@@ -21,12 +21,7 @@ from django.contrib import messages
 def messaging(request, domain, template="sms/default.html"):
     context = get_sms_autocomplete_context(request, domain)
     context['domain'] = domain
-    context['messagelog'] = MessageLog.view("sms/by_domain_and_date",
-                                            startkey=[domain,{}],
-                                            endkey=[domain],
-                                            include_docs=True,
-                                            reduce=False,
-                                            descending=True )
+    context['messagelog'] = MessageLog.by_domain_dsc(domain)
     context['now'] = datetime.utcnow()
     return render_to_response(request, template, context)
 
