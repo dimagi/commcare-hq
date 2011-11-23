@@ -115,8 +115,8 @@ def send_to_recipients(request, domain):
         for user, number in phone_numbers:
             if not number:
                 no_numbers.append(user.raw_username)
-            elif send_sms(domain, user.user_id if user else None, number, message):
-                sent.append("%s" % (user.raw_username if user else "+%s" % number))
+            elif send_sms(domain, user.user_id if user else "", number, message):
+                sent.append("%s" % (user.raw_username if user else number))
             else:
                 failed_numbers.append("%s (%s)" % (
                     number,
@@ -126,7 +126,7 @@ def send_to_recipients(request, domain):
             if no_numbers:
                 messages.error(request, "The following users don't have phone numbers: %s"  % (', '.join(no_numbers)))
             if failed_numbers:
-                messages.error(request, "Couldn't send to the following number(s): +%s" % (', +'.join(failed_numbers)))
+                messages.error(request, "Couldn't send to the following number(s): %s" % (', '.join(failed_numbers)))
             if unknown_usernames:
                 messages.error(request, "Couldn't find the following user(s): %s" % (', '.join(unknown_usernames)))
             if sent:
