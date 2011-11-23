@@ -247,7 +247,7 @@
                     <input type="text" id="startdate" name="startdate" class="date-picker" value="{{ datespan.startdate|date:"Y-m-d" }}">
                    <label for="enddate">To Date:</label>
                     <input type="text" id="enddate" name="enddate" class="date-picker" value="{{ datespan.enddate|date:"Y-m-d" }}">
-           {% endif %}
+            {% endif %}
                     {% if custom_fields %}
                         {% for field in custom_fields %}
                             {{ field|safe }}
@@ -256,7 +256,8 @@
                     {% if custom_fields or show_dates %}
                         <input type="submit" value="Go!" />
                    {% endif %}
-          {% endif %}
+            {% endif %}
+            </form>
         </div>
         {% if show_time_notice %}{% include "hqwebapp/partials/time-notice.html"%}{% endif %}
         {% block reportcontent %}Your report goes here{% endblock %}
