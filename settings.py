@@ -368,7 +368,12 @@ INSTALLED_APPS += LOCAL_APPS
 
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
 
-logging.basicConfig(filename=DJANGO_LOG_FILE)
+try:
+    LOG_FORMAT
+except Exception:
+    LOG_FORMAT = "%(asctime)s %(levelname)-8s - %(name)-26s %(message)s"
+
+logging.basicConfig(filename=DJANGO_LOG_FILE, format=LOG_FORMAT)
 
 # these are the official django settings
 # which really we should be using over the

@@ -7,7 +7,7 @@ from corehq.apps.domain.utils import legacy_domain_re
 from django.contrib import admin
 try:
     from localsettings import LOCAL_APP_URLS
-except:
+except ImportError:
     LOCAL_APP_URLS = ()
 admin.autodiscover()
 
