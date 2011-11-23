@@ -7,7 +7,8 @@
 
 {% block reportcontent %}
 
-    {% if ward and p and p.deaths %}
+    {% if ward and p %}
+    {% if p.male or p.female %}
         <h2 align="center">Home Based Care Monthly Summary Report</h2>
 
         <h4 align="center">Ward: {{ ward }}</h4>
@@ -202,7 +203,12 @@
                 <td>{{ p.opted_out|length }}</td>
                 <td>{{ p.deaths|add:p.losses|add:p.transfers|add:p.no_need|add:p.migrations|add:p.opted_out|length }}</td>
             </tr>
-        </table>
+        </table> 
+    {% else %}
+       There is no data for this period.
+
+    {% endif %}
+
     {% else %}
         You need to select a ward, month, and year.
     {% endif %}
