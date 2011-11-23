@@ -103,8 +103,7 @@
                     <td>{{ chw.region }}</td>
                     <td>{{ chw.district }}</td>
                     <td>{{ chw.ward }}</td>
-                    <td><a href="{% url pathfinder.views.provider_summary domain %}?name={{ chw.full_name }}&year={{ year }}&month={{ month }}">{{ chw.full_name }}</a></td>
-                    {#		<td>{{ chw.full_name }}</td>#}
+                   <td>{{ chw.full_name }}</td>
                     <td>{{ chw.chw_id }}</td>
                     {% with chw.full_name as n %}
                         {% with prov_p|dict_lookup:n as pats %}
