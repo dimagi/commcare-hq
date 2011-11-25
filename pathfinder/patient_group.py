@@ -16,9 +16,9 @@ class PathfinderPatientGroup(QueryableList):
         self._child = lambda x: 18 < x['age']
         self._adult = lambda x: 18 >= x['age']
 
-        self._hiv_reg = lambda x: x['registration_cause'].count('hiv')
+        self._hiv_reg = lambda x: x.has_key('registration_cause') and x['registration_cause'].count('hiv')
 
-        self._hiv_unk = lambda x: (x['hiv_status_during_registration'] is None or \
+        self._hiv_unk = lambda x: (not x['registration_cause'].count('hiv')) and (x['hiv_status_during_registration'] is None or \
                                     (x['hiv_status_during_registration'].lower() != 'positive' and \
                                     x['hiv_status_during_registration'].lower() != 'negative')) \
                                     and \
