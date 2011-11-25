@@ -198,6 +198,8 @@ def retrieve_patient_group(user_ids, domain, year, month):
         p['referrals_made'] = 0
         for i in ['provider',
                   'registration_and_followup_hiv',
+                  'hiv_status_during_registration',
+                  'hiv_status_after_test',
                   'referrals_hiv',
                   'ctc',
                   'medication_given',
