@@ -63,12 +63,40 @@ class MessageLog(Document, UnicodeMixIn):
                     descending=True)
 
     @classmethod
-    def count_by_domain(cls, domain):
+    def count_by_domain(cls, domain, start_date = None, end_date = {}):
+        if not end_date:
+            end_date = {}
         reduced = MessageLog.view("sms/by_domain",
-                            startkey=[domain],
-                            endkey=[domain,{}],
+                            startkey=[domain] + [start_date],
+                            endkey=[domain] + [end_date],
                             reduce=True).all()
-        return reduced[0]['value']
+        if reduced:
+            return reduced[0]['value']
+        return 0
+
+    @classmethod
+    def count_incoming_by_domain(cls, domain, start_date = None, end_date = {}):
+        if not end_date:
+            end_date = {}
+        reduced = MessageLog.view("sms/direction_by_domain",
+                            startkey=[domain, "I"] + [start_date],
+                            endkey=[domain, "I"] + [end_date],
+                            reduce=True).all()
+        if reduced:
+            return reduced[0]['value']
+        return 0
+
+    @classmethod
+    def count_outgoing_by_domain(cls, domain, start_date = None, end_date = {}):
+        if not end_date:
+            end_date = {}
+        reduced = MessageLog.view("sms/direction_by_domain",
+                            startkey=[domain, "O"] + [start_date],
+                            endkey=[domain, "O"] + [end_date],
+                            reduce=True).all()
+        if reduced:
+            return reduced[0]['value']
+        return 0
 
 
 
