@@ -155,7 +155,6 @@ def message_log_report(request):
     show_dates = True
     
     datespan = request.datespan
-    print datespan.startdate
     domains = Domain.objects.all().order_by("name")
     for dom in domains:
         dom.sms_incoming = MessageLog.count_incoming_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
