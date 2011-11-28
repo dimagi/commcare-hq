@@ -111,6 +111,9 @@ class MessageLogOld(models.Model):
     # efficient to store here rather than doing a couch query for each couch user
     domain             = models.TextField()
 
+    class Meta(): 
+        db_table = "sms_messagelog"
+         
     def __unicode__(self):
 
         # crop the text (to avoid exploding the admin)
