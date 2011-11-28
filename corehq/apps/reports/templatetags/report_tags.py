@@ -1,9 +1,12 @@
 from datetime import datetime, timedelta
 from django import template
 import itertools
+from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 import json
 import calendar
+from django.conf import settings
+from dimagi.utils.modules import to_function
 #from bhoma.apps.locations.models import Location
 
 register = template.Library()
@@ -240,3 +243,14 @@ def attribute_lookup(obj, attr):
     if (hasattr(obj, attr)):
         return getattr(obj, attr)
     
+
+@register.simple_tag
+def custom_report_list(domain):
+    mapping = getattr(settings, 'CUSTOM_REPORT_MAP', None)
+    if not mapping: return ""
+    if not domain in mapping: return ""
+    lst = []
+    for model in mapping[domain]:
+        klass = to_function(model)
+        lst.append("<li><a href='%s' title='%s'>%s</a></li>" % (reverse('report_dispatcher', args=(domain, klass.slug)), klass.description, klass.name))
+    return "\n".join(lst)

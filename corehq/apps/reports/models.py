@@ -1,6 +1,8 @@
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.mixins import UnicodeMixIn
 from datetime import datetime
+from django.shortcuts import render_to_response
+from django.template.context import RequestContext
 
 class ReportNotification(Document, UnicodeMixIn):
     domain = StringProperty()

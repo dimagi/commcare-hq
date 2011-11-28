@@ -89,5 +89,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^download/cases/$', 'download_cases', name='download_cases'),
 
     url(r'^phonelog/', include(phonelog_reports)),
+    url(r'^custom/(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="report_dispatcher"),
+
 )
 

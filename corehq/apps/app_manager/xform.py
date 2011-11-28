@@ -286,9 +286,13 @@ class XForm(WrappedNode):
                                 options = []
                                 for item in prompt.findall('{f}item'):
                                     translation = self.get_label_text(item, langs)
+                                    try:
+                                        value = item.findtext('{f}value').strip()
+                                    except AttributeError:
+                                        raise XFormError("<item> (%r) has no <value>" % translation)
                                     options.append({
                                         'label': translation,
-                                        'value': item.findtext('{f}value').strip()
+                                        'value': value
                                     })
                                 question.update({'options': options})
                             questions.append(question)

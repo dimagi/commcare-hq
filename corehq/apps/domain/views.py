@@ -219,7 +219,7 @@ def registration_request(request, kind=None):
 
 # Neither login nor domain required here - outside users, not registered on our site, can request a domain
 # Manual transaction because we want to update multiple objects atomically
-@transaction.commit_manually
+@transaction.commit_on_success
 def registration_confirm(request, guid=None):
     
     # Did we get a guid?
@@ -242,22 +242,14 @@ def registration_confirm(request, guid=None):
         return render_to_response(request, 'error.html', vals)
     
     # Set confirm time and IP; activate domain and new user who is in the 
-    try:
-        req.confirm_time = datetime.datetime.utcnow()
-        req.confirm_ip = request.META['REMOTE_ADDR']     
-        req.domain.is_active = True
-        req.domain.save()
-        req.new_user.is_active = True
-        req.new_user.save() 
-        req.save()
-    except:
-        transaction.rollback()                
-        vals = {'error_msg':'There was a problem with your request',
-                'error_details':sys.exc_info(),
-                'show_homepage_link': 1 }
-        return render_to_response(request, 'error.html', vals)
-    else:
-        transaction.commit()
+    req.confirm_time = datetime.datetime.utcnow()
+    req.confirm_ip = request.META['REMOTE_ADDR']
+    req.domain.is_active = True
+    req.domain.save()
+    req.new_user.is_active = True
+    req.new_user.save()
+    req.save()
+
         
     vals = {'domain_name':req.domain.name,            
             'username':req.new_user.username }
