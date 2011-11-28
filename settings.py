@@ -342,6 +342,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'couchforms',
         'couchexport',
         'couchlog',
+        'hqadmin',
         'domain',
         'forms',
         'groups',
