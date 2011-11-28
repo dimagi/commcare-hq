@@ -98,6 +98,7 @@ def global_report(request, template="hqadmin/global.html"):
     def _metric(name):
         counts = []
         for result in get_db().view("hqadmin/%ss_over_time" % name, group_level=2):
+            if not result or not result.has_key('key') or not result.has_key('value'): continue
             if int(result['key'][0]) > 2000:
                 counts.append([_flot_format(result), result['value']])
         context['%s_counts' % name] = counts
