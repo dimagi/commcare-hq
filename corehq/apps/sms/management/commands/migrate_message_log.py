@@ -12,13 +12,14 @@ class Command(LabelCommand):
 
         print "Migrating MessageLog"
         for message in old_django_messages:
+            
             new_key = hashlib.md5("%s %s %s %s %s %s" % (
                 message.couch_recipient,
                 message.domain,
                 message.phone_number,
                 message.direction,
                 message.date,
-                message.text
+                " ".join([str(ord(c)) for c in message.text]) # hack to support arbitrarily encoded strings
             )).hexdigest()
             try:
                 couch_message = MessageLog(_id=new_key,
@@ -30,8 +31,8 @@ class Command(LabelCommand):
                                             text=message.text)
                 couch_message.save()
             except Exception as e:
-                print "There was an error migrating MessageLog with text %s to couch_recipient %s in domain %s" % (
+                print "There was an error migrating MessageLog with text %s to couch_recipient %s in domain %s." % (
                     message.text,
                     message.couch_recipient,
-                    message.domain
+                    message.domain,
                 )
