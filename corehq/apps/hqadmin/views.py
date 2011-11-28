@@ -99,7 +99,7 @@ def global_report(request, template="hqadmin/global.html"):
         counts = []
         for result in get_db().view("hqadmin/%ss_over_time" % name, group_level=2):
             if not result or not result.has_key('key') or not result.has_key('value'): continue
-            if result['key'][0] and int(result['key'][0]) > 2000 and int(result['key'][0] <= datetime.utcnow().year):
+            if result['key'][0] and int(result['key'][0]) >= 2009 and int(result['key'][0]) <= datetime.utcnow().year and int(result['key'][1]) <= datetime.utcnow().month:
                 counts.append([_flot_format(result), result['value']])
         context['%s_counts' % name] = counts
         counts_int = deepcopy(counts)
