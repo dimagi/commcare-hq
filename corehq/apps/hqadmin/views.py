@@ -7,17 +7,25 @@ from django.template.context import RequestContext
 from django.views.decorators.cache import cache_page
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
+from corehq.apps.sms.models import MessageLog
 from corehq.apps.users.models import CouchUser, CommCareUser
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from collections import defaultdict
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
+from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response, render_to_response
 
 @require_superuser
 def default(request):
     return HttpResponseRedirect(reverse("domain_list"))
+
+datespan_default = datespan_in_request(
+    from_param="startdate",
+    to_param="enddate",
+    default_days=30,
+)
 
 @cache_page(60 * 15)
 @require_superuser
@@ -139,3 +147,27 @@ def domain_activity_report(request, template="hqadmin/domain_activity_report.htm
         'domains': domains,
         'landmarks': landmarks
     })
+
+@cache_page(60 * 15)
+@datespan_default
+@require_superuser
+def message_log_report(request):
+    show_dates = True
+    
+    datespan = request.datespan
+    print datespan.startdate
+    domains = Domain.objects.all().order_by("name")
+    for dom in domains:
+        dom.sms_incoming = MessageLog.count_incoming_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
+        dom.sms_outgoing = MessageLog.count_outgoing_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
+        dom.sms_total = MessageLog.count_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
+    try:
+        domain = request.user.selected_domain.name
+    except AttributeError:
+        domain = None
+    return render_to_response(request, "hqadmin/message_log_report.html",
+                              {"domains": domains,
+                               "domain": domain,
+                               "show_dates": show_dates,
+                               "datespan": datespan},
+                              context_instance=RequestContext(request))
