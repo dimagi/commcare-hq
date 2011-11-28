@@ -1,5 +1,6 @@
 from datetime import timedelta, datetime
 import json
+from copy import deepcopy
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import permission_required
@@ -85,6 +86,33 @@ def active_users(request):
                 final_count[domain] += 1
 
     return json_response({"break_down": final_count, "total": sum(final_count.values())})
+
+@require_superuser
+def global_report(request, template="hqadmin/global.html"):
+
+    def _flot_format(result):
+        return int(datetime(year=result['key'][0], month=result['key'][1], day=1).strftime("%s"))*1000
+
+    context = {}
+
+    def _metric(name):
+        counts = []
+        for result in get_db().view("hqadmin/%ss_over_time" % name, group_level=2):
+            if int(result['key'][0]) > 2000:
+                counts.append([_flot_format(result), result['value']])
+        context['%s_counts' % name] = counts
+        counts_int = deepcopy(counts)
+        for i in range(1, len(counts_int)): counts_int[i][1] += counts_int[i-1][1]
+        context['%s_counts_int' % name] = counts_int
+
+    _metric('case')
+    _metric('form')
+    _metric('user')
+
+    return render_to_response(request, template, context, context_instance=RequestContext(request))
+
+
+        
 
 
 @cache_page(60 * 15)

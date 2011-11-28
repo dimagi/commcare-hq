@@ -1,0 +1,70 @@
+{% extends base_template %}
+{% block page_imports %}
+    {% include "imports/datatables.html" %}
+{% endblock %}
+{% block head %}
+    <link rel="stylesheet" href="{{STATIC_URL}}reports/css/flot.css">
+    <script src="{{STATIC_URL}}reports/javascripts/flot/jquery.flot.min.js"></script>
+    <script src="{{STATIC_URL}}reports/javascripts/flot/jquery.flot.pie.js"></script>
+
+    <script>
+        //        datatable configuration.
+        $(document).ready(function() {
+
+            prepare_graphs = function(){
+                if ($('#cumulative')[0].checked) {
+                    var case_counts = [{{case_counts_int|safe}}];
+                    var form_counts = [{{form_counts_int|safe}}];
+                    var user_counts = [{{user_counts_int|safe}}];
+                }
+                else {
+                    var case_counts = [{{case_counts|safe}}];
+                    var form_counts = [{{form_counts|safe}}];
+                    var user_counts = [{{user_counts|safe}}];
+                }
+
+
+                $.plot($('#cases'), case_counts, {
+                    xaxis: { mode: "time" }
+                });
+
+                $.plot($('#forms'), form_counts, {
+                    xaxis: { mode: "time" }
+                });
+
+                $.plot($('#users'), user_counts, {
+                    xaxis: { mode: "time" }
+                });
+            };
+
+            $('#cumulative').change(prepare_graphs);
+
+            prepare_graphs();
+
+
+        });
+
+    </script>
+    <style>
+        .graph {
+            width: 800px;
+            height:300px;
+            margin: 10px;
+            padding-bottom: 10px;
+        }
+    </style>{% endblock %}
+{% block content %}
+    <div id="main_container">
+        <div id="report-title">
+            <h1>CCHQ Usage Report</h1>
+        </div>
+        <form action=""><label for="cumulative">Cumulative: </label><input type="checkbox" id="cumulative" /></form>
+        <div id="report-content">
+            <h2>New Cases</h2>
+            <div id="cases" class="graph"></div>
+            <h2>Submitted Forms</h2>
+            <div id="forms" class="graph"></div>
+            <h2>New Users</h2>
+            <div id="users" class="graph"></div>
+        </div>
+{% endblock %}
