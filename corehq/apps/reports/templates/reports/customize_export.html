@@ -1,5 +1,25 @@
 {% extends base_template %}
 
+{% block js-inline %}{{ block.super }}
+    <script>
+        $(function(){
+            // style button
+            $(".button").button();
+
+            // select all/none
+            $("#select_all").click(function() {
+                $(".field_include").attr('checked', true);
+            });
+            $("#select_none").click(function() {
+                $(".field_include").attr('checked', false);
+            });
+        });
+    </script>
+{% endblock %}
+{% block js %}{{ block.super }}
+    <script src="{{ STATIC_URL }}hqwebapp/js/dialogs.js"></script>
+{% endblock %}
+
 {% block head %}
     {{ block.super }}
     <style>
@@ -22,21 +42,6 @@
             width: 25em;
         }
     </style>
-    <script type="text/javascript">
-        $(function(){
-            // style button
-            $(".button").button();
-            
-            // select all/none
-            $("#select_all").click(function() {
-                $(".field_include").attr('checked', true);
-            });
-            $("#select_none").click(function() {
-                $(".field_include").attr('checked', false);
-            });
-        });
-    </script>
-    <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/dialogs.js"></script>
 {% endblock %}
 
 {% block content %}

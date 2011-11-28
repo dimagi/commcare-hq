@@ -1,9 +1,9 @@
 {% extends base_template %}
 {% load multimedia_tags %}
-{% block head %}
-    {{ block.super }}
+{% block js-inline %}{{ block.super }}
     <script>
-        HOME_URL = "{% url corehq.apps.app_manager.views.view_app domain app.get_id %}";
+    (function () {
+        var HOME_URL = "{% url corehq.apps.app_manager.views.view_app domain app.get_id %}";
         // hat tip: http://stackoverflow.com/questions/985272/jquery-selecting-text-in-an-element-akin-to-highlighting-with-your-mouse/2838358#2838358
         function selectElementText(el, win) {
 		    win = win || window;
@@ -20,7 +20,7 @@
 		        range.select();
 		    }
 		}
-		
+
         $(function () {
             $( "#dialog" ).dialog({
                 autoOpen: false,
@@ -33,7 +33,7 @@
                     contents += "<p>References: " + refs + "</p>"
                     contents += "<h3>Found in forms:</h3><ul>";
                     for (var i = 0; i < forms.length; i++) {
-                        contents += "<li><a href='" + HOME_URL + "?m=" +forms[i].module + "&f=" + forms[i].form + "'>" + 
+                        contents += "<li><a href='" + HOME_URL + "?m=" +forms[i].module + "&f=" + forms[i].form + "'>" +
                                     forms[i].display + "</a></li>";
                     }
                     contents += "</ul>"
@@ -77,12 +77,12 @@
                     return false;
                 });
             });
-            
-            
+
+
             $("#select_contents").click(function() {
                 selectElementText(document.getElementById("filelist"));
             });
-            
+
             // select all/none
             $("#show_images").click(function() {
                 if ($("#show_images").attr("checked")) {
@@ -113,11 +113,14 @@
                     }
                 });
             });
-            
+
 
 
         });
-        </script>
+    }());
+    </script>
+{% endblock %}
+{% block head %}{{ block.super }}
         <style>
             input[type="checkbox"] {
                 margin-right: 1em;

@@ -1,8 +1,6 @@
 {% extends "reminders/reminders_base.html" %}
 {% load hq_shared_tags %}
-
-{% block head %}
-    {{ block.super }}
+{% block js-inline %}{{ block.super }}
     <script>
         $(function () {
             $('.message-popup').addClass('shadow').find('td').each(function () {
@@ -18,6 +16,8 @@
             });
         });
     </script>
+{% endblock %}
+{% block head %}{{ block.super }}
     <style>
         .message-popup {
             position: absolute;

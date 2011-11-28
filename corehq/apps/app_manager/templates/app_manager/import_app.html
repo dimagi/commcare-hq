@@ -1,14 +1,15 @@
 {% extends "app_manager/apps_base.html" %}
-{% block head %}
+{% block js-inline %}{{ block.super }}
     <script>
         $(function () {
             $(".historyBack").click(function () {
                 history.back();
                 return false;
             });
-            $("#main").show();
         });
     </script>
+{% endblock %}
+{% block head %}
     {{ block.super }}
     <style>
         #main_container {

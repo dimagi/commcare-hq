@@ -22,6 +22,9 @@ var LangcodeValidator = (function () {
             validationsComplete += 1;
             that.render();
         }
+        if (this.langcodes.length) {
+            this.$home.html("");
+        }
         for (i = 0; i < this.langcodes.length; i += 1) {
             LangcodeValidator.validate(this.langcodes[i], validateCallback);
         }
@@ -90,7 +93,6 @@ var LangcodeValidator = (function () {
             var i, j, langcode, sughtml, sug,
                 $table = $("<table></table>"),
                 $row,
-                $td,
                 $a,
                 $links,
                 that = this;
@@ -155,10 +157,14 @@ var LangcodeValidator = (function () {
 //                    $links = "";
 //                }
                 $row = $("<tr></tr>");
-                $td = $("<td></td>").html(this.validation.isValid[langcode] ? langcode : "<strike>" + langcode + "</strike>").appendTo($row);
-                $td = $("<td></td>").text(this.validation.name[langcode] || "?").appendTo($row);
+                $("<td/>").html(this.validation.isValid[langcode] ?
+                    langcode : '<strike>' + langcode + '</strike>').appendTo($row);
+                $('<td/>').append(
+                    $('<span/>').addClass(this.validation.isValid[langcode] ? 'ui-icon ui-icon-check' : 'ui-icon ui-icon-alert')
+                ).appendTo($row);
+                $("<td/>").html(this.validation.name[langcode] || "").appendTo($row);
                 if (this.edit) {
-                    $td = $("<td></td>").appendTo($row).html($links);
+                    $("<td></td>").appendTo($row).html($links);
                 }
                 $table.append($row);
             }

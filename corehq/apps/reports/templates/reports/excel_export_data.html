@@ -1,8 +1,29 @@
 {% extends "reports/report_base.html" %}
 {% load xforms_extras %}
 
-{% block head %}
-    {{ block.super }}
+{% block js %}{{ block.super }}
+    <script src="{{ STATIC_URL }}hqwebapp/js/dialogs.js"></script>
+{% endblock %}
+
+
+{% block js-inline %}{{ block.super }}
+    <script>
+	    {# modified from: http://stackoverflow.com/questions/809035/ajax-jquery-ui-dialog-window-loaded-within-ajax-style-jquery-ui-tabs #}
+	    $(function (){
+	        var ajaxDialog = $('<div id="export-ajax-dialog" style="display:hidden"></div>').appendTo('body');
+            ajaxDialog.dialog({autoOpen: false});
+            $('a.export-ajax').live('click', function() {
+			    // load remote content
+			    ajaxDialog.load(this.href);
+			    ajaxDialog.dialog("open");
+			    //prevent the browser from following the link
+			    return false;
+			});
+	    });
+    </script>
+{% endblock %}
+
+{% block head %}{{ block.super }}
     <style>
         th {
             text-align: left;
@@ -17,21 +38,7 @@
             width: 100%;
         }
     </style>
-    <script type="text/javascript" src="{{ STATIC_URL }}hqwebapp/js/dialogs.js"></script>
-	<script type="text/javascript">
-	    {# modified from: http://stackoverflow.com/questions/809035/ajax-jquery-ui-dialog-window-loaded-within-ajax-style-jquery-ui-tabs #}
-	    $(function (){
-	        var ajaxDialog = $('<div id="export-ajax-dialog" style="display:hidden"></div>').appendTo('body');
-            ajaxDialog.dialog({autoOpen: false});
-            $('a.export-ajax').live('click', function() {
-			    // load remote content
-			    ajaxDialog.load(this.href);
-			    ajaxDialog.dialog("open");
-			    //prevent the browser from following the link
-			    return false;
-			});
-	    });
-    </script>
+
 {% endblock %}
 
 {% block reportcontent %}

@@ -1,12 +1,13 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
-{% block head %}
-    {{ block.super }}
+{% block js %}{{ block.super }}
     <script src="{{ STATIC_URL }}hqwebapp/javascripts/underscore-1.1.7.js"></script>
     <script src="{{ STATIC_URL }}app_manager/js/lcs-merge.js"></script>
-    <link rel="stylesheet" href="{{ STATIC_URL }}app_manager/css/detail-screen-config.css"/>
     <script src="{{ STATIC_URL }}app_manager/js/detail-screen-config.js?version=4"></script>
+{% endblock %}
+{% block head %}{{ block.super }}
+    <link rel="stylesheet" href="{{ STATIC_URL }}app_manager/css/detail-screen-config.css"/>
     <script>
         $(function () {
             var $home = $("#detail-screen-config");
@@ -60,6 +61,9 @@
                             <input type="text" name="name" value="{{ module.name|trans:langs }}" />
                         </td>
                     </tr>
+                    {% with module as item %}
+                        {% include "app_manager/partials/nav_menu_media.html" %}
+                    {% endwith %}
                     <tr class="form editable">
                         <th>
                             Case Type <span class="help-link" data-help-key="app_manager/case_type"></span>

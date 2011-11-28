@@ -1,10 +1,20 @@
-div.login-block {
+.login-block {
     border: 1px solid #ccc;
     background-color: #fff;
     margin: auto;
     width: 350px;
     padding: 1.5em;
+    
+    -moz-box-shadow: 0 0 8px #bbc;
+	-webkit-box-shadow: 0 0 8px #bbc;
+	box-shadow: 0 0 8px #bbc;
+
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -khtml-border-radius: 5px;
+    border-radius: 5px;
 }
+
 .login-block p {
     font-size: .8em;
     text-align: center;

@@ -265,7 +265,7 @@ def get_form_view_context(request, form, langs, is_user_registration):
             messages.error(request, "Error in form: %s" % e)
         # any other kind of error should fail hard, but for now there are too many for that to be practical
         except Exception as e:
-            if settings.DEBUG and False:
+            if settings.DEBUG:
                 raise
             logging.exception(e)
             messages.error(request, "Unexpected System Error: %s" % e)
@@ -327,8 +327,13 @@ def get_apps_base_context(request, domain, app):
         ).all()
     else:
         saved_apps = []
+
+
     context = locals()
     context.update(get_sms_autocomplete_context(request, domain))
+    context.update({
+        'URL_BASE': get_url_base()
+    })
     return context
 
 def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False):
@@ -412,10 +417,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'edit': edit,
 
 #        'factory_apps': factory_apps,
-        'editor_url': settings.EDITOR_URL,
-        'URL_BASE': get_url_base(),
-        'XFORMPLAYER_URL': reverse('xform_play_remote'),
-
         'build_errors': build_errors,
     }
     context.update(base_context)
@@ -485,15 +486,20 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None, is_user_reg
     app = get_app(domain, app_id)
 
     if is_user_registration:
-        form = app.user_registration
+        form = app.get_user_registration()
     else:
         module = app.get_module(module_id)
         form = module.get_form(form_id)
 
-    edit = True
+
+
 
     context = get_apps_base_context(req, domain, app)
     context.update(locals())
+    context.update({
+        'edit': True,
+        'editor_url': settings.EDITOR_URL,
+    })
     return render_to_response(req, 'app_manager/form_designer.html', context)
 
 
@@ -618,6 +624,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         "all": None,
         "case_type": None, "put_in_root": None,
         "name": None, "case_label": None, "referral_label": None,
+        'media_image': None, 'media_audio': None,
         "case_list": ('case_list-show', 'case_list-label'),
     }
 
@@ -634,7 +641,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
                         return False
                 return True
             else:
-                return req.POST.get(attribute)
+                return req.POST.get(attribute) is not None
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -653,6 +660,9 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     if should_edit("case_list"):
         module["case_list"].show = json.loads(req.POST['case_list-show'])
         module["case_list"].label[lang] = req.POST['case_list-label']
+
+    _handle_media_edits(req, module, should_edit, resp)
+
     app.save(resp)
     return HttpResponse(json.dumps(resp))
 
@@ -747,6 +757,28 @@ def delete_module_detail(req, domain, app_id, module_id):
     return HttpResponse(json.dumps(resp))
     #return back_to_main(**locals())
 
+def _handle_media_edits(request, item, should_edit, resp):
+    if not resp.has_key('corrections'):
+        resp['corrections'] = {}
+    for attribute in ('media_image', 'media_audio'):
+        if should_edit(attribute):
+            val = request.POST.get(attribute)
+            if val:
+                if val.startswith('jr://'):
+                    pass
+                elif val.startswith('/file/'):
+                    val = 'jr:/' + val
+                elif val.startswith('file/'):
+                    val = 'jr://' + val
+                elif val.startswith('/'):
+                    val = 'jr://file' + val
+                else:
+                    val = 'jr://file/' + val
+                resp['corrections'][attribute] = val
+            else:
+                val = None
+            setattr(item, attribute, val)
+
 @require_POST
 @require_permission('edit-apps')
 def edit_form_attr(req, domain, app_id, unique_form_id, attr):
@@ -754,6 +786,7 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     Called to edit any (supported) form attribute, given by attr
 
     """
+    
     app = get_app(domain, app_id)
     form = app.get_form(unique_form_id)
     lang = req.COOKIES.get('lang', app.langs[0])
@@ -761,40 +794,53 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
 
     resp = {}
 
-    if   "requires" == attr:
+    def should_edit(attribute):
+        if req.POST.has_key(attribute):
+            return True
+        elif req.FILES.has_key(attribute):
+            return True
+        else:
+            return False
+
+    if should_edit("requires"):
         requires = req.POST['requires']
         form.set_requires(requires)
-    elif "name" == attr:
+    if should_edit("name"):
         name = req.POST['name']
         form.name[lang] = name
         resp['update'] = {'.variable-form_name': form.name[lang]}
-    elif "xform" == attr:
-        error = None
+    if should_edit("xform"):
         try:
-            xform = req.FILES.get('xform').read()
+            # support FILES for upload and POST for ajax post from Vellum
             try:
-                xform = unicode(xform, encoding="utf-8")
+                xform = req.FILES.get('xform').read()
             except Exception:
-                error = "Error uploading form: Please make sure your form is encoded in UTF-8"
-        except Exception:
-            xform = req.POST.get('xform')
-
-        if xform:
-            form.source = xform
-            form.refresh()
-        else:
-            error = "You didn't select a form to upload"
-        if error:
-            if ajax:
-                return HttpResponseBadRequest(error)
+                xform = req.POST.get('xform')
             else:
-                messages.error(req, error)
-    elif "show_count" == attr:
+                try:
+                    xform = unicode(xform, encoding="utf-8")
+                except Exception:
+                    raise Exception("Error uploading form: Please make sure your form is encoded in UTF-8")
+
+            if xform:
+                form.source = xform
+                form.refresh()
+            else:
+                raise Exception("You didn't select a form to upload")
+        except Exception, e:
+            if ajax:
+                return HttpResponseBadRequest(unicode(e))
+            else:
+                messages.error(req, unicode(e))
+    if should_edit("show_count"):
         show_count = req.POST['show_count']
         form.show_count = True if show_count == "True" else False
-    elif "put_in_root" == attr:
+    if should_edit("put_in_root"):
         put_in_root = req.POST['put_in_root']
         form.put_in_root = True if put_in_root == "True" else False
+
+    _handle_media_edits(req, form, should_edit, resp)
+    
     app.save(resp)
     if ajax:
         return HttpResponse(json.dumps(resp))
@@ -865,7 +911,9 @@ def multimedia_home(req, domain, app_id, module_id=None, form_id=None):
     # TODO: make this more fully featured
     for m in app.get_modules():
         for f in m.get_forms():
-            parsed = XForm(f.source)
+            parsed = f.wrapped_xform()
+            if not parsed.exists():
+                continue
             parsed.validate()
             parsed_forms[f] = parsed
             for i in parsed.image_references:
@@ -991,7 +1039,7 @@ def edit_app_attr(req, domain, app_id, attr):
         'native_input', 'build_spec', 'show_user_registration',
         'use_custom_suite', 'custom_suite',
         # RemoteApp only
-        'profile_url'
+        'profile_url',
     ]
     if attr not in attributes:
         return HttpResponseBadRequest()
@@ -1040,7 +1088,7 @@ def edit_app_attr(req, domain, app_id, attr):
 @require_permission('edit-apps')
 def rearrange(req, domain, app_id, key):
     """
-    This function handels any request to switch two items in a list.
+    This function handles any request to switch two items in a list.
     Key tells us the list in question and must be one of
     'forms', 'modules', 'detail', or 'langs'. The two POST params
     'to' and 'from' give us the indicies of the items to be rearranged.
@@ -1100,6 +1148,8 @@ def save_copy(req, domain, app_id):
         try:
             app.save_copy(comment=comment)
         except Exception as e:
+            if settings.DEBUG:
+                raise
             messages.error(req, "Unexpected error saving build:\n%s" % e)
     else:
         errors = BuildErrors(errors=errors)
@@ -1147,10 +1197,9 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
     all the resource files that will end up zipped into the jar.
 
     """
-    app = get_app(domain, app_id)
     return render_to_response(req, template, {
-        'app': app,
-        'files': sorted(app.create_all_files().items()),
+        'app': req.app,
+        'files': sorted(req.app.create_all_files().items()),
     })
 
 @safe_download
@@ -1160,7 +1209,7 @@ def download_profile(req, domain, app_id):
 
     """
     return HttpResponse(
-        get_app(domain, app_id).create_profile()
+        req.app.create_profile()
     )
 
 def odk_install(req, domain, app_id):
@@ -1178,7 +1227,7 @@ def download_odk_profile(req, domain, app_id):
 
     """
     return HttpResponse(
-        get_app(domain, app_id).create_profile(is_odk=True),
+        req.app.create_profile(is_odk=True),
         mimetype="commcare/profile"
     )
 
@@ -1189,7 +1238,7 @@ def download_suite(req, domain, app_id):
 
     """
     return HttpResponse(
-        get_app(domain, app_id).create_suite()
+        req.app.create_suite()
     )
 
 @safe_download
@@ -1199,7 +1248,7 @@ def download_app_strings(req, domain, app_id, lang):
 
     """
     return HttpResponse(
-        get_app(domain, app_id).create_app_strings(lang)
+        req.app.create_app_strings(lang)
     )
 
 @safe_download
@@ -1209,14 +1258,14 @@ def download_xform(req, domain, app_id, module_id, form_id):
 
     """
     return HttpResponse(
-        get_app(domain, app_id).fetch_xform(module_id, form_id)
+        req.app.fetch_xform(module_id, form_id)
     )
 
 @safe_download
 def download_user_registration(req, domain, app_id):
     """See Application.fetch_xform"""
     return HttpResponse(
-        get_app(domain, app_id).get_user_registration().render_xform()
+        req.app.get_user_registration().render_xform()
     )
 
 @safe_download
@@ -1225,7 +1274,7 @@ def download_jad(req, domain, app_id):
     See ApplicationBase.create_jadjar
 
     """
-    app = get_app(domain, app_id)
+    app = req.app
     try:
         jad, _ = app.create_jadjar()
     except ResourceConflict:
@@ -1251,7 +1300,7 @@ def download_jar(req, domain, app_id):
 
     """
     response = HttpResponse(mimetype="application/java-archive")
-    app = get_app(domain, app_id)
+    app = req.app
     _, jar = app.create_jadjar()
     response['Content-Disposition'] = "filename=%s.jar" % "CommCare"
     response['Content-Length'] = len(jar)
@@ -1279,7 +1328,7 @@ def download_raw_jar(req, domain, app_id):
 
     """
     response = HttpResponse(
-        get_app(domain, app_id).fetch_jar()
+        req.app.fetch_jar()
     )
     response['Content-Type'] = "application/java-archive"
     return response

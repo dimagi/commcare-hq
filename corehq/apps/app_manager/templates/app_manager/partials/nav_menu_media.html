@@ -1,0 +1,24 @@
+<tr>
+    <th>Image (optional)</th>
+    <td>
+        {% if edit %}
+            <input type="text" class="wide jr-resource-field" name="media_image"
+                   value="{{ item.media_image|default:"" }}"
+                   placeholder="jr://file/commcare_media/image/image.png"/>
+        {% else %}
+            {{ item.media_image }}
+        {% endif %}
+    </td>
+</tr>
+<tr>
+    <th>Audio (optional)</th>
+    <td>
+        {% if edit %}
+            <input type="text" class="wide jr-resource-field" name="media_audio"
+                   value="{{ item.media_audio|default:"" }}"
+                   placeholder="jr://file/commcare_media/audio/audio.mp3"/>
+        {% else %}
+            {{ item.media_audio }}
+        {% endif %}
+    </td>
+</tr>

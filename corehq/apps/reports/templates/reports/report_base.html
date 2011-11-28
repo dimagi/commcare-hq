@@ -20,95 +20,9 @@
             return ((x < y) ?  1 : ((x > y) ? -1 : 0));
         };
     </script>
-    <script>
-        $(function(){
-            $("#report_select").val(location.pathname);
-            $("#report_select").change(function(){
-                location.href = $(this).val();
-            });
-            $("#report_dropdown").dropdown();
-            $("#title-bar").addClass('ui-corner-top');
-        });
-    </script>
-    <script type="text/javascript">
-        function shiftDates(days) {
-            var start, end;
-            start = new Date($("#startdate").val());
-            start.setDate(start.getDate() + days);
-            end = new Date($("#enddate").val());
-            end.setDate(end.getDate() + days);
-            $("#startdate").datepicker('setDate', start);
-            $("#enddate").datepicker('setDate', end);
-            $("#paramSelectorForm").submit();
-        }
-		$(function() {
-		    $('.date-picker').datepicker({
-		        changeMonth: true,
-		        changeYear: true,
-		        showButtonPanel: true,
-		        dateFormat: 'yy-mm-dd',
-                maxDate: '0',
-                numberOfMonths: 2
-		        /*onClose: function(dateText, inst) {
-		            var month = $("#ui-datepicker-div .ui-datepicker-month :selected").val();
-		            var year = $("#ui-datepicker-div .ui-datepicker-year :selected").val();
-		            $(this).datepicker('setDate', new Date(year, month, 1));
-		        }*/
-		    });
-            $('#startdate').change(function(){
-                $("#enddate").datepicker('option', 'minDate', $('#startdate').val());
-            }).trigger('change');
-            $("#previous_date").click(function(e){
-                e.preventDefault();
-                shiftDates(-7);
-            });
-            $("#next_date").click(function(e){
-                e.preventDefault();
-                shiftDates(7);
-            });
-		});
-    </script>
-    <script type="text/javascript">
-        // datatable configuration.
-        function start_datatables(elem){
-            if(!elem){
-                elem = document;
-            }
-            $('.datatable', elem).each(function(){
-                var params = {
-                    "bJQueryUI": true
-                },
-                    sAjaxSource = $(this).data('source'),
-                    aoColumns = [],
-                    $columns = $(this).find('tr').first().find('th'),
-                    i;
-
-                if(sAjaxSource) {
-                    params = {
-                        "bJQueryUI": true,
-                        "bServerSide": true,
-                        "sAjaxSource": sAjaxSource,
-                        "bSort": false,
-                        "bFilter": false
-                    };
-                }
-                for (i = 0; i < $columns.length; i += 1) {
-                    var sortType = $($columns[i]).data('sort');
-                    if (sortType) {
-                        aoColumns.push({sType: sortType});
-                    } else {
-                        aoColumns.push(null);
-                    }
-                }
-                params.aoColumns = aoColumns;
-                $(this).dataTable(params);
-            });
-            $('.datatable').parent().find('.fg-toolbar').removeClass('ui-corner-tr ui-corner-tl');
-        }
-        $(document).ready(function() {
-            start_datatables();
-        }); 
-    </script>
+    <script type="text/javascript" src="{{ STATIC_URL }}reports/javascripts/dropdown.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}reports/javascripts/datepicker.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}reports/javascripts/datatable_config.js"></script>
     {% if show_users or show_case_types  or show_groups %}
         <script>
             $(function(){
@@ -127,7 +41,7 @@
         });
     </script>
     {% endif %}
-    
+
     <style>
         h1 {
             font-size: 2em;

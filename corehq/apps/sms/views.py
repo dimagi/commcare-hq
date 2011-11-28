@@ -21,7 +21,7 @@ from django.contrib import messages
 def messaging(request, domain, template="sms/default.html"):
     context = get_sms_autocomplete_context(request, domain)
     context['domain'] = domain
-    context['messagelog'] = MessageLog.objects.filter(domain=domain).order_by('-pk')
+    context['messagelog'] = MessageLog.by_domain_dsc(domain)
     context['now'] = datetime.utcnow()
     return render_to_response(request, template, context)
 
@@ -45,7 +45,7 @@ def post(request, domain):
     if user is None or not user.is_active:
         return HttpResponseBadRequest("Authentication fail")
     msg = MessageLog(domain=domain,
-                     # how to map phone numbers to recipients, when phone numbers are shared?
+                     # TODO: how to map phone numbers to recipients, when phone numbers are shared?
                      #couch_recipient=id, 
                      phone_number=to,
                      direction=INCOMING,
@@ -96,7 +96,7 @@ def send_to_recipients(request, domain):
             elif re.match(r'[\w\.]+', recipient):
                 usernames.append(recipient)
             elif re.match(r'\+\d+', recipient):
-                phone_numbers.append(recipient)
+                phone_numbers.append((None, recipient))
 
 
         login_ids = dict([(r['key'], r['id']) for r in get_db().view("users/by_username", keys=usernames).all()])
@@ -107,18 +107,35 @@ def send_to_recipients(request, domain):
 
         users = CouchUser.view('users/by_group', keys=[[domain, gn] for gn in group_names], include_docs=True).all()
         users.extend(CouchUser.view('_all_docs', keys=login_ids, include_docs=True).all())
-        phone_numbers.extend([user.default_phone_number for user in users])
+        phone_numbers.extend([(user, user.phone_number) for user in users])
 
         failed_numbers = []
-        for number in phone_numbers:
-            if not send_sms(domain, "", number, message):
-                failed_numbers.append(number)
-        if not failed_numbers and not unknown_usernames:
+        no_numbers = []
+        sent = []
+        for user, number in phone_numbers:
+            if not number:
+                no_numbers.append(user.raw_username)
+            elif send_sms(domain, user.user_id if user else "", number, message):
+                sent.append("%s" % (user.raw_username if user else number))
+            else:
+                failed_numbers.append("%s (%s)" % (
+                    number,
+                    user.raw_username if user else "<no username>"
+                ))
+        if failed_numbers or unknown_usernames or no_numbers:
+            if no_numbers:
+                messages.error(request, "The following users don't have phone numbers: %s"  % (', '.join(no_numbers)))
+            if failed_numbers:
+                messages.error(request, "Couldn't send to the following number(s): %s" % (', '.join(failed_numbers)))
+            if unknown_usernames:
+                messages.error(request, "Couldn't find the following user(s): %s" % (', '.join(unknown_usernames)))
+            if sent:
+                messages.success(request, "Successfully sent: %s" % (', '.join(sent)))
+            else:
+                messages.info(request, "No messages were sent.")
+        else:
             messages.success(request, "Message sent")
-        if failed_numbers:
-            messages.error(request, "Couldn't send to the following number(s): +%s" % (', +'.join(failed_numbers)))
-        if unknown_usernames:
-            messages.error(request, "Couldn't find the following user(s): %s" % (', '.join(unknown_usernames)))
+
     return HttpResponseRedirect(
         request.META.get('HTTP_REFERER') or
         reverse(messaging, args=[domain])

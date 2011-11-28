@@ -2,6 +2,7 @@
 from collections import defaultdict
 from datetime import datetime
 import re
+from couchdbkit.exceptions import BadValueError
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -176,12 +177,11 @@ class FormSource(object):
         unique_id = form.get_unique_id()
         source = form.dynamic_properties().get('contents')
         if source is None:
-            try:
-                app = form.get_app()
-                filename = "%s.xml" % unique_id
-                if filename in app._attachments and app._attachments[filename]["length"] > 0:
-                    source = form.get_app().fetch_attachment(filename)
-            except Exception:
+            app = form.get_app()
+            filename = "%s.xml" % unique_id
+            if app._attachments and filename in app._attachments and app._attachments[filename]["length"] > 0:
+                source = form.get_app().fetch_attachment(filename)
+            else:
                 source = ''
         return source
 
@@ -376,10 +376,23 @@ class FormBase(DocumentSchema):
     def requires_referral(self):
         return self.requires == "referral"
 
+class JRResourceProperty(StringProperty):
+    def validate(self, value, required=True):
+        super(JRResourceProperty, self).validate(value, required)
+        if value is not None and not value.startswith('jr://'):
+            raise BadValueError("JR Resources must start with 'jr://")
+        return value
+    
+class NavMenuItemMediaMixin(DocumentSchema):
+    media_image = JRResourceProperty(required=False)
+    media_audio = JRResourceProperty(required=False)
 
-class Form(FormBase, IndexedSchema):
+
+class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
     def get_app(self):
         return self._parent._parent
+    def get_module(self):
+        return self._parent
 
 class DetailColumn(IndexedSchema):
     """
@@ -450,6 +463,9 @@ class Detail(DocumentSchema):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
 
+    @property
+    def display(self):
+        return "short" if self.type.endswith('short') else 'long'
 
 class CaseList(IndexedSchema):
     label = DictProperty()
@@ -459,7 +475,7 @@ class CaseList(IndexedSchema):
         for dct in (self.label,):
             _rename_key(dct, old_lang, new_lang)
 
-class Module(IndexedSchema):
+class Module(IndexedSchema, NavMenuItemMediaMixin):
     """
     A group of related forms, and configuration that applies to them all.
     Translates to a top-level menu on the phone.
@@ -502,7 +518,7 @@ class Module(IndexedSchema):
 
     def infer_case_type(self):
         case_types = []
-        for form in self.forms:
+        for form in self.get_forms():
             xform = form.source
             soup = BeautifulStoneSoup(xform)
             try:
@@ -727,9 +743,9 @@ class ApplicationBase(VersionedDoc):
         )
     @property
     def profile_url(self):
-        return "%s%s" % (
+        return "%s%s?latest=true" % (
             get_url_base(),
-            reverse('corehq.apps.app_manager.views.download_profile', args=[self.domain, self._id])
+            reverse('download_profile', args=[self.domain, self.copy_of or self._id])
         )
     @property
     def profile_loc(self):
@@ -816,7 +832,11 @@ class ApplicationBase(VersionedDoc):
     def fetch_emulator_commcare_jar(self):
 #        version, build_number = current_builds.TAG_MAP[current_builds.PREVIEW_TAG]
 #        jadjar = CommCareBuild.get_build(version, build_number).get_jadjar("Generic/WebDemo")
-        jadjar = CommCareBuildConfig.fetch().preview.get_build().get_jadjar("Generic/WebDemo")
+        path = "Generic/WebDemo"
+        try:
+            jadjar = self.get_build().get_jadjar(path)
+        except Exception:
+            jadjar = CommCareBuildConfig.fetch().preview.get_build().get_jadjar(path)
         jadjar = jadjar.pack(self.create_all_files())
         return jadjar.jar
 
@@ -930,9 +950,9 @@ class Application(ApplicationBase, TranslationMixin):
 
     @property
     def suite_url(self):
-        return "%s%s" % (
+        return "%s%s?latest=true" % (
             self.url_base,
-            reverse('corehq.apps.app_manager.views.download_suite', args=[self.domain, self._id])
+            reverse('download_suite', args=[self.domain, self.copy_of or self.get_id])
         )
     @property
     def suite_loc(self):
@@ -1058,9 +1078,9 @@ class Application(ApplicationBase, TranslationMixin):
 
     def get_forms(self, bare=True):
         if self.show_user_registration:
-            yield self.user_registration if bare else {
+            yield self.get_user_registration() if bare else {
                 'type': 'user_registration',
-                'form': self.user_registration
+                'form': self.get_user_registration()
             }
         for module in self.get_modules():
             for form in module.get_forms():
@@ -1121,18 +1141,12 @@ class Application(ApplicationBase, TranslationMixin):
         form = module.get_form(-1)
         form.source = attachment
         form.refresh()
-        case_types = module.infer_case_type()
-        if len(case_types) == 1 and not module.case_type:
-            module.case_type, = case_types
         return form
 
     def new_form_from_source(self, module_id, source):
         module = self.get_module(module_id)
         module.forms.append(Form.wrap(source))
         form = module.get_form(-1)
-        case_types = module.infer_case_type()
-        if len(case_types) == 1 and not module.case_type:
-            module.case_type, = case_types
         return form
     @parse_int([1, 2])
     def delete_form(self, module_id, form_id):
@@ -1228,6 +1242,9 @@ class Application(ApplicationBase, TranslationMixin):
                     message=unicode(e),
                     **meta
                 ))
+            except ValueError:
+                logging.error("Failed: _parse_xml(string=%r)" % form.source)
+                raise
             xmlns_count[form.xmlns] += 1
             if form.requires_case():
                 needs_case_detail = True
@@ -1264,7 +1281,6 @@ class Application(ApplicationBase, TranslationMixin):
     def get_by_xmlns(cls, domain, xmlns):
         r = get_db().view('reports/forms_by_xmlns', key=[domain, xmlns]).one()
         return cls.get(r['value']['app']['id']) if r and 'app' in r['value'] else None
-
 
 class NotImplementedYet(Exception):
     pass
@@ -1345,17 +1361,30 @@ class BuildErrors(Document):
 
     errors = ListProperty()
 
-def get_app(domain, app_id, wrap_cls=None):
+def get_app(domain, app_id, wrap_cls=None, latest=False):
     """
     Utility for getting an app, making sure it's in the domain specified, and wrapping it in the right class
     (Application or RemoteApp).
 
     """
 
-    try:
-        app = get_db().get(app_id)
-    except:
-        raise Http404
+    if latest:
+        if not domain:
+            try:
+                domain = get_db().get(app_id)['domain']
+            except Exception:
+                raise Http404
+        app = get_db().view('app_manager/applications',
+            startkey=[domain, app_id, {}],
+            limit=1,
+            descending=True,
+            include_docs=True
+        ).one()['doc']
+    else:
+        try:
+            app = get_db().get(app_id)
+        except Exception:
+            raise Http404
 
     if domain:
         try:    Domain.objects.get(name=domain)
@@ -1441,4 +1470,14 @@ class DeleteFormRecord(DeleteRecord):
         app.modules[self.module_id].forms = forms
         app.save()
 
+Form.get_command_id = lambda self: "m{module.id}-f{form.id}".format(module=self.get_module(), form=self)
+Form.get_locale_id = lambda self: "forms.m{module.id}f{form.id}".format(module=self.get_module(), form=self)
+
+Module.get_locale_id = lambda self: "modules.m{module.id}".format(module=self)
+
+Module.get_case_list_command_id = lambda self: "m{module.id}-case-list".format(module=self)
+Module.get_case_list_locale_id = lambda self: "case_lists.m{module.id}".format(module=self)
+
+Module.get_referral_list_command_id = lambda self: "m{module.id}-referral-list".format(module=self)
+Module.get_referral_list_locale_id = lambda self: "referral_lists.m{module.id}".format(module=self)
 import corehq.apps.app_manager.signals

@@ -64,12 +64,9 @@ li {
 }
 
 .shadow {
-	-moz-box-shadow: 0px 0px 8px #bbc;
-	-webkit-box-shadow: 0px 0px 8px #bbc;
-	box-shadow: 0px 0px 8px #bbc;
-}
-h1,h2,h3,h4,h5,h6 {
-    /*text-shadow: #96989B 0px 0px 4px;*/
+	-moz-box-shadow: 0 0 8px #bbc;
+	-webkit-box-shadow: 0 0 8px #bbc;
+	box-shadow: 0 0 8px #bbc;
 }
 
 .sortable {
@@ -91,6 +88,7 @@ a.new_link {
 
 body {
 	color: #000;
+    background-color: #f5f5ff;
 	font: normal 12px Helvetica, Arial, Verdana, sans-serif;
 	margin: 0;
 	padding: 0;
@@ -113,6 +111,10 @@ body {
     width: 450px;
     margin: 20px auto;
 }
+#bug-report-body {
+    display: none;
+}
+
 #bug-report-body p {
     text-align: center;
     font-size: 1.5em;
@@ -150,11 +152,6 @@ body {
     text-align: right;
 }
 
-#wrapper {
-    background-color: #f5f5ff;
-    padding-bottom: 60px;
-    min-height: 600px;
-}
 abbr {
 	cursor: help;
 }
@@ -162,87 +159,109 @@ abbr {
 .fixed-width {
     width: 1000px;
     margin: auto;
+    position: relative;
 }
 #logo {
-    float: left;
-    /*background: url('../img/commcarehq-logo.png') no-repeat scroll 0 0 transparent; width: 450px; height: 70px;*/
-    /*background: url('../img/monstertruck-cc-logo.png') no-repeat scroll 0 0 transparent; width: 462px; height: 95px;*/
-    /*background: url('../img/monstertruck-overlap.png') no-repeat scroll 0 0 transparent; width: 462px; height: 95px;*/
-    margin-top: 2px;
-    /*background: url('../img/hq-stamp-tilt.png') no-repeat scroll 0 0 transparent; width: 462px; height: 130px;*/
-    background: url('../img/HQ-Blue-2.png') no-repeat scroll 0 0 transparent; width: 462px; height: 130px;
+    position: absolute;
+    background: url('../img/HQ-Blue-2.png') no-repeat scroll 0 0 transparent; width: 462px; height: 109px;
     text-indent: -10000%;
+    z-index: 0;
 }
 ul#top-nav{
+    position: absolute;
+    right: 0;
+    top: 5px;
+    z-index: 1;
     list-style-type: none;
     border-collapse: collapse;
     font-size: 1.2em;
+    background-color: white;
 }
 ul#top-nav li {
     display: inline;
 }
-header {
-    padding: 5px 0;
-    /* curly hq */
-    /*height: 70px;*/
-    /* monstertruck hq */
-    height: 95px;
+body:before {
+    content: "";
+    position: absolute;
+    width: 100%;
+}
+header, body:before {
+    display: block;
+    padding: 0;
+    height: 109px;
     background-color: #fff;
     border-bottom: 1px solid #eee;
-
+}
+header {
+    position: relative;
+}
+header nav ul {
+    float: right;
+    padding-top: 3px;
+    padding-bottom: 0;
+    margin: 0;
+}
+header nav li {
+    padding: 0 11px 0 6px;
+    font-weight: normal;
+    font-size: 1.2em;
+    border-right: 1px solid #96989B;
+    margin: 0;
+}
+header nav li:last-child {
+    border-right: none;
+    padding-right: 0;
+}
+header nav .active a {
+    color: black;
+}
+header #logged-in {
+    clear: right;
+    float: right;
+    margin-top: 4em;
+    padding: 0;
 }
 
-    header nav ul {
-        float: right;
-        padding-top: 3px;
-        padding-bottom: 0;
-        margin: 0;
-    }
-        header nav li {
-            padding: 0 11px 0 6px;
-            font-weight: normal;
-            font-size: 1.2em;
-            /*text-shadow: #96989B 0px 0px 3px;*/
-            border-right: 1px solid #96989B;
-            margin: 0;
-        }
-        header nav li:last-child {
-            border-right: none;
-            padding-right: 0;
-        }
-        header nav .active a {
-            color: black;
-        }
-    header #logged-in {
-        clear: right;
-        float: right;
-        margin-top: 4em;
-        padding: 0;
-    }
-
-
-footer {
+body:after {
+    content: "";
+    display: block;
+    width: 100%;
+    z-index: 4;
+    -moz-box-shadow: 0 0 8px #bbc;
+	-webkit-box-shadow: 0 0 8px #bbc;
+	box-shadow: 0 0 8px #bbc;
+}
+footer, body:after {
     background-color: white;
     position: fixed;
     bottom: 0;
     padding: 10px 0;
     border-top: 1px solid #ddd;
-    width: 100%;
+    height: 17px;
+}
+footer {
+    width: 1000px;
+    left: 50%;
+    margin-left: -500px;
     z-index: 5;
 }
-    #copyright {
-        color: #555;
-        text-align: right;
-    }
-    #help {
-        color: #555;
-        float: left;
-    }
+#copyright {
+    color: #555;
+    text-align: right;
+}
+#help {
+    color: #555;
+    float: left;
+}
+#help > * {
+    margin-right: 20px;
+}
 
 #main {
     margin-top: 40px;
     /* to prevent flicker */
     display: none;
+    margin-bottom: 60px;
 }
 #main > div {
 }
@@ -250,7 +269,7 @@ footer {
 #main_container {
     border: 0;
     background-color: #fff;
-    padding: 0px;
+    padding: 0;
 }
 
 #title-bar {
@@ -266,13 +285,13 @@ footer {
     padding: 1em;
 }
 #form-tabs {
-    padding: 0px !important;
+    padding: 0 !important;
     margin-bottom: 3em;
     /* to avoid flicker!!*/
     display: none;
 }
 #forms {
-    padding: 0px;
+    padding: 0;
 }
 #title-bar {
     padding: 1em;

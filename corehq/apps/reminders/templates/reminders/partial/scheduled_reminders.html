@@ -1,7 +1,7 @@
 {% extends "reminders/reminders_base.html" %}
 {% load hq_shared_tags %}
-{% block head %}
-    {{ block.super }}
+
+{% block js-inline %}{{ block.super }}
     <script>
         $(function () {
             var reminders = [
@@ -48,6 +48,8 @@
             });
         });
     </script>
+{% endblock %}
+{% block head %}{{ block.super }}
     <style>
         .calendar-first:not(:first-child) {
             border-left-width: 3px;

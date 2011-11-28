@@ -1,0 +1,41 @@
+{% extends base_template %}
+{% block head %}
+    {{ block.super }}
+    {% include "imports/datatables.html" %}
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}hqadmin/css/style.css"/>
+    <script src="{{ STATIC_URL }}hqwebapp/js/dropdown.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}reports/javascripts/dropdown.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}reports/javascripts/datepicker.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}reports/javascripts/datatable_config.js"></script>
+{% endblock %}
+{% block content %}
+<div id="main_container">
+    <div id="title-bar">
+        <ul>
+            <li>
+                <div id="report_dropdown">
+                    <span>Select Report</span>
+                    <div>
+                        {% include "hqadmin/partials/report_list.html" %}
+                    </div>
+                </div>
+            </li>
+        </ul>
+        <h1>Administrative Reports</h1>
+    </div>
+    <h2 id="report-title"{% block report-title %}An Admin Report{% endblock %}</h2>
+    <div id="report-content">
+        {% if show_dates %}
+            <form method="get" id="paramSelectorForm">
+                <label for="startdate">From Date:</label>
+                <input type="text" id="startdate" name="startdate" class="date-picker" value="{{ datespan.startdate|date:"Y-m-d" }}">
+                <label for="enddate">To Date:</label>
+                <input type="text" id="enddate" name="enddate" class="date-picker" value="{{ datespan.enddate|date:"Y-m-d" }}">
+                <input type="submit" value="Go!" />
+                <div class="selected-date">Showing <strong>{{  datespan }}</strong></div>
+            </form>
+        {% endif %}
+        {% block reportcontent %}{% endblock %}
+     </div>
+</div>
+{% endblock %}

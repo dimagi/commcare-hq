@@ -2,8 +2,8 @@
 {% block page_imports %}
     {% include "imports/datatables.html" %}
 {% endblock %}
-{% block head %}
-    <script type="text/javascript">
+{% block js-inline %}{{ block.super }}
+    <script>
         // datatable configuration.
         $(document).ready(function() {
             $('.datatable').dataTable({
@@ -11,6 +11,8 @@
             });
         });
     </script>
+{% endblock %}
+{% block head %}{{ block.super }}
     <style>
         .datatable {
             width: 100%;

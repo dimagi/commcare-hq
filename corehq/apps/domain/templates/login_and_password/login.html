@@ -3,9 +3,7 @@
 {% block title %}login{% endblock title %}
 {% block head %}
     {{ block.super }}
-    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}domain/css/login.css"/>
-    <script src="{{ STATIC_URL }}domain/js/login.js"></script>
-    
+    <link rel="stylesheet" href="{{STATIC_URL}}domain/css/login.css?version=1"/>
 {% endblock %}
 
 {% block content %}

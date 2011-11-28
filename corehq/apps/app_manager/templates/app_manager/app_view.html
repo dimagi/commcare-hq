@@ -1,7 +1,7 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
-{% block head %}
+{% block js %}
     {{ block.super }}
     {% if app.doc_type == "Application" %}
         <script src="{{ STATIC_URL }}app_manager/js/commcareProperties.js?version=3"></script>
@@ -94,24 +94,6 @@
                 });
             });
         </script>
-        <style>
-            .scary-settings {
-                background-color: #FEFEFE;
-                border: 1px solid #CCC;
-                border-top: none;
-                padding: 1em;
-            }
-            .scary-settings-toggle {
-                margin-top: 1em;
-                border: 1px solid transparent;
-                padding: .5em;
-            }
-            .scary-settings-toggle-open {
-                border: 1px solid #CCC;
-                background-color: #EEE;
-
-            }
-        </style>
     {% endif %}
     <script>
         $(function(){
@@ -159,19 +141,9 @@
                     </td>
                 </tr>
             {% endif %}
-                <tr>
-                    <th>CommCare Users</th>
-                    <td>
-                        {% if edit %}
-                            <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
-                        {% else %}
-                            {{ app.recipients }}
-                        {% endif %}
-                    </td>
-                </tr>
             {% if app.doc_type == "Application" %}
                 <tr>
-                    <th><label for="show-user-registration-select">Use a Custom User Registration</label></th>
+                    <th><label for="show-user-registration-select">Custom User Registration</label></th>
                     <td>
                         {% if edit %}
                                 <select id="show-user-registration-select" name="show_user_registration" data-value="{{ app.show_user_registration|JSON }}">
@@ -184,31 +156,33 @@
                     </td>
                 </tr>
                 {% if user.is_superuser %}
-                <tr class="superuser-only">
-                    <th><label for="use-custom-suite-select">Use a Custom Suite File</label></th>
-                    <td>
-                        {% if edit %}
-                                <select id="use-custom-suite-select" name="use_custom_suite" data-value="{{ app.use_custom_suite|JSON }}">
-                                    <option value="false">* Don't Use</option>
-                                    <option value="true">Use</option>
-                                </select>
-                        {% else %}
-                            {% if not app.use_custom_suite %}Don't Use{% else %}Use{% endif %}
-                        {% endif %}
-                    </td>
-                </tr>
-                {% if app.use_custom_suite %}
-                <tr class="superuser-only">
-                    <th><label for="custom-suite-textarea">Custom Suite</label></th>
-                    <td>
-                        {% if edit %}
-                            <textarea id="custom-suite-textarea" name="custom_suite">{{ app.custom_suite }}</textarea>
-                        {% else %}
-                            {{ app.custom_suite }}
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endif %}
+                <tbody class="superuser-only">
+                    <tr>
+                        <th><label for="use-custom-suite-select">Custom Suite File</label></th>
+                        <td>
+                            {% if edit %}
+                                    <select id="use-custom-suite-select" name="use_custom_suite" data-value="{{ app.use_custom_suite|JSON }}">
+                                        <option value="false">* Don't Use</option>
+                                        <option value="true">Use</option>
+                                    </select>
+                            {% else %}
+                                {% if not app.use_custom_suite %}Don't Use{% else %}Use{% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if app.use_custom_suite %}
+                    <tr>
+                        <th><label for="custom-suite-textarea">Custom Suite</label></th>
+                        <td>
+                            {% if edit %}
+                                <textarea id="custom-suite-textarea" name="custom_suite">{{ app.custom_suite }}</textarea>
+                            {% else %}
+                                {{ app.custom_suite }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
                 {% endif %}
             {% endif %}
                 <tr>
@@ -337,7 +311,7 @@
             </table>
         </div>
         <div class="scary-settings-toggle">
-            <a href="#"><span class="ui-icon"></span>Multimedia (Beta)</a>
+            <a href="#"><span class="ui-icon"></span>Multimedia</a>
         </div>
         <div class="scary-settings">
             <h4>View and download lists of multimedia references found in your application's forms and use our multimedia toolkit</h4>
@@ -345,7 +319,7 @@
         </div>
         
         <div class="scary-settings-toggle">
-            <a href="#"><span class="ui-icon"></span>User Interface Translations (Beta)</a>
+            <a href="#"><span class="ui-icon"></span>User Interface Translations</a>
         </div>
         <div class="scary-settings">
             <div id="translations_ui">

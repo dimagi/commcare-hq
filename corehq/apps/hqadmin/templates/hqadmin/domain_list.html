@@ -1,32 +1,11 @@
-{% extends base_template %}
-{% block page_imports %}
-    {% include "imports/datatables.html" %}
-{% endblock %}
-{% block head %}
-    <script type="text/javascript">
-        // datatable configuration.
-        $(document).ready(function() {
-            $('.datatable').dataTable({
-                "bJQueryUI": true
-            });
-        }); 
-    </script>
-    <style>
-        .datatable {
-            width: 100%;
-        }
-    </style>{% endblock %}
-{% block content %}
-<div id="main_container">
-    <div id="report-title">
-    <h1>All Domains</h1>
-</div>
-<div id="report-content">
+{% extends "hqadmin/hqadmin_base_report.html" %}
+{% block report-title %}>Domain List{% endblock %}
+{% block reportcontent %}
 <table class="datatable">
 <thead>
     <tr>
-        <th>Domain</th>        
-        <th># Web Users</th>        
+        <th>Domain</th>
+        <th># Web Users</th>
         <th># CommCare Users</th>
         <th># Submitted Forms</th>
         <th>Domain Admins</th>
@@ -44,6 +23,4 @@
 {% endfor %}
 </tbody>
 </table>
-</div>
-</div>
 {% endblock %}

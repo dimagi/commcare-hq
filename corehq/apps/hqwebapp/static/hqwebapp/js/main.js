@@ -290,7 +290,11 @@ $(function () {
                 return div.detach().addClass('shadow ui-corner-all');
             },
             sendingMessage = createDialog($('<div/>').text('Sending report...')),
-            errorMessage = createDialog($('<div/>').text('We\'re sorry! There was an error sending your bug report.')),
+            errorMessage = createDialog($('<div/>').html(
+                'We\'re sorry but our system is having difficulties. ' +
+                'Please email us at ' +
+                '<a href="mailto:commcarehq-support@dimagi.com">commcarehq-support@dimagi.com</a>.'
+            )),
             sentMessage = createDialog($('<div/>').text('Thank you for reporting this issue. We are already hard at work addressing it.'));
         COMMCAREHQ.initBlock(createDialog(body));
         url.val(location.href);

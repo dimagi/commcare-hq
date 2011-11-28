@@ -1,9 +1,11 @@
+from couchdbkit.exceptions import ResourceConflict
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from corehq.apps.groups.models import Group, DeleteGroupRecord
 from corehq.apps.users.decorators import require_permission
+from dimagi.utils.couch.resource_conflict import repeat
 
 require_can_edit_groups = require_permission('edit-users')
 
@@ -44,29 +46,30 @@ def edit_group(request, domain, group_id):
         if name is not None:
             group.name = name
         group.save()
-        return HttpResponseRedirect(reverse("group_members", args=[domain, group.get_id]))
+        return HttpResponseRedirect(reverse("group_members", args=[domain, group_id]))
     else:
         return HttpResponseForbidden()
 
 @require_can_edit_groups
-def join_group(request, domain, couch_user_id, group_id):
-    group = Group.get(group_id)
-    if group:
-        #couch_user = CouchUser.get(couch_user_id)
-        group.add_user(couch_user_id)
-        #messages.success(request, 'User "%s" added to group "%s"' % (couch_user.username, group.name))
-
+def join_group(request, domain, group_id, couch_user_id):
+    def add_user():
+        group = Group.get(group_id)
+        if group:
+                group.add_user(couch_user_id)
+    repeat(add_user, 3)
     if 'redirect_url' in request.POST:
-        return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(domain, group.get_id)))
+        return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(domain, group_id)))
     else:
         return HttpResponseRedirect(reverse("group_membership", args=(domain, couch_user_id)))
 
 @require_can_edit_groups
 def leave_group(request, domain, group_id, couch_user_id):
-    group = Group.get(group_id)
-    if group:
-        group.remove_user(couch_user_id)
+    def remove_user():
+        group = Group.get(group_id)
+        if group:
+            group.remove_user(couch_user_id)
+    repeat(remove_user, 3)
     if 'redirect_url' in request.POST:
-        return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(domain, group.get_id)))
+        return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(domain, group_id)))
     else:
         return HttpResponseRedirect(reverse("group_membership", args=(domain, couch_user_id)))

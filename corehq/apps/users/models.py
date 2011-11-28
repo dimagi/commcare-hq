@@ -542,6 +542,14 @@ class CommCareUser(CouchUser):
         else:
             return 0
 
+    def get_owner_ids(self):
+        from corehq.apps.groups.models import Group
+
+        owner_ids = [self.user_id]
+        owner_ids.extend(Group.by_user(self, wrap=False))
+        
+        return owner_ids
+    
     def retire(self):
         suffix = '-Deleted'
         # doc_type remains the same, since the views use base_doc instead
@@ -578,6 +586,7 @@ class CommCareUser(CouchUser):
 class WebUser(CouchUser):
     domains = StringListProperty()
     domain_memberships = SchemaListProperty(DomainMembership)
+    betahack = BooleanProperty(default=False)
 
     def sync_from_old_couch_user(self, old_couch_user):
         super(WebUser, self).sync_from_old_couch_user(old_couch_user)

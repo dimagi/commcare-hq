@@ -141,16 +141,14 @@ def bug_report(req):
     from django.core.mail.message import EmailMessage
     from django.core.mail import send_mail
 
-    try:
-        email = EmailMessage(
-            subject,
-            message,
-            report['username'],
-            settings.BUG_REPORT_RECIPIENTS,
-            headers = {'Reply-To': report['username']}
-        )
-        email.send(fail_silently=False)
-    except Exception, e:
-        logging.exception("Problem sending bug report email")
-        
+
+    email = EmailMessage(
+        subject,
+        message,
+        report['username'],
+        settings.BUG_REPORT_RECIPIENTS,
+        headers = {'Reply-To': report['username']}
+    )
+    email.send(fail_silently=False)
+    
     return HttpResponse()

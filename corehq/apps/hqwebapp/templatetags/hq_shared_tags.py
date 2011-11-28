@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import json
 from django import template
+from django.conf import settings
 from django.utils.safestring import mark_safe
 
 
@@ -55,3 +56,15 @@ def concat(str1, str2):
 def build_url(relative_path, request=None):
     """Attempt to build a URL from within a template"""
     return build_url_util(relative_path, request)
+
+try:
+    from resource_versions import resource_versions
+except ImportError:
+    resource_versions = {}
+@register.simple_tag
+def static(url):
+    version = resource_versions.get(url)
+    url = settings.STATIC_URL + url
+    if version:
+        url += "?version=%s" % version
+    return url
