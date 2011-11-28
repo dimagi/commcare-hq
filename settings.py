@@ -135,7 +135,6 @@ HQ_APPS = (
     'corehq.apps.hqwebapp',
     'corehq.apps.logtracker',
     'corehq.apps.docs',
-    'corehq.apps.help',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -317,8 +316,6 @@ if not os.path.isdir(os.path.join(root,'data','schemas')):
     os.mkdir(os.path.join(root,'data','schemas'))
 
 
-XFORMS_FORM_TRANSLATE_JAR="submodules/core-hq-src/lib/form_translate.jar"
-
 ####### South Settings #######
 #SKIP_SOUTH_TESTS=True
 #SOUTH_TESTS_MIGRATE=False
@@ -372,7 +369,12 @@ INSTALLED_APPS += LOCAL_APPS
 
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
 
-logging.basicConfig(filename=DJANGO_LOG_FILE)
+try:
+    LOG_FORMAT
+except Exception:
+    LOG_FORMAT = "%(asctime)s %(levelname)-8s - %(name)-26s %(message)s"
+
+logging.basicConfig(filename=DJANGO_LOG_FILE, format=LOG_FORMAT)
 
 # these are the official django settings
 # which really we should be using over the

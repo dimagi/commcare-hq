@@ -7,7 +7,7 @@ from corehq.apps.domain.utils import legacy_domain_re
 from django.contrib import admin
 try:
     from localsettings import LOCAL_APP_URLS
-except:
+except ImportError:
     LOCAL_APP_URLS = ()
 admin.autodiscover()
 
@@ -32,12 +32,10 @@ domain_specific = patterns('',
     (r'^domain/', include(domain_domain_specific)),
     (r'^', include(hqwebapp_domain_specific)),
     (r'^', include('django_user_registration.urls')),
-    (r'^help/', include('corehq.apps.help.urls')),
     (r'^case/', include('corehq.apps.hqcase.urls')),
     (r'^submitlist/', include('corehq.apps.hqsofabed.urls')),
     (r'^cleanup/', include('corehq.apps.cleanup.urls')),
     (r'^phonelog/', include('phonelog.urls')),
-    (r'^customreports/', include('pathfinder.urls')),
 )
 
 urlpatterns = patterns('',

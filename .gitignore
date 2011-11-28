@@ -18,3 +18,4 @@ CommCare.ja*
 startover.sh
 celery.db
 *.sql
+/resource_versions.py
