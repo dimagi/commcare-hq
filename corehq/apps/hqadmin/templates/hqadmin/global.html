@@ -70,6 +70,17 @@
 
             };
 
+
+            var overview = $.plot($("#overview"), [{{ case_counts|safe }}], {
+                series: {
+                    lines: { show: true, lineWidth: 1 },
+                    shadowSize: 0
+                },
+                xaxis: { mode: "time" },
+                yaxis: { ticks: [], min: 0, autoscaleMargin: 0.1 },
+                selection: { mode: "x" }
+            });
+
             var prepare_graphs = function(){
                 if ($('#cumulative')[0].checked) {
                     var case_counts = [{{case_counts_int|safe}}];
@@ -82,17 +93,6 @@
                     var user_counts = [{{user_counts|safe}}];
                 }
 
-
-
-                var overview = $.plot($("#overview"), case_counts, {
-                    series: {
-                        lines: { show: true, lineWidth: 1 },
-                        shadowSize: 0
-                    },
-                    xaxis: { mode: "time" },
-                    yaxis: { ticks: [], min: 0, autoscaleMargin: 0.1 },
-                    selection: { mode: "x" }
-                });
 
                 case_plot = $.plot($('#cases'), case_counts, plot_options);
                 bind_hover('#cases', "Cases", case_counts);
@@ -130,13 +130,12 @@
     </style>{% endblock %}
 {% block report-title %}CommCare HQ Global Statistics{% endblock %}
 {% block reportcontent %}
-    <form action=
 
     <label for="cumulative">Cumulative: </label><input type="checkbox" id="cumulative" />
 
     <div style="clear:both;display:block;width:500px;">
         <div style="float:left;">Zoom: </div>
-        <div id="overview" style="float:right; margin-left:50px;margin-top:0px;width:400px;height:50px"></div>
+        <div id="overview" style="display:block;float:right; margin-left:50px;margin-top:0px;width:400px;height:50px"></div>
         <div style="clear:both;">&nbsp;</div>
     </div>
 
