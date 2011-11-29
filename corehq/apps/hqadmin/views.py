@@ -112,10 +112,6 @@ def global_report(request, template="hqadmin/global.html"):
 
     return render_to_response(request, template, context, context_instance=RequestContext(request))
 
-
-        
-
-
 @cache_page(60 * 15)
 @require_superuser
 def commcare_version_report(request, template="hqadmin/commcare_version.html"):
