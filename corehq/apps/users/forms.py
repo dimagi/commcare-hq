@@ -1,4 +1,5 @@
 from django import forms
+from django.core.validators import EmailValidator, email_re
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.users.models import CouchUser, WebUser
@@ -44,6 +45,7 @@ class CommCareAccountForm(forms.Form):
         except KeyError:
             pass
         else:
+            validate_user('%s@commcarehq.org' % username)
             domain = self.cleaned_data['domain']
             username = format_username(username, domain)
             num_couch_users = len(CouchUser.view("users/by_username",
@@ -54,3 +56,5 @@ class CommCareAccountForm(forms.Form):
             # set the cleaned username to user@domain.commcarehq.org
             self.cleaned_data['username'] = username
         return self.cleaned_data
+
+validate_user = EmailValidator(email_re, _(u'Username contains invalid characters.'), 'invalid')
