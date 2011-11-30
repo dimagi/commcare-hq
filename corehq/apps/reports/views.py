@@ -136,7 +136,7 @@ def custom_export(req, domain):
     
     if req.method == "POST":
         table = req.POST["table"]
-        cols = [col[:-4] for col in req.POST if col.endswith("_val")]
+        cols = req.POST['order'].strip().split(" ")
         export_cols = [ExportColumn(index=col, 
                                     display=req.POST["%s_display" % col]) \
                        for col in cols]
@@ -179,7 +179,7 @@ def edit_custom_export(req, domain, export_id):
     saved_export = SavedExportSchema.get(export_id)
     if req.method == "POST":
         table = req.POST["table"]
-        cols = [col[:-4] for col in req.POST if col.endswith("_val")]
+        cols = req.POST['order'].strip().split(" ")#[col[:-4] for col in req.POST if col.endswith("_val")]
         export_cols = [ExportColumn(index=col, 
                                     display=req.POST["%s_display" % col]) \
                        for col in cols]
@@ -187,6 +187,7 @@ def edit_custom_export(req, domain, export_id):
         saved_export.index = schema.index 
         saved_export.schema_id = req.POST["schema"]
         saved_export.name = req.POST["name"]
+        saved_export.order = cols
         saved_export.default_format = req.POST["format"] or Format.XLS_2007
         saved_export.filter_function = "couchforms.filters.instances" \
                 if not req.POST.get("include-errors", "") else "" 
