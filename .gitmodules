@@ -54,7 +54,7 @@
 	url = git://github.com/dimagi/phonelog.git
 [submodule "submodules/formdesigner"]
 	path = submodules/formdesigner
-	url = git://github.com/dimagi/FormDesignerAlpha.git
+	url = git://github.com/dimagi/Vellum.git
 [submodule "submodules/pathfinder-reports"]
 	path = submodules/pathfinder-reports
 	url = git://github.com/dimagi/pathfinder-reports.git
