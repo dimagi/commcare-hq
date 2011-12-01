@@ -51,13 +51,13 @@ class Command(LabelCommand):
             
             except Exception, e:
                 logging.exception("problem in domain sync for line: %s\n%s" % (line, e))
-                raise
+                raise                
                 
-        last_checkpoint = Checkpoint.get_last_checkpoint(CHECKPOINT_ID)
         
         # Go into receive loop waiting for any new docs to come in
         while True:
             try:
+                last_checkpoint = Checkpoint.get_last_checkpoint(CHECKPOINT_ID)
                 c.wait(heartbeat=5000, since=last_checkpoint, cb=sync_if_necessary)
                        
             except Exception, e:
