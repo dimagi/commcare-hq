@@ -161,22 +161,27 @@ abbr {
 .fixed-width #main,
 .fixed-width header hgroup,
 .fixed-width header nav,
-.fixed-width header #logged-in span{
+.fixed-width header #logged-in{
     width: 960px;
     margin: auto;
     position: relative;
 }
-
-body:before {
-    content: "";
-    position: absolute;
+header:before {
+    content: ' ';
+    display: block;
     width: 100%;
+    padding: 0;
+    background-color: #919396;
+    position:absolute;
+    top: 0px;
+    height: 25px;
 }
 header {
+    padding-top:25px;
     font-size: 12px;
     height: 55px;
     position: relative;
-    margin-bottom: 50px;
+    margin-bottom: 30px;
     background-color: #F1F1F1;
 }
 header h1 {
@@ -257,18 +262,15 @@ header nav li.active a {
     background-color: #0468B1;
 }
 header #logged-in {
-    width: 100%;
-    padding: 0;
-    background-color: #919396;
     color: #ffffff;
-    position:absolute;
-    bottom: -24px;
-    height: 24px;
 }
 header #logged-in span {
     text-align: right;
     display: block;
     padding-top: 2px;
+    position:absolute;
+    right: 0;
+    top: -25px;
 }
 header #logged-in a {
     display: inline-block;
