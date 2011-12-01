@@ -1,5 +1,5 @@
 from couchdbkit.ext.django.schema import Document, IntegerProperty, DictProperty,\
-    Property, DocumentSchema, StringProperty, SchemaListProperty
+    Property, DocumentSchema, StringProperty, SchemaListProperty, ListProperty
 import json
 from StringIO import StringIO
 from couchexport import util
@@ -103,6 +103,7 @@ class ExportTable(DocumentSchema):
     index = StringProperty()
     display = StringProperty()
     columns = SchemaListProperty(ExportColumn)
+    order = ListProperty()
     
     @classmethod
     def default(cls, index):
@@ -114,10 +115,14 @@ class ExportTable(DocumentSchema):
     
     def get_column_configuration(self, schema):
         all_cols = schema.top_level_nodes
-        cols = [{"index": c, 
+        cols = []
+        for c in self.columns:
+            cols += [{"index": c.index, "display": c.display, "selected": True}]
+            all_cols = filter(lambda x: x != c.index, all_cols) # exclude
+        cols += [{"index": c,
                  "display": self.col_dict[c] if c in self.col_dict else c,
                  "selected": c in self.col_dict} for c in all_cols]
-        cols.sort(key=lambda x: not x["selected"])
+        #cols.sort(key=lambda x: not x["selected"])
         return cols
     
     def format_data(self, data):
@@ -127,7 +132,7 @@ class ExportTable(DocumentSchema):
         header_to_index_map = dict([(h, i) \
                                     for i, h in enumerate(headers) \
                                     if h in self.col_dict])
-        cols = header_to_index_map.keys()
+        cols = map(lambda x: x.index, self.columns)
         headers = [self.col_dict[col] for col in cols]
         ret = [headers]
         for row in data:
