@@ -4,7 +4,7 @@
         <meta charset="utf-8"/>
         <title>CommCare HQ</title>
 
-        <link rel="shortcut icon" href="{{ STATIC_URL }}hqwebapp/img/favicon.png" />
+        <link rel="shortcut icon" href="{{ STATIC_URL }}hqwebapp/img/favicon2.png" />
 
         <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/reset.css"/>
         <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/javascripts/jquery-ui/jquery-ui-redmond-1.8.16.css"/>
@@ -18,11 +18,28 @@
         {% block page_imports %}
         {% endblock %}
     </head>
-    <body>
-        <header class="fixed-width">
-            <a id="logo" href="{% url homepage %}">CommCare HQ</a>
-            <nav>
-                <ul id="top-nav">
+    <body class="fixed-width">
+        <header>
+            <hgroup>
+                <h1><a href="{% url homepage %}"><img src="{{ STATIC_URL }}hqwebapp/img/commcare-hq-logo.png" alt="CommCare HQ" /></a></h1>
+            </hgroup>
+            {% if request.user.is_authenticated %}
+                <div id="logged-in">
+                    <span>
+                        Signed in
+                        {% if domain %}
+                            to <strong>{{ domain }}</strong>
+                        {% endif %}
+                        as <strong>{{ user.username }}</strong>
+                        {% with request.couch_user.role_label as role %}
+                            {% if role %}
+                                ({{ role }})
+                            {% endif %}
+                        {% endwith %}
+                         <a href='/accounts/logout'>Sign Out</a>
+                    </span>
+                </div>
+                <nav>
                     {% block tabs %}
                     <ul id="tabs">
                         {% if domain %}
@@ -38,27 +55,16 @@
                         {% endif %}
                     </ul>
                     {% endblock %}
-                </ul>
-            </nav>
-            {% if request.user.is_authenticated %}
-                <p id="logged-in">
-                Signed in
-                {% if domain %}
-                    to <strong>{{ domain }}</strong>
-                {% endif %}
-                as <strong>{{ user.username }}</strong>
-                {% with request.couch_user.role_label as role %}
-                    {% if role %}
-                        ({{ role }})
-                    {% endif %}
-                {% endwith %}
-                 | <a href='/accounts/logout'>Sign Out</a>
-                </p>
+                </nav>
             {% else %}
-                <p id="logged-in">Already have an account? <a href="{% url login %}">Sign in</a></p>
+                <nav>
+                    <a href="{% url login %}" class="header-button">Sign in</a>
+                </nav>
             {% endif %}
+
+
         </header>
-        <div id="main" class="fixed-width">
+        <div id="main">
             {% block messages %}
             {% if messages %}
                 <ul class="message">

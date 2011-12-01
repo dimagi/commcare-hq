@@ -46,7 +46,9 @@ img::-moz-selection {background: transparent;}
 /*- LET'S GET STARTED!
 ----------------------------------------------------------------------*/
 
-html {overflow-y: scroll;}
+html {
+   overflow-y: scroll;
+}
 
 .ie-warning {
     text-align: center;
@@ -88,7 +90,7 @@ a.new_link {
 
 body {
 	color: #000;
-    background-color: #f5f5ff;
+    background-color: #ffffff;
 	font: normal 12px Helvetica, Arial, Verdana, sans-serif;
 	margin: 0;
 	padding: 0;
@@ -156,72 +158,139 @@ abbr {
 	cursor: help;
 }
 
-.fixed-width {
-    width: 1000px;
+.fixed-width #main,
+.fixed-width header hgroup,
+.fixed-width header nav,
+.fixed-width header #logged-in span{
+    width: 960px;
     margin: auto;
     position: relative;
 }
-#logo {
-    position: absolute;
-    background: url('../img/HQ-Blue-2.png') no-repeat scroll 0 0 transparent; width: 462px; height: 109px;
-    text-indent: -10000%;
-    z-index: 0;
-}
-ul#top-nav{
-    position: absolute;
-    right: 0;
-    top: 5px;
-    z-index: 1;
-    list-style-type: none;
-    border-collapse: collapse;
-    font-size: 1.2em;
-    background-color: white;
-}
-ul#top-nav li {
-    display: inline;
-}
+
 body:before {
     content: "";
     position: absolute;
     width: 100%;
 }
-header, body:before {
-    display: block;
-    padding: 0;
-    height: 109px;
-    background-color: #fff;
-    border-bottom: 1px solid #eee;
-}
 header {
+    font-size: 12px;
+    height: 55px;
     position: relative;
+    margin-bottom: 50px;
+    background-color: #F1F1F1;
+}
+header h1 {
+    position: absolute;
+    z-index: 0;
+    margin:  10px 0 10px;
+}
+header h1 a {
+    display: block;
+}
+header h1 img {
+    width: 230px;
+    height: 35px;
+}
+header nav .header-button {
+    display: block;
+    float: right;
+    padding:  .5em 1em;
+    font-size: 16px;
+    background-color: #919396;
+    -moz-border-radius: .5em;
+    -webkit-border-radius: .5em;
+    border-radius: .5em;
+    margin-top: 10px;
+    text-decoration: none;
+}
+header nav a.header-button,
+header nav a:visited.header-button {
+    color: #ffffff;
+}
+header nav a:hover.header-button {
+    background-color: #0468B1;
+    text-decoration: none;
 }
 header nav ul {
+    position: absolute;
+    right: 0;
+    top: 10px;
     float: right;
     padding-top: 3px;
     padding-bottom: 0;
     margin: 0;
+    z-index: 1;
+    list-style-type: none;
+    font-size: 1.2em;
 }
 header nav li {
-    padding: 0 11px 0 6px;
+    padding-left: 10px;
     font-weight: normal;
     font-size: 1.2em;
-    border-right: 1px solid #96989B;
     margin: 0;
+    float: left;
 }
 header nav li:last-child {
     border-right: none;
     padding-right: 0;
 }
-header nav .active a {
-    color: black;
+header nav li a {
+    display: block;
+    padding: .3em .5em;
+    -moz-border-radius: .3em;
+    -webkit-border-radius: .3em;
+    border-radius: .3em;
+}
+header nav li a,
+header nav li a:visited{
+    color: #787A7D;
+}
+header nav li a:hover {
+    text-decoration: none;
+    background-color: #919396;
+}
+header nav li.active a,
+header nav li a:hover {
+    color: #ffffff;
+}
+header nav li.active a {
+    background-color: #0468B1;
 }
 header #logged-in {
-    clear: right;
-    float: right;
-    margin-top: 4em;
+    width: 100%;
     padding: 0;
+    background-color: #919396;
+    color: #ffffff;
+    position:absolute;
+    bottom: -24px;
+    height: 24px;
 }
-
+header #logged-in span {
+    text-align: right;
+    display: block;
+    padding-top: 2px;
+}
+header #logged-in a {
+    display: inline-block;
+    padding: .2em .35em;
+    background-color: #ffffff;
+    -moz-border-radius: .35em;
+    -webkit-border-radius: .35em;
+    border-radius: .35em;
+    font-weight: bold;
+    margin-left: 1em;
+    border: 1px solid #919396;
+}
+header #logged-in a,
+header #logged-in a:visited {
+    color: #787A7D;
+}
+header #logged-in a:hover {
+    background-color: #787A7D;
+    color: #ffffff;
+    text-decoration: none;
+    border-color: #ffffff;
+}
 body:after {
     content: "";
     display: block;
