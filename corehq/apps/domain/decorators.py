@@ -57,7 +57,11 @@ def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME, login_
             domain_name = normalize_domain_name(domain)
             domains = Domain.objects.filter(name=domain_name)
             if user.is_authenticated() and user.is_active:
-                couch_user = req.couch_user # set by user middleware
+                if hasattr(req, "couch_user"):
+                    couch_user = req.couch_user # set by user middleware
+                else: 
+                    # some views might not have this set
+                    couch_user = CouchUser.from_django_user(user)
                 if couch_user.is_member_of(domains):
                     return view_func(req, domain_name, *args, **kwargs)
                 elif user.is_superuser:
