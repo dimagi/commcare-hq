@@ -1,0 +1,32 @@
+from django.test import TestCase
+from couchforms.models import XFormInstance
+from couchforms.util import post_xform_to_couch
+import os
+import json
+from dimagi.utils.couch.database import get_db
+from ..config import DocumentTransform
+from ..formdeidentification import deidentify_form
+
+class FormDeidentificationTestCase(TestCase):
+    
+    def setUp(self):
+        
+        for item in XFormInstance.view("couchforms/by_xmlns", include_docs=True, reduce=False).all():
+            item.delete()
+        
+        
+    def testCRSReg(self):
+        file_path = os.path.join(os.path.dirname(__file__), "data", "crs_reg.xml")
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
+        
+        self.instance = post_xform_to_couch(xml_data)
+        
+        transform = DocumentTransform(self.instance._doc, get_db())
+        self.assertTrue("IDENTIFIER" in json.dumps(transform.doc))
+        self.assertTrue("IDENTIFIER" in transform.attachments["form.xml"])
+        
+        deidentified = deidentify_form(transform)
+        self.assertTrue("IDENTIFIER" not in json.dumps(deidentified.doc))
+        self.assertTrue("IDENTIFIER" not in deidentified.attachments["form.xml"])
+        
