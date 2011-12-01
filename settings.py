@@ -130,6 +130,7 @@ HQ_APPS = (
     'casexml.apps.phone',
     'corehq.apps.cleanup',
     'corehq.apps.domain',
+    'corehq.apps.domainsync',
     'corehq.apps.hqadmin',
     'corehq.apps.hqcase',
     'corehq.apps.hqwebapp',
@@ -194,6 +195,14 @@ ACCOUNT_ACTIVATION_DAYS=7
 # If a user tries to access domain admin pages but isn't a domain 
 # administrator, here's where he/she is redirected
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME="homepage"
+
+# domain syncs
+# e.g. 
+#               { sourcedomain1: { "domain": targetdomain1,
+#                                  "transform": path.to.transformfunction1 },
+#                 sourcedomain2: {...} }
+DOMAIN_SYNCS = { }
+DOMAIN_SYNC_DATABASE_NAME = "commcarehq-public"
 
 ####### Release Manager App settings  #######
 RELEASE_FILE_PATH=os.path.join("data","builds")
