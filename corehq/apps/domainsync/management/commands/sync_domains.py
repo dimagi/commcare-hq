@@ -1,16 +1,14 @@
 from django.core.management.base import LabelCommand
+from django.conf import settings
+from django.db import models
 from dimagi.utils.couch.database import get_db
 from couchdbkit.consumer import Consumer
 import logging
 import time
 from dimagi.utils.couch.changes import Change
-from couchforms.models import XFormInstance
-from sofabed.forms.config import get_formdata_class
-from django.db import transaction
 from sofabed.forms.models import Checkpoint
-from django.db.utils import DatabaseError
-from sofabed.forms.exceptions import InvalidFormUpdateException
 from corehq.apps.domainsync.config import global_config
+from couchdbkit.ext.django.loading import CouchdbkitHandler
 
 FILTER_FORMS_WITH_META = "forms/xforms_with_meta"
 CHECKPOINT_FREQUENCY = 100
@@ -28,6 +26,13 @@ class Command(LabelCommand):
         db = get_db()
         c = Consumer(db)
         
+        # sync design docs to the target db
+        # lots of source diving to figure out this magic
+        new_dbs = [(app, global_config.database.uri) for app, _ in settings.COUCHDB_DATABASES]
+        couchdbkit_handler = CouchdbkitHandler(new_dbs)
+        for app, _ in new_dbs:
+            couchdbkit_handler.sync(models.get_app(app))
+
         def sync_if_necessary(line):
             try:
                 change = Change(line)
