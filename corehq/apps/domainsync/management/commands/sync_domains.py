@@ -10,6 +10,7 @@ from sofabed.forms.models import Checkpoint
 from corehq.apps.domainsync.config import global_config
 from couchdbkit.ext.django.loading import CouchdbkitHandler
 from django.core.exceptions import ImproperlyConfigured
+from corehq.couchapps import sync_design_docs
 
 FILTER_FORMS_WITH_META = "forms/xforms_with_meta"
 CHECKPOINT_FREQUENCY = 100
@@ -38,7 +39,10 @@ class Command(LabelCommand):
                 # if django doesn't think this is an app it throws this error
                 # this is probably fine
                 pass
-
+        
+        # also sync couchapps
+        sync_design_docs(global_config.database)
+        
         def sync_if_necessary(line):
             try:
                 change = Change(line)
