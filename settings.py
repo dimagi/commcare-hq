@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 
-import os, time
+import os
 import logging
 
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
@@ -304,26 +304,14 @@ LOCAL_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
 try:
     #try to see if there's an environmental variable set for local_settings
-    import sys, os
-    if os.environ.has_key('LOCALSETTINGS'):
-        localpath = os.path.dirname(os.environ['LOCALSETTINGS'])
-        sys.path.insert(0, localpath)
-    from localsettings import *
+    if os.environ.has_key('CUSTOMSETTINGS') and os.environ['CUSTOMSETTINGS'] == "demo":
+        # this sucks, but is a workaround for supporting different settings
+        # in the same environment
+        from settings_demo import *
+    else:
+        from localsettings import *
 except ImportError:
     pass
-
-# create data directories required by commcarehq
-import os
-root = os.path.dirname(__file__)
-if not os.path.isdir(os.path.join(root,'data')):
-    os.mkdir(os.path.join(root,'data'))
-if not os.path.isdir(os.path.join(root,'data','submissions')):
-    os.mkdir(os.path.join(root,'data','submissions'))
-if not os.path.isdir(os.path.join(root,'data','attachments')):
-    os.mkdir(os.path.join(root,'data','attachments'))
-if not os.path.isdir(os.path.join(root,'data','schemas')):
-    os.mkdir(os.path.join(root,'data','schemas'))
-
 
 ####### South Settings #######
 #SKIP_SOUTH_TESTS=True
