@@ -21,7 +21,7 @@ from django.contrib import messages
 def messaging(request, domain, template="sms/default.html"):
     context = get_sms_autocomplete_context(request, domain)
     context['domain'] = domain
-    context['messagelog'] = MessageLog.objects.filter(domain=domain).order_by('-pk')
+    context['messagelog'] = MessageLog.by_domain_dsc(domain)
     context['now'] = datetime.utcnow()
     return render_to_response(request, template, context)
 
@@ -45,7 +45,7 @@ def post(request, domain):
     if user is None or not user.is_active:
         return HttpResponseBadRequest("Authentication fail")
     msg = MessageLog(domain=domain,
-                     # how to map phone numbers to recipients, when phone numbers are shared?
+                     # TODO: how to map phone numbers to recipients, when phone numbers are shared?
                      #couch_recipient=id, 
                      phone_number=to,
                      direction=INCOMING,

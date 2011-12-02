@@ -1,5 +1,21 @@
 from django.contrib.auth.models import User
 from django.db import models
+from couchdbkit.ext.django.schema import Document, StringProperty,\
+    BooleanProperty
+
+class CouchDomain(Document):
+    """
+    The model that will eventually store domains in couch.
+    """
+    name = StringProperty()
+    is_active = BooleanProperty()
+    is_public = BooleanProperty()
+    
+    def save(self, **kwargs):
+        # eventually we'll change the name of this object to just "Domain"
+        # so correctly set the doc type for future migration 
+        self.doc_type = "Domain"
+        super(CouchDomain, self).save(**kwargs)
 
 ##############################################################################################################
 #
@@ -84,3 +100,4 @@ class Settings(models.Model):
     max_users = models.PositiveIntegerField()
     
 ##############################################################################################################
+from . import signals

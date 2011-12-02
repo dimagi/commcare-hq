@@ -2,7 +2,8 @@ from django.conf import settings
 import django.core.exceptions
 
 ############################################################################################################
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, PublicUser, InvalidUser
+from corehq.apps.domain.models import CouchDomain
 
 class UsersMiddleware(object):
     def __init__(self):        
@@ -21,7 +22,16 @@ class UsersMiddleware(object):
         if request.user and hasattr(request.user, 'get_profile'):
             request.couch_user = CouchUser.from_django_user(request.user)
             if 'domain' in view_kwargs:
-                request.couch_user.current_domain = view_kwargs['domain']
+                domain = view_kwargs['domain']
+                if not request.couch_user:
+                    couch_domain = CouchDomain.view("domain/domains", key=domain, 
+                                                    reduce=False, include_docs=True).one()
+                    if couch_domain and couch_domain.is_public:
+                        request.couch_user = PublicUser(domain)
+                    else:
+                        request.couch_user = InvalidUser()
+                if request.couch_user:
+                    request.couch_user.current_domain = view_kwargs['domain']
         return None
     
 ############################################################################################################
