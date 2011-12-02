@@ -202,6 +202,9 @@ DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME="homepage"
 #                                  "transform": path.to.transformfunction1 },
 #                 sourcedomain2: {...} }
 DOMAIN_SYNCS = { }
+# if you want to deidentify app names, put a dictionary in your settings
+# of source names to deidentified names
+DOMAIN_SYNC_APP_NAME_MAP = {}
 DOMAIN_SYNC_DATABASE_NAME = "commcarehq-public"
 
 ####### Release Manager App settings  #######
