@@ -4,6 +4,7 @@ from dimagi.utils.couch.database import get_db
 from casexml.apps.phone import xml
 from datetime import datetime
 from receiver.xml import get_response_element
+from casexml.apps.case import const
 
 def generate_restore_payload(user, restore_id=""):
     """
@@ -26,15 +27,19 @@ def generate_restore_payload(user, restore_id=""):
     cases_to_send = user.get_case_updates(last_sync)
     case_xml_elements = [xml.get_case_element(case, updates) for case, updates in cases_to_send]
     
-    # TODO: update purged lists
-    saved_case_ids = [case.case_id for case, _ in cases_to_send]
+    
+    saved_case_ids = [case.case_id for case, updates in cases_to_send \
+                      if const.CASE_ACTION_UPDATE in updates]
+    purged_case_ids = [case.case_id for case, updates in cases_to_send if \
+                       const.CASE_ACTION_PURGE in updates]
+    
     last_seq = get_db().info()["update_seq"]
     
     # create a sync log for this
     previous_log_id = last_sync.get_id if last_sync else None
     synclog = SyncLog(user_id=user.user_id, last_seq=last_seq,
                       date=datetime.utcnow(), previous_log_id=previous_log_id,
-                      cases=saved_case_ids)
+                      cases=saved_case_ids, purged_cases=purged_case_ids)
     synclog.save()
     
     # start with standard response

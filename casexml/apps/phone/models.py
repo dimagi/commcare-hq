@@ -40,8 +40,10 @@ class SyncLog(Document, UnicodeMixIn):
     user_id = StringProperty()
     previous_log_id = StringProperty()  # previous sync log, forming a chain
     last_seq = IntegerProperty()        # the last_seq of couch during this sync
-    cases = StringListProperty()
     
+    # cases that were synced down during this sync
+    cases = StringListProperty()
+    # cases that were purged during this sync
     purged_cases = StringListProperty() # cases that were purged during this sync. 
     
     # cases that were submitted between this sync and the next one
