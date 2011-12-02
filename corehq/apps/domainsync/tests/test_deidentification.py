@@ -5,7 +5,7 @@ import os
 import json
 from dimagi.utils.couch.database import get_db
 from ..config import DocumentTransform
-from ..formdeidentification import deidentify_form
+from ..deidentification.forms import deidentify_form
 
 class FormDeidentificationTestCase(TestCase):
     
