@@ -680,13 +680,10 @@ class ApplicationBase(VersionedDoc):
     """
 
     recipients = StringProperty(default="")
-    # is a tag like "1.1" that we use to look up the latest build of that type
-    # deprecated
-    # commcare_tag = StringProperty(default=current_builds.DEFAULT_TAG)
 
     # this is the supported way of specifying which commcare build to use
     build_spec = SchemaProperty(BuildSpec)
-    native_input = BooleanProperty(default=False)
+    text_input = StringProperty(choices=['roman', 'native', 'custom-keys'], default="roman")
     success_message = DictProperty()
 
     # The following properties should only appear on saved builds
@@ -712,6 +709,11 @@ class ApplicationBase(VersionedDoc):
         if not data.has_key("build_spec") or BuildSpec.wrap(data['build_spec']).is_null():
             data['build_spec'] = CommCareBuildConfig.fetch().default.to_json()
 
+        if data.has_key('native_input'):
+            if not data.has_key('text_input'):
+                data['text_input'] = 'native' if data['native_input'] else 'roman'
+            del data['native_input']
+            
         return super(ApplicationBase, cls).wrap(data)
 
     def get_build(self):
@@ -756,11 +758,17 @@ class ApplicationBase(VersionedDoc):
             get_url_base(),
             reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id]),
         )
+    
     def get_jadjar(self):
+        build = self.get_build()
+        if self.text_input == 'custom-keys' and build.minor_release() < (1,3):
+            raise AppError("Custom Keys not supported in CommCare versions before 1.3. (Using %s.%s)" % build.minor_release())
+
         spec = {
-            (True,): 'Nokia/S40-native-input',
-            (False,): 'Nokia/S40-generic',
-        }[(self.native_input,)]
+            ('native',): 'Nokia/S40-native-input',
+            ('roman',): 'Nokia/S40-generic',
+            ('custom-keys',):  'Nokia/S40-custom-keys',
+        }[(self.text_input,)]
         return self.get_build().get_jadjar(spec)
 
     def create_jadjar(self):

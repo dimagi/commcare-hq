@@ -29,7 +29,7 @@ class OutboundParams(object):
     DESTINATION = "dest"
 
 # constant additional parameters when sending a unicode message
-UNICODE_PARAMS = [("udhi", 1),
+UNICODE_PARAMS = [("udhi", 0),
                   ("dcs", 8)]
 
 DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"

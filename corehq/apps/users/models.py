@@ -705,6 +705,8 @@ class WebUser(CouchUser):
     def has_permission(self, domain, permission):
         # is_admin is the same as having all the permissions set
         dm = self.get_domain_membership(domain)
+        if not dm:
+            return False
         if self.is_domain_admin(domain):
             return True
         else:
@@ -767,6 +769,37 @@ class WebUser(CouchUser):
     def can_edit_users(self, domain):
         return self.has_permission(domain, Permissions.EDIT_USERS)
 
+class FakeUser(WebUser):
+    """
+    Prevent actually saving user types that don't exist in the database
+    """
+    def save(self, **kwargs):
+        raise NotImplementedError("You aren't allowed to do that!")
+        
+    
+class PublicUser(FakeUser):
+    """
+    Public users have read-only access to certain domains
+    """
+    
+    def __init__(self, domain, **kwargs):
+        super(PublicUser, self).__init__(**kwargs)
+        self.domain = domain
+        self.domains = [domain]
+        self.domain_memberships = [DomainMembership(domain=domain, is_admin=False)]
+    
+    def get_role(self, domain=None):
+        assert(domain == self.domain)
+        return "read-only"
+
+class InvalidUser(FakeUser):
+    """
+    Public users have read-only access to certain domains
+    """
+    
+    def is_member_of(self, domain_qs):
+        return False
+    
 #
 # Django  models go here
 #

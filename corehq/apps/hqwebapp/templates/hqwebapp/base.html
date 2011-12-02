@@ -47,9 +47,13 @@
                             {% for tab in tabs %}
                                 {% if tab.visible %}
                                 {# hack for domain admins only seeing domain tab #}
-                                {% if tab.caption != "My Domain" or request.couch_user and request.couch_user|is_admin:domain%}
+                                {% if tab.caption != "My Domain" or request.couch_user and request.couch_user|is_admin:domain %}
+                                    {# and hack for hiding the users tab from public domains #}
+                                    {% if tab.caption != "Users" or request.couch_user and request.couch_user.get_id  %}
                                     <li class="{% if tab.is_active %}active{% endif %}"><a href="{{ tab.url }}">{{ tab.caption }}{{ BETA_HACK }}</a></li>
+                                    {% endif %}
                                 {% endif %}
+                                
                                 {% endif %}
                             {% endfor %}
                         {% endif %}
