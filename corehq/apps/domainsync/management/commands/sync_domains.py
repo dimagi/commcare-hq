@@ -20,7 +20,7 @@ domainsync_counter = 0
 
 # this is based heavily on sofabed
 class Command(LabelCommand):
-    help = "Listens for XFormInstance documents and sync them between domains."
+    help = "Listens for documents and sync them between domains."
     args = ""
     label = ""
      
