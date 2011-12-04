@@ -1,0 +1,64 @@
+{% extends login_template %}
+
+{% block title %}Sign Up{% endblock title %}
+{% block head  %}
+    {{ block.super }}
+    {% include "imports/jqmodal.html" %}
+    <style>
+        label[for="id_tos_confirmed"] {
+            font-size: .9em;
+            color: #333;
+        }
+    </style>
+{% endblock %}
+{% block login-content %}
+
+    <script>
+    $().ready(function() {
+        $('#tos-placeholder').jqm({ajax: '@href', trigger: 'a.tos',
+                                   ajaxText: "Please wait while we load that for you..." });
+    });
+    </script>
+
+    <form name="form" method="post" action="{% url new_user_registration %}">
+        {% csrf_token %}
+        <table>
+            {% for field in form.visible_fields %}
+                {% if field.errors %}
+                    <tr>
+                        <td></td>
+                        <td>{{field.errors}}</td>
+                    </tr>
+                {% endif %}
+                <tr>
+                    {% ifnotequal field.name 'tos_confirmed' %}
+                        <td>{{ field.label_tag }}
+                        	<br/><span class="helptext">{{field.help_text}}</span>
+                        </td>
+                        <td>{{ field }}</td>
+                    {%else%}
+                        <td colspan="2">
+                            <input id="id_tos_confirmed" type="checkbox" name="tos_confirmed" />
+                            <label for="id_tos_confirmed">I have read and agree to the <a href="{% url tos %}" class="tos">Terms of Service</a></label>
+                        </td>
+                    {% endifnotequal %}
+                </tr>
+            {% endfor %}
+                <h1>Sign Up for CommCare HQ</h1>
+            {% if form.non_field_errors %}
+                <tr class="non_field_errors">
+                    <td></td>
+                    <td>{{ form.non_field_errors }}</td>
+                </tr>
+            {% endif %}
+            <tr>
+                <td></td>
+                <td><input type="submit" value="Submit" /></td>
+            </tr>
+        </table>
+    </form>
+    <div class="jqmWindow" id="tos-placeholder">
+    Please wait while that loads...
+    </div>
+{% endblock %}
+     
