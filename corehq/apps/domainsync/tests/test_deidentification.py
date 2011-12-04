@@ -29,4 +29,23 @@ class FormDeidentificationTestCase(TestCase):
         deidentified = deidentify_form(transform)
         self.assertTrue("IDENTIFIER" not in json.dumps(deidentified.doc))
         self.assertTrue("IDENTIFIER" not in deidentified.attachments["form.xml"])
+    
+    def testCRSChecklist(self):
+        file_path = os.path.join(os.path.dirname(__file__), "data", "crs_checklist.xml")
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
+        
+        self.instance = post_xform_to_couch(xml_data)
+        
+        transform = DocumentTransform(self.instance._doc, get_db())
+        self.assertTrue("IDENTIFIER" in json.dumps(transform.doc))
+        self.assertTrue("IDENTIFIER" in transform.attachments["form.xml"])
+        self.assertTrue("YESNO" in json.dumps(transform.doc))
+        self.assertTrue("YESNO" in transform.attachments["form.xml"])
+        
+        deidentified = deidentify_form(transform)
+        self.assertTrue("IDENTIFIER" not in json.dumps(deidentified.doc))
+        self.assertTrue("IDENTIFIER" not in deidentified.attachments["form.xml"])
+        self.assertTrue("YESNO" not in json.dumps(deidentified.doc))
+        self.assertTrue("YESNO" not in deidentified.attachments["form.xml"])
         
