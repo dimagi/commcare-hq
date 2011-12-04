@@ -1,0 +1,17 @@
+{% extends login_template %}
+
+{% block title %}Email Confirmation{% endblock title %}
+{% block head  %}
+    {{ block.super }}
+{% endblock %}
+{% block login-content %}
+<article>
+    <h1>{{ message_title }}</h1>
+    {% if message_body %}<p>{{ message_body }}</p>{% endif %}
+    {% if is_error %}
+        <p>In the meantime, you may explore the <a href=="/a/public/">public demo domain for CommCare HQ.</a></p>
+    {% else %}
+        <p>You may now <a href="{% url domain_select %}">use your domain</a>.</p>
+    {% endif %}
+</article>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends login_template %}
+
+{% block title %}Register a Domain{% endblock title %}
+{% block head  %}
+    {{ block.super }}
+{% endblock %}
+{% block login-content %}
+<article>
+    <h1>{{ alert_message }}</h1>
+    <p>An email has been sent to {{ request.user.email }} to confirm your account.</p>
+    <p>If you can't find the email, you may <a href="">resend the confirmation email</a>.</p>
+    <p>In the meantime, you may explore the <a href=="/a/public/">public demo domain for CommCare HQ.</a></p>
+</article>
+{% endblock %}

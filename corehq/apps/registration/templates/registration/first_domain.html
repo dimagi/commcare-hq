@@ -1,0 +1,34 @@
+{% extends login_template %}
+
+{% block title %}Register a Domain{% endblock title %}
+{% block head  %}
+    {{ block.super }}
+{% endblock %}
+{% block login-content %}
+<article>
+    <h1>Welcome to CommCare</h1>
+    <p>You've successfully joined CommCare HQ.</p>
+    <p>A <strong>domain</strong> is, essentially, a container for your project or group.</p>
+    <p>You may now do either of the following:</p>
+    <ol>
+        <li>Explore the public demo domain for CommCare HQ.</li>
+        <li>
+            <form method="post" action="{% url registration_first_time_domain %}">
+                {% for field in form.visible_fields %}
+                    {% if field.errors %}<p class="field-error">{{field.errors}}</p>{% endif %}
+                    {% ifnotequal field.name 'tos_confirmed' %}
+                        {{ field.label_tag }}
+                        {{ field }}
+                    {% else %}
+                        {{ field }}<label for="id_tos_confirmed">I have read and agree to the <a href="{% url tos %}" class="tos">Terms of Service</a></label>
+                    {% endifnotequal %}
+                {% endfor %}
+                <p>You will be emailed a request to confirm your email address. In order to use your own domain, you must first confirm your email.</p>
+                <input type="submit" value="Create Domain" />
+            </form>
+        </li>
+    </ol>
+
+    <p></p>
+</article>
+{% endblock %}

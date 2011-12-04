@@ -20,7 +20,7 @@
     });
     </script>
 
-    <form name="form" method="post" action="{% url new_user_registration %}">
+    <form name="form" method="post" action="{% url registration_new_user %}">
         {% csrf_token %}
         <table>
             {% for field in form.visible_fields %}
