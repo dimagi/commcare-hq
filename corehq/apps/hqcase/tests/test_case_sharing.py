@@ -1,7 +1,7 @@
-from xml.etree import ElementTree
 from django.utils.unittest.case import TestCase
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock
+from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock,\
+    check_user_has_case
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.restore import generate_restore_payload
 from casexml.apps.phone.xml import date_to_xml_string
@@ -62,9 +62,9 @@ class CaseSharingTest(TestCase):
 
         def check_has_block(case_block, should_have, should_not_have, line_by_line=True):
             for user in should_have:
-                self.check_user_has_case(user, case_block, line_by_line=line_by_line)
+                check_user_has_case(self, user.to_casexml_user(), case_block, line_by_line=line_by_line)
             for user in should_not_have:
-                self.check_user_has_case(user, case_block, should_have=False, line_by_line=line_by_line)
+                check_user_has_case(self, user.to_casexml_user(), case_block, should_have=False, line_by_line=line_by_line)
 
         create_and_test(
             case_id='case-a-1',
@@ -102,28 +102,6 @@ class CaseSharingTest(TestCase):
             should_have=[self.userB1, self.userB2, self.userX],
             should_not_have=[self.userA1, self.userA2],
         )
-
-
-    def check_user_has_case(self, user, case_block, should_have=True, line_by_line=True):
-        case_block.attrib['xmlns'] = 'http://openrosa.org/http/response'
-        case_block = ElementTree.fromstring(ElementTree.tostring(case_block))
-        payload = ElementTree.fromstring(generate_restore_payload(user.to_casexml_user()))
-        blocks = payload.findall('{http://openrosa.org/http/response}case')
-        case_id = case_block.findtext('{http://openrosa.org/http/response}case_id')
-        n = 0
-        for block in blocks:
-            if block.findtext('{http://openrosa.org/http/response}case_id') == case_id:
-                if should_have:
-                    if line_by_line:
-                        check_xml_line_by_line(self, ElementTree.tostring(block), ElementTree.tostring(case_block))
-                    n += 1
-                    if n == 2:
-                        self.fail("Block for case_id '%s' appears twice in ota restore for user '%s'" % (case_id, user.raw_username))
-                else:
-                    self.fail("User '%s' gets case '%s' but shouldn't" % (user.raw_username, case_id))
-        if not n and should_have:
-            self.fail("Block for case_id '%s' doesn't appear in ota restore for user '%s'" % (case_id, user.raw_username))
-
 
 
     def get_create_block(self, case_id, type, user_id, owner_id, name=None, **kwargs):
