@@ -72,7 +72,7 @@ class DomainSyncConfig():
     def get_transforms(self, doc):
         transforms = []
         # always sync certain global documents
-        if (doc["doc_type"] == "CommCareBuild"):
+        if "doc_type" in doc and doc["doc_type"] == "CommCareBuild":
             return DocumentTransform(doc, self.old_database)
         
         for domain in _extract_domains(doc):

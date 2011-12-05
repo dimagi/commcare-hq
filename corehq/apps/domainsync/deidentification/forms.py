@@ -96,8 +96,7 @@ FORM_CONFIG = { CRS_REGISTRATION: {
                     "case/update/tetanus-1": random_yesno,
                     "case/update/tetanus-2": random_yesno,
                     "case/update/manual-labor-info": random_yesno,
-                    "case/update/knows-closest-facility": random_yesno
-              },
+                    "case/update/knows-closest-facility": random_yesno },
                 CRS_BIRTH: {
                     "meta/username": random_username }
               }
