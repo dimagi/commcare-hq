@@ -582,6 +582,11 @@ th {
     float: left;
 }
 
+img.ui-icon {
+    display: inline;
+    float: none;
+}
+
 .dialog {
     display: none;
 }
