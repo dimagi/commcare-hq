@@ -133,13 +133,16 @@
                 onChangeBuildSpec();
 	            buildSpec.change(onChangeBuildSpec);
             }
+            var customKeysHelp = $('#custom-keys-help');
+            customKeysExample.hide();
+            customKeysHelp.hide();
             var onChangeTextInput = function () {
-                var customKeysHelp = $('#custom-keys-help');
+
                 if (textInput.val() == 'custom-keys') {
                     customKeysHelp.slideDown();
                 } else {
-                    customKeysHelp.slideUp();
                     customKeysExample.hide();
+                    customKeysHelp.slideUp();
                 }
             };
             onChangeTextInput();
@@ -149,7 +152,6 @@
                 e.preventDefault();
                 customKeysExample.slideToggle();
             });
-            customKeysExample.hide();
         });
     </script>
 {% endblock %}
@@ -174,6 +176,20 @@
             border: 1px solid #CCC;
             padding: 2px;
             margin: 1px;
+        }
+
+        #supported-languages {
+            position: relative;
+            z-index: 1;
+        }
+        #default-language-help {
+            position: absolute;
+            /*width: 100%;*/
+            border: 1px solid #CCC;
+            padding: .5em;
+            padding-left: 150px;
+            left: 40px;
+            background-color: #DDD;
         }
     </style>
 {% endblock %}
@@ -341,7 +357,8 @@
             {% if edit %}
                 <p align="right"><span class="caution">Caution</span>: Changes you make here are saved immediately as you make them.</p>
             {% endif %}
-            <table>
+            <aside id="default-language-help"><span class="ui-icon ui-icon-arrowthick-1-w"></span>Default Language</aside>
+            <table id="supported-languages">
                 <tbody {% if edit %}class="sortable"{% endif %}>
                     <tr class="sort-action">
                         <td>

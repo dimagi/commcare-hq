@@ -1,4 +1,4 @@
-{% load tabs_tags %}{% load permissions %}{% load i18n %}<!DOCTYPE html>
+{% load tabs_tags %}{% load permissions %}{% load i18n %}{% load hq_shared_tags %}<!DOCTYPE html>
 <html>
     <head>
         <meta charset="utf-8"/>
@@ -8,7 +8,7 @@
 
         <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/reset.css"/>
         <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/javascripts/jquery-ui/jquery-ui-redmond-1.8.16.css"/>
-        <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/core.css?version=10"/>
+        <link rel="stylesheet" href="{% static 'hqwebapp/css/core.css' %}"/>
 
         <script src="{{ STATIC_URL }}hqwebapp/javascripts/jquery-1.6.4.min.js"></script>
 
