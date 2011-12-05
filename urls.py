@@ -41,6 +41,7 @@ domain_specific = patterns('',
 urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     (r'^admin/', include(admin.site.urls)),
+    (r'^register/', include('corehq.apps.registration.urls')),
     (r'^auditcare/', include('auditcare.urls')),
     (r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     (r'^couch/', include('djangocouch.urls')),
