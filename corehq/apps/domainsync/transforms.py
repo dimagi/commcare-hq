@@ -4,8 +4,9 @@ Functions that transform known data types in HQ
 from dimagi.utils.data.generator import random_fullname, random_phonenumber,\
     username_from_name
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.domainsync.formdeidentification import deidentify_form
+from corehq.apps.domainsync.deidentification.forms import deidentify_form
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.domainsync.deidentification.apps import deidentify_app
 
 def identity(doc):
     """
@@ -41,7 +42,7 @@ def deidentify_commcare_user(doc):
 
 def deidentify_domain(doc):
     handleable_types = {"CommCareCase": deidentify_case,
-                        "Application": identity,
+                        "Application": deidentify_app,
                         "CommCareUser": deidentify_commcare_user,
                         "XFormInstance": deidentify_form,
                         "SavedExportSchema": identity}
