@@ -8,6 +8,7 @@ from django.contrib.auth.views import login as django_login
 from django.contrib.auth.views import logout as django_logout
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound
+from django.shortcuts import redirect
 from corehq.apps.app_manager.models import get_app, BUG_REPORTS_DOMAIN
 from corehq.apps.app_manager.models import import_app
 from corehq.apps.domain.utils import normalize_domain_name
@@ -53,7 +54,7 @@ def redirect_to_default(req, domain=None):
         else:
             domains = Domain.active_for_user(req.user)
         if   0 == domains.count() and not req.user.is_superuser:
-            return render_to_response(req, "hqwebapp/no_permission.html", {})
+            return no_permissions(req)
         elif 1 == domains.count():
             #url = reverse('corehq.apps.app_manager.views.default', args=[domains[0].name])
             url = reverse('corehq.apps.reports.views.default', args=[domains[0].name])
@@ -90,8 +91,7 @@ def server_up(req):
     return HttpResponse("success")
 
 def no_permissions(request):
-    template_name="hqwebapp/no_permission.html"
-    return render_to_response(request, template_name, {})
+    return redirect('registration_first_time_domain')
 
 def login(req, template_name="login_and_password/login.html"):
     # this view, and the one below, is overridden because

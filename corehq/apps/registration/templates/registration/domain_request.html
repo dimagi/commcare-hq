@@ -1,0 +1,49 @@
+{% extends "registration/base.html" %}
+{% block title %}Register a Domain{% endblock title %}
+{% block head  %}
+    {{ block.super }}
+    {% include "imports/jqmodal.html" %}
+    <style>
+        label[for="id_tos_confirmed"] {
+            font-size: .9em;
+            color: #333;
+        }
+    </style>
+{% endblock %}
+{% block login-content %}
+<script>
+$().ready(function() {
+    $('#tos-placeholder').jqm({ajax: '@href', trigger: 'a.tos',
+                               ajaxText: "Please wait while we load that for you..." });
+});
+</script>
+<article>
+    <h1>Welcome to CommCare</h1>
+    <p>You've successfully joined CommCare HQ.</p>
+    <p>Your domain is your secure web portal into your CommCare project.  It will contain all form submissions from your CommCare mobile applications, as well as tools that help you easily create, deploy, and monitor your applications and workers.  For detailed documentation, please visit the <a href="http://wiki.commcarehq.org/display/commcarepublic/Home">CommCare Wiki</a>.</p>
+    <p>You may now do either of the following:</p>
+    <ol>
+        <li><a href="/a/public/">Explore the <strong>public demo domain</strong> for CommCare HQ.</a></li>
+        <li>
+            <form method="post" action="{% url registration_first_time_domain %}">
+                {% for field in form.visible_fields %}
+                    {% ifnotequal field.name 'tos_confirmed' %}
+                        <div>
+                            {{ field.label_tag }}
+                            {% if field.errors %}<p class="field-error">{{field.errors}}</p>{% endif %}
+                        </div>{{ field }}
+                    {% else %}
+                        <div class="tos">
+                            {% if field.errors %}<p class="field-error">{{field.errors}}</p>{% endif %}
+                            {{ field }}<label for="id_tos_confirmed">I have read and agree to the <a href="{% url tos %}" class="tos">Terms of Service</a></label>
+                        </div>
+                    {% endifnotequal %}
+                {% endfor %}
+                <p>You will be emailed a request to confirm your email address. In order to use your own domain, you must first confirm your email.</p>
+                <input type="submit" class="create-domain" value="Create Domain" />
+            </form>
+        </li>
+    </ol>
+</article>
+<div id="tos-placeholder"></div>
+{% endblock %}

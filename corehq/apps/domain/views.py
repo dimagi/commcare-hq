@@ -8,6 +8,7 @@ from django.db import transaction
 from django.http import HttpResponseRedirect, HttpResponse
 
 from django_tables import tables
+from django.shortcuts import redirect
 
 from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
 from corehq.apps.domain.forms import DomainSelectionForm, RegistrationRequestForm, ResendConfirmEmailForm, clean_password, UpdateSelfForm, UpdateSelfTable
@@ -34,9 +35,7 @@ def select( request,
     
     domains_for_user = Domain.active_for_user(request.user)
     if len(domains_for_user) == 0:
-        vals = dict( error_msg = "You are not a member of any existing domains - please contact your system administrator",
-                     show_homepage_link = False   )
-        return render_to_response(request, 'error.html', vals)
+        return redirect('registration_first_time_domain')
     
     redirect_to = request.REQUEST.get(redirect_field_name, '')    
     if request.method == 'POST': # If the form has been submitted...        

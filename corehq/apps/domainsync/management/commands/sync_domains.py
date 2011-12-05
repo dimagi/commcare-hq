@@ -10,6 +10,7 @@ from sofabed.forms.models import Checkpoint
 from corehq.apps.domainsync.config import global_config
 from couchdbkit.ext.django.loading import CouchdbkitHandler
 from django.core.exceptions import ImproperlyConfigured
+from corehq.couchapps import sync_design_docs
 
 FILTER_FORMS_WITH_META = "forms/xforms_with_meta"
 CHECKPOINT_FREQUENCY = 100
@@ -19,7 +20,7 @@ domainsync_counter = 0
 
 # this is based heavily on sofabed
 class Command(LabelCommand):
-    help = "Listens for XFormInstance documents and sync them between domains."
+    help = "Listens for documents and sync them between domains."
     args = ""
     label = ""
      
@@ -38,7 +39,10 @@ class Command(LabelCommand):
                 # if django doesn't think this is an app it throws this error
                 # this is probably fine
                 pass
-
+        
+        # also sync couchapps
+        sync_design_docs(global_config.database)
+        
         def sync_if_necessary(line):
             try:
                 change = Change(line)
@@ -62,9 +66,7 @@ class Command(LabelCommand):
             
             except Exception, e:
                 logging.exception("problem in domain sync for line: %s\n%s" % (line, e))
-                raise                
-                
-        
+
         # Go into receive loop waiting for any new docs to come in
         while True:
             try:

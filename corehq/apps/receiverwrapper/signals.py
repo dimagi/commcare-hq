@@ -42,7 +42,6 @@ def scrub_meta(sender, xform, **kwargs):
                     del xform.form["meta"][key]
                     found_old = True
     if found_old:
-        logging.error("form %s contains old-format metadata.  You should update it!!" % xform.get_id)
         xform.save()
             
 def _get_domain(xform):

@@ -45,7 +45,7 @@ class CommCareAccountForm(forms.Form):
         except KeyError:
             pass
         else:
-            validate_user('%s@commcarehq.org' % username)
+            validate_username('%s@commcarehq.org' % username)
             domain = self.cleaned_data['domain']
             username = format_username(username, domain)
             num_couch_users = len(CouchUser.view("users/by_username",
@@ -57,4 +57,6 @@ class CommCareAccountForm(forms.Form):
             self.cleaned_data['username'] = username
         return self.cleaned_data
 
-validate_user = EmailValidator(email_re, _(u'Username contains invalid characters.'), 'invalid')
+validate_username = EmailValidator(email_re, _(u'Username contains invalid characters.'), 'invalid')
+
+

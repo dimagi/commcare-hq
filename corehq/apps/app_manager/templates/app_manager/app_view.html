@@ -114,7 +114,7 @@
                 buildSpec = appSettings.find('[name="build_spec"]'),
                 customKeysExampleOpener = appSettings.find('a[href="#custom-keys-example"]'),
                 customKeysExample = $('#custom-keys-example');
-
+            
             var onChangeBuildSpec = function () {
                 var build = buildSpec.val().split('.'),
                     customKeys = textInput.find('[value="custom-keys"]');
@@ -128,9 +128,11 @@
                     customKeys.removeAttr('disabled');
                 }
             };
-            onChangeBuildSpec();
-            buildSpec.change(onChangeBuildSpec);
-
+            // proxy for this existing.
+            if (buildSpec.val()) {
+                onChangeBuildSpec();
+	            buildSpec.change(onChangeBuildSpec);
+            }
             var onChangeTextInput = function () {
                 var customKeysHelp = $('#custom-keys-help');
                 if (textInput.val() == 'custom-keys') {

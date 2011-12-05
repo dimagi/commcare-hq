@@ -50,6 +50,19 @@ class Domain(models.Model):
         couch_user = CouchUser.from_django_user(user)
         if couch_user:
             domain_names = couch_user.get_domains()
+            return Domain.objects.filter(name__in=domain_names, is_active=True)
+        else:
+            return Domain.objects.none()
+
+    @staticmethod
+    def all_for_user(user):
+        if not hasattr(user,'get_profile'):
+            # this had better be an anonymous user
+            return Domain.objects.none()
+        from corehq.apps.users.models import CouchUser
+        couch_user = CouchUser.from_django_user(user)
+        if couch_user:
+            domain_names = couch_user.get_domains()
             return Domain.objects.filter(name__in=domain_names)
         else:
             return Domain.objects.none()

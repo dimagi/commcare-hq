@@ -1,0 +1,13 @@
+{% extends "registration/base.html" %}
+
+{% block title %}Waiting for Email Confirmation{% endblock title %}
+{% block head  %}
+    {{ block.super }}
+{% endblock %}
+{% block login-content %}
+<article>
+    <h1>Waiting for Domain Confirmation</h1>
+    <p>Thank you for requesting the domain <strong>{{ requested_domain }}</strong>. Before you can access this domain, you must first confirm your email.</p>
+    {% include "registration/partials/confirmation_waiting_actions.html" %}
+</article>
+{% endblock %}
