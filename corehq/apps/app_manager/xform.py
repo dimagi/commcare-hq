@@ -403,7 +403,6 @@ class XForm(WrappedNode):
         if form.requires == 'none' and 'open_case' not in actions and actions:
             raise CaseError("To perform case actions you must either open a case or require a case to begin with")
 
-
         binds = []
         if form.requires == 'none' and not actions:
             casexml_text = ""
@@ -423,7 +422,7 @@ class XForm(WrappedNode):
                 if action.condition.type == 'always':
                     return 'true()'
                 elif action.condition.type == 'if':
-                    return "%s = '%s'" % (action.condition.question, action.condition.answer)
+                    return "%s = '%s'" % (self.resolve_path(action.condition.question), action.condition.answer)
                 else:
                     return 'false()'
             if 'open_case' in actions:
@@ -458,17 +457,17 @@ class XForm(WrappedNode):
                 })
                 add_bind({
                     "nodeset":"case/create/case_name",
-                    "calculate":actions['open_case'].name_path,
+                    "calculate":self.resolve_path(actions['open_case'].name_path),
                 })
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     add_bind({
                         "nodeset":"case/create/external_id",
-                        "calculate":actions['open_case'].external_id,
+                        "calculate": self.resolve_path(actions['open_case'].external_id),
                     })
                 else:
                     add_bind({
                         "nodeset":"case/create/external_id",
-                        "calculate":"case/case_id",
+                        "calculate": self.resolve_path("case/case_id"),
                     })
                 def require_case_name_source():
                     "make sure that the question that provides the case_name is required"
@@ -497,7 +496,7 @@ class XForm(WrappedNode):
                     ]
                 ]
                 for key, path in actions['update_case'].update.items():
-                    add_bind({"nodeset":"case/update/%s" % key, "calculate": path, "relevant": "count(%s) > 0" % path})
+                    add_bind({"nodeset":"case/update/%s" % key, "calculate": self.resolve_path(path), "relevant": "count(%s) > 0" % path})
             if 'close_case' in actions:
                 casexml[
                     __('close')
@@ -525,7 +524,7 @@ class XForm(WrappedNode):
                     ]
                     add_bind({
                         "nodeset":"case/referral",
-                        "relevant":"count-selected(%s) > 0" % actions['open_referral'].name_path
+                        "relevant":"count-selected(%s) > 0" % self.resolve_path(actions['open_referral'].name_path)
                     })
                     add_bind({
                         "nodeset":"case/referral/referral_id",
@@ -535,11 +534,11 @@ class XForm(WrappedNode):
                     add_bind({
                         "nodeset":"case/referral/followup_date",
                         "type":"date",
-                        "calculate": actions['open_referral'].get_followup_date()
+                        "calculate": self.resolve_path(actions['open_referral'].get_followup_date())
                     })
                     add_bind({
                         "nodeset":"case/referral/open/referral_types",
-                        "calculate": actions['open_referral'].name_path,
+                        "calculate": self.resolve_path(actions['open_referral'].name_path),
                     })
                 if 'update_referral' in actions or 'close_referral' in actions:
                     # no condition
@@ -565,7 +564,7 @@ class XForm(WrappedNode):
                         add_bind({
                             "nodeset": "case/referral/followup_date",
                             "type":"xsd:date",
-                            "calculate": actions['update_referral'].get_followup_date()
+                            "calculate": self.resolve_path(actions['update_referral'].get_followup_date()),
                         })
                 if 'close_referral' in actions:
                     referral_update[__("date_closed")]
