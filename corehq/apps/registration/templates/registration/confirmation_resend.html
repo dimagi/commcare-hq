@@ -1,0 +1,19 @@
+{% extends "registration/base.html" %}
+
+{% block title %}Resend Confirmation Email{% endblock title %}
+{% block head  %}
+    {{ block.super }}
+{% endblock %}
+{% block login-content %}
+<article>
+    <h1>Resend Confirmation Email</h1>
+    <form method="post" action="{% url registration_resend_domain_confirmation %}">
+        {% for field in form.visible_fields %}
+            {% if field.errors %}<p class="field-error">{{field.errors}}</p>{% endif %}
+            {{ field.label_tag }}
+            {{ field }}
+        {% endfor %}
+        <input type="submit" value="Resend Confirmation" />
+    </form>
+</article>
+{% endblock %}
