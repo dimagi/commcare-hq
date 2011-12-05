@@ -1,7 +1,7 @@
 import os
 import uuid
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from xml.etree import ElementTree
 
 from couchforms.util import post_xform_to_couch
@@ -12,6 +12,7 @@ from casexml.apps.case.signals import process_cases
 from dimagi.utils.dates import utcnow_sans_milliseconds
 from lxml import etree
 from dimagi.utils.parsing import json_format_datetime
+from casexml.apps.phone.restore import generate_restore_payload
 
 def bootstrap_case_from_xml(test_class, filename, case_id_override=None,
                                  referral_id_override=None):
@@ -182,3 +183,28 @@ class CaseBlock(dict):
                     raise CaseBlockError("Can't transform to XML: %s; unexpected type." % value)
         dict_to_xml(case, self)
         return case
+    
+    
+def check_user_has_case(testcase, user, case_block, should_have=True, line_by_line=True, restore_id=""):
+    case_block.attrib['xmlns'] = 'http://openrosa.org/http/response'
+    case_block = ElementTree.fromstring(ElementTree.tostring(case_block))
+    payload = ElementTree.fromstring(generate_restore_payload(user, restore_id))
+    blocks = payload.findall('{http://openrosa.org/http/response}case')
+    case_id = case_block.findtext('{http://openrosa.org/http/response}case_id')
+    n = 0
+    for block in blocks:
+        if block.findtext('{http://openrosa.org/http/response}case_id') == case_id:
+            if should_have:
+                if line_by_line:
+                    check_xml_line_by_line(testcase, ElementTree.tostring(block), ElementTree.tostring(case_block))
+                n += 1
+                if n == 2:
+                    testcase.fail("Block for case_id '%s' appears twice in ota restore for user '%s'" % (case_id, user.username))
+            else:
+                testcase.fail("User '%s' gets case '%s' but shouldn't" % (user.username, case_id))
+    if not n and should_have:
+        testcase.fail("Block for case_id '%s' doesn't appear in ota restore for user '%s'" % (case_id, user.username))
+
+
+
+    
