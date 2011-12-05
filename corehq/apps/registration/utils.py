@@ -52,25 +52,52 @@ def request_new_domain(request, form):
 
 def send_domain_registration_email(recipient, domain_name, guid):
     DNS_name = Site.objects.get(id = settings.SITE_ID).domain
-    link = 'http://' + DNS_name + reverse('registration_confirm_domain') + guid + '/'
+    activation_link = 'http://' + DNS_name + reverse('registration_confirm_domain') + guid + '/'
+    wiki_link = 'http://wiki.commcarehq.org/display/commcarepublic/Home'
+    users_link = 'http://groups.google.com/group/commcare-users'
 
     message_plaintext = """
-You requested the new HQ domain "{domain}". To activate this domain, navigate to the following link
-{link}
-Thereafter, you'll be able to log on to your new domain with the email "{username}".
+Welcome to CommCareHQ!
+
+Please click this link:
+{activation_link}
+to activate your new domain.  You will not be able to use your domain until you have confirmed this email address.
+
+Domain name: "{domain}"
+
+Username:  "{username}"
+
+For help getting started, you can visit the CommCare Wiki, the home of all CommCare documentation.  Click this link to go directly to the guide to CommCare HQ:
+{wiki_link}
+
+We also encourage you to join the "commcare-users" google group, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list:
+{users_link}
+
+If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page.  Our developers will look into the problem and communicate with you about a solution.
+
+Thank you,
+
+The CommCareHQ Team
+
 """
 
     message_html = """
-<p>You requested the new CommCare HQ domain "{domain}".</p>
-<p>To activate this domain, click on <a href="{link}">this link</a>.</p>
-<p>If your email viewer won't permit you to click on that link, cut and paste the following link into your web browser:</p>
-<p>{link}</p>
-<p>Thereafter, you'll be able to log on to your new domain with the email "{username}".</p>
+<h1>Welcome to CommCare HQ!</h1>
+<p>Please <a href="{activation_link}">go here to activate your new domain</a>.  You will not be able to use your domain until you have confirmed this email address.</p>
+<p><strong>Domain name:</strong> {domain}</p>
+<p><strong>Username:</strong> {username}</p>
+<p>For help getting started, you can visit the <a href="{wiki_link}">CommCare Wiki</a>, the home of all CommCare documentation.
+<p>We also encourage you to join the <a href="{users_link}">commcare-users google group</a>, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list:</a>
+<p>If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page.  Our developers will look into the problem and communicate with you about a solution.</p>
+<p style="margin-top:1em">Thank you,</p>
+<p><strong>The CommCareHQ Team</strong></p>
+<p>If your email viewer won't permit you to click on the registration link above, cut and paste the following link into your web browser:</p>
+{activation_link}
 """
-    params = {"domain": domain_name, "link": link, "username": recipient}
+    params = {"domain": domain_name, "activation_link": activation_link, "username": recipient, "wiki_link": wiki_link, "users_link": users_link}
     message_plaintext = message_plaintext.format(**params)
     message_html = message_html.format(**params)
 
-    subject = 'CommCare HQ Domain Request ({domain_name})'.format(**locals())
+    subject = 'Welcome to CommCare HQ!'.format(**locals())
 
     send_HTML_email(subject, recipient, message_plaintext, message_html)
