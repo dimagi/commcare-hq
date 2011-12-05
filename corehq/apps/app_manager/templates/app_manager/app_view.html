@@ -123,6 +123,7 @@
                     customKeys.attr('disabled', 'true');
                     if (textInput.val() == 'custom-keys') {
                         textInput.val('roman');
+                        textInput.trigger('change');
                     }
                 } else {
                     customKeys.removeAttr('disabled');
@@ -137,7 +138,6 @@
             customKeysExample.hide();
             customKeysHelp.hide();
             var onChangeTextInput = function () {
-
                 if (textInput.val() == 'custom-keys') {
                     customKeysHelp.slideDown();
                 } else {
