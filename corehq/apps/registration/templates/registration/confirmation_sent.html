@@ -1,0 +1,12 @@
+{% extends "registration/base.html" %}
+{% block title %}Confirmation Email Sent{% endblock title %}
+{% block head  %}
+    {{ block.super }}
+{% endblock %}
+{% block login-content %}
+<article>
+    <h1>{{ alert_message }}</h1>
+    <p>An email has been sent to {{ request.user.email }} to confirm your account.</p>
+    {% include "registration/partials/confirmation_waiting_actions.html" %}
+</article>
+{% endblock %}

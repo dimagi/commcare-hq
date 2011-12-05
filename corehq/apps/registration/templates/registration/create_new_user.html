@@ -1,0 +1,27 @@
+{% extends "registration/base.html" %}
+
+{% block title %}Sign Up{% endblock title %}
+{% block head  %}
+    {{ block.super }}
+{% endblock %}
+{% block login-content %}
+<article>
+    <h1>Join CommCare HQ</h1>
+    <form name="form" method="post" action="{% url registration_new_user %}">
+        {% csrf_token %}
+        {% for field in form.visible_fields %}
+
+            <div>
+                {{ field.label_tag }}
+                {% if field.errors %}{{field.errors}}{% endif %}
+                <p class="helptext">{{field.help_text}}</p>
+            </div>{{ field }}
+        {% endfor %}
+        {% if form.non_field_errors %}
+            <p class="non-field-error">{{ form.non_field_errors }}</p>
+        {% endif %}
+        <input type="submit" class="sign-up" value="Sign Up" />
+    </form>
+</article>
+{% endblock %}
+     

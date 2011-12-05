@@ -33,7 +33,7 @@ def register_user(request):
             form = NewWebUserRegistrationForm() # An unbound form
 
         vals = dict(form = form)
-        return render_to_response(request, 'registration/new_user.html', vals)
+        return render_to_response(request, 'registration/create_new_user.html', vals)
 
 
 @transaction.commit_on_success
@@ -47,7 +47,7 @@ def register_domain(request):
     domains_for_user = Domain.all_for_user(request.user)
     if len(domains_for_user) > 0:
         vals = dict(requested_domain=domains_for_user[0])
-        return render_to_response(request, 'registration/waiting_confirmation.html', vals)
+        return render_to_response(request, 'registration/confirmation_waiting.html', vals)
 
     if request.method == 'POST': # If the form has been submitted...
         form = FirstTimeDomainRegistrationForm(request.POST) # A form bound to the POST data
@@ -63,13 +63,13 @@ def register_domain(request):
 
             request_new_domain(request, form)
 
-            vals = dict(alert_message="Thank you for requesting the domain %s on CommCare HQ." % form.cleaned_data['domain_name'])
-            return render_to_response(request, 'registration/email_sent.html', vals)
+            vals = dict(alert_message="Request sent.")
+            return render_to_response(request, 'registration/confirmation_sent.html', vals)
     else:
         form = FirstTimeDomainRegistrationForm() # An unbound form
 
     vals = dict(form = form)
-    return render_to_response(request, 'registration/first_domain.html', vals)
+    return render_to_response(request, 'registration/domain_request.html', vals)
 
 @transaction.commit_on_success
 @login_required_late_eval_of_LOGIN_URL
@@ -88,39 +88,39 @@ def resend_confirmation(request):
                 return render_to_response(request, 'error.html', vals)
             else:
                 vals = dict(alert_message="Email sent.")
-                return render_to_response(request, 'registration/email_sent.html', vals)
+                return render_to_response(request, 'registration/confirmation_sent.html', vals)
     else:
         form = ResendConfirmationEmailForm() # An unbound form
 
     vals = dict(form = form)
-    return render_to_response(request, 'registration/resend_confirmation.html', vals)
+    return render_to_response(request, 'registration/confirmation_resend.html', vals)
 
 @transaction.commit_on_success
 def confirm_domain(request, guid=None):
     # Did we get a guid?
     vals = {}
     if guid is None:
-        vals['message_title'] = 'A domain activation key was not provided.'
-        vals['message_body'] = 'If you think this is an error, please contact the system administrator.'
+        vals['message_title'] = 'Missing Activation Key'
+        vals['message_body'] = 'A domain activation key was not provided. If you think this is an error, please contact the system administrator.'
         vals['is_error'] = True
-        return render_to_response(request, 'registration/confirmation_message.html', vals)
+        return render_to_response(request, 'registration/confirmation_complete.html', vals)
 
     # Does guid exist in the system?
     reqs = RegistrationRequest.objects.filter(activation_guid=guid)
     if len(reqs) != 1:
-        vals['message_title'] = 'The domain activation key "%s" provided is invalid.' % guid
-        vals['message_body'] = 'If you think this is invalid, please contact the system administrator.'
+        vals['message_title'] = 'Invalid Activation Key'
+        vals['message_body'] = 'The domain activation key "%s" provided is invalid. If you think this is an error, please contact the system administrator.'  % guid
         vals['is_error'] = True
-        return render_to_response(request, 'registration/confirmation_message.html', vals)
+        return render_to_response(request, 'registration/confirmation_complete.html', vals)
 
     # Has guid already been confirmed?
     req = reqs[0]
     if req.domain.is_active:
         assert(req.confirm_time is not None and req.confirm_ip is not None)
-        vals['message_title'] = 'The domain %s has already been activated.' % req.domain.name
-        vals['message_body'] = 'No further validation is required.'
+        vals['message_title'] = 'Already Activated'
+        vals['message_body'] = 'The domain %s has already been activated. No further validation is required.' % req.domain.name
         vals['is_error'] = False
-        return render_to_response(request, 'registration/confirmation_message.html', vals)
+        return render_to_response(request, 'registration/confirmation_complete.html', vals)
 
     # Set confirm time and IP; activate domain and new user who is in the
     req.confirm_time = datetime.utcnow()
@@ -129,7 +129,7 @@ def confirm_domain(request, guid=None):
     req.domain.save()
     req.save()
 
-    vals['message_title'] = 'The domain %s has been successfully activated.' % req.domain.name
-    vals['message_body'] = 'Thank you for taking the time to confirm your email address.'
+    vals['message_title'] = 'Domain Activation Complete'
+    vals['message_body'] = 'The domain %s has been successfully activated. Thank you for taking the time to confirm your email address.' % req.domain.name
     vals['is_error'] = False
-    return render_to_response(request, 'registration/confirmation_message.html', vals)
+    return render_to_response(request, 'registration/confirmation_complete.html', vals)
