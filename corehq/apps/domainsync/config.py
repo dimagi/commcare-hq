@@ -73,7 +73,7 @@ class DomainSyncConfig():
         transforms = []
         # always sync certain global documents
         if "doc_type" in doc and doc["doc_type"] == "CommCareBuild":
-            return DocumentTransform(doc, self.old_database)
+            return [DocumentTransform(doc, self.old_database)]
         
         for domain in _extract_domains(doc):
             if domain in self.mapping:
