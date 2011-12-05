@@ -66,9 +66,7 @@ class Command(LabelCommand):
             
             except Exception, e:
                 logging.exception("problem in domain sync for line: %s\n%s" % (line, e))
-                raise                
-                
-        
+
         # Go into receive loop waiting for any new docs to come in
         while True:
             try:
