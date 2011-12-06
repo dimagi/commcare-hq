@@ -21,7 +21,8 @@ from django_digest.decorators import httpdigest
 from .googlecharts import get_punchcard_url
 from .calc import punchcard
 from corehq.apps.domain.decorators import login_and_domain_required
-from dimagi.utils.couch.pagination import CouchPaginator, ReportBase
+from dimagi.utils.couch.pagination import CouchPaginator, ReportBase,\
+    LucenePaginator
 import couchforms.views as couchforms_views
 from django.contrib import messages
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
@@ -577,6 +578,7 @@ def case_list(request, domain):
     context['report'].update({
         "headers": headers,
     })
+    context.update({"filter": settings.LUCENE_ENABLED })
     return render_to_response(request, "reports/case_list.html", context)
 
 @login_and_domain_required
@@ -590,7 +592,14 @@ def paging_case_list(request, domain, case_type, individual):
                     (reverse('case_details', args=[domain, case_id]),
                      case_name)
 
-        case = CommCareCase.wrap(row["doc"])
+        if "doc" in row:
+            case = CommCareCase.wrap(row["doc"])
+        elif "id" in row:
+            case = CommCareCase.get(row["id"])
+        else:
+            raise ValueError("Can't construct case object from row result %s" % row)                            
+        
+        assert(case.domain == domain)
         return ([] if case_type else [case.type]) + [
             case_data_link(row['id'], case.name),
             user_id_to_username(case.user_id),
@@ -600,13 +609,7 @@ def paging_case_list(request, domain, case_type, individual):
         ]
 
     key = [domain, case_type or {}, individual or {}]
-    
-    paginator = CouchPaginator(
-        "hqcase/all_cases",
-        view_to_table,
-        search=False,
-        use_reduce_to_count=True,
-        view_args=dict(
+    view_args=dict(
             reduce=False,
             include_docs=True,
             # this is horrible, but the paginator currently automatically
@@ -614,8 +617,39 @@ def paging_case_list(request, domain, case_type, individual):
             startkey=key + [{}],
             endkey=key,
         )
+    
+    search_key = request.REQUEST.get("sSearch", "")
+    if search_key:
+        assert(settings.LUCENE_ENABLED)
+        
+        # force the search key to include the other defaults + params
+        search_key = "%s AND domain:%s" % (search_key, domain)
+        if case_type:
+            search_key = "%s AND type:%s" % (search_key, case_type)
+        if individual:
+            search_key = "%s AND user_id:%s" % (search_key, individual)
+        
+        paginator = LucenePaginator("case/search", view_to_table)
+        
+        # hackity hack - get the total by doing what the other paginator
+        # would have done 
+        view_args.update(descending=True, reduce=True, group_level=0, 
+                         include_docs=False, skip=0, limit=None)
+        total_rows = (
+            get_db().view("hqcase/all_cases", **view_args).one() or {'value': 0}
+        )['value']
+        
+        return paginator.get_ajax_response(request, search_key, extras={"iTotalRecords": total_rows})
+    
+    paginator = CouchPaginator(
+        "hqcase/all_cases",
+        view_to_table,
+        search=False,
+        use_reduce_to_count=True,
+        view_args=view_args
     )
     return paginator.get_ajax_response(request)
+
 
 @login_and_domain_required
 def case_details(request, domain, case_id):
