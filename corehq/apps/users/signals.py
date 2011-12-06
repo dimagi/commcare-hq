@@ -6,6 +6,7 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 
 import corehq.apps.users.xml as xml
 from receiver.signals import successful_form_received, ReceiverResult, Certainty
+from casexml.apps.phone.xml import USER_REGISTRATION_XMLNS
 
 # Signal that syncs django_user => couch_user
 def django_user_post_save_signal(sender, instance, created, **kwargs):
@@ -22,8 +23,6 @@ If so, we need to check for a user created via Case 3 and link them to this acco
 automatically
 """
 
-REGISTRATION_XMLNS = "http://openrosa.org/user-registration"
-
 def create_user_from_commcare_registration(sender, xform, **kwargs):
     """
     # this comes in as xml that looks like:
@@ -35,7 +34,7 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
     # <registering_phone_id>NRPHIOUSVEA215AJL8FFKGTVR</registering_phone_id>
     # <user_data> ... some custom stuff </user_data>
     """
-    if xform.xmlns != REGISTRATION_XMLNS:
+    if xform.xmlns != USER_REGISTRATION_XMLNS:
         return False
     try:
         couch_user = CommCareUser.create_from_xform(xform)

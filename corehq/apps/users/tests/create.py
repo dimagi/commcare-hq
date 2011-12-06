@@ -2,10 +2,10 @@ from datetime import datetime
 from django.test import TestCase
 from corehq.apps.users.util import format_username
 from couchforms.models import XFormInstance
-from corehq.apps.users.signals import REGISTRATION_XMLNS
 from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
 from dimagi.utils.dates import force_to_datetime
 from django.contrib.auth.models import User
+from casexml.apps.phone.xml import USER_REGISTRATION_XMLNS
 
 
 class CreateTestCase(TestCase):
@@ -23,7 +23,7 @@ class CreateTestCase(TestCase):
         self.xform.form['registering_phone_id'] = self.registering_device_id = '67QQ86GVH8CCDNSCL0VQVKF7A'
         self.xform.form['user_data'] = {'data': [{'@key': 'user_type', '#text': 'normal'}]}
         self.xform.domain = self.domain = 'mock'
-        self.xform.xmlns = REGISTRATION_XMLNS
+        self.xform.xmlns = USER_REGISTRATION_XMLNS
         
     def testCreateBasicWebUser(self):
         """ 

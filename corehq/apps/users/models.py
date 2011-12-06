@@ -496,11 +496,16 @@ class CommCareUser(CouchUser):
         self.device_ids = _add_to_list(self.device_ids, device_id, default)
 
     def to_casexml_user(self):
-        return CaseXMLUser(user_id=self.userID,
+        user = CaseXMLUser(user_id=self.userID,
                            username=self.raw_username,
                            password=self.password,
                            date_joined=self.date_joined,
                            user_data=self.user_data)
+
+        def get_owner_ids():
+            return self.get_owner_ids()
+        user.get_owner_ids = get_owner_ids
+        return user
 
     def get_forms(self):
         return XFormInstance.view('couchforms/by_user',
