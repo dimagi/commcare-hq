@@ -272,6 +272,8 @@ COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/
 COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables/js/jquery.dataTables.min.js")
 COUCHLOG_THRESHOLD = logging.WARNING
 
+# couchlog/case search
+LUCENE_ENABLED = False
 
 # sofabed
 FORMDATA_MODEL = 'hqsofabed.HQFormData'  
