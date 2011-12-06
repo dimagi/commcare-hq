@@ -3,8 +3,8 @@
 {% load hq_shared_tags %}
 {% block js %}{{ block.super }}
     {% if app.doc_type == "Application" %}
-        <script src="{{ STATIC_URL }}app_manager/js/commcareProperties.js?version=3"></script>
-        <script src="{{ STATIC_URL }}translations/js/translations.js?version=4"></script>
+        <script src="{% static 'app_manager/js/commcareProperties.js' %}"></script>
+        <script src="{% static 'translations/js/translations.js' %}"></script>
     {% endif %}
 {% endblock %}
 {% block js-inline %}
@@ -33,7 +33,8 @@
                     saveButtonHolder = $('#commcare-settings .save-button-holder');
                 $.get('{% url corehq.apps.app_manager.views.commcare_profile domain app.id %}', function (initialValues) {
                     initialValues = JSON.parse(initialValues);
-                    $.get('{{ STATIC_URL }}app_manager/json/custom-commcare-properties-1_1.json', function (profile_spec) {
+                    $.get('{% static "app_manager/json/custom-commcare-properties.json" %}', function (profile_spec) {
+
                         var settings = CommcareSettings.wrap(
                                 profile_spec,
                                 initialValues,
@@ -181,15 +182,17 @@
         #supported-languages {
             position: relative;
             z-index: 1;
+            vertical-align: middle;
         }
         #default-language-help {
             position: absolute;
             /*width: 100%;*/
             border: 1px solid #CCC;
-            padding: .5em;
+            padding: .5em 1em;
             padding-left: 150px;
-            left: 40px;
-            background-color: #DDD;
+            left: 35px;
+            background-color: #FFF;
+            border-radius: 40px;
         }
     </style>
 {% endblock %}

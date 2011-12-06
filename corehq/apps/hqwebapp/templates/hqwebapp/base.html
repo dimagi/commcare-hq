@@ -4,13 +4,13 @@
         <meta charset="utf-8"/>
         <title>CommCare HQ</title>
 
-        <link rel="shortcut icon" href="{{ STATIC_URL }}hqwebapp/img/favicon2.png" />
+        <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
 
-        <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/reset.css"/>
-        <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/javascripts/jquery-ui/jquery-ui-redmond-1.8.16.css"/>
+        <link rel="stylesheet" href="{% static 'hqwebapp/css/reset.css' %}"/>
+        <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
         <link rel="stylesheet" href="{% static 'hqwebapp/css/core.css' %}"/>
 
-        <script src="{{ STATIC_URL }}hqwebapp/javascripts/jquery-1.6.4.min.js"></script>
+        <script src="{% static 'hqwebapp/javascripts/jquery-1.6.4.min.js' %}"></script>
 
         {% block head %}
         {% endblock %}
@@ -21,7 +21,7 @@
     <body class="fixed-width">
         <header>
             <hgroup>
-                <h1><a href="{% url homepage %}"><img src="{{ STATIC_URL }}hqwebapp/img/commcare-hq-logo.png" alt="CommCare HQ" /></a></h1>
+                <h1><a href="{% url homepage %}"><img src="{% static 'hqwebapp/img/commcare-hq-logo.png' %}" alt="CommCare HQ" /></a></h1>
             </hgroup>
             {% if request.user.is_authenticated %}
                 <div id="logged-in">
@@ -144,12 +144,12 @@
         </footer>
 
         {% block js %}
-        <script src="{{ STATIC_URL }}hqwebapp/javascripts/jquery-ui/jquery-ui-1.8.16.min.js"></script>
-        <script src="{{ STATIC_URL }}hqwebapp/js/jquery.cookie.js"></script>
-        <script src="{{ STATIC_URL }}hqwebapp/js/sugar.js"></script>
-        <script src="{{ STATIC_URL }}hqwebapp/js/main.js?version=10"></script>
-        <script src="{{ STATIC_URL }}hqwebapp/js/shield.js?version=3"></script>
-        <script src="{{ STATIC_URL }}hqwebapp/js/help.js?version=2"></script>
+        <script src="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/jquery.cookie.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/sugar.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/shield.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/help.js' %}"></script>
         {% endblock %}
         
         {% block js-inline %}

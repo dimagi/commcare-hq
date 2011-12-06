@@ -162,7 +162,7 @@ abbr {
 .fixed-width header hgroup,
 .fixed-width header nav,
 .fixed-width header #logged-in{
-    width: 960px;
+    width: 1000px;
     margin: auto;
     position: relative;
 }

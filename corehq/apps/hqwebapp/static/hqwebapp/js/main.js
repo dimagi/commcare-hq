@@ -18,11 +18,13 @@ var eventize = function (that) {
         var i;
         if (events[tag] !== undefined) {
             for (i = 0; i < events[tag].length; i += 1) {
+                console.log(events[tag][i]);
                 events[tag][i].apply(that, [e]);
             }
         }
         return that;
     };
+    return that;
 };
 
 var COMMCAREHQ = (function () {

@@ -1,15 +1,45 @@
 /*globals COMMCAREHQ */
 (function () {
     'use strict';
-    COMMCAREHQ.app_manager = {};
+    COMMCAREHQ.app_manager = eventize({});
+
+    COMMCAREHQ.app_manager.setCommcareVersion = function (version) {
+        COMMCAREHQ.app_manager.commcareVersion = version;
+        COMMCAREHQ.app_manager.fire('change:commcareVersion', {commcareVersion: version});
+    };
+    COMMCAREHQ.app_manager.checkCommcareVersion = function (version) {
+        function versionGE(commcareVersion1, commcareVersion2) {
+            function parse(version) {
+                version = version.split('.');
+                version = [parseInt(version[0]), parseInt(version[1])];
+                return version;
+            }
+            commcareVersion1 = parse(commcareVersion1);
+            commcareVersion2 = parse(commcareVersion2);
+            if (commcareVersion1[0] > commcareVersion2[0]) {
+                return true;
+            } else if (commcareVersion1[0] === commcareVersion2[0]) {
+                return commcareVersion1[1] >= commcareVersion2[1];
+
+            } else {
+                return false;
+            }
+        }
+        return versionGE(COMMCAREHQ.app_manager.commcareVersion, version);
+    };
     COMMCAREHQ.app_manager.init = function (args) {
         var lastAppVersion = args.lastAppVersion,
             appVersion = args.appVersion,
             edit = args.edit;
+        COMMCAREHQ.app_manager.setCommcareVersion(args.commcareVersion);
 
         function updateDOM(update) {
-            if (update.hasOwnProperty('.variable-version')) {
-                appVersion = update['.variable-version'];
+            if (update.hasOwnProperty('app-version')) {
+                appVersion = update['app-version'];
+                $('.variable-version').text(appVersion);
+            }
+            if (update.hasOwnProperty('commcare-version')) {
+                COMMCAREHQ.app_manager.setCommcareVersion(update['commcare-version']);
             }
             COMMCAREHQ.updateDOM(update);
         }
