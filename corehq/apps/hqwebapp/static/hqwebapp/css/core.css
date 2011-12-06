@@ -158,7 +158,7 @@ abbr {
 	cursor: help;
 }
 
-.fixed-width #main,
+#main,
 .fixed-width header hgroup,
 .fixed-width header nav,
 .fixed-width header #logged-in{
