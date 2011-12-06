@@ -6,14 +6,14 @@
 {% load i18n %}
 {% block head %}{{ block.super }}
     {% include "imports/jqmodal.html" %}
-    <link rel="stylesheet" href="{{ STATIC_URL }}app_manager/css/app_manager.css?version=3"/>
+    <link rel="stylesheet" href="{% static 'app_manager/css/app_manager.css' %}"/>
 {% endblock %}
 {% block js %}{{ block.super }}
-    <script src="{{ STATIC_URL }}hqwebapp/js/ui-element.js?version=2"></script>
-    <script src="{{ STATIC_URL }}langcodes/js/langcodes.js"></script>
-    <script src="{{ STATIC_URL }}hqwebapp/js/dropdown.js"></script>
-    <script src="{{ STATIC_URL }}app_manager/js/app_manager.js?version=6"></script>
-    <script src="{{ STATIC_URL }}hqwebapp/javascripts/jquery.textchange.min.js"></script>
+    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
+    <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/dropdown.js' %}"></script>
+    <script src="{% static 'app_manager/js/app_manager.js' %}"></script>
+    <script src="{% static 'hqwebapp/javascripts/jquery.textchange.min.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     <script>
@@ -70,7 +70,8 @@
         COMMCAREHQ.app_manager.init({
             lastAppVersion: {% if saved_apps.0.version %}{{ saved_apps.0.version }}{% else %}-1{% endif %},
             appVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
-            edit: {{ edit|JSON }}
+            edit: {{ edit|JSON }},
+            commcareVersion: {{ app.commcare_minor_release|JSON }}
         });
     });
     </script>

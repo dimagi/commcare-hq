@@ -1,31 +1,12 @@
 /*globals $, console, JSON */
 
-var eventize = function (that) {
-    var events = {};
-    that.on = function (tag, callback) {
-        if (events[tag] === undefined) {
-            events[tag] = [];
-        }
-        events[tag].push(callback);
-        return that;
-    };
-    that.fire = function (tag, e) {
-        var i;
-        if (events[tag] !== undefined) {
-            for (i = 0; i < events[tag].length; i += 1) {
-                events[tag][i].apply(that, [e]);
-            }
-        }
-        return that;
-    };
-};
-
 var CommcareProperty = {
     wrap: function (json, initialValue, $home, settings, saveURL, edit) {
         var that = typeof json === 'object' ? json : JSON.parse(json),
             value,
             isEnabled,
             $input,
+            $disabledMessage,
             $tr = $("<tr />"),
             needsToBeSaved = false,
             initialValue = initialValue || null,
@@ -65,7 +46,7 @@ var CommcareProperty = {
                 };
 
             },
-            enabled = function (v) {
+            enabled = function (v, message) {
                 if (v === undefined) {
                     return isEnabled;
                 } else {
@@ -73,12 +54,14 @@ var CommcareProperty = {
                     if (isEnabled) {
                         if (edit) {
                             $input.removeAttr('disabled');
+                            $disabledMessage.html('');
                         } else {
                             $tr.show();
                         }
                     } else {
                         if (edit) {
                             $input.attr('disabled', 'true');
+                            $disabledMessage.html(message);
                         } else {
                             $tr.hide();
                         }
@@ -138,6 +121,7 @@ var CommcareProperty = {
                 } else {
                     $input = $("<span />").appendTo($td);
                 }
+                $disabledMessage = $('<span style="display: inline-block;"/>').appendTo($td);
                 that.val(initialValue);
                 initRequires();
                 $td.appendTo($tr);
@@ -230,6 +214,21 @@ var CommcareSettings = {
                         that.saveButton.fire('change');
                     });
                 }
+                (function () {
+                    var updateAvailableProperties = function () {
+                        var i, version;
+                        for (i = 0; i < that.length; i += 1) {
+                            version = that[i].since || "1.1";
+                            that[i].enabled(
+                                COMMCAREHQ.app_manager.checkCommcareVersion(version),
+                                '<span class="ui-icon ui-icon-arrowthick-1-w"></span>Upgrade to CommCare ' + version + '!'
+                            );
+                        }
+                    };
+                    updateAvailableProperties();
+                    COMMCAREHQ.app_manager.on('change:commcareVersion', updateAvailableProperties);
+                }());
+
                 return $.unique($homes);
             },
             serialize = function () {
@@ -262,6 +261,7 @@ var CommcareSettings = {
         eventize(that);
         that.render = render;
         that.serialize = serialize;
+        
         return that;
     }
 };

@@ -8,6 +8,7 @@ function start_datatables(elem){
             "bJQueryUI": true
         },
             sAjaxSource = $(this).data('source'),
+            filter = $(this).data('filter'),
             aoColumns = [],
             $columns = $(this).find('tr').first().find('th'),
             i;
@@ -18,7 +19,7 @@ function start_datatables(elem){
                 "bServerSide": true,
                 "sAjaxSource": sAjaxSource,
                 "bSort": false,
-                "bFilter": false
+                "bFilter": filter
             };
         }
         for (i = 0; i < $columns.length; i += 1) {

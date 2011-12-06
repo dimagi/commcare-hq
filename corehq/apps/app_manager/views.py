@@ -1067,6 +1067,7 @@ def edit_app_attr(req, domain, app_id, attr):
     if should_edit("build_spec"):
         build_spec = req.POST['build_spec']
         app.build_spec = BuildSpec.from_string(build_spec)
+        resp['update']['commcare-version'] = app.commcare_minor_release
     if should_edit("show_user_registration"):
         app.show_user_registration = bool(json.loads(req.POST['show_user_registration']))
     if should_edit("use_custom_suite"):

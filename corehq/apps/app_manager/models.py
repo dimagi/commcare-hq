@@ -68,7 +68,7 @@ def load_default_user_registration():
         return f.read()
 
 def load_custom_commcare_properties():
-    with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'custom-commcare-properties-1_1.json')) as f:
+    with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'custom-commcare-properties.json')) as f:
         return json.load(f)
 
 def authorize_xform_edit(view):
@@ -580,7 +580,7 @@ class VersionedDoc(Document):
         if response_json is not None:
             if 'update' not in response_json:
                 response_json['update'] = {}
-            response_json['update']['.variable-version'] = self.version
+            response_json['update']['app-version'] = self.version
     def save_copy(self):
         cls = self.__class__
         copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True).all()
@@ -720,6 +720,11 @@ class ApplicationBase(VersionedDoc):
 #        version, build_number = current_builds.TAG_MAP[self.commcare_tag]
 #        return CommCareBuild.get_build(version, build_number)
         return self.build_spec.get_build()
+
+    @property
+    def commcare_minor_release(self):
+        """This is mostly just for views"""
+        return self.build_spec.minor_release()
 
     def get_build_label(self):
         """This is a helper to look up a human readable name for a build tag"""
