@@ -102,69 +102,77 @@
             <h1>{{ report.name|default:"Unknown Report"|safe }}</h1>
         </div>
         <div id="report_header">
-            {% if show_dates or show_users or show_groups or show_forms %}
+            {% if show_dates or show_users or show_groups or show_forms or custom_fields %}
             <form method="get" id="paramSelectorForm">
-            <fieldset>
-            {% if show_users %}
-                <label for="individual_select">Select a CHW: </label>
-                <select id="individual_select" name="individual">
-                    <option value=''>All CHWs</option>
-                    {% for user in users %}
-                        {% ifchanged user.is_active %}
-                            {% if not user.is_active %}<optgroup label="Inactive">{% endif %}
-                        {% endifchanged %}
-                        <option {% if user.user_id == individual %}selected="true"{% endif %} value="{{ user.user_id }}">{{ user.raw_username }}</option>
+                <fieldset>
+                {% if show_users %}
+                    <label for="individual_select">Select a CHW: </label>
+                    <select id="individual_select" name="individual">
+                        <option value=''>All CHWs</option>
+                        {% for user in users %}
+                            {% ifchanged user.is_active %}
+                                {% if not user.is_active %}<optgroup label="Inactive">{% endif %}
+                            {% endifchanged %}
+                            <option {% if user.user_id == individual %}selected="true"{% endif %} value="{{ user.user_id }}">{{ user.raw_username }}</option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
+                {% if show_case_types and case_types|length != 1 %}
+                    <label for="case_type_select">Select a Case Type</label>
+                    <select id="case_type_select" name="case_type" data-value="{{ case_type }}">
+                        <option value="">
+                            All Case Types ({{ n_all_case_types.open }}/{{ n_all_case_types.all }} open)
+                        </option>
+                        {% for i_case_type, n_cases in case_types.items %}
+                            <option value="{{ i_case_type }}">{{ i_case_type }} ({{ n_cases.open }}/{{ n_cases.all }} open)</option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
+                {% if show_groups %}
+                    <label for="group_select">Select a Group</label>
+                    <select id="group_select" name="group" data-value="{{ group.get_id }}">
+                        <option value="">
+                            Everybody
+                        </option>
+                        {% for group in groups %}
+                            <option value="{{ group.get_id }}">{{ group.name }}</option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
+                {% if show_forms %}
+                    <label for="form_select">Choose Form: </label>
+                    <select id="form_select" name="form">
+                        {% if all_forms_selectable %}
+                        <option  value=''>All Forms</option>
+                        {% else %}
+                        <option  value='' style="color:#777;">Select a Form</option>
+                        {% endif %}
+                        {% for form in forms %}
+                            <option {% if form.xmlns == selected_form %}selected="true"{% endif %} value="{{ form.xmlns }}">{{ form.display }}</option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
+                </fieldset>
+                {% if show_dates %}
+                        <label for="startdate">From Date:</label>
+                        <input type="text" id="startdate" name="startdate" class="date-picker" value="{{ datespan.startdate|date:"Y-m-d" }}">
+                       <label for="enddate">To Date:</label>
+                        <input type="text" id="enddate" name="enddate" class="date-picker" value="{{ datespan.enddate|date:"Y-m-d" }}">
+                       {# oddly enough, this is the only form that needs or has a submit button #}
+                       <input type="submit" value="Go!" />
+    {#                <p>#}
+    {#                    <a href="#" id="previous_date">Previous week</a> | <a href="#" id="next_date">Next Week</a>#}
+    {#                </p>#}
+                {% endif %}
+                {% if custom_fields %}
+                    {% for field in custom_fields %}
+                        {{ field|safe }}
                     {% endfor %}
-                </select>
-            {% endif %}
-            {% if show_case_types and case_types|length != 1 %}
-                <label for="case_type_select">Select a Case Type</label>
-                <select id="case_type_select" name="case_type" data-value="{{ case_type }}">
-                    <option value="">
-                        All Case Types ({{ n_all_case_types.open }}/{{ n_all_case_types.all }} open)
-                    </option>
-                    {% for i_case_type, n_cases in case_types.items %}
-                        <option value="{{ i_case_type }}">{{ i_case_type }} ({{ n_cases.open }}/{{ n_cases.all }} open)</option>
-                    {% endfor %}
-                </select>
-            {% endif %}
-            {% if show_groups %}
-                <label for="group_select">Select a Group</label>
-                <select id="group_select" name="group" data-value="{{ group.get_id }}">
-                    <option value="">
-                        Everybody
-                    </option>
-                    {% for group in groups %}
-                        <option value="{{ group.get_id }}">{{ group.name }}</option>
-                    {% endfor %}
-                </select>
-            {% endif %}
-            {% if show_forms %}
-                <label for="form_select">Choose Form: </label>
-                <select id="form_select" name="form">
-                    {% if all_forms_selectable %}
-                    <option  value=''>All Forms</option>
-                    {% else %}
-                    <option  value='' style="color:#777;">Select a Form</option>
-                    {% endif %}
-                    {% for form in forms %}
-                        <option {% if form.xmlns == selected_form %}selected="true"{% endif %} value="{{ form.xmlns }}">{{ form.display }}</option>
-                    {% endfor %}
-                </select>
-            {% endif %}
-            </fieldset>
-            {% if show_dates %}
-                    <label for="startdate">From Date:</label>
-                    <input type="text" id="startdate" name="startdate" class="date-picker" value="{{ datespan.startdate|date:"Y-m-d" }}">
-                   <label for="enddate">To Date:</label>
-                    <input type="text" id="enddate" name="enddate" class="date-picker" value="{{ datespan.enddate|date:"Y-m-d" }}">
-                   {# oddly enough, this is the only form that needs or has a submit button #}
-                   <input type="submit" value="Go!" />
-{#                <p>#}
-{#                    <a href="#" id="previous_date">Previous week</a> | <a href="#" id="next_date">Next Week</a>#}
-{#                </p>#}
-            {% endif %}
-                </form>
+                {% endif %}
+                {% if custom_fields or show_dates %}
+                    <input type="submit" value="Go!" />
+                {% endif %}
+            </form>
             {% endif %}
         </div>
         {% if show_time_notice %}{% include "hqwebapp/partials/time-notice.html"%}{% endif %}
