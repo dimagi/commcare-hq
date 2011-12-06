@@ -159,7 +159,7 @@ class LucenePaginator(object):
                 if row is not None:
                     all_json.append(row)
             total_rows = results.total_rows
-        except RequestFailed, e:
+        except RequestFailed:
             # just ignore poorly formatted search terms for now
             total_rows = 0
             
