@@ -41,7 +41,10 @@ def export_cases_and_referrals(cases, workbook, users=None):
             case_row = {'dynamic_properties': {}}
             for key in case_static_keys:
                 if key == 'username':
-                    case_row[key] = by_user_id[case.user_id].raw_username
+                    try:
+                        case_row[key] = by_user_id[case.user_id].raw_username
+                    except TypeError:
+                        case_row[key] = ''
                 else:
                     case_row[key] = getattr(case, key)
             for key in case.dynamic_properties():
