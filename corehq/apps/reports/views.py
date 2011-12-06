@@ -623,7 +623,7 @@ def paging_case_list(request, domain, case_type, individual):
         assert(settings.LUCENE_ENABLED)
         
         # force the search key to include the other defaults + params
-        search_key = "%s AND domain:%s" % (search_key, domain)
+        search_key = "(%s) AND domain:%s" % (search_key, domain)
         if case_type:
             search_key = "%s AND type:%s" % (search_key, case_type)
         if individual:
