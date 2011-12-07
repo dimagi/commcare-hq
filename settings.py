@@ -362,7 +362,8 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'formplayer',
         'xep_hq_server',
         'phonelog',
-        'pathfinder'
+        'pathfinder',
+        'registration'
     ]
 ]
 
