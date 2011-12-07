@@ -1,10 +1,9 @@
 from __future__ import absolute_import
 from receiver.signals import successful_form_received, ReceiverResult,\
     Certainty
-from casexml.apps.phone import xml as xml
+from receiver import xml as xml
 from datetime import datetime
 from dimagi.utils.couch.database import get_db
-import logging
 
 def send_default_response(sender, xform, **kwargs):
     """
