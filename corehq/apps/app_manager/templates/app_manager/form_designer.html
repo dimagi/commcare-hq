@@ -96,6 +96,14 @@
 
 {% block app-content %}
     <div id="breadcrumbs">
+        {% if not is_user_registration %}
+            <form method="POST" id="purcforms-link" action="{% url xep_hq_server.views.initiate form.get_unique_id %}">
+                {% csrf_token %}
+                <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
+                <input type="hidden" name="editor" value="{{ editor_url }}" />
+                <a class="submit" href="#">Looking for the old form designer?</a>
+            </form>
+        {% endif %}
         <ul>
             <li><a href="{% url view_app domain app.id %}?edit=true">{{ app.name }}</a></li>
             {% if is_user_registration %}
@@ -107,13 +115,5 @@
             <li>Form Editor</li>
         </ul>
     </div>
-    {% if not is_user_registration %}
-        <form method="POST" id="purcforms-link" action="{% url xep_hq_server.views.initiate form.get_unique_id %}">
-            {% csrf_token %}
-            <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
-            <input type="hidden" name="editor" value="{{ editor_url }}" />
-            <a class="submit" href="#">Looking for the old form designer?</a>
-        </form>
-    {% endif %}
     <div id="formdesigner"></div>
 {% endblock %}
