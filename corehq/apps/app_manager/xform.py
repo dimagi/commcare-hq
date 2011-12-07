@@ -533,8 +533,9 @@ class XForm(WrappedNode):
                     })
                     add_bind({
                         "nodeset":"case/referral/followup_date",
-                        "type":"date",
-                        "calculate": self.resolve_path(actions['open_referral'].get_followup_date())
+                        "type":"xsd:date",
+                        # trust get_followup_date to return xpath with absolute paths
+                        "calculate": actions['open_referral'].get_followup_date()
                     })
                     add_bind({
                         "nodeset":"case/referral/open/referral_types",
@@ -564,7 +565,8 @@ class XForm(WrappedNode):
                         add_bind({
                             "nodeset": "case/referral/followup_date",
                             "type":"xsd:date",
-                            "calculate": self.resolve_path(actions['update_referral'].get_followup_date()),
+                            # trust get_followup_date to return xpath with absolute paths
+                            "calculate": actions['update_referral'].get_followup_date(),
                         })
                 if 'close_referral' in actions:
                     referral_update[__("date_closed")]
