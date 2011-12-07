@@ -500,6 +500,11 @@ input[type='text'].url {
     min-width: 500px;
 }
 
+input[disabled] {
+    background-color: #DDD !important;
+    border: 1px solid #CCC;
+}
+
 input.short {
     width: 50px;
 }

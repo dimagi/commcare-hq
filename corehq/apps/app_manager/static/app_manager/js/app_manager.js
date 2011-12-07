@@ -31,7 +31,6 @@
         var lastAppVersion = args.lastAppVersion,
             appVersion = args.appVersion,
             edit = args.edit;
-        COMMCAREHQ.app_manager.setCommcareVersion(args.commcareVersion);
 
         function updateDOM(update) {
             if (update.hasOwnProperty('app-version')) {
@@ -302,5 +301,29 @@
                 return false;
             }
         });
+
+        COMMCAREHQ.app_manager.on('change:commcareVersion', function () {
+            console.log('one');
+            $('.commcare-feature').each(function () {
+                console.log('two');
+                var version = '' + $(this).data('since-version') || '1.1',
+                    upgradeMessage = $('<div class="upgrade-message"/>'),
+                    area = $(this);
+
+                console.log(version);
+                if (COMMCAREHQ.app_manager.checkCommcareVersion(version)) {
+                    area.find('upgrade-message').remove();
+                    area.find('*').removeAttr('disabled');
+                } else {
+                    area.find('*').attr('disabled', 'true');
+                    upgradeMessage.append(
+                        $('<span/>').addClass('ui-icon ui-icon-alert')
+                    ).append(
+                        $('<span/>').text('Requires CommCare ' + version)
+                    ).appendTo(area);
+                }
+            });
+        });
+        COMMCAREHQ.app_manager.setCommcareVersion(args.commcareVersion);
     };
 }());

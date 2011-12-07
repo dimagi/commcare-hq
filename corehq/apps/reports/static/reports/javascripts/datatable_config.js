@@ -8,7 +8,7 @@ function start_datatables(elem){
             "bJQueryUI": true
         },
             sAjaxSource = $(this).data('source'),
-            filter = $(this).data('filter'),
+            filter = $(this).data('filter') || false,
             aoColumns = [],
             $columns = $(this).find('tr').first().find('th'),
             i;

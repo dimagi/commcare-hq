@@ -35,14 +35,14 @@ var SaveButton = {
     */
     init: function (options) {
         var button = {
-            $save: $('<span/>').text(COMMCAREHQ.SaveButton.message.SAVE).click(function () {
+            $save: $('<span/>').text(SaveButton.message.SAVE).click(function () {
                 button.fire('save');
             }).button(),
-            $retry: $('<span/>').text(COMMCAREHQ.SaveButton.message.RETRY).click(function () {
+            $retry: $('<span/>').text(SaveButton.message.RETRY).click(function () {
                 button.fire('save');
             }).button(),
-            $saving: $('<span/>').text(COMMCAREHQ.SaveButton.message.SAVING).button().button('disable'),
-            $saved: $('<span/>').text(COMMCAREHQ.SaveButton.message.SAVED).button().button('disable'),
+            $saving: $('<span/>').text(SaveButton.message.SAVING).button().button('disable'),
+            $saved: $('<span/>').text(SaveButton.message.SAVED).button().button('disable'),
             ui: $('<div/>').css({textAlign: 'right'}),
             setStateWhenReady: function (state) {
                 if (this.state === 'saving') {
@@ -87,7 +87,7 @@ var SaveButton = {
                 options.error = function (data) {
                     that.nextState = null;
                     that.setState('retry');
-                    alert(COMMCAREHQ.SaveButton.message.ERROR_SAVING);
+                    alert(SaveButton.message.ERROR_SAVING);
                     error.apply(this, arguments);
                 };
                 $.ajax(options);
@@ -110,7 +110,7 @@ var SaveButton = {
     },
     initForm: function ($form, options) {
         var url = $form.attr('action'),
-            button = COMMCAREHQ.SaveButton.init({
+            button = SaveButton.init({
                 unsavedMessage: options.unsavedMessage,
                 save: function () {
                     this.ajax({

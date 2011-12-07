@@ -1,9 +1,10 @@
 {% extends base_template %}
+{% load hq_shared_tags %}
 {% block head %}
     {{ block.super }}
     {% include "imports/datatables.html" %}
     {% include "imports/flot.html" %}
-    <script src="{{ STATIC_URL }}hqwebapp/js/dropdown.js"></script>
+    <script src="{% static 'hqwebapp/js/dropdown.js' %}"></script>
     <script>
         jQuery.fn.dataTableExt.oSort['title-numeric-asc']  = function(a,b) {
             var x = a.match(/title="*(-?[0-9]+)/)[1];
@@ -20,9 +21,9 @@
             return ((x < y) ?  1 : ((x > y) ? -1 : 0));
         };
     </script>
-    <script type="text/javascript" src="{{ STATIC_URL }}reports/javascripts/dropdown.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}reports/javascripts/datepicker.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}reports/javascripts/datatable_config.js"></script>
+    <script type="text/javascript" src="{% static 'reports/javascripts/dropdown.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/javascripts/datatable_config.js' %}"></script>
     {% if show_users or show_case_types  or show_groups %}
         <script>
             $(function(){

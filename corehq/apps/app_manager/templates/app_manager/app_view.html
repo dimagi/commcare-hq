@@ -217,6 +217,29 @@
                         {% endif %}
                     </td>
                 </tr>
+                <tr>
+                    <th>CommCare Version</th>
+                    <td>
+                        {% if edit %}
+                            <select name="build_spec" data-value="{{ app.build_spec.to_string }}">
+                                {% for option in commcare_build_options %}
+                                    <option value='{{ option.build.to_string }}'>
+                                        {{ option.label }}
+                                    </option>
+                                {% endfor %}
+                                {% if not is_standard_build %}
+                                    <optgroup label="Custom">
+                                        <option value='{{ app.build_spec.to_string }}'>
+                                            {{ app.build_spec.get_label }}
+                                        </option>
+                                    </optgroup>
+                                {% endif %}
+                            </select>
+                        {% else %}
+                            {{ app.get_build_label }}
+                        {% endif %}
+                    </td>
+                </tr>
             {% if app.doc_type == "RemoteApp" %}
                 <tr>
                     <th>Profile URL</th>
@@ -275,29 +298,6 @@
                 </tbody>
                 {% endif %}
             {% endif %}
-                <tr>
-                    <th>CommCare Version</th>
-                    <td>
-                        {% if edit %}
-                            <select name="build_spec" data-value="{{ app.build_spec.to_string }}">
-                                {% for option in commcare_build_options %}
-                                    <option value='{{ option.build.to_string }}'>
-                                        {{ option.label }}
-                                    </option>
-                                {% endfor %}
-                                {% if not is_standard_build %}
-                                    <optgroup label="Custom">
-                                        <option value='{{ app.build_spec.to_string }}'>
-                                            {{ app.build_spec.get_label }}
-                                        </option>
-                                    </optgroup>
-                                {% endif %}
-                            </select>
-                        {% else %}
-                            {{ app.get_build_label }}
-                        {% endif %}
-                    </td>
-                </tr>
                 <tr>
                     <th>Text Input</th>
                     <td>
