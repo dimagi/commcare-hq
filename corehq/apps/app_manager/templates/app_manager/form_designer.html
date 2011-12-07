@@ -35,7 +35,8 @@
                 iconUrl: '/static/hqwebapp/javascripts/jquery-ui/images/ui-icons_469bdd_256x240.png',
                 saveUrl: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',
                 form: {{ form.source|JSON }},
-                langs: {{ app.langs|JSON }}
+                langs: {{ app.langs|JSON }},
+                displayLanguage: {{ lang|JSON }}
             });
             formdesigner.on('form-saved', function (args) {
                 var response = JSON.parse(args.response);
