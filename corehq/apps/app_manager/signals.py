@@ -2,9 +2,8 @@ from datetime import timedelta
 from couchdbkit.exceptions import MultipleResultsFound
 from corehq.apps.app_manager.models import Application, get_app
 from corehq.apps.app_manager.success_message import SuccessMessage
-from corehq.apps.users.models import CouchUser, CommCareUser
 from receiver.signals import successful_form_received, Certainty, ReceiverResult
-from casexml.apps.phone import xml
+from receiver import xml
 from corehq.middleware import OPENROSA_ACCEPT_LANGUAGE
 
 def get_custom_response_message(sender, xform, **kwargs):
