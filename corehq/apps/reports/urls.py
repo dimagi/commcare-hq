@@ -23,7 +23,7 @@ phonelog_reports = patterns('',
         'template': 'reports/phonelog/devicelist.html',
         'context': _phonelog_context
     }),
-    url(r'^(?P<device>\w+)/$', 'phonelog.views.device_log', name="device_log", kwargs={
+    url(r'^(?P<device>[\w\-]+)/$', 'phonelog.views.device_log', name="device_log", kwargs={
         'template': 'reports/phonelog/devicelogs.html',
         'context': _phonelog_context
     }),
@@ -51,9 +51,9 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^case_data/(?P<case_id>[\w\-]+)/$', 'case_details', name="case_details"),
 
 
-    url(r'^form_data/(?P<instance_id>\w+)/$', 'form_data', name='render_form_data'),
-    url(r'^form_data/(?P<instance_id>\w+)/download/$', 'download_form', name='download_form'),
-    url(r'^form_data/(?P<instance_id>\w+)/download/(?P<attachment>[\w.-_]+)?$', 
+    url(r'^form_data/(?P<instance_id>[\w\-]+)/$', 'form_data', name='render_form_data'),
+    url(r'^form_data/(?P<instance_id>[\w\-]+)/download/$', 'download_form', name='download_form'),
+    url(r'^form_data/(?P<instance_id>[\w\-]+)/download/(?P<attachment>[\w.-_]+)?$',
         'download_attachment', name='download_attachment'),
     
     # url(r'^partial/form_data/(?P<instance_id>.*)/$', 'form_data', name='render_form_data'),
@@ -81,9 +81,9 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^excel_export_data/$', 'excel_export_data', name="excel_export_data_report"),
     
     url(r"^export/customize/$", 'custom_export', name="custom_export"),
-    url(r"^export/custom/(?P<export_id>\w+)/edit/$", 'edit_custom_export', name="edit_custom_export"),
-    url(r"^export/custom/(?P<export_id>\w+)/delete/$", 'delete_custom_export', name="delete_custom_export"),
-    url(r"^export/custom/(?P<export_id>\w+)/download/$", 'export_custom_data', name="export_custom_data"),
+    url(r"^export/custom/(?P<export_id>[\w\-]+)/edit/$", 'edit_custom_export', name="edit_custom_export"),
+    url(r"^export/custom/(?P<export_id>[\w\-]+)/delete/$", 'delete_custom_export', name="delete_custom_export"),
+    url(r"^export/custom/(?P<export_id>[\w\-]+)/download/$", 'export_custom_data', name="export_custom_data"),
     
     url(r'^case_export/$', 'case_export', name='case_export'),
     url(r'^download/cases/$', 'download_cases', name='download_cases'),
