@@ -303,21 +303,18 @@
         });
 
         COMMCAREHQ.app_manager.on('change:commcareVersion', function () {
-            console.log('one');
             $('.commcare-feature').each(function () {
-                console.log('two');
                 var version = '' + $(this).data('since-version') || '1.1',
                     upgradeMessage = $('<div class="upgrade-message"/>'),
                     area = $(this);
 
-                console.log(version);
                 if (COMMCAREHQ.app_manager.checkCommcareVersion(version)) {
                     area.find('upgrade-message').remove();
-                    area.find('*').removeAttr('disabled');
+                    area.find('*:not(".hidden")').show();
                 } else {
-                    area.find('*').attr('disabled', 'true');
+                    area.find('*').hide();
                     upgradeMessage.append(
-                        $('<span/>').addClass('ui-icon ui-icon-alert')
+                        $('<span/>').addClass('ui-icon ui-icon-arrowthick-1-w')
                     ).append(
                         $('<span/>').text('Requires CommCare ' + version)
                     ).appendTo(area);
