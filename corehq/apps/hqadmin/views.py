@@ -198,3 +198,7 @@ def message_log_report(request):
                                "show_dates": show_dates,
                                "datespan": datespan},
                               context_instance=RequestContext(request))
+
+def emails(request):
+    email_list = [r['key'] for r in get_db().view('hqadmin/emails').all()]
+    return HttpResponse('"' + '", "'.join(email_list) + '"')
