@@ -171,6 +171,7 @@ class CommCareCase(CaseBase):
     referrals = SchemaListProperty(Referral)
     actions = SchemaListProperty(CommCareCaseAction)
     name = StringProperty()
+    version = StringProperty()
     
     server_modified_on = DateTimeProperty()
     
@@ -233,20 +234,22 @@ class CommCareCase(CaseBase):
         return XFormInstance.get_db().fetch_attachment(attachment_tuple[0], attachment_tuple[1])
         
     @classmethod
-    def from_doc(cls, case_block, xformdoc):
+    def from_case_update(cls, case_update, xformdoc):
         """
-        Create a case object from a case block.
+        Create a case object from a case update object.
         """
         case = CommCareCase()
-        case._id = case_block[const.CASE_TAG_ID]
+        case._id = case_update.id
+        
         def _safe_get(dict, key):
             return dict[key] if key in dict else None
         
-        modified_on_str = _safe_get(case_block, const.CASE_TAG_MODIFIED)
-        case.modified_on = parsing.string_to_datetime(modified_on_str) if modified_on_str else datetime.utcnow()
+        case.modified_on = parsing.string_to_datetime(case_update.modified_on_str) \
+                            if case_update.modified_on_str else datetime.utcnow()
         
         # apply initial updates, referrals and such, if present
-        case.update_from_block(case_block, xformdoc)
+        # todo
+        case.update_from_case_update(case_update, xformdoc)
         return case
     
     def apply_create_block(self, create_block, xformdoc, modified_on):
@@ -271,63 +274,63 @@ class CommCareCase(CaseBase):
                                                              create_block)
         self.actions.append(create_action)
     
-    def update_from_block(self, case_block, xformdoc):
+    def update_from_case_update(self, case_update, xformdoc):
         
-        mod_date = parsing.string_to_datetime(case_block[const.CASE_TAG_MODIFIED]) \
-                    if   const.CASE_TAG_MODIFIED in case_block \
-                    else datetime.utcnow()
+        case_block = case_update.raw_block
+        
+        mod_date = parsing.string_to_datetime(case_update.modified_on_str) \
+                    if   case_update.modified_on_str else datetime.utcnow()
+        
         if self.modified_on is None or mod_date > self.modified_on:
             self.modified_on = mod_date
     
-        if const.CASE_ACTION_CREATE in case_block:
-            self.apply_create_block(case_block[const.CASE_ACTION_CREATE], xformdoc, mod_date)
+        if case_update.create_block:
+            self.apply_create_block(case_update.create_block, xformdoc, mod_date)
             if not self.opened_on:
                 self.opened_on = mod_date
         
         
-        if const.CASE_ACTION_UPDATE in case_block:
-            
-            update_block = case_block[const.CASE_ACTION_UPDATE]
+        if case_update.update_block:
             update_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_UPDATE, 
                                                                  mod_date,
                                                                  xformdoc,
-                                                                 update_block)
+                                                                 case_update.update_block)
             self.apply_updates(update_action)
             self.actions.append(update_action)
-            
-        if const.CASE_ACTION_CLOSE in case_block:
-            close_block = case_block[const.CASE_ACTION_CLOSE]
+        
+        if case_update.close_block:
             close_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_CLOSE, 
                                                                 mod_date, 
                                                                 xformdoc,
-                                                                close_block)
+                                                                case_update.close_block)
             self.apply_close(close_action)
             self.actions.append(close_action)
         
-        if const.REFERRAL_TAG in case_block:
-            referral_block = case_block[const.REFERRAL_TAG]
-            if const.REFERRAL_ACTION_OPEN in referral_block:
-                referrals = Referral.from_block(mod_date, referral_block)
+        if case_update.referral_block:
+            if const.REFERRAL_ACTION_OPEN in case_update.referral_block:
+                referrals = Referral.from_block(mod_date, case_update.referral_block)
                 # for some reason extend doesn't work.  disconcerting
                 # self.referrals.extend(referrals)
                 for referral in referrals:
                     self.referrals.append(referral)
-            elif const.REFERRAL_ACTION_UPDATE in referral_block:
+            elif const.REFERRAL_ACTION_UPDATE in case_update.referral_block:
                 found = False
-                update_block = referral_block[const.REFERRAL_ACTION_UPDATE]
+                update_block = case_update.referral_block[const.REFERRAL_ACTION_UPDATE]
                 for ref in self.referrals:
                     if ref.type == update_block[const.REFERRAL_TAG_TYPE]:
-                        ref.apply_updates(mod_date, referral_block)
+                        ref.apply_updates(mod_date, case_update.referral_block)
                         found = True
                 if not found:
                     logging.error(("Tried to update referral type %s for referral %s in case %s "
                                    "but it didn't exist! Nothing will be done about this.") % \
                                    (update_block[const.REFERRAL_TAG_TYPE], 
-                                    referral_block[const.REFERRAL_TAG_ID],
+                                    case_update.referral_block[const.REFERRAL_TAG_ID],
                                     self.case_id))
         
-                        
-        
+        # finally override any explicit properties from the update
+        if case_update.user_id:     self.user_id = case_update.user_id
+        if case_update.version:     self.version = case_update.version
+
         
     def apply_updates(self, update_action):
         """

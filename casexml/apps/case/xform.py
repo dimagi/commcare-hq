@@ -7,6 +7,8 @@ from casexml.apps.case.models import CommCareCase
 from couchdbkit.schema.properties_proxy import SchemaProperty
 import logging
 from couchdbkit.resource import ResourceNotFound
+from casexml.apps.case.parser import case_update_from_block
+
 
 def get_or_update_cases(xformdoc):
     """
@@ -25,18 +27,15 @@ def get_or_update_cases(xformdoc):
             logging.error("Xform %s had a case block that wasn't able to create a case! This usually means it had a missing ID" % xformdoc.get_id)
     return cases_touched
 
-
 def get_or_update_model(case_block, xformdoc):
     """
     Gets or updates an existing case, based on a block of data in a 
     submitted form.  Doesn't save anything.
     """
-    if const.CASE_TAG_ID not in case_block:
-        return None # oops
-    case_id = case_block[const.CASE_TAG_ID]
     
+    case_update = case_update_from_block(case_block)
     try: 
-        case_doc = CommCareCase.get(case_id)
+        case_doc = CommCareCase.get(case_update.id)
         # some forms recycle case ids as other ids (like xform ids)
         # disallow that hard.
         if case_doc.doc_type != "CommCareCase":
@@ -45,10 +44,10 @@ def get_or_update_model(case_block, xformdoc):
         case_doc = None
     
     if case_doc == None:
-        case_doc = CommCareCase.from_doc(case_block, xformdoc)
+        case_doc = CommCareCase.from_case_update(case_update, xformdoc)
         return case_doc
     else:
-        case_doc.update_from_block(case_block, xformdoc)
+        case_doc.update_from_case_update(case_update, xformdoc)
         return case_doc
         
     
@@ -84,4 +83,7 @@ def extract_case_blocks(doc):
             return []
     
     # filter out anything without a case id property
-    return [block for block in block_list if const.CASE_TAG_ID in block]
+    def _has_case_id(case_block):
+        return const.CASE_TAG_ID in case_block or \
+               "@%s" % const.CASE_TAG_ID in case_block
+    return [block for block in block_list if _has_case_id(block)]
