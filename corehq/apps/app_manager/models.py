@@ -244,7 +244,7 @@ class FormBase(DocumentSchema):
             else:
                 self.validation_cache = ""
             self.get_app().save(increment_version=False)
-        elif self.validation_cache:
+        if self.validation_cache:
             raise XFormValidationError(self.validation_cache)
         return self
     def get_unique_id(self):

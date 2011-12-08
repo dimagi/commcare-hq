@@ -253,12 +253,13 @@ def get_form_view_context(request, form, langs, is_user_registration):
             if not is_user_registration:
                 xform_questions = xform.get_questions(langs)
         except XMLSyntaxError as e:
-            messages.error(request, "%s" % e)
+            messages.error(request, "Syntax Error: %s" % e)
         except AppError as e:
             messages.error(request, "Error in application: %s" % e)
         except XFormValidationError as e:
             message = unicode(e)
             # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
+            messages.error(request, "Validation Error:\n")
             for msg in message.split("\n")[2:]:
                 messages.error(request, "%s" % msg)
         except XFormError as e:
