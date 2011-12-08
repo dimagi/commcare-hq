@@ -27,15 +27,26 @@
                 }).trigger('change');
             }());
             (function configXFormSourceAjax(){
-                $("#xform-source-opener").click(function (){
-                    $("#xform-source").text("Loading...");
-                    $.get($(this).attr('href'), function (data) {
-                        var brush = new SyntaxHighlighter.brushes.Xml();
-                        brush.init({ toolbar: false });
-                        // brush.getDiv seems to escape inconsistently, so I'm helping it out
-                        data = data.replace(/&/g, '&amp;');
-                        $("#xform-source").html(brush.getDiv(data));
-                    }, 'json');
+                $("#xform-source-opener").click(function(evt){
+                    if (evt.shiftKey) {
+                        console.log("shift key!");
+                        $("#source-readonly").hide();
+                        $("#source-edit").show();
+                        $.get($(this).attr('href'), function (data) {
+                            $("#xform-source-edit").text(data);
+                        }, 'json');
+                    } else {
+                        $("#source-edit").hide();
+                        $("#source-readonly").show();
+                        $("#xform-source").text("Loading...");
+                        $.get($(this).attr('href'), function (data) {
+                            var brush = new SyntaxHighlighter.brushes.Xml();
+                            brush.init({ toolbar: false });
+                            // brush.getDiv seems to escape inconsistently, so I'm helping it out
+                            data = data.replace(/&/g, '&amp;');
+                            $("#xform-source").html(brush.getDiv(data));
+                        }, 'json');
+                    }
                 });
             }());
             var edit = {% if edit %}true{% else %}false{% endif %};
@@ -176,8 +187,21 @@
                         View
                     </a>
                     <div class="xml-source dialog" title="XML Source">
+                        <div id="source-readonly">
                         Double-click to select all.
                         <pre id="xform-source" class="brush: xml;"></pre>
+                        </div>
+                        <div id="source-edit">
+                            You can edit your XForm here.<br />
+                            <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'xform' %}" method="POST">
+                                <textarea name="xform" id="xform-source-edit" style="height:550px;width:90%;font-family:Monospace;">
+                                Loading...
+                                </textarea><br />
+                            <input type="hidden" name="ajax" value="false" />
+                                
+                                <input type="submit" value="Save" />
+                            </form>
+                        </div>
                     </div>
                 </li><li>
                     <a class="dialog_opener" href="#"><span class="ui-icon ui-icon-arrowthick-1-n"></span>Upload</a>
