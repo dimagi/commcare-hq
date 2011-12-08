@@ -162,9 +162,10 @@ def custom_export(req, domain):
         saved_export = SavedExportSchema.default(schema, name="%s: %s" %\
                                                  (xmlns_to_name(export_tag[1], domain),
                                                   datetime.utcnow().strftime("%d-%m-%Y")))
+        print saved_export.table_configuration
         return render_to_response(req, "reports/customize_export.html", 
                                   {"saved_export": saved_export,
-                                   "table_config": saved_export.table_configuration[0],
+                                   "table_configs": saved_export.table_configuration,
                                    "domain": domain})
     else:
         messages.info(req, "No data found for that form "
@@ -178,6 +179,7 @@ def edit_custom_export(req, domain, export_id):
     Customize an export
     """
     saved_export = SavedExportSchema.get(export_id)
+    table_dict = dict([t.index, t] for t in saved_export.tables)
     if req.method == "POST":
         table = req.POST["table"]
         cols = req.POST['order'].strip().split(" ")#[col[:-4] for col in req.POST if col.endswith("_val")]
@@ -193,7 +195,6 @@ def edit_custom_export(req, domain, export_id):
         saved_export.filter_function = "couchforms.filters.instances" \
                 if not req.POST.get("include-errors", "") else "" 
         
-        table_dict = dict([t.index, t] for t in saved_export.tables)
         if table in table_dict:
             table_dict[table].columns = export_cols
         else:
@@ -203,15 +204,15 @@ def edit_custom_export(req, domain, export_id):
         saved_export.save()
     
     # not yet used, but will be when we support child table export
-    table_index = req.GET.get("table_id", None) 
-    if table_index:
-        table_config = saved_export.get_table_configuration(table_index)
-    else:
-        table_config = saved_export.table_configuration[0]
+#    table_index = req.GET.get("table_id", None)
+#    if table_index:
+#        table_config = saved_export.get_table_configuration(table_index)
+#    else:
+    table_configs = saved_export.table_configuration
         
     return render_to_response(req, "reports/customize_export.html", 
                               {"saved_export": saved_export,
-                               "table_config": table_config,
+                               "table_configs": table_configs,
                                "domain": domain})
 
 @login_and_domain_required

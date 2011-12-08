@@ -1,0 +1,11 @@
+{% extends "reports/report_base.html" %}
+{% load i18n %}
+
+{% block reportcontent %}
+    <h2>This is a sample report!</h2>
+
+    <div>Today is {{ now_date }}.  The answer is {{ answer }}.</div>
+
+    <div>Some text: [{{ text }}]</div>
+{% endblock %}
+

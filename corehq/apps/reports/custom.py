@@ -36,6 +36,9 @@ class HQReport(object):
         )
 
     def build_selector_form(self):
+        """
+        Get custom field info and use it to construct a set of field form HTML to grab the right inputs.
+        """
         if not self.fields: return
         field_classes = []
         for f in self.fields:
@@ -62,7 +65,7 @@ class HQReport(object):
 
     def calc(self):
         """
-        Override this function with something that updates self.context.
+        Override this function with something that updates self.context, as needed by your report.
         """
         pass
 
@@ -91,6 +94,9 @@ class ReportField(object):
         return render_to_string(self.template, self.context)
 
     def update_context(self):
+        """
+        If your select field needs some context (for example, to set the default) you can set that up here.
+        """
         pass
 
 class MonthField(ReportField):
@@ -109,13 +115,31 @@ class YearField(ReportField):
         self.context['years'] = range(year, datetime.utcnow().year + 1)
         self.context['year'] = int(self.request.GET.get('year', datetime.utcnow().year))
 
+class ExampleInputField(ReportField):
+    slug = "example-input"
+    template = "reports/partials/example-input-select.html"
+
+    def update_context(self):
+        self.context['example_input_default'] = "Some Example Text"
+
 class SampleHQReport(HQReport):
     name = "Sample Report"
     slug = "sample"
-    description = "Sample report that just gets a list of users."
+    description = "A sample report demonstrating the HQ reports system."
+    template_name = "reports/sample-report.html"
+    fields = ['corehq.apps.reports.custom.ExampleInputField']
 
     def calc(self):
-        pass
+        self.context['now_date'] = datetime.now()
+        self.context['the_answer'] = 42
+
+        text = self.request.GET.get("example-input", None)
+        
+        if text:
+            self.context['text'] = text
+        else:
+            self.context['text'] = "You didn't type anything!"
+
 
 
 
