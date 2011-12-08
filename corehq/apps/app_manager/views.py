@@ -347,7 +347,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         messages.error(req, 'Oops! We could not complete your request. Please try again')
         return back_to_main(req, domain, app_id)
 
-    edit = (req.GET.get('edit', 'true') == 'true') and req.couch_user.can_edit_apps(domain)
+    edit = (req.GET.get('edit', 'true') == 'true') and \
+           (req.couch_user.can_edit_apps(domain) or req.user.is_superuser)
 
     if form_id and not module_id:
         return bail()
