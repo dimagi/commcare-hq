@@ -76,11 +76,15 @@ class Group(UndoableDocument):
         self.path = self.path[index:]
         self.save()
 
-    def get_user_ids(self):
-        return [user_id for user_id in self.users]
+    def get_user_ids(self, is_active=True):
+        return [user.user_id for user in self.get_users(is_active)]
 
-    def get_users(self):
-        return [CouchUser.get_by_user_id(user_id) for user_id in self.users]
+    def get_users(self, is_active=True):
+        users = [CouchUser.get_by_user_id(user_id) for user_id in self.users]
+        if is_active is True:
+            return [user for user in users if user.is_active]
+        else:
+            return users
     
     def save(self, *args, **kwargs):
         # forcibly replace empty name with '-'
