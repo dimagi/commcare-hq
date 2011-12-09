@@ -73,5 +73,5 @@ def static(url):
 def get_report_analytics_tag(request):
     if 'reports' in request.path_info:
         report_name = request.path_info.split('reports/')[1][:-1].replace('_', ' ')
-        return "_gaq.push(['_setCustomVar', 2, 'report', '%s', 3]);" % report_name
+        return "_gaq.push(['_setCustomVar', 2, 'report', '%s', 3]);\n_gaq.push(['_trackEvent', 'Viewed Report', '%s']);" % (report_name, report_name)
     return ''
