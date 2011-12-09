@@ -33,40 +33,54 @@ class CaseGenerationException(Exception):
     """ 
     pass
 
-def parse_v1(case_block):
-    if const.CASE_TAG_ID not in case_block:
-        raise CaseGenerationException
-    
-    modified_on = case_block.get(const.CASE_TAG_MODIFIED, "")
-    return CaseUpdate(id=case_block[const.CASE_TAG_ID], 
-                      version=V1,
-                      block=case_block,
-                      modified_on_str=modified_on)
-
-def _to_attr(val):
-    return "@%s" % val
-
-def parse_v2(case_block):
-    case_id_attr = _to_attr(const.CASE_TAG_ID) 
-    if case_id_attr not in case_block:
-        raise CaseGenerationException
-    
-    user_id = case_block.get(_to_attr(const.CASE_TAG_USER_ID), "")
-    modified_on = case_block.get(_to_attr(const.CASE_TAG_MODIFIED), "")
-    return CaseUpdate(id=case_block[case_id_attr],
-                      version=V2,
-                      block=case_block,
-                      user_id=user_id,
-                      modified_on_str=modified_on)
-    
-VERSION_FUNCTION_MAP = {
-    V1: parse_v1,
-    V2: parse_v2
-}
 
 def case_update_from_block(case_block):
     case_version = get_version(case_block)
     return VERSION_FUNCTION_MAP[case_version](case_block)
+
+
+class CaseActionBase(object):
+    
+    def __init__(self, block):
+        self.raw_block = block
+    
+    @classmethod
+    def from_block(cls, block):
+        return cls(block)
+        
+class CaseCreateAction(CaseActionBase):
+    
+    def __init__(self, block, type, name, external_id="", user_id="", owner_id=""):
+        super(CaseCreateAction, self).__init__(block)
+        self.type = type
+        self.name = name
+        self.external_id = external_id
+        self.user_id = user_id
+        self.owner_id = owner_id
+    
+    @classmethod
+    def from_v1(cls, block):
+        return cls(block, 
+                   type=block.get(const.CASE_TAG_TYPE_ID, ""),
+                   name=block.get(const.CASE_TAG_NAME, ""),
+                   external_id=block.get(const.CASE_TAG_EXTERNAL_ID, ""),
+                   user_id=block.get(const.CASE_TAG_USER_ID, ""))
+    
+    @classmethod
+    def from_v2(cls, block):
+        return cls(block,
+                   type=block.get(const.CASE_TAG_TYPE, ""),
+                   name=block.get(const.CASE_TAG_NAME, ""),
+                   owner_id=block.get(const.CASE_TAG_OWNER_ID, ""))
+
+        
+class CaseUpdateAction(CaseActionBase):
+    # Right now this doesn't do anything other than the default
+    pass
+
+class CaseCloseAction(CaseActionBase):
+    # Right now this doesn't do anything other than the default
+    pass
 
 class CaseUpdate(object):
     """
@@ -90,7 +104,16 @@ class CaseUpdate(object):
         
         # referrals? really?
         self.referral_block = block.get(const.REFERRAL_TAG, {})
-    
+        
+        # actions
+        self.actions = []
+        if self.creates_case():
+            self.actions.append(CREATE_ACTION_FUNCTION_MAP[self.version](self.create_block))
+        if self.updates_case():
+            self.actions.append(UPDATE_ACTION_FUNCTION_MAP[self.version](self.update_block))
+        if self.closes_case():
+            self.actions.append(CLOSE_ACTION_FUNCTION_MAP[self.version](self.close_block))
+
     def creates_case(self):
         # creates have to have actual data in them so this is fine
         return bool(self.create_block)    
@@ -112,3 +135,78 @@ class CaseUpdate(object):
     def __str__(self):
         return "%s: %s" % (self.version, self.id)
     
+    
+    def _filtered_action(self, func):
+        # filters the actions, assumes exactly 0 or 1 match.
+        filtered = filter(func, self.actions)
+        if filtered:
+            assert(len(filtered) == 1)
+            return filtered[0]
+            
+    def get_create_action(self):
+        return self._filtered_action(lambda a: isinstance(a, CaseCreateAction))
+        
+    def get_update_action(self):
+        return self._filtered_action(lambda a: isinstance(a, CaseUpdateAction))
+    
+    def get_close_action(self):
+        return self._filtered_action(lambda a: isinstance(a, CaseCloseAction))
+    
+    @classmethod
+    def from_v1(cls, case_block):
+        """
+        Gets a case update from a version 1 case. 
+        Spec: https://bitbucket.org/javarosa/javarosa/wiki/casexml
+        """
+        if const.CASE_TAG_ID not in case_block:
+            raise CaseGenerationException
+        
+        modified_on = case_block.get(const.CASE_TAG_MODIFIED, "")
+        return cls(id=case_block[const.CASE_TAG_ID], 
+                   version=V1,
+                   block=case_block,
+                   modified_on_str=modified_on)
+    
+    @classmethod
+    def from_v2(cls, case_block):
+        """
+        Gets a case update from a version 2 case. 
+        Spec: https://bitbucket.org/commcare/commcare/wiki/casexml20
+        """
+        
+        def _to_attr(val):
+            return "@%s" % val
+    
+        case_id_attr = _to_attr(const.CASE_TAG_ID) 
+        if case_id_attr not in case_block:
+            raise CaseGenerationException
+        
+        user_id = case_block.get(_to_attr(const.CASE_TAG_USER_ID), "")
+        modified_on = case_block.get(_to_attr(const.CASE_TAG_MODIFIED), "")
+        return cls(id=case_block[case_id_attr],
+                   version=V2,
+                   block=case_block,
+                   user_id=user_id,
+                   modified_on_str=modified_on)
+
+
+# this section is what maps various things to their v1/v2 parsers
+VERSION_FUNCTION_MAP = {
+    V1: CaseUpdate.from_v1,
+    V2: CaseUpdate.from_v2
+}
+
+CREATE_ACTION_FUNCTION_MAP = {
+    V1: CaseCreateAction.from_v1,
+    V2: CaseCreateAction.from_v2
+}
+
+UPDATE_ACTION_FUNCTION_MAP = {
+    V1: CaseUpdateAction.from_block,
+    V2: CaseUpdateAction.from_block,
+}
+
+CLOSE_ACTION_FUNCTION_MAP = {
+    V1: CaseCloseAction.from_block,
+    V2: CaseCloseAction.from_block,
+}

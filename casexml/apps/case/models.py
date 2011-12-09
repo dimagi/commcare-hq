@@ -42,7 +42,6 @@ class CommCareCaseAction(DocumentSchema):
     server_date = DateTimeProperty()
     xform_id = StringProperty()
     
-    
     @classmethod
     def from_action_block(cls, action, date, xformdoc, action_block):
         if not action in const.CASE_ACTIONS:
@@ -247,26 +246,26 @@ class CommCareCase(CaseBase):
         case.update_from_case_update(case_update, xformdoc)
         return case
     
-    def apply_create_block(self, create_block, xformdoc, modified_on):
+    def apply_create_block(self, create_action, xformdoc, modified_on):
         # create case from required fields in the case/create block
         # create block
-        def _safe_replace_and_force_to_string(me, attr, dict, key):
+        def _safe_replace_and_force_to_string(me, attr, val):
             if getattr(me, attr, None):
                 # attr exists and wasn't empty or false, for now don't do anything, 
                 # though in the future we want to do a date-based modification comparison
                 return
-            rep = dict[key] if key in dict else None
-            if rep:
-                setattr(me, attr, unicode(rep))
+            if val:
+                setattr(me, attr, unicode(val))
             
-        _safe_replace_and_force_to_string(self, "type", create_block, const.CASE_TAG_TYPE_ID)
-        _safe_replace_and_force_to_string(self, "name", create_block, const.CASE_TAG_NAME)
-        _safe_replace_and_force_to_string(self, "external_id", create_block, const.CASE_TAG_EXTERNAL_ID)
-        _safe_replace_and_force_to_string(self, "user_id", create_block, const.CASE_TAG_USER_ID)
+        _safe_replace_and_force_to_string(self, "type", create_action.type)
+        _safe_replace_and_force_to_string(self, "name", create_action.name)
+        _safe_replace_and_force_to_string(self, "external_id", create_action.external_id)
+        _safe_replace_and_force_to_string(self, "user_id", create_action.user_id)
+        _safe_replace_and_force_to_string(self, "owner_id", create_action.owner_id)
         create_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_CREATE, 
                                                              modified_on, 
                                                              xformdoc,
-                                                             create_block)
+                                                             create_action.raw_block)
         self.actions.append(create_action)
     
     def update_from_case_update(self, case_update, xformdoc):
@@ -278,7 +277,7 @@ class CommCareCase(CaseBase):
             self.modified_on = mod_date
     
         if case_update.creates_case():
-            self.apply_create_block(case_update.create_block, xformdoc, mod_date)
+            self.apply_create_block(case_update.get_create_action(), xformdoc, mod_date)
             if not self.opened_on:
                 self.opened_on = mod_date
         
@@ -287,7 +286,7 @@ class CommCareCase(CaseBase):
             update_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_UPDATE, 
                                                                  mod_date,
                                                                  xformdoc,
-                                                                 case_update.update_block)
+                                                                 case_update.get_update_action().raw_block)
             self.apply_updates(update_action)
             self.actions.append(update_action)
         
@@ -295,7 +294,7 @@ class CommCareCase(CaseBase):
             close_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_CLOSE, 
                                                                 mod_date, 
                                                                 xformdoc,
-                                                                case_update.close_block)
+                                                                case_update.get_close_action().raw_block)
             self.apply_close(close_action)
             self.actions.append(close_action)
         

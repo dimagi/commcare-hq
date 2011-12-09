@@ -26,4 +26,5 @@ class Version2CaseParsingTest(TestCase):
         case = CommCareCase.get("foo-case-id")
         self.assertEqual("bar-user-id", case.user_id)
         self.assertEqual(datetime(2011, 12, 8, 13, 42, 50), case.modified_on)
+        self.assertEqual("v2_case_type", case.type)
         
