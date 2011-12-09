@@ -6,7 +6,7 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 
 import corehq.apps.users.xml as xml
 from receiver.signals import successful_form_received, ReceiverResult, Certainty
-from casexml.apps.phone.xml import USER_REGISTRATION_XMLNS
+from casexml.apps.phone.xml import VALID_USER_REGISTRATION_XMLNSES
 
 # Signal that syncs django_user => couch_user
 def django_user_post_save_signal(sender, instance, created, **kwargs):
@@ -34,8 +34,9 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
     # <registering_phone_id>NRPHIOUSVEA215AJL8FFKGTVR</registering_phone_id>
     # <user_data> ... some custom stuff </user_data>
     """
-    if xform.xmlns != USER_REGISTRATION_XMLNS:
+    if xform.xmlns not in VALID_USER_REGISTRATION_XMLNSES:
         return False
+    
     try:
         couch_user = CommCareUser.create_from_xform(xform)
     except Exception, e:

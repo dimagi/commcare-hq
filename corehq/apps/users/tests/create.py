@@ -5,7 +5,8 @@ from couchforms.models import XFormInstance
 from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
 from dimagi.utils.dates import force_to_datetime
 from django.contrib.auth.models import User
-from casexml.apps.phone.xml import USER_REGISTRATION_XMLNS
+from casexml.apps.phone.xml import USER_REGISTRATION_XMLNS,\
+    USER_REGISTRATION_XMLNS_DEPRECATED
 
 
 class CreateTestCase(TestCase):
@@ -62,7 +63,7 @@ class CreateTestCase(TestCase):
         django_user = couch_user.get_django_user()
         self.assertEqual(couch_user.user_id, CouchUser.from_django_user(django_user).user_id)
 
-    def testCreateUserFromRegistration(self):
+    def _runCreateUserFromRegistrationTest(self):
         """ 
         test creating of couch user from a registration xmlns.
         this is more of an integration test than a unit test.
@@ -85,6 +86,13 @@ class CreateTestCase(TestCase):
         django_user = couch_user.get_django_user()
         self.assertEqual(couch_user.user_id, CouchUser.from_django_user(django_user).user_id)
 
+        
+    def testCreateUserFromRegistration(self):
+        self._runCreateUserFromRegistrationTest()
+    
+    def testCreateUserFromOldRegistration(self):
+        self.xform.xmlns = USER_REGISTRATION_XMLNS_DEPRECATED
+        self._runCreateUserFromRegistrationTest()
         
     def testCreateDuplicateUsersFromRegistration(self):
         """ 

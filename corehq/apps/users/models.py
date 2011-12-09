@@ -851,4 +851,5 @@ class RemoveWebUserRecord(DeleteRecord):
         user = WebUser.get_by_user_id(self.user_id)
         user.add_domain_membership(**self.domain_membership._doc)
         user.save()
+
 from .signals import *
