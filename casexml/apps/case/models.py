@@ -32,10 +32,10 @@ class CaseBase(Document):
     class Meta:
         app_label = 'case'
 
-class CommCareCaseAction(Document):
+class CommCareCaseAction(DocumentSchema):
     """
     An atomic action on a case. Either a create, update, or close block in
-    the xml.  
+    the xml.
     """
     action_type = StringProperty()
     date = DateTimeProperty()
@@ -275,8 +275,6 @@ class CommCareCase(CaseBase):
         self.actions.append(create_action)
     
     def update_from_case_update(self, case_update, xformdoc):
-        
-        case_block = case_update.raw_block
         
         mod_date = parsing.string_to_datetime(case_update.modified_on_str) \
                     if   case_update.modified_on_str else datetime.utcnow()
