@@ -6,6 +6,7 @@
     <script>
         $(function () {
             var groupName = {{ group.name|JSON }},
+                groupCaseSharing = {{ group.case_sharing|JSON }},
                 selectedGroupTab = $('#group-list > .selected'),
                 pencil = $('<span/>').addClass('ui-icon ui-icon-pencil').css({'float': 'right'}),
                 editLink = $('<a href="#"/>').append(pencil).click(function (e) {
@@ -18,10 +19,29 @@
                     }).prependTo(selectedGroupTab),
                 editorPopup = $('<div/>').addClass('edit-group-name-popup ui-widget shadow ui-corner-top ui-corner-br');
             $('<form/>').attr({method: "POST", action: "{% url edit_group domain group.get_id %}"}).append(
-                $('<label for="group-name-input"/>').text('Group Name: '),
-                $('<input type="text" id="group-name-input"/>').attr({name: 'name'}).val(groupName),
+                $('<table/>').append(
+                    $('<tr/>').append(
+                        $('<td/>').append(
+                            $('<label for="group-name-input"/>').text('Group Name: ')
+                        ),
+                        $('<td/>').append(
+                            $('<input type="text" id="group-name-input"/>').attr({name: 'name'}).val(groupName)
+                        )
+                    ),
+                    $('<tr/>').append(
+                        $('<td/>').append(
+                            $('<label for="group-case-sharing-input"/>').text('Case Sharing: ')
+                        ),
+                        $('<td/>').append(
+                            $('<select id="group-case-sharing-input"/>').attr({name: 'case_sharing'}).append(
+                                $('<option/>').attr({value: 'false'}).text('Off'),
+                                $('<option/>').attr({value: 'true'}).text('On')
+                            ).val(JSON.stringify(groupCaseSharing))
+                        )
+                    )
+                ),
                 $('<div/>').append(
-                    $('<a href="#"/>').addClass('submit button').text("Save").css('float', 'right'),
+                    $('<a href="#"/>').addClass('submit button').text("Save").css({'float': 'right', marginLeft: '.5em'}),
                     $('<a href="#"/>').addClass('button').text('Cancel').css('float', 'right').click(function (e) {
                         e.preventDefault();
                         Shield.close();

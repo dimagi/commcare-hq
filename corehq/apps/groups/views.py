@@ -1,3 +1,4 @@
+import json
 from couchdbkit.exceptions import ResourceConflict
 from django.contrib import messages
 from django.core.urlresolvers import reverse
@@ -43,8 +44,11 @@ def edit_group(request, domain, group_id):
     group = Group.get(group_id)
     if group.domain == domain:
         name = request.POST.get('name')
+        case_sharing = request.POST.get('case_sharing')
         if name is not None:
             group.name = name
+        if case_sharing in ('true', 'false'):
+            group.case_sharing = json.loads(case_sharing)
         group.save()
         return HttpResponseRedirect(reverse("group_members", args=[domain, group_id]))
     else:

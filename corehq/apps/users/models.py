@@ -22,6 +22,7 @@ from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.reports.models import ReportNotification
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username, cc_user_domain
+from corehq.apps.users.xml import group_fixture
 from couchforms.models import XFormInstance
 
 from dimagi.utils.couch.database import get_db
@@ -587,7 +588,11 @@ class CommCareUser(CouchUser):
             case.domain = domain
             case.save()
         self.save()
-        
+
+    def get_group_fixture(self):
+        from corehq.apps.groups.models import Group
+        return group_fixture([group for group in Group.by_user(self) if group.case_sharing], self)
+    
 class WebUser(CouchUser):
     domains = StringListProperty()
     domain_memberships = SchemaListProperty(DomainMembership)

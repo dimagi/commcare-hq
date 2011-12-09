@@ -21,6 +21,7 @@ class Group(UndoableDocument):
     # a list of user ids for users
     users = ListProperty()
     path = ListProperty()
+    case_sharing = BooleanProperty()
 
     def add_user(self, couch_user_id):
         if couch_user_id not in self.users:
