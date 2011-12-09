@@ -3,10 +3,10 @@ from django.test import TestCase
 from django.test.client import Client
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.success_message import SuccessMessage
-from corehq.apps.users.models import create_hq_user_from_commcare_registration_info, CommCareUser
+from corehq.apps.users.models import CommCareUser
 from datetime import datetime, timedelta
 from dimagi.utils.parsing import json_format_datetime
-from receiver.xml import get_response
+from receiver.xml import get_simple_response_xml
 
 submission_template = """<?xml version='1.0' ?>
 <data xmlns="%(xmlns)s">
@@ -75,7 +75,7 @@ class SuccessMessageTest(TestCase):
                 self.num_forms_today += 1
             self.failUnlessEqual(
                 response.content,
-                get_response(("Thanks {self.first_name} ({self.first_name} {self.last_name})! "
+                get_simple_response_xml(("Thanks {self.first_name} ({self.first_name} {self.last_name})! "
                 "You have submitted {self.num_forms_today} forms today "
                 "and {self.num_forms_this_week} forms since Monday.").format(self=self))
             )
