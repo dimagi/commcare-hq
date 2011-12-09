@@ -23,6 +23,7 @@ class Version2CaseParsingTest(TestCase):
         form = post_xform_to_couch(xml_data)
         process_cases(sender="testharness", xform=form)
         case = CommCareCase.get("foo-case-id")
+        self.assertFalse(case.closed)
         self.assertEqual("bar-user-id", case.user_id)
         self.assertEqual(datetime(2011, 12, 6, 13, 42, 50), case.modified_on)
         self.assertEqual("v2_case_type", case.type)
@@ -39,6 +40,7 @@ class Version2CaseParsingTest(TestCase):
         form = post_xform_to_couch(xml_data)
         process_cases(sender="testharness", xform=form)
         case = CommCareCase.get("foo-case-id")
+        self.assertFalse(case.closed)
         self.assertEqual("bar-user-id", case.user_id)
         self.assertEqual(datetime(2011, 12, 7, 13, 42, 50), case.modified_on)
         self.assertEqual("updated_v2_case_type", case.type)
@@ -46,4 +48,15 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("something dynamic", case.dynamic)
         self.assertEqual(2, len(case.actions))
     
+    def testParseClose(self):
+        self.testParseCreate()
+        
+        file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "basic_close.xml")
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
+        
+        form = post_xform_to_couch(xml_data)
+        process_cases(sender="testharness", xform=form)
+        case = CommCareCase.get("foo-case-id")
+        self.assertTrue(case.closed)
         
