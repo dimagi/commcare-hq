@@ -21,10 +21,29 @@ class Version2CaseParsingTest(TestCase):
             xml_data = f.read()
         
         form = post_xform_to_couch(xml_data)
-        # pdb.set_trace()
         process_cases(sender="testharness", xform=form)
         case = CommCareCase.get("foo-case-id")
         self.assertEqual("bar-user-id", case.user_id)
-        self.assertEqual(datetime(2011, 12, 8, 13, 42, 50), case.modified_on)
+        self.assertEqual(datetime(2011, 12, 6, 13, 42, 50), case.modified_on)
         self.assertEqual("v2_case_type", case.type)
+        self.assertEqual("test case name", case.name)
+        self.assertEqual(1, len(case.actions))
+    
+    def testParseUpdate(self):
+        self.testParseCreate()
+        
+        file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "basic_update.xml")
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
+        
+        form = post_xform_to_couch(xml_data)
+        process_cases(sender="testharness", xform=form)
+        case = CommCareCase.get("foo-case-id")
+        self.assertEqual("bar-user-id", case.user_id)
+        self.assertEqual(datetime(2011, 12, 7, 13, 42, 50), case.modified_on)
+        self.assertEqual("updated_v2_case_type", case.type)
+        self.assertEqual("updated case name", case.name)
+        self.assertEqual("something dynamic", case.dynamic)
+        self.assertEqual(2, len(case.actions))
+    
         
