@@ -240,15 +240,10 @@ class CommCareCase(CaseBase):
         """
         case = CommCareCase()
         case._id = case_update.id
-        
-        def _safe_get(dict, key):
-            return dict[key] if key in dict else None
-        
         case.modified_on = parsing.string_to_datetime(case_update.modified_on_str) \
                             if case_update.modified_on_str else datetime.utcnow()
         
         # apply initial updates, referrals and such, if present
-        # todo
         case.update_from_case_update(case_update, xformdoc)
         return case
     
