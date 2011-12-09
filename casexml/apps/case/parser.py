@@ -85,11 +85,30 @@ class CaseUpdate(object):
         self.create_block = block.get(const.CASE_ACTION_CREATE, {})
         self.update_block = block.get(const.CASE_ACTION_UPDATE, {})
         self.close_block = block.get(const.CASE_ACTION_CLOSE, {})
+        self._closes_case = const.CASE_ACTION_CLOSE in block
         self.index_block = block.get(const.CASE_BLOCK_INDEX, {})
         
         # referrals? really?
         self.referral_block = block.get(const.REFERRAL_TAG, {})
-            
+    
+    def creates_case(self):
+        # creates have to have actual data in them so this is fine
+        return bool(self.create_block)    
+    
+    def updates_case(self):
+        # updates have to have actual data in them so this is fine
+        return bool(self.update_block)    
+    
+    def closes_case(self):
+        # closes might not have data and so we store this separately
+        return self._closes_case    
+    
+    def has_indices(self):
+        return bool(self.index_block)
+    
+    def has_referrals(self):
+        return bool(self.referral_block)
+    
     def __str__(self):
         return "%s: %s" % (self.version, self.id)
     

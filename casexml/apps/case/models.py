@@ -284,13 +284,13 @@ class CommCareCase(CaseBase):
         if self.modified_on is None or mod_date > self.modified_on:
             self.modified_on = mod_date
     
-        if case_update.create_block:
+        if case_update.creates_case():
             self.apply_create_block(case_update.create_block, xformdoc, mod_date)
             if not self.opened_on:
                 self.opened_on = mod_date
         
         
-        if case_update.update_block:
+        if case_update.updates_case():
             update_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_UPDATE, 
                                                                  mod_date,
                                                                  xformdoc,
@@ -298,7 +298,7 @@ class CommCareCase(CaseBase):
             self.apply_updates(update_action)
             self.actions.append(update_action)
         
-        if case_update.close_block:
+        if case_update.closes_case():
             close_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_CLOSE, 
                                                                 mod_date, 
                                                                 xformdoc,
@@ -306,7 +306,7 @@ class CommCareCase(CaseBase):
             self.apply_close(close_action)
             self.actions.append(close_action)
         
-        if case_update.referral_block:
+        if case_update.has_referrals():
             if const.REFERRAL_ACTION_OPEN in case_update.referral_block:
                 referrals = Referral.from_block(mod_date, case_update.referral_block)
                 # for some reason extend doesn't work.  disconcerting
