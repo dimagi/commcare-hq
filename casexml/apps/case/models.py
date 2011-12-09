@@ -42,6 +42,25 @@ class CommCareCaseAction(DocumentSchema):
     server_date = DateTimeProperty()
     xform_id = StringProperty()
     
+    updated_known_properties = DictProperty()
+    updated_unknown_properties = DictProperty()
+    
+    @classmethod
+    def from_parsed_action(cls, action_type, date, xformdoc, action):
+        if not action_type in const.CASE_ACTIONS:
+            raise ValueError("%s not a valid case action!")
+        
+        ret = CommCareCaseAction(action_type=action_type, date=date,
+                                 xform_id=xformdoc.get_id) 
+        
+        def _couchify(d):
+            return dict((k, couchable_property(v)) for k, v in d.items())
+                        
+        
+        ret.updated_known_properties = _couchify(action.get_known_properties())
+        ret.updated_unknown_properties = _couchify(action.dynamic_properties)
+        return ret
+    
     @classmethod
     def from_action_block(cls, action, date, xformdoc, action_block):
         if not action in const.CASE_ACTIONS:
@@ -57,7 +76,7 @@ class CommCareCaseAction(DocumentSchema):
             return action
             
         for item in action_block:
-            action[item] = couchable_property(action_block[item])
+            action.updated_properties[item] = couchable_property(action_block[item])
         return action
     
     @classmethod
@@ -222,8 +241,7 @@ class CommCareCase(CaseBase):
         """
         attachments = []
         for action in self.actions:
-            for prop in action.dynamic_properties():
-                val = action[prop]
+            for prop, val in action.updated_unknown_properties.items():
                 # welcome to hard code city!
                 if isinstance(val, dict) and "@tag" in val and val["@tag"] == "attachment":
                     attachments.append((action.xform_id, val["#text"]))
@@ -262,10 +280,10 @@ class CommCareCase(CaseBase):
         _safe_replace_and_force_to_string(self, "external_id", create_action.external_id)
         _safe_replace_and_force_to_string(self, "user_id", create_action.user_id)
         _safe_replace_and_force_to_string(self, "owner_id", create_action.owner_id)
-        create_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_CREATE, 
-                                                             modified_on, 
-                                                             xformdoc,
-                                                             create_action.raw_block)
+        create_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_CREATE, 
+                                                              modified_on, 
+                                                              xformdoc,
+                                                              create_action)
         self.actions.append(create_action)
     
     def update_from_case_update(self, case_update, xformdoc):
@@ -283,18 +301,18 @@ class CommCareCase(CaseBase):
         
         
         if case_update.updates_case():
-            update_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_UPDATE, 
-                                                                 mod_date,
-                                                                 xformdoc,
-                                                                 case_update.get_update_action().raw_block)
+            update_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_UPDATE, 
+                                                                  mod_date,
+                                                                  xformdoc,
+                                                                  case_update.get_update_action())
             self.apply_updates(update_action)
             self.actions.append(update_action)
         
         if case_update.closes_case():
-            close_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_CLOSE, 
-                                                                mod_date, 
-                                                                xformdoc,
-                                                                case_update.get_close_action().raw_block)
+            close_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_CLOSE, 
+                                                                 mod_date, 
+                                                                 xformdoc,
+                                                                 case_update.get_close_action())
             self.apply_close(close_action)
             self.actions.append(close_action)
         
@@ -328,15 +346,12 @@ class CommCareCase(CaseBase):
         """
         Applies updates to a case
         """
-        if const.CASE_TAG_TYPE_ID in update_action:
-            self.type = update_action[const.CASE_TAG_TYPE_ID]
-        if const.CASE_TAG_NAME in update_action:
-            self.name = update_action[const.CASE_TAG_NAME]
-        if const.CASE_TAG_DATE_OPENED in update_action:
-            self.opened_on = update_action[const.CASE_TAG_DATE_OPENED]
-        for item in update_action.dynamic_properties():
+        for k, v in update_action.updated_known_properties.items():
+            setattr(self, k, v)
+        
+        for item in update_action.updated_unknown_properties:
             if item not in const.CASE_TAGS:
-                self[item] = couchable_property(update_action[item])
+                self[item] = couchable_property(update_action.updated_unknown_properties[item])
             
         
     def apply_close(self, close_action):

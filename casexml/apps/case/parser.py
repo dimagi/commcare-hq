@@ -41,37 +41,64 @@ def case_update_from_block(case_block):
 
 class CaseActionBase(object):
     
-    def __init__(self, block):
+    def __init__(self, block, type=None, name=None, external_id=None, 
+                 user_id=None, owner_id=None, opened_on=None, 
+                 dynamic_properties=None):
         self.raw_block = block
-    
-    @classmethod
-    def from_block(cls, block):
-        return cls(block)
-        
-class CaseCreateAction(CaseActionBase):
-    
-    def __init__(self, block, type, name, external_id="", user_id="", owner_id=""):
-        super(CaseCreateAction, self).__init__(block)
         self.type = type
         self.name = name
         self.external_id = external_id
         self.user_id = user_id
         self.owner_id = owner_id
+        self.opened_on = opened_on
+        self.dynamic_properties = dynamic_properties
     
+    def get_known_properties(self):
+        prop_list = ["type", "name", "external_id", "user_id", 
+                     "owner_id", "opened_on"]
+        return dict((p, getattr(self, p)) for p in prop_list \
+                    if getattr(self, p) is not None)
+    
+    @classmethod
+    def _from_block_and_mapping(cls, block, mapping):
+        kwargs = {}
+        dynamic_properties = {}
+        # if not a dict, it's probably an empty close block
+        if isinstance(block, dict):
+            for k, v in block.items():
+                if k in mapping:
+                    kwargs[mapping[k]] = v
+                else:
+                    dynamic_properties[k] = v 
+        
+        return cls(block, dynamic_properties=dynamic_properties,
+                   **kwargs)
+        
     @classmethod
     def from_v1(cls, block):
-        return cls(block, 
-                   type=block.get(const.CASE_TAG_TYPE_ID, ""),
-                   name=block.get(const.CASE_TAG_NAME, ""),
-                   external_id=block.get(const.CASE_TAG_EXTERNAL_ID, ""),
-                   user_id=block.get(const.CASE_TAG_USER_ID, ""))
-    
+        mapping = {const.CASE_TAG_TYPE_ID: "type",
+                   const.CASE_TAG_NAME: "name",
+                   const.CASE_TAG_EXTERNAL_ID: "external_id",
+                   const.CASE_TAG_USER_ID: "user_id",
+                   const.CASE_TAG_OWNER_ID: "owner_id",
+                   const.CASE_TAG_DATE_OPENED: "opened_on"}
+        return cls._from_block_and_mapping(block, mapping)
+                   
     @classmethod
     def from_v2(cls, block):
-        return cls(block,
-                   type=block.get(const.CASE_TAG_TYPE, ""),
-                   name=block.get(const.CASE_TAG_NAME, ""),
-                   owner_id=block.get(const.CASE_TAG_OWNER_ID, ""))
+        # the only difference is the place where "type" is stored
+        mapping = {const.CASE_TAG_TYPE: "type",
+                   const.CASE_TAG_NAME: "name",
+                   const.CASE_TAG_EXTERNAL_ID: "external_id",
+                   const.CASE_TAG_USER_ID: "user_id",
+                   const.CASE_TAG_OWNER_ID: "owner_id",
+                   const.CASE_TAG_DATE_OPENED: "opened_on"}
+        return cls._from_block_and_mapping(block, mapping)
+        
+
+class CaseCreateAction(CaseActionBase):
+    # Right now this doesn't do anything other than the default
+    pass
 
         
 class CaseUpdateAction(CaseActionBase):
@@ -202,11 +229,11 @@ CREATE_ACTION_FUNCTION_MAP = {
 }
 
 UPDATE_ACTION_FUNCTION_MAP = {
-    V1: CaseUpdateAction.from_block,
-    V2: CaseUpdateAction.from_block,
+    V1: CaseUpdateAction.from_v1,
+    V2: CaseUpdateAction.from_v2,
 }
 
 CLOSE_ACTION_FUNCTION_MAP = {
-    V1: CaseCloseAction.from_block,
-    V2: CaseCloseAction.from_block,
+    V1: CaseCloseAction.from_v1,
+    V2: CaseCloseAction.from_v2,
 }
