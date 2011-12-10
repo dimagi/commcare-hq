@@ -61,6 +61,9 @@
                 <td><a href='{% url corehq.apps.reports.views.edit_custom_export domain export.get_id %}'>
                         Edit
                     </a></td>
+                <td><a href='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?format=html'>
+                        View as Raw HTML
+                    </a></td>
                 <td><a class="delete_link" href="#">Delete</a>
                     {% include "reports/dialogs/delete_custom_export_dialog.html" %}
                  </td>
