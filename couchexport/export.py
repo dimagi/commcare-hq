@@ -7,8 +7,9 @@ from couchexport.models import ExportSchema, Format
 from couchdbkit.client import Database
 import re
 from dimagi.utils.mixins import UnicodeMixIn
+from django.template.loader import render_to_string
 
-        
+
 def get_full_export_tables(schema_index, previous_export, filter=None):
     """
     Returns a tuple, the first element being the tabular data ready for 
@@ -43,9 +44,10 @@ def get_full_export_tables(schema_index, previous_export, filter=None):
     
 
 def export_from_tables(tables, file, format, max_column_size=2000):
-    
     if format == Format.CSV:
         _export_csv(tables, file, max_column_size)
+    elif format == Format.HTML:
+        _export_html(tables, file, max_column_size)
     elif format == Format.XLS:
         _export_excel(tables, max_column_size).save(file)
     elif format == Format.XLS_2007:
@@ -236,7 +238,10 @@ def _export_csv(tables, file, max_column_size):
     temp.seek(0)
     return temp
 
-    
+
+def _export_html(tables, file, max_column_size):
+    file.write(render_to_string("couchexport/html_export.html", {'tables': tables}))
+
 def _export_excel(tables, max_column_size):
     try:
         import xlwt

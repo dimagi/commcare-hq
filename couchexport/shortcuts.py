@@ -70,8 +70,13 @@ def export_response(file, format, filename, checkpoint=None):
     from couchexport.export import Format
     if not filename:
         filename = "NAMELESS EXPORT"
-    
+
+    if format == "html":
+        print "yarr got html"
+        return HttpResponse(file.getvalue(), mimetype="text/html")
+
     format = Format.from_format(format)
+
     response = HttpResponse(mimetype=format.mimetype)
 
     try:

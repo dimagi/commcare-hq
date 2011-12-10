@@ -13,14 +13,16 @@ class Format(object):
     CSV = "csv"
     XLS = "xls"
     XLS_2007 = "xlsx"
-    
+    HTML = "html"
     
     FORMAT_DICT = {CSV: {"mimetype": "application/zip",
                          "extension": "zip"},
                    XLS: {"mimetype": "application/vnd.ms-excel",
                          "extension": "xls"},
                    XLS_2007: {"mimetype": "application/vnd.ms-excel",
-                              "extension": "xlsx"}}
+                              "extension": "xlsx"},
+                   HTML: {"mimetype": "text/html",
+                          "extension": "html"},}
     
     VALID_FORMATS = FORMAT_DICT.keys()
     
@@ -202,7 +204,7 @@ class SavedExportSchema(Document, UnicodeMixIn):
                                        table_dict[table_index].format_data(data)))
         
         return trimmed_tables
-    
+
     def download_data(self, format="", previous_export=None, filter=None):
         """
         If there is data, return an HTTPResponse with the appropriate data. 
