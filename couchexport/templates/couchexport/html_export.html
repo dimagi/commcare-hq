@@ -5,7 +5,7 @@
 
 {% for table_name, table in tables %}
     <h2>{{ table_name }}</h2>
-    <table border=2>
+    <table>
     <thead>
     {% for row in table %}
         {% if forloop.first %}

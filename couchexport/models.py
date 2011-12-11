@@ -165,7 +165,7 @@ class SavedExportSchema(Document, UnicodeMixIn):
     def filter(self):
         if self.filter_function:
             func = to_function(self.filter_function)
-            print "got filter function %s for %s" % (func, self.filter_function)
+            #print "got filter function %s for %s" % (func, self.filter_function)
             return func
     
     @classmethod
