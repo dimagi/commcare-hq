@@ -1,5 +1,5 @@
 django==1.3
-couchdbkit==0.5.4
+couchdbkit>0.5.4
 pytz
 psycopg2==2.4.1
 south

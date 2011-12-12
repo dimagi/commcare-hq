@@ -1,8 +1,8 @@
+from couchdbkit.ext.django.testrunner import CouchDbKitTestSuiteRunner
 from django.test.simple import DjangoTestSuiteRunner
 from django.conf import settings
 from couchdbkit.ext.django import loading as loading
 from couchdbkit.resource import ResourceNotFound
-from dimagi.utils.couch.testrunner import CouchDbKitTestSuiteRunner
 import settingshelper
 
 class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
