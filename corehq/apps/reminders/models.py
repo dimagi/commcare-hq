@@ -60,13 +60,16 @@ class Message(object):
 METHOD_CHOICES = ["sms", "email", "test"]
 
 class CaseReminderHandler(Document):
+    """
+    Contains a set of rules that determine how things should fire.
+    """
     domain = StringProperty()
     case_type = StringProperty()
 
     nickname = StringProperty()
     
     start = StringProperty()            # e.g. "edd" => create reminder on edd
-                                           # | "form_started" => create reminder when form_started = 'ok'
+                                        # | "form_started" => create reminder when form_started = 'ok'
     start_offset = IntegerProperty()    # e.g. 3 => three days after edd
     frequency = IntegerProperty()       # e.g. 3 => every 3 days
     until = StringProperty()            # e.g. "edd" => until today > edd
@@ -262,6 +265,11 @@ class CaseReminderHandler(Document):
         return self.doc_type != 'CaseReminderHandler'
 
 class CaseReminder(Document):
+    """
+    Doesn't correlate to a single reminder, but to a way the rule is applied.
+    This same object might correspond to multiple SMS messages that go out
+    that are all related.
+    """
     domain = StringProperty()
     case_id = StringProperty() # to a CommCareCase
     handler_id = StringProperty() # to a CaseReminderHandler
