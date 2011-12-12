@@ -162,10 +162,9 @@ def custom_export(req, domain):
         saved_export = SavedExportSchema.default(schema, name="%s: %s" %\
                                                  (xmlns_to_name(export_tag[1], domain),
                                                   datetime.utcnow().strftime("%d-%m-%Y")))
-        print saved_export.table_configuration
-        return render_to_response(req, "reports/customize_export.html", 
+        return render_to_response(req, "reports/customize_export.html",
                                   {"saved_export": saved_export,
-                                   "table_configs": saved_export.table_configuration,
+                                   "table_config": saved_export.table_configuration[0],
                                    "domain": domain})
     else:
         messages.info(req, "No data found for that form "
@@ -208,11 +207,11 @@ def edit_custom_export(req, domain, export_id):
 #    if table_index:
 #        table_config = saved_export.get_table_configuration(table_index)
 #    else:
-    table_configs = saved_export.table_configuration
+    table_config = saved_export.table_configuration[0]
         
     return render_to_response(req, "reports/customize_export.html", 
                               {"saved_export": saved_export,
-                               "table_configs": table_configs,
+                               "table_config": table_config,
                                "domain": domain})
 
 @login_and_domain_required
