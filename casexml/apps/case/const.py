@@ -7,6 +7,7 @@ PATIENT_ID_TAG = "patient_id"
 FOLLOWUP_DATE_TAG = "followup_date"
 
 # internal case identifiers
+CASE_BLOCK_INDEX = "index"
 CASE_ACTION_CREATE = "create"
 CASE_ACTION_UPDATE = "update"
 CASE_ACTION_CLOSE = "close"
@@ -23,6 +24,8 @@ CASE_TAG_MODIFIED = "date_modified"
 CASE_TAG_USER_ID = "user_id"
 CASE_TAG_EXTERNAL_ID = "external_id"
 CASE_TAG_DATE_OPENED = "date_opened"
+CASE_TAG_OWNER_ID = "owner_id"
+
 
 CASE_TAGS = (CASE_ACTION_CREATE, CASE_ACTION_UPDATE, CASE_ACTION_CLOSE, REFERRAL_TAG, 
              CASE_TAG_TYPE_ID, CASE_TAG_ID, CASE_TAG_NAME, CASE_TAG_MODIFIED, CASE_TAG_USER_ID, 

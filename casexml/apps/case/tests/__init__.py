@@ -1,9 +1,11 @@
 from dimagi.utils.logging import log_exception
 try:
-    from casexml.apps.case.tests.test_from_xform import *
-    from casexml.apps.case.tests.test_multi_case_submits import *
-    from casexml.apps.case.tests.test_attachments import *
-    from casexml.apps.case.tests.test_bugs import *
+    from .test_attachments import *
+    from .test_bugs import *
+    from .test_from_xform import *
+    from .test_multi_case_submits import *
+    from .test_ota_restore import *
+    from .test_v2_parsing import *
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
     # otherwise debugging is a pain

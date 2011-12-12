@@ -32,16 +32,34 @@ class CaseBase(Document):
     class Meta:
         app_label = 'case'
 
-class CommCareCaseAction(Document):
+class CommCareCaseAction(DocumentSchema):
     """
     An atomic action on a case. Either a create, update, or close block in
-    the xml.  
+    the xml.
     """
     action_type = StringProperty()
     date = DateTimeProperty()
     server_date = DateTimeProperty()
     xform_id = StringProperty()
     
+    updated_known_properties = DictProperty()
+    updated_unknown_properties = DictProperty()
+    
+    @classmethod
+    def from_parsed_action(cls, action_type, date, xformdoc, action):
+        if not action_type in const.CASE_ACTIONS:
+            raise ValueError("%s not a valid case action!")
+        
+        ret = CommCareCaseAction(action_type=action_type, date=date,
+                                 xform_id=xformdoc.get_id) 
+        
+        def _couchify(d):
+            return dict((k, couchable_property(v)) for k, v in d.items())
+                        
+        
+        ret.updated_known_properties = _couchify(action.get_known_properties())
+        ret.updated_unknown_properties = _couchify(action.dynamic_properties)
+        return ret
     
     @classmethod
     def from_action_block(cls, action, date, xformdoc, action_block):
@@ -58,7 +76,7 @@ class CommCareCaseAction(Document):
             return action
             
         for item in action_block:
-            action[item] = couchable_property(action_block[item])
+            action.updated_properties[item] = couchable_property(action_block[item])
         return action
     
     @classmethod
@@ -171,6 +189,7 @@ class CommCareCase(CaseBase):
     referrals = SchemaListProperty(Referral)
     actions = SchemaListProperty(CommCareCaseAction)
     name = StringProperty()
+    version = StringProperty()
     
     server_modified_on = DateTimeProperty()
     
@@ -222,8 +241,7 @@ class CommCareCase(CaseBase):
         """
         attachments = []
         for action in self.actions:
-            for prop in action.dynamic_properties():
-                val = action[prop]
+            for prop, val in action.updated_unknown_properties.items():
                 # welcome to hard code city!
                 if isinstance(val, dict) and "@tag" in val and val["@tag"] == "attachment":
                     attachments.append((action.xform_id, val["#text"]))
@@ -233,115 +251,107 @@ class CommCareCase(CaseBase):
         return XFormInstance.get_db().fetch_attachment(attachment_tuple[0], attachment_tuple[1])
         
     @classmethod
-    def from_doc(cls, case_block, xformdoc):
+    def from_case_update(cls, case_update, xformdoc):
         """
-        Create a case object from a case block.
+        Create a case object from a case update object.
         """
         case = CommCareCase()
-        case._id = case_block[const.CASE_TAG_ID]
-        def _safe_get(dict, key):
-            return dict[key] if key in dict else None
-        
-        modified_on_str = _safe_get(case_block, const.CASE_TAG_MODIFIED)
-        case.modified_on = parsing.string_to_datetime(modified_on_str) if modified_on_str else datetime.utcnow()
+        case._id = case_update.id
+        case.modified_on = parsing.string_to_datetime(case_update.modified_on_str) \
+                            if case_update.modified_on_str else datetime.utcnow()
         
         # apply initial updates, referrals and such, if present
-        case.update_from_block(case_block, xformdoc)
+        case.update_from_case_update(case_update, xformdoc)
         return case
     
-    def apply_create_block(self, create_block, xformdoc, modified_on):
+    def apply_create_block(self, create_action, xformdoc, modified_on):
         # create case from required fields in the case/create block
         # create block
-        def _safe_replace_and_force_to_string(me, attr, dict, key):
+        def _safe_replace_and_force_to_string(me, attr, val):
             if getattr(me, attr, None):
                 # attr exists and wasn't empty or false, for now don't do anything, 
                 # though in the future we want to do a date-based modification comparison
                 return
-            rep = dict[key] if key in dict else None
-            if rep:
-                setattr(me, attr, unicode(rep))
+            if val:
+                setattr(me, attr, unicode(val))
             
-        _safe_replace_and_force_to_string(self, "type", create_block, const.CASE_TAG_TYPE_ID)
-        _safe_replace_and_force_to_string(self, "name", create_block, const.CASE_TAG_NAME)
-        _safe_replace_and_force_to_string(self, "external_id", create_block, const.CASE_TAG_EXTERNAL_ID)
-        _safe_replace_and_force_to_string(self, "user_id", create_block, const.CASE_TAG_USER_ID)
-        create_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_CREATE, 
-                                                             modified_on, 
-                                                             xformdoc,
-                                                             create_block)
+        _safe_replace_and_force_to_string(self, "type", create_action.type)
+        _safe_replace_and_force_to_string(self, "name", create_action.name)
+        _safe_replace_and_force_to_string(self, "external_id", create_action.external_id)
+        _safe_replace_and_force_to_string(self, "user_id", create_action.user_id)
+        _safe_replace_and_force_to_string(self, "owner_id", create_action.owner_id)
+        create_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_CREATE, 
+                                                              modified_on, 
+                                                              xformdoc,
+                                                              create_action)
         self.actions.append(create_action)
     
-    def update_from_block(self, case_block, xformdoc):
+    def update_from_case_update(self, case_update, xformdoc):
         
-        mod_date = parsing.string_to_datetime(case_block[const.CASE_TAG_MODIFIED]) \
-                    if   const.CASE_TAG_MODIFIED in case_block \
-                    else datetime.utcnow()
+        mod_date = parsing.string_to_datetime(case_update.modified_on_str) \
+                    if   case_update.modified_on_str else datetime.utcnow()
+        
         if self.modified_on is None or mod_date > self.modified_on:
             self.modified_on = mod_date
     
-        if const.CASE_ACTION_CREATE in case_block:
-            self.apply_create_block(case_block[const.CASE_ACTION_CREATE], xformdoc, mod_date)
+        if case_update.creates_case():
+            self.apply_create_block(case_update.get_create_action(), xformdoc, mod_date)
             if not self.opened_on:
                 self.opened_on = mod_date
         
         
-        if const.CASE_ACTION_UPDATE in case_block:
-            
-            update_block = case_block[const.CASE_ACTION_UPDATE]
-            update_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_UPDATE, 
-                                                                 mod_date,
-                                                                 xformdoc,
-                                                                 update_block)
+        if case_update.updates_case():
+            update_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_UPDATE, 
+                                                                  mod_date,
+                                                                  xformdoc,
+                                                                  case_update.get_update_action())
             self.apply_updates(update_action)
             self.actions.append(update_action)
-            
-        if const.CASE_ACTION_CLOSE in case_block:
-            close_block = case_block[const.CASE_ACTION_CLOSE]
-            close_action = CommCareCaseAction.from_action_block(const.CASE_ACTION_CLOSE, 
-                                                                mod_date, 
-                                                                xformdoc,
-                                                                close_block)
+        
+        if case_update.closes_case():
+            close_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_CLOSE, 
+                                                                 mod_date, 
+                                                                 xformdoc,
+                                                                 case_update.get_close_action())
             self.apply_close(close_action)
             self.actions.append(close_action)
         
-        if const.REFERRAL_TAG in case_block:
-            referral_block = case_block[const.REFERRAL_TAG]
-            if const.REFERRAL_ACTION_OPEN in referral_block:
-                referrals = Referral.from_block(mod_date, referral_block)
+        if case_update.has_referrals():
+            if const.REFERRAL_ACTION_OPEN in case_update.referral_block:
+                referrals = Referral.from_block(mod_date, case_update.referral_block)
                 # for some reason extend doesn't work.  disconcerting
                 # self.referrals.extend(referrals)
                 for referral in referrals:
                     self.referrals.append(referral)
-            elif const.REFERRAL_ACTION_UPDATE in referral_block:
+            elif const.REFERRAL_ACTION_UPDATE in case_update.referral_block:
                 found = False
-                update_block = referral_block[const.REFERRAL_ACTION_UPDATE]
+                update_block = case_update.referral_block[const.REFERRAL_ACTION_UPDATE]
                 for ref in self.referrals:
                     if ref.type == update_block[const.REFERRAL_TAG_TYPE]:
-                        ref.apply_updates(mod_date, referral_block)
+                        ref.apply_updates(mod_date, case_update.referral_block)
                         found = True
                 if not found:
                     logging.error(("Tried to update referral type %s for referral %s in case %s "
                                    "but it didn't exist! Nothing will be done about this.") % \
                                    (update_block[const.REFERRAL_TAG_TYPE], 
-                                    referral_block[const.REFERRAL_TAG_ID],
+                                    case_update.referral_block[const.REFERRAL_TAG_ID],
                                     self.case_id))
         
-                        
-        
+        # finally override any explicit properties from the update
+        if case_update.user_id:     self.user_id = case_update.user_id
+        if case_update.version:     self.version = case_update.version
+
         
     def apply_updates(self, update_action):
         """
         Applies updates to a case
         """
-        if const.CASE_TAG_TYPE_ID in update_action:
-            self.type = update_action[const.CASE_TAG_TYPE_ID]
-        if const.CASE_TAG_NAME in update_action:
-            self.name = update_action[const.CASE_TAG_NAME]
-        if const.CASE_TAG_DATE_OPENED in update_action:
-            self.opened_on = update_action[const.CASE_TAG_DATE_OPENED]
-        for item in update_action.dynamic_properties():
+        for k, v in update_action.updated_known_properties.items():
+            setattr(self, k, v)
+        
+        for item in update_action.updated_unknown_properties:
             if item not in const.CASE_TAGS:
-                self[item] = couchable_property(update_action[item])
+                self[item] = couchable_property(update_action.updated_unknown_properties[item])
             
         
     def apply_close(self, close_action):
