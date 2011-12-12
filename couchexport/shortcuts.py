@@ -75,7 +75,9 @@ def export_response(file, format, filename, checkpoint=None):
 
     if not format.download:
         # For direct-display formats like HTML and JSON, don't attach the file, just send it directly.
-        return HttpResponse(file.getvalue(), mimetype=format.mimetype)
+        response = HttpResponse(file.getvalue(), mimetype=format.mimetype)
+        response['X-CommCareHQ-Export-Token'] = checkpoint.get_id
+        return response
 
 
     response = HttpResponse(mimetype=format.mimetype)
