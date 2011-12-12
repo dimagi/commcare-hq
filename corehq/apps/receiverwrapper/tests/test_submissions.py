@@ -29,9 +29,10 @@ class SubmissionTest(TestCase):
     def _check_for_message(self, msg, response):
         # ghetto
         return msg in str(response)
+        
     
     def testSubmitSimpleForm(self):
-        self.assertTrue(self._check_for_message("Thanks for submitting!", 
+        self.assertTrue(self._check_for_message("Thanks for submitting, someuser.  We have received 1 forms from you today (1 forms all time)", 
                                                 self._submit("simple_form.xml")),
                         "Basic form successfully parsed")
     
@@ -44,4 +45,9 @@ class SubmissionTest(TestCase):
         self.assertTrue(self._check_for_message("Thanks for registering! Your username is mealz@", 
                                                 self._submit("user_registration.xml")),
                         "User registration form successfully parsed")
+    
+    def testSubmitWithCase(self):
+        self.assertTrue(self._check_for_message("Thanks for submitting, someuser.  We have received 1 forms from you today (1 forms all time)", 
+                                                self._submit("form_with_case.xml")),
+                        "Form with case successfully parsed")
         
