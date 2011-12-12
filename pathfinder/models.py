@@ -1,8 +1,11 @@
+from couchdbkit.ext.django.schema import Document
 from corehq.apps.reports.custom import HQReport, ReportField
 from datetime import date
 from pathfinder.views import retrieve_patient_group, retrieve_providers, get_provider_info, get_patients_by_provider
 from django.http import Http404
 from dimagi.utils.couch.database import get_db
+
+class _(Document): pass
 
 class PathfinderWardSummaryReport(HQReport):
     name = "Ward Summary"
