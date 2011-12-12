@@ -3,9 +3,9 @@ import time
 from auditcare.inspect import history_for_doc
 from auditcare.utils import _thread_locals
 from django.contrib.auth.models import User
-from auditcare.models.couchmodels import AuditEvent, ModelActionAudit
+from auditcare.models import AuditEvent, ModelActionAudit
 from auditcare.tests.testutils import delete_all
-from contrib_apps.django_digest.test import Client
+from django_digest.test import Client
 
 class modelEventTestCaseo(unittest.TestCase):
     def setUp(self):
