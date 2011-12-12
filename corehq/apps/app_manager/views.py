@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 
 from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
@@ -36,13 +37,16 @@ from dimagi.utils.make_uuid import random_hex
 from utilities.profile import profile
 import urllib
 import urlparse
+import re
 from collections import defaultdict
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.decorators import safe_download
 from django.utils.datastructures import SortedDict
+from xml.dom.minidom import parseString
 
 try:
     from lxml.etree import XMLSyntaxError
+    from lxml.etree import parse as lxml_parse
 except ImportError:
     logging.error("lxml not installed! apps won't work properly!!")
 from django.contrib import messages
@@ -823,10 +827,19 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
                     xform = unicode(xform, encoding="utf-8")
                 except Exception:
                     raise Exception("Error uploading form: Please make sure your form is encoded in UTF-8")
-
+            if req.POST.get('cleanup', False):
+                try:
+                    # First, we strip all newlines and reformat the DOM.
+                    px = parseString(xform.replace('\r\n', '')).toprettyxml()
+                    # Then we remove excess newlines from the DOM output.
+                    text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
+                    prettyXml = text_re.sub('>\g<1></', px)
+                    prettyXml
+                    xform = prettyXml
+                except Exception:
+                    pass
             if xform:
                 form.source = xform
-                form.refresh()
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception, e:

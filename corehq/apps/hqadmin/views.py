@@ -106,13 +106,25 @@ def global_report(request, template="hqadmin/global.html"):
                 counts.append([_flot_format(result), result['value']])
         context['%s_counts' % name] = counts
         counts_int = deepcopy(counts)
-        for i in range(1, len(counts_int)): counts_int[i][1] += counts_int[i-1][1]
+        for i in range(1, len(counts_int)):
+            if isinstance(counts_int[i][1], int):
+                counts_int[i][1] += counts_int[i-1][1]
+            elif isinstance(counts_int[i][1], list):
+                counts_int[i][1] = list(set(counts_int[i-1][1]).union(counts_int[i][1]))
+        if isinstance(counts_int[1][1], list):
+            print counts, counts_int
+            counts = [[x[0], len(x[1])] for x in counts]
+            counts_int = [[x[0], len(x[1])] for x in counts_int]
+            print counts, counts_int
+            context['%s_counts' % name] = counts
+
         context['%s_counts_int' % name] = counts_int
 
     _metric('case')
     _metric('form')
     _metric('user')
-
+    _metric('active_domain')
+    
     return render_to_response(request, template, context, context_instance=RequestContext(request))
 
 @cache_page(60 * 15)

@@ -86,11 +86,13 @@
                     var case_counts = [{{case_counts_int|safe}}];
                     var form_counts = [{{form_counts_int|safe}}];
                     var user_counts = [{{user_counts_int|safe}}];
+                    var domain_counts = [{{active_domain_counts_int|safe}}];
                 }
                 else {
                     var case_counts = [{{case_counts|safe}}];
                     var form_counts = [{{form_counts|safe}}];
                     var user_counts = [{{user_counts|safe}}];
+                    var domain_counts = [{{active_domain_counts|safe}}];
                 }
 
 
@@ -103,10 +105,14 @@
                 user_plot = $.plot($('#users'), user_counts, plot_options);
                 bind_hover('#users', "Users", user_counts);
 
+                domain_plot = $.plot($('#domains'), domain_counts, plot_options);
+                bind_hover('#domains', "Domains", domain_counts);
+
                 $("#overview").bind("plotselected", function (event, ranges) {
                     case_plot.setSelection(ranges);
                     form_plot.setSelection(ranges);
                     user_plot.setSelection(ranges);
+                    domain_plot.setSelection(ranges);
                 });
 
             };
@@ -146,4 +152,6 @@
     <div id="forms" class="graph"></div>
     <h2>New CommCare Users</h2>
     <div id="users" class="graph"></div>
+    <h2>Active Domains</h2>
+    <div id="domains" class="graph"></div>
 {% endblock %}

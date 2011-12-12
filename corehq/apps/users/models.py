@@ -769,7 +769,7 @@ class WebUser(CouchUser):
         if not domain:
             try:
                 domain = self.current_domain
-            except KeyError:
+            except AttributeError:
                 return None
         return dict(self.ROLE_LABELS).get(self.get_role(domain), "Unknown Role")
 
