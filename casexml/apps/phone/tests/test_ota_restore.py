@@ -3,8 +3,6 @@ import os
 import time
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
-from django.test.client import Client
-from django.core.urlresolvers import reverse
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.case.signals import process_cases
 from datetime import datetime
@@ -99,7 +97,6 @@ class OtaRestoreTest(TestCase):
         process_cases(sender="testharness", xform=form)
         [updated_case] = CommCareCase.view("case/by_xform_id", include_docs=True).all()
         self.assertEqual(1, len(updated_case.referrals))
-        c = Client()
         response = views.xml_for_case(HttpRequest(), updated_case.get_id)
         expected_response = """<case>
     <case_id>IKA9G79J4HDSPJLG3ER2OHQUY</case_id> 
