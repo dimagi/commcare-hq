@@ -4,8 +4,8 @@ from xml.sax import saxutils
 from xml.etree import ElementTree
 from casexml.apps.case import const
 
-USER_REGISTRATION_XMLNS_DEPRECATED = "http://openrosa.org/user/registration"
-USER_REGISTRATION_XMLNS = "http://openrosa.org/user-registration"
+USER_REGISTRATION_XMLNS_DEPRECATED = "http://openrosa.org/user-registration"
+USER_REGISTRATION_XMLNS = "http://openrosa.org/user/registration"
 VALID_USER_REGISTRATION_XMLNSES = [USER_REGISTRATION_XMLNS_DEPRECATED, USER_REGISTRATION_XMLNS]
 
 SYNC_XMLNS = "http://commcarehq.org/sync"

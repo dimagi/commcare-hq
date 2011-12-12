@@ -8,7 +8,7 @@ def dummy_user():
 
 def dummy_user_xml():
         return """
-    <Registration xmlns="http://openrosa.org/user-registration">
+    <Registration xmlns="http://openrosa.org/user/registration">
         <username>mclovin</username>
         <password>changeme</password>
         <uuid>foo</uuid>
