@@ -94,7 +94,6 @@ def put_xform(form_unique_id, source):
     "For use with xep_hq_server's PUT_XFORM hook."
     form, app = Form.get_form(form_unique_id, and_app=True)
     form.source = source
-    form.refresh()
     app.save()
 
 class IndexedSchema(DocumentSchema):
@@ -195,7 +194,10 @@ class FormSource(object):
         def post_save():
             app.put_attachment(value, '%s.xml' % unique_id)
         form.validation_cache = None
-        form.refresh()
+        try:
+            form.xmlns = form.wrapped_xform().data_node.tag_xmlns
+        except Exception:
+            form.xmlns = None
         app.register_pre_save(pre_save)
         app.register_post_save(post_save)
 
@@ -261,12 +263,6 @@ class FormBase(DocumentSchema):
     def get_app(self):
         return self._app
 
-    def refresh(self):
-        soup = BeautifulStoneSoup(self.source)
-        try:
-            self.xmlns = soup.find('instance').findChild()['xmlns']
-        except Exception:
-            self.xmlns = None
     def get_case_type(self):
         return self._parent.case_type
 
@@ -978,7 +974,6 @@ class Application(ApplicationBase, TranslationMixin):
 #        )
     def fetch_xform(self, module_id, form_id):
         form = self.get_module(module_id).get_form(form_id)
-        form.refresh()
         return form.validate_form().render_xform()
 
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
@@ -1153,7 +1148,6 @@ class Application(ApplicationBase, TranslationMixin):
         module.forms.append(form)
         form = module.get_form(-1)
         form.source = attachment
-        form.refresh()
         return form
 
     def new_form_from_source(self, module_id, source):

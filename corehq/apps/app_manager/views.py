@@ -826,7 +826,6 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
 
             if xform:
                 form.source = xform
-                form.refresh()
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception, e:
