@@ -1,11 +1,12 @@
 [
-    "case_name", "date_opened", "external_id", "status",
+    "case_name", "case_type", "case_type_id",
+    "date_opened", "external_id", "status",
     "name",      "date-opened", "external-id",
     "date",
     "doc_type",
     "domain",
     "opened_on",
-    "modified_on", "server_modified_on",
+    "modified_on", "server_modified_on", "version",
     "type",
     "closed",
     "closed_on",
@@ -13,6 +14,7 @@
     "xform_ids",
     "user_id",
     "owner_id",
+    "version",
     "referrals",
     "actions"
 ]
