@@ -12,6 +12,7 @@ from django.utils.datastructures import SortedDict
 from couchdbkit.resource import ResourceNotFound
 import logging
 import hashlib
+from copy import copy
 
 class Metadata(DocumentSchema):
     """
@@ -68,7 +69,24 @@ class XFormInstance(Document):
     @property
     def metadata(self):
         if (const.TAG_META) in self._form:
-            return Metadata(self._form[const.TAG_META])
+            def _clean(meta_block):
+                # couchdbkit chokes on dates that aren't actually dates
+                # so check their validity before passing htem up
+                ret = copy(dict(meta_block))
+                if meta_block:
+                    for key in ("timeStart", "timeEnd"):
+                        if key in meta_block:
+                            if meta_block[key]:
+                                try:
+                                    parsed = string_to_datetime(meta_block[key])
+                                except ValueError:
+                                    # we couldn't parse it
+                                    del ret[key]
+                            else:
+                                # it was empty, also a failure
+                                del ret[key]
+                return ret
+            return Metadata(_clean(self._form[const.TAG_META]))
             
         return None
 
