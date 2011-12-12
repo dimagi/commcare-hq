@@ -14,22 +14,31 @@ class Format(object):
     XLS = "xls"
     XLS_2007 = "xlsx"
     HTML = "html"
+    JSON = "json"
     
     FORMAT_DICT = {CSV: {"mimetype": "application/zip",
-                         "extension": "zip"},
+                         "extension": "zip",
+                         "download": True},
                    XLS: {"mimetype": "application/vnd.ms-excel",
-                         "extension": "xls"},
+                         "extension": "xls",
+                         "download": True},
                    XLS_2007: {"mimetype": "application/vnd.ms-excel",
-                              "extension": "xlsx"},
+                              "extension": "xlsx",
+                              "download": True},
                    HTML: {"mimetype": "text/html",
-                          "extension": "html"},}
+                          "extension": "html",
+                          "download": False},
+                   JSON: {"mimetype": "application/json",
+                          "extension": "json",
+                          "download": False}}
     
     VALID_FORMATS = FORMAT_DICT.keys()
     
-    def __init__(self, slug, mimetype, extension):
+    def __init__(self, slug, mimetype, extension, download):
         self.slug = slug
         self.mimetype = mimetype
         self.extension = extension
+        self.download = download
     
     @classmethod
     def from_format(cls, format):

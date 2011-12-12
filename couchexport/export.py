@@ -1,5 +1,6 @@
 from couchexport.schema import get_docs, get_schema
 import csv
+import json
 import zipfile
 from StringIO import StringIO
 from django.conf import settings
@@ -41,13 +42,13 @@ def get_full_export_tables(schema_index, previous_export, filter=None):
     this_export.save()
     return (format_tables(create_intermediate_tables(docs,schema)), this_export)
     
-    
-
 def export_from_tables(tables, file, format, max_column_size=2000):
     if format == Format.CSV:
         _export_csv(tables, file, max_column_size)
     elif format == Format.HTML:
         _export_html(tables, file, max_column_size)
+    elif format == Format.JSON:
+        _export_json(tables, file)
     elif format == Format.XLS:
         _export_excel(tables, max_column_size).save(file)
     elif format == Format.XLS_2007:
@@ -241,6 +242,13 @@ def _export_csv(tables, file, max_column_size):
 
 def _export_html(tables, file, max_column_size):
     file.write(render_to_string("couchexport/html_export.html", {'tables': tables}))
+
+def _export_json(tables, file):
+    new_tables = dict()
+    for table in tables:
+        new_tables[table[0]] = {"headers":table[1][0], "rows": table[1][1:]}
+
+    file.write(json.dumps(new_tables))
 
 def _export_excel(tables, max_column_size):
     try:
