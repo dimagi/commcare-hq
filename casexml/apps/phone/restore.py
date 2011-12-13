@@ -5,8 +5,9 @@ from casexml.apps.phone import xml
 from datetime import datetime
 from receiver.xml import get_response_element
 from casexml.apps.case import const
+from casexml.apps.case.xml import check_version
 
-def generate_restore_payload(user, restore_id=""):
+def generate_restore_payload(user, restore_id="", version="1.0"):
     """
     Gets an XML payload suitable for OTA restore. If you need to do something
     other than find all cases matching user_id = user.user_id then you have
@@ -14,9 +15,14 @@ def generate_restore_payload(user, restore_id=""):
     
     It should match the same signature as models.user.get_case_updates():
     
-        args:    sync token
+        user:          who the payload is for. must implement get_case_updates
+        restore_id:    sync token
+        version:       the CommCare version 
+        
         returns: list of (CommCareCase, previously_synced) tuples
     """
+    check_version(version)
+    
     last_sync = None
     if restore_id:
         try:
@@ -25,7 +31,7 @@ def generate_restore_payload(user, restore_id=""):
             logging.error("Request for bad sync log %s by %s, ignoring..." % (restore_id, user))
     
     cases_to_send = user.get_case_updates(last_sync)
-    case_xml_elements = [xml.get_case_element(case, updates) for case, updates in cases_to_send]
+    case_xml_elements = [xml.get_case_element(case, updates, version) for case, updates in cases_to_send]
     
     
     saved_case_ids = [case.case_id for case, updates in cases_to_send \

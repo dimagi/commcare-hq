@@ -3,6 +3,7 @@ import logging
 from xml.sax import saxutils
 from xml.etree import ElementTree
 from casexml.apps.case import const
+from casexml.apps.case.xml import check_version
 
 USER_REGISTRATION_XMLNS_DEPRECATED = "http://openrosa.org/user-registration"
 USER_REGISTRATION_XMLNS = "http://openrosa.org/user/registration"
@@ -75,7 +76,10 @@ def get_referral_element(referral):
     
     return elem
 
-def get_case_element(case, updates):
+def get_case_element(case, updates, version="1.0"):
+    
+    check_version(version)
+    
     if case is None: 
         logging.error("Can't generate case xml for empty case!")
         return ""
@@ -130,8 +134,9 @@ def get_case_element(case, updates):
         
     return root
 
-def get_case_xml(case, updates):
-    return tostring(get_case_element(case, updates))
+def get_case_xml(case, updates, version="1.0"):
+    check_version(version)
+    return tostring(get_case_element(case, updates, version))
     
 
 def get_registration_element(user):
