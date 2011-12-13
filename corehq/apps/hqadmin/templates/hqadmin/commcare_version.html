@@ -1,9 +1,35 @@
+{% extends "hqadmin/hqadmin_base_report.html" %}
 {% load i18n %}
 
-<h1>CommCare Version Report</h1>
+{% block head %}{{ block.super }}
+    <style>
+        #report-content section {
+            display: inline-block;
+            padding: 1em;
+            width: 30%;
+        }
+        #report-content h2 {
+            font-size: 1.2em;
+            text-align: center;
+        }
+        #report-content hgroup p {
+            color: #AAA;
+            text-align: center;
+        }
+        #report-content section table {
+            width: 100%;
+            text-align: center;
+        }
+    </style>
+{% endblock %}
+{% block report-title %}CommCare Versions{% endblock %}
+{% block reportcontent %}
 {% for table in tables %}
-
-    <h2>{{ table.label }} [{{ table.build }}]</h2>
+    <section>
+    <hgroup>
+        <h2>{{ table.label }}</h2>
+        <p>{{ table.build }}</p>
+    </hgroup>
     <table>
         <tr>
             <th>{% trans "Domain" %}</th>
@@ -16,5 +42,6 @@
             </tr>
         {% endfor %}
     </table>
-
+    </section>
 {% endfor %}
+{% endblock %}

@@ -28,6 +28,17 @@ datespan_default = datespan_in_request(
     default_days=30,
 )
 
+
+def get_hqadmin_base_context(request):
+    try:
+        domain = request.user.selected_domain.name
+    except AttributeError:
+        domain = None
+
+    return {
+        "domain": domain,
+    }
+
 @cache_page(60 * 15)
 @require_superuser
 def domain_list(request):
@@ -50,14 +61,10 @@ def domain_list(request):
         dom.commcare_users = commcare_counts[dom.name]
         dom.forms = form_counts[dom.name]
         dom.admins = [row["doc"]["email"] for row in get_db().view("users/admins_by_domain", key=dom.name, reduce=False, include_docs=True).all()]
-    try:
-        domain = request.user.selected_domain.name
-    except AttributeError:
-        domain = None
-    return render_to_response(request, "hqadmin/domain_list.html",
-                              {"domains": domains,
-                               "domain": domain},
-                              context_instance=RequestContext(request))
+
+    context = get_hqadmin_base_context(request)
+    context.update({"domains": domains})
+    return render_to_response(request, "hqadmin/domain_list.html", context)
 
 @cache_page(60 * 15)
 @require_superuser
@@ -93,7 +100,7 @@ def global_report(request, template="hqadmin/global.html"):
     def _flot_format(result):
         return int(datetime(year=result['key'][0], month=result['key'][1], day=1).strftime("%s"))*1000
 
-    context = {}
+    context = get_hqadmin_base_context(request)
 
     def _metric(name):
         counts = []
@@ -124,8 +131,8 @@ def global_report(request, template="hqadmin/global.html"):
     _metric('form')
     _metric('user')
     _metric('active_domain')
-    
-    return render_to_response(request, template, context, context_instance=RequestContext(request))
+
+    return render_to_response(request, template, context)
 
 @cache_page(60 * 15)
 @require_superuser
@@ -151,7 +158,9 @@ def commcare_version_report(request, template="hqadmin/commcare_version.html"):
     for build in builds:
         by_build[build]['build'] = build
         tables.append(by_build[build])
-    return render_to_response(request, template, {'tables': tables})
+    context = get_hqadmin_base_context(request)
+    context.update({'tables': tables})
+    return render_to_response(request, template, context)
 
 @cache_page(60 * 15)
 @require_superuser
@@ -183,10 +192,13 @@ def domain_activity_report(request, template="hqadmin/domain_activity_report.htm
                 for i, date in enumerate(dates):
                     if time > date:
                         domain.user_sets[i][user_id] = domain.users[user_id]
-    return render_to_response(request, template, {
+
+    context = get_hqadmin_base_context(request)
+    context.update({
         'domains': domains,
         'landmarks': landmarks
     })
+    return render_to_response(request, template, context)
 
 @cache_page(60 * 15)
 @datespan_default
@@ -200,16 +212,15 @@ def message_log_report(request):
         dom.sms_incoming = MessageLog.count_incoming_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
         dom.sms_outgoing = MessageLog.count_outgoing_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
         dom.sms_total = MessageLog.count_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
-    try:
-        domain = request.user.selected_domain.name
-    except AttributeError:
-        domain = None
-    return render_to_response(request, "hqadmin/message_log_report.html",
-                              {"domains": domains,
-                               "domain": domain,
-                               "show_dates": show_dates,
-                               "datespan": datespan},
-                              context_instance=RequestContext(request))
+
+    context = get_hqadmin_base_context(request)
+    context.update({
+        "domains": domains,
+        "show_dates": show_dates,
+        "datespan": datespan
+    })
+    return render_to_response(request, "hqadmin/message_log_report.html", context)
+
 def _get_emails():
     return [r['key'] for r in get_db().view('hqadmin/emails').all()]
 

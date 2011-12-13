@@ -21,9 +21,8 @@
                 </div>
             </li>
         </ul>
-        <h1>Administrative Reports</h1>
+        <h1>{% block report-title %}Administrative Report{% endblock %}</h1>
     </div>
-    <h2 id="report-title"{% block report-title %}An Admin Report{% endblock %}</h2>
     <div id="report-content">
         {% if show_dates %}
             <form method="get" id="paramSelectorForm">
