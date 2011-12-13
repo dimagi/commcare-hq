@@ -119,10 +119,8 @@ def global_report(request, template="hqadmin/global.html"):
             elif isinstance(counts_int[i][1], list):
                 counts_int[i][1] = list(set(counts_int[i-1][1]).union(counts_int[i][1]))
         if isinstance(counts_int[1][1], list):
-            print counts, counts_int
             counts = [[x[0], len(x[1])] for x in counts]
             counts_int = [[x[0], len(x[1])] for x in counts_int]
-            print counts, counts_int
             context['%s_counts' % name] = counts
 
         context['%s_counts_int' % name] = counts_int
