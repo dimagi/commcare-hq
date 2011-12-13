@@ -261,13 +261,6 @@ class OtaRestoreTest(TestCase):
        <vision></vision>
        <vomiting></vomiting>
     </update>
-    <referral> 
-        <referral_id>V2RLNE4VQYEMZRGYSOMLYU4PM</referral_id>
-        <followup_date>2011-02-20</followup_date>
-        <open>
-            <referral_types>referral</referral_types>
-        </open>
-    </referral>
 </case>"""
         
         v2response = views.xml_for_case(HttpRequest(), updated_case.get_id, version="2.0")

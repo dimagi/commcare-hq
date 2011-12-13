@@ -73,8 +73,7 @@ def get_case_element(case, updates, version="1.0"):
         
     if not do_purge:
         # only send down referrals if the case is not being purged
-        for ref in case.referrals:
-            root.append(generator.get_referral_element(ref))
+        generator.add_referrals(root)
         
     return root
 

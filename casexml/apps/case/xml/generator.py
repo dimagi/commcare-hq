@@ -1,5 +1,6 @@
 from casexml.apps.case.xml import V1, V2, check_version, V2_NAMESPACE
 from xml.etree import ElementTree
+import logging
 
 def safe_element(tag, text=None):
     # shortcut for commonly used functionality
@@ -41,8 +42,11 @@ class CaseXMLGeneratorBase(object):
     
     # Force subclasses to override any methods that we don't explictly
     # want to implement in the base class. However fill in a lot ourselves.
+    def _ni(self):
+        raise NotImplementedError("That method must be overridden by subclass!")
+    
     def get_root_element(self):
-        raise NotImplementedError
+        self._ni()
     
     def get_create_element(self):
         return safe_element("create")
@@ -74,7 +78,7 @@ class CaseXMLGeneratorBase(object):
 
     
     def get_case_type_element(self):
-        raise NotImplementedError
+        self._ni()
     
     def get_user_id_element(self):
         return safe_element("user_id", self.case.user_id)
@@ -93,6 +97,8 @@ class CaseXMLGeneratorBase(object):
         for k, v, in self.case.dynamic_case_properties():
             element.append(get_dynamic_element(k, v))
             
+    def add_referrals(self, element):
+        self._ni()
         
 class V1CaseXMLGenerator(CaseXMLGeneratorBase):
     
@@ -119,6 +125,10 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
             element.append(safe_element('owner_id', self.case.owner_id))
         super(V1CaseXMLGenerator, self).add_custom_properties(element)
         
+    def add_referrals(self, element):
+        for ref in self.case.referrals:
+            element.append(self.get_referral_element(ref))
+    
 class V2CaseXMLGenerator(CaseXMLGeneratorBase):
     
     
@@ -146,6 +156,10 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
             element.append(safe_element('external_id', self.case.external_id))
         super(V2CaseXMLGenerator, self).add_custom_properties(element)
             
+    def add_referrals(self, element):
+        if self.case.referrals:
+            logging.warning("Tried to add referrals to version 2 CaseXML. This is not supported")
+        # intentionally a no-op
     
 def get_generator(version, case):
     check_version(version)
