@@ -7,7 +7,7 @@ from casexml.apps.case.models import CommCareCase
 from couchdbkit.schema.properties_proxy import SchemaProperty
 import logging
 from couchdbkit.resource import ResourceNotFound
-from casexml.apps.case.parser import case_update_from_block
+from casexml.apps.case.xml.parser import case_update_from_block
 
 
 def get_or_update_cases(xformdoc):

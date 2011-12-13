@@ -1,4 +1,5 @@
-import os
+from __future__ import absolute_import
+
 import uuid
 from xml.etree import ElementTree
 from couchdbkit.schema.properties import LazyDict

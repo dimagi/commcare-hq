@@ -4,12 +4,10 @@ objects from things from xforms.
 """
 
 from casexml.apps.case import const
+from casexml.apps.case.xml import DEFAULT_VERSION, V1, V2
 
 XMLNS_ATTR = "@xmlns"
 
-V1 = "1.0"
-V2 = "2.0"
-DEFAULT_VERSION = V1
 
 NS_VERSION_MAP = {
     "http://commcarehq.org/case/transaction/v2": "2.0"
