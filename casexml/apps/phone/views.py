@@ -21,11 +21,12 @@ def restore(request):
         return HttpResponse(status=503)
     
 
-def xml_for_case(request, case_id):
+def xml_for_case(request, case_id, version="1.0"):
     """
     Test view to get the xml for a particular case
     """
     case = CommCareCase.get(case_id)
     return HttpResponse(xml.get_case_xml(case, [const.CASE_ACTION_CREATE,
-                                                const.CASE_ACTION_UPDATE]), mimetype="text/xml")
+                                                const.CASE_ACTION_UPDATE],
+                                         version), mimetype="text/xml")
     

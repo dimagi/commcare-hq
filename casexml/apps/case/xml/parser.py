@@ -4,14 +4,10 @@ objects from things from xforms.
 """
 
 from casexml.apps.case import const
-from casexml.apps.case.xml import DEFAULT_VERSION, V1, V2
+from casexml.apps.case.xml import DEFAULT_VERSION, V1, V2, NS_REVERSE_LOOKUP_MAP
 
 XMLNS_ATTR = "@xmlns"
 
-
-NS_VERSION_MAP = {
-    "http://commcarehq.org/case/transaction/v2": "2.0"
-}
 
 def get_version(case_block):
     """
@@ -19,9 +15,9 @@ def get_version(case_block):
     """
     xmlns = case_block.get(XMLNS_ATTR, "")
     if xmlns:
-        if xmlns not in NS_VERSION_MAP:
+        if xmlns not in NS_REVERSE_LOOKUP_MAP:
             raise CaseGenerationException("%s not a valid case xmlns. We don't know how to handle this version.")
-        return NS_VERSION_MAP[xmlns]
+        return NS_REVERSE_LOOKUP_MAP[xmlns]
     return DEFAULT_VERSION
 
 

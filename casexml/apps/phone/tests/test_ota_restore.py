@@ -75,6 +75,23 @@ class OtaRestoreTest(TestCase):
         check_xml_line_by_line(self, expected_case_block, xml.get_case_xml(newcase, [case_const.CASE_ACTION_CREATE,
                                                                                      case_const.CASE_ACTION_UPDATE]))
         
+        # check v2
+        expected_v2_case_block = """
+        <case case_id="asdf" date_modified="2010-06-29" user_id="foo" xmlns="http://commcarehq.org/case/transaction/v2" >
+            <create>
+                <case_type>test_case_type</case_type> 
+                <case_name>test case name</case_name> 
+            </create>
+            <update>
+                <external_id>someexternal</external_id>
+            </update>
+        </case>"""
+        check_xml_line_by_line(self, expected_v2_case_block, xml.get_case_xml\
+                               (newcase, [case_const.CASE_ACTION_CREATE,
+                                          case_const.CASE_ACTION_UPDATE],
+                                version="2.0"))
+        
+        
         restore_payload = generate_restore_payload(dummy_user())
         # implicit length assertion
         [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
@@ -176,6 +193,85 @@ class OtaRestoreTest(TestCase):
     </referral>
 </case>"""
         check_xml_line_by_line(self, expected_response, response.content)
+        
+        # this is really ridiculous. TODO, get rid of massive text wall x 2
+        expected_v2_response = """<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="IKA9G79J4HDSPJLG3ER2OHQUY" date_modified="2011-02-19" user_id="ae179a62-38af-11e0-b6a3-005056aa7fb5">
+    <create>
+        <case_type>cc_mobilize_client</case_type> 
+        <case_name>SIEGEL-ROBERT-5412366523984</case_name> 
+    </create>
+    <update>
+       <external_id>5412366523984</external_id>
+       <Problems></Problems>
+       <abdominalpain></abdominalpain>
+       <address></address>
+       <addstaff1></addstaff1>
+       <addstaff2></addstaff2>
+       <allmeds_likert></allmeds_likert>
+       <arv_lasttreatment></arv_lasttreatment>
+       <arv_missedtreatments></arv_missedtreatments>
+       <arv_taking></arv_taking>
+       <assistance></assistance>
+       <confusion></confusion>
+       <contact_age_alt></contact_age_alt>
+       <contact_name_alt></contact_name_alt>
+       <contact_phone_alt></contact_phone_alt>
+       <deafness></deafness>
+       <depression></depression>
+       <diarrhea></diarrhea>
+       <dob>2011-02-11</dob>
+       <gender>male</gender>
+       <given_name>ROBERT</given_name>
+       <imbalance></imbalance>
+       <injectionother></injectionother>
+       <injectiontype></injectiontype>
+       <jaundice></jaundice>
+       <jointpain></jointpain>
+       <legal_name>ROBERT SIEGEL</legal_name>
+       <musclepain></musclepain>
+       <muscleweakness></muscleweakness>
+       <nickname>BOB</nickname>
+       <other></other>
+       <patient_dot>123</patient_dot>
+       <patient_id>5412366523984</patient_id>
+       <phone_number>1</phone_number>
+       <place></place>
+       <psychosis></psychosis>
+       <rash></rash>
+       <request_name>ME</request_name>
+       <request_rank>staff_nurse</request_rank>
+       <request_reason></request_reason>
+       <request_timestamp>2011-02-19 16:46:28</request_timestamp>
+       <ringing></ringing>
+       <seizures></seizures>
+       <short_name>SIEGEL, ROBERT</short_name>
+       <sleeping></sleeping>
+       <staffnumber1></staffnumber1>
+       <staffnumber2></staffnumber2>
+       <staffnumber3></staffnumber3>
+       <surname>SIEGEL</surname>
+       <swelling></swelling>
+       <tb_lasttreatment></tb_lasttreatment>
+       <tb_missedtreatments></tb_missedtreatments>
+       <tbtype></tbtype>
+       <tingling></tingling>
+       <tribal_area></tribal_area>
+       <txoutcome></txoutcome>
+       <txstart>2011-02-11</txstart>
+       <vision></vision>
+       <vomiting></vomiting>
+    </update>
+    <referral> 
+        <referral_id>V2RLNE4VQYEMZRGYSOMLYU4PM</referral_id>
+        <followup_date>2011-02-20</followup_date>
+        <open>
+            <referral_types>referral</referral_types>
+        </open>
+    </referral>
+</case>"""
+        
+        v2response = views.xml_for_case(HttpRequest(), updated_case.get_id, version="2.0")
+        check_xml_line_by_line(self, expected_v2_response, v2response.content)
         
         
         
