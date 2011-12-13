@@ -335,9 +335,22 @@ def get_apps_base_context(request, domain, app):
 
 
     context = locals()
+    del context['request']
+
+    build_errors_id = request.GET.get('build_errors', "")
+    build_errors = []
+    if build_errors_id:
+        try:
+            error_doc = BuildErrors.get(build_errors_id)
+            build_errors = error_doc.errors
+            error_doc.delete()
+        except ResourceNotFound:
+            pass
+
     context.update(get_sms_autocomplete_context(request, domain))
     context.update({
-        'URL_BASE': get_url_base()
+        'URL_BASE': get_url_base(),
+        'build_errors': build_errors,
     })
     return context
 
@@ -397,17 +410,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             case_properties.update(_form.actions.update_case.update.keys())
     case_properties = sorted(case_properties)
 
-
-    build_errors_id = req.GET.get('build_errors', "")
-    build_errors = []
-    if build_errors_id:
-        try:
-            error_doc = BuildErrors.get(build_errors_id)
-            build_errors = error_doc.errors
-            error_doc.delete()
-        except ResourceNotFound:
-            pass
-
     context = {
         'domain': domain,
         'applications': applications,
@@ -423,7 +425,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'edit': edit,
 
 #        'factory_apps': factory_apps,
-        'build_errors': build_errors,
     }
     context.update(base_context)
     if app and not module and hasattr(app, 'translations'):
