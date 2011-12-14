@@ -10,7 +10,7 @@ from django.template.context import RequestContext
 from soil.tasks import demo_sleep
 import json
 from soil.heartbeat import get_file_heartbeat, get_cache_heartbeat,\
-    last_heartbeat
+    last_heartbeat, heartbeat_enabled, is_alive
 
 def _parse_date(string):
     if isinstance(string, basestring):
@@ -40,8 +40,13 @@ def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html")
         is_ready = False
     else:
         is_ready=True
+    alive = True
+    if heartbeat_enabled():
+        alive = is_alive()
+    
     context = RequestContext(request)
     context['is_ready'] = is_ready
+    context['is_alive'] = alive
     context['download_id'] = download_id
     return render_to_response(template, context_instance=context)
 

@@ -5,4 +5,9 @@
         </div>
     {% else %}
         <img src="{{ STATIC_URL }}soil/ajax-loader.gif"> Processing...
+        {% if not is_alive %}
+            <p class="error">Task processor not detected. There may be something wrong with your system. 
+            If the download takes longer than normal to complete please contact support for help.
+            </p>
+        {% endif %}
     {% endif %}

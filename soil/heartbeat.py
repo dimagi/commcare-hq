@@ -1,10 +1,18 @@
 from django.conf import settings
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.core.cache import cache
 
 NOT_FOUND = "None found"
 NOT_CONFIGURED = "Not configured."
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+def heartbeat_enabled():
+    return hasattr(settings, "SOIL_HEARTBEAT_FILE") or \
+           hasattr(settings, "SOIL_HEARTBEAT_CACHE_KEY")
+
+def is_alive(window=timedelta(minutes=10)):
+    hb = last_heartbeat()
+    return hb and (datetime.utcnow() - window) < hb
 
 def write_file_heartbeat():
     """
