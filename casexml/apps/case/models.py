@@ -173,6 +173,17 @@ class Referral(CaseBase):
         
         return ref_list
 
+class CommCareCaseIndex(DocumentSchema):
+    """
+    In CaseXML v2 we support indices, which link a case to other cases.
+    """
+    identifier = StringProperty()
+    referenced_type = StringProperty()
+    referenced_id = StringProperty()
+    
+    def get_referenced_case(self):
+        return CommCareCase.get(self.referenced_id)
+
 class CommCareCase(CaseBase):
     """
     A case, taken from casexml.  This represents the latest
@@ -190,6 +201,7 @@ class CommCareCase(CaseBase):
     actions = SchemaListProperty(CommCareCaseAction)
     name = StringProperty()
     version = StringProperty()
+    indices = SchemaListProperty(CommCareCaseIndex)
     
     server_modified_on = DateTimeProperty()
     
@@ -231,6 +243,16 @@ class CommCareCase(CaseBase):
         # in theory since case ids are unique and modification dates get updated
         # upon any change, this is all we need
         return "%s::%s" % (self.case_id, self.modified_on)
+    
+    def has_index(self, id):
+        return id in (i.identifier for i in self.indices)
+    
+    def get_index(self, id):
+        found = filter(lambda i: i.identifier == id, self.indices)
+        if found:
+            assert(len(found) == 1)
+            return found[0]
+        return None
     
     @property
     def attachments(self):
@@ -337,6 +359,9 @@ class CommCareCase(CaseBase):
                                     case_update.referral_block[const.REFERRAL_TAG_ID],
                                     self.case_id))
         
+        if case_update.has_indices():
+            self.update_indices(case_update.indices)
+        
         # finally override any explicit properties from the update
         if case_update.user_id:     self.user_id = case_update.user_id
         if case_update.version:     self.version = case_update.version
@@ -358,6 +383,16 @@ class CommCareCase(CaseBase):
         self.closed = True
         self.closed_on = close_action.date
 
+    def update_indices(self, index_update_list):
+        for index_update in index_update_list:
+            if self.has_index(index_update.identifier):
+                index = self.get_index(index_update.identifier)
+                index.referenced_type = index_update.referenced_type
+                index.referenced_id = index_update.referenced_id
+            else:
+                self.indices.append(CommCareCaseIndex(identifier=index_update.identifier,
+                                                      referenced_type=index_update.referenced_type,
+                                                      referenced_id=index_update.referenced_id))
 
     def force_close(self, submit_url):
         if not self.closed:

@@ -103,6 +103,28 @@ class CaseCloseAction(CaseActionBase):
     # Right now this doesn't do anything other than the default
     pass
 
+
+class CaseIndex(object):
+    
+    def __init__(self, identifier, referenced_type, referenced_id):
+        self.identifier = identifier
+        self.referenced_type = referenced_type
+        self.referenced_id = referenced_id
+    
+    @classmethod
+    def from_v1(cls, block):
+        # indices are not supported in v1
+        return []
+    
+    @classmethod
+    def from_v2(cls, block):
+        ret = []
+        for id, data in block.items():
+            if "@case_type" not in data:
+                raise CaseGenerationException("Invalid index, must have a case type attribute.")
+            ret.append(CaseIndex(id, data["@case_type"], data.get("#text", "")))
+        return ret
+    
 class CaseUpdate(object):
     """
     A temporary model that parses the data from the form consistently.
@@ -134,7 +156,10 @@ class CaseUpdate(object):
             self.actions.append(UPDATE_ACTION_FUNCTION_MAP[self.version](self.update_block))
         if self.closes_case():
             self.actions.append(CLOSE_ACTION_FUNCTION_MAP[self.version](self.close_block))
-
+        
+        
+        self.indices = INDEX_FUNCTION_MAP[self.version](self.index_block) if self.has_indices() else []
+    
     def creates_case(self):
         # creates have to have actual data in them so this is fine
         return bool(self.create_block)    
@@ -230,4 +255,8 @@ UPDATE_ACTION_FUNCTION_MAP = {
 CLOSE_ACTION_FUNCTION_MAP = {
     V1: CaseCloseAction.from_v1,
     V2: CaseCloseAction.from_v2,
+}
+INDEX_FUNCTION_MAP = {
+    V2: CaseIndex.from_v1,
+    V2: CaseIndex.from_v2
 }

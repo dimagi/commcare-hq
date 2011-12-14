@@ -60,3 +60,20 @@ class Version2CaseParsingTest(TestCase):
         case = CommCareCase.get("foo-case-id")
         self.assertTrue(case.closed)
         
+    def testParseWithIndices(self):
+        self.testParseCreate()
+        
+        file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "index_update.xml")
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
+        
+        form = post_xform_to_couch(xml_data)
+        process_cases(sender="testharness", xform=form)
+        case = CommCareCase.get("foo-case-id")
+        self.assertEqual(2, len(case.indices))
+        self.assertTrue(case.has_index("foo_ref"))
+        self.assertTrue(case.has_index("baz_ref"))
+        self.assertEqual("bar", case.get_index("foo_ref").referenced_type)
+        self.assertEqual("some_referenced_id", case.get_index("foo_ref").referenced_id)
+        self.assertEqual("bop", case.get_index("baz_ref").referenced_type)
+        self.assertEqual("some_other_referenced_id", case.get_index("baz_ref").referenced_id)
