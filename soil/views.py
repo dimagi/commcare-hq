@@ -28,7 +28,7 @@ def demo(request):
 
 @login_required
 def heartbeat_status(request):
-    return HttpResponse(json.dumps({"last_timestamp": last_heartbeat(),
+    return HttpResponse(json.dumps({"last_timestamp": str(last_heartbeat()),
                                     "last_from_file": get_file_heartbeat(),
                                     "last_from_cache": get_cache_heartbeat()}))
     
