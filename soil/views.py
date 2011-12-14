@@ -2,12 +2,15 @@ import uuid
 from datetime import datetime
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.core.cache import cache
 import logging
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from soil.tasks import demo_sleep
+import json
+from soil.heartbeat import get_file_heartbeat, get_cache_heartbeat,\
+    last_heartbeat
 
 def _parse_date(string):
     if isinstance(string, basestring):
@@ -22,8 +25,13 @@ def demo(request):
     howlong = int(request.GET.get('secs', 5))
     demo_sleep.delay(download_id, howlong)
     return HttpResponseRedirect(reverse('retrieve_download', kwargs={'download_id': download_id}))
-    
 
+@login_required
+def heartbeat_status(request):
+    return HttpResponse(json.dumps({"last_timestamp": last_heartbeat(),
+                                    "last_from_file": get_file_heartbeat(),
+                                    "last_from_cache": get_cache_heartbeat()}))
+    
 
 @login_required
 def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html"):
