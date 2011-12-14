@@ -4,7 +4,6 @@ from couchdbkit.ext.django.schema import Document
 from django.http import HttpResponse
 from StringIO import StringIO
 from unidecode import unidecode
-from couchforms.models import XFormInstance
 from django.core.cache import cache
 import hashlib
 
@@ -100,7 +99,8 @@ def export_response(file, format, filename, checkpoint=None):
     return response
 
 def export_raw_data(export_tag, filename=None):
-                       
+    # really this shouldn't be here, but keeping it for now                   
+    from couchforms.models import XFormInstance
     xform_instances = XFormInstance.view('couchexport/schema_index', key=export_tag, include_docs=True)
     f = StringIO()
     zipfile = ZipFile(f, 'w')
