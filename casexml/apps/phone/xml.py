@@ -45,6 +45,7 @@ def get_case_element(case, updates, version="1.0"):
     # update block
     do_create = const.CASE_ACTION_CREATE in updates
     do_update = const.CASE_ACTION_UPDATE in updates
+    do_index = do_update # NOTE: we may want to differentiate this eventually
     do_purge = const.CASE_ACTION_PURGE in updates or const.CASE_ACTION_CLOSE in updates
     if do_create:
         # currently the below code relies on the assumption that
@@ -64,6 +65,10 @@ def get_case_element(case, updates, version="1.0"):
         generator.add_custom_properties(update_block)
         
         root.append(update_block)
+        
+    if do_index:
+        generator.add_indices(root)
+    
     if do_purge:
         # likewise, for now we assume that you can't both create/update and close/purge  
         assert(const.CASE_ACTION_UPDATE not in updates)

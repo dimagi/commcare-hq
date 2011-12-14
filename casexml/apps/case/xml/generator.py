@@ -76,6 +76,10 @@ class CaseXMLGeneratorBase(object):
         
         return elem
 
+    def get_index_element(self, index):
+        elem = safe_element(index.identifier, index.referenced_id)
+        elem.attrib = {"case_type": index.referenced_type}
+        return elem
     
     def get_case_type_element(self):
         self._ni()
@@ -98,6 +102,9 @@ class CaseXMLGeneratorBase(object):
             element.append(get_dynamic_element(k, v))
             
     def add_referrals(self, element):
+        self._ni()
+    
+    def add_indices(self, element):
         self._ni()
         
 class V1CaseXMLGenerator(CaseXMLGeneratorBase):
@@ -129,6 +136,12 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
         for ref in self.case.referrals:
             element.append(self.get_referral_element(ref))
     
+    def add_indices(self, element):
+        # intentionally a no-op
+        if self.case.indices:
+            logging.warning("Tried to add indices to version 1 CaseXML. This is not supported")
+        
+        
 class V2CaseXMLGenerator(CaseXMLGeneratorBase):
     
     
@@ -157,10 +170,17 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
         super(V2CaseXMLGenerator, self).add_custom_properties(element)
             
     def add_referrals(self, element):
+        # intentionally a no-op
         if self.case.referrals:
             logging.warning("Tried to add referrals to version 2 CaseXML. This is not supported")
-        # intentionally a no-op
     
+    def add_indices(self, element):
+        if self.case.indices:
+            index_elem = safe_element("index")
+            for i in self.case.indices:
+                index_elem.append(self.get_index_element(i))
+            element.append(index_elem)
+
 def get_generator(version, case):
     check_version(version)
     return GENERATOR_MAP[version](case)

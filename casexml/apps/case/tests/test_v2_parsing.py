@@ -2,8 +2,11 @@ from django.test import TestCase
 import os
 from casexml.apps.case.models import CommCareCase
 from couchforms.util import post_xform_to_couch
+from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.case.signals import process_cases
 from datetime import datetime
+from casexml.apps.phone import views as phone_views
+from django.http import HttpRequest
 
 class Version2CaseParsingTest(TestCase):
     """
@@ -77,3 +80,20 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("some_referenced_id", case.get_index("foo_ref").referenced_id)
         self.assertEqual("bop", case.get_index("baz_ref").referenced_type)
         self.assertEqual("some_other_referenced_id", case.get_index("baz_ref").referenced_id)
+        
+        # quick test for ota restore
+        v2response = phone_views.xml_for_case(HttpRequest(), case.get_id, version="2.0")
+        expected_v2_response = """
+<case case_id="foo-case-id" date_modified="2011-12-07" user_id="bar-user-id" xmlns="http://commcarehq.org/case/transaction/v2">
+    <create>
+        <case_type>v2_case_type</case_type>
+        <case_name>test case name</case_name>
+    </create>
+    <update />
+    <index>
+        <foo_ref case_type="bar">some_referenced_id</foo_ref>
+        <baz_ref case_type="bop">some_other_referenced_id</baz_ref>
+    </index>
+</case>"""
+        check_xml_line_by_line(self, expected_v2_response, v2response.content)
+        
