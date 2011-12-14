@@ -211,6 +211,9 @@ DOMAIN_SYNC_DATABASE_NAME = "commcarehq-public"
 ####### Release Manager App settings  #######
 RELEASE_FILE_PATH=os.path.join("data","builds")
 
+## soil heartbead config ##
+SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
+
 
 ####### Shared/Global/UI Settings ######
 
