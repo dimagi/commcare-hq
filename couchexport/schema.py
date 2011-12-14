@@ -15,6 +15,9 @@ def get_docs(schema_index, previous_export=None, filter=None):
     if previous_export is not None:
         consumer = Consumer(db)
         view_results = consumer.fetch(since=previous_export.seq)
+        if isinstance(view_results, basestring):
+            import logging
+            logging.error("view results is: %s" % view_results)
         include_ids = set([res["id"] for res in view_results["results"]])
         possible_ids = set([result['id'] for result in \
                             db.view("couchexport/schema_index", 
