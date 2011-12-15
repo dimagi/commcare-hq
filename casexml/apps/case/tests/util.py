@@ -267,9 +267,7 @@ class CaseBlock(dict):
             if dct.has_key('_attrib'):
                 for (key, value) in dct['_attrib'].items():
                     if value is not CaseBlock.undefined:
-                        if isinstance(value, datetime):
-                            value
-                        block.attrib[key] = value
+                        block.attrib[key] = fmt(value)
             if dct.has_key('_text'):
                 block.text = unicode(dct['_text'])
 
@@ -290,18 +288,25 @@ def check_user_has_case(testcase, user, case_block, should_have=True, line_by_li
     case_block.attrib['xmlns'] = XMLNS
     case_block = ElementTree.fromstring(ElementTree.tostring(case_block))
     payload = ElementTree.fromstring(generate_restore_payload(user, restore_id, version=version))
-    blocks = payload.findall('{{0}}case'.format(XMLNS))
-    case_id = case_block.findtext('{{0}}case_id'.format(XMLNS))
+    blocks = payload.findall('{{{0}}}case'.format(XMLNS))
+    def get_case_id(block):
+        if version == V1:
+            return block.findtext('{{{0}}}case_id'.format(XMLNS))
+        else:
+            return block.attrib['case_id']
+    case_id = get_case_id(case_block)
     n = 0
+    def extra_info():
+        return "\n%s\n%s" % (ElementTree.tostring(case_block), map(ElementTree.tostring, blocks))
     for block in blocks:
-        if block.findtext('{0}case_id'.format(XMLNS)) == case_id:
+        if get_case_id(block) == case_id:
             if should_have:
                 if line_by_line:
                     check_xml_line_by_line(testcase, ElementTree.tostring(block), ElementTree.tostring(case_block))
                 n += 1
                 if n == 2:
-                    testcase.fail("Block for case_id '%s' appears twice in ota restore for user '%s'" % (case_id, user.username))
+                    testcase.fail("Block for case_id '%s' appears twice in ota restore for user '%s':%s" % (case_id, user.username, extra_info()))
             else:
-                testcase.fail("User '%s' gets case '%s' but shouldn't" % (user.username, case_id))
+                testcase.fail("User '%s' gets case '%s' but shouldn't:%s" % (user.username, case_id, extra_info()))
     if not n and should_have:
-        testcase.fail("Block for case_id '%s' doesn't appear in ota restore for user '%s'" % (case_id, user.username))
+        testcase.fail("Block for case_id '%s' doesn't appear in ota restore for user '%s':%s" % (case_id, user.username, extra_info()))
