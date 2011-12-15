@@ -37,11 +37,12 @@ class CasePurgeTest(TestCase):
         user = dummy_user()
         case_id = uid.new()
         case_block = CaseBlock(
+            create=True,
             case_id=case_id,
-            create__case_name="purgeme",
-            create__case_type_id="sometype",
-            create__user_id=user.user_id, # must match 
-            create__external_id=uid.new(), # must match 
+            case_name="purgeme",
+            case_type="sometype",
+            user_id=user.user_id, # must match
+            external_id=uid.new(), # must match
             update={'foo': "bar"},
         ).as_xml(format_datetime=date_to_xml_string)
         

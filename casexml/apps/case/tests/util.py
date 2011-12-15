@@ -3,6 +3,7 @@ import uuid
 
 from datetime import datetime
 from xml.etree import ElementTree
+from casexml.apps.case.xml import V1, V2, NS_VERSION_MAP
 
 from couchforms.util import post_xform_to_couch
 from couchforms.models import XFormInstance
@@ -75,19 +76,23 @@ class CaseBlockError(Exception):
 
 class CaseBlock(dict):
     undefined = object()
-    def __init__(self, case_id, date_modified=None,
-            create=undefined,
-                create__case_type_id=undefined,
-                create__case_name=undefined,
-                create__external_id=undefined,
-                create__user_id=undefined,
-            update=undefined,
-                update__case_type_id=undefined,
-                update__case_name=undefined,
-                update__date_opened=undefined,
-                update__owner_id=undefined, # just for kicks
-            close=undefined,
+    def __init__(self,
+            case_id,
+            date_modified=None,
+            user_id=undefined,
+            owner_id=undefined,
+            external_id=undefined,
+            case_type=undefined,
+            case_name=undefined,
+            create=False,
+            date_opened=undefined,
+            update=None,
+            close=False,
             # referrals currently not supported
+            # V2 only
+            index=None,
+            version=V1,
+            compatibility_mode=False,
         ):
         """
         From https://bitbucket.org/javarosa/javarosa/wiki/casexml
@@ -124,43 +129,124 @@ class CaseBlock(dict):
 #                </update>
 #            </referral>
         </case>
-        
+
+        https://bitbucket.org/commcare/commcare/wiki/casexml20
+
+        <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" user_id="" date_modified="" >
+            <!-- user_id - At Most One: the GUID of the user responsible for this transaction -->
+            <!-- case_id - Exactly One: The id of the abstract case to be modified (even in the case of creation) -->
+            <!-- date_modified - Exactly One: The date and time of this operation -->
+            <create>         <!-- At Most One: Create action -->
+                <case_type/>             <!-- Exactly One: The ID for the type of case represented -->
+                <owner_id/>                 <!-- At Most One: The GUID of the current owner of this case -->
+                <case_name/>                <!-- Exactly One: A semantically meaningless but human readable name associated with the case -->
+            </create>
+            <update>         <!-- At Most One: Updates data for the case -->
+                <case_type/>             <!-- At Most One: Modifies the Case Type for the case -->
+                <case_name/>                <!-- At Most One: A semantically meaningless but human  readable name associated with the case -->
+                <date_opened/>              <!-- At Most One: Modifies the Date the case was opened -->
+                <owner_id/>                 <!-- At Most One: Modifies the owner of this case -->
+                <*/>                        <-- An Arbitrary Number: Creates or mutates a value  identified by the key provided -->
+            </update>
+            <index/>          <!-- At Most One: Contains a set of referenced GUID's to other cases -->
+            <close/>          <!-- At Most One: Closes the case -->
+         </case>
+
         """
         super(CaseBlock, self).__init__()
-        self.update({
-            'case_id': case_id,
-            'date_modified': date_modified or datetime.utcnow(),
+        date_modified = date_modified or datetime.utcnow()
+        update = update or {}
+        index = index or {}
+
+        self.XMLNS = NS_VERSION_MAP.get(version)
+
+        if version == V1:
+            self.VERSION = V1
+            self.CASE_TYPE = "case_type_id"
+        elif version == V2:
+            self.VERSION = V2
+            self.CASE_TYPE = "case_type"
+        else:
+            raise CaseBlockError("Case XML version must be %s or %s" % (V1, V2))
+
+        if create:
+            self['create'] = {}
+        self['update'] = update
+        self['update'].update({
+            'date_opened':                  date_opened
         })
-        tmp_create = {} if create is CaseBlock.undefined else create # maybe one of create__* is passed in
-        tmp_update = {} if update is CaseBlock.undefined else update # maybe one of update__* is passed in
+        create_or_update = {
+            self.CASE_TYPE:                 case_type,
+            'case_name':                    case_name,
+        }
 
-        for key in ('case_type_id', 'case_name', 'external_id', 'user_id'):
-            value = locals()['create__%s' % key]
-            if value is not CaseBlock.undefined:
-                tmp_create[key] = value
+        # what to do with case_id, date_modified, user_id, and owner_id, external_id
+        if version == V1:
+            self.update({
+                'case_id':                  case_id, # V1
+                'date_modified':            date_modified, # V1
+            })
+            if create:
+                self['create'].update({
+                    'user_id':              user_id, # V1
+                })
+            else:
+                if not compatibility_mode and user_id is not CaseBlock.undefined:
+                    CaseBlockError("CaseXML V1: You only set user_id when creating a case")
+            self['update'].update({
+                'owner_id':                 owner_id, # V1
+            })
+            create_or_update.update({
+                'external_id':              external_id # V1
+            })
+        else:
+            self.update({
+                '_attrib': {
+                    'case_id':              case_id, # V2
+                    'date_modified':        date_modified, # V2
+                    'user_id':              user_id, # V2
+                    'xmlns':                self.XMLNS,
+                }
+            })
+            create_or_update.update({
+                'owner_id':                 owner_id, # V2
+            })
+            self['update'].update({
+                'external_id':              external_id, # V2
+            })
 
-        for key in ('case_type_id', 'case_name', 'date_opened', 'owner_id'):
-            value = locals()['update__%s' % key]
-            if value is not CaseBlock.undefined:
-                tmp_update[key] = value
 
-        if create is not CaseBlock.undefined or tmp_create:
-            for required_key in 'case_type_id', 'case_name', 'external_id':
-                if not tmp_create.has_key(required_key):
-                    raise CaseBlockError("Attempt to make <create/> block without <%s/>" % required_key)
-            self['create'] = tmp_create
-            
-        if update is not CaseBlock.undefined or tmp_update:
-            self['update'] = tmp_update
-            
-        if close is not CaseBlock.undefined:
+        # fail if user specifies both, say, case_name='Johnny' and update={'case_name': 'Johnny'}
+        for key in create_or_update:
+            if create_or_update[key] is not CaseBlock.undefined and self['update'].has_key(key):
+                raise CaseBlockError("Key %r specified twice" % key)
+                
+        if create:
+            self['create'].update(create_or_update)
+        else:
+            self['update'].update(create_or_update)
+
+        
+        if close:
             self['closed'] = {}
 
+        if not ['' for val in self['update'].values() if val is not CaseBlock.undefined]:
+                self['update'] = CaseBlock.undefined
+        if index and version==V2:
+            self['index'] = {}
+            for name, (case_type, case_id) in index.items():
+                self['index'][name] = {
+                    '_attrib': {
+                        'case_type': case_type
+                    },
+                    '_text': case_id
+                }
+        
     def as_xml(self, format_datetime=None):
         format_datetime = format_datetime or json_format_datetime
         case = ElementTree.Element('case')
         order = ['case_id', 'date_modified', 'create', 'update', 'close',
-                 'case_type_id', 'user_id', 'case_name', 'external_id', 'date_opened', 'owner_id']
+                 self.CASE_TYPE, 'user_id', 'case_name', 'external_id', 'date_opened', 'owner_id']
         def sort_key(item):
             word, _ = item
             try:
@@ -169,42 +255,58 @@ class CaseBlock(dict):
             except ValueError:
                 return 1, word
 
+        def fmt(value):
+            if isinstance(value, datetime):
+                return unicode(format_datetime(value))
+            elif isinstance(value, basestring):
+                return unicode(value)
+            else:
+                raise CaseBlockError("Can't transform to XML: %s; unexpected type." % value)
+
         def dict_to_xml(block, dct):
+            if dct.has_key('_attrib'):
+                for (key, value) in dct['_attrib'].items():
+                    if value is not CaseBlock.undefined:
+                        block.attrib[key] = fmt(value)
+            if dct.has_key('_text'):
+                block.text = unicode(dct['_text'])
+
             for (key, value) in sorted(dct.items(), key=sort_key):
-                elem = ElementTree.Element(key)
-                block.append(elem)
-                if isinstance(value, dict):
-                    dict_to_xml(elem, value)
-                elif isinstance(value, datetime):
-                    elem.text = unicode(format_datetime(value))
-                elif isinstance(value, basestring):
-                    elem.text = unicode(value)
-                else:
-                    raise CaseBlockError("Can't transform to XML: %s; unexpected type." % value)
+                if value is not CaseBlock.undefined and key != '_attrib':
+                    elem = ElementTree.Element(key)
+                    block.append(elem)
+                    if isinstance(value, dict):
+                        dict_to_xml(elem, value)
+                    else:
+                        elem.text = fmt(value)
         dict_to_xml(case, self)
         return case
     
     
-def check_user_has_case(testcase, user, case_block, should_have=True, line_by_line=True, restore_id=""):
-    case_block.attrib['xmlns'] = 'http://openrosa.org/http/response'
+def check_user_has_case(testcase, user, case_block, should_have=True, line_by_line=True, restore_id="", version=V1):
+    XMLNS = NS_VERSION_MAP.get(version, 'http://openrosa.org/http/response')
+    case_block.attrib['xmlns'] = XMLNS
     case_block = ElementTree.fromstring(ElementTree.tostring(case_block))
-    payload = ElementTree.fromstring(generate_restore_payload(user, restore_id))
-    blocks = payload.findall('{http://openrosa.org/http/response}case')
-    case_id = case_block.findtext('{http://openrosa.org/http/response}case_id')
+    payload = ElementTree.fromstring(generate_restore_payload(user, restore_id, version=version))
+    blocks = payload.findall('{{{0}}}case'.format(XMLNS))
+    def get_case_id(block):
+        if version == V1:
+            return block.findtext('{{{0}}}case_id'.format(XMLNS))
+        else:
+            return block.attrib['case_id']
+    case_id = get_case_id(case_block)
     n = 0
+    def extra_info():
+        return "\n%s\n%s" % (ElementTree.tostring(case_block), map(ElementTree.tostring, blocks))
     for block in blocks:
-        if block.findtext('{http://openrosa.org/http/response}case_id') == case_id:
+        if get_case_id(block) == case_id:
             if should_have:
                 if line_by_line:
                     check_xml_line_by_line(testcase, ElementTree.tostring(block), ElementTree.tostring(case_block))
                 n += 1
                 if n == 2:
-                    testcase.fail("Block for case_id '%s' appears twice in ota restore for user '%s'" % (case_id, user.username))
+                    testcase.fail("Block for case_id '%s' appears twice in ota restore for user '%s':%s" % (case_id, user.username, extra_info()))
             else:
-                testcase.fail("User '%s' gets case '%s' but shouldn't" % (user.username, case_id))
+                testcase.fail("User '%s' gets case '%s' but shouldn't:%s" % (user.username, case_id, extra_info()))
     if not n and should_have:
-        testcase.fail("Block for case_id '%s' doesn't appear in ota restore for user '%s'" % (case_id, user.username))
-
-
-
-    
+        testcase.fail("Block for case_id '%s' doesn't appear in ota restore for user '%s':%s" % (case_id, user.username, extra_info()))
