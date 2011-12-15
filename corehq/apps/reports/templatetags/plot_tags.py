@@ -19,17 +19,17 @@ def case_plot_js(chw_id):
                              "total_case_data": total_case_data})
     
 @register.simple_tag
-def formentry_plot_js(domain, user_id):
-    data = entrytimes.get_data(domain, user_id)
+def formentry_plot_js(domain, user_id, datespan=None):
+    data = entrytimes.get_data(domain, user_id, datespan)
     totals, avgs = get_sparkline_totals(data)
     
     def _tot_to_flot(k, v):
         return {"label": "%s (total)" % k, "data": v, "yaxis": 2,
-                "points": { "show": True }}
+                "lines": { "show": True }}
     
     def _avg_to_flot(k, v):
         return {"label": "%s (average time)" % k, "data": v,
-                "lines": { "show": True }, "points": { "show": True }}
+                "points": { "show": True }, "points": { "show": True }}
     
     plots = dict((k, {"totals": _tot_to_flot(k,v)}) for k, v in totals.items())
     for k, v in avgs.items():
