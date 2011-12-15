@@ -94,4 +94,4 @@ Here is how to create a class-based custom report in HQ.
    You can add the same report to multiple domains.
 
    You should now be able to access your new report through the "Select Report" dropdown in the "Reports" tab
-   in your domain.
+   in your domain.  No URL setup is required -- the reports_dispatcher function in views.py will take care of it.

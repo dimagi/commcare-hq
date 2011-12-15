@@ -769,8 +769,9 @@ class WebUser(CouchUser):
         if not domain:
             try:
                 domain = self.current_domain
-            except AttributeError:
+            except (AttributeError, KeyError):
                 return None
+
         return dict(self.ROLE_LABELS).get(self.get_role(domain), "Unknown Role")
 
     # these functions help in templates

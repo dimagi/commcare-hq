@@ -1,9 +1,7 @@
 from collections import defaultdict
-import json
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from corehq.apps.reports.display import xmlns_to_name
-import sys
 
 def get_data(domain, user=None, datespan=None):
     """

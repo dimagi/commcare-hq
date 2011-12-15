@@ -16,5 +16,6 @@
     "owner_id",
     "version",
     "referrals",
-    "actions"
+    "actions",
+    "indices"
 ]
