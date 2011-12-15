@@ -716,7 +716,8 @@ def submit_time_punchcard(request, domain, template="reports/basic_report.html",
 def submit_trends(request, domain, template="reports/basic_report.html",
                                    report_partial="reports/partials/formtrends.html"):
     individual = request.GET.get("individual", '')
-    context = util.report_context(domain, report_partial, "Submit Trends", datespan=request.datespan)
+    context = util.report_context(domain, report_partial, "Submit Trends", datespan=request.datespan,
+                                  individual=individual)
     context.update({"user_id": individual})
     return render_to_response(request, template, context)
 
