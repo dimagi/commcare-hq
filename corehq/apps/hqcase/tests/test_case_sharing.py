@@ -1,9 +1,8 @@
 from django.utils.unittest.case import TestCase
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock,\
-    check_user_has_case
+from casexml.apps.case.tests.util import CaseBlock, check_user_has_case
 from casexml.apps.case.util import post_case_blocks
-from casexml.apps.phone.restore import generate_restore_payload
+from casexml.apps.case.xml import V1, LEGAL_VERSIONS, V2
 from casexml.apps.phone.xml import date_to_xml_string
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
@@ -38,90 +37,100 @@ class CaseSharingTest(TestCase):
 
     def test_sharing(self):
 
-        def create_and_test(case_id, user, owner, should_have, should_not_have):
+        def create_and_test(case_id, user, owner, should_have, should_not_have, version):
             case_block = self.get_create_block(
                 case_id=case_id,
                 type="case",
                 user_id=user.user_id,
                 owner_id=owner.get_id,
+                version=version
             )
             post_case_blocks([case_block])
             CommCareCase.get(case_id)
 
-            check_has_block(case_block, should_have, should_not_have)
+            check_has_block(case_block, should_have, should_not_have, version=version)
 
-        def update_and_test(case_id, owner=None, should_have=None, should_not_have=None):
+        def update_and_test(case_id, owner=None, should_have=None, should_not_have=None, version=V1):
             case_block = self.get_update_block(
                 case_id='case-a-1',
                 update={'greeting': "Hello!"},
                 owner_id=owner.get_id if owner else None,
+                version=version
             )
             post_case_blocks([case_block])
 
-            check_has_block(case_block, should_have, should_not_have, line_by_line=False)
+            check_has_block(case_block, should_have, should_not_have, line_by_line=False, version=version)
 
-        def check_has_block(case_block, should_have, should_not_have, line_by_line=True):
+        def check_has_block(case_block, should_have, should_not_have, line_by_line=True, version=V1):
             for user in should_have:
-                check_user_has_case(self, user.to_casexml_user(), case_block, line_by_line=line_by_line)
+                check_user_has_case(self, user.to_casexml_user(), case_block, line_by_line=line_by_line, version=version)
             for user in should_not_have:
-                check_user_has_case(self, user.to_casexml_user(), case_block, should_have=False, line_by_line=line_by_line)
+                check_user_has_case(self, user.to_casexml_user(), case_block, should_have=False, line_by_line=line_by_line, version=version)
+        for version in [V2]:
+            create_and_test(
+                case_id='case-a-1',
+                user=self.userA1,
+                owner=self.groupA,
+                should_have=[self.userA1, self.userA2, self.userX],
+                should_not_have=[self.userB1, self.userB2],
+                version=version
+            )
 
-        create_and_test(
-            case_id='case-a-1',
-            user=self.userA1,
-            owner=self.groupA,
-            should_have=[self.userA1, self.userA2, self.userX],
-            should_not_have=[self.userB1, self.userB2]
-        )
+            create_and_test(
+                case_id='case-b-1',
+                user=self.userB1,
+                owner=self.groupB,
+                should_have=[self.userB1, self.userB2, self.userX],
+                should_not_have=[self.userA1, self.userA2],
+                version=version
+            )
 
-        create_and_test(
-            case_id='case-b-1',
-            user=self.userB1,
-            owner=self.groupB,
-            should_have=[self.userB1, self.userB2, self.userX],
-            should_not_have=[self.userA1, self.userA2]
-        )
+            create_and_test(
+                case_id='case-a-2',
+                user=self.userX,
+                owner=self.groupA,
+                should_have=[self.userA1, self.userA2, self.userX],
+                should_not_have=[self.userB1, self.userB2],
+                version=version
+            )
 
-        create_and_test(
-            case_id='case-a-2',
-            user=self.userX,
-            owner=self.groupA,
-            should_have=[self.userA1, self.userA2, self.userX],
-            should_not_have=[self.userB1, self.userB2]
-        )
+            update_and_test(
+                case_id='case-a-1',
+                should_have=[self.userA1, self.userA2, self.userX],
+                should_not_have=[self.userB1, self.userB2],
+                version=version,
+            )
 
-        update_and_test(
-            case_id='case-a-1',
-            should_have=[self.userA1, self.userA2, self.userX],
-            should_not_have=[self.userB1, self.userB2],
-        )
-
-        update_and_test(
-            case_id='case-a-1',
-            owner=self.groupB,
-            should_have=[self.userB1, self.userB2, self.userX],
-            should_not_have=[self.userA1, self.userA2],
-        )
+            update_and_test(
+                case_id='case-a-1',
+                owner=self.groupB,
+                should_have=[self.userB1, self.userB2, self.userX],
+                should_not_have=[self.userA1, self.userA2],
+                version=version
+            )
 
 
-    def get_create_block(self, case_id, type, user_id, owner_id, name=None, **kwargs):
+    def get_create_block(self, case_id, type, user_id, owner_id, name=None, version=V1, **kwargs):
         name = name or case_id
         case_block = CaseBlock(
             case_id=case_id,
-            create__case_name=name,
-            create__case_type_id=type,
-            create__user_id=user_id,
-            create__external_id=case_id,
-            update={'owner_id': owner_id},
+            create=True,
+            case_name=name,
+            case_type=type,
+            user_id=user_id,
+            external_id=case_id,
+            owner_id=owner_id,
+            version=version,
             **kwargs
         ).as_xml(format_datetime=date_to_xml_string)
         return case_block
 
-    def get_update_block(self, case_id, owner_id=None, update=None):
+    def get_update_block(self, case_id, owner_id=None, update=None, version=V1):
         update = update or {}
         case_block = CaseBlock(
             case_id=case_id,
             update=update,
-            update__owner_id=owner_id or CaseBlock.undefined,
+            owner_id=owner_id or CaseBlock.undefined,
+            version=version,
         ).as_xml(format_datetime=date_to_xml_string)
         return case_block
