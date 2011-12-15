@@ -113,8 +113,8 @@ class CaseSharingTest(TestCase):
     def get_create_block(self, case_id, type, user_id, owner_id, name=None, version=V1, **kwargs):
         name = name or case_id
         case_block = CaseBlock(
-            case_id=case_id,
             create=True,
+            case_id=case_id,
             case_name=name,
             case_type=type,
             user_id=user_id,
