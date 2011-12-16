@@ -1,48 +1,157 @@
-from django.db import models
+from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.xml import V2, LEGAL_VERSIONS
+from couchforms.models import XFormInstance
+from dimagi.utils.parsing import json_format_datetime
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.mixins import UnicodeMixIn
 from datetime import datetime, timedelta
+from dimagi.utils.post import simple_post
 
-class FormRepeater(Document, UnicodeMixIn):
-    """
-    Record of forms repeating to a new url.
-    """
+repeater_types = {}
+
+def register_repeater_type(cls):
+    repeater_types[cls.__name__] = cls
+    return cls
+
+class Repeater(Document, UnicodeMixIn):
+    base_doc = 'Repeater'
+
     domain = StringProperty()
     url = StringProperty()
-    
-    def __unicode__(self):
-        return "forwarding to: %s" % self.url
 
-class RepeatRecord(DocumentSchema, UnicodeMixIn):
+    def register(self, payload, next_check=None):
+        try:
+            payload_id = payload.get_id
+        except Exception:
+            payload_id = payload
+        repeat_record = RepeatRecord(
+            repeater_id=self.get_id,
+            repeater_type=self.doc_type,
+            domain=self.domain,
+            next_check=next_check or datetime.utcnow(),
+            payload_id=payload_id
+        )
+        repeat_record.save()
+        return repeat_record
+
+    @classmethod
+    def by_domain(cls, domain):
+        key = [domain]
+        if cls.__name__ in repeater_types:
+            key.append(cls.__name__)
+        elif cls.doc_type == Repeater.base_doc:
+            pass
+        else:
+            raise Exception("Unknown Repeater type: %s" % cls.doc_type)
+        return cls.view('receiverwrapper/repeaters', startkey=key, endkey=key + [{}])
+
+    @classmethod
+    def wrap(cls, data):
+        doc_type = data['doc_type']
+        return repeater_types.get(doc_type, cls).wrap(data)
+
+@register_repeater_type
+class FormRepeater(Repeater):
     """
-    Record of something being repeated to something.
-    These get injected into XForms.
+    Record that forms should be repeated to a new url
+
     """
-    url = StringProperty()
+
+    def get_payload(self, repeat_record):
+        return XFormInstance.get(repeat_record.payload_id).get_xml()
+
+    def __unicode__(self):
+        return "forwarding forms to: %s" % self.url
+
+@register_repeater_type
+class CaseRepeater(Repeater):
+    """
+    Record that cases should be repeated to a new url
+
+    """
+
+    version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
+
+    def get_payload(self, repeat_record):
+        return CommCareCase.get(repeat_record.payload_id).to_xml(version=self.version)
+
+    def __unicode__(self):
+        return "forwarding cases to: %s" % self.url
+
+class RepeatRecord(Document):
+    """
+    An record of a particular instance of something that needs to be forwarded
+    with a link to the proper repeater object
+    """
+
+    repeater_id = StringProperty()
+    repeater_type = StringProperty()
+    domain = StringProperty()
+
     last_checked = DateTimeProperty()
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
-    
+
+    payload_id = StringProperty()
+
+    @property
+    def repeater(self):
+        return Repeater.get(self.repeater_id)
+
+    @property
+    def url(self):
+        return self.repeater.url
+
+    @classmethod
+    def all(cls, domain=None, due_before=None):
+        json_now = json_format_datetime(due_before or datetime.utcnow())
+        repeat_records = RepeatRecord.view("receiverwrapper/repeat_records_by_next_check",
+            startkey=[domain],
+            endkey=[domain, json_now]
+        )
+        return repeat_records
+
     def update_success(self):
-        # we use an exponential backoff to avoid submitting to bad urls
-        # too frequently.
         self.last_checked = datetime.utcnow()
         self.next_check = None
         self.succeeded = True
     
     def update_failure(self):
-        # we use an exponential backoff to avoid submitting to bad urls
+        # we use an exponential back-off to avoid submitting to bad urls
         # too frequently.
         assert(self.succeeded == False)
-        window = self.next_check - self.last_checked if self.last_checked else timedelta(minutes=30)
-        self.last_checked = datetime.utcnow()
-        self.next_check = datetime.utcnow() + window
+        now = datetime.utcnow()
+        if self.last_checked:
+            window = self.next_check - self.last_checked
+        else:
+            window = timedelta(minutes=30)
+        self.last_checked = now
+        self.next_check += 1.5 * window
         
     def try_now(self):
         # try when we haven't succeeded and either we've
         # never checked, or it's time to check again
-        return not self.succeeded and self.next_check is None \
-                or self.next_check < datetime.utcnow() 
+        return not self.succeeded
+
+    def get_payload(self):
+        return self.repeater.get_payload(self)
+
+    def fire(self, max_tries=3, post_fn=None):
+        post_fn = post_fn or simple_post
+        if self.try_now():
+            # we don't use celery's version of retry because
+            # we want to override the success/fail each try
+            for _ in range(max_tries):
+                try:
+                    resp = post_fn(self.get_payload(), self.url)
+                    if 200 <= resp.status < 300:
+                        self.update_success()
+                        break
+                except Exception:
+                    pass # some other connection issue probably
+            if not self.succeeded:
+                # mark it failed for later and give up
+                self.update_failure()
 
 # import signals
 from corehq.apps.receiverwrapper import signals

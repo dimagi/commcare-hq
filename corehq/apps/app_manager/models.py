@@ -512,19 +512,6 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
                 return detail
         raise Exception("Module %s has no detail type %s" % (self, detail_type))
 
-    def infer_case_type(self):
-        case_types = []
-        for form in self.get_forms():
-            xform = form.source
-            soup = BeautifulStoneSoup(xform)
-            try:
-                case_type = soup.find('case').find('case_type_id').string.strip()
-            except AttributeError:
-                case_type = None
-            if case_type:
-                case_types.append(case_type)
-        return case_types
-
     def export_json(self, dump_json=True):
         source = self.to_json()
         for form in source['forms']:
