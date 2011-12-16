@@ -389,3 +389,8 @@ EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
+
+STANDARD_REPORT_MAP = {
+    "Worker Monitoring" : ['corehq.apps.reports.standard.DailySubmissionsReport',
+                           ]
+}
