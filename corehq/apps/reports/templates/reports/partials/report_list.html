@@ -91,7 +91,8 @@
             <li><a href="{% url case_export domain %}">Export cases, referrals, and users</a></li>
         </ul>
     </li>
-    <li id="report-list-custom"><h2>Custom</h2>
+    {% standard_report_list domain %}
+    <li id="report-list-custom"><h2>Custom Reports</h2>
         <ul>
             {% custom_report_list domain %}
         </ul>

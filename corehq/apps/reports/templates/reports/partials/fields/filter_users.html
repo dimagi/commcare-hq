@@ -1,0 +1,7 @@
+{% if show_user_filter %}
+    <span>Show results for: </span>
+    {% for user in toggle_users %}
+        <input type="checkbox" name="ufilter" value="{{ user.type }}" id="user-filter-{{ forloop.counter }}" {% if user.show %}checked="checked"{% endif %}/>
+        <label for="user-filter-{{ forloop.counter }}">{{ user.name }}</label>
+    {% endfor %}
+{% endif %}

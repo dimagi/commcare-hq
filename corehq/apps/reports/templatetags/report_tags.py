@@ -242,7 +242,19 @@ def attribute_lookup(obj, attr):
     '''Get an attribute from an object.'''
     if (hasattr(obj, attr)):
         return getattr(obj, attr)
-    
+
+@register.simple_tag
+def standard_report_list(domain):
+    mapping = getattr(settings, 'STANDARD_REPORT_MAP', None)
+    if not mapping: return ""
+    lst = []
+    for key, models in mapping.iteritems():
+        lst.append("<li><h2>%s</h2><ul>" % key)
+        for model in models:
+            klass = to_function(model)
+            lst.append("<li><a href='%s' title='%s'>%s</a></li>" % (reverse('standard_report_dispatcher', args=(domain, klass.slug)), klass.description, klass.name))
+        lst.append("</ul></li>")
+    return "\n".join(lst)
 
 @register.simple_tag
 def custom_report_list(domain):
@@ -252,5 +264,5 @@ def custom_report_list(domain):
     lst = []
     for model in mapping[domain]:
         klass = to_function(model)
-        lst.append("<li><a href='%s' title='%s'>%s</a></li>" % (reverse('report_dispatcher', args=(domain, klass.slug)), klass.description, klass.name))
+        lst.append("<li><a href='%s' title='%s'>%s</a></li>" % (reverse('custom_report_dispatcher', args=(domain, klass.slug)), klass.description, klass.name))
     return "\n".join(lst)

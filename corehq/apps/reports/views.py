@@ -279,6 +279,7 @@ class SubmitHistory(ReportBase):
         def form_data_link(instance_id):
             return "<a class='ajax_dialog' href='%s'>View Form</a>" % reverse('render_form_data', args=[self.domain, instance_id])
         if self.individual:
+            print "SUBMIT HISTORY"
             rows = get_db().view('reports/submit_history',
                 endkey=[self.domain, self.individual],
                 startkey=[self.domain, self.individual, {}],
@@ -297,6 +298,7 @@ class SubmitHistory(ReportBase):
                 return [form_data_link(row['id']), username, time, xmlns]
 
         else:
+            print "ALL SUBMISSIONS"
             rows = get_db().view('reports/all_submissions',
                 endkey=[self.domain],
                 startkey=[self.domain, {}],
@@ -766,7 +768,8 @@ def daily_submissions(request, domain, view_name, title):
         request.datespan = DateSpan.since(7, format="%Y-%m-%d")
 
     group, users = util.get_group_params(domain, **json_request(request.GET))
-
+    print "GROUP ", group
+    print "USERS ", users
     results = get_db().view(
         view_name,
         group=True,
@@ -1035,7 +1038,21 @@ def emailtest(request, domain, report_slug):
     return HttpResponse(report.get_response(request.user, domain))
 
 @login_and_domain_required
-def report_dispatcher(request, domain, report_slug):
+@datespan_default
+def standard_report_dispatcher(request, domain, report_slug):
+    mapping = getattr(settings, 'STANDARD_REPORT_MAP', None)
+    if not mapping:
+        return Http404("Sorry, no standard reports have been configured yet.")
+    for key, models in mapping.iteritems():
+        for model in models:
+            klass = to_function(model)
+            if klass.slug == report_slug:
+                k = klass(domain, request)
+                return k.as_view()
+    return Http404("Can't find that report.")
+
+@login_and_domain_required
+def custom_report_dispatcher(request, domain, report_slug):
     mapping = getattr(settings, 'CUSTOM_REPORT_MAP', None)
     if not mapping or not domain in mapping:
         return Http404("Sorry, no reports have been configured for this domain.")

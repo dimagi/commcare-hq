@@ -1,6 +1,7 @@
 from datetime import datetime
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.models import HQUserType
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_id_to_username
 from dimagi.utils.couch.database import get_db
@@ -146,3 +147,19 @@ def create_group_filter(group):
     else:
         group_filter = None
     return group_filter
+
+def get_user_filter(request):
+    ufilter = group = individual = None
+    try:
+        ufilter = request.GET.getlist('ufilter')
+        group = request.GET.get('group', '')
+        individual = request.GET.get('individual', '')
+    except KeyError:
+        pass
+    show_filter = True
+    toggle = HQUserType.use_defaults()
+    if ufilter and not (group or individual):
+        toggle = HQUserType.use_filter(ufilter)
+    elif group or individual:
+        show_filter = False
+    return toggle, show_filter
