@@ -13,6 +13,8 @@ from casexml.apps.case.signals import process_cases
 from dimagi.utils.dates import utcnow_sans_milliseconds
 from lxml import etree
 from dimagi.utils.parsing import json_format_datetime
+from casexml.apps.phone.xml import date_to_xml_string
+
 from casexml.apps.phone.restore import generate_restore_payload
 
 def bootstrap_case_from_xml(test_class, filename, case_id_override=None,
@@ -171,6 +173,11 @@ class CaseBlock(dict):
 
         if create:
             self['create'] = {}
+            # make case_type
+            case_type = "" if case_type is CaseBlock.undefined else case_type
+            case_name = "" if case_name is CaseBlock.undefined else case_name
+            if version == V2:
+                owner_id = "" if owner_id is CaseBlock.undefined else owner_id
         self['update'] = update
         self['update'].update({
             'date_opened':                  date_opened
@@ -242,7 +249,7 @@ class CaseBlock(dict):
                     '_text': case_id
                 }
         
-    def as_xml(self, format_datetime=None):
+    def as_xml(self, format_datetime=date_to_xml_string):
         format_datetime = format_datetime or json_format_datetime
         case = ElementTree.Element('case')
         order = ['case_id', 'date_modified', 'create', 'update', 'close',
@@ -267,12 +274,12 @@ class CaseBlock(dict):
             if dct.has_key('_attrib'):
                 for (key, value) in dct['_attrib'].items():
                     if value is not CaseBlock.undefined:
-                        block.attrib[key] = fmt(value)
+                        block.set(key, fmt(value))
             if dct.has_key('_text'):
                 block.text = unicode(dct['_text'])
 
             for (key, value) in sorted(dct.items(), key=sort_key):
-                if value is not CaseBlock.undefined and key != '_attrib':
+                if value is not CaseBlock.undefined and not key.startswith('_'):
                     elem = ElementTree.Element(key)
                     block.append(elem)
                     if isinstance(value, dict):
@@ -285,7 +292,7 @@ class CaseBlock(dict):
     
 def check_user_has_case(testcase, user, case_block, should_have=True, line_by_line=True, restore_id="", version=V1):
     XMLNS = NS_VERSION_MAP.get(version, 'http://openrosa.org/http/response')
-    case_block.attrib['xmlns'] = XMLNS
+    case_block.set('xmlns', XMLNS)
     case_block = ElementTree.fromstring(ElementTree.tostring(case_block))
     payload = ElementTree.fromstring(generate_restore_payload(user, restore_id, version=version))
     blocks = payload.findall('{{{0}}}case'.format(XMLNS))
@@ -293,16 +300,18 @@ def check_user_has_case(testcase, user, case_block, should_have=True, line_by_li
         if version == V1:
             return block.findtext('{{{0}}}case_id'.format(XMLNS))
         else:
-            return block.attrib['case_id']
+            return block.get('case_id')
     case_id = get_case_id(case_block)
     n = 0
     def extra_info():
         return "\n%s\n%s" % (ElementTree.tostring(case_block), map(ElementTree.tostring, blocks))
+    match = None
     for block in blocks:
         if get_case_id(block) == case_id:
             if should_have:
                 if line_by_line:
                     check_xml_line_by_line(testcase, ElementTree.tostring(block), ElementTree.tostring(case_block))
+                    match = block
                 n += 1
                 if n == 2:
                     testcase.fail("Block for case_id '%s' appears twice in ota restore for user '%s':%s" % (case_id, user.username, extra_info()))
@@ -310,3 +319,4 @@ def check_user_has_case(testcase, user, case_block, should_have=True, line_by_li
                 testcase.fail("User '%s' gets case '%s' but shouldn't:%s" % (user.username, case_id, extra_info()))
     if not n and should_have:
         testcase.fail("Block for case_id '%s' doesn't appear in ota restore for user '%s':%s" % (case_id, user.username, extra_info()))
+    return match

@@ -70,7 +70,6 @@ class OtaRestoreTest(TestCase):
                 <case_name>test case name</case_name> 
                 <external_id>someexternal</external_id>
             </create>
-            <update />
         </case>"""
         check_xml_line_by_line(self, expected_case_block, xml.get_case_xml(newcase, [case_const.CASE_ACTION_CREATE,
                                                                                      case_const.CASE_ACTION_UPDATE]))
@@ -80,7 +79,8 @@ class OtaRestoreTest(TestCase):
         <case case_id="asdf" date_modified="2010-06-29" user_id="foo" xmlns="http://commcarehq.org/case/transaction/v2" >
             <create>
                 <case_type>test_case_type</case_type> 
-                <case_name>test case name</case_name> 
+                <case_name>test case name</case_name>
+                <owner_id/>
             </create>
             <update>
                 <external_id>someexternal</external_id>
@@ -198,7 +198,8 @@ class OtaRestoreTest(TestCase):
         expected_v2_response = """<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="IKA9G79J4HDSPJLG3ER2OHQUY" date_modified="2011-02-19" user_id="ae179a62-38af-11e0-b6a3-005056aa7fb5">
     <create>
         <case_type>cc_mobilize_client</case_type> 
-        <case_name>SIEGEL-ROBERT-5412366523984</case_name> 
+        <case_name>SIEGEL-ROBERT-5412366523984</case_name>
+        <owner_id/>
     </create>
     <update>
        <external_id>5412366523984</external_id>

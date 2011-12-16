@@ -161,8 +161,7 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
     def add_base_properties(self, element):
         super(V2CaseXMLGenerator, self).add_base_properties(element)
         # owner id introduced in v2
-        if self.case.owner_id:
-            element.append(safe_element('owner_id', self.case.owner_id))
+        element.append(safe_element('owner_id', self.case.owner_id or ""))
         
     def add_custom_properties(self, element):
         if self.case.external_id:
@@ -176,9 +175,12 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
     
     def add_indices(self, element):
         if self.case.indices:
+            indices = []
             index_elem = safe_element("index")
             for i in self.case.indices:
-                index_elem.append(self.get_index_element(i))
+                indices.append(self.get_index_element(i))
+            indices.sort(key=lambda elem: elem.tag)
+            index_elem.extend(indices)
             element.append(index_elem)
 
 def get_generator(version, case):
