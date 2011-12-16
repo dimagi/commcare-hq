@@ -1,8 +1,34 @@
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.mixins import UnicodeMixIn
-from datetime import datetime
-from django.shortcuts import render_to_response
-from django.template.context import RequestContext
+
+class HQUserType:
+    REGISTERED = 0
+    DEMO_USER = 1
+    ADMIN = 2
+    UNKNOWN = 3
+    human_readable = ["CommCare Users",
+                      "demo_user",
+                      "admin",
+                      "Unknown Users"]
+    toggle_defaults = [True, False, False, False]
+
+    @classmethod
+    def use_defaults(cls):
+        return [HQUserToggle(i, cls.toggle_defaults[i]) for i in range(len(cls.human_readable))]
+
+    @classmethod
+    def use_filter(cls, ufilter):
+        return [HQUserToggle(i, unicode(i) in ufilter) for i in range(len(cls.human_readable))]
+
+class HQUserToggle:
+    type = None
+    show = False
+    name = None
+
+    def __init__(self, type, show):
+        self.type = type
+        self.name = HQUserType.human_readable[self.type]
+        self.show = show
 
 class ReportNotification(Document, UnicodeMixIn):
     domain = StringProperty()
@@ -20,5 +46,3 @@ class DailyReportNotification(ReportNotification):
 class WeeklyReportNotification(ReportNotification):
     hours = IntegerProperty()
     day_of_week = IntegerProperty()
-
-import corehq.apps.reports.signals
