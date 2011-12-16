@@ -27,7 +27,8 @@ class HQReport(object):
             raise NotImplementedError
         self.domain = domain
         self.request = request
-        self.rows = []
+        if not self.rows:
+            self.rows = []
         self.context = base_context
         self.context.update(name = self.name,
                             slug = self.slug,
@@ -43,7 +44,7 @@ class HQReport(object):
         field_classes = []
         for f in self.fields:
             klass = to_function(f)
-            field_classes.append(klass(self.request))
+            field_classes.append(klass(self.request, self.domain))
         self.context['custom_fields'] = [f.render() for f in field_classes]
 
     def get_report_context(self):
@@ -85,8 +86,9 @@ class ReportField(object):
     template = ""
     context = Context()
 
-    def __init__(self, request):
+    def __init__(self, request, domain=None):
         self.request = request
+        self.domain = domain
 
     def render(self):
         if not self.template: return ""
@@ -140,6 +142,19 @@ class SampleHQReport(HQReport):
         else:
             self.context['text'] = "You didn't type anything!"
 
+
+class TabularHQReport(HQReport):
+
+    def get_headers(self):
+        return self.headers
+
+    def get_rows(self):
+        return self.rows
+
+    def get_report_context(self):
+        self.headers = self.get_headers()
+        self.rows = self.get_rows()
+        super(TabularHQReport, self).get_report_context()
 
 
 
