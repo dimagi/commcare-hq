@@ -105,8 +105,6 @@ def post_xform_to_couch(instance, attachments={}):
             else:
                 # follow standard dupe handling
                 new_doc_id = uid.new()
-                log_exception(CouchFormException("Duplicate post for xform!  uid from form:"
-                                                 " %s, duplicate instance %s" % (conflict_id, new_doc_id)))
                 response, errors = post_from_settings(instance, {"uid": new_doc_id})
                 if not _has_errors(response, errors):
                     # create duplicate doc
