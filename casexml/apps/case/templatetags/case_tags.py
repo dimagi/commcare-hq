@@ -4,6 +4,7 @@ from django import template
 from django.utils.html import escape
 from casexml.apps.case.models import CommCareCase
 from django.template.loader import render_to_string
+from couchdbkit.exceptions import ResourceNotFound
 
 register = template.Library()
 
@@ -21,7 +22,10 @@ def case_inline_display(case_id):
     """
     Given a case id, make a best effort at displaying it.
     """
-    case = CommCareCase.get(case_id)
+    try:
+        case = CommCareCase.get(case_id)
+    except ResourceNotFound:
+        case = None
     if case:
         if case.opened_on:
             return "%s (opened: %s)" % (case.name, case.opened_on.date())
