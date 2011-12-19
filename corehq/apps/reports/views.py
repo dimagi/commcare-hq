@@ -43,6 +43,7 @@ from couchexport import views as couchexport_views
 from couchexport.shortcuts import export_data_shared, export_raw_data
 from django.views.decorators.http import require_POST
 from couchforms.filters import instances
+from couchdbkit.exceptions import ResourceNotFound
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -653,7 +654,13 @@ def paging_case_list(request, domain, case_type, individual):
 
 @login_and_domain_required
 def case_details(request, domain, case_id):
-    case = CommCareCase.get(case_id)
+    try: 
+        case = CommCareCase.get(case_id)
+    except ResourceNotFound:
+        messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake plase report an issue.")
+        return HttpResponseRedirect(reverse("submit_history", args=[domain]))
+                                            
+        
     form_lookups = dict((form.get_id,
                          "%s: %s" % (form.received_on.date(), xmlns_to_name(form.xmlns, domain))) \
                         for form in [XFormInstance.get(id) for id in case.xform_ids] \
