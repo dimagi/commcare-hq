@@ -16,16 +16,18 @@ def get_docs(schema_index, previous_export=None, filter=None):
         consumer = Consumer(db)
         view_results = consumer.fetch(since=previous_export.seq)
         if view_results:
-            if isinstance(view_results, basestring):
+            try:
+                include_ids = set([res["id"] for res in view_results["results"]])
+                possible_ids = set([result['id'] for result in \
+                                    db.view("couchexport/schema_index", 
+                                            key=schema_index).all()])
+                ids_to_use = include_ids.intersection(possible_ids)
+                return _filter(res["doc"] for res in \
+                               db.all_docs(keys=list(ids_to_use), include_docs=True).all())
+            except Exception:
                 import logging
-                logging.error("view results: %s" % view_results) 
-            include_ids = set([res["id"] for res in view_results["results"]])
-            possible_ids = set([result['id'] for result in \
-                                db.view("couchexport/schema_index", 
-                                        key=schema_index).all()])
-            ids_to_use = include_ids.intersection(possible_ids)
-            return _filter(res["doc"] for res in \
-                           db.all_docs(keys=list(ids_to_use), include_docs=True).all())
+                logging.exception("export failed! results: %s" % view_results) 
+                raise
         else:
             # sometimes this comes back empty. I think it might be a bug
             # in couchdbkit, but it's impossible to consistently reproduce.
