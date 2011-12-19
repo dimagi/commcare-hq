@@ -623,6 +623,11 @@ def paging_case_list(request, domain, case_type, individual):
     if search_key:
         assert(settings.LUCENE_ENABLED)
         
+        # uppercase the "AND" and "OR" keywords for convenience
+        tokens = search_key.split(" ")
+        if len(tokens) > 1:
+            search_key = " ".join(map(lambda x: x if x.lower() not in ["and", "or"] else x.upper(), 
+                                      tokens))
         # force the search key to include the other defaults + params
         search_key = "(%s) AND domain:%s" % (search_key, domain)
         if case_type:
