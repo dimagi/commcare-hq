@@ -658,7 +658,7 @@ def case_details(request, domain, case_id):
         case = CommCareCase.get(case_id)
     except ResourceNotFound:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake plase report an issue.")
-        return HttpResponseRedirect(reverse("submit_history", args=[domain]))
+        return HttpResponseRedirect(reverse("submit_history_report", args=[domain]))
                                             
         
     form_lookups = dict((form.get_id,
