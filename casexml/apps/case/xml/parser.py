@@ -205,7 +205,7 @@ class CaseUpdate(object):
         Spec: https://bitbucket.org/javarosa/javarosa/wiki/casexml
         """
         if const.CASE_TAG_ID not in case_block:
-            raise CaseGenerationException
+            raise CaseGenerationException("No case_id element found in v1 case block, this is a required property.")
         
         modified_on = case_block.get(const.CASE_TAG_MODIFIED, "")
         return cls(id=case_block[const.CASE_TAG_ID], 
@@ -225,7 +225,7 @@ class CaseUpdate(object):
     
         case_id_attr = _to_attr(const.CASE_TAG_ID) 
         if case_id_attr not in case_block:
-            raise CaseGenerationException
+            raise CaseGenerationException("No case_id attribute found in v2 case block, this is a required property.")
         
         user_id = case_block.get(_to_attr(const.CASE_TAG_USER_ID), "")
         modified_on = case_block.get(_to_attr(const.CASE_TAG_MODIFIED), "")
