@@ -180,7 +180,9 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
             for i in self.case.indices:
                 indices.append(self.get_index_element(i))
             indices.sort(key=lambda elem: elem.tag)
-            index_elem.extend(indices)
+            for index in indices:
+                index_elem.append(index) # .extend() only works in python 2.7
+            
             element.append(index_elem)
 
 def get_generator(version, case):
