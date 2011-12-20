@@ -235,7 +235,7 @@ class CaseBlock(dict):
 
         
         if close:
-            self['closed'] = {}
+            self['close'] = {}
 
         if not ['' for val in self['update'].values() if val is not CaseBlock.undefined]:
                 self['update'] = CaseBlock.undefined
@@ -290,11 +290,13 @@ class CaseBlock(dict):
         return case
     
     
-def check_user_has_case(testcase, user, case_block, should_have=True, line_by_line=True, restore_id="", version=V1):
+def check_user_has_case(testcase, user, case_block, should_have=True, 
+                        line_by_line=True, restore_id="", version=V1):
     XMLNS = NS_VERSION_MAP.get(version, 'http://openrosa.org/http/response')
     case_block.set('xmlns', XMLNS)
     case_block = ElementTree.fromstring(ElementTree.tostring(case_block))
-    payload = ElementTree.fromstring(generate_restore_payload(user, restore_id, version=version))
+    payload = ElementTree.fromstring(generate_restore_payload(user, restore_id,
+                                                              version=version))
     blocks = payload.findall('{{{0}}}case'.format(XMLNS))
     def get_case_id(block):
         if version == V1:
@@ -318,5 +320,6 @@ def check_user_has_case(testcase, user, case_block, should_have=True, line_by_li
             else:
                 testcase.fail("User '%s' gets case '%s' but shouldn't:%s" % (user.username, case_id, extra_info()))
     if not n and should_have:
-        testcase.fail("Block for case_id '%s' doesn't appear in ota restore for user '%s':%s" % (case_id, user.username, extra_info()))
+        testcase.fail("Block for case_id '%s' doesn't appear in ota restore for user '%s':%s" \
+                      % (case_id, user.username, extra_info()))
     return match
