@@ -6,6 +6,7 @@ from datetime import datetime
 from receiver.xml import get_response_element
 from casexml.apps.case import const
 from casexml.apps.case.xml import check_version
+from casexml.apps.phone.fixtures import generator
 
 def generate_restore_payload(user, restore_id="", version="1.0"):
     """
@@ -55,6 +56,9 @@ def generate_restore_payload(user, restore_id="", version="1.0"):
     response.append(xml.get_sync_element(synclog.get_id))
     # registration block
     response.append(xml.get_registration_element(user))
+    # fixture block
+    for fixture in generator.get_fixtures(user, version, last_sync):
+        response.append(fixture)
     # case blocks
     for case_elem in case_xml_elements:
         response.append(case_elem)
