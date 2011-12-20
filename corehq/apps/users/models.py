@@ -506,6 +506,7 @@ class CommCareUser(CouchUser):
         def get_owner_ids():
             return self.get_owner_ids()
         user.get_owner_ids = get_owner_ids
+        user._hq_user = self # don't tell anyone that we snuck this here
         return user
 
     def get_forms(self):
