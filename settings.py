@@ -240,6 +240,9 @@ PAGINATOR_MAX_PAGE_LINKS = 5
 # OpenRosa Standards
 OPENROSA_VERSION = "1.0"
 
+# OTA restore fixture generators
+FIXTURE_GENERATORS = ["corehq.apps.users.fixturegenerators.user_groups"]
+
 # xep_hq_server settings
 XEP_AUTHORIZE = 'corehq.apps.app_manager.models.authorize_xform_edit'
 XEP_GET_XFORM = 'corehq.apps.app_manager.models.get_xform'
