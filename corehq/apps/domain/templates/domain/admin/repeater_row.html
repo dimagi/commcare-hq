@@ -1,0 +1,17 @@
+{% load i18n %}
+<tr>
+    <td>{{ repeater.url }}</td>
+    <td>
+        <a class="delete_link" href="#">{% trans "Stop" %}</a>
+        <div class="dialog delete_dialog" title="Cancel Forwarding?">
+            <form name="drop_repeater" action="{% url drop_repeater domain repeater.get_id %}" method="POST">
+                <table>
+                    <tr><td>
+                        Are you sure you want to stop forwarding to: {{ repeater.url }}?
+                    </td></tr>
+                </table>
+                <input type="submit" value="Stop" />
+            </form>
+        </div>
+    </td>
+</tr>
