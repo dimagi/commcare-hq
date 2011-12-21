@@ -1,4 +1,6 @@
+import traceback
 from casexml.apps import case
+from casexml.apps.case.signals import case_post_save
 from corehq.apps.domain.utils import normalize_domain_name
 from receiver.signals import form_received, successful_form_received
 import logging
@@ -67,22 +69,23 @@ def add_app_id(sender, xform, **kwargs):
 
 def create_form_repeat_records(sender, xform, **kwargs):
     from corehq.apps.receiverwrapper.models import FormRepeater
-    domain = _get_domain(xform)
-    if domain:
-        repeaters = FormRepeater.by_domain(domain)
-        for repeater in repeaters:
-            repeater.register(xform)
+    xform.domain = _get_domain(xform)
+    create_repeat_records(FormRepeater, xform)
+
 
 def create_case_repeat_records(sender, case, **kwargs):
     from corehq.apps.receiverwrapper.models import CaseRepeater
-    domain = case.domain
+    create_repeat_records(CaseRepeater, case)
+
+def create_repeat_records(repeater_cls, payload):
+    domain = payload.domain
     if domain:
-        repeaters = CaseRepeater.by_domain(domain)
+        repeaters = repeater_cls.by_domain(domain)
         for repeater in repeaters:
-            repeater.register(case)
+            repeater.register(payload)
 
 form_received.connect(scrub_meta)
 form_received.connect(add_domain)
 form_received.connect(add_app_id)
 successful_form_received.connect(create_form_repeat_records)
-case_post_save.connect(create_repeat_records)
+case_post_save.connect(create_case_repeat_records)

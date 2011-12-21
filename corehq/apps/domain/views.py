@@ -1,11 +1,12 @@
 import sys, datetime, uuid
+from corehq.apps import receiverwrapper
 from django.conf import settings
 #from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.db import transaction
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, Http404
 
 from django_tables import tables
 from django.shortcuts import redirect
@@ -20,7 +21,7 @@ from dimagi.utils.web import render_to_response
 from corehq.apps.users.views import require_can_edit_users
 from dimagi.utils.django.email import send_HTML_email
 from corehq.apps.receiverwrapper.forms import FormRepeaterForm
-from corehq.apps.receiverwrapper.models import FormRepeater
+from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 import json
@@ -338,10 +339,15 @@ def _dict_for_one_user( user, domain ):
            
 @require_can_edit_users
 def manage_domain(request, domain):
-    repeaters = FormRepeater.view("receiverwrapper/repeaters", key=domain, include_docs=True).all()
-    return render_to_response(request, "domain/admin/manage_domain.html", 
-                              {"domain": domain,
-                               "repeaters": repeaters})
+    form_repeaters = FormRepeater.by_domain(domain)
+    case_repeaters = CaseRepeater.by_domain(domain)
+    return render_to_response(request, "domain/admin/manage_domain.html", {
+        "domain": domain,
+        "repeaters": (
+            ("FormRepeater", form_repeaters),
+            ("CaseRepeater", case_repeaters)
+        ),
+    })
 
 @require_POST
 @require_can_edit_users
@@ -381,19 +387,25 @@ def test_repeater(request, domain):
     
     
 @require_can_edit_users
-def add_repeater(request, domain):
+def add_repeater(request, domain, repeater_type):
     if request.method == "POST":
         form = FormRepeaterForm(request.POST)
+        try:
+            cls = receiverwrapper.models.repeater_types[repeater_type]
+        except KeyError:
+            raise Http404()
         if form.is_valid():
-            repeater = FormRepeater(domain=domain, url=form.cleaned_data["url"])
+            repeater = cls(domain=domain, url=form.cleaned_data["url"])
             repeater.save()
             messages.success(request, "Forwarding setup to %s" % repeater.url)
             return HttpResponseRedirect(reverse("corehq.apps.domain.views.manage_domain", args=[domain]))
     else:
         form = FormRepeaterForm()
-    return render_to_response(request, "domain/admin/add_form_repeater.html", 
-                              {"domain": domain, 
-                               "form": form})
+    return render_to_response(request, "domain/admin/add_form_repeater.html", {
+        "domain": domain,
+        "form": form,
+        "repeater_type": repeater_type,
+    })
 
 def legacy_domain_name(request, domain, path):
     domain = normalize_domain_name(domain)

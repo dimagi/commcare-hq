@@ -37,18 +37,27 @@ class Repeater(Document, UnicodeMixIn):
     @classmethod
     def by_domain(cls, domain):
         key = [domain]
-        if cls.__name__ in repeater_types:
+        if repeater_types.has_key(cls.__name__):
             key.append(cls.__name__)
-        elif cls.doc_type == Repeater.base_doc:
+        elif cls.doc_type == Repeater.__name__:
             pass
         else:
             raise Exception("Unknown Repeater type: %s" % cls.doc_type)
-        return cls.view('receiverwrapper/repeaters', startkey=key, endkey=key + [{}])
+
+        return cls.view('receiverwrapper/repeaters',
+            startkey=key,
+            endkey=key + [{}],
+            include_docs=True,
+            reduce=False
+        )
 
     @classmethod
     def wrap(cls, data):
         doc_type = data['doc_type']
-        return repeater_types.get(doc_type, cls).wrap(data)
+        if cls.__name__ == Repeater.__name__:
+            return repeater_types.get(doc_type, cls).wrap(data)
+        else:
+            return super(Repeater, cls).wrap(data)
 
 @register_repeater_type
 class FormRepeater(Repeater):
@@ -96,7 +105,9 @@ class RepeatRecord(Document):
 
     @property
     def repeater(self):
-        return Repeater.get(self.repeater_id)
+        if not hasattr(self, '_repeater'):
+            self._repeater = Repeater.get(self.repeater_id)
+        return self._repeater
 
     @property
     def url(self):
@@ -107,7 +118,9 @@ class RepeatRecord(Document):
         json_now = json_format_datetime(due_before or datetime.utcnow())
         repeat_records = RepeatRecord.view("receiverwrapper/repeat_records_by_next_check",
             startkey=[domain],
-            endkey=[domain, json_now]
+            endkey=[domain, json_now, {}],
+            include_docs=True,
+            reduce=False,
         )
         return repeat_records
 
@@ -120,14 +133,17 @@ class RepeatRecord(Document):
         # we use an exponential back-off to avoid submitting to bad urls
         # too frequently.
         assert(self.succeeded == False)
+        assert(self.next_check is not None)
         now = datetime.utcnow()
         if self.last_checked:
             window = self.next_check - self.last_checked
+            window += (window // 2) # window *= 1.5
         else:
             window = timedelta(minutes=30)
+
         self.last_checked = now
-        self.next_check += 1.5 * window
-        
+        self.next_check += window
+
     def try_now(self):
         # try when we haven't succeeded and either we've
         # never checked, or it's time to check again
@@ -141,13 +157,14 @@ class RepeatRecord(Document):
         if self.try_now():
             # we don't use celery's version of retry because
             # we want to override the success/fail each try
-            for _ in range(max_tries):
+            for i in range(max_tries):
                 try:
                     resp = post_fn(self.get_payload(), self.url)
                     if 200 <= resp.status < 300:
                         self.update_success()
                         break
-                except Exception:
+                except Exception, e:
+                    raise
                     pass # some other connection issue probably
             if not self.succeeded:
                 # mark it failed for later and give up
