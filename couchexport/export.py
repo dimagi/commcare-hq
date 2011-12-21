@@ -243,12 +243,18 @@ def _export_csv(tables, file, max_column_size):
 def _export_html(tables, file, max_column_size):
     file.write(render_to_string("couchexport/html_export.html", {'tables': tables}))
 
+class ConstantEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Constant):
+            return obj.message
+        return json.JSONEncoder.default(self, obj)
+
 def _export_json(tables, file):
     new_tables = dict()
     for table in tables:
         new_tables[table[0]] = {"headers":table[1][0], "rows": table[1][1:]}
 
-    file.write(json.dumps(new_tables))
+    file.write(json.dumps(new_tables, cls=ConstantEncoder))
 
 def _export_excel(tables, max_column_size):
     try:
