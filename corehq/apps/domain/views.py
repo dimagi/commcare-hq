@@ -353,7 +353,7 @@ def manage_domain(request, domain):
 @require_can_edit_users
 def drop_repeater(request, domain, repeater_id):
     rep = FormRepeater.get(repeater_id)
-    rep.delete()
+    rep.retire()
     messages.success(request, "Form forwarding stopped!")
     return HttpResponseRedirect(reverse("corehq.apps.domain.views.manage_domain", args=[domain]))
     

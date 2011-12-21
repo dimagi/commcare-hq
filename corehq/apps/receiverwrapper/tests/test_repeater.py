@@ -104,6 +104,9 @@ class RepeaterTest(TestCase):
 
         in30min = now + timedelta(minutes=30)
 
+        repeat_records = RepeatRecord.all(domain=self.domain, due_before=now + timedelta(minutes=15))
+        self.assertEqual(len(repeat_records), 0)
+
         repeat_records = RepeatRecord.all(domain=self.domain, due_before=in30min)
         self.assertEqual(len(repeat_records), 2)
 
@@ -120,6 +123,7 @@ class RepeaterTest(TestCase):
         repeat_records = RepeatRecord.all(domain=self.domain, due_before=in30min)
         for repeat_record in repeat_records:
             self.assertEqual(repeat_record.succeeded, True)
+            self.assertEqual(repeat_record.next_check, None)
 
     def test_migration(self):
         now = datetime.utcnow()

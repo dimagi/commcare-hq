@@ -12,7 +12,7 @@ repeater_types = {}
 def register_repeater_type(cls):
     repeater_types[cls.__name__] = cls
     return cls
-
+DELETED = "-Deleted"
 class Repeater(Document, UnicodeMixIn):
     base_doc = 'Repeater'
 
@@ -53,11 +53,18 @@ class Repeater(Document, UnicodeMixIn):
 
     @classmethod
     def wrap(cls, data):
-        doc_type = data['doc_type']
+        doc_type = data['doc_type'].replace(DELETED, '')
         if cls.__name__ == Repeater.__name__:
             return repeater_types.get(doc_type, cls).wrap(data)
         else:
             return super(Repeater, cls).wrap(data)
+
+    def retire(self):
+        if DELETED not in self['doc_type']:
+            self['doc_type'] += DELETED
+        if DELETED not in self['base_doc']:
+            self['base_doc'] += DELETED
+        self.save()
 
 @register_repeater_type
 class FormRepeater(Repeater):
@@ -135,14 +142,15 @@ class RepeatRecord(Document):
         assert(self.succeeded == False)
         assert(self.next_check is not None)
         now = datetime.utcnow()
+        window = timedelta(minutes=0)
         if self.last_checked:
             window = self.next_check - self.last_checked
             window += (window // 2) # window *= 1.5
-        else:
+        if window < timedelta(minutes=30):
             window = timedelta(minutes=30)
 
         self.last_checked = now
-        self.next_check += window
+        self.next_check = self.last_checked + window
 
     def try_now(self):
         # try when we haven't succeeded and either we've
@@ -164,7 +172,6 @@ class RepeatRecord(Document):
                         self.update_success()
                         break
                 except Exception, e:
-                    raise
                     pass # some other connection issue probably
             if not self.succeeded:
                 # mark it failed for later and give up
