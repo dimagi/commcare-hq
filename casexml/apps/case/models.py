@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from casexml.apps.case.xml import V1, check_version
+from casexml.apps.phone.xml import get_case_element
 from couchdbkit.ext.django.schema import *
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
@@ -412,5 +414,9 @@ class CommCareCase(CaseBase):
         self.server_modified_on = datetime.utcnow()
         super(CommCareCase, self).save(**params)
         case_post_save.send(CommCareCase, case=self)
+
+    def to_xml(self, version):
+        from xml.etree import ElementTree
+        return ElementTree.tostring(get_case_element(self, ('create', 'update'), version))
 
 import casexml.apps.case.signals
