@@ -486,7 +486,7 @@ def group_members(request, domain, group_id, template="groups/group_members.html
     all_groups = _get_groups(domain)
     group = Group.get(group_id)
     if group is None:
-        raise Http404("Group %s does not exist" % group_name)
+        raise Http404("Group %s does not exist" % group_id)
     member_ids = group.get_user_ids()
     members = CouchUser.view("_all_docs", keys=member_ids, include_docs=True).all()
     members.sort(key=lambda user: user.username)
