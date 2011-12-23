@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse
 from django.test.client import Client
 from django.contrib.auth.models import User, AnonymousUser
 from auditcare.models import AuditEvent, ModelActionAudit, AccessAudit
-from auditcare.models import couchmodels
+from auditcare import models
 import unittest
 from auditcare.tests.testutils import delete_all, get_latest_access
 import settings
@@ -64,7 +64,7 @@ class authenticationTestCase(unittest.TestCase):
         self.assertEqual(start_count+1, login_count)
 
         latest_audit = get_latest_access(['user', 'mockmock@mockmock.com'])
-        self.assertEquals(latest_audit.access_type, couchmodels.ACCESS_LOGIN)
+        self.assertEquals(latest_audit.access_type, models.ACCESS_LOGIN)
 
         #django test client doesn't seem to like logout for some reason
         #logout
@@ -84,7 +84,7 @@ class authenticationTestCase(unittest.TestCase):
         #got the basic count, now let's inspect this value to see what kind of result it is.
 
         latest_audit = get_latest_access(['user', 'mockmock@mockmock.com'])
-        self.assertEquals(latest_audit.access_type, couchmodels.ACCESS_FAILED)
+        self.assertEquals(latest_audit.access_type, models.ACCESS_FAILED)
         self.assertEquals(latest_audit.failures_since_start, 1)
 
 
@@ -102,7 +102,7 @@ class authenticationTestCase(unittest.TestCase):
 
 
         first_audit = get_latest_access(['user', 'mockmock@mockmock.com'])
-        self.assertEquals(first_audit.access_type, couchmodels.ACCESS_FAILED)
+        self.assertEquals(first_audit.access_type, models.ACCESS_FAILED)
         self.assertEquals(first_audit.failures_since_start, 1)
         start_failures = first_audit.failures_since_start
 
@@ -113,7 +113,7 @@ class authenticationTestCase(unittest.TestCase):
             self.assertEquals(firstlogin_count, next_count)
 
             next_audit = get_latest_access(['user', 'mockmock@mockmock.com'])
-            self.assertEquals(next_audit.access_type, couchmodels.ACCESS_FAILED)
+            self.assertEquals(next_audit.access_type, models.ACCESS_FAILED)
             self.assertEquals(next_audit.failures_since_start, n+start_failures)
             time.sleep(1)
         time.sleep(3)

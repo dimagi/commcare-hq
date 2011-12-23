@@ -1,4 +1,4 @@
-from auditcare.models.couchmodels import AccessAudit
+from auditcare.models import AccessAudit
 
 def delete_all(couchmodel, view_name, key=None, startkey=None, endkey=None):
     """Helper function to help delete/clear documents from the database of a certain type.

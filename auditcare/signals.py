@@ -35,13 +35,13 @@ def django_audit_save(sender, instance, created, **kwargs):
             User.objects.get(id=usr.id)
         except:
             usr = None
-    from auditcare.models.couchmodels import AuditEvent
+    from auditcare.models import AuditEvent
     AuditEvent.audit_django_save(sender, instance, instance_json, usr)
 
 def couch_audit_save(instance, *args, **kwargs):
-    from auditcare.models.couchmodels import AuditEvent
     instance.__orig_save(*args, **kwargs)
     instance_json = instance.to_json()
+    from auditcare.models import AuditEvent
     usr = get_current_user()
     if usr != None:
         try:

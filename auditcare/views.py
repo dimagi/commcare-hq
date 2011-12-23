@@ -15,7 +15,7 @@ from django.conf import settings
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from auditcare import models
-from auditcare.models import AccessAudit, couchmodels
+from auditcare.models import AccessAudit
 from auditcare.tables import AuditLogTable
 
 import logging
@@ -27,7 +27,7 @@ VERBOSE = getattr(settings, 'AXES_VERBOSE', True)
 
 @login_required
 def auditAll(request, template="auditcare/index.html"):
-    auditEvents = couchmodels.AccessAudit.view("auditcare/by_date_access_events", descending=True, include_docs=True).all()
+    auditEvents = AccessAudit.view("auditcare/by_date_access_events", descending=True, include_docs=True).all()
     realEvents = [{'user': a.user, 
                    'date': a.event_date, 
                    'class': a.doc_type, 

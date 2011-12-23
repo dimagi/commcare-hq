@@ -3,7 +3,7 @@
 from couchdbkit.ext.django.schema import Document
 from datetime import datetime, timedelta
 from django.db.models.base import Model
-from auditcare.models.couchmodels import ModelActionAudit
+from auditcare.models import ModelActionAudit
 
 default_excludes = ['_rev']
 

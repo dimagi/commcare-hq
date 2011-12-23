@@ -4,7 +4,7 @@ from couchdbkit.consumer import Consumer
 import logging
 import time
 from auditcare import utils
-from auditcare.models.couchmodels import AccessAudit, ModelActionAudit
+from auditcare.models import AccessAudit, ModelActionAudit
 from dimagi.utils.couch.database import get_db
 
 class Command(NoArgsCommand):
