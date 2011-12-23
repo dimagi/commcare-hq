@@ -127,15 +127,15 @@ def _create_new_domain_request( request, kind, form, now ):
     d.save()                                
     dom_req.domain = d                
                      
-    ############# User     
-    if kind == 'existing_user':   
+    ############# User
+    if kind == 'existing_user':
         new_user = CouchUser.from_django_user(request.user)
         new_user.add_domain_membership(d.name, is_admin=True)
     else:
         username = form.cleaned_data['email']
         assert(form.cleaned_data['password_1'] == form.cleaned_data['password_2'])
         password = form.cleaned_data['password_1']
-        
+
         new_user = WebUser.create(d.name, username, password, is_admin=True)
         new_user.first_name = form.cleaned_data['first_name']
         new_user.last_name  = form.cleaned_data['last_name']
@@ -143,7 +143,7 @@ def _create_new_domain_request( request, kind, form, now ):
 
         new_user.is_staff = False # Can't log in to admin site
         new_user.is_active = False # Activated upon receipt of confirmation
-        new_user.is_superuser = False           
+        new_user.is_superuser = False
         new_user.last_login = datetime.datetime(1970,1,1)
         new_user.date_joined = now
         # As above, must save to get id from db before giving to request
@@ -204,7 +204,7 @@ def registration_request(request, kind=None):
     
             # Only gets here if the database-insert try block's else clause executed
             if kind == 'existing_user':
-                vals = {'domain_name':dom_req.domain.name, 'username':request.user.email}
+                vals = {'domain_name':dom_req.domain.name, 'username':request.user.username}
                 return render_to_response(request, 'domain/registration_confirmed.html', vals)
             else: # new_user
                 vals = dict(email=form.cleaned_data['email'])
