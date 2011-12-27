@@ -21,7 +21,7 @@ class OtaRestoreTest(TestCase):
     
     def setUp(self):
         # clear cases
-        for case in CommCareCase.view("case/by_xform_id", include_docs=True).all():
+        for case in CommCareCase.view("case/by_user", reduce=False, include_docs=True).all():
             case.delete()
         for log in SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all():
             log.delete()
@@ -58,7 +58,7 @@ class OtaRestoreTest(TestCase):
         user = dummy_user()
         
         # implicit length assertion
-        [newcase] = CommCareCase.view("case/by_xform_id", include_docs=True).all()
+        [newcase] = CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()
         self.assertEqual(1, len(user.get_case_updates(None)))
         expected_case_block = """
         <case>
@@ -99,20 +99,20 @@ class OtaRestoreTest(TestCase):
                                restore_payload)
         
     def testWithReferrals(self):
-        self.assertEqual(0, len(CommCareCase.view("case/by_xform_id", include_docs=True).all()))
+        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()))
         file_path = os.path.join(os.path.dirname(__file__), "data", "case_create.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
         process_cases(sender="testharness", xform=form)
-        [newcase] = CommCareCase.view("case/by_xform_id", include_docs=True).all()
+        [newcase] = CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()
         self.assertEqual(0, len(newcase.referrals))
         file_path = os.path.join(os.path.dirname(__file__), "data", "case_refer.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
         form = post_xform_to_couch(xml_data)
         process_cases(sender="testharness", xform=form)
-        [updated_case] = CommCareCase.view("case/by_xform_id", include_docs=True).all()
+        [updated_case] = CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()
         self.assertEqual(1, len(updated_case.referrals))
         response = views.xml_for_case(HttpRequest(), updated_case.get_id)
         expected_response = """<case>

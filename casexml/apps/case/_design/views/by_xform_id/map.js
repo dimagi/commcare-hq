@@ -1,5 +1,7 @@
 function(doc){
     if(doc.doc_type == "CommCareCase") {
-        emit(doc.xform_ids[0], null);
+        for (var i = 0; i < doc.xform_ids.length; i++) {
+            emit(doc.xform_ids[i], null);
+        }
     }
 }

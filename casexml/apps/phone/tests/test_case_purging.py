@@ -26,7 +26,7 @@ class CasePurgeTest(TestCase):
         for item in XFormInstance.view("couchforms/by_xmlns", include_docs=True, 
                                        reduce=False).all():
             item.delete()
-        for case in CommCareCase.view("case/by_xform_id", include_docs=True).all():
+        for case in CommCareCase.view("case/by_user", reduce=False, include_docs=True).all():
             case.delete()
         for log in SyncLog.view("phone/sync_logs_by_user", include_docs=True, 
                                 reduce=False).all():
