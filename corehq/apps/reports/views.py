@@ -897,9 +897,10 @@ def excel_export_data(request, domain, template="reports/excel_export_data.html"
 def form_data(request, domain, instance_id):
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)
+    cases = CommCareCase.view("case/by_xform_id", key=instance_id, reduce=False, include_docs=True).all()
     return render_to_response(request, "reports/form_data.html",
                               dict(domain=domain,instance=instance,
-                                   caseblocks=extract_case_blocks(instance)))
+                                   cases=cases))
 
 @login_and_domain_required
 def download_form(request, domain, instance_id):
