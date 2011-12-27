@@ -14,7 +14,7 @@ class Version2CaseParsingTest(TestCase):
     """
     
     def setUp(self):
-        for item in CommCareCase.view("case/by_xform_id", include_docs=True).all():
+        for item in CommCareCase.view("case/by_user", include_docs=True, reduce=False).all():
             item.delete()
         
     
@@ -63,6 +63,22 @@ class Version2CaseParsingTest(TestCase):
         case = CommCareCase.get("foo-case-id")
         self.assertTrue(case.closed)
         
+    def testParseNamedNamespace(self):
+        file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "named_namespace.xml")
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
+        
+        form = post_xform_to_couch(xml_data)
+        process_cases(sender="testharness", xform=form)
+        case = CommCareCase.get("14cc2770-2d1c-49c2-b252-22d6ecce385a")
+        self.assertFalse(case.closed)
+        self.assertEqual("d5ce3a980b5b69e793445ec0e3b2138e", case.user_id)
+        self.assertEqual(datetime(2011, 12, 27), case.modified_on)
+        self.assertEqual("cc_bihar_pregnancy", case.type)
+        self.assertEqual("TEST", case.name)
+        self.assertEqual(2, len(case.actions))
+    
+    
     def testParseWithIndices(self):
         self.testParseCreate()
         
