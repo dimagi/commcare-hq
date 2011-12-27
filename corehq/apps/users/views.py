@@ -3,6 +3,7 @@ import re
 from smtplib import SMTPRecipientsRefused
 import urllib
 from datetime import datetime
+from django.contrib.auth import logout
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
@@ -119,14 +120,17 @@ def accept_invitation(request, domain, invitation_id):
     if request.user.is_authenticated():
         # if you are already authenticated, just add the domain to your 
         # list of domains
-        couch_user = CouchUser.from_django_user(request.user)
-        couch_user.add_domain_membership(domain=domain, is_admin=invitation.is_domain_admin)
-        couch_user.save()
-        invitation.is_accepted = True
-        invitation.save()
-        messages.success(request, "You have been added to the %s domain" % domain)
-        return HttpResponseRedirect(reverse("domain_homepage", args=[domain,]))
-    else:
+        if request.user.username == invitation.email:
+            couch_user = CouchUser.from_django_user(request.user)
+            couch_user.add_domain_membership(domain=domain, is_admin=invitation.is_domain_admin)
+            couch_user.save()
+            invitation.is_accepted = True
+            invitation.save()
+            messages.success(request, "You have been added to the %s domain" % domain)
+            return HttpResponseRedirect(reverse("domain_homepage", args=[domain,]))
+        else:
+            logout(request)
+    if not request.user.is_authenticated():
         # if you're not authenticated we need you to fill out your information
         if request.method == "POST":
             form = UserRegistersSelfForm(request.POST)
@@ -139,12 +143,16 @@ def accept_invitation(request, domain, invitation_id):
                 del data["tos_confirmed"]  
                 user = register_user(invitation.domain, send_email=False, 
                                      is_domain_admin=invitation.is_domain_admin, **data)
-                messages.success(request, "User account for %s created! You may now login." % data["email"])
                 invitation.is_accepted = True
                 invitation.save()
-                return HttpResponseRedirect(reverse("homepage"))
-        else: 
-            form = UserRegistersSelfForm(initial={'email': invitation.email})
+                messages.success(request, "User account for %s created! You may now login." % data["email"])
+                return HttpResponseRedirect(reverse("login"))
+        else:
+            user = WebUser.get_by_username(invitation.email)
+            if user:
+                return HttpResponseRedirect(reverse('login') + '?next=%s' % urllib.quote(request.path))
+            else:
+                form = UserRegistersSelfForm(initial={'email': invitation.email})
         
         return render_to_response(request, "users/accept_invite.html", {"form": form})
 

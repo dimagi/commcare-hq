@@ -223,9 +223,11 @@
                         {% if edit %}
                             <select name="build_spec" data-value="{{ app.build_spec.to_string }}">
                                 {% for option in commcare_build_options %}
+                                    {% if user.is_superuser or not option.superuser_only %}
                                     <option value='{{ option.build.to_string }}'>
                                         {{ option.label }}
                                     </option>
+                                    {% endif %}
                                 {% endfor %}
                                 {% if not is_standard_build %}
                                     <optgroup label="Custom">
