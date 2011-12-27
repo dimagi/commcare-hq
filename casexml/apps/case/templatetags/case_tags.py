@@ -18,18 +18,14 @@ def render_case(case):
     
     
 @register.simple_tag
-def case_inline_display(case_id):
+def case_inline_display(case):
     """
     Given a case id, make a best effort at displaying it.
     """
-    try:
-        case = CommCareCase.get(case_id)
-    except ResourceNotFound:
-        case = None
     if case:
         if case.opened_on:
             return "%s (opened: %s)" % (case.name, case.opened_on.date())
         else:
             return case.name
-    return "unknown case: %s" % case_id
+    return "empty case" 
     
