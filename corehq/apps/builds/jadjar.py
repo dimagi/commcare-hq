@@ -119,7 +119,8 @@ class JadJar(object):
     def jar(self):
         return self._jar
 
-    def pack(self, files, jad_properties={}):
+    def pack(self, files, jad_properties=None):
+        jad_properties = jad_properties or {}
 
         # pack files into jar
         buffer = StringIO(self.jar)

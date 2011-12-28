@@ -1054,6 +1054,7 @@ def edit_app_attr(req, domain, app_id, attr):
         'recipients', 'name', 'success_message', 'use_commcare_sense',
         'text_input', 'build_spec', 'show_user_registration',
         'use_custom_suite', 'custom_suite',
+        'admin_password',
         # RemoteApp only
         'profile_url',
     ]
@@ -1088,6 +1089,10 @@ def edit_app_attr(req, domain, app_id, attr):
         app.show_user_registration = bool(json.loads(req.POST['show_user_registration']))
     if should_edit("use_custom_suite"):
         app.use_custom_suite = bool(json.loads(req.POST['use_custom_suite']))
+    if should_edit("admin_password"):
+        admin_password = req.POST.get('admin_password')
+        if admin_password:
+            app.set_admin_password(admin_password)
     # For RemoteApp
     if should_edit("profile_url"):
         if app.doc_type not in ("RemoteApp",):
