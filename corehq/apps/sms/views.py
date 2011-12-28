@@ -89,9 +89,10 @@ def send_to_recipients(request, domain):
         phone_numbers = []
 
         unknown_usernames = []
+        GROUP = "(group)"
         for recipient in recipients:
-            if recipient.endswith("(group)"):
-                name = recipient.strip("(group)").strip()
+            if recipient.endswith(GROUP):
+                name = recipient[:-len(GROUP)].strip()
                 group_names.append(name)
             elif re.match(r'[\w\.]+', recipient):
                 usernames.append(recipient)
@@ -107,7 +108,10 @@ def send_to_recipients(request, domain):
 
         users = CouchUser.view('users/by_group', keys=[[domain, gn] for gn in group_names], include_docs=True).all()
         users.extend(CouchUser.view('_all_docs', keys=login_ids, include_docs=True).all())
+        users = [user for user in users if user.is_active and not user.is_deleted()]
+
         phone_numbers.extend([(user, user.phone_number) for user in users])
+
 
         failed_numbers = []
         no_numbers = []
