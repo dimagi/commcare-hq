@@ -794,8 +794,7 @@ class ApplicationBase(VersionedDoc):
             return self.fetch_attachment('CommCare.jad'), self.fetch_attachment('CommCare.jar')
         except ResourceError:
             built_on = datetime.utcnow()
-            jadjar = self.get_jadjar().pack(self.create_all_files(), {
-                'JavaRosa-Admin-Password': self.admin_password,
+            properties = {
                 'Profile': self.profile_loc,
                 'MIDlet-Jar-URL': self.jar_url,
                 #'MIDlet-Name': self.name,
@@ -803,7 +802,11 @@ class ApplicationBase(VersionedDoc):
                 'Released-on': built_on.strftime("%Y-%b-%d %H:%M"),
                 'CommCare-Release': "true",
                 'Build-Number': self.version,
-            })
+            }
+            if self.admin_password:
+                properties['JavaRosa-Admin-Password'] = self.admin_password,
+
+            jadjar = self.get_jadjar().pack(self.create_all_files(), properties)
             self.put_attachment(jadjar.jad, 'CommCare.jad')
             self.put_attachment(jadjar.jar, 'CommCare.jar')
             self.built_on = built_on
