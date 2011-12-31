@@ -363,9 +363,7 @@
                     <th>Profile URL</th>
                     <td>
                         {% if edit %}
-                            <form action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id  'profile_url' %}">
-                                <input type="text" class="autosave code wide" name="profile_url" value="{{ app.profile_url }}"/>
-                            </form>
+                            <input type="text" class="code wide" name="profile_url" value="{{ app.profile_url }}"/>
                         {% else %}
                             {{ app.profile_url }}
                         {% endif %}

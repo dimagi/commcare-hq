@@ -720,14 +720,16 @@ class ApplicationBase(VersionedDoc):
             self.admin_password_charset = 'x'
 
     def check_password_charset(self):
-        password_format = self.profile.get('properties', {}).get('password_format', 'n')
-        message = 'Your app requires {0} passwords but the admin password is not {0}'
+        errors = []
+        if hasattr(self, 'profile'):
+            password_format = self.profile.get('properties', {}).get('password_format', 'n')
+            message = 'Your app requires {0} passwords but the admin password is not {0}'
 
-        if password_format == 'n' and self.admin_password_charset in 'ax':
-            return [{'type': 'password_format', 'message': message.format('numeric')}]
-        if password_format == 'a' and self.admin_password_charset in 'x':
-            return [{'type': 'password_format', 'message': message.format('alphanumeric')}]
-        return []
+            if password_format == 'n' and self.admin_password_charset in 'ax':
+                errors.append({'type': 'password_format', 'message': message.format('numeric')})
+            if password_format == 'a' and self.admin_password_charset in 'x':
+                errors.append({'type': 'password_format', 'message': message.format('alphanumeric')})
+        return errors
 
     def get_build(self):
 #        version, build_number = current_builds.TAG_MAP[self.commcare_tag]

@@ -151,7 +151,8 @@
                 {% if app %}
                     <ul>
                         <li>
-                            <strong id="app_name" class="variable-app_name">{{ app.name }}{% if app.doc_type == "RemoteApp" %} (remote){% endif %}</strong>
+                            <strong id="app_name" class="variable-app_name">{{ app.name }}</strong>
+                            {% if app.doc_type == "RemoteApp" %}<strong>(remote)</strong>{% endif %}
                             version <span id="version" class="variable-version">{{ app.version }}</span>
                         </li>
                     </ul>
