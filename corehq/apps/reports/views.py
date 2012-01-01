@@ -48,7 +48,7 @@ DATE_FORMAT = "%Y-%m-%d"
 
 datespan_default = datespan_in_request(
     from_param="startdate",
-    to_param="enddate", 
+    to_param="enddate",
     default_days=7,
 )
 
@@ -426,6 +426,7 @@ def get_active_cases_json(domain, days=31, **kwargs):
 def case_activity(request, domain):
     params = json_request(request.GET)
     case_type = params.get('case_type', '')
+    print case_type
     display = params.get('display', ['percent'])
     group, users = util.get_group_params(domain, **params)
     userIDs = [user.user_id for user in users]
@@ -760,7 +761,6 @@ def submission_log(request, domain):
 
 
 @login_and_domain_required
-@datespan_default
 def daily_submissions(request, domain, view_name, title):
     if not request.datespan.is_valid():
         messages.error(request, "Sorry, that's not a valid date range because: %s" % \
@@ -768,8 +768,6 @@ def daily_submissions(request, domain, view_name, title):
         request.datespan = DateSpan.since(7, format="%Y-%m-%d")
 
     group, users = util.get_group_params(domain, **json_request(request.GET))
-    print "GROUP ", group
-    print "USERS ", users
     results = get_db().view(
         view_name,
         group=True,

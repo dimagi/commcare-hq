@@ -118,7 +118,7 @@
                         {% endfor %}
                     </select>
                 {% endif %}
-                {% if show_case_types and case_types|length != 1 %}
+                {% if show_case_types and case_types|length > 1 %}
                     <label for="case_type_select">Select a Case Type</label>
                     <select id="case_type_select" name="case_type" data-value="{{ case_type }}">
                         <option value="">
