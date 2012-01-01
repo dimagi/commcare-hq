@@ -20,7 +20,7 @@ from casexml.apps.phone.models import User as CaseXMLUser
 
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name
-from corehq.apps.reports.models import ReportNotification
+from corehq.apps.reports.models import ReportNotification, HQUserType
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username, cc_user_domain
 from corehq.apps.users.xml import group_fixture
 from couchforms.models import XFormInstance
@@ -99,24 +99,17 @@ class DjangoUserMixin(DocumentSchema):
 
 
 class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
-
     """
     A user (for web and commcare)
-
     """
-
     base_doc = 'CouchUser'
-
     device_ids = ListProperty()
     phone_numbers = ListProperty()
-
     created_on = DateTimeProperty()
-
 #    For now, 'status' is things like:
 #        ('auto_created',     'Automatically created from form submission.'),
 #        ('phone_registered', 'Registered from phone'),
 #        ('site_edited',     'Manually added or edited from the HQ website.'),
-
     status = StringProperty()
 
     _user = None
@@ -124,6 +117,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     class AccountTypeError(Exception):
         pass
+    
     class Inconsistent(Exception):
         pass
 
@@ -400,6 +394,13 @@ class CommCareUser(CouchUser):
         commcare_user.save()
 
         return commcare_user
+
+    @property
+    def filter_flag(self):
+        return HQUserType.REGISTERED
+
+    def username_in_report(self):
+        return self.raw_username
 
     @classmethod
     def create_from_xform(cls, xform):
