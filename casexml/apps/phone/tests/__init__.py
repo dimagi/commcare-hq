@@ -8,3 +8,9 @@ except ImportError, e:
     # otherwise debugging is a pain
     log_exception(e)
     raise(e)
+
+# doctest
+from casexml.apps.phone.checksum import Checksum
+__test__ = {
+    'checksum': Checksum
+}
