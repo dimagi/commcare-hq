@@ -761,6 +761,7 @@ def submission_log(request, domain):
 
 
 @login_and_domain_required
+@datespan_default
 def daily_submissions(request, domain, view_name, title):
     if not request.datespan.is_valid():
         messages.error(request, "Sorry, that's not a valid date range because: %s" % \

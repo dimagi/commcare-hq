@@ -167,8 +167,8 @@ def get_users_by_type_and_group(domain, group='', filter_users=None):
         registered_user_ids = [user.user_id for user in CommCareUser.by_domain(domain)]
         for user_id in submitted_user_ids:
             if user_id in registered_user_ids and filter_users[HQUserType.REGISTERED].show:
-                    user = CommCareUser.get_by_user_id(user_id)
-                    users.append(user)
+                user = CommCareUser.get_by_user_id(user_id)
+                users.append(user)
             elif not user_id in registered_user_ids and \
                  (filter_users[HQUserType.ADMIN].show or
                   filter_users[HQUserType.DEMO_USER].show or
@@ -177,6 +177,14 @@ def get_users_by_type_and_group(domain, group='', filter_users=None):
                 temp_user = TempCommCareUser(domain, username, user_id)
                 if filter_users[temp_user.filter_flag].show:
                     users.append(temp_user)
+
+        if filter_users[HQUserType.REGISTERED].show:
+            # now add all the registered users who never submitted anything
+            for user_id in registered_user_ids:
+                if not user_id in submitted_user_ids:
+                    user = CommCareUser.get_by_user_id(user_id)
+                    users.append(user)
+
     return users
 
 def get_all_userids_submitted(domain):
