@@ -10,19 +10,21 @@ from corehq.apps.domain.models import Domain, CouchDomain, RegistrationRequest
 
 
 def send_new_domain_email(sender, instance, created, **kwargs):
-    domain = instance.domain
-    user = instance.new_user or instance.requesting_user
-    message = 'User %s just signed up for a new domain, %s (%s)' % (
-        user.username,
-        domain.name,
-        get_url_base() + "/a/%s/" % domain
-    )
+    if instance.confirm_time:
+        domain = instance.domain
+        user = instance.new_user or instance.requesting_user
+        message = 'User %s from IP address %s just signed up for a new domain, %s (%s)' % (
+            user.username,
+            instance.confirm_ip,
+            domain.name,
+            get_url_base() + "/a/%s/" % domain
+        )
 
-    try:
-        recipients = settings.NEW_DOMAIN_RECIPIENTS
-        send_mail("New Domain: %s" % domain.name, message, settings.EMAIL_LOGIN, recipients)
-    except Exception:
-        logging.warning("Can't send email, but the message was:\n%s" % message)
+        try:
+            recipients = settings.NEW_DOMAIN_RECIPIENTS
+            send_mail("New Domain: %s" % domain.name, message, settings.EMAIL_LOGIN, recipients)
+        except Exception:
+            logging.warning("Can't send email, but the message was:\n%s" % message)
 
 
 def update_couch_domain(sender, instance, created, **kwargs):
