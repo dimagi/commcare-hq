@@ -65,8 +65,6 @@ class FormType(object):
                     )
                 else:
                     name = title
-                name = StringWithAttributes(name)
-                name.title = title
         else:
             name = self.xmlns
         return name
