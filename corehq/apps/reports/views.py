@@ -34,7 +34,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.export import export_cases_and_referrals
 from django.template.defaultfilters import yesno
 from casexml.apps.case.xform import extract_case_blocks
-from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.display import xmlns_to_name, FormType
 import sys
 from couchexport.schema import build_latest_schema
 from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
@@ -161,7 +161,7 @@ def custom_export(req, domain):
     schema = build_latest_schema(export_tag)
     if schema:
         saved_export = SavedExportSchema.default(schema, name="%s: %s" %\
-                                                 (xmlns_to_name(export_tag[1], domain),
+                                                 (xmlns_to_name(domain, export_tag[1]),
                                                   datetime.utcnow().strftime("%d-%m-%Y")))
         return render_to_response(req, "reports/customize_export.html",
                                   {"saved_export": saved_export,
@@ -170,7 +170,7 @@ def custom_export(req, domain):
     else:
         messages.info(req, "No data found for that form "
                       "(%s). Submit some data before creating an export!" % \
-                      xmlns_to_name(export_tag[1], domain))
+                      xmlns_to_name(domain, export_tag[1]))
         return HttpResponseRedirect(reverse('excel_export_data_report', args=[domain]))
         
 @login_and_domain_required
@@ -291,10 +291,11 @@ class SubmitHistory(ReportBase):
             def view_to_table(row):
                 time = row['value'].get('time')
                 xmlns = row['value'].get('xmlns')
+                app_id = row['value'].get('app_id')
                 username = user_id_to_username(self.individual)
 
                 time = format_time(time)
-                xmlns = xmlns_to_name(xmlns, self.domain)
+                xmlns = xmlns_to_name(self.domain, xmlns, app_id, html=True)
                 return [form_data_link(row['id']), username, time, xmlns]
 
         else:
@@ -309,11 +310,12 @@ class SubmitHistory(ReportBase):
             def view_to_table(row):
                 time = row['value'].get('time')
                 xmlns = row['value'].get('xmlns')
+                app_id = row['value'].get('app_id')
                 user_id = row['value'].get('user_id')
                 fake_name = row['value'].get('username')
 
                 time = format_time(time)
-                xmlns = xmlns_to_name(xmlns, self.domain)
+                xmlns = xmlns_to_name(self.domain, xmlns, app_id, html=True)
                 username = user_id_to_username(user_id)
                 if username:
                     return [form_data_link(row['id']), username, time, xmlns]
@@ -667,7 +669,7 @@ def case_details(request, domain, case_id):
                                             
         
     form_lookups = dict((form.get_id,
-                         "%s: %s" % (form.received_on.date(), xmlns_to_name(form.xmlns, domain))) \
+                         "%s: %s" % (form.received_on.date(), xmlns_to_name(domain, form.xmlns))) \
                         for form in [XFormInstance.get(id) for id in case.xform_ids] \
                         if form)
     return render_to_response(request, "reports/case_details.html", {
@@ -880,7 +882,7 @@ def excel_export_data(request, domain, template="reports/excel_export_data.html"
                                      startkey=startkey, endkey=endkey,
                                      include_docs=True)
     for export in exports:
-        export.formname = xmlns_to_name(export.index[1], domain)
+        export.formname = xmlns_to_name(domain, export.index[1])
 
     context = util.report_context(domain, title="Export Data to Excel", #datespan=request.datespan
         group=group
@@ -941,7 +943,7 @@ def submissions_by_form(request, domain):
     userIDs = [user.user_id for user in users]
     counts = submissions_by_form_json(domain=domain, userIDs=userIDs, datespan=datespan)
     form_types = _relevant_form_types(domain=domain, userIDs=userIDs, datespan=datespan)
-    form_names = [xmlns_to_name(xmlns, domain) for xmlns in form_types]
+    form_names = [xmlns_to_name(*id_tuple) for id_tuple in form_types]
     form_names = [name.replace("/", " / ") for name in form_names]
 
     if form_types:
@@ -992,15 +994,20 @@ def _relevant_form_types(domain, userIDs=None, datespan=None):
             xmlns = submission['xmlns']
         except KeyError:
             xmlns = None
+
+        try:
+            app_id = submission['app_id']
+        except Exception:
+            app_id = None
         if userIDs is not None:
             try:
                 userID = submission['form']['meta']['userID']
                 if userID in userIDs:
-                    form_types.add(xmlns)
+                    form_types.add(FormType(domain, xmlns, app_id).get_id_tuple())
             except Exception:
                 pass
         else:
-            form_types.add(xmlns)
+            form_types.add(FormType(domain, xmlns, app_id).get_id_tuple())
 
     return sorted(form_types)
 
@@ -1014,9 +1021,14 @@ def submissions_by_form_json(domain, datespan, userIDs=None):
     counts = defaultdict(lambda: defaultdict(int))
     for sub in submissions:
         try:
+            app_id = sub['app_id']
+        except Exception:
+            app_id = None
+
+        try:
             userID = sub['form']['meta']['userID']
             if (userIDs is None) or (userID in userIDs):
-                counts[userID][sub['xmlns']] += 1
+                counts[userID][FormType(domain, sub['xmlns'], app_id).get_id_tuple()] += 1
         except Exception:
             # if a form don't even have a userID, don't even bother tryin'
             pass

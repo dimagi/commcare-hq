@@ -32,7 +32,7 @@ def get_data(domain, user=None, datespan=None):
     for row in view:
         date = row["key"][-2]
         xmlns = row["key"][-1]
-        form_name = xmlns_to_name(xmlns, domain)
+        form_name = xmlns_to_name(domain, xmlns)
         data = all_data[form_name]
         if not date in data:
             data[date] = defaultdict(lambda: 0)
