@@ -37,7 +37,7 @@ class CaseActionBase(object):
     
     def __init__(self, block, type=None, name=None, external_id=None, 
                  user_id=None, owner_id=None, opened_on=None, 
-                 dynamic_properties=None):
+                 dynamic_properties={}, indices=[]):
         self.raw_block = block
         self.type = type
         self.name = name
@@ -46,6 +46,7 @@ class CaseActionBase(object):
         self.owner_id = owner_id
         self.opened_on = opened_on
         self.dynamic_properties = dynamic_properties
+        self.indices = indices
     
     def get_known_properties(self):
         prop_list = ["type", "name", "external_id", "user_id", 
@@ -105,25 +106,39 @@ class CaseCloseAction(CaseActionBase):
 
 
 class CaseIndex(object):
-    
+    """
+    A class that holds an index to a case.
+    """
     def __init__(self, identifier, referenced_type, referenced_id):
         self.identifier = identifier
         self.referenced_type = referenced_type
         self.referenced_id = referenced_id
     
+class CaseIndexAction(CaseActionBase):
+    """
+    Action describing updates to the case indices
+    """
+    
+    def __init__(self, block, indices):
+        super(CaseIndexAction, self).__init__(block, indices=indices)
+
+    def get_known_properties(self):
+        # override this since the index action only cares about a list of indices
+        return {}
+    
     @classmethod
     def from_v1(cls, block):
         # indices are not supported in v1
-        return []
-    
+        return cls(block, [])
+                   
     @classmethod
     def from_v2(cls, block):
-        ret = []
+        indices = []
         for id, data in block.items():
             if "@case_type" not in data:
                 raise CaseGenerationException("Invalid index, must have a case type attribute.")
-            ret.append(CaseIndex(id, data["@case_type"], data.get("#text", "")))
-        return ret
+            indices.append(CaseIndex(id, data["@case_type"], data.get("#text", "")))
+        return cls(block, indices)
     
 class CaseUpdate(object):
     """
@@ -143,7 +158,7 @@ class CaseUpdate(object):
         self.update_block = block.get(const.CASE_ACTION_UPDATE, {})
         self.close_block = block.get(const.CASE_ACTION_CLOSE, {})
         self._closes_case = const.CASE_ACTION_CLOSE in block
-        self.index_block = block.get(const.CASE_BLOCK_INDEX, {})
+        self.index_block = block.get(const.CASE_ACTION_INDEX, {})
         
         # referrals? really?
         self.referral_block = block.get(const.REFERRAL_TAG, {})
@@ -156,9 +171,9 @@ class CaseUpdate(object):
             self.actions.append(UPDATE_ACTION_FUNCTION_MAP[self.version](self.update_block))
         if self.closes_case():
             self.actions.append(CLOSE_ACTION_FUNCTION_MAP[self.version](self.close_block))
+        if self.has_indices():
+            self.actions.append(INDEX_ACTION_FUNCTION_MAP[self.version](self.index_block))
         
-        
-        self.indices = INDEX_FUNCTION_MAP[self.version](self.index_block) if self.has_indices() else []
     
     def creates_case(self):
         # creates have to have actual data in them so this is fine
@@ -197,6 +212,9 @@ class CaseUpdate(object):
     
     def get_close_action(self):
         return self._filtered_action(lambda a: isinstance(a, CaseCloseAction))
+    
+    def get_index_action(self):
+        return self._filtered_action(lambda a: isinstance(a, CaseIndexAction))
     
     @classmethod
     def from_v1(cls, case_block):
@@ -256,7 +274,7 @@ CLOSE_ACTION_FUNCTION_MAP = {
     V1: CaseCloseAction.from_v1,
     V2: CaseCloseAction.from_v2,
 }
-INDEX_FUNCTION_MAP = {
-    V2: CaseIndex.from_v1,
-    V2: CaseIndex.from_v2
+INDEX_ACTION_FUNCTION_MAP = {
+    V2: CaseIndexAction.from_v1,
+    V2: CaseIndexAction.from_v2
 }

@@ -7,6 +7,7 @@ from casexml.apps.case.signals import process_cases
 from datetime import datetime
 from casexml.apps.phone import views as phone_views
 from django.http import HttpRequest
+from casexml.apps.case import const
 
 class Version2CaseParsingTest(TestCase):
     """
@@ -96,6 +97,13 @@ class Version2CaseParsingTest(TestCase):
         self.assertEqual("some_referenced_id", case.get_index("foo_ref").referenced_id)
         self.assertEqual("bop", case.get_index("baz_ref").referenced_type)
         self.assertEqual("some_other_referenced_id", case.get_index("baz_ref").referenced_id)
+        
+        # check the action
+        self.assertEqual(2, len(case.actions))
+        [_, index_action] = case.actions
+        self.assertEqual(const.CASE_ACTION_INDEX, index_action.action_type)
+        self.assertEqual(2, len(index_action.indices))
+        
         
         # quick test for ota restore
         v2response = phone_views.xml_for_case(HttpRequest(), case.get_id, version="2.0")

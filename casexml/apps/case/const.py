@@ -7,11 +7,11 @@ PATIENT_ID_TAG = "patient_id"
 FOLLOWUP_DATE_TAG = "followup_date"
 
 # internal case identifiers
-CASE_BLOCK_INDEX = "index"
+CASE_ACTION_INDEX = "index"
 CASE_ACTION_CREATE = "create"
 CASE_ACTION_UPDATE = "update"
 CASE_ACTION_CLOSE = "close"
-CASE_ACTIONS = (CASE_ACTION_CREATE, CASE_ACTION_UPDATE, CASE_ACTION_CLOSE)
+CASE_ACTIONS = (CASE_ACTION_CREATE, CASE_ACTION_UPDATE, CASE_ACTION_INDEX, CASE_ACTION_CLOSE)
 
 # this might not be used / be combined with close, but for now consider it different
 CASE_ACTION_PURGE = "purge"

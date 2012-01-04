@@ -34,6 +34,23 @@ class CaseBase(Document):
     class Meta:
         app_label = 'case'
 
+class CommCareCaseIndex(DocumentSchema):
+    """
+    In CaseXML v2 we support indices, which link a case to other cases.
+    """
+    identifier = StringProperty()
+    referenced_type = StringProperty()
+    referenced_id = StringProperty()
+    
+    def get_referenced_case(self):
+        return CommCareCase.get(self.referenced_id)
+    
+    @classmethod
+    def from_case_index_update(cls, index):
+        return cls(identifier=index.identifier,
+                   referenced_type=index.referenced_type,
+                   referenced_id=index.referenced_id)
+
 class CommCareCaseAction(DocumentSchema):
     """
     An atomic action on a case. Either a create, update, or close block in
@@ -46,6 +63,7 @@ class CommCareCaseAction(DocumentSchema):
     
     updated_known_properties = DictProperty()
     updated_unknown_properties = DictProperty()
+    indices = SchemaListProperty(CommCareCaseIndex)
     
     @classmethod
     def from_parsed_action(cls, action_type, date, xformdoc, action):
@@ -61,46 +79,10 @@ class CommCareCaseAction(DocumentSchema):
         
         ret.updated_known_properties = _couchify(action.get_known_properties())
         ret.updated_unknown_properties = _couchify(action.dynamic_properties)
+        ret.indices = [CommCareCaseIndex.from_case_index_update(i) for i in action.indices]
         return ret
     
-    @classmethod
-    def from_action_block(cls, action, date, xformdoc, action_block):
-        if not action in const.CASE_ACTIONS:
-            raise ValueError("%s not a valid case action!")
         
-        action = CommCareCaseAction(action_type=action, date=date, 
-                                    xform_id=xformdoc.get_id)
-        
-        # a close block can come without anything inside.  
-        # if this is the case don't bother trying to post 
-        # process anything
-        if isinstance(action_block, basestring):
-            return action
-            
-        for item in action_block:
-            action.updated_properties[item] = couchable_property(action_block[item])
-        return action
-    
-    @classmethod
-    def new_create_action(cls, date=None):
-        """
-        Get a new create action
-        """
-        if not date: date = datetime.utcnow()
-        return CommCareCaseAction(action_type=const.CASE_ACTION_CREATE, 
-                                  date=date, 
-                                  opened_on=date)
-    
-    @classmethod
-    def new_close_action(cls, date=None):
-        """
-        Get a new close action
-        """
-        if not date: date = datetime.utcnow()
-        return CommCareCaseAction(action_type=const.CASE_ACTION_CLOSE, 
-                                  date=date, 
-                                  closed_on=date)
-    
     class Meta:
         app_label = 'case'
 
@@ -174,17 +156,6 @@ class Referral(CaseBase):
                     ref.apply_updates(date, block)
         
         return ref_list
-
-class CommCareCaseIndex(DocumentSchema):
-    """
-    In CaseXML v2 we support indices, which link a case to other cases.
-    """
-    identifier = StringProperty()
-    referenced_type = StringProperty()
-    referenced_id = StringProperty()
-    
-    def get_referenced_case(self):
-        return CommCareCase.get(self.referenced_id)
 
 class CommCareCase(CaseBase):
     """
@@ -362,7 +333,12 @@ class CommCareCase(CaseBase):
                                     self.case_id))
         
         if case_update.has_indices():
-            self.update_indices(case_update.indices)
+            index_action = CommCareCaseAction.from_parsed_action(const.CASE_ACTION_INDEX, 
+                                                                 mod_date,
+                                                                 xformdoc,
+                                                                 case_update.get_index_action())
+            self.actions.append(index_action)
+            self.update_indices(index_action.indices)
         
         # finally override any explicit properties from the update
         if case_update.user_id:     self.user_id = case_update.user_id
