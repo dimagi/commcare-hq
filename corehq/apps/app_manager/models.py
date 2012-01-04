@@ -1302,7 +1302,7 @@ class Application(ApplicationBase, TranslationMixin):
 
     @classmethod
     def get_by_xmlns(cls, domain, xmlns):
-        r = get_db().view('reports/forms_by_xmlns', key=[domain, xmlns, None]).one()
+        r = get_db().view('reports/forms_by_xmlns', key=[domain, {}, xmlns], group=True).one()
         return cls.get(r['value']['app']['id']) if r and 'app' in r['value'] else None
 
 class NotImplementedYet(Exception):

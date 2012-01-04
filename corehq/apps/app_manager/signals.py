@@ -15,14 +15,11 @@ def get_custom_response_message(sender, xform, **kwargs):
         userID = xform.metadata.userID
         xmlns = xform.form.get('@xmlns')
         domain = xform.domain
+
         try:
+            app = get_app(domain, xform.app_id)
+        except Exception:
             app = Application.get_by_xmlns(domain, xmlns)
-        except MultipleResultsFound:
-            try:
-                app = get_app(domain, xform.app_id)
-            except Exception:
-                app = None
-            
 
         if app and hasattr(app, 'langs'):
             try:

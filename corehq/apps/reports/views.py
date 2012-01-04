@@ -825,7 +825,7 @@ def daily_submissions(request, domain, view_name, title):
 @datespan_default
 def excel_export_data(request, domain, template="reports/excel_export_data.html"):
     group, users = util.get_group_params(domain, **json_request(request.GET))
-    forms = get_db().view('reports/forms_by_xmlns', startkey=[domain], endkey=[domain, {}], group=True)
+    forms = get_db().view('reports/forms_by_xmlns', startkey=[domain, {}], endkey=[domain, {}, {}], group=True)
     forms = [x['value'] for x in forms]
 
     forms = sorted(forms, key=lambda form: \

@@ -109,14 +109,18 @@
                     </td>
                     <td>
                         {% include "reports/partials/form_name.html" %}
-                        {% if form.duplicate %}(XMLNS Conflict){% endif %}
+                        {% if form.duplicate %}(Multiple Applications){% endif %}
                     </td>
                     <td>
 {#                        <a href='{% url corehq.apps.reports.views.export_data domain %}?export_tag="{{ form.xmlns }}"&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}'>#}
 {#                            Download#}
 {#                        </a><br>#}
+                        {% if form.submissions %}
                         <a href='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}'
-                            class="export-ajax">Download</a>
+                            class="export-ajax">Download</a> ({{ form.submissions }} rows)
+                        {% else %}
+                            No Forms
+                        {% endif %}
                         <br>
                         {% if form.xmlns != None %}
                             <a href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ form.xmlns }}"'>Create Custom Export</a>
