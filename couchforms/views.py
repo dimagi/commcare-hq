@@ -7,7 +7,7 @@ from couchforms.models import XFormInstance
 
 @require_POST
 @csrf_exempt
-def post(request, callback=None):
+def post(request, callback=None, magic_property='xml_submission_file'):
     """
     XForms can get posted here.  They will be forwarded to couch.
     
@@ -22,10 +22,10 @@ def post(request, callback=None):
         #it's an standard form submission (eg ODK)
         #this does an assumption that ODK submissions submit using the form parameter xml_submission_file
         #todo: this should be made more flexibly to handle differeing params for xform submission
-        instance = request.FILES['xml_submission_file'].read()
+        instance = request.FILES[magic_property].read()
         for key, item in request.FILES.items():
             if key != "xml_submission_file":
-                attachments[key] = item
+                attachments[magic_property] = item
 
     else:
         #else, this is a raw post via a j2me client of xml (or touchforms)
