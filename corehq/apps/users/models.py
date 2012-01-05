@@ -118,6 +118,8 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 #        ('site_edited',     'Manually added or edited from the HQ website.'),
 
     status = StringProperty()
+    
+    time_zone = StringProperty()
 
     _user = None
     _user_checked = False
@@ -284,6 +286,14 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     @classmethod
     def get_by_username(cls, username):
         result = get_db().view('users/by_username', key=username, include_docs=True).one()
+        if result:
+            return cls.wrap_correctly(result['doc'])
+        else:
+            return None
+
+    @classmethod
+    def get_by_default_phone(cls, phone_number):
+        result = get_db().view('users/by_default_phone', key=phone_number, include_docs=True).one()
         if result:
             return cls.wrap_correctly(result['doc'])
         else:

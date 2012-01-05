@@ -1,11 +1,14 @@
 from datetime import timedelta, datetime
 import json
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reminders.forms import CaseReminderForm
-from corehq.apps.reminders.models import CaseReminderHandler
+from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderCallback
+from corehq.apps.users.models import CouchUser
 from dimagi.utils.web import render_to_response
+from tropo import Tropo
 
 @login_and_domain_required
 def default(request, domain):
@@ -90,3 +93,24 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
         'today': today,
         'now': now,
     })
+
+@csrf_exempt
+def callback(request, domain):
+    if request.method == "POST":
+        data = json.loads(request.raw_post_data)
+        caller_id = data["session"]["from"]["id"]
+        user = CouchUser.get_by_default_phone(caller_id)
+        #
+        c = CaseReminderCallback()
+        c.phone_number = caller_id
+        c.timestamp = datetime.utcnow()
+        if user is not None:
+            c.user_id = user._id
+        c.save()
+        #
+        t = Tropo()
+        t.reject()
+        return HttpResponse(t.RenderJson())
+    else:
+        return HttpResponseBadRequest("Bad Request")
+

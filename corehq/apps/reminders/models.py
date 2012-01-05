@@ -1,3 +1,5 @@
+import pytz
+from pytz import timezone
 from datetime import timedelta, datetime, date
 import re
 from couchdbkit.ext.django.schema import *
@@ -62,32 +64,26 @@ METHOD_CHOICES = ["sms", "email", "test"]
 """
 A CaseReminderEvent describes a single instance when a text message should be sent.
 
-handler_id              The _id of the CaseReminderHandler to which this ReminderEvent belongs
-sequence_num            The sequence number for this ReminderEvent (should be 1 to reminder_schedule.max_sequence_num)
 day_num                 The day offset from the beginning of the current event list iteration for when this event should fire (starting with 0)
 fire_time               The time of day when this event should fire
 message                 The text to send
 max_try_count           The maximum number of times to try sending the reminder without getting a response back
 timeout_minutes         The number of minutes to wait before sending the reminder again
 """
-class CaseReminderEvent(Document):
-    handler_id = StringProperty()
-    sequence_num = IntegerProperty()
+class CaseReminderEvent(DocumentSchema):
     day_num = IntegerProperty()
     fire_time = TimeProperty()
     message = DictProperty()
     max_try_count = IntegerProperty()
     timeout_minutes = IntegerProperty()
 
-    @property
-    def handler(self):
-        return CaseReminderHandler.get(self.handler_id)
-
 """
 A CaseReminderCallback object logs the callback response for a CaseReminder with method "callback".
 """
 class CaseReminderCallback(Document):
-    pass
+    phone_number = StringProperty()
+    timestamp = DateTimeProperty()
+    user_id = StringProperty()
 
 class CaseReminderHandler(Document):
     """
@@ -113,15 +109,7 @@ class CaseReminderHandler(Document):
     
     max_iteration_count = IntegerProperty()
     schedule_length = IntegerProperty()
-    max_sequence_num = IntegerProperty()
-    
-    @property
-    def events(self):
-        return CaseReminderEvent.view(
-            "reminders/events_by_handler"
-           ,key=self._id
-           ,include_docs=True
-        ).all()
+    events = SchemaListProperty(CaseReminderEvent)
 
     @classmethod
     def get_now(cls):
@@ -130,13 +118,6 @@ class CaseReminderHandler(Document):
             return getattr(cls, 'now')
         except Exception:
             return datetime.utcnow()
-
-    def get_event(self, event_sequence_num):
-        return CaseReminderEvent.view(
-            "reminders/event_by_handler_sequence"
-           ,key=[self._id, event_sequence_num]
-           ,include_docs=True
-        ).one()
 
     def get_reminder(self, case):
         domain = self.domain
@@ -168,11 +149,30 @@ class CaseReminderHandler(Document):
             lang=self.default_lang,
             start_date=date(now.year,now.month,now.day),
             schedule_iteration_num=1,
-            next_event_sequence_num=1,
+            current_event_sequence_num=0,
             try_count=0
         )
-        reminder.set_next_fire()
+        local_tmsp = datetime.combine(reminder.start_date, self.events[0].fire_time) + timedelta(days = (self.start_offset + self.events[0].day_num))
+        reminder.next_fire = self.timestamp_to_utc(reminder, local_tmsp)
         return reminder
+
+    def timestamp_to_utc(self, reminder, timestamp):
+        try:
+            time_zone = timezone(reminder.user.time_zone)
+            local_datetime = time_zone.localize(timestamp)
+            utc_datetime = local_datetime.astimezone(pytz.utc)
+            naive_utc_datetime = utc_datetime.replace(tzinfo=None)
+            return naive_utc_datetime
+        except Exception:
+            return timestamp
+
+    def move_to_next_event(self, reminder):
+        reminder.current_event_sequence_num += 1
+        if reminder.current_event_sequence_num >= len(self.events):
+            reminder.current_event_sequence_num = 0
+            reminder.schedule_iteration_num += 1
+            if reminder.schedule_iteration_num > self.max_iteration_count:
+                reminder.active = False
 
     def set_next_fire(self, reminder, now):
         """
@@ -184,8 +184,12 @@ class CaseReminderHandler(Document):
 
         """
         while now >= reminder.next_fire and reminder.active:
-            reminder.move_to_next_event()
-            reminder.set_next_fire()
+            self.move_to_next_event(reminder)
+            if reminder.active:
+                next_event = reminder.current_event
+                day_offset = self.start_offset + (self.schedule_length * (reminder.schedule_iteration_num - 1)) + next_event.day_num
+                reminder_datetime = datetime.combine(reminder.start_date, next_event.fire_time) + timedelta(days = day_offset)
+                reminder.next_fire = self.timestamp_to_utc(reminder, reminder_datetime)
 
     def should_fire(self, reminder, now):
         return now > reminder.next_fire
@@ -337,26 +341,8 @@ class CaseReminder(Document):
     lang = StringProperty()
     start_date = DateProperty()
     schedule_iteration_num = IntegerProperty()
-    next_event_sequence_num = IntegerProperty()
+    current_event_sequence_num = IntegerProperty()
     try_count = IntegerProperty()
-    time_zone = StringProperty()
-    
-    def set_next_fire(self):
-        next_event = self.handler.get_event(self.next_event_sequence_num)
-        day_offset = self.handler.start_offset + (self.handler.schedule_length * (self.schedule_iteration_num - 1)) + next_event.day_num
-        reminder_datetime = datetime.combine(self.start_date, next_event.fire_time) + timedelta(days = day_offset)
-        self.next_fire = reminder_datetime
-        self.save()
-    
-    def move_to_next_event(self):
-        if self.next_event_sequence_num == self.handler.max_sequence_num:
-            self.next_event_sequence_num = 1
-            self.schedule_iteration_num += 1
-            if self.schedule_iteration_num > self.handler.max_iteration_count:
-                self.active_ind = False
-        else:
-            self.next_event_sequence_num += 1
-        self.save()
 
     @property
     def handler(self):
@@ -364,10 +350,7 @@ class CaseReminder(Document):
 
     @property
     def current_event(self):
-        current_sequence_num = self.next_event_sequence_num - 1
-        if current_sequence_num == 0:
-            current_sequence_num = self.handler.max_sequence_num
-        return self.handler.get_event(current_sequence_num)
+        return self.handler.events[self.current_event_sequence_num]
 
     @property
     def case(self):
