@@ -114,6 +114,7 @@ DEFAULT_APPS = (
     'djtables',    # pip install djtables
     #'ghettoq',     # pip install ghettoq
     'djkombu',     # pip install django-kombu
+    'couchdbkit.ext.django',
 )
 
 HQ_APPS = (
