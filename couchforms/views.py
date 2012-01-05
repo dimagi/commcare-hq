@@ -24,7 +24,7 @@ def post(request, callback=None, magic_property='xml_submission_file'):
         #todo: this should be made more flexibly to handle differeing params for xform submission
         instance = request.FILES[magic_property].read()
         for key, item in request.FILES.items():
-            if key != "xml_submission_file":
+            if key != magic_property:
                 attachments[magic_property] = item
 
     else:
