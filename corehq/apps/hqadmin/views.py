@@ -127,7 +127,7 @@ def global_report(request, template="hqadmin/global.html"):
     _metric('case')
     _metric('form')
     _metric('user')
-    _metric('active_domain')
+    #_metric('active_domain')
 
     return render_to_response(request, template, context)
 
