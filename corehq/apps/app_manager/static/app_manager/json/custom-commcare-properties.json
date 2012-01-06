@@ -118,7 +118,7 @@
     "default": "false",
     "group": "sense"
 }, {
-    "name": "Form Entry Mode",
+    "name": "Item Selection Mode",
     "description": "Whether form entry is optimized for speed, or for new users.",
     "id": "cc-entry-mode",
     "requires": "{features.sense}='false'",
