@@ -30,6 +30,8 @@ class FormType(object):
         if self.app_id:
             try:
                 form = FormType.forms_by_xmlns(self.domain, self.xmlns, self.app_id)
+                # raise exception if no form['app']
+                form['app']
             except Exception:
                 name = self.xmlns
             else:
