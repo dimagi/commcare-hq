@@ -114,6 +114,7 @@ DEFAULT_APPS = (
     'djtables',    # pip install djtables
     #'ghettoq',     # pip install ghettoq
     'djkombu',     # pip install django-kombu
+    'couchdbkit.ext.django',
 )
 
 HQ_APPS = (
@@ -211,6 +212,9 @@ DOMAIN_SYNC_DATABASE_NAME = "commcarehq-public"
 ####### Release Manager App settings  #######
 RELEASE_FILE_PATH=os.path.join("data","builds")
 
+## soil heartbead config ##
+SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
+
 
 ####### Shared/Global/UI Settings ######
 
@@ -236,6 +240,9 @@ PAGINATOR_MAX_PAGE_LINKS = 5
 
 # OpenRosa Standards
 OPENROSA_VERSION = "1.0"
+
+# OTA restore fixture generators
+FIXTURE_GENERATORS = ["corehq.apps.users.fixturegenerators.user_groups"]
 
 # xep_hq_server settings
 XEP_AUTHORIZE = 'corehq.apps.app_manager.models.authorize_xform_edit'

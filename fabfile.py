@@ -66,7 +66,9 @@ def deploy():
         sudo('git submodule sync')
         sudo('git submodule update --init --recursive', user=env.sudo_user)
         with enter_virtualenv():
-            sudo('pip install -r requirements.txt')
+            sudo('pip install -r requirements.txt', user=env.sudo_user)
+            sudo('python manage.py sync_prepare_couchdb', user=env.sudo_user)
+            sudo('python manage.py sync_finish_couchdb', user=env.sudo_user)
             sudo('python manage.py syncdb --noinput', user=env.sudo_user)
             sudo('python manage.py migrate --noinput', user=env.sudo_user)
             sudo('python manage.py collectstatic --noinput', user=env.sudo_user)
