@@ -20,6 +20,7 @@
     "default": "7",
     "values_txt": "Any positive integer. Represents period of purging in days."
 }, {
+    "disabled": true,
     "name": "Phone Locale",
     "description": "The locale (Language) that the application will use. Must be installed",
     "id": "cur_locale",
@@ -100,12 +101,13 @@
     "values_txt": "Chatterbox displays a running list of questions on the screen at the same time. One Question per Screen displays each question independently. Note: OQPS does not support some features",
     "default": "v_chatterbox"
 }, {
+    "disabled": true,
     "id": "users",
     "type": "features",
-    "name": "User Logins",
+    "name": "No Users Mode",
     "description": "Whether to show the user login screen",
     "values": ["true", "false"],
-    "value_names": ["Show Login Screen", "Use Auto Login"],
+    "value_names": ["Off", "On"],
     "default": "true",
     "group": "sense"
 }, {
@@ -118,6 +120,16 @@
     "default": "false",
     "group": "sense"
 }, {
+    "id": "cc-user-mode",
+    "name": "User Login Mode",
+    "values": ["cc-u-normal", "cc-u-auto"],
+    "value_names": ["Normal", "Auto-login"],
+    "default": "cc-u-normal",
+    "//contingent_default": [{"condition": "{features.sense}='true'", "value": "cc-u-auto"}],
+    "description": "In normal mode, users log in each time with their username and password. In auto-login mode, once a user (not the 'admin' or 'demo' users) has logged in, the application will start up with that user already logged in.",
+    "group": "sense",
+    "since": "1.3"
+}, {
     "name": "Item Selection Mode",
     "description": "Whether form entry is optimized for speed, or for new users.",
     "id": "cc-entry-mode",
@@ -126,7 +138,7 @@
     "value_names": ["Normal Scrolling", "Numeric Selection"],
     "values_txt": "Numeric Selection mode will display information about questions for longer and require more input from the user. Normal Scrolling will proceed to the next question whenever enough information is provided.",
     "default": "cc-entry-quick",
-    "contingent_default": [{"condition": "{features.sense}='false'", "value": "cc-entry-review"}],
+    "contingent_default": [{"condition": "{features.sense}='true'", "value": "cc-entry-review"}],
     "group": "sense"
 }, {
     "name": "Send Forms Mode",
@@ -138,7 +150,7 @@
     "value_names": ["Automatic", "Manual"],
     "values_txt": "If automatic is enabled, forms will attempt to send on their own without intervention from the user. If manual is enabled, the user must manually decide when to attempt to send forms.",
     "default": "cc-su-man",
-    "contingent_default": [{"condition": "{features.sense}='false'", "value": "cc-su-auto"}],
+    "contingent_default": [{"condition": "{features.sense}='true'", "value": "cc-su-auto"}],
     "group": "sense"
 }, {
     "name": "Extra Key Action",
@@ -149,7 +161,7 @@
     "value_names": ["Cycle", "Audio"],
     "values_txt": "cycle cycles through available languages. audio plays the question's audio if available. NOTE: If audio is selected, a question's audio will not be played by default when the question is displayed.",
     "default": "cycle",
-    "contingent_default": [{"condition": "{features.sense}='false'", "value": "audio"}],
+    "contingent_default": [{"condition": "{features.sense}='true'", "value": "audio"}],
     "group": "sense"
 }, {
     "name": "Loose Media Mode",
