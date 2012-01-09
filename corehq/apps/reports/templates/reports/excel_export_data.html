@@ -109,7 +109,7 @@
                     </td>
                     <td>
                         {% include "reports/partials/form_name.html" %}
-                        {% if form.duplicate %}(Multiple Applications){% endif %}
+                        {% if form.duplicate %}(Multiple Forms){% endif %}
                     </td>
                     <td>
 {#                        <a href='{% url corehq.apps.reports.views.export_data domain %}?export_tag="{{ form.xmlns }}"&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}'>#}

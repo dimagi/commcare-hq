@@ -20,21 +20,23 @@ class FormType(object):
                 form = FormType.forms_by_xmlns(domain, xmlns, app_id)
                 self.app_id = form['app']['id']
             except Exception:
-                self.app_id = None
+                self.app_id = {}
 
     def get_id_tuple(self):
         return self.domain, self.xmlns, self.app_id
 
     def get_label(self, html=False, lang=None):
-        print self.get_id_tuple()
-        if self.app_id:
-            try:
-                form = FormType.forms_by_xmlns(self.domain, self.xmlns, self.app_id)
-                # raise exception if no form['app']
-                form['app']
-            except Exception:
+#        print self.get_id_tuple()
+        try:
+            form = FormType.forms_by_xmlns(self.domain, self.xmlns, self.app_id)
+        except Exception:
+            name = self.xmlns
+        else:
+            if not form:
                 name = self.xmlns
-            else:
+            elif form.get('duplicate'):
+                name = "%s (Multiple Forms)" % self.xmlns
+            elif form.get('app'):
                 langs = form['app']['langs']
                 if lang:
                     langs = [lang] + langs
@@ -67,8 +69,8 @@ class FormType(object):
                     )
                 else:
                     name = title
-        else:
-            name = self.xmlns
+            else:
+                name = self.xmlns
         return name
 
     @classmethod
