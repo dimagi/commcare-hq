@@ -15,6 +15,7 @@ def production():
     env.root = root = '/opt/www.commcarehq.org_project'
     env.virtualenv_root = _join(root, 'env/cchq_www')
     env.code_root       = _join(root, 'src/commcare-hq')
+    env.pre_code_root   = _join(root, 'src/_commcare-hq')
     env.code_branch = 'master'
     env.sudo_user = 'cchqwww'
     env.hosts = ['10.84.168.241']
@@ -51,6 +52,18 @@ def enter_virtualenv():
     """
     return prefix('PATH=%(virtualenv_root)s/bin/:$PATH' % env)
 
+def preindex_views():
+    with cd(env.pre_code_root):
+        _update_code()
+        with enter_virtualenv():
+            sudo('nohup python manage.py sync_prepare_couchdb > preindex_views.out 2> preindex_views.err', user=env.sudo_user)
+
+def _update_code():
+    sudo('git pull', user=env.sudo_user)
+    sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
+    sudo('git pull', user=env.sudo_user)
+    sudo('git submodule sync', user=env.sudo_user)
+    sudo('git submodule update --init --recursive', user=env.sudo_user)
 
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
@@ -60,14 +73,9 @@ def deploy():
             utils.abort('Production deployment aborted.')
 
     with cd(env.code_root):
-        sudo('git pull', user=env.sudo_user)
-        sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
-        sudo('git pull', user=env.sudo_user)
-        sudo('git submodule sync')
-        sudo('git submodule update --init --recursive', user=env.sudo_user)
+        _update_code()
         with enter_virtualenv():
             sudo('pip install -r requirements.txt', user=env.sudo_user)
-            sudo('python manage.py sync_prepare_couchdb', user=env.sudo_user)
             sudo('python manage.py sync_finish_couchdb', user=env.sudo_user)
             sudo('python manage.py syncdb --noinput', user=env.sudo_user)
             sudo('python manage.py migrate --noinput', user=env.sudo_user)
