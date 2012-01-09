@@ -1,16 +1,6 @@
-{% extends base_template %}
+{% extends "hqadmin/hqadmin_base_report.html" %}
 {% block page_imports %}
     {% include "imports/datatables.html" %}
-{% endblock %}
-{% block js-inline %}{{ block.super }}
-    <script>
-        // datatable configuration.
-        $(document).ready(function() {
-            $('.datatable').dataTable({
-                "bJQueryUI": true
-            });
-        });
-    </script>
 {% endblock %}
 {% block head %}{{ block.super }}
     <style>
@@ -18,12 +8,9 @@
             width: 100%;
         }
     </style>{% endblock %}
-{% block content %}
-    <div id="main_container">
-        <div id="report-title">
-            <h1>Number of Active Users by Domain</h1>
-        </div>
-        <div id="report-content">
+{% block report-title %}Number of Active Users by Domain{% endblock %}
+
+{% block reportcontent %}
             <table class="datatable">
             <thead>
                 <tr>
@@ -48,6 +35,4 @@
             {% endfor %}
             </tbody>
             </table>
-        </div>
-    </div>
 {% endblock %}

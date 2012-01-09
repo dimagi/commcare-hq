@@ -5,6 +5,7 @@ import re
 from couchdbkit.exceptions import BadValueError
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
+from django.contrib.auth.models import get_hexdigest
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from restkit.errors import ResourceError
@@ -512,19 +513,6 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
                 return detail
         raise Exception("Module %s has no detail type %s" % (self, detail_type))
 
-    def infer_case_type(self):
-        case_types = []
-        for form in self.get_forms():
-            xform = form.source
-            soup = BeautifulStoneSoup(xform)
-            try:
-                case_type = soup.find('case').find('case_type_id').string.strip()
-            except AttributeError:
-                case_type = None
-            if case_type:
-                case_types.append(case_type)
-        return case_types
-
     def export_json(self, dump_json=True):
         source = self.to_json()
         for form in source['forms']:
@@ -688,6 +676,11 @@ class ApplicationBase(VersionedDoc):
     built_on = DateTimeProperty(required=False)
     build_comment = StringProperty()
 
+    # django-style salted hash of the admin password
+    admin_password = StringProperty()
+    # a=Alphanumeric, n=Numeric, x=Neither (not allowed)
+    admin_password_charset = StringProperty(choices=['a', 'n', 'x'], default='n')
+
     @classmethod
     def wrap(cls, data):
         # scrape for old conventions and get rid of them
@@ -711,6 +704,32 @@ class ApplicationBase(VersionedDoc):
             del data['native_input']
             
         return super(ApplicationBase, cls).wrap(data)
+
+    def set_admin_password(self, raw_password):
+        import random
+        algo = 'sha1'
+        salt = get_hexdigest(algo, str(random.random()), str(random.random()))[:5]
+        hsh = get_hexdigest(algo, salt, raw_password)
+        self.admin_password = '%s$%s$%s' % (algo, salt, hsh)
+
+        if raw_password.isnumeric():
+            self.admin_password_charset = 'n'
+        elif raw_password.isalnum():
+            self.admin_password_charset = 'a'
+        else:
+            self.admin_password_charset = 'x'
+
+    def check_password_charset(self):
+        errors = []
+        if hasattr(self, 'profile'):
+            password_format = self.profile.get('properties', {}).get('password_format', 'n')
+            message = 'Your app requires {0} passwords but the admin password is not {0}'
+
+            if password_format == 'n' and self.admin_password_charset in 'ax':
+                errors.append({'type': 'password_format', 'message': message.format('numeric')})
+            if password_format == 'a' and self.admin_password_charset in 'x':
+                errors.append({'type': 'password_format', 'message': message.format('alphanumeric')})
+        return errors
 
     def get_build(self):
 #        version, build_number = current_builds.TAG_MAP[self.commcare_tag]
@@ -778,6 +797,7 @@ class ApplicationBase(VersionedDoc):
         except ResourceError:
             built_on = datetime.utcnow()
             jadjar = self.get_jadjar().pack(self.create_all_files(), {
+                'JavaRosa-Admin-Password': self.admin_password,
                 'Profile': self.profile_loc,
                 'MIDlet-Jar-URL': self.jar_url,
                 #'MIDlet-Name': self.name,
@@ -795,6 +815,8 @@ class ApplicationBase(VersionedDoc):
 
     def validate_app(self):
         errors = []
+
+        errors.extend(self.check_password_charset())
 
         try:
             self.create_all_files()
@@ -1273,20 +1295,14 @@ class Application(ApplicationBase, TranslationMixin):
             for xmlns in xmlns_count:
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
-        # Make sure that putting together all the files actually works
-        if not errors:
-            try:
-                self.create_all_files()
-            except Exception as e:
-                if settings.DEBUG:
-                    raise
-                errors.append({'type': "form error", 'message': unicode(e)})
 
+        if not errors:
+            errors = super(Application, self).validate_app()
         return errors
 
     @classmethod
     def get_by_xmlns(cls, domain, xmlns):
-        r = get_db().view('reports/forms_by_xmlns', key=[domain, xmlns]).one()
+        r = get_db().view('reports/forms_by_xmlns', key=[domain, {}, xmlns], group=True).one()
         return cls.get(r['value']['app']['id']) if r and 'app' in r['value'] else None
 
 class NotImplementedYet(Exception):

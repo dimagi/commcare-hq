@@ -166,6 +166,7 @@ class BuildSpec(DocumentSchema):
 class BuildMenuItem(DocumentSchema):
     build = SchemaProperty(BuildSpec)
     label = StringProperty(required=False)
+    superuser_only = BooleanProperty(default=False)
 
     def get_build(self):
         return self.build.get_build()

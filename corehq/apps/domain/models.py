@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 from couchdbkit.ext.django.schema import Document, StringProperty,\
-    BooleanProperty
+    BooleanProperty, DateTimeProperty
 
 class CouchDomain(Document):
     """
@@ -10,6 +10,7 @@ class CouchDomain(Document):
     name = StringProperty()
     is_active = BooleanProperty()
     is_public = BooleanProperty()
+    date_created = DateTimeProperty()
     
     def save(self, **kwargs):
         # eventually we'll change the name of this object to just "Domain"

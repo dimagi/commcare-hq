@@ -26,7 +26,7 @@ from corehq.apps.users.xml import group_fixture
 from couchforms.models import XFormInstance
 
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.couch.undo import DeleteRecord
+from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
@@ -347,9 +347,10 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
         
         super(CouchUser, self).save(**params)
-        if not self.base_doc.endswith("-Deleted"):
+        if not self.base_doc.endswith(DELETED_SUFFIX):
             django_user = self.sync_to_django_user()
             django_user.save()
+
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, **kwargs):
@@ -361,6 +362,9 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
                 couch_user.sync_from_django_user(django_user)
                 # avoid triggering cyclical sync
                 super(CouchUser, couch_user).save()
+
+    def is_deleted(self):
+        return self.base_doc.endswith(DELETED_SUFFIX)
 
 class CommCareUser(CouchUser):
 
@@ -508,6 +512,7 @@ class CommCareUser(CouchUser):
         def get_owner_ids():
             return self.get_owner_ids()
         user.get_owner_ids = get_owner_ids
+        user._hq_user = self # don't tell anyone that we snuck this here
         return user
 
     def get_forms(self):
@@ -559,7 +564,7 @@ class CommCareUser(CouchUser):
         return owner_ids
     
     def retire(self):
-        suffix = '-Deleted'
+        suffix = DELETED_SUFFIX
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
             self.base_doc += suffix

@@ -99,7 +99,7 @@
                     </td>
                     <td>
                         {% ifchanged %}
-                            {% if form.app %}
+                            {% if form.app and not form.is_user_registration %}
                                 <!--Make sure to check if {{ form.app.name }} changed-->
                                 {{ form.module.name|trans:form.app.langs }}
                             {% else %}
@@ -107,21 +107,20 @@
                             {% endif %}
                         {% endifchanged %}
                     </td>
-                    
                     <td>
-                            {% if form.app %}
-                                {{ form.form.name|trans:form.app.langs }}
-
-                            {% else %}
-                                {{ form.xmlns }} {% if form.duplicate %}(XMLNS Conflict){% endif %}
-                            {% endif %}
+                        {% include "reports/partials/form_name.html" %}
+                        {% if form.duplicate %}(Multiple Forms){% endif %}
                     </td>
                     <td>
-{#                        <a href='{% url corehq.apps.reports.views.export_data domain %}?export_tag="{{ form.xmlns }}"&filename={% if form.app %}{{ form.form.name|trans:form.app.langs }}{% else %}{{ form.xmlns }}{% endif %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}'>#}
+{#                        <a href='{% url corehq.apps.reports.views.export_data domain %}?export_tag="{{ form.xmlns }}"&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}'>#}
 {#                            Download#}
 {#                        </a><br>#}
-                        <a href='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% if form.app %}{{ form.form.name|trans:form.app.langs }}{% else %}{{ form.xmlns }}{% endif %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}'
-                            class="export-ajax">Download</a>
+                        {% if form.submissions %}
+                        <a href='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}'
+                            class="export-ajax">Download</a> ({{ form.submissions }} rows)
+                        {% else %}
+                            No Forms
+                        {% endif %}
                         <br>
                         {% if form.xmlns != None %}
                             <a href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ form.xmlns }}"'>Create Custom Export</a>

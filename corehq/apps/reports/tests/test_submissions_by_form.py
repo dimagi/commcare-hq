@@ -37,7 +37,7 @@ class SubmissionsByFormTest(TestCase):
         )
         self.failUnlessEqual(
             _relevant_form_types(DOMAIN, datespan=datespan),
-            ["xmlns-A", "xmlns-B"]
+            [(DOMAIN, "xmlns-A", None), (DOMAIN, "xmlns-B", None)]
         )
     def test__submissions_by_form_json(self):
         self.failUnlessEqual(
@@ -49,5 +49,5 @@ class SubmissionsByFormTest(TestCase):
                     format=DATE_FORMAT
                 )
             ),
-            {"DANNY": {"xmlns-A": 4, "xmlns-B": 3}}
+            {"DANNY": {(DOMAIN, "xmlns-A", None): 4, (DOMAIN, "xmlns-B", None): 3}}
         )

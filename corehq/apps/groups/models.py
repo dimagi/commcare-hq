@@ -7,7 +7,7 @@ from __future__ import absolute_import
 import re
 from couchdbkit.ext.django.schema import *
 from corehq.apps.users.models import CouchUser
-from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
+from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_SUFFIX
 
 class Group(UndoableDocument):
     """
@@ -82,6 +82,7 @@ class Group(UndoableDocument):
 
     def get_users(self, is_active=True):
         users = [CouchUser.get_by_user_id(user_id) for user_id in self.users]
+        users = [user for user in users if not user.is_deleted()]
         if is_active is True:
             return [user for user in users if user.is_active]
         else:

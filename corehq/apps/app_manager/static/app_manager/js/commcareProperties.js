@@ -1,33 +1,36 @@
-/*globals $, console, JSON */
+/*globals $, console, JSON, COMMCAREHQ, eventize */
 
 var CommcareProperty = {
-    wrap: function (json, initialValue, $home, settings, saveURL, edit) {
+    wrap: function (json, initialValue, $home, settings, edit) {
+        'use strict';
         var that = typeof json === 'object' ? json : JSON.parse(json),
             value,
-            isEnabled,
+            isEnabled = true,
             $input,
+            disabledMessage,
             $disabledMessage,
             $tr = $("<tr />"),
             needsToBeSaved = false,
-            initialValue = initialValue || null,
             parseCondition = function (condition) {
                 var parts = condition ? condition.split('&&') : [],
-                    parse_part = /\{(\w+)\.([\w_\-]+)\}='(.*)'/,
+                    parse_part = /\{(\w+)\.([\w\-]+)\}='([\w\-]*)'/,
                     result,
-                    type, variable, value,
+                    type,
+                    variable,
+                    value,
                     i,
                     repr = [];
                 for (i = 0; i < parts.length; i += 1) {
                     result = parse_part.exec(parts[i]);
                     if (result === null) {
-                        console.log("Unable to parse '" + things[i] + "'");
+                        console.log("Unable to parse '" + parts[i] + "'");
                     } else {
                         type = result[1];
                         variable = result[2];
                         value = result[3];
                         try {
-                            repr.push({variable: settings[type][variable], value:value});
-                        } catch(e) {
+                            repr.push({variable: settings[type][variable], value: value});
+                        } catch (e) {
                             console.log("Error finding {" + type + "." + variable + "}");
                         }
                     }
@@ -36,52 +39,87 @@ var CommcareProperty = {
                     check: function () {
                         var i;
                         for (i = 0; i < repr.length; i += 1) {
-                            if(repr[i].variable.val() !== repr[i].value) {
+                            if (repr[i].variable.val() !== repr[i].value) {
                                 return false;
                             }
                         }
                         return true;
                     },
-                    variables: repr.map(function(p){return p.variable;})
+                    variables: repr.map(function (p) { return p.variable; })
                 };
 
+            },
+            getDefault = function () {
+                var i = 0,
+                    contingent_default = that.contingent_default || [];
+                for (i = 0; i < contingent_default.length; i += 1) {
+                    if (parseCondition(contingent_default[i].condition)) {
+                        return contingent_default[i].value;
+                    }
+                }
+                return that['default'];
+
+            },
+            setDisplay = function () {
+                var displayValue;
+                if (isEnabled) {
+                    displayValue = value || that['default'];
+                    if (edit) {
+                        $input.removeAttr('disabled');
+                        $disabledMessage.html('');
+                    } else {
+                        $tr.show();
+                    }
+                } else {
+                    displayValue = getDefault();
+                    if (edit) {
+                        $input.attr('disabled', 'true');
+                        $disabledMessage.html(disabledMessage);
+                    } else {
+                        $tr.hide();
+                    }
+                }
+
+                if (edit) {
+                    $input.val(displayValue);
+                } else {
+                    if (that.values === undefined) {
+                        $input.text(displayValue);
+                    } else {
+                        $input.text(that.value_names[that.values.indexOf(displayValue)]);
+                    }
+                }
             },
             enabled = function (v, message) {
                 if (v === undefined) {
                     return isEnabled;
                 } else {
                     isEnabled = v;
-                    if (isEnabled) {
-                        if (edit) {
-                            $input.removeAttr('disabled');
-                            $disabledMessage.html('');
-                        } else {
-                            $tr.show();
-                        }
-                    } else {
-                        if (edit) {
-                            $input.attr('disabled', 'true');
-                            $disabledMessage.html(message);
-                        } else {
-                            $tr.hide();
-                        }
-                    }
+                    disabledMessage = message;
+                    setDisplay();
                 }
             },
             initRequires = function () {
                 var i,
                     requiresCondition = parseCondition(that.requires),
-                    onChange, onSave;
+                    onChange,
+                    onSave;
                 onChange = function () {
-                    enabled(requiresCondition.check());
+                    var version = that.since || "1.1",
+                        versionOK = COMMCAREHQ.app_manager.checkCommcareVersion(version),
+                        is_enabled = true,
+                        disabled_message;
+                    if (!versionOK) {
+                        is_enabled = false;
+                        disabled_message = '<span class="ui-icon ui-icon-arrowthick-1-w"></span>Upgrade to CommCare ' + version + '!';
+                    }
+                    if (!requiresCondition.check()) {
+                        is_enabled = false;
+                    }
+                    enabled(is_enabled, disabled_message);
                 };
                 onSave = function () {
-                    if (requiresCondition.check()) {
-                        that.save();
-                    } else {
-                        val(null);
-                        that.save();
-                    }
+                    that.save();
                 };
                 for (i = 0; i < requiresCondition.variables.length; i += 1) {
                     requiresCondition.variables[i].on('change', onChange);
@@ -89,10 +127,12 @@ var CommcareProperty = {
                 }
                 // bootstrap
                 onChange();
+                COMMCAREHQ.app_manager.on('change:commcareVersion', onChange);
             },
             render = function () {
                 var $td = $("<td />"),
-                    v, v_name,
+                    v,
+                    v_name,
                     i;
                 $("<th></th>").text(that.name + " ").append(
                     $("<span></span>").addClass('help-link').attr('data-help-key', that.id)
@@ -107,7 +147,7 @@ var CommcareProperty = {
                         for (i = 0; i < that.values.length; i += 1) {
                             v = that.values[i];
                             v_name = (that.value_names || that.values)[i];
-                            $("<option></option>").attr('value', v).text((v===that["default"] ? "* " : " ") + v_name).appendTo($input);
+                            $("<option></option>").attr('value', v).text((v === that['default'] ? "* " : " ") + v_name).appendTo($input);
                         }
                     }
                     $input.attr('name', that.id).change(function () {
@@ -122,30 +162,28 @@ var CommcareProperty = {
                     $input = $("<span />").appendTo($td);
                 }
                 $disabledMessage = $('<span style="display: inline-block;"/>').appendTo($td);
-                that.val(initialValue);
+                that.val(initialValue || null);
                 initRequires();
                 $td.appendTo($tr);
+                if (that.disabled) {
+                    $tr.hide();
+                }
                 return $home.append($tr);
             },
             val = function (v) {
-                var v_or_default;
+                var theDefault = that['default'];
                 if (v === undefined) {
-                    return value || that['default'];
+                    if (enabled()) {
+                        return value || theDefault;
+                    } else {
+                        return null;
+                    }
                 } else if (value !== v) {
-                    v_or_default = v || that['default'];
                     // if this is the first time value is being set
                     // then it doesn't need to be saved
                     needsToBeSaved = (value !== undefined);
-                    value = (v === that['default'] ? null : v);
-                    if (edit) {
-                        $input.val(v_or_default);
-                    } else {
-                        if (that.values === undefined) {
-                            $input.text(v_or_default);
-                        } else {
-                            $input.text(that.value_names[that.values.indexOf(v_or_default)]);
-                        }
-                    }
+                    value = (v === theDefault ? null : v);
+                    setDisplay();
                     that.fire('change');
                 }
             },
@@ -155,27 +193,6 @@ var CommcareProperty = {
                 }
             };
         eventize(that);
-//        that.on('save', function(){
-//            var $msg = $('<span />').text("saving...").appendTo($input.parent()),
-//                data = {};
-//            data[that.type] = {};
-//            data[that.type][that.id] = that.val();
-//            $.ajax({
-//                url: saveURL,
-//                type: "POST",
-//                dataType: "json",
-//                data: {profile: JSON.stringify(data)},
-//                success: function (data) {
-//                    needsToBeSaved = false;
-//                    $msg.text('saved!').fadeOut('slow', function(){
-//                        $msg.remove();
-//                    });
-//                },
-//                error: function (jqHXR) {
-//                    $msg.text('Error! Please reload page');
-//                }
-//            });
-//        });
         that.render = render;
         that.val = val;
         that.enabled = enabled;
@@ -185,16 +202,42 @@ var CommcareProperty = {
 };
 var CommcareSettings = {
     wrap: function (json, initialValues, $home, saveURL, edit, saveButtonHolder) {
+        'use strict';
         var that = typeof json === 'object' ? json : JSON.parse(json),
-            getHome = function(p){
+            getHome = function (p) {
                 if (typeof $home === "function") {
                     return $home(p);
                 } else {
                     return $home;
                 }
             },
+            $homes,
+            test_serialize = function () {
+                var expected = {},
+                    output = that.serialize(),
+                    check = function (dict) {
+                        var key;
+                        for (key in dict) {
+                            if (dict.hasOwnProperty(key)) {
+                                if (dict[key] !== expected[key]) {
+                                    console.error(key + ' set to ' + dict[key] + '! (Expected ' + expected[key] + ')');
+                                }
+                            }
+                        }
+                    };
+                $homes.find('[name]').each(function () {
+                    expected[$(this).attr('name')] = $(this).attr('disabled') ? null : $(this).val();
+                });
+                check(output.features);
+                check(output.properties);
+            },
             render = function () {
-                var i, p, $homes = $(), $pHome;
+                var i, p, $pHome,
+                    onChange = function () {
+                        test_serialize();
+                        that.saveButton.fire('change');
+                    };
+                $homes = $();
                 that.properties = {};
                 that.features = {};
 
@@ -203,32 +246,16 @@ var CommcareSettings = {
                     p.type = p.type || "properties";
                     $pHome = getHome(p);
                     $.merge($homes, $pHome);
-                    CommcareProperty.wrap(p, (initialValues[p.type] || {})[p.id], $pHome, that, saveURL, edit);
+                    CommcareProperty.wrap(p, (initialValues[p.type] || {})[p.id], $pHome, that, edit);
                     // make properties/features available as e.g. that.properties.logenabled
                     that[p.type][p.id] = p;
                 }
-                
+
+
                 for (i = 0; i < that.length; i += 1) {
                     that[i].render();
-                    that[i].on('change', function(){
-                        that.saveButton.fire('change');
-                    });
+                    that[i].on('change', onChange);
                 }
-                (function () {
-                    var updateAvailableProperties = function () {
-                        var i, version;
-                        for (i = 0; i < that.length; i += 1) {
-                            version = that[i].since || "1.1";
-                            that[i].enabled(
-                                COMMCAREHQ.app_manager.checkCommcareVersion(version),
-                                '<span class="ui-icon ui-icon-arrowthick-1-w"></span>Upgrade to CommCare ' + version + '!'
-                            );
-                        }
-                    };
-                    updateAvailableProperties();
-                    COMMCAREHQ.app_manager.on('change:commcareVersion', updateAvailableProperties);
-                }());
-
                 return $.unique($homes);
             },
             serialize = function () {
@@ -261,7 +288,7 @@ var CommcareSettings = {
         eventize(that);
         that.render = render;
         that.serialize = serialize;
-        
+
         return that;
     }
 };

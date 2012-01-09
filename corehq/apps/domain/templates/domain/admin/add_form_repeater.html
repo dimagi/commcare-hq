@@ -1,12 +1,9 @@
-{% extends base_template %}
+{% extends "domain/admin/domain_admin_base.html" %}
 {% block head %}
     {{ block.super }}
     <script>
     $(function() {
         // styling
-        $('#domain_forwarding').addClass('ui-widget ui-corner-all');
-        $('#header').addClass('ui-widget-header ui-corner-top');
-        $('#content').addClass("ui-widget-content");
         $('#notify').addClass("hidden");
         // test url
         $('#test-url').click(function () { 
@@ -42,9 +39,9 @@
 {% block content %}
 <div id="main_container">
     <div id="domain_forwarding">
-        <h2 id="header" >Configure Domain Forwarding</h2>
+        <h2 id="header">Forward {% if repeater_type == "FormRepeater"  %}Forms{% else %}Cases{% endif %}</h2>
         <div id="content" >
-			<form method="post">
+			<form method="post" action="">
 			<table>
 			    {{form.as_table}}
 			    <tr><td></td><td><input type="submit" value="Start Forwarding" />

@@ -56,6 +56,9 @@
             <param name="archive" value="./CommCare.jar" />
             <param name="midlet" value="org.commcare.midlet.CommCareMidlet" />
             <param name="Profile" value="jr://resource/profile.xml" />
+            {% if app.admin_password %}
+                <param name="JavaRosa-Admin-Password" value="{{ app.admin_password }}" />
+            {% endif %}
         </applet>
         <div id="emu-info">
             <p>This might take a few minutes.</p>

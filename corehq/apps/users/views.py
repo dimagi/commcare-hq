@@ -3,8 +3,10 @@ import re
 from smtplib import SMTPRecipientsRefused
 import urllib
 from datetime import datetime
+from django.contrib.auth import logout
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.models import User
+from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpResponseForbidden
@@ -109,6 +111,12 @@ def undo_remove_web_user(request, domain, record_id):
 
 @transaction.commit_on_success
 def accept_invitation(request, domain, invitation_id):
+    if request.GET.get('switch') == 'true':
+        logout(request)
+        return redirect_to_login(request.path)
+    if request.GET.get('create') == 'true':
+        logout(request)
+        return HttpResponseRedirect(request.path)
     invitation = Invitation.get(invitation_id)
     assert(invitation.domain == domain)
     if invitation.is_accepted:
@@ -119,13 +127,16 @@ def accept_invitation(request, domain, invitation_id):
     if request.user.is_authenticated():
         # if you are already authenticated, just add the domain to your 
         # list of domains
-        couch_user = CouchUser.from_django_user(request.user)
-        couch_user.add_domain_membership(domain=domain, is_admin=invitation.is_domain_admin)
-        couch_user.save()
-        invitation.is_accepted = True
-        invitation.save()
-        messages.success(request, "You have been added to the %s domain" % domain)
-        return HttpResponseRedirect(reverse("domain_homepage", args=[domain,]))
+        if request.method == "POST":
+            couch_user = CouchUser.from_django_user(request.user)
+            couch_user.add_domain_membership(domain=domain, is_admin=invitation.is_domain_admin)
+            couch_user.save()
+            invitation.is_accepted = True
+            invitation.save()
+            messages.success(request, "You have been added to the %s domain" % domain)
+            return HttpResponseRedirect(reverse("domain_homepage", args=[domain,]))
+        else:
+            return render_to_response(request, 'users/accept_invite.html', {'domain': domain})
     else:
         # if you're not authenticated we need you to fill out your information
         if request.method == "POST":
@@ -139,11 +150,11 @@ def accept_invitation(request, domain, invitation_id):
                 del data["tos_confirmed"]  
                 user = register_user(invitation.domain, send_email=False, 
                                      is_domain_admin=invitation.is_domain_admin, **data)
-                messages.success(request, "User account for %s created! You may now login." % data["email"])
                 invitation.is_accepted = True
                 invitation.save()
-                return HttpResponseRedirect(reverse("homepage"))
-        else: 
+                messages.success(request, "User account for %s created! You may now login." % data["email"])
+                return HttpResponseRedirect(reverse("login"))
+        else:
             form = UserRegistersSelfForm(initial={'email': invitation.email})
         
         return render_to_response(request, "users/accept_invite.html", {"form": form})
@@ -486,7 +497,7 @@ def group_members(request, domain, group_id, template="groups/group_members.html
     all_groups = _get_groups(domain)
     group = Group.get(group_id)
     if group is None:
-        raise Http404("Group %s does not exist" % group_name)
+        raise Http404("Group %s does not exist" % group_id)
     member_ids = group.get_user_ids()
     members = CouchUser.view("_all_docs", keys=member_ids, include_docs=True).all()
     members.sort(key=lambda user: user.username)

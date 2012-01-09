@@ -5,7 +5,6 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import permission_required
 from django.template.context import RequestContext
-from django.views.decorators.cache import cache_page
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import MessageLog
@@ -17,6 +16,7 @@ from corehq.apps.domain.decorators import login_and_domain_required, require_sup
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response, render_to_response
+from django.views.decorators.cache import cache_page
 
 @require_superuser
 def default(request):
@@ -39,7 +39,7 @@ def get_hqadmin_base_context(request):
         "domain": domain,
     }
 
-@cache_page(60 * 15)
+
 @require_superuser
 def domain_list(request):
     # one wonders if this will eventually have to paginate
@@ -66,7 +66,6 @@ def domain_list(request):
     context.update({"domains": domains})
     return render_to_response(request, "hqadmin/domain_list.html", context)
 
-@cache_page(60 * 15)
 @require_superuser
 def active_users(request):
     keys = []
@@ -128,11 +127,10 @@ def global_report(request, template="hqadmin/global.html"):
     _metric('case')
     _metric('form')
     _metric('user')
-    _metric('active_domain')
+    #_metric('active_domain')
 
     return render_to_response(request, template, context)
 
-@cache_page(60 * 15)
 @require_superuser
 def commcare_version_report(request, template="hqadmin/commcare_version.html"):
     apps = get_db().view('app_manager/applications_brief').all()
@@ -160,9 +158,9 @@ def commcare_version_report(request, template="hqadmin/commcare_version.html"):
     context.update({'tables': tables})
     return render_to_response(request, template, context)
 
-@cache_page(60 * 15)
-@require_superuser
-def domain_activity_report(request, template="hqadmin/domain_activity_report.html"):
+
+@cache_page(60*5)
+def _cacheable_domain_activity_report(request):
     landmarks = json.loads(request.GET.get('landmarks') or "[7, 30, 90]")
     landmarks.sort()
     now = datetime.utcnow()
@@ -170,35 +168,35 @@ def domain_activity_report(request, template="hqadmin/domain_activity_report.htm
     for landmark in landmarks:
         dates.append(now - timedelta(days=landmark))
 
-    domains = Domain.objects.all().order_by("name")
+    domains = [{'name': domain.name} for domain in Domain.objects.all().order_by("name")]
 
     for domain in domains:
-        domain.users = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain.name)])
-        if not domain.users:
+        domain['users'] = dict([(user.user_id, {'raw_username': user.raw_username}) for user in CommCareUser.by_domain(domain['name'])])
+        if not domain['users']:
             continue
         forms = [r['value'] for r in get_db().view('reports/all_submissions',
             reduce=False,
-            startkey=[domain.name, json_format_datetime(dates[-1])],
-            endkey=[domain.name, json_format_datetime(now)],
+            startkey=[domain['name'], json_format_datetime(dates[-1])],
+            endkey=[domain['name'], json_format_datetime(now)],
         ).all()]
-        domain.user_sets = [dict() for landmark in landmarks]
+        domain['user_sets'] = [dict() for landmark in landmarks]
 
         for form in forms:
             user_id = form.get('user_id')
             time = string_to_datetime(form['time']).replace(tzinfo = None)
-            if user_id in domain.users:
+            if user_id in domain['users']:
                 for i, date in enumerate(dates):
                     if time > date:
-                        domain.user_sets[i][user_id] = domain.users[user_id]
+                        domain['user_sets'][i][user_id] = domain['users'][user_id]
 
+    return HttpResponse(json.dumps({'domains': domains, 'landmarks': landmarks}))
+
+@require_superuser
+def domain_activity_report(request, template="hqadmin/domain_activity_report.html"):
     context = get_hqadmin_base_context(request)
-    context.update({
-        'domains': domains,
-        'landmarks': landmarks
-    })
+    context.update(json.loads(_cacheable_domain_activity_report(request).content))
     return render_to_response(request, template, context)
 
-@cache_page(60 * 15)
 @datespan_default
 @require_superuser
 def message_log_report(request):

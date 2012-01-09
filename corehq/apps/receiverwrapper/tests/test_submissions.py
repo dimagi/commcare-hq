@@ -28,7 +28,11 @@ class SubmissionTest(TestCase):
         
     def _check_for_message(self, msg, response):
         # ghetto
-        return msg in str(response)
+        if msg in str(response):
+            return True
+        else:
+            # just so there's a printout
+            self.assertEqual(msg, str(response))
         
     
     def testSubmitSimpleForm(self):

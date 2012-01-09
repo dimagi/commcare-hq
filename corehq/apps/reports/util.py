@@ -89,7 +89,7 @@ def form_list(domain):
                          group=True,
                          group_level=3,
                          reduce=True)
-    return [{"display": xmlns_to_name(r["key"][2], domain), "xmlns": r["key"][2]} for r in view]
+    return [{"display": xmlns_to_name(domain, r["key"][2]), "xmlns": r["key"][2]} for r in view]
 
 def get_case_types(domain, user_ids=None):
     case_types = {}

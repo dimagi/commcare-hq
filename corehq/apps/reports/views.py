@@ -34,7 +34,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.export import export_cases_and_referrals
 from django.template.defaultfilters import yesno
 from casexml.apps.case.xform import extract_case_blocks
-from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.display import xmlns_to_name, FormType
 import sys
 from couchexport.schema import build_latest_schema
 from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
@@ -43,6 +43,7 @@ from couchexport import views as couchexport_views
 from couchexport.shortcuts import export_data_shared, export_raw_data
 from django.views.decorators.http import require_POST
 from couchforms.filters import instances
+from couchdbkit.exceptions import ResourceNotFound
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -160,7 +161,7 @@ def custom_export(req, domain):
     schema = build_latest_schema(export_tag)
     if schema:
         saved_export = SavedExportSchema.default(schema, name="%s: %s" %\
-                                                 (xmlns_to_name(export_tag[1], domain),
+                                                 (xmlns_to_name(domain, export_tag[1]),
                                                   datetime.utcnow().strftime("%d-%m-%Y")))
         return render_to_response(req, "reports/customize_export.html",
                                   {"saved_export": saved_export,
@@ -169,7 +170,7 @@ def custom_export(req, domain):
     else:
         messages.info(req, "No data found for that form "
                       "(%s). Submit some data before creating an export!" % \
-                      xmlns_to_name(export_tag[1], domain))
+                      xmlns_to_name(domain, export_tag[1]))
         return HttpResponseRedirect(reverse('excel_export_data_report', args=[domain]))
         
 @login_and_domain_required
@@ -291,10 +292,11 @@ class SubmitHistory(ReportBase):
             def view_to_table(row):
                 time = row['value'].get('time')
                 xmlns = row['value'].get('xmlns')
+                app_id = row['value'].get('app_id')
                 username = user_id_to_username(self.individual)
 
                 time = format_time(time)
-                xmlns = xmlns_to_name(xmlns, self.domain)
+                xmlns = xmlns_to_name(self.domain, xmlns, app_id, html=True)
                 return [form_data_link(row['id']), username, time, xmlns]
 
         else:
@@ -310,11 +312,12 @@ class SubmitHistory(ReportBase):
             def view_to_table(row):
                 time = row['value'].get('time')
                 xmlns = row['value'].get('xmlns')
+                app_id = row['value'].get('app_id')
                 user_id = row['value'].get('user_id')
                 fake_name = row['value'].get('username')
 
                 time = format_time(time)
-                xmlns = xmlns_to_name(xmlns, self.domain)
+                xmlns = xmlns_to_name(self.domain, xmlns, app_id, html=True)
                 username = user_id_to_username(user_id)
                 if username:
                     return [form_data_link(row['id']), username, time, xmlns]
@@ -625,6 +628,11 @@ def paging_case_list(request, domain, case_type, individual):
     if search_key:
         assert(settings.LUCENE_ENABLED)
         
+        # uppercase the "AND" and "OR" keywords for convenience
+        tokens = search_key.split(" ")
+        if len(tokens) > 1:
+            search_key = " ".join(map(lambda x: x if x.lower() not in ["and", "or"] else x.upper(), 
+                                      tokens))
         # force the search key to include the other defaults + params
         search_key = "(%s) AND domain:%s" % (search_key, domain)
         if case_type:
@@ -656,9 +664,15 @@ def paging_case_list(request, domain, case_type, individual):
 
 @login_and_domain_required
 def case_details(request, domain, case_id):
-    case = CommCareCase.get(case_id)
+    try: 
+        case = CommCareCase.get(case_id)
+    except ResourceNotFound:
+        messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake plase report an issue.")
+        return HttpResponseRedirect(reverse("submit_history_report", args=[domain]))
+                                            
+        
     form_lookups = dict((form.get_id,
-                         "%s: %s" % (form.received_on.date(), xmlns_to_name(form.xmlns, domain))) \
+                         "%s: %s" % (form.received_on.date(), xmlns_to_name(domain, form.xmlns))) \
                         for form in [XFormInstance.get(id) for id in case.xform_ids] \
                         if form)
     return render_to_response(request, "reports/case_details.html", {
@@ -715,15 +729,14 @@ def submit_time_punchcard(request, domain, template="reports/basic_report.html",
     return render_to_response(request, template, context)
 
 @login_and_domain_required
+@datespan_default
 def submit_trends(request, domain, template="reports/basic_report.html",
                                    report_partial="reports/partials/formtrends.html"):
     individual = request.GET.get("individual", '')
-    return render_to_response(request, template, {
-        "domain": domain,
-        "report": {"name": "Submit Trends"},
-        "report_partial": report_partial,
-        "user_id": individual
-    })
+    context = util.report_context(domain, report_partial, "Submit Trends", datespan=request.datespan,
+                                  individual=individual)
+    context.update({"user_id": individual})
+    return render_to_response(request, template, context)
 
 @login_and_domain_required
 def submit_distribution(request, domain, template="reports/basic_report.html",
@@ -814,53 +827,14 @@ def daily_submissions(request, domain, view_name, title):
 @datespan_default
 def excel_export_data(request, domain, template="reports/excel_export_data.html"):
     group, users = util.get_group_params(domain, **json_request(request.GET))
-    forms = get_db().view('reports/forms_by_xmlns', startkey=[domain], endkey=[domain, {}], group=True)
+    forms = get_db().view('reports/forms_by_xmlns', startkey=[domain, {}], endkey=[domain, {}, {}], group=True)
     forms = [x['value'] for x in forms]
 
     forms = sorted(forms, key=lambda form: \
-        (0, form['app']['name'], form['module']['id'], form['form']['id']) \
+        (0, form['app']['name'], form.get('module', {'id': -1})['id'], form.get('form', {'id': -1})['id']) \
         if 'app' in form else \
         (1, form['xmlns'])
     )
-
-    apps = []
-    unknown_forms = []
-
-    # organize forms into apps, modules, forms:
-    #        apps = [
-    #            {
-    #                "name": "App",
-    #                "modules": [
-    #                    {
-    #                        "name": "Module 1",
-    #                        "id": 1,
-    #                        "forms": [
-    #                            {...}
-    #                        ]
-    #                    }
-    #                ]
-    #
-    #            }
-    #        ]
-
-    for f in forms:
-        if 'app' in f:
-            if apps and f['app']['name'] == apps[-1]['name']:
-                if f['module']['id'] == apps[-1]['modules'][-1]['id']:
-                    apps[-1]['modules'][-1]['forms'].append(f)
-                else:
-                    module = f['module'].copy()
-                    module.update(forms=[f])
-                    apps[-1]['modules'].append(module)
-            else:
-                app = f['app'].copy()
-                module = f['module'].copy()
-                module.update(forms=[f])
-                app.update(modules=[module])
-                apps.append(app)
-
-        else:
-            unknown_forms.append(f)
 
 
     # add saved exports. because of the way in which the key is stored
@@ -871,15 +845,13 @@ def excel_export_data(request, domain, template="reports/excel_export_data.html"
                                      startkey=startkey, endkey=endkey,
                                      include_docs=True)
     for export in exports:
-        export.formname = xmlns_to_name(export.index[1], domain)
+        export.formname = xmlns_to_name(domain, export.index[1])
 
     context = util.report_context(domain, title="Export Data to Excel", #datespan=request.datespan
         group=group
     )
     context.update({
         "forms": forms,
-        "forms_by_app": apps,
-        "unknown_forms": unknown_forms,
         "saved_exports": exports,
     })
     return render_to_response(request, template, context)
@@ -888,9 +860,10 @@ def excel_export_data(request, domain, template="reports/excel_export_data.html"
 def form_data(request, domain, instance_id):
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)
+    cases = CommCareCase.view("case/by_xform_id", key=instance_id, reduce=False, include_docs=True).all()
     return render_to_response(request, "reports/form_data.html",
                               dict(domain=domain,instance=instance,
-                                   caseblocks=extract_case_blocks(instance)))
+                                   cases=cases))
 
 @login_and_domain_required
 def download_form(request, domain, instance_id):
@@ -931,7 +904,7 @@ def submissions_by_form(request, domain):
     userIDs = [user.user_id for user in users]
     counts = submissions_by_form_json(domain=domain, userIDs=userIDs, datespan=datespan)
     form_types = _relevant_form_types(domain=domain, userIDs=userIDs, datespan=datespan)
-    form_names = [xmlns_to_name(xmlns, domain) for xmlns in form_types]
+    form_names = [xmlns_to_name(*id_tuple) for id_tuple in form_types]
     form_names = [name.replace("/", " / ") for name in form_names]
 
     if form_types:
@@ -982,15 +955,21 @@ def _relevant_form_types(domain, userIDs=None, datespan=None):
             xmlns = submission['xmlns']
         except KeyError:
             xmlns = None
+
+        try:
+            app_id = submission['app_id']
+        except Exception:
+            app_id = None
         if userIDs is not None:
             try:
                 userID = submission['form']['meta']['userID']
-                if userID in userIDs:
-                    form_types.add(xmlns)
             except Exception:
                 pass
+            else:
+                if userID in userIDs:
+                    form_types.add(FormType(domain, xmlns, app_id).get_id_tuple())
         else:
-            form_types.add(xmlns)
+            form_types.add(FormType(domain, xmlns, app_id).get_id_tuple())
 
     return sorted(form_types)
 
@@ -1004,9 +983,14 @@ def submissions_by_form_json(domain, datespan, userIDs=None):
     counts = defaultdict(lambda: defaultdict(int))
     for sub in submissions:
         try:
+            app_id = sub['app_id']
+        except Exception:
+            app_id = None
+
+        try:
             userID = sub['form']['meta']['userID']
             if (userIDs is None) or (userID in userIDs):
-                counts[userID][sub['xmlns']] += 1
+                counts[userID][FormType(domain, sub['xmlns'], app_id).get_id_tuple()] += 1
         except Exception:
             # if a form don't even have a userID, don't even bother tryin'
             pass
