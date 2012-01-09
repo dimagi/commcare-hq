@@ -961,10 +961,11 @@ def _relevant_form_types(domain, userIDs=None, datespan=None):
         if userIDs is not None:
             try:
                 userID = submission['form']['meta']['userID']
-                if userID in userIDs:
-                    form_types.add(FormType(domain, xmlns, app_id).get_id_tuple())
             except Exception:
                 pass
+            else:
+                if userID in userIDs:
+                    form_types.add(FormType(domain, xmlns, app_id).get_id_tuple())
         else:
             form_types.add(FormType(domain, xmlns, app_id).get_id_tuple())
 

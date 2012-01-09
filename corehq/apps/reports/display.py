@@ -23,7 +23,7 @@ class FormType(object):
                 self.app_id = {}
 
     def get_id_tuple(self):
-        return self.domain, self.xmlns, self.app_id
+        return self.domain, self.xmlns, self.app_id or None
 
     def get_label(self, html=False, lang=None):
 #        print self.get_id_tuple()
