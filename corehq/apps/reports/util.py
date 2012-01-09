@@ -151,7 +151,7 @@ def create_group_filter(group):
 # New HQReport Structure stuff. There's a lot of duplicate code from above, only because I don't want to ruin any old
 # reports until everything is fully refactored....
 
-def get_users_by_type_and_group(domain, group='', filter_users=None):
+def get_all_users_by_domain(domain, group='', individual='', filter_users=None):
     """ Returns a list of CommCare Users based on domain, group, and user filter (demo_user, admin, registered, unknown)
     """
     if group:
@@ -159,6 +159,8 @@ def get_users_by_type_and_group(domain, group='', filter_users=None):
         if not isinstance(group, Group):
             group = Group.get(group)
         users =  group.get_users()
+    elif individual:
+        users = [CommCareUser.get_by_user_id(individual)]
     else:
         if not filter_users:
             filter_users = HQUserType.use_defaults()
@@ -184,7 +186,6 @@ def get_users_by_type_and_group(domain, group='', filter_users=None):
                 if not user_id in submitted_user_ids:
                     user = CommCareUser.get_by_user_id(user_id)
                     users.append(user)
-
     return users
 
 def get_all_userids_submitted(domain):

@@ -90,6 +90,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
     url(r'^phonelog/', include(phonelog_reports)),
     url(r'^standard/(?P<report_slug>[\w_]+)/$', 'standard_report_dispatcher', name="standard_report_dispatcher"),
+    url(r'^json/standard/(?P<report_slug>[\w_]+)/$', 'standard_report_json_dispatcher', name="standard_report_json_dispatcher"),
     url(r'^custom/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="custom_report_dispatcher"),
 
 )

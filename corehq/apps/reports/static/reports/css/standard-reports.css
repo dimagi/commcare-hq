@@ -1,0 +1,58 @@
+h1 {
+    font-size: 2em;
+    text-align: center;
+}
+
+.datatable {
+    width: 100%;
+}
+
+#main_container {
+    padding: 0;
+}
+#report_header {
+    padding: 10px;
+}
+#paramSelectorForm p {
+    padding: 5px 0 5px 0;
+}
+#title-bar {
+    background-color: #EEE;
+    border-bottom: 1px solid #CCC;
+}
+#title-bar > ul {
+    display: table-row;
+    position: absolute;
+}
+#title-bar > ul > li {
+    border-right: 1px solid #CCC;
+    padding: 0 .5em;
+    display: table-cell;
+}
+#title-bar > ul > li:last-child {
+    border-right: none;
+}
+input.date-picker {
+    width: 100px;
+    text-align: center;
+}
+.username {
+    text-decoration: underline;
+}
+
+fieldset {
+    display: inline-block;
+    padding: .5em 1.5em 0.5em 0;
+}
+
+fieldset#ufilter {
+    display: block;
+    padding: .8em 0 0.5em 10em;
+    position: relative;
+}
+
+fieldset#ufilter legend {
+    font-weight: 800;
+    position: absolute;
+    left: 0;
+}

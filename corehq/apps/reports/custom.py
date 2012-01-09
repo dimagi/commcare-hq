@@ -1,5 +1,7 @@
+import json
 from datetime import datetime
 from django.conf import settings
+from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext, Context
 from django.template.loader import render_to_string
@@ -45,7 +47,7 @@ class HQReport(object):
         for f in self.fields:
             klass = to_function(f)
             field_classes.append(klass(self.request, self.domain))
-        self.context['custom_fields'] = [f.render() for f in field_classes]
+        self.context['custom_fields'] = [{"field": f.render(), "slug": f.slug} for f in field_classes]
 
     def get_report_context(self):
         # circular import
@@ -70,6 +72,12 @@ class HQReport(object):
         """
         pass
 
+    def json_data(self):
+        """
+        Override this function to return a python dict, as needed by your report.
+        """
+        return {}
+
     def get_template(self):
         if self.template_name:
             return "%s" % self.template_name
@@ -80,6 +88,11 @@ class HQReport(object):
         self.get_report_context()
         self.calc()
         return render_to_response(self.get_template(), self.context, context_instance=RequestContext(self.request))
+
+    def as_json(self):
+        self.get_report_context()
+        self.calc()
+        return HttpResponse(json.dumps(self.json_data()))
 
 class ReportField(object):
     slug = ""
@@ -141,20 +154,6 @@ class SampleHQReport(HQReport):
             self.context['text'] = text
         else:
             self.context['text'] = "You didn't type anything!"
-
-
-class TabularHQReport(HQReport):
-
-    def get_headers(self):
-        return self.headers
-
-    def get_rows(self):
-        return self.rows
-
-    def get_report_context(self):
-        self.headers = self.get_headers()
-        self.rows = self.get_rows()
-        super(TabularHQReport, self).get_report_context()
 
 
 

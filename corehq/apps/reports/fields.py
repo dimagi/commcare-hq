@@ -3,6 +3,14 @@ from corehq.apps.reports.custom import ReportField
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.dates import DateSpan
+from dimagi.utils.decorators.datespan import datespan_in_request
+
+datespan_default = datespan_in_request(
+            from_param="startdate",
+            to_param="enddate",
+            default_days=7,
+        )
 
 class GroupField(ReportField):
     slug = "group"
@@ -49,19 +57,12 @@ class CaseTypeField(ReportField):
     def update_context(self):
         individual = self.request.GET.get('individual', '')
         group = self.request.GET.get('group', '')
-
-        if individual:
-            user_ids = [individual]
-        elif group is not None:
-            _, user_ids = util.get_group_params(self.domain, group=group, user_id_only=True)
-        else:
-            user_ids = None
-
+        user_filter, _ = FilterUsersField.get_user_filter(self.request)
+        users = util.get_all_users_by_domain(self.domain, group, individual, user_filter)
+        user_ids = [user.user_id for user in users]
+        
         case_types = self.get_case_types(self.domain, user_ids)
-        if len(case_types) == 1:
-            case_type = case_types.items()[0][0]
-        else:
-            case_type = self.request.GET.get('case_type', '')
+        case_type = self.request.GET.get('case_type', '')
 
         open_count, all_count = self.get_case_counts(self.domain, user_ids=user_ids)
         self.context['case_types'] = case_types
@@ -85,6 +86,8 @@ class CaseTypeField(ReportField):
 
     @classmethod
     def get_case_counts(cls, domain, case_type=None, user_ids=None):
+        """ Returns open count, all count
+        """
         user_ids = user_ids or [{}]
         for view_name in ('hqcase/open_cases', 'hqcase/all_cases'):
             def individual_counts():
@@ -99,3 +102,48 @@ class CaseTypeField(ReportField):
                     except TypeError:
                         yield 0
             yield sum(individual_counts())
+
+class SelectFormField(ReportField):
+    slug = "select_form"
+    template = "reports/partials/fields/select_form.html"
+    select_all = False
+
+    def update_context(self):
+        self.context['select_all'] = self.select_all
+        self.context['selected_form'] = self.request.GET.get('form','')
+        self.context['available_forms'] = util.form_list(self.domain)
+
+class SelectAllFormField(SelectFormField):
+    select_all = True
+
+class SelectCHWField(ReportField):
+    slug = "select_chw"
+    template = "reports/partials/fields/select_chw.html"
+
+    def update_context(self):
+        user_filter, _ = FilterUsersField.get_user_filter(self.request)
+        individual = self.request.GET.get('individual', '')
+        
+        self.context['default_option'] = self.get_default_text(user_filter)
+        self.context['users'] = util.user_list(self.domain)
+        self.context['individual'] = individual
+
+    @classmethod
+    def get_default_text(cls, user_filter):
+        default = 'All CHWs'
+        if user_filter[HQUserType.ADMIN].show or \
+           user_filter[HQUserType.DEMO_USER].show or user_filter[HQUserType.UNKNOWN].show:
+            default = '%s & Others' % default
+        return default
+
+class DatespanField(ReportField):
+    slug = "datespan"
+    template = "reports/partials/fields/datespan.html"
+    datespan = DateSpan.since(7, format="%Y-%m-%d")
+
+    def update_context(self):
+        datespan_default(self.request)
+        if self.request.datespan.is_valid():
+            self.datespan = self.request.datespan
+        self.context['datespan'] = self.datespan
+

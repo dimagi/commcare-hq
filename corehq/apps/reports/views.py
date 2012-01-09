@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 import json
 from corehq.apps.groups.models import Group
-from corehq.apps.reports import util
+from corehq.apps.reports import util, standard
 from corehq.apps.reports.case_activity import CaseActivity
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import CouchUser, CommCareUser
@@ -70,7 +70,7 @@ def login_or_digest(fn):
 
 @login_and_domain_required
 def default(request, domain):
-    return HttpResponseRedirect(reverse("submissions_by_form_report", args=[domain]))
+    return HttpResponseRedirect(reverse("standard_report_dispatcher", args=[domain, standard.SubmissionsByFormReport.slug]))
 
 @login_or_digest
 @datespan_default
@@ -582,7 +582,7 @@ def case_list(request, domain):
         "headers": headers,
     })
     context.update({"filter": settings.LUCENE_ENABLED })
-    return render_to_response(request, "reports/case_list.html", context)
+    return render_to_response(request, "reports/case_list_old.html", context)
 
 @login_and_domain_required
 def paging_case_list(request, domain, case_type, individual):
@@ -1048,6 +1048,20 @@ def standard_report_dispatcher(request, domain, report_slug):
             if klass.slug == report_slug:
                 k = klass(domain, request)
                 return k.as_view()
+    return Http404("Can't find that report.")
+
+@login_and_domain_required
+@datespan_default
+def standard_report_json_dispatcher(request, domain, report_slug):
+    mapping = getattr(settings, 'STANDARD_REPORT_MAP', None)
+    if not mapping:
+        return Http404("Sorry, no standard reports have been configured yet.")
+    for key, models in mapping.iteritems():
+        for model in models:
+            klass = to_function(model)
+            if klass.slug == report_slug:
+                k = klass(domain, request)
+                return k.as_json()
     return Http404("Can't find that report.")
 
 @login_and_domain_required

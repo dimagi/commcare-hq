@@ -398,7 +398,8 @@ class CommCareUser(CouchUser):
     @property
     def filter_flag(self):
         return HQUserType.REGISTERED
-
+    
+    @property
     def username_in_report(self):
         return self.raw_username
 
