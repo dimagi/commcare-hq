@@ -391,6 +391,15 @@ EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
 
 STANDARD_REPORT_MAP = {
-    "Worker Monitoring" : ['corehq.apps.reports.standard.DailySubmissionsReport',
+    "Monitor Workers" : ['corehq.apps.reports.standard.CaseActivityReport',
+                           'corehq.apps.reports.standard.SubmissionsByFormReport',
+                           'corehq.apps.reports.standard.DailySubmissionsReport',
+                           'corehq.apps.reports.standard.DailyFormCompletionsReport',
+                           'corehq.apps.reports.standard.FormCompletionTrendsReport',
+                           'corehq.apps.reports.standard.SubmissionTimesReport',
+                           'corehq.apps.reports.standard.SubmitDistributionReport',
+                           ],
+    "Inspect Data" : ['corehq.apps.reports.standard.SubmitHistory',
+                      'corehq.apps.reports.standard.CaseListReport',
                            ]
 }
