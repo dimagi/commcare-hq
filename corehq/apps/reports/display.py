@@ -19,7 +19,7 @@ class FormType(object):
             try:
                 form = FormType.forms_by_xmlns(domain, xmlns, app_id)
                 self.app_id = form['app']['id']
-            except (MultipleResultsFound, KeyError):
+            except Exception:
                 self.app_id = None
 
     def get_id_tuple(self):
