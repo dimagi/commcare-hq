@@ -37,7 +37,8 @@ class FilterUsersField(ReportField):
     def get_user_filter(cls, request):
         ufilter = group = individual = None
         try:
-            ufilter = request.GET.getlist('ufilter')
+            if request.GET.get('ufilter', ''):
+                ufilter = request.GET.getlist('ufilter')
             group = request.GET.get('group', '')
             individual = request.GET.get('individual', '')
         except KeyError:

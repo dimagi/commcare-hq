@@ -252,7 +252,7 @@ def standard_report_list(domain):
         lst.append("<li><h2>%s</h2><ul>" % key)
         for model in models:
             klass = to_function(model)
-            lst.append("<li><a href='%s' title='%s'>%s</a></li>" % (reverse('standard_report_dispatcher', args=(domain, klass.slug)), klass.description, klass.name))
+            lst.append("<li><a href='%s' title='%s'>%s</a></li>" % (reverse('report_dispatcher', args=(domain, klass.slug)), klass.description, klass.name))
         lst.append("</ul></li>")
     return "\n".join(lst)
 

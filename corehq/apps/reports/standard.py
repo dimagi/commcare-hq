@@ -81,7 +81,7 @@ class StandardTabularHQReport(StandardHQReport):
 
     def get_report_context(self):
         if self.use_json:
-            self.context['ajax_source'] = reverse('standard_report_json_dispatcher',
+            self.context['ajax_source'] = reverse('json_report_dispatcher',
                                                   args=[self.domain, self.slug])
             self.context['ajax_params'] = [{'name': 'individual', 'value': self.individual},
                                             {'name': 'group', 'value': self.group},
@@ -212,7 +212,7 @@ class CaseActivityReport(StandardTabularHQReport):
 
     def user_cases_link(self, user):
         template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
-        return template % {"link": reverse("standard_report_dispatcher", args=[self.domain, CaseListReport.slug]),
+        return template % {"link": reverse("report_dispatcher", args=[self.domain, CaseListReport.slug]),
                            "user_id": user.user_id,
                            "username": user.username_in_report}
 
