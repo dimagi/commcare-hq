@@ -1,6 +1,7 @@
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.mixins import UnicodeMixIn
 from casexml.apps.case import const
+from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 
 class User(object):
     """
@@ -31,6 +32,16 @@ class User(object):
                    password=django_user.password, date_joined=django_user.date_joined,
                    user_data={})
     
+
+class CaseState(DocumentSchema, IndexHoldingMixIn):
+    """
+    Represents the state of a case on a phone.
+    """
+    
+    case_id = StringProperty()
+    indices = SchemaListProperty(CommCareCaseIndex)
+        
+
 class SyncLog(Document, UnicodeMixIn):
     """
     A log of a single sync operation.
@@ -43,17 +54,19 @@ class SyncLog(Document, UnicodeMixIn):
     
     # cases that were synced down during this sync
     cases = StringListProperty()
-    # cases that were purged during this sync
-    purged_cases = StringListProperty() # cases that were purged during this sync. 
     
-    # cases that were submitted between this sync and the next one
-    # broken down by how they were modified (note that cases can,
-    # and often will, appear in more than one of these lists)
-    # (these are stored redundantly, but avoid excessive cross lookups at sync-time)
-    created_cases = StringListProperty() 
-    updated_cases = StringListProperty() 
-    closed_cases = StringListProperty() 
-    submitted_forms = StringListProperty()
+    # we need to store a mapping of cases to indices for generating the footprint
+    
+    # The cases_on_phone property represents the state of all cases the server thinks
+    # the phone has on it and cares about. 
+    
+    # The dependant_cases_on_phone property represents the possible list of cases
+    # also on the phone because they are referenced by a real case's index (or 
+    # a dependent case's index). This list is not necessarily a perfect reflection
+    # of what's on the phone, but is guaranteed to be after pruning
+    cases_on_phone = SchemaListProperty(CaseState)
+    dependent_cases_on_phone = SchemaListProperty(CaseState)
+    owner_ids_on_phone = StringListProperty()
     
     @classmethod
     def last_for_user(cls, user_id):
@@ -88,55 +101,53 @@ class SyncLog(Document, UnicodeMixIn):
         if previous_log:
             chain = chain | previous_log._walk_the_chain(func)
         return chain
+    
+    def _init_casemap_if_necessary(self):
+        if not hasattr(self, "_cached_casemap"):
+            self._cached_casemap = dict((case.case_id, case) for case in self.cases_on_phone)
         
-    
-    def get_synced_case_ids(self):
+    def phone_has_case(self, case_id):
         """
-        All cases that have been touched, either by this or
-        any previous syncs that this knew about.
+        Whether the phone currently has a case, according to this sync log
         """
-        if not hasattr(self, "_touched_case_ids"):
-            self._touched_case_ids = self._walk_the_chain\
-                (lambda synclog: [id for id in synclog.cases])
-        return self._touched_case_ids
-    
-    def get_purged_case_ids(self):
-        """
-        All cases that have been purged, either by this or
-        any previous syncs that this knew about.
-        """
-        if not hasattr(self, "_purged_case_ids"):
-            self._purged_case_ids = self._walk_the_chain\
-                (lambda synclog: [id for id in synclog.purged_cases])
-        return self._purged_case_ids
-    
-    def get_created_case_ids(self):
-        # TODO: cache if necessary
-        return self._walk_the_chain\
-                (lambda synclog: [id for id in synclog.created_cases])
-    
-    def get_updated_case_ids(self):
-        # TODO: cache if necessary
-        return self._walk_the_chain\
-                (lambda synclog: [id for id in synclog.updated_cases])
-    
-    def get_closed_case_ids(self):
-        # TODO: cache if necessary
-        return self._walk_the_chain\
-                (lambda synclog: [id for id in synclog.closed_cases])
-    
-    def get_submitted_case_ids(self):
-        # TODO: cache if necessary
-        ret = self.get_created_case_ids()
-        ret = ret | self.get_updated_case_ids()
-        ret = ret | self.get_closed_case_ids()
-        return ret
+        return self.get_case_state(case_id) is not None
         
-    def get_submitted_form_ids(self):
-        # TODO: cache if necessary
-        return self._walk_the_chain\
-                (lambda synclog: [id for id in synclog.submitted_forms])
+    def get_case_state(self, case_id):
+        """
+        Get the case state object associated with an id, or None if no such
+        object is found
+        """
+        filtered_list = [case for case in self.cases_on_phone if case.case_id == case_id]
+        if filtered_list:
+            assert(len(filtered_list) == 1, 
+                   "Should be exactly 0 or 1 cases on phone but were %s for %s" %
+                   (len(filtered_list), case_id))
+            return filtered_list[0]
+        return None
+    
+    def phone_has_dependent_case(self, case_id):
+        """
+        Whether the phone currently has a dependent case, according to this sync log
+        """
+        return self.get_dependent_case_state(case_id) is not None
         
+    def get_dependent_case_state(self, case_id):
+        """
+        Get the dependent case state object associated with an id, or None if no such
+        object is found
+        """
+        filtered_list = [case for case in self.dependent_cases_on_phone if case.case_id == case_id]
+        if filtered_list:
+            assert(len(filtered_list) == 1, 
+                   "Should be exactly 0 or 1 dependent cases on phone but were %s for %s" %
+                   (len(filtered_list), case_id))
+            return filtered_list[0]
+        return None
+    
+    def archive_case(self, case_id):
+        state = self.get_case_state(case_id)
+        self.cases_on_phone.remove(state)
+        self.dependent_cases_on_phone.append(state)
     def get_all_cases_seen(self):
         """
         All cases the phone has ever seen.
@@ -144,9 +155,7 @@ class SyncLog(Document, UnicodeMixIn):
          - any case previously synced.
          - any case that has ever been submitted to.
         """
-        ret = self.get_synced_case_ids()
-        ret = ret | self.get_submitted_case_ids()
-        return ret
+        raise NotImplementedError("This is broken!")
     
     def get_open_cases_on_phone(self):
         """
@@ -159,28 +168,37 @@ class SyncLog(Document, UnicodeMixIn):
         # TODO: Asserts? Anything in the latter two sets
         # should have already been in the original list
         ret = ret - self.get_closed_case_ids()
-        ret = ret - self.get_purged_case_ids()
         return ret
     
-    def update_submitted_lists(self, xform, case_list):
+    def update_phone_lists(self, xform, case_list):
         # for all the cases update the relevant lists in the sync log
         # so that we can build a historical record of what's associated
         # with the phone
-        if xform.get_id not in self.submitted_forms:
-            self.submitted_forms.append(xform.get_id)
+                
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
-                if action.action_type == const.CASE_ACTION_CREATE \
-                   and case.get_id not in self.created_cases:
-                    self.created_cases.append(case.get_id)
-                elif action.action_type == const.CASE_ACTION_UPDATE \
-                   and case.get_id not in self.updated_cases:
-                    self.updated_cases.append(case.get_id)
-           
-                elif action.action_type == const.CASE_ACTION_CLOSE \
-                   and case.get_id not in self.closed_cases:
-                    self.closed_cases.append(case.get_id)
+                try: 
+                    if action.action_type == const.CASE_ACTION_CREATE:
+                        assert(not self.phone_has_case(case.get_id))
+                        self.cases_on_phone.append(CaseState(case_id=case.get_id, 
+                                                             indices=[]))
+                    elif action.action_type == const.CASE_ACTION_UPDATE:
+                        assert(self.phone_has_case(case.get_id))
+                        # no actual action necessary here
+                    elif action.action_type == const.CASE_ACTION_INDEX:
+                        assert(self.phone_has_case(case.get_id))
+                        # reconcile indices
+                        case_state = self.get_case_state(case.get_id)
+                        case_state.update_indices(action.indices)
+                    elif action.action_type == const.CASE_ACTION_CLOSE:
+                        assert(self.phone_has_case(case.get_id))
+                        self.archive_case(case.get_id)
+                except Exception, e:
+                    # debug
+                    # import pdb
+                    # pdb.set_trace()
+                    raise    
         self.save()
             
     def __unicode__(self):

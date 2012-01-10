@@ -11,6 +11,10 @@ def required_updates(synclog, case):
     ret = []
     # only allowed to call this method with a valid synclog
     assert(synclog is not None)
+    
+    # TODO: this method needs a complete rewrite.
+    raise NotImplementedError("This is broken!")
+
     if case.get_server_modified_date() >= synclog.date:
         # only do any updates if the case has been touched since
         # the last time we synced
@@ -27,7 +31,7 @@ def required_updates(synclog, case):
 def get_case_updates(user, last_sync):
     """
     Given a user, get the open/updated cases since the 
-    last sync operation.  This returns tuples of phone_case objects, and flags 
+    last sync operation.  This returns tuples of phone_case objects, and flags
     that say whether or not they should be created.
     """
     try:

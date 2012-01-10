@@ -1,18 +1,16 @@
 from __future__ import absolute_import
-from casexml.apps.case.xml import V1, check_version
 from casexml.apps.phone.xml import get_case_element
-from couchdbkit.ext.django.schema import *
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
     couchable_property
-from couchdbkit.schema.properties_proxy import SchemaListProperty
-from datetime import datetime, date, time
+from datetime import datetime
 from couchdbkit.ext.django.schema import *
 from casexml.apps.case import const
 from dimagi.utils import parsing
 import logging
 from receiver.util import spoof_submission
 from couchforms.models import XFormInstance
+from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex
 
 """
 Couch models for commcare cases.  
@@ -33,23 +31,6 @@ class CaseBase(Document):
     
     class Meta:
         app_label = 'case'
-
-class CommCareCaseIndex(DocumentSchema):
-    """
-    In CaseXML v2 we support indices, which link a case to other cases.
-    """
-    identifier = StringProperty()
-    referenced_type = StringProperty()
-    referenced_id = StringProperty()
-    
-    def get_referenced_case(self):
-        return CommCareCase.get(self.referenced_id)
-    
-    @classmethod
-    def from_case_index_update(cls, index):
-        return cls(identifier=index.identifier,
-                   referenced_type=index.referenced_type,
-                   referenced_id=index.referenced_id)
 
 class CommCareCaseAction(DocumentSchema):
     """
@@ -157,7 +138,7 @@ class Referral(CaseBase):
         
         return ref_list
 
-class CommCareCase(CaseBase):
+class CommCareCase(CaseBase, IndexHoldingMixIn):
     """
     A case, taken from casexml.  This represents the latest
     representation of the case - the result of playing all
@@ -216,16 +197,6 @@ class CommCareCase(CaseBase):
         # in theory since case ids are unique and modification dates get updated
         # upon any change, this is all we need
         return "%s::%s" % (self.case_id, self.modified_on)
-    
-    def has_index(self, id):
-        return id in (i.identifier for i in self.indices)
-    
-    def get_index(self, id):
-        found = filter(lambda i: i.identifier == id, self.indices)
-        if found:
-            assert(len(found) == 1)
-            return found[0]
-        return None
     
     @property
     def attachments(self):
@@ -360,17 +331,6 @@ class CommCareCase(CaseBase):
     def apply_close(self, close_action):
         self.closed = True
         self.closed_on = close_action.date
-
-    def update_indices(self, index_update_list):
-        for index_update in index_update_list:
-            if self.has_index(index_update.identifier):
-                index = self.get_index(index_update.identifier)
-                index.referenced_type = index_update.referenced_type
-                index.referenced_id = index_update.referenced_id
-            else:
-                self.indices.append(CommCareCaseIndex(identifier=index_update.identifier,
-                                                      referenced_type=index_update.referenced_type,
-                                                      referenced_id=index_update.referenced_id))
 
     def force_close(self, submit_url):
         if not self.closed:

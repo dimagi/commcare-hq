@@ -3,14 +3,22 @@ import os
 import time
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import check_xml_line_by_line
+from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock,\
+    check_user_has_case
 from casexml.apps.case.signals import process_cases
-from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.models import SyncLog, CaseState
 from casexml.apps.phone.restore import generate_restore_payload
 from casexml.apps.phone.tests import const
 from casexml.apps.phone.tests.dummy import dummy_user
 from couchforms.models import XFormInstance
+from casexml.apps.case.xml import V2
+from casexml.apps.case.util import post_case_blocks
+from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
+USER_ID = "foo"
+PARENT_ID = "mommy"
+PARENT_TYPE = "mother"
+        
 class SyncTokenUpdateTest(TestCase):
     """
     Tests sync token updates on submission
@@ -24,7 +32,23 @@ class SyncTokenUpdateTest(TestCase):
             case.delete()
         for log in SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all():
             log.delete()
-    
+        
+        self.user = dummy_user() 
+        # this creates the initial blank sync token in the database
+        generate_restore_payload(self.user)
+        [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
+        self.sync_log = sync_log
+        
+    def _createParentStub(self):
+        parent = CaseBlock(
+            create=True,
+            case_id=PARENT_ID,
+            user_id=USER_ID,
+            case_type=PARENT_TYPE,
+            version=V2
+        ).as_xml()
+        self._postFakeWithSyncToken(parent, self.sync_log.get_id)
+        
     def _postWithSyncToken(self, filename, token_id):
         file_path = os.path.join(os.path.dirname(__file__), "data", filename)
         with open(file_path, "rb") as f:
@@ -35,6 +59,8 @@ class SyncTokenUpdateTest(TestCase):
         form.last_sync_token = token_id
         process_cases(sender="testharness", xform=form)
         
+    def _postFakeWithSyncToken(self, caseblock, token_id):
+        post_case_blocks([caseblock], form_extras={"last_sync_token": token_id})
         
     def _checkLists(self, l1, l2):
         self.assertEqual(len(l1), len(l2))
@@ -43,84 +69,162 @@ class SyncTokenUpdateTest(TestCase):
         for i in l2:
             self.assertTrue(i in l1, "%s found in %s" % (i, l1))
     
-    def _testUpdate(self, sync_id, create_list, update_list, close_list, form_list):
-        log = SyncLog.get(sync_id)
-        self._checkLists(log.created_cases, create_list)
-        self._checkLists(log.updated_cases, update_list)
-        self._checkLists(log.closed_cases, close_list)
-        self._checkLists(log.submitted_forms, form_list)
+    def _testUpdate(self, sync_id, case_id_map, dependent_case_id_map={}):
+        sync_log = SyncLog.get(sync_id)
+        
+        # check case map
+        self.assertEqual(len(case_id_map), len(sync_log.cases_on_phone))
+        for case_id, indices in case_id_map.items():
+            self.assertTrue(sync_log.phone_has_case(case_id))
+            state = sync_log.get_case_state(case_id)
+            self._checkLists(indices, state.indices)
+        
+        # check dependent case map
+        self.assertEqual(len(dependent_case_id_map), len(sync_log.dependent_cases_on_phone))
+        for case_id, indices in dependent_case_id_map.items():
+            self.assertTrue(sync_log.phone_has_dependent_case(case_id))
+            state = sync_log.get_dependent_case_state(case_id)
+            self._checkLists(indices, state.indices)
         
     def testInitialEmpty(self):
         """
         Tests that a newly created sync token has no cases attached to it.
         """
-        restore_payload = generate_restore_payload(dummy_user())
         [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
-        
-        self._testUpdate(sync_log.get_id, [], [], [], [])
+        self._testUpdate(sync_log.get_id, {}, {})
+                         
         
     def testTokenAssociation(self):
         """
         Test that individual create, update, and close submissions update
         the appropriate case lists in the sync token
         """
-        restore_payload = generate_restore_payload(dummy_user())
         [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
         
-        cases = ["asdf"]
-        forms = ["someuid"]
         self._postWithSyncToken("create_short.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, cases, [], [], forms)
         
-        forms.append("somenewuid")
+        self._testUpdate(sync_log.get_id, {"asdf": []})
+        
+        # a normal update should have no affect
         self._postWithSyncToken("update_short.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, cases, cases, [], forms)
+        self._testUpdate(sync_log.get_id, {"asdf": []})
         
-        forms.append("someothernewuid")
+        # close should remove it from the cases_on_phone list
+        # (and currently puts it into the dependent list though this 
+        # might change.
         self._postWithSyncToken("close_short.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, cases, cases, cases, forms)
-    
+        self._testUpdate(sync_log.get_id, {}, {"asdf": []})
+
     def testMultipleUpdates(self):
         """
-        Test that multiple update submissions update the case lists 
+        Test that multiple update submissions don't update the case lists 
         and don't create duplicates in them
         """
         
-        restore_payload = generate_restore_payload(dummy_user())
         [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
         
-        cases = ["asdf"]
-        forms = ["someuid", "somenewuid"]
         self._postWithSyncToken("create_short.xml", sync_log.get_id)
         self._postWithSyncToken("update_short.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, cases, cases, [], forms)
+        self._testUpdate(sync_log.get_id, {"asdf": []})
         
-        forms.append("somenewuid2")
         self._postWithSyncToken("update_short_2.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, cases, cases, [], forms)
+        self._testUpdate(sync_log.get_id, {"asdf": []})
         
     def testMultiplePartsSingleSubmit(self):
-        restore_payload = generate_restore_payload(dummy_user())
+        """
+        Tests a create and update in the same form
+        """
         [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
         
-        cases = ["IKA9G79J4HDSPJLG3ER2OHQUY"]
-        forms = ["33UP8MOWL8CQNERTDYAHRPVJG"]
         self._postWithSyncToken("case_create.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, cases, cases, [], forms)
-
-    def testMultipleForms(self):
-        restore_payload = generate_restore_payload(dummy_user())
+        self._testUpdate(sync_log.get_id, {"IKA9G79J4HDSPJLG3ER2OHQUY": []})
+        
+    def testMultipleCases(self):
+        """
+        Test creating multiple cases from multilple forms
+        """
         [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
         
-        cases = ["asdf"]
-        forms = ["someuid"]
         self._postWithSyncToken("create_short.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, cases, [], [], forms)
+        self._testUpdate(sync_log.get_id, {"asdf": []})
         
-        new_cases = ["IKA9G79J4HDSPJLG3ER2OHQUY"]
-        both_cases = ["asdf", "IKA9G79J4HDSPJLG3ER2OHQUY"]
-        
-        forms.append("33UP8MOWL8CQNERTDYAHRPVJG")
         self._postWithSyncToken("case_create.xml", sync_log.get_id)
-        self._testUpdate(sync_log.get_id, both_cases, new_cases, [], forms)
-
+        self._testUpdate(sync_log.get_id, {"asdf": [], 
+                                           "IKA9G79J4HDSPJLG3ER2OHQUY": []})
+    
+    def testIndexReferences(self):
+        """
+        Tests that indices properly get set in the sync log when created. 
+        """
+        # first create the parent case
+        self._createParentStub()
+        self._testUpdate(self.sync_log.get_id, {PARENT_ID: []})
+        
+        # create the child        
+        child_id = "baby"
+        index_id = 'my_mom_is'
+        child = CaseBlock(
+            create=True,
+            case_id=child_id,
+            user_id=USER_ID,
+            version=V2,
+            index={index_id: (PARENT_TYPE, PARENT_ID)},
+        ).as_xml()
+        self._postFakeWithSyncToken(child, self.sync_log.get_id)
+        index_ref = CommCareCaseIndex(identifier=index_id,
+                                      referenced_type=PARENT_TYPE,
+                                      referenced_id=PARENT_ID)
+    
+        self._testUpdate(self.sync_log.get_id, {PARENT_ID: [], 
+                                                child_id: [index_ref]})
+        
+        # update the child's index (parent type)
+        updated_type = "updated_mother_type"
+        child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
+                          index={index_id: (updated_type, PARENT_ID)},
+        ).as_xml()
+        self._postFakeWithSyncToken(child, self.sync_log.get_id)
+        index_ref = CommCareCaseIndex(identifier=index_id,
+                                      referenced_type=updated_type,
+                                      referenced_id=PARENT_ID)
+    
+        self._testUpdate(self.sync_log.get_id, {PARENT_ID: [], 
+                                                child_id: [index_ref]})
+        
+        # update the child's index (parent id)
+        updated_id = "updated_mommy_id"
+        child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
+                          index={index_id: (updated_type, updated_id)},
+        ).as_xml()
+        self._postFakeWithSyncToken(child, self.sync_log.get_id)
+        index_ref = CommCareCaseIndex(identifier=index_id,
+                                      referenced_type=updated_type,
+                                      referenced_id=updated_id)
+    
+        self._testUpdate(self.sync_log.get_id, {PARENT_ID: [], 
+                                                child_id: [index_ref]})
+        
+        # add new index
+        new_index_id = "my_daddy"
+        new_index_type = "dad"
+        new_PARENT_ID = "daddy"
+        child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
+                          index={new_index_id: (new_index_type, new_PARENT_ID)},
+        ).as_xml()
+        self._postFakeWithSyncToken(child, self.sync_log.get_id)
+        new_index_ref = CommCareCaseIndex(identifier=new_index_id,
+                                          referenced_type=new_index_type,
+                                          referenced_id=new_PARENT_ID)
+    
+        self._testUpdate(self.sync_log.get_id, {PARENT_ID: [], 
+                                                child_id: [index_ref, new_index_ref]})
+        
+        # delete index
+        child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
+                          index={index_id: (updated_type, "")},
+        ).as_xml()
+        self._postFakeWithSyncToken(child, self.sync_log.get_id)
+        self._testUpdate(self.sync_log.get_id, {PARENT_ID: [], 
+                                                child_id: [new_index_ref]})
+    
+        

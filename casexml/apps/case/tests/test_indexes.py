@@ -38,7 +38,7 @@ class IndexTest(TestCase):
             case_id=CASE_ID,
             user_id=USER_ID,
             create=True,
-            index={'mom': ('mother-case', ''), 'dad': ('father-case', FATHER_CASE_ID)},
+            index={'dad': ('father-case', FATHER_CASE_ID)},
             version=V2
         ).as_xml()
 

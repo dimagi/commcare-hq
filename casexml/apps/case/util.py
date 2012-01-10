@@ -36,7 +36,13 @@ def couchable_property(prop):
         return dict(prop)
     return prop
 
-def post_case_blocks(case_blocks):
+def post_case_blocks(case_blocks, form_extras={}):
+    """
+    Post case blocks.
+    
+    Extras is used to add runtime attributes to the form before
+    sending it off to the case (current use case is sync-token pairing)
+    """
     form = ElementTree.Element("data")
     form.attrib['xmlns'] = "https://www.commcarehq.org/test/casexml-wrapper"
     form.attrib['xmlns:jrm'] ="http://openrosa.org/jr/xforms"
@@ -44,5 +50,7 @@ def post_case_blocks(case_blocks):
         form.append(block)
 #    print ElementTree.tostring(form)
     xform = post_xform_to_couch(ElementTree.tostring(form))
+    for k, v in form_extras.items():
+        setattr(xform, k, v)
     process_cases(sender="testharness", xform=xform)
     return xform
