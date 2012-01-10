@@ -38,5 +38,5 @@ class Checksum(object):
         x = map(Checksum.serialize_entry, x)
         x = map(Checksum.hash, x)
         x = reduce(Checksum.xor, x)
-        x = binascii.hexlify(x)
+        x = binascii.hexlify(str(x))
         return x
