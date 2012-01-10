@@ -39,20 +39,22 @@ input.date-picker {
 .username {
     text-decoration: underline;
 }
-
-fieldset {
-    display: inline-block;
-    padding: .5em 1.5em 0.5em 0;
-}
-
-fieldset#ufilter {
+#ufilter, #datespan, #select_form {
     display: block;
-    padding: .8em 0 0.5em 10em;
-    position: relative;
 }
 
-fieldset#ufilter legend {
+fieldset.report-field {
+    display: inline-block;
+    padding: .25em 20px 0.25em 90px;
+    position: relative;
+    min-width: 200px;
+}
+
+fieldset.report-field legend {
     font-weight: 800;
     position: absolute;
     left: 0;
+}
+fieldset.report-field legend:after {
+    content: ':';
 }

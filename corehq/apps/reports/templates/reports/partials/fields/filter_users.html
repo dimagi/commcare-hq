@@ -1,4 +1,4 @@
-<legend>Show results for: </legend>
+<legend>User Type</legend>
 {% if show_user_filter %}
     {% for user in toggle_users %}
         <input type="checkbox" name="ufilter" value="{{ user.type }}" id="user-filter-{{ forloop.counter }}" {% if user.show %}checked="checked"{% endif %}/>

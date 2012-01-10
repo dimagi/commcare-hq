@@ -24,7 +24,8 @@ class HQReport(object):
     show_time_notice = False
     fields = []
 
-    def __init__(self, domain, request, base_context = {}):
+    def __init__(self, domain, request, base_context = None):
+        base_context = base_context or {}
         if not self.name or not self.slug:
             raise NotImplementedError
         self.domain = domain

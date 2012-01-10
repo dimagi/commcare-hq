@@ -10,7 +10,7 @@ from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports import util
 from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.custom import HQReport
-from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.display import xmlns_to_name, FormType
 from corehq.apps.reports.fields import FilterUsersField, CaseTypeField, SelectCHWField, datespan_default
 from corehq.apps.reports.models import HQUserType
 from couchforms.models import XFormInstance
@@ -273,7 +273,7 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
         self.form_types = self.get_relevant_form_types()
 
     def set_headers(self):
-        form_names = [xmlns_to_name(xmlns, self.domain) for xmlns in self.form_types]
+        form_names = form_names = [xmlns_to_name(*id_tuple) for id_tuple in self.form_types]
         form_names = [name.replace("/", " / ") for name in form_names]
 
         if self.form_types:
@@ -315,12 +315,17 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
         counts = defaultdict(lambda: defaultdict(int))
         for sub in submissions:
             try:
+                app_id = sub['app_id']
+            except Exception:
+                app_id = None
+            try:
                 userID = sub['form']['meta']['userID']
-                if (userIDs is None) or (userID in userIDs):
-                    counts[userID][sub['xmlns']] += 1
             except Exception:
                 # if a form don't even have a userID, don't even bother tryin'
                 pass
+            else:
+                if (userIDs is None) or (userID in userIDs):
+                    counts[userID][FormType(self.domain, sub['xmlns'], app_id).get_id_tuple()] += 1
         return counts
 
     def get_relevant_form_types(self):
@@ -338,15 +343,22 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
                 xmlns = submission['xmlns']
             except KeyError:
                 xmlns = None
+
+            try:
+                app_id = submission['app_id']
+            except Exception:
+                app_id = None
+
             if userIDs is not None:
                 try:
                     userID = submission['form']['meta']['userID']
-                    if userID in userIDs:
-                        form_types.add(xmlns)
                 except Exception:
                     pass
+                else:
+                    if userID in userIDs:
+                        form_types.add(FormType(self.domain, xmlns, app_id).get_id_tuple())
             else:
-                form_types.add(xmlns)
+                form_types.add(FormType(self.domain, xmlns, app_id).get_id_tuple())
 
         return sorted(form_types)
 
@@ -416,7 +428,7 @@ class SubmitHistory(PaginatedHistoryHQReport):
                 time = data.received_on
                 time = time.strftime("%Y-%m-%d %H:%M:%S")
                 xmlns = data.xmlns
-                xmlns = xmlns_to_name(xmlns, self.domain)
+                xmlns = xmlns_to_name(self.domain, xmlns)
                 rows.append([self.form_data_link(data.instanceID), self.usernames[data.userID], time, xmlns])
         return rows
 
@@ -590,7 +602,7 @@ class SubmitDistributionReport(StandardHQReport):
                                  reduce=True)
             for row in view:
                 xmlns = row["key"][-1]
-                form_name = xmlns_to_name(xmlns, self.domain)
+                form_name = xmlns_to_name(self.domain, xmlns)
                 if form_name in predata:
                     predata[form_name]["value"] = predata[form_name]["value"] + row["value"]
                     predata[form_name]["description"] = "(%s) submissions of %s" % \

@@ -126,7 +126,7 @@
                 {% endif %}
                 {% if custom_fields %}
                     {% for field in custom_fields %}
-                        <fieldset id="{{ field.slug }}">
+                        <fieldset id="{{ field.slug }}" class="report-field">
                             {{ field.field|safe }}
                         </fieldset>
                     {% endfor %}
