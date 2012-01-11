@@ -1,5 +1,7 @@
+import json
 from datetime import datetime
 from django.conf import settings
+from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext, Context
 from django.template.loader import render_to_string
@@ -22,12 +24,14 @@ class HQReport(object):
     show_time_notice = False
     fields = []
 
-    def __init__(self, domain, request, base_context = {}):
+    def __init__(self, domain, request, base_context = None):
+        base_context = base_context or {}
         if not self.name or not self.slug:
             raise NotImplementedError
         self.domain = domain
         self.request = request
-        self.rows = []
+        if not self.rows:
+            self.rows = []
         self.context = base_context
         self.context.update(name = self.name,
                             slug = self.slug,
@@ -43,8 +47,8 @@ class HQReport(object):
         field_classes = []
         for f in self.fields:
             klass = to_function(f)
-            field_classes.append(klass(self.request))
-        self.context['custom_fields'] = [f.render() for f in field_classes]
+            field_classes.append(klass(self.request, self.domain))
+        self.context['custom_fields'] = [{"field": f.render(), "slug": f.slug} for f in field_classes]
 
     def get_report_context(self):
         # circular import
@@ -69,6 +73,12 @@ class HQReport(object):
         """
         pass
 
+    def json_data(self):
+        """
+        Override this function to return a python dict, as needed by your report.
+        """
+        return {}
+
     def get_template(self):
         if self.template_name:
             return "%s" % self.template_name
@@ -80,13 +90,19 @@ class HQReport(object):
         self.calc()
         return render_to_response(self.get_template(), self.context, context_instance=RequestContext(self.request))
 
+    def as_json(self):
+        self.get_report_context()
+        self.calc()
+        return HttpResponse(json.dumps(self.json_data()))
+
 class ReportField(object):
     slug = ""
     template = ""
     context = Context()
 
-    def __init__(self, request):
+    def __init__(self, request, domain=None):
         self.request = request
+        self.domain = domain
 
     def render(self):
         if not self.template: return ""
@@ -139,7 +155,6 @@ class SampleHQReport(HQReport):
             self.context['text'] = text
         else:
             self.context['text'] = "You didn't type anything!"
-
 
 
 

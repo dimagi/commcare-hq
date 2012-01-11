@@ -1,6 +1,7 @@
 from datetime import datetime
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_id_to_username
 from dimagi.utils.couch.database import get_db
@@ -146,3 +147,66 @@ def create_group_filter(group):
     else:
         group_filter = None
     return group_filter
+
+# New HQReport Structure stuff. There's a lot of duplicate code from above, only because I don't want to ruin any old
+# reports until everything is fully refactored....
+
+def get_all_users_by_domain(domain, group='', individual='', filter_users=None):
+    """ Returns a list of CommCare Users based on domain, group, and user filter (demo_user, admin, registered, unknown)
+    """
+    if group:
+        # get all the users only in this group and don't bother filtering.
+        if not isinstance(group, Group):
+            group = Group.get(group)
+        users =  group.get_users()
+    elif individual:
+        users = [CommCareUser.get_by_user_id(individual)]
+    else:
+        if not filter_users:
+            filter_users = HQUserType.use_defaults()
+        users = []
+        submitted_user_ids = get_all_userids_submitted(domain)
+        registered_user_ids = [user.user_id for user in CommCareUser.by_domain(domain)]
+        for user_id in submitted_user_ids:
+            if user_id in registered_user_ids and filter_users[HQUserType.REGISTERED].show:
+                user = CommCareUser.get_by_user_id(user_id)
+                users.append(user)
+            elif not user_id in registered_user_ids and \
+                 (filter_users[HQUserType.ADMIN].show or
+                  filter_users[HQUserType.DEMO_USER].show or
+                  filter_users[HQUserType.UNKNOWN].show):
+                username = get_username_from_forms(domain, user_id)
+                temp_user = TempCommCareUser(domain, username, user_id)
+                if filter_users[temp_user.filter_flag].show:
+                    users.append(temp_user)
+
+        if filter_users[HQUserType.REGISTERED].show:
+            # now add all the registered users who never submitted anything
+            for user_id in registered_user_ids:
+                if not user_id in submitted_user_ids:
+                    user = CommCareUser.get_by_user_id(user_id)
+                    users.append(user)
+    return users
+
+def get_all_userids_submitted(domain):
+    submitted = get_db().view(
+        'reports/all_users_submitted',
+        startkey=[domain],
+        endkey=[domain, {}],
+        group=True,
+        reduce=True
+    ).all()
+    return [ user['key'][1] for user in submitted]
+
+def get_username_from_forms(domain, user_id):
+    user_info = get_db().view(
+        'reports/submit_history',
+        startkey=[domain, user_id],
+        limit=1,
+        reduce=False
+    ).one()
+    username = user_info['value']['username']
+    if username == 'none':
+        return HQUserType.human_readable[HQUserType.ADMIN]
+    else:
+        return username

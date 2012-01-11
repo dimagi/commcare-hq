@@ -23,69 +23,28 @@
     </script>
     <script type="text/javascript" src="{% static 'reports/javascripts/dropdown.js' %}"></script>
     <script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reports/javascripts/datatable_config.js' %}"></script>
-    {% if show_users or show_case_types  or show_groups %}
+    {% if not standard_report %}
+        {% if show_users or show_case_types  or show_groups %}
+            <script>
+                $(function(){
+                    $("#individual_select, #case_type_select, #group_select").change(function(){
+                        $(this).closest('form').submit();
+                    });
+                });
+            </script>
+        {% endif %}
+        {% if show_forms %}
         <script>
             $(function(){
-                $("#individual_select, #case_type_select, #group_select").change(function(){
-                    $(this).closest('form').submit();
+                $("#form_select").change(function(){
+                    $(this).closest("form").submit();
                 });
             });
         </script>
-    {% endif %}
-    {% if show_forms %}
-    <script>
-        $(function(){
-            $("#form_select").change(function(){
-                $(this).closest("form").submit();
-            });
-        });
-    </script>
-    {% endif %}
+        {% endif %}
+   {% endif %}
 
-    <style>
-        h1 {
-            font-size: 2em;
-            text-align: center;
-        }
-
-        .datatable {
-            width: 100%;
-        }
-
-        #main_container {
-            padding: 0;
-        }
-        #report_header {
-            padding: 10px;
-        }
-        #paramSelectorForm p {
-            padding: 5px 0 5px 0;
-        }
-        #title-bar {
-            background-color: #EEE;
-            border-bottom: 1px solid #CCC;
-        }
-        #title-bar > ul {
-            display: table-row;
-            position: absolute;
-        }
-        #title-bar > ul > li {
-            border-right: 1px solid #CCC;
-            padding: 0 .5em;
-            display: table-cell;
-        }
-        #title-bar > ul > li:last-child {
-            border-right: none;
-        }
-        input.date-picker {
-            width: 100px;
-            text-align: center;
-        }
-        .username {
-            text-decoration: underline;
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'reports/css/standard-reports.css' %}" />
 {% endblock %}
 {% block content %}
     <div id="main_container">
@@ -103,77 +62,81 @@
             <h1>{{ report.name|default:"Unknown Report"|safe }}</h1>
         </div>
         <div id="report_header">
-            {% if show_dates or show_users or show_groups or show_forms or custom_fields %}
             <form method="get" id="paramSelectorForm">
-                <fieldset>
-                {% if show_users %}
-                    <label for="individual_select">Select a CHW: </label>
-                    <select id="individual_select" name="individual">
-                        <option value=''>All CHWs</option>
-                        {% for user in users %}
-                            {% ifchanged user.is_active %}
-                                {% if not user.is_active %}<optgroup label="Inactive">{% endif %}
-                            {% endifchanged %}
-                            <option {% if user.user_id == individual %}selected="true"{% endif %} value="{{ user.user_id }}">{{ user.raw_username }}</option>
-                        {% endfor %}
-                    </select>
-                {% endif %}
-                {% if show_case_types and case_types|length != 1 %}
-                    <label for="case_type_select">Select a Case Type</label>
-                    <select id="case_type_select" name="case_type" data-value="{{ case_type }}">
-                        <option value="">
-                            All Case Types ({{ n_all_case_types.open }}/{{ n_all_case_types.all }} open)
-                        </option>
-                        {% for i_case_type, n_cases in case_types.items %}
-                            <option value="{{ i_case_type }}">{{ i_case_type }} ({{ n_cases.open }}/{{ n_cases.all }} open)</option>
-                        {% endfor %}
-                    </select>
-                {% endif %}
-                {% if show_groups %}
-                    <label for="group_select">Select a Group</label>
-                    <select id="group_select" name="group" data-value="{{ group.get_id }}">
-                        <option value="">
-                            Everybody
-                        </option>
-                        {% for group in groups %}
-                            <option value="{{ group.get_id }}">{{ group.name }}</option>
-                        {% endfor %}
-                    </select>
-                {% endif %}
-                {% if show_forms %}
-                    <label for="form_select">Choose Form: </label>
-                    <select id="form_select" name="form">
-                        {% if all_forms_selectable %}
-                        <option  value=''>All Forms</option>
-                        {% else %}
-                        <option  value='' style="color:#777;">Select a Form</option>
-                        {% endif %}
-                        {% for form in forms %}
-                            <option {% if form.xmlns == selected_form %}selected="true"{% endif %} value="{{ form.xmlns }}">{{ form.display }}</option>
-                        {% endfor %}
-                    </select>
-                {% endif %}
-                </fieldset>
-                {% if show_dates %}
-                        <label for="startdate">From Date:</label>
-                        <input type="text" id="startdate" name="startdate" class="date-picker" value="{{ datespan.startdate|date:"Y-m-d" }}">
-                       <label for="enddate">To Date:</label>
-                        <input type="text" id="enddate" name="enddate" class="date-picker" value="{{ datespan.enddate|date:"Y-m-d" }}">
-                       {# oddly enough, this is the only form that needs or has a submit button #}
-    {#                <p>#}
-    {#                    <a href="#" id="previous_date">Previous week</a> | <a href="#" id="next_date">Next Week</a>#}
-    {#                </p>#}
+                {% if not standard_report %}
+                    <fieldset>
+                    {% if show_users %}
+                        <label for="individual_select">Select a CHW: </label>
+                        <select id="individual_select" name="individual">
+                            <option value=''>All CHWs</option>
+                            {% for user in users %}
+                                {% ifchanged user.is_active %}
+                                    {% if not user.is_active %}<optgroup label="Inactive">{% endif %}
+                                {% endifchanged %}
+                                <option {% if user.user_id == individual %}selected="true"{% endif %} value="{{ user.user_id }}">{{ user.raw_username }}</option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
+                    {% if show_case_types and case_types|length > 1 %}
+                        <label for="case_type_select">Select a Case Type</label>
+                        <select id="case_type_select" name="case_type" data-value="{{ case_type }}">
+                            <option value="">
+                                All Case Types ({{ n_all_case_types.open }}/{{ n_all_case_types.all }} open)
+                            </option>
+                            {% for i_case_type, n_cases in case_types.items %}
+                                <option value="{{ i_case_type }}">{{ i_case_type }} ({{ n_cases.open }}/{{ n_cases.all }} open)</option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
+                    {% if show_groups %}
+                        <label for="group_select">Select a Group</label>
+                        <select id="group_select" name="group" data-value="{{ group.get_id }}">
+                            <option value="">
+                                Everybody
+                            </option>
+                            {% for group in groups %}
+                                <option value="{{ group.get_id }}">{{ group.name }}</option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
+                    {% if show_forms %}
+                        <label for="form_select">Choose Form: </label>
+                        <select id="form_select" name="form">
+                            {% if all_forms_selectable %}
+                            <option  value=''>All Forms</option>
+                            {% else %}
+                            <option  value='' style="color:#777;">Select a Form</option>
+                            {% endif %}
+                            {% for form in forms %}
+                                <option {% if form.xmlns == selected_form %}selected="true"{% endif %} value="{{ form.xmlns }}">{{ form.display }}</option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
+                    </fieldset>
+                    {% if show_dates %}
+                            <label for="startdate">From Date:</label>
+                            <input type="text" id="startdate" name="startdate" class="date-picker" value="{{ datespan.startdate|date:"Y-m-d" }}">
+                           <label for="enddate">To Date:</label>
+                            <input type="text" id="enddate" name="enddate" class="date-picker" value="{{ datespan.enddate|date:"Y-m-d" }}">
+                           {# oddly enough, this is the only form that needs or has a submit button #}
+        {#                <p>#}
+        {#                    <a href="#" id="previous_date">Previous week</a> | <a href="#" id="next_date">Next Week</a>#}
+        {#                </p>#}
+                    {% endif %}
                 {% endif %}
                 {% if custom_fields %}
                     {% for field in custom_fields %}
-                        {{ field|safe }}
+                        <fieldset id="{{ field.slug }}" class="report-field">
+                            {{ field.field|safe }}
+                        </fieldset>
                     {% endfor %}
                 {% endif %}
-                {% if custom_fields or show_dates %}
+                {% if show_dates or custom_fields %}
                     <input type="submit" value="Go!" />
                 {% endif %}
+
             </form>
-            {% endif %}
+
         </div>
         {% if show_time_notice %}{% include "hqwebapp/partials/time-notice.html"%}{% endif %}
         {% block reportcontent %}Your report goes here{% endblock %}

@@ -1,0 +1,10 @@
+<legend>Group</legend>
+<label for="group_select"></label>
+<select id="group_select" name="group" data-value="{{ group.get_id }}">
+    <option value="">
+        Everybody
+    </option>
+    {% for group in groups %}
+        <option value="{{ group.get_id }}">{{ group.name }}</option>
+    {% endfor %}
+</select>

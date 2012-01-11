@@ -2,6 +2,7 @@ from django.http import HttpRequest
 from corehq.apps.reports.schedule.parsers import ReportParser
 from corehq.apps.reports.schedule.request import RequestProcessor
 from django.template.loader import render_to_string
+from corehq.apps.reports.views import report_dispatcher
 
 
 class ReportSchedule(object):
@@ -45,15 +46,13 @@ class BasicReportSchedule(object):
     These are compatibile with the daily_submission views
     """
     
-    def __init__(self, view_func, couch_view, title):
-        self._view_func = view_func
-        self._couch_view = couch_view
-        self._title = title
+    def __init__(self, report):
+        self._report = report
         self.auth = lambda user: True
-    
+
     @property
     def title(self):
-        return self._title
+        return self._report.name
     
     def get_response(self, user, domain):
         # these three lines are a complicated way of saying request.user = user.
@@ -61,7 +60,7 @@ class BasicReportSchedule(object):
         processor = RequestProcessor()
         request = HttpRequest()
         processor.preprocess(request, user=user.get_django_user())
-        response = self._view_func(request, domain, self._couch_view, self._title)
+        response = report_dispatcher(request, domain, self._report.slug)
         parser = ReportParser(response.content)
         return render_to_string("reports/report_email.html", { "report_body": parser.get_html(), "domain": domain })
         

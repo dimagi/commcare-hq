@@ -5,7 +5,8 @@ function start_datatables(elem){
     }
     $('.datatable', elem).each(function(){
         var params = {
-            "bJQueryUI": true
+            "bJQueryUI": true,
+            "sPaginationType": "full_numbers"
         },
             sAjaxSource = $(this).data('source'),
             filter = $(this).data('filter') || false,
@@ -19,7 +20,20 @@ function start_datatables(elem){
                 "bServerSide": true,
                 "sAjaxSource": sAjaxSource,
                 "bSort": false,
-                "bFilter": filter
+                "bFilter": filter,
+                "sPaginationType": "full_numbers",
+                "fnServerParams": function ( aoData ) {
+                    aoData.push({ "name" : 'individual', "value": $(this).data('individual')});
+                    aoData.push({ "name" : 'group', "value": $(this).data('group')});
+                    aoData.push({ "name" : 'case_type', "value": $(this).data('casetype')});
+                    ufilter = $(this).data('ufilter');
+                    if (ufilter) {
+                        for (var i=0;i<ufilter.length;i++) {
+                            aoData.push({ "name" : 'ufilter', "value": ufilter[i]});
+                        }
+                    }
+
+                }
             };
         }
         for (i = 0; i < $columns.length; i += 1) {
