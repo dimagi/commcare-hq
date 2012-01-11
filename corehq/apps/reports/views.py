@@ -17,7 +17,6 @@ from django.conf import settings
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, Http404
 from django.core.urlresolvers import reverse
 from django_digest.decorators import httpdigest
-from .googlecharts import get_punchcard_url
 from .calc import punchcard
 from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.couch.pagination import CouchPaginator, ReportBase,\
