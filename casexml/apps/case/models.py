@@ -58,7 +58,7 @@ class CommCareCaseAction(DocumentSchema):
         def _couchify(d):
             return dict((k, couchable_property(v)) for k, v in d.items())
                         
-        
+        ret.server_date = datetime.utcnow()
         ret.updated_known_properties = _couchify(action.get_known_properties())
         ret.updated_unknown_properties = _couchify(action.dynamic_properties)
         ret.indices = [CommCareCaseIndex.from_case_index_update(i) for i in action.indices]
