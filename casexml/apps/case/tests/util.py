@@ -295,8 +295,9 @@ def check_user_has_case(testcase, user, case_block, should_have=True,
     XMLNS = NS_VERSION_MAP.get(version, 'http://openrosa.org/http/response')
     case_block.set('xmlns', XMLNS)
     case_block = ElementTree.fromstring(ElementTree.tostring(case_block))
-    payload = ElementTree.fromstring(generate_restore_payload(user, restore_id,
-                                                              version=version))
+    payload_string = generate_restore_payload(user, restore_id, version=version)
+    payload = ElementTree.fromstring(payload_string)
+    
     blocks = payload.findall('{{{0}}}case'.format(XMLNS))
     def get_case_id(block):
         if version == V1:
@@ -313,7 +314,7 @@ def check_user_has_case(testcase, user, case_block, should_have=True,
             if should_have:
                 if line_by_line:
                     check_xml_line_by_line(testcase, ElementTree.tostring(block), ElementTree.tostring(case_block))
-                    match = block
+                match = block
                 n += 1
                 if n == 2:
                     testcase.fail("Block for case_id '%s' appears twice in ota restore for user '%s':%s" % (case_id, user.username, extra_info()))
