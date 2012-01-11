@@ -29,17 +29,27 @@ def export_cases_and_referrals(cases, workbook, users=None):
     case_rows = []
     referral_rows = []
 
+    def render_case_attr(case, key):
+        attr = getattr(case, key)
+        if isinstance (attr, dict):
+            return attr.get('#text', '')
+        else:
+            return attr
+
     for case in cases:
         if not users or users and case.user_id in by_user_id:
             case_row = {'dynamic_properties': {}}
             for key in case_static_keys:
                 if key == 'username':
-                    case_row[key] = by_user_id[case.user_id].raw_username
+                    try:
+                        case_row[key] = by_user_id[case.user_id].raw_username
+                    except TypeError:
+                        case_row[key] = ''
                 else:
                     case_row[key] = getattr(case, key)
             for key in case.dynamic_properties():
                 case_dynamic_keys.add(key)
-                case_row['dynamic_properties'][key] = getattr(case, key)
+                case_row['dynamic_properties'][key] = render_case_attr(case, key)
             case_rows.append(case_row)
 
             for referral in case.referrals:

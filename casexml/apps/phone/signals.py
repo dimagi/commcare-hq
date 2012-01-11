@@ -1,10 +1,9 @@
 from __future__ import absolute_import
 from receiver.signals import successful_form_received, ReceiverResult,\
     Certainty
-from casexml.apps.phone import xml as xml
+from receiver import xml as xml
 from datetime import datetime
 from dimagi.utils.couch.database import get_db
-import logging
 
 def send_default_response(sender, xform, **kwargs):
     """
@@ -26,15 +25,18 @@ def send_default_response(sender, xform, **kwargs):
         return forms_submitted_today["value"] if forms_submitted_today else "at least 1"
         
     if xform.metadata and xform.metadata.userID:
-        to = ", %s" % xform.metadata.username if xform.metadata.username else ""
-        message = ("Thanks for submitting%s.  We have received %s forms from "
-                   "you today (%s forms all time)") % \
-                   (to,
-                    forms_submitted_today_count(xform.metadata.userID), 
-                    forms_submitted_count(xform.metadata.userID))
-        return ReceiverResult(xml.get_response(message), Certainty.MILD)
+        if xform.metadata.username == "demo_user":
+            message = "Thanks for submitting from demo mode!"
+        else: 
+            to = ", %s" % xform.metadata.username if xform.metadata.username else ""
+            message = ("Thanks for submitting%s.  We have received %s forms from "
+                       "you today (%s forms all time)") % \
+                       (to,
+                        forms_submitted_today_count(xform.metadata.userID), 
+                        forms_submitted_count(xform.metadata.userID))
+        return ReceiverResult(xml.get_simple_response_xml(message), Certainty.MILD)
     else:
-        return ReceiverResult(xml.get_response("Thanks for submitting!"), Certainty.MILD)
+        return ReceiverResult(xml.get_simple_response_xml("Thanks for submitting!"), Certainty.MILD)
 
 
 successful_form_received.connect(send_default_response)

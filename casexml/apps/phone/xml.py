@@ -1,6 +1,17 @@
 from __future__ import absolute_import
 import logging
 from xml.sax import saxutils
+from xml.etree import ElementTree
+from casexml.apps.case import const
+from casexml.apps.case.xml import check_version
+from casexml.apps.case.xml.generator import get_generator, date_to_xml_string,\
+    safe_element
+
+USER_REGISTRATION_XMLNS_DEPRECATED = "http://openrosa.org/user-registration"
+USER_REGISTRATION_XMLNS = "http://openrosa.org/user/registration"
+VALID_USER_REGISTRATION_XMLNSES = [USER_REGISTRATION_XMLNS_DEPRECATED, USER_REGISTRATION_XMLNS]
+
+SYNC_XMLNS = "http://commcarehq.org/sync"
 
 def escape(o):
     if o is None:
@@ -8,161 +19,92 @@ def escape(o):
     else:
         return saxutils.escape(unicode(o))
 
-# Response template according to 
-# https://bitbucket.org/javarosa/javarosa/wiki/OpenRosaRequest
-
-RESPONSE_TEMPLATE = \
-'''<?xml version='1.0' encoding='UTF-8'?>
-<OpenRosaResponse xmlns="http://openrosa.org/http/response">
-    <message>%(message)s</message>%(extra_xml)s
-</OpenRosaResponse>'''
-
-def get_response(message, extra_xml=""):
-    return RESPONSE_TEMPLATE % {"message": escape(message),
-                                "extra_xml": extra_xml}
+def tostring(element):
+    # save some typing, force UTF-8
+    return ElementTree.tostring(element, encoding="utf-8")
 
 
-RESTOREDATA_TEMPLATE =\
-"""%(sync_info)s%(registration)s%(case_list)s
-"""
+def get_sync_element(restore_id):
+    elem = safe_element("Sync")
+    elem.attrib = {"xmlns": SYNC_XMLNS}
+    elem.append(safe_element("restore_id", restore_id))
+    return elem
 
-SYNC_TEMPLATE =\
-"""
-    <Sync xmlns="http://commcarehq.org/sync">
-        <restore_id>%(restore_id)s</restore_id> 
-    </Sync>"""
+def get_case_element(case, updates, version="1.0"):
     
-
-def get_sync_xml(restore_id):
-    return SYNC_TEMPLATE % {"restore_id": escape(restore_id)}
-
-CASE_TEMPLATE = \
-"""
-<case>
-    <case_id>%(case_id)s</case_id> 
-    <date_modified>%(date_modified)s</date_modified>%(create_block)s%(update_block)s%(referral_block)s
-</case>"""
-
-CREATE_BLOCK = \
-"""
-    <create>%(base_data)s
-    </create>"""
-
-BASE_DATA = \
-"""
-        <case_type_id>%(case_type_id)s</case_type_id> 
-        <user_id>%(user_id)s</user_id> 
-        <case_name>%(case_name)s</case_name> 
-        <external_id>%(external_id)s</external_id>"""
-
-UPDATE_BLOCK = \
-"""
-    <update>%(update_base_data)s
-        %(update_custom_data)s
-    </update>"""
-
-
-REFERRAL_BLOCK = \
-"""
-    <referral> 
-        <referral_id>%(ref_id)s</referral_id>
-        <followup_date>%(fu_date)s</followup_date>%(open_block)s%(update_block)s
-    </referral>"""
-
-REFERRAL_OPEN_BLOCK = \
-"""
-        <open>
-            <referral_types>%(ref_type)s</referral_types>
-        </open>"""
-
-REFERRAL_UPDATE_BLOCK = \
-"""
-    <update>
-        <referral_type>%(ref_type)s</referral_type>%(close_data)s
-    </update>"""
-
-REFERRAL_CLOSE_BLOCK = \
-"""
-        <date_closed>%(close_date)s</date_closed>"""
-     
-def date_to_xml_string(date):
-    if date: return date.strftime("%Y-%m-%d")
-    return ""
-
-def get_referral_xml(referral):
-    # TODO: support referrals not always opening, this will
-    # break with sync
-    open_block = REFERRAL_OPEN_BLOCK % {"ref_type": escape(referral.type)}
+    check_version(version)
     
-    if referral.closed:
-        close_data = REFERRAL_CLOSE_BLOCK % {"close_date": escape(date_to_xml_string(referral.closed_on))}
-        update_block = REFERRAL_UPDATE_BLOCK % {"ref_type": escape(referral.type),
-                                                "close_data": close_data}
-    else:
-        update_block = "" # TODO
-    return REFERRAL_BLOCK % {"ref_id": escape(referral.referral_id),
-                             "fu_date": escape(date_to_xml_string(referral.followup_on)),
-                             "open_block": open_block,
-                             "update_block": update_block,
-                             }
-
-def get_case_xml(case, create=True):
     if case is None: 
         logging.error("Can't generate case xml for empty case!")
         return ""
     
-    base_data = BASE_DATA % {"case_type_id": escape(case.type),
-                             "user_id": escape(case.user_id),
-                             "case_name": escape(case.name),
-                             "external_id": escape(case.external_id) }
+    generator = get_generator(version, case)
+    root = generator.get_root_element()
+    
     # if creating, the base data goes there, otherwise it goes in the
     # update block
-    if create:
-        create_block = CREATE_BLOCK % {"base_data": base_data }
-        update_base_data = ""
-    else:
-        create_block = ""
-        update_base_data = base_data
+    do_create = const.CASE_ACTION_CREATE in updates
+    do_update = const.CASE_ACTION_UPDATE in updates
+    do_index = do_update # NOTE: we may want to differentiate this eventually
+    do_purge = const.CASE_ACTION_PURGE in updates or const.CASE_ACTION_CLOSE in updates
+    if do_create:
+        # currently the below code relies on the assumption that
+        # every create also includes an update
+        create_block = generator.get_create_element()
+        generator.add_base_properties(create_block)
+        root.append(create_block)
     
-    update_custom_data = "\n        ".join(["<%(key)s>%(val)s</%(key)s>" % {"key": key, "val": escape(val)} \
-                                    for key, val in case.dynamic_case_properties()])
-    update_block = UPDATE_BLOCK % { "update_base_data": update_base_data,
-                                    "update_custom_data": update_custom_data}
-    referral_block = "".join([get_referral_xml(ref) for ref in case.referrals])
-    return CASE_TEMPLATE % {"case_id": escape(case.case_id),
-                            "date_modified": escape(date_to_xml_string(case.modified_on)),
-                            "create_block": create_block,
-                            "update_block": update_block,
-                            "referral_block": referral_block
-                            } 
+    if do_update:
+        update_block = generator.get_update_element()
+        # if we don't have a create block, also put the base properties
+        # in the update block, in case they changed
+        if not do_create:
+            generator.add_base_properties(update_block)
+        
+        # custom properties
+        generator.add_custom_properties(update_block)
+        if update_block.getchildren():
+            root.append(update_block)
+        
+    if do_index:
+        generator.add_indices(root)
     
-REGISTRATION_TEMPLATE = \
-"""
-    <Registration xmlns="http://openrosa.org/user/registration">
-        <username>%(username)s</username>
-        <password>%(password)s</password>
-        <uuid>%(uuid)s</uuid>
-        <date>%(date)s</date>%(user_data)s
-    </Registration>"""
+    if do_purge:
+        # likewise, for now we assume that you can't both create/update and close/purge  
+        assert(const.CASE_ACTION_UPDATE not in updates)
+        assert(const.CASE_ACTION_CREATE not in updates)
+        purge_block = generator.get_close_element()
+        root.append(purge_block)
+        
+    if not do_purge:
+        # only send down referrals if the case is not being purged
+        generator.add_referrals(root)
+        
+    return root
 
-USER_DATA_TEMPLATE = \
-"""
-        <user_data>
-            %(data)s
-        </user_data>"""
+def get_case_xml(case, updates, version="1.0"):
+    check_version(version)
+    return tostring(get_case_element(case, updates, version))
+    
+
+def get_registration_element(user):
+    root = safe_element("Registration")
+    root.attrib = { "xmlns": USER_REGISTRATION_XMLNS }
+    root.append(safe_element("username", user.username))
+    root.append(safe_element("password", user.password))
+    root.append(safe_element("uuid", user.user_id))
+    root.append(safe_element("date", date_to_xml_string(user.date_joined)))
+    if user.user_data:
+        root.append(get_user_data_element(user.user_data))
+    return root
 
 def get_registration_xml(user):
-    # TODO: this doesn't feel like a final way to do this
-    # all dates should be formatted like YYYY-MM-DD (e.g. 2010-07-28)
-    return REGISTRATION_TEMPLATE % {"username":  escape(user.username),
-                                    "password":  escape(user.password),
-                                    "uuid":      escape(user.user_id),
-                                    "date":      escape(user.date_joined.strftime("%Y-%m-%d")),
-                                    "user_data": get_user_data_xml(user.user_data)
-                                    }
-def get_user_data_xml(dict):
-    if not dict:  return ""
-    return USER_DATA_TEMPLATE % \
-        {"data": "\n            ".join('<data key="%(key)s">%(value)s</data>' % \
-                                       {"key": key, "value": escape(val) } for key, val in dict.items())}
-
+    return tostring(get_registration_element(user))
+    
+def get_user_data_element(dict):
+    elem = safe_element("user_data")
+    for k, v in dict.items():
+        sub_el = safe_element("data", v)
+        sub_el.attrib = {"key": k}
+        elem.append(sub_el)
+    return elem

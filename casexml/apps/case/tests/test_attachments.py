@@ -14,13 +14,13 @@ class CaseAttachmentTest(TestCase):
     
     
     def setUp(self):
-        for item in CommCareCase.view("case/by_xform_id", include_docs=True).all():
+        for item in CommCareCase.view("case/by_user", include_docs=True, reduce=False).all():
             item.delete()
         for item in XFormInstance.view("couchforms/by_xmlns", include_docs=True, reduce=False).all():
             item.delete()
     
     def testAttachInCreate(self):
-        self.assertEqual(0, len(CommCareCase.view("case/by_xform_id").all()))
+        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         
         file_path = os.path.join(os.path.dirname(__file__), "data", "attachments", "create_with_attach.xml")
         with open(file_path, "rb") as f:

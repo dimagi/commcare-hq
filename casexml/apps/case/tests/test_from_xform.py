@@ -27,6 +27,7 @@ class CaseFromXFormTest(TestCase):
         self.assertEqual(original_case.name, "test case name")
         # we don't need to bother checking all the properties because this is
         # the exact same workflow as above.
+        
         case = bootstrap_case_from_xml(self, "update.xml", original_case.case_id)
         self.assertEqual(False, case.closed)
         
@@ -39,19 +40,19 @@ class CaseFromXFormTest(TestCase):
         
         # but some should have
         self.assertEqual("abcd", case["someprop"])
-        self.assertEqual("abcd", new_update_action["someprop"])
+        self.assertEqual("abcd", new_update_action.updated_unknown_properties["someprop"])
         
         # and there are new ones
         self.assertEqual("efgh", case["somenewprop"])
-        self.assertEqual("efgh", new_update_action["somenewprop"])
+        self.assertEqual("efgh", new_update_action.updated_unknown_properties["somenewprop"])
         
         # we also changed everything originally in the case
         self.assertEqual("a_new_type", case.type)
-        self.assertEqual("a_new_type", new_update_action.case_type_id)
+        self.assertEqual("a_new_type", new_update_action.updated_known_properties["type"])
         self.assertEqual("a new name", case.name)
-        self.assertEqual("a new name", new_update_action.case_name)        
+        self.assertEqual("a new name", new_update_action.updated_known_properties["name"])        
         self.assertEqual(UPDATE_DATE, case.opened_on)
-        self.assertEqual(UPDATE_DATE, new_update_action.date_opened)
+        self.assertEqual(UPDATE_DATE, new_update_action.updated_known_properties["opened_on"])
         
         # case should have a new modified date
         self.assertEqual(MODIFY_DATE, case.modified_on)
@@ -73,9 +74,9 @@ class CaseFromXFormTest(TestCase):
         self.assertEqual(const.CASE_ACTION_CLOSE, close_action.action_type)
         
         self.assertEqual("abcde", case["someprop"])
-        self.assertEqual("abcde", update_action["someprop"])
+        self.assertEqual("abcde", update_action.updated_unknown_properties["someprop"])
         self.assertEqual("case closed", case["someclosedprop"])
-        self.assertEqual("case closed", update_action["someclosedprop"])
+        self.assertEqual("case closed", update_action.updated_unknown_properties["someclosedprop"])
         
         self.assertEqual(CLOSE_DATE, close_action.date)
         self.assertEqual(CLOSE_DATE, case.modified_on)
