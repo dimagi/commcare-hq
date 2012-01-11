@@ -7,7 +7,7 @@ function(doc) {
             ret.add(doc.name, {"field": "name"});
             ret.add(doc.opened_on, {"field": "opened"}); 
             ret.add(doc.modified_on, {"field": "modified"});
-            ret.field('sort_mod_date',  doc.modified_on,  'yes', 'not_analyzed');
+            ret.add(doc.modified_on, {"field": "sort_modified", "index": "not_analyzed", "store": "yes"});
             ret.add(doc.domain, {"field": "domain"});
             ret.add(doc.user_id, {"field": "user_id"});
             ret.add(doc.type, {"field": "type"});
