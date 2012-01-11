@@ -45,9 +45,9 @@ def get_footprint(initial_case_list):
     
 def get_case_updates(user, last_sync):
     """
-    Given a user, get the open/updated cases since the 
-    last sync operation.  This returns tuples of phone_case objects, and flags
-    that say whether or not they should be created.
+    Given a user, get the open/updated cases since the last sync 
+    operation.  This returns tuples of phone_case objects, and flags
+    that say whether or not they should be created/updated/closed.
     """
     try:
         keys = [[owner_id, False] for owner_id in user.get_owner_ids()]
@@ -63,6 +63,14 @@ def get_case_updates(user, last_sync):
                 if action.server_date > last_sync.date and \
                    action.sync_log_id != last_sync.get_id:
                     return True
+        
+        # If we got down here, as a last check make sure the phone
+        # is aware of the case. There are some corner cases where
+        # this won't be true
+        if not last_sync.phone_has_case(case.get_id):
+            return True
+        
+        # We're good.
         return False
     
     to_return = []

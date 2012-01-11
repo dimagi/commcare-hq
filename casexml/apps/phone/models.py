@@ -9,13 +9,19 @@ class User(object):
     find cases and generate the user XML.
     """
     
-    def __init__(self, user_id, username, password, date_joined, user_data=None):
+    def __init__(self, user_id, username, password, date_joined, user_data=None, additional_owner_ids=[]):
         self.user_id = user_id
         self.username = username
         self.password = password
         self.date_joined = date_joined
         self.user_data = user_data or {}
+        self.additional_owner_ids = additional_owner_ids
     
+    def get_owner_ids(self):
+        ret = [self.user_id]
+        ret.extend(self.additional_owner_ids)
+        return list(set(ret))
+        
     def get_case_updates(self, last_sync):
         """
         Get open cases associated with the user. This method
@@ -239,7 +245,21 @@ class SyncLog(Document, UnicodeMixIn):
                 queue.extend(children(case_state))
         return relevant_cases
     
+    def phone_is_holding_case(self, case_id):
+        """
+        Whether the phone is holding (not purging) a case.
+        """
+        # this is inefficient and could be optimized
+        if self.phone_has_case(case_id): 
+            return True
+        else:
+            cs = self.get_dependent_case_state(case_id)
+            if cs and cs in self.get_footprint_of_cases_on_phone():
+                return True
+            return False
+            
+        
     def __unicode__(self):
-        return "%s synced on %s (%s)" % (self.chw_id, self.date.date(), self.get_id)
+        return "%s synced on %s (%s)" % (self.user_id, self.date.date(), self.get_id)
 
 from casexml.apps.phone import signals
