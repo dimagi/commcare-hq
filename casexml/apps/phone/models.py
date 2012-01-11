@@ -9,7 +9,8 @@ class User(object):
     find cases and generate the user XML.
     """
     
-    def __init__(self, user_id, username, password, date_joined, user_data=None, additional_owner_ids=[]):
+    def __init__(self, user_id, username, password, date_joined, 
+                 user_data=None, additional_owner_ids=[]):
         self.user_id = user_id
         self.username = username
         self.password = password
@@ -27,7 +28,7 @@ class User(object):
         Get open cases associated with the user. This method
         can be overridden to change case-syncing behavior
         
-        returns: list of (CommCareCase, previously_synced) tuples
+        returns: A CaseSyncOperation object
         """
         from casexml.apps.phone.caselogic import get_case_updates
         return get_case_updates(self, last_sync)
@@ -46,7 +47,12 @@ class CaseState(DocumentSchema, IndexHoldingMixIn):
     
     case_id = StringProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
-        
+    
+    @classmethod
+    def from_case(cls, case):
+        return CaseState(case_id=case.get_id, 
+                         indices=case.indices)
+    
 
 class SyncLog(Document, UnicodeMixIn):
     """

@@ -4,26 +4,6 @@ Logic about chws phones and cases go here.
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import const
 
-def required_updates(synclog, case):
-    
-    if case.closed:
-        # if the case is closed, this means we must be trying 
-        # to purge it from a phone which means there must
-        # be a sync log
-        assert(synclog is not None)
-        return [const.CASE_ACTION_CLOSE] \
-            if synclog.phone_has_case(case.get_id) \
-            else []    
-    
-    else:
-        ret = []
-        if not synclog or not synclog.phone_has_case(case.get_id):
-            ret.append(const.CASE_ACTION_CREATE)
-                
-        # always include an update 
-        ret.append(const.CASE_ACTION_UPDATE)
-        return ret
-    
 def get_footprint(initial_case_list):
     """
     Get's the flat list of the footprint of cases based on a starting list.
@@ -42,61 +22,101 @@ def get_footprint(initial_case_list):
             queue.extend(children(case))
     return relevant_cases
 
+class CaseSyncUpdate(object):
+    """
+    The record of how a case should sync
+    """
+    def __init__(self, case, sync_token):
+        self.case = case
+        self.sync_token = sync_token
+        # cache this property since computing it can be expensive
+        self.required_updates = self._get_required_updates()
+        
     
+    def _get_required_updates(self):
+        """
+        Returns a list of the required updates for this case/token
+        pairing. Should be a list of actions like [create, update, close]
+        """
+        if self.case.closed:
+            # if the case is closed, this means we must be trying 
+            # to purge it from a phone which means there must
+            # be a sync log
+            assert(self.sync_token is not None)
+            return [const.CASE_ACTION_CLOSE] \
+                if self.sync_token.phone_has_case(self.case.get_id) \
+                else []    
+        
+        else:
+            ret = []
+            if not self.sync_token or not self.sync_token.phone_has_case(self.case.get_id):
+                ret.append(const.CASE_ACTION_CREATE)
+                    
+            # always include an update 
+            ret.append(const.CASE_ACTION_UPDATE)
+            return ret
+
+class CaseSyncOperation(object):
+    """
+    A record of a user's sync operation
+    """
+    
+    def __init__(self, user, last_sync):
+        try:
+            keys = [[owner_id, False] for owner_id in user.get_owner_ids()]
+        except AttributeError:
+            keys = [[user.user_id, False]]
+        
+        def case_modified_elsewhere_since_sync(case):
+            # this function uses closures so can't be moved
+            if not last_sync:
+                return True
+            else:
+                for action in case.actions:
+                    if action.server_date > last_sync.date and \
+                       action.sync_log_id != last_sync.get_id:
+                        return True
+            
+            # If we got down here, as a last check make sure the phone
+            # is aware of the case. There are some corner cases where
+            # this won't be true
+            if not last_sync.phone_has_case(case.get_id):
+                return True
+            
+            # We're good.
+            return False
+        
+        # the world to sync involves
+        # Union(cases on the phone, footprint of those,  
+        #       cases the server thinks are the phone's, footprint of those) 
+        # intersected with:
+        # (cases modified by someone else since the last sync)
+        self.actual_owned_cases = set(CommCareCase.view("case/by_owner", keys=keys,
+                                                        include_docs=True).all())
+        self.actual_relevant_cases = get_footprint(self.actual_owned_cases)
+        self.actual_extended_cases = self.actual_relevant_cases - self.actual_owned_cases
+        self.phone_relevant_cases = set([CommCareCase.get(case_id) for case_id \
+                                         in last_sync.get_footprint_of_cases_on_phone()]) \
+                                    if last_sync else set()
+        
+        self.all_potential_cases = self.actual_relevant_cases | self.phone_relevant_cases
+        
+        self.all_potential_to_sync = filter(case_modified_elsewhere_since_sync, 
+                                                       list(self.all_potential_cases))
+        
+        # handle create/update of new material for the phone
+        self.actual_cases_to_sync = []
+        for case in self.all_potential_to_sync:
+            sync_update = CaseSyncUpdate(case, last_sync)
+            if sync_update.required_updates:
+                self.actual_cases_to_sync.append(sync_update)
+
 def get_case_updates(user, last_sync):
     """
     Given a user, get the open/updated cases since the last sync 
-    operation.  This returns tuples of phone_case objects, and flags
-    that say whether or not they should be created/updated/closed.
+    operation.  This returns a CaseSyncOperation object containing
+    various properties about cases that should sync.
     """
-    try:
-        keys = [[owner_id, False] for owner_id in user.get_owner_ids()]
-    except AttributeError:
-        keys = [[user.user_id, False]]
     
-    def case_modified_elsewhere_since_sync(case):
-        # this function uses closures so can't be moved
-        if not last_sync:
-            return True
-        else:
-            for action in case.actions:
-                if action.server_date > last_sync.date and \
-                   action.sync_log_id != last_sync.get_id:
-                    return True
-        
-        # If we got down here, as a last check make sure the phone
-        # is aware of the case. There are some corner cases where
-        # this won't be true
-        if not last_sync.phone_has_case(case.get_id):
-            return True
-        
-        # We're good.
-        return False
+    return CaseSyncOperation(user, last_sync)
     
-    to_return = []
-    
-    # the world to sync involves
-    # Union(cases on the phone, footprint of those,  
-    #       cases the server thinks are the phone's, footprint of those) 
-    # intersected with:
-    # (cases modified by someone else since the last sync)
-    server_owned_cases = CommCareCase.view("case/by_owner", keys=keys,
-                                           include_docs=True).all()
-    server_relevant_cases = get_footprint(server_owned_cases)
-    phone_relevant_cases = set([CommCareCase.get(case_id) for case_id \
-                                in last_sync.get_footprint_of_cases_on_phone()]) \
-                           if last_sync else set()
-    
-    all_potential_cases = server_relevant_cases | phone_relevant_cases
-    
-    all_potential_modified_elsewhere = filter(case_modified_elsewhere_since_sync, 
-                                              list(all_potential_cases))
-    # handle create/update of new material for the phone
-    for case in all_potential_modified_elsewhere:
-        operations = required_updates(last_sync, case)
-        if operations:
-            to_return.append((case, operations))
-
-    return to_return
-
-

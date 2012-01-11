@@ -1,4 +1,4 @@
-from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.models import SyncLog, CaseState
 import logging
 from dimagi.utils.couch.database import get_db
 from casexml.apps.phone import xml
@@ -20,7 +20,7 @@ def generate_restore_payload(user, restore_id="", version="1.0"):
         restore_id:    sync token
         version:       the CommCare version 
         
-        returns: list of (CommCareCase, previously_synced) tuples
+        returns: the xml payload of the sync operation
     """
     check_version(version)
     
@@ -31,20 +31,22 @@ def generate_restore_payload(user, restore_id="", version="1.0"):
         except Exception:
             logging.error("Request for bad sync log %s by %s, ignoring..." % (restore_id, user))
     
-    cases_to_send = user.get_case_updates(last_sync)
-    case_xml_elements = [xml.get_case_element(case, updates, version) for case, updates in cases_to_send]
+    sync_operation = user.get_case_updates(last_sync)
+    case_xml_elements = [xml.get_case_element(op.case, op.required_updates, version) \
+                         for op in sync_operation.actual_cases_to_sync]
     
-    
-    saved_case_ids = [case.case_id for case, updates in cases_to_send \
-                      if const.CASE_ACTION_UPDATE in updates]
     
     last_seq = get_db().info()["update_seq"]
     
     # create a sync log for this
     previous_log_id = last_sync.get_id if last_sync else None
+    
     synclog = SyncLog(user_id=user.user_id, last_seq=last_seq,
                       date=datetime.utcnow(), previous_log_id=previous_log_id,
-                      cases=saved_case_ids)
+                      cases_on_phone=[CaseState.from_case(c) for c in \
+                                      sync_operation.actual_owned_cases],
+                      dependent_cases_on_phone=[CaseState.from_case(c) for c in \
+                                                sync_operation.actual_extended_cases])
     synclog.save()
     
     # start with standard response
