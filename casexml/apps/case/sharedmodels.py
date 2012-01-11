@@ -46,7 +46,14 @@ class IndexHoldingMixIn(object):
         return None
     
     def update_indices(self, index_update_list):
+        from .models import CommCareCase
         for index_update in index_update_list:
+            if index_update.referenced_id:
+                if not CommCareCase.get_db().doc_exist(index_update.referenced_id):
+                    raise Exception(("Submitted index against an unknown case id: %s. "
+                                     "This is not allowed. Most likely your case "
+                                     "database is corrupt and you should restore your "
+                                     "phone directly from the server.") % index_update.referenced_id)
             if self.has_index(index_update.identifier):
                 if not index_update.referenced_id:
                     # empty ID = delete

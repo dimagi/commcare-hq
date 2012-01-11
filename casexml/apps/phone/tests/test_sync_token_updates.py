@@ -16,7 +16,6 @@ from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
 USER_ID = "foo"
-PARENT_ID = "mommy"
 PARENT_TYPE = "mother"
         
 class SyncTokenUpdateTest(TestCase):
@@ -39,15 +38,16 @@ class SyncTokenUpdateTest(TestCase):
         [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
         self.sync_log = sync_log
         
-    def _createParentStub(self):
-        parent = CaseBlock(
-            create=True,
-            case_id=PARENT_ID,
-            user_id=USER_ID,
-            case_type=PARENT_TYPE,
-            version=V2
-        ).as_xml()
-        self._postFakeWithSyncToken(parent, self.sync_log.get_id)
+    def _createCaseStubs(self, id_list):
+        for id in id_list:
+            parent = CaseBlock(
+                create=True,
+                case_id=id,
+                user_id=USER_ID,
+                case_type=PARENT_TYPE,
+                version=V2
+            ).as_xml()
+            self._postFakeWithSyncToken(parent, self.sync_log.get_id)
         
     def _postWithSyncToken(self, filename, token_id):
         file_path = os.path.join(os.path.dirname(__file__), "data", filename)
@@ -157,8 +157,11 @@ class SyncTokenUpdateTest(TestCase):
         Tests that indices properly get set in the sync log when created. 
         """
         # first create the parent case
-        self._createParentStub()
-        self._testUpdate(self.sync_log.get_id, {PARENT_ID: []})
+        parent_id = "mommy"
+        updated_id = "updated_mommy_id"
+        new_parent_id = "daddy"
+        self._createCaseStubs([parent_id, updated_id, new_parent_id])
+        self._testUpdate(self.sync_log.get_id, {parent_id: [], updated_id: [], new_parent_id: []})
         
         # create the child        
         child_id = "baby"
@@ -168,31 +171,30 @@ class SyncTokenUpdateTest(TestCase):
             case_id=child_id,
             user_id=USER_ID,
             version=V2,
-            index={index_id: (PARENT_TYPE, PARENT_ID)},
+            index={index_id: (PARENT_TYPE, parent_id)},
         ).as_xml()
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
         index_ref = CommCareCaseIndex(identifier=index_id,
                                       referenced_type=PARENT_TYPE,
-                                      referenced_id=PARENT_ID)
+                                      referenced_id=parent_id)
     
-        self._testUpdate(self.sync_log.get_id, {PARENT_ID: [], 
+        self._testUpdate(self.sync_log.get_id, {parent_id: [], updated_id: [], new_parent_id: [], 
                                                 child_id: [index_ref]})
         
         # update the child's index (parent type)
         updated_type = "updated_mother_type"
         child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
-                          index={index_id: (updated_type, PARENT_ID)},
+                          index={index_id: (updated_type, parent_id)},
         ).as_xml()
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
         index_ref = CommCareCaseIndex(identifier=index_id,
                                       referenced_type=updated_type,
-                                      referenced_id=PARENT_ID)
+                                      referenced_id=parent_id)
     
-        self._testUpdate(self.sync_log.get_id, {PARENT_ID: [], 
+        self._testUpdate(self.sync_log.get_id, {parent_id: [], updated_id: [], new_parent_id: [], 
                                                 child_id: [index_ref]})
         
         # update the child's index (parent id)
-        updated_id = "updated_mommy_id"
         child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
                           index={index_id: (updated_type, updated_id)},
         ).as_xml()
@@ -201,22 +203,21 @@ class SyncTokenUpdateTest(TestCase):
                                       referenced_type=updated_type,
                                       referenced_id=updated_id)
     
-        self._testUpdate(self.sync_log.get_id, {PARENT_ID: [], 
+        self._testUpdate(self.sync_log.get_id, {parent_id: [], updated_id: [], new_parent_id: [], 
                                                 child_id: [index_ref]})
         
         # add new index
         new_index_id = "my_daddy"
         new_index_type = "dad"
-        new_PARENT_ID = "daddy"
         child = CaseBlock(create=False, case_id=child_id, user_id=USER_ID, version=V2,
-                          index={new_index_id: (new_index_type, new_PARENT_ID)},
+                          index={new_index_id: (new_index_type, new_parent_id)},
         ).as_xml()
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
         new_index_ref = CommCareCaseIndex(identifier=new_index_id,
                                           referenced_type=new_index_type,
-                                          referenced_id=new_PARENT_ID)
+                                          referenced_id=new_parent_id)
     
-        self._testUpdate(self.sync_log.get_id, {PARENT_ID: [], 
+        self._testUpdate(self.sync_log.get_id, {parent_id: [], updated_id: [], new_parent_id: [], 
                                                 child_id: [index_ref, new_index_ref]})
         
         # delete index
@@ -224,7 +225,6 @@ class SyncTokenUpdateTest(TestCase):
                           index={index_id: (updated_type, "")},
         ).as_xml()
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
-        self._testUpdate(self.sync_log.get_id, {PARENT_ID: [], 
+        self._testUpdate(self.sync_log.get_id, {parent_id: [], updated_id: [], new_parent_id: [], 
                                                 child_id: [new_index_ref]})
     
-        

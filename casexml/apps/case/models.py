@@ -41,6 +41,7 @@ class CommCareCaseAction(DocumentSchema):
     date = DateTimeProperty()
     server_date = DateTimeProperty()
     xform_id = StringProperty()
+    sync_log_id = StringProperty()
     
     updated_known_properties = DictProperty()
     updated_unknown_properties = DictProperty()
@@ -61,6 +62,8 @@ class CommCareCaseAction(DocumentSchema):
         ret.updated_known_properties = _couchify(action.get_known_properties())
         ret.updated_unknown_properties = _couchify(action.dynamic_properties)
         ret.indices = [CommCareCaseIndex.from_case_index_update(i) for i in action.indices]
+        if hasattr(xformdoc, "last_sync_token"):
+            ret.sync_log_id = xformdoc.last_sync_token
         return ret
     
         

@@ -2,12 +2,14 @@ from django.test import TestCase
 import os
 from casexml.apps.case.models import CommCareCase
 from couchforms.util import post_xform_to_couch
-from casexml.apps.case.tests.util import check_xml_line_by_line
+from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock
 from casexml.apps.case.signals import process_cases
 from datetime import datetime
 from casexml.apps.phone import views as phone_views
 from django.http import HttpRequest
 from casexml.apps.case import const
+from casexml.apps.case.util import post_case_blocks
+from casexml.apps.case.xml import V2
 
 class Version2CaseParsingTest(TestCase):
     """
@@ -83,6 +85,13 @@ class Version2CaseParsingTest(TestCase):
     def testParseWithIndices(self):
         self.testParseCreate()
         
+        user_id = "bar-user-id"
+        for prereq in ["some_referenced_id", "some_other_referenced_id"]:
+            post_case_blocks([
+                CaseBlock(create=True, case_id=prereq, user_id=user_id,
+                          version=V2).as_xml()
+            ])
+            
         file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "index_update.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()

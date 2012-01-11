@@ -48,7 +48,7 @@ def post_case_blocks(case_blocks, form_extras={}):
     form.attrib['xmlns:jrm'] ="http://openrosa.org/jr/xforms"
     for block in case_blocks:
         form.append(block)
-#    print ElementTree.tostring(form)
+
     xform = post_xform_to_couch(ElementTree.tostring(form))
     for k, v in form_extras.items():
         setattr(xform, k, v)

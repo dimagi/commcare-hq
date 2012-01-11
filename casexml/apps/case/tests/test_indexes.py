@@ -12,6 +12,13 @@ class IndexTest(TestCase):
         USER_ID = 'test-index-user'
         user = User(user_id=USER_ID, username="", password="", date_joined="")
 
+        # Step 0. Create mother and father cases
+        for prereq in [MOTHER_CASE_ID, FATHER_CASE_ID]:
+            post_case_blocks([
+                CaseBlock(create=True, case_id=prereq, user_id=USER_ID,
+                          version=V2).as_xml()
+            ])
+            
         # Step 1. Create a case with index <mom>
 
         create_index = CaseBlock(

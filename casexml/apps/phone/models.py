@@ -58,7 +58,8 @@ class SyncLog(Document, UnicodeMixIn):
     # we need to store a mapping of cases to indices for generating the footprint
     
     # The cases_on_phone property represents the state of all cases the server thinks
-    # the phone has on it and cares about. 
+    # the phone has on it and cares about.
+     
     
     # The dependant_cases_on_phone property represents the possible list of cases
     # also on the phone because they are referenced by a real case's index (or 
@@ -144,6 +145,9 @@ class SyncLog(Document, UnicodeMixIn):
             return filtered_list[0]
         return None
     
+    def _get_case_state_from_anywhere(self, case_id):
+        return self.get_case_state(case_id) or self.get_dependent_case_state(case_id)
+    
     def archive_case(self, case_id):
         state = self.get_case_state(case_id)
         self.cases_on_phone.remove(state)
@@ -170,37 +174,71 @@ class SyncLog(Document, UnicodeMixIn):
         ret = ret - self.get_closed_case_ids()
         return ret
     
+    def _phone_owns(self, action):
+        # whether the phone thinks it owns an action block.
+        # the only way this can't be true is if the block assigns to an
+        # owner id that's not associated with the user on the phone 
+        if "owner_id" in action.updated_known_properties and action.updated_known_properties["owner_id"]:
+            return action.updated_known_properties["owner_id"] in self.owner_ids_on_phone
+        return True
+        
     def update_phone_lists(self, xform, case_list):
         # for all the cases update the relevant lists in the sync log
         # so that we can build a historical record of what's associated
         # with the phone
-                
         for case in case_list:
             actions = case.get_actions_for_form(xform.get_id)
             for action in actions:
                 try: 
                     if action.action_type == const.CASE_ACTION_CREATE:
                         assert(not self.phone_has_case(case.get_id))
-                        self.cases_on_phone.append(CaseState(case_id=case.get_id, 
-                                                             indices=[]))
+                        if self._phone_owns(action):
+                            self.cases_on_phone.append(CaseState(case_id=case.get_id, 
+                                                                 indices=[]))
                     elif action.action_type == const.CASE_ACTION_UPDATE:
                         assert(self.phone_has_case(case.get_id))
-                        # no actual action necessary here
+                        if not self._phone_owns(action):
+                            # only action necessary here is in the case of 
+                            # reassignment to an owner the phone doesn't own
+                            self.archive_case(case.get_id)
                     elif action.action_type == const.CASE_ACTION_INDEX:
-                        assert(self.phone_has_case(case.get_id))
+                        # in the case of parallel reassignment and index update
+                        # the phone might not have the case
+                        if self.phone_has_case(case.get_id):
+                            case_state = self.get_case_state(case.get_id)
+                        else:
+                            assert(self.phone_has_dependent_case(case.get_id))
+                            case_state = self.get_dependent_case_state(case.get_id)
                         # reconcile indices
-                        case_state = self.get_case_state(case.get_id)
                         case_state.update_indices(action.indices)
                     elif action.action_type == const.CASE_ACTION_CLOSE:
-                        assert(self.phone_has_case(case.get_id))
-                        self.archive_case(case.get_id)
+                        if self.phone_has_case(case.get_id):
+                            self.archive_case(case.get_id)
                 except Exception, e:
                     # debug
                     # import pdb
                     # pdb.set_trace()
                     raise    
         self.save()
-            
+                
+    def get_footprint_of_cases_on_phone(self):
+        """
+        Get's the phone's flat list of all case ids on the phone, 
+        owned or not owned but relevant.
+        """
+        def children(case_state):
+            return [self._get_case_state_from_anywhere(index.reference_id) \
+                    for index in case_state.indices]
+        
+        relevant_cases = set()
+        queue = list(case_state for case_state in self.cases_on_phone)
+        while queue:
+            case_state = queue.pop()
+            if case_state.case_id not in relevant_cases:
+                relevant_cases.add(case_state.case_id)
+                queue.extend(children(case_state))
+        return relevant_cases
+    
     def __unicode__(self):
         return "%s synced on %s (%s)" % (self.chw_id, self.date.date(), self.get_id)
 

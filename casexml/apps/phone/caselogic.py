@@ -2,31 +2,46 @@
 Logic about chws phones and cases go here.
 """
 from casexml.apps.case.models import CommCareCase
-from datetime import datetime
-import logging
-from dimagi.utils.dates import utcnow_sans_milliseconds
 from casexml.apps.case import const
 
 def required_updates(synclog, case):
-    ret = []
-    # only allowed to call this method with a valid synclog
-    assert(synclog is not None)
     
-    # TODO: this method needs a complete rewrite.
-    raise NotImplementedError("This is broken!")
-
-    if case.get_server_modified_date() >= synclog.date:
-        # only do any updates if the case has been touched since
-        # the last time we synced
-        if case.get_id not in synclog.get_all_cases_seen():
-            # we've never seen it so we need a create block
+    if case.closed:
+        # if the case is closed, this means we must be trying 
+        # to purge it from a phone which means there must
+        # be a sync log
+        assert(synclog is not None)
+        return [const.CASE_ACTION_CLOSE] \
+            if synclog.phone_has_case(case.get_id) \
+            else []    
+    
+    else:
+        ret = []
+        if not synclog or not synclog.phone_has_case(case.get_id):
             ret.append(const.CASE_ACTION_CREATE)
-        # always include an update if it's been modified
+                
+        # always include an update 
         ret.append(const.CASE_ACTION_UPDATE)
-        
-        # closed intentionally not put in - closed cases are 
-        # handled differently via the purge workflow
-    return ret
+        return ret
+    
+def get_footprint(initial_case_list):
+    """
+    Get's the flat list of the footprint of cases based on a starting list.
+    Walks all the referenced indexes recursively.
+    """
+    def children(case):
+        return [CommCareCase.get(index.referenced_id) \
+                for index in case.indices]
+    
+    relevant_cases = set()
+    queue = list(case for case in initial_case_list)
+    while queue:
+        case = queue.pop()
+        if case.case_id not in relevant_cases:
+            relevant_cases.add(case)
+            queue.extend(children(case))
+    return relevant_cases
+
     
 def get_case_updates(user, last_sync):
     """
@@ -37,42 +52,43 @@ def get_case_updates(user, last_sync):
     try:
         keys = [[owner_id, False] for owner_id in user.get_owner_ids()]
     except AttributeError:
-        keys = [[user.user_id, False],]
+        keys = [[user.user_id, False]]
+    
+    def case_modified_elsewhere_since_sync(case):
+        # this function uses closures so can't be moved
+        if not last_sync:
+            return True
+        else:
+            for action in case.actions:
+                if action.server_date > last_sync.date and \
+                   action.sync_log_id != last_sync.get_id:
+                    return True
+        return False
     
     to_return = []
-    # keep a running list of case ids sent down because the phone doesn't
-    # deal well with duplicates.  There shouldn't be duplicates, but they
-    # can come up with bugs, so arbitrarily only send down the first case
-    # if there are any duplicates
     
-    case_ids = set()
-
-    cases = CommCareCase.view("case/by_owner", keys=keys,
-                              include_docs=True).all()
-
+    # the world to sync involves
+    # Union(cases on the phone, footprint of those,  
+    #       cases the server thinks are the phone's, footprint of those) 
+    # intersected with:
+    # (cases modified by someone else since the last sync)
+    server_owned_cases = CommCareCase.view("case/by_owner", keys=keys,
+                                           include_docs=True).all()
+    server_relevant_cases = get_footprint(server_owned_cases)
+    phone_relevant_cases = set([CommCareCase.get(case_id) for case_id \
+                                in last_sync.get_footprint_of_cases_on_phone()]) \
+                           if last_sync else set()
+    
+    all_potential_cases = server_relevant_cases | phone_relevant_cases
+    
+    all_potential_modified_elsewhere = filter(case_modified_elsewhere_since_sync, 
+                                              list(all_potential_cases))
     # handle create/update of new material for the phone
-    for case in cases:
-        if case.case_id in case_ids:
-            logging.error("Found a duplicate case for %s. Will not be sent to phone." % case.case_id)
-        else:
-            # the no-sync-token use case is really straightforward so special case it
-            case_ids.add(case.case_id)
-            if not last_sync:
-                to_return.append((case, [const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE]))
-            else:
-                operations = required_updates(last_sync, case)
-                if operations:
-                    to_return.append((case, operations))
-    
-    # handle purging of existing cases on phone
-    if last_sync:
-        # any currently open case that is no longer relevant 
-        # (absent from sync list) should be purged.
-        relevant_ids = set(c.get_id for c in cases)
-        current_list = last_sync.get_open_cases_on_phone()
-        to_purge = current_list - relevant_ids
-        to_return.extend((CommCareCase.get(id), [const.CASE_ACTION_PURGE]) for id in to_purge)
-        
+    for case in all_potential_modified_elsewhere:
+        operations = required_updates(last_sync, case)
+        if operations:
+            to_return.append((case, operations))
+
     return to_return
 
 
