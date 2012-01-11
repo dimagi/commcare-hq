@@ -37,6 +37,8 @@ class CasePurgeTest(TestCase):
         Tests that purging cases works as advertised
         """
         # create a case and attach it to someone.
+        raise Exception("This test is no longer valid and needs to be fixed if anyone cares")
+        
         user = dummy_user()
         case_id = uid.new()
         case_block = CaseBlock(
