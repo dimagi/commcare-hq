@@ -73,7 +73,7 @@ class CaseSyncOperation(object):
                 return True
             else:
                 for action in case.actions:
-                    if action.server_date > last_sync.date and \
+                    if action.server_date >= last_sync.date and \
                        action.sync_log_id != last_sync.get_id:
                         return True
             

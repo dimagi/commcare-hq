@@ -85,7 +85,7 @@ class SyncLog(Document, UnicodeMixIn):
     def last_for_user(cls, user_id):
         return SyncLog.view("phone/sync_logs_by_user", 
                             startkey=[user_id, {}],
-                            endkey=[user_id, ""],
+                            endkey=[user_id],
                             descending=True,
                             limit=1,
                             reduce=False,

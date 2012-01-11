@@ -308,7 +308,6 @@ class MultiUserSyncTest(SyncBaseTest):
         self._createCaseStubs([case_id])
         
         # sync to the other's phone to be able to edit
-        time.sleep(1)
         check_user_has_case(self, self.other_user, 
                             CaseBlock(case_id=case_id, version=V2).as_xml(), 
                             should_have=True, line_by_line=False,
