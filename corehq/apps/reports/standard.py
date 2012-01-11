@@ -364,7 +364,7 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
 
 class FormCompletionTrendsReport(StandardTabularHQReport, StandardDateHQReport):
     name = "Form Completion Trends"
-    slug = "completion_trends"
+    slug = "completion_times"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.SelectFormField',
               'corehq.apps.reports.fields.GroupField',
@@ -475,7 +475,7 @@ class CaseListReport(PaginatedHistoryHQReport):
 
             results = get_db().search("case/search", q=query,
                                       handler="_fti/_design",
-                                      limit=limit, skip=skip)
+                                      limit=limit, skip=skip, sort="\sort_modified")
             try:
                 for row in results:
                     row = self.format_row(row)
@@ -517,7 +517,7 @@ class CaseListReport(PaginatedHistoryHQReport):
     
 class SubmissionTimesReport(StandardHQReport):
     name = "Submission Times"
-    slug = "submission_times"
+    slug = "submit_time_punchcard"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.SelectCHWField']
     template_name = "reports/basic_report.html"
