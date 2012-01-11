@@ -475,7 +475,7 @@ class CaseListReport(PaginatedHistoryHQReport):
 
             results = get_db().search("case/search", q=query,
                                       handler="_fti/_design",
-                                      limit=limit, skip=skip, sort="modified")
+                                      limit=limit, skip=skip, sort="sort_modified")
             try:
                 for row in results:
                     row = self.format_row(row)
