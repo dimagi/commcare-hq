@@ -37,8 +37,6 @@ def generate_restore_payload(user, restore_id="", version="1.0"):
     
     saved_case_ids = [case.case_id for case, updates in cases_to_send \
                       if const.CASE_ACTION_UPDATE in updates]
-    purged_case_ids = [case.case_id for case, updates in cases_to_send if \
-                       const.CASE_ACTION_PURGE in updates]
     
     last_seq = get_db().info()["update_seq"]
     
