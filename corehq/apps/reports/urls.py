@@ -55,11 +55,12 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^phonelog/', include(phonelog_reports)),
 
     # HQReport handlers
-    url(r'^standard/(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="report_dispatcher"),
-    url(r'^json/standard/(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="json_report_dispatcher", kwargs={
+    url(r'^json/(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="json_report_dispatcher", kwargs={
         'return_json': True
     }),
     url(r'^custom/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="custom_report_dispatcher"),
+    url(r'^(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="report_dispatcher"),
+
 
 )
 
