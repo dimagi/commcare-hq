@@ -64,6 +64,8 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
         'multimedia_home', name='multimedia_home'),
     url(r'^multimedia/(?P<app_id>[\w-]+)/download/$',
         'multimedia_list_download', name='multimedia_list_download'),
+    url(r'^zippy/(?P<app_id>[\w-]+)/$',
+        'zip_file_play', name='zip_file_play'),
 
  url(r'^edit_module_detail_screens/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',    'edit_module_detail_screens',
                                                                        name='edit_module_detail_screens'),

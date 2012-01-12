@@ -16,7 +16,7 @@ from corehq.apps.users.models import DomainMembership, Permissions
 
 from dimagi.utils.web import render_to_response, json_response, json_request
 
-from corehq.apps.app_manager.forms import NewXFormForm, NewModuleForm
+from corehq.apps.app_manager.forms import NewXFormForm, NewModuleForm, ZipUploadForm
 
 from corehq.apps.domain.decorators import login_and_domain_required
 
@@ -956,6 +956,23 @@ def multimedia_home(req, domain, app_id, module_id=None, form_id=None):
 def commcare_profile(req, domain, app_id):
     app = get_app(domain, app_id)
     return HttpResponse(json.dumps(app.profile))
+
+@login_and_domain_required
+def zip_file_play(request, domain, app_id):
+    print request.GET
+    app = get_app(domain, app_id)
+    if request.method == 'POST':
+        print "request is post"
+        form = ZipUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            print "form is valid"
+            success = form.save()
+    else:
+        form = ZipUploadForm()
+    return render_to_response(request, "app_manager/zippy.html",
+                              {"domain": domain,
+                               "app": app,
+                               "zipform": form})
 
 @require_POST
 @require_permission('edit-apps')
