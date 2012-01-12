@@ -3,14 +3,19 @@ import re
 from smtplib import SMTPRecipientsRefused
 import urllib
 from datetime import datetime
+import csv
+import io
+from corehq.apps.users.util import format_username
+from dimagi.utils.decorators.view import get_file
 from django.contrib.auth import logout
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.models import User
 from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
 from django.db import transaction
-from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpResponseForbidden
+from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpResponseForbidden, HttpResponseBadRequest
 from django.template.loader import render_to_string
+from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 from corehq.apps.domain.user_registration_backend import register_user
 from corehq.apps.domain.user_registration_backend.forms import AdminRegistersUserForm,\
@@ -29,6 +34,7 @@ from corehq.apps.reports.schedule.config import ScheduledReportFactory
 from corehq.apps.reports.models import WeeklyReportNotification, DailyReportNotification, ReportNotification
 from django.contrib import messages
 from corehq.apps.reports.tasks import send_report
+from django.views.generic.base import TemplateView
 from django_digest.decorators import httpdigest
 
 
@@ -558,6 +564,92 @@ def add_commcare_account(request, domain, template="users/add_commcare_account.h
         form = CommCareAccountForm()
     context.update(form=form)
     return render_to_response(request, template, context)
+
+class UploadCommCareUsers(TemplateView):
+
+    template_name = 'users/upload_commcare_users.html'
+
+    required_headers = set(['username', 'password'])
+    allowed_headers = set(['phone-number']) | required_headers
+
+    def get_context_data(self, **kwargs):
+        """TemplateView automatically calls this to render the view (on a get)"""
+        return _users_context(self.request, self.domain)
+
+    @method_decorator(get_file)
+    def post(self, request):
+        """View's dispatch method automatically calls this"""
+        try:
+            self.user_specs = csv.DictReader(io.StringIO(request.file.read().decode('ascii'), newline=None))
+        except UnicodeDecodeError:
+            return HttpResponseBadRequest("Your CSV contains illegal characters")
+
+        try:
+            self.check_headers()
+        except Exception, e:
+            return HttpResponseBadRequest(e)
+
+        response = HttpResponse()
+        response_writer = csv.DictWriter(response, ['username', 'flag'])
+
+        for row in self.create_or_update_users():
+            response_writer.writerow(row)
+
+        redirect = request.POST.get('redirect')
+        if redirect:
+            messages.success(request, 'Your bulk user upload is complete!')
+            return HttpResponseRedirect(redirect)
+        else:
+            return response
+
+    def create_or_update_users(self):
+        usernames = set()
+        for row in self.user_specs:
+            password, phone_number, username = (row.get(k) for k in sorted(self.allowed_headers))
+            full_username = format_username(username, self.domain)
+            status_row = {'username': username}
+
+            if username in usernames:
+                status_row['flag'] = 'repeat'
+            else:
+                usernames.add(username)
+                user = CommCareUser.get_by_username(full_username)
+                if user:
+                    user.set_password(password)
+                    status_row['flag'] = 'updated'
+                else:
+                    user = CommCareUser.create(self.domain, full_username, password)
+                    status_row['flag'] = 'created'
+                if phone_number:
+                    user.add_phone_number(phone_number.lstrip('+'), default=True)
+                user.save()
+            yield status_row
+
+    def check_headers(self):
+        headers = set(self.user_specs.fieldnames)
+
+        illegal_headers = headers - self.allowed_headers
+        missing_headers = self.required_headers - headers
+
+        messages = []
+        for header_set, label in (missing_headers, 'required'), (illegal_headers, 'illegal'):
+            if header_set:
+                messages.append('The following are %s column headers: %s.' % (label, ', '.join(header_set)))
+        if messages:
+            raise Exception('\n'.join(messages))
+
+    @method_decorator(require_can_edit_users)
+    def dispatch(self, request, domain, *args, **kwargs):
+        self.domain = domain
+        return super(UploadCommCareUsers, self).dispatch(request, *args, **kwargs)
+
+def upload_commcare_users_example(request, domain):
+    response = HttpResponse()
+    response['Content-Type'] = 'text/csv'
+    response['Content-Disposition'] = 'attachment; filename=users.csv'
+    writer = csv.writer(response)
+    writer.writerow(['username', 'password', 'phone-number'])
+    return response
 
 @login_and_domain_required
 def test_autocomplete(request, domain, template="users/test_autocomplete.html"):
