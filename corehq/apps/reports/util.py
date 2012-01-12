@@ -205,8 +205,13 @@ def get_username_from_forms(domain, user_id):
         limit=1,
         reduce=False
     ).one()
-    username = user_info['value']['username']
-    if username == 'none':
-        return HQUserType.human_readable[HQUserType.ADMIN]
+    user_info = user_info['value']
+    username = HQUserType.human_readable[HQUserType.ADMIN]
+    if user_info and not username == 'none':
+        username = user_info['username']
     else:
-        return username
+        # attempt to get username from commcare users who might not have submitted any forms
+        possible_username = user_id_to_username(user_id)
+        if possible_username:
+            username = possible_username
+    return username
