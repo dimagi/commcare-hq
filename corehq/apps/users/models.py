@@ -218,6 +218,14 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             include_docs=True,
         )
 
+    def is_member_of(self, domain_qs):
+        if isinstance(domain_qs, basestring):
+            return domain_qs in self.get_domains() or self.is_superuser
+        membership_count = domain_qs.filter(name__in=self.get_domains()).count()
+        if membership_count > 0:
+            return True
+        return False
+
     # for synching
     def sync_from_django_user(self, django_user):
         if not django_user:
@@ -491,6 +499,9 @@ class CommCareUser(CouchUser):
     def is_web_user(self):
         return False
 
+    def get_domains(self):
+        return [self.domain]
+
     def add_commcare_account(self, domain, device_id, user_data=None):
         """
         Adds a commcare account to this.
@@ -696,14 +707,6 @@ class WebUser(CouchUser):
             return domains
         else:
             raise self.Inconsistent("domains and domain_memberships out of sync")
-
-    def is_member_of(self, domain_qs):
-        if isinstance(domain_qs, basestring):
-            return domain_qs in self.get_domains() or self.is_superuser
-        membership_count = domain_qs.filter(name__in=self.get_domains()).count()
-        if membership_count > 0:
-            return True
-        return False
 
     def set_permission(self, domain, permission, value, save=True):
         assert(permission in Permissions.AVAILABLE_PERMISSIONS)
