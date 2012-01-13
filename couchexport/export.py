@@ -257,49 +257,6 @@ def get_headers(schema, separator="|"):
     return format_tables_new(create_intermediate_tables(schema, schema), 
                              include_data=False, separator=separator)
 
-def create_intermediate_tables_new(doc, schema, integer='#'):
-    def lookup(doc, keys):
-        for key in keys:
-            doc = doc[key]
-        return doc
-    def split_path(path):
-        table = []
-        column = []
-        id = []
-        for k in path:
-            if isinstance(k, basestring):
-                column.append(k)
-            else:
-                table.extend(column)
-                table.append(integer)
-                column = []
-                id.append(k)
-        return (tuple(table), tuple(column), tuple(id))
-    
-    doc = fit_to_schema(doc, schema)
-    # first, flatten documents
-    queue = [()]
-    leaves = []
-    while queue:
-        path = queue.pop()
-        d = lookup(doc, path)
-        if isinstance(d, dict):
-            for key in d:
-                queue.append(path + (key,))
-        elif isinstance(d, list):
-            for i,_ in enumerate(d):
-                queue.append(path + (i,))
-        elif d != list_never_was:
-            leaves.append((split_path(path), d))
-    leaves.sort()
-    tables = {}
-    for (table_name, column_name, id), val in leaves:
-        table = tables.setdefault(table_name, {})
-        row = table.setdefault(id, {})
-        row[column_name] = val
-
-    return tables
-
 def create_intermediate_tables(docs, schema, integer='#'):
     def lookup(doc, keys):
         for key in keys:
@@ -353,10 +310,13 @@ class FormattedRow(object):
     
     The id should be an iterable (compound ids are supported). 
     """
-    def __init__(self, id, data, separator="."):
-        self.id = id
+    def __init__(self, data, id=None, separator="."):
         self.data = data
+        self.id = id
         self.separator = separator
+    
+    def has_id(self):
+        return self.id is not None
     
     @property
     def formatted_id(self):
@@ -365,7 +325,8 @@ class FormattedRow(object):
         return self.separator.join(map(unicode, self.id))
     
     def get_data(self):
-        yield self.formatted_id
+        if self.has_id():
+            yield self.formatted_id
         for val in self.data:
             yield val        
 
@@ -381,12 +342,12 @@ def format_tables_new(tables, id_label='id', separator='.', include_headers=True
         
         if include_headers:
             header_vals = [separator.join(key) for key in keys]
-            new_table.append(FormattedRow([id_label], header_vals, separator))
+            new_table.append(FormattedRow(header_vals, [id_label], separator))
         
         if include_data:
             for id, row in sorted(table.items()):
                 values = [row[key] for key in keys]
-                new_table.append(FormattedRow(id, values, separator))
+                new_table.append(FormattedRow(values, id, separator))
         
         answ.append((separator.join(table_name), new_table))
     return answ

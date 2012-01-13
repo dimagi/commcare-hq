@@ -5,6 +5,7 @@ from StringIO import StringIO
 from couchexport import util
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.modules import try_import, to_function
+from dimagi.utils.couch.database import get_db
 
 class Format(object):
     """
@@ -136,18 +137,27 @@ class ExportTable(DocumentSchema):
         #cols.sort(key=lambda x: not x["selected"])
         return cols
     
-    def format_data(self, data):
-        
+    def get_headers_row(self):
+        from couchexport.export import FormattedRow
+        return FormattedRow([self.col_dict[col] for col in map(lambda x: x.index, self.columns)])
+    
+    def trim(self, data):
+        from couchexport.export import FormattedRow
+
         headers = data[0]
-        data = data[1:]
-        header_to_index_map = dict([(h, i) \
-                                    for i, h in enumerate(headers) \
+        if not hasattr(self, "header_to_index_map"):
+            self._header_to_index_map = dict([(h, i) \
+                                    for i, h in enumerate(headers.get_data()) \
                                     if h in self.col_dict])
-        cols = map(lambda x: x.index, self.columns)
-        headers = [self.col_dict[col] for col in cols]
-        ret = [headers]
+        if not hasattr(self, "_cols"):
+            self._cols = map(lambda x: x.index, self.columns)
+        
+        data = data[1:]
+        ret = []
         for row in data:
-            ret.append([row[header_to_index_map[col]] for col in cols])
+            row_data = list(row.get_data())
+            id = row_data[self._header_to_index_map["id"]] if "id" in self._cols else None
+            ret.append(FormattedRow([row_data[self._header_to_index_map[col]] for col in self._cols if col != "id"], id))
         return ret
     
 class SavedExportSchema(Document, UnicodeMixIn):
@@ -192,43 +202,63 @@ class SavedExportSchema(Document, UnicodeMixIn):
                                               "selected": False} for c in self.schema.get_columns(index)],
                  "selected": index in table_dict} 
     
+    def get_table_headers(self):
+        return ((t.index, [t.get_headers_row()]) for t in self.tables)
+        
     @property
     def table_configuration(self):
         return [self.get_table_configuration(index) \
                 for index, cols in self.schema.tables]
 
-    def get_export_tables(self, previous_export=None, filter=None):
-        from couchexport.export import get_full_export_tables
+    def trim(self, document_table):
+        if not hasattr(self, "_table_dict"):
+            self._table_dict = dict([t.index, t] for t in self.tables)
         
-        full_tables, checkpoint = get_full_export_tables\
-                                    (self.index, previous_export, util.intersect_filters(self.filter, filter))
-        if not full_tables: 
-            return None
-        
-        table_dict = dict([t.index, t] for t in self.tables)
         trimmed_tables = []
-        for table_index, data in full_tables:
-            if table_index in table_dict:
-                trimmed_tables.append((table_dict[table_index].display, 
-                                       table_dict[table_index].format_data(data)))
-        
+        for table_index, data in document_table:
+            if table_index in self._table_dict:
+                trimmed_tables.append((# self._table_dict[table_index].display,
+                                       table_index, # TODO: figure out a way to separate index from display 
+                                       self._table_dict[table_index].trim(data)))
         return trimmed_tables
-
+    
     def download_data(self, format="", previous_export=None, filter=None):
         """
         If there is data, return an HTTPResponse with the appropriate data. 
         If there is not data returns None.
         """
-        from couchexport.export import export_from_tables
         from couchexport.shortcuts import export_response
+        from couchexport.export import get_writer, get_schema_new, \
+            format_tables_new, create_intermediate_tables
         
         if not format:
             format = self.default_format or Format.XLS_2007
         
-        tables = self.get_export_tables(previous_export, filter=filter)
-        if not tables:
-            return None
+        from couchexport.export import ExportConfiguration
+        database = get_db()
+        config = ExportConfiguration(database, self.index, 
+                                     previous_export, 
+                                     util.intersect_filters(self.filter, filter))
         
+        
+        # get and checkpoint the latest schema
+        updated_schema = get_schema_new(config)
+        export_schema_checkpoint = ExportSchema(seq=config.current_seq, 
+                                                schema=updated_schema,
+                                                index=config.schema_index)
+        export_schema_checkpoint.save()
+        # transform docs onto output and save
+        writer = get_writer(format)
+        
+        # open the doc and the headers
+        formatted_headers = self.get_table_headers()
         tmp = StringIO()
-        export_from_tables(tables, tmp, format)
+        writer.open(formatted_headers, tmp)
+        
+        for doc in config.get_docs():
+            writer.write(self.trim(format_tables_new\
+                             (create_intermediate_tables(doc, updated_schema), 
+                              separator=".")))
+        writer.close()
+
         return export_response(tmp, format, self.name)

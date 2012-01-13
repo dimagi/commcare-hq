@@ -48,7 +48,8 @@ class ExportWriter(object):
             for row in table:
                 # update the primary component of the ID to match
                 # how many docs we've seen
-                row.id = (self._current_primary_id,) + tuple(row.id[1:])
+                if row.has_id():
+                    row.id = (self._current_primary_id,) + tuple(row.id[1:])
                 self._write_row(table_name, row)
         
         self._current_primary_id += 1
