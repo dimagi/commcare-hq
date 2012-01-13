@@ -271,6 +271,7 @@ class FormBase(DocumentSchema):
         xform = XForm(self.source)
         xform.add_case_and_meta(self)
         xform.set_default_language(self.get_app().langs[0])
+        xform.set_version(self.get_app().version)
         return xform.render()
 
     def _get_active_actions(self, types):

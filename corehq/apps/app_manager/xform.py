@@ -391,6 +391,8 @@ class XForm(WrappedNode):
                 else:
                     translation.attrib.pop('default', None)
 
+    def set_version(self, version):
+        self.data_node.set('version', "%s" % version)
 
     def create_casexml(self, form):
         from xml_utils import XMLTag as __
