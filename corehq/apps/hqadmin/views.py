@@ -105,7 +105,7 @@ def global_report(request, template="hqadmin/global.html"):
         counts = []
         for result in get_db().view("hqadmin/%ss_over_time" % name, group_level=2):
             if not result or not result.has_key('key') or not result.has_key('value'): continue
-            if result['key'][0] and int(result['key'][0]) >= 2009 and \
+            if result['key'][0] and int(result['key'][0]) >= 2010 and \
                (int(result['key'][0]) < datetime.utcnow().year or
                 (int(result['key'][0]) == datetime.utcnow().year and
                  int(result['key'][1]) <= datetime.utcnow().month)):
@@ -130,11 +130,15 @@ def global_report(request, template="hqadmin/global.html"):
     dates = {}
     for result in get_db().view("hqadmin/active_domains_over_time", group=True):
         if not result or not result.has_key('key') or not result.has_key('value'): continue
-        date = _flot_format(result)
-        if not date in dates:
-            dates[date] = set([result['key'][2]])
-        else:
-            dates[date].update([result['key'][2]])
+        if result['key'][0] and int(result['key'][0]) >= 2010 and\
+           (int(result['key'][0]) < datetime.utcnow().year or
+            (int(result['key'][0]) == datetime.utcnow().year and
+             int(result['key'][1]) <= datetime.utcnow().month)):
+            date = _flot_format(result)
+            if not date in dates:
+                dates[date] = set([result['key'][2]])
+            else:
+                dates[date].update([result['key'][2]])
     datelist = [[date, dates[date]] for date in sorted(dates.keys())]
     domainlist = [[x[0], len(x[1])] for x in datelist]
     domainlist_int = deepcopy(datelist)
