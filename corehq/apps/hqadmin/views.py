@@ -127,7 +127,22 @@ def global_report(request, template="hqadmin/global.html"):
     _metric('case')
     _metric('form')
     _metric('user')
-    #_metric('active_domain')
+    dates = {}
+    for result in get_db().view("hqadmin/active_domains_over_time", group=True):
+        if not result or not result.has_key('key') or not result.has_key('value'): continue
+        date = _flot_format(result)
+        if not date in dates:
+            dates[date] = set([result['key'][2]])
+        else:
+            dates[date].update([result['key'][2]])
+    datelist = [[date, dates[date]] for date in sorted(dates.keys())]
+    domainlist = [[x[0], len(x[1])] for x in datelist]
+    domainlist_int = deepcopy(datelist)
+    for i in range(1, len(domainlist_int)):
+        domainlist_int[i][1] = list(set(domainlist_int[i-1][1]).union(domainlist_int[i][1]))
+    domainlist_int = [[x[0], len(x[1])] for x in domainlist_int]
+    context['active_domain_counts'] = domainlist
+    context['active_domain_counts_int'] = domainlist_int
 
     return render_to_response(request, template, context)
 
