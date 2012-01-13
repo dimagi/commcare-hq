@@ -12,7 +12,7 @@ def get_export_files(export_tag, format=None, previous_export_id=None, filter=No
     # the APIs of how these methods are broken down suck, but at least
     # it's DRY
     
-    from couchexport.export import export
+    from couchexport.export import export_new
     
     CACHE_TIME = 1 * 60 * 60 # cache for 1 hour, in seconds
     def _build_cache_key(tag, prev_export_id, format, max_column_size):
@@ -31,9 +31,9 @@ def get_export_files(export_tag, format=None, previous_export_id=None, filter=No
             return (tmp, checkpoint)
     
     tmp = StringIO()
-    checkpoint = export(export_tag, tmp, format=format, 
-                        previous_export_id=previous_export_id,
-                        filter=filter, max_column_size=max_column_size)
+    checkpoint = export_new(export_tag, tmp, format=format, 
+                            previous_export_id=previous_export_id,
+                            filter=filter, max_column_size=max_column_size)
     if checkpoint:
         if use_cache:
             cache.set(cache_key, (tmp, checkpoint), CACHE_TIME)

@@ -54,6 +54,14 @@ def build_latest_schema(schema_index):
     updated_checkpoint.save()
     return updated_checkpoint
 
+def get_schema_new(config):
+    last_export = config.last_checkpoint()
+    schema = last_export.schema if last_export else None
+    for doc_id in config.potentially_relevant_ids:
+        doc = config.database.get(doc_id)
+        schema = extend_schema(schema, doc)
+    return schema
+
 def get_schema(docs, previous_export=None):
     if previous_export is None:
         return make_schema(docs)
