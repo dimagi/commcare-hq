@@ -1,0 +1,12 @@
+{% extends "users/users_base.html" %}
+{% block user-view %}
+    <h1>Upload CommCare Users</h1>
+    <p>Step 1. Download the example file: <a href="{% url upload_commcare_users_example domain %}">users.csv</a></p>
+    <p>Step 2. Fill it out with your users' information</p>
+    <p>Step 3. Use the form below to upload your completed file.</p>
+    <form action="" method="post" enctype="multipart/form-data">
+        <input type="file" name="file"/>
+        <input type="submit" value="Upload"/>
+        <input type="hidden" name="redirect" value="{% url commcare_users domain %}"/>
+    </form>
+{% endblock %}

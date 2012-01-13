@@ -97,6 +97,10 @@ class DjangoUserMixin(DocumentSchema):
         'date_joined',
     )
 
+    def set_password(self, raw_password):
+        dummy = User()
+        dummy.set_password(raw_password)
+        self.password = dummy.password
 
 class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     """
