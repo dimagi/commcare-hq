@@ -365,13 +365,59 @@ class MultiUserSyncTest(SyncBaseTest):
     
     def testMultiUserEdits(self):
         # create a case from one user
-        # original user syncs
+        case_id = "multi_user_edits"
+        self._createCaseStubs([case_id])
+
+        # both users syncs
+        generate_restore_payload(self.user)
+        generate_restore_payload(self.other_user)
+        self.sync_log = SyncLog.last_for_user(USER_ID)
+        self.other_sync_log = SyncLog.last_for_user(OTHER_USER_ID)
+
         # update case from same user
+        my_change = CaseBlock(
+            create=False,
+            case_id=case_id,
+            user_id=USER_ID,
+            version=V2,
+            update={'greeting': 'hello'}
+        ).as_xml()
+        self._postFakeWithSyncToken(
+            my_change,
+            self.sync_log.get_id
+        )
+
         # update from another user
+        their_change = CaseBlock(
+            create=False,
+            case_id=case_id,
+            user_id=USER_ID,
+            version=V2,
+            update={'greeting_2': 'hello'}
+        ).as_xml()
+        self._postFakeWithSyncToken(
+            their_change,
+            self.other_sync_log.get_id
+        )
+
         # original user syncs again
         # make sure updates both appear (and merge?)
-        pass
-    
+        joint_change = CaseBlock(
+            create=False,
+            case_id=case_id,
+            user_id=USER_ID,
+            version=V2,
+            update={
+                'greeting': 'hello',
+                'greeting_2': 'hello'
+            },
+            owner_id='',
+            case_name='',
+            case_type='mother',
+        ).as_xml()
+        check_user_has_case(self, self.user, joint_change, restore_id=self.sync_log.get_id, version=V2)
+        check_user_has_case(self, self.other_user, joint_change, restore_id=self.other_sync_log.get_id, version=V2)
+
     def testOtherUserCloses(self):
         # create a case from one user
         # close case from another user
