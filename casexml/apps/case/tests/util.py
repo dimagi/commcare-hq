@@ -25,7 +25,7 @@ def bootstrap_case_from_xml(test_class, filename, case_id_override=None,
     file_path = os.path.join(os.path.dirname(__file__), "data", filename)
     with open(file_path, "rb") as f:
         xml_data = f.read()
-    doc_id, uid, case_id, ref_id = replace_ids_and_post(xml_data, case_id_override=case_id_override, 
+    doc_id, uid, case_id, ref_id = replace_ids_and_post(xml_data, case_id_override=case_id_override,
                                                          referral_id_override=referral_id_override)  
     doc = XFormInstance.get(doc_id)
     process_cases(sender="testharness", xform=doc)
@@ -61,7 +61,7 @@ def check_xml_line_by_line(test_case, expected, actual):
         return
     
     try:
-        expected_lines =  parsed_expected.split("\n")
+        expected_lines = parsed_expected.split("\n")
         actual_lines = parsed_actual.split("\n")
         test_case.assertEqual(len(expected_lines), len(actual_lines), "Parsed xml files are different lengths\n" + 
                               "Expected: \n%s\nActual:\n%s" % (parsed_expected, parsed_actual)) 
@@ -239,7 +239,7 @@ class CaseBlock(dict):
 
         if not ['' for val in self['update'].values() if val is not CaseBlock.undefined]:
                 self['update'] = CaseBlock.undefined
-        if index and version==V2:
+        if index and version == V2:
             self['index'] = {}
             for name, (case_type, case_id) in index.items():
                 self['index'][name] = {
@@ -290,7 +290,7 @@ class CaseBlock(dict):
         return case
     
     
-def check_user_has_case(testcase, user, case_block, should_have=True, 
+def check_user_has_case(testcase, user, case_block, should_have=True,
                         line_by_line=True, restore_id="", version=V1):
     XMLNS = NS_VERSION_MAP.get(version, 'http://openrosa.org/http/response')
     case_block.set('xmlns', XMLNS)

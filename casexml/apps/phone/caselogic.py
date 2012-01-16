@@ -9,6 +9,7 @@ def get_footprint(initial_case_list):
     Get's the flat list of the footprint of cases based on a starting list.
     Walks all the referenced indexes recursively.
     """
+    
     def children(case):
         return [CommCareCase.get(index.referenced_id) \
                 for index in case.indices]
@@ -100,13 +101,16 @@ class CaseSyncOperation(object):
                                     if last_sync else set()
         
         self.all_potential_cases = self.actual_relevant_cases | self.phone_relevant_cases
-        
         self.all_potential_to_sync = filter(case_modified_elsewhere_since_sync, 
-                                                       list(self.all_potential_cases))
+                                            list(self.all_potential_cases))
         
-        # handle create/update of new material for the phone
+        # this is messy but forces uniqueness at the case_id level, without
+        # having to reload all the cases
+        self.all_potential_to_sync_dict = dict((case.get_id, case) \
+                                               for case in self.all_potential_to_sync)
+        
         self.actual_cases_to_sync = []
-        for case in self.all_potential_to_sync:
+        for _, case in self.all_potential_to_sync_dict.items():
             sync_update = CaseSyncUpdate(case, last_sync)
             if sync_update.required_updates:
                 self.actual_cases_to_sync.append(sync_update)
