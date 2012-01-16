@@ -334,8 +334,8 @@ class FormattedRow(object):
 def format_tables_new(tables, id_label='id', separator='.', include_headers=True,
                       include_data=True):
     answ = []
-    assert(include_data or include_headers, 
-           "This method is pretty useless if you don't include anything!")
+    assert include_data or include_headers, "This method is pretty useless if you don't include anything!"
+    
     for table_name, table in sorted(tables.items()):
         new_table = []
         keys = sorted(table.items()[0][1].keys()) # the keys for every row are the same
