@@ -333,10 +333,35 @@ class MultiUserSyncTest(SyncBaseTest):
     
     def testOtherUserAddsIndex(self):
         # create a case from one user
+        case_id = "other_user_adds_index"
+        mother_id = "other_user_adds_index_mother"
+        self._createCaseStubs([case_id, mother_id])
+
+        # sync to the other's phone to be able to edit
+        check_user_has_case(self, self.other_user,
+            CaseBlock(case_id=case_id, version=V2).as_xml(),
+            should_have=True, line_by_line=False,
+            restore_id=self.other_sync_log.get_id, version=V2)
+
         # update from another, adding an indexed case
+        latest_sync = SyncLog.last_for_user(OTHER_USER_ID)
+        self._postFakeWithSyncToken(
+            CaseBlock(
+                create=False,
+                case_id=case_id,
+                user_id=OTHER_USER_ID,
+                version=V2,
+                update={'greeting': 'hello'},
+                index={'mother': ('mother', mother_id)}
+            ).as_xml(),
+            latest_sync.get_id
+        )
+
         # original user syncs again
         # make sure index updates take and indexed case also syncs
-        pass
+        mother_case = CaseBlock(create=False, case_id=mother_id, user_id=USER_ID, version=V2).as_xml()
+        print ElementTree.tostring(mother_case)
+        match = check_user_has_case(self, self.user, mother_case, restore_id=self.sync_log.get_id, version=V2)
     
     def testMultiUserEdits(self):
         # create a case from one user
