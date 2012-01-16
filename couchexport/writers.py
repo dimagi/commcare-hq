@@ -5,6 +5,7 @@ import json
 from django.template.loader import render_to_string
 
 class ExportWriter(object):
+    max_table_name_size = 500
     
     def open(self, header_table, file, max_column_size=2000):
         """
@@ -21,7 +22,8 @@ class ExportWriter(object):
         used_names = []
         for table_name, table in header_table:
             used_headers = []
-            table_name_truncated = _clean_name(_next_unique(table_name, used_names))
+            table_name_truncated = _clean_name(_next_unique(table_name, used_names,
+                                                             self.max_table_name_size))
             used_names.append(table_name_truncated)
             def _truncate(val):
                 ret = _next_unique(val, used_headers, max_column_size)
@@ -98,6 +100,7 @@ class CsvExportWriter(ExportWriter):
         self.file.seek(0)
 
 class Excel2007ExportWriter(ExportWriter):
+    max_table_name_size = 31
     
     def _init(self):
         try:
