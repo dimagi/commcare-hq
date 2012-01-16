@@ -1,5 +1,6 @@
 from couchdbkit.ext.django.schema import Document, IntegerProperty, DictProperty,\
-    Property, DocumentSchema, StringProperty, SchemaListProperty, ListProperty
+    Property, DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
+    StringListProperty
 import json
 from StringIO import StringIO
 from couchexport import util
@@ -262,3 +263,26 @@ class SavedExportSchema(Document, UnicodeMixIn):
         writer.close()
 
         return export_response(tmp, format, self.name)
+
+class ExportConfiguration(DocumentSchema):
+    """
+    Just a way to configure a single export. Used in the group export config.
+    """
+    index = JsonProperty()
+    name = StringProperty()
+    format = StringProperty()
+    
+    @property
+    def filename(self):
+        return "%s.%s" % (self.name, Format.from_format(self.format).extension)
+    
+class GroupExportConfiguration(Document):
+    """
+    An export configuration allows you to setup a collection of exports
+    that all run together. Used by the management command or a scheduled
+    job to run a bunch of exports on a schedule.
+    """
+    full_exports = SchemaListProperty(ExportConfiguration)
+    custom_export_ids = StringListProperty()
+    
+    
