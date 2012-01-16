@@ -110,14 +110,12 @@ class Excel2007ExportWriter(ExportWriter):
                             "excel export. To export to excel you have to run the "
                             "command:  easy_install openpyxl")
         
-        self.book = openpyxl.workbook.Workbook()
-        self.book.remove_sheet(self.book.worksheets[0])
+        self.book = openpyxl.workbook.Workbook(optimized_write=True)
         self.tables = {}
         self.table_indices = {}
         
         
     def _init_table(self, table_name, table_name_truncated):
-        
         sheet = self.book.create_sheet()
         sheet.title = table_name_truncated
         self.tables[table_name] = sheet
@@ -125,12 +123,8 @@ class Excel2007ExportWriter(ExportWriter):
 
     
     def _write_row(self, sheet_index, row):
-        row_index = self.table_indices[sheet_index]
         sheet = self.tables[sheet_index]
-        # have to deal with primary ids
-        for i, val in enumerate(row.get_data()):
-            sheet.cell(row=row_index, column=i).value = unicode(val)
-        self.table_indices[sheet_index] = row_index + 1
+        sheet.append([unicode(v) for v in row.get_data()]) 
     
     def _close(self):
         """
