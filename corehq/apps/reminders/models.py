@@ -59,23 +59,21 @@ class Message(object):
             template = unicode(template, encoding='utf-8')
         return unicode(cls(template, **params))
     
-METHOD_CHOICES = ["sms", "email", "test"]
+METHOD_CHOICES = ["sms", "email", "test", "callback", "callback_test"]
 
 """
 A CaseReminderEvent describes a single instance when a text message should be sent.
 
-day_num                 The day offset from the beginning of the current event list iteration for when this event should fire (starting with 0)
-fire_time               The time of day when this event should fire
-message                 The text to send
-max_try_count           The maximum number of times to try sending the reminder without getting a response back
-timeout_minutes         The number of minutes to wait before sending the reminder again
+day_num                     The day offset from the beginning of the current event list iteration for when this event should fire (starting with 0)
+fire_time                   The time of day when this event should fire
+message                     The text to send along with language to send it, represented as a dictionary: {"en" : "Hello"}
+callback_timeout_intervals  For CaseReminderHandlers whose method is "callback", a list of timeout intervals (in minutes); The message is resent based on the number of entries in this list until the callback is received, or the number of timeouts is exhausted
 """
 class CaseReminderEvent(DocumentSchema):
     day_num = IntegerProperty()
     fire_time = TimeProperty()
     message = DictProperty()
-    max_try_count = IntegerProperty()
-    timeout_minutes = IntegerProperty()
+    callback_timeout_intervals = ListProperty(IntegerProperty)
 
 """
 A CaseReminderCallback object logs the callback response for a CaseReminder with method "callback".
@@ -84,6 +82,17 @@ class CaseReminderCallback(Document):
     phone_number = StringProperty()
     timestamp = DateTimeProperty()
     user_id = StringProperty()
+    
+    @classmethod
+    def callback_exists(cls, user_id, after_timestamp):
+        start_timestamp = json_format_datetime(after_timestamp)
+        end_timestamp = json_format_datetime(datetime.utcnow())
+        c = CaseReminderCallback.view("reminders/callbacks_by_user_timestamp"
+           ,startkey = [user_id, start_timestamp]
+           ,endkey = [user_id, end_timestamp]
+           ,include_docs = True
+        ).one()
+        return (c is not None)
 
 class CaseReminderHandler(Document):
     """
@@ -139,6 +148,8 @@ class CaseReminderHandler(Document):
         ).all()
 
     def spawn_reminder(self, case, now):
+        user = CommCareUser.get_by_user_id(case.user_id)
+        local_now = CaseReminderHandler.utc_to_local(user, now)
         reminder = CaseReminder(
             domain=self.domain,
             case_id=case._id,
@@ -147,18 +158,31 @@ class CaseReminderHandler(Document):
             method=self.method,
             active=True,
             lang=self.default_lang,
-            start_date=date(now.year,now.month,now.day),
+            start_date=date(local_now.year,local_now.month,local_now.day),
             schedule_iteration_num=1,
             current_event_sequence_num=0,
-            try_count=0
+            callback_try_count=0,
+            callback_received=False
         )
         local_tmsp = datetime.combine(reminder.start_date, self.events[0].fire_time) + timedelta(days = (self.start_offset + self.events[0].day_num))
-        reminder.next_fire = self.timestamp_to_utc(reminder, local_tmsp)
+        reminder.next_fire = CaseReminderHandler.timestamp_to_utc(reminder.user, local_tmsp)
         return reminder
 
-    def timestamp_to_utc(self, reminder, timestamp):
+    @classmethod
+    def utc_to_local(cls, user, timestamp):
         try:
-            time_zone = timezone(reminder.user.time_zone)
+            time_zone = timezone(user.time_zone)
+            utc_datetime = pytz.utc.localize(timestamp)
+            local_datetime = utc_datetime.astimezone(time_zone)
+            naive_local_datetime = local_datetime.replace(tzinfo=None)
+            return naive_local_datetime
+        except Exception:
+            return timestamp
+
+    @classmethod
+    def timestamp_to_utc(cls, user, timestamp):
+        try:
+            time_zone = timezone(user.time_zone)
             local_datetime = time_zone.localize(timestamp)
             utc_datetime = local_datetime.astimezone(pytz.utc)
             naive_utc_datetime = utc_datetime.replace(tzinfo=None)
@@ -168,6 +192,8 @@ class CaseReminderHandler(Document):
 
     def move_to_next_event(self, reminder):
         reminder.current_event_sequence_num += 1
+        reminder.callback_try_count = 0
+        reminder.callback_received = False
         if reminder.current_event_sequence_num >= len(self.events):
             reminder.current_event_sequence_num = 0
             reminder.schedule_iteration_num += 1
@@ -184,28 +210,39 @@ class CaseReminderHandler(Document):
 
         """
         while now >= reminder.next_fire and reminder.active:
+            if (reminder.method == "callback" or reminder.method == "callback_test") and len(reminder.current_event.callback_timeout_intervals) > 0:
+                if reminder.callback_received or reminder.callback_try_count >= len(reminder.current_event.callback_timeout_intervals):
+                    pass
+                else:
+                    reminder.next_fire = reminder.next_fire + timedelta(minutes = reminder.current_event.callback_timeout_intervals[reminder.callback_try_count])
+                    reminder.callback_try_count += 1
+                    continue
             self.move_to_next_event(reminder)
             if reminder.active:
                 next_event = reminder.current_event
                 day_offset = self.start_offset + (self.schedule_length * (reminder.schedule_iteration_num - 1)) + next_event.day_num
                 reminder_datetime = datetime.combine(reminder.start_date, next_event.fire_time) + timedelta(days = day_offset)
-                reminder.next_fire = self.timestamp_to_utc(reminder, reminder_datetime)
+                reminder.next_fire = CaseReminderHandler.timestamp_to_utc(reminder.user, reminder_datetime)
 
     def should_fire(self, reminder, now):
         return now > reminder.next_fire
 
     def fire(self, reminder):
+        if (reminder.method == "callback" or reminder.method == "callback_test") and len(reminder.current_event.callback_timeout_intervals) > 0:
+            if CaseReminderCallback.callback_exists(reminder.user_id, reminder.last_fired):
+                reminder.callback_received = True
+                return True
         reminder.last_fired = self.get_now()
         message = reminder.current_event.message.get(reminder.lang, reminder.current_event.message[self.default_lang])
         message = Message.render(message, case=reminder.case.case_properties())
-        if reminder.method == "sms":
+        if reminder.method == "sms" or reminder.method == "callback":
             try:
                 phone_number = reminder.user.phone_number
             except Exception:
                 phone_number = ''
 
             return send_sms(reminder.domain, reminder.user_id, phone_number, message)
-        elif reminder.method == "test":
+        elif reminder.method == "test" or reminder.method == "callback_test":
             print(message)
             return True
         
@@ -342,7 +379,8 @@ class CaseReminder(Document):
     start_date = DateProperty()
     schedule_iteration_num = IntegerProperty()
     current_event_sequence_num = IntegerProperty()
-    try_count = IntegerProperty()
+    callback_try_count = IntegerProperty()
+    callback_received = BooleanProperty()
 
     @property
     def handler(self):
