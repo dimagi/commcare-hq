@@ -6,13 +6,14 @@ from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
 import sys
 from unidecode import unidecode
+from corehq.apps.hqmedia import utils
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
     XForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import DomainMembership, Permissions
+from corehq.apps.users.models import DomainMembership, Permissions, CouchUser
 
 from dimagi.utils.web import render_to_response, json_response, json_request
 
@@ -920,59 +921,33 @@ def multimedia_home(req, domain, app_id, module_id=None, form_id=None):
     Edit multimedia for forms
     """
     app = get_app(domain, app_id)
-
-    parsed_forms = {}
-    images = {}
-    audio_files = {}
-    # TODO: make this more fully featured
-    for m in app.get_modules():
-        for f in m.get_forms():
-            parsed = f.wrapped_xform()
-            if not parsed.exists():
-                continue
-            parsed.validate()
-            parsed_forms[f] = parsed
-            for i in parsed.image_references:
-                if i not in images: images[i] = []
-                images[i].append((m,f))
-            for i in parsed.audio_references:
-                if i not in audio_files: audio_files[i] = []
-                audio_files[i].append((m,f))
-
-    sorted_images = SortedDict()
-    sorted_audio = SortedDict()
-    for k in sorted(images):
-        sorted_images[k] = images[k]
-    for k in sorted(audio_files):
-        sorted_audio[k] = audio_files[k]
+    sorted_images, sorted_audio = utils.get_sorted_multimedia_refs(app)
     return render_to_response(req, "app_manager/multimedia_home.html",
                               {"domain": domain,
                                "app": app,
                                "images": sorted_images,
                                "audiofiles": sorted_audio})
 
-@require_GET
-@login_and_domain_required
-def commcare_profile(req, domain, app_id):
-    app = get_app(domain, app_id)
-    return HttpResponse(json.dumps(app.profile))
-
 @login_and_domain_required
 def zip_file_play(request, domain, app_id):
     print request.GET
     app = get_app(domain, app_id)
     if request.method == 'POST':
-        print "request is post"
         form = ZipUploadForm(request.POST, request.FILES)
         if form.is_valid():
-            print "form is valid"
-            success = form.save()
+            success = form.save(domain, app, request.user.username)
     else:
         form = ZipUploadForm()
     return render_to_response(request, "app_manager/zippy.html",
                               {"domain": domain,
                                "app": app,
                                "zipform": form})
+
+@require_GET
+@login_and_domain_required
+def commcare_profile(req, domain, app_id):
+    app = get_app(domain, app_id)
+    return HttpResponse(json.dumps(app.profile))
 
 @require_POST
 @require_permission('edit-apps')
