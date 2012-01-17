@@ -12,6 +12,7 @@ gunicorn==0.12.0
 lxml==2.3
 mocker==1.1
 openpyxl==1.2.3
+PIL
 psycopg2==2.4.1
 pygooglechart==0.3.0
 python-dateutil==1.5
