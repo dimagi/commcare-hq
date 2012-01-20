@@ -670,7 +670,6 @@ class XForm(WrappedNode):
         }))
 
         # user_data binds
-        print user_data
         for key, path in data_paths.items():
             self.model_node.append(_make_elem('{f}bind', {
                 'nodeset': self.resolve_path('registration/user_data/%s' % key),

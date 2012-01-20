@@ -812,7 +812,6 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     if should_edit("user_reg_data"):
         # should be user_registrations only
         data = json.loads(req.POST['user_reg_data'])
-        print data
         data_paths = data['data_paths']
         data_paths_dict = {}
         for path in data_paths:
