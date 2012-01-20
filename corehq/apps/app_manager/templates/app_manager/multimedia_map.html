@@ -1,0 +1,23 @@
+{% extends base_template %}
+{% load hq_shared_tags %}
+{% block content %}
+<div id="main_container">
+    <div class="padded">
+        Multimedia Map
+        <table>
+        {% for form_path, image in images.items %}
+            <tr>
+            {% if image %}
+                <td><img src="{% static 'hqmedia/img/checkmark.png' %}" alt="included" /></td>
+                <td>(Replace Image)</td>
+            {% else %}
+                <td><img src="{% static 'hqmedia/img/no_sign.png' %}" alt="not included" /></td>
+                <td>(Upload an Image)</td>
+            {% endif %}
+                <td>{{ form_path }}{% if image %} (<a href="{{ image }}">View Image</a>){% endif %}</td>
+            </tr>
+        {% endfor %}
+        </table>
+    </div>
+</div>
+{% endblock %}

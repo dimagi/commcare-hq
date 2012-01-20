@@ -1,0 +1,33 @@
+{% extends base_template %}
+{% block js %}{{ block.super }}
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#upload-zip").click(function() {
+            $(this).everyTime(1000, function(i) {
+                $.getJSON("{{ upload_progress_url }}",
+                  function(data){
+                      console.log("updated");
+                  });
+           });
+        });
+     });
+</script>
+{% endblock %}
+
+{% block content %}
+<div id="main_container">
+    <div class="padded">
+        <h1>Upload a .Zip file</h1>
+        <div class="body">
+          <p>
+            <form action="{{ submit_url }}" method="post"
+                  enctype="multipart/form-data">
+              <table>
+                {{ zipform }}
+              </table>
+              <input type="submit" id="upload-zip" value="Upload ZIP" />
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -14,19 +14,16 @@ def get_sorted_multimedia_refs(app):
                 continue
             parsed.validate()
             parsed_forms[f] = parsed
+            print parsed
+            print parsed.audio_references
             for i in parsed.image_references:
-                print i
                 if i not in images:
                     images[i] = []
                 images[i].append((m,f))
             for i in parsed.audio_references:
-                print i
-                print m
                 if i not in audio_files:
                     audio_files[i] = []
                 audio_files[i].append((m,f))
-            print "M", m
-            print "F", f
     sorted_images = SortedDict()
     sorted_audio = SortedDict()
     for k in sorted(images):
@@ -49,7 +46,7 @@ def get_multimedia_filenames(app):
             for i in parsed.image_references:
                 if i not in images:
                     images.append(i)
-            for i in parsed.audio_references:
-                if i not in audio_files:
-                    audio_files.append(i)
+            for a in parsed.audio_references:
+                if a not in audio_files:
+                    audio_files.append(a)
     return images, audio_files

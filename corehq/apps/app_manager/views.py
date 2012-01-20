@@ -1,15 +1,21 @@
+from StringIO import StringIO
 import logging
+import tempfile
+import uuid
+from wsgiref.util import FileWrapper
+import zipfile
 import os
 import re
 
 from couchdbkit.exceptions import ResourceConflict
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseServerError
 import sys
 from unidecode import unidecode
 from corehq.apps.hqmedia import utils
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
     XForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
+from corehq.apps.hqmedia.upload import HQMediaUploadProgressHandler
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.decorators import require_permission
@@ -17,7 +23,9 @@ from corehq.apps.users.models import DomainMembership, Permissions, CouchUser
 
 from dimagi.utils.web import render_to_response, json_response, json_request
 
-from corehq.apps.app_manager.forms import NewXFormForm, NewModuleForm, ZipUploadForm
+from corehq.apps.app_manager.forms import NewXFormForm, NewModuleForm
+from corehq.apps.hqmedia.forms import ZipUploadForm
+from corehq.apps.hqmedia.models import CommCareMultimedia, CommCareImage, CommCareAudio
 
 from corehq.apps.domain.decorators import login_and_domain_required
 
@@ -929,8 +937,13 @@ def multimedia_home(req, domain, app_id, module_id=None, form_id=None):
                                "audiofiles": sorted_audio})
 
 @login_and_domain_required
-def zip_file_play(request, domain, app_id):
-    print request.GET
+def multimedia_upload_zip(request, domain, app_id):
+    #progress_id = request.GET.get('X-Progress-ID', '')
+    #if not progress_id:
+        # progress_id = uuid.uuid4()
+        # request.META['X-Progress-ID'] = progress_id
+    # request.upload_handlers.insert(0, HQMediaUploadProgressHandler(request))
+    
     app = get_app(domain, app_id)
     if request.method == 'POST':
         form = ZipUploadForm(request.POST, request.FILES)
@@ -938,10 +951,42 @@ def zip_file_play(request, domain, app_id):
             success = form.save(domain, app, request.user.username)
     else:
         form = ZipUploadForm()
-    return render_to_response(request, "app_manager/zippy.html",
+    upload_progress_url = "%s?X-Progress-ID=%s?" % \
+                 (reverse("hqmedia_upload_progress", args=[domain]), uuid.uuid4())
+    submit_url = reverse("multimedia_upload_zip", args=[domain, app_id])
+   # print "%s?X-Progress-ID=%s" % (upload_progress_url, progress_id)
+    return render_to_response(request, "hqmedia/upload_zip.html",
                               {"domain": domain,
                                "app": app,
-                               "zipform": form})
+                               "zipform": form,
+                               "upload_progress_url": upload_progress_url,
+                               "submit_url": submit_url})
+
+def multimedia_map(request, domain, app_id):
+    app = get_app(domain, app_id)
+    multimedia_map = app.multimedia_map
+    sorted_images, sorted_audio = utils.get_sorted_multimedia_refs(app)
+
+    images = {}
+    audio_map = {}
+
+    for im in sorted_images:
+        im = im.strip()
+        try:
+            images[im] = reverse("hqmedia_download", args=[domain,
+                                                           multimedia_map[im].media_type,
+                                                           multimedia_map[im].multimedia_id] )
+        except KeyError:
+            images[im] = None
+    print images
+
+
+    return render_to_response(request, "app_manager/multimedia_map.html",
+                              {"domain": domain,
+                               "app": app,
+                               "images": images})
+
+
 
 @require_GET
 @login_and_domain_required
@@ -1281,6 +1326,29 @@ def download_user_registration(req, domain, app_id):
     return HttpResponse(
         req.app.get_user_registration().render_xform()
     )
+
+@safe_download
+def download_multimedia_zip(req, domain, app_id):
+    app = get_app(domain, app_id)
+    temp = StringIO()
+    hqZip = zipfile.ZipFile(temp, "a")
+    for form_path, media_item in app.multimedia_map.items():
+        try:
+            media = eval(media_item.media_type)
+            media = media.get(media_item.multimedia_id)
+            data, content_type = media.get_display_file()
+            path = form_path.replace(utils.MULTIMEDIA_PREFIX, "")
+            hqZip.writestr(path, data)
+        except (NameError, ResourceNotFound) as e:
+            print e, " on ", form_path, media_item
+            return HttpResponseServerError("There was an error gathering some of the multimedia for this application.")
+    hqZip.close()
+    response = HttpResponse(mimetype="application/zip")
+    response["Content-Disposition"] = "attachment; filename=commcare.zip"
+    temp.seek(0)
+    response.write(temp.read())
+    return response
+    
 
 @safe_download
 def download_jad(req, domain, app_id):
