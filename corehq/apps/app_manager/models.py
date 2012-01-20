@@ -267,11 +267,14 @@ class FormBase(DocumentSchema):
     def get_case_type(self):
         return self._parent.case_type
 
-    def render_xform(self):
-        xform = XForm(self.source)
-        xform.add_case_and_meta(self)
+
+    def add_stuff_to_xform(self, xform):
         xform.set_default_language(self.get_app().langs[0])
         xform.set_version(self.get_app().version)
+
+    def render_xform(self):
+        xform = XForm(self.source)
+        self.add_stuff_to_xform(xform)
         return xform.render()
 
     def _get_active_actions(self, types):
@@ -387,10 +390,22 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
 
 class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
+    def add_stuff_to_xform(self, xform):
+        super(Form, self).add_stuff_to_xform(xform)
+        xform.add_case_and_meta(self)
     def get_app(self):
         return self._parent._parent
     def get_module(self):
         return self._parent
+
+class UserRegistrationForm(FormBase):
+    username_path = StringProperty(default='username')
+    password_path = StringProperty(default='password')
+    data_paths = DictProperty()
+
+    def add_stuff_to_xform(self, xform):
+        super(UserRegistrationForm, self).add_stuff_to_xform(xform)
+        xform.add_user_registration(self.username_path, self.password_path, self.data_paths)
 
 class DetailColumn(IndexedSchema):
     """
@@ -737,6 +752,12 @@ class ApplicationBase(VersionedDoc):
 #        return CommCareBuild.get_build(version, build_number)
         return self.build_spec.get_build()
 
+    def get_preview_build(self):
+        try:
+            preview = self.get_build()
+        except Exception:
+            preview = CommCareBuildConfig.fetch().preview.get_build()
+        return preview
     @property
     def commcare_minor_release(self):
         """This is mostly just for views"""
@@ -862,13 +883,8 @@ class ApplicationBase(VersionedDoc):
         return self.get_jadjar().fetch_jar()
 
     def fetch_emulator_commcare_jar(self):
-#        version, build_number = current_builds.TAG_MAP[current_builds.PREVIEW_TAG]
-#        jadjar = CommCareBuild.get_build(version, build_number).get_jadjar("Generic/WebDemo")
         path = "Generic/WebDemo"
-        try:
-            jadjar = self.get_build().get_jadjar(path)
-        except Exception:
-            jadjar = CommCareBuildConfig.fetch().preview.get_build().get_jadjar(path)
+        jadjar = self.get_preview_build().get_jadjar(path)
         jadjar = jadjar.pack(self.create_all_files())
         return jadjar.jar
 
@@ -913,7 +929,7 @@ class Application(ApplicationBase, TranslationMixin):
     forms themselves.
 
     """
-    user_registration = SchemaProperty(FormBase)
+    user_registration = SchemaProperty(UserRegistrationForm)
     show_user_registration = BooleanProperty(default=False, required=True)
     modules = SchemaListProperty(Module)
     name = StringProperty()

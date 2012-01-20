@@ -17,6 +17,7 @@ def post(request):
     try:
         build_number = int(build_number)
     except Exception:
+        print "%r" % build_number
         return HttpResponseBadRequest("build_number has to be a base-10 integer")
 
 

@@ -28,10 +28,11 @@ namespaces = dict(
     f='{http://www.w3.org/2002/xforms}',
     ev="{http://www.w3.org/2001/xml-events}",
     orx="{http://openrosa.org/jr/xforms}",
+    reg="{http://openrosa.org/user/registration}",
 )
 
 def _make_elem(tag, attr):
-    return ET.Element(tag, dict([(key.format(**namespaces), val) for key,val in attr.items()]))
+    return ET.Element(tag.format(**namespaces), dict([(key.format(**namespaces), val) for key,val in attr.items()]))
 
 class WrappedNode(object):
     def __init__(self, xml, namespaces=namespaces):
@@ -599,3 +600,79 @@ class XForm(WrappedNode):
             for trans in additional_transformations:
                 trans()
         return casexml_text, binds, transformation
+
+    def add_user_registration(self, username_path='username', password_path='password', data_paths=None):
+        data_paths = data_paths or {'village': 'village'}
+
+        if self.model_node.find("{reg}registration"):
+            return
+
+        # registration
+        registration = ET.Element("{reg}registration".format(**namespaces), nsmap={None: namespaces['reg'][1:-1]})
+        ET.SubElement(registration, "{reg}username".format(**namespaces))
+        ET.SubElement(registration, "{reg}password".format(**namespaces))
+        ET.SubElement(registration, "{reg}uuid".format(**namespaces))
+        ET.SubElement(registration, "{reg}date".format(**namespaces))
+        ET.SubElement(registration, "{reg}registering_phone_id".format(**namespaces))
+        user_data = ET.SubElement(registration, "{reg}user_data".format(**namespaces))
+        for key in data_paths:
+            # $('<reg:' + key + '/>').attr('key', key).appendTo(user_data)
+            ET.SubElement(user_data, ("{reg}%s" % key).format(**namespaces)).set('key', key)
+        self.data_node.append(registration)
+
+        # hq_tmp
+        HQ_TMP = 'hq_tmp'
+        hq_tmp = ET.Element(("{x}%s" % HQ_TMP).format(**namespaces))
+        ET.SubElement(hq_tmp, "{x}loadedguid".format(**namespaces))
+        ET.SubElement(hq_tmp, "{x}freshguid".format(**namespaces))
+        self.data_node.append(hq_tmp)
+
+        # binds: username, password
+        for key, path in [('username', username_path), ('password', password_path)]:
+            self.model_node.append(_make_elem('{f}bind', {
+                'nodeset': self.resolve_path('registration/%s' % key),
+                'calculate': self.resolve_path(path)
+            }))
+
+            # add required="true()" to binds of required elements
+            bind = self.model_node.find('{f}bind[@nodeset="%s"]' % self.resolve_path(path))
+            if not bind.exists():
+                bind = _make_elem('{f}bind', {
+                    'nodeset': self.resolve_path(path),
+                    })
+                self.model_node.append(bind)
+            bind.set('required', "true()")
+
+        # binds: hq_tmp/loadedguid, hq_tmp/freshguid, registration/date, registration/registering_phone_id
+
+        for path, type, preload, preload_params in [
+            ('registration/date', 'xsd:dateTime', 'timestamp', 'start'),
+            ('registration/registering_phone_id', 'xsd:string', 'property', 'DeviceID'),
+            ('%s/loadedguid' % HQ_TMP, 'xsd:string', 'user', 'uuid'),
+            ('%s/freshguid' % HQ_TMP, 'xsd:string', 'uid', 'general'),
+        ]:
+            self.model_node.append(_make_elem('{f}bind', {
+                'nodeset': self.resolve_path(path),
+                'type': type,
+                '{jr}preload': preload,
+                '{jr}preloadParams': preload_params,
+            }))
+
+
+        # bind: registration/uuid
+        self.model_node.append(_make_elem('{f}bind', {
+            'nodeset': self.resolve_path('registration/uuid'),
+            'type': 'xsd:string',
+            'calculate': "if({loadedguid}='', {freshguid}, {loadedguid})".format(
+                loadedguid=self.resolve_path('%s/loadedguid' % HQ_TMP),
+                freshguid=self.resolve_path('%s/freshguid' % HQ_TMP),
+            )
+        }))
+
+        # user_data binds
+        print user_data
+        for key, path in data_paths.items():
+            self.model_node.append(_make_elem('{f}bind', {
+                'nodeset': self.resolve_path('registration/user_data/%s' % key),
+                'calculate': self.resolve_path(path),
+            }))
