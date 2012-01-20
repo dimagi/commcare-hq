@@ -602,7 +602,7 @@ class XForm(WrappedNode):
         return casexml_text, binds, transformation
 
     def add_user_registration(self, username_path='username', password_path='password', data_paths=None):
-        data_paths = data_paths or {'village': 'village'}
+        data_paths = data_paths or {}
 
         if self.model_node.find("{reg}registration").exists():
             return
