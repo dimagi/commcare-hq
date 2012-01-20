@@ -11,8 +11,8 @@
                 </user_registration>
             </instance>
             <bind nodeset="/user_registration/username" type="xsd:string" />
-            <bind nodeset="/user_registration/password" type="xsd:string" />
-            <bind nodeset="/user_registration/confirmpass" type="xsd:string" constraint="/user_registration/password = ." />
+            <bind nodeset="/user_registration/password" type="xsd:int" />
+            <bind nodeset="/user_registration/confirmpass" type="xsd:int" constraint="/user_registration/password = ." />
             <itext>
                 <translation lang="en" default="">
                     <text id="username-label">
