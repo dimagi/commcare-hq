@@ -753,11 +753,13 @@ class ApplicationBase(VersionedDoc):
         return self.build_spec.get_build()
 
     def get_preview_build(self):
-        try:
-            preview = self.get_build()
-        except Exception:
-            preview = CommCareBuildConfig.fetch().preview.get_build()
-        return preview
+        preview = self.get_build()
+
+        for path in getattr(preview, '_attachments', {}):
+            if path.startswith('Generic/WebDemo'):
+                return preview
+        return CommCareBuildConfig.fetch().preview.get_build()
+
     @property
     def commcare_minor_release(self):
         """This is mostly just for views"""
