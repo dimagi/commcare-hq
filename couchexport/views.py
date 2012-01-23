@@ -1,4 +1,5 @@
 from couchexport.export import Format
+import couchforms
 from django.http import HttpResponse, HttpResponseRedirect
 import json
 from couchexport.shortcuts import export_data_shared
@@ -17,13 +18,14 @@ def _export_tag_or_bust(request):
         pass # assume it was a string
     return export_tag
 
-def export_data_async(request, **kwargs):
+def export_data_async(request, filter=None, **kwargs):
     export_tag = _export_tag_or_bust(request)
     download_id = uuid.uuid4().hex
     export_async.delay(download_id, export_tag, 
                        request.GET.get("format", Format.XLS_2007), 
                        request.GET.get("filename", None), 
-                       request.GET.get("previous_export", None))
+                       request.GET.get("previous_export", None),
+                       filter=filter)
     return HttpResponseRedirect(reverse('retrieve_download', kwargs={'download_id': download_id}))
     
 def export_data(request, **kwargs):
