@@ -121,7 +121,7 @@ def export_data_async(req, domain):
         return HttpResponseBadRequest()
 
     assert(export_tag[0] == domain)
-    return couchexport_views.export_data_async(req)
+    return couchexport_views.export_data_async(req, filter=instances)
     
 @login_and_domain_required
 def custom_export(req, domain):
