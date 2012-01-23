@@ -12,7 +12,13 @@
             (function styleSourcePopup() {
                 var $dialog = $(".xml-source");
                 if ($dialog.hasClass('ui-dialog-content')) {
-                    $dialog.dialog({height: 700, width: 900})
+                    $dialog.dialog({
+                        open: function () {
+                            $dialog.dialog('option', 'height', $(window).height() -100);
+                            $dialog.dialog('option', 'width', $(window).width() - 100);
+                            $dialog.dialog('option', 'position', [50, 50]);
+                        }
+                    });
                 } else {
                     window.setTimeout(styleSourcePopup, 1000);
                 }
