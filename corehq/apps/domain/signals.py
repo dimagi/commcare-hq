@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from datetime import datetime
 import logging
-from corehq.apps.users.models import WebUser
 from dimagi.utils.web import get_url_base
 from django.conf import settings
 from django.core.mail import send_mail
