@@ -1,11 +1,11 @@
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, time
 import json
 from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reminders.forms import CaseReminderForm
-from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderCallback
+from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, CaseReminderCallback, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.web import render_to_response
 from tropo import Tropo
@@ -39,16 +39,29 @@ def add_reminder(request, domain, handler_id=None, template="reminders/partial/a
             if not handler:
                 handler = CaseReminderHandler(domain=domain)
             for key, value in reminder_form.cleaned_data.items():
-                handler[key] = value
+                if (key != "frequency") and (key != "message"):
+                    handler[key] = value
+            handler.max_iteration_count = REPEAT_SCHEDULE_INDEFINITELY
+            handler.schedule_length = reminder_form.cleaned_data["frequency"]
+            handler.event_interpretation = EVENT_AS_OFFSET
+            handler.events = [
+                CaseReminderEvent(
+                    day_num = 0
+                   ,fire_time = time(hour=0,minute=0,second=0)
+                   ,message = reminder_form.cleaned_data["message"]
+                   ,callback_timeout_intervals = []
+               )
+            ]
             handler.save()
-            print handler.message
+            print handler.events[0].message
             return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
     elif handler:
         initial = {}
         for key in handler.to_json():
-            initial[key] = handler[key]
-            if key == 'message':
-                initial[key] = json.dumps(initial[key])
+            if (key != "max_iteration_count") and (key != "schedule_length") and (key != "events"):
+                initial[key] = handler[key]
+        initial["message"] = json.dumps(handler.events[0].message)
+        initial["frequency"] = handler.schedule_length
         reminder_form = CaseReminderForm(initial=initial)
     else:
         reminder_form = CaseReminderForm()

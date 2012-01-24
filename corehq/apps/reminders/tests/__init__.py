@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, date, time
 from django.test.testcases import TestCase
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.reminders.models import CaseReminderHandler, Message, CaseReminderEvent, CaseReminderCallback
+from corehq.apps.reminders.models import *
 from corehq.apps.users.models import CouchUser, CommCareUser
 
 """
@@ -21,12 +21,13 @@ class ReminderTestCase(TestCase):
             start_offset=1,
             until='stop_sending',
             default_lang='en',
-            max_iteration_count=5,
+            max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY,
             schedule_length=3,
+            event_interpretation=EVENT_AS_OFFSET,
             events = [
                 CaseReminderEvent(
                     day_num = 0
-                   ,fire_time = time(9,30,0)
+                   ,fire_time = time(0,0,0)
                    ,message={"en":cls.message}
                    ,callback_timeout_intervals=[]
                 )
@@ -47,7 +48,7 @@ class ReminderTestCase(TestCase):
         self.assertEqual(self.handler.get_reminder(self.case), None)
 
         # create reminder
-        CaseReminderHandler.now = datetime(year=2011, month=7, day=7, hour=9, minute=30)
+        CaseReminderHandler.now = datetime(year=2011, month=7, day=7, hour=19, minute=8)
         self.case.set_case_property('start_sending', 'ok')
         self.case.save()
         CaseReminderHandler.fire_reminders()
@@ -60,7 +61,7 @@ class ReminderTestCase(TestCase):
         self.assertEqual(reminder.last_fired, None)
 
         # fire a day after created
-        CaseReminderHandler.now = datetime(year=2011, month=7, day=8, hour=9, minute=30)
+        CaseReminderHandler.now = datetime(year=2011, month=7, day=8, hour=19, minute=8)
         self.case.set_case_property('irrelevant_1', 'ok')
         self.case.save()
         CaseReminderHandler.fire_reminders()
@@ -74,7 +75,7 @@ class ReminderTestCase(TestCase):
 
         # Shouldn't fire until three days after created
         last_fired = CaseReminderHandler.now
-        CaseReminderHandler.now = datetime(year=2011, month=7, day=9, hour=9, minute=30)
+        CaseReminderHandler.now = datetime(year=2011, month=7, day=9, hour=19, minute=8)
         CaseReminderHandler.fire_reminders()
         reminder = self.handler.get_reminder(self.case)
         self.assertNotEqual(reminder, None)
@@ -85,7 +86,7 @@ class ReminderTestCase(TestCase):
         )
 
         # fire three days after last fired
-        CaseReminderHandler.now = datetime(year=2011, month=7, day=11, hour=9, minute=30)
+        CaseReminderHandler.now = datetime(year=2011, month=7, day=11, hour=19, minute=8)
         self.case.set_case_property('irrelevant_2', 'ok')
         self.case.save()
         CaseReminderHandler.fire_reminders()
@@ -98,12 +99,15 @@ class ReminderTestCase(TestCase):
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
 
         # set stop_sending to 'ok' should make it stop sending and make the reminder inactive
-        CaseReminderHandler.now = datetime(year=2011, month=7, day=14, hour=9, minute=30)
+        last_fired = CaseReminderHandler.now
+        CaseReminderHandler.now = datetime(year=2011, month=7, day=14, hour=19, minute=8)
         self.case.set_case_property('stop_sending', 'ok')
         self.case.save()
         CaseReminderHandler.fire_reminders()
         reminder = self.handler.get_reminder(self.case)
         self.assertNotEqual(reminder, None)
+        self.assertEqual(reminder.last_fired, last_fired)
+        self.assertEqual(reminder.active, False)
 
     @classmethod
     def tearDownClass(cls):
@@ -138,6 +142,7 @@ class ReminderIrregularScheduleTestCase(TestCase):
             default_lang='en',
             max_iteration_count=2,
             schedule_length=7,
+            event_interpretation=EVENT_AS_SCHEDULE,
             events = [
                 CaseReminderEvent(
                     day_num = 0
@@ -290,6 +295,7 @@ class ReminderCallbackTestCase(TestCase):
             default_lang='en',
             max_iteration_count=3,
             schedule_length=1,
+            event_interpretation=EVENT_AS_SCHEDULE,
             events = [
                 CaseReminderEvent(
                     day_num = 0
