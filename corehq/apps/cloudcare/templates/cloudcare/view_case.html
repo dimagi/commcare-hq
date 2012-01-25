@@ -1,25 +1,25 @@
 {% extends base_template %}
 {% load i18n %}
 {% load hq_shared_tags %}
+
+{% block head %}{{ block.super }}
+    <style>
+        #main_container {
+            padding: 10px;
+        }
+    </style>
+{% endblock %}
+
 {% block js %}{{ block.super }}
-    <script src="{% static 'cloudcare/js/owner-input.js' %}"></script>
+    <script src="{% static 'cloudcare/js/casexml.js' %}"></script>
 {% endblock %}
 {% block inline-js %}{{ block.super }}
-    $(function () {
-        $('#case-owner_id').owner_input();
-    });
+
 {% endblock %}
 
 {% block content %}
-    <section id="case-edit-form"></section>
-    <table>
-        <tr>
-            <th>{% trans "ID" %}</th>
-            <td>{{ case.case_id }}</td>
-        </tr>
-        <tr>
-            <th><label for="case-owner_id">{% trans "Owner" %}</label></th>
-            <td><input type="text" id="case-owner_id" class="owner_id" value="{{ case.owner_id }}" /></td>
-        </tr>
-    </table>
+    <div id="main_container">
+        Hello
+        <section id="case-edit-form"></section>
+    </div>
 {% endblock %}
