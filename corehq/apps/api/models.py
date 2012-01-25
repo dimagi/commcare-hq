@@ -3,6 +3,7 @@ from couchdbkit.ext.django.schema import *
 
 from django.contrib.auth.models import get_hexdigest, check_password
 from django.http import HttpResponse
+import settings
 
 class ApiUser(Document):
     password = StringProperty()
@@ -52,7 +53,8 @@ class ApiUser(Document):
 
 def require_api_user(fn):
     from django.views.decorators.http import require_POST
-    
+    if settings.DEBUG:
+        return fn
     @require_POST
     def _outer(request, *args, **kwargs):
         if ApiUser.auth(request.POST.get('username', ''), request.POST.get('password', '')):

@@ -105,7 +105,7 @@ def global_report(request, template="hqadmin/global.html"):
         counts = []
         for result in get_db().view("hqadmin/%ss_over_time" % name, group_level=2):
             if not result or not result.has_key('key') or not result.has_key('value'): continue
-            if result['key'][0] and int(result['key'][0]) >= 2009 and \
+            if result['key'][0] and int(result['key'][0]) >= 2010 and \
                (int(result['key'][0]) < datetime.utcnow().year or
                 (int(result['key'][0]) == datetime.utcnow().year and
                  int(result['key'][1]) <= datetime.utcnow().month)):
@@ -115,19 +115,34 @@ def global_report(request, template="hqadmin/global.html"):
         for i in range(1, len(counts_int)):
             if isinstance(counts_int[i][1], int):
                 counts_int[i][1] += counts_int[i-1][1]
-            elif isinstance(counts_int[i][1], list):
-                counts_int[i][1] = list(set(counts_int[i-1][1]).union(counts_int[i][1]))
-        if isinstance(counts_int[1][1], list):
-            counts = [[x[0], len(x[1])] for x in counts]
-            counts_int = [[x[0], len(x[1])] for x in counts_int]
-            context['%s_counts' % name] = counts
-
         context['%s_counts_int' % name] = counts_int
 
     _metric('case')
     _metric('form')
     _metric('user')
-    #_metric('active_domain')
+    def _active_metric(name):
+        dates = {}
+        for result in get_db().view("hqadmin/%ss_over_time" % name, group=True):
+            if not result or not result.has_key('key') or not result.has_key('value'): continue
+            if result['key'][0] and int(result['key'][0]) >= 2010 and\
+               (int(result['key'][0]) < datetime.utcnow().year or
+                (int(result['key'][0]) == datetime.utcnow().year and
+                 int(result['key'][1]) <= datetime.utcnow().month)):
+                date = _flot_format(result)
+                if not date in dates:
+                    dates[date] = set([result['key'][2]])
+                else:
+                    dates[date].update([result['key'][2]])
+        datelist = [[date, dates[date]] for date in sorted(dates.keys())]
+        domainlist = [[x[0], len(x[1])] for x in datelist]
+        domainlist_int = deepcopy(datelist)
+        for i in range(1, len(domainlist_int)):
+            domainlist_int[i][1] = list(set(domainlist_int[i-1][1]).union(domainlist_int[i][1]))
+        domainlist_int = [[x[0], len(x[1])] for x in domainlist_int]
+        context['%s_counts' % name] = domainlist
+        context['%s_counts_int' % name] = domainlist_int
+    _active_metric("active_domain")
+    _active_metric("active_user")
 
     return render_to_response(request, template, context)
 

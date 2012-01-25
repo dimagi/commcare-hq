@@ -107,7 +107,7 @@ def back_to_main(req, domain, app_id=None, module_id=None, form_id=None, unique_
         "?%s" % urlencode(params) if params else ""
     ))
 
-def _get_xform_source(request, app, form):
+def _get_xform_source(request, app, form, filename="form.xml"):
     download = json.loads(request.GET.get('download', 'false'))
     lang = request.COOKIES.get('lang', app.langs[0])
     source = form.source
@@ -116,8 +116,9 @@ def _get_xform_source(request, app, form):
         response['Content-Type'] = "application/xml"
         for lc in [lang] + app.langs:
             if lc in form.name:
-                response["Content-Disposition"] = "attachment; filename=%s.xml" % unidecode(form.name[lc])
+                filename = "%s.xml" % unidecode(form.name[lc])
                 break
+        response["Content-Disposition"] = "attachment; filename=%s" % filename
         return response
     else:
         return json_response(source)
@@ -132,7 +133,7 @@ def get_xform_source(req, domain, app_id, module_id, form_id):
 def get_user_registration_source(req, domain, app_id):
     app = get_app(domain, app_id)
     form = app.get_user_registration()
-    return _get_xform_source(req, app, form)
+    return _get_xform_source(req, app, form, filename="User Registration.xml")
 
 def xform_display(req, domain, form_unique_id):
     form, app = Form.get_form(form_unique_id, and_app=True)
@@ -254,8 +255,7 @@ def get_form_view_context(request, form, langs, is_user_registration):
     if xform and xform.exists():
         try:
             form.validate_form()
-            if not is_user_registration:
-                xform_questions = xform.get_questions(langs)
+            xform_questions = xform.get_questions(langs)
         except XMLSyntaxError as e:
             messages.error(request, "Syntax Error: %s" % e)
         except AppError as e:
@@ -808,6 +808,15 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
             return True
         else:
             return False
+
+    if should_edit("user_reg_data"):
+        # should be user_registrations only
+        data = json.loads(req.POST['user_reg_data'])
+        data_paths = data['data_paths']
+        data_paths_dict = {}
+        for path in data_paths:
+            data_paths_dict[path.split('/')[-1]] = path
+        form.data_paths = data_paths_dict
 
     if should_edit("requires"):
         requires = req.POST['requires']
@@ -1362,7 +1371,7 @@ def emulator(req, domain, app_id, template="app_manager/emulator.html"):
 
     # Coupled URL -- Sorry!
     build_path = "/builds/{version}/{build_number}/Generic/WebDemo/".format(
-        **CommCareBuildConfig.fetch().preview.get_build()._doc
+        **app.get_preview_build()._doc
     )
     return render_to_response(req, template, {
         'domain': domain,

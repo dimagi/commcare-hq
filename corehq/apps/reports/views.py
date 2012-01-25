@@ -14,7 +14,7 @@ from dimagi.utils.web import json_request, render_to_response
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.modules import to_function
 from django.conf import settings
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, Http404
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, Http404, HttpResponseNotFound
 from django.core.urlresolvers import reverse
 from django_digest.decorators import httpdigest
 from .calc import punchcard
@@ -121,7 +121,7 @@ def export_data_async(req, domain):
         return HttpResponseBadRequest()
 
     assert(export_tag[0] == domain)
-    return couchexport_views.export_data_async(req)
+    return couchexport_views.export_data_async(req, filter=instances)
     
 @login_and_domain_required
 def custom_export(req, domain):
@@ -398,7 +398,7 @@ def emailtest(request, domain, report_slug):
 def report_dispatcher(request, domain, report_slug, return_json=False, map='STANDARD_REPORT_MAP'):
     mapping = getattr(settings, map, None)
     if not mapping:
-        return Http404("Sorry, no standard reports have been configured yet.")
+        return HttpResponseNotFound("Sorry, no standard reports have been configured yet.")
     for key, models in mapping.items():
         for model in models:
             klass = to_function(model)
@@ -407,17 +407,17 @@ def report_dispatcher(request, domain, report_slug, return_json=False, map='STAN
                 if return_json:
                     return k.as_json()
                 return k.as_view()
-    return Http404("Can't find that report.")
+    raise Http404
 
 @login_and_domain_required
 @datespan_default
 def custom_report_dispatcher(request, domain, report_slug):
     mapping = getattr(settings, 'CUSTOM_REPORT_MAP', None)
     if not mapping or not domain in mapping:
-        return Http404("Sorry, no reports have been configured for this domain.")
+        return HttpResponseNotFound("Sorry, no custom reports have been configured yet.")
     for model in mapping[domain]:
         klass = to_function(model)
         if klass.slug == report_slug:
             k = klass(domain, request)
             return k.as_view()
-    return Http404("Can't find that report.")
+    raise Http404

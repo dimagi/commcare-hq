@@ -2,7 +2,7 @@ from django.utils.unittest.case import TestCase
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import CaseBlock, check_user_has_case
 from casexml.apps.case.util import post_case_blocks
-from casexml.apps.case.xml import V1, LEGAL_VERSIONS, V2
+from casexml.apps.case.xml import V1, V2
 from casexml.apps.phone.xml import date_to_xml_string
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
