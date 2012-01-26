@@ -5,125 +5,37 @@
 {% block js %}{{ block.super }}
 <script type="text/javascript" src="{{ STATIC_URL }}hqmedia/js/jquery.form.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}hqmedia/js/jquery.progressbar.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}hqmedia/js/hqmedia_upload.js"></script>
 <script type="text/javascript">
-    var submit_options = {
-        dataType: 'multipart/form-data',
-        url: '{{ submit_url }}',
-        beforeSubmit: showRequest,
-        success: showResponse,
-        type: 'post'
-    },
-        progress_bar_options = {
-        boxImage		: '{{ STATIC_URL }}hqmedia/img/progressbar.gif',
-        barImage		: {
-            0:  '{{ STATIC_URL }}hqmedia/img/progressbg_red.gif',
-            30: '{{ STATIC_URL }}hqmedia/img/progressbg_orange.gif',
-            70: '{{ STATIC_URL }}hqmedia/img/progressbg_green.gif'
+    $().ready(function() {
+        var _failed_files = $("#failed_files");
+        function showFailedFiles () {
+           $.getJSON("{{ failed_files_url }}", function(data) {
+               if (data.failed_files) {
+                   _failed_files.prepend("<h3>We could not find references to the following files in your application:</h3>");
+                   _failed_files.fadeIn();
+               }
+               for (var i = 0; i < data.failed_files.length; i++) {
+                   $("#failed_files ul").append("<li>"+data.failed_files[i]+"</li>");
+
+               }
+           });
         }
-    };
-    var submission_in_progress = false,
-        poll_server_interval = 0;
 
-    $('#uploadprogressbar').progressBar(progress_bar_options);
-    $('#processingprogressbar').progressBar(progress_bar_options);
-    
-    $(document).ready(function() {
-        $("#submitting_status").fadeOut();
-        $("#failed_files").fadeOut();
-		$("form#upload_zip_form").submit(function(e) {
-            e.preventDefault();
-            $(this).ajaxSubmit(submit_options);
-            startProgressBarUpdate("{{ progress_id }}");
-            $("input#upload_zip_submit").fadeOut();
-            $("#submitting_status").html("Submitting...");
-            $("#submitting_status").fadeIn();
-            return false;
-        });
-	});
-    function showRequest(formData, jqForm, options) {
-        submission_in_progress = true;
-        return true;
-    }
-    function showResponse(response) {
-        if(response) {
-            var error_list = $.parseJSON(response);
-            cancel_upload();
-            process_errors(error_list);
-        }
-    }
-    function startProgressBarUpdate(upload_id) {
-        if(poll_server_interval != 0)
-            clearInterval(poll_server_interval);
-        if(submission_in_progress) {
-            poll_server_interval = setInterval(function() {
-                $.getJSON("{{ upload_progress_url }}", function(data) {
-                    if(data == null) {
-                        // upload and processing has finished
-                        stop_polling_server(100);
-                        $(".form_error").html("");
-                        $("div#submitting_status").html("Finished.");
-                        show_failed_files();
-                        return;
-                    }
-                    if(data.upload_aborted) {
-                        cancel_upload();
-                        if (data.error_list)
-                            process_errors(data.error_list);
-                        return;
-                    }
-                    $(".form_error").html("");
-
-                    var upload_percentage = 100;
-                    if(!data.upload_complete)
-                        upload_percentage = Math.floor(100 * parseInt(data.uploaded) / parseInt(data.length));
-                    var processed_percentage = Math.floor(100 * parseInt(data.processed) / parseInt(data.processed_length));
-                    $("#uploadprogressbar").progressBar(upload_percentage);
-                    $("#processingprogressbar").progressBar(processed_percentage);
-                });
-            }, 1000);
-        }
-    }
-    function stop_polling_server(progressStatus) {
-        $("#uploadprogressbar").progressBar(progressStatus);
-        $("#processingprogressbar").progressBar(progressStatus);
-        clearInterval(poll_server_interval);
-        poll_server_interval = 0;
-        submission_in_progress = false;
-    }
-    function show_failed_files () {
-       $.getJSON("{{ failed_files_url }}", function(data) {
-           if (data.failed_files) {
-               $("#failed_files").prepend("<h3>We could not find references to the following files in your application:</h3>");
-               $("#failed_files").fadeIn();
-           }
-           for (var i = 0; i < data.failed_files.length; i++) {
-               $("ul#failed_file_list").append("<li>"+data.failed_files[i]+"</li>");
-
-           }
-       });
-    }
-    function cancel_upload() {
-        stop_polling_server(0);
-        $("input#upload_zip_submit").fadeIn();
-        $("#submitting_status").fadeOut();
-    }
-    function process_errors(error_list) {
-        for(var error in error_list) {
-            var error_div = "#errors_"+error;
-            $(error_div).html("");
-
-            var messages = error_list[error];
-            for(var i=0; i < messages.length ; i++) {
-                $(error_div).append(messages[i]);
+        var hqUpload;
+        hqUpload = new HQMediaUpload({
+            submit_url: '{{ submit_url }}',
+            progress_checker_url: '{{ upload_progress_url }}',
+            processbar: '#hqmedia_processing_progressbar',
+            static_url: '{{ STATIC_URL }}',
+            submit_complete: function() {
+                showFailedFiles();
             }
-        }
-    }
-    /*$(window).bind("onbeforeunload", function() {
-        if(submission_in_progress) {
-            // This is not really the correct way to do this. Something better should be done later.
-            return confirm("Are you sure you want to leave this page? It will cancel the upload.");
-        }
-    });*/
+        });
+
+        _failed_files.fadeOut();
+        hqUpload.listenForUploads();
+    });
 </script>
 {% endblock %}
 
@@ -132,12 +44,12 @@
     <div class="padded">
         <h1>Upload a .Zip file</h1>
         <div class="body">
-            <form action="" id="upload_zip_form" method="post" enctype="multipart/form-data">
+            <form action="" id="hqmedia_upload" method="post" enctype="multipart/form-data">
                 <ul>
                 {% for field in zipform %}
                     {% if field.field.required %}
                     <li>{{ field.label_tag }}: {{ field }} <span class="helptext">{{ field.help_text }}</span></li>
-                    <li class="form_error" id="errors_{{ field.name }}">{{ field.errors }}</li>
+                    <li class="error" id="errors_{{ field.name }}">{{ field.errors }}</li>
                     {% endif %}
                 {% endfor %}
                 </ul>
@@ -145,18 +57,19 @@
                 {% for field in zipform %}
                     {% if not field.field.required %}
                     <li>{{ field.label_tag }}: {{ field }} <span class="helptext">{{ field.help_text }}</span></li>
-                    <li class="form_error" class="errors_{{ field.name }}">{{ field.errors }}</li>
+                    <li class="error" class="errors_{{ field.name }}">{{ field.errors }}</li>
                     {% endif %}
                 {% endfor %}
                 </ul>
-                <input type="submit" id="upload_zip_submit" value="Upload ZIP" />
-                <div id="submitting_status"></div>
+                <input type="hidden" class="hqmedia_upload_id" value="{{ progress_id }}" />
+                <input type="submit" value="Upload Zip File" />
+                <div id="hqmedia_upload_status"></div>
             </form>
-            <div>Upload progress: <span id="uploadprogressbar"></span></div>
-            <div>Processing progress: <span id="processingprogressbar"></span></div>
+            <div>Upload progress: <span id="hqmedia_progressbar"></span></div>
+            <div>Processing progress: <span id="hqmedia_processing_progressbar"></span></div>
         </div>
         <div id="failed_files">
-            <ul id="failed_file_list"></ul>
+            <ul></ul>
         </div>
     </div>
 </div>

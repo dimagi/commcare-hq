@@ -4,7 +4,6 @@ Requires jquery.form and jquery.progressbar
 
 function HQMediaUpload (args) {
     /* defaults...
-        upload_id: null,
         submit_url: '',
         progress_checker_url: '',
         uploadbar: '#hqmedia_progressbar',
@@ -17,8 +16,7 @@ function HQMediaUpload (args) {
         submit_complete: function() {}
      */
 
-    var _upload_id = (args.upload_id) ? args.upload_id : null,
-        _submit_url = (args.submit_url) ? args.submit_url : '',
+    var _submit_url = (args.submit_url) ? args.submit_url : '',
         _progress_checker_url = (args.progress_checker_url) ? args.progress_checker_url : '',
         _upload_progressbar = (args.uploadbar) ? $(args.uploadbar) : $('#hqmedia_progressbar'),
         _process_progressbar = (args.processbar) ? $(args.processbar): null,
@@ -134,17 +132,15 @@ function HQMediaUpload (args) {
         _submit_status_elem.fadeOut();
         _upload_form.submit(function(e) {
             $(this).ajaxSubmit(ajax_submit_options);
-            if(_upload_id)
-                startProgressBarUpdates(_upload_id);
+            var upload_id = $(this).children('.hqmedia_upload_id').val();
+            if(upload_id)
+                startProgressBarUpdates(upload_id);
             else
                 console.log("No upload id was provided!");
             _upload_form_submit.fadeOut();
             _submit_status_elem.text('Submitting...');
             _submit_status_elem.fadeIn();
-
             return false;
         });
     }
-        
-
 }

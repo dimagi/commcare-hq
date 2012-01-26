@@ -1007,7 +1007,8 @@ def multimedia_map(request, domain, app_id):
 @require_permission('edit-apps')
 def upload_multimedia_file(request, domain, app_id):
     app = get_app(domain, app_id)
-
+    upload_progress_url = reverse("hqmedia_upload_progress", args=[domain])
+    submit_url = reverse("multimedia_upload_zip", args=[domain, app_id])
 
 
     response = {}
