@@ -315,7 +315,7 @@ class ReminderCallbackTestCase(TestCase):
         cls.user_id = "USER-ID-109349"
         cls.user = CommCareUser.create(cls.domain, 'chw.bob3', '****', uuid=cls.user_id)
         cls.user.phone_numbers = ["+15551234"]
-        cls.user.time_zone="Africa/Nairobi"
+        cls.user.user_data["time_zone"]="Africa/Nairobi"
         cls.user.save()
         cls.case = CommCareCase(
             domain=cls.domain,

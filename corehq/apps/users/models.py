@@ -118,8 +118,6 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 #        ('site_edited',     'Manually added or edited from the HQ website.'),
 
     status = StringProperty()
-    
-    time_zone = StringProperty()
 
     _user = None
     _user_checked = False
