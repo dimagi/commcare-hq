@@ -14,8 +14,6 @@ def get_sorted_multimedia_refs(app):
                 continue
             parsed.validate()
             parsed_forms[f] = parsed
-            print parsed
-            print parsed.audio_references
             for i in parsed.image_references:
                 if i not in images:
                     images[i] = []

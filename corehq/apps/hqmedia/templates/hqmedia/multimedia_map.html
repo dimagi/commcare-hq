@@ -1,0 +1,140 @@
+{% extends base_template %}
+{% load hq_shared_tags %}
+{% load multimedia_display_tags %}
+{% block head %}{{ block.super }}
+    {% include "imports/jqmodal.html" %}
+    <style type="text/css">
+        .jqmWindow {
+            display: none;
+
+            position: fixed;
+            top: 17%;
+            left: 50%;
+
+            margin-left: -300px;
+            width: 600px;
+
+            background-color: #EEE;
+            color: #333;
+            border: 1px solid black;
+            padding: 12px;
+        }
+    </style>
+{% endblock %}
+{% block js %}{{ block.super }}
+<script type="text/javascript" src="{{ STATIC_URL }}hqmedia/js/jquery.jplayer.min.js"></script>
+<script type="text/javascript">
+    $().ready(function () {
+        var _jplayer = $("#jquery_jplayer"),
+            _jplayer_is_playing = false,
+            _jplayer_trigger = $(".Audiofile a.view_media");
+        
+        $("#imageView").jqm( {
+            trigger: ".Imagefile a.view_media"
+        });
+        $("#uploadFileView").jqm( {
+            trigger: "a.upload_media"
+        });
+        $(".Imagefile a.view_media").click(function(e) {
+            console.log("clicked");
+            var form_path = $(this).parent().data('form-path'),
+                image_src = $(this).attr('href');
+            $("#imageView h2").text("Viewing Image for path "+form_path);
+            $("#imageView img").attr('src', image_src);
+            return false;
+        });
+        $("a.upload_media").click(function(e) {
+            console.log("attempt to upload media");
+            var form_path = $(this).parent().data("form-path"),
+                media_type = $(this).parent().data("media-type"),
+                replace_file = $(this).data("replace-file"),
+                action_text = $(this).text();
+            console.log(replace_file);
+            $('form #id_multimedia_upload_action').val(replace_file != null);
+            $('form #id_multimedia_form_path').val(form_path);
+            $('form #id_multimedia_class').val(media_type);
+            $('form#multimedia_file_form input[type="submit"]').val(action_text);
+            $('form#multimedia_file_form fieldset legend').text(action_text+" for path "+form_path);
+            return false;
+        });
+        _jplayer.jPlayer({
+            swfPath: "{{ STATIC_URL }}hqmedia/js",
+            supplied: "mp3",
+            wmode: "window",
+            error: function(e) {
+                console.log("jPlayer error", e);
+            },
+            ready: function(e) {
+                _jplayer_trigger.click(function(e) {
+                    if (_jplayer_is_playing && $(this).text() == "Stop Audio") {
+                        _jplayer.jPlayer("stop");
+                    } else {
+                        _jplayer.jPlayer("setMedia", {
+                            mp3: $(this).attr("href")
+                        });
+                        _jplayer_is_playing = true;
+                        _jplayer.jPlayer("play");
+                        _jplayer_trigger.text("Play Audio");
+                        $(this).text("Stop Audio");
+                    }
+                    return false;
+                }).text("Play Audio");
+            },
+            ended: function(e) {
+                stopPlayingAudio();
+            },
+            pause: function(e) {
+                stopPlayingAudio();
+            }
+        });
+        function stopPlayingAudio() {
+            _jplayer_is_playing = false;
+            _jplayer_trigger.text("Play Audio");
+        }
+    });
+</script>
+{% endblock %}
+{% block content %}
+<div id="main_container">
+    <div class="padded">
+        <h1>Applcication Multimedia</h1>
+
+        <h2>Images</h2>
+        <ul>
+        {% for form_path, image in images.items %}
+            {% render_multimedia_map form_path "image" image %}
+        {% endfor %}
+        </ul>
+
+        <h2>Audio</h2>
+        <ul>
+        {% for form_path, sound in audio.items %}
+            {% render_multimedia_map form_path "audio" sound %}
+        {% endfor %}
+        </ul>
+    </div>
+</div>
+<div class="jqmWindow" id="imageView">
+    <a href="#" class="jqmClose">Close</a>
+    <h2>Viewing Image for path</h2>
+    <img src="" alt="currently selected image" />
+</div>
+<div id="jquery_jplayer"></div>
+<div class="jqmWindow" id="uploadFileView">
+    <a href="#" class="jqmClose">Close</a>
+    <form id="multimedia_file_form" action="" method="post" enctype="multipart/form-data">
+        <fieldset>
+            <legend>Replace Media for path</legend>
+            <ul>
+            {% for field in fileform.visible_fields %}
+                <li>{{ field.label_tag }}{{ field }}</li>
+            {% endfor %}
+            </ul>
+            {% for field in fileform.hidden_fields %}
+                {{ field }}
+            {% endfor %}
+            <input type="submit" value="Upload File" /><input type="button" value="Cancel" class="jqmClose" />
+        </fieldset>
+    </form>
+</div>
+{% endblock %}

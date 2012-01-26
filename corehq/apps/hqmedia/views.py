@@ -1,9 +1,13 @@
 from couchdbkit.exceptions import ResourceNotFound
 from django.http import HttpResponse, HttpResponseServerError
+from django.utils import simplejson
+from corehq.apps.hqmedia import upload
 from corehq.apps.hqmedia.models import *
-from django.core.cache import cache
+
+X_PROGRESS_ERROR = 'Server Error: You must provide X-Progress-ID header or query param.'
 
 def download_media(request, domain, media_type, doc_id):
+    # TODO limit access to relevant domains
     try:
         media = eval(media_type)
         try:
@@ -22,15 +26,23 @@ def check_upload_progress(request, domain):
     """
     Return JSON object with information about the progress of an upload.
     """
-    progress_id = ''
-    if 'X-Progress-ID' in request.GET:
-        progress_id = request.GET['X-Progress-ID']
-    elif 'X-Progress-ID' in request.META:
-        progress_id = request.META['X-Progress-ID']
-    if progress_id:
-        from django.utils import simplejson
-        cache_key = "%s_%s" % (request.META['REMOTE_ADDR'], progress_id)
-        data = cache.get(cache_key)
-        return HttpResponse(simplejson.dumps(data))
+    cache_handler = upload.HQMediaUploadCacheHandler.handler_from_request(request)
+    if cache_handler:
+        cache_handler.sync()
+        return HttpResponse(simplejson.dumps(cache_handler.data))
     else:
-        return HttpResponseServerError('Server Error: You must provide X-Progress-ID header or query param.')
+        return HttpResponseServerError(X_PROGRESS_ERROR)
+
+def check_failed_files(request, domain):
+    """
+    Return JSON object with information about files that failed to sync with couch after
+    a zip upload---can only by accessed once, and later returns an empty JSON object.
+    """
+    cache_handler = upload.HQMediaFailedFilesCacheHandler.handler_from_request(request)
+    if cache_handler:
+        cache_handler.sync()
+        failed_files = cache_handler.data
+        cache_handler.delete()
+        return HttpResponse(simplejson.dumps(failed_files))
+    else:
+        return HttpResponseServerError(X_PROGRESS_ERROR)

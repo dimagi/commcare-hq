@@ -4,6 +4,7 @@ import tempfile
 import uuid
 from wsgiref.util import FileWrapper
 import zipfile
+from django.utils import simplejson
 import os
 import re
 
@@ -15,7 +16,7 @@ from corehq.apps.hqmedia import utils
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
     XForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
-from corehq.apps.hqmedia.upload import HQMediaUploadProgressHandler
+from corehq.apps.hqmedia import upload
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.decorators import require_permission
@@ -24,7 +25,7 @@ from corehq.apps.users.models import DomainMembership, Permissions, CouchUser
 from dimagi.utils.web import render_to_response, json_response, json_request
 
 from corehq.apps.app_manager.forms import NewXFormForm, NewModuleForm
-from corehq.apps.hqmedia.forms import ZipUploadForm
+from corehq.apps.hqmedia.forms import HQMediaZipUploadForm, HQMediaFileUploadForm
 from corehq.apps.hqmedia.models import CommCareMultimedia, CommCareImage, CommCareAudio
 
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -936,57 +937,81 @@ def multimedia_home(req, domain, app_id, module_id=None, form_id=None):
                                "images": sorted_images,
                                "audiofiles": sorted_audio})
 
-@login_and_domain_required
+@require_permission('edit-apps')
 def multimedia_upload_zip(request, domain, app_id):
-    #progress_id = request.GET.get('X-Progress-ID', '')
-    #if not progress_id:
-        # progress_id = uuid.uuid4()
-        # request.META['X-Progress-ID'] = progress_id
-    # request.upload_handlers.insert(0, HQMediaUploadProgressHandler(request))
-    
+    upload_progress_url = reverse("hqmedia_upload_progress", args=[domain])
+    submit_url = reverse("multimedia_upload_zip", args=[domain, app_id])
+    failed_files_url = reverse("hqmedia_failed_file_status", args=[domain])
+
     app = get_app(domain, app_id)
     if request.method == 'POST':
-        form = ZipUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            success = form.save(domain, app, request.user.username)
-    else:
-        form = ZipUploadForm()
-    upload_progress_url = "%s?X-Progress-ID=%s?" % \
-                 (reverse("hqmedia_upload_progress", args=[domain]), uuid.uuid4())
-    submit_url = reverse("multimedia_upload_zip", args=[domain, app_id])
-   # print "%s?X-Progress-ID=%s" % (upload_progress_url, progress_id)
+        request.upload_handlers.insert(0, upload.HQMediaFileUploadHandler(request))
+        cache_handler = upload.HQMediaUploadCacheHandler.handler_from_request(request)
+        response_errors = {}
+        try:
+            form = HQMediaZipUploadForm(data=request.POST, files=request.FILES)
+            if form.is_valid():
+                failed_files = form.save(domain, app, request.user.username, cache_handler)
+                if cache_handler:
+                    cache_handler.delete()
+                if failed_files:
+                    failed_cache = upload.HQMediaFailedFilesCacheHandler.handler_from_request(request)
+                    if failed_cache:
+                        failed_cache.defaults()
+                        failed_cache.data["failed_files"] = failed_files
+                        failed_cache.save()
+                return HttpResponse(simplejson.dumps(failed_files))
+            else:
+                response_errors = form.errors
+        except TypeError:
+            pass
+        if response_errors:
+            cache_handler.defaults()
+            cache_handler.data['error_list'] = response_errors
+            cache_handler.save()
+        return HttpResponse(simplejson.dumps(response_errors))
+    
+    form = HQMediaZipUploadForm()
+    progress_id = uuid.uuid4()
+    upload_progress_url = "%s?%s=%s" % (upload_progress_url, upload.HQMediaCacheHandler.X_PROGRESS_ID, progress_id)
+    submit_url = "%s?%s=%s" % (submit_url, upload.HQMediaCacheHandler.X_PROGRESS_ID, progress_id)
+    failed_files_url = "%s?%s=%s" % (failed_files_url, upload.HQMediaCacheHandler.X_PROGRESS_ID, progress_id)
+
     return render_to_response(request, "hqmedia/upload_zip.html",
                               {"domain": domain,
                                "app": app,
                                "zipform": form,
                                "upload_progress_url": upload_progress_url,
-                               "submit_url": submit_url})
+                               "submit_url": submit_url,
+                               "failed_files_url": failed_files_url,
+                               "progress_id": progress_id })
 
+@login_and_domain_required
 def multimedia_map(request, domain, app_id):
     app = get_app(domain, app_id)
-    multimedia_map = app.multimedia_map
     sorted_images, sorted_audio = utils.get_sorted_multimedia_refs(app)
 
-    images = {}
-    audio_map = {}
+    images = app.get_template_map(sorted_images, domain)
+    audio = app.get_template_map(sorted_audio, domain)
 
-    for im in sorted_images:
-        im = im.strip()
-        try:
-            images[im] = reverse("hqmedia_download", args=[domain,
-                                                           multimedia_map[im].media_type,
-                                                           multimedia_map[im].multimedia_id] )
-        except KeyError:
-            images[im] = None
-    print images
-
-
-    return render_to_response(request, "app_manager/multimedia_map.html",
+    fileform = HQMediaFileUploadForm()
+    
+    return render_to_response(request, "hqmedia/multimedia_map.html",
                               {"domain": domain,
                                "app": app,
-                               "images": images})
+                               "images": images,
+                               "audio": audio,
+                               "fileform": fileform})
+
+@require_POST
+@require_permission('edit-apps')
+def upload_multimedia_file(request, domain, app_id):
+    app = get_app(domain, app_id)
 
 
+
+    response = {}
+    return HttpResponse(simplejson.dumps(response))
 
 @require_GET
 @login_and_domain_required

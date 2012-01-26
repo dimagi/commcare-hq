@@ -3,6 +3,8 @@ from PIL import Image
 from datetime import datetime
 import hashlib
 from couchdbkit.ext.django.schema import *
+from django.core.urlresolvers import reverse
+import magic
 from hutch.models import AuxMedia, AttachmentImage, MediaAttachmentManager
 
 class HQMediaType(object):
@@ -18,13 +20,22 @@ class CommCareMultimedia(Document):
     last_modified = DateTimeProperty()
     valid_domains = StringListProperty()
 
-    def attach_data(self, data, upload_path=None, username=None, attachment_id=None, media_meta=None):
+    def attach_data(self, data, upload_path=None, username=None, attachment_id=None,
+                    media_meta=None, replace_attachment=False):
         self.last_modified = datetime.utcnow()
         self.save()
         if not attachment_id:
             attachment_id = self.file_hash
+        if attachment_id in self.current_attachments and replace_attachment:
+            self.delete_attachment(attachment_id)
+            for aux in self.aux_media:
+                if aux.attachment_id == attachment_id:
+                    self.aux_media.remove(aux)
+            self.save()
         if not attachment_id in self.current_attachments:
-            self.put_attachment(data, attachment_id)
+            mime = magic.Magic(mime=True)
+            content_type = mime.from_buffer(data)
+            self.put_attachment(data, attachment_id, content_type=content_type)
             new_media = AuxMedia()
             new_media.uploaded_date = datetime.utcnow()
             new_media.attachment_id = attachment_id
@@ -78,17 +89,17 @@ class CommCareMultimedia(Document):
 
 class CommCareImage(CommCareMultimedia):
 
-    def attach_data(self, data, upload_path=None, username=None, attachment_id=None, media_meta=None):
+    def attach_data(self, data, upload_path=None, username=None, attachment_id=None, media_meta=None, replace_attachment=False):
         image = Image.open(StringIO(data))
         attachment_id = "%dx%d" % image.size
         attachment_id = "%s-%s.%s" % (self.file_hash, attachment_id, image.format)
-        media_meta = {
-                "size": {
-                    "width": image.size[0],
-                    "height": image.size[1]
-                }
-            }
-        super(CommCareImage, self).attach_data(data, upload_path, username, attachment_id, media_meta)
+        if not media_meta:
+            media_meta = {}
+        media_meta["size"] = {
+            "width": image.size[0],
+            "height": image.size[1]
+        }
+        super(CommCareImage, self).attach_data(data, upload_path, username, attachment_id, media_meta, replace_attachment)
         
 class CommCareAudio(CommCareMultimedia):
     pass
@@ -117,3 +128,17 @@ class HQMediaMixin(Document):
             media = eval(map_item.media_type)
             media = media.get(map_item.multimedia_id)
             print media.file_hash
+
+    def get_template_map(self, sorted_files, domain):
+        product = {}
+        multimedia_map = self.multimedia_map
+        for f in sorted_files:
+            f = f.strip()
+            try:
+                product[f] = {"url": reverse("hqmedia_download", args=[domain,
+                                                           multimedia_map[f].media_type,
+                                                           multimedia_map[f].multimedia_id]),
+                                "m_id": multimedia_map[f].multimedia_id}
+            except KeyError:
+                product[f] = None
+        return product
