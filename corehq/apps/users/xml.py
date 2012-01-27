@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from lxml.etree import Element, SubElement
+from xml.etree import ElementTree
 
 """
 This module is used to generate xml responses for user registrations.
@@ -29,13 +29,12 @@ def group_fixture(groups, user):
         </groups>
     </fixture>
     """
-
-    xFixture = Element('fixture', attrib={'id': 'user-groups', 'user_id': user.user_id})
-    xGroups = SubElement(xFixture, 'groups')
+    xFixture = ElementTree.Element('fixture', attrib={'id': 'user-groups', 'user_id': user.user_id})
+    xGroups = ElementTree.SubElement(xFixture, 'groups')
 
     for group in groups:
-        xGroup = SubElement(xGroups, 'group', attrib={'id': group.get_id})
-        xName = SubElement(xGroup, 'name')
+        xGroup = ElementTree.SubElement(xGroups, 'group', attrib={'id': group.get_id})
+        xName = ElementTree.SubElement(xGroup, 'name')
         xName.text = group.name
 
     return xFixture

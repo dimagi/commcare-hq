@@ -64,26 +64,7 @@
     </script>
 {% endblock %}
 <ul id="report-list">
-    <li>
-        <h2>Worker Monitoring</h2>
-        <ul>
-            <li><a href="{% url case_activity_report domain %}">Case Activity</a></li>
-            <li><a href="{% url submissions_by_form_report domain %}">Submissions By Form</a></li>
-            <li><a href="{% url daily_submissions_report domain %}">Daily Form Submissions</a></li>
-            <li><a href="{% url daily_completions_report domain %}">Daily Form Completions</a></li>
-            <li><a href="{% url completion_times_report domain %}">Form Completion Trends</a></li>
-            <li><a href="{% url submit_time_punchcard domain %}?individual={{ individual }}">Submission Times</a></li>
-            <li><a href="{% url submit_trends domain %}?individual={{ individual }}">Submit Trends</a></li>
-            <li><a href="{% url submit_distribution domain %}?individual={{ individual }}">Submit Distribution</a></li>
-        </ul>
-    </li>
-    <li>
-        <h2>Data Inspection</h2>
-        <ul>
-            <li><a href="{% url submit_history_report domain %}?individual={{ individual }}&show_unregistered={{ show_unregistered }}">Submit History</a></li>
-            <li><a href="{% url case_list_report domain %}">Case List</a></li>
-        </ul>
-    </li>
+    {% standard_report_list domain %}
     <li>
         <h2>Raw Data</h2>
         <ul>
@@ -91,7 +72,7 @@
             <li><a href="{% url case_export domain %}">Export cases, referrals, and users</a></li>
         </ul>
     </li>
-    <li id="report-list-custom"><h2>Custom</h2>
+    <li id="report-list-custom"><h2>Custom Reports</h2>
         <ul>
             {% custom_report_list domain %}
         </ul>

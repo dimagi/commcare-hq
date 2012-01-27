@@ -5,6 +5,7 @@ import re
 from couchdbkit.exceptions import BadValueError
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
+from django.contrib.auth.models import get_hexdigest
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from restkit.errors import ResourceError
@@ -266,10 +267,14 @@ class FormBase(DocumentSchema):
     def get_case_type(self):
         return self._parent.case_type
 
+
+    def add_stuff_to_xform(self, xform):
+        xform.set_default_language(self.get_app().langs[0])
+        xform.set_version(self.get_app().version)
+
     def render_xform(self):
         xform = XForm(self.source)
-        xform.add_case_and_meta(self)
-        xform.set_default_language(self.get_app().langs[0])
+        self.add_stuff_to_xform(xform)
         return xform.render()
 
     def _get_active_actions(self, types):
@@ -385,10 +390,22 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
 
 class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
+    def add_stuff_to_xform(self, xform):
+        super(Form, self).add_stuff_to_xform(xform)
+        xform.add_case_and_meta(self)
     def get_app(self):
         return self._parent._parent
     def get_module(self):
         return self._parent
+
+class UserRegistrationForm(FormBase):
+    username_path = StringProperty(default='username')
+    password_path = StringProperty(default='password')
+    data_paths = DictProperty()
+
+    def add_stuff_to_xform(self, xform):
+        super(UserRegistrationForm, self).add_stuff_to_xform(xform)
+        xform.add_user_registration(self.username_path, self.password_path, self.data_paths)
 
 class DetailColumn(IndexedSchema):
     """
@@ -511,19 +528,6 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
             if detail.type == detail_type:
                 return detail
         raise Exception("Module %s has no detail type %s" % (self, detail_type))
-
-    def infer_case_type(self):
-        case_types = []
-        for form in self.get_forms():
-            xform = form.source
-            soup = BeautifulStoneSoup(xform)
-            try:
-                case_type = soup.find('case').find('case_type_id').string.strip()
-            except AttributeError:
-                case_type = None
-            if case_type:
-                case_types.append(case_type)
-        return case_types
 
     def export_json(self, dump_json=True):
         source = self.to_json()
@@ -688,6 +692,11 @@ class ApplicationBase(VersionedDoc):
     built_on = DateTimeProperty(required=False)
     build_comment = StringProperty()
 
+    # django-style salted hash of the admin password
+    admin_password = StringProperty()
+    # a=Alphanumeric, n=Numeric, x=Neither (not allowed)
+    admin_password_charset = StringProperty(choices=['a', 'n', 'x'], default='n')
+
     @classmethod
     def wrap(cls, data):
         # scrape for old conventions and get rid of them
@@ -712,10 +721,44 @@ class ApplicationBase(VersionedDoc):
             
         return super(ApplicationBase, cls).wrap(data)
 
+    def set_admin_password(self, raw_password):
+        import random
+        algo = 'sha1'
+        salt = get_hexdigest(algo, str(random.random()), str(random.random()))[:5]
+        hsh = get_hexdigest(algo, salt, raw_password)
+        self.admin_password = '%s$%s$%s' % (algo, salt, hsh)
+
+        if raw_password.isnumeric():
+            self.admin_password_charset = 'n'
+        elif raw_password.isalnum():
+            self.admin_password_charset = 'a'
+        else:
+            self.admin_password_charset = 'x'
+
+    def check_password_charset(self):
+        errors = []
+        if hasattr(self, 'profile'):
+            password_format = self.profile.get('properties', {}).get('password_format', 'n')
+            message = 'Your app requires {0} passwords but the admin password is not {0}'
+
+            if password_format == 'n' and self.admin_password_charset in 'ax':
+                errors.append({'type': 'password_format', 'message': message.format('numeric')})
+            if password_format == 'a' and self.admin_password_charset in 'x':
+                errors.append({'type': 'password_format', 'message': message.format('alphanumeric')})
+        return errors
+
     def get_build(self):
 #        version, build_number = current_builds.TAG_MAP[self.commcare_tag]
 #        return CommCareBuild.get_build(version, build_number)
         return self.build_spec.get_build()
+
+    def get_preview_build(self):
+        preview = self.get_build()
+
+        for path in getattr(preview, '_attachments', {}):
+            if path.startswith('Generic/WebDemo'):
+                return preview
+        return CommCareBuildConfig.fetch().preview.get_build()
 
     @property
     def commcare_minor_release(self):
@@ -778,6 +821,7 @@ class ApplicationBase(VersionedDoc):
         except ResourceError:
             built_on = datetime.utcnow()
             jadjar = self.get_jadjar().pack(self.create_all_files(), {
+                'JavaRosa-Admin-Password': self.admin_password,
                 'Profile': self.profile_loc,
                 'MIDlet-Jar-URL': self.jar_url,
                 #'MIDlet-Name': self.name,
@@ -795,6 +839,8 @@ class ApplicationBase(VersionedDoc):
 
     def validate_app(self):
         errors = []
+
+        errors.extend(self.check_password_charset())
 
         try:
             self.create_all_files()
@@ -839,13 +885,8 @@ class ApplicationBase(VersionedDoc):
         return self.get_jadjar().fetch_jar()
 
     def fetch_emulator_commcare_jar(self):
-#        version, build_number = current_builds.TAG_MAP[current_builds.PREVIEW_TAG]
-#        jadjar = CommCareBuild.get_build(version, build_number).get_jadjar("Generic/WebDemo")
         path = "Generic/WebDemo"
-        try:
-            jadjar = self.get_build().get_jadjar(path)
-        except Exception:
-            jadjar = CommCareBuildConfig.fetch().preview.get_build().get_jadjar(path)
+        jadjar = self.get_preview_build().get_jadjar(path)
         jadjar = jadjar.pack(self.create_all_files())
         return jadjar.jar
 
@@ -890,7 +931,7 @@ class Application(ApplicationBase, TranslationMixin):
     forms themselves.
 
     """
-    user_registration = SchemaProperty(FormBase)
+    user_registration = SchemaProperty(UserRegistrationForm)
     show_user_registration = BooleanProperty(default=False, required=True)
     modules = SchemaListProperty(Module)
     name = StringProperty()
@@ -1273,20 +1314,14 @@ class Application(ApplicationBase, TranslationMixin):
             for xmlns in xmlns_count:
                 if xmlns_count[xmlns] > 1:
                     errors.append({'type': "duplicate xmlns", "xmlns": xmlns})
-        # Make sure that putting together all the files actually works
-        if not errors:
-            try:
-                self.create_all_files()
-            except Exception as e:
-                if settings.DEBUG:
-                    raise
-                errors.append({'type': "form error", 'message': unicode(e)})
 
+        if not errors:
+            errors = super(Application, self).validate_app()
         return errors
 
     @classmethod
     def get_by_xmlns(cls, domain, xmlns):
-        r = get_db().view('reports/forms_by_xmlns', key=[domain, xmlns]).one()
+        r = get_db().view('reports/forms_by_xmlns', key=[domain, {}, xmlns], group=True).one()
         return cls.get(r['value']['app']['id']) if r and 'app' in r['value'] else None
 
 class NotImplementedYet(Exception):

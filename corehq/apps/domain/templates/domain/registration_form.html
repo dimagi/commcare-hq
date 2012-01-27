@@ -2,6 +2,17 @@
 
 
 {% block title %}domain registration request{% endblock title %}
+{% block js-inline %}
+    <script>
+        $(function() {
+            $('#tos-placeholder').jqm({ajax: '@href', trigger: 'a.tos',
+                ajaxText: "Please wait while we load that for you..." });
+            window.setTimeout(function () {
+                $('#id_domain_name').focus();
+            }, 100);
+        });
+    </script>
+{% endblock %}
 {% block head  %}
     {{ block.super }}
     {% include "imports/jqmodal.html" %}
@@ -13,13 +24,6 @@
     </style>
 {% endblock %}
 {% block login-content %}
-
-    <script>
-    $().ready(function() {
-        $('#tos-placeholder').jqm({ajax: '@href', trigger: 'a.tos', 
-                                   ajaxText: "Please wait while we load that for you..." });
-    });
-    </script>
 
     <form name="form" method="post" action="{% url domain_registration_request kind=kind %}">
         {% csrf_token %}

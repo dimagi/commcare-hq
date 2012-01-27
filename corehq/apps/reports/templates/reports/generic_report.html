@@ -1,5 +1,6 @@
 {% extends "reports/report_base.html" %}
 {% load report_tags %}
+{% load i18n %}
 
 {% block head %}{{ block.super }}
     <style>
@@ -10,11 +11,11 @@
 {% endblock %}
 {% block reportcontent %}
 <div id="report-content">
-<table class="datatable" {% if ajax_source %}data-source="{{ ajax_source }}"{% endif %}>
+<table class="datatable" {% if ajax_source %}data-source="{{ ajax_source }}"{% endif %}{% if ajax_params and ajax_source %}{% for param in ajax_params %} data-{{ param.name }}="{{ param.value }}"{% endfor %}{% if filter %} data-filter="true"{% endif %}{% endif %}>
     <thead>
         <tr>
             {% for header in report.headers %}
-                <th data-sort="{{ header.sort_type }}">
+                <th {% if not ajax_source %}data-sort="{{ header.sort_type }}"{% endif %}>
                     {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
                 </th>
             {% endfor %}

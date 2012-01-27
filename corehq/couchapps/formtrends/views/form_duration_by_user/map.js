@@ -7,7 +7,16 @@ function (doc) {
         }
         return null;
     }
-
+    
+    // parse a date in yyyy-mm-dd format
+	function parse_date(date_string) {
+	    if (!date_string) return new Date(1970,1,1);
+	    // hat tip: http://stackoverflow.com/questions/2587345/javascript-date-parse    
+	    var parts = date_string.match(/(\d+)/g);
+	    // new Date(year, month [, date [, hours[, minutes[, seconds[, ms]]]]])
+	    return new Date(parts[0], parts[1]-1, parts[2]); // months are 0-based
+	}
+	    
     var duration, form_date, xmlns, userID, domain;
 
     // for now incude all non-device-reports in this report
@@ -19,7 +28,7 @@ function (doc) {
             domain = doc.domain;
             xmlns = doc.xmlns;
             userID = doc.form.meta.userID;
-            form_date = doc.received_on;
+            form_date = parse_date(doc.received_on);
             emit(["dx", domain, form_date, xmlns], duration);
             emit(["udx", domain, userID, form_date, xmlns], duration);
             emit(["xdu", domain, xmlns, form_date, userID], duration);

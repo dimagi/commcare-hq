@@ -2,37 +2,23 @@
 {% load i18n %}
 {% block content %}
 <div id="main_container">
-    <div id="domain_forwarding" class="ui-widget ui-corner-all">
-          <h2 id="header" class="ui-widget-header ui-corner-top">Domain Forwarding</h2>
-          <div id="content" class="ui-widget-content">
-          {% if repeaters %}
-    <p>You are currently forwarding forms to the following urls:</p>
-    <table>
-    {% for repeater in repeaters %}
-        <tr>
-            <td>{{ repeater.url }}</td>
-            <td><a class="delete_link" href="#">{% trans "Stop" %}</a>
-                        <div class="dialog delete_dialog" title="Cancel Forwarding?">
-                            <form name="drop_repeater" action="{% url drop_repeater domain repeater.get_id %}" method="POST">
-                                <table>
-                                    <tr><td>
-                                    Are you sure you want to stop forwarding to: {{ repeater.url }}?
-                                    </td></tr>
-                                </table>
-                                <input type="submit" value="Stop" />
-                            </form>
-                        </div>
-            </td>
-        </tr>
-    {% endfor %}
-    </table>
-    {% else %}
-    <p>You haven't configured any urls to forward to yet.</p>
-    {% endif %}
-    <a class="new_link" href="{% url add_repeater domain %}">Add a forwarding location</a>
+    <div id="domain_forwarding">
+        <h2>Domain Forwarding</h2>
+        <div id="content">
+        {% for cls, form_repeaters in repeaters %}
+            <h3>Forward {% if cls == "FormRepeater" %}Forms{% else %}Cases{% endif %}:</h3>
+            {% if form_repeaters %}
+                <table>
+                {% for repeater in form_repeaters %}
+                    {% include "domain/admin/repeater_row.html" %}
+                {% endfor %}
+                </table>
+            {% else %}
+                <p>You haven't configured any urls to forward to yet.</p>
+            {% endif %}
+            <a class="new_link" href="{% url add_repeater domain cls %}">Add a forwarding location</a>
+        {% endfor %}
+        </div>
     </div>
-      </div>
-  
-    
 </div>
 {% endblock %}

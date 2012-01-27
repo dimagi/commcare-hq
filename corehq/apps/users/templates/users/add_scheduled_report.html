@@ -18,6 +18,7 @@
     <form method="post" action="">
         <label for="report_type" id="report_type">Choose Report: </label> 
         <select name="report_type" id="report_type">
+            {{ reports }}
             {% for id, report in reports.items %}
             <option value="{{id}}">{{report.title}}</option>
             {% endfor %}

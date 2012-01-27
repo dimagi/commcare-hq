@@ -13,6 +13,7 @@ def restore(request, domain):
     
     user = request.user
     restore_id = request.GET.get('since')
+    api_version = request.GET.get('version', "1.0")
     username = user.username
     couch_user = CouchUser.from_django_user(user)
     
@@ -21,5 +22,6 @@ def restore(request, domain):
         response.status_code = 401 # Authentication Failure
         return response
     
-    response = generate_restore_payload(couch_user.to_casexml_user(), restore_id)
+    response = generate_restore_payload(couch_user.to_casexml_user(), restore_id, 
+                                        api_version)
     return HttpResponse(response, mimetype="text/xml")

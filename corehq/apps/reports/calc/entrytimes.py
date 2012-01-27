@@ -1,9 +1,7 @@
 from collections import defaultdict
-import json
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from corehq.apps.reports.display import xmlns_to_name
-import sys
 
 def get_data(domain, user=None, datespan=None):
     """
@@ -34,7 +32,7 @@ def get_data(domain, user=None, datespan=None):
     for row in view:
         date = row["key"][-2]
         xmlns = row["key"][-1]
-        form_name = xmlns_to_name(xmlns, domain)
+        form_name = xmlns_to_name(domain, xmlns)
         data = all_data[form_name]
         if not date in data:
             data[date] = defaultdict(lambda: 0)

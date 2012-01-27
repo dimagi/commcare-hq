@@ -9,6 +9,93 @@
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
+    <script>
+        $.fn.password_setter = function (options) {
+            var that = this,
+                options = options || {},
+                title = options.title || "Set Password",
+                randID = Math.floor(Math.random() * 1000),
+                password1ID = 'password-' + randID + '-1',
+                password2ID = 'password-' + randID + '-2',
+                message = {
+                    RESET: "Reset",
+                    LABEL1: "Password",
+                    LABEL2: "Repeat Password",
+                    OK: "OK",
+                    CANCEL: "Cancel",
+                    PASSWORD_EMPTY: "You must enter a password.",
+                    PASSWORD_MISMATCH: "Try again. The passwords don't match"
+                },
+                label1 = $('<label/>').attr({'for': password1ID}).text(message.LABEL1),
+                label2 = $('<label/>').attr({'for': password2ID}).text(message.LABEL2),
+                password1 = $('<input/>').attr({type: 'password', id: password1ID}),
+                password2 = $('<input/>').attr({type: 'password', id: password2ID}),
+                popupLink = $('<a/>').attr({href: '#'}).text(message.RESET),
+                popup = $('<section/>').addClass('password-setter-popup'),
+                popupOK = $('<input/>').attr({type: 'submit'}).val(message.OK).button(),
+                popupCancel = $('<a/>').attr({href: '#'}).text(message.CANCEL).button(),
+                passwordMismatch = $('<p/>').text(message.PASSWORD_MISMATCH),
+                passwordEmpty = $('<p/>').text(message.PASSWORD_EMPTY),
+                form = $('<form/>').attr({action: ''}),
+                undefined = undefined;
+            this.hide();
+            this.after(popupLink);
+            popup.append(
+                $('<h1/>').text(title),
+                form.append(
+                    passwordMismatch,
+                    $('<table/>').append(
+                        $('<tr/>').append(
+                            $('<td/>').append(label1),
+                            $('<td/>').append(passwordEmpty, password1)
+                        ),
+                        $('<tr/>').append(
+                            $('<td/>').append(label2),
+                            $('<td/>').append(password2)
+                        )
+                    ),
+                    popupOK,
+                    popupCancel
+                )
+            );
+            passwordEmpty.hide();
+            passwordMismatch.hide();
+            popupLink.click(function (e) {
+                var position = popupLink.offset();
+                e.preventDefault();
+                popup.css({
+                    display: 'block',
+                    position: 'absolute',
+                    top: position.top,
+                    left: position.left,
+                }).addClass('ui-corner-tr ui-corner-br ui-corner-bl shadow');
+                $('body').append(popup);
+                password1.focus();
+            });
+
+            popupCancel.click(function (e) {
+                e.preventDefault();
+                popup.detach();
+            });
+
+            form.submit(function (e) {
+                e.preventDefault();
+                passwordEmpty.hide();
+                passwordMismatch.hide();
+                if (password1.val() && password1.val() === password2.val()) {
+                    popup.detach();
+                    that.val(password1.val()).trigger('textchange');
+                } else if (!password1.val()) {
+                    passwordEmpty.show();
+                } else {
+                    passwordMismatch.show();
+                }
+            });
+        };
+        $(function () {
+            $('#app_admin_password').password_setter({title: 'Admin Password'});
+        });
+    </script>
     {% if app.doc_type == "Application" %}
         <script>
             $(function () {
@@ -194,6 +281,25 @@
             background-color: #FFF;
             border-radius: 40px;
         }
+        .password-setter-popup {
+            background-color: white;
+            border: 1px solid #CCC;
+            padding: 1em;
+        }
+        .password-setter-popup h1 {
+            text-align: center;
+            font-size: 1.2em;
+        }
+        .password-setter-popup table {
+            margin: 0;
+        }
+        .password-setter-popup .ui-button {
+            float: right;
+            margin: 5px;
+        }
+        .password-setter-popup input[type='password'] {
+            width: 40px;
+        }
     </style>
 {% endblock %}
 {% block form-view %}
@@ -223,9 +329,11 @@
                         {% if edit %}
                             <select name="build_spec" data-value="{{ app.build_spec.to_string }}">
                                 {% for option in commcare_build_options %}
+                                    {% if user.is_superuser or not option.superuser_only %}
                                     <option value='{{ option.build.to_string }}'>
                                         {{ option.label }}
                                     </option>
+                                    {% endif %}
                                 {% endfor %}
                                 {% if not is_standard_build %}
                                     <optgroup label="Custom">
@@ -240,14 +348,22 @@
                         {% endif %}
                     </td>
                 </tr>
+                <tr>
+                    <th>Admin Password</th>
+                    <td>
+                        {% if edit %}
+                            <input type="password" id="app_admin_password" name="admin_password"/>
+                        {% else %}
+                            ********
+                        {% endif %}
+                    </td>
+                </tr>
             {% if app.doc_type == "RemoteApp" %}
                 <tr>
                     <th>Profile URL</th>
                     <td>
                         {% if edit %}
-                            <form action="{% url corehq.apps.app_manager.views.edit_app_attr domain app.id  'profile_url' %}">
-                                <input type="text" class="autosave code wide" name="profile_url" value="{{ app.profile_url }}"/>
-                            </form>
+                            <input type="text" class="code wide" name="profile_url" value="{{ app.profile_url }}"/>
                         {% else %}
                             {{ app.profile_url }}
                         {% endif %}
@@ -424,7 +540,7 @@
                         {% endfor %}
                     {% endif %}
                 </tbody>
-                <!--tbody id="language-properties"></tbody-->
+                <tbody id="language-properties"></tbody>
             </table>
         </div>
         <div class="scary-settings-toggle">

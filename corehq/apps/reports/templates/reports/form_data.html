@@ -32,7 +32,7 @@
 {% if instance.attachments %}
         <li><a href="#attachments">Attachments</a></li>
 {% endif %}
-{% if caseblocks %}
+{% if cases %}
         <li><a href="#cases">Cases</a></li>
 {% endif %}
     </ul>
@@ -53,9 +53,9 @@
 </div>
 <div title="Cases" id="cases">
     <ul>
-    {% for case in caseblocks %}
-        <li>{% if case.case_id %}
-        <a href="{% url case_details domain case.case_id %}">{% case_inline_display case.case_id %}</a>
+    {% for case in cases %}
+        <li>{% if case.get_id %}
+        <a href="{% url case_details domain case.case_id %}">{% case_inline_display case %}</a>
         {% else %}
         <span class="error">Unknown or malformed case</span>
         {% endif %}

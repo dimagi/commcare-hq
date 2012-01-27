@@ -1,10 +1,10 @@
+import traceback
+from casexml.apps import case
+from casexml.apps.case.signals import case_post_save
 from corehq.apps.domain.utils import normalize_domain_name
 from receiver.signals import form_received, successful_form_received
-from datetime import datetime
 import logging
 import re
-from corehq.apps.receiverwrapper.tasks import send_repeats
-from corehq.apps.receiverwrapper.models import RepeatRecord
 import types
 
 DOMAIN_RE = re.compile(r'^/a/(\S+)/receiver(/(.*))?/?$')
@@ -67,20 +67,25 @@ def add_app_id(sender, xform, **kwargs):
         xform['app_id'] = app_id
         xform.save()
 
-def send_repeaters(sender, xform, **kwargs):
+def create_form_repeat_records(sender, xform, **kwargs):
     from corehq.apps.receiverwrapper.models import FormRepeater
-    domain = _get_domain(xform)
+    xform.domain = _get_domain(xform)
+    create_repeat_records(FormRepeater, xform)
+
+
+def create_case_repeat_records(sender, case, **kwargs):
+    from corehq.apps.receiverwrapper.models import CaseRepeater
+    create_repeat_records(CaseRepeater, case)
+
+def create_repeat_records(repeater_cls, payload):
+    domain = payload.domain
     if domain:
-        repeaters = FormRepeater.view("receiverwrapper/repeaters", key=domain, include_docs=True).all()
-        # tag the repeat_to field an save first. if we crash between here and 
-        # when we do the actual repetition this will be preserved
-        if repeaters:
-            xform["repeats"] = [RepeatRecord(url=repeater.url, next_check=datetime.utcnow()).to_json() for repeater in repeaters]
-            xform.save()
-            send_repeats.delay(xform.get_id)
-                
-        
+        repeaters = repeater_cls.by_domain(domain)
+        for repeater in repeaters:
+            repeater.register(payload)
+
 form_received.connect(scrub_meta)
 form_received.connect(add_domain)
 form_received.connect(add_app_id)
-successful_form_received.connect(send_repeaters)
+successful_form_received.connect(create_form_repeat_records)
+case_post_save.connect(create_case_repeat_records)

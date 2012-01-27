@@ -1,14 +1,27 @@
 {% extends login_template %}
 {% block title %}Domain Selection{% endblock title %}
 {% block login-content %}
-<form name="form" method="post">
+<form name="form" method="post" action="">
     {% csrf_token %}
-    <h1>To accept the invitation please create an account</h1>
-    <br>
-    <p>Already have an account? <a href="{% url login %}?next={{request.path}}">Sign in now</a></p>
-    <table>
-    {{ form.as_table }}
-    </table>
-    <input type="submit" value="Create Account" />
+    {% if request.user.is_authenticated %}
+        <h1>Accept Invitation</h1>
+        <p>Accept invitation to domain <b>{{ domain }}</b> as <b>{{ user.username }}</b>?</p>
+        <input type="submit" value="Accept" style="float: right"/>
+        <br style="clear: both"/>
+        <p>Not {{ user.username }}?</p>
+        <p>
+            <a href="?create=true">Create an account</a>
+                or
+            <a href="?switch=true">Switch accounts</a>
+        </p>
+    {% else %}
+        <h1>To accept the invitation please create an account</h1>
+        <br>
+        <p>Already have an account? <a href="{% url login %}?next={{request.path}}">Sign in now</a></p>
+        <table>
+        {{ form.as_table }}
+        </table>
+        <input type="submit" value="Create Account" />
+    {% endif %}
 </form>
 {% endblock %}

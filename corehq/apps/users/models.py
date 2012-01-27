@@ -20,13 +20,13 @@ from casexml.apps.phone.models import User as CaseXMLUser
 
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name
-from corehq.apps.reports.models import ReportNotification
+from corehq.apps.reports.models import ReportNotification, HQUserType
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username, cc_user_domain
 from corehq.apps.users.xml import group_fixture
 from couchforms.models import XFormInstance
 
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.couch.undo import DeleteRecord
+from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
@@ -97,26 +97,23 @@ class DjangoUserMixin(DocumentSchema):
         'date_joined',
     )
 
+    def set_password(self, raw_password):
+        dummy = User()
+        dummy.set_password(raw_password)
+        self.password = dummy.password
 
 class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
-
     """
     A user (for web and commcare)
-
     """
-
     base_doc = 'CouchUser'
-
     device_ids = ListProperty()
     phone_numbers = ListProperty()
-
     created_on = DateTimeProperty()
-
 #    For now, 'status' is things like:
 #        ('auto_created',     'Automatically created from form submission.'),
 #        ('phone_registered', 'Registered from phone'),
 #        ('site_edited',     'Manually added or edited from the HQ website.'),
-
     status = StringProperty()
 
     _user = None
@@ -124,6 +121,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     class AccountTypeError(Exception):
         pass
+    
     class Inconsistent(Exception):
         pass
 
@@ -361,9 +359,10 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
         
         super(CouchUser, self).save(**params)
-        if not self.base_doc.endswith("-Deleted"):
+        if not self.base_doc.endswith(DELETED_SUFFIX):
             django_user = self.sync_to_django_user()
             django_user.save()
+
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, **kwargs):
@@ -375,6 +374,9 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
                 couch_user.sync_from_django_user(django_user)
                 # avoid triggering cyclical sync
                 super(CouchUser, couch_user).save()
+
+    def is_deleted(self):
+        return self.base_doc.endswith(DELETED_SUFFIX)
 
 class CommCareUser(CouchUser):
 
@@ -408,6 +410,14 @@ class CommCareUser(CouchUser):
         commcare_user.save()
 
         return commcare_user
+
+    @property
+    def filter_flag(self):
+        return HQUserType.REGISTERED
+    
+    @property
+    def username_in_report(self):
+        return self.raw_username
 
     @classmethod
     def create_from_xform(cls, xform):
@@ -514,6 +524,7 @@ class CommCareUser(CouchUser):
         def get_owner_ids():
             return self.get_owner_ids()
         user.get_owner_ids = get_owner_ids
+        user._hq_user = self # don't tell anyone that we snuck this here
         return user
 
     def get_forms(self):
@@ -565,7 +576,7 @@ class CommCareUser(CouchUser):
         return owner_ids
     
     def retire(self):
-        suffix = '-Deleted'
+        suffix = DELETED_SUFFIX
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
             self.base_doc += suffix

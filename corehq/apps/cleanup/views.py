@@ -203,6 +203,8 @@ def _get_submissions(domain, keys):
 
 def _get_cases(xforms):
     cases = []
-    for case in CommCareCase.view('case/by_xform_id', keys=[xform.get_id for xform in xforms], include_docs=True).all():
+    for case in CommCareCase.view('case/by_xform_id', 
+                                  keys=[xform.get_id for xform in xforms], 
+                                  reduce=False, include_docs=True).all():
         cases.append(case)
     return cases

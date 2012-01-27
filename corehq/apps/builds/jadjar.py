@@ -35,7 +35,7 @@ class JadDict(dict):
                         'MIDlet-Certificate-1-4']
         unordered = [key for key in self.keys() if key not in ordered_start and key not in ordered_end]
         props = itertools.chain(ordered_start, sorted(unordered), ordered_end)
-        lines = ['%s: %s%s' % (key, self[key], self.line_ending) for key in props if key in self]
+        lines = ['%s: %s%s' % (key, self[key], self.line_ending) for key in props if self.get(key) is not None]
         return "".join(lines)
 
 def sign_jar(jad, jar):
@@ -119,7 +119,8 @@ class JadJar(object):
     def jar(self):
         return self._jar
 
-    def pack(self, files, jad_properties={}):
+    def pack(self, files, jad_properties=None):
+        jad_properties = jad_properties or {}
 
         # pack files into jar
         buffer = StringIO(self.jar)

@@ -7,6 +7,7 @@
 {% block head %}{{ block.super }}
     {% include "imports/jqmodal.html" %}
     <link rel="stylesheet" href="{% static 'app_manager/css/app_manager.css' %}"/>
+    <link href="{% static 'formdesigner/css/chosen.css' %}" rel="stylesheet" />
 {% endblock %}
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
@@ -14,6 +15,7 @@
     <script src="{% static 'hqwebapp/js/dropdown.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager.js' %}"></script>
     <script src="{% static 'hqwebapp/javascripts/jquery.textchange.min.js' %}"></script>
+    <script src="{% static 'formdesigner/js/chosen.jquery.min.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     <script>
@@ -151,7 +153,8 @@
                 {% if app %}
                     <ul>
                         <li>
-                            <strong id="app_name" class="variable-app_name">{{ app.name }}{% if app.doc_type == "RemoteApp" %} (remote){% endif %}</strong>
+                            <strong id="app_name" class="variable-app_name">{{ app.name }}</strong>
+                            {% if app.doc_type == "RemoteApp" %}<strong>(remote)</strong>{% endif %}
                             version <span id="version" class="variable-version">{{ app.version }}</span>
                         </li>
                     </ul>

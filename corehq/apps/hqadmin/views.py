@@ -5,7 +5,6 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import permission_required
 from django.template.context import RequestContext
-from django.views.decorators.cache import cache_page
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import MessageLog
@@ -17,6 +16,7 @@ from corehq.apps.domain.decorators import login_and_domain_required, require_sup
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response, render_to_response
+from django.views.decorators.cache import cache_page
 
 @require_superuser
 def default(request):
@@ -39,7 +39,7 @@ def get_hqadmin_base_context(request):
         "domain": domain,
     }
 
-@cache_page(60 * 15)
+
 @require_superuser
 def domain_list(request):
     # one wonders if this will eventually have to paginate
@@ -66,7 +66,6 @@ def domain_list(request):
     context.update({"domains": domains})
     return render_to_response(request, "hqadmin/domain_list.html", context)
 
-@cache_page(60 * 15)
 @require_superuser
 def active_users(request):
     keys = []
@@ -106,7 +105,7 @@ def global_report(request, template="hqadmin/global.html"):
         counts = []
         for result in get_db().view("hqadmin/%ss_over_time" % name, group_level=2):
             if not result or not result.has_key('key') or not result.has_key('value'): continue
-            if result['key'][0] and int(result['key'][0]) >= 2009 and \
+            if result['key'][0] and int(result['key'][0]) >= 2010 and \
                (int(result['key'][0]) < datetime.utcnow().year or
                 (int(result['key'][0]) == datetime.utcnow().year and
                  int(result['key'][1]) <= datetime.utcnow().month)):
@@ -116,23 +115,37 @@ def global_report(request, template="hqadmin/global.html"):
         for i in range(1, len(counts_int)):
             if isinstance(counts_int[i][1], int):
                 counts_int[i][1] += counts_int[i-1][1]
-            elif isinstance(counts_int[i][1], list):
-                counts_int[i][1] = list(set(counts_int[i-1][1]).union(counts_int[i][1]))
-        if isinstance(counts_int[1][1], list):
-            counts = [[x[0], len(x[1])] for x in counts]
-            counts_int = [[x[0], len(x[1])] for x in counts_int]
-            context['%s_counts' % name] = counts
-
         context['%s_counts_int' % name] = counts_int
 
     _metric('case')
     _metric('form')
     _metric('user')
-    _metric('active_domain')
+    def _active_metric(name):
+        dates = {}
+        for result in get_db().view("hqadmin/%ss_over_time" % name, group=True):
+            if not result or not result.has_key('key') or not result.has_key('value'): continue
+            if result['key'][0] and int(result['key'][0]) >= 2010 and\
+               (int(result['key'][0]) < datetime.utcnow().year or
+                (int(result['key'][0]) == datetime.utcnow().year and
+                 int(result['key'][1]) <= datetime.utcnow().month)):
+                date = _flot_format(result)
+                if not date in dates:
+                    dates[date] = set([result['key'][2]])
+                else:
+                    dates[date].update([result['key'][2]])
+        datelist = [[date, dates[date]] for date in sorted(dates.keys())]
+        domainlist = [[x[0], len(x[1])] for x in datelist]
+        domainlist_int = deepcopy(datelist)
+        for i in range(1, len(domainlist_int)):
+            domainlist_int[i][1] = list(set(domainlist_int[i-1][1]).union(domainlist_int[i][1]))
+        domainlist_int = [[x[0], len(x[1])] for x in domainlist_int]
+        context['%s_counts' % name] = domainlist
+        context['%s_counts_int' % name] = domainlist_int
+    _active_metric("active_domain")
+    _active_metric("active_user")
 
     return render_to_response(request, template, context)
 
-@cache_page(60 * 15)
 @require_superuser
 def commcare_version_report(request, template="hqadmin/commcare_version.html"):
     apps = get_db().view('app_manager/applications_brief').all()
@@ -160,9 +173,9 @@ def commcare_version_report(request, template="hqadmin/commcare_version.html"):
     context.update({'tables': tables})
     return render_to_response(request, template, context)
 
-@cache_page(60 * 15)
-@require_superuser
-def domain_activity_report(request, template="hqadmin/domain_activity_report.html"):
+
+@cache_page(60*5)
+def _cacheable_domain_activity_report(request):
     landmarks = json.loads(request.GET.get('landmarks') or "[7, 30, 90]")
     landmarks.sort()
     now = datetime.utcnow()
@@ -170,35 +183,35 @@ def domain_activity_report(request, template="hqadmin/domain_activity_report.htm
     for landmark in landmarks:
         dates.append(now - timedelta(days=landmark))
 
-    domains = Domain.objects.all().order_by("name")
+    domains = [{'name': domain.name} for domain in Domain.objects.all().order_by("name")]
 
     for domain in domains:
-        domain.users = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain.name)])
-        if not domain.users:
+        domain['users'] = dict([(user.user_id, {'raw_username': user.raw_username}) for user in CommCareUser.by_domain(domain['name'])])
+        if not domain['users']:
             continue
         forms = [r['value'] for r in get_db().view('reports/all_submissions',
             reduce=False,
-            startkey=[domain.name, json_format_datetime(dates[-1])],
-            endkey=[domain.name, json_format_datetime(now)],
+            startkey=[domain['name'], json_format_datetime(dates[-1])],
+            endkey=[domain['name'], json_format_datetime(now)],
         ).all()]
-        domain.user_sets = [dict() for landmark in landmarks]
+        domain['user_sets'] = [dict() for landmark in landmarks]
 
         for form in forms:
             user_id = form.get('user_id')
             time = string_to_datetime(form['time']).replace(tzinfo = None)
-            if user_id in domain.users:
+            if user_id in domain['users']:
                 for i, date in enumerate(dates):
                     if time > date:
-                        domain.user_sets[i][user_id] = domain.users[user_id]
+                        domain['user_sets'][i][user_id] = domain['users'][user_id]
 
+    return HttpResponse(json.dumps({'domains': domains, 'landmarks': landmarks}))
+
+@require_superuser
+def domain_activity_report(request, template="hqadmin/domain_activity_report.html"):
     context = get_hqadmin_base_context(request)
-    context.update({
-        'domains': domains,
-        'landmarks': landmarks
-    })
+    context.update(json.loads(_cacheable_domain_activity_report(request).content))
     return render_to_response(request, template, context)
 
-@cache_page(60 * 15)
 @datespan_default
 @require_superuser
 def message_log_report(request):

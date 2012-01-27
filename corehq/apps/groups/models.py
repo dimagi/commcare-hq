@@ -6,8 +6,8 @@ http://probablyprogramming.com/2008/07/04/storing-hierarchical-data-in-couchdb
 from __future__ import absolute_import
 import re
 from couchdbkit.ext.django.schema import *
-from corehq.apps.users.models import CouchUser
-from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
+from corehq.apps.users.models import CouchUser, CommCareUser
+from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_SUFFIX
 
 class Group(UndoableDocument):
     """
@@ -80,8 +80,11 @@ class Group(UndoableDocument):
     def get_user_ids(self, is_active=True):
         return [user.user_id for user in self.get_users(is_active)]
 
-    def get_users(self, is_active=True):
+    def get_users(self, is_active=True, only_commcare=False):
         users = [CouchUser.get_by_user_id(user_id) for user_id in self.users]
+        users = [user for user in users if not user.is_deleted()]
+        if only_commcare is True:
+            users = [user for user in users if user.__class__ == CommCareUser().__class__]
         if is_active is True:
             return [user for user in users if user.is_active]
         else:
