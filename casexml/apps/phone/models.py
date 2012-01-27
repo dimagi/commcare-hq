@@ -239,7 +239,7 @@ class SyncLog(Document, UnicodeMixIn):
         owned or not owned but relevant.
         """
         def children(case_state):
-            return [self._get_case_state_from_anywhere(index.reference_id) \
+            return [self._get_case_state_from_anywhere(index.referenced_id) \
                     for index in case_state.indices]
         
         relevant_cases = set()
