@@ -15,9 +15,7 @@ def view_case(request, domain, case_id):
         logout(request)
         return HttpResponseRedirect(reverse('login') + '?next=%s' % request.path)
     return render_to_response(request, 'cloudcare/view_case.html', {
-        'case': {
-            'case_id': case.case_id,
-            'owner_id': case.owner_id or case.user_id,
-        },
-        'owner_ids': owner_ids
+        'case': case.get_json(),
+        'owner_ids': owner_ids,
+        'domain': domain
     })
