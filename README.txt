@@ -73,6 +73,3 @@ requirements.txt as ">=ver.si.on" like so:
 3. Configure xep_hq_server 
     - in localsettings point EDITOR_URL to your XEP server above (the right addresss is 
       http(s)://<xepservername>:<port>/xep/initiate
-    
-    
-    	 
