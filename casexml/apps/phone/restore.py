@@ -42,6 +42,7 @@ def generate_restore_payload(user, restore_id="", version="1.0"):
     previous_log_id = last_sync.get_id if last_sync else None
     
     synclog = SyncLog(user_id=user.user_id, last_seq=last_seq,
+                      owner_ids_on_phone=user.get_owner_ids(),
                       date=datetime.utcnow(), previous_log_id=previous_log_id,
                       cases_on_phone=[CaseState.from_case(c) for c in \
                                       sync_operation.actual_owned_cases],
