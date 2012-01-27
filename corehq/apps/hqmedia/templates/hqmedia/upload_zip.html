@@ -24,6 +24,7 @@
 
         var hqUpload;
         hqUpload = new HQMediaUpload({
+            progress_id_varname: '{{ progress_id_varname }}',
             submit_url: '{{ submit_url }}',
             progress_checker_url: '{{ upload_progress_url }}',
             processbar: '#hqmedia_processing_progressbar',

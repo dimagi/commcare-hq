@@ -23,6 +23,7 @@
 {% endblock %}
 {% block js %}{{ block.super }}
 <script type="text/javascript" src="{{ STATIC_URL }}hqmedia/js/jquery.jplayer.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}hqmedia/js/hqmedia_upload.js"></script>
 <script type="text/javascript">
     $().ready(function () {
         var _jplayer = $("#jquery_jplayer"),
@@ -48,13 +49,16 @@
             var form_path = $(this).parent().data("form-path"),
                 media_type = $(this).parent().data("media-type"),
                 replace_file = $(this).data("replace-file"),
-                action_text = $(this).text();
+                action_text = $(this).text(),
+                guid = guidGenerator();
             console.log(replace_file);
+
             $('form #id_multimedia_upload_action').val(replace_file != null);
             $('form #id_multimedia_form_path').val(form_path);
             $('form #id_multimedia_class').val(media_type);
-            $('form#multimedia_file_form input[type="submit"]').val(action_text);
-            $('form#multimedia_file_form fieldset legend').text(action_text+" for path "+form_path);
+            $('form#hqmedia_upload .hqmedia_upload_id').val(guid);
+            $('form#hqmedia_upload input[type="submit"]').val(action_text);
+            $('form#hqmedia_upload fieldset legend').text(action_text+" for path "+form_path);
             return false;
         });
         _jplayer.jPlayer({
@@ -122,7 +126,7 @@
 <div id="jquery_jplayer"></div>
 <div class="jqmWindow" id="uploadFileView">
     <a href="#" class="jqmClose">Close</a>
-    <form id="multimedia_file_form" action="" method="post" enctype="multipart/form-data">
+    <form id="hqmedia_upload" action="" method="post" enctype="multipart/form-data">
         <fieldset>
             <legend>Replace Media for path</legend>
             <ul>
@@ -133,8 +137,10 @@
             {% for field in fileform.hidden_fields %}
                 {{ field }}
             {% endfor %}
-            <input type="submit" value="Upload File" /><input type="button" value="Cancel" class="jqmClose" />
         </fieldset>
+            <input type="hidden" class="hqmedia_upload_id" value="" />
+            <input type="submit" value="Upload File" /><input type="button" value="Cancel" class="jqmClose" />
+            <div id="hqmedia_upload_status"></div>
     </form>
 </div>
 {% endblock %}

@@ -5,6 +5,7 @@ Requires jquery.form and jquery.progressbar
 function HQMediaUpload (args) {
     /* defaults...
         submit_url: '',
+        progress_id_varname: 'X-Progress-ID',
         progress_checker_url: '',
         uploadbar: '#hqmedia_progressbar',
         processbar: null,
@@ -18,6 +19,7 @@ function HQMediaUpload (args) {
 
     var _submit_url = (args.submit_url) ? args.submit_url : '',
         _progress_checker_url = (args.progress_checker_url) ? args.progress_checker_url : '',
+        _progress_id_var = (args.progress_id_varname) ? args.progress_id_varname : 'X-Progress-ID',
         _upload_progressbar = (args.uploadbar) ? $(args.uploadbar) : $('#hqmedia_progressbar'),
         _process_progressbar = (args.processbar) ? $(args.processbar): null,
         _progress_bar_update_interval = (args.progressbar_update_interval) ? args.progressbar_update_interval : 1000,
@@ -35,14 +37,7 @@ function HQMediaUpload (args) {
     var submission_in_progress = false,
         poll_server_interval = 0;
 
-    var ajax_submit_options = {
-            dataType: 'multipart/form-data',
-            url: _submit_url,
-            beforeSubmit: showRequest,
-            success: showResponse,
-            type: 'post'
-        },
-        progress_bar_options = {
+    var progress_bar_options = {
             boxImage: _static_url+'hqmedia/img/progressbar.gif',
             barImage: {
                 0:  _static_url+'hqmedia/img/progressbg_red.gif',
@@ -91,13 +86,16 @@ function HQMediaUpload (args) {
             }
         }
     }
+    function generateHQMediaUrl(url, progress_id){
+        return url+"?"+_progress_id_var+"="+progress_id;
+    }
 
-    function startProgressBarUpdates(upload_id) {
+    function startProgressBarUpdates(progress_id) {
         if(poll_server_interval != 0)
             clearInterval(poll_server_interval);
         if(submission_in_progress) {
             poll_server_interval = setInterval(function() {
-                $.getJSON(_progress_checker_url, function (data) {
+                $.getJSON(generateHQMediaUrl(_progress_checker_url, progress_id), function (data) {
                     if (data == null) {
                         // uploading and processing has finished
                         stopPollingServer(100);
@@ -131,11 +129,18 @@ function HQMediaUpload (args) {
     this.listenForUploads = function () {
         _submit_status_elem.fadeOut();
         _upload_form.submit(function(e) {
-            $(this).ajaxSubmit(ajax_submit_options);
-            var upload_id = $(this).children('.hqmedia_upload_id').val();
-            if(upload_id)
-                startProgressBarUpdates(upload_id);
-            else
+            var progress_id = $(this).children('.hqmedia_upload_id').val();
+            if(progress_id) {
+                var ajax_submit_options = {
+                    dataType: 'multipart/form-data',
+                    url: generateHQMediaUrl(_submit_url, progress_id),
+                    beforeSubmit: showRequest,
+                    success: showResponse,
+                    type: 'post'
+                };
+                $(this).ajaxSubmit(ajax_submit_options);
+                startProgressBarUpdates(progress_id);
+            }else
                 console.log("No upload id was provided!");
             _upload_form_submit.fadeOut();
             _submit_status_elem.text('Submitting...');
@@ -143,4 +148,12 @@ function HQMediaUpload (args) {
             return false;
         });
     }
+}
+
+function guidGenerator() {
+    // from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
+    var S4 = function() {
+       return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+    };
+    return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
 }
