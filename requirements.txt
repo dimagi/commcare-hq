@@ -16,6 +16,7 @@ PIL
 psycopg2==2.4.1
 pygooglechart==0.3.0
 python-dateutil==1.5
+python-magic
 python-memcached==1.47
 pytz==2011b
 south
