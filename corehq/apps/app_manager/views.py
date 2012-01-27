@@ -973,8 +973,6 @@ def multimedia_upload_zip(request, domain, app_id):
     
     form = HQMediaZipUploadForm()
     progress_id = uuid.uuid4()
-    upload_progress_url = "%s?%s=%s" % (upload_progress_url, upload.HQMediaCacheHandler.X_PROGRESS_ID, progress_id)
-    submit_url = "%s?%s=%s" % (submit_url, upload.HQMediaCacheHandler.X_PROGRESS_ID, progress_id)
     failed_files_url = "%s?%s=%s" % (failed_files_url, upload.HQMediaCacheHandler.X_PROGRESS_ID, progress_id)
 
     return render_to_response(request, "hqmedia/upload_zip.html",
@@ -984,7 +982,8 @@ def multimedia_upload_zip(request, domain, app_id):
                                "upload_progress_url": upload_progress_url,
                                "submit_url": submit_url,
                                "failed_files_url": failed_files_url,
-                               "progress_id": progress_id })
+                               "progress_id": progress_id,
+                               "progress_id_varname": upload.HQMediaCacheHandler.X_PROGRESS_ID})
 
 @login_and_domain_required
 def multimedia_map(request, domain, app_id):
