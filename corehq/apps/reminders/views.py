@@ -58,7 +58,7 @@ def add_reminder(request, domain, handler_id=None, template="reminders/partial/a
     elif handler:
         initial = {}
         for key in handler.to_json():
-            if (key != "max_iteration_count") and (key != "schedule_length") and (key != "events"):
+            if (key != "max_iteration_count") and (key != "schedule_length") and (key != "events") and (key != "event_interpretation"):
                 initial[key] = handler[key]
         initial["message"] = json.dumps(handler.events[0].message)
         initial["frequency"] = handler.schedule_length
