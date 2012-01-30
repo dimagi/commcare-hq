@@ -77,6 +77,44 @@ class CaseBlockError(Exception):
     pass
 
 class CaseBlock(dict):
+    """
+    Doctests:
+
+    >>> NOW = datetime(year=2012, month=1, day=24)
+    >>> FIVE_DAYS_FROM_NOW = datetime(year=2012, month=1, day=29)
+    >>> CASE_ID = 'test-case-id'
+
+    # Basic
+    >>> ElementTree.tostring(CaseBlock(
+    ...     case_id=CASE_ID,
+    ...     date_opened=NOW,
+    ...     date_modified=NOW,
+    ... ).as_xml())
+    '<case><case_id>test-case-id</case_id><date_modified>2012-01-24</date_modified><update><date_opened>2012-01-24</date_opened></update></case>'
+
+    # Doesn't let you specify a keyword twice (here 'case_name')
+    >>> try:
+    ...     CaseBlock(
+    ...         case_id=CASE_ID,
+    ...         case_name='Johnny',
+    ...         update={'case_name': 'Johnny'},
+    ...     ).as_xml()
+    ... except CaseBlockError, e:
+    ...     print "%s" % e
+    Key 'case_name' specified twice
+
+    # The following is a BUG; should fail!! Should fix and change tests
+    >>> ElementTree.tostring(CaseBlock(
+    ...     case_id=CASE_ID,
+    ...     date_opened=NOW,
+    ...     date_modified=NOW,
+    ...     update={
+    ...         'date_opened': FIVE_DAYS_FROM_NOW,
+    ...     },
+    ... ).as_xml())
+    '<case><case_id>test-case-id</case_id><date_modified>2012-01-24</date_modified><update><date_opened>2012-01-24</date_opened></update></case>'
+
+    """
     undefined = object()
     def __init__(self,
             case_id,

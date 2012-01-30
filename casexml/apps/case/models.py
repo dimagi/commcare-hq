@@ -218,6 +218,42 @@ class CommCareCase(CaseBase):
     def __set_case_id(self, id):    self._id = id
     case_id = property(__get_case_id, __set_case_id)
 
+    def get_json(self):
+        return {
+            # referrals and actions excluded here
+            "domain": self.domain,
+            "case_id": self.case_id,
+            "user_id": self.user_id,
+            "closed": self.closed,
+            "xform_ids": self.xform_ids,
+            # renamed
+            "date_modified": self.modified_on,
+            "version": self.version,
+            # renamed
+            "server_date_modified": self.server_modified_on,
+            # renamed
+            "server_date_opened": self.server_modified_on,
+            "properties": dict(self.dynamic_properties().items() + {
+                "external_id": self.external_id,
+                "owner_id": self.owner_id,
+                # renamed
+                "case_name": self.name,
+                # renamed
+                "case_type": self.type,
+                # renamed
+                "date_opened": self.opened_on,
+                # all custom properties go here
+            }.items()),
+            #reorganized
+            "indices": dict([
+                # all indexes are stored in the following form
+                (index.identifier, {
+                    "case_type": index.referenced_type,
+                    "case_id": index.referenced_id
+                }) for index in self.indices
+            ]),
+        }
+
     def get_server_modified_date(self):
         # gets (or adds) the server modified timestamp
         if not self.server_modified_on:
