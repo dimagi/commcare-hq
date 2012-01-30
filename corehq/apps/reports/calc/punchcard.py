@@ -11,5 +11,9 @@ def get_data(domain, individual=None):
                          group=True)
     for row in view:
         domain, _user, day, hour = row["key"]
-        data["%d %02d" % (day, hour)] = data["%d %02d" % (day, hour)] + row["value"]
+        try:
+            data["%d %02d" % (day, hour)] = data["%d %02d" % (day, hour)] + row["value"]
+        except TypeError:
+            continue
+
     return data
