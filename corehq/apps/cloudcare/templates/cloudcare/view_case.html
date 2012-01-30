@@ -41,6 +41,10 @@
             font-size: 1.2em;
             margin: .5em 0;
         }
+        h2, #case-edit-form-edit-link {
+            display: inline-block;
+            margin-right: 1em;
+        }
     </style>
 {% endblock %}
 
@@ -48,6 +52,7 @@
     <script src="{% static 'hqwebapp/javascripts/underscore-1.3.1.js' %}"></script>
     <script src="{% static 'hqwebapp/javascripts/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
+    <script src="{% static 'cloudcare/js/cheapxml.js' %}"></script>
     <script src="{% static 'cloudcare/js/casexml.js' %}"></script>
     <script src="{% static 'cloudcare/js/case-edit-form.js' %}"></script>
 {% endblock %}
@@ -61,10 +66,27 @@
                 home: caseEditForm,
                 commcareCase: {{ case|JSON }},
                 user_id: user_id,
-                availableProperties: {
-                    'edd': 'date',
-                    'village': 'string'
-                },
+                availableProperties: [{
+                    key: 'owner_id',
+                    label: 'Assigned To',
+                    type: 'select',
+                    choices: [{
+                        label: 'No one',
+                        value: '',
+                        trueValue: null
+                    }, {
+                        label: 'Raymond',
+                        value: 'XXXRAYMONDXXX'
+                    }]
+                }, {
+                    key: 'edd',
+                    label: 'EDD',
+                    type: 'date'
+                }, {
+                    key: 'village',
+                    type: 'string',
+                    label: 'Village'
+                }],
                 receiverUrl: "{% url receiver_post domain %}"
             });
 //            console.log(casexml.CaseDelta.wrap({{ case|JSON }}).toXML({

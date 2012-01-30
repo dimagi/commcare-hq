@@ -1,4 +1,5 @@
-/*global $, XMLSerializer */
+/*global cheapxml, XMLSerializer */
+
 var casexml = (function () {
     'use strict';
     var casexml = {
@@ -29,8 +30,8 @@ var casexml = (function () {
         },
         cloudcareEditXMLNS: "http://commcarehq.org/cloudcare/custom-edit",
         makeSerializableXML: function (jQueryObj) {
-            jQueryObj.toString = function () {
-                return (new XMLSerializer).serializeToString(this[0]);
+            jQueryObj.serialize = function () {
+                return new XMLSerializer().serializeToString(this[0]);
             };
             return jQueryObj;
         },
@@ -75,7 +76,7 @@ var casexml = (function () {
                     for (index in this.indices) {
                         if (this.indices.hasOwnProperty(index)) {
                             if (this.indices[index].case_type !== (that.indices[index] || {}).case_type ||
-                                this.indices[index].case_id !== (that.indices[index] || {}).case_id) {
+                                    this.indices[index].case_id !== (that.indices[index] || {}).case_id) {
                                 diff.indices[index] = this.indices[index];
                             }
                         }
@@ -98,7 +99,8 @@ var casexml = (function () {
         CaseDelta: {
             wrap: function (o) {
                 o.toXML = function (options) {
-                    var user_id = options.user_id,
+                    var $ = cheapxml.$,
+                        user_id = options.user_id,
                         create = options.create || false,
                         version = options.version || casexml.versions.V2,
                         date_modified = options.date_modified || o.date_modified || casexml.isonow(),
@@ -227,10 +229,11 @@ var casexml = (function () {
                     if (closed) {
                         $close.appendTo($case);
                     }
-                    return casexml.makeSerializableXML($case);
+                    return $case;
                 };
                 o.asXFormInstance = function (options) {
-                    var timeEnd = options.timeEnd || o.date_modified || casexml.isonow(),
+                    var $ = cheapxml.$,
+                        timeEnd = options.timeEnd || o.date_modified || casexml.isonow(),
                         timeStart = options.timeStart || '',
                         xform;
                     options.date_modified = timeEnd;
@@ -243,7 +246,7 @@ var casexml = (function () {
 //                            $('<deviceID/>')
                         )
                     ).append(o.toXML(options));
-                    return casexml.makeSerializableXML(xform);
+                    return xform;
                 };
                 return o;
             }

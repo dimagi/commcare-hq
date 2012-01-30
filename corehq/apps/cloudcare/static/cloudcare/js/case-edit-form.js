@@ -1,7 +1,74 @@
 /*global eventize */
 
 var CaseEditForm = (function () {
-    var CaseEditForm = function (o) {
+    var setWarning = function (spec, val) {
+            alert(spec.label + ' has illegal value: ' + val);
+            spec.element.ui.css('background-color', 'red');
+        },
+        propertyTypes = {
+            'date': function (spec) {
+                var dateFormat = 'd M. yy',
+                    altFormat = 'yy-mm-dd';
+                spec.element = (function () {
+                    var element = uiElement.input();
+                    element.ui.find('input').datepicker({
+                        dateFormat: dateFormat,
+                        altFormat: altFormat
+                    });
+                    element.ui.css({
+                        position: 'relative'
+                    }).append(
+                        $('<div/>').addClass('ui-icon ui-icon-calendar').css({
+                            position: 'absolute',
+                            right: 3,
+                            top: 2
+                        })
+                    );
+                    return element;
+                }());
+                spec.stringToValue = function (str) {
+                    return $.datepicker.formatDate(altFormat,
+                        $.datepicker.parseDate(dateFormat, str)
+                    );
+                };
+                spec.valueToString = function (val) {
+                    try {
+                        return $.datepicker.formatDate(dateFormat,
+                            $.datepicker.parseDate(altFormat, val || '')
+                        )
+                    } catch (e) {
+                        setWarning(spec, val);
+                        return val;
+                    }
+                };
+            },
+            'select': function (spec) {
+                var stringToValue = {},
+                    valueToString = {},
+                    i;
+                console.log(spec);
+                for (i = 0; i < spec.choices.length; i += 1) {
+                    if (spec.choices[i].trueValue === undefined) {
+                        spec.choices[i].trueValue = spec.choices[i].value;
+                    }
+                    stringToValue[spec.choices[i].value] = spec.choices[i].trueValue;
+                    valueToString[spec.choices[i].trueValue] = spec.choices[i].value;
+                }
+                spec.element = uiElement.select(spec.choices);
+                spec.stringToValue = function (str) {
+                    return stringToValue[str];
+                };
+                spec.valueToString = function (val) {
+                    if (valueToString.hasOwnProperty(val)) {
+                        return valueToString[val];
+                    } else {
+                        setWarning(spec, val);
+                        return val;
+                    }
+                };
+            }
+        },
+        CaseEditForm = function (o) {
         var that = this,
             edit = true,
             timeStart,
@@ -10,12 +77,20 @@ var CaseEditForm = (function () {
             availableProperties = o.availableProperties || [],
             saveButton = SaveButton.init({
                 save: function () {
-                    console.log(casexml.Case.wrap(keis).minus(originalCase).asXFormInstance({
+                    var xform = casexml.Case.wrap(keis).minus(originalCase).asXFormInstance({
                         timeStart: timeStart,
                         user_id: o.user_id
-                    }).toString());
-                    that.fire('restart');
-                    saveButton.setState('saved');
+                    }).serialize();
+
+                    saveButton.ajax({
+                        url: o.receiverUrl,
+                        type: 'post',
+                        data: xform,
+                        success: function (data) {
+                            that.fire('restart');
+                            console.log(data);
+                        }
+                    });
                 }
             }),
             home = o.home,
@@ -35,57 +110,30 @@ var CaseEditForm = (function () {
                             } else {
                                 target[attr] = this.val();
                             }
-                            console.log(target);
+                            element.ui.attr('title', target[attr]);
                         });
                         that.on('edit:change', function () {
                             element.setEdit(edit);
                         });
                     },
-                    mkInput = function (x, s) {
-                        var element = uiElement.input(),
-                            dateFormat,
-                            altFormat;
+                    mkInput = function (value, spec) {
+                        var element;
 
-                        if (s.type === 'date') {
-                            dateFormat = 'd M. yy';
-                            altFormat = 'yy-mm-dd';
-                            element.ui.find('input').datepicker({
-                                dateFormat: dateFormat,
-                                altFormat: altFormat
-                            });
-                            element.ui.css({
-                                position: 'relative'
-                            }).append(
-                                $('<div/>').addClass('ui-icon ui-icon-calendar').css({
-                                    position: 'absolute',
-                                    right: 3,
-                                    top: 2
-                                })
-                            );
-                            // TODO: I should really break this out better
-                            // each type should come with a converter between the visible string value
-                            // and the actual value that should be stored in the variable
-                            // and that should be in a setting variable outside this function
-                            s.strToValue = function (str) {
-                                return $.datepicker.formatDate(altFormat,
-                                    $.datepicker.parseDate(dateFormat, str)
-                                );
-                            };
-                            element.val(
-                                $.datepicker.formatDate(dateFormat,
-                                    $.datepicker.parseDate(altFormat, x || '')
-                                )
-                            );
+                        if (propertyTypes.hasOwnProperty(spec.type)) {
+                            propertyTypes[spec.type](spec);
+                            element = spec.element;
+                            element.val(spec.valueToString(value));
                         } else {
-                            element.val(x || '');
+                            element = uiElement.input().val(value || '');
                         }
+                        element.ui.attr('title', value);
                         return element;
                     },
                     element, s;
                 for (i = 0; i < spec.length; i += 1) {
                     s = spec[i];
                     element = (s.format || mkInput)(mapping[s.key], s);
-                    setControl(element, mapping, s.key, s.strToValue);
+                    setControl(element, mapping, s.key, s.stringToValue);
                     $table.append(
                         $('<tr/>').append(
                             $('<th/>').text(s.label),
@@ -95,35 +143,25 @@ var CaseEditForm = (function () {
                 }
                 return $table;
             },
-//            keisPropertiesSpec = _.sortBy(_.map(_.keys(keis.properties), function (property) {
-//                return {
-//                    key: property,
-//                    label: property.replace(/[-_]/g, ' ')
-//                };
-//            }), function (entry) {
-//                return entry.label;
-//            })
-            keisPropertiesSpec = _.chain(availableProperties).map(function (type, property) {
-                return {
-                    key: property,
-                    label: property.replace(/[-_]/g, ' '),
-                    type: type
-                };
-            }).value();
+            keisPropertiesSpec = _.chain(availableProperties).map(function (spec) {
+                spec.label = spec.label || spec.key.replace(/[-_]/g, ' ');
+                return spec;
+            }).value(),
+            editLink;
 
         eventize(that);
         that.on('restart', function () {
             originalCase = JSON.parse(JSON.stringify(keis));
             timeStart = o.timeStart || casexml.isonow();
         }).fire('restart');
+        saveButton.ui.appendTo(home);
         $('<h1/>').text(keis.properties.case_name).appendTo(home);
-        $('<a href="#"/>').text('edit').click(function () {
+        $('<h2/>').text('Properties').appendTo(home);
+        editLink = $('<a href="#" id="case-edit-form-edit-link"/>').text('edit').click(function () {
             edit = !edit;
             that.fire('edit:change');
             return false;
         }).appendTo(home);
-        saveButton.ui.appendTo(home);
-        $('<h2/>').text('Properties').appendTo(home);
         keyValueTable({
             mapping: keis.properties,
             spec: keisPropertiesSpec
@@ -133,24 +171,29 @@ var CaseEditForm = (function () {
             spec: [{
                 key: 'closed',
                 label: 'Status',
-                format: function (x) {
-                    return uiElement.select([{
-                        label: 'Closed',
-                        value: 'true'
-                    }, {
-                        label: 'Open',
-                        value: 'false'
-                    }]).val(x ? 'true' : 'false');
-                },
-                strToValue: function (str) {
-                    return JSON.parse(str);
-                }
+                type: 'select',
+                choices: [{
+                    label: 'Closed',
+                    value: 'true',
+                    trueValue: true
+                }, {
+                    label: 'Open',
+                    value: 'false',
+                    trueValue: false
+                }]
             }]
         }).appendTo(home);
 
         saveButton.on('save', function () {
             edit = false;
             that.fire('edit:change');
+        });
+        that.on('edit:change', function () {
+            if (edit) {
+                editLink.hide();
+            } else {
+                editLink.show();
+            }
         });
         that.fire('edit:change');
         /* make all the th's as wide as the widest */
