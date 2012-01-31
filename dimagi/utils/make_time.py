@@ -1,4 +1,6 @@
 from datetime import datetime
+from pytz import timezone
+import settings
 
 def make_time():
-    return datetime.utcnow()
+    return datetime.now(tz=timezone(settings.TIME_ZONE))
