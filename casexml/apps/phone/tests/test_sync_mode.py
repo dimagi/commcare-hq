@@ -670,18 +670,140 @@ class MultiUserSyncTest(SyncBaseTest):
 
     def testOtherUserReassignsIndexed(self):
         # create a parent and child case (with index) from one user
+        parent_id = "other_reassigns_index_parent"
+        case_id = "other_reassigns_index_child"
+        
+        parent = CaseBlock(
+            create=True, 
+            case_id=parent_id,
+            user_id=USER_ID, 
+            owner_id=USER_ID_ALIAS, # this makes it not sync to the other phone
+            version=V2).as_xml()
+        child = CaseBlock(
+            create=True,
+            case_id=case_id,
+            user_id=USER_ID,
+            owner_id=USER_ID,
+            version=V2,
+            index={'mother': ('mother', parent_id)}
+        ).as_xml()
+        self._postFakeWithSyncToken(parent, self.sync_log.get_id)
+        self._postFakeWithSyncToken(child, self.sync_log.get_id)
+        
         # assign the parent case away from the same user
+        parent_update = CaseBlock(
+            create=False, 
+            case_id=parent_id,
+            user_id=USER_ID, 
+            owner_id=OTHER_USER_ID,
+            update={"greeting": "hello"}, 
+            version=V2).as_xml()
+        self._postFakeWithSyncToken(parent_update, self.sync_log.get_id)
+        
+        # sync cases to second user
+        generate_restore_payload(self.other_user)
+        self.other_sync_log = SyncLog.last_for_user(self.other_user.user_id)
         # change the child's owner from another user
+        child_reassignment = CaseBlock(
+            create=False,
+            case_id=case_id,
+            user_id=OTHER_USER_ID,
+            owner_id=OTHER_USER_ID,
+            version=V2,
+            update={"childgreeting": "hi!"}, 
+        ).as_xml()
+        self._postFakeWithSyncToken(child_reassignment, self.other_sync_log.get_id)
+        
         # also change the parent from the second user
+        other_parent_update = CaseBlock(
+            create=False, 
+            case_id=parent_id,
+            user_id=OTHER_USER_ID, 
+            owner_id=OTHER_USER_ID,
+            update={"other_greeting": "something new"}, 
+            version=V2).as_xml()
+        self._postFakeWithSyncToken(other_parent_update, self.other_sync_log.get_id)
+        
         # original user syncs again
+        self.sync_log = SyncLog.last_for_user(self.user.user_id)
         # both cases should sync to original user with updated ownership / edits
+        check_user_has_case(self, self.user, child_reassignment, should_have=True, 
+                            line_by_line=False, restore_id=self.sync_log.get_id, 
+                            version=V2)
+        check_user_has_case(self, self.user, other_parent_update, should_have=True, 
+                            line_by_line=False, restore_id=self.sync_log.get_id, 
+                            version=V2)
+        # Ghetto
+        payload = generate_restore_payload(self.user, self.sync_log.get_id, 
+                                           version=V2)
+        self.assertTrue("something new" in payload)
+        self.assertTrue("hi!" in payload)
+        
         # change the parent again from the second user
+        other_parent_update = CaseBlock(
+            create=False, 
+            case_id=parent_id,
+            user_id=OTHER_USER_ID, 
+            owner_id=OTHER_USER_ID,
+            update={"other_greeting": "something different"}, 
+            version=V2).as_xml()
+        self._postFakeWithSyncToken(other_parent_update, self.other_sync_log.get_id)
+        
+        
         # original user syncs again
+        self.sync_log = SyncLog.last_for_user(self.user.user_id)
         # should be no changes
+        check_user_has_case(self, self.user, child_reassignment, should_have=False, 
+                            line_by_line=False, restore_id=self.sync_log.get_id, 
+                            version=V2)
+        check_user_has_case(self, self.user, other_parent_update, should_have=False, 
+                            line_by_line=False, restore_id=self.sync_log.get_id, 
+                            version=V2)
+        
         # change the child again from the second user
+        other_child_update = CaseBlock(
+            create=False,
+            case_id=case_id,
+            user_id=OTHER_USER_ID,
+            owner_id=OTHER_USER_ID,
+            version=V2,
+            update={"childgreeting": "hi changed!"}, 
+        ).as_xml()
+        self._postFakeWithSyncToken(other_child_update, self.other_sync_log.get_id)
+        
+        
         # original user syncs again
+        self.sync_log = SyncLog.last_for_user(self.user.user_id)
         # should be no changes
+        check_user_has_case(self, self.user, other_child_update, should_have=False, 
+                            line_by_line=False, restore_id=self.sync_log.get_id, 
+                            version=V2)
+        check_user_has_case(self, self.user, other_parent_update, should_have=False, 
+                            line_by_line=False, restore_id=self.sync_log.get_id, 
+                            version=V2)
+        
         # change owner of child back to orginal user from second user
+        child_reassignment = CaseBlock(
+            create=False,
+            case_id=case_id,
+            user_id=OTHER_USER_ID,
+            owner_id=USER_ID,
+            version=V2
+        ).as_xml()
+        self._postFakeWithSyncToken(child_reassignment, self.other_sync_log.get_id)
+        
         # original user syncs again
+        self.sync_log = SyncLog.last_for_user(self.user.user_id)
         # both cases should now sync
-        pass
+        check_user_has_case(self, self.user, child_reassignment, should_have=True, 
+                            line_by_line=False, restore_id=self.sync_log.get_id, 
+                            version=V2)
+        check_user_has_case(self, self.user, other_parent_update, should_have=True, 
+                            line_by_line=False, restore_id=self.sync_log.get_id, 
+                            version=V2)
+        # ghetto
+        payload = generate_restore_payload(self.user, self.sync_log.get_id, 
+                                           version=V2)
+        self.assertTrue("something different" in payload)
+        self.assertTrue("hi changed!" in payload)
+        
