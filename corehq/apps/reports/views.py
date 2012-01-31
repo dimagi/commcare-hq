@@ -136,8 +136,8 @@ def custom_export(req, domain):
     
     if req.method == "POST":
         table = req.POST["table"]
-        cols = req.POST['order'].strip().split(" ")
-        export_cols = [ExportColumn(index=col, 
+        cols = req.POST['order'].strip().split()
+        export_cols = [ExportColumn(index=col,
                                     display=req.POST["%s_display" % col]) \
                        for col in cols]
         export_table = ExportTable(index=table, display=req.POST["name"],
