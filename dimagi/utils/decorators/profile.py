@@ -5,7 +5,7 @@ from django.conf import settings
 
 try:
     PROFILE_LOG_BASE = settings.PROFILE_LOG_BASE
-except:
+except Exception:
     PROFILE_LOG_BASE = "/tmp"
 
 # Source: http://code.djangoproject.com/wiki/ProfilingDjango
