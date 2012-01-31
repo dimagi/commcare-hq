@@ -12,3 +12,8 @@ except ImportError, e:
     # otherwise debugging is a pain
     log_exception(e)
     raise e
+
+from .util import CaseBlock, CaseBlockError
+__test__ = {
+    'caseblock': CaseBlock
+}
