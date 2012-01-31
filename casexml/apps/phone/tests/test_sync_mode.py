@@ -1,14 +1,11 @@
 from django.test import TestCase
 import os
-import time
 from couchforms.util import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import check_xml_line_by_line, CaseBlock, \
-    check_user_has_case
+from casexml.apps.case.tests.util import CaseBlock, check_user_has_case
 from casexml.apps.case.signals import process_cases
-from casexml.apps.phone.models import SyncLog, CaseState, User
+from casexml.apps.phone.models import SyncLog, User
 from casexml.apps.phone.restore import generate_restore_payload
-from casexml.apps.phone.tests import const
 from casexml.apps.phone.tests.dummy import dummy_user
 from couchforms.models import XFormInstance
 from casexml.apps.case.xml import V2
@@ -17,9 +14,9 @@ from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from datetime import datetime
 from xml.etree import ElementTree
 
-USER_ID = "foo"
+USER_ID = "main_user"
 OTHER_USER_ID = "someone_else"
-USER_ID_ALIAS = "orig"
+SHARED_ID = "our_group"
 PARENT_TYPE = "mother"
 
 class SyncBaseTest(TestCase):
@@ -36,18 +33,20 @@ class SyncBaseTest(TestCase):
         for log in SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all():
             log.delete()
         
-        self.user = dummy_user()
+        self.user = User(user_id=USER_ID, username="syncguy", 
+                         password="changeme", date_joined=datetime(2011, 6, 9)) 
         # this creates the initial blank sync token in the database
         generate_restore_payload(self.user)
         [sync_log] = SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all()
         self.sync_log = sync_log
     
-    def _createCaseStubs(self, id_list):
+    def _createCaseStubs(self, id_list, user_id=USER_ID, owner_id=USER_ID):
         for id in id_list:
             parent = CaseBlock(
                 create=True,
                 case_id=id,
-                user_id=USER_ID,
+                user_id=user_id,
+                owner_id=owner_id,
                 case_type=PARENT_TYPE,
                 version=V2
             ).as_xml()
@@ -317,25 +316,26 @@ class MultiUserSyncTest(SyncBaseTest):
         # for convenience
         self.other_user = User(user_id=OTHER_USER_ID, username="ferrel",
                                password="changeme", date_joined=datetime(2011, 6, 9),
-                               additional_owner_ids=[USER_ID])
+                               additional_owner_ids=[SHARED_ID])
+        
         # this creates the initial blank sync token in the database
         generate_restore_payload(self.other_user)
         self.other_sync_log = SyncLog.last_for_user(OTHER_USER_ID)
         
-        self.assertTrue(USER_ID in self.other_sync_log.owner_ids_on_phone)
+        self.assertTrue(SHARED_ID in self.other_sync_log.owner_ids_on_phone)
         self.assertTrue(OTHER_USER_ID in self.other_sync_log.owner_ids_on_phone)
         
-        self.user.additional_owner_ids = [USER_ID_ALIAS]
+        self.user.additional_owner_ids = [SHARED_ID]
         generate_restore_payload(self.user)
         self.sync_log = SyncLog.last_for_user(self.user.user_id)
-        self.assertTrue(USER_ID_ALIAS in self.sync_log.owner_ids_on_phone)
+        self.assertTrue(SHARED_ID in self.sync_log.owner_ids_on_phone)
         self.assertTrue(USER_ID in self.sync_log.owner_ids_on_phone)
         
         
     def testSharedCase(self):
         # create a case by one user
         case_id = "shared_case"
-        self._createCaseStubs([case_id])
+        self._createCaseStubs([case_id], owner_id=SHARED_ID)
         # should sync to the other owner
         expected = CaseBlock(case_id=case_id, version=V2).as_xml()
         check_user_has_case(self, self.other_user, expected, should_have=True,
@@ -345,7 +345,7 @@ class MultiUserSyncTest(SyncBaseTest):
     def testOtherUserEdits(self):
         # create a case by one user
         case_id = "other_user_edits"
-        self._createCaseStubs([case_id])
+        self._createCaseStubs([case_id], owner_id=SHARED_ID)
         
         # sync to the other's phone to be able to edit
         check_user_has_case(self, self.other_user, 
@@ -372,7 +372,7 @@ class MultiUserSyncTest(SyncBaseTest):
     def testOtherUserAddsIndex(self):
         # create a case from one user
         case_id = "other_user_adds_index"
-        self._createCaseStubs([case_id])
+        self._createCaseStubs([case_id], owner_id=SHARED_ID)
 
         # sync to the other's phone to be able to edit
         check_user_has_case(self, self.other_user,
@@ -424,7 +424,7 @@ class MultiUserSyncTest(SyncBaseTest):
     def testMultiUserEdits(self):
         # create a case from one user
         case_id = "multi_user_edits"
-        self._createCaseStubs([case_id])
+        self._createCaseStubs([case_id], owner_id=SHARED_ID)
 
         # both users syncs
         generate_restore_payload(self.user)
@@ -469,7 +469,7 @@ class MultiUserSyncTest(SyncBaseTest):
                 'greeting': 'hello',
                 'greeting_2': 'hello'
             },
-            owner_id='',
+            owner_id=SHARED_ID,
             case_name='',
             case_type='mother',
         ).as_xml()
@@ -479,7 +479,7 @@ class MultiUserSyncTest(SyncBaseTest):
     def testOtherUserCloses(self):
         # create a case from one user
         case_id = "other_user_closes"
-        self._createCaseStubs([case_id])
+        self._createCaseStubs([case_id], owner_id=SHARED_ID)
 
         # sync then close case from another user
         generate_restore_payload(self.other_user)
@@ -504,17 +504,8 @@ class MultiUserSyncTest(SyncBaseTest):
     def testOtherUserUpdatesUnowned(self):
         # create a case from one user and assign ownership elsewhere
         case_id = "other_user_updates_unowned"
-        orig = CaseBlock(
-            create=True,
-            case_id=case_id,
-            user_id=USER_ID,
-            owner_id=OTHER_USER_ID,
-            version=V2,
-        ).as_xml()
-        self._postFakeWithSyncToken(
-            orig,
-            self.sync_log.get_id
-        )
+        self._createCaseStubs([case_id], owner_id=OTHER_USER_ID)
+        
         # sync and update from another user
         check_user_has_case(self, self.other_user,
             CaseBlock(case_id=case_id, version=V2).as_xml(),
@@ -545,26 +536,20 @@ class MultiUserSyncTest(SyncBaseTest):
         # create a parent and child case (with index) from one user
         parent_id = "indexes_sync_parent"
         case_id = "indexes_sync"
-        
-        parent = CaseBlock(
-            create=True, 
-            case_id=parent_id,
-            user_id=USER_ID, 
-            owner_id=USER_ID_ALIAS, # this makes it not sync to the other phone
-            version=V2).as_xml()
+        self._createCaseStubs([parent_id])
         child = CaseBlock(
             create=True,
             case_id=case_id,
             user_id=USER_ID,
-            owner_id=USER_ID_ALIAS,
+            owner_id=USER_ID,
             version=V2,
             index={'mother': ('mother', parent_id)}
         ).as_xml() 
-        
-        self._postFakeWithSyncToken(parent, self.sync_log.get_id)
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
-        
+
         # make sure the second user doesn't get either
+        parent = CaseBlock(case_id=parent_id, version=V2).as_xml()
+        child = CaseBlock(case_id=case_id, version=V2).as_xml()
         check_user_has_case(self, self.other_user, parent, should_have=False, 
                             restore_id=self.other_sync_log.get_id, version=V2)
         check_user_has_case(self, self.other_user, child, should_have=False, 
@@ -597,23 +582,20 @@ class MultiUserSyncTest(SyncBaseTest):
         # create a parent and child case (with index) from one user
         parent_id = "other_updates_index_parent"
         case_id = "other_updates_index_child"
+        self._createCaseStubs([parent_id])
+        parent = CaseBlock(case_id=parent_id, version=V2).as_xml()
         
-        parent = CaseBlock(
-            create=True, 
-            case_id=parent_id,
-            user_id=USER_ID, 
-            owner_id=USER_ID_ALIAS, # this makes it not sync to the other phone
-            version=V2).as_xml()
         child = CaseBlock(
             create=True,
             case_id=case_id,
             user_id=USER_ID,
-            owner_id=USER_ID_ALIAS,
+            owner_id=USER_ID,
             version=V2,
             index={'mother': ('mother', parent_id)}
         ).as_xml()
-        self._postFakeWithSyncToken(parent, self.sync_log.get_id)
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
+
+
         check_user_has_case(self, self.user, parent, should_have=False, 
                             restore_id=self.sync_log.get_id, version=V2)
         check_user_has_case(self, self.user, child, should_have=False, 
@@ -668,23 +650,17 @@ class MultiUserSyncTest(SyncBaseTest):
         # create a parent and child case (with index) from one user
         parent_id = "other_reassigns_index_parent"
         case_id = "other_reassigns_index_child"
-        
-        parent = CaseBlock(
-            create=True, 
-            case_id=parent_id,
-            user_id=USER_ID, 
-            owner_id=USER_ID_ALIAS, # this makes it not sync to the other phone
-            version=V2).as_xml()
+        self._createCaseStubs([parent_id])
         child = CaseBlock(
             create=True,
             case_id=case_id,
             user_id=USER_ID,
-            owner_id=USER_ID,
+            owner_id=SHARED_ID,
             version=V2,
             index={'mother': ('mother', parent_id)}
         ).as_xml()
-        self._postFakeWithSyncToken(parent, self.sync_log.get_id)
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
+        
         
         # assign the parent case away from the same user
         parent_update = CaseBlock(
