@@ -524,8 +524,8 @@ class CaseReminderHandler(Document):
         if not self.deleted():
             cases = CommCareCase.view('hqcase/open_cases',
                 reduce=False,
-                startkey=[self.domain],
-                endkey=[self.domain, {}],
+                startkey=[self.domain, self.case_type],
+                endkey=[self.domain, self.case_type, {}],
                 include_docs=True,
             )
             for case in cases:
