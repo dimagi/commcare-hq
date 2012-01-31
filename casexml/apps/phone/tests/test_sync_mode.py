@@ -273,10 +273,6 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self._testUpdate(self.sync_log.get_id, {parent_id: [], updated_id: [], new_parent_id: [],
                                                 child_id: [new_index_ref]})
         
-        # close parent case and make sure it hangs around because the child
-        # is still open
-        # todo
-        
     def testAssignToNewOwner(self):
         # first create the parent case
         parent_id = "mommy"
