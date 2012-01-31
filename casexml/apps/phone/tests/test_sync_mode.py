@@ -164,6 +164,39 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self._testUpdate(sync_log.get_id, {"asdf": [],
                                            "IKA9G79J4HDSPJLG3ER2OHQUY": []})
     
+    def testOwnUpdatesDontSync(self):
+        case_id = "own_updates_dont_sync"
+        self._createCaseStubs([case_id])
+        case_block = CaseBlock(
+            create=True,
+            case_id=case_id,
+            user_id=USER_ID,
+            version=V2,
+        ).as_xml()
+        check_user_has_case(self, self.user, case_block, should_have=False, 
+                            restore_id=self.sync_log.get_id, version=V2)
+        
+        update_block = CaseBlock(
+            create=False,
+            case_id=case_id,
+            user_id=USER_ID,
+            version=V2,
+            update={"greeting": "hello"}
+        ).as_xml()
+        self._postFakeWithSyncToken(update_block, self.sync_log.get_id)
+        check_user_has_case(self, self.user, update_block, should_have=False, 
+                            restore_id=self.sync_log.get_id, version=V2)
+        
+        reassign_block = CaseBlock(
+            create=False,
+            case_id=case_id,
+            owner_id=OTHER_USER_ID,
+            version=V2
+        ).as_xml()
+        self._postFakeWithSyncToken(reassign_block, self.sync_log.get_id)
+        check_user_has_case(self, self.user, reassign_block, should_have=False, 
+                            restore_id=self.sync_log.get_id, version=V2)
+        
     def testIndexReferences(self):
         """
         Tests that indices properly get set in the sync log when created. 
@@ -292,7 +325,7 @@ class MultiUserSyncTest(SyncBaseTest):
         # this creates the initial blank sync token in the database
         generate_restore_payload(self.other_user)
         self.other_sync_log = SyncLog.last_for_user(OTHER_USER_ID)
-        print self.other_sync_log.owner_ids_on_phone
+        
         self.assertTrue(USER_ID in self.other_sync_log.owner_ids_on_phone)
         self.assertTrue(OTHER_USER_ID in self.other_sync_log.owner_ids_on_phone)
         
@@ -585,6 +618,10 @@ class MultiUserSyncTest(SyncBaseTest):
         ).as_xml()
         self._postFakeWithSyncToken(parent, self.sync_log.get_id)
         self._postFakeWithSyncToken(child, self.sync_log.get_id)
+        check_user_has_case(self, self.user, parent, should_have=False, 
+                            restore_id=self.sync_log.get_id, version=V2)
+        check_user_has_case(self, self.user, child, should_have=False, 
+                            restore_id=self.sync_log.get_id, version=V2)
         
         # assign the parent case away from same user
         parent_update = CaseBlock(
@@ -596,11 +633,19 @@ class MultiUserSyncTest(SyncBaseTest):
             version=V2).as_xml()
         self._postFakeWithSyncToken(parent_update, self.sync_log.get_id)
         
+        self.sync_log = SyncLog.get(self.sync_log.get_id)
+        
+        # these tests added to debug another issue revealed by this test
+        self.assertTrue(self.sync_log.phone_has_case(case_id))
+        self.assertTrue(self.sync_log.phone_has_dependent_case(parent_id))
+        self.assertTrue(self.sync_log.phone_is_holding_case(case_id))
+        self.assertTrue(self.sync_log.phone_is_holding_case(parent_id))
+        
         # original user syncs again
         # make sure there are no new changes
         check_user_has_case(self, self.user, parent, should_have=False, 
                             restore_id=self.sync_log.get_id, version=V2)
-        check_user_has_case(self, self._user, child, should_have=False, 
+        check_user_has_case(self, self.user, child, should_have=False, 
                             restore_id=self.sync_log.get_id, version=V2)
         
         # update the parent case from another user
@@ -623,7 +668,6 @@ class MultiUserSyncTest(SyncBaseTest):
                             line_by_line=False, 
                             restore_id=self.sync_log.get_id, version=V2)
 
-    
     def testOtherUserReassignsIndexed(self):
         # create a parent and child case (with index) from one user
         # assign the parent case away from the same user
@@ -641,5 +685,3 @@ class MultiUserSyncTest(SyncBaseTest):
         # original user syncs again
         # both cases should now sync
         pass
-    
-    

@@ -81,7 +81,7 @@ class CaseSyncOperation(object):
             # If we got down here, as a last check make sure the phone
             # is aware of the case. There are some corner cases where
             # this won't be true
-            if not last_sync.phone_has_case(case.get_id):
+            if not last_sync.phone_is_holding_case(case.get_id):
                 return True
             
             # We're good.
@@ -105,7 +105,7 @@ class CaseSyncOperation(object):
                                             list(self.all_potential_cases))
         
         # this is messy but forces uniqueness at the case_id level, without
-        # having to reload all the cases
+        # having to reload all the cases from the DB
         self.all_potential_to_sync_dict = dict((case.get_id, case) \
                                                for case in self.all_potential_to_sync)
         

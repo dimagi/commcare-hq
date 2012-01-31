@@ -235,7 +235,7 @@ class SyncLog(Document, UnicodeMixIn):
                 
     def get_footprint_of_cases_on_phone(self):
         """
-        Get's the phone's flat list of all case ids on the phone, 
+        Gets the phone's flat list of all case ids on the phone, 
         owned or not owned but relevant.
         """
         def children(case_state):
@@ -260,7 +260,7 @@ class SyncLog(Document, UnicodeMixIn):
             return True
         else:
             cs = self.get_dependent_case_state(case_id)
-            if cs and cs in self.get_footprint_of_cases_on_phone():
+            if cs and case_id in self.get_footprint_of_cases_on_phone():
                 return True
             return False
             
