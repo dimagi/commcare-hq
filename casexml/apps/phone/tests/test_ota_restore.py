@@ -59,7 +59,7 @@ class OtaRestoreTest(TestCase):
         
         # implicit length assertion
         [newcase] = CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()
-        self.assertEqual(1, len(user.get_case_updates(None)))
+        self.assertEqual(1, len(user.get_case_updates(None).actual_cases_to_sync))
         expected_case_block = """
         <case>
             <case_id>asdf</case_id> 
@@ -290,7 +290,6 @@ class OtaRestoreTest(TestCase):
         
         time.sleep(1)
         sync_restore_payload = generate_restore_payload(dummy_user(), sync_log.get_id)
-        # implicit length assertion
         [latest_log] = [log for log in \
                         SyncLog.view("phone/sync_logs_by_user", include_docs=True, reduce=False).all() \
                         if log.get_id != sync_log.get_id]
