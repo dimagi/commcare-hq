@@ -219,7 +219,10 @@ def get_business_day_of_month_after(year, month, day):
         try:
             adate = datetime(year, month, 30)
         except ValueError:
-            adate = datetime(year, month, 28)
+            try:
+                adate = datetime(year, month, 29)
+            except ValueError:
+                adate = datetime(year, month, 28)
     r = rrule(MONTHLY, byweekday=(MO, TU, WE, TH, FR), 
               dtstart=datetime(year,month, 1))
     res = r.after(adate, inc=True)
@@ -238,7 +241,10 @@ def get_business_day_of_month_before(year, month, day):
         try:
             adate = datetime(year, month, 30)
         except ValueError:
-            adate = datetime(year, month, 28)
+            try:
+                adate = datetime(year, month, 29)
+            except ValueError:
+                adate = datetime(year, month, 28)
     r = rrule(MONTHLY, byweekday=(MO, TU, WE, TH, FR), 
               dtstart=datetime(year,month,1))
     res = r.before(adate, inc=True)
