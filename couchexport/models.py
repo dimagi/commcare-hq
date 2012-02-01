@@ -228,7 +228,7 @@ class SavedExportSchema(Document, UnicodeMixIn):
         """
         from couchexport.shortcuts import export_response
         from couchexport.export import get_writer, get_schema_new, \
-            format_tables_new, create_intermediate_tables
+            format_tables, create_intermediate_tables
         
         if not format:
             format = self.default_format or Format.XLS_2007
@@ -255,7 +255,7 @@ class SavedExportSchema(Document, UnicodeMixIn):
         writer.open(formatted_headers, tmp)
         
         for doc in config.get_docs():
-            writer.write(self.trim(format_tables_new\
+            writer.write(self.trim(format_tables\
                              (create_intermediate_tables(doc, updated_schema), 
                               separator=".")))
         writer.close()

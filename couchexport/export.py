@@ -128,7 +128,7 @@ def export_new(schema_index, file, format=Format.XLS_2007,
     writer.open(formatted_headers, file)
     
     for doc in config.get_docs():
-        writer.write(format_tables_new(create_intermediate_tables(doc, updated_schema), 
+        writer.write(format_tables(create_intermediate_tables(doc, updated_schema), 
                                        include_headers=False, separator="|"))
     writer.close()
     return export_schema_checkpoint
@@ -207,7 +207,7 @@ def fit_to_schema(doc, schema):
 
 
 def get_headers(schema, separator="|"):
-    return format_tables_new(create_intermediate_tables(schema, schema), 
+    return format_tables(create_intermediate_tables(schema, schema), 
                              include_data=False, separator=separator)
 
 def create_intermediate_tables(docs, schema, integer='#'):
@@ -284,7 +284,7 @@ class FormattedRow(object):
             yield val        
 
         
-def format_tables_new(tables, id_label='id', separator='.', include_headers=True,
+def format_tables(tables, id_label='id', separator='.', include_headers=True,
                       include_data=True):
     answ = []
     assert include_data or include_headers, "This method is pretty useless if you don't include anything!"
