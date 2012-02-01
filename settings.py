@@ -167,6 +167,7 @@ HQ_APPS = (
     'touchforms.formplayer',
     'phonelog',
     'pathfinder',
+    'hutch',
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
