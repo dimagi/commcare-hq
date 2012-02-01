@@ -481,7 +481,7 @@ class CaseReminderHandler(Document):
         now = now or self.get_now()
         reminder = self.get_reminder(case)
 
-        if case.closed or not CommCareUser.get_by_user_id(case.user_id):
+        if case.closed or case.type != self.case_type or not CommCareUser.get_by_user_id(case.user_id):
             if reminder:
                 reminder.retire()
         else:
@@ -524,8 +524,8 @@ class CaseReminderHandler(Document):
         if not self.deleted():
             cases = CommCareCase.view('hqcase/open_cases',
                 reduce=False,
-                startkey=[self.domain, self.case_type],
-                endkey=[self.domain, self.case_type, {}],
+                startkey=[self.domain],
+                endkey=[self.domain, {}],
                 include_docs=True,
             )
             for case in cases:
