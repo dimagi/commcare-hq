@@ -41,7 +41,7 @@ def get_docs(schema_index, previous_export=None, filter=None):
 
 def build_latest_schema(schema_index):
     """
-    Build a schema, directly from the index.
+    Build a schema, directly from the index. Also creates a saved checkpoint.
     """
     from couchexport.export import ExportConfiguration
     db = Database(settings.COUCH_DATABASE)
