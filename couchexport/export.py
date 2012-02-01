@@ -73,39 +73,6 @@ class ExportConfiguration(object):
     def last_checkpoint(self):
         return self.previous_export or ExportSchema.last(self.schema_index)
 
-def get_full_export_tables(schema_index, previous_export, filter=None):
-    """
-    Returns a tuple, the first element being the tabular data ready for 
-    processing, and the second the saved checkpoint associated with the tables.
-    
-    The "filter" argument allows you to pass in a function to filter documents
-    from the results. The filter function should take in a document and return
-    true if the document should be included, otherwise false.
-    """
-    db = Database(settings.COUCH_DATABASE)
-    
-    # used cached export config to determine doc list
-    # previous_export = ExportSchema.last(schema_index)
-    current_seq = db.info()["update_seq"]
-    
-    
-    docs = get_docs(schema_index, previous_export, filter)
-    if not docs:
-        return (None, None)
-    
-    checkpoint = ExportSchema.last(schema_index)
-    if not previous_export and checkpoint:
-        temp_docs = get_docs(schema_index, previous_export, filter)
-        schema = get_schema(temp_docs, checkpoint)
-    else:
-        schema = get_schema(docs, previous_export)
-    
-    [schema_dict] = schema
-    this_export = ExportSchema(seq=current_seq, schema=schema_dict, 
-                               index=schema_index)
-    this_export.save()
-    return (format_tables(create_intermediate_tables(docs,schema)), this_export)
-
 def get_writer(format):
     if format == Format.CSV:
         return CsvExportWriter()
@@ -165,20 +132,6 @@ def export_new(schema_index, file, format=Format.XLS_2007,
                                        include_headers=False, separator="|"))
     writer.close()
     return export_schema_checkpoint
-
-def export(schema_index, file, format=Format.XLS_2007, 
-           previous_export_id=None, filter=None, max_column_size=2000):
-    """
-    Exports data from couch documents matching a given tag to a file. 
-    Returns true if it finds data, otherwise nothing
-    """
-    previous_export = ExportSchema.get(previous_export_id) \
-                      if previous_export_id else None
-    tables, checkpoint = get_full_export_tables(schema_index, previous_export, filter)
-    if not tables:
-        return None
-    export_from_tables(tables, file, format, max_column_size)
-    return checkpoint
 
 class Constant(UnicodeMixIn):
     def __init__(self, message):
@@ -349,24 +302,6 @@ def format_tables_new(tables, id_label='id', separator='.', include_headers=True
                 values = [row[key] for key in keys]
                 new_table.append(FormattedRow(values, id, separator))
         
-        answ.append((separator.join(table_name), new_table))
-    return answ
-
-def format_tables(tables, id_label='id', separator='.'):
-    answ = []
-    for table_name, table in sorted(tables.items()):
-        new_table = []
-        keys = sorted(table.items()[0][1].keys()) # the keys for every row are the same
-        header = [id_label]
-        for key in keys:
-            header.append(separator.join(key))
-        new_table.append(header)
-        for id, row in sorted(table.items()):
-            new_row = []
-            new_row.append(separator.join(map(unicode,id)))
-            for key in keys:
-                new_row.append(row[key])
-            new_table.append(new_row)
         answ.append((separator.join(table_name), new_table))
     return answ
 
