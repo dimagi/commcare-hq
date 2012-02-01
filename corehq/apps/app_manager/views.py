@@ -1365,13 +1365,13 @@ def download_raw_jar(req, domain, app_id):
     return response
 
 def emulator(req, domain, app_id, template="app_manager/emulator.html"):
-    app = get_app(domain, app_id)
+    copied_app = app = get_app(domain, app_id)
     if app.copy_of:
         app = get_app(domain, app.copy_of)
 
     # Coupled URL -- Sorry!
     build_path = "/builds/{version}/{build_number}/Generic/WebDemo/".format(
-        **app.get_preview_build()._doc
+        **copied_app.get_preview_build()._doc
     )
     return render_to_response(req, template, {
         'domain': domain,
