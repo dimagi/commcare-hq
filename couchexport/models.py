@@ -84,11 +84,9 @@ class ExportSchema(Document, UnicodeMixIn):
     @property
     def tables(self):
         if self._tables is None:
-            from couchexport.export import create_intermediate_tables, format_tables
-            # this is some crazy hackery, but works. Essentially build the tables
-            # for a (almost) totally blank set of documents
-            full_tables = format_tables(create_intermediate_tables([{"_id": ""}],[self.schema]))
-            self._tables = [(t[0], t[1][0]) for t in full_tables]
+            from couchexport.export import get_headers
+            headers = get_headers(self.schema, separator=".")
+            self._tables = [(index, row[0]) for index, row in headers]
         return self._tables
     
     @property
@@ -97,10 +95,10 @@ class ExportSchema(Document, UnicodeMixIn):
     
     @property
     def top_level_nodes(self):
-        return self.tables[0][1]
+        return self.tables[0][1].get_data()
     
     def get_columns(self, index):
-        return self.table_dict[index]
+        return self.table_dict[index].get_data()
 
 class ExportColumn(DocumentSchema):
     """

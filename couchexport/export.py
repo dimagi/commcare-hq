@@ -20,7 +20,7 @@ class ExportConfiguration(object):
     some functions to actually facilitate the export from this config.
     """
     
-    def __init__(self, database, schema_index, previous_export, filter=None):
+    def __init__(self, database, schema_index, previous_export=None, filter=None):
         self.database = database
         self.schema_index = schema_index
         self.previous_export = previous_export
@@ -45,7 +45,7 @@ class ExportConfiguration(object):
     
     def _potentially_relevant_ids(self):
         if self.previous_export is not None:
-            consumer = Consumer(self.db)
+            consumer = Consumer(self.database)
             view_results = consumer.fetch(since=self.previous_export.seq)
             if view_results:
                 try:

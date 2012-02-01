@@ -2,6 +2,7 @@ from couchdbkit.client import Database
 from django.conf import settings
 from couchdbkit.consumer import Consumer
 from couchexport.models import ExportSchema
+from dimagi.utils.couch.database import get_db
 
 
 def get_docs(schema_index, previous_export=None, filter=None):
@@ -42,11 +43,13 @@ def build_latest_schema(schema_index):
     """
     Build a schema, directly from the index.
     """
+    from couchexport.export import ExportConfiguration
     db = Database(settings.COUCH_DATABASE)
     current_seq = db.info()["update_seq"]
     previous_export = ExportSchema.last(schema_index)
-    docs = get_docs(schema_index, previous_export)
-    [schema] = get_schema(docs, previous_export)
+    config = ExportConfiguration(get_db(), schema_index, 
+                                 previous_export=previous_export)
+    schema = get_schema_new(config)
     if not schema:
         return None
     updated_checkpoint = ExportSchema(seq=current_seq, schema=schema, 
