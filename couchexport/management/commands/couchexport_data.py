@@ -1,7 +1,7 @@
 from django.core.management.base import LabelCommand, CommandError
 from couchexport.models import GroupExportConfiguration
 from couchdbkit.exceptions import ResourceNotFound
-from couchexport.export import export_new
+from couchexport.export import export
 import os
 
 class Command(LabelCommand):
@@ -23,5 +23,5 @@ class Command(LabelCommand):
             filename = export.filename
             with open(os.path.join(output_dir, filename), "wb") as f:
                 print "exporting %s to %s" % (export.name, output_dir)
-                export_new(export.index, f, format=export.format)
+                export(export.index, f, format=export.format)
                 

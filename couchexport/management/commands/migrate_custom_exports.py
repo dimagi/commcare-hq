@@ -1,8 +1,5 @@
 from django.core.management.base import LabelCommand, CommandError
-from couchexport.models import GroupExportConfiguration, SavedExportSchema
-from couchdbkit.exceptions import ResourceNotFound
-from couchexport.export import export_new
-import os
+from couchexport.models import SavedExportSchema
 from optparse import make_option
 
 OLD_ROOT_INDEX = "#.#"
