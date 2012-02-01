@@ -50,7 +50,7 @@ class HQMediaCacheHandler(object):
 
     def put_data(self, data):
         if self.cache_key:
-            cache.set(self.cache_key, data)
+            cache.set(self.cache_key, data, 600)
 
     def delete(self):
         if self.cache_key:

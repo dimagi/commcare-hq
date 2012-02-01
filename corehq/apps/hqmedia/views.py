@@ -41,8 +41,8 @@ def check_upload_success(request, domain):
     cache_handler = upload.HQMediaUploadSuccessCacheHandler.handler_from_request(request, domain)
     if cache_handler:
         cache_handler.sync()
-        failed_files = cache_handler.data
+        cached_data = cache_handler.data
         cache_handler.delete()
-        return HttpResponse(simplejson.dumps(failed_files))
+        return HttpResponse(simplejson.dumps(cached_data))
     else:
         return HttpResponseServerError(X_PROGRESS_ERROR)
