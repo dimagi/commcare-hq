@@ -1,8 +1,12 @@
 div#hqmedia_upload_status {
     display: inline-block;
 }
-a.view_media.inactive{
+a.view_media.inactive,
+#return-to-map.inactive{
     display: none;
+}
+#return-to-map {
+    margin-top: 1em;
 }
 
 .multimedia nav.breadcrumbs ul li {

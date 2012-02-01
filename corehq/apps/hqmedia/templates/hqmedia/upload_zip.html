@@ -10,6 +10,7 @@
     $().ready(function() {
         var _failed_files = $("#failed_files");
         function showFailedFiles () {
+           $("#return-to-map").removeClass("inactive");
            $.getJSON("{{ failed_files_url }}", function(data) {
                if(data.failed_files) {
                    _failed_files.prepend($("<h3 />").text("We could not find references to the following files in your application:"));
@@ -49,33 +50,33 @@
             </ul>
         </nav>
         <h1>Upload a ZIP of Multimedia Files for Application "{{ app.name }}"</h1>
-        <div class="body">
-            <form action="" id="hqmedia_upload" method="post" enctype="multipart/form-data">
-                <fieldset>
-                    <ul>
-                    {% for field in zipform %}
-                        {% if field.field.required %}
-                        <li>{{ field.label_tag }} {{ field }} <span class="helptext">{{ field.help_text }}</span></li>
-                        <li class="error" id="errors_{{ field.name }}">{{ field.errors }}</li>
-                        {% endif %}
-                    {% endfor %}
-                    </ul>
-                    <ul class="advanced-options">
-                    {% for field in zipform %}
-                        {% if not field.field.required %}
-                        <li>{{ field }} {{ field.label_tag }}</li>
-                        <li class="error" class="errors_{{ field.name }}">{{ field.errors }}</li>
-                        {% endif %}
-                    {% endfor %}
-                    </ul>
-                </fieldset>
-                <input type="hidden" class="hqmedia_upload_id" value="{{ progress_id }}" />
-                <input type="submit" value="Upload Zip File" />
-                <div id="hqmedia_upload_status"></div>
-            </form>
-            <div>Upload progress: <span id="hqmedia_progressbar"></span></div>
-            <div>Processing progress: <span id="hqmedia_processing_progressbar"></span></div>
-        </div>
+        <form action="" id="hqmedia_upload" method="post" enctype="multipart/form-data">
+            <fieldset>
+                <ul>
+                {% for field in zipform %}
+                    {% if field.field.required %}
+                    <li>{{ field.label_tag }} {{ field }} <span class="helptext">{{ field.help_text }}</span></li>
+                    <li class="error" id="errors_{{ field.name }}">{{ field.errors }}</li>
+                    {% endif %}
+                {% endfor %}
+                </ul>
+                <ul class="advanced-options">
+                {% for field in zipform %}
+                    {% if not field.field.required %}
+                    <li>{{ field }} {{ field.label_tag }}</li>
+                    <li class="error" class="errors_{{ field.name }}">{{ field.errors }}</li>
+                    {% endif %}
+                {% endfor %}
+                </ul>
+            </fieldset>
+            <input type="hidden" class="hqmedia_upload_id" value="{{ progress_id }}" />
+            <input type="submit" value="Upload Zip File" />
+            <div id="hqmedia_upload_status"></div>
+        </form>
+        <div>Upload progress: <span id="hqmedia_progressbar"></span></div>
+        <div>Processing progress: <span id="hqmedia_processing_progressbar"></span></div>
+
+        <div><a href="{% url multimedia_map domain app.get_id %}" id="return-to-map" class="button inactive">Return to Multimedia Map</a></div>
         <div id="failed_files">
             <ul></ul>
         </div>
