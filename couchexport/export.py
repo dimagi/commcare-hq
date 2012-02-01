@@ -102,12 +102,13 @@ def export_from_tables(tables, file, format, max_column_size=2000):
         raise Exception("Unsupported export format: %s!" % format)
     
 def export(schema_index, file, format=Format.XLS_2007, 
-               previous_export_id=None, filter=None, 
-               max_column_size=2000, separator='|'):
+           previous_export_id=None, filter=None, 
+           max_column_size=2000, separator='|'):
     """
     Exports data from couch documents matching a given tag to a file. 
     Returns true if it finds data, otherwise nothing
     """
+    
     previous_export = ExportSchema.get(previous_export_id) \
                       if previous_export_id else None
     database = get_db()
@@ -125,7 +126,7 @@ def export(schema_index, file, format=Format.XLS_2007,
     writer = get_writer(format)
     
     # open the doc and the headers
-    formatted_headers = get_headers(updated_schema)
+    formatted_headers = get_headers(updated_schema, separator=separator)
     writer.open(formatted_headers, file)
     
     for doc in config.get_docs():
