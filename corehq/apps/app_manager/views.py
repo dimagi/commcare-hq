@@ -446,6 +446,17 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     elif module:
         template="app_manager/module_view.html"
     else:
+        sorted_images, sorted_audio = utils.get_sorted_multimedia_refs(app)
+        multimedia_images, missing_image_refs = app.get_template_map(sorted_images, domain)
+        multimedia_audio, missing_audio_refs = app.get_template_map(sorted_audio, domain)
+        context.update({
+            'missing_image_refs': missing_image_refs,
+            'missing_audio_refs': missing_audio_refs,
+            'multimedia': {
+                'images': multimedia_images,
+                'audio': multimedia_audio
+            }
+        })
         template="app_manager/app_view.html"
     error = req.GET.get('error', '')
 
@@ -925,23 +936,10 @@ def multimedia_list_download(req, domain, app_id):
     return response
 
 @require_permission('edit-apps')
-def multimedia_home(req, domain, app_id, module_id=None, form_id=None):
-    """
-    Edit multimedia for forms
-    """
-    app = get_app(domain, app_id)
-    sorted_images, sorted_audio = utils.get_sorted_multimedia_refs(app)
-    return render_to_response(req, "app_manager/multimedia_home.html",
-                              {"domain": domain,
-                               "app": app,
-                               "images": sorted_images,
-                               "audiofiles": sorted_audio})
-
-@require_permission('edit-apps')
-def multimedia_upload_zip(request, domain, app_id):
+def multimedia_upload(request, domain, kind, app_id):
     upload_progress_url = reverse("hqmedia_upload_progress", args=[domain])
-    submit_url = reverse("multimedia_upload_zip", args=[domain, app_id])
-    failed_files_url = reverse("hqmedia_failed_file_status", args=[domain])
+    submit_url = reverse("multimedia_upload", args=[domain, kind, app_id])
+    failed_files_url = reverse("hqmedia_upload_success", args=[domain])
 
     app = get_app(domain, app_id)
     if request.method == 'POST':
@@ -949,18 +947,25 @@ def multimedia_upload_zip(request, domain, app_id):
         cache_handler = upload.HQMediaUploadCacheHandler.handler_from_request(request)
         response_errors = {}
         try:
-            form = HQMediaZipUploadForm(data=request.POST, files=request.FILES)
+            if kind == 'zip':
+                form = HQMediaZipUploadForm(data=request.POST, files=request.FILES)
+            elif kind == 'file':
+                form = HQMediaFileUploadForm(data=request.POST, files=request.FILES)
+            else:
+                return Http404()
             if form.is_valid():
-                failed_files = form.save(domain, app, request.user.username, cache_handler)
+                extra_data = form.save(domain, app, request.user.username, cache_handler)
                 if cache_handler:
                     cache_handler.delete()
-                if failed_files:
-                    failed_cache = upload.HQMediaFailedFilesCacheHandler.handler_from_request(request)
-                    if failed_cache:
-                        failed_cache.defaults()
-                        failed_cache.data["failed_files"] = failed_files
-                        failed_cache.save()
-                return HttpResponse(simplejson.dumps(failed_files))
+                if extra_data:
+                    completion_cache = upload.HQMediaUploadSuccessCacheHandler.handler_from_request(request)
+                    if kind=='zip' and completion_cache:
+                        completion_cache.data = extra_data
+                        completion_cache.save()
+                    elif kind=='file' and completion_cache:
+                        completion_cache.data = extra_data
+                        completion_cache.save()
+                return HttpResponse(simplejson.dumps(extra_data))
             else:
                 response_errors = form.errors
         except TypeError:
@@ -985,33 +990,27 @@ def multimedia_upload_zip(request, domain, app_id):
                                "progress_id": progress_id,
                                "progress_id_varname": upload.HQMediaCacheHandler.X_PROGRESS_ID})
 
-@login_and_domain_required
+@require_permission('edit-apps')
 def multimedia_map(request, domain, app_id):
     app = get_app(domain, app_id)
     sorted_images, sorted_audio = utils.get_sorted_multimedia_refs(app)
 
-    images = app.get_template_map(sorted_images, domain)
-    audio = app.get_template_map(sorted_audio, domain)
+    images, missing_image_refs = app.get_template_map(sorted_images, domain)
+    audio, missing_audio_refs = app.get_template_map(sorted_audio, domain)
 
     fileform = HQMediaFileUploadForm()
     
     return render_to_response(request, "hqmedia/multimedia_map.html",
                               {"domain": domain,
                                "app": app,
-                               "images": images,
-                               "audio": audio,
-                               "fileform": fileform})
-
-@require_POST
-@require_permission('edit-apps')
-def upload_multimedia_file(request, domain, app_id):
-    app = get_app(domain, app_id)
-    upload_progress_url = reverse("hqmedia_upload_progress", args=[domain])
-    submit_url = reverse("multimedia_upload_zip", args=[domain, app_id])
-
-
-    response = {}
-    return HttpResponse(simplejson.dumps(response))
+                               "multimedia": {
+                                   "images": images,
+                                   "audio": audio
+                               },
+                               "fileform": fileform,
+                               "progress_id_varname": upload.HQMediaCacheHandler.X_PROGRESS_ID,
+                               "missing_image_refs": missing_image_refs,
+                               "missing_audio_refs": missing_audio_refs})
 
 @require_GET
 @login_and_domain_required
