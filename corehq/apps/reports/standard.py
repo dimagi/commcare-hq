@@ -466,12 +466,12 @@ class CaseListReport(PaginatedHistoryHQReport):
         
         if settings.LUCENE_ENABLED:
             search_key = self.request_params.get("sSearch", "")
-            query = "domain:%s" % self.domain
+            query = "domain:(%s)" % self.domain
             query = "%s AND user_id:(%s)" % (query, " OR ".join(self.userIDs))
             if self.case_type:
                 query = "%s AND type:%s" % (query, self.case_type)
             if search_key:
-                query = "(%s) and %s" % (search_key, query)
+                query = "(%s) AND %s" % (search_key, query)
 
             results = get_db().search("case/search", q=query,
                                       handler="_fti/_design",

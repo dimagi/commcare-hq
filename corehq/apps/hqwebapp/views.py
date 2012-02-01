@@ -108,7 +108,7 @@ def logout(req, template_name="hqwebapp/loggedout.html"):
     return HttpResponseRedirect(reverse('login'))
 
 def bug_report(req):
-    report = dict([(key, req.POST.get(key)) for key in (
+    report = dict([(key, req.POST.get(key, '')) for key in (
         'subject',
         'username',
         'domain',
@@ -118,24 +118,25 @@ def bug_report(req):
         'message',
         'app_id',
     )])
+
     report['datetime'] = datetime.utcnow()
-    report['time_description'] = 'just now' if report['now'] else 'earlier: {when}'.format(**report)
+    report['time_description'] = u'just now' if report['now'] else u'earlier: {when}'.format(**report)
     if report['app_id']:
         app = import_app(report['app_id'], BUG_REPORTS_DOMAIN)
         report['copy_url'] = "%s%s" % (get_url_base(), reverse('view_app', args=[BUG_REPORTS_DOMAIN, app.id]))
     else:
         report['copy_url'] = None
 
-    subject = 'CCHQ Bug Report ({domain}): {subject}'.format(**report)
+    subject = u'CCHQ Bug Report ({domain}): {subject}'.format(**report)
     message = (
-        "username: {username}\n"
-        "domain: {domain}\n"
-        "url: {url}\n"
-        "copy url: {copy_url}\n"
-        "datetime: {datetime}\n"
-        "error occured: {time_description}\n"
-        "Message:\n\n"
-        "{message}\n"
+        u"username: {username}\n"
+        u"domain: {domain}\n"
+        u"url: {url}\n"
+        u"copy url: {copy_url}\n"
+        u"datetime: {datetime}\n"
+        u"error occured: {time_description}\n"
+        u"Message:\n\n"
+        u"{message}\n"
     ).format(**report)
 
     from django.core.mail.message import EmailMessage

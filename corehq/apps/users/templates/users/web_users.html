@@ -1,5 +1,38 @@
 {% extends "users/users_base.html" %}
 {% load i18n %}
+{% block js-inline %}
+    <script>
+        $(function () {
+            function selectText(element) {
+                /* copied from http://stackoverflow.com/questions/985272/jquery-selecting-text-in-an-element-akin-to-highlighting-with-your-mouse */
+                var doc = document;
+                var text = element[0];
+
+                if (doc.body.createTextRange) { // ms
+                    var range = doc.body.createTextRange();
+                    range.moveToElementText(text);
+                    range.select();
+                } else if (window.getSelection) { // moz, opera, webkit
+                    var selection = window.getSelection();
+                    var range = doc.createRange();
+                    range.selectNodeContents(text);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+            }
+            $('#show_all_web_users_emails').click(function () {
+                var open = false,
+                    p = $('#all_web_users_emails');
+                p.toggle();
+                open = !open;
+                if (open) {
+                    selectText(p);
+                }
+                return false;
+            });
+        });
+    </script>
+{% endblock %}
 {% block user-view %}
     <h1>Web Users</h1>
 	<table class='big_border'>
@@ -35,6 +68,21 @@
 	</tr>
 	{% endfor %}
 	</table>
+    {% if user.is_superuser %}
+        <a id="show_all_web_users_emails" href="#">Copy and paste admin emails</a>
+        <p id="all_web_users_emails" class="hidden">
+            {% for user in web_users %}
+                {% if user.is_domain_admin %}
+                {% if user.first_name or user.last_name %}
+                    "{{ user.first_name }} {{ user.last_name }}"
+                    &lt;{{ user.username }}&gt;,
+                {% else %}
+                    {{ user.username }},
+                {% endif %}
+                {% endif %}
+            {% endfor %}
+        </p>
+    {% endif %}
     <div>
         <a class="new_link" href="{% url invite_web_user domain %}">Web User</a>
     </div>
