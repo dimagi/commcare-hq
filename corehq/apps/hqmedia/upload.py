@@ -81,7 +81,6 @@ class HQMediaCacheHandler(object):
 class HQMediaUploadCacheHandler(HQMediaCacheHandler):
 
     def from_defaults(self):
-        print "getting data from defaults"
         return {'length': 1,
                 'uploaded' : 0,
                 'upload_complete': False,
@@ -90,15 +89,11 @@ class HQMediaUploadCacheHandler(HQMediaCacheHandler):
                 'processed': 0,
                 }
 
-class HQMediaFailedFilesCacheHandler(HQMediaCacheHandler):
+class HQMediaUploadSuccessCacheHandler(HQMediaCacheHandler):
 
     def __init__(self, progress_id, request):
-        super(HQMediaFailedFilesCacheHandler, self).__init__(progress_id, request)
-        self.cache_key = "FailedFiles_%s" % self.cache_key
-
-    def from_defaults(self):
-        print "reading from failed files defaults", self.cache_key
-        return { "failed_files" : None }
+        super(HQMediaUploadSuccessCacheHandler, self).__init__(progress_id, request)
+        self.cache_key = "UploadSuccess_%s" % self.cache_key
 
 
 

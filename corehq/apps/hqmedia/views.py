@@ -33,12 +33,12 @@ def check_upload_progress(request, domain):
     else:
         return HttpResponseServerError(X_PROGRESS_ERROR)
 
-def check_failed_files(request, domain):
+def check_upload_success(request, domain):
     """
     Return JSON object with information about files that failed to sync with couch after
     a zip upload---can only by accessed once, and later returns an empty JSON object.
     """
-    cache_handler = upload.HQMediaFailedFilesCacheHandler.handler_from_request(request)
+    cache_handler = upload.HQMediaUploadSuccessCacheHandler.handler_from_request(request)
     if cache_handler:
         cache_handler.sync()
         failed_files = cache_handler.data

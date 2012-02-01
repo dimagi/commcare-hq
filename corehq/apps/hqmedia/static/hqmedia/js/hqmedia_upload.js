@@ -52,6 +52,9 @@ function HQMediaUpload (args) {
 
     function showRequest(formData, jqForm, options) {
         submission_in_progress = true;
+        _upload_progressbar.parent().fadeIn();
+        if (_process_progressbar)
+            _process_progressbar.parent().fadeIn();
         return true;
     }
 
@@ -127,6 +130,12 @@ function HQMediaUpload (args) {
     }
 
     this.listenForUploads = function () {
+        _upload_progressbar.parent().hide();
+        _upload_progressbar.parent().addClass("prog-bar");
+        if(_process_progressbar) {
+            _process_progressbar.parent().hide();
+            _process_progressbar.parent().addClass("prog-bar");
+        }
         _submit_status_elem.fadeOut();
         _upload_form.submit(function(e) {
             var progress_id = $(this).children('.hqmedia_upload_id').val();
@@ -143,7 +152,7 @@ function HQMediaUpload (args) {
             }else
                 console.log("No upload id was provided!");
             _upload_form_submit.fadeOut();
-            _submit_status_elem.text('Submitting...');
+            _submit_status_elem.text('Submitting, please wait...').prepend($("<img/>").attr("src", "/static/hqmedia/img/submitting.gif"));
             _submit_status_elem.fadeIn();
             return false;
         });

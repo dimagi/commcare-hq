@@ -67,6 +67,10 @@ class CommCareMultimedia(Document):
     @property
     def current_attachments(self):
         return [aux.attachment_id for aux in self.aux_media]
+
+    @property
+    def valid_content_types(self):
+        return ['image/jpeg', 'image/png', 'audio/mpeg', 'image/gif', 'image/bmp']
         
     @classmethod
     def generate_hash(cls, data):
@@ -86,6 +90,10 @@ class CommCareMultimedia(Document):
         media = cls.get_by_hash(file_hash)
         return media
 
+    @classmethod
+    def validate_content_type(cls, content_type):
+        return True
+
 
 class CommCareImage(CommCareMultimedia):
 
@@ -100,9 +108,17 @@ class CommCareImage(CommCareMultimedia):
             "height": image.size[1]
         }
         super(CommCareImage, self).attach_data(data, upload_path, username, attachment_id, media_meta, replace_attachment)
+
+    @classmethod
+    def validate_content_type(cls, content_type):
+        return content_type in ['image/jpeg', 'image/png', 'image/gif', 'image/bmp']
+
         
 class CommCareAudio(CommCareMultimedia):
-    pass
+
+    @classmethod
+    def validate_content_type(cls, content_type):
+        return content_type in ['audio/mpeg', 'audio/mp3']
 
 class HQMediaMapItem(DocumentSchema):
 
@@ -127,10 +143,10 @@ class HQMediaMixin(Document):
         for form_path, map_item in self.multimedia_map.items():
             media = eval(map_item.media_type)
             media = media.get(map_item.multimedia_id)
-            print media.file_hash
 
     def get_template_map(self, sorted_files, domain):
         product = {}
+        missing_refs = 0
         multimedia_map = self.multimedia_map
         for f in sorted_files:
             f = f.strip()
@@ -141,4 +157,5 @@ class HQMediaMixin(Document):
                                 "m_id": multimedia_map[f].multimedia_id}
             except KeyError:
                 product[f] = None
-        return product
+                missing_refs += 1
+        return product, missing_refs

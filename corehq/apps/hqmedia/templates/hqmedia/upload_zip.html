@@ -11,12 +11,12 @@
         var _failed_files = $("#failed_files");
         function showFailedFiles () {
            $.getJSON("{{ failed_files_url }}", function(data) {
-               if (data.failed_files) {
-                   _failed_files.prepend("<h3>We could not find references to the following files in your application:</h3>");
-                   _failed_files.fadeIn();
+               if(data.failed_files) {
+                   _failed_files.prepend($("<h3 />").text("We could not find references to the following files in your application:"));
+                   _failed_files.show('blind');
                }
-               for (var i = 0; i < data.failed_files.length; i++) {
-                   $("#failed_files ul").append("<li>"+data.failed_files[i]+"</li>");
+               for(var i = 0; i < data.failed_files.length; i++) {
+                   $("#failed_files ul").append($("<li />").text(data.failed_files[i]));
 
                }
            });
@@ -25,13 +25,11 @@
         var hqUpload;
         hqUpload = new HQMediaUpload({
             progress_id_varname: '{{ progress_id_varname }}',
-            submit_url: '{{ submit_url }}',
-            progress_checker_url: '{{ upload_progress_url }}',
+            submit_url: '{% url multimedia_upload domain 'zip' app.get_id %}',
+            progress_checker_url: '{% url hqmedia_upload_progress domain%}',
             processbar: '#hqmedia_processing_progressbar',
             static_url: '{{ STATIC_URL }}',
-            submit_complete: function() {
-                showFailedFiles();
-            }
+            submit_complete: showFailedFiles
         });
 
         _failed_files.fadeOut();
@@ -42,26 +40,35 @@
 
 {% block content %}
 <div id="main_container">
-    <div class="padded">
-        <h1>Upload a .Zip file</h1>
+    <div class="padded multimedia">
+        <nav class="breadcrumbs">
+            <ul>
+                <li><a href="{% url view_app domain app.get_id %}">Application "{{ app.name }}"</a></li>
+                <li><a href="{% url multimedia_map domain app.get_id %}">Multimedia Map</a></li>
+                <li>Upload Zip</li>
+            </ul>
+        </nav>
+        <h1>Upload a ZIP of Multimedia Files for Application "{{ app.name }}"</h1>
         <div class="body">
             <form action="" id="hqmedia_upload" method="post" enctype="multipart/form-data">
-                <ul>
-                {% for field in zipform %}
-                    {% if field.field.required %}
-                    <li>{{ field.label_tag }}: {{ field }} <span class="helptext">{{ field.help_text }}</span></li>
-                    <li class="error" id="errors_{{ field.name }}">{{ field.errors }}</li>
-                    {% endif %}
-                {% endfor %}
-                </ul>
-                <ul class="advanced-options">
-                {% for field in zipform %}
-                    {% if not field.field.required %}
-                    <li>{{ field.label_tag }}: {{ field }} <span class="helptext">{{ field.help_text }}</span></li>
-                    <li class="error" class="errors_{{ field.name }}">{{ field.errors }}</li>
-                    {% endif %}
-                {% endfor %}
-                </ul>
+                <fieldset>
+                    <ul>
+                    {% for field in zipform %}
+                        {% if field.field.required %}
+                        <li>{{ field.label_tag }} {{ field }} <span class="helptext">{{ field.help_text }}</span></li>
+                        <li class="error" id="errors_{{ field.name }}">{{ field.errors }}</li>
+                        {% endif %}
+                    {% endfor %}
+                    </ul>
+                    <ul class="advanced-options">
+                    {% for field in zipform %}
+                        {% if not field.field.required %}
+                        <li>{{ field }} {{ field.label_tag }}</li>
+                        <li class="error" class="errors_{{ field.name }}">{{ field.errors }}</li>
+                        {% endif %}
+                    {% endfor %}
+                    </ul>
+                </fieldset>
                 <input type="hidden" class="hqmedia_upload_id" value="{{ progress_id }}" />
                 <input type="submit" value="Upload Zip File" />
                 <div id="hqmedia_upload_status"></div>

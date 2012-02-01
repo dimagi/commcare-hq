@@ -1,3 +1,218 @@
 div#hqmedia_upload_status {
     display: inline-block;
 }
+a.view_media.inactive{
+    display: none;
+}
+
+.multimedia nav.breadcrumbs ul li {
+    display: inline-block;
+    padding-right: 1.5em;
+    position: relative;
+}
+.multimedia nav.breadcrumbs ul li:after {
+    content: ">";
+    display: block;
+    position: absolute;
+    right: 0;
+    top: -1px;
+}
+.multimedia nav.breadcrumbs ul li:last-child:after {
+    content: "";
+    display: none;
+}
+.multimedia h1 {
+    font-size: 2em;
+    padding: .5em 0;
+}
+
+.multimedia h2 {
+    font-size: 1.2em;
+}
+
+.multimedia a.download-zip,
+.multimedia a.upload-zip {
+    position: relative;
+    padding: 0.6em 0 0.6em 4em;
+}
+
+.multimedia a.download-zip:before,
+.multimedia a.upload-zip:before {
+    content: url('/static/hqmedia/img/download_zip.png');
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 2px;
+}
+
+.multimedia a.upload-zip:before {
+    content: url('/static/hqmedia/img/upload_zip.png');
+}
+
+.multimedia p {
+    padding: .5em 0;
+}
+
+.multimedia h2 {
+    padding-top: 1em;
+}
+
+.jqmWindow {
+    display: none;
+
+    position: fixed;
+    top: 17%;
+    left: 50%;
+
+    margin-left: -300px;
+    width: 600px;
+    padding:  0;
+
+    background-color: #fefefe;
+    color: #333;
+    border: 1px solid #696969;
+
+    -moz-box-shadow: 0px 0px 10px #222222;
+    -webkit-box-shadow: 0px 0px 10px #222222;
+    box-shadow: 0px 0px 10px #222222;
+}
+
+.jqmWindow h2 {
+    font-size: 1.5em;
+    padding: 1em 14px .5em;
+}
+
+.jqmWindow a.jqmClose {
+    display:block;
+    background-color: #0468B1;
+    line-height: 1em;
+    color: #ffffff;
+    padding: .5em 14px;
+}
+
+#uploadFileView .original img,
+#uploadFileView .uploaded img,
+#imageView img{
+    border: 1px solid #AAA;
+    margin: .5em 0 1em 0;
+}
+#uploadFileView .original,
+#uploadFileView .uploaded {
+    margin: 0 14px;
+}
+#uploadFileView .original {
+    float: left;
+    margin-right: 1em;
+}
+#uploadFileView .uploaded {
+    clear: both;
+}
+
+#imageView img {
+    margin: .5em 2em 2em;
+}
+
+
+.multimedia .scary-settings {
+    background-color: #FEFEFE;
+    border: 1px solid #CCC;
+    border-top: none;
+    padding: 1em;
+}
+.multimedia .scary-settings-toggle {
+    margin-top: 1em;
+    border: 1px solid transparent;
+    padding: .5em;
+}
+.multimedia .scary-settings-toggle-open {
+    border: 1px solid #CCC;
+    background-color: #EEE;
+}
+
+.multimedia .scary-settings li {
+    line-height: 2em;
+    padding: .5em 0;
+}
+.multimedia .scary-settings li .indicator {
+    display: inline-block;
+    vertical-align: middle;
+    padding-right: .5em;
+}
+
+.multimedia .scary-settings li .upload_media {
+    margin-right: .5em;
+}
+
+.multimedia .Imagefile a.view_media,
+.multimedia .Audiofile a.view_media{
+    position: relative;
+    width: 5em;
+    padding-left: 1em;
+    margin-right: .5em;
+}
+
+.multimedia .Imagefile a.view_media:before,
+.multimedia .Audiofile a.view_media:before {
+    content: url('/static/hqmedia/img/image.png');
+    position: absolute;
+    display: block;
+    top: .35em;
+    left: .3em;
+}
+.multimedia .Audiofile a.view_media:before {
+    content: url('/static/hqmedia/img/audio.png');
+}
+.multimedia .notice {
+    border: 1px solid #cccccc;
+    padding: 1em;
+}
+.multimedia .notice li {
+    margin: 0.5em 0;
+}
+.multimedia .notice li img {
+    margin-top: -2px;
+    margin-right: .5em;
+}
+.multimedia .notice h3 {
+    font-size: 1.2em;
+    text-align: left;
+}
+.multimedia #failed_files {
+    padding: 1em 0 2em;
+}
+.jqmWindow #hqmedia_upload {
+    padding: 1em 14px;
+}
+#hqmedia_upload li {
+    padding: .5em 0;
+}
+#hqmedia_upload .error {
+    color: #932222;
+    padding: 0;
+}
+#hqmedia_upload .ui-button {
+    margin-right: .5em;
+}
+#hqmedia_upload .prog-bar {
+    margin: 1em 0;
+}
+.multimedia .prog-bar img,
+#hqmedia_upload_status img,
+.multimedia .notice li img {
+    display: inline-block;
+    vertical-align: middle;
+}
+#hqmedia_upload .prog-bar img {
+    margin-left: .5em;
+}
+#hqmedia_upload_status img {
+    margin-right: .5em;
+    margin-top: -1px;
+    height: 2em;
+}
+#hqmedia_upload label {
+   padding-right: 1em;
+}
+#hqmedia_upload fieldset {
+    margin-bottom: 1em;
+}

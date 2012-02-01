@@ -1,12 +1,14 @@
 from django import forms
+from django.core.urlresolvers import reverse
 from django.forms.util import ErrorList
+import magic
 from corehq.apps.hqmedia import utils
 from corehq.apps.hqmedia.models import CommCareMultimedia, CommCareImage, CommCareAudio
 import zipfile
 
 class HQMediaZipUploadForm(forms.Form):
 
-    zip_file = forms.FileField(required=True)
+    zip_file = forms.FileField(required=True, label="ZIP file with CommCare multimedia:")
     repopulate_multimedia_map = forms.BooleanField(required=False,
                                 label="Remove all previous references to multimedia files in my application.")
     replace_existing_media = forms.BooleanField(required=False,
@@ -77,21 +79,57 @@ class HQMediaZipUploadForm(forms.Form):
                 cache_handler.data["processed"] = index+1
                 cache_handler.save()
         zip.close()
-        return unknown_files
+        return {"failed_files": unknown_files}
 
 class HQMediaFileUploadForm(forms.Form):
 
-    media_file = forms.FileField(required=True)
-    multimedia_form_path = forms.CharField(required=True, widget=forms.HiddenInput)
     multimedia_class = forms.CharField(initial="CommCareMultimedia", widget=forms.HiddenInput)
+    media_file = forms.FileField(required=True, label="Please select a file to reference:")
+    multimedia_form_path = forms.CharField(required=True, widget=forms.HiddenInput)
     multimedia_upload_action = forms.BooleanField(required=False, widget=forms.HiddenInput)
+    old_reference = forms.CharField(widget=forms.HiddenInput)
 
     def clean_media_file(self):
         if 'media_file' in self.cleaned_data:
             media_file = self.cleaned_data['media_file']
-            if media_file.content_type == 'application/zip':
+            mime = magic.Magic(mime=True)
+            data = media_file.file.read()
+            content_type = mime.from_buffer(data)
+            if content_type == 'application/zip':
                 raise forms.ValidationError('Please use the zip file uploader to upload zip files.')
+            media = eval(self.cleaned_data['multimedia_class'])
+            if not media.validate_content_type(content_type):
+                raise forms.ValidationError('That was not a valid file type, please try again with a different file.')
             return media_file
 
-    def save(self, domain, app, username):
-        pass
+
+    def save(self, domain, app, username, cache_handler):
+        media_class = eval(self.cleaned_data['multimedia_class'])
+        media_file = self.cleaned_data['media_file']
+        replace_attachment = self.cleaned_data['multimedia_upload_action']
+        form_path = self.cleaned_data['multimedia_form_path']
+
+        media_file.file.seek(0)
+        data = media_file.file.read()
+        media = media_class.get_by_data(data)
+        if cache_handler:
+            cache_handler.sync()
+            cache_handler.data["processed_length"] = 1
+            cache_handler.save()
+        if media:
+            media.attach_data(data,
+                     upload_path=media_file.name,
+                     username=username,
+                     replace_attachment=replace_attachment)
+            media.add_domain(domain)
+            app.create_mapping(media, form_path)
+        if cache_handler:
+            cache_handler.sync()
+            cache_handler.data["processed"] = 1
+            cache_handler.save()
+        old_ref = self.cleaned_data['old_reference']
+        new_ref = reverse("hqmedia_download", args=[domain,
+                                                media.doc_type,
+                                                media._id])
+        return {old_ref: new_ref}
+        
