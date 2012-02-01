@@ -4,10 +4,13 @@ from django.core.cache import cache
 class HQMediaFileUploadHandler(FileUploadHandler):
     """ From django snippets: http://djangosnippets.org/snippets/678/
     """
+    def __init__(self, request=None, domain=None):
+        super(HQMediaFileUploadHandler, self).__init__(request)
+        self.domain = domain
 
     def handle_raw_input(self, input_data, META, content_length, boundary, encoding=None):
         self.content_length = content_length
-        self.cache_handler = HQMediaUploadCacheHandler.handler_from_request(self.request)
+        self.cache_handler = HQMediaUploadCacheHandler.handler_from_request(self.request, self.domain)
         if self.cache_handler:
             self.cache_handler.defaults()
             if self.content_length > 200:
@@ -41,9 +44,9 @@ class HQMediaCacheHandler(object):
     data = None
     X_PROGRESS_ID = 'X-Progress-ID'
 
-    def __init__(self, progress_id, request):
+    def __init__(self, progress_id, domain):
         self.progress_id = progress_id
-        self.cache_key = "%s_%s" % (request.META['REMOTE_ADDR'], progress_id)
+        self.cache_key = "%s_%s" % (domain, progress_id)
 
     def put_data(self, data):
         if self.cache_key:
@@ -68,14 +71,14 @@ class HQMediaCacheHandler(object):
         return {}
 
     @classmethod
-    def handler_from_request(cls, request):
+    def handler_from_request(cls, request, domain):
         progress_id = ''
         if cls.X_PROGRESS_ID in request.GET:
             progress_id = request.GET[cls.X_PROGRESS_ID]
         elif cls.X_PROGRESS_ID in request.META:
             progress_id = request.META[cls.X_PROGRESS_ID]
         if progress_id:
-            return cls(progress_id, request)
+            return cls(progress_id, domain)
         return None
 
 class HQMediaUploadCacheHandler(HQMediaCacheHandler):

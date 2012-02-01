@@ -26,7 +26,7 @@ def check_upload_progress(request, domain):
     """
     Return JSON object with information about the progress of an upload.
     """
-    cache_handler = upload.HQMediaUploadCacheHandler.handler_from_request(request)
+    cache_handler = upload.HQMediaUploadCacheHandler.handler_from_request(request, domain)
     if cache_handler:
         cache_handler.sync()
         return HttpResponse(simplejson.dumps(cache_handler.data))
@@ -38,7 +38,7 @@ def check_upload_success(request, domain):
     Return JSON object with information about files that failed to sync with couch after
     a zip upload---can only by accessed once, and later returns an empty JSON object.
     """
-    cache_handler = upload.HQMediaUploadSuccessCacheHandler.handler_from_request(request)
+    cache_handler = upload.HQMediaUploadSuccessCacheHandler.handler_from_request(request, domain)
     if cache_handler:
         cache_handler.sync()
         failed_files = cache_handler.data

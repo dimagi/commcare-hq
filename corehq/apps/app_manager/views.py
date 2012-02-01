@@ -952,8 +952,8 @@ def multimedia_upload(request, domain, kind, app_id):
 
     app = get_app(domain, app_id)
     if request.method == 'POST':
-        request.upload_handlers.insert(0, upload.HQMediaFileUploadHandler(request))
-        cache_handler = upload.HQMediaUploadCacheHandler.handler_from_request(request)
+        request.upload_handlers.insert(0, upload.HQMediaFileUploadHandler(request, domain))
+        cache_handler = upload.HQMediaUploadCacheHandler.handler_from_request(request, domain)
         response_errors = {}
         try:
             if kind == 'zip':
@@ -967,7 +967,7 @@ def multimedia_upload(request, domain, kind, app_id):
                 if cache_handler:
                     cache_handler.delete()
                 if extra_data:
-                    completion_cache = upload.HQMediaUploadSuccessCacheHandler.handler_from_request(request)
+                    completion_cache = upload.HQMediaUploadSuccessCacheHandler.handler_from_request(request, domain)
                     if kind=='zip' and completion_cache:
                         completion_cache.data = extra_data
                         completion_cache.save()
