@@ -1,5 +1,4 @@
 from couchexport.export import Format
-import couchforms
 from django.http import HttpResponse, HttpResponseRedirect
 import json
 from couchexport.shortcuts import export_data_shared
