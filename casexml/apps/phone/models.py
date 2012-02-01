@@ -132,9 +132,9 @@ class SyncLog(Document, UnicodeMixIn):
         """
         filtered_list = [case for case in self.cases_on_phone if case.case_id == case_id]
         if filtered_list:
-            assert(len(filtered_list) == 1, 
-                   "Should be exactly 0 or 1 cases on phone but were %s for %s" %
-                   (len(filtered_list), case_id))
+            assert len(filtered_list) == 1, \
+                   "Should be exactly 0 or 1 cases on phone but were %s for %s" % \
+                   (len(filtered_list), case_id)
             return filtered_list[0]
         return None
     
@@ -151,9 +151,9 @@ class SyncLog(Document, UnicodeMixIn):
         """
         filtered_list = [case for case in self.dependent_cases_on_phone if case.case_id == case_id]
         if filtered_list:
-            assert(len(filtered_list) == 1, 
-                   "Should be exactly 0 or 1 dependent cases on phone but were %s for %s" %
-                   (len(filtered_list), case_id))
+            assert len(filtered_list) == 1, \
+                   "Should be exactly 0 or 1 dependent cases on phone but were %s for %s" % \
+                   (len(filtered_list), case_id)
             return filtered_list[0]
         return None
     
