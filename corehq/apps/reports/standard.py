@@ -18,7 +18,7 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import DatatablesParams
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.parsing import json_format_datetime
-from dimagi.utils.web import json_request
+from dimagi.utils.web import json_request, get_url_base
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -212,7 +212,7 @@ class CaseActivityReport(StandardTabularHQReport):
 
     def user_cases_link(self, user):
         template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
-        return template % {"link": reverse("report_dispatcher", args=[self.domain, CaseListReport.slug]),
+        return template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[self.domain, CaseListReport.slug])),
                            "user_id": user.user_id,
                            "username": user.username_in_report}
 
