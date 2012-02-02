@@ -155,7 +155,10 @@ function HQMediaUpload (args) {
             }else
                 console.log("No upload id was provided!");
             _upload_form_submit.fadeOut();
-            _submit_status_elem.text('Uploading, please wait...').prepend($("<img/>").attr("src", "/static/hqmedia/img/submitting.gif"));
+            if (retrying)
+                _submit_status_elem.text('Retrying upload, please wait...').prepend($("<img/>").attr("src", "/static/hqmedia/img/submitting.gif"));
+            else
+                _submit_status_elem.text('Uploading, please wait...').prepend($("<img/>").attr("src", "/static/hqmedia/img/submitting.gif"));
             _submit_status_elem.fadeIn();
             return false;
         });
@@ -163,7 +166,6 @@ function HQMediaUpload (args) {
 
     this.retry = function (num_attempts) {
         if(retry_attempts <= num_attempts) {
-            _submit_status_elem.text('Encountered an error, retrying upload...').prepend($("<img/>").attr("src", "/static/hqmedia/img/submitting.gif"));
             _upload_progressbar.progressBar(0);
             if(_process_progressbar)
                 _process_progressbar.progressBar(0);

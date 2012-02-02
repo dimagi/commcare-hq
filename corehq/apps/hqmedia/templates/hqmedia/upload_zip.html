@@ -10,8 +10,12 @@
     $().ready(function() {
         var _failed_files = $("#failed_files");
         function showFailedFiles () {
-           $("#return-to-map").removeClass("inactive");
            $.getJSON("{{ failed_files_url }}", function(data) {
+               if(data === null) {
+                    hqUpload.retry(1);
+                    return;
+               }
+               $("#return-to-map").removeClass("inactive");
                if(data.failed_files) {
                    _failed_files.prepend($("<h3 />").text("We could not find references to the following files in your application:"));
                    _failed_files.show('blind');

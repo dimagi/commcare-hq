@@ -113,7 +113,6 @@
             var upload_success = "{% url hqmedia_upload_success domain %}?{{ progress_id_varname }}="+hqupload_form.find('.hqmedia_upload_id').val();
             $.getJSON(upload_success, function(data) {
                 if(data === null) {
-                    console.log("data is empty, retrying upload");
                     hqUpload.retry(1);
                     return;
                 }
