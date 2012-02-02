@@ -26,8 +26,11 @@
         function showFailedFiles () {
            $.getJSON("{{ failed_files_url }}", function(data) {
                console.log(data);
-               if(data === null)
-                    hqUpload.complete = false;
+               if(data === null) {
+                   hqUpload.complete = false;
+                   return;
+               }
+
 
                $("#return-to-map").removeClass("inactive");
                if(data.failed_files) {

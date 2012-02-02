@@ -111,7 +111,7 @@ function HQMediaUpload (args) {
                         if(this.is_complete) {
                             stopPollingServer(100);
                         } else {
-                            self.retry(2);
+                            this.retry(2);
                             stopPollingServer(0);
                         }
                         return;
