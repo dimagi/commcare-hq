@@ -106,9 +106,9 @@ function HQMediaUpload (args) {
                         // uploading and processing has finished
                         _upload_form_errors.text('');
                         _submit_status_elem.text('Finished.');
-                        var submit_complete = _submit_completion_fn();
-                        console.log(submit_complete);
-                        if(submit_complete) {
+                        _submit_completion_fn();
+                        console.log(this.is_complte);
+                        if(this.is_complete) {
                             stopPollingServer(100);
                         } else {
                             self.retry(2);
@@ -158,17 +158,20 @@ function HQMediaUpload (args) {
                 };
                 $(this).ajaxSubmit(ajax_submit_options);
                 startProgressBarUpdates(progress_id);
-            }else
+            } else
                 console.log("No upload id was provided!");
             _upload_form_submit.fadeOut();
-            if (retrying && retry_attempts > 1)
+            if (retrying && retry_attempts > 1) {
                 _submit_status_elem.text('Retrying upload, please wait...').prepend($("<img/>").attr("src", "/static/hqmedia/img/submitting.gif"));
-            else
+            } else {
                 _submit_status_elem.text('Uploading, please wait...').prepend($("<img/>").attr("src", "/static/hqmedia/img/submitting.gif"));
+            }
             _submit_status_elem.fadeIn();
             return false;
         });
     }
+
+    this.is_complete = true;
 
     this.retry = function (num_attempts) {
         if(retry_attempts <= num_attempts) {

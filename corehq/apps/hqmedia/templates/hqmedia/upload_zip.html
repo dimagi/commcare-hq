@@ -9,27 +9,6 @@
 <script type="text/javascript">
     $().ready(function() {
         var $failed_files = $("#failed_files");
-        var complete = true;
-        function showFailedFiles () {
-           $.getJSON("{{ failed_files_url }}", function(data) {
-               console.log(data);
-               if(data === null) {
-                   console.log("data is null");
-                   complete = false;
-                   return;
-               }
-               
-               $("#return-to-map").removeClass("inactive");
-               if(data.failed_files) {
-                   $failed_files.prepend($("<h3 />").text("We could not find references to the following files in your application:"));
-                   $failed_files.show('blind');
-               }
-               for(var i = 0; i < data.failed_files.length; i++) {
-                   $("#failed_files ul").append($("<li />").text(data.failed_files[i]));
-               }
-           });
-           return complete;
-        }
 
         var hqUpload;
         hqUpload = new HQMediaUpload({
@@ -43,6 +22,23 @@
 
         $failed_files.fadeOut();
         hqUpload.listenForUploads();
+
+        function showFailedFiles () {
+           $.getJSON("{{ failed_files_url }}", function(data) {
+               console.log(data);
+               if(data === null)
+                    hqUpload.complete = false;
+
+               $("#return-to-map").removeClass("inactive");
+               if(data.failed_files) {
+                   $failed_files.prepend($("<h3 />").text("We could not find references to the following files in your application:"));
+                   $failed_files.show('blind');
+               }
+               for(var i = 0; i < data.failed_files.length; i++) {
+                   $("#failed_files ul").append($("<li />").text(data.failed_files[i]));
+               }
+           });
+        }
     });
 </script>
 {% endblock %}
