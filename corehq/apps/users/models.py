@@ -412,7 +412,7 @@ class CommCareUser(CouchUser):
         return self.raw_username
 
     @classmethod
-    def create_from_xform(cls, xform):
+    def create_or_update_from_xform(cls, xform):
         # if we have 1,000,000 users with the same name in a domain
         # then we have bigger problems then duplicate user accounts
         MAX_DUPLICATE_USERS = 1000000
@@ -453,7 +453,7 @@ class CommCareUser(CouchUser):
                         to_append = to_append + 1
                 if not saved:
                     raise Exception("There are over 1,000,000 users with that base name in your domain. REALLY?!? REALLY?!?!")
-                return conflicting_user
+                return (conflicting_user, False)
                 
             try:
                 User.objects.get(username=username)
@@ -470,7 +470,7 @@ class CommCareUser(CouchUser):
                 date=date,
                 user_data=user_data
             )
-            return couch_user
+            return (couch_user, True)
 
         # will raise TypeError if xform.form doesn't have all the necessary params
         return create_or_update_safe(
