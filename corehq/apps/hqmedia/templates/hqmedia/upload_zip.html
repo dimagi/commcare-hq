@@ -24,11 +24,11 @@
         hqUpload.listenForUploads();
 
         function showFailedFiles () {
-           var complete = true;
+           var finish_upload = true;
            $.getJSON("{{ failed_files_url }}", function(data) {
                console.log(data);
                if(data === null) {
-                   complete = false;
+                   finish_upload = false;
                }else {
                    $("#return-to-map").removeClass("inactive");
                    if(data.failed_files) {
@@ -40,7 +40,9 @@
                    }
                }
            });
-           return false;
+           console.log("complete");
+           console.log(finish_upload);
+           return finish_upload;
         }
     });
 </script>

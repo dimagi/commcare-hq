@@ -108,11 +108,13 @@ function HQMediaUpload (args) {
                         _submit_status_elem.text('Finished.');
                         var complete = _submit_completion_fn();
                         if(complete) {
+                            console.log("not retrying");
+                            console.log(complete);
+                            stopPollingServer(100);
+                        } else {
                             console.log("retrying");
                             retrySubmitAttempt(2);
                             stopPollingServer(0);
-                        } else {
-                            stopPollingServer(100);
                         }
                         return;
                     }
