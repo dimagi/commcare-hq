@@ -8,22 +8,25 @@
 <script type="text/javascript" src="{{ STATIC_URL }}hqmedia/js/hqmedia_upload.js"></script>
 <script type="text/javascript">
     $().ready(function() {
-        var _failed_files = $("#failed_files");
+        var $failed_files = $("#failed_files");
+        var complete = true;
         function showFailedFiles () {
            $.getJSON("{{ failed_files_url }}", function(data) {
-               if(data == null)
-                    return false;
+               if(data == null) {
+                   complete = false;
+                   return;
+               }
                
                $("#return-to-map").removeClass("inactive");
                if(data.failed_files) {
-                   _failed_files.prepend($("<h3 />").text("We could not find references to the following files in your application:"));
-                   _failed_files.show('blind');
+                   $failed_files.prepend($("<h3 />").text("We could not find references to the following files in your application:"));
+                   $failed_files.show('blind');
                }
                for(var i = 0; i < data.failed_files.length; i++) {
                    $("#failed_files ul").append($("<li />").text(data.failed_files[i]));
                }
            });
-           return true;
+           return complete;
         }
 
         var hqUpload;
