@@ -73,6 +73,7 @@ class StandardHQReport(HQReport):
 
 class StandardTabularHQReport(StandardHQReport):
 
+#    exportable = True
     def set_headers(self):
         return self.headers
 
@@ -93,6 +94,10 @@ class StandardTabularHQReport(StandardHQReport):
 
         self.headers = self.set_headers()
         self.rows = self.set_rows()
+
+        self.context['header'] = self.headers
+        self.context['rows'] = self.rows
+
         super(StandardTabularHQReport, self).get_report_context()
 
 

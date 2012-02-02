@@ -1,3 +1,4 @@
+from StringIO import StringIO
 import json
 from datetime import datetime
 from django.conf import settings
@@ -6,6 +7,11 @@ from django.shortcuts import render_to_response
 from django.template.context import RequestContext, Context
 from django.template.loader import render_to_string
 from dimagi.utils.modules import to_function
+from couchexport.models import Format
+from tempfile import NamedTemporaryFile
+from couchexport.models import Format
+from couchexport.export import export_from_tables
+from couchexport.shortcuts import export_response
 
 class HQReport(object):
     name = ""
@@ -23,6 +29,7 @@ class HQReport(object):
     datespan = None
     show_time_notice = False
     fields = []
+    exportable = False
 
     def __init__(self, domain, request, base_context = None):
         base_context = base_context or {}
@@ -37,6 +44,9 @@ class HQReport(object):
                             slug = self.slug,
                             description = self.description,
                             template_name = self.template_name,
+                            exportable = self.exportable,
+                            export_path = self.request.get_full_path().replace('/custom/', '/export/'),
+                            export_formats = Format.VALID_FORMATS
         )
 
     def build_selector_form(self):
@@ -94,6 +104,28 @@ class HQReport(object):
         self.get_report_context()
         self.calc()
         return HttpResponse(json.dumps(self.json_data()))
+
+    def as_export(self):
+        """
+        This assumes you have either a set of tables under self.context['tables'], or
+        self.context['headers'] and self.context['rows'].
+
+        To turn it on, set exportable=True in your report model.
+        """
+        self.get_report_context()
+        self.calc()
+        if (not 'tables' in self.context) and ('headers' in self.context):
+            t = [self.context['headers']]
+            t.extend(self.context['rows'])
+            self.context['tables'] = [[self.name, t]]
+        if not 'tables' in self.context:
+            return self.as_view()
+        format = self.request.GET.get('format', None)
+        if not format: return self.as_view()
+
+        temp = StringIO()
+        export_from_tables(self.context['tables'], temp, format)
+        return export_response(temp, format, self.slug)
 
 class ReportField(object):
     slug = ""
@@ -155,7 +187,6 @@ class SampleHQReport(HQReport):
             self.context['text'] = text
         else:
             self.context['text'] = "You didn't type anything!"
-
 
 
 
