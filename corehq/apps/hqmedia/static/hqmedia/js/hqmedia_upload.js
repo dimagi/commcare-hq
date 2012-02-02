@@ -37,6 +37,9 @@ function HQMediaUpload (args) {
     var submission_in_progress = false,
         poll_server_interval = 0;
 
+    var retrying = false,
+        retry_attempts = 0;
+
     var progress_bar_options = {
             boxImage: _static_url+'hqmedia/img/progressbar.gif',
             barImage: {
@@ -152,10 +155,29 @@ function HQMediaUpload (args) {
             }else
                 console.log("No upload id was provided!");
             _upload_form_submit.fadeOut();
-            _submit_status_elem.text('Submitting, please wait...').prepend($("<img/>").attr("src", "/static/hqmedia/img/submitting.gif"));
+            _submit_status_elem.text('Uploading, please wait...').prepend($("<img/>").attr("src", "/static/hqmedia/img/submitting.gif"));
             _submit_status_elem.fadeIn();
             return false;
         });
+    }
+
+    this.retry = function (num_attempts) {
+        if(retry_attempts <= num_attempts) {
+            _submit_status_elem.text('Encountered an error, retrying upload...').prepend($("<img/>").attr("src", "/static/hqmedia/img/submitting.gif"));
+            _upload_progressbar.progressBar(0);
+            if(_process_progressbar)
+                _process_progressbar.progressBar(0);
+            retry_attempts += 1;
+            retrying = true;
+            _upload_form.submit();
+        } else {
+            retrying = false;
+            _upload_progressbar.progressBar(0);
+            if(_process_progressbar)
+                _process_progressbar.progressBar(0);
+            _submit_status_elem.text("Unfortunately there seems to be an error uploading the file.");
+            _upload_form_submit.fadeIn();
+        }
     }
 }
 

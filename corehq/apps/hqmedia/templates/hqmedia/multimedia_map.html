@@ -112,6 +112,11 @@
             hqupload_form.find("input[type='button']").val('Close');
             var upload_success = "{% url hqmedia_upload_success domain %}?{{ progress_id_varname }}="+hqupload_form.find('.hqmedia_upload_id').val();
             $.getJSON(upload_success, function(data) {
+                if(data === null) {
+                    console.log("data is empty");
+                    hqUpload.retry(1);
+                    return;
+                }
                 for(var ref_id in data) {
                     var container = $("#"+ref_id);
                     var view_action = container.find("a.view_media"),
