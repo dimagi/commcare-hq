@@ -107,6 +107,7 @@ function HQMediaUpload (args) {
                         _upload_form_errors.text('');
                         _submit_status_elem.text('Finished.');
                         if(_submit_completion_fn() === null) {
+                            console.log("retrying");
                             retrySubmitAttempt(2);
                             stopPollingServer(0);
                         } else {

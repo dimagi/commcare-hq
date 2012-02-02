@@ -29,17 +29,15 @@
                console.log(data);
                if(data === null) {
                    complete = false;
-                   return;
-               }
-
-
-               $("#return-to-map").removeClass("inactive");
-               if(data.failed_files) {
-                   $failed_files.prepend($("<h3 />").text("We could not find references to the following files in your application:"));
-                   $failed_files.show('blind');
-               }
-               for(var i = 0; i < data.failed_files.length; i++) {
-                   $("#failed_files ul").append($("<li />").text(data.failed_files[i]));
+               }else {
+                   $("#return-to-map").removeClass("inactive");
+                   if(data.failed_files) {
+                       $failed_files.prepend($("<h3 />").text("We could not find references to the following files in your application:"));
+                       $failed_files.show('blind');
+                   }
+                   for(var i = 0; i < data.failed_files.length; i++) {
+                       $("#failed_files ul").append($("<li />").text(data.failed_files[i]));
+                   }
                }
            });
            return false;
