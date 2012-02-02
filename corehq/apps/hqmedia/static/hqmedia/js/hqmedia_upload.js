@@ -106,8 +106,8 @@ function HQMediaUpload (args) {
                         // uploading and processing has finished
                         _upload_form_errors.text('');
                         _submit_status_elem.text('Finished.');
-                        _submit_completion_fn();
-                        console.log(this.is_complte);
+                        console.log(_submit_completion_fn());
+
                         if(this.is_complete) {
                             stopPollingServer(100);
                         } else {

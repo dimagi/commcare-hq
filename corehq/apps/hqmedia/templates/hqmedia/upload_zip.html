@@ -24,10 +24,11 @@
         hqUpload.listenForUploads();
 
         function showFailedFiles () {
+           var complete = true;
            $.getJSON("{{ failed_files_url }}", function(data) {
                console.log(data);
                if(data === null) {
-                   hqUpload.complete = false;
+                   complete = false;
                    return;
                }
 
@@ -41,6 +42,7 @@
                    $("#failed_files ul").append($("<li />").text(data.failed_files[i]));
                }
            });
+           return false;
         }
     });
 </script>
