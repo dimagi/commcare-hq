@@ -439,13 +439,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     context.update(base_context)
     if app and not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(context['lang'], {})})
-
-    if form:
-        template="app_manager/form_view.html"
-        context.update(get_form_view_context(req, form, context['langs'], is_user_registration))
-    elif module:
-        template="app_manager/module_view.html"
-    else:
         sorted_images, sorted_audio = utils.get_sorted_multimedia_refs(app)
         multimedia_images, missing_image_refs = app.get_template_map(sorted_images, domain)
         multimedia_audio, missing_audio_refs = app.get_template_map(sorted_audio, domain)
@@ -457,6 +450,13 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
                 'audio': multimedia_audio
             }
         })
+
+    if form:
+        template="app_manager/form_view.html"
+        context.update(get_form_view_context(req, form, context['langs'], is_user_registration))
+    elif module:
+        template="app_manager/module_view.html"
+    else:
         template="app_manager/app_view.html"
     error = req.GET.get('error', '')
 
