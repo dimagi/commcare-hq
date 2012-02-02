@@ -254,7 +254,7 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
 
         for i, user in enumerate(self.users):
             rows[i][0] = user.username_in_report
-            rows[i][-1] = sum(rows[i][1:-2])
+            rows[i][-1] = sum(rows[i][1:-1])
 
         return rows
 
