@@ -78,13 +78,14 @@ def export_data(req, domain):
               "previous_export_id": req.GET.get("previous_export", None),
               "filename": export_tag,
               "use_cache": string_to_boolean(req.GET.get("use_cache", "True")),
-              "max_column_size": int(req.GET.get("max_column_size", 2000))}
+              "max_column_size": int(req.GET.get("max_column_size", 2000)),
+              "separator": req.GET.get("separator", "|")}
 
     group_filter = util.create_group_filter(group)
     errors_filter = instances if not include_errors else None
 
     kwargs['filter'] = couchexport.util.intersect_filters(group_filter, errors_filter)
-
+    
     if kwargs['format'] == 'raw':
         resp = export_raw_data([domain, export_tag], filename=export_tag)
     else:
