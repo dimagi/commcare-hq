@@ -388,7 +388,7 @@ def emailtest(request, domain, report_slug):
 
 @login_and_domain_required
 @datespan_default
-def report_dispatcher(request, domain, report_slug, return_json=False, map='STANDARD_REPORT_MAP'):
+def report_dispatcher(request, domain, report_slug, return_json=False, map='STANDARD_REPORT_MAP', export=False):
     mapping = getattr(settings, map, None)
     if not mapping:
         return HttpResponseNotFound("Sorry, no standard reports have been configured yet.")
@@ -399,12 +399,14 @@ def report_dispatcher(request, domain, report_slug, return_json=False, map='STAN
                 k = klass(domain, request)
                 if return_json:
                     return k.as_json()
+                elif export:
+                    return k.as_export()
                 return k.as_view()
     raise Http404
 
 @login_and_domain_required
 @datespan_default
-def custom_report_dispatcher(request, domain, report_slug):
+def custom_report_dispatcher(request, domain, report_slug, export=False):
     mapping = getattr(settings, 'CUSTOM_REPORT_MAP', None)
     if not mapping or not domain in mapping:
         return HttpResponseNotFound("Sorry, no custom reports have been configured yet.")
@@ -412,5 +414,7 @@ def custom_report_dispatcher(request, domain, report_slug):
         klass = to_function(model)
         if klass.slug == report_slug:
             k = klass(domain, request)
+            if export:
+                return k.as_export()
             return k.as_view()
     raise Http404
