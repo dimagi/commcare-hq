@@ -11,7 +11,7 @@
         var _failed_files = $("#failed_files");
         function showFailedFiles () {
            $.getJSON("{{ failed_files_url }}", function(data) {
-               if(!data)
+               if(data == null)
                     return false;
                
                $("#return-to-map").removeClass("inactive");
