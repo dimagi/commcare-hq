@@ -12,7 +12,9 @@
         var complete = true;
         function showFailedFiles () {
            $.getJSON("{{ failed_files_url }}", function(data) {
-               if(data == null) {
+               console.log(data);
+               if(data === null) {
+                   console.log("data is null");
                    complete = false;
                    return;
                }
