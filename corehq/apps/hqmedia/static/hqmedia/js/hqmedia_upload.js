@@ -106,13 +106,11 @@ function HQMediaUpload (args) {
                         // uploading and processing has finished
                         _upload_form_errors.text('');
                         _submit_status_elem.text('Finished.');
-                        console.log(_submit_completion_fn());
-
-                        if(this.is_complete) {
-                            stopPollingServer(100);
-                        } else {
+                        if(_submit_completion_fn() === null) {
                             retrySubmitAttempt(2);
                             stopPollingServer(0);
+                        } else {
+                            stopPollingServer(100);
                         }
                         return;
                     }
