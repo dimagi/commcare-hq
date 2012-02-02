@@ -111,7 +111,7 @@ function HQMediaUpload (args) {
                         if(this.is_complete) {
                             stopPollingServer(100);
                         } else {
-                            this.retry(2);
+                            retrySubmitAttempt(2);
                             stopPollingServer(0);
                         }
                         return;
@@ -173,7 +173,7 @@ function HQMediaUpload (args) {
 
     this.is_complete = true;
 
-    this.retry = function (num_attempts) {
+    function retrySubmitAttempt(num_attempts) {
         if(retry_attempts <= num_attempts) {
             _upload_progressbar.progressBar(0);
             if(_process_progressbar)
