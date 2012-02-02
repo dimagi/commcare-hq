@@ -32,7 +32,9 @@ function HQMediaUpload (args) {
         _upload_form_errors = $(_upload_form_id+" "+_error_class),
         _upload_form_submit = $(_upload_form_id+" input[type='submit']");
 
-    var _submit_completion_fn = (args.submit_complete) ? args.submit_complete : function () { return true; };
+    var parent = this;
+
+    var _submit_completion_fn = (args.submit_complete) ? args.submit_complete : function () { };
 
     var submission_in_progress = false,
         poll_server_interval = 0;
@@ -106,10 +108,9 @@ function HQMediaUpload (args) {
                         // uploading and processing has finished
                         _upload_form_errors.text('');
                         _submit_status_elem.text('Finished.');
-                        var complete = _submit_completion_fn();
-                        if(complete) {
+                        _submit_completion_fn();
+                        if(parent.is_complete) {
                             console.log("not retrying");
-                            console.log(complete);
                             stopPollingServer(100);
                         } else {
                             console.log("retrying");

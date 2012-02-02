@@ -23,13 +23,13 @@
         $failed_files.fadeOut();
         hqUpload.listenForUploads();
 
-        var finish_upload;
         function showFailedFiles () {
            $.getJSON("{{ failed_files_url }}", function(data) {
                console.log(data);
-               if(data === null) {
-                   finish_upload = false;
-               }else {
+               if(data === null){
+                    hqUpload.is_complete = false;
+                    return;
+                }
                    $("#return-to-map").removeClass("inactive");
                    if(data.failed_files) {
                        $failed_files.prepend($("<h3 />").text("We could not find references to the following files in your application:"));
@@ -38,12 +38,7 @@
                    for(var i = 0; i < data.failed_files.length; i++) {
                        $("#failed_files ul").append($("<li />").text(data.failed_files[i]));
                    }
-                   finish_upload = true;
-               }
            });
-           console.log("complete");
-           console.log(finish_upload);
-           return finish_upload;
         }
     });
 </script>
