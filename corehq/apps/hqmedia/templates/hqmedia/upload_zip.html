@@ -11,6 +11,10 @@
         var _failed_files = $("#failed_files");
         function showFailedFiles () {
            $.getJSON("{{ failed_files_url }}", function(data) {
+               console.log(data);
+               console.log(data == null);
+               console.log(data === null);
+               console.log(data.empty);
                if(data === null)
                     return false;
                
