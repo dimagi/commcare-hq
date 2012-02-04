@@ -1,11 +1,6 @@
 from optparse import make_option
-from django.core.management.base import LabelCommand, NoArgsCommand
-from couchdbkit.consumer import Consumer
-import logging
-import time
-from auditcare import utils
+from django.core.management.base import  NoArgsCommand
 from auditcare.models import AccessAudit, ModelActionAudit
-from dimagi.utils.couch.database import get_db
 
 class Command(NoArgsCommand):
     help = "Recompute diff properties on all model changes, and set next/prev pointers"
@@ -18,7 +13,9 @@ class Command(NoArgsCommand):
         print recompute
         db = AccessAudit.get_db()
         vals = db.view('auditcare/model_actions_by_id', group=True, group_level=1).all()
+
         #get all model types
+        #python 2.7 dict comprehension
         #model_dict= {x['key'][0]: x['value'] for x in vals}
         model_dict= dict((x['key'][0], x['value']) for x in vals)
 

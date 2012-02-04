@@ -2,24 +2,16 @@ import copy
 import settings
 from couchdbkit.ext.django.schema import Document
 from couchdbkit.schema.properties import StringProperty, DateTimeProperty, StringListProperty, DictProperty, IntegerProperty
-from couchdbkit.schema.properties_proxy import SchemaListProperty
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
 import uuid
 from django.contrib.auth.models import User, AnonymousUser
 
-from datetime import datetime, timedelta
-from django.contrib.sessions.backends.db import SessionStore
-from django.contrib.sessions.models import Session
+from datetime import datetime
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes import generic
-from django.db.models.query import QuerySet
-from django.utils.http import urlquote
 import logging
 import hashlib
 import json
 from auditcare import utils
-from dimagi.utils.couch.database import get_db
 
 try:
     from django.contrib.auth.signals import user_logged_in, user_logged_out
@@ -83,6 +75,7 @@ class AuditEvent(Document):
             audit.user = user.username
             audit.description = ''
         return audit
+
 
 
 
@@ -238,8 +231,8 @@ class ModelActionAudit(AuditEvent):
 
         """
 
-        db = get_db()
-        prior_revs = db.view('auditcare/model_actions', key=['model_types', model_class_name, instance_id]).all()
+        db = AuditEvent.get_db()
+        prior_revs = db.view('auditcare/model_actions_by_id', key=[model_class_name, instance_id], reduce=False).all()
 
         audit.description += "Save %s" % (model_class_name)
         audit.object_type = model_class_name
@@ -301,9 +294,6 @@ setattr(AuditEvent, 'audit_django_save', ModelActionAudit.audit_django_save)
 setattr(AuditEvent, 'audit_couch_save', ModelActionAudit.audit_couch_save)
 
 
-
-
-
 class NavigationEventAudit(AuditEvent):
     """
     Audit event to track happenings within the system, ie, view access
@@ -314,7 +304,9 @@ class NavigationEventAudit(AuditEvent):
 
     view = StringProperty() #the fully qualifid view name
     headers = DictProperty() #the request.META?
-    session_key = StringProperty()
+    session_key = StringProperty() #in the future possibly save some disk space by storing user agent and IP stuff in a separte session document?
+
+    extra = DictProperty()
 
     @property
     def summary(self):
@@ -325,9 +317,8 @@ class NavigationEventAudit(AuditEvent):
 
 
     @classmethod
-    def audit_view(cls, request, user, view_func):
-        '''Creates an instance of a Access log.
-        '''
+    def audit_view(cls, request, user, view_func, extra={}):
+        """Creates an instance of a Access log."""
         try:
             audit = cls.create_audit(cls, user)
             audit.description += "View"
@@ -340,9 +331,11 @@ class NavigationEventAudit(AuditEvent):
             audit.view = "%s.%s" % (view_func.__module__, view_func.func_name)
             #audit.headers = request.META #it's a bit verbose to go to that extreme, TODO: need to have targeted fields in the META, but due to server differences, it's hard to make it universal.
             audit.session_key = request.session.session_key
+            audit.extra = extra
             audit.save()
         except Exception, ex:
             logging.error("NavigationEventAudit.audit_view error: %s" % (ex))
+            print "exception: %s" % ex
 
 setattr(AuditEvent, 'audit_view', NavigationEventAudit.audit_view)
 
@@ -481,4 +474,3 @@ class ModelAuditEvent(models.Model):
         app_label = 'auditcare'
 
 
-import auditcare.signals

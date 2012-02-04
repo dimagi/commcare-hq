@@ -1,5 +1,5 @@
+from __future__ import absolute_import
 from django.conf import settings
-import django.core.exceptions
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 import logging
@@ -52,26 +52,32 @@ class AuditMiddleware(object):
         else:
             logging.debug("Middleware is running in a test context, disabling monkeypatch")
 
+
+    @staticmethod
+    def do_process_view(request, view_func, view_args, view_kwargs, extra={}):
+        if getattr(settings, "AUDIT_VIEWS", False):
+            if hasattr(view_func, 'func_name'): #is this just a plain jane __builtin__.function
+                fqview = "%s.%s" % (view_func.__module__, view_func.func_name)
+            else:
+                #just assess it from the classname for the class based view
+                fqview = "%s.%s" % (view_func.__module__, view_func.__class__.__name__)
+
+            if (fqview.startswith('django.contrib.admin') or fqview.startswith('reversion.admin')) and getattr(settings, "AUDIT_ADMIN_VIEWS", True):
+                AuditEvent.audit_view(request, request.user, view_func)
+            else:
+                user = request.user
+                if settings.AUDIT_VIEWS.__contains__(fqview):
+                    logging.debug("Auditing view " + fqview)
+                    print view_args
+                    print view_kwargs
+                    AuditEvent.audit_view(request, request.user, view_func, extra=extra)
+        return None
+
     def process_view(self, request, view_func, view_args, view_kwargs):
         """
         Simple centralized manner to audit views without having to modify the requisite code.  This is an alternate
         way to manage audit events rather than using the decorator.
         """
-
-        if hasattr(view_func, 'func_name'): #is this just a plain jane __builtin__.function
-            fqview = "%s.%s" % (view_func.__module__, view_func.func_name)
-        else:
-            #just assess it from the classname for the class based view
-            fqview = "%s.%s" % (view_func.__module__, view_func.__class__.__name__)
-
-
-        if (fqview.startswith('django.contrib.admin') or fqview.startswith('reversion.admin')) and self.log_admin:
-            AuditEvent.audit_view(request, request.user, view_func)
-        else:
-            if self.active:
-                user = request.user
-                if settings.AUDIT_VIEWS.__contains__(fqview):
-                    logging.debug("Auditing view " + fqview)
-                    AuditEvent.audit_view(request, request.user, view_func)
+        AuditMiddleware.do_process_view(request, view_func, view_args, view_kwargs)
         return None
 
