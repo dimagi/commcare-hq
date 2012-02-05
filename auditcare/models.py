@@ -334,8 +334,7 @@ class NavigationEventAudit(AuditEvent):
             audit.extra = extra
             audit.save()
         except Exception, ex:
-            logging.error("NavigationEventAudit.audit_view error: %s" % (ex))
-            print "exception: %s" % ex
+            logging.error("NavigationEventAudit.audit_view error: %s" % ex)
 
 setattr(AuditEvent, 'audit_view', NavigationEventAudit.audit_view)
 
