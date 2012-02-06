@@ -603,16 +603,17 @@ class CommCareUser(CouchUser):
         self.save()
 
     def unretire(self):
-        if self.base_doc.endswith(DELETED_SUFFIX):
-            self.base_doc = self.base_doc.rstrip(DELETED_SUFFIX)
+        def chop_suffix(string, suffix=DELETED_SUFFIX):
+            if string.endswith(suffix):
+                return string[:-len(suffix)]
+            else:
+                return string
+        self.base_doc = chop_suffix(self.base_doc)
         for form in self.get_forms(deleted=True):
-            print form.doc_type
-            form.doc_type = form.doc_type.rstrip(DELETED_SUFFIX)
-            print form.doc_type + "!"
+            form.doc_type = chop_suffix(form.doc_type)
             form.save()
-        print self.get_forms(deleted=True).count()
         for case in self.get_cases(deleted=True):
-            case.doc_type = case.doc_type.rstrip(DELETED_SUFFIX)
+            case.doc_type = chop_suffix(case.doc_type)
             case.save()
         self.save()
 
