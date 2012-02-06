@@ -2,9 +2,10 @@ from couchdbkit.ext.django.schema import *
 from dimagi.utils.mixins import UnicodeMixIn
 from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
+from casexml.apps.phone.checksum import Checksum, CaseStateHash
 
 class User(object):
-    """
+    """ 
     This is a basic user model that's used for OTA restore to properly
     find cases and generate the user XML.
     """
@@ -224,7 +225,9 @@ class SyncLog(Document, UnicodeMixIn):
                 return True
             return False
             
-        
+    def get_state_hash(self):
+        return CaseStateHash(Checksum(self.get_footprint_of_cases_on_phone()).hexdigest())
+
     def __unicode__(self):
         return "%s synced on %s (%s)" % (self.user_id, self.date.date(), self.get_id)
 
