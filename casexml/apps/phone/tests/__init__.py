@@ -1,5 +1,6 @@
 from dimagi.utils.logging import log_exception
 try:
+    from .test_sync_logs import *
     from .test_ota_restore import *
     from .test_sync_mode import *
 except ImportError, e:
