@@ -1,4 +1,5 @@
 from django.utils.datastructures import SortedDict
+from corehq.apps.app_manager.xform import XFormValidationError
 from corehq.apps.hqmedia.models import CommCareMultimedia
 
 MULTIMEDIA_PREFIX = "jr://file/"
@@ -12,16 +13,19 @@ def get_sorted_multimedia_refs(app):
             parsed = f.wrapped_xform()
             if not parsed.exists():
                 continue
-            parsed.validate()
-            parsed_forms[f] = parsed
-            for i in parsed.image_references:
-                if i not in images:
-                    images[i] = []
-                images[i].append((m,f))
-            for i in parsed.audio_references:
-                if i not in audio_files:
-                    audio_files[i] = []
-                audio_files[i].append((m,f))
+            try:
+                parsed.validate()
+                parsed_forms[f] = parsed
+                for i in parsed.image_references:
+                    if i not in images:
+                        images[i] = []
+                    images[i].append((m,f))
+                for i in parsed.audio_references:
+                    if i not in audio_files:
+                        audio_files[i] = []
+                    audio_files[i].append((m,f))
+            except XFormValidationError:
+                pass
     sorted_images = SortedDict()
     sorted_audio = SortedDict()
     for k in sorted(images):
@@ -41,13 +45,15 @@ def get_multimedia_filenames(app):
             parsed = f.wrapped_xform()
             if not parsed.exists():
                 continue
-            parsed.validate()
-            parsed_forms[f] = parsed
-            for i in parsed.image_references:
-
-                if i and i not in images:
-                    images.append(i)
-            for a in parsed.audio_references:
-                if a and a not in audio_files:
-                    audio_files.append(a)
+            try:
+                parsed.validate()
+                parsed_forms[f] = parsed
+                for i in parsed.image_references:
+                    if i and i not in images:
+                        images.append(i)
+                for a in parsed.audio_references:
+                    if a and a not in audio_files:
+                        audio_files.append(a)
+            except XFormValidationError:
+                pass
     return images, audio_files
