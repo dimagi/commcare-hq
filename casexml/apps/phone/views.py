@@ -1,9 +1,7 @@
-from django.http import HttpResponse
 from django_digest.decorators import *
 from casexml.apps.phone import xml
-from dimagi.utils.timeout import TimeoutException
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.phone.restore import generate_restore_payload
+from casexml.apps.phone.restore import generate_restore_response
 from casexml.apps.phone.models import User
 from casexml.apps.case import const
 
@@ -13,12 +11,7 @@ from casexml.apps.case import const
 def restore(request):
     user = User.from_django_user(request.user)
     restore_id = request.GET.get('since')
-    
-    try:
-        response = generate_restore_payload(user, restore_id)
-        return HttpResponse(response, mimetype="text/xml")
-    except TimeoutException:
-        return HttpResponse(status=503)
+    return generate_restore_response(user, restore_id)
     
 
 def xml_for_case(request, case_id, version="1.0"):

@@ -1,28 +1,54 @@
 import hashlib
 import binascii
+from copy import copy
 
+
+EMPTY_HASH = ""
+CASE_STATE_HASH_PREFIX = "ccsh"
+
+class CaseStateHash(object):
+    
+    def __init__(self, hash):
+        self.hash = hash
+    
+    @classmethod
+    def parse(cls, str):
+        assert str.lower().startswith("%s:" % CASE_STATE_HASH_PREFIX)
+        return cls(str[len(CASE_STATE_HASH_PREFIX) + 1:])
+    
+    def __str__(self):
+        return "%s:%s" % (CASE_STATE_HASH_PREFIX, self.hash)
+    
+    def __eq__(self, obj):
+        return isinstance(obj, CaseStateHash) and obj.hash == self.hash 
+    
+    def __ne__(self, obj):
+        return not self == obj
+        
 class Checksum(object):
     """
-    >>> Checksum({'abc123': True, '123abc': False}).hexdigest()
-    'c4251c443d45aa2601bf16533fb9dbe1'
+    >>> Checksum(['abc123', '123abc']).hexdigest()
+    '409c5c597fa2c2a693b769f0d2ad432b'
+
+    >>> Checksum(['123abc', 'abc123']).hexdigest()
+    '409c5c597fa2c2a693b769f0d2ad432b'
 
     >>> c = Checksum()
-    >>> c.add('abc123', open=True)
-    >>> c.add('123abc', open=False)
+    >>> c.add('abc123')
+    >>> c.add('123abc')
     >>> c.hexdigest()
-    'c4251c443d45aa2601bf16533fb9dbe1'
+    '409c5c597fa2c2a693b769f0d2ad432b'
+
+    >>> Checksum().hexdigest()
+    ''
 
     """
+
     def __init__(self, init=None):
-        self._dict = init or {}
+        self._list = init or []
 
-    def add(self, id, open):
-        self._dict[id] = open
-
-    @classmethod
-    def serialize_entry(cls, entry):
-        id, open = entry
-        return "%s:%s" % (id, 'o' if open else 'c')
+    def add(self, id):
+        self._list.append(id)
 
     @classmethod
     def hash(cls, line):
@@ -34,8 +60,9 @@ class Checksum(object):
         return bytearray([b1 ^ b2 for (b1, b2) in zip(bytes1, bytes2)])
 
     def hexdigest(self):
-        x = self._dict.items()
-        x = map(Checksum.serialize_entry, x)
+        if not self._list:
+            return EMPTY_HASH
+        x = copy(self._list)
         x = map(Checksum.hash, x)
         x = reduce(Checksum.xor, x)
         x = binascii.hexlify(str(x))

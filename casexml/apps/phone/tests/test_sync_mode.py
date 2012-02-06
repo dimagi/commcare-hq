@@ -25,7 +25,7 @@ class SyncBaseTest(TestCase):
     """
     
     def setUp(self):
-        # clear cases
+        # clear cases, forms, logs
         for item in XFormInstance.view("couchforms/by_xmlns", include_docs=True, reduce=False).all():
             item.delete()
         for case in CommCareCase.view("case/by_user", reduce=False, include_docs=True).all():
