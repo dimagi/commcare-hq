@@ -17,10 +17,14 @@ class HQMediaZipUploadForm(forms.Form):
     def clean_zip_file(self):
         if 'zip_file' in self.cleaned_data:
             zip_file = self.cleaned_data['zip_file']
-            if zip_file.content_type != 'application/zip':
+            mime = magic.Magic(mime=True)
+            data = zip_file.file.read()
+            content_type = mime.from_buffer(data)
+            if content_type != 'application/zip':
                 raise forms.ValidationError('Only .ZIP archive files are allowed.')
             else:
                 # Verify that it's a valid zipfile
+                zip_file.file.seek(0)
                 zip = zipfile.ZipFile(zip_file)
                 bad_file = zip.testzip()
                 if bad_file:
