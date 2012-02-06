@@ -73,6 +73,7 @@ function HQMediaUpload (args) {
     }
 
     function showRequest(formData, jqForm, options) {
+        console.log("request");
         submission_in_progress = true;
         _upload_form_submit.fadeOut();
         if (!received_data)
@@ -83,6 +84,8 @@ function HQMediaUpload (args) {
     }
 
     function showResponse(response) {
+        console.log("response");
+        console.log(response);
         if(response) {
             var error_list = $.parseJSON(response);
             cancelUpload();
@@ -148,7 +151,7 @@ function HQMediaUpload (args) {
             poll_server_interval = setInterval(function() {
                 $.getJSON(generateHQMediaUrl(_progress_checker_url, progress_id), function (data) {
                     if (data == null) {
-                        if(_process_checker_url)
+                        if(_process_checker_url && submission_in_progress)
                             $.getJSON(generateHQMediaUrl(_process_checker_url, progress_id), function(data) {
                                 if(data === null) {
                                     stopPollingServer(0);
