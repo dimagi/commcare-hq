@@ -42,7 +42,8 @@ function HQMediaUpload (args) {
         poll_server_interval = 0,
         received_data = false,
         uploaded_file = null,
-        last_known_upload_percentage = 0;
+        last_known_upload_percentage = 0,
+        last_known_processed_percentage = 0;
 
     var retrying = false,
         retry_attempts = 0;
@@ -184,7 +185,8 @@ function HQMediaUpload (args) {
 
                     if(_process_progressbar){
                         var processed_percentage = Math.floor(100 * parseInt(data.processed) / parseInt(data.processed_length));
-                        _process_progressbar.progressBar(processed_percentage);
+                        if (processed_percentage >= last_known_upload_percentage && !(processed_percentage > 100))
+                            _process_progressbar.progressBar(processed_percentage);
                     }
                 });
             }, _progress_bar_update_interval);
