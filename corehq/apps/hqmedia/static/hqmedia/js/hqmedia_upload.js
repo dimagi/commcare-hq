@@ -74,7 +74,6 @@ function HQMediaUpload (args) {
     }
 
     function showRequest(formData, jqForm, options) {
-        console.log("request");
         submission_in_progress = true;
         _upload_form_submit.fadeOut();
         if (!received_data)
@@ -85,8 +84,6 @@ function HQMediaUpload (args) {
     }
 
     function showResponse(response) {
-        console.log("response");
-        console.log(response);
         if(response) {
             var error_list = $.parseJSON(response);
             cancelUpload();
@@ -203,6 +200,8 @@ function HQMediaUpload (args) {
         _upload_form.submit(function(e) {
             var progress_id = $(this).children('.hqmedia_upload_id').val();
             if(progress_id) {
+                received_data = false;
+                _submit_status_elem.text('');
                 var ajax_submit_options = {
                     dataType: 'multipart/form-data',
                     url: generateHQMediaUrl(_submit_url, progress_id),
