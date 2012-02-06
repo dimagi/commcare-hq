@@ -439,6 +439,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     context.update(base_context)
     if app and not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(context['lang'], {})})
+    if app:
         sorted_images, sorted_audio = utils.get_sorted_multimedia_refs(app)
         multimedia_images, missing_image_refs = app.get_template_map(sorted_images, domain)
         multimedia_audio, missing_audio_refs = app.get_template_map(sorted_audio, domain)
@@ -987,15 +988,11 @@ def multimedia_upload(request, domain, kind, app_id):
     
     form = HQMediaZipUploadForm()
     progress_id = uuid.uuid4()
-    failed_files_url = "%s?%s=%s" % (failed_files_url, upload.HQMediaCacheHandler.X_PROGRESS_ID, progress_id)
 
     return render_to_response(request, "hqmedia/upload_zip.html",
                               {"domain": domain,
                                "app": app,
                                "zipform": form,
-                               "upload_progress_url": upload_progress_url,
-                               "submit_url": submit_url,
-                               "failed_files_url": failed_files_url,
                                "progress_id": progress_id,
                                "progress_id_varname": upload.HQMediaCacheHandler.X_PROGRESS_ID})
 

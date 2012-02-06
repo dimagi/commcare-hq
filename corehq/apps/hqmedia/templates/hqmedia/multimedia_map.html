@@ -12,6 +12,8 @@
 <script type="text/javascript" src="{{ STATIC_URL }}hqmedia/js/hqmedia_upload.js"></script>
 <script type="text/javascript">
     $().ready(function () {
+
+        // Audio
         var _jplayer = $("#jquery_jplayer"),
             _jplayer_is_playing = false,
             _jplayer_trigger = $(".Audiofile a.view_media"),
@@ -52,7 +54,8 @@
             _jplayer_is_playing = false;
             _jplayer_trigger.find('span').text(_jplayer_play_text);
         }
-        
+
+        // Upload & View image modal
         $("#imageView").jqm( {
             trigger: ".Imagefile a.view_media"
         });
@@ -63,7 +66,8 @@
             var form_path = $(this).parent().parent().data('form-path'),
                 image_src = $(this).attr('href');
             $("#imageView h2").text("Viewing Image for path "+form_path);
-            $("#imageView img").attr('src', image_src);
+            $("#imageView img").attr('src', image_src).removeClass('previewing');
+
             return false;
         });
 
@@ -92,54 +96,57 @@
             hqupload_form.find(".hqmedia_upload_id").val(guid);
             hqupload_form.find('input[type="submit"]').val(action_text);
             if(media_type == "CommCareImage" && replace_file === true) {
-                hqupload_form.parent().find(".original img").attr("src", $(this).parent().parent().find('a.view_media').attr('href'));
+                var orig_img = hqupload_form.parent().find(".original img");
+                orig_img.attr("src", $(this).parent().parent().find('a.view_media').attr('href'));
+                orig_img.removeClass('previewing');
                 hqupload_form.parent().find(".original").show();
             }else
                 hqupload_form.parent().find(".original").hide();
             hqupload_form.parent().find("h2").text(action_text+" for path "+form_path);
             return false;
         });
+        $(".jqmWindow .jqmClose").click(function(e) {
+            $(".jqmWindow img.preview").attr("src", "{% static 'hqmedia/img/submitting.gif' %}").addClass('previewing');
+        });
+
+        // Upload progress handling
         var hqUpload;
         hqUpload = new HQMediaUpload({
             submit_url: '{% url multimedia_upload domain 'file' app.get_id %}',
             progress_checker_url: '{% url hqmedia_upload_progress domain %}',
+            process_checker_url: '{% url hqmedia_upload_success domain %}',
             static_url: '{{ STATIC_URL }}',
-            submit_complete: uploadComplete
+            process_complete_fn: uploadComplete
         });
         hqUpload.listenForUploads();
 
-        function uploadComplete() {
+        function uploadComplete(data) {
             hqupload_form.find("input[type='button']").val('Close');
-            var upload_success = "{% url hqmedia_upload_success domain %}?{{ progress_id_varname }}="+hqupload_form.find('.hqmedia_upload_id').val();
-            $.getJSON(upload_success, function(data) {
-                if(data === null){
-                    hqUpload.is_complete = false;
-                    return;
+            hqupload_form.find("input[type='submit']").fadeOut();
+            for(var ref_id in data) {
+                var container = $("#"+ref_id);
+                var view_action = container.find("a.view_media"),
+                    upload_action = container.find("a.upload_media"),
+                    status_icon = container.find("img.indicator");
+                var media_type = view_action.parent().parent().data("media-type").replace("CommCare", "");
+                if(view_action.hasClass('inactive')) {
+                    view_action.removeClass('inactive');
+                    upload_action.find('span').text("Replace "+media_type);
+                    upload_action.attr('data-replace-file', 'true');
+                    view_action.attr('href', data[ref_id]);
+                    status_icon.attr('src', "{% static 'hqmedia/img/checkmark.png' %}");
+                }else {
+                    view_action.attr('href', data[ref_id]);
                 }
-                for(var ref_id in data) {
-                    var container = $("#"+ref_id);
-                    var view_action = container.find("a.view_media"),
-                        upload_action = container.find("a.upload_media"),
-                        status_icon = container.find("img.indicator");
-                    var media_type = view_action.parent().parent().data("media-type").replace("CommCare", "");
-                    if(view_action.hasClass('inactive')) {
-                        view_action.removeClass('inactive');
-                        upload_action.find('span').text("Replace "+media_type);
-                        upload_action.attr('data-replace-file', 'true');
-                        view_action.attr('href', data[ref_id]);
-                        status_icon.attr('src', "{% static 'hqmedia/img/checkmark.png' %}");
-                    }else {
-                        view_action.attr('href', data[ref_id]);
-                    }
-                    if (media_type == "Image") {
-                        var uploaded_image = hqupload_form.parent().find(".uploaded");
-                        uploaded_image.find('img').attr('src', data[ref_id]);
-                        uploaded_image.fadeIn();
-                    }
+                if (media_type == "Image") {
+                    var uploaded_image = hqupload_form.parent().find(".uploaded");
+                    uploaded_image.find('img').attr('src', data[ref_id]);
+                    uploaded_image.fadeIn();
                 }
-            });
+            }
         }
 
+        // Hide/show list of references
         $('.scary-settings').each(function () {
             var $scarySettings = $(this).addClass('ui-corner-bottom'),
                 $toggleBar = $(this).prev(".scary-settings-toggle").addClass('ui-corner-top'),
@@ -218,7 +225,7 @@
 <div class="jqmWindow" id="imageView">
     <a href="#" class="jqmClose">Close</a>
     <h2>Viewing Image for path</h2>
-    <img src="" alt="currently selected image" />
+    <img src="{% static 'hqmedia/img/submitting.gif' %}" class="preview previewing" alt="currently selected image" />
 </div>
 <div id="jquery_jplayer"></div>
 <div class="jqmWindow" id="uploadFileView">
@@ -226,7 +233,7 @@
     <h2>Upload Media</h2>
     <div class="original">
         <p>Image currently referenced:</p>
-        <p><img src="" alt="Currently Referenced Image" /></p>
+        <p><img src="{% static 'hqmedia/img/submitting.gif' %}" class="preview previewing" alt="Currently Referenced Image" /></p>
     </div>
     <form id="hqmedia_upload" action="{% url multimedia_upload domain 'file' app.get_id %}?{{ progress_id_varname }}=foobar" method="post" enctype="multipart/form-data">
         <fieldset>
