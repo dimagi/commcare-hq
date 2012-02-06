@@ -5,6 +5,7 @@ from __future__ import absolute_import
 
 from datetime import datetime
 import logging
+from dimagi.utils.make_uuid import random_hex
 
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
@@ -519,8 +520,13 @@ class CommCareUser(CouchUser):
         user._hq_user = self # don't tell anyone that we snuck this here
         return user
 
-    def get_forms(self):
-        return XFormInstance.view('couchforms/by_user',
+    def get_forms(self, deleted=False):
+        if deleted:
+            view_name = 'users/deleted_forms_by_user'
+        else:
+            view_name = 'couchforms/by_user'
+
+        return XFormInstance.view(view_name,
             startkey=[self.user_id],
             endkey=[self.user_id, {}],
             reduce=False,
@@ -539,8 +545,13 @@ class CommCareUser(CouchUser):
         else:
             return 0
 
-    def get_cases(self):
-        return CommCareCase.view('case/by_user',
+    def get_cases(self, deleted=False):
+        if deleted:
+            view_name = 'users/deleted_cases_by_user'
+        else:
+            view_name = 'case/by_user'
+
+        return CommCareCase.view(view_name,
             startkey=[self.user_id],
             endkey=[self.user_id, {}],
             reduce=False,
@@ -569,22 +580,41 @@ class CommCareUser(CouchUser):
     
     def retire(self):
         suffix = DELETED_SUFFIX
+        deletion_id = random_hex()
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
             self.base_doc += suffix
+            self['-deletion_id'] = deletion_id
         for form in self.get_forms():
             form.doc_type += suffix
+            form['-deletion_id'] = deletion_id
             form.save()
         for case in self.get_cases():
             case.doc_type += suffix
+            case['-deletion_id'] = deletion_id
             case.save()
+
         try:
             django_user = self.get_django_user()
         except User.DoesNotExist:
             pass
         else:
             django_user.delete()
-            
+        self.save()
+
+    def unretire(self):
+        def chop_suffix(string, suffix=DELETED_SUFFIX):
+            if string.endswith(suffix):
+                return string[:-len(suffix)]
+            else:
+                return string
+        self.base_doc = chop_suffix(self.base_doc)
+        for form in self.get_forms(deleted=True):
+            form.doc_type = chop_suffix(form.doc_type)
+            form.save()
+        for case in self.get_cases(deleted=True):
+            case.doc_type = chop_suffix(case.doc_type)
+            case.save()
         self.save()
 
     def transfer_to_domain(self, domain, app_id):

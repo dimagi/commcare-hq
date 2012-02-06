@@ -33,6 +33,7 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'^commcare/archive/(?P<user_id>[\w-]+)/$', 'archive_commcare_user', name='archive_commcare_user'),
     url(r'^commcare/unarchive/(?P<user_id>[\w-]+)/$', 'archive_commcare_user', name='unarchive_commcare_user', kwargs={'is_active': True}),
     url(r'^commcare/delete/(?P<user_id>[\w-]+)/$', 'delete_commcare_user', name='delete_commcare_user'),
+    url(r'^commcare/restore/(?P<user_id>[\w-]+)/$', 'restore_commcare_user', name='restore_commcare_user'),
     url(r'^commcare/upload/$', UploadCommCareUsers.as_view(), name='upload_commcare_users'),
     url(r'^commcare/upload-example/$', 'upload_commcare_users_example', name='upload_commcare_users_example'),
 
