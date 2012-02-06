@@ -94,6 +94,10 @@ a.view_media.inactive,
     padding: .5em 14px;
 }
 
+.jqmWindow img.previewing {
+    padding: 5.3em;
+}
+
 #uploadFileView .original img,
 #uploadFileView .uploaded img,
 #imageView img{

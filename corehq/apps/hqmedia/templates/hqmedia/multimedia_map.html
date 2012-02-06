@@ -60,14 +60,14 @@
             trigger: ".Imagefile a.view_media"
         });
         $("#uploadFileView").jqm( {
-            trigger: "a.upload_media",
-            onHide: hideUploadForm
+            trigger: "a.upload_media"
         });
         $(".Imagefile a.view_media").click(function(e) {
             var form_path = $(this).parent().parent().data('form-path'),
                 image_src = $(this).attr('href');
             $("#imageView h2").text("Viewing Image for path "+form_path);
-            $("#imageView img").attr('src', image_src);
+            $("#imageView img").attr('src', image_src).removeClass('previewing');
+
             return false;
         });
 
@@ -96,16 +96,18 @@
             hqupload_form.find(".hqmedia_upload_id").val(guid);
             hqupload_form.find('input[type="submit"]').val(action_text);
             if(media_type == "CommCareImage" && replace_file === true) {
-                hqupload_form.parent().find(".original img").attr("src", $(this).parent().parent().find('a.view_media').attr('href'));
+                var orig_img = hqupload_form.parent().find(".original img");
+                orig_img.attr("src", $(this).parent().parent().find('a.view_media').attr('href'));
+                orig_img.removeClass('previewing');
                 hqupload_form.parent().find(".original").show();
             }else
                 hqupload_form.parent().find(".original").hide();
             hqupload_form.parent().find("h2").text(action_text+" for path "+form_path);
             return false;
         });
-        function hideUploadForm(e) {
-             hqupload_form.parent().find(".original img").attr("src", "");
-        }
+        $(".jqmWindow .jqmClose").click(function(e) {
+            $(".jqmWindow img.preview").attr("src", "{% static 'hqmedia/img/submitting.gif' %}").addClass('previewing');
+        });
 
         // Upload progress handling
         var hqUpload;
@@ -222,7 +224,7 @@
 <div class="jqmWindow" id="imageView">
     <a href="#" class="jqmClose">Close</a>
     <h2>Viewing Image for path</h2>
-    <img src="" alt="currently selected image" />
+    <img src="{% static 'hqmedia/img/submitting.gif' %}" class="preview previewing" alt="currently selected image" />
 </div>
 <div id="jquery_jplayer"></div>
 <div class="jqmWindow" id="uploadFileView">
@@ -230,7 +232,7 @@
     <h2>Upload Media</h2>
     <div class="original">
         <p>Image currently referenced:</p>
-        <p><img src="" alt="Currently Referenced Image" /></p>
+        <p><img src="{% static 'hqmedia/img/submitting.gif' %}" class="preview previewing" alt="Currently Referenced Image" /></p>
     </div>
     <form id="hqmedia_upload" action="{% url multimedia_upload domain 'file' app.get_id %}?{{ progress_id_varname }}=foobar" method="post" enctype="multipart/form-data">
         <fieldset>
