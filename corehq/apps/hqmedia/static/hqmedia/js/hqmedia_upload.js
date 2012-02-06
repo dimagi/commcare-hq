@@ -41,7 +41,8 @@ function HQMediaUpload (args) {
     var submission_in_progress = false,
         poll_server_interval = 0,
         received_data = false,
-        uploaded_file = null;
+        uploaded_file = null,
+        last_known_upload_percentage = 0;
 
     var retrying = false,
         retry_attempts = 0;
@@ -176,10 +177,11 @@ function HQMediaUpload (args) {
                         showProgressBars();
                     _upload_form_errors.text('');
 
-                    var upload_percentage = 100;
-                    if(!data.upload_complete)
-                        upload_percentage = Math.floor(100 * parseInt(data.uploaded) / parseInt(data.length));
-                    _upload_progressbar.progressBar(upload_percentage);
+                    if(!data.upload_complete) {
+                        var upload_percentage = Math.floor(100 * parseInt(data.uploaded) / parseInt(data.length));
+                        if (upload_percentage >= last_known_upload_percentage && !(upload_percentage > 100))
+                            _upload_progressbar.progressBar(upload_percentage);
+                    }
 
                     if(_process_progressbar){
                         var processed_percentage = Math.floor(100 * parseInt(data.processed) / parseInt(data.processed_length));
