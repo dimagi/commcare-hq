@@ -244,6 +244,7 @@
     </script>
 {% endblock %}
 {% block head %}{{ block.super }}
+    <link rel="stylesheet" href="{{ STATIC_URL }}hqmedia/css/media_upload.css"/>
     <style>
         #custom-keys-help {
             width: 400px;
@@ -546,9 +547,10 @@
         <div class="scary-settings-toggle">
             <a href="#"><span class="ui-icon"></span>Multimedia</a>
         </div>
-        <div class="scary-settings">
-            <h4>View and download lists of multimedia references found in your application's forms and use our multimedia toolkit</h4>
-            <p><a target="_blank" href="{% url multimedia_home domain app.get_id %}">Multimedia Home</a> (opens in a new window)</p>
+        <div class="scary-settings multimedia">
+            <h2>View, manage, upload, and download files using the Multimedia Map.</h2>
+            <p><a target="_blank" href="{% url multimedia_map domain app.get_id %}">Multimedia Map</a> (opens in a new window)</p>
+            {% include "hqmedia/partials/multimedia_zip_notice.html" %}
         </div>
         
         <div class="scary-settings-toggle" id="user-interface-translations">

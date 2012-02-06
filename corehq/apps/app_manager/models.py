@@ -13,6 +13,7 @@ import commcare_translations
 from corehq.apps.app_manager import fixtures
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError
 from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig
+from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
@@ -925,7 +926,7 @@ def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
         raise ValueError("Invalid Language")
 
-class Application(ApplicationBase, TranslationMixin):
+class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     """
     A Managed Application that can be created entirely through the online interface, except for writing the
     forms themselves.
