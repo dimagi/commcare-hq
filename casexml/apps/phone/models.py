@@ -64,9 +64,6 @@ class SyncLog(Document, UnicodeMixIn):
     previous_log_id = StringProperty()  # previous sync log, forming a chain
     last_seq = IntegerProperty()        # the last_seq of couch during this sync
     
-    # cases that were synced down during this sync
-    cases = StringListProperty()
-    
     # we need to store a mapping of cases to indices for generating the footprint
     
     # The cases_on_phone property represents the state of all cases the server thinks
@@ -79,6 +76,10 @@ class SyncLog(Document, UnicodeMixIn):
     # of what's on the phone, but is guaranteed to be after pruning
     cases_on_phone = SchemaListProperty(CaseState)
     dependent_cases_on_phone = SchemaListProperty(CaseState)
+    
+    # The owner ids property keeps track of what ids the phone thinks it's the owner
+    # of. This typically includes the user id, as well as all groups that that user
+    # is a member of. 
     owner_ids_on_phone = StringListProperty()
     
     @classmethod
@@ -99,26 +100,6 @@ class SyncLog(Document, UnicodeMixIn):
             self._previous_log_ref = SyncLog.get(self.previous_log_id) if self.previous_log_id else None
         return self._previous_log_ref
     
-    def _walk_the_chain(self, func):
-        """
-        Given a function that takes in a log and returns a list, 
-        walk up the chain to extend the list by calling the function
-        on all parents.
-        
-        Returns a set object, stripping all duplicate ids
-        
-        Used to generate case id lists for synced, purged, and other cases
-        """
-        chain = set(func(self))
-        previous_log = self.get_previous_log()
-        if previous_log:
-            chain = chain | previous_log._walk_the_chain(func)
-        return chain
-    
-    def _init_casemap_if_necessary(self):
-        if not hasattr(self, "_cached_casemap"):
-            self._cached_casemap = dict((case.case_id, case) for case in self.cases_on_phone)
-        
     def phone_has_case(self, case_id):
         """
         Whether the phone currently has a case, according to this sync log
@@ -164,27 +145,6 @@ class SyncLog(Document, UnicodeMixIn):
         state = self.get_case_state(case_id)
         self.cases_on_phone.remove(state)
         self.dependent_cases_on_phone.append(state)
-    def get_all_cases_seen(self):
-        """
-        All cases the phone has ever seen.
-        Union of:
-         - any case previously synced.
-         - any case that has ever been submitted to.
-        """
-        raise NotImplementedError("This is broken!")
-    
-    def get_open_cases_on_phone(self):
-        """
-        The current list of open cases on the phone.
-        The formula is:
-         - Cases synced down PLUS cases submitted by phone 
-           MINUS (cases closed by phone PLUS cases already purged) 
-        """
-        ret = self.get_all_cases_seen() 
-        # TODO: Asserts? Anything in the latter two sets
-        # should have already been in the original list
-        ret = ret - self.get_closed_case_ids()
-        return ret
     
     def _phone_owns(self, action):
         # whether the phone thinks it owns an action block.
