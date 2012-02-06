@@ -128,7 +128,7 @@ function HQMediaUpload (args) {
     }
 
     function retrySubmitAttempt() {
-        if(retry_attempts <= _max_retries) {
+        if(retry_attempts < _max_retries) {
             _upload_progressbar.progressBar(0);
             if(_process_progressbar)
                 _process_progressbar.progressBar(0);
@@ -156,7 +156,7 @@ function HQMediaUpload (args) {
                                     retrySubmitAttempt();
                                     return;
                                 }
-                                if (uploaded_file && !received_data)
+                                if (uploaded_file && !received_data && submission_in_progress)
                                     showProgressBars();
                                 completeUpload();
                                 _process_complete_fn(data);
