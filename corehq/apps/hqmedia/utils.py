@@ -8,12 +8,12 @@ def get_sorted_multimedia_refs(app):
     parsed_forms = {}
     images = {}
     audio_files = {}
-    for m in app.get_modules():
-        for f in m.get_forms():
-            parsed = f.wrapped_xform()
-            if not parsed.exists():
-                continue
-            try:
+    try:
+        for m in app.get_modules():
+            for f in m.get_forms():
+                parsed = f.wrapped_xform()
+                if not parsed.exists():
+                    continue
                 parsed.validate()
                 parsed_forms[f] = parsed
                 for i in parsed.image_references:
@@ -24,8 +24,8 @@ def get_sorted_multimedia_refs(app):
                     if i not in audio_files:
                         audio_files[i] = []
                     audio_files[i].append((m,f))
-            except XFormValidationError:
-                pass
+    except XFormValidationError:
+        pass
     sorted_images = SortedDict()
     sorted_audio = SortedDict()
     for k in sorted(images):
@@ -40,12 +40,12 @@ def get_multimedia_filenames(app):
     parsed_forms = {}
     images = []
     audio_files = []
-    for m in app.get_modules():
-        for f in m.get_forms():
-            parsed = f.wrapped_xform()
-            if not parsed.exists():
-                continue
-            try:
+    try:
+        for m in app.get_modules():
+            for f in m.get_forms():
+                parsed = f.wrapped_xform()
+                if not parsed.exists():
+                    continue
                 parsed.validate()
                 parsed_forms[f] = parsed
                 for i in parsed.image_references:
@@ -54,6 +54,6 @@ def get_multimedia_filenames(app):
                 for a in parsed.audio_references:
                     if a and a not in audio_files:
                         audio_files.append(a)
-            except XFormValidationError:
-                pass
+    except XFormValidationError:
+        pass
     return images, audio_files
