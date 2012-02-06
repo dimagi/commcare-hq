@@ -28,7 +28,7 @@ function HQMediaUpload (args) {
         _submit_status_elem = (args.upload_status_id) ? $(args.upload_status_id) : $('#hqmedia_upload_status'),
         _static_url = (args.static_url) ? args.static_url : '/static',
         _error_class = (args.form_error_class) ? args.form_error_class : '.error',
-        _max_retries = (args.max_retries) ? args.max_retries : 3;
+        _max_retries = (args.max_retries) ? args.max_retries : 4;
 
     var _upload_form = $(_upload_form_id),
         _upload_form_errors = $(_upload_form_id+" "+_error_class),
@@ -138,7 +138,7 @@ function HQMediaUpload (args) {
         } else {
             retrying = false;
             cancelUpload();
-            _submit_status_elem.text("Unfortunately there seems to be an error uploading the file.");
+            _submit_status_elem.text("Unfortunately there seems to be an error uploading the file. Please retry.");
         }
     }
 
@@ -162,7 +162,7 @@ function HQMediaUpload (args) {
                                 _process_complete_fn(data);
                             });
                         else
-                            completeUpload();
+                            stopPollingServer(100);
                         return;
                     }
                     if(data.upload_aborted) {
