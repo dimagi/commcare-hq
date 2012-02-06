@@ -15,30 +15,24 @@
             progress_id_varname: '{{ progress_id_varname }}',
             submit_url: '{% url multimedia_upload domain 'zip' app.get_id %}',
             progress_checker_url: '{% url hqmedia_upload_progress domain%}',
-            processbar: '#hqmedia_processing_progressbar',
             static_url: '{{ STATIC_URL }}',
-            submit_complete: showFailedFiles
+            processbar: '#hqmedia_processing_progressbar',
+            process_checker_url: '{% url hqmedia_upload_success domain %}',
+            process_complete_fn: showFailedFiles
         });
 
         $failed_files.fadeOut();
         hqUpload.listenForUploads();
 
-        function showFailedFiles () {
-           $.getJSON("{{ failed_files_url }}", function(data) {
-               console.log(data);
-               if(data === null){
-                    hqUpload.is_complete = false;
-                    return;
-                }
-                   $("#return-to-map").removeClass("inactive");
-                   if(data.failed_files) {
-                       $failed_files.prepend($("<h3 />").text("We could not find references to the following files in your application:"));
-                       $failed_files.show('blind');
-                   }
-                   for(var i = 0; i < data.failed_files.length; i++) {
-                       $("#failed_files ul").append($("<li />").text(data.failed_files[i]));
-                   }
-           });
+        function showFailedFiles(data) {
+           $("#return-to-map").removeClass("inactive");
+           if(data.failed_files) {
+               $failed_files.prepend($("<h3 />").text("We could not find references to the following files in your application:"));
+               $failed_files.show('blind');
+           }
+           for(var i = 0; i < data.failed_files.length; i++) {
+               $("#failed_files ul").append($("<li />").text(data.failed_files[i]));
+           }
         }
     });
 </script>

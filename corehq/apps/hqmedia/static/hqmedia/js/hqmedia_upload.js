@@ -22,22 +22,26 @@ function HQMediaUpload (args) {
         _progress_id_var = (args.progress_id_varname) ? args.progress_id_varname : 'X-Progress-ID',
         _upload_progressbar = (args.uploadbar) ? $(args.uploadbar) : $('#hqmedia_progressbar'),
         _process_progressbar = (args.processbar) ? $(args.processbar): null,
+        _process_checker_url = (args.process_checker_url) ? args.process_checker_url : '',
         _progress_bar_update_interval = (args.progressbar_update_interval) ? args.progressbar_update_interval : 1000,
         _upload_form_id = (args.upload_form_id) ? args.upload_form_id : 'form#hqmedia_upload',
         _submit_status_elem = (args.upload_status_id) ? $(args.upload_status_id) : $('#hqmedia_upload_status'),
         _static_url = (args.static_url) ? args.static_url : '/static',
-        _error_class = (args.form_error_class) ? args.form_error_class: '.error';
+        _error_class = (args.form_error_class) ? args.form_error_class : '.error',
+        _max_retries = (args.max_retries) ? args.max_retries : 2;
 
     var _upload_form = $(_upload_form_id),
         _upload_form_errors = $(_upload_form_id+" "+_error_class),
         _upload_form_submit = $(_upload_form_id+" input[type='submit']");
 
-    var parent = this;
+    var $submitting_pinwheel = $("<img/>").attr("src", "/static/hqmedia/img/submitting.gif");
 
-    var _submit_completion_fn = (args.submit_complete) ? args.submit_complete : function () { };
+    var _process_complete_fn = (args.process_complete_fn) ? args.process_complete_fn : function (data) { };
 
     var submission_in_progress = false,
-        poll_server_interval = 0;
+        poll_server_interval = 0,
+        received_data = false,
+        uploaded_file = null;
 
     var retrying = false,
         retry_attempts = 0;
@@ -55,11 +59,26 @@ function HQMediaUpload (args) {
     if(_process_progressbar)
         _process_progressbar.progressBar(progress_bar_options);
 
-    function showRequest(formData, jqForm, options) {
-        submission_in_progress = true;
+    function showProgressBars() {
         _upload_progressbar.parent().fadeIn();
         if (_process_progressbar)
             _process_progressbar.parent().fadeIn();
+
+        if (retrying && retry_attempts > 1)
+            _submit_status_elem.text('Retrying upload, please wait...').prepend($submitting_pinwheel);
+        else
+            _submit_status_elem.text('Uploading, please wait...').prepend($submitting_pinwheel);
+
+        received_data = true;
+    }
+
+    function showRequest(formData, jqForm, options) {
+        submission_in_progress = true;
+        _upload_form_submit.fadeOut();
+        if (!received_data)
+            _submit_status_elem.text('Verifying, please wait...').prepend($submitting_pinwheel);
+        uploaded_file = _upload_form.find("input[type='file']").val();
+        _submit_status_elem.fadeIn();
         return true;
     }
 
@@ -67,6 +86,7 @@ function HQMediaUpload (args) {
         if(response) {
             var error_list = $.parseJSON(response);
             cancelUpload();
+            _submit_status_elem.fadeOut();
             processErrors(error_list);
         }
     }
@@ -79,11 +99,18 @@ function HQMediaUpload (args) {
         poll_server_interval = 0;
         submission_in_progress = false;
     }
+
     function cancelUpload() {
         stopPollingServer(0);
         _upload_form_submit.fadeIn();
-        _submit_status_elem.fadeOut();
     }
+
+    function completeUpload() {
+        _upload_form_errors.text('');
+        _submit_status_elem.text('Finished.');
+        stopPollingServer(100);
+    }
+
     function processErrors(error_list) {
         for(var error in error_list) {
             var error_div = "#errors_"+error;
@@ -94,8 +121,24 @@ function HQMediaUpload (args) {
             }
         }
     }
+
     function generateHQMediaUrl(url, progress_id){
         return url+"?"+_progress_id_var+"="+progress_id;
+    }
+
+    function retrySubmitAttempt() {
+        if(retry_attempts <= _max_retries) {
+            _upload_progressbar.progressBar(0);
+            if(_process_progressbar)
+                _process_progressbar.progressBar(0);
+            retry_attempts += 1;
+            retrying = true;
+            _upload_form.submit();
+        } else {
+            retrying = false;
+            cancelUpload();
+            _submit_status_elem.text("Unfortunately there seems to be an error uploading the file.");
+        }
     }
 
     function startProgressBarUpdates(progress_id) {
@@ -105,24 +148,29 @@ function HQMediaUpload (args) {
             poll_server_interval = setInterval(function() {
                 $.getJSON(generateHQMediaUrl(_progress_checker_url, progress_id), function (data) {
                     if (data == null) {
-                        // uploading and processing has finished
-                        _upload_form_errors.text('');
-                        _submit_status_elem.text('Finished.');
-                        _submit_completion_fn();
-                        if(parent.is_complete) {
-                            stopPollingServer(100);
-                        } else {
-                            retrySubmitAttempt(2);
-                            stopPollingServer(0);
-                        }
+                        if(_process_checker_url)
+                            $.getJSON(generateHQMediaUrl(_process_checker_url, progress_id), function(data) {
+                                if(data === null) {
+                                    stopPollingServer(0);
+                                    retrySubmitAttempt();
+                                    return;
+                                }
+                                completeUpload();
+                                _process_complete_fn(data);
+                            });
+                        else
+                            completeUpload();
                         return;
                     }
                     if(data.upload_aborted) {
                         cancelUpload();
+                        _submit_status_elem.fadeOut();
                         if(data.error_list)
                             processErrors(data.error_list);
                         return;
                     }
+                    if (uploaded_file && !received_data)
+                        showProgressBars();
                     _upload_form_errors.text('');
 
                     var upload_percentage = 100;
@@ -161,36 +209,12 @@ function HQMediaUpload (args) {
                 startProgressBarUpdates(progress_id);
             } else
                 console.log("No upload id was provided!");
-            _upload_form_submit.fadeOut();
-            if (retrying && retry_attempts > 1) {
-                _submit_status_elem.text('Retrying upload, please wait...').prepend($("<img/>").attr("src", "/static/hqmedia/img/submitting.gif"));
-            } else {
-                _submit_status_elem.text('Uploading, please wait...').prepend($("<img/>").attr("src", "/static/hqmedia/img/submitting.gif"));
-            }
-            _submit_status_elem.fadeIn();
+            
+
             return false;
         });
     }
-
-    this.is_complete = true;
-
-    function retrySubmitAttempt(num_attempts) {
-        if(retry_attempts <= num_attempts) {
-            _upload_progressbar.progressBar(0);
-            if(_process_progressbar)
-                _process_progressbar.progressBar(0);
-            retry_attempts += 1;
-            retrying = true;
-            _upload_form.submit();
-        } else {
-            retrying = false;
-            _upload_progressbar.progressBar(0);
-            if(_process_progressbar)
-                _process_progressbar.progressBar(0);
-            _submit_status_elem.text("Unfortunately there seems to be an error uploading the file.");
-            _upload_form_submit.fadeIn();
-        }
-    }
+    
 }
 
 function guidGenerator() {

@@ -103,41 +103,35 @@
         hqUpload = new HQMediaUpload({
             submit_url: '{% url multimedia_upload domain 'file' app.get_id %}',
             progress_checker_url: '{% url hqmedia_upload_progress domain %}',
+            process_checker_url: '{% url hqmedia_upload_success domain %}',
             static_url: '{{ STATIC_URL }}',
-            submit_complete: uploadComplete
+            process_complete_fn: uploadComplete
         });
         hqUpload.listenForUploads();
 
-        function uploadComplete() {
+        function uploadComplete(data) {
             hqupload_form.find("input[type='button']").val('Close');
-            var upload_success = "{% url hqmedia_upload_success domain %}?{{ progress_id_varname }}="+hqupload_form.find('.hqmedia_upload_id').val();
-            $.getJSON(upload_success, function(data) {
-                if(data === null){
-                    hqUpload.is_complete = false;
-                    return;
+            for(var ref_id in data) {
+                var container = $("#"+ref_id);
+                var view_action = container.find("a.view_media"),
+                    upload_action = container.find("a.upload_media"),
+                    status_icon = container.find("img.indicator");
+                var media_type = view_action.parent().parent().data("media-type").replace("CommCare", "");
+                if(view_action.hasClass('inactive')) {
+                    view_action.removeClass('inactive');
+                    upload_action.find('span').text("Replace "+media_type);
+                    upload_action.attr('data-replace-file', 'true');
+                    view_action.attr('href', data[ref_id]);
+                    status_icon.attr('src', "{% static 'hqmedia/img/checkmark.png' %}");
+                }else {
+                    view_action.attr('href', data[ref_id]);
                 }
-                for(var ref_id in data) {
-                    var container = $("#"+ref_id);
-                    var view_action = container.find("a.view_media"),
-                        upload_action = container.find("a.upload_media"),
-                        status_icon = container.find("img.indicator");
-                    var media_type = view_action.parent().parent().data("media-type").replace("CommCare", "");
-                    if(view_action.hasClass('inactive')) {
-                        view_action.removeClass('inactive');
-                        upload_action.find('span').text("Replace "+media_type);
-                        upload_action.attr('data-replace-file', 'true');
-                        view_action.attr('href', data[ref_id]);
-                        status_icon.attr('src', "{% static 'hqmedia/img/checkmark.png' %}");
-                    }else {
-                        view_action.attr('href', data[ref_id]);
-                    }
-                    if (media_type == "Image") {
-                        var uploaded_image = hqupload_form.parent().find(".uploaded");
-                        uploaded_image.find('img').attr('src', data[ref_id]);
-                        uploaded_image.fadeIn();
-                    }
+                if (media_type == "Image") {
+                    var uploaded_image = hqupload_form.parent().find(".uploaded");
+                    uploaded_image.find('img').attr('src', data[ref_id]);
+                    uploaded_image.fadeIn();
                 }
-            });
+            }
         }
 
         $('.scary-settings').each(function () {
