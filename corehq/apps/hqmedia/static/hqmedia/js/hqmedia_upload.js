@@ -110,10 +110,8 @@ function HQMediaUpload (args) {
                         _submit_status_elem.text('Finished.');
                         _submit_completion_fn();
                         if(parent.is_complete) {
-                            console.log("not retrying");
                             stopPollingServer(100);
                         } else {
-                            console.log("retrying");
                             retrySubmitAttempt(2);
                             stopPollingServer(0);
                         }
