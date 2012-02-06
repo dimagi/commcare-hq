@@ -28,7 +28,7 @@ function HQMediaUpload (args) {
         _submit_status_elem = (args.upload_status_id) ? $(args.upload_status_id) : $('#hqmedia_upload_status'),
         _static_url = (args.static_url) ? args.static_url : '/static',
         _error_class = (args.form_error_class) ? args.form_error_class : '.error',
-        _max_retries = (args.max_retries) ? args.max_retries : 2;
+        _max_retries = (args.max_retries) ? args.max_retries : 3;
 
     var _upload_form = $(_upload_form_id),
         _upload_form_errors = $(_upload_form_id+" "+_error_class),
@@ -65,7 +65,7 @@ function HQMediaUpload (args) {
         if (_process_progressbar)
             _process_progressbar.parent().fadeIn();
 
-        if (retrying && retry_attempts > 1)
+        if (retrying && retry_attempts == _max_retries)
             _submit_status_elem.text('Retrying upload, please wait...').prepend($submitting_pinwheel);
         else
             _submit_status_elem.text('Uploading, please wait...').prepend($submitting_pinwheel);
