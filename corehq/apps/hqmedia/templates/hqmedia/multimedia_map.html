@@ -122,6 +122,7 @@
 
         function uploadComplete(data) {
             hqupload_form.find("input[type='button']").val('Close');
+            hqupload_form.find("input[type='submit']").fadeOut();
             for(var ref_id in data) {
                 var container = $("#"+ref_id);
                 var view_action = container.find("a.view_media"),
