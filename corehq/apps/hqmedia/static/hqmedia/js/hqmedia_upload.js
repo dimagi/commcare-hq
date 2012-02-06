@@ -62,16 +62,17 @@ function HQMediaUpload (args) {
         _process_progressbar.progressBar(progress_bar_options);
 
     function showProgressBars() {
-        _upload_progressbar.parent().fadeIn();
-        if (_process_progressbar)
-            _process_progressbar.parent().fadeIn();
+        if (uploaded_file && !received_data && submission_in_progress)
+            _upload_progressbar.parent().fadeIn();
+            if (_process_progressbar)
+                _process_progressbar.parent().fadeIn();
 
-        if (retrying && retry_attempts == _max_retries)
-            _submit_status_elem.text('Retrying upload, please wait...').prepend($submitting_pinwheel);
-        else
-            _submit_status_elem.text('Uploading, please wait...').prepend($submitting_pinwheel);
-
-        received_data = true;
+            if (retrying && retry_attempts == _max_retries)
+                _submit_status_elem.text('Retrying upload, please wait...').prepend($submitting_pinwheel);
+            else
+                _submit_status_elem.text('Uploading, please wait...').prepend($submitting_pinwheel);
+    
+            received_data = true;
     }
 
     function showRequest(formData, jqForm, options) {
@@ -157,8 +158,7 @@ function HQMediaUpload (args) {
                                     retrySubmitAttempt();
                                     return;
                                 }
-                                if (uploaded_file && !received_data && submission_in_progress)
-                                    showProgressBars();
+                                showProgressBars();
                                 completeUpload();
                                 _process_complete_fn(data);
                             });
@@ -173,8 +173,7 @@ function HQMediaUpload (args) {
                             processErrors(data.error_list);
                         return;
                     }
-                    if (uploaded_file && !received_data)
-                        showProgressBars();
+                    showProgressBars();
                     _upload_form_errors.text('');
 
                     if(!data.upload_complete) {
