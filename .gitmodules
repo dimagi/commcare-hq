@@ -64,3 +64,6 @@
 [submodule "submodules/django-soil-src"]
 	path = submodules/django-soil-src
 	url = git://github.com/dimagi/django-soil.git
+[submodule "submodules/hutch-src"]
+	path = submodules/hutch-src
+	url = git://github.com/dimagi/hutch.git

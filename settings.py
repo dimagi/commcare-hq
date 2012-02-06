@@ -137,6 +137,7 @@ HQ_APPS = (
     'corehq.apps.hqwebapp',
     'corehq.apps.logtracker',
     'corehq.apps.docs',
+    'corehq.apps.hqmedia',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -166,6 +167,7 @@ HQ_APPS = (
     'touchforms.formplayer',
     'phonelog',
     'pathfinder',
+    'hutch',
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
@@ -357,6 +359,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'forms',
         'groups',
         'hqcase',
+        'hqmedia',
         'migration',
         'phone',
         'receiverwrapper',
@@ -370,7 +373,8 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'xep_hq_server',
         'phonelog',
         'pathfinder',
-        'registration'
+        'registration',
+        'hutch'
     ]
 ]
 
