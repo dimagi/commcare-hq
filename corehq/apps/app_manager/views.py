@@ -988,15 +988,11 @@ def multimedia_upload(request, domain, kind, app_id):
     
     form = HQMediaZipUploadForm()
     progress_id = uuid.uuid4()
-    failed_files_url = "%s?%s=%s" % (failed_files_url, upload.HQMediaCacheHandler.X_PROGRESS_ID, progress_id)
 
     return render_to_response(request, "hqmedia/upload_zip.html",
                               {"domain": domain,
                                "app": app,
                                "zipform": form,
-                               "upload_progress_url": upload_progress_url,
-                               "submit_url": submit_url,
-                               "failed_files_url": failed_files_url,
                                "progress_id": progress_id,
                                "progress_id_varname": upload.HQMediaCacheHandler.X_PROGRESS_ID})
 

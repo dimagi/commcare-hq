@@ -107,6 +107,8 @@ function HQMediaUpload (args) {
     }
 
     function completeUpload() {
+        if (uploaded_file && !received_data)
+            showProgressBars();
         _upload_form_errors.text('');
         _submit_status_elem.text('Finished.');
         stopPollingServer(100);

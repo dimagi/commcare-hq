@@ -12,6 +12,8 @@
 <script type="text/javascript" src="{{ STATIC_URL }}hqmedia/js/hqmedia_upload.js"></script>
 <script type="text/javascript">
     $().ready(function () {
+
+        // Audio
         var _jplayer = $("#jquery_jplayer"),
             _jplayer_is_playing = false,
             _jplayer_trigger = $(".Audiofile a.view_media"),
@@ -52,12 +54,14 @@
             _jplayer_is_playing = false;
             _jplayer_trigger.find('span').text(_jplayer_play_text);
         }
-        
+
+        // Upload & View image modal
         $("#imageView").jqm( {
             trigger: ".Imagefile a.view_media"
         });
         $("#uploadFileView").jqm( {
-            trigger: "a.upload_media"
+            trigger: "a.upload_media",
+            onHide: hideUploadForm
         });
         $(".Imagefile a.view_media").click(function(e) {
             var form_path = $(this).parent().parent().data('form-path'),
@@ -99,6 +103,11 @@
             hqupload_form.parent().find("h2").text(action_text+" for path "+form_path);
             return false;
         });
+        function hideUploadForm(e) {
+             hqupload_form.parent().find(".original img").attr("src", "");
+        }
+
+        // Upload progress handling
         var hqUpload;
         hqUpload = new HQMediaUpload({
             submit_url: '{% url multimedia_upload domain 'file' app.get_id %}',
@@ -134,6 +143,7 @@
             }
         }
 
+        // Hide/show list of references
         $('.scary-settings').each(function () {
             var $scarySettings = $(this).addClass('ui-corner-bottom'),
                 $toggleBar = $(this).prev(".scary-settings-toggle").addClass('ui-corner-top'),
