@@ -2,9 +2,15 @@ import hashlib
 import binascii
 from copy import copy
 
+
+EMPTY_HASH = ""
+    
 class Checksum(object):
     """
     >>> Checksum(['abc123', '123abc']).hexdigest()
+    '409c5c597fa2c2a693b769f0d2ad432b'
+
+    >>> Checksum(['123abc', 'abc123']).hexdigest()
     '409c5c597fa2c2a693b769f0d2ad432b'
 
     >>> c = Checksum()
@@ -13,7 +19,11 @@ class Checksum(object):
     >>> c.hexdigest()
     '409c5c597fa2c2a693b769f0d2ad432b'
 
+    >>> Checksum().hexdigest()
+    ''
+
     """
+
     def __init__(self, init=None):
         self._list = init or []
 
@@ -30,6 +40,8 @@ class Checksum(object):
         return bytearray([b1 ^ b2 for (b1, b2) in zip(bytes1, bytes2)])
 
     def hexdigest(self):
+        if not self._list:
+            return EMPTY_HASH
         x = copy(self._list)
         x = map(Checksum.hash, x)
         x = reduce(Checksum.xor, x)
