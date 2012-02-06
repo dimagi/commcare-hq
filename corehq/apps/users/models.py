@@ -547,7 +547,7 @@ class CommCareUser(CouchUser):
 
     def get_cases(self, deleted=False):
         if deleted:
-            view_name = 'users/deleted_forms_by_user'
+            view_name = 'users/deleted_cases_by_user'
         else:
             view_name = 'case/by_user'
 
