@@ -188,7 +188,7 @@ function HQMediaUpload (args) {
 
                     if(_process_progressbar){
                         var processed_percentage = Math.floor(100 * parseInt(data.processed) / parseInt(data.processed_length));
-                        if (processed_percentage >= last_known_upload_percentage && !(processed_percentage > 100)) {
+                        if (processed_percentage >= last_known_processed_percentage && !(processed_percentage > 100)) {
                             last_known_processed_percentage = processed_percentage;
                             _process_progressbar.progressBar(processed_percentage);
                             
