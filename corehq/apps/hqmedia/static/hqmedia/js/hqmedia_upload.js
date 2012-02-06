@@ -181,7 +181,7 @@ function HQMediaUpload (args) {
                     if(!data.upload_complete) {
                         var upload_percentage = Math.floor(100 * parseInt(data.uploaded) / parseInt(data.length));
                         if (upload_percentage >= last_known_upload_percentage && !(upload_percentage > 100)) {
-                            last_known_processed_percentage = upload_percentage;
+                            last_known_upload_percentage = upload_percentage;
                             _upload_progressbar.progressBar(upload_percentage);
                         }
                     }
