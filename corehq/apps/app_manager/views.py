@@ -439,7 +439,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     context.update(base_context)
     if app and not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(context['lang'], {})})
-    if app:
+    if app and app.doc_type == 'Application':
         sorted_images, sorted_audio = utils.get_sorted_multimedia_refs(app)
         multimedia_images, missing_image_refs = app.get_template_map(sorted_images, domain)
         multimedia_audio, missing_audio_refs = app.get_template_map(sorted_audio, domain)
