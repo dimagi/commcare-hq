@@ -107,8 +107,6 @@ function HQMediaUpload (args) {
     }
 
     function completeUpload() {
-        if (uploaded_file && !received_data)
-            showProgressBars();
         _upload_form_errors.text('');
         _submit_status_elem.text('Finished.');
         stopPollingServer(100);
@@ -158,6 +156,8 @@ function HQMediaUpload (args) {
                                     retrySubmitAttempt();
                                     return;
                                 }
+                                if (uploaded_file && !received_data)
+                                    showProgressBars();
                                 completeUpload();
                                 _process_complete_fn(data);
                             });
