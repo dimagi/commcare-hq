@@ -27,6 +27,22 @@
             addSearchBox : true,
             showSelectedItems : true,
         });
+        $("#sms-message").bind('keyup', function () {
+            var max_char = 160,
+                current_count = $(this).val().length,
+                cc_message = "";
+            var chars_remaining = max_char - current_count;
+            var $char_count = $("#character-count");
+            if(chars_remaining < 0)
+                $char_count.addClass("alert");
+            else
+                $char_count.removeClass("alert");
+            cc_message = current_count + " character";
+            if(current_count != 1)
+                cc_message = cc_message + "s";
+            cc_message = cc_message + " (" + max_char + " max)";
+            $char_count.text(cc_message);
+        });
     });
     </script>
     {% include "sms/partials/sms_autocomplete.html" %}
@@ -35,6 +51,15 @@
     {{ block.super }}
     <link rel="stylesheet" href="{{ STATIC_URL }}sms/css/sms.css" />
     <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/splits.css" />
+    <style type="text/css">
+        #character-count {
+            color: #888888;
+            padding-bottom: .5em;
+        }
+        #character-count.alert {
+            color: #FF1111;
+        }
+    </style>
 {% endblock %}
 
 
@@ -51,7 +76,8 @@
                         <label>Recipients:</label>
                         <textarea name="recipients" rows="3" cols="100" class="sms-autocomplete"></textarea>
                         <label>Message:</label>
-                        <textarea name="message" cols="53" rows="3"></textarea><br/>
+                        <textarea id="sms-message" name="message" cols="53" rows="3"></textarea><br/>
+                        <div id="character-count">0 characters (160 max)</div>
                         <input name="send_sms_button" class="send ui-button ui-button-text-only" type="submit" value="Send Messages"/>
                     </div>
                 </div>

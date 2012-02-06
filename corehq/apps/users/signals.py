@@ -38,13 +38,13 @@ def create_user_from_commcare_registration(sender, xform, **kwargs):
         return False
     
     try:
-        couch_user = CommCareUser.create_from_xform(xform)
+        couch_user, created = CommCareUser.create_or_update_from_xform(xform)
     except Exception, e:
         #import traceback, sys
         #exc_type, exc_value, exc_traceback = sys.exc_info()
         #traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
         logging.exception(e)
         raise
-    return ReceiverResult(xml.get_response(couch_user), Certainty.CERTAIN)
+    return ReceiverResult(xml.get_response(couch_user, created), Certainty.CERTAIN)
 
 successful_form_received.connect(create_user_from_commcare_registration)

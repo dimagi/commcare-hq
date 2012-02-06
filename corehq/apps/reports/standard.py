@@ -73,6 +73,7 @@ class StandardHQReport(HQReport):
 
 class StandardTabularHQReport(StandardHQReport):
 
+#    exportable = True
     def set_headers(self):
         return self.headers
 
@@ -93,6 +94,10 @@ class StandardTabularHQReport(StandardHQReport):
 
         self.headers = self.set_headers()
         self.rows = self.set_rows()
+
+        self.context['header'] = self.headers
+        self.context['rows'] = self.rows
+
         super(StandardTabularHQReport, self).get_report_context()
 
 
@@ -226,7 +231,7 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
         self.dates = [self.datespan.startdate]
         while self.dates[-1] < self.datespan.enddate:
             self.dates.append(self.dates[-1] + timedelta(days=1))
-        return ["Username"] + [d.strftime(DATE_FORMAT) for d in self.dates]
+        return ["Username"] + [d.strftime(DATE_FORMAT) for d in self.dates] + ["Total"]
 
     def set_rows(self):
         date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
@@ -239,7 +244,7 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
         ).all()
         user_map = dict([(user.user_id, i) for (i, user) in enumerate(self.users)])
         userIDs = [user.user_id for user in self.users]
-        rows = [[0]*(1+len(date_map)) for _ in range(len(self.users))]
+        rows = [[0]*(2+len(date_map)) for _ in range(len(self.users))]
 
         for result in results:
             _, date, user_id = result['key']
@@ -249,6 +254,7 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
 
         for i, user in enumerate(self.users):
             rows[i][0] = user.username_in_report
+            rows[i][-1] = sum(rows[i][1:-1])
 
         return rows
 
