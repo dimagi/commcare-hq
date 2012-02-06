@@ -22,7 +22,6 @@ from dimagi.utils.couch.undo import DeleteRecord
 from dimagi.utils.web import get_url_base, parse_int
 from copy import deepcopy
 from corehq.apps.domain.models import Domain
-from BeautifulSoup import BeautifulStoneSoup
 import hashlib
 from django.template.loader import render_to_string
 from urllib2 import urlopen, URLError
@@ -1380,13 +1379,14 @@ class RemoteApp(ApplicationBase):
         suite_loc = tree.find('suite/resource/location[@authority="local"]').text
         suite_loc, suite = self.fetch_file(suite_loc)
         files[suite_loc] = suite
-        soup = BeautifulStoneSoup(suite)
+        suite_xml = _parse_xml(suite)
+
         locations = []
-        for resource in soup.findAll('resource'):
+        for resource in suite_xml.findall('*/resource'):
             try:
-                loc = resource.findChild('location', authority='remote').string
+                loc = resource.findtext('location[@authority="remote"]')
             except Exception:
-                loc = resource.findChild('location', authority='local').string
+                loc = resource.findtext('location[@authority="local"]')
             locations.append(loc)
         for location in locations:
             files.update((self.fetch_file(location),))
