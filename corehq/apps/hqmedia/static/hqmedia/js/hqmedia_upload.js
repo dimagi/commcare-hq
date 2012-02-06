@@ -23,7 +23,7 @@ function HQMediaUpload (args) {
         _upload_progressbar = (args.uploadbar) ? $(args.uploadbar) : $('#hqmedia_progressbar'),
         _process_progressbar = (args.processbar) ? $(args.processbar): null,
         _process_checker_url = (args.process_checker_url) ? args.process_checker_url : '',
-        _progress_bar_update_interval = (args.progressbar_update_interval) ? args.progressbar_update_interval : 1000,
+        _progress_bar_update_interval = (args.progressbar_update_interval) ? args.progressbar_update_interval : 2000,
         _upload_form_id = (args.upload_form_id) ? args.upload_form_id : 'form#hqmedia_upload',
         _submit_status_elem = (args.upload_status_id) ? $(args.upload_status_id) : $('#hqmedia_upload_status'),
         _static_url = (args.static_url) ? args.static_url : '/static',
@@ -43,7 +43,8 @@ function HQMediaUpload (args) {
         received_data = false,
         uploaded_file = null,
         last_known_upload_percentage = 0,
-        last_known_processed_percentage = 0;
+        last_known_processed_percentage = 0,
+        upload_complete = false;
 
     var retrying = false,
         retry_attempts = 0;
@@ -62,7 +63,7 @@ function HQMediaUpload (args) {
         _process_progressbar.progressBar(progress_bar_options);
 
     function showProgressBars() {
-        if (uploaded_file && !received_data && submission_in_progress)
+        if (uploaded_file && !received_data && submission_in_progress && !upload_complete)
             _upload_progressbar.parent().fadeIn();
             if (_process_progressbar)
                 _process_progressbar.parent().fadeIn();
@@ -111,6 +112,7 @@ function HQMediaUpload (args) {
     function completeUpload() {
         _upload_form_errors.text('');
         _submit_status_elem.text('Finished.');
+        upload_complete = true;
         stopPollingServer(100);
     }
 
@@ -214,6 +216,7 @@ function HQMediaUpload (args) {
             var progress_id = $(this).children('.hqmedia_upload_id').val();
             if(progress_id) {
                 received_data = false;
+                upload_complete = false;
                 _submit_status_elem.text('');
                 var ajax_submit_options = {
                     dataType: 'multipart/form-data',
