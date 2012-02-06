@@ -192,7 +192,7 @@ function HQMediaUpload (args) {
                             _process_progressbar.progressBar(processed_percentage);
                             
                             // Such an hack, I'm so very sorry
-                            if (last_known_upload_percentage < 75) {
+                            if (last_known_upload_percentage < 75 && processed_percentage > 1) {
                                 last_known_upload_percentage = 75;
                                 _upload_progressbar.progressBar(last_known_upload_percentage);
                             }
