@@ -149,8 +149,8 @@ class HQMediaMixin(Document):
         missing_refs = 0
         multimedia_map = self.multimedia_map
         for f in sorted_files:
-            f = f.strip()
             try:
+                f = f.strip()
                 product[f] = {"url": reverse("hqmedia_download", args=[domain,
                                                            multimedia_map[f].media_type,
                                                            multimedia_map[f].multimedia_id]),
@@ -158,4 +158,6 @@ class HQMediaMixin(Document):
             except KeyError:
                 product[f] = None
                 missing_refs += 1
+            except AttributeError:
+                pass
         return product, missing_refs
