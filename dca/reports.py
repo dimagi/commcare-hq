@@ -114,13 +114,10 @@ class LendingGroup(object):
 
     def __init__(self, case, month, year):
         self.case = case
-        print self.case['_id'], month, year
         startkey = [self.case['_id'], int(year), int(month)]
         endkey=[self.case['_id'], int(year), int(month), {}]
-        print startkey, endkey
         tmp = get_db().view('dca/dca_collection_forms_by_case', startkey=startkey,
             endkey=endkey, include_docs=True, limit=1).all()
-        print tmp
         if len(tmp):
             self.coll = tmp[0]
 
@@ -289,6 +286,10 @@ class LendingGroupAggregate(object):
         return self.pct(self.dropouts_since_start_of_cycle, self.num_members)
 
     @property
+    def retention_rate(self):
+        return self.pct(self.num_members - self.dropouts_since_start_of_cycle, self.num_members)
+
+    @property
     def change_in_members(self):
         return self.sum_all_groups(lambda x: int(x.active_members_at_time_of_visit) - int(x.members_at_start_of_cycle))
 
@@ -306,6 +307,10 @@ class LendingGroupAggregate(object):
     @property
     def value_of_savings(self):
         return self.currency(self._value_of_savings)
+
+    @property
+    def value_of_savings_per_member(self):
+        return self.currency(self.div(self._value_of_savings, self.num_members))
 
     @property
     def avg_value_of_savings(self):
@@ -340,8 +345,28 @@ class LendingGroupAggregate(object):
         return self.sum_all_groups(lambda x: x.debts)
 
     @property
+    def debts(self):
+        return self.currency(self._debts)
+
+    @property
+    def avg_debts(self):
+        return self.currency(self.avg_all_groups(lambda x: x.debts))
+
+    @property
+    def pct_debts_liabilities(self):
+        return self.pct(self._debts, self._liabilities_and_equity)
+
+    @property
     def _cash_in_other_funds(self):
         return self.sum_all_groups(lambda x: x.cash_in_other_funds)
+
+    @property
+    def cash_in_other_funds(self):
+        return self.currency(self._cash_in_other_funds)
+
+    @property
+    def avg_cash_in_other_funds(self):
+        return self.currency(self.avg_all_groups(lambda x:x.cash_in_other_funds))
 
     @property
     def property_now(self):
@@ -356,8 +381,36 @@ class LendingGroupAggregate(object):
         return self.currency(self.div(self._property_now, self.num_groups))
 
     @property
+    def _property_at_start_of_cycle(self):
+        return self.sum_all_groups(lambda x: x.property_at_start_of_cycle)
+
+    @property
+    def property_at_start_of_cycle(self):
+        return self.sum_all_groups(lambda x: x.property_at_start_of_cycle)
+
+    @property
+    def avg_property_at_start_of_cycle(self):
+        return self.currency(self.div(self._property_at_start_of_cycle, self.num_groups))
+
+    @property
     def _assets(self):
         return self._loan_fund_cash_in_box_at_bank + self._value_of_loans_outstanding + self._cash_in_other_funds + self._property_now
+
+    @property
+    def pct_loans_assets(self):
+        return self.pct(self._value_of_loans_outstanding, self._assets)
+
+    @property
+    def pct_loan_fund_cash_assets(self):
+        return self.pct(self._loan_fund_cash_in_box_at_bank, self._assets)
+
+    @property
+    def pct_cash_assets(self):
+        return self.pct(self._cash_in_other_funds, self._assets)
+
+    @property
+    def pct_property_assets(self):
+        return self.pct(self._property_now, self._assets)
 
     @property
     def assets(self):
@@ -368,8 +421,16 @@ class LendingGroupAggregate(object):
         return self.currency(self.div(self._assets, self.num_groups))
 
     @property
+    def _equity(self):
+        return self._cash_in_other_funds + self._value_of_savings + self._retained_earnings
+
+    @property
+    def avg_equity_per_member(self):
+        return self.currency(self.div(self._equity, self.num_members))
+
+    @property
     def _liabilities_and_equity(self):
-        return self._debts + self._cash_in_other_funds + self._value_of_savings
+        return self._debts +self._equity
 
     @property
     def liabilities_and_equity(self):
@@ -378,6 +439,72 @@ class LendingGroupAggregate(object):
     @property
     def avg_liabilities_and_equity(self):
         return self.currency(self.div(self._liabilities_and_equity, self.num_groups))
+
+    @property
+    def pct_debts_liabilities(self):
+        return self.pct(self._debts, self._liabilities_and_equity)
+
+    @property
+    def pct_cash_liabilities(self):
+        return self.pct(self._cash_in_other_funds, self._liabilities_and_equity)
+
+    @property
+    def pct_savings_liabilities(self):
+        return self.pct(self._value_of_savings, self._liabilities_and_equity)
+
+    @property
+    def pct_earnings_liabilities(self):
+        return self.pct(self._retained_earnings, self._liabilities_and_equity)
+
+
+    @property
+    def _writeoffs(self):
+        return self.sum_all_groups(lambda x: x.write_off_since_start_of_cycle)
+
+    @property
+    def writeoffs(self):
+        return self.currency(self._writeoffs)
+
+    @property
+    def avg_writeoffs(self):
+        return self.currency(self.avg_all_groups(lambda x: x.write_off_since_start_of_cycle))
+
+    @property
+    def _profits(self):
+        return self._loan_fund_cash_in_box_at_bank \
+               - self._value_of_savings \
+               - self._property_at_start_of_cycle \
+               + self._value_of_loans_outstanding \
+               + self._property_now \
+               - self._debts
+
+    @property
+    def profits(self):
+        return self.currency(self._profits)
+
+    @property
+    def avg_profits_per_group(self):
+        return self.currency(self.div(self._profits, self.num_groups))
+
+    @property
+    def avg_profits_per_member(self):
+        return self.currency(self.div(self._profits, self.num_members))
+
+    @property
+    def _retained_earnings(self):
+        return self._profits + self._property_at_start_of_cycle
+
+    @property
+    def retained_earnings(self):
+        return self.currency(self._retained_earnings)
+
+    @property
+    def avg_retained_earnings(self):
+        return self.currency(self.div(self._retained_earnings, self.num_groups))
+
+    @property
+    def one_hundred_percent(self):
+        return self.pct(1.0,1.0)
 
 class PortfolioComparisonReport(HQReport):
     name = "Portfolio Comparison"
@@ -447,22 +574,58 @@ class PerformanceReport(HQReport):
 
     # Aggregate, %, Avg
     _rows = [
+        ('<h2>Group Profile</h2>',),
         ('Number of groups', 'num_groups', '', ''),
         ('Total number of current members', 'sum__active_members_at_time_of_visit', '', 'avg__active_members_at_time_of_visit'),
         ('Total men', 'sum__active_men_at_time_of_visit', '', 'avg__active_men_at_time_of_visit'),
         ('Total women', 'sum__active_women_at_time_of_visit', '', 'avg__active_women_at_time_of_visit'),
         ('Total number of supervised groups', 'num_groups', '', ''),
-        ('Change in number of members this cycle', 'change_in_members','pct_change_in_members','avg_change_in_members'),
-        ('Dropout rate', '', 'dropout_rate',''),
-        ('Attendance rate', '','attendance_rate',''),
+        ('Total number of graduated groups', '', '', ''),
         ('Average age of group (weeks)', '','','avg_age_of_group'),
-        ('Total assets', 'assets', '', 'avg_assets'),
-        ('Loan fund cash on hand', 'loan_fund_cash_in_box_at_bank', '', 'avg_loan_fund_cash_in_box_at_bank'),
+        ('Membership growth rate', 'change_in_members','pct_change_in_members','avg_change_in_members'),
+        ('Attendance rate', '','attendance_rate',''),
+        ('Retention rate', '', 'retention_rate',''),
+        ('Number of members belonging to graduated groups', '','',''),
+        ('Total number of people assisted by the program', '','',''),
+        ('Percent of members with loans outstanding', '', 'pct_loans_outstanding', ''),
+        (),
+        ('<h2>Financial Performance of Groups</h2>',),
+        ('<h3>Composition of assets, liabilities, and equity</h3>',),
+        ('<b>Assets</b>', 'assets', 'one_hundred_percent', 'avg_assets'),
+        ('Loan fund cash on hand', 'loan_fund_cash_in_box_at_bank', 'pct_loan_fund_cash_assets', 'avg_loan_fund_cash_in_box_at_bank'),
+        ('Total cash in other funds', 'cash_in_other_funds', 'pct_cash_assets', 'avg_cash_in_other_funds'),
+        ('Value of loans outstanding', 'value_of_loans_outstanding', 'pct_loans_assets', 'avg_value_of_loans_outstanding'),
+        ('Property', 'property_now', 'pct_property_assets', 'avg_property_now'),
+        #------------
+        ('<b>Total liabilities and equity</b>', 'liabilities_and_equity', 'one_hundred_percent', 'avg_liabilities_and_equity'),
+        ('Debts', 'debts', 'pct_debts_liabilities', 'avg_debts'),
+        ('Cash in other funds', 'cash_in_other_funds', 'pct_cash_liabilities', 'avg_cash_in_other_funds'),
+        ('Savings', 'value_of_savings', 'pct_savings_liabilities', 'avg_value_of_savings'),
+        ('Retained earnings', 'retained_earnings', 'pct_earnings_liabilities', 'avg_retained_earnings'),
+        (),
+        #------------
+        ('<h3>Savings</h3>',),
+        ('Cumulative value of savings this cycle', 'value_of_savings','','avg_value_of_savings'),
+        ('Average savings per member', '','','value_of_savings_per_member'),
+        ('Retained earnings', 'retained_earnings', '', ''),
+        ('Average member equity', '','','avg_equity_per_member'),
+        (),
+        #------------
+        ('<h3>Loan Portfolio</h3>',),
+        ('Number of loans outstanding', 'loans_outstanding', '', 'avg_loans_outstanding'),
         ('Value of loans outstanding', 'value_of_loans_outstanding', '', 'avg_value_of_loans_outstanding'),
-        ('Property', 'property_now', '', 'avg_property_now'),
-        ('Total liabilities and equity', 'liabilities_and_equity', '', 'avg_liabilities_and_equity'),
-        ('Total value of savings this cycle', 'value_of_savings', '', 'avg_value_of_savings'),
-        ('Number of loans outstanding', 'loans_outstanding', '', 'avg_loans_outstanding')
+        ('Average outstanding loan size', '', '', 'avg_outstanding_loan_size'),
+        ('Unpaid balance of late loans', 'unpaid_balance_of_late_loans', '', ''),
+        ('Portfolio at risk', '', 'pct_portfolio_at_risk', ''),
+        ('Average writeoff per graduated group', '', '', 'avg_writeoffs'),
+        ('Writeoffs this cycle', 'writeoffs', '', ''),
+        ('Loan fund utilisation rate', '', 'loan_fund_utilization', ''),
+        (),
+        ('<h3>Current yield</h3>',),
+        ('Average profit per member to date', '','','avg_profits_per_member'),
+        ('Return on savings', '','',''),
+        ('Return on assets', '','',''),
+        ('Annualized return on assets', '','',''),
 
     ]
 
@@ -484,14 +647,67 @@ class PerformanceReport(HQReport):
         self.context['headers'] = headers
         self.context['rows'] = []
         for r in self._rows:
-            row = [r[0]]
-            def _ga(x):
-                if x:
-                    return getattr(lg, x)
-                return ''
-            row.extend(map(_ga, r[1:]))
-            self.context['rows'].append(row)
+            if r:
+                row = [r[0]]
+                def _ga(x):
+                    if x:
+                        return getattr(lg, x)
+                    return ''
+                row.extend(map(_ga, r[1:]))
+                self.context['rows'].append(row)
+            else:
+                self.context['rows'].append(['<hr />'])
 
 
 
+class PerformanceRatiosReport(HQReport):
+    name = "Performance Ratios"
+    slug = "performance_ratios"
+    template_name = "dca/performance-ratios.html"
+    exportable = True
+    fields = ['corehq.apps.reports.custom.MonthField', 'corehq.apps.reports.custom.YearField', 'corehq.apps.reports.fields.GroupField', 'dca.reports.CurrencySelectionField']
+
+    _rows = [
+        ('Attendance rate','attendance_rate'),
+        ('Retention rate','retention_rate'),
+        ('Membership growth rate','pct_change_in_members'),
+        ('Average savings per member','value_of_savings_per_member'),
+        ('Return on assets',''),
+        ('Annualized return on assets',''),
+        ('Return on savings',''),
+        ('Average outstanding loan size','avg_outstanding_loan_size'),
+        ('Portfolio at risk','pct_portfolio_at_risk'),
+        ('Average write-off per graduated group','avg_writeoffs'),
+        ('% of members with loans outstanding','pct_loans_outstanding'),
+        ('Loans outstanding as % of total assets','pct_loans_assets'),
+    ]
+
+    def calc(self):
+        group_id = self.request.GET.get("group", None)
+        month = self.request.GET.get("month", None)
+        year = self.request.GET.get("year", None)
+        curval = float(self.request.GET.get("curval", 1.0))
+        curname = self.request.GET.get("curname", "MK")
+        if not (group_id and month and year):
+            return
+
+        headers = ["Statistic", "Values"]
+
+        group = Group.get(group_id)
+
+        lg = LendingGroupAggregate(group.name, group.users, month, year, curval, curname)
+
+        self.context['headers'] = headers
+        self.context['rows'] = []
+        for r in self._rows:
+            if r:
+                row = [r[0]]
+                def _ga(x):
+                    if x:
+                        return getattr(lg, x)
+                    return ''
+                row.extend(map(_ga, r[1:]))
+                self.context['rows'].append(row)
+            else:
+                self.context['rows'].append(['<hr />'])
         
