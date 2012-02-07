@@ -7,7 +7,7 @@ from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL
 from corehq.apps.domain.models import RegistrationRequest, Domain
 from corehq.apps.registration.forms import NewWebUserRegistrationForm, FirstTimeDomainRegistrationForm, ResendConfirmationEmailForm
 from corehq.apps.registration.utils import *
-from dimagi.utils.web import render_to_response
+from dimagi.utils.web import render_to_response, get_ip
 
 @transaction.commit_on_success
 def register_user(request):

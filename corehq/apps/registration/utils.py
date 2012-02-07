@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from dimagi.utils.web import get_ip
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
