@@ -101,13 +101,13 @@ Enabling Exports
 ----------------
 
 If you have a report with tabular data, you can enable exports to allow this data to be downloaded in a variety of
-formats (whatever couchexport currently supports).  To do so, set exportable = True in your report class, like so:
+formats (whatever couchexport currently supports).  To do so, set exportable = True in your report class, like so::
 
         class SampleHQReport(HQReport):
             [...]
             exportable = True
 
-The export system expects your report's data to **either** be in a set of tables, set up like so:
+The export system expects your report's data to **either** be in a set of tables, set up like so::
 
         self.context['tables'] =
             { "first table": [['header1', 'header2', 'header3'],
@@ -116,7 +116,7 @@ The export system expects your report's data to **either** be in a set of tables
               "second table":[['header1', 'header2', 'header3', 'header4'],
                               [row1, row2, row2]...]}
 
-**Or**, if your report consists of a single table:
+**Or**, if your report consists of a single table::
 
         self.context['headers'] = ['header1', 'header2', 'header3']
         self.context['rows'] = [[row1, row2, row3],
