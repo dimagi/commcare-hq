@@ -75,6 +75,7 @@
     "value_names": ["Alphanumeric", "Numeric"],
     "default": "n"
 }, {
+    "disabled": true,
     "name": "Server User Registration",
     "description": "Whether users registered on the phone need to be registered with the submission server.",
     "id": "user_reg_server",
