@@ -194,7 +194,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
 
         if app_id:
             app = get_app(None, app_id)
-            assert(app.doc_type in ('Application', 'RemoteApp'))
+            assert(app.get_doc_type() in ('Application', 'RemoteApp'))
             assert(req.couch_user.is_member_of(app.domain))
         else:
             app = None
@@ -439,7 +439,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     context.update(base_context)
     if app and not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(context['lang'], {})})
-    if app and app.doc_type == 'Application':
+    if app and app.get_doc_type() == 'Application':
         sorted_images, sorted_audio = utils.get_sorted_multimedia_refs(app)
         multimedia_images, missing_image_refs = app.get_template_map(sorted_images, domain)
         multimedia_audio, missing_audio_refs = app.get_template_map(sorted_audio, domain)
@@ -462,7 +462,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     error = req.GET.get('error', '')
 
     force_edit = False
-    if (not context['applications']) or (app and app.doc_type == "Application" and not app.modules):
+    if (not context['applications']) or (app and app.get_doc_type() == "Application" and not app.modules):
         edit = True
         force_edit = True
     context.update({
@@ -592,10 +592,16 @@ def delete_app(req, domain, app_id):
 @require_POST
 @require_permission('edit-apps')
 def undo_delete_app(request, domain, record_id):
-    record = DeleteApplicationRecord.get(record_id)
-    record.undo()
+    try:
+        app = get_app(domain, record_id)
+        app.unretire()
+        app_id = app.id
+    except Exception:
+        record = DeleteApplicationRecord.get(record_id)
+        record.undo()
+        app_id = record.app_id
     messages.success(request, 'Application successfully restored.')
-    return back_to_main(request, domain, app_id=record.app_id)
+    return back_to_main(request, domain, app_id=app_id)
 
 @require_POST
 @require_permission('edit-apps')
@@ -1162,8 +1168,8 @@ def edit_app_attr(req, domain, app_id, attr):
             app.set_admin_password(admin_password)
     # For RemoteApp
     if should_edit("profile_url"):
-        if app.doc_type not in ("RemoteApp",):
-            raise Exception("App type %s does not support profile url" % app.doc_type)
+        if app.get_doc_type() not in ("RemoteApp",):
+            raise Exception("App type %s does not support profile url" % app.get_doc_type())
         app['profile_url'] = req.POST['profile_url']
 
     app.save(resp)
