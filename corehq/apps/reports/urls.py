@@ -58,6 +58,10 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^json/(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="json_report_dispatcher", kwargs={
         'return_json': True
     }),
+    # HQReport handlers
+    url(r'^export/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="export_report_dispatcher", kwargs={
+        'export': True
+    }),
     url(r'^custom/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="custom_report_dispatcher"),
     url(r'^(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="report_dispatcher"),
 

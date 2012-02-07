@@ -13,6 +13,7 @@ import commcare_translations
 from corehq.apps.app_manager import fixtures
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError
 from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig
+from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
@@ -21,7 +22,6 @@ from dimagi.utils.couch.undo import DeleteRecord
 from dimagi.utils.web import get_url_base, parse_int
 from copy import deepcopy
 from corehq.apps.domain.models import Domain
-from BeautifulSoup import BeautifulStoneSoup
 import hashlib
 from django.template.loader import render_to_string
 from urllib2 import urlopen, URLError
@@ -925,7 +925,7 @@ def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
         raise ValueError("Invalid Language")
 
-class Application(ApplicationBase, TranslationMixin):
+class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     """
     A Managed Application that can be created entirely through the online interface, except for writing the
     forms themselves.
@@ -1379,13 +1379,14 @@ class RemoteApp(ApplicationBase):
         suite_loc = tree.find('suite/resource/location[@authority="local"]').text
         suite_loc, suite = self.fetch_file(suite_loc)
         files[suite_loc] = suite
-        soup = BeautifulStoneSoup(suite)
+        suite_xml = _parse_xml(suite)
+
         locations = []
-        for resource in soup.findAll('resource'):
+        for resource in suite_xml.findall('*/resource'):
             try:
-                loc = resource.findChild('location', authority='remote').string
+                loc = resource.findtext('location[@authority="remote"]')
             except Exception:
-                loc = resource.findChild('location', authority='local').string
+                loc = resource.findtext('location[@authority="local"]')
             locations.append(loc)
         for location in locations:
             files.update((self.fetch_file(location),))

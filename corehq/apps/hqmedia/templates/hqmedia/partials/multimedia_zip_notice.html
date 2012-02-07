@@ -1,0 +1,21 @@
+{% load multimedia_tags %}
+{% if multimedia.images.items and multimedia.audio.items %}
+    <h2>Download a ZIP of all the files referenced by the CommCare application "{{ app.name }}"</h2>
+    <p>This .zip file is structured to match the multimedia paths referenced in your CommCare application.</p>
+    <p><a class="button download-zip" href="{% url download_multimedia_zip domain app.get_id  %}">Download ZIP</a></p>
+{% else %}
+    <aside class="notice">
+        <h3>Notice</h3>
+        <p>This application currently does not contain any multimedia references.</p>
+    </aside>
+{% endif %}
+{% if missing_audio_refs > 0 or missing_image_refs > 0 %}
+<aside class="notice">
+    <h3>Notice</h3>
+    <p>This .zip file is missing references to files made by your application.</p>
+    <ul>
+        <li><img src="{{ STATIC_URL }}hqmedia/img/image.png" alt="image reference" />{% missing_refs missing_image_refs "Image" %}</li>
+        <li><img src="{{ STATIC_URL }}hqmedia/img/audio.png" alt="audio reference" />{% missing_refs missing_audio_refs "Audio" %}</li>
+    </ul>
+</aside>
+{% endif %}

@@ -10,8 +10,11 @@ Spec: https://bitbucket.org/javarosa/javarosa/wiki/UserRegistrationAPI
 from casexml.apps.phone import xml as phone_xml 
 from receiver import xml as receiver_xml 
 
-def get_response(user):
-    response = receiver_xml.get_response_element("Thanks for registering! Your username is %s" % user.username)
+def get_response(user, created):
+    if created:   text = "Thanks for registering! Your username is %s" % user.username
+    else:         text = "Thanks for updating your information, %s." % user.username
+        
+    response = receiver_xml.get_response_element(text)
     response.append(phone_xml.get_registration_element(user.to_casexml_user()))
     return phone_xml.tostring(response)
 

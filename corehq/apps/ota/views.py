@@ -1,6 +1,6 @@
 from corehq.apps.users.models import CouchUser
 from django_digest.decorators import *
-from casexml.apps.phone.restore import generate_restore_payload
+from casexml.apps.phone.restore import generate_restore_response
 
 
 
@@ -14,6 +14,7 @@ def restore(request, domain):
     user = request.user
     restore_id = request.GET.get('since')
     api_version = request.GET.get('version', "1.0")
+    state_hash = request.GET.get('state')
     username = user.username
     couch_user = CouchUser.from_django_user(user)
     
@@ -22,6 +23,6 @@ def restore(request, domain):
         response.status_code = 401 # Authentication Failure
         return response
     
-    response = generate_restore_payload(couch_user.to_casexml_user(), restore_id, 
-                                        api_version)
-    return HttpResponse(response, mimetype="text/xml")
+    return generate_restore_response(couch_user.to_casexml_user(), restore_id, 
+                                         api_version, state_hash)
+    

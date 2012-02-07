@@ -141,4 +141,12 @@
         {% if show_time_notice %}{% include "hqwebapp/partials/time-notice.html"%}{% endif %}
         {% block reportcontent %}Your report goes here{% endblock %}
     </div>
+    <div id="report-footer">
+    {% if exportable %}
+        Export current view to:
+        {% for f in export_formats %}
+            <a href="{{ export_path|safe }}&format={{ f }}">{{ f }}</a>
+        {% endfor %}
+    {% endif %}
+    </div>
 {% endblock %}
