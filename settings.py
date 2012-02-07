@@ -168,6 +168,7 @@ HQ_APPS = (
     'phonelog',
     'pathfinder',
     'hutch',
+    'dca'
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
@@ -375,6 +376,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'pathfinder',
         'registration',
         'hutch'
+        'dca'
     ]
 ]
 
