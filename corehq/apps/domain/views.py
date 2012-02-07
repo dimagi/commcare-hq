@@ -17,7 +17,7 @@ from corehq.apps.domain.models import Domain, RegistrationRequest
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 from corehq.apps.users.models import CouchUser, WebUser
 
-from dimagi.utils.web import render_to_response
+from dimagi.utils.web import render_to_response, get_ip
 from corehq.apps.users.views import require_can_edit_users
 from dimagi.utils.django.email import send_HTML_email
 from corehq.apps.receiverwrapper.forms import FormRepeaterForm
@@ -111,13 +111,13 @@ def _create_new_domain_request( request, kind, form, now ):
     dom_req = RegistrationRequest()
     dom_req.tos_confirmed = form.cleaned_data['tos_confirmed']
     dom_req.request_time = now
-    dom_req.request_ip = request.META['REMOTE_ADDR']                
+    dom_req.request_ip = get_ip(request)
     dom_req.activation_guid = uuid.uuid1().hex         
  
     dom_is_active = False
     if kind == 'existing_user':
         dom_req.confirm_time = datetime.datetime.utcnow()
-        dom_req.confirm_ip = request.META['REMOTE_ADDR']     
+        dom_req.confirm_ip = get_ip(request)
         dom_is_active = True  
      
     # Req copies domain_id at initial assignment of Domain to req; does NOT get the ID from the 
@@ -243,7 +243,7 @@ def registration_confirm(request, guid=None):
     
     # Set confirm time and IP; activate domain and new user who is in the 
     req.confirm_time = datetime.datetime.utcnow()
-    req.confirm_ip = request.META['REMOTE_ADDR']
+    req.confirm_ip = get_ip(request)
     req.domain.is_active = True
     req.domain.save()
     req.new_user.is_active = True

@@ -124,7 +124,7 @@ def confirm_domain(request, guid=None):
 
     # Set confirm time and IP; activate domain and new user who is in the
     req.confirm_time = datetime.utcnow()
-    req.confirm_ip = request.META['REMOTE_ADDR']
+    req.confirm_ip = get_ip(request)
     req.domain.is_active = True
     req.domain.save()
     req.save()

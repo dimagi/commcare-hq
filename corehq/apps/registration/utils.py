@@ -31,7 +31,7 @@ def request_new_domain(request, form):
     dom_req = RegistrationRequest()
     dom_req.tos_confirmed = form.cleaned_data['tos_confirmed']
     dom_req.request_time = now
-    dom_req.request_ip = request.META['REMOTE_ADDR']
+    dom_req.request_ip = get_ip(request)
     dom_req.activation_guid = uuid.uuid1().hex
 
     new_domain = Domain(name=form.cleaned_data['domain_name'], is_active=False)
