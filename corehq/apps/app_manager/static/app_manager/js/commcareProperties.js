@@ -161,12 +161,22 @@ var CommcareProperty = {
                 } else {
                     $input = $("<span />").appendTo($td);
                 }
-                $disabledMessage = $('<span style="display: inline-block;"/>').appendTo($td);
+                $disabledMessage = $('<span style="display: inline-block;"/>').appendTo($td).css({
+                    width: '250px',
+                    verticalAlign: 'top',
+                    paddingLeft: '5px'
+                });
                 that.val(initialValue || null);
                 initRequires();
                 $td.appendTo($tr);
                 if (that.disabled) {
-                    $tr.hide();
+                    if (that.val() === that['default']) {
+                        $tr.hide();
+                    } else {
+                        $tr.css({border: '1px solid red'});
+                        // This is an abstraction violation
+                        $disabledMessage.text("Oops! This setting shouldn't be here. Could you change it to the default to make it go away? Sorry about that.");
+                    }
                 }
                 return $home.append($tr);
             },
