@@ -1,6 +1,7 @@
 from django.utils.datastructures import SortedDict
 from corehq.apps.app_manager.xform import XFormValidationError
 from corehq.apps.hqmedia.models import CommCareMultimedia
+from couchforms.models import XFormError
 
 MULTIMEDIA_PREFIX = "jr://file/"
 
@@ -24,7 +25,7 @@ def get_sorted_multimedia_refs(app):
                     if i not in audio_files:
                         audio_files[i] = []
                     audio_files[i].append((m,f))
-    except XFormValidationError:
+    except (XFormValidationError, XFormError):
         pass
     sorted_images = SortedDict()
     sorted_audio = SortedDict()
@@ -54,6 +55,6 @@ def get_multimedia_filenames(app):
                 for a in parsed.audio_references:
                     if a and a not in audio_files:
                         audio_files.append(a)
-    except XFormValidationError:
+    except (XFormValidationError, XFormError):
         pass
     return images, audio_files
