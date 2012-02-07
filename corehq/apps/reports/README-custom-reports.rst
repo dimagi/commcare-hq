@@ -114,7 +114,7 @@ The export system expects your report's data to **either** be in a set of tables
                               [row1, row2, row3],
                               [row1, row2, row3]...],
               "second table":[['header1', 'header2', 'header3', 'header4'],
-                              [row1, row2, row2]...]}
+                              [row1, row2, row3, row4]...]}
 
 **Or**, if your report consists of a single table::
 
