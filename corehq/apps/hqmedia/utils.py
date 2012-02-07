@@ -1,7 +1,5 @@
 from django.utils.datastructures import SortedDict
-from corehq.apps.app_manager.xform import XFormValidationError
-from corehq.apps.hqmedia.models import CommCareMultimedia
-from couchforms.models import XFormError
+from corehq.apps.app_manager.xform import XFormValidationError, XFormError
 
 MULTIMEDIA_PREFIX = "jr://file/"
 
