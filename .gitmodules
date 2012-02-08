@@ -67,3 +67,6 @@
 [submodule "submodules/hutch-src"]
 	path = submodules/hutch-src
 	url = git://github.com/dimagi/hutch.git
+[submodule "submodules/dca-reports"]
+	path = submodules/dca-reports
+	url = git://github.com/dimagi/dca-reports.git
