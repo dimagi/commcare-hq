@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+from dimagi.utils.web import get_ip
 from django.http import HttpResponse
 from couchforms.models import XFormInstance
 from couchforms.views import post as couchforms_post
@@ -43,7 +44,7 @@ def post(request):
     def callback(doc):
         def default_actions(doc):
             """These are always done"""
-            doc['submit_ip'] = request.META['REMOTE_ADDR']
+            doc['submit_ip'] = get_ip(request)
             doc['path'] = request.path
             
             # if you have OpenRosaMiddleware running the headers appear here
