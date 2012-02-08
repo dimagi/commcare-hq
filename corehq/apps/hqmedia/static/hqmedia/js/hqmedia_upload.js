@@ -90,7 +90,6 @@ function HQMediaUpload (args) {
     }
 
     function showResponse(response) {
-        console.log(response);
         if(response) {
             var response_obj = $.parseJSON(response);
             if(response_obj.successful) {
