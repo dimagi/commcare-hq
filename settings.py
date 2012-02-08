@@ -416,3 +416,16 @@ STANDARD_REPORT_MAP = {
                       'corehq.apps.reports.standard.CaseListReport',
                            ]
 }
+
+CUSTOM_REPORT_MAP = {
+    "pathfinder": [
+                   'pathfinder.models.PathfinderHBCReport',
+                   'pathfinder.models.PathfinderProviderReport',
+                   'pathfinder.models.PathfinderWardSummaryReport'
+                   ],
+    "dca-malawi": [
+                   'dca.reports.ProjectOfficerReport',
+                   'dca.reports.PortfolioComparisonReport',
+                   'dca.reports.PerformanceReport',
+                   'dca.reports.PerformanceRatiosReport']
+}
