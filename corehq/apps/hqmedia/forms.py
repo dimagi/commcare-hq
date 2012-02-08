@@ -83,7 +83,7 @@ class HQMediaZipUploadForm(forms.Form):
                 cache_handler.data["processed"] = index+1
                 cache_handler.save()
         zip.close()
-        return {"failed_files": unknown_files}
+        return {"successful": unknown_files}
 
 class HQMediaFileUploadForm(forms.Form):
 
@@ -135,5 +135,5 @@ class HQMediaFileUploadForm(forms.Form):
         new_ref = reverse("hqmedia_download", args=[domain,
                                                 media.doc_type,
                                                 media._id])
-        return {old_ref: new_ref}
+        return {"successful" : {old_ref: new_ref}}
         

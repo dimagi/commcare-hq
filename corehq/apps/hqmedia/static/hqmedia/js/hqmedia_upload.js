@@ -80,19 +80,28 @@ function HQMediaUpload (args) {
     function showRequest(formData, jqForm, options) {
         submission_in_progress = true;
         _upload_form_submit.fadeOut();
-        if (!received_data)
-            _submit_status_elem.text('Verifying, please wait...').prepend($submitting_pinwheel);
-        uploaded_file = _upload_form.find("input[type='file']").val();
+        //if (!received_data)
+        //    _submit_status_elem.text('Verifying, please wait...').prepend($submitting_pinwheel);
+        //uploaded_file = _upload_form.find("input[type='file']").val();
+        // the next line is temporary
+        _submit_status_elem.text('Uploading, please wait...').prepend($submitting_pinwheel);
         _submit_status_elem.fadeIn();
         return true;
     }
 
     function showResponse(response) {
+        console.log(response);
         if(response) {
-            var error_list = $.parseJSON(response);
-            cancelUpload();
-            _submit_status_elem.fadeOut();
-            processErrors(error_list);
+            var response_obj = $.parseJSON(response);
+            if(response_obj.successful) {
+                completeUpload();
+                _process_complete_fn(response_obj);
+            } else {
+                cancelUpload();
+                _submit_status_elem.fadeOut();
+                processErrors(response_obj);
+            }
+
         }
     }
 
@@ -220,14 +229,14 @@ function HQMediaUpload (args) {
                 upload_complete = false;
                 _submit_status_elem.text('');
                 var ajax_submit_options = {
-                    dataType: 'multipart/form-data',
+                    dataType: 'text',
                     url: generateHQMediaUrl(_submit_url, progress_id),
                     beforeSubmit: showRequest,
                     success: showResponse,
                     type: 'post'
                 };
                 $(this).ajaxSubmit(ajax_submit_options);
-                startProgressBarUpdates(progress_id);
+                // startProgressBarUpdates(progress_id);
             } else
                 console.log("No upload id was provided!");
             
