@@ -279,7 +279,7 @@ XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 # couchlog
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
-COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables/js/jquery.dataTables.min.js")
+COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables-1.8.2/js/jquery.dataTables.min.js")
 COUCHLOG_THRESHOLD = logging.WARNING
 
 # couchlog/case search
