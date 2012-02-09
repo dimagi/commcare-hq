@@ -375,7 +375,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'phonelog',
         'pathfinder',
         'registration',
-        'hutch'
+        'hutch',
         'dca'
     ]
 ]
