@@ -25,6 +25,7 @@
     {% for row in report.rows %}
         <tr>
             {% for thing in row %}
+
                 <td class="{% if not thing or thing.html != None and not thing.html %}null-entry{% endif %}">
                     {% if thing.html != None %}{{ thing.html|safe }}{% else %}{{ thing|safe }}{% endif %}
                     <span title="{% if thing.sort_key != "" %}{{ thing.sort_key }}{% else %}{{ thing }}{% endif %}"></span>
@@ -33,6 +34,15 @@
         </tr>
     {% endfor %}
 </tbody>
+{% if total_row %}
+<tfoot>
+    <tr>
+        {% for col in total_row %}
+            <td>{% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}</td>
+        {% endfor %}
+    </tr>
+</tfoot>
+{% endif %}
 </table>
 </div>
 {% endblock %}

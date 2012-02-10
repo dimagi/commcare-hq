@@ -216,3 +216,12 @@ def get_username_from_forms(domain, user_id):
         if possible_username:
             username = possible_username
     return username
+
+def create_sort_key(text, key):
+    return {"html": text,
+            "sort_key": key}
+
+SORT_TYPE_NUMERIC = "title-numeric"
+def define_sort_type(text, type=SORT_TYPE_NUMERIC):
+    return {"html": text,
+            "sort_type": type}

@@ -72,12 +72,13 @@ class StandardHQReport(HQReport):
 
 
 class StandardTabularHQReport(StandardHQReport):
+    total_row = None
 
 #    exportable = True
-    def set_headers(self):
+    def get_headers(self):
         return self.headers
 
-    def set_rows(self):
+    def get_rows(self):
         return self.rows
 
     def get_report_context(self):
@@ -92,11 +93,13 @@ class StandardTabularHQReport(StandardHQReport):
             self.context['ajax_source'] = False
             self.context['ajax_params'] = False
 
-        self.headers = self.set_headers()
-        self.rows = self.set_rows()
+        self.headers = self.get_headers()
+        self.rows = self.get_rows()
 
         self.context['header'] = self.headers
         self.context['rows'] = self.rows
+        if self.total_row:
+            self.context['total_row'] = self.total_row
 
         super(StandardTabularHQReport, self).get_report_context()
 
@@ -146,6 +149,8 @@ class CaseActivityReport(StandardTabularHQReport):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.CaseTypeField',
               'corehq.apps.reports.fields.GroupField']
+    all_users = None
+    display_data = ['percent']
 
     def get_parameters(self):
         landmarks_param = self.request_params.get('landmarks', [30,60,120])
@@ -154,12 +159,11 @@ class CaseActivityReport(StandardTabularHQReport):
         if self.history:
             self.now = self.history
 
-    def set_headers(self):
-        return ["User"] + [{"html": "Last %s Days" % l.days if l else "Ever",
-                            "sort_type": "title-numeric"} for l in self.landmarks]
+    def get_headers(self):
+        return ["User"] + [util.define_sort_type("Last %s Days" % l.days if l else "Ever") for l in self.landmarks]
 
-    def set_rows(self):
-        display = self.request_params.get('display', ['percent'])
+    def get_rows(self):
+        self.display_data = self.request_params.get('display', ['percent'])
 
         data = defaultdict(list)
         for user in self.users:
@@ -193,35 +197,37 @@ class CaseActivityReport(StandardTabularHQReport):
             all_users[i]["diff"] = all_users[i]["total"] - all_users[i]["last"]
             all_users[i]["percent"] = 1.0*all_users[i]["total"]/all_users[i]["next"] if all_users[i]["next"] else None
 
+        self.all_users = all_users
+
         rows = []
         for user in extra:
             row = [self.user_cases_link(user)]
             for entry in extra[user]:
-                row = self.format_row(row, entry, display)
+                row = self.format_row(row, entry)
             rows.append(row)
 
-        total_row = ["*All Users"]
-        for cumulative in all_users:
-            total_row = self.format_row(total_row, cumulative, display)
-        rows.append(total_row)
+        total_row = ["All Users"]
+        for cumulative in self.all_users:
+            total_row = self.format_row(total_row, cumulative)
+        self.total_row = total_row
 
         return rows
 
-    def format_row(self, row, entry, display):
+    def format_row(self, row, entry):
         unformatted = entry['total']
-        if entry['total'] == entry['diff'] or 'diff' not in display:
+        if entry['total'] == entry['diff'] or 'diff' not in self.display_data:
             fmt = "{total}"
         else:
             fmt = "+ {diff} = {total}"
 
-        if entry['percent'] and 'percent' in display:
+        if entry['percent'] and 'percent' in self.display_data:
             fmt += " ({percent:.0%} of {next})"
         formatted = fmt.format(**entry)
         try:
             formatted = int(formatted)
         except ValueError:
             pass
-        row.append({"html": formatted, "sort_key": unformatted})
+        row.append(util.create_sort_key(formatted, unformatted))
         return row
 
 
@@ -248,13 +254,13 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
 
-    def set_headers(self):
+    def get_headers(self):
         self.dates = [self.datespan.startdate]
         while self.dates[-1] < self.datespan.enddate:
             self.dates.append(self.dates[-1] + timedelta(days=1))
-        return ["Username"] + [d.strftime(DATE_FORMAT) for d in self.dates] + ["Total"]
+        return ["Username"] + [util.define_sort_type(d.strftime(DATE_FORMAT)) for d in self.dates] + [util.define_sort_type("Total")]
 
-    def set_rows(self):
+    def get_rows(self):
         date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
 
         results = get_db().view(
@@ -266,6 +272,7 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
         user_map = dict([(user.user_id, i) for (i, user) in enumerate(self.users)])
         userIDs = [user.user_id for user in self.users]
         rows = [[0]*(2+len(date_map)) for _ in range(len(self.users))]
+        total_row = [0]*(2+len(date_map))
 
         for result in results:
             _, date, user_id = result['key']
@@ -275,7 +282,16 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
 
         for i, user in enumerate(self.users):
             rows[i][0] = user.username_in_report
-            rows[i][-1] = sum(rows[i][1:-1])
+            total = sum(rows[i][1:-1])
+            rows[i][-1] = total
+            total_row[1:-1] = [total_row[ind+1]+val for ind, val in enumerate(rows[i][1:-1])]
+            total_row[-1] += total
+
+        total_row[0] = "All Users"
+        self.total_row = total_row
+
+        for row in rows:
+            row[1:] = [util.create_sort_key(val, val) for val in row[1:]]
 
         return rows
 
@@ -299,7 +315,7 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
     def get_parameters(self):
         self.form_types = self.get_relevant_form_types()
 
-    def set_headers(self):
+    def get_headers(self):
         form_names = form_names = [xmlns_to_name(*id_tuple) for id_tuple in self.form_types]
         form_names = [name.replace("/", " / ") for name in form_names]
 
@@ -307,9 +323,10 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
             # this fails if form_names, form_types is [], []
             form_names, self.form_types = zip(*sorted(zip(form_names, self.form_types)))
 
-        return ['User'] + list(form_names) + ['All Forms']
+        return ['User'] + [util.define_sort_type(name) for name in list(form_names)] + \
+               [util.define_sort_type("All Forms")]
 
-    def set_rows(self):
+    def get_rows(self):
         counts = self.get_submissions_by_form_json()
         rows = []
         totals_by_form = defaultdict(int)
@@ -324,10 +341,11 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
                     totals_by_form[form_type] += count
                 except Exception:
                     row.append(0)
-            rows.append([user.username_in_report] + row + ["* %s" % sum(row)])
+            row_sum = sum(row)
+            rows.append([user.username_in_report] + [util.create_sort_key(row_data, row_data) for row_data in row] + [util.create_sort_key("* %s" % row_sum, row_sum)])
 
         totals_by_form = [totals_by_form[form_type] for form_type in self.form_types]
-        rows.append(["* All Users"] + ["* %s" % t for t in totals_by_form] + ["* %s" % sum(totals_by_form)])
+        self.total_row = ["All Users"] + ["%s" % t for t in totals_by_form] + ["* %s" % sum(totals_by_form)]
 
         return rows
 
@@ -397,10 +415,10 @@ class FormCompletionTrendsReport(StandardTabularHQReport, StandardDateHQReport):
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
 
-    def set_headers(self):
+    def get_headers(self):
         return ["User", "Average duration", "Shortest", "Longest", "# Forms"]
 
-    def set_rows(self):
+    def get_rows(self):
         form = self.request_params.get('form', '')
         rows = []
 
@@ -442,7 +460,7 @@ class SubmitHistory(PaginatedHistoryHQReport):
     name = 'Submit History'
     slug = 'submit_history'
 
-    def set_headers(self):
+    def get_headers(self):
         return ["View Form", "Username", "Submit Time", "Form"]
 
     def paginate_rows(self, skip, limit):
@@ -474,7 +492,7 @@ class CaseListReport(PaginatedHistoryHQReport):
         self.context.update({"filter": settings.LUCENE_ENABLED })
         super(PaginatedHistoryHQReport, self).get_report_context()
 
-    def set_headers(self):
+    def get_headers(self):
         final_headers = ["Name", "User", "Created Date", "Modified Date", "Status"]
         if not self.individual:
             self.name = "%s for %s" % (self.name, SelectCHWField.get_default_text(self.user_filter))

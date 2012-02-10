@@ -58,3 +58,8 @@ fieldset.report-field legend {
 fieldset.report-field legend:after {
     content: ':';
 }
+
+tfoot td {
+    border-top: 1px solid #333333;
+    font-weight: bold;
+}
