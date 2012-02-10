@@ -84,10 +84,22 @@ def export_data(req, domain):
               "max_column_size": int(req.GET.get("max_column_size", 2000)),
               "separator": req.GET.get("separator", "|")}
 
-    group_filter = util.create_group_filter(group)
+    user_filter, _ = FilterUsersField.get_user_filter(req)
+
+    if user_filter:
+        users_matching_filter = map(lambda x: x._id, get_all_users_by_domain(domain, filter_users=user_filter))
+        def _ufilter(user):
+            try:
+                return user['form']['meta']['userID'] in users_matching_filter
+            except KeyError:
+                return False
+        filter = _ufilter
+    else:
+        filter = util.create_group_filter(group)
+
     errors_filter = instances if not include_errors else None
 
-    kwargs['filter'] = couchexport.util.intersect_filters(group_filter, errors_filter)
+    kwargs['filter'] = couchexport.util.intersect_filters(filter, errors_filter)
     
     if kwargs['format'] == 'raw':
         resp = export_raw_data([domain, export_tag], filename=export_tag)
@@ -282,6 +294,9 @@ def case_export(request, domain, template='reports/basic_report.html',
         title="Export cases, referrals, and users",
         group=group,
     )
+    toggle, show_filter = FilterUsersField.get_user_filter(request)
+    context['show_user_filter'] = show_filter
+    context['toggle_users'] = toggle
     return render_to_response(request, template, context)
 
 @login_or_digest
@@ -294,9 +309,12 @@ def download_cases(request, domain):
 
     key = [domain, {}, {}]
     cases = CommCareCase.view(view_name, startkey=key, endkey=key + [{}], reduce=False, include_docs=True)
-    group, users = util.get_group_params(domain, **json_request(request.GET))
-    if not group:
-        users.extend(CommCareUser.by_domain(domain, is_active=False))
+#    group, users = util.get_group_params(domain, **json_request(request.GET))
+    group = request.GET.get('group', None)
+    user_filter, _ = FilterUsersField.get_user_filter(request)
+    users = get_all_users_by_domain(domain, group=group, filter_users=user_filter)
+#    if not group:
+#        users.extend(CommCareUser.by_domain(domain, is_active=False))
 
     workbook = WorkBook()
     export_cases_and_referrals(cases, workbook, users=users)
