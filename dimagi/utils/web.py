@@ -10,7 +10,8 @@ from django.shortcuts import render_to_response as django_r_to_r
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.contrib.sites.models import Site
 import json
-
+from dimagi.utils.parsing import json_format_datetime
+from datetime import date, datetime
 
 def get_url_base():
     try:
@@ -164,7 +165,19 @@ def parse_int(arg_keys=[], kwarg_keys=[]):
         return _fn
     return _parse_int
 
+# http://stackoverflow.com/questions/455580/json-datetime-between-python-and-javascript
+def json_handler(obj):
+    if isinstance(obj, datetime):
+        return json_format_datetime(obj)
+    elif isinstance(obj, date):
+        return obj.isoformat()
+    else:
+        print '%r' % obj
+        raise TypeError
+
 def json_response(obj, **kwargs):
+    if not kwargs.has_key('default'):
+        kwargs['default'] = json_handler
     return HttpResponse(json.dumps(obj, **kwargs))
 
 def json_request(params, lenient=True):
