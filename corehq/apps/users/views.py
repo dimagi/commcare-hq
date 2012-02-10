@@ -580,7 +580,7 @@ def add_commcare_account(request, domain, template="users/add_commcare_account.h
 
             couch_user = CommCareUser.create(domain, username, password, device_id='Generated from HQ')
             couch_user.save()
-            return HttpResponseRedirect(reverse("commcare_users", args=[domain]))
+            return HttpResponseRedirect(reverse("user_account", args=[domain, couch_user.userID]))
     else:
         form = CommCareAccountForm()
     context.update(form=form)
