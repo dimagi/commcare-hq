@@ -9,8 +9,6 @@ import tempfile
 import os
 import stat
 
-
-
 @task
 def export_async(download_id, export_tag, format=None, filename=None,
                  previous_export_id=None, filter=None, 

@@ -8,7 +8,7 @@ from django.core.cache import cache
 import hashlib
 
 def get_export_files(export_tag, format=None, previous_export_id=None, filter=None,
-                     use_cache=True, max_column_size=2000):
+                     use_cache=True, max_column_size=2000, separator='|'):
     # the APIs of how these methods are broken down suck, but at least
     # it's DRY
     
@@ -33,7 +33,9 @@ def get_export_files(export_tag, format=None, previous_export_id=None, filter=No
     tmp = StringIO()
     checkpoint = export(export_tag, tmp, format=format, 
                         previous_export_id=previous_export_id,
-                        filter=filter, max_column_size=max_column_size)
+                        filter=filter, max_column_size=max_column_size, 
+                        separator=separator)
+    
     if checkpoint:
         if use_cache:
             cache.set(cache_key, (tmp, checkpoint), CACHE_TIME)
@@ -43,19 +45,19 @@ def get_export_files(export_tag, format=None, previous_export_id=None, filter=No
     
 def export_data_shared(export_tag, format=None, filename=None,
                        previous_export_id=None, filter=None,
-                       use_cache=True, max_column_size=2000):
+                       use_cache=True, max_column_size=2000,
+                       separator='|'):
     """
     Shared method for export. If there is data, return an HTTPResponse
     with the appropriate data. If there is not data returns None.
     """
-    from couchexport.export import export
-
     if not filename:
         filename = export_tag
     
     tmp, checkpoint = get_export_files(export_tag, format, 
                                        previous_export_id, filter, 
-                                       use_cache, max_column_size)
+                                       use_cache, max_column_size, 
+                                       separator=separator)
     
     if checkpoint:
         return export_response(tmp, format, filename, checkpoint)

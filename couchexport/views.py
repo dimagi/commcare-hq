@@ -1,5 +1,4 @@
 from couchexport.export import Format
-import couchforms
 from django.http import HttpResponse, HttpResponseRedirect
 import json
 from couchexport.shortcuts import export_data_shared
@@ -36,7 +35,8 @@ def export_data(request, **kwargs):
     resp = export_data_shared(export_tag, 
                               request.GET.get("format", Format.XLS_2007), 
                               request.GET.get("filename", None), 
-                              request.GET.get("previous_export", None)) 
+                              request.GET.get("previous_export", None),
+                              request.GET.get("separator", "|")) 
     if resp:
         return resp
     else:
