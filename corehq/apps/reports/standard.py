@@ -167,13 +167,16 @@ class CaseActivityReport(StandardTabularHQReport):
                 data[user].append(self.get_number_cases_updated(user.user_id, landmark))
 
         extra = {}
-
+        num_landmarks = len(self.landmarks)
+        all_users = [dict(total=0, diff=0, next=None, last=0, percent=None) for _ in range(num_landmarks)]
+        
         for user in data:
             extra[user] = []
-            for i in range(len(self.landmarks)):
-                next = data[user][i+1] if i+1 < len(self.landmarks) else None
+            for i in range(num_landmarks):
+                next = data[user][i+1] if i+1 < num_landmarks else None
                 last = data[user][i-1] if i else 0
                 current = data[user][i]
+                all_users[i]["total"] += current
                 extra[user].append({
                     "total": current,
                     "diff": current - last,
@@ -182,27 +185,45 @@ class CaseActivityReport(StandardTabularHQReport):
                     "percent": 1.0*current/next if next else None
                 })
 
+        for i in range(num_landmarks):
+            if i > 0:
+                all_users[i]["last"] = all_users[i-1]["total"]
+            if i+1 < num_landmarks:
+                all_users[i]["next"] = all_users[i+1]["total"]
+            all_users[i]["diff"] = all_users[i]["total"] - all_users[i]["last"]
+            all_users[i]["percent"] = 1.0*all_users[i]["total"]/all_users[i]["next"] if all_users[i]["next"] else None
+
         rows = []
         for user in extra:
             row = [self.user_cases_link(user)]
             for entry in extra[user]:
-                unformatted = entry['total']
-                if entry['total'] == entry['diff'] or 'diff' not in display:
-                    fmt = "{total}"
-                else:
-                    fmt = "+ {diff} = {total}"
-
-                if entry['percent'] and 'percent' in display:
-                    fmt += " ({percent:.0%} of {next})"
-                formatted = fmt.format(**entry)
-                try:
-                    formatted = int(formatted)
-                except ValueError:
-                    pass
-                row.append({"html": formatted, "sort_key": unformatted})
+                row = self.format_row(row, entry, display)
             rows.append(row)
 
+        total_row = ["*All Users"]
+        for cumulative in all_users:
+            total_row = self.format_row(total_row, cumulative, display)
+        rows.append(total_row)
+
         return rows
+
+    def format_row(self, row, entry, display):
+        unformatted = entry['total']
+        if entry['total'] == entry['diff'] or 'diff' not in display:
+            fmt = "{total}"
+        else:
+            fmt = "+ {diff} = {total}"
+
+        if entry['percent'] and 'percent' in display:
+            fmt += " ({percent:.0%} of {next})"
+        formatted = fmt.format(**entry)
+        try:
+            formatted = int(formatted)
+        except ValueError:
+            pass
+        row.append({"html": formatted, "sort_key": unformatted})
+        return row
+
 
     def get_number_cases_updated(self, user_id, landmark=None):
         start_time_json = json_format_datetime(self.now - landmark) if landmark else ""
