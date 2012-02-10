@@ -128,7 +128,7 @@
         {% endif %}
         <div id="apps-menu">
             <ul>
-                {% if request.couch_user|can_edit_apps:domain %}
+                {% if request.couch_user.can_edit_apps %}
                 <li>
                     <div id="new_app_menu">
                         <span>New Application</span>
@@ -195,7 +195,7 @@
                     </ul>
                 {% endif %}
             </div>
-            {% if applications and request.couch_user|can_edit_apps:domain %}
+            {% if applications and request.couch_user.can_edit_apps %}
                 <div id="edit">
                     Switch to: 
                     {% if edit %}

@@ -42,12 +42,13 @@ class UserRegistersSelfForm(RegistrationRequestForm):
 ########################################################################################################
         
 class AdminInvitesUserForm(_BaseForm, forms.Form):
+    from corehq.apps.users.models import Roles
     # As above. Need email now; still don't need domain. Don't need TOS. Do need the is_active flag,
     # and do need to relabel some things.
     email       =  forms.EmailField(label="User's email address", 
                                     max_length=User._meta.get_field('email').max_length)
-    is_domain_admin = forms.BooleanField(label='User is a domain administrator', initial=False, required=False)
-
+#    is_domain_admin = forms.BooleanField(label='User is a domain administrator', initial=False, required=False)
+    role = forms.ChoiceField(choices=Roles.get_role_labels())
     
     
 class AdminRegistersUserForm(RegistrationRequestForm): 
