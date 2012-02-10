@@ -89,7 +89,7 @@ def doc_value_wrapper(doc_cls, value_cls):
 
 def user_data_from_registration_form(xform):
     """
-    Helper function for create_from_xform
+    Helper function for create_or_update_from_xform
     """
     user_data = {}
     if "user_data" in xform.form and "data" in xform.form["user_data"]:

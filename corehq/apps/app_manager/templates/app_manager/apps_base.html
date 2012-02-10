@@ -19,6 +19,35 @@
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     <script>
+    $(function () {
+        $('#deleted-app-dialog').each(function () {
+            var shield = $('<div/>').css({
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                zIndex: 9999,
+                backgroundColor: 'black',
+                opacity: .7
+            });
+            $(this).detach().appendTo($('body')).css({
+                position: 'fixed',
+                width: 400
+            });
+            $('body').append(shield).css({
+                overflow: 'hidden'
+            });
+            $(window).resize(function() {
+                shield.css({
+                    width: $(window).width(),
+                    height: $(window).height()
+                });
+                $('#deleted-app-dialog').css({
+                    left: $(window).width()/2 - 200,
+                    top: Math.max($(window).height()/2 - 200, 100)
+                });
+            }).trigger('resize');
+        });
+    });
     $(function() {
         $('#odk-install-placeholder').jqm({ajax: '@href', trigger: 'a.odk_install', 
                                    ajaxText: "Please wait while we load that for you..." });
@@ -84,6 +113,12 @@
     <div id="main_container">
 
         {% if app %}
+            {% if app.is_deleted %}
+                <div id="deleted-app-dialog">
+                    <h1>Oops! This application was deleted.</h1>
+                    <p><a href="{% url undo_delete_app domain app.id %}" class="post-link">Click here</a> to restore.</p>
+                </div>
+            {% endif %}
         {% if error %}
         <div id="error">
             {% ifequal error 'app_exists' %}
@@ -130,7 +165,7 @@
                     {% for a in applications %}
                     <option value="{% url corehq.apps.app_manager.views.view_app domain a.id %}"
                             {% ifequal a.id app.id %}selected="" class="variable-app_name" {% endifequal %}>
-                        {{ a.name }}{% if a.doc_type == "RemoteApp" %} (remote){% endif %}
+                        {{ a.name }}{% if a.get_doc_type == "RemoteApp" %} (remote){% endif %}
                     </option>
                     {% endfor %}
                 </select>
@@ -154,7 +189,7 @@
                     <ul>
                         <li>
                             <strong id="app_name" class="variable-app_name">{{ app.name }}</strong>
-                            {% if app.doc_type == "RemoteApp" %}<strong>(remote)</strong>{% endif %}
+                            {% if app.get_doc_type == "RemoteApp" %}<strong>(remote)</strong>{% endif %}
                             version <span id="version" class="variable-version">{{ app.version }}</span>
                         </li>
                     </ul>
@@ -334,7 +369,7 @@
                                             </div>
                                         </li>
                                         <li>
-                                            <a class="dialog_opener" href="">Send to Phones</a>
+                                            <a class="dialog_opener" href="">Send to Phones by SMS</a>
                                             <div class="dialog send_app_dialog" title="Send Out Version {{ saved_app.version }}">
                                                 <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
                                                     <label>Send to: </label>

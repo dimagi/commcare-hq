@@ -9,6 +9,9 @@ METHOD_CHOICES = (
     ('test', 'Test'),
 )
 
+"""
+A form used to create/edit CaseReminderHandlers.
+"""
 class CaseReminderForm(Form):
     nickname = CharField()
     case_type = CharField()

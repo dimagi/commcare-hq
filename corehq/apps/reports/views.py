@@ -1,11 +1,8 @@
-from collections import defaultdict
 from datetime import datetime, timedelta
 import json
-from corehq.apps.groups.models import Group
 from corehq.apps.reports import util, standard
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import CouchUser, CommCareUser
-from corehq.apps.users.util import user_id_to_username
 import couchexport
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
@@ -17,23 +14,15 @@ from django.conf import settings
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, Http404, HttpResponseNotFound
 from django.core.urlresolvers import reverse
 from django_digest.decorators import httpdigest
-from .calc import punchcard
 from corehq.apps.domain.decorators import login_and_domain_required
-from dimagi.utils.couch.pagination import CouchPaginator, ReportBase,\
-    LucenePaginator
 import couchforms.views as couchforms_views
 from django.contrib import messages
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from django.contrib.auth.decorators import permission_required
 from dimagi.utils.decorators.datespan import datespan_in_request
-from dimagi.utils.dates import DateSpan
-from corehq.apps.reports.calc import formdistribution, entrytimes
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.export import export_cases_and_referrals
-from django.template.defaultfilters import yesno
-from casexml.apps.case.xform import extract_case_blocks
-from corehq.apps.reports.display import xmlns_to_name, FormType
-import sys
+from corehq.apps.reports.display import xmlns_to_name
 from couchexport.schema import build_latest_schema
 from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
     ExportTable, Format
@@ -135,9 +124,10 @@ def custom_export(req, domain):
         return HttpResponseBadRequest()
     
     if req.method == "POST":
+        
         table = req.POST["table"]
-        cols = req.POST['order'].strip().split(" ")
-        export_cols = [ExportColumn(index=col, 
+        cols = req.POST['order'].strip().split()
+        export_cols = [ExportColumn(index=col,
                                     display=req.POST["%s_display" % col]) \
                        for col in cols]
         export_table = ExportTable(index=table, display=req.POST["name"],
@@ -157,6 +147,7 @@ def custom_export(req, domain):
                                             args=[domain,export_def.get_id]))
         
     schema = build_latest_schema(export_tag)
+    
     if schema:
         saved_export = SavedExportSchema.default(schema, name="%s: %s" %\
                                                  (xmlns_to_name(domain, export_tag[1]),
@@ -180,6 +171,7 @@ def edit_custom_export(req, domain, export_id):
     table_dict = dict([t.index, t] for t in saved_export.tables)
     if req.method == "POST":
         table = req.POST["table"]
+        
         cols = req.POST['order'].strip().split(" ")#[col[:-4] for col in req.POST if col.endswith("_val")]
         export_cols = [ExportColumn(index=col, 
                                     display=req.POST["%s_display" % col]) \
@@ -395,7 +387,7 @@ def emailtest(request, domain, report_slug):
 
 @login_and_domain_required
 @datespan_default
-def report_dispatcher(request, domain, report_slug, return_json=False, map='STANDARD_REPORT_MAP'):
+def report_dispatcher(request, domain, report_slug, return_json=False, map='STANDARD_REPORT_MAP', export=False):
     mapping = getattr(settings, map, None)
     if not mapping:
         return HttpResponseNotFound("Sorry, no standard reports have been configured yet.")
@@ -406,12 +398,14 @@ def report_dispatcher(request, domain, report_slug, return_json=False, map='STAN
                 k = klass(domain, request)
                 if return_json:
                     return k.as_json()
+                elif export:
+                    return k.as_export()
                 return k.as_view()
     raise Http404
 
 @login_and_domain_required
 @datespan_default
-def custom_report_dispatcher(request, domain, report_slug):
+def custom_report_dispatcher(request, domain, report_slug, export=False):
     mapping = getattr(settings, 'CUSTOM_REPORT_MAP', None)
     if not mapping or not domain in mapping:
         return HttpResponseNotFound("Sorry, no custom reports have been configured yet.")
@@ -419,5 +413,7 @@ def custom_report_dispatcher(request, domain, report_slug):
         klass = to_function(model)
         if klass.slug == report_slug:
             k = klass(domain, request)
+            if export:
+                return k.as_export()
             return k.as_view()
     raise Http404

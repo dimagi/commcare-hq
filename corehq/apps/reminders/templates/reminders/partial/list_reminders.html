@@ -60,7 +60,7 @@
             <td>
                 <div class="message-popup hidden">
                     <table>
-                        {% for lang, msg in handler.message.items %}
+                        {% for lang, msg in handler.events.0.message.items %}
                         <tr>
                             <th>{% if lang == handler.default_lang %}<strong>{{ lang }}</strong>{% else %}{{ lang }}{% endif %}</th>
                             <td>{{ msg }}</td>
@@ -71,7 +71,7 @@
                 <a class="message-popup-link" href="#">view</a>
             </td>
             <td>{{ handler.start }}<span class="light"> +</span> {{ handler.start_offset }}<span class="light"> days</span></td>
-            <td>{{ handler.frequency }}<span class="light"> days</span></td>
+            <td>{{ handler.schedule_length }}<span class="light"> days</span></td>
             <td>{{ handler.until }}</td>
             <td>
                 <form action="{% url delete_reminder domain handler.get_id %}" method="post"

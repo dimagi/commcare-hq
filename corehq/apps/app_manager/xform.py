@@ -151,7 +151,7 @@ class XForm(WrappedNode):
 
     @property
     def audio_references(self):
-        return self.media_references(form="image")
+        return self.media_references(form="audio")
     
     def rename_language(self, old_code, new_code):
         trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)

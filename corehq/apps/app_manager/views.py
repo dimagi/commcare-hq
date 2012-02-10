@@ -1,22 +1,32 @@
+from StringIO import StringIO
 import logging
+import tempfile
+import uuid
+from wsgiref.util import FileWrapper
+import zipfile
+from django.utils import simplejson
 import os
 import re
 
 from couchdbkit.exceptions import ResourceConflict
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseServerError
 import sys
 from unidecode import unidecode
+from corehq.apps.hqmedia import utils
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
     XForm
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
+from corehq.apps.hqmedia import upload
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import DomainMembership, Permissions
+from corehq.apps.users.models import DomainMembership, Permissions, CouchUser
 
 from dimagi.utils.web import render_to_response, json_response, json_request
 
 from corehq.apps.app_manager.forms import NewXFormForm, NewModuleForm
+from corehq.apps.hqmedia.forms import HQMediaZipUploadForm, HQMediaFileUploadForm
+from corehq.apps.hqmedia.models import CommCareMultimedia, CommCareImage, CommCareAudio
 
 from corehq.apps.domain.decorators import login_and_domain_required
 
@@ -184,7 +194,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
 
         if app_id:
             app = get_app(None, app_id)
-            assert(app.doc_type in ('Application', 'RemoteApp'))
+            assert(app.get_doc_type() in ('Application', 'RemoteApp'))
             assert(req.couch_user.is_member_of(app.domain))
         else:
             app = None
@@ -429,6 +439,18 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     context.update(base_context)
     if app and not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(context['lang'], {})})
+    if app and app.get_doc_type() == 'Application':
+        sorted_images, sorted_audio = utils.get_sorted_multimedia_refs(app)
+        multimedia_images, missing_image_refs = app.get_template_map(sorted_images, domain)
+        multimedia_audio, missing_audio_refs = app.get_template_map(sorted_audio, domain)
+        context.update({
+            'missing_image_refs': missing_image_refs,
+            'missing_audio_refs': missing_audio_refs,
+            'multimedia': {
+                'images': multimedia_images,
+                'audio': multimedia_audio
+            }
+        })
 
     if form:
         template="app_manager/form_view.html"
@@ -440,7 +462,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     error = req.GET.get('error', '')
 
     force_edit = False
-    if (not context['applications']) or (app and app.doc_type == "Application" and not app.modules):
+    if (not context['applications']) or (app and app.get_doc_type() == "Application" and not app.modules):
         edit = True
         force_edit = True
     context.update({
@@ -570,10 +592,16 @@ def delete_app(req, domain, app_id):
 @require_POST
 @require_permission('edit-apps')
 def undo_delete_app(request, domain, record_id):
-    record = DeleteApplicationRecord.get(record_id)
-    record.undo()
+    try:
+        app = get_app(domain, record_id)
+        app.unretire()
+        app_id = app.id
+    except Exception:
+        record = DeleteApplicationRecord.get(record_id)
+        record.undo()
+        app_id = record.app_id
     messages.success(request, 'Application successfully restored.')
-    return back_to_main(request, domain, app_id=record.app_id)
+    return back_to_main(request, domain, app_id=app_id)
 
 @require_POST
 @require_permission('edit-apps')
@@ -924,41 +952,73 @@ def multimedia_list_download(req, domain, app_id):
     return response
 
 @require_permission('edit-apps')
-def multimedia_home(req, domain, app_id, module_id=None, form_id=None):
-    """
-    Edit multimedia for forms
-    """
+def multimedia_upload(request, domain, kind, app_id):
     app = get_app(domain, app_id)
+    if request.method == 'POST':
+        request.upload_handlers.insert(0, upload.HQMediaFileUploadHandler(request, domain))
+        cache_handler = upload.HQMediaUploadCacheHandler.handler_from_request(request, domain)
+        response_errors = {}
+        try:
+            if kind == 'zip':
+                form = HQMediaZipUploadForm(data=request.POST, files=request.FILES)
+            elif kind == 'file':
+                form = HQMediaFileUploadForm(data=request.POST, files=request.FILES)
+            else:
+                return Http404()
+            if form.is_valid():
+                extra_data = form.save(domain, app, request.user.username, cache_handler)
+                if cache_handler:
+                    cache_handler.delete()
+                if extra_data:
+                    completion_cache = upload.HQMediaUploadSuccessCacheHandler.handler_from_request(request, domain)
+                    if kind=='zip' and completion_cache:
+                        completion_cache.data = extra_data
+                        completion_cache.save()
+                    elif kind=='file' and completion_cache:
+                        completion_cache.data = extra_data
+                        completion_cache.save()
+                return HttpResponse(simplejson.dumps(extra_data))
+            else:
+                response_errors = form.errors
+        except TypeError:
+            pass
+        if response_errors:
+            cache_handler.defaults()
+            cache_handler.data['error_list'] = response_errors
+            cache_handler.save()
+        return HttpResponse(simplejson.dumps(response_errors))
+    
+    form = HQMediaZipUploadForm()
+    progress_id = uuid.uuid4()
 
-    parsed_forms = {}
-    images = {}
-    audio_files = {}
-    # TODO: make this more fully featured
-    for m in app.get_modules():
-        for f in m.get_forms():
-            parsed = f.wrapped_xform()
-            if not parsed.exists():
-                continue
-            parsed.validate()
-            parsed_forms[f] = parsed
-            for i in parsed.image_references:
-                if i not in images: images[i] = []
-                images[i].append((m,f))
-            for i in parsed.audio_references:
-                if i not in audio_files: audio_files[i] = []
-                audio_files[i].append((m,f))
-
-    sorted_images = SortedDict()
-    sorted_audio = SortedDict()
-    for k in sorted(images):
-        sorted_images[k] = images[k]
-    for k in sorted(audio_files):
-        sorted_audio[k] = audio_files[k]
-    return render_to_response(req, "app_manager/multimedia_home.html",
+    return render_to_response(request, "hqmedia/upload_zip.html",
                               {"domain": domain,
                                "app": app,
-                               "images": sorted_images,
-                               "audiofiles": sorted_audio})
+                               "zipform": form,
+                               "progress_id": progress_id,
+                               "progress_id_varname": upload.HQMediaCacheHandler.X_PROGRESS_ID})
+
+@require_permission('edit-apps')
+def multimedia_map(request, domain, app_id):
+    app = get_app(domain, app_id)
+    sorted_images, sorted_audio = utils.get_sorted_multimedia_refs(app)
+
+    images, missing_image_refs = app.get_template_map(sorted_images, domain)
+    audio, missing_audio_refs = app.get_template_map(sorted_audio, domain)
+
+    fileform = HQMediaFileUploadForm()
+    
+    return render_to_response(request, "hqmedia/multimedia_map.html",
+                              {"domain": domain,
+                               "app": app,
+                               "multimedia": {
+                                   "images": images,
+                                   "audio": audio
+                               },
+                               "fileform": fileform,
+                               "progress_id_varname": upload.HQMediaCacheHandler.X_PROGRESS_ID,
+                               "missing_image_refs": missing_image_refs,
+                               "missing_audio_refs": missing_audio_refs})
 
 @require_GET
 @login_and_domain_required
@@ -1104,8 +1164,8 @@ def edit_app_attr(req, domain, app_id, attr):
             app.set_admin_password(admin_password)
     # For RemoteApp
     if should_edit("profile_url"):
-        if app.doc_type not in ("RemoteApp",):
-            raise Exception("App type %s does not support profile url" % app.doc_type)
+        if app.get_doc_type() not in ("RemoteApp",):
+            raise Exception("App type %s does not support profile url" % app.get_doc_type())
         app['profile_url'] = req.POST['profile_url']
 
     app.save(resp)
@@ -1300,6 +1360,29 @@ def download_user_registration(req, domain, app_id):
     )
 
 @safe_download
+def download_multimedia_zip(req, domain, app_id):
+    app = get_app(domain, app_id)
+    temp = StringIO()
+    hqZip = zipfile.ZipFile(temp, "a")
+    for form_path, media_item in app.multimedia_map.items():
+        try:
+            media = eval(media_item.media_type)
+            media = media.get(media_item.multimedia_id)
+            data, content_type = media.get_display_file()
+            path = form_path.replace(utils.MULTIMEDIA_PREFIX, "")
+            hqZip.writestr(path, data)
+        except (NameError, ResourceNotFound) as e:
+            print e, " on ", form_path, media_item
+            return HttpResponseServerError("There was an error gathering some of the multimedia for this application.")
+    hqZip.close()
+    response = HttpResponse(mimetype="application/zip")
+    response["Content-Disposition"] = "attachment; filename=commcare.zip"
+    temp.seek(0)
+    response.write(temp.read())
+    return response
+    
+
+@safe_download
 def download_jad(req, domain, app_id):
     """
     See ApplicationBase.create_jadjar
@@ -1365,13 +1448,13 @@ def download_raw_jar(req, domain, app_id):
     return response
 
 def emulator(req, domain, app_id, template="app_manager/emulator.html"):
-    app = get_app(domain, app_id)
+    copied_app = app = get_app(domain, app_id)
     if app.copy_of:
         app = get_app(domain, app.copy_of)
 
     # Coupled URL -- Sorry!
     build_path = "/builds/{version}/{build_number}/Generic/WebDemo/".format(
-        **app.get_preview_build()._doc
+        **copied_app.get_preview_build()._doc
     )
     return render_to_response(req, template, {
         'domain': domain,

@@ -3,7 +3,7 @@
 {% load url_extras %}
 {% load hq_shared_tags %}
 {% block js-inline %}{{ block.super }}
-    {% if app.doc_type == "Application" %}
+    {% if app.get_doc_type == "Application" %}
     <script>
         $(function () {
             var show_user_registration = {{ app.show_user_registration|JSON }};
@@ -33,7 +33,7 @@
             <a href="{% url view_app domain app.id %}?edit={{ edit|JSON }}" class="variable-app_name">{{ app.name }}
             </a>
         </h2>
-            {% if app.doc_type == "Application" %}
+            {% if app.get_doc_type == "Application" %}
                 <ul {% if edit %}class="sortable"{% endif %}>
                     {% if edit %}
                         <li class="sort-action">
@@ -101,7 +101,7 @@
                             </li>
                         {% endfor %}
                     {% endwith %}
-                    {% if edit and app.doc_type == "Application" %}
+                    {% if edit and app.get_doc_type == "Application" %}
                         <li class="sort-disabled">
                             <form action="{% url corehq.apps.app_manager.views.new_module domain app.id %}"
                                   method="post">

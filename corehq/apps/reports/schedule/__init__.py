@@ -1,3 +1,6 @@
+from django.conf import settings
+from django.contrib.sites.models import Site
+from django.core.urlresolvers import reverse
 from django.http import HttpRequest
 from corehq.apps.reports.schedule.parsers import ReportParser
 from corehq.apps.reports.schedule.request import RequestProcessor
@@ -33,7 +36,11 @@ class ReportSchedule(object):
         self._processor.preprocess(request, user=user.get_django_user(), domain=domain)
         response = self._view_func(request, **self._view_args)
         parser = ReportParser(response.content)
-        return render_to_string("reports/report_email.html", { "report_body": parser.get_html(), "domain": domain })
+        DNS_name = "http://"+Site.objects.get(id = settings.SITE_ID).domain
+        return render_to_string("reports/report_email.html", { "report_body": parser.get_html(),
+                                                               "domain": domain,
+                                                               "couch_user": user.userID,
+                                                               "DNS_name": DNS_name })
 
 class DomainedReportSchedule(ReportSchedule):
     
@@ -62,5 +69,9 @@ class BasicReportSchedule(object):
         processor.preprocess(request, user=user.get_django_user())
         response = report_dispatcher(request, domain, self._report.slug)
         parser = ReportParser(response.content)
-        return render_to_string("reports/report_email.html", { "report_body": parser.get_html(), "domain": domain })
+        DNS_name = "http://"+Site.objects.get(id = settings.SITE_ID).domain
+        return render_to_string("reports/report_email.html", { "report_body": parser.get_html(),
+                                                               "domain": domain,
+                                                               "couch_user": user.userID,
+                                                               "DNS_name": DNS_name})
         

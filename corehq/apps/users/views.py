@@ -218,6 +218,13 @@ def delete_commcare_user(request, domain, user_id):
     messages.success(request, "User %s and all their submissions have been permanently deleted" % user.username)
     return HttpResponseRedirect(reverse('commcare_users', args=[domain]))
 
+@require_can_edit_users
+@require_POST
+def restore_commcare_user(request, domain, user_id):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    user.unretire()
+    messages.success(request, "User %s and all their submissions have been restored" % user.username)
+    return HttpResponseRedirect(reverse('user_account', args=[domain, user_id]))
 
 @require_permission_to_edit_user
 def account(request, domain, couch_user_id, template="users/account.html"):
@@ -226,6 +233,16 @@ def account(request, domain, couch_user_id, template="users/account.html"):
 
     if not couch_user:
         raise Http404
+
+    context.update({
+        'couch_user': couch_user,
+    })
+
+    if couch_user.is_deleted():
+        if couch_user.is_commcare_user():
+            return render_to_response(request, 'users/deleted_account.html', context)
+        else:
+            raise Http404
 
     # phone-numbers tab
     if request.method == "POST" and request.POST['form_type'] == "phone-numbers":
@@ -245,7 +262,6 @@ def account(request, domain, couch_user_id, template="users/account.html"):
                         })
     # scheduled reports tab
     context.update({
-        'couch_user': couch_user,
         # for phone-number tab
         'phone_numbers': couch_user.phone_numbers,
 

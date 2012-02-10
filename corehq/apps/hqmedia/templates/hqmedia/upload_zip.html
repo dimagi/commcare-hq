@@ -1,0 +1,85 @@
+{% extends base_template %}
+{% block head %}{{ block.super }}
+    <link rel="stylesheet" href="{{ STATIC_URL }}hqmedia/css/media_upload.css" />
+{% endblock %}
+{% block js %}{{ block.super }}
+<script type="text/javascript" src="{{ STATIC_URL }}hqmedia/js/jquery.form.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}hqmedia/js/jquery.progressbar.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}hqmedia/js/hqmedia_upload.js"></script>
+<script type="text/javascript">
+    $().ready(function() {
+        var $failed_files = $("#failed_files");
+
+        var hqUpload;
+        hqUpload = new HQMediaUpload({
+            progress_id_varname: '{{ progress_id_varname }}',
+            submit_url: '{% url multimedia_upload domain 'zip' app.get_id %}',
+            progress_checker_url: '{% url hqmedia_upload_progress domain%}',
+            static_url: '{{ STATIC_URL }}',
+            processbar: '#hqmedia_processing_progressbar',
+            process_checker_url: '{% url hqmedia_upload_success domain %}',
+            process_complete_fn: showFailedFiles
+        });
+
+        $failed_files.fadeOut();
+        hqUpload.listenForUploads();
+
+        function showFailedFiles(data) {
+           $("#return-to-map").removeClass("inactive");
+           if(data.successful) {
+               $failed_files.prepend($("<h3 />").text("We could not find references to the following files in your application:"));
+               $failed_files.show('blind');
+           }
+           for(var i = 0; i < data.successful.length; i++) {
+               $("#failed_files ul").append($("<li />").text(data.successful[i]));
+           }
+        }
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div id="main_container">
+    <div class="padded multimedia">
+        <nav class="breadcrumbs">
+            <ul>
+                <li><a href="{% url view_app domain app.get_id %}">Application "{{ app.name }}"</a></li>
+                <li><a href="{% url multimedia_map domain app.get_id %}">Multimedia Map</a></li>
+                <li>Upload Zip</li>
+            </ul>
+        </nav>
+        <h1>Upload a ZIP of Multimedia Files for Application "{{ app.name }}"</h1>
+        <p>Note: If you are having issues with large files, try breaking up the zip file into several separate smaller zip files.</p>
+        <form action="" id="hqmedia_upload" method="post" enctype="multipart/form-data">
+            <fieldset>
+                <ul>
+                {% for field in zipform %}
+                    {% if field.field.required %}
+                    <li>{{ field.label_tag }} {{ field }} <span class="helptext">{{ field.help_text }}</span></li>
+                    <li class="error" id="errors_{{ field.name }}">{{ field.errors }}</li>
+                    {% endif %}
+                {% endfor %}
+                </ul>
+                <ul class="advanced-options">
+                {% for field in zipform %}
+                    {% if not field.field.required %}
+                    <li>{{ field }} {{ field.label_tag }}</li>
+                    <li class="error" class="errors_{{ field.name }}">{{ field.errors }}</li>
+                    {% endif %}
+                {% endfor %}
+                </ul>
+            </fieldset>
+            <input type="hidden" class="hqmedia_upload_id" value="{{ progress_id }}" />
+            <input type="submit" value="Upload Zip File" />
+            <div id="hqmedia_upload_status"></div>
+        </form>
+        <div>Upload progress: <span id="hqmedia_progressbar"></span></div>
+        <div>Processing progress: <span id="hqmedia_processing_progressbar"></span></div>
+
+        <div><a href="{% url multimedia_map domain app.get_id %}" id="return-to-map" class="button inactive">Return to Multimedia Map</a></div>
+        <div id="failed_files">
+            <ul></ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

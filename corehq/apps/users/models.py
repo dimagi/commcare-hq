@@ -5,6 +5,7 @@ from __future__ import absolute_import
 
 from datetime import datetime
 import logging
+from dimagi.utils.make_uuid import random_hex
 
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
@@ -296,6 +297,14 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             return None
 
     @classmethod
+    def get_by_default_phone(cls, phone_number):
+        result = get_db().view('users/by_default_phone', key=phone_number, include_docs=True).one()
+        if result:
+            return cls.wrap_correctly(result['doc'])
+        else:
+            return None
+
+    @classmethod
     def get_by_user_id(cls, userID, domain=None):
         try:
             couch_user = cls.wrap_correctly(get_db().get(userID))
@@ -420,7 +429,7 @@ class CommCareUser(CouchUser):
         return self.raw_username
 
     @classmethod
-    def create_from_xform(cls, xform):
+    def create_or_update_from_xform(cls, xform):
         # if we have 1,000,000 users with the same name in a domain
         # then we have bigger problems then duplicate user accounts
         MAX_DUPLICATE_USERS = 1000000
@@ -461,7 +470,7 @@ class CommCareUser(CouchUser):
                         to_append = to_append + 1
                 if not saved:
                     raise Exception("There are over 1,000,000 users with that base name in your domain. REALLY?!? REALLY?!?!")
-                return conflicting_user
+                return (conflicting_user, False)
                 
             try:
                 User.objects.get(username=username)
@@ -478,7 +487,7 @@ class CommCareUser(CouchUser):
                 date=date,
                 user_data=user_data
             )
-            return couch_user
+            return (couch_user, True)
 
         # will raise TypeError if xform.form doesn't have all the necessary params
         return create_or_update_safe(
@@ -530,8 +539,13 @@ class CommCareUser(CouchUser):
         user._hq_user = self # don't tell anyone that we snuck this here
         return user
 
-    def get_forms(self):
-        return XFormInstance.view('couchforms/by_user',
+    def get_forms(self, deleted=False):
+        if deleted:
+            view_name = 'users/deleted_forms_by_user'
+        else:
+            view_name = 'couchforms/by_user'
+
+        return XFormInstance.view(view_name,
             startkey=[self.user_id],
             endkey=[self.user_id, {}],
             reduce=False,
@@ -550,8 +564,13 @@ class CommCareUser(CouchUser):
         else:
             return 0
 
-    def get_cases(self):
-        return CommCareCase.view('case/by_user',
+    def get_cases(self, deleted=False):
+        if deleted:
+            view_name = 'users/deleted_cases_by_user'
+        else:
+            view_name = 'case/by_user'
+
+        return CommCareCase.view(view_name,
             startkey=[self.user_id],
             endkey=[self.user_id, {}],
             reduce=False,
@@ -580,22 +599,41 @@ class CommCareUser(CouchUser):
     
     def retire(self):
         suffix = DELETED_SUFFIX
+        deletion_id = random_hex()
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
             self.base_doc += suffix
+            self['-deletion_id'] = deletion_id
         for form in self.get_forms():
             form.doc_type += suffix
+            form['-deletion_id'] = deletion_id
             form.save()
         for case in self.get_cases():
             case.doc_type += suffix
+            case['-deletion_id'] = deletion_id
             case.save()
+
         try:
             django_user = self.get_django_user()
         except User.DoesNotExist:
             pass
         else:
             django_user.delete()
-            
+        self.save()
+
+    def unretire(self):
+        def chop_suffix(string, suffix=DELETED_SUFFIX):
+            if string.endswith(suffix):
+                return string[:-len(suffix)]
+            else:
+                return string
+        self.base_doc = chop_suffix(self.base_doc)
+        for form in self.get_forms(deleted=True):
+            form.doc_type = chop_suffix(form.doc_type)
+            form.save()
+        for case in self.get_cases(deleted=True):
+            case.doc_type = chop_suffix(case.doc_type)
+            case.save()
         self.save()
 
     def transfer_to_domain(self, domain, app_id):
