@@ -34,7 +34,7 @@
         </tr>
     {% endfor %}
 </tbody>
-{% if total_row %}
+{% if total_row and report.rows %}
 <tfoot>
     <tr>
         {% for col in total_row %}
