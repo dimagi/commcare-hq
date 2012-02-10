@@ -778,6 +778,8 @@ class WebUser(CouchUser):
 
     def has_permission(self, domain, permission):
         # is_admin is the same as having all the permissions set
+        if self.is_superuser:
+            return True
         dm = self.get_domain_membership(domain)
         if not dm:
             return False
