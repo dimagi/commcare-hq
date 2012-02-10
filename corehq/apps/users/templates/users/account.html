@@ -11,6 +11,12 @@
                 }
             }).removeClass('ui-corner-all ui-widget-content').css({padding: "0px"})
               .find('.ui-tabs-nav').removeClass('ui-corner-all');
+
+            $('#id_role [value=""]').each(function () {
+                if (!$(this).is(':selected')) {
+                    $(this).detach();
+                }
+            });
         });
 	</script>
     <style>

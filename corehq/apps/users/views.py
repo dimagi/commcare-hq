@@ -25,7 +25,7 @@ from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.forms import UserForm, CommCareAccountForm
-from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord
+from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord, Permissions
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
 from dimagi.utils.web import render_to_response, json_response
@@ -40,13 +40,14 @@ from django_digest.decorators import httpdigest
 
 def require_permission_to_edit_user(view_func):
     def _inner(request, domain, couch_user_id, *args, **kwargs):
-        if hasattr(request, "couch_user") and (request.user.is_superuser or request.couch_user.can_edit_users(domain) or request.couch_user._id == couch_user_id):
+        if hasattr(request, "couch_user") and (request.user.is_superuser or request.couch_user.can_edit_web_users(domain) or request.couch_user._id == couch_user_id):
             return login_and_domain_required(view_func)(request, domain, couch_user_id, *args, **kwargs)
         else:
             raise Http404()
     return _inner
 
-require_can_edit_users = require_permission('edit-users')
+require_can_edit_web_users = require_permission(Permissions.EDIT_WEB_USERS)
+require_can_edit_commcare_users = require_permission(Permissions.EDIT_COMMCARE_USERS)
 
 def _users_context(request, domain):
     couch_user = request.couch_user
@@ -68,12 +69,12 @@ def users(request, domain):
         args=[domain, request.couch_user._id],
     ))
 
-@require_can_edit_users
+@require_can_edit_web_users
 def web_users(request, domain, template="users/web_users.html"):
     context = _users_context(request, domain)
     return render_to_response(request, template, context)
 
-@require_can_edit_users
+@require_can_edit_web_users
 @transaction.commit_on_success
 def create_web_user(request, domain, template="users/create_web_user.html"):
     if request.method == "POST":
@@ -94,7 +95,7 @@ def create_web_user(request, domain, template="users/create_web_user.html"):
     )
     return render_to_response(request, template, context)
 
-@require_can_edit_users
+@require_can_edit_web_users
 @require_POST
 def remove_web_user(request, domain, couch_user_id):
     user = WebUser.get_by_user_id(couch_user_id, domain)
@@ -106,7 +107,7 @@ def remove_web_user(request, domain, couch_user_id):
         ), extra_tags="html")
     return HttpResponseRedirect(reverse('web_users', args=[domain]))
 
-@require_can_edit_users
+@require_can_edit_web_users
 def undo_remove_web_user(request, domain, record_id):
     record = RemoveWebUserRecord.get(record_id)
     record.undo()
@@ -135,7 +136,8 @@ def accept_invitation(request, domain, invitation_id):
         # list of domains
         if request.method == "POST":
             couch_user = CouchUser.from_django_user(request.user)
-            couch_user.add_domain_membership(domain=domain, is_admin=invitation.is_domain_admin)
+            couch_user.add_domain_membership(domain=domain)
+            couch_user.set_role(domain, invitation.role)
             couch_user.save()
             invitation.is_accepted = True
             invitation.save()
@@ -154,8 +156,10 @@ def accept_invitation(request, domain, invitation_id):
                 del data['password_1']
                 del data['password_2']
                 del data["tos_confirmed"]  
-                user = register_user(invitation.domain, send_email=False, 
-                                     is_domain_admin=invitation.is_domain_admin, **data)
+                user = register_user(invitation.domain, send_email=False,
+                                     is_domain_admin=False, **data)
+                user.set_role(domain, invitation.role)
+                user.save()
                 invitation.is_accepted = True
                 invitation.save()
                 messages.success(request, "User account for %s created! You may now login." % data["email"])
@@ -166,7 +170,7 @@ def accept_invitation(request, domain, invitation_id):
         return render_to_response(request, "users/accept_invite.html", {"form": form})
 
 
-@require_can_edit_users
+@require_can_edit_web_users
 def invite_web_user(request, domain, template="users/invite_web_user.html"):
     if request.method == "POST":
         form = AdminInvitesUserForm(request.POST)
@@ -189,7 +193,7 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
     )
     return render_to_response(request, template, context)
 
-@require_can_edit_users
+@require_can_edit_commcare_users
 def commcare_users(request, domain, template="users/commcare_users.html"):
     show_inactive = json.loads(request.GET.get('show_inactive', 'false'))
     context = _users_context(request, domain)
@@ -203,14 +207,14 @@ def commcare_users(request, domain, template="users/commcare_users.html"):
     })
     return render_to_response(request, template, context)
 
-@require_can_edit_users
+@require_can_edit_commcare_users
 def archive_commcare_user(request, domain, user_id, is_active=False):
     user = CommCareUser.get_by_user_id(user_id, domain)
     user.is_active = is_active
     user.save()
     return HttpResponseRedirect(reverse('commcare_users', args=[domain]))
 
-@require_can_edit_users
+@require_can_edit_commcare_users
 @require_POST
 def delete_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
@@ -218,7 +222,7 @@ def delete_commcare_user(request, domain, user_id):
     messages.success(request, "User %s and all their submissions have been permanently deleted" % user.username)
     return HttpResponseRedirect(reverse('commcare_users', args=[domain]))
 
-@require_can_edit_users
+@require_can_edit_commcare_users
 @require_POST
 def restore_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
@@ -395,7 +399,7 @@ def _handle_user_form(request, domain, couch_user=None):
     else:
         create_user = True
     can_change_admin_status = \
-        (request.user.is_superuser or request.couch_user.can_edit_users(domain))\
+        (request.user.is_superuser or request.couch_user.can_edit_web_users(domain))\
         and request.couch_user.user_id != couch_user.user_id and not couch_user.is_commcare_user()
     if request.method == "POST" and request.POST['form_type'] == "basic-info":
         form = UserForm(request.POST)
@@ -410,7 +414,8 @@ def _handle_user_form(request, domain, couch_user=None):
             couch_user.email = form.cleaned_data['email']
             if can_change_admin_status:
                 role = form.cleaned_data['role']
-                couch_user.set_role(domain, role)
+                if role:
+                    couch_user.set_role(domain, role)
             couch_user.save()
             messages.success(request, 'Changes saved for user "%s"' % couch_user.username)
     else:
@@ -420,7 +425,7 @@ def _handle_user_form(request, domain, couch_user=None):
             form.initial['last_name'] = couch_user.last_name
             form.initial['email'] = couch_user.email
             if can_change_admin_status:
-                form.initial['role'] = couch_user.get_role(domain)
+                form.initial['role'] = couch_user.get_role(domain) or ''
 
     if not can_change_admin_status:
         del form.fields['role']
@@ -503,7 +508,7 @@ def _get_groups(domain):
     return groups
 
 
-@require_can_edit_users
+@require_can_edit_web_users
 def all_groups(request, domain, template="groups/all_groups.html"):
     context = _users_context(request, domain)
     all_groups = _get_groups(domain)
@@ -513,7 +518,7 @@ def all_groups(request, domain, template="groups/all_groups.html"):
     })
     return render_to_response(request, template, context)
 
-@require_can_edit_users
+@require_can_edit_web_users
 def group_members(request, domain, group_id, template="groups/group_members.html"):
     context = _users_context(request, domain)
     all_groups = _get_groups(domain)
@@ -539,7 +544,7 @@ def group_members(request, domain, group_id, template="groups/group_members.html
 #def my_groups(request, domain, template="groups/groups.html"):
 #    return group_membership(request, domain, request.couch_user._id, template)
 
-@require_can_edit_users
+@require_can_edit_web_users
 def group_membership(request, domain, couch_user_id, template="groups/groups.html"):
     context = _users_context(request, domain)
     couch_user = CouchUser.get_by_user_id(couch_user_id, domain)
@@ -561,7 +566,7 @@ def group_membership(request, domain, couch_user_id, template="groups/groups.htm
                     "couch_user":couch_user })
     return render_to_response(request, template, context)
 
-@require_can_edit_users
+@require_can_edit_web_users
 def add_commcare_account(request, domain, template="users/add_commcare_account.html"):
     """
     Create a new commcare account
@@ -654,7 +659,7 @@ class UploadCommCareUsers(TemplateView):
         if messages:
             raise Exception('\n'.join(messages))
 
-    @method_decorator(require_can_edit_users)
+    @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, domain, *args, **kwargs):
         self.domain = domain
         return super(UploadCommCareUsers, self).dispatch(request, *args, **kwargs)

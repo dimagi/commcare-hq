@@ -17,18 +17,22 @@
                     </li>
                     <li><a href="{% url change_my_password domain %}">Change Password</a></li>
                 </ul>
-                {% if request.couch_user.is_domain_admin or request.user.is_superuser %}
+                {% if request.couch_user.can_edit_web_users or request.couch_user.can_edit_commcare_users %}
                     <strong>User Management</strong>
                     <ul>
+                        {% if request.couch_user.can_edit_web_users %}
                         <li><a href="{% url web_users domain %}">Web Users</a>
                             {% block web_users_indicator %}{% endblock %}
                         </li>
+                        {% endif %}
+                        {% if request.couch_user.can_edit_commcare_users %}
                         <li><a href="{% url commcare_users domain %}">CommCare Users</a>
                             {% block commcare_users_indicator %}{% endblock %}
                         </li>
                         <li><a href="{% url all_groups domain %}">Groups</a>
                             {% block groups_indicator %}{% endblock %}
                         </li>
+                        {% endif %}
                     </ul>
                 {% endif %}
             </div>
