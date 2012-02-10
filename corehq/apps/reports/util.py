@@ -15,6 +15,7 @@ def report_context(domain,
             case_type=None,
             show_case_type_counts=True,
             group=None,
+            ufilter=None,
             form=None,
             datespan=None,
             show_time_notice=False
@@ -54,7 +55,9 @@ def report_context(domain,
         if individual:
             user_ids = [individual]
         elif group is not None:
-            _, user_ids = get_group_params(domain, group=group, user_id_only=True)
+            _, user_ids = get_all_users_by_domain(domain, group=group)
+        elif ufilter is not None:
+            _, user_ids = get_all_users_by_domain(domain, filter_users=ufilter)
         else:
             user_ids = None
 

@@ -58,7 +58,7 @@
             <tr class="{% cycle "odd" "even" %}">
                 <td>{{ export.name|default:"[blank]" }}</td>
                 <td>{{ export.formname }}</td>
-                <td><a href='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?group={{ group.get_id }}'>
+                <td><a href='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?group={{ group.get_id }}{% if show_user_filter %}{% for f in toggle_users %}{% if f.show %}&ufilter={{ f.type }}{% endif %}{% endfor %}{% endif %}'>
                         Download data
                     </a></td>
                 <td><a href='{% url corehq.apps.reports.views.edit_custom_export domain export.get_id %}'>

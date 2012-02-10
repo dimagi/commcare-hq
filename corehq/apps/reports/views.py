@@ -31,6 +31,9 @@ from couchexport.shortcuts import export_data_shared, export_raw_data
 from django.views.decorators.http import require_POST
 from couchforms.filters import instances
 from couchdbkit.exceptions import ResourceNotFound
+from mock import self
+from fields import FilterUsersField
+from util import get_all_users_by_domain
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -229,7 +232,18 @@ def export_custom_data(req, domain, export_id):
     if not next:
         next = reverse('excel_export_data_report', args=[domain])
 
-    filter = util.create_group_filter(group)
+    user_filter, _ = FilterUsersField.get_user_filter(req)
+
+    if user_filter:
+        users_matching_filter = map(lambda x: x._id, get_all_users_by_domain(domain, filter_users=user_filter))
+        def _ufilter(user):
+            try:
+                return user['form']['meta']['userID'] in users_matching_filter
+            except KeyError:
+                return False
+        filter = _ufilter
+    else:
+        filter = util.create_group_filter(group)
 
     resp = saved_export.download_data(format, filter=filter)
     if resp:
@@ -296,6 +310,7 @@ def download_cases(request, domain):
 @datespan_default
 def excel_export_data(request, domain, template="reports/excel_export_data.html"):
     group, users = util.get_group_params(domain, **json_request(request.GET))
+    ufilter = request.GET.get('ufilter', None)
     forms = get_db().view('reports/forms_by_xmlns', startkey=[domain, {}], endkey=[domain, {}, {}], group=True)
     forms = [x['value'] for x in forms]
 
@@ -319,6 +334,9 @@ def excel_export_data(request, domain, template="reports/excel_export_data.html"
     context = util.report_context(domain, title="Export Data to Excel", #datespan=request.datespan
         group=group
     )
+    toggle, show_filter = FilterUsersField.get_user_filter(request)
+    context['show_user_filter'] = show_filter
+    context['toggle_users'] = toggle
     context.update({
         "forms": forms,
         "saved_exports": exports,
