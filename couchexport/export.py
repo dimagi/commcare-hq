@@ -115,6 +115,10 @@ def export(schema_index, file, format=Format.XLS_2007,
     config = ExportConfiguration(database, schema_index, 
                                  previous_export, filter)
     
+    # handle empty case 
+    if not config.potentially_relevant_ids:
+        return None
+        
     # get and checkpoint the latest schema
     updated_schema = get_schema_new(config)
     export_schema_checkpoint = ExportSchema(seq=config.current_seq, 
