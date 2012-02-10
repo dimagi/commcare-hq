@@ -1,9 +1,9 @@
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 import json
-from dimagi.utils.parsing import json_format_datetime
 from django import template
 from django.conf import settings
 from django.utils.safestring import mark_safe
+from dimagi.utils.web import json_handler
 
 
 register = template.Library()
@@ -15,17 +15,7 @@ def JSON(obj):
     except AttributeError:
         pass
 
-    # http://stackoverflow.com/questions/455580/json-datetime-between-python-and-javascript
-    def handler(obj):
-        if isinstance(obj, datetime):
-            return json_format_datetime(obj)
-        elif isinstance(obj, date):
-            return obj.isoformat()
-        else:
-            print '%r' % obj
-            raise TypeError
-
-    return mark_safe(json.dumps(obj, default=handler))
+    return mark_safe(json.dumps(obj, default=json_handler))
 
 @register.filter
 def dict_lookup(dict, key):

@@ -3,15 +3,17 @@
 {% load hq_shared_tags %}
 
 {% block head %}{{ block.super }}
+    <link href="{% static 'formdesigner/css/chosen.css' %}" rel="stylesheet" />
     <style>
         #main_container {
             padding: 10px;
         }
         .key-value-table {
-            margin-left: 1em;
+            /*width: 500px;*/
+            margin: auto;
         }
         .key-value-table th, .key-value-table td {
-            border: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
             vertical-align: middle;
         }
         .key-value-table th {
@@ -19,6 +21,7 @@
             text-align: left;
             height: 24px;
             padding-left: 8px;
+            font-weight: bold;
         }
         .key-value-table td .ui-element-input,
         .key-value-table td .ui-element-select {
@@ -37,6 +40,11 @@
             font-size: 2em;
             text-align: center;
         }
+        h1 input[type="text"] {
+            width: 400px;
+            text-align: center;
+            margin-bottom: .5em;
+        }
         h2 {
             font-size: 1.2em;
             margin: .5em 0;
@@ -45,60 +53,51 @@
             display: inline-block;
             margin-right: 1em;
         }
+        #main_container {
+            min-width: 500px;
+        }
     </style>
 {% endblock %}
 
 {% block js %}{{ block.super }}
+    <script src="{% static 'formdesigner/js/chosen.jquery.min.js' %}"></script>
     <script src="{% static 'hqwebapp/javascripts/underscore-1.3.1.js' %}"></script>
     <script src="{% static 'hqwebapp/javascripts/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% static 'cloudcare/js/cheapxml.js' %}"></script>
     <script src="{% static 'cloudcare/js/casexml.js' %}"></script>
     <script src="{% static 'cloudcare/js/case-edit-form.js' %}"></script>
+    <script src="{% static 'cloudcare/js/case-list.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     <script>
         $(function () {
             var caseEditForm = $('#case-edit-form'),
+                caseList = $('#case-list'),
                 user_id = {{ request.couch_user.user_id|JSON }};
 
             CaseEditForm.init({
                 home: caseEditForm,
                 commcareCase: {{ case|JSON }},
                 user_id: user_id,
-                availableProperties: [{
-                    key: 'owner_id',
-                    label: 'Assigned To',
-                    type: 'select',
-                    choices: [{
-                        label: 'No one',
-                        value: '',
-                        trueValue: null
-                    }, {
-                        label: 'Raymond',
-                        value: 'XXXRAYMONDXXX'
-                    }]
-                }, {
-                    key: 'edd',
-                    label: 'EDD',
-                    type: 'date'
-                }, {
-                    key: 'village',
-                    type: 'string',
-                    label: 'Village'
-                }],
-                receiverUrl: "{% url receiver_post domain %}"
+                caseSpec: {{ case_spec|JSON }},
+                receiverUrl: "{% url receiver_post domain %}",
+                groupsUrl: "{% url cloudcare_get_groups domain request.couch_user.user_id %}",
+                lang: "en"
             });
-//            console.log(casexml.CaseDelta.wrap({{ case|JSON }}).toXML({
-//                create: true,
-//                user_id: user_id
-//            }));
+
+            CaseList.init({
+                user_id: user_id,
+                casesUrl: "{% url cloudcare_get_cases domain %}",
+                home: caseList
+            });
         }());
     </script>
 {% endblock %}
 
 {% block content %}
     <div id="main_container">
+        <section id="case-list"></section>
         <section id="case-edit-form"></section>
     </div>
 {% endblock %}
