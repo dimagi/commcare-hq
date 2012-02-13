@@ -2,6 +2,7 @@ from dimagi.utils.logging import log_exception
 try:
     from .test_attachments import *
     from .test_bugs import *
+    from .test_exclusion import *
     from .test_from_xform import *
     from .test_multi_case_submits import *
     from .test_ota_restore import *
@@ -13,7 +14,11 @@ except ImportError, e:
     log_exception(e)
     raise e
 
+# need all imports used by the doc tests here
 from .util import CaseBlock, CaseBlockError
+from datetime import datetime
+from xml.etree import ElementTree
+
 __test__ = {
     'caseblock': CaseBlock
 }
