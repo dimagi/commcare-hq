@@ -4,10 +4,11 @@ from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.reminders.forms import CaseReminderForm
+from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm
 from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, CaseReminderCallback, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.web import render_to_response
+from dimagi.utils.parsing import string_to_datetime
 from tropo import Tropo
 
 @login_and_domain_required
@@ -105,6 +106,33 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
         'dates': dates,
         'today': today,
         'now': now,
+    })
+
+@login_and_domain_required
+def add_complex_reminder_schedule(request, domain):
+    if request.method == "POST":
+        form = ComplexCaseReminderForm(request.POST)
+        if form.is_valid():
+            h = CaseReminderHandler()
+            h.domain = domain
+            h.case_type = form.cleaned_data["case_type"]
+            h.nickname = form.cleaned_data["nickname"]
+            h.default_lang = form.cleaned_data["default_lang"]
+            h.method = form.cleaned_data["method"]
+            h.start = form.cleaned_data["start"]
+            h.start_offset = form.cleaned_data["start_offset"]
+            h.schedule_length = form.cleaned_data["schedule_length"]
+            h.event_interpretation = form.cleaned_data["event_interpretation"]
+            h.max_iteration_count = form.cleaned_data["max_iteration_count"]
+            h.until = form.cleaned_data["until"]
+            h.events = form.cleaned_data["events"]
+            h.save()
+    else:
+        form = ComplexCaseReminderForm()
+    
+    return render_to_response(request, "reminders/partial/add_complex_reminder.html", {
+        "domain":   domain
+       ,"form":     form
     })
 
 @csrf_exempt
