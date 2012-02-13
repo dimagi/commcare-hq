@@ -77,6 +77,7 @@ MIDDLEWARE_CLASSES = [
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.apps.domain.middleware.DomainMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
+    'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
 ]
 
@@ -168,6 +169,7 @@ HQ_APPS = (
     'phonelog',
     'pathfinder',
     'hutch',
+    'dca'
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
@@ -278,7 +280,7 @@ XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 # couchlog
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
-COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables/js/jquery.dataTables.min.js")
+COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables-1.8.2/js/jquery.dataTables.min.js")
 COUCHLOG_THRESHOLD = logging.WARNING
 
 # couchlog/case search
@@ -374,7 +376,8 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'phonelog',
         'pathfinder',
         'registration',
-        'hutch'
+        'hutch',
+        'dca'
     ]
 ]
 
@@ -413,4 +416,17 @@ STANDARD_REPORT_MAP = {
     "Inspect Data" : ['corehq.apps.reports.standard.SubmitHistory',
                       'corehq.apps.reports.standard.CaseListReport',
                            ]
+}
+
+CUSTOM_REPORT_MAP = {
+    "pathfinder": [
+                   'pathfinder.models.PathfinderHBCReport',
+                   'pathfinder.models.PathfinderProviderReport',
+                   'pathfinder.models.PathfinderWardSummaryReport'
+                   ],
+    "dca-malawi": [
+                   'dca.reports.ProjectOfficerReport',
+                   'dca.reports.PortfolioComparisonReport',
+                   'dca.reports.PerformanceReport',
+                   'dca.reports.PerformanceRatiosReport']
 }
