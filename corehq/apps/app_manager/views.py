@@ -1242,6 +1242,10 @@ def save_copy(req, domain, app_id):
             if settings.DEBUG:
                 raise
             messages.error(req, "Unexpected error saving build:\n%s" % e)
+        finally:
+            # To make a RemoteApp always available for building
+            if app.is_remote_app():
+                app.save(increment_version=True)
     else:
         errors = BuildErrors(errors=errors)
         errors.save()
