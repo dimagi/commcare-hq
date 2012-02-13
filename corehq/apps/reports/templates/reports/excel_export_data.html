@@ -119,7 +119,7 @@
 {#                            Download#}
 {#                        </a><br>#}
                         {% if form.submissions %}
-                        <a href='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}'
+                        <a href='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}&app_id={{ form.app.id }}'
                             class="export-ajax">Download</a> ({{ form.submissions }} rows)
                         {% else %}
                             No Forms
