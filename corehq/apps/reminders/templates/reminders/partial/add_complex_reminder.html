@@ -26,6 +26,19 @@
     #id_schedule_length {
         width: 50px;
     }
+    .errorlist ul {
+        margin: 0;
+        padding: 0;
+    }
+    .errorlist li {
+        background-color: #F88;
+        border: 1px solid #A44;
+        padding: 2px;
+    }
+    div.clickable {
+        cursor: pointer;
+        font-family: "Courier New";
+    }
 </style>
 {% endblock %}
 
@@ -59,11 +72,17 @@
         td4.appendChild(create_text_input("timeouts_input"));
         
         var td5 = document.createElement("TD");
-        td5.innerHTML = "[ - ]";
+        var div2 = document.createElement("DIV");
+        div2.setAttribute("class","clickable");
+        div2.innerHTML = "[-]";
+        td5.appendChild(div2);
         td5.onclick = function() { delete_row(this); };
         
         var td6 = document.createElement("TD");
-        td6.innerHTML = "[ + ]";
+        var div3 = document.createElement("DIV");
+        div3.setAttribute("class","clickable");
+        div3.innerHTML = "[+]";
+        td6.appendChild(div3);
         td6.onclick = function() { add_row(this); };
         
         tr.appendChild(td1);
@@ -169,14 +188,14 @@
     <div>
         The following reminder schedule should be repeated: <br /><br />
         <input type="radio" name="iteration_type" value="INDEFINITE" {%if form.iteration_type.value != "FIXED" %}checked{% endif %} />Until the above "Until" condition is met.<br />
-        <input type="radio" name="iteration_type" value="FIXED" {%if form.iteration_type.value == "FIXED" %}checked{% endif %} />{{ form.max_iteration_count_input }} times, or until the above "Until" condition is met, whichever comes first.<br />
         {{ form.max_iteration_count.errors }}
+        <input type="radio" name="iteration_type" value="FIXED" {%if form.iteration_type.value == "FIXED" %}checked{% endif %} />{{ form.max_iteration_count_input }} times, or until the above "Until" condition is met, whichever comes first.<br />
     </div>
     <br />
     <div>
         The day and time for each event in the reminder schedule below are: <br /><br />
-        <input type="radio" name="event_interpretation" value="OFFSET" {%if form.event_interpretation.value != "SCHEDULE" %}checked{% endif %} />The number of days to wait and the time to wait before sending the given message.<br />
-        <input type="radio" name="event_interpretation" value="SCHEDULE" {%if form.event_interpretation.value == "SCHEDULE" %}checked{% endif %} />The day number in the schedule cycle and the exact time of day to send the given message.
+        <input type="radio" name="event_interpretation" value="OFFSET" onClick="document.getElementById('schedule_length_description').innerHTML = 'The number of days between the end of a schedule cycle and the start of a new schedule cycle is:';" {%if form.event_interpretation.value != "SCHEDULE" %}checked{% endif %} />The number of days to wait and the time to wait before sending the given message.<br />
+        <input type="radio" name="event_interpretation" value="SCHEDULE" onClick="document.getElementById('schedule_length_description').innerHTML = 'The total number of days for a single schedule cycle is:';" {%if form.event_interpretation.value == "SCHEDULE" %}checked{% endif %} />The day number in the schedule cycle and the exact time of day to send the given message.
     </div>
     <br />
     {{ form.events.errors }}
@@ -184,10 +203,10 @@
         <tr>
             <th>Day</th>
             <th>Time</th>
-            <th>Message</th>
+            <th>Language : Message</th>
             <th>Callback Timeouts</th>
             <th></th>
-            <th onClick="add_row(this);">[ + ]</th>
+            <th onClick="add_row(this);"><div class="clickable">[+]</div></th>
         </tr>
         {% for e in form.events.value %}
         <tr>
@@ -201,8 +220,8 @@
                 {% endfor %}
             </td>
             <td><input type="text" class="timeouts_input" name="reminder_events.{{ forloop.counter }}.timeouts" value="{{ e.timeouts }}" /></td>
-            <td onClick="delete_row(this);">[ - ]</td>
-            <td onClick="add_row(this);">[ + ]</td>
+            <td onClick="delete_row(this);"><div class="clickable">[-]</div></td>
+            <td onClick="add_row(this);"><div class="clickable">[+]</div></td>
         </tr>
         {% empty %}
         <tr>
@@ -214,8 +233,8 @@
                 </div>
             </td>
             <td><input type="text" class="timeouts_input" name="reminder_events.1.timeouts" /></td>
-            <td onClick="delete_row(this);">[ - ]</td>
-            <td onClick="add_row(this);">[ + ]</td>
+            <td onClick="delete_row(this);"><div class="clickable">[-]</div></td>
+            <td onClick="add_row(this);"><div class="clickable">[+]</div></td>
         </tr>
         {% endfor %}
     </table>

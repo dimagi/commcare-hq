@@ -1,4 +1,5 @@
 import json
+import re
 from django.core.exceptions import ValidationError
 from django.forms.fields import *
 from django.forms.forms import Form
@@ -73,16 +74,26 @@ class EventListField(Field):
             try:
                 day = int(e["day"])
             except Exception:
-                raise ValidationError("Day must be specified and must be a number")
+                raise ValidationError("Day must be specified and must be a number.")
             
-            try:
-                time = string_to_datetime(e["time"]).time()
-            except Exception:
-                raise ValidationError("Time must be in the format HH:MM")
+            pattern = re.compile("\d{1,2}:\d\d")
+            if pattern.match(e["time"]):
+                try:
+                    time = string_to_datetime(e["time"]).time()
+                except Exception:
+                    raise ValidationError("Please enter a valid time from 00:00 to 23:59.")
+            else:
+                raise ValidationError("Time must be in the format HH:MM.")
             
             message = {}
             for key in e["messages"]:
-                message[e["messages"][key]["language"]] = e["messages"][key]["text"]
+                language = e["messages"][key]["language"]
+                text = e["messages"][key]["text"]
+                if len(language.strip()) == 0:
+                    raise ValidationError("Please enter a language code.")
+                if len(text.strip()) == 0:
+                    raise ValidationError("Please enter a message.")
+                message[language] = text
             
             if len(e["timeouts"].strip()) == 0:
                 timeouts_int = []
@@ -93,7 +104,7 @@ class EventListField(Field):
                     try:
                         timeouts_int.append(int(t))
                     except Exception:
-                        raise ValidationError("Callback timeout intervals must be a list of comma-separated numbers")
+                        raise ValidationError("Callback timeout intervals must be a list of comma-separated numbers.")
             
             events.append(CaseReminderEvent(
                 day_num = day
