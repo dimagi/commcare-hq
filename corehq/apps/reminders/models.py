@@ -16,6 +16,10 @@ EVENT_AS_SCHEDULE = "SCHEDULE"
 EVENT_AS_OFFSET = "OFFSET"
 EVENT_INTERPRETATIONS = [EVENT_AS_SCHEDULE, EVENT_AS_OFFSET]
 
+UI_SIMPLE_FIXED = "SIMPLE_FIXED"
+UI_COMPLEX = "COMPLEX"
+UI_CHOICES = [UI_SIMPLE_FIXED, UI_COMPLEX]
+
 def is_true_value(val):
     return val == 'ok' or val == 'OK'
 
@@ -229,6 +233,7 @@ default_lang    Default language to use in case the language specified by "lang_
 method          Set to "sms" to send simple sms reminders at the proper intervals.
                 Set to "callback" to send sms reminders and to enable the checked of "callback_timeout_intervals" on each event.
 
+ui_type         The type of UI to use for editing this CaseReminderHandler (see UI_CHOICES)
 """
 class CaseReminderHandler(Document):
     domain = StringProperty()
@@ -237,6 +242,7 @@ class CaseReminderHandler(Document):
     lang_property = StringProperty()
     default_lang = StringProperty()
     method = StringProperty(choices=METHOD_CHOICES, default="sms")
+    ui_type = StringProperty(choices=UI_CHOICES, default=UI_SIMPLE_FIXED)
     
     # Attributes which define the reminder schedule
     start = StringProperty()

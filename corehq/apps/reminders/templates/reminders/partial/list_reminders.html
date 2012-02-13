@@ -52,7 +52,11 @@
                 </tr>
             {% endifchanged %}
         <tr>
-            <td><a href="{% url edit_reminder domain handler.get_id %}">edit</a></td>
+            {% if handler.ui_type == "COMPLEX" %}
+                <td><a href="{% url edit_complex domain handler.get_id %}">edit</a></td>
+            {% else %}
+                <td><a href="{% url edit_reminder domain handler.get_id %}">edit</a></td>
+            {% endif %}
             <td>{{ handler.nickname }}</td>
 {#            <td>{{ handler.method }}</td>#}
 {#            <td>{{ handler.default_lang }}</td>#}
@@ -85,7 +89,8 @@
         {% endfor %}
         <tr class="separator">
             <td colspan="7">
-                <a href="{% url add_reminder domain %}"><div class="ui-icon ui-icon-plusthick"></div>Add Reminder</a>
+                <a href="{% url add_reminder domain %}"><div class="ui-icon ui-icon-plusthick"></div>Add Reminder: Simple Fixed Schedule</a><br /><br />
+                <a href="{% url add_complex_reminder_schedule domain %}"><div class="ui-icon ui-icon-plusthick"></div>Add Reminder: Complex Schedule</a>
             </td>
         </tr>
     </table>

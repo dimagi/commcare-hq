@@ -121,9 +121,9 @@ class ComplexCaseReminderForm(Form):
     
     def __init__(self, *args, **kwargs):
         super(ComplexCaseReminderForm, self).__init__(*args, **kwargs)
-        try:
-            initial = args[0]
-        except Exception:
+        if "initial" in kwargs:
+            initial = kwargs["initial"]
+        else:
             initial = {}
         
         # Populate iteration_type and max_iteration_count_input
@@ -137,6 +137,30 @@ class ComplexCaseReminderForm(Form):
         else:
             self.initial["iteration_type"] = "INDEFINITE"
             self.initial["max_iteration_count_input"] = ""
+        
+        # Populate events
+        events = []
+        if "events" in initial:
+            for e in initial["events"]:
+                ui_event = {
+                    "day"       : e.day_num
+                   ,"time"      : "%02d:%02d" % (e.fire_time.hour, e.fire_time.minute)
+                }
+                
+                messages = {}
+                counter = 1
+                for key, value in e.message.items():
+                    messages[str(counter)] = {"language" : key, "text" : value}
+                ui_event["messages"] = messages
+                
+                timeouts_str = []
+                for t in e.callback_timeout_intervals:
+                    timeouts_str.append(str(t))
+                ui_event["timeouts"] = ",".join(timeouts_str)
+                
+                events.append(ui_event)
+        
+        self.initial["events"] = events
     
     def clean_max_iteration_count(self):
         if self.cleaned_data.get("iteration_type",None) == "FIXED":
