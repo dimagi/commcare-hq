@@ -14,7 +14,8 @@ function HQMediaUpload (args) {
         upload_status_id: '#hqmedia_upload_status',
         static_url: '/static',
         form_error_class: '.error',
-        submit_complete: function() {}
+        process_complete_fn: function() {},
+        max_retries: 4
      */
 
     var _submit_url = (args.submit_url) ? args.submit_url : '',
@@ -23,7 +24,7 @@ function HQMediaUpload (args) {
         _upload_progressbar = (args.uploadbar) ? $(args.uploadbar) : $('#hqmedia_progressbar'),
         _process_progressbar = (args.processbar) ? $(args.processbar): null,
         _process_checker_url = (args.process_checker_url) ? args.process_checker_url : '',
-        _progress_bar_update_interval = (args.progressbar_update_interval) ? args.progressbar_update_interval : 2000,
+        _progress_bar_update_interval = (args.progressbar_update_interval) ? args.progressbar_update_interval : 4000,
         _upload_form_id = (args.upload_form_id) ? args.upload_form_id : 'form#hqmedia_upload',
         _submit_status_elem = (args.upload_status_id) ? $(args.upload_status_id) : $('#hqmedia_upload_status'),
         _static_url = (args.static_url) ? args.static_url : '/static',

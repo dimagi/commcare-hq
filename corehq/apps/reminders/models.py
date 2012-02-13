@@ -329,7 +329,7 @@ class CaseReminderHandler(Document):
     @classmethod
     def utc_to_local(cls, user, timestamp):
         try:
-            time_zone = timezone(user.user_data.get("time_zone"))
+            time_zone = timezone(str(user.user_data.get("time_zone")))
             utc_datetime = pytz.utc.localize(timestamp)
             local_datetime = utc_datetime.astimezone(time_zone)
             naive_local_datetime = local_datetime.replace(tzinfo=None)
@@ -348,7 +348,7 @@ class CaseReminderHandler(Document):
     @classmethod
     def timestamp_to_utc(cls, user, timestamp):
         try:
-            time_zone = timezone(user.user_data.get("time_zone"))
+            time_zone = timezone(str(user.user_data.get("time_zone")))
             local_datetime = time_zone.localize(timestamp)
             utc_datetime = local_datetime.astimezone(pytz.utc)
             naive_utc_datetime = utc_datetime.replace(tzinfo=None)

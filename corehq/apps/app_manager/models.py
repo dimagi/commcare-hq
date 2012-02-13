@@ -18,7 +18,7 @@ from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
 import current_builds
-from dimagi.utils.couch.undo import DeleteRecord
+from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.web import get_url_base, parse_int
 from copy import deepcopy
 from corehq.apps.domain.models import Domain
@@ -670,6 +670,18 @@ class VersionedDoc(Document):
         app = cls.wrap(source)
         return app
 
+    def is_deleted(self):
+        return self.doc_type.endswith(DELETED_SUFFIX)
+
+    def unretire(self):
+        self.doc_type = self.get_doc_type()
+        self.save()
+
+    def get_doc_type(self):
+        if self.doc_type.endswith(DELETED_SUFFIX):
+            return self.doc_type[:-len(DELETED_SUFFIX)]
+        else:
+            return self.doc_type
 
 
 class ApplicationBase(VersionedDoc):
@@ -1435,7 +1447,12 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
 
         if app['domain'] != domain:
             raise Http404
-    cls = wrap_cls or {'Application': Application, "RemoteApp": RemoteApp}[app['doc_type']]
+    cls = wrap_cls or {
+        'Application': Application,
+        'Application-Deleted': Application,
+        "RemoteApp": RemoteApp,
+        "RemoteApp-Deleted": RemoteApp,
+    }[app['doc_type']]
     app = cls.wrap(app)
     return app
 
@@ -1456,7 +1473,12 @@ def _get_or_create_app(app_id):
     else:
         return get_app(None, app_id)
 
-str_to_cls = {"Application":Application, "RemoteApp":RemoteApp}
+str_to_cls = {
+    "Application": Application,
+    "Application-Deleted": Application,
+    "RemoteApp": RemoteApp,
+    "RemoteApp-Deleted": RemoteApp,
+}
 
 def import_app(app_id_or_source, domain, name=None, validate_source_domain=None):
     if isinstance(app_id_or_source, basestring):
@@ -1485,7 +1507,7 @@ class DeleteApplicationRecord(DeleteRecord):
 
     def undo(self):
         app = ApplicationBase.get(self.app_id)
-        app.doc_type = app.doc_type.rstrip('-Deleted')
+        app.doc_type = app.get_doc_type()
         app.save()
 
 class DeleteModuleRecord(DeleteRecord):
