@@ -93,6 +93,8 @@ class EventListField(Field):
                     raise ValidationError("Please enter a language code.")
                 if len(text.strip()) == 0:
                     raise ValidationError("Please enter a message.")
+                if language in message:
+                    raise ValidationError("You have entered the same language twice for the same reminder event.");
                 message[language] = text
             
             if len(e["timeouts"].strip()) == 0:
@@ -112,7 +114,10 @@ class EventListField(Field):
                ,message = message
                ,callback_timeout_intervals = timeouts_int
             ))
-            
+        
+        if len(events) == 0:
+            raise ValidationError("You must have at least one reminder event.")
+        
         return events
 
 class ComplexCaseReminderForm(Form):
@@ -162,6 +167,7 @@ class ComplexCaseReminderForm(Form):
                 counter = 1
                 for key, value in e.message.items():
                     messages[str(counter)] = {"language" : key, "text" : value}
+                    counter += 1
                 ui_event["messages"] = messages
                 
                 timeouts_str = []

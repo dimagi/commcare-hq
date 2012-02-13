@@ -39,6 +39,10 @@
         cursor: pointer;
         font-family: "Courier New";
     }
+    span.clickable {
+        cursor: pointer;
+        font-family: "Courier New";
+    }
 </style>
 {% endblock %}
 
@@ -61,12 +65,7 @@
         td2.appendChild(create_text_input("time_input"));
         
         var td3 = document.createElement("TD");
-        var div1 = document.createElement("DIV");
-        inp1 = create_text_input("language_input");
-        inp2 = create_text_input("message_input");
-        div1.appendChild(inp1);
-        div1.appendChild(inp2);
-        td3.appendChild(div1);
+        td3.appendChild(create_message());
         
         var td4 = document.createElement("TD");
         td4.appendChild(create_text_input("timeouts_input"));
@@ -159,6 +158,43 @@
             }
         }
     }
+    
+    function create_message() {
+        div = document.createElement("DIV");
+        input1 = create_text_input("language_input");
+        input2 = create_text_input("message_input");
+        span1 = document.createElement("SPAN");
+        span1.setAttribute("class", "clickable");
+        span1.onclick = function() { delete_message(this); }
+        span1.innerHTML = "[-]";
+        span2 = document.createElement("SPAN");
+        span2.setAttribute("class", "clickable");
+        span2.onclick = function() { add_message(this); }
+        span2.innerHTML = "[+]";
+        div.appendChild(input1);
+        div.appendChild(input2);
+        div.appendChild(span1);
+        div.appendChild(span2);
+        return div;
+    }
+    
+    function add_message(span_ref) {
+        div_ref = span_ref.parentNode;
+        td_ref = div_ref.parentNode;
+        td_ref.appendChild(create_message());
+        order_rows(td_ref.parentNode.parentNode);
+    }
+    
+    function delete_message(span_ref) {
+        div_ref = span_ref.parentNode;
+        td_ref = div_ref.parentNode;
+        if(td_ref.getElementsByTagName("DIV").length == 1) {
+            alert("You must specify a message in at least one language.");
+        } else {
+            td_ref.removeChild(div_ref);
+            order_rows(td_ref.parentNode.parentNode);
+        }
+    }
 </script>
 {% endblock %}
 
@@ -215,7 +251,7 @@
             <td>
                 {% for message_num, message in e.messages.items %}
                 <div>
-                    <input type="text" class="language_input" name="reminder_events.{{ forloop.parentloop.counter }}.messages.{{ forloop.counter }}.language" value="{{ message.language }}" /><input type="text" class="message_input" name="reminder_events.{{ forloop.parentloop.counter }}.messages.{{ forloop.counter }}.text" value="{{ message.text }}" />
+                    <input type="text" class="language_input" name="reminder_events.{{ forloop.parentloop.counter }}.messages.{{ forloop.counter }}.language" value="{{ message.language }}" /><input type="text" class="message_input" name="reminder_events.{{ forloop.parentloop.counter }}.messages.{{ forloop.counter }}.text" value="{{ message.text }}" /><span class="clickable" onClick="delete_message(this);">[-]</span><span class="clickable" onClick="add_message(this);">[+]</span>
                 </div>
                 {% endfor %}
             </td>
@@ -229,7 +265,7 @@
             <td><input type="text" class="time_input" name="reminder_events.1.time" /></td>
             <td>
                 <div>
-                    <input type="text" class="language_input" name="reminder_events.1.messages.1.language" /><input type="text" class="message_input" name="reminder_events.1.messages.1.text" />
+                    <input type="text" class="language_input" name="reminder_events.1.messages.1.language" /><input type="text" class="message_input" name="reminder_events.1.messages.1.text" /><span class="clickable" onClick="delete_message(this);">[-]</span><span class="clickable" onClick="add_message(this);">[+]</span>
                 </div>
             </td>
             <td><input type="text" class="timeouts_input" name="reminder_events.1.timeouts" /></td>
