@@ -219,8 +219,26 @@ def device_log(request, domain, device, template='phonelog/devicelogs.html', con
         'earlier_skip': earlier_skip,
         'later_skip': later_skip,
         'domain': domain,
+        'device': device
     })
 
+    return render_to_response(request, template, context)
+
+@login_and_domain_required
+def device_log_raw(request, domain, device, template='phonelog/devicelogs_raw.html', 
+                   context=None):
+    
+    logs = get_db().view("phonelog/device_log_first_last", key=[domain, device], reduce=False)
+    def fmt_log(log):
+        return {"received_on": parse_isodate(log["value"]),
+                "id": log["id"]}
+    
+    context.update({
+        "domain": domain,
+        "logs": sorted(map(fmt_log, logs), key=lambda log: log["received_on"], reverse=True),
+        "device": device
+    })
+    
     return render_to_response(request, template, context)
 
 def parse_isodate(datestr):
