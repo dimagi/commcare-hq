@@ -39,6 +39,8 @@ class TempCommCareUser:
         self.username = username
         self._id = uuid
         self.date_joined = datetime.utcnow()
+        self.is_active = False
+        self.user_data = {}
 
         if username == HQUserType.human_readable[HQUserType.DEMO_USER]:
             self.filter_flag = HQUserType.DEMO_USER

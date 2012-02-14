@@ -1,4 +1,4 @@
-{% load tabs_tags %}{% load permissions %}{% load i18n %}{% load hq_shared_tags %}<!DOCTYPE html>
+{% load tabs_tags %}{% load i18n %}{% load hq_shared_tags %}<!DOCTYPE html>
 <html>
     <head>
         <meta charset="utf-8"/>
@@ -66,7 +66,7 @@
                             {% for tab in tabs %}
                                 {% if tab.visible %}
                                 {# hack for domain admins only seeing domain tab #}
-                                {% if tab.caption != "My Domain" or request.couch_user and request.couch_user|is_admin:domain %}
+                                {% if tab.caption != "My Domain" or request.couch_user and request.couch_user.is_domain_admin %}
                                     {# and hack for hiding the users tab from public domains #}
                                     {% if tab.caption != "Users" or request.couch_user and request.couch_user.get_id  %}
                                     <li class="{% if tab.is_active %}active{% endif %}"><a href="{{ tab.url }}">{{ tab.caption }}{{ BETA_HACK }}</a></li>

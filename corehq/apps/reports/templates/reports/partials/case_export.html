@@ -10,6 +10,11 @@
 <div id="case_export">
     <form action="{% url download_cases domain %}" method="get">
         <input type="hidden" name="group" value="{{ group.get_id }}"/>
+        {% for f in toggle_users %}
+            {% if f.show %}
+                <input type="hidden" name="ufilter" value="{{ f.type }}" />
+            {% endif %}
+        {% endfor %}
         Download
         <select name="include_closed">
             <option value="false">all open</option>

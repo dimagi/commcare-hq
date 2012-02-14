@@ -58,7 +58,7 @@
             <tr class="{% cycle "odd" "even" %}">
                 <td>{{ export.name|default:"[blank]" }}</td>
                 <td>{{ export.formname }}</td>
-                <td><a href='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?group={{ group.get_id }}'>
+                <td><a href='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?group={{ group.get_id }}{% if show_user_filter %}{% for f in toggle_users %}{% if f.show %}&ufilter={{ f.type }}{% endif %}{% endfor %}{% endif %}'>
                         Download data
                     </a></td>
                 <td><a href='{% url corehq.apps.reports.views.edit_custom_export domain export.get_id %}'>
@@ -119,7 +119,7 @@
 {#                            Download#}
 {#                        </a><br>#}
                         {% if form.submissions %}
-                        <a href='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}'
+                        <a href='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}&app_id={{ form.app.id }}'
                             class="export-ajax">Download</a> ({{ form.submissions }} rows)
                         {% else %}
                             No Forms

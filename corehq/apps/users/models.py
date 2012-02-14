@@ -52,11 +52,26 @@ def _get_default(list):
     return list[0] if list else None
 
 class Permissions(object):
-    EDIT_USERS = 'edit-users'
+    EDIT_WEB_USERS = 'edit-users'
+    EDIT_COMMCARE_USERS = 'edit-commcare-users'
     EDIT_DATA = 'edit-data'
     EDIT_APPS = 'edit-apps'
-    LOG_IN = 'log-in'
-    AVAILABLE_PERMISSIONS = [EDIT_DATA, EDIT_USERS, EDIT_APPS, LOG_IN]
+    AVAILABLE_PERMISSIONS = [EDIT_DATA, EDIT_WEB_USERS, EDIT_COMMCARE_USERS, EDIT_APPS]
+
+class Roles(object):
+    ROLES = (
+        ('edit-apps', 'App Editor', set([Permissions.EDIT_APPS])),
+        ('field-implementer', 'Field Implementer', set([Permissions.EDIT_COMMCARE_USERS])),
+        ('read-only', 'Read Only', set([]))
+    )
+
+    @classmethod
+    def get_role_labels(cls):
+        return tuple([('admin', 'Admin')] + [(key, label) for (key, label, _) in cls.ROLES])
+
+    @classmethod
+    def get_role_mapping(cls):
+        return dict([(key, perms) for (key, _, perms) in cls.ROLES])
 
 class DomainMembership(DocumentSchema):
     """
@@ -766,6 +781,8 @@ class WebUser(CouchUser):
 
     def has_permission(self, domain, permission):
         # is_admin is the same as having all the permissions set
+        if self.is_superuser:
+            return True
         dm = self.get_domain_membership(domain)
         if not dm:
             return False
@@ -787,10 +804,14 @@ class WebUser(CouchUser):
         if self.is_member_of(domain):
             if self.is_domain_admin(domain):
                 role = 'admin'
-            elif self.can_edit_apps(domain):
-                role = "edit-apps"
             else:
-                role = "read-only"
+                permissions = set(self.get_domain_membership(domain).permissions)
+                role_mapping = Roles.get_role_mapping()
+                for role in role_mapping:
+                    if permissions == role_mapping[role]:
+                        break
+                else:
+                    role = None
         else:
             role = None
 
@@ -805,18 +826,10 @@ class WebUser(CouchUser):
         dm.is_admin = False
         if role == "admin":
             dm.is_admin = True
-        elif role == "edit-apps":
-            self.reset_permissions(domain, [Permissions.EDIT_APPS])
-        elif role == "read-only":
-            self.reset_permissions(domain, [])
         else:
-            raise KeyError()
+            dm.permissions = list(Roles.get_role_mapping()[role])
 
-    ROLE_LABELS = (
-        ('admin', 'Admin'),
-        ('edit-apps', 'App Editor'),
-        ('read-only', 'Read Only')
-    )
+
     def role_label(self, domain=None):
         if not domain:
             try:
@@ -824,13 +837,26 @@ class WebUser(CouchUser):
             except (AttributeError, KeyError):
                 return None
 
-        return dict(self.ROLE_LABELS).get(self.get_role(domain), "Unknown Role")
+        return dict(Roles.get_role_labels()).get(self.get_role(domain), "Unknown Role")
+#
+#    # these functions help in templates
+#    def can_edit_apps(self, domain=None):
+#        domain = domain or self.current_domain
+#        return self.has_permission(domain, Permissions.EDIT_APPS)
+#    def can_edit_web_users(self, domain=None):
+#        domain = domain or self.current_domain
+#        return self.has_permission(domain, Permissions.EDIT_WEB_USERS)
 
-    # these functions help in templates
-    def can_edit_apps(self, domain):
-        return self.has_permission(domain, Permissions.EDIT_APPS)
-    def can_edit_users(self, domain):
-        return self.has_permission(domain, Permissions.EDIT_USERS)
+    def __getattr__(self, item):
+        if item.startswith('can_'):
+            perm = getattr(Permissions, item[len('can_'):].upper(), None)
+            if perm:
+                def fn(domain=None):
+                    domain = domain or self.current_domain
+                    return self.has_permission(domain, perm)
+                fn.__name__ = item
+                return fn
+        return super(WebUser, self).__getattr__(item)
 
 class FakeUser(WebUser):
     """
@@ -872,10 +898,12 @@ class Invitation(Document):
     """
     domain = StringProperty()
     email = StringProperty()
-    is_domain_admin = BooleanProperty()
+#    is_domain_admin = BooleanProperty()
     invited_by = StringProperty()
     invited_on = DateTimeProperty()
     is_accepted = BooleanProperty(default=False)
+
+    role = StringProperty()
 
     _inviter = None
     def get_inviter(self):

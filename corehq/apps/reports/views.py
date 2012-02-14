@@ -4,6 +4,7 @@ from corehq.apps.reports import util, standard
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import CouchUser, CommCareUser
 import couchexport
+from couchexport.util import FilterFunction
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.export import WorkBook
@@ -31,6 +32,9 @@ from couchexport.shortcuts import export_data_shared, export_raw_data
 from django.views.decorators.http import require_POST
 from couchforms.filters import instances
 from couchdbkit.exceptions import ResourceNotFound
+from mock import self
+from fields import FilterUsersField
+from util import get_all_users_by_domain
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -78,13 +82,26 @@ def export_data(req, domain):
               "previous_export_id": req.GET.get("previous_export", None),
               "filename": export_tag,
               "use_cache": string_to_boolean(req.GET.get("use_cache", "True")),
-              "max_column_size": int(req.GET.get("max_column_size", 2000))}
+              "max_column_size": int(req.GET.get("max_column_size", 2000)),
+              "separator": req.GET.get("separator", "|")}
 
-    group_filter = util.create_group_filter(group)
+    user_filter, _ = FilterUsersField.get_user_filter(req)
+
+    if user_filter:
+        users_matching_filter = map(lambda x: x._id, get_all_users_by_domain(domain, filter_users=user_filter))
+        def _ufilter(user):
+            try:
+                return user['form']['meta']['userID'] in users_matching_filter
+            except KeyError:
+                return False
+        filter = _ufilter
+    else:
+        filter = util.create_group_filter(group)
+
     errors_filter = instances if not include_errors else None
 
-    kwargs['filter'] = couchexport.util.intersect_filters(group_filter, errors_filter)
-
+    kwargs['filter'] = couchexport.util.intersect_filters(filter, errors_filter)
+    
     if kwargs['format'] == 'raw':
         resp = export_raw_data([domain, export_tag], filename=export_tag)
     else:
@@ -104,13 +121,18 @@ def export_data_async(req, domain):
     """
     Download all data for a couchdbkit model
     """
+
     try:
         export_tag = json.loads(req.GET.get("export_tag", "null") or "null")
     except ValueError:
         return HttpResponseBadRequest()
 
+    app_id = req.GET.get('app_id', None)
     assert(export_tag[0] == domain)
-    return couchexport_views.export_data_async(req, filter=instances)
+
+    filter = FilterFunction(instances) & FilterFunction(util.app_export_filter, app_id=app_id)
+
+    return couchexport_views.export_data_async(req, filter=filter)
     
 @login_and_domain_required
 def custom_export(req, domain):
@@ -228,7 +250,18 @@ def export_custom_data(req, domain, export_id):
     if not next:
         next = reverse('excel_export_data_report', args=[domain])
 
-    filter = util.create_group_filter(group)
+    user_filter, _ = FilterUsersField.get_user_filter(req)
+
+    if user_filter:
+        users_matching_filter = map(lambda x: x._id, get_all_users_by_domain(domain, filter_users=user_filter))
+        def _ufilter(user):
+            try:
+                return user['form']['meta']['userID'] in users_matching_filter
+            except KeyError:
+                return False
+        filter = _ufilter
+    else:
+        filter = util.create_group_filter(group)
 
     resp = saved_export.download_data(format, filter=filter)
     if resp:
@@ -267,6 +300,9 @@ def case_export(request, domain, template='reports/basic_report.html',
         title="Export cases, referrals, and users",
         group=group,
     )
+    toggle, show_filter = FilterUsersField.get_user_filter(request)
+    context['show_user_filter'] = show_filter
+    context['toggle_users'] = toggle
     return render_to_response(request, template, context)
 
 @login_or_digest
@@ -279,9 +315,12 @@ def download_cases(request, domain):
 
     key = [domain, {}, {}]
     cases = CommCareCase.view(view_name, startkey=key, endkey=key + [{}], reduce=False, include_docs=True)
-    group, users = util.get_group_params(domain, **json_request(request.GET))
-    if not group:
-        users.extend(CommCareUser.by_domain(domain, is_active=False))
+#    group, users = util.get_group_params(domain, **json_request(request.GET))
+    group = request.GET.get('group', None)
+    user_filter, _ = FilterUsersField.get_user_filter(request)
+    users = get_all_users_by_domain(domain, group=group, filter_users=user_filter)
+#    if not group:
+#        users.extend(CommCareUser.by_domain(domain, is_active=False))
 
     workbook = WorkBook()
     export_cases_and_referrals(cases, workbook, users=users)
@@ -295,7 +334,8 @@ def download_cases(request, domain):
 @datespan_default
 def excel_export_data(request, domain, template="reports/excel_export_data.html"):
     group, users = util.get_group_params(domain, **json_request(request.GET))
-    forms = get_db().view('reports/forms_by_xmlns', startkey=[domain, {}], endkey=[domain, {}, {}], group=True)
+    ufilter = request.GET.get('ufilter', None)
+    forms = get_db().view('reports/forms_by_xmlns', startkey=[domain], endkey=[domain, {}], group=True)
     forms = [x['value'] for x in forms]
 
     forms = sorted(forms, key=lambda form: \
@@ -318,6 +358,9 @@ def excel_export_data(request, domain, template="reports/excel_export_data.html"
     context = util.report_context(domain, title="Export Data to Excel", #datespan=request.datespan
         group=group
     )
+    toggle, show_filter = FilterUsersField.get_user_filter(request)
+    context['show_user_filter'] = show_filter
+    context['toggle_users'] = toggle
     context.update({
         "forms": forms,
         "saved_exports": exports,
