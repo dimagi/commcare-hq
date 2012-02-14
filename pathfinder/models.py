@@ -1,9 +1,15 @@
 from couchdbkit.ext.django.schema import Document
 from corehq.apps.reports.custom import HQReport, ReportField
 from datetime import date
-from pathfinder.views import retrieve_patient_group, retrieve_providers, get_provider_info, get_patients_by_provider
+from pathfinder.views import retrieve_patient_group, get_patients_by_provider
 from django.http import Http404
 from dimagi.utils.couch.database import get_db
+from corehq.apps.groups.models import Group
+
+from casexml.apps.case.models import CommCareCase
+from corehq.apps.users.models import CommCareUser
+from dimagi.utils.queryable_set import QueryableList
+from couchforms.models import XFormInstance
 
 class _(Document): pass
 
@@ -11,22 +17,23 @@ class PathfinderWardSummaryReport(HQReport):
     name = "Ward Summary"
     slug = "ward"
     template_name = "pathfinder-reports/ward_summary.html"
-    fields = ['corehq.apps.reports.custom.MonthField', 'corehq.apps.reports.custom.YearField', 'pathfinder.models.WardSelect']
+    fields = ['corehq.apps.reports.custom.MonthField', 'corehq.apps.reports.custom.YearField', 'corehq.apps.reports.fields.GroupField']
 
     def calc(self):
-        ward = self.request.GET.get("ward", None)
+        ward = self.request.GET.get("group", None)
         month = self.request.GET.get("month", None)
         year = self.request.GET.get("year", None)
         if not (ward and month and year):
             return #raise Http404("Ward, month, or year not set.")
-
-        provs = retrieve_providers(self.domain, ward)
+        ward = Group.get(ward)
+        #provs = retrieve_providers(self.domain, ward)
+        provs = map(CommCareUser.get, ward.users)
         prov_p = {} # Providers, indexed by name.
         refs_p = {} # Referrals, indexed by name.
         for p in provs:
-            x = retrieve_patient_group(get_patients_by_provider(self.domain, p['full_name']), self.domain, year, month)
-            prov_p[p['full_name']] = x
-            refs_p[p['full_name']] = sum([a['referrals_completed'] for a in x])
+            x = retrieve_patient_group(get_patients_by_provider(self.domain, p._id), self.domain, year, month)
+            prov_p[p.get_id] = x
+            refs_p[p.get_id] = sum([a['referrals_completed'] for a in x])
         self.context['ward'] = ward
         self.context['year'] = year
         self.context['month'] = month
@@ -42,14 +49,14 @@ class PathfinderProviderReport(HQReport):
 
 
     def calc(self):
-        name = self.request.GET.get("name", None)
+        name = self.request.GET.get("user", None)
         month = self.request.GET.get("month", None)
         year = self.request.GET.get("year", None)
         if not (name and month and year):
             return #raise Http404("Ward, month, or year not set.")
 
 
-        self.context['p'] = get_provider_info(self.domain, name)
+        self.context['p'] = CommCareUser.get(name)#get_provider_info(self.domain, name)
         self.context['name'] = name
         pre = get_patients_by_provider(self.domain, name)
         patients = {}
@@ -68,25 +75,27 @@ class PathfinderHBCReport(HQReport):
     name = "Home-Based Care"
     slug = "hbc"
     template_name = "pathfinder-reports/hbc.html"
-    fields = ['corehq.apps.reports.custom.MonthField', 'corehq.apps.reports.custom.YearField', 'pathfinder.models.WardSelect']
-
+    fields = ['corehq.apps.reports.custom.MonthField', 'corehq.apps.reports.custom.YearField', 'corehq.apps.reports.fields.GroupField']
     def calc(self):
-        ward = self.request.GET.get("ward", None)
+        ward = self.request.GET.get("group", None)
         month = self.request.GET.get("month", None)
         year = self.request.GET.get("year", None)
         if not (ward and month and year):
             return #raise Http404("Ward, month, or year not set.")
 
-        user_ids = get_db().view('pathfinder/pathfinder_gov_reg', keys=[[self.domain, ward]], include_docs=True).all()
-        print user_ids
+        ward = Group.get(ward)
+
+        user_ids = get_db().view('pathfinder/pathfinder_gov_reg_by_username', keys=[[self.domain, w] for w in ward.users], include_docs=True).all()
         self.context['p'] = retrieve_patient_group(user_ids, self.domain, year, month)
-        chws = retrieve_providers(self.domain, ward)
+        chws = QueryableList(map(CommCareUser.get, ward.users))
         chws._reported = lambda x: x['reported_this_month']
         for c in chws:
-            if len(filter(lambda x: x['provider'] == c['full_name'], self.context['p'].followup)):
-                c['reported_this_month'] = True
-            else:
-                c['reported_this_month'] = False
+            r = XFormInstance.view('pathfinder/pathfinder_xforms',
+                key=['pathfinder', c.get_id, int(year), int(month)],
+                reduce=True
+            ).one()
+            c['reported_this_month'] = (r != None)
+
         self.context['chws'] = chws
         self.context['ward'] = ward
         self.context['date'] = date(year=int(year),month=int(month), day=01)
@@ -96,17 +105,8 @@ class ProviderSelect(ReportField):
     template = "pathfinder-reports/provider-select.html"
 
     def update_context(self):
-        results = get_db().view('pathfinder/pathfinder_gov_chw_by_name').all()
-        self.context['names'] = [result['key'][1] for result in results]
-        self.context['provider'] = self.request.GET.get('provider', None)
-
-
-class WardSelect(ReportField):
-    slug = "ward"
-    template = "pathfinder-reports/ward-select.html"
-
-    def update_context(self):
-        results = get_db().view('pathfinder/pathfinder_all_wards', group=True).all()
-        res = [result['key'] for result in results]
-        self.context['wards'] = [{"district": result[1], "ward": result[2]} for result in res]
-        self.context['ward'] = self.request.GET.get('ward', None)
+        results = CommCareUser.by_domain('pathfinder')
+        self.context['names'] = {}
+        for result in results:
+            self.context['names'].update({result.user_data['full_name']: result.get_id})
+        self.context['provider'] = self.request.GET.get('user', None)

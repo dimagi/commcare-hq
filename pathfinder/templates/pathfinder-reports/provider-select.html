@@ -1,5 +1,5 @@
-Provider: <select name="name">
-{% for name in names%}
-<option value="{{ name }}" {% ifequal provider name %} selected="true"{% endifequal %}>{{ name }}</option>
+Provider: <select name="user">
+{% for name,id in names.items%}
+<option value="{{ id }}" {% ifequal provider id %} selected="true"{% endifequal %}>{{ name }}</option>
 {% endfor %}
 </select>

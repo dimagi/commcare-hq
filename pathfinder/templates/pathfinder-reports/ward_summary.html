@@ -9,7 +9,7 @@
     {% if ward %}
         <h2 align="center">Ward Summary Report</h2>
 
-        <h5 align="center">Ward: {{ ward }}</h5>
+        <h5 align="center">Ward: {{ ward.name }}</h5>
         <h5 align="center">Month: {{ month }}</h5>
         <h5 align="center">Year: {{ year }}</h5>
 
@@ -100,14 +100,13 @@
             <tbody>
             {% for chw in provs %}
                 <tr class="{% cycle 'odd' 'even' %}">
-                    <td>{{ chw.region }}</td>
-                    <td>{{ chw.district }}</td>
-                    <td>{{ chw.ward }}</td>
-                   <td>{{ chw.full_name }}</td>
-                    <td>{{ chw.chw_id }}</td>
-                    {% with chw.full_name as n %}
+                    <td>{{ chw.user_data.region }}</td>
+                    <td>{{ chw.user_data.district }}</td>
+                    <td>{{ chw.user_data.ward }}</td>
+                   <td>{{ chw.user_data.full_name }}</td>
+                    <td>{{ chw.user_data.chw_id }}</td>
+                    {% with chw.get_id as n %}
                         {% with prov_p|dict_lookup:n as pats %}
-
                             <td>{{ pats.new__hiv_pos__m|length }}</td>
                             <td>{{ pats.new__hiv_pos__f|length }}</td>
                             <td>{{ pats.new__hiv_neg__m|length }}</td>

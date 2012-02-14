@@ -11,7 +11,7 @@
     {% if p.male or p.female %}
         <h2 align="center">Home Based Care Monthly Summary Report</h2>
 
-        <h4 align="center">Ward: {{ ward }}</h4>
+        <h4 align="center">Ward: {{ ward.name }}</h4>
         <h5 align="center">Date: {{ date|date:"F Y"}}</h5>
 {#        <div align="center"><a href="{% url  domain %}?ward={{ ward }}&year={{ date|date:"Y"}}&month={{date|date:"m"}}">#}
 {#            View ward summary for {{ ward }}, {{ date|date:"F Y" }}</a></div>#}
