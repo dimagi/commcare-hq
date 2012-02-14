@@ -56,6 +56,7 @@ class Permissions(object):
     EDIT_COMMCARE_USERS = 'edit-commcare-users'
     EDIT_DATA = 'edit-data'
     EDIT_APPS = 'edit-apps'
+
     AVAILABLE_PERMISSIONS = [EDIT_DATA, EDIT_WEB_USERS, EDIT_COMMCARE_USERS, EDIT_APPS]
 
 class Roles(object):
@@ -401,6 +402,22 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     def is_deleted(self):
         return self.base_doc.endswith(DELETED_SUFFIX)
+
+    def has_permission(self, domain, permission):
+        """To be overridden by subclasses"""
+        return False
+
+    def __getattr__(self, item):
+        if item.startswith('can_'):
+            perm = getattr(Permissions, item[len('can_'):].upper(), None)
+            if perm:
+                def fn(domain=None):
+                    domain = domain or self.current_domain
+                    return self.has_permission(domain, perm)
+                fn.__name__ = item
+                return fn
+        return super(CouchUser, self).__getattr__(item)
+
 
 class CommCareUser(CouchUser):
 
@@ -838,25 +855,6 @@ class WebUser(CouchUser):
                 return None
 
         return dict(Roles.get_role_labels()).get(self.get_role(domain), "Unknown Role")
-#
-#    # these functions help in templates
-#    def can_edit_apps(self, domain=None):
-#        domain = domain or self.current_domain
-#        return self.has_permission(domain, Permissions.EDIT_APPS)
-#    def can_edit_web_users(self, domain=None):
-#        domain = domain or self.current_domain
-#        return self.has_permission(domain, Permissions.EDIT_WEB_USERS)
-
-    def __getattr__(self, item):
-        if item.startswith('can_'):
-            perm = getattr(Permissions, item[len('can_'):].upper(), None)
-            if perm:
-                def fn(domain=None):
-                    domain = domain or self.current_domain
-                    return self.has_permission(domain, perm)
-                fn.__name__ = item
-                return fn
-        return super(WebUser, self).__getattr__(item)
 
 class FakeUser(WebUser):
     """

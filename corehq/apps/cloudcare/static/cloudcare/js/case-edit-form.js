@@ -201,9 +201,10 @@ var CaseEditForm = (function () {
                     },
                     makeCallback = function (spec, mapping, $td, $label) {
                         return function (element) {
-                            var forID = casexml.guid();
+                            var forID;
                             setControl(element, mapping, spec.key, spec.stringToValue);
                             $td.html(element.ui);
+                            forID = element.$edit_view.attr('id') || casexml.guid();
                             element.$edit_view.attr({id: forID});
                             $label.attr({'for': forID});
                         };
@@ -242,8 +243,12 @@ var CaseEditForm = (function () {
                 indices: {}
             };
         }
-
-        saveButton.ui.appendTo(home);
+        saveButton.ui.appendTo(home).attr({'id': 'case-edit-save-button'});
+        editLink = $('<a href="#" id="case-edit-form-edit-link"/>').text('edit').click(function () {
+            edit = !edit;
+            that.fire('edit:change');
+            return false;
+        }).appendTo(home);
         $('<h1/>').appendTo(home).append(case_name_element.ui);
 
         that.on('restart', function () {
@@ -253,11 +258,6 @@ var CaseEditForm = (function () {
         }).fire('restart');
         setControl(case_name_element, keis.properties, 'case_name');
 
-        editLink = $('<a href="#" id="case-edit-form-edit-link"/>').text('edit').click(function () {
-            edit = !edit;
-            that.fire('edit:change');
-            return false;
-        }).appendTo(home);
         keyValueTable({
             mapping: keis.properties,
             spec: keisPropertiesSpec

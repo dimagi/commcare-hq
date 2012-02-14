@@ -9,7 +9,6 @@
             padding: 10px;
         }
         .key-value-table {
-            /*width: 500px;*/
             margin: auto;
         }
         .key-value-table th, .key-value-table td {
@@ -49,12 +48,23 @@
             font-size: 1.2em;
             margin: .5em 0;
         }
-        h2, #case-edit-form-edit-link {
+        h2 {
             display: inline-block;
             margin-right: 1em;
         }
+        #case-edit-form-edit-link {
+            display: block;
+            width: 400px;
+            margin: auto;
+            text-align: right;
+        }
+        #case-edit-save-button {
+            position: absolute;
+            right: 1em;
+        }
         #main_container {
             min-width: 500px;
+            position: relative;
         }
     </style>
 {% endblock %}
