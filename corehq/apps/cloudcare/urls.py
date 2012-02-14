@@ -4,7 +4,7 @@ from django.views.generic.simple import direct_to_template
 cases_urls = patterns('corehq.apps.cloudcare.views',
     url(r'^list/$', 'case_list', name='cloudcare_case_list'),
     url(r'^view/(?P<case_id>[\w-]*)/$', 'view_case', name='cloudcare_view_case'),
-    url(r'^create/$', 'create_case', name='cloudcare_create_case'),
+    url(r'^create/$', 'view_case', {'case_id': None}, name='cloudcare_create_case'),
 )
 
 api_urls = patterns('corehq.apps.cloudcare.views',

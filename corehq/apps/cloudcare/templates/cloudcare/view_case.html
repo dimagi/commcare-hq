@@ -74,23 +74,27 @@
         $(function () {
             var caseEditForm = $('#case-edit-form'),
                 caseList = $('#case-list'),
-                user_id = {{ request.couch_user.user_id|JSON }};
+                user_id = {{ request.couch_user.user_id|JSON }},
+                caseSpec = {{ case_spec|JSON}},
+                commcareCase = {{ case|JSON }};
 
-            CaseEditForm.init({
-                home: caseEditForm,
-                commcareCase: {{ case|JSON }},
-                user_id: user_id,
-                caseSpec: {{ case_spec|JSON }},
-                receiverUrl: "{% url receiver_post domain %}",
-                groupsUrl: "{% url cloudcare_get_groups domain request.couch_user.user_id %}",
-                lang: "en"
-            });
+            if (caseSpec) {
+                CaseEditForm.init({
+                    home: caseEditForm,
+                    commcareCase: commcareCase,
+                    user_id: user_id,
+                    caseSpec: caseSpec,
+                    receiverUrl: "{% url receiver_post domain %}",
+                    groupsUrl: "{% url cloudcare_get_groups domain request.couch_user.user_id %}",
+                    lang: "en"
+                });
 
-            CaseList.init({
-                user_id: user_id,
-                casesUrl: "{% url cloudcare_get_cases domain %}",
-                home: caseList
-            });
+    //            CaseList.init({
+    //                user_id: user_id,
+    //                casesUrl: "{% url cloudcare_get_cases domain %}",
+    //                home: caseList
+    //            });
+            }
         }());
     </script>
 {% endblock %}
@@ -98,6 +102,21 @@
 {% block content %}
     <div id="main_container">
         <section id="case-list"></section>
-        <section id="case-edit-form"></section>
+        <section id="case-edit-form">
+            {% if not case_spec %}
+                {% if suggested_case_specs %}
+                    <p>Which outline would you like to use?</p>
+                    <ul>
+                        {% for spec in suggested_case_specs %}
+                            <li>
+                                <a href="?spec={{ spec.get_id }}">{{ spec.name }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>Oops! You don't have any case specs configured{% if case %} for case type "{{ case.properties.case_type }}"{% endif %}. Contact your administrator.</p>
+                {% endif %}
+            {% endif %}
+        </section>
     </div>
 {% endblock %}
