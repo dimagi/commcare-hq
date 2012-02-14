@@ -88,6 +88,12 @@ def device_log(request, domain, device, template='phonelog/devicelogs.html', con
     logdata = list(logdata)
     logdata.reverse()
 
+    def valid_log_entry(row):
+        return isinstance(row["value"], dict) and not \
+            len(filter(lambda val: not isinstance(val, dict), row["value"].values()))
+    
+    logdata = filter(lambda l: valid_log_entry(l), logdata)
+    
     num = len(logdata)
     more_prev = (num == limit)
     more_next = (skip > 0)
