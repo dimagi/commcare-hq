@@ -17,10 +17,17 @@
         }
     .devicelogs {
         margin: 1em;
+        clear: both;
+    }
+    
+    #view_raw {
+        float: right;
+        margin: 1em;
     }
     </style>
 {% endblock %}
 {% block reportcontent %}
+    <a id="view_raw" href="{% url device_log_raw domain device %}">View Raw Logs</a>
     <div class="devicelogs">
         {% include 'phonelog/devicelogs.html' %}
     </div>

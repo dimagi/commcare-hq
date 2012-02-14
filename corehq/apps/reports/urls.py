@@ -21,6 +21,10 @@ phonelog_reports = patterns('',
         'template': 'reports/phonelog/devicelogs.html',
         'context': _phonelog_context
     }),
+    url(r'^(?P<device>[\w\-]+)/raw/$', 'phonelog.views.device_log_raw', name="device_log_raw", kwargs={
+        'template': 'reports/phonelog/devicelogs_raw.html',
+        'context': _phonelog_context
+    }),
 )
 
 
