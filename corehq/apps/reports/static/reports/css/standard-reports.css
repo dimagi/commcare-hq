@@ -48,7 +48,7 @@ input.date-picker {
 }
 
 fieldset.report-field {
-    display: inline-block;
+    display: block;
     padding: .25em 20px 0.25em 90px;
     min-width: 200px;
 }
