@@ -4,12 +4,46 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.views import logout
 from corehq.apps.users.models import CouchUser
-from dimagi.utils.web import render_to_response, json_response
+from dimagi.utils.web import render_to_response, json_response, json_handler
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
+from corehq.apps.app_manager.models import Application, ApplicationBase
+import json
+from corehq.apps.cloudcare.api import get_owned_cases
+from corehq.apps.app_manager.views import get_apps_base_context
 
-def case_list(request):
-    pass
+@login_and_domain_required
+def case_list(request, domain):
+    
+    apps = filter(lambda app: app.doc_type == "Application",
+                  ApplicationBase.view('app_manager/applications_brief', 
+                                       startkey=[domain], endkey=[domain, {}]))
+    
+    user_id = request.REQUEST.get("user_id", request.couch_user.get_id)
+    app_id = request.REQUEST.get("app_id", "")
+    module_id = int(request.REQUEST.get("module_id", "0"))
+    language = request.REQUEST.get("language", "en")
+    
+    if not app_id and apps:
+        app_id = apps[0].get_id
+    
+    if app_id:
+        app = Application.get(app_id)
+        case_short = app.modules[module_id].get_detail("case_short")
+        case_long = app.modules[module_id].get_detail("case_long")
+    else:
+        case_short=""
+        case_long=""
+    
+    return render_to_response(request, "cloudcare/list_cases.html", 
+                              {"domain": domain,
+                               "language": language,
+                               "user_id": user_id,
+                               "apps": apps,
+                               "case_short": json.dumps(case_short._doc),
+                               "case_long": json.dumps(case_long._doc),
+                               "cases": json.dumps(get_owned_cases(domain, user_id),
+                                                   default=json_handler)})
 
 cloudcare_api = login_and_domain_required
 
@@ -41,8 +75,4 @@ def get_groups(request, domain, user_id):
 
 @cloudcare_api
 def get_cases(request, domain):
-    user = CouchUser.get_by_user_id(request.GET['user_id'], domain)
-    owner_ids = user.get_owner_ids()
-    keys = [[owner_id, False] for owner_id in owner_ids]
-    cases = CommCareCase.view('case/by_owner', keys=keys, include_docs=True)
-    return json_response([case.get_json() for case in cases])
+    return json_response(get_owned_cases(domain, request.GET['user_id']))
