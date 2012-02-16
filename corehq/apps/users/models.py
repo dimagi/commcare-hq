@@ -5,6 +5,7 @@ from __future__ import absolute_import
 
 from datetime import datetime
 import logging
+import re
 from dimagi.utils.make_uuid import random_hex
 
 from django.contrib.auth.models import User
@@ -142,6 +143,9 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     class Inconsistent(Exception):
         pass
 
+    class InvalidID(Exception):
+        pass
+
     @property
     def raw_username(self):
         if self.doc_type == "CommCareUser":
@@ -178,6 +182,11 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         return "%s %s" % (self.first_name, self.last_name)
 
     formatted_name = full_name
+
+    def set_full_name(self, full_name):
+        data = full_name.split()
+        self.first_name = data.pop(0)
+        self.last_name = ' '.join(data)
 
     def get_scheduled_reports(self):
         return ReportNotification.view("reports/user_notifications", key=self.user_id, include_docs=True).all()
@@ -351,6 +360,8 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
         django_user = create_user(username, password=password, email=email)
         if uuid:
+            if not re.match(r'[\w-]+', uuid):
+                raise cls.InvalidID('invalid id %r' % uuid)
             couch_user = cls(_id=uuid)
         else:
             couch_user = cls()

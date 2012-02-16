@@ -1,7 +1,16 @@
 {% extends "users/users_base.html" %}
+{% load hq_shared_tags %}
+{% block js-inline %}
+    <script>
+        $(function () {
+
+        });
+    </script>
+{% endblock %}
+
 {% block user-view %}
     <h1>Upload CommCare Users</h1>
-    <p>Step 1. Download the example file: <a href="{% url upload_commcare_users_example domain %}">users.csv</a></p>
+    <p>Step 1. Download the example file: <a href="{% static 'users/xlsx/users.xlsx' %}">users.xlsx</a></p>
     <p>Step 2. Fill it out with your users' information</p>
     <p>Step 3. Use the form below to upload your completed file.</p>
     <form action="" method="post" enctype="multipart/form-data">

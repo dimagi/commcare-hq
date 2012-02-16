@@ -6,8 +6,9 @@ import urllib
 from datetime import datetime
 import csv
 import io
-from corehq.apps.users.util import format_username
+from corehq.apps.users.util import format_username, normalize_username, raw_username
 from dimagi.utils.decorators.view import get_file
+from dimagi.utils.excel import Excel2007DictReader
 from django.contrib.auth import logout
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.models import User
@@ -604,7 +605,7 @@ class UploadCommCareUsers(TemplateView):
     template_name = 'users/upload_commcare_users.html'
 
     required_headers = set(['username', 'password'])
-    allowed_headers = set(['phone-number']) | required_headers
+    allowed_headers = set(['phone-number', 'user_id', 'name']) | required_headers
 
     def get_context_data(self, **kwargs):
         """TemplateView automatically calls this to render the view (on a get)"""
@@ -613,10 +614,14 @@ class UploadCommCareUsers(TemplateView):
     @method_decorator(get_file)
     def post(self, request):
         """View's dispatch method automatically calls this"""
+
         try:
-            self.user_specs = csv.DictReader(io.StringIO(request.file.read().decode('ascii'), newline=None))
-        except UnicodeDecodeError:
-            return HttpResponseBadRequest("Your CSV contains illegal characters")
+            self.user_specs = Excel2007DictReader(request.file)
+        except Exception:
+            try:
+                self.user_specs = csv.DictReader(io.StringIO(request.file.read().decode('ascii'), newline=None))
+            except UnicodeDecodeError:
+                return HttpResponseBadRequest("Your CSV contains illegal characters")
 
         try:
             self.check_headers()
@@ -625,38 +630,65 @@ class UploadCommCareUsers(TemplateView):
 
         response = HttpResponse()
         response_writer = csv.DictWriter(response, ['username', 'flag'])
+        response_rows = []
 
         for row in self.create_or_update_users():
             response_writer.writerow(row)
+            response_rows.append(row)
 
         redirect = request.POST.get('redirect')
         if redirect:
             messages.success(request, 'Your bulk user upload is complete!')
+            problem_rows = []
+            for row in response_rows:
+                if row['flag'] not in ('updated', 'created'):
+                    problem_rows.append(row)
+            if problem_rows:
+                messages.error(request, 'However, we ran into problems with the following users:')
+                for row in problem_rows:
+                    messages.error(request, '{username}: {flag}'.format(**row))
             return HttpResponseRedirect(redirect)
         else:
             return response
 
     def create_or_update_users(self):
         usernames = set()
+        user_ids = set()
         for row in self.user_specs:
-            password, phone_number, username = (row.get(k) for k in sorted(self.allowed_headers))
-            full_username = format_username(username, self.domain)
-            status_row = {'username': username}
+            name, password, phone_number, user_id, username = (row.get(k) for k in sorted(self.allowed_headers))
+            username = normalize_username(username, self.domain)
+            status_row = {'username': raw_username(username)}
 
-            if username in usernames:
+            if username in usernames or user_id in user_ids:
                 status_row['flag'] = 'repeat'
+            elif not username and not user_id:
+                status_row['flag'] = 'missing-data'
             else:
-                usernames.add(username)
-                user = CommCareUser.get_by_username(full_username)
-                if user:
-                    user.set_password(password)
-                    status_row['flag'] = 'updated'
-                else:
-                    user = CommCareUser.create(self.domain, full_username, password)
-                    status_row['flag'] = 'created'
-                if phone_number:
-                    user.add_phone_number(phone_number.lstrip('+'), default=True)
-                user.save()
+                try:
+                    usernames.add(username)
+                    user_ids.add(user_id)
+                    if user_id:
+                        user = CommCareUser.get_by_user_id(user_id, self.domain)
+                    else:
+                        user = CommCareUser.get_by_username(username)
+                    if user:
+                        if user.domain != self.domain:
+                            raise Exception('User with username %r is somehow in domain %r' % (user.username, user.domain))
+                        if user.username != username:
+                            user.change_username(username)
+                        if password:
+                            user.set_password(password)
+                        status_row['flag'] = 'updated'
+                    else:
+                        user = CommCareUser.create(self.domain, username, password, uuid=user_id or '')
+                        status_row['flag'] = 'created'
+                    if phone_number:
+                        user.add_phone_number(phone_number.lstrip('+'), default=True)
+                    if name:
+                        user.set_full_name(name)
+                    user.save()
+                except Exception, e:
+                    status_row['flag'] = 'error: %s' % e
             yield status_row
 
     def check_headers(self):
