@@ -41,197 +41,25 @@
     <script src="{% static 'cloudcare/js/casexml.js' %}"></script>
     <script src="{% static 'cloudcare/js/case-edit-form.js' %}"></script>
     <script src="{% static 'hqwebapp/javascripts/backbone.js' %}"></script>
-    {# <script src="{% static 'cloudcare/js/backbone/case-list.js' %}"></script> #}
+    <script src="{% static 'cloudcare/js/backbone/case-list.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     <script>
         $(function () {
             var language = "{{ language }}";
-            
-            window.Navigation = Backbone.Router.extend({
-                
-                initialize: function() {
-                    // _.bindAll(this); 
-                },
-                
-                routes: {
-                    "case/:case":  "case",    // #view/caseid
-                },
-                
-            });
-            
-            window.Details = Backbone.Model.extend({
-            
-            });
-            
-            window.Case = Backbone.Model.extend({
-                
-                initialize: function() {
-                    _.bindAll(this, 'getProperty'); 
-                },
-                
-                getProperty: function (property) {
-                    if (property === "name") {
-                        return this.get("properties").case_name;
-                    }
-                    var root = this.get(property);
-                    return root ? root : this.get("properties")[property];
-                }
-			});      
-			
-			window.CaseView = Backbone.View.extend({
-			    tagName: 'tr', // name of (orphan) root tag in this.el
-			    initialize: function() {
-			        _.bindAll(this, 'render', 'select', 'deselect');
-			        this.selected = false; 
-			    },
-			    events: {
-			        "click": "select"
-			    },
-			    
-			    select: function () {
-			        $(this.el).addClass("selected");
-			        this.trigger("selected");
-			    }, 
-			    
-			    deselect: function () {
-                    $(this.el).removeClass("selected");
-                    this.trigger("deselected");
-                }, 
-                
-				render: function(){
-				    var self = this;
-				    _(this.options.columns).each(function (col) {
-				        $("<td />").text(self.model.getProperty(col.field) || "?").appendTo($(self.el));
-				    });
-				    
-				    return this; 
-                }
-			});
-
-			window.CaseList = Backbone.Collection.extend({
-			    model: Case,
-			    url: "{% url cloudcare_get_cases domain %}?user_id={{user_id}}"
-			});
-			
-			window.CaseListView = Backbone.View.extend({
-			    el: $('#case-list'), 
-			    
-			    initialize: function(){
-			      _.bindAll(this, 'render', 'appendItem', 'appendAll'); 
-			      
-			      this.caseMap = {};
-			      
-			      this.detailsShort = new Details();
-                  this.detailsShort.set({{case_short|safe}});
-                  
-                  this.caseList = new CaseList();
-			      this.caseList.bind('add', this.appendItem);
-			      this.caseList.bind('reset', this.appendAll);
-                  this.caseList.reset({{ cases|safe }});
-                  
-                  this.render();
-                  
-                  
-			    },
-			    
-			    render: function () {
-			      var self = this;
-			      var table = $("<table />").appendTo($(this.el));
-			      var thead = $("<thead />").appendTo(table);
-			      var theadrow = $("<tr />").appendTo(thead);
-			      _(this.detailsShort.get("columns")).each(function (col) {
-			        $("<th />").text(col.header[language] || "?").appendTo(theadrow);
-			      });
-			      var tbody = $("<tbody />").appendTo(table);
-			      _(this.caseList.models).each(function(item){ 
-			         self.appendItem(item);
-			      });
-			    },
-			    appendItem: function (item) {
-			      var self = this;
-			      var caseView = new CaseView({
-			          model: item,
-			          columns: this.detailsShort.get("columns")
-			      });
-			      caseView.on("selected", function () {
-			          if (self.selectedCaseView) {
-			              self.selectedCaseView.deselect();
-			          }
-			          if (self.selectedCaseView !== this) {
-			              self.selectedCaseView = this;
-			              self.trigger("case:selected", this);
-			          }
-			      });
-			      
-			      $('table tbody', this.el).append(caseView.render().el);
-			      this.caseMap[item.getProperty("case_id")] = caseView;
-                  
-			    },
-			    appendAll: function () {
-			      this.caseList.each(this.appendItem);
-                }, 
-			    
-			});
-			
-			window.CaseDetailsView = Backbone.View.extend({
-                el: $('#case-details'),
-                
-                initialize: function(){
-                  _.bindAll(this, 'render'); 
-                  
-                  this.details = new Details();
-                  this.details.set({{case_long|safe}});
-                  this.render();
-                },
-                
-                render: function () {
-                  var self = this;
-                  $(this.el).html(""); // clear
-                  if (this.model) {
-	                  var table = $("<table />").appendTo($(this.el));
-	                  _(this.details.get("columns")).each(function (col) {
-	                    var row = $("<tr />").appendTo(table);
-	                    $("<th />").text(col.header[language] || "?").appendTo(row);
-	                    $("<td />").text(self.model.getProperty(col.field) || "?").appendTo(row);
-	                  });
-	              }
-                },               
-            });
-            
-			window.AppView = Backbone.View.extend({
+            var listDetails = {{case_short|safe}};
+            var summaryDetails = {{case_long|safe}};
+            var cases = {{ cases|safe }};
+            window.appView = new AppView({
 			    el: $("#main-container"),
-			    
-			    initialize: function () {
-			        _.bindAll(this, 'render', 'selectCase'); 
-			        var self = this;
-			        this.router = new Navigation();
-                    this.router.on("route:case", function (caseId) {
-                        self.selectCase(self.listView.caseMap[caseId]);
-                    });
-                    this.listView = new CaseListView();
-			        this.detailsView = new CaseDetailsView();
-			        this.listView.on("case:selected", function (caseView) {
-			            self.selectCase(caseView);
-			            self.router.navigate("case/" + caseView.model.getProperty("case_id"));
-			        });
-			        
-			    },
-			    
-			    selectCase: function (caseView) {
-			        this.detailsView.model = caseView.model;
-			        this.detailsView.render();
-			    },
-                
-                render: function () {
-                    
-                }
-                
-                
+			    listDetails: listDetails,
+			    summaryDetails: summaryDetails,
+			    cases: cases,
+			    language: language
 			});
-			
-			window.appView = new AppView();
 			Backbone.history.start();
+			// TODO: when we figure out what to do about get params, use this
+			// Backbone.history.start({pushState: true, root: "{% url cloudcare_case_list domain %}"});
             
         }());
     </script>
