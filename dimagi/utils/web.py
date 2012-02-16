@@ -172,8 +172,7 @@ def json_handler(obj):
     elif isinstance(obj, date):
         return obj.isoformat()
     else:
-        print '%r' % obj
-        raise TypeError
+        raise TypeError("%r is not json serializable" % obj)
 
 def json_response(obj, **kwargs):
     if not kwargs.has_key('default'):
