@@ -12,6 +12,7 @@ from django.contrib.sites.models import Site
 import json
 from dimagi.utils.parsing import json_format_datetime
 from datetime import date, datetime
+from decimal import Decimal
 
 def get_url_base():
     try:
@@ -171,6 +172,8 @@ def json_handler(obj):
         return json_format_datetime(obj)
     elif isinstance(obj, date):
         return obj.isoformat()
+    elif isinstance(obj, Decimal):
+        return float(obj) # warning, potential loss of precision
     else:
         raise TypeError("%r is not json serializable" % obj)
 
