@@ -4,10 +4,10 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.reminders.models import *
 from corehq.apps.users.models import CouchUser, CommCareUser
 
-"""
-This is the original use case and tests a fixed reminder schedule.
-"""
 class ReminderTestCase(TestCase):
+    """
+    This is the original use case and tests a fixed reminder schedule.
+    """
     @classmethod
     def setUpClass(cls):
         cls.domain = "test"
@@ -113,18 +113,18 @@ class ReminderTestCase(TestCase):
     def tearDownClass(cls):
         pass
 
-"""
-This use case represents an irregular reminder schedule which is repeated twice:
-
-Week1: Day1: 10:00 Message 1
-Week1: Day4: 11:00 Message 2
-Week1: Day4: 11:30 Message 3
-
-Week2: Day1: 10:00 Message 1
-Week2: Day4: 11:00 Message 2
-Week2: Day4: 11:30 Message 3
-"""
 class ReminderIrregularScheduleTestCase(TestCase):
+    """
+    This use case represents an irregular reminder schedule which is repeated twice:
+
+    Week1: Day1: 10:00 Message 1
+    Week1: Day4: 11:00 Message 2
+    Week1: Day4: 11:30 Message 3
+
+    Week2: Day1: 10:00 Message 1
+    Week2: Day4: 11:00 Message 2
+    Week2: Day4: 11:30 Message 3
+    """
     @classmethod
     def setUpClass(cls):
         cls.domain = "test"
@@ -264,21 +264,21 @@ class ReminderIrregularScheduleTestCase(TestCase):
     def tearDownClass(cls):
         pass
 
-"""
-This use case represents a reminder schedule with an expected callback:
-
-Day1: 10:00 Callback Message 1 [simple reminder]
-Day1: 11:00 Callback Message 2 [expects callback]
-Day1: 11:15 Callback Message 2 [15-minute timeout if callback is not received]
-Day1: 11:45 Callback Message 2 [30-minute timeout if callback is not received]
-
-Day2: (same as Day1)
-
-Day3: (same as Day1)
-
-This case also tests handling of time zones using the timezone of Africa/Nairobi (UTC+3).
-"""
 class ReminderCallbackTestCase(TestCase):
+    """
+    This use case represents a reminder schedule with an expected callback:
+
+    Day1: 10:00 Callback Message 1 [simple reminder]
+    Day1: 11:00 Callback Message 2 [expects callback]
+    Day1: 11:15 Callback Message 2 [15-minute timeout if callback is not received]
+    Day1: 11:45 Callback Message 2 [30-minute timeout if callback is not received]
+
+    Day2: (same as Day1)
+
+    Day3: (same as Day1)
+
+    This case also tests handling of time zones using the timezone of Africa/Nairobi (UTC+3).
+    """
     @classmethod
     def setUpClass(cls):
         cls.domain = "test"

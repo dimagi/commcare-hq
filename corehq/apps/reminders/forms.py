@@ -15,10 +15,10 @@ METHOD_CHOICES = (
     ('callback', 'Callback')
 )
 
-"""
-A form used to create/edit CaseReminderHandlers.
-"""
 class CaseReminderForm(Form):
+    """
+    A form used to create/edit fixed-schedule CaseReminderHandlers.
+    """
     nickname = CharField()
     case_type = CharField()
 #    method = ChoiceField(choices=METHOD_CHOICES)
@@ -121,6 +121,9 @@ class EventListField(Field):
         return events
 
 class ComplexCaseReminderForm(Form):
+    """
+    A form used to create/edit CaseReminderHandlers with any type of schedule.
+    """
     nickname = CharField()
     case_type = CharField()
     method = ChoiceField(choices=METHOD_CHOICES)
