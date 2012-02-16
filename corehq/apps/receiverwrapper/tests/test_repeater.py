@@ -107,7 +107,7 @@ class RepeaterTest(TestCase):
         repeat_records = RepeatRecord.all(domain=self.domain, due_before=now + timedelta(minutes=15))
         self.assertEqual(len(repeat_records), 0)
 
-        repeat_records = RepeatRecord.all(domain=self.domain, due_before=in30min)
+        repeat_records = RepeatRecord.all(domain=self.domain, due_before=in30min + timedelta(seconds=1))
         self.assertEqual(len(repeat_records), 2)
 
         for repeat_record in repeat_records:
