@@ -195,6 +195,7 @@ def retrieve_patient_group(user_ids, domain, year, month):
         caseid_set.add(p['case_id'] )
         p['ward'] = p['village']
         p['registered_this_month'] = True if (regdate.year == form_now.year and regdate.month == form_now.month) else False
+        print regdate.year, form_now.year, regdate.month, form_now.month, p['registered_this_month']
         p['followup_this_month'] = 0
         p['referrals_made'] = 0
         for i in ['provider',
@@ -208,7 +209,7 @@ def retrieve_patient_group(user_ids, domain, year, month):
                   'referrals']:
             if not i in p:
                 p[i] = ''
-        patients[p['case_id'] ] = p
+        patients[p['case_id']] = p
     update_patients_with_followups(domain, patients, caseid_set,year,month)
     update_patients_with_referrals(patients,caseid_set,year,month)
     ## I chose not to remove patients without followups this month -- sometimes there's a referral in a month with no followup.

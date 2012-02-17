@@ -4,6 +4,8 @@ class PathfinderPatientGroup(QueryableList):
     def __init__(self):
 
         self._new = lambda x: x['registered_this_month']
+        self._old = lambda x: not x['registered_this_month']
+
         self._followup = lambda x: x['followup_this_month']
 
         self._f = lambda x: x['followup_this_month'] and (x['registration_and_followup_hiv'] == 'continuing' or x['registration_and_followup_hiv'] == '')

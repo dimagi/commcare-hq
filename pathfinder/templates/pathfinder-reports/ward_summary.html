@@ -17,7 +17,7 @@
 {#            View HBC summary for {{ ward }}, {{ month }} {{ year }}</a></div>#}
 
 
-        <table>
+        <table style="text-align: center">
             <thead>
             <tr>
                 <th rowspan=2></th>
@@ -107,26 +107,26 @@
                     <td>{{ chw.user_data.chw_id }}</td>
                     {% with chw.get_id as n %}
                         {% with prov_p|dict_lookup:n as pats %}
-                            <td>{{ pats.new__hiv_pos__m|length }}</td>
-                            <td>{{ pats.new__hiv_pos__f|length }}</td>
-                            <td>{{ pats.new__hiv_neg__m|length }}</td>
-                            <td>{{ pats.new__hiv_neg__f|length }}</td>
-                            <td>{{ pats.not_new__hiv_pos__f|length }}</td>
-                            <td>{{ pats.not_new__hiv_pos__f|length }}</td>
-                            <td>{{ pats.not_new__hiv_neg__m|length }}</td>
-                            <td>{{ pats.not_new__hiv_neg__f|length }}</td>
-                            <td>{{ pats.adult__m|length }}</td>
-                            <td>{{ pats.adult__f|length }}</td>
-                            <td>{{ pats.child__m|length }}</td>
-                            <td>{{ pats.child__f|length }}</td>
-                            <td>{{ pats.deaths__hiv_pos__m|length }}</td>
-                            <td>{{ pats.deaths__hiv_pos__f|length }}</td>
-                            <td>{{ pats.deaths__hiv_neg__m|length }}</td>
-                            <td>{{ pats.deaths__hiv_neg__f|length }}</td>
-                            <td>{{ pats.transfers__plha_m|length }}</td>
-                            <td>{{ pats.transfer_plha_f|length }}</td>
-                            <td>{{ pats.transfer_cip_m|length }}</td>
-                            <td>{{ pats.transfer_cip_f|length }}</td>
+                            <td>{{ pats.new__hiv_pos__male|length }}</td>
+                            <td>{{ pats.new__hiv_pos__female|length }}</td>
+                            <td>{{ pats.new__hiv_neg__male|length }}</td>
+                            <td>{{ pats.new__hiv_neg__female|length }}</td>
+                            <td>{{ pats.old__hiv_pos__male|length }}</td>
+                            <td>{{ pats.old__hiv_pos__female|length }}</td>
+                            <td>{{ pats.old__hiv_neg__male|length }}</td>
+                            <td>{{ pats.old__hiv_neg__female|length }}</td>
+                            <td>{{ pats.adult__male|length }}</td>
+                            <td>{{ pats.adult__female|length }}</td>
+                            <td>{{ pats.child__male|length }}</td>
+                            <td>{{ pats.child__female|length }}</td>
+                            <td>{{ pats.deaths__hiv_pos__male|length }}</td>
+                            <td>{{ pats.deaths__hiv_pos__female|length }}</td>
+                            <td>{{ pats.deaths__hiv_neg__male|length }}</td>
+                            <td>{{ pats.deaths__hiv_neg__female|length }}</td>
+                            <td>{{ pats.transfers__hiv_pos__male|length }}</td>
+                            <td>{{ pats.transfers__hiv_pos__female|length }}</td>
+                            <td>{{ pats.transfers__hiv_neg__male|length }}</td>
+                            <td>{{ pats.transfers__hiv_neg__female|length }}</td>
                             <td>{{ pats.vct|length }}</td>
                             <td>{{ pats.ois|length }}</td>
                             <td>{{ pats.ctc|length }}</td>
