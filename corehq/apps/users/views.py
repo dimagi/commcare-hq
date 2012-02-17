@@ -666,7 +666,8 @@ class UploadCommCareUsers(TemplateView):
             else:
                 try:
                     usernames.add(username)
-                    user_ids.add(user_id)
+                    if user_ids:
+                        user_ids.add(user_id)
                     if user_id:
                         user = CommCareUser.get_by_user_id(user_id, self.domain)
                     else:
