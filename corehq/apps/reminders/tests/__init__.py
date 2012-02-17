@@ -473,6 +473,206 @@ class ReminderCallbackTestCase(TestCase):
         pass
 
 
+class CaseTypeReminderTestCase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = "test"
+        cls.user_id = "USER-ID-109350"
+        cls.user = CommCareUser.create(cls.domain, 'chw.bob4', '****', uuid=cls.user_id)
+        
+        cls.handler1 = CaseReminderHandler(
+            domain=cls.domain,
+            case_type="case_type_a",
+            method="test",
+            start='start_sending1',
+            start_offset=1,
+            until='stop_sending1',
+            default_lang='en',
+            max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY,
+            schedule_length=3,
+            event_interpretation=EVENT_AS_OFFSET,
+            events = [
+                CaseReminderEvent(
+                    day_num = 0
+                   ,fire_time = time(0,0,0)
+                   ,message={"en":"Message1"}
+                   ,callback_timeout_intervals=[]
+                )
+            ]
+        )
+        cls.handler1.save()
+        
+        cls.handler2 = CaseReminderHandler(
+            domain=cls.domain,
+            case_type="case_type_a",
+            method="test",
+            start='start_sending2',
+            start_offset=2,
+            until='stop_sending2',
+            default_lang='en',
+            max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY,
+            schedule_length=3,
+            event_interpretation=EVENT_AS_OFFSET,
+            events = [
+                CaseReminderEvent(
+                    day_num = 0
+                   ,fire_time = time(0,0,0)
+                   ,message={"en":"Message2"}
+                   ,callback_timeout_intervals=[]
+                )
+            ]
+        )
+        cls.handler2.save()
+        
+        cls.handler3 = CaseReminderHandler(
+            domain=cls.domain,
+            case_type="case_type_a",
+            method="test",
+            start='start_sending3',
+            start_offset=3,
+            until='stop_sending3',
+            default_lang='en',
+            max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY,
+            schedule_length=3,
+            event_interpretation=EVENT_AS_OFFSET,
+            events = [
+                CaseReminderEvent(
+                    day_num = 0
+                   ,fire_time = time(0,0,0)
+                   ,message={"en":"Message3"}
+                   ,callback_timeout_intervals=[]
+                )
+            ]
+        )
+        cls.handler3.save()
+        
+        cls.case1 = CommCareCase(
+            domain=cls.domain,
+            type="case_type_a",
+            user_id=cls.user_id
+        )
+        cls.case1.save()
+        
+        cls.case2 = CommCareCase(
+            domain=cls.domain,
+            type="case_type_b",
+            user_id=cls.user_id
+        )
+        cls.case2.save()
+
+    def test_ok(self):
+        # Initial condition
+        CaseReminderHandler.now = datetime(year=2012, month=2, day=16, hour=11, minute=0)
+        
+        self.case1.set_case_property("start_sending1", "ok")
+        self.case1.set_case_property("start_sending2", "ok")
+        self.case2.set_case_property("start_sending1", "ok")
+        self.case2.set_case_property("start_sending3", "ok")
+        self.case1.save()
+        self.case2.save()
+        
+        self.assertNotEqual(self.handler1.get_reminder(self.case1), None)
+        self.assertEqual(self.handler1.get_reminder(self.case2), None)
+        self.assertNotEqual(self.handler2.get_reminder(self.case1), None)
+        self.assertEqual(self.handler2.get_reminder(self.case2), None)
+        self.assertEqual(self.handler3.get_reminder(self.case1), None)
+        self.assertEqual(self.handler3.get_reminder(self.case2), None)
+        
+        self.assertEqual(
+            self.handler1.get_reminder(self.case1).next_fire
+           ,CaseReminderHandler.now + timedelta(days=self.handler1.start_offset)
+        )
+        self.assertEqual(
+            self.handler2.get_reminder(self.case1).next_fire
+           ,CaseReminderHandler.now + timedelta(days=self.handler2.start_offset)
+        )
+        
+        # Test deactivation and spawn on change of CaseReminderHandler.case_type
+        CaseReminderHandler.now = datetime(year=2012, month=2, day=16, hour=11, minute=15)
+        
+        self.handler1.case_type = "case_type_b"
+        self.handler1.save()
+        self.handler2.case_type = "case_type_b"
+        self.handler2.save()
+        self.handler3.case_type = "case_type_b"
+        self.handler3.save()
+        
+        self.assertEqual(self.handler1.get_reminder(self.case1), None)
+        self.assertNotEqual(self.handler1.get_reminder(self.case2), None)
+        self.assertEqual(self.handler2.get_reminder(self.case1), None)
+        self.assertEqual(self.handler2.get_reminder(self.case2), None)
+        self.assertEqual(self.handler3.get_reminder(self.case1), None)
+        self.assertNotEqual(self.handler3.get_reminder(self.case2), None)
+        
+        self.assertEqual(
+            self.handler1.get_reminder(self.case2).next_fire
+           ,CaseReminderHandler.now + timedelta(days=self.handler1.start_offset)
+        )
+        self.assertEqual(
+            self.handler3.get_reminder(self.case2).next_fire
+           ,CaseReminderHandler.now + timedelta(days=self.handler3.start_offset)
+        )
+        
+        # Test spawn on change of Case.type
+        prev_now = CaseReminderHandler.now
+        CaseReminderHandler.now = datetime(year=2012, month=2, day=16, hour=11, minute=30)
+        
+        self.case1.type = "case_type_b"
+        self.case1.save()
+        
+        self.assertNotEqual(self.handler1.get_reminder(self.case1), None)
+        self.assertNotEqual(self.handler1.get_reminder(self.case2), None)
+        self.assertNotEqual(self.handler2.get_reminder(self.case1), None)
+        self.assertEqual(self.handler2.get_reminder(self.case2), None)
+        self.assertEqual(self.handler3.get_reminder(self.case1), None)
+        self.assertNotEqual(self.handler3.get_reminder(self.case2), None)
+        
+        self.assertEqual(
+            self.handler1.get_reminder(self.case1).next_fire
+           ,CaseReminderHandler.now + timedelta(days=self.handler1.start_offset)
+        )
+        self.assertEqual(
+            self.handler2.get_reminder(self.case1).next_fire
+           ,CaseReminderHandler.now + timedelta(days=self.handler2.start_offset)
+        )
+        
+        self.assertEqual(
+            self.handler1.get_reminder(self.case2).next_fire
+           ,prev_now + timedelta(days=self.handler1.start_offset)
+        )
+        self.assertEqual(
+            self.handler3.get_reminder(self.case2).next_fire
+           ,prev_now + timedelta(days=self.handler3.start_offset)
+        )
+        
+        # Test deactivation on change of Case.type
+        prev_now = CaseReminderHandler.now
+        CaseReminderHandler.now = datetime(year=2012, month=2, day=16, hour=11, minute=45)
+        
+        self.case2.type = "case_type_a"
+        self.case2.save()
+        
+        self.assertNotEqual(self.handler1.get_reminder(self.case1), None)
+        self.assertEqual(self.handler1.get_reminder(self.case2), None)
+        self.assertNotEqual(self.handler2.get_reminder(self.case1), None)
+        self.assertEqual(self.handler2.get_reminder(self.case2), None)
+        self.assertEqual(self.handler3.get_reminder(self.case1), None)
+        self.assertEqual(self.handler3.get_reminder(self.case2), None)
+        
+        self.assertEqual(
+            self.handler1.get_reminder(self.case1).next_fire
+           ,prev_now + timedelta(days=self.handler1.start_offset)
+        )
+        self.assertEqual(
+            self.handler2.get_reminder(self.case1).next_fire
+           ,prev_now + timedelta(days=self.handler2.start_offset)
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        pass
+
+
 class MessageTestCase(TestCase):
     def test_message(self):
         message = 'The EDD for client with ID {case.external_id} is approaching in {case.edd.days_until} days.'
