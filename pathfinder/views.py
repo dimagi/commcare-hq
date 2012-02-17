@@ -195,7 +195,6 @@ def retrieve_patient_group(user_ids, domain, year, month):
         caseid_set.add(p['case_id'] )
         p['ward'] = p['village']
         p['registered_this_month'] = True if (regdate.year == form_now.year and regdate.month == form_now.month) else False
-        print regdate.year, form_now.year, regdate.month, form_now.month, p['registered_this_month']
         p['followup_this_month'] = 0
         p['referrals_made'] = 0
         for i in ['provider',
@@ -257,10 +256,9 @@ def update_patients_with_referrals(patients, ids, year,month):
     """
     Given a set of patients, count how many completed referrals they had in that month.
     """
-    refs = get_db().view('pathfinder/pathfinder_gov_referral', keys=[[x] for x in list(ids)], include_docs=True).all()
+    refs = get_db().view('pathfinder/pathfinder_gov_referral', keys=[[x, int(year), int(month)] for x in list(ids)], include_docs=True).all()
+
     for p in patients: patients[p]['referrals_completed'] = 0
     for r in refs:
-        d = string_to_datetime(r['doc']['form']['meta']['timeEnd'])
-        if d.month == month and d.year == year and r['doc']['form']['client']['referral'] == 'yes':
-            print "got referral"
+        if r['doc']['form']['client']['referral'] == 'yes':
             patients[r['doc']['form']['case']['case_id']]['referrals_completed'] += 1
