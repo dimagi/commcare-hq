@@ -672,6 +672,223 @@ class CaseTypeReminderTestCase(TestCase):
     def tearDownClass(cls):
         pass
 
+class StartConditionReminderTestCase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = "test"
+        cls.user_id = "USER-ID-109351"
+        cls.user = CommCareUser.create(cls.domain, 'chw.bob5', '****', uuid=cls.user_id)
+        
+        cls.handler1 = CaseReminderHandler(
+            domain=cls.domain,
+            case_type="case_type_a",
+            method="test",
+            start='start_sending1',
+            start_offset=1,
+            until='stop_sending1',
+            default_lang='en',
+            max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY,
+            schedule_length=3,
+            event_interpretation=EVENT_AS_OFFSET,
+            events = [
+                CaseReminderEvent(
+                    day_num = 0
+                   ,fire_time = time(0,0,0)
+                   ,message={"en":"Message1"}
+                   ,callback_timeout_intervals=[]
+                )
+            ]
+        )
+        cls.handler1.save()
+        
+        cls.case1 = CommCareCase(
+            domain=cls.domain,
+            type="case_type_a",
+            user_id=cls.user_id
+        )
+        cls.case1.save()
+
+    def test_ok(self):
+        #
+        # Test changing a start condition of "ok"
+        #
+        # Spawn the reminder with an "ok" start condition value
+        CaseReminderHandler.now = datetime(year=2012, month=2, day=17, hour=12, minute=0)
+        self.assertEqual(self.handler1.get_reminder(self.case1), None)
+        
+        self.case1.set_case_property("start_sending1", "ok")
+        self.case1.save()
+        
+        reminder = self.handler1.get_reminder(self.case1)
+        self.assertNotEqual(reminder, None)
+        
+        self.assertEqual(
+            reminder.next_fire
+           ,CaseReminderHandler.now + timedelta(days=self.handler1.start_offset)
+        )
+        
+        # Test that saving the case without changing the start condition has no effect
+        old_reminder_id = reminder._id
+        self.case1.set_case_property("case_property1", "abc")
+        self.case1.save()
+        reminder = self.handler1.get_reminder(self.case1)
+        self.assertNotEqual(reminder, None)
+        self.assertEqual(reminder._id, old_reminder_id)
+        
+        # Test retiring the reminder
+        old_reminder_id = reminder._id
+        self.case1.set_case_property("start_sending1", None)
+        self.case1.save()
+        
+        self.assertEqual(self.handler1.get_reminder(self.case1), None)
+        self.assertEqual(CaseReminder.get(old_reminder_id).doc_type, "CaseReminder-Deleted")
+        
+        #
+        # Test changing a start condition which is a datetime value
+        #
+        # Spawn the reminder with datetime start condition value
+        start = datetime(2012,2,20,9,0,0)
+        self.case1.set_case_property("start_sending1", start)
+        self.case1.save()
+        
+        reminder = self.handler1.get_reminder(self.case1)
+        self.assertNotEqual(reminder, None)
+        
+        self.assertEqual(
+            reminder.next_fire
+           ,start + timedelta(days=self.handler1.start_offset)
+        )
+        
+        # Reset the datetime start condition
+        old_reminder_id = reminder._id
+        start = datetime(2012,2,22,10,15,0)
+        self.case1.set_case_property("start_sending1", start)
+        self.case1.save()
+        
+        reminder = self.handler1.get_reminder(self.case1)
+        self.assertNotEqual(reminder, None)
+        
+        self.assertEqual(
+            reminder.next_fire
+           ,start + timedelta(days=self.handler1.start_offset)
+        )
+        self.assertEqual(CaseReminder.get(old_reminder_id).doc_type, "CaseReminder-Deleted")
+        
+        # Test that saving the case without changing the start condition has no effect
+        old_reminder_id = reminder._id
+        self.case1.set_case_property("case_property1", "xyz")
+        self.case1.save()
+        reminder = self.handler1.get_reminder(self.case1)
+        self.assertNotEqual(reminder, None)
+        self.assertEqual(reminder._id, old_reminder_id)
+        
+        # Retire the reminder
+        old_reminder_id = reminder._id
+        self.case1.set_case_property("start_sending1", None)
+        self.case1.save()
+        
+        reminder = self.handler1.get_reminder(self.case1)
+        self.assertEqual(reminder, None)
+        self.assertEqual(CaseReminder.get(old_reminder_id).doc_type, "CaseReminder-Deleted")
+        
+        #
+        # Test changing a start condition which is a date value
+        #
+        # Spawn the reminder with date start condition value
+        start = date(2012,2,20)
+        self.case1.set_case_property("start_sending1", start)
+        self.case1.save()
+        
+        reminder = self.handler1.get_reminder(self.case1)
+        self.assertNotEqual(reminder, None)
+        
+        self.assertEqual(
+            reminder.next_fire
+           ,datetime.combine(start, CaseReminderHandler.now.time()) + timedelta(days=self.handler1.start_offset)
+        )
+        
+        # Reset the date start condition
+        old_reminder_id = reminder._id
+        start = date(2012,2,22)
+        self.case1.set_case_property("start_sending1", start)
+        self.case1.save()
+        
+        reminder = self.handler1.get_reminder(self.case1)
+        self.assertNotEqual(reminder, None)
+        
+        self.assertEqual(
+            reminder.next_fire
+           ,datetime.combine(start, CaseReminderHandler.now.time()) + timedelta(days=self.handler1.start_offset)
+        )
+        self.assertEqual(CaseReminder.get(old_reminder_id).doc_type, "CaseReminder-Deleted")
+        
+        # Test that saving the case without changing the start condition has no effect
+        old_reminder_id = reminder._id
+        self.case1.set_case_property("case_property1", "abc")
+        self.case1.save()
+        reminder = self.handler1.get_reminder(self.case1)
+        self.assertNotEqual(reminder, None)
+        self.assertEqual(reminder._id, old_reminder_id)
+        
+        # Retire the reminder
+        old_reminder_id = reminder._id
+        self.case1.set_case_property("start_sending1", None)
+        self.case1.save()
+        
+        reminder = self.handler1.get_reminder(self.case1)
+        self.assertEqual(reminder, None)
+        self.assertEqual(CaseReminder.get(old_reminder_id).doc_type, "CaseReminder-Deleted")
+        
+        #
+        # Test changing a start condition which is a string representation of a datetime value
+        #
+        # Spawn the reminder with datetime start condition value
+        self.case1.set_case_property("start_sending1", "2012-02-25 11:15")
+        self.case1.save()
+        
+        reminder = self.handler1.get_reminder(self.case1)
+        self.assertNotEqual(reminder, None)
+        
+        self.assertEqual(
+            reminder.next_fire
+           ,datetime(2012,2,25,11,15) + timedelta(days=self.handler1.start_offset)
+        )
+        
+        # Reset the datetime start condition
+        old_reminder_id = reminder._id
+        self.case1.set_case_property("start_sending1", "2012-02-26 11:20")
+        self.case1.save()
+        
+        reminder = self.handler1.get_reminder(self.case1)
+        self.assertNotEqual(reminder, None)
+        
+        self.assertEqual(
+            reminder.next_fire
+           ,datetime(2012,2,26,11,20) + timedelta(days=self.handler1.start_offset)
+        )
+        self.assertEqual(CaseReminder.get(old_reminder_id).doc_type, "CaseReminder-Deleted")
+        
+        # Test that saving the case without changing the start condition has no effect
+        old_reminder_id = reminder._id
+        self.case1.set_case_property("case_property1", "xyz")
+        self.case1.save()
+        reminder = self.handler1.get_reminder(self.case1)
+        self.assertNotEqual(reminder, None)
+        self.assertEqual(reminder._id, old_reminder_id)
+        
+        # Retire the reminder
+        old_reminder_id = reminder._id
+        self.case1.set_case_property("start_sending1", None)
+        self.case1.save()
+        
+        reminder = self.handler1.get_reminder(self.case1)
+        self.assertEqual(reminder, None)
+        self.assertEqual(CaseReminder.get(old_reminder_id).doc_type, "CaseReminder-Deleted")
+
+
+    @classmethod
+    def tearDownClass(cls):
+        pass
 
 class MessageTestCase(TestCase):
     def test_message(self):

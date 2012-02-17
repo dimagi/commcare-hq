@@ -9,6 +9,7 @@ from corehq.apps.sms.api import send_sms
 from corehq.apps.users.models import CommCareUser
 import logging
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
+from dateutil.parser import parse
 
 REPEAT_SCHEDULE_INDEFINITELY = -1
 
@@ -491,16 +492,42 @@ class CaseReminderHandler(Document):
             if reminder:
                 reminder.retire()
         else:
-            if not reminder:
-                start = case.get_case_property(self.start)
-                try: start = string_to_datetime(start)
+            # Retrieve the value of the start property
+            start_value = case.get_case_property(self.start)
+            if isinstance(start_value, date) or isinstance(start_value, datetime):
+                start = start_value
+            else:
+                try:
+                    start = parse(start_value)
                 except Exception:
-                    pass
+                    start = start_value
+            
+            # Retire the reminder if the start condition is no longer valid
+            if reminder:
                 if isinstance(start, date) or isinstance(start, datetime):
-                    if isinstance(start, date):
+                    if isinstance(start, datetime):
+                        expected_start_condition_datetime = start
+                    else:
+                        expected_start_condition_datetime = datetime(start.year, start.month, start.day, 0, 0, 0)
+                    
+                    if reminder.start_condition_datetime != expected_start_condition_datetime:
+                        # The start date/time has changed, so retire the reminder; it will be spawned again in the next block
+                        reminder.retire()
+                        reminder = None
+                elif not is_true_value(start):
+                    # The start condition is no longer valid, so retire the reminder
+                    reminder.retire()
+                    reminder = None
+            
+            if not reminder:
+                if isinstance(start, date) or isinstance(start, datetime):
+                    start_condition_datetime = start
+                    if isinstance(start, date) and not isinstance(start, datetime): #datetime is an instance of both date and datetime
                         start = datetime(start.year, start.month, start.day, now.hour, now.minute, now.second, now.microsecond)
+                        start_condition_datetime = datetime(start.year, start.month, start.day, 0, 0, 0)
                     try:
                         reminder = self.spawn_reminder(case, start)
+                        reminder.start_condition_datetime = start_condition_datetime
                     except Exception:
                         if settings.DEBUG:
                             raise
@@ -512,6 +539,7 @@ class CaseReminderHandler(Document):
                 else:
                     if self.condition_reached(case, self.start, now):
                         reminder = self.spawn_reminder(case, now)
+                        reminder.start_condition_datetime = now
             else:
                 active = (not self.condition_reached(case, self.until, now)) and not (reminder.handler.max_iteration_count != REPEAT_SCHEDULE_INDEFINITELY and reminder.schedule_iteration_num > reminder.handler.max_iteration_count)
                 if active and not reminder.active:
@@ -598,11 +626,12 @@ class CaseReminder(Document):
     last_fired = DateTimeProperty()                 # The date and time that the last message went out
     active = BooleanProperty(default=False)         # True if active, False if deactivated
     lang = StringProperty()                         # Language the reminder should be sent in
-    start_date = DateProperty()                     # The date that the CaseReminder was spawned
+    start_date = DateProperty()                     # For CaseReminderHandlers with event_interpretation=SCHEDULE, this is the date (in the recipient's time zone) from which all event times are calculated
     schedule_iteration_num = IntegerProperty()      # The current iteration through the cycle of self.handler.events
     current_event_sequence_num = IntegerProperty()  # The current event number (index to self.handler.events)
     callback_try_count = IntegerProperty()          # Keeps track of the number of times a callback has timed out
     callback_received = BooleanProperty()           # True if the expected callback was received since the last SMS was sent, False if not
+    start_condition_datetime = DateTimeProperty()   # The date and time matching the case property specified by the CaseReminderHandler.start_condition
 
     @property
     def handler(self):
