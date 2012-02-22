@@ -15,8 +15,8 @@ class PathfinderPatientGroup(QueryableList):
         self._15to24 = lambda x: 15 <= x['age'] <= 24
         self._25to49 = lambda x: 25 <= x['age'] <= 49
         self._50plus = lambda x: 50 <= x['age']
-        self._child = lambda x: 18 < x['age']
-        self._adult = lambda x: 18 >= x['age']
+        self._child = lambda x: 18 > x['age']
+        self._adult = lambda x: 18 <= x['age']
 
         self._hiv_reg = lambda x: x.has_key('registration_cause') and x['registration_cause'].count('hiv')
 
