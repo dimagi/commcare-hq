@@ -1,152 +1,87 @@
 {% extends base_template %}
 {% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+{% include "imports/datatables.bootstrap.html" %}
+{% include "imports/flot.html" %}
+<script type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    {% if slug %}
+    <script type="text/javascript">
+        $(function() {
+            var reportFilterCookieName = '{{ slug }}_reportFiltersHidden',
+                    savedPath = '/a/{{ domain }}/reports/{{ slug }}';
+            $("#reportFilters").addClass($.cookie(reportFilterCookieName));
+            $("#reportFilters").on('hidden', function () {
+                $.cookie(reportFilterCookieName, '', {path: savedPath});
+            });
+            $("#reportFilters").on('shown', function () {
+                $.cookie(reportFilterCookieName, 'in', {path: savedPath});
+            });
+        });
+    </script>
+    {% endif %}
+{% endblock %}
+
 {% block head %}
     {{ block.super }}
-    {% include "imports/datatables.html" %}
-    {% include "imports/flot.html" %}
-    <script src="{% static 'hqwebapp/js/dropdown.js' %}"></script>
-    <script>
-        jQuery.fn.dataTableExt.oSort['title-numeric-asc']  = function(a,b) {
-            var x = a.match(/title="*(-?[0-9]+)/)[1];
-            var y = b.match(/title="*(-?[0-9]+)/)[1];
-            x = parseFloat( x );
-            y = parseFloat( y );
-            return ((x < y) ? -1 : ((x > y) ?  1 : 0));
-        };
-        jQuery.fn.dataTableExt.oSort['title-numeric-desc'] = function(a,b) {
-            var x = a.match(/title="*(-?[0-9]+)/)[1];
-            var y = b.match(/title="*(-?[0-9]+)/)[1];
-            x = parseFloat( x );
-            y = parseFloat( y );
-            return ((x < y) ?  1 : ((x > y) ? -1 : 0));
-        };
-    </script>
-    <script type="text/javascript" src="{% static 'reports/javascripts/dropdown.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
-    {% if not standard_report %}
-        {% if show_users or show_case_types  or show_groups %}
-            <script>
-                $(function(){
-                    $("#individual_select, #case_type_select, #group_select").change(function(){
-                        $(this).closest('form').submit();
-                    });
-                });
-            </script>
-        {% endif %}
-        {% if show_forms %}
-        <script>
-            $(function(){
-                $("#form_select").change(function(){
-                    $(this).closest("form").submit();
-                });
-            });
-        </script>
-        {% endif %}
-   {% endif %}
-
-    <link rel="stylesheet" href="{% static 'reports/css/standard-reports.css' %}" />
+    <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
 {% endblock %}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url default_report domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <a href="#">{{ report.name|default:"Unknown Report"|safe }}</a>
+        </li>
+    </ul>
+{% endblock %}
+
 {% block content %}
-    <div id="main_container">
-        <div id="title-bar">
-            <ul>
-                <li>
-                    <div id="report_dropdown">
-                        <span>Select Report</span>
-                        <div>
-                            {% include "reports/partials/report_list.html" %}
-                        </div>
-                    </div>
-                </li>
-            </ul>
-            <h1>{{ report.name|default:"Unknown Report"|safe }}</h1>
+    <div class="row-fluid">
+        <div class="sidebar span2">
+            {% include "reports/partials/report_list.html" %}
         </div>
-        <div id="report_header">
-            <form method="get" id="paramSelectorForm">
-                {% if not standard_report %}
-                    <fieldset>
-                    {% if show_users %}
-                        <label for="individual_select">Select a CHW: </label>
-                        <select id="individual_select" name="individual">
-                            <option value=''>All CHWs</option>
-                            {% for user in users %}
-                                {% ifchanged user.is_active %}
-                                    {% if not user.is_active %}<optgroup label="Inactive">{% endif %}
-                                {% endifchanged %}
-                                <option {% if user.user_id == individual %}selected="true"{% endif %} value="{{ user.user_id }}">{{ user.raw_username }}</option>
-                            {% endfor %}
-                        </select>
-                    {% endif %}
-                        {% if show_user_filter %}
-                            {% for user in toggle_users %}
-                                <input type="checkbox" name="ufilter" value="{{ user.type }}" id="user-filter-{{ forloop.counter }}" {% if user.show %}checked="checked"{% endif %}/>
-                                <label for="user-filter-{{ forloop.counter }}">{{ user.name }}</label>
-                            {% endfor %}
-                            <br/>
-                        {% endif %}
-                    {% if show_case_types and case_types|length > 1 %}
-                        <label for="case_type_select">Select a Case Type</label>
-                        <select id="case_type_select" name="case_type" data-value="{{ case_type }}">
-                            <option value="">
-                                All Case Types ({{ n_all_case_types.open }}/{{ n_all_case_types.all }} open)
-                            </option>
-                            {% for i_case_type, n_cases in case_types.items %}
-                                <option value="{{ i_case_type }}">{{ i_case_type }} ({{ n_cases.open }}/{{ n_cases.all }} open)</option>
-                            {% endfor %}
-                        </select>
-                    {% endif %}
-                    {% if show_groups %}
-                        <label for="group_select">Select a Group</label>
-                        <select id="group_select" name="group" data-value="{{ group.get_id }}">
-                            <option value="">
-                                Everybody
-                            </option>
-                            {% for group in groups %}
-                                <option value="{{ group.get_id }}">{{ group.name }}</option>
-                            {% endfor %}
-                        </select>
-                    {% endif %}
-                    {% if show_forms %}
-                        <label for="form_select">Choose Form: </label>
-                        <select id="form_select" name="form">
-                            {% if all_forms_selectable %}
-                            <option  value=''>All Forms</option>
-                            {% else %}
-                            <option  value='' style="color:#777;">Select a Form</option>
+        <div class="{% if slug or is_tabular %}hq-flush-content{% else %}hq-content{% endif %} span10">
+            {% block reportpresentation %}
+            <div class="hq-accordion-control">
+                <div class="accordion-heading">
+                    <a href="#reportFilters" data-toggle="collapse">Advanced Filters</a>
+                    <div id="extra-filter-info" class="accordion-extra"></div>
+                </div>
+
+                <div id="reportFilters" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                        <form method="get" id="paramSelectorForm" class="form-horizontal">
+                            {% if custom_fields %}
+                                <fieldset>
+                                <legend>Report Filters</legend>
+                                {% for field in custom_fields %}
+                                    <div id="{{ field.slug }}" class="control-group">
+                                        {{ field.field|safe }}
+                                    </div>
+                                {% endfor %}
+                                </fieldset>
                             {% endif %}
-                            {% for form in forms %}
-                                <option {% if form.xmlns == selected_form %}selected="true"{% endif %} value="{{ form.xmlns }}">{{ form.display }}</option>
-                            {% endfor %}
-                        </select>
-                    {% endif %}
-                    </fieldset>
-                    {% if show_dates %}
-                            <label for="startdate">From Date:</label>
-                            <input type="text" id="startdate" name="startdate" class="date-picker" value="{{ datespan.startdate|date:"Y-m-d" }}">
-                           <label for="enddate">To Date:</label>
-                            <input type="text" id="enddate" name="enddate" class="date-picker" value="{{ datespan.enddate|date:"Y-m-d" }}">
-                           {# oddly enough, this is the only form that needs or has a submit button #}
-        {#                <p>#}
-        {#                    <a href="#" id="previous_date">Previous week</a> | <a href="#" id="next_date">Next Week</a>#}
-        {#                </p>#}
-                    {% endif %}
-                {% endif %}
-                {% if custom_fields %}
-                    {% for field in custom_fields %}
-                        <fieldset id="{{ field.slug }}" class="report-field">
-                            {{ field.field|safe }}
-                        </fieldset>
-                    {% endfor %}
-                {% endif %}
-                {% if show_dates or custom_fields or show_user_filter %}
-                    <input type="submit" value="Go!" />
-                {% endif %}
-
-            </form>
-
+                            {% if show_dates or custom_fields or show_user_filter %}
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-large btn-primary">Update Filters</button>
+                                    <a href="#reportFilters" data-toggle="collapse" class="btn btn-large">Cancel</a>
+                                </div>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% if show_time_notice %}{% include "hqwebapp/partials/time-notice.html"%}{% endif %}
+            {% block reportcontent %}Your report goes here{% endblock %}
+            {% endblock %}
         </div>
-        {% if show_time_notice %}{% include "hqwebapp/partials/time-notice.html"%}{% endif %}
-        {% block reportcontent %}Your report goes here{% endblock %}
     </div>
     <div id="report-footer">
     {% if exportable %}

@@ -1,183 +1,218 @@
 {% load tabs_tags %}{% load i18n %}{% load hq_shared_tags %}<!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
         <meta charset="utf-8"/>
         <title>CommCare HQ</title>
+        <meta name="application-name" content="CommCare HQ">
+        <meta http-equiv="content-language" content="en">
 
         <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
 
-        <link rel="stylesheet" href="{% static 'hqwebapp/css/reset.css' %}"/>
-        <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
-        <link rel="stylesheet" href="{% static 'hqwebapp/css/core.css' %}"/>
+        <link rel="stylesheet" media="screen" href="{% static 'hq-bootstrap/css/hq-bootstrap.css' %}"/>
 
-        {% if GOOGLE_ANALYTICS_ID %}
-            <script type="text/javascript">
-
-              var _gaq = _gaq || [];
-              _gaq.push(['_setAccount', '{{ GOOGLE_ANALYTICS_ID }}']);
-              _gaq.push(['_trackPageview']);
-              {% if domain %}_gaq.push(['_setCustomVar', 1, 'domain', '{{ domain }}', 3]);{% endif %}
-              {% if request.user.is_authenticated %}_gaq.push(['_setCustomVar', 1, 'uuid', '{{ request.user.id }}', 3]);{% endif %}
-              {% get_report_analytics_tag request %}
-
-              (function() {
-                var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-                ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-                var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-              })();
-
-            </script>
-        {% endif %}
-
-        <script src="{% static 'hqwebapp/javascripts/jquery-1.6.4.min.js' %}"></script>
-
+        {# this should eventually be moved to the end of the page #}
+        <script src="{% static 'hq-bootstrap/js/jquery-1.7.1.min.js' %}"></script>
         {% block head %}
         {% endblock %}
     
         {% block page_imports %}
         {% endblock %}
     </head>
-    <body class="fixed-width">
-        <header>
-            <hgroup>
-                <h1><a href="{% url homepage %}"><img src="{% static 'hqwebapp/img/commcare-hq-logo.png' %}" alt="CommCare HQ" /></a></h1>
-            </hgroup>
-            {% if request.user.is_authenticated %}
-                <div id="logged-in">
-                    <span>
-                        Signed in
-                        {% if domain %}
-                            to <strong>{{ domain }}</strong>
-                        {% endif %}
-                        as <strong>{{ user.username }}</strong>
-                        {% with request.couch_user.role_label as role %}
-                            {% if role %}
-                                ({{ role }})
-                            {% endif %}
-                        {% endwith %}
-                         <a href='/accounts/logout'>Sign Out</a>
-                    </span>
-                </div>
-                <nav>
-                    {% block tabs %}
-                    <ul id="tabs">
-                        {% if domain %}
-                            {% get_tabs as tabs %}
-                            {% for tab in tabs %}
-                                {% if tab.visible %}
-                                {# hack for domain admins only seeing domain tab #}
-                                {% if tab.caption != "My Domain" or request.couch_user and request.couch_user.is_domain_admin %}
-                                    {# and hack for hiding the users tab from public domains #}
-                                    {% if tab.caption != "Users" or request.couch_user and request.couch_user.get_id  %}
-                                    <li class="{% if tab.is_active %}active{% endif %}"><a href="{{ tab.url }}">{{ tab.caption }}{{ BETA_HACK }}</a></li>
+    <body>
+        <div class="hq-container-fluid hq-double-col">
+            <header class="hq-navbar">
+                <hgroup>
+                    <h1><a href="{% url homepage %}"><img src="{% static 'hq-bootstrap/img/commcare-logo.png' %}" alt="CommCare HQ" /></a></h1>
+                </hgroup>
+                {% if request.user.is_authenticated %}
+                    <nav>
+                        {% block tabs %}
+                        <ul class="nav">
+                            {% if domain %}
+                                {% get_tabs as tabs %}
+                                {% for tab in tabs %}
+                                    {% if tab.visible %}
+                                        {# hack for domain admins only seeing domain tab #}
+                                        {% if tab.caption != "My Domain" or request.couch_user and request.couch_user.is_domain_admin %}
+                                            {# and hack for hiding the users tab from public domains #}
+                                            {% if tab.caption != "Users" or request.couch_user and request.couch_user.get_id  %}
+                                                <li class="{% if tab.is_active %}active{% endif %}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
+                                            {% endif %}
+                                        {% endif %}
                                     {% endif %}
-                                {% endif %}
-                                
-                                {% endif %}
-                            {% endfor %}
-                        {% endif %}
-                    </ul>
-                    {% endblock %}
-                </nav>
-            {% else %}
-                <nav>
-                    <a href="{% url login %}" class="header-button">Sign in</a>
-                </nav>
-            {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </ul>
+                        {% endblock %}
+                        <div class="btn-toolbar secondary-nav">
+                            {% if domain %}
+                            <div class="btn-group">
+                                <a class="btn btn-project dropdown-toggle" data-toggle="dropdown" href="#">
+                                    <i class="icon-hq-white icon-hq-logo"></i>
+                                    {{ domain }}
+                                    <span class="caret"></span>
+                                </a>
+                                <ul class="dropdown-menu nav-list dropdown-orange">
+                                    <li class="nav-header">My Projects</li>
+                                    <li><a href="#">Some Project</a></li>
+                                    <li><a href="#">Some Other Project</a></li>
+                                    <li class="divider"></li>
+                                    <li><a href="#">New Project...</a></li>
+                                </ul>
+                            </div>
+                            {% endif %}
+                            <div class="btn-group">
+                                <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
+                                    <i class="icon-hq-white icon-hq-person"></i>
+                                    {{ user.username }}
+                                    {% with request.couch_user.role_label as role %}
+                                        {% if role %}
+                                            ({{ role }})
+                                        {% endif %}
+                                    {% endwith %}
+                                    <span class="caret"></span>
+                                </a>
+                                <ul class="dropdown-menu nav-list dropdown-blue right-align">
+                                    <li><a href="#">Account Settings</a></li>
+                                    <li class="divider"></li>
+                                    <li><a href="/accounts/logout">Sign Out</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </nav>
+                {% else %}
+                    <nav>
+                        <div class="btn-toolbar secondary-nav">
+                            <a href="{% url login %}" class="btn btn-primary">Sign In</a>
+                        </div>
+                    </nav>
+                {% endif %}
+            </header>
 
-
-        </header>
-        <div id="main">
-            {% block messages %}
-            {% if messages %}
-                <ul class="message">
+            <div class="hq-page-header-container">
+                {% block messages %}
+                {% if messages %}
                     {% for message in messages %}
-                        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
+                        <div class="alert fade in alert-block alert-full{% if message.tags %} alert-{{ message.tags }}{% endif %}">
+                            <a class="close" data-dismiss="alert" href="#">&times;</a>
                             {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
-                        </li>
+                        </div>
                     {% endfor %}
-                </ul>
-            {% endif %}
-            {% endblock %}
+                {% endif %}
+                {% endblock %}
+                <h1 class="page-header">
+                    {% block page-title %}
+                    {% endblock %}
+                </h1>
+            </div>
+
             {% block content %}
             {% endblock %}
         </div>
-        <div id="bug-report-body">
-            <p>Report an Issue</p>
-            <form id='bug-report-form' action="{% url bug_report %}">
-                <input type="hidden" id="bug-report-url" name="url"/>
-                <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
-                <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
-                <input type="hidden" id="bug-report-app_id" name="app_id" value="{{ app.id }}"/>
-                <table>
-                    <tr>
-                        <th><label for="bug-report-subject">Short Description:</label></th>
-                        <td><input type='text' id='bug-report-subject' name='subject'/></td>
-                    </tr>
-                    <tr>
-                        <th><label for="bug-report-now">Time of Occurrence:</label></th>
-                        <td>
-                            <select id='bug-report-now' name='now'>
-                                <option value="true">Just Now</option>
-                                <option value="false">Earlier</option>
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>
-                            <label for="bug-report-when">When:</label>
-                        </th>
-                        <td>
-                            <input type="text" id="bug-report-when" name="when"/>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><label for="bug-report-message">Message:</label></th>
-                    </tr>
-                    <tr>
-                        <td colspan="2">
-                            <textarea id="bug-report-message" name="message"></textarea>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="2">
-                            <div id="bug-report-buttons">
-                                <a href="#" id="bug-report-cancel" class="button">Cancel</a>
-                                <a href="#" id="bug-report-submit" class="button">Send Report</a>
-                            </div>
-                        </td>
-                    </tr>
-                </table>
-            </form>
-        </div>
+
         <footer>
+            <a href="http://www.dimagi.com/" class="footer-left"><img src="{% static 'hq-bootstrap/img/powered-by-dimagi.png' %}" class="powered" alt="Powered by Diamgi, Inc." /></a>
+
             {% if user.is_authenticated %}
-            <div id="help">
-                <a href="#" id='bug-report-button'>
-                    <span class="ui-icon ui-icon-comment"></span>Report an Issue
-                </a>
-                <span>Need help? Try the <a href="https://wiki.commcarehq.org/display/commcarepublic/Home" target="_blank">CommCare Wiki</a> and join the <a href="http://groups.google.com/group/commcare-users/subscribe" target="_blank">commcare-users</a> mailing list.</span>
+            <div class="footer-right">
+                <a data-toggle="modal" data-target="#reportIssueModal" href="#reportIssueModal" class="btn btn-footer-highlight btn-large"><i class="icon-comment icon-white"></i> Report an Issue</a>
             </div>
             {% endif %}
-            <p id="copyright">© 2011 by <a href="http://www.dimagi.com/">Dimagi, Inc</a>.</p>
+
+            <div class="footer-text footer-left">Copyright &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a></div>
+
+            {% if user.is_authenticated %}
+            <div class="footer-right">
+                Need help? Try the <a href="https://wiki.commcarehq.org/display/commcarepublic/Home" target="_blank" class="btn btn-footer"><i class="icon-info-sign icon-white"></i> CommCare Wiki</a> and join the <a href="http://groups.google.com/group/commcare-users/subscribe" target="_blank" class="btn btn-footer"><i class="icon-envelope icon-white"></i> commcare-users</a> mailing list.
+            </div>
+            {% endif %}
         </footer>
 
-        {% block js %}
-        <script src="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/jquery.cookie.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/sugar.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/main.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/shield.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/help.js' %}"></script>
+        {% block modals %}
+            <div class="modal hide fade" id="reportIssueModal">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h3>Report an Issue with CommCare HQ</h3>
+                </div>
+                <form id="hqwebapp-bugReportForm" class="form-horizontal" action="{% url bug_report %}" method="post">
+                    <input type="hidden" id="bug-report-url" name="url"/>
+                    <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
+                    <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
+                    <input type="hidden" id="bug-report-app_id" name="app_id" value="{{ app.id }}"/>
+
+                    <div class="modal-body">
+                        <fieldset>
+                            <div class="control-group">
+                                <label class="control-label" for="bug-report-subject">Short Description</label>
+                                <div class="controls">
+                                    <input type="text" class="input-xlarge" name="subject" id="bug-report-subject">
+                                    <p class="help-block">Please summarize the issue in one sentence&mdash;the message field below should contain more detail.</p>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label" for="bug-report-now">Time of Occurrence</label>
+                                <div class="controls">
+                                    <select id="bug-report-now" name="now">
+                                        <option value="true">Just Now</option>
+                                        <option value="false">Earlier</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label" for="bug-report-when">When</label>
+                                <div class="controls">
+                                    <input type="text" class="input-xlarge" name="when" id="bug-report-when">
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label" for="bug-report-message">Full Description</label>
+                                <div class="controls">
+                                    <textarea class="input-xlarge" name="message" id="bug-report-message" rows="3"></textarea>
+                                    <p class="help-block">Please try to include as much information as possible.</p>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary" data-loading-text="Submitting Report..." data-complete-text="Report Submitted, Close Window">Submit Report</button>
+                        <button id="bug-report-cancel" class="btn" data-dismiss="modal" data-loading-text="Cancel">Cancel</button>
+                    </div>
+                </form>
+            </div>
         {% endblock %}
-        
+
+        <!--Begin javascript -->
+        <script src="{% static 'hq-bootstrap/js/bootstrap.min.js' %}"></script>
+        <script src="{% static 'hq-bootstrap/js/jquery.form.js' %}"></script>
+
+        {% block js %}
+        <script src="{% static 'hqwebapp/js-custom/hqhandler.form.bugReport.js' %}"></script>
+        <script src="{% static 'hqwebapp/js-custom/hq.helpers.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/jquery.cookie.js' %}"></script>
+        <!--<script src="{% static 'hqwebapp/js/sugar.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/help.js' %}"></script>-->
+        {% endblock %}
+
         {% block js-inline %}
         {% endblock %}
 
-        <script>
-            $(function () {
-                $("#main").show();
-            })
-        </script>
+        {% if GOOGLE_ANALYTICS_ID %}
+            <script type="text/javascript">
+                var _gaq = _gaq || [];
+                _gaq.push(['_setAccount', '{{ GOOGLE_ANALYTICS_ID }}']);
+                _gaq.push(['_trackPageview']);
+                {% if domain %}_gaq.push(['_setCustomVar', 1, 'domain', '{{ domain }}', 3]);{% endif %}
+                {% if request.user.is_authenticated %}_gaq.push(['_setCustomVar', 1, 'uuid', '{{ request.user.id }}', 3]);{% endif %}
+                {% get_report_analytics_tag request %}
+
+                (function() {
+                    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+                    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+                    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+                })();
+
+            </script>
+        {% endif %}
     </body>
 </html>

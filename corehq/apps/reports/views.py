@@ -31,7 +31,6 @@ from couchexport.shortcuts import export_data_shared, export_raw_data
 from django.views.decorators.http import require_POST
 from couchforms.filters import instances
 from couchdbkit.exceptions import ResourceNotFound
-from mock import self
 from fields import FilterUsersField
 from util import get_all_users_by_domain
 
@@ -111,7 +110,7 @@ def export_data(req, domain):
         messages.error(req, "Sorry, there was no data found for the tag '%s'." % export_tag)
         next = req.GET.get("next", "")
         if not next:
-            next = reverse('excel_export_data_report', args=[domain])
+            next = reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug])
         return HttpResponseRedirect(next)
 
 @login_and_domain_required
@@ -168,15 +167,15 @@ def custom_export(req, domain):
         saved_export = SavedExportSchema.default(schema, name="%s: %s" %\
                                                  (xmlns_to_name(domain, export_tag[1]),
                                                   datetime.utcnow().strftime("%d-%m-%Y")))
-        return render_to_response(req, "reports/customize_export.html",
+        return render_to_response(req, "reports/reportdata/customize_export.html",
                                   {"saved_export": saved_export,
                                    "table_config": saved_export.table_configuration[0],
                                    "domain": domain})
     else:
-        messages.info(req, "No data found for that form "
-                      "(%s). Submit some data before creating an export!" % \
-                      xmlns_to_name(domain, export_tag[1]))
-        return HttpResponseRedirect(reverse('excel_export_data_report', args=[domain]))
+        messages.warning(req, "<strong>No data found for that form "
+                      "(%s).</strong> Submit some data before creating an export!" % \
+                      xmlns_to_name(domain, export_tag[1]), extra_tags="html")
+        return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug]))
         
 @login_and_domain_required
 def edit_custom_export(req, domain, export_id):
@@ -188,7 +187,7 @@ def edit_custom_export(req, domain, export_id):
     if req.method == "POST":
         table = req.POST["table"]
         
-        cols = req.POST['order'].strip().split(" ")#[col[:-4] for col in req.POST if col.endswith("_val")]
+        cols = req.POST['order'].strip().split()#[col[:-4] for col in req.POST if col.endswith("_val")]
         export_cols = [ExportColumn(index=col, 
                                     display=req.POST["%s_display" % col]) \
                        for col in cols]
@@ -216,7 +215,7 @@ def edit_custom_export(req, domain, export_id):
 #    else:
     table_config = saved_export.table_configuration[0]
         
-    return render_to_response(req, "reports/customize_export.html", 
+    return render_to_response(req, "reports/reportdata/customize_export.html",
                               {"saved_export": saved_export,
                                "table_config": table_config,
                                "domain": domain})
@@ -230,7 +229,7 @@ def delete_custom_export(req, domain, export_id):
     saved_export = SavedExportSchema.get(export_id)
     saved_export.delete()
     messages.success(req, "Custom export was deleted.")
-    return HttpResponseRedirect(reverse('excel_export_data_report', args=[domain]))
+    return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug]))
 
 @login_or_digest
 def export_custom_data(req, domain, export_id):
@@ -242,7 +241,7 @@ def export_custom_data(req, domain, export_id):
     format = req.GET.get("format", "")
     next = req.GET.get("next", "")
     if not next:
-        next = reverse('excel_export_data_report', args=[domain])
+        next = reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug])
 
     user_filter, _ = FilterUsersField.get_user_filter(req)
 
@@ -266,8 +265,10 @@ def export_custom_data(req, domain, export_id):
 
 @login_and_domain_required
 def case_details(request, domain, case_id):
+    report_name = "Case Details"
     try:
         case = CommCareCase.get(case_id)
+        report_name = 'Details for Case "%s"' % case.name
     except ResourceNotFound:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake plase report an issue.")
         return HttpResponseRedirect(reverse("submit_history_report", args=[domain]))
@@ -277,27 +278,15 @@ def case_details(request, domain, case_id):
                          "%s: %s" % (form.received_on.date(), xmlns_to_name(domain, form.xmlns))) \
                         for form in [XFormInstance.get(id) for id in case.xform_ids] \
                         if form)
-    return render_to_response(request, "reports/case_details.html", {
+    return render_to_response(request, "reports/reportdata/case_details.html", {
         "domain": domain,
         "case_id": case_id,
         "form_lookups": form_lookups,
         "report": {
-            "name": "Case Details"
-        }
+            "name": report_name
+        },
+        "is_tabular": True
     })
-
-@login_and_domain_required
-def case_export(request, domain, template='reports/basic_report.html',
-                                    report_partial='reports/partials/case_export.html'):
-    group, users = util.get_group_params(domain, **json_request(request.GET))
-    context = util.report_context(domain, report_partial,
-        title="Export cases, referrals, and users",
-        group=group,
-    )
-    toggle, show_filter = FilterUsersField.get_user_filter(request)
-    context['show_user_filter'] = show_filter
-    context['toggle_users'] = toggle
-    return render_to_response(request, template, context)
 
 @login_or_digest
 @login_and_domain_required
@@ -325,50 +314,16 @@ def download_cases(request, domain):
     return response
 
 @login_and_domain_required
-@datespan_default
-def excel_export_data(request, domain, template="reports/excel_export_data.html"):
-    group, users = util.get_group_params(domain, **json_request(request.GET))
-    ufilter = request.GET.get('ufilter', None)
-    forms = get_db().view('reports/forms_by_xmlns', startkey=[domain, {}], endkey=[domain, {}, {}], group=True)
-    forms = [x['value'] for x in forms]
-
-    forms = sorted(forms, key=lambda form: \
-        (0, form['app']['name'], form.get('module', {'id': -1})['id'], form.get('form', {'id': -1})['id']) \
-        if 'app' in form else \
-        (1, form['xmlns'])
-    )
-
-
-    # add saved exports. because of the way in which the key is stored
-    # (serialized json) this is a little bit hacky, but works.
-    startkey = json.dumps([domain, ""])[:-3]
-    endkey = "%s{" % startkey
-    exports = SavedExportSchema.view("couchexport/saved_exports",
-                                     startkey=startkey, endkey=endkey,
-                                     include_docs=True)
-    for export in exports:
-        export.formname = xmlns_to_name(domain, export.index[1])
-
-    context = util.report_context(domain, title="Export Data to Excel", #datespan=request.datespan
-        group=group
-    )
-    toggle, show_filter = FilterUsersField.get_user_filter(request)
-    context['show_user_filter'] = show_filter
-    context['toggle_users'] = toggle
-    context.update({
-        "forms": forms,
-        "saved_exports": exports,
-    })
-    return render_to_response(request, template, context)
-
-@login_and_domain_required
 def form_data(request, domain, instance_id):
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)
     cases = CommCareCase.view("case/by_xform_id", key=instance_id, reduce=False, include_docs=True).all()
-    return render_to_response(request, "reports/form_data.html",
-                              dict(domain=domain,instance=instance,
-                                   cases=cases))
+    return render_to_response(request, "reports/reportdata/form_data.html",
+                              dict(domain=domain,
+                                    instance=instance,
+                                    cases=cases,
+                                    form_data=dict(name=instance.get_form["@name"],
+                                                    modified=instance.get_form["case"]["date_modified"])))
 
 @login_and_domain_required
 def download_form(request, domain, instance_id):

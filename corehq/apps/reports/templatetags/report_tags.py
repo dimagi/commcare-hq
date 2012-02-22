@@ -6,6 +6,7 @@ from django.template.loader import render_to_string
 import json
 import calendar
 from django.conf import settings
+from corehq.apps.reports.standard import ExcelExportReport, CaseExportReport
 from dimagi.utils.modules import to_function
 #from bhoma.apps.locations.models import Location
 
@@ -244,25 +245,44 @@ def attribute_lookup(obj, attr):
         return getattr(obj, attr)
 
 @register.simple_tag
-def standard_report_list(domain):
+def standard_report_list(domain, current_slug=""):
     mapping = getattr(settings, 'STANDARD_REPORT_MAP', None)
     if not mapping: return ""
     lst = []
     for key, models in mapping.iteritems():
-        lst.append("<li><h2>%s</h2><ul>" % key)
+        lst.append('<li class="nav-header">%s</li>' % key)
         for model in models:
             klass = to_function(model)
-            lst.append("<li><a href='%s' title='%s'>%s</a></li>" % (reverse('report_dispatcher', args=(domain, klass.slug)), klass.description, klass.name))
-        lst.append("</ul></li>")
+            lst.append('<li%s><a href="%s" title="%s">' %\
+                       ((' class="active"' if klass.slug == current_slug else ""),
+                        reverse('report_dispatcher', args=(domain, klass.slug)),
+                        klass.description))
+            if klass.slug == ExcelExportReport.slug:
+                lst.append('<i class="icon-list-alt"></i> ')
+            elif klass.slug == CaseExportReport.slug:
+                lst.append('<i class="icon-share"></i> ')
+            lst.append('%s</a></li>' % klass.name)
     return "\n".join(lst)
 
 @register.simple_tag
-def custom_report_list(domain):
+def custom_reports_exist(domain):
+    mapping = getattr(settings, 'CUSTOM_REPORT_MAP', None)
+    if not mapping: return False
+    if not domain in mapping: return False
+    return True
+
+@register.simple_tag
+def custom_report_list(domain, current_slug=""):
     mapping = getattr(settings, 'CUSTOM_REPORT_MAP', None)
     if not mapping: return ""
     if not domain in mapping: return ""
     lst = []
+    lst.append('<li class="nav-header" >Custom Reports</li>')
     for model in mapping[domain]:
         klass = to_function(model)
-        lst.append("<li><a href='%s' title='%s'>%s</a></li>" % (reverse('custom_report_dispatcher', args=(domain, klass.slug)), klass.description, klass.name))
+        lst.append('<li%s><a href="%s" title="%s">%s</a></li>' % \
+                   ((' class="active"' if klass.slug == current_slug else ""),
+                    reverse('custom_report_dispatcher', args=(domain, klass.slug)),
+                    klass.description,
+                    klass.name))
     return "\n".join(lst)

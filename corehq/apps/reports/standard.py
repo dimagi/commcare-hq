@@ -1,5 +1,6 @@
 from _collections import defaultdict
 from datetime import timedelta, datetime
+import json
 import sys
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -13,6 +14,7 @@ from corehq.apps.reports.custom import HQReport
 from corehq.apps.reports.display import xmlns_to_name, FormType
 from corehq.apps.reports.fields import FilterUsersField, CaseTypeField, SelectCHWField, datespan_default
 from corehq.apps.reports.models import HQUserType
+from couchexport.models import SavedExportSchema
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import DatatablesParams
@@ -680,3 +682,47 @@ class SubmitTrendsReport(StandardDateHQReport):
         self.context.update({
             "user_id": self.individual,
         })
+
+class ExcelExportReport(StandardHQReport):
+    name = "Export Submissions to Excel"
+    slug = "excel_export_data"
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.GroupField']
+    template_name = "reports/reportdata/excel_export_data.html"
+
+    def calc(self):
+        forms = get_db().view('reports/forms_by_xmlns', startkey=[self.domain, {}], endkey=[self.domain, {}, {}], group=True)
+        forms = [x['value'] for x in forms]
+
+        forms = sorted(forms, key=lambda form:\
+            (0, form['app']['name'], form.get('module', {'id': -1})['id'], form.get('form', {'id': -1})['id'])\
+            if 'app' in form else\
+            (1, form['xmlns'])
+        )
+
+        # add saved exports. because of the way in which the key is stored
+        # (serialized json) this is a little bit hacky, but works.
+        startkey = json.dumps([self.domain, ""])[:-3]
+        endkey = "%s{" % startkey
+        exports = SavedExportSchema.view("couchexport/saved_exports",
+            startkey=startkey, endkey=endkey,
+            include_docs=True)
+
+        for export in exports:
+            export.formname = xmlns_to_name(self.domain, export.index[1])
+
+        self.context.update({
+            "forms": forms,
+            "saved_exports": exports,
+        })
+
+class CaseExportReport(StandardHQReport):
+    name = "Export Cases, Referrals, and Users"
+    slug = "case_export"
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.GroupField']
+    template_name = "reports/basic_report.html"
+    report_partial = "reports/partials/case_export.html"
+
+    def calc(self):
+        pass

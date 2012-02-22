@@ -14,7 +14,7 @@ datespan_default = datespan_in_request(
 
 class GroupField(ReportField):
     slug = "group"
-    template = "reports/partials/fields/select_group.html"
+    template = "reports/fields/select_group.html"
 
     def update_context(self):
         group = self.request.GET.get('group', '')
@@ -26,7 +26,7 @@ class GroupField(ReportField):
 
 class FilterUsersField(ReportField):
     slug = "ufilter"
-    template = "reports/partials/fields/filter_users.html"
+    template = "reports/fields/filter_users.html"
 
     def update_context(self):
         toggle, show_filter = self.get_user_filter(self.request)
@@ -53,7 +53,7 @@ class FilterUsersField(ReportField):
 
 class CaseTypeField(ReportField):
     slug = "case_type"
-    template = "reports/partials/fields/case_type.html"
+    template = "reports/fields/case_type.html"
 
     def update_context(self):
         individual = self.request.GET.get('individual', '')
@@ -106,7 +106,7 @@ class CaseTypeField(ReportField):
 
 class SelectFormField(ReportField):
     slug = "select_form"
-    template = "reports/partials/fields/select_form.html"
+    template = "reports/fields/select_form.html"
     select_all = False
 
     def update_context(self):
@@ -119,7 +119,7 @@ class SelectAllFormField(SelectFormField):
 
 class SelectCHWField(ReportField):
     slug = "select_chw"
-    template = "reports/partials/fields/select_chw.html"
+    template = "reports/fields/select_chw.html"
 
     def update_context(self):
         user_filter, _ = FilterUsersField.get_user_filter(self.request)
@@ -139,7 +139,7 @@ class SelectCHWField(ReportField):
 
 class DatespanField(ReportField):
     slug = "datespan"
-    template = "reports/partials/fields/datespan.html"
+    template = "reports/fields/datespan.html"
     datespan = DateSpan.since(7, format="%Y-%m-%d")
 
     def update_context(self):

@@ -1,80 +1,11 @@
 {% load report_tags %}
-
-{% block head %}
-
-    <style>
-
-        #report-list {
-            display: table-row;
-        }
-        #report-list > li {
-            border-right: 1px solid #CCC;
-            display: table-cell;
-            padding: 15px;
-        }
-        #report-list > li:last-child {
-            border-right: none;
-        }
-        #report-list .report-link {
-            padding: 5px 10px;
-            margin:  2px 0;
-            border:  1px solid transparent;
-            cursor: pointer;
-        }
-        #report-list .report-link.report-link-other:hover {
-            border:  1px solid #CCC;
-            background-color:  #0067B1;
-            color: #FFF;
-        }
-        #report-list .report-link.report-link-other:hover a {
-            color: #FFF;
-        }
-        #report-list .report-link a:hover {
-            text-decoration: none;
-        }
-        #report-list .report-link-current {
-            border:  1px solid #CCC;
-            background-color:  #E2E4FF;
-        }
-    </style>
-    <script>
-        $(function () {
-            'use strict';
-            var $reportLinks = $("#report-list > li > ul > li").addClass("report-link ui-corner-all"),
-                clicked = false;
-            $reportLinks.click(function () {
-                window.location.href = $('a', this).attr('href');
-            });
-            $reportLinks.each(function () {
-                var url = $('a', this).attr('href').split('?')[0];
-                if (url == location.pathname) {
-                    $(this).addClass('report-link-current');
-                } else {
-                    $(this).addClass('report-link-other');
-                }
-            });
-        });
-        $(function () {
-            'use strict';
-            var customReports = $('#report-list-custom');
-            if (!customReports.find('li').length) {
-                customReports.hide();
-            }
-        });
-    </script>
-{% endblock %}
-<ul id="report-list">
-    {% standard_report_list domain %}
-    <li>
-        <h2>Raw Data</h2>
-        <ul>
-            <li><a href="{% url excel_export_data_report domain %}">Export submissions to excel</a></li>
-            <li><a href="{% url case_export domain %}">Export cases, referrals, and users</a></li>
-        </ul>
-    </li>
-    <li id="report-list-custom"><h2>Custom Reports</h2>
-        <ul>
-            {% custom_report_list domain %}
-        </ul>
-    </li>
-</ul>
+<nav>
+    <ul class="nav nav-list" id="report-list">
+        {% if slug %}
+            {% standard_report_list domain slug %}
+        {% else %}
+            {% standard_report_list domain %}
+        {% endif %}
+        {% custom_report_list domain %}
+    </ul>
+</nav>

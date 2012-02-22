@@ -165,7 +165,7 @@ class YearField(ReportField):
 
 class ExampleInputField(ReportField):
     slug = "example-input"
-    template = "reports/partials/example-input-select.html"
+    template = "reports/fields/example-input-select.html"
 
     def update_context(self):
         self.context['example_input_default'] = "Some Example Text"

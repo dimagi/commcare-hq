@@ -1,0 +1,91 @@
+{% extends "reports/report_base.html" %}
+{% load xform_tags %}
+{% load case_tags %}
+
+{% block head %}{{ block.super }}
+    {% include "imports/bootstrap.google-prettify.html" %}
+    <script type="text/javascript" src="{{ STATIC_URL }}hq-bootstrap/js/jquery.selectText.js"></script>
+    <script type="text/javascript">
+        $(function() {
+            var $codeBlock = $("#formatted-form-xml"),
+                original_xml = $codeBlock.find("code").text(),
+                code_selected = false;
+            prettyPrint();
+            var formatted_block = $codeBlock.html();
+            $codeBlock.dblclick(function() {
+               if(!code_selected) {
+                   $(this).text(original_xml);
+                   $(this).selText();
+                   code_selected = true;
+               }
+            });
+            $(document).click(function() {
+                if(code_selected) {
+                    code_selected = false;
+                    $codeBlock.html(formatted_block);
+                }
+            });
+        })
+    </script>
+{% endblock %}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url default_report domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li>
+            <a href="{% url report_dispatcher domain 'submit_history' %}">Submit History</a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <a href="#">Form Data for "{{ form_data.name }}"{% if form_data.modified %}&mdash;modified {{ form_data.modified }}{% endif %}</a>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block reportpresentation %}
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#form_display" data-toggle="tab">Form Data</a></li>
+        <li><a href="#raw_xml" data-toggle="tab">Raw XML</a></li>
+        {% if instance.attachments %}
+        <li><a href="#attachments" data-toggle="tab">Attachments</a></li>
+        {% endif %}
+        {% if cases %}
+        <li><a href="#cases" data-toggle="tab">Cases</a></li>
+        {% endif %}
+    </ul>
+    <div class="tab-content">
+        <div class="tab-pane active" id="form_display">
+            {% render_form_data instance %}
+        </div>
+        <div class="tab-pane" id="raw_xml">
+            <p><a class="btn" href="{% url download_form domain instance.get_id %}" target="_blank">Open XML in New Window</a></p>
+            <p>Double-click code below to select all:</p>
+            {% render_form_xml instance %}
+        </div>
+        {% if instance.attachments %}
+        <div class="tab-pane" id="attachments">
+            <ul>
+                {% for key, val in instance.attachments.items %}
+                    <li><a href="{% url download_attachment domain instance.get_id key %}">{{ key }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        {% if cases %}
+        <div class="tab-pane" id="cases">
+            <ul>
+                {% for case in cases %}
+                    <li>{% if case.get_id %}
+                        <a href="{% url case_details domain case.case_id %}">{% case_inline_display case %}</a>
+                    {% else %}
+                        <span class="error">Unknown or malformed case</span>
+                    {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+
+{% endblock %}

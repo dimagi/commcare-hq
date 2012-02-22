@@ -1,5 +1,4 @@
-{% extends base_template %}
-
+{% extends "reports/report_base.html" %}
 {% load case_tags %}
 {% load hq_shared_tags %}
 
@@ -23,34 +22,22 @@
     </script>
 {% endblock %}
 
-{% block head %}
-    {{ block.super }}
-    {% include "imports/datatables.html" %}
-    <style>
-        h2 {
-            padding-top: 1em;
-        }
-        .no_data {
-            text-align: center;
-            color: #ccc;
-        }
-        .inner_container {
-            text-align: left;   
-            width: 95%;
-            margin: auto;
-            padding: 1em 0 1em 0;
-        }
-        table.case_details, table.case_history, table.case_properties {
-            border: 1px solid #ccc;
-            width: 100%;
-        }
-    </style>
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url default_report domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li>
+            <a href="{% url report_dispatcher domain 'case_list' %}">Case List</a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <a href="#">{{ report.name }}</a>
+        </li>
+    </ul>
 {% endblock %}
 
-{% block content %}
-    <div id="main_container">
-    <div class="inner_container">
-        {% render_case case_id %} 
-    </div>
-    </div>
+{% block reportpresentation %}
+<div class="hq-generic-report">
+    {% render_case case_id %}
+</div>
 {% endblock %}
