@@ -30,6 +30,7 @@ class PathfinderPatientGroup(QueryableList):
         self._hiv_pos = lambda x: (x['hiv_status_during_registration'].lower() == 'positive' or  x['hiv_status_after_test'].lower() == 'positive')
         self._hiv_neg = lambda x: x['hiv_status_during_registration'].lower() != 'positive' and  x['hiv_status_after_test'].lower() == 'negative'
 
+        self._cip = lambda x: not self._hiv_pos(x)
 
         self._ctc_arv = lambda x: x['ctc'].count('and_arvs') > 0
         self._ctc_no_arv = lambda x: x['ctc'].count('no_arvs') > 0

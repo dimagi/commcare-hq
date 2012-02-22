@@ -109,12 +109,12 @@
                         {% with prov_p|dict_lookup:n as pats %}
                             <td>{{ pats.new__hiv_pos__male|length }}</td>
                             <td>{{ pats.new__hiv_pos__female|length }}</td>
-                            <td>{{ pats.new__hiv_neg__male|length }}</td>
-                            <td>{{ pats.new__hiv_neg__female|length }}</td>
+                            <td>{{ pats.new__cip__male|length }}</td>
+                            <td>{{ pats.new__cip__female|length }}</td>
                             <td>{{ pats.old__hiv_pos__male|length }}</td>
                             <td>{{ pats.old__hiv_pos__female|length }}</td>
-                            <td>{{ pats.old__hiv_neg__male|length }}</td>
-                            <td>{{ pats.old__hiv_neg__female|length }}</td>
+                            <td>{{ pats.old__cip__male|length }}</td>
+                            <td>{{ pats.old__cip__female|length }}</td>
                             <td>{{ pats.adult__male|length }}</td>
                             <td>{{ pats.adult__female|length }}</td>
                             <td>{{ pats.child__male|length }}</td>
