@@ -1,10 +1,16 @@
 {% extends "users/users_base.html" %}
 {% load hq_shared_tags %}
-{% block js-inline %}
+{% block js %} {{ block.super }}
+    <script src="{% static 'hqwebapp/javascripts/knockout-2.0.0.js' %}"></script>
+{% endblock %}
+{% block js-inline %} {{ block.super }}
     <script>
-        $(function () {
-
-        });
+            ko.applyBindings(new (function () {
+                this.file = ko.observable(null);
+                this.getFile = function () {
+                    console.log(this.file());
+                };
+            })());
     </script>
 {% endblock %}
 
@@ -14,8 +20,8 @@
     <p>Step 2. Fill it out with your users' information</p>
     <p>Step 3. Use the form below to upload your completed file.</p>
     <form action="" method="post" enctype="multipart/form-data">
-        <input type="file" name="file"/>
-        <input type="submit" value="Upload"/>
+        <input type="file" name="file" data-bind="value: file"/>
+        <input type="submit" value="Upload" data-bind="visible: file() !== null"/>
         <input type="hidden" name="redirect" value="{% url commcare_users domain %}"/>
     </form>
 {% endblock %}
