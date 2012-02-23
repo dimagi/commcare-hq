@@ -7,7 +7,6 @@ from django.shortcuts import render_to_response
 from django.template.context import RequestContext, Context
 from django.template.loader import render_to_string
 from dimagi.utils.modules import to_function
-from couchexport.models import Format
 from tempfile import NamedTemporaryFile
 from couchexport.models import Format
 from couchexport.export import export_from_tables

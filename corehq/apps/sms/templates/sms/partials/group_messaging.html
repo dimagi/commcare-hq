@@ -1,5 +1,3 @@
-{% load permissions %}
-
 
 <div class="two-columns" class="ui-widget">
     <form method="POST" action="{% url messaging domain %}#tabs-2">
@@ -20,7 +18,7 @@
                     </div>
                 {% endif %}
                 <div class="footnote">
-                    {% if request.couch_user|is_admin:domain %}
+                    {% if request.couch_user.is_domain_admin %}
                         <a href="{% url all_groups domain %}">Create a new group.</a>
                     {% else %}
                         <p>To create a group, please contact your administrator.</p>

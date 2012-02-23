@@ -953,10 +953,6 @@ def multimedia_list_download(req, domain, app_id):
 
 @require_permission('edit-apps')
 def multimedia_upload(request, domain, kind, app_id):
-    upload_progress_url = reverse("hqmedia_upload_progress", args=[domain])
-    submit_url = reverse("multimedia_upload", args=[domain, kind, app_id])
-    failed_files_url = reverse("hqmedia_upload_success", args=[domain])
-
     app = get_app(domain, app_id)
     if request.method == 'POST':
         request.upload_handlers.insert(0, upload.HQMediaFileUploadHandler(request, domain))
@@ -1246,6 +1242,10 @@ def save_copy(req, domain, app_id):
             if settings.DEBUG:
                 raise
             messages.error(req, "Unexpected error saving build:\n%s" % e)
+        finally:
+            # To make a RemoteApp always available for building
+            if app.is_remote_app():
+                app.save(increment_version=True)
     else:
         errors = BuildErrors(errors=errors)
         errors.save()

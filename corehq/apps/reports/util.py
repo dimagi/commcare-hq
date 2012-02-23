@@ -15,6 +15,7 @@ def report_context(domain,
             case_type=None,
             show_case_type_counts=True,
             group=None,
+            ufilter=None,
             form=None,
             datespan=None,
             show_time_notice=False
@@ -54,7 +55,9 @@ def report_context(domain,
         if individual:
             user_ids = [individual]
         elif group is not None:
-            _, user_ids = get_group_params(domain, group=group, user_id_only=True)
+            _, user_ids = get_all_users_by_domain(domain, group=group)
+        elif ufilter is not None:
+            _, user_ids = get_all_users_by_domain(domain, filter_users=ufilter)
         else:
             user_ids = None
 
@@ -216,3 +219,20 @@ def get_username_from_forms(domain, user_id):
         if possible_username:
             username = possible_username
     return username
+
+def create_sort_key(text, key):
+    return {"html": text,
+            "sort_key": key}
+
+SORT_TYPE_NUMERIC = "title-numeric"
+def define_sort_type(text, type=SORT_TYPE_NUMERIC):
+    return {"html": text,
+            "sort_type": type}
+
+def app_export_filter(doc, app_id):
+    if app_id:
+        return (doc['app_id'] == app_id) if doc.has_key('app_id') else True
+    elif app_id == '':
+        return not doc.has_key('app_id')
+    else:
+        return True

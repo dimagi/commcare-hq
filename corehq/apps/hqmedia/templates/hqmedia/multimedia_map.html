@@ -121,10 +121,13 @@
         hqUpload.listenForUploads();
 
         function uploadComplete(data) {
+            console.log(data.successful);
             hqupload_form.find("input[type='button']").val('Close');
             hqupload_form.find("input[type='submit']").fadeOut();
-            for(var ref_id in data) {
+            for(var ref_id in data.successful) {
+                console.log(ref_id);
                 var container = $("#"+ref_id);
+                console.log(container);
                 var view_action = container.find("a.view_media"),
                     upload_action = container.find("a.upload_media"),
                     status_icon = container.find("img.indicator");
@@ -133,14 +136,14 @@
                     view_action.removeClass('inactive');
                     upload_action.find('span').text("Replace "+media_type);
                     upload_action.attr('data-replace-file', 'true');
-                    view_action.attr('href', data[ref_id]);
+                    view_action.attr('href', data.successful[ref_id]);
                     status_icon.attr('src', "{% static 'hqmedia/img/checkmark.png' %}");
                 }else {
-                    view_action.attr('href', data[ref_id]);
+                    view_action.attr('href', data.successful[ref_id]);
                 }
                 if (media_type == "Image") {
                     var uploaded_image = hqupload_form.parent().find(".uploaded");
-                    uploaded_image.find('img').attr('src', data[ref_id]);
+                    uploaded_image.find('img').attr('src', data.successful[ref_id]);
                     uploaded_image.fadeIn();
                 }
             }

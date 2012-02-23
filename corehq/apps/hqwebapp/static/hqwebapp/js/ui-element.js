@@ -1,4 +1,4 @@
-/*globals $, eventize */
+/*globals $, eventize, _ */
 var uiElement;
 (function () {
     'use strict';
@@ -23,7 +23,8 @@ var uiElement;
         this.$noedit_view = $('<span class="ui-element-input"/>');
 
         this.on('change', function () {
-            this.val(this.getElemValue());
+            this.value = this.getElemValue();
+            this.$noedit_view.text(this.value);
         });
         this.setEdit(this.edit);
     };
@@ -112,7 +113,7 @@ var uiElement;
                                 break;
                             }
                         }
-                        this.$edit_view.val(this.value);
+                        this.$edit_view.val(this.value.toString());
                         this.$noedit_view.text(label);
                         return this;
                     }
@@ -184,6 +185,22 @@ var uiElement;
             return function () {
                 return new Checkbox();
             };
-        }())
+        }()),
+        serialize: function (obj) {
+            var i, cpy;
+            if (typeof obj.val === 'function') {
+                return obj.val();
+            } else if (_.isArray(obj)) {
+                return _.map(obj, uiElement.serialize);
+            } else if (_.isObject(obj)) {
+                cpy = _.clone(obj);
+                _.chain(cpy).map(function (value, key) {
+                    cpy[key] = uiElement.serialize(value);
+                });
+                return cpy;
+            } else {
+                return obj;
+            }
+        }
     };
 }());

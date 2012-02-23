@@ -3,6 +3,7 @@ import json
 from django import template
 from django.conf import settings
 from django.utils.safestring import mark_safe
+from dimagi.utils.web import json_handler
 
 
 register = template.Library()
@@ -13,7 +14,8 @@ def JSON(obj):
         obj = obj.to_json()
     except AttributeError:
         pass
-    return mark_safe(json.dumps(obj))
+
+    return mark_safe(json.dumps(obj, default=json_handler))
 
 @register.filter
 def dict_lookup(dict, key):

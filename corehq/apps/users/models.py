@@ -5,6 +5,7 @@ from __future__ import absolute_import
 
 from datetime import datetime
 import logging
+import re
 from dimagi.utils.make_uuid import random_hex
 
 from django.contrib.auth.models import User
@@ -52,11 +53,27 @@ def _get_default(list):
     return list[0] if list else None
 
 class Permissions(object):
-    EDIT_USERS = 'edit-users'
+    EDIT_WEB_USERS = 'edit-users'
+    EDIT_COMMCARE_USERS = 'edit-commcare-users'
     EDIT_DATA = 'edit-data'
     EDIT_APPS = 'edit-apps'
-    LOG_IN = 'log-in'
-    AVAILABLE_PERMISSIONS = [EDIT_DATA, EDIT_USERS, EDIT_APPS, LOG_IN]
+
+    AVAILABLE_PERMISSIONS = [EDIT_DATA, EDIT_WEB_USERS, EDIT_COMMCARE_USERS, EDIT_APPS]
+
+class Roles(object):
+    ROLES = (
+        ('edit-apps', 'App Editor', set([Permissions.EDIT_APPS])),
+        ('field-implementer', 'Field Implementer', set([Permissions.EDIT_COMMCARE_USERS])),
+        ('read-only', 'Read Only', set([]))
+    )
+
+    @classmethod
+    def get_role_labels(cls):
+        return tuple([('admin', 'Admin')] + [(key, label) for (key, label, _) in cls.ROLES])
+
+    @classmethod
+    def get_role_mapping(cls):
+        return dict([(key, perms) for (key, _, perms) in cls.ROLES])
 
 class DomainMembership(DocumentSchema):
     """
@@ -126,6 +143,9 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     class Inconsistent(Exception):
         pass
 
+    class InvalidID(Exception):
+        pass
+
     @property
     def raw_username(self):
         if self.doc_type == "CommCareUser":
@@ -162,6 +182,11 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         return "%s %s" % (self.first_name, self.last_name)
 
     formatted_name = full_name
+
+    def set_full_name(self, full_name):
+        data = full_name.split()
+        self.first_name = data.pop(0)
+        self.last_name = ' '.join(data)
 
     def get_scheduled_reports(self):
         return ReportNotification.view("reports/user_notifications", key=self.user_id, include_docs=True).all()
@@ -218,6 +243,14 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             endkey=[domain, {}],
             include_docs=True,
         )
+
+    def is_member_of(self, domain_qs):
+        if isinstance(domain_qs, basestring):
+            return domain_qs in self.get_domains() or self.is_superuser
+        membership_count = domain_qs.filter(name__in=self.get_domains()).count()
+        if membership_count > 0:
+            return True
+        return False
 
     # for synching
     def sync_from_django_user(self, django_user):
@@ -327,6 +360,8 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
         django_user = create_user(username, password=password, email=email)
         if uuid:
+            if not re.match(r'[\w-]+', uuid):
+                raise cls.InvalidID('invalid id %r' % uuid)
             couch_user = cls(_id=uuid)
         else:
             couch_user = cls()
@@ -378,6 +413,22 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     def is_deleted(self):
         return self.base_doc.endswith(DELETED_SUFFIX)
+
+    def has_permission(self, domain, permission):
+        """To be overridden by subclasses"""
+        return False
+
+    def __getattr__(self, item):
+        if item.startswith('can_'):
+            perm = getattr(Permissions, item[len('can_'):].upper(), None)
+            if perm:
+                def fn(domain=None):
+                    domain = domain or self.current_domain
+                    return self.has_permission(domain, perm)
+                fn.__name__ = item
+                return fn
+        return super(CouchUser, self).__getattr__(item)
+
 
 class CommCareUser(CouchUser):
 
@@ -499,6 +550,9 @@ class CommCareUser(CouchUser):
 
     def is_web_user(self):
         return False
+
+    def get_domains(self):
+        return [self.domain]
 
     def add_commcare_account(self, domain, device_id, user_data=None):
         """
@@ -735,14 +789,6 @@ class WebUser(CouchUser):
         else:
             raise self.Inconsistent("domains and domain_memberships out of sync")
 
-    def is_member_of(self, domain_qs):
-        if isinstance(domain_qs, basestring):
-            return domain_qs in self.get_domains() or self.is_superuser
-        membership_count = domain_qs.filter(name__in=self.get_domains()).count()
-        if membership_count > 0:
-            return True
-        return False
-
     def set_permission(self, domain, permission, value, save=True):
         assert(permission in Permissions.AVAILABLE_PERMISSIONS)
         if self.has_permission(domain, permission) == value:
@@ -763,6 +809,8 @@ class WebUser(CouchUser):
 
     def has_permission(self, domain, permission):
         # is_admin is the same as having all the permissions set
+        if self.is_superuser:
+            return True
         dm = self.get_domain_membership(domain)
         if not dm:
             return False
@@ -784,10 +832,14 @@ class WebUser(CouchUser):
         if self.is_member_of(domain):
             if self.is_domain_admin(domain):
                 role = 'admin'
-            elif self.can_edit_apps(domain):
-                role = "edit-apps"
             else:
-                role = "read-only"
+                permissions = set(self.get_domain_membership(domain).permissions)
+                role_mapping = Roles.get_role_mapping()
+                for role in role_mapping:
+                    if permissions == role_mapping[role]:
+                        break
+                else:
+                    role = None
         else:
             role = None
 
@@ -802,18 +854,10 @@ class WebUser(CouchUser):
         dm.is_admin = False
         if role == "admin":
             dm.is_admin = True
-        elif role == "edit-apps":
-            self.reset_permissions(domain, [Permissions.EDIT_APPS])
-        elif role == "read-only":
-            self.reset_permissions(domain, [])
         else:
-            raise KeyError()
+            dm.permissions = list(Roles.get_role_mapping()[role])
 
-    ROLE_LABELS = (
-        ('admin', 'Admin'),
-        ('edit-apps', 'App Editor'),
-        ('read-only', 'Read Only')
-    )
+
     def role_label(self, domain=None):
         if not domain:
             try:
@@ -821,13 +865,7 @@ class WebUser(CouchUser):
             except (AttributeError, KeyError):
                 return None
 
-        return dict(self.ROLE_LABELS).get(self.get_role(domain), "Unknown Role")
-
-    # these functions help in templates
-    def can_edit_apps(self, domain):
-        return self.has_permission(domain, Permissions.EDIT_APPS)
-    def can_edit_users(self, domain):
-        return self.has_permission(domain, Permissions.EDIT_USERS)
+        return dict(Roles.get_role_labels()).get(self.get_role(domain), "Unknown Role")
 
 class FakeUser(WebUser):
     """
@@ -869,10 +907,12 @@ class Invitation(Document):
     """
     domain = StringProperty()
     email = StringProperty()
-    is_domain_admin = BooleanProperty()
+#    is_domain_admin = BooleanProperty()
     invited_by = StringProperty()
     invited_on = DateTimeProperty()
     is_accepted = BooleanProperty(default=False)
+
+    role = StringProperty()
 
     _inviter = None
     def get_inviter(self):

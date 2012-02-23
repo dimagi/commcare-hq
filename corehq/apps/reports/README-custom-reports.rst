@@ -95,3 +95,32 @@ Here is how to create a class-based custom report in HQ.
 
    You should now be able to access your new report through the "Select Report" dropdown in the "Reports" tab
    in your domain.  No URL setup is required -- the reports_dispatcher function in views.py will take care of it.
+
+
+Enabling Exports
+----------------
+
+If you have a report with tabular data, you can enable exports to allow this data to be downloaded in a variety of
+formats (whatever couchexport currently supports).  To do so, set exportable = True in your report class, like so::
+
+        class SampleHQReport(HQReport):
+            [...]
+            exportable = True
+
+The export system expects your report's data to **either** be in a set of tables, set up like so::
+
+        self.context['tables'] =
+            { "first table": [['header1', 'header2', 'header3'],
+                              [row1, row2, row3],
+                              [row1, row2, row3]...],
+              "second table":[['header1', 'header2', 'header3', 'header4'],
+                              [row1, row2, row3, row4]...]}
+
+**Or**, if your report consists of a single table::
+
+        self.context['headers'] = ['header1', 'header2', 'header3']
+        self.context['rows'] = [[row1, row2, row3],
+                                [row1, row2, row3]...]
+
+
+The export links will appear at the bottom of the report.

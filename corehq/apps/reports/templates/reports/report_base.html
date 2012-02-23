@@ -77,6 +77,13 @@
                             {% endfor %}
                         </select>
                     {% endif %}
+                        {% if show_user_filter %}
+                            {% for user in toggle_users %}
+                                <input type="checkbox" name="ufilter" value="{{ user.type }}" id="user-filter-{{ forloop.counter }}" {% if user.show %}checked="checked"{% endif %}/>
+                                <label for="user-filter-{{ forloop.counter }}">{{ user.name }}</label>
+                            {% endfor %}
+                            <br/>
+                        {% endif %}
                     {% if show_case_types and case_types|length > 1 %}
                         <label for="case_type_select">Select a Case Type</label>
                         <select id="case_type_select" name="case_type" data-value="{{ case_type }}">
@@ -131,7 +138,7 @@
                         </fieldset>
                     {% endfor %}
                 {% endif %}
-                {% if show_dates or custom_fields %}
+                {% if show_dates or custom_fields or show_user_filter %}
                     <input type="submit" value="Go!" />
                 {% endif %}
 
