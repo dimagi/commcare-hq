@@ -3,7 +3,8 @@ import logging
 from dimagi.utils.couch.database import get_db
 from casexml.apps.phone import xml
 from datetime import datetime
-from receiver.xml import get_response_element, get_simple_response_xml
+from receiver.xml import get_response_element, get_simple_response_xml,\
+    ResponseNature
 from casexml.apps.case.xml import check_version
 from casexml.apps.phone.fixtures import generator
 from django.http import HttpResponse
@@ -72,7 +73,9 @@ def generate_restore_payload(user, restore_id="", version="1.0", state_hash=""):
     synclog.save()
     
     # start with standard response
-    response = get_response_element("Successfully restored account %s!" % user.username)
+    response = get_response_element(
+        "Successfully restored account %s!" % user.username, 
+        ResponseNature.OTA_RESTORE_SUCCESS)
     
     # add sync token info
     response.append(xml.get_sync_element(synclog.get_id))
@@ -92,7 +95,9 @@ def generate_restore_response(user, restore_id="", version="1.0", state_hash="")
         response = generate_restore_payload(user, restore_id, version, state_hash)
         return HttpResponse(response, mimetype="text/xml")
     except BadStateException:
-        response = get_simple_response_xml("Phone case list is inconsistant with server's records.")
+        response = get_simple_response_xml(
+            "Phone case list is inconsistant with server's records.",
+            ResponseNature.OTA_RESTORE_ERROR)
         return HttpResponse(response, mimetype="text/xml", 
                             status=412) # precondition failed
     

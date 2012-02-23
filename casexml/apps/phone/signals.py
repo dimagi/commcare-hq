@@ -4,11 +4,13 @@ from receiver.signals import successful_form_received, ReceiverResult,\
 from receiver import xml as xml
 from datetime import datetime
 from dimagi.utils.couch.database import get_db
+from receiver.xml import ResponseNature
 
 def send_default_response(sender, xform, **kwargs):
     """
     This signal just sends a default response to xform submissions.
     """
+    
     def forms_submitted_count(user):
         forms_submitted = get_db().view("couchforms/by_user", 
                                         startkey=[user], 
@@ -34,9 +36,13 @@ def send_default_response(sender, xform, **kwargs):
                        (to,
                         forms_submitted_today_count(xform.metadata.userID), 
                         forms_submitted_count(xform.metadata.userID))
-        return ReceiverResult(xml.get_simple_response_xml(message), Certainty.MILD)
+        return ReceiverResult(xml.get_simple_response_xml(
+            message, nature=ResponseNature.SUBMIT_SUCCESS), Certainty.MILD)
+            
     else:
-        return ReceiverResult(xml.get_simple_response_xml("Thanks for submitting!"), Certainty.MILD)
+        return ReceiverResult(xml.get_simple_response_xml(
+            "Thanks for submitting!", ResponseNature.SUBMIT_SUCCESS), 
+            Certainty.MILD)
 
 
 successful_form_received.connect(send_default_response)
