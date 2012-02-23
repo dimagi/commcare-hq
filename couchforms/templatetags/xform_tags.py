@@ -31,7 +31,7 @@ def render_form_data(form):
 
         def render_base_type(key, value):
             if not value: return ""
-            return "<li><span class='prompt'>%s:</span> <span class='value'>%s</span></li>" % (format_name(key), format_name(value))
+            return '<dt><i class="icon-info-sign"></i> %s</dt><dd>%s</dd>' % (format_name(key), format_name(value))
 
 
         def is_base_type(value):
@@ -43,7 +43,7 @@ def render_form_data(form):
         if is_base_type(nodevalue):
             return render_base_type(nodekey, nodevalue)
         else:
-            header = '<li class="group">%s</li>' % format_name(nodekey)
+            header = '<dt class="nest-head">%s</dt>' % format_name(nodekey)
             # process a dictionary
             if isinstance(nodevalue, types.DictionaryType):
                 node_list = []
@@ -53,7 +53,7 @@ def render_form_data(form):
                     if node: node_list.append(node)
 
                 if node_list:
-                    return '%(header)s<ul>%(body)s</ul>' % \
+                    return '%(header)s<dd class="nest-body"><dl>%(body)s</dl></dd>' % \
                             {"header": header,
                              "body": "".join(node_list)}
                 else:
@@ -74,18 +74,18 @@ def render_form_data(form):
                                 node_list.append(node)
                     else:
                         node_list.append("<li>%s</li>" % format_name(str(item)))
-                    full_list.append("%(header)s<ul>%(body)s</ul>" % \
+                    full_list.append("%(header)s<dd><ul>%(body)s</ul></dd>" % \
                                      {"header": header,
                                       "body": "".join(node_list)})
                 return "".join(full_list)
             else:
                 return render_base_type(nodekey, nodevalue)
 
-    return "<ul id='formdata'>%s</ul>" % "".join(render_node(key, val) for key, val in form.top_level_tags().items())
+    return '<dl class="def-form-data">%s</dl>' % "".join(render_node(key, val) for key, val in form.top_level_tags().items())
 
 @register.simple_tag
 def render_form_xml(form):
-    return '<pre id="formxml">%s</pre>' % escape(form.get_xml())
+    return '<pre id="formatted-form-xml" class="prettyprint linenums"><code class="language-xml">%s</code></pre>' % escape(form.get_xml().replace("><", ">\n<"))
 
 @register.simple_tag
 def form_inline_display(form_id):
