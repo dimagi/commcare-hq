@@ -111,7 +111,7 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     #'django.contrib.messages', # don't need this for messages and it's causing some error
-    'django.contrib.staticfiles', #soon to be django.contrib.staticfiles in 1.3
+    'django.contrib.staticfiles', 
     'south',
     'djcelery',    # pip install django-celery
     'djtables',    # pip install djtables
@@ -389,7 +389,7 @@ LOGGING = {
     },
     'handlers': {
         'console':{
-            'level':'DEBUG',
+            'level':'INFO',
             'class':'logging.StreamHandler',
             'formatter': 'simple'
         },
