@@ -319,7 +319,6 @@ def get_apps_base_context(request, domain, app):
     for _app in ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}]):
         applications.append(_app)
 
-
     lang = request.GET.get('lang',
        request.COOKIES.get('lang', app.langs[0] if hasattr(app, 'langs') and app.langs else '')
     )
@@ -471,7 +470,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'app': app,
     })
     if app:
-        options = CommCareBuildConfig.fetch().menu
+        options = CommCareBuildConfig.fetch().get_menu(app.application_version)
         is_standard_build = [o.build.to_string() for o in options if o.build.to_string() == app.build_spec.to_string()]
         context.update({
             "commcare_build_options": options,
@@ -539,8 +538,9 @@ def new_app(req, domain):
     "Adds an app to the database"
     lang = req.COOKIES.get('lang', "en")
     type = req.POST["type"]
+    application_version = req.POST['application_version']
     cls = str_to_cls[type]
-    app = cls.new_app(domain, "Untitled Application", lang)
+    app = cls.new_app(domain, "Untitled Application", lang=lang, application_version=application_version)
     if cls == Application:
         app.new_module("Untitled Module", lang)
         app.new_form(0, "Untitled Form", lang)

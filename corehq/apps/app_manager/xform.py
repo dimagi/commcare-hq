@@ -1,3 +1,4 @@
+from corehq.apps.app_manager.const import APP_V1, APP_V2
 from lxml import etree as ET
 import formtranslate.api
 
@@ -315,13 +316,14 @@ class XForm(WrappedNode):
         build_non_question_paths(self.data_node)
         return questions
 
-    def add_case_and_meta(self, form):
+    def add_case_and_meta(self, form, application_version=None):
+        application_version = application_version or form.get_app().application_version
         case = self.case_node
 
         case_parent = self.data_node
         bind_parent = self.model_node
 
-        casexml, binds, transformation = self.create_casexml(form)
+        casexml, binds, transformation = self.create_casexml(form, application_version)
         if casexml:
             if case.exists():
                 case_parent.remove(case.xml)
@@ -393,9 +395,10 @@ class XForm(WrappedNode):
                     translation.attrib.pop('default', None)
 
     def set_version(self, version):
+        """set the form's version attribute"""
         self.data_node.set('version', "%s" % version)
 
-    def create_casexml(self, form):
+    def create_casexml(self, form, version=APP_V1):
         from xml_utils import XMLTag as __
 
         actions = form.active_actions()

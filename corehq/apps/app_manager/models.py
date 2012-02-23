@@ -2,6 +2,7 @@
 from collections import defaultdict
 from datetime import datetime
 import re
+from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import BadValueError
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
@@ -709,6 +710,9 @@ class ApplicationBase(VersionedDoc):
     # a=Alphanumeric, n=Numeric, x=Neither (not allowed)
     admin_password_charset = StringProperty(choices=['a', 'n', 'x'], default='n')
 
+    # This is here instead of in Application because it needs to be available in stub representation
+    application_version = StringProperty(default=APP_V1, choices=[APP_V1, APP_V2], required=False)
+
     @classmethod
     def wrap(cls, data):
         # scrape for old conventions and get rid of them
@@ -723,15 +727,15 @@ class ApplicationBase(VersionedDoc):
         if data.has_key("built_with") and isinstance(data['built_with'], basestring):
             data['built_with'] = BuildSpec.from_string(data['built_with']).to_json()
 
-        if not data.has_key("build_spec") or BuildSpec.wrap(data['build_spec']).is_null():
-            data['build_spec'] = CommCareBuildConfig.fetch().default.to_json()
-
         if data.has_key('native_input'):
             if not data.has_key('text_input'):
                 data['text_input'] = 'native' if data['native_input'] else 'roman'
             del data['native_input']
-            
-        return super(ApplicationBase, cls).wrap(data)
+
+        self = super(ApplicationBase, cls).wrap(data)
+        if not self.build_spec or self.build_spec.is_null():
+            self.build_spec = CommCareBuildConfig.fetch().get_default(self.application_version)
+        return self
 
     def is_remote_app(self):
         return False
@@ -1163,8 +1167,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
 
     @classmethod
-    def new_app(cls, domain, name, lang="en"):
-        app = cls(domain=domain, modules=[], name=name, langs=[lang])
+    def new_app(cls, domain, name, application_version, lang="en"):
+        app = cls(domain=domain, modules=[], name=name, langs=[lang], application_version=application_version)
         return app
 
     def new_module(self, name, lang):

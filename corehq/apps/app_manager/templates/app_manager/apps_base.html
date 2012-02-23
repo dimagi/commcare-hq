@@ -139,6 +139,7 @@
                             <li>
                                 <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
                                     <input type="hidden" name="type" value="Application" />
+                                    <input type="hidden" name="application_version" value="1.0" />
                                     <a href="#" class="submit">{% trans 'Blank Application' %}</a>
                                 </form>
                             </li>
@@ -146,6 +147,13 @@
                                 <form action="{% url corehq.apps.app_manager.views.import_app domain %}" method="post">
                                     <input type="hidden" name="app_id" value="example--hello-world"/>
                                     <a href="#" class="submit">{% trans 'From Example: Hello World' %}</a>
+                                </form>
+                            </li>
+                            <li>
+                                <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
+                                    <input type="hidden" name="type" value="Application" />
+                                    <input type="hidden" name="application_version" value="2.0" />
+                                    <a href="#" class="submit">{% trans 'Blank 2.x Application (Bleeding Edge)' %}</a>
                                 </form>
                             </li>
                             <li>
@@ -168,7 +176,9 @@
                     {% for a in applications %}
                     <option value="{% url corehq.apps.app_manager.views.view_app domain a.id %}"
                             {% ifequal a.id app.id %}selected="" class="variable-app_name" {% endifequal %}>
-                        {{ a.name }}{% if a.get_doc_type == "RemoteApp" %} (remote){% endif %}
+                        {{ a.name }}
+                        {% if a.get_doc_type == "RemoteApp" %}(remote){% endif %}
+                        {% if a.application_version == '2.0' %}(2.x){% endif %}
                     </option>
                     {% endfor %}
                 </select>
@@ -193,6 +203,7 @@
                         <li>
                             <strong id="app_name" class="variable-app_name">{{ app.name }}</strong>
                             {% if app.get_doc_type == "RemoteApp" %}<strong>(remote)</strong>{% endif %}
+                            {% if app.application_version == "2.0" %}<strong>(2.x)</strong>{% endif %}
                             version <span id="version" class="variable-version">{{ app.version }}</span>
                         </li>
                     </ul>
