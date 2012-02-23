@@ -50,13 +50,23 @@ def get_or_update_model(case_block, xformdoc):
         case_doc.update_from_case_update(case_update, xformdoc)
         return case_doc
         
-    
+def is_excluded(doc):
+    # exclude anything matching a certain set of conditions from case processing.
+    # as of today, the only things that meet these requirements are device logs.
+    device_report_xmlns = "http://code.javarosa.org/devicereport"
+    try: 
+        return (hasattr(doc, "xmlns") and doc.xmlns == device_report_xmlns) or \
+               ("@xmlns" in doc and doc["@xmlns"] == device_report_xmlns)
+    except TypeError:
+        return False # wasn't iterable, don't exclude
+
 def extract_case_blocks(doc):
     """
     Extract all case blocks from a document, returning an array of dictionaries
     with the data in each case. 
     """
-    if doc is None: return []  
+    if doc is None or is_excluded(doc): return []
+    
     block_list = []
     if isinstance(doc, list):
         for item in doc: 
