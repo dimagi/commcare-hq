@@ -22,7 +22,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         print os.path.abspath(os.path.curdir)
-        verbosity = int(options.get('verbosity', 1))
         if len(args) != 2:
             raise CommandError('Usage is submit_form %s' % self.args)
         file = args[0]
