@@ -21,8 +21,8 @@ def render_form_data(form):
             # want to display
             if show_hidden: return False
             SYSTEM_FIELD_NAMES = ("drugs_prescribed", "case", "meta", "clinic_ids", "drug_drill_down", "tmp", "info_hack_done")
-            return field_key.startswith("#") or field_key.startswith("@") or field_key.startswith("_") \
-                   or field_key.lower() in SYSTEM_FIELD_NAMES
+            return field_key.startswith("#") or field_key.startswith("@") or field_key.startswith("_")\
+            or field_key.lower() in SYSTEM_FIELD_NAMES
 
         def format_name(value):
             if not isinstance(value, basestring):
@@ -35,8 +35,8 @@ def render_form_data(form):
 
 
         def is_base_type(value):
-            return isinstance(value, basestring) or \
-                   isinstance(value, date) or \
+            return isinstance(value, basestring) or\
+                   isinstance(value, date) or\
                    isinstance(value, datetime)
 
         if not nodevalue or is_hidden_field(nodekey): return ""
@@ -53,12 +53,12 @@ def render_form_data(form):
                     if node: node_list.append(node)
 
                 if node_list:
-                    return '%(header)s<dd class="nest-body"><dl>%(body)s</dl></dd>' % \
-                            {"header": header,
-                             "body": "".join(node_list)}
+                    return '%(header)s<dd class="nest-body"><dl>%(body)s</dl></dd>' %\
+                           {"header": header,
+                            "body": "".join(node_list)}
                 else:
                     return ""
-            elif isinstance(nodevalue, types.ListType) or \
+            elif isinstance(nodevalue, types.ListType) or\
                  isinstance(nodevalue, types.TupleType):
                 # the only thing we are allowed to have lists of
                 # is dictionaries
@@ -74,7 +74,7 @@ def render_form_data(form):
                                 node_list.append(node)
                     else:
                         node_list.append("<li>%s</li>" % format_name(str(item)))
-                    full_list.append("%(header)s<dd><ul>%(body)s</ul></dd>" % \
+                    full_list.append("%(header)s<dd><ul>%(body)s</ul></dd>" %\
                                      {"header": header,
                                       "body": "".join(node_list)})
                 return "".join(full_list)
