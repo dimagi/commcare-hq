@@ -1,6 +1,6 @@
 import os
 from django.core.management.base import LabelCommand
-from staticfiles import finders
+from django.contrib.staticfiles import finders
 
 class Command(LabelCommand):
     help = "Prints the paths of all the static files"
