@@ -1,12 +1,14 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
+
 {% block js %}{{ block.super }}
     {% if app.get_doc_type == "Application" %}
         <script src="{% static 'app_manager/js/commcareProperties.js' %}"></script>
         <script src="{% static 'translations/js/translations.js' %}"></script>
     {% endif %}
 {% endblock %}
+
 {% block js-inline %}
     {{ block.super }}
     <script>
@@ -243,6 +245,7 @@
         });
     </script>
 {% endblock %}
+
 {% block head %}{{ block.super }}
     <link rel="stylesheet" href="{{ STATIC_URL }}hqmedia/css/media_upload.css"/>
     <style>

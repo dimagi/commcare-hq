@@ -12,14 +12,23 @@
 
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hq-bootstrap/js/jquery-1.7.1.min.js' %}"></script>
+
+        {% block oldstyle_imports %}
+            <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
+            <link rel="stylesheet" href="{% static 'hq-bootstrap/css/old/core.css' %}"/>
+            {% include "imports/hq-oldstyle-js.html" %}
+        {% endblock %}
+
         {% block head %}
         {% endblock %}
     
         {% block page_imports %}
         {% endblock %}
+
+
     </head>
     <body>
-        <div class="hq-container-fluid hq-double-col">
+        <div class="hq-container-fluid hq-double-col{% block oldstyle_tag %} old-style{% endblock %}">
             <header class="hq-navbar">
                 <hgroup>
                     <h1><a href="{% url homepage %}"><img src="{% static 'hq-bootstrap/img/commcare-logo.png' %}" alt="CommCare HQ" /></a></h1>
@@ -52,13 +61,7 @@
                                     {{ domain }}
                                     <span class="caret"></span>
                                 </a>
-                                <ul class="dropdown-menu nav-list dropdown-orange">
-                                    <li class="nav-header">My Projects</li>
-                                    <li><a href="#">Some Project</a></li>
-                                    <li><a href="#">Some Other Project</a></li>
-                                    <li class="divider"></li>
-                                    <li><a href="#">New Project...</a></li>
-                                </ul>
+                                {% domains_for_user request %}
                             </div>
                             {% endif %}
                             <div class="btn-group">
@@ -73,8 +76,6 @@
                                     <span class="caret"></span>
                                 </a>
                                 <ul class="dropdown-menu nav-list dropdown-blue right-align">
-                                    <li><a href="#">Account Settings</a></li>
-                                    <li class="divider"></li>
                                     <li><a href="/accounts/logout">Sign Out</a></li>
                                 </ul>
                             </div>
@@ -105,9 +106,10 @@
                     {% endblock %}
                 </h1>
             </div>
-
+            {% block oldstyle_hack_start %}<div class="hq-oldstyle">{% endblock %}
             {% block content %}
             {% endblock %}
+            {% block oldstyle_hack_end %}</div>{% endblock %}
         </div>
 
         <footer>
@@ -129,56 +131,56 @@
         </footer>
 
         {% block modals %}
-            <div class="modal hide fade" id="reportIssueModal">
-                <div class="modal-header">
-                    <a class="close" data-dismiss="modal">&times;</a>
-                    <h3>Report an Issue with CommCare HQ</h3>
-                </div>
-                <form id="hqwebapp-bugReportForm" class="form-horizontal" action="{% url bug_report %}" method="post">
-                    <input type="hidden" id="bug-report-url" name="url"/>
-                    <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
-                    <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
-                    <input type="hidden" id="bug-report-app_id" name="app_id" value="{{ app.id }}"/>
-
-                    <div class="modal-body">
-                        <fieldset>
-                            <div class="control-group">
-                                <label class="control-label" for="bug-report-subject">Short Description</label>
-                                <div class="controls">
-                                    <input type="text" class="input-xlarge" name="subject" id="bug-report-subject">
-                                    <p class="help-block">Please summarize the issue in one sentence&mdash;the message field below should contain more detail.</p>
-                                </div>
-                            </div>
-                            <div class="control-group">
-                                <label class="control-label" for="bug-report-now">Time of Occurrence</label>
-                                <div class="controls">
-                                    <select id="bug-report-now" name="now">
-                                        <option value="true">Just Now</option>
-                                        <option value="false">Earlier</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="control-group">
-                                <label class="control-label" for="bug-report-when">When</label>
-                                <div class="controls">
-                                    <input type="text" class="input-xlarge" name="when" id="bug-report-when">
-                                </div>
-                            </div>
-                            <div class="control-group">
-                                <label class="control-label" for="bug-report-message">Full Description</label>
-                                <div class="controls">
-                                    <textarea class="input-xlarge" name="message" id="bug-report-message" rows="3"></textarea>
-                                    <p class="help-block">Please try to include as much information as possible.</p>
-                                </div>
-                            </div>
-                        </fieldset>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary" data-loading-text="Submitting Report..." data-complete-text="Report Submitted, Close Window">Submit Report</button>
-                        <button id="bug-report-cancel" class="btn" data-dismiss="modal" data-loading-text="Cancel">Cancel</button>
-                    </div>
-                </form>
+        <div class="modal hide fade" id="reportIssueModal">
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal">&times;</a>
+                <h3>Report an Issue with CommCare HQ</h3>
             </div>
+            <form id="hqwebapp-bugReportForm" class="form-horizontal" action="{% url bug_report %}" method="post">
+                <input type="hidden" id="bug-report-url" name="url"/>
+                <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
+                <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
+                <input type="hidden" id="bug-report-app_id" name="app_id" value="{{ app.id }}"/>
+
+                <div class="modal-body">
+                    <fieldset>
+                        <div class="control-group">
+                            <label class="control-label" for="bug-report-subject">Short Description</label>
+                            <div class="controls">
+                                <input type="text" class="input-xlarge" name="subject" id="bug-report-subject">
+                                <p class="help-block">Please summarize the issue in one sentence&mdash;the message field below should contain more detail.</p>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label" for="bug-report-now">Time of Occurrence</label>
+                            <div class="controls">
+                                <select id="bug-report-now" name="now">
+                                    <option value="true">Just Now</option>
+                                    <option value="false">Earlier</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label" for="bug-report-when">When</label>
+                            <div class="controls">
+                                <input type="text" class="input-xlarge" name="when" id="bug-report-when">
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label" for="bug-report-message">Full Description</label>
+                            <div class="controls">
+                                <textarea class="input-xlarge" name="message" id="bug-report-message" rows="3"></textarea>
+                                <p class="help-block">Please try to include as much information as possible.</p>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" data-loading-text="Submitting Report..." data-complete-text="Report Submitted, Close Window">Submit Report</button>
+                    <button id="bug-report-cancel" class="btn" data-dismiss="modal" data-loading-text="Cancel">Cancel</button>
+                </div>
+            </form>
+        </div>
         {% endblock %}
 
         <!--Begin javascript -->

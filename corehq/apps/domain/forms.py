@@ -54,7 +54,7 @@ class DomainBoundModelChoiceField(forms.ModelChoiceField):
 ########################################################################################################
 
 class DomainSelectionForm(forms.Form):
-    domain_list = DomainModelChoiceField(queryset=Domain.objects.none(),empty_label=None)
+    domain_list = DomainModelChoiceField(queryset=Domain.objects.none(), empty_label=None, label="Project List")
 
     def __init__(self, domain_list=None, *args, **kwargs):
         super(DomainSelectionForm, self).__init__(*args, **kwargs)
@@ -93,7 +93,7 @@ class RegistrationRequestForm(_BaseForm, forms.Form):
     email       =  forms.EmailField(label='Email Address',
                                     max_length=User._meta.get_field('email').max_length, 
                                     help_text='You will use this to log in')
-    domain_name =  forms.CharField(label='Domain Name', max_length=Domain._meta.get_field('name').max_length)
+    domain_name =  forms.CharField(label='Project Name', max_length=Domain._meta.get_field('name').max_length)
     password_1  =  forms.CharField(label='Password', max_length=max_pwd, widget=forms.PasswordInput(render_value=False))
     password_2  =  forms.CharField(label='Password (reenter)', max_length=max_pwd, widget=forms.PasswordInput(render_value=False))
     
@@ -153,7 +153,7 @@ class RegistrationRequestForm(_BaseForm, forms.Form):
 ########################################################################################################    
 
 class ResendConfirmEmailForm(_BaseForm, forms.Form):
-    domain_name =  forms.CharField(label='Domain name', max_length=Domain._meta.get_field('name').max_length)
+    domain_name =  forms.CharField(label='Project Name', max_length=Domain._meta.get_field('name').max_length)
 
     def clean_domain_name(self):
         data = self.cleaned_data['domain_name'].strip()

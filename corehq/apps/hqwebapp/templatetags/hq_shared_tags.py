@@ -2,7 +2,9 @@ from datetime import datetime, timedelta
 import json
 from django import template
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
+from corehq.apps.domain.models import Domain
 
 
 register = template.Library()
@@ -75,3 +77,25 @@ def get_report_analytics_tag(request):
         report_name = request.path_info.split('reports/')[1][:-1].replace('_', ' ')
         return "_gaq.push(['_setCustomVar', 2, 'report', '%s', 3]);\n_gaq.push(['_trackEvent', 'Viewed Report', '%s']);" % (report_name, report_name)
     return ''
+
+@register.simple_tag
+def domains_for_user(request):
+    domain_list = Domain.active_for_user(request.user)
+    new_domain_url = reverse("domain_registration_request", args=["existing_user"]);
+    lst = list()
+    lst.append('<ul class="dropdown-menu nav-list dropdown-orange">')
+    if len(domain_list) > 0:
+        lst.append('<li class="nav-header">My Projects</li>')
+        for domain in domain_list:
+            default_url = reverse("default_report", args=[domain.name])
+            lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.name))
+        lst.append('<li class="divider"></li>')
+        lst.append('<li><a href="/a/public/">View Demo Project</a></li>')
+    else:
+        lst.append('<li class="nav-header">Example Projects</li>')
+        lst.append('<li><a href="/a/public/">CommCare Demo Project</a></li>')
+        lst.append('<li class="divider"></li>')
+    lst.append('<li><a href="%s">New Project...</a></li>' % new_domain_url)
+    lst.append("</ul>")
+
+    return "".join(lst)

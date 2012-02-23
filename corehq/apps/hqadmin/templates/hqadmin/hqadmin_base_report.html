@@ -3,21 +3,20 @@
     {{ block.super }}
     {% include "imports/datatables.html" %}
     <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}hqadmin/css/style.css"/>
-    <script src="{{ STATIC_URL }}hqwebapp/js/dropdown.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}reports/javascripts/dropdown.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}reports/javascripts/datepicker.js"></script>
 {% endblock %}
 {% block content %}
 <div id="main_container">
     <div id="title-bar">
-        <ul>
-            <li>
-                <div id="report_dropdown">
-                    <span>Select Report</span>
-                    <div>
-                        {% include "hqadmin/partials/report_list.html" %}
-                    </div>
-                </div>
+        <ul class="nav pills">
+            <li class="dropdown" id="admin_report_dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#admin_report_dropdown">
+                    Select Admin Report
+                    <b class="caret"></b>
+                </a>
+                <ul class="dropdown-menu">
+                    {% include "hqadmin/partials/report_list.html" %}
+                </ul>
             </li>
         </ul>
         <h1>{% block report-title %}Administrative Report{% endblock %}</h1>

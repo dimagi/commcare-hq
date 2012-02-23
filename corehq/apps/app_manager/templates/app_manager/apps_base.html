@@ -3,11 +3,13 @@
 {% load url_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
+
 {% block head %}{{ block.super }}
+    <link rel="stylesheet" href="{% static 'hq-bootstrap/css/old/app_manager.css' %}"/>
     {% include "imports/jqmodal.html" %}
-    <link rel="stylesheet" href="{% static 'app_manager/css/app_manager.css' %}"/>
     <link href="{% static 'formdesigner/css/chosen.css' %}" rel="stylesheet" />
 {% endblock %}
+
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
@@ -16,6 +18,7 @@
     <script src="{% static 'hqwebapp/javascripts/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'formdesigner/js/chosen.jquery.min.js' %}"></script>
 {% endblock %}
+
 {% block js-inline %}{{ block.super }}
     <script>
     $(function () {
@@ -106,6 +109,7 @@
     });
     </script>
 {% endblock %}
+
 {% block content %}
     <input type="hidden" name="edit_mode" value="{% if edit %}true{% else %}false{% endif %}" />
     {% include "sms/partials/sms_autocomplete.html" %}

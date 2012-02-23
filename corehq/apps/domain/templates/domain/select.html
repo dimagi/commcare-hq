@@ -1,11 +1,11 @@
 {% extends login_template %}
 
-{% block title %}Domain Selection{% endblock title %}
+{% block title %}Project Selection{% endblock title %}
 
 {% block login-content %}
     <form name="form" method="post" action="{% url domain_select %}">
         {% csrf_token %}
-        <h1>Select a domain</h1>
+        <h1>Select a Project</h1>
         {% if form.non_field_errors %}
             <div class="non_field_errors">
                 {{ form.non_field_errors }}
@@ -40,5 +40,5 @@
         </table>
 
     </form>
-    <p>You may also <a href="/a/public/">visit the CommCare demo domain</a>.</p>
+    <p>You may also <a href="/a/public/">visit the CommCare demo project</a>.</p>
 {% endblock %}

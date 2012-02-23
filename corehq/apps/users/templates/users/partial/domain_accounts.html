@@ -2,7 +2,7 @@
 <div class='all_users'>
 	<table class='big_border'>
 	<tr><th></th>
-		<th>{% trans "Domain Name" %}</th>
+		<th>{% trans "Project Name" %}</th>
 		<th></th>
 	</tr>
 	{% for dom in domains %}
@@ -13,7 +13,7 @@
 	            <form  name="delete_domain_membership" action="{% url delete_domain_membership domain couch_user.couch_id dom %}" method="POST">
 	                <table>
 	                    <tr><td>
-	                    Are you sure you want to remove {{ couch_user.html_username|safe }} from the domain "{{ dom }}"?
+	                    Are you sure you want to remove {{ couch_user.html_username|safe }} from the project "{{ dom }}"?
 	                    </td></tr>
 	                </table>
 	                <input type="submit" value="Delete" />
@@ -23,7 +23,7 @@
 	</tr>
 	{% endfor %}
 	</table>
-    <a class="new_link" href="{% url domain_registration_request kind='existing_user'%}">Create another Domain</a>
+    <a class="new_link" href="{% url domain_registration_request kind='existing_user'%}">Create another Project</a>
 
 
 </div>

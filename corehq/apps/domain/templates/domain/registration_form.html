@@ -1,7 +1,7 @@
 {% extends login_template %}
 
 
-{% block title %}domain registration request{% endblock title %}
+{% block title %}project space registration request{% endblock title %}
 {% block js-inline %}
     <script>
         $(function() {
@@ -49,7 +49,7 @@
                     {% endifnotequal %}
                 </tr>  
             {% endfor %}
-                <h1>Request a new domain</h1>
+                <h1>Request a new project space</h1>
             {% if form.non_field_errors %}
                 <tr class="non_field_errors">
                     <td></td>
