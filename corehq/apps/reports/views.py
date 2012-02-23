@@ -4,6 +4,7 @@ from corehq.apps.reports import util, standard
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import CouchUser, CommCareUser
 import couchexport
+from couchexport.util import FilterFunction
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.export import WorkBook
@@ -119,13 +120,18 @@ def export_data_async(req, domain):
     """
     Download all data for a couchdbkit model
     """
+
     try:
         export_tag = json.loads(req.GET.get("export_tag", "null") or "null")
     except ValueError:
         return HttpResponseBadRequest()
 
+    app_id = req.GET.get('app_id', None)
     assert(export_tag[0] == domain)
-    return couchexport_views.export_data_async(req, filter=instances)
+
+    filter = FilterFunction(instances) & FilterFunction(util.app_export_filter, app_id=app_id)
+
+    return couchexport_views.export_data_async(req, filter=filter)
     
 @login_and_domain_required
 def custom_export(req, domain):

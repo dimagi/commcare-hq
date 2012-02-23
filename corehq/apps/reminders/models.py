@@ -9,12 +9,17 @@ from corehq.apps.sms.api import send_sms
 from corehq.apps.users.models import CommCareUser
 import logging
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
+from dateutil.parser import parse
 
 REPEAT_SCHEDULE_INDEFINITELY = -1
 
 EVENT_AS_SCHEDULE = "SCHEDULE"
 EVENT_AS_OFFSET = "OFFSET"
 EVENT_INTERPRETATIONS = [EVENT_AS_SCHEDULE, EVENT_AS_OFFSET]
+
+UI_SIMPLE_FIXED = "SIMPLE_FIXED"
+UI_COMPLEX = "COMPLEX"
+UI_CHOICES = [UI_SIMPLE_FIXED, UI_COMPLEX]
 
 def is_true_value(val):
     return val == 'ok' or val == 'OK'
@@ -67,47 +72,47 @@ class Message(object):
     
 METHOD_CHOICES = ["sms", "email", "test", "callback", "callback_test"]
 
-"""
-A CaseReminderEvent is the building block for representing reminder schedules in
-a CaseReminderHandler (see CaseReminderHandler.events).
-
-day_num                     See CaseReminderHandler, depends on event_interpretation.
-
-fire_time                   See CaseReminderHandler, depends on event_interpretation.
-
-message                     The text to send along with language to send it, represented 
-                            as a dictionary: {"en": "Hello, {user.full_name}, you're having issues."}
-
-callback_timeout_intervals  For CaseReminderHandlers whose method is "callback", a list of 
-                            timeout intervals (in minutes). The message is resent based on 
-                            the number of entries in this list until the callback is received, 
-                            or the number of timeouts is exhausted.
-"""
 class CaseReminderEvent(DocumentSchema):
+    """
+    A CaseReminderEvent is the building block for representing reminder schedules in
+    a CaseReminderHandler (see CaseReminderHandler.events).
+
+    day_num                     See CaseReminderHandler, depends on event_interpretation.
+
+    fire_time                   See CaseReminderHandler, depends on event_interpretation.
+
+    message                     The text to send along with language to send it, represented 
+                                as a dictionary: {"en": "Hello, {user.full_name}, you're having issues."}
+
+    callback_timeout_intervals  For CaseReminderHandlers whose method is "callback", a list of 
+                                timeout intervals (in minutes). The message is resent based on 
+                                the number of entries in this list until the callback is received, 
+                                or the number of timeouts is exhausted.
+    """
     day_num = IntegerProperty()
     fire_time = TimeProperty()
     message = DictProperty()
     callback_timeout_intervals = ListProperty(IntegerProperty)
 
-"""
-A CaseReminderCallback object logs the callback response for a CaseReminder 
-with method "callback".
-"""
 class CaseReminderCallback(Document):
+    """
+    A CaseReminderCallback object logs the callback response for a CaseReminder 
+    with method "callback".
+    """
     phone_number = StringProperty()
     timestamp = DateTimeProperty()
     user_id = StringProperty()
     
-    """
-    Checks to see if a callback exists for the given user after the given timestamp.
-    
-    user_id         The user for whom to check the existence of a callback.
-    after_timestamp The datetime after which to check for the existence of a callback.
-    
-    return          True if a callback exists, False if not.
-    """
     @classmethod
     def callback_exists(cls, user_id, after_timestamp):
+        """
+        Checks to see if a callback exists for the given user after the given timestamp.
+        
+        user_id         The user for whom to check the existence of a callback.
+        after_timestamp The datetime after which to check for the existence of a callback.
+        
+        return          True if a callback exists, False if not.
+        """
         start_timestamp = json_format_datetime(after_timestamp)
         end_timestamp = json_format_datetime(datetime.utcnow())
         c = CaseReminderCallback.view("reminders/callbacks_by_user_timestamp"
@@ -117,126 +122,128 @@ class CaseReminderCallback(Document):
         ).one()
         return (c is not None)
 
-"""
-A CaseReminderHandler defines the rules and schedule which govern how messages 
-should go out. The "start" and "until" attributes will spawn and deactivate a
-CaseReminder for a CommCareCase, respectively, when their conditions are reached. 
-Below both are described in more detail:
-
-start   This defines when the reminder schedule kicks off.
-        Examples:   start="edd"
-                        - The reminder schedule kicks off for a CommCareCase on 
-                          the date defined by the CommCareCase's "edd" property.
-                    start="form_started"
-                        - The reminder schedule kicks off for a CommCareCase when 
-                          the CommCareCase's "form_started" property equals "ok".
-
-until   This defines when the reminders should stop being sent. Once this condition 
-        is reached, the CaseReminder is deactivated.
-        Examples:   until="edd"
-                        - The reminders will stop being sent for a CommCareCase on 
-                          the date defined by the CommCareCase's "edd" property.
-                    until="followup_1_complete"
-                        - The reminders will stop being sent for a CommCareCase when 
-                          the CommCareCase's "followup_1_complete" property equals "ok".
-
-Once a CaseReminder is spawned (i.e., when the "start" condition is met for a
-CommCareCase), the intervals at which reminders are sent and the messages sent
-are defined by the "events" attribute on the CaseReminderHandler. 
-
-One complete cycle through all events is considered to be an "iteration", and the attribute
-that defines the maximum number of iterations for this schedule is "max_iteration_count". 
-Reminder messages will continue to be sent until the events cycle has occurred "max_iteration_count" 
-times, or until the "until" condition is met, whichever comes first. To ignore the "max_iteration_count",
-it can be set to REPEAT_SCHEDULE_INDEFINITELY, in which case only the "until" condition
-stops the reminder messages.
-
-The events can either be interpreted as offsets from each other and from the original "start" 
-condition, or as fixed schedule times from the original "start" condition:
-
-Example of "event_interpretation" == EVENT_AS_OFFSET:
-    start                   = "form1_completed"
-    start_offset            = 1
-    events                  = [
-        CaseReminderEvent(
-            day_num     = 0
-           ,fire_time   = time(hour=1)
-           ,message     = {"en": "Form not yet completed."}
-        )
-    ]
-    schedule_length         = 0
-    event_interpretation    = EVENT_AS_OFFSET
-    max_iteration_count     = REPEAT_SCHEDULE_INDEFINITELY
-    until                   = "form2_completed"
-
-This CaseReminderHandler can be used to send an hourly message starting one day (start_offset=1)
-after "form1_completed", and will keep sending the message every hour until "form2_completed". So,
-if "form1_completed" is reached on January 1, 2012, at 9:46am, the reminders will begin being sent
-at January 2, 2012, at 9:46am and every hour subsequently until "form2_completed". Specifically,
-when "event_interpretation" is EVENT_AS_OFFSET:
-    day_num         is interpreted to be a number of days after the last fire
-    fire_time       is interpreted to be a number of hours, minutes, and seconds after the last fire
-    schedule_length is interpreted to be a number of days between the last event and the beginning of a new iteration
-
-
-
-Example of "event_interpretation" == EVENT_AS_SCHEDULE:
-    start                   = "regimen_started"
-    start_offset            = 1
-    events                  = [
-        CaseReminderEvent(
-            day_num     = 1
-           ,fire_time   = time(11,00)
-           ,message     = {"en": "Form not yet completed."}
-        )
-       ,CaseReminderEvent(
-            day_num     = 4
-           ,fire_time   = time(11,00)
-           ,message     = {"en": "Form not yet completed."}
-        )
-    ]
-    schedule_length         = 7
-    event_interpretation    = EVENT_AS_SCHEDULE
-    max_iteration_count     = 4
-    until                   = "ignore_this_attribute"
-
-This CaseReminderHandler can be used to send reminders at 11:00am on days 2 and 5 of a weekly
-schedule (schedule_length=7), for 4 weeks (max_iteration_count=4). "Day 1" of the weekly schedule
-is considered to be one day (start_offset=1) after "regimen_started". So, if "regimen_started" is
-reached on a Sunday, the days of the week will be Monday=1, Tuesday=2, etc., and the reminders
-will be sent on Tuesday and Friday of each week, for 4 weeks. Specifically, when "event_interpretation" 
-is EVENT_AS_SCHEDULE:
-    day_num         is interpreted to be a the number of days since the current event cycle began
-    fire_time       is interpreted to be the time of day to fire the reminder
-    schedule_length is interpreted to be the length of the event cycle, in days
-
-Below is a description of the remaining attributes for a CaseReminderHandler:
-
-domain          The domain to which this CaseReminderHandler belongs. Only CommCareCases belonging to
-                this domain will be checked for the "start" and "until" conditions.
-
-case_type       Only CommCareCases whose "type" attribute matches this attribute will be checked for 
-                the "start" and "until" conditions.
-
-nickname        A simple name used to describe this CaseReminderHandler.
-
-lang_property   If given, will be used to select the appropriate translation of a message before it is sent
-                out. For example, if this attribute is "lang", the system will check the CaseReminder's 
-                user.user_data.lang for the correct language.
-
-default_lang    Default language to use in case the language specified by "lang_property" is not found.
-
-method          Set to "sms" to send simple sms reminders at the proper intervals.
-                Set to "callback" to send sms reminders and to enable the checked of "callback_timeout_intervals" on each event.
-
-"""
 class CaseReminderHandler(Document):
+    """
+    A CaseReminderHandler defines the rules and schedule which govern how messages 
+    should go out. The "start" and "until" attributes will spawn and deactivate a
+    CaseReminder for a CommCareCase, respectively, when their conditions are reached. 
+    Below both are described in more detail:
+
+    start   This defines when the reminder schedule kicks off.
+            Examples:   start="edd"
+                            - The reminder schedule kicks off for a CommCareCase on 
+                              the date defined by the CommCareCase's "edd" property.
+                        start="form_started"
+                            - The reminder schedule kicks off for a CommCareCase when 
+                              the CommCareCase's "form_started" property equals "ok".
+
+    until   This defines when the reminders should stop being sent. Once this condition 
+            is reached, the CaseReminder is deactivated.
+            Examples:   until="edd"
+                            - The reminders will stop being sent for a CommCareCase on 
+                              the date defined by the CommCareCase's "edd" property.
+                        until="followup_1_complete"
+                            - The reminders will stop being sent for a CommCareCase when 
+                              the CommCareCase's "followup_1_complete" property equals "ok".
+
+    Once a CaseReminder is spawned (i.e., when the "start" condition is met for a
+    CommCareCase), the intervals at which reminders are sent and the messages sent
+    are defined by the "events" attribute on the CaseReminderHandler. 
+
+    One complete cycle through all events is considered to be an "iteration", and the attribute
+    that defines the maximum number of iterations for this schedule is "max_iteration_count". 
+    Reminder messages will continue to be sent until the events cycle has occurred "max_iteration_count" 
+    times, or until the "until" condition is met, whichever comes first. To ignore the "max_iteration_count",
+    it can be set to REPEAT_SCHEDULE_INDEFINITELY, in which case only the "until" condition
+    stops the reminder messages.
+
+    The events can either be interpreted as offsets from each other and from the original "start" 
+    condition, or as fixed schedule times from the original "start" condition:
+
+    Example of "event_interpretation" == EVENT_AS_OFFSET:
+        start                   = "form1_completed"
+        start_offset            = 1
+        events                  = [
+            CaseReminderEvent(
+                day_num     = 0
+               ,fire_time   = time(hour=1)
+               ,message     = {"en": "Form not yet completed."}
+            )
+        ]
+        schedule_length         = 0
+        event_interpretation    = EVENT_AS_OFFSET
+        max_iteration_count     = REPEAT_SCHEDULE_INDEFINITELY
+        until                   = "form2_completed"
+
+    This CaseReminderHandler can be used to send an hourly message starting one day (start_offset=1)
+    after "form1_completed", and will keep sending the message every hour until "form2_completed". So,
+    if "form1_completed" is reached on January 1, 2012, at 9:46am, the reminders will begin being sent
+    at January 2, 2012, at 9:46am and every hour subsequently until "form2_completed". Specifically,
+    when "event_interpretation" is EVENT_AS_OFFSET:
+        day_num         is interpreted to be a number of days after the last fire
+        fire_time       is interpreted to be a number of hours, minutes, and seconds after the last fire
+        schedule_length is interpreted to be a number of days between the last event and the beginning of a new iteration
+
+
+
+    Example of "event_interpretation" == EVENT_AS_SCHEDULE:
+        start                   = "regimen_started"
+        start_offset            = 1
+        events                  = [
+            CaseReminderEvent(
+                day_num     = 1
+               ,fire_time   = time(11,00)
+               ,message     = {"en": "Form not yet completed."}
+            )
+           ,CaseReminderEvent(
+                day_num     = 4
+               ,fire_time   = time(11,00)
+               ,message     = {"en": "Form not yet completed."}
+            )
+        ]
+        schedule_length         = 7
+        event_interpretation    = EVENT_AS_SCHEDULE
+        max_iteration_count     = 4
+        until                   = "ignore_this_attribute"
+
+    This CaseReminderHandler can be used to send reminders at 11:00am on days 2 and 5 of a weekly
+    schedule (schedule_length=7), for 4 weeks (max_iteration_count=4). "Day 1" of the weekly schedule
+    is considered to be one day (start_offset=1) after "regimen_started". So, if "regimen_started" is
+    reached on a Sunday, the days of the week will be Monday=1, Tuesday=2, etc., and the reminders
+    will be sent on Tuesday and Friday of each week, for 4 weeks. Specifically, when "event_interpretation" 
+    is EVENT_AS_SCHEDULE:
+        day_num         is interpreted to be a the number of days since the current event cycle began
+        fire_time       is interpreted to be the time of day to fire the reminder
+        schedule_length is interpreted to be the length of the event cycle, in days
+
+    Below is a description of the remaining attributes for a CaseReminderHandler:
+
+    domain          The domain to which this CaseReminderHandler belongs. Only CommCareCases belonging to
+                    this domain will be checked for the "start" and "until" conditions.
+
+    case_type       Only CommCareCases whose "type" attribute matches this attribute will be checked for 
+                    the "start" and "until" conditions.
+
+    nickname        A simple name used to describe this CaseReminderHandler.
+
+    lang_property   If given, will be used to select the appropriate translation of a message before it is sent
+                    out. For example, if this attribute is "lang", the system will check the CaseReminder's 
+                    user.user_data.lang for the correct language.
+
+    default_lang    Default language to use in case the language specified by "lang_property" is not found.
+
+    method          Set to "sms" to send simple sms reminders at the proper intervals.
+                    Set to "callback" to send sms reminders and to enable the checked of "callback_timeout_intervals" on each event.
+
+    ui_type         The type of UI to use for editing this CaseReminderHandler (see UI_CHOICES)
+    """
     domain = StringProperty()
     case_type = StringProperty()
     nickname = StringProperty()
     lang_property = StringProperty()
     default_lang = StringProperty()
     method = StringProperty(choices=METHOD_CHOICES, default="sms")
+    ui_type = StringProperty(choices=UI_CHOICES, default=UI_SIMPLE_FIXED)
     
     # Attributes which define the reminder schedule
     start = StringProperty()
@@ -274,16 +281,16 @@ class CaseReminderHandler(Document):
             include_docs=True,
         ).all()
 
-    """
-    Creates a CaseReminder.
-    
-    case    The CommCareCase for which to create the CaseReminder.
-    now     The date and time to kick off the CaseReminder. This is the date and time from which all
-            offsets are calculated.
-    
-    return  The CaseReminder
-    """
     def spawn_reminder(self, case, now):
+        """
+        Creates a CaseReminder.
+        
+        case    The CommCareCase for which to create the CaseReminder.
+        now     The date and time to kick off the CaseReminder. This is the date and time from which all
+                offsets are calculated.
+        
+        return  The CaseReminder
+        """
         user = CommCareUser.get_by_user_id(case.user_id)
         local_now = CaseReminderHandler.utc_to_local(user, now)
         reminder = CaseReminder(
@@ -312,16 +319,16 @@ class CaseReminderHandler(Document):
             reminder.next_fire = CaseReminderHandler.timestamp_to_utc(reminder.user, local_tmsp)
         return reminder
 
-    """
-    Converts the given naive datetime from UTC to the user's time zone.
-    
-    user        The user whose time zone to use.
-    timestamp   The naive datetime.
-    
-    return      The converted timestamp, as a naive datetime.
-    """
     @classmethod
     def utc_to_local(cls, user, timestamp):
+        """
+        Converts the given naive datetime from UTC to the user's time zone.
+        
+        user        The user whose time zone to use.
+        timestamp   The naive datetime.
+        
+        return      The converted timestamp, as a naive datetime.
+        """
         try:
             time_zone = timezone(str(user.user_data.get("time_zone")))
             utc_datetime = pytz.utc.localize(timestamp)
@@ -331,16 +338,16 @@ class CaseReminderHandler(Document):
         except Exception:
             return timestamp
 
-    """
-    Converts the given naive datetime from the user's time zone to UTC.
-    
-    user        The user whose time zone to use.
-    timestamp   The naive datetime.
-    
-    return      The converted timestamp, as a naive datetime.
-    """
     @classmethod
     def timestamp_to_utc(cls, user, timestamp):
+        """
+        Converts the given naive datetime from the user's time zone to UTC.
+        
+        user        The user whose time zone to use.
+        timestamp   The naive datetime.
+        
+        return      The converted timestamp, as a naive datetime.
+        """
         try:
             time_zone = timezone(str(user.user_data.get("time_zone")))
             local_datetime = time_zone.localize(timestamp)
@@ -350,18 +357,18 @@ class CaseReminderHandler(Document):
         except Exception:
             return timestamp
 
-    """
-    Moves the given CaseReminder to the next event specified by its CaseReminderHandler. If
-    the CaseReminder is on the last event in the cycle, it moves to the first event in the cycle.
-    
-    If the CaseReminderHandler's max_iteration_count is not REPEAT_SCHEDULE_INDEFINITELY and
-    the CaseReminder is on the last event in the event cycle, the CaseReminder is also deactivated.
-    
-    reminder    The CaseReminder to move to the next event.
-    
-    return      void
-    """
     def move_to_next_event(self, reminder):
+        """
+        Moves the given CaseReminder to the next event specified by its CaseReminderHandler. If
+        the CaseReminder is on the last event in the cycle, it moves to the first event in the cycle.
+        
+        If the CaseReminderHandler's max_iteration_count is not REPEAT_SCHEDULE_INDEFINITELY and
+        the CaseReminder is on the last event in the event cycle, the CaseReminder is also deactivated.
+        
+        reminder    The CaseReminder to move to the next event.
+        
+        return      void
+        """
         reminder.current_event_sequence_num += 1
         reminder.callback_try_count = 0
         reminder.callback_received = False
@@ -371,20 +378,20 @@ class CaseReminderHandler(Document):
             if (self.max_iteration_count != REPEAT_SCHEDULE_INDEFINITELY) and (reminder.schedule_iteration_num > self.max_iteration_count):
                 reminder.active = False
 
-    """
-    Sets reminder.next_fire to the next allowable date after now by continuously moving the 
-    given CaseReminder to the next event (using move_to_next_event() above) and setting the 
-    CaseReminder's next_fire attribute accordingly until the next_fire > the now parameter. 
-    
-    This is done to skip reminders that were never sent (such as when reminders are deactivated 
-    for a while), instead of sending one reminder every minute until they're all made up for.
-    
-    reminder    The CaseReminder whose next_fire to set.
-    now         The date and time after which reminder.next_fire must be before returning.
-    
-    return      void
-    """
     def set_next_fire(self, reminder, now):
+        """
+        Sets reminder.next_fire to the next allowable date after now by continuously moving the 
+        given CaseReminder to the next event (using move_to_next_event() above) and setting the 
+        CaseReminder's next_fire attribute accordingly until the next_fire > the now parameter. 
+        
+        This is done to skip reminders that were never sent (such as when reminders are deactivated 
+        for a while), instead of sending one reminder every minute until they're all made up for.
+        
+        reminder    The CaseReminder whose next_fire to set.
+        now         The date and time after which reminder.next_fire must be before returning.
+        
+        return      void
+        """
         while now >= reminder.next_fire and reminder.active:
             # If it is a callback reminder, check the callback_timeout_intervals
             if (reminder.method == "callback" or reminder.method == "callback_test") and len(reminder.current_event.callback_timeout_intervals) > 0:
@@ -415,14 +422,14 @@ class CaseReminderHandler(Document):
     def should_fire(self, reminder, now):
         return now > reminder.next_fire
 
-    """
-    Sends the message associated with the given CaseReminder's current event.
-    
-    reminder    The CaseReminder which to fire.
-    
-    return      True on success, False on failure
-    """
     def fire(self, reminder):
+        """
+        Sends the message associated with the given CaseReminder's current event.
+        
+        reminder    The CaseReminder which to fire.
+        
+        return      True on success, False on failure
+        """
         # If it is a callback reminder and the callback has been received, skip sending the next timeout message
         if (reminder.method == "callback" or reminder.method == "callback_test") and len(reminder.current_event.callback_timeout_intervals) > 0:
             if CaseReminderCallback.callback_exists(reminder.user_id, reminder.last_fired):
@@ -443,19 +450,19 @@ class CaseReminderHandler(Document):
             return True
         
 
-    """
-    Checks to see if the condition specified by case_property on case has been reached.
-    If case[case_property] is a timestamp and it is later than now, then the condition is reached.
-    If case[case_property] equals "ok", then the condition is reached.
-    
-    case            The CommCareCase to check.
-    case_property   The property on CommCareCase to check.
-    now             The timestamp to use when comparing, if case[case_property] is a timestamp.
-    
-    return      True if the condition is reached, False if not.
-    """
     @classmethod
     def condition_reached(cls, case, case_property, now):
+        """
+        Checks to see if the condition specified by case_property on case has been reached.
+        If case[case_property] is a timestamp and it is later than now, then the condition is reached.
+        If case[case_property] equals "ok", then the condition is reached.
+        
+        case            The CommCareCase to check.
+        case_property   The property on CommCareCase to check.
+        now             The timestamp to use when comparing, if case[case_property] is a timestamp.
+        
+        return      True if the condition is reached, False if not.
+        """
         condition = case.get_case_property(case_property)
         try: condition = string_to_datetime(condition)
         except Exception:
@@ -466,35 +473,61 @@ class CaseReminderHandler(Document):
         else:
             return False
 
-    """
-    This method is called every time a CommCareCase is saved and matches this
-    CaseReminderHandler's domain and case_type. It's used to check for the
-    "start" and "until" conditions in order to spawn or deactivate a CaseReminder
-    for the CommCareCase.
-    
-    case    The case that is being updated.
-    now     The current date and time to use; if not specified, datetime.utcnow() is used.
-    
-    return  void
-    """
     def case_changed(self, case, now=None):
+        """
+        This method is called every time a CommCareCase is saved and matches this
+        CaseReminderHandler's domain and case_type. It's used to check for the
+        "start" and "until" conditions in order to spawn or deactivate a CaseReminder
+        for the CommCareCase.
+        
+        case    The case that is being updated.
+        now     The current date and time to use; if not specified, datetime.utcnow() is used.
+        
+        return  void
+        """
         now = now or self.get_now()
         reminder = self.get_reminder(case)
-
+        
         if case.closed or case.type != self.case_type or not CommCareUser.get_by_user_id(case.user_id):
             if reminder:
                 reminder.retire()
         else:
-            if not reminder:
-                start = case.get_case_property(self.start)
-                try: start = string_to_datetime(start)
+            # Retrieve the value of the start property
+            start_value = case.get_case_property(self.start)
+            if isinstance(start_value, date) or isinstance(start_value, datetime):
+                start = start_value
+            else:
+                try:
+                    start = parse(start_value)
                 except Exception:
-                    pass
+                    start = start_value
+            
+            # Retire the reminder if the start condition is no longer valid
+            if reminder:
                 if isinstance(start, date) or isinstance(start, datetime):
-                    if isinstance(start, date):
+                    if isinstance(start, datetime):
+                        expected_start_condition_datetime = start
+                    else:
+                        expected_start_condition_datetime = datetime(start.year, start.month, start.day, 0, 0, 0)
+                    
+                    if reminder.start_condition_datetime != expected_start_condition_datetime:
+                        # The start date/time has changed, so retire the reminder; it will be spawned again in the next block
+                        reminder.retire()
+                        reminder = None
+                elif not is_true_value(start):
+                    # The start condition is no longer valid, so retire the reminder
+                    reminder.retire()
+                    reminder = None
+            
+            if not reminder:
+                if isinstance(start, date) or isinstance(start, datetime):
+                    start_condition_datetime = start
+                    if isinstance(start, date) and not isinstance(start, datetime): #datetime is an instance of both date and datetime
                         start = datetime(start.year, start.month, start.day, now.hour, now.minute, now.second, now.microsecond)
+                        start_condition_datetime = datetime(start.year, start.month, start.day, 0, 0, 0)
                     try:
                         reminder = self.spawn_reminder(case, start)
+                        reminder.start_condition_datetime = start_condition_datetime
                     except Exception:
                         if settings.DEBUG:
                             raise
@@ -506,6 +539,7 @@ class CaseReminderHandler(Document):
                 else:
                     if self.condition_reached(case, self.start, now):
                         reminder = self.spawn_reminder(case, now)
+                        reminder.start_condition_datetime = now
             else:
                 active = (not self.condition_reached(case, self.until, now)) and not (reminder.handler.max_iteration_count != REPEAT_SCHEDULE_INDEFINITELY and reminder.schedule_iteration_num > reminder.handler.max_iteration_count)
                 if active and not reminder.active:
@@ -524,8 +558,8 @@ class CaseReminderHandler(Document):
         if not self.deleted():
             cases = CommCareCase.view('hqcase/open_cases',
                 reduce=False,
-                startkey=[self.domain],
-                endkey=[self.domain, {}],
+                startkey=[self.domain, {}, {}],
+                endkey=[self.domain, {}, {}],
                 include_docs=True,
             )
             for case in cases:
@@ -575,14 +609,14 @@ class CaseReminderHandler(Document):
     def deleted(self):
         return self.doc_type != 'CaseReminderHandler'
 
-"""
-Where the CaseReminderHandler is the rule and schedule for sending out reminders,
-a CaseReminder is an instance of that rule as it is being applied to a specific
-CommCareCase. A CaseReminder only applies to a single CommCareCase/CaseReminderHandler
-interaction and is just a representation of the state of the rule in the lifecycle 
-of the CaseReminderHandler.
-"""
 class CaseReminder(Document):
+    """
+    Where the CaseReminderHandler is the rule and schedule for sending out reminders,
+    a CaseReminder is an instance of that rule as it is being applied to a specific
+    CommCareCase. A CaseReminder only applies to a single CommCareCase/CaseReminderHandler
+    interaction and is just a representation of the state of the rule in the lifecycle 
+    of the CaseReminderHandler.
+    """
     domain = StringProperty()                       # Domain
     case_id = StringProperty()                      # Reference to the CommCareCase
     handler_id = StringProperty()                   # Reference to the CaseReminderHandler
@@ -592,11 +626,12 @@ class CaseReminder(Document):
     last_fired = DateTimeProperty()                 # The date and time that the last message went out
     active = BooleanProperty(default=False)         # True if active, False if deactivated
     lang = StringProperty()                         # Language the reminder should be sent in
-    start_date = DateProperty()                     # The date that the CaseReminder was spawned
+    start_date = DateProperty()                     # For CaseReminderHandlers with event_interpretation=SCHEDULE, this is the date (in the recipient's time zone) from which all event times are calculated
     schedule_iteration_num = IntegerProperty()      # The current iteration through the cycle of self.handler.events
     current_event_sequence_num = IntegerProperty()  # The current event number (index to self.handler.events)
     callback_try_count = IntegerProperty()          # Keeps track of the number of times a callback has timed out
     callback_received = BooleanProperty()           # True if the expected callback was received since the last SMS was sent, False if not
+    start_condition_datetime = DateTimeProperty()   # The date and time matching the case property specified by the CaseReminderHandler.start_condition
 
     @property
     def handler(self):

@@ -5,6 +5,7 @@ from __future__ import absolute_import
 
 from datetime import datetime
 import logging
+import re
 from dimagi.utils.make_uuid import random_hex
 
 from django.contrib.auth.models import User
@@ -56,6 +57,7 @@ class Permissions(object):
     EDIT_COMMCARE_USERS = 'edit-commcare-users'
     EDIT_DATA = 'edit-data'
     EDIT_APPS = 'edit-apps'
+
     AVAILABLE_PERMISSIONS = [EDIT_DATA, EDIT_WEB_USERS, EDIT_COMMCARE_USERS, EDIT_APPS]
 
 class Roles(object):
@@ -141,6 +143,9 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     class Inconsistent(Exception):
         pass
 
+    class InvalidID(Exception):
+        pass
+
     @property
     def raw_username(self):
         if self.doc_type == "CommCareUser":
@@ -177,6 +182,11 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         return "%s %s" % (self.first_name, self.last_name)
 
     formatted_name = full_name
+
+    def set_full_name(self, full_name):
+        data = full_name.split()
+        self.first_name = data.pop(0)
+        self.last_name = ' '.join(data)
 
     def get_scheduled_reports(self):
         return ReportNotification.view("reports/user_notifications", key=self.user_id, include_docs=True).all()
@@ -233,6 +243,14 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             endkey=[domain, {}],
             include_docs=True,
         )
+
+    def is_member_of(self, domain_qs):
+        if isinstance(domain_qs, basestring):
+            return domain_qs in self.get_domains() or self.is_superuser
+        membership_count = domain_qs.filter(name__in=self.get_domains()).count()
+        if membership_count > 0:
+            return True
+        return False
 
     # for synching
     def sync_from_django_user(self, django_user):
@@ -342,6 +360,8 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
         django_user = create_user(username, password=password, email=email)
         if uuid:
+            if not re.match(r'[\w-]+', uuid):
+                raise cls.InvalidID('invalid id %r' % uuid)
             couch_user = cls(_id=uuid)
         else:
             couch_user = cls()
@@ -393,6 +413,22 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     def is_deleted(self):
         return self.base_doc.endswith(DELETED_SUFFIX)
+
+    def has_permission(self, domain, permission):
+        """To be overridden by subclasses"""
+        return False
+
+    def __getattr__(self, item):
+        if item.startswith('can_'):
+            perm = getattr(Permissions, item[len('can_'):].upper(), None)
+            if perm:
+                def fn(domain=None):
+                    domain = domain or self.current_domain
+                    return self.has_permission(domain, perm)
+                fn.__name__ = item
+                return fn
+        return super(CouchUser, self).__getattr__(item)
+
 
 class CommCareUser(CouchUser):
 
@@ -514,6 +550,9 @@ class CommCareUser(CouchUser):
 
     def is_web_user(self):
         return False
+
+    def get_domains(self):
+        return [self.domain]
 
     def add_commcare_account(self, domain, device_id, user_data=None):
         """
@@ -750,14 +789,6 @@ class WebUser(CouchUser):
         else:
             raise self.Inconsistent("domains and domain_memberships out of sync")
 
-    def is_member_of(self, domain_qs):
-        if isinstance(domain_qs, basestring):
-            return domain_qs in self.get_domains() or self.is_superuser
-        membership_count = domain_qs.filter(name__in=self.get_domains()).count()
-        if membership_count > 0:
-            return True
-        return False
-
     def set_permission(self, domain, permission, value, save=True):
         assert(permission in Permissions.AVAILABLE_PERMISSIONS)
         if self.has_permission(domain, permission) == value:
@@ -835,25 +866,6 @@ class WebUser(CouchUser):
                 return None
 
         return dict(Roles.get_role_labels()).get(self.get_role(domain), "Unknown Role")
-#
-#    # these functions help in templates
-#    def can_edit_apps(self, domain=None):
-#        domain = domain or self.current_domain
-#        return self.has_permission(domain, Permissions.EDIT_APPS)
-#    def can_edit_web_users(self, domain=None):
-#        domain = domain or self.current_domain
-#        return self.has_permission(domain, Permissions.EDIT_WEB_USERS)
-
-    def __getattr__(self, item):
-        if item.startswith('can_'):
-            perm = getattr(Permissions, item[len('can_'):].upper(), None)
-            if perm:
-                def fn(domain=None):
-                    domain = domain or self.current_domain
-                    return self.has_permission(domain, perm)
-                fn.__name__ = item
-                return fn
-        return super(WebUser, self).__getattr__(item)
 
 class FakeUser(WebUser):
     """

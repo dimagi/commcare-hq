@@ -1,23 +1,6 @@
 {% extends "reports/report_base.html" %}
 {% load xforms_extras %}
 
-{% block js-inline %}{{ block.super }}
-   <!-- <script>
-	    {# modified from: http://stackoverflow.com/questions/809035/ajax-jquery-ui-dialog-window-loaded-within-ajax-style-jquery-ui-tabs #}
-	    $(function (){
-	        var ajaxDialog = $('<div id="export-ajax-dialog" style="display:hidden"></div>').appendTo('body');
-            ajaxDialog.dialog({autoOpen: false});
-            $('a.export-ajax').live('click', function() {
-			    // load remote content
-			    ajaxDialog.load(this.href);
-			    ajaxDialog.dialog("open");
-			    //prevent the browser from following the link
-			    return false;
-			});
-	    });
-    </script>-->
-{% endblock %}
-
 {% block reportcontent %}
     <div class="hq-generic-report">
         <h2>Saved Custom Exports</h2>

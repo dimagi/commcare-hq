@@ -43,10 +43,13 @@ input.date-picker {
     display: block;
 }
 
-fieldset.report-field {
-    display: inline-block;
-    padding: .25em 20px 0.25em 90px;
+#paramSelectorForm {
     position: relative;
+}
+
+fieldset.report-field {
+    display: block;
+    padding: .25em 20px 0.25em 90px;
     min-width: 200px;
 }
 

@@ -99,7 +99,6 @@ HQ_APPS = (
     'corehq.apps.receiver',
     'corehq.apps.hqwebapp',
     'corehq.apps.program',
-    'corehq.apps.logtracker',
     'corehq.apps.xforms',
     'casexml.apps.phone',
     'releasemanager',
@@ -170,11 +169,6 @@ DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME="homepage"
 BASE_TEMPLATE="hqwebapp/base.html"
 LOGIN_TEMPLATE="login_and_password/login.html"
 LOGGEDOUT_TEMPLATE="loggedout.html"
-
-#logtracker settings variables
-LOGTRACKER_ALERT_EMAILS = []
-LOGTRACKER_LOG_THRESHOLD = 30
-LOGTRACKER_ALERT_THRESHOLD = 40
 
 # email settings: these ones are the custom hq ones
 EMAIL_LOGIN="notifications@dimagi.com"

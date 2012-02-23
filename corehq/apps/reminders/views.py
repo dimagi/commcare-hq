@@ -4,11 +4,13 @@ from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.reminders.forms import CaseReminderForm
+from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm
 from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, CaseReminderCallback, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.web import render_to_response
+from dimagi.utils.parsing import string_to_datetime
 from tropo import Tropo
+from .models import UI_SIMPLE_FIXED, UI_COMPLEX
 
 @login_and_domain_required
 def default(request, domain):
@@ -38,6 +40,7 @@ def add_reminder(request, domain, handler_id=None, template="reminders/partial/a
         if reminder_form.is_valid():
             if not handler:
                 handler = CaseReminderHandler(domain=domain)
+                handler.ui_type = UI_SIMPLE_FIXED
             for key, value in reminder_form.cleaned_data.items():
                 if (key != "frequency") and (key != "message"):
                     handler[key] = value
@@ -105,6 +108,59 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
         'dates': dates,
         'today': today,
         'now': now,
+    })
+
+@login_and_domain_required
+def add_complex_reminder_schedule(request, domain, handler_id=None):
+    if handler_id:
+        h = CaseReminderHandler.get(handler_id)
+        if h.doc_type != 'CaseReminderHandler' or h.domain != domain:
+            raise Http404
+    else:
+        h = None
+    
+    if request.method == "POST":
+        form = ComplexCaseReminderForm(request.POST)
+        if form.is_valid():
+            if h is None:
+                h = CaseReminderHandler(domain=domain)
+                h.ui_type = UI_COMPLEX
+            h.case_type = form.cleaned_data["case_type"]
+            h.nickname = form.cleaned_data["nickname"]
+            h.default_lang = form.cleaned_data["default_lang"]
+            h.method = form.cleaned_data["method"]
+            h.start = form.cleaned_data["start"]
+            h.start_offset = form.cleaned_data["start_offset"]
+            h.schedule_length = form.cleaned_data["schedule_length"]
+            h.event_interpretation = form.cleaned_data["event_interpretation"]
+            h.max_iteration_count = form.cleaned_data["max_iteration_count"]
+            h.until = form.cleaned_data["until"]
+            h.events = form.cleaned_data["events"]
+            h.save()
+            return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
+    else:
+        if h is not None:
+            initial = {
+                "case_type"             : h.case_type
+               ,"nickname"              : h.nickname
+               ,"default_lang"          : h.default_lang
+               ,"method"                : h.method
+               ,"start"                 : h.start
+               ,"start_offset"          : h.start_offset
+               ,"schedule_length"       : h.schedule_length
+               ,"event_interpretation"  : h.event_interpretation
+               ,"max_iteration_count"   : h.max_iteration_count
+               ,"until"                 : h.until
+               ,"events"                : h.events
+            }
+        else:
+            initial = {}
+        
+        form = ComplexCaseReminderForm(initial=initial)
+    
+    return render_to_response(request, "reminders/partial/add_complex_reminder.html", {
+        "domain":   domain
+       ,"form":     form
     })
 
 @csrf_exempt

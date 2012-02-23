@@ -733,6 +733,9 @@ class ApplicationBase(VersionedDoc):
             
         return super(ApplicationBase, cls).wrap(data)
 
+    def is_remote_app(self):
+        return False
+
     def set_admin_password(self, raw_password):
         import random
         algo = 'sha1'
@@ -1354,6 +1357,9 @@ class RemoteApp(ApplicationBase):
     #             return self.suite_url.split('/')[-1]
     #         else:
     #             raise NotImplementedYet()
+
+    def is_remote_app(self):
+        return True
 
     @classmethod
     def new_app(cls, domain, name, lang='en'):

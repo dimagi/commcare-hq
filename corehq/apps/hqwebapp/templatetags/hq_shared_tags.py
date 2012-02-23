@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from corehq.apps.domain.models import Domain
+from dimagi.utils.web import json_handler
 
 
 register = template.Library()
@@ -15,7 +16,8 @@ def JSON(obj):
         obj = obj.to_json()
     except AttributeError:
         pass
-    return mark_safe(json.dumps(obj))
+
+    return mark_safe(json.dumps(obj, default=json_handler))
 
 @register.filter
 def dict_lookup(dict, key):

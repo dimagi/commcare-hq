@@ -5,6 +5,7 @@ from corehq.apps.app_manager.success_message import SuccessMessage
 from receiver.signals import successful_form_received, Certainty, ReceiverResult
 from receiver import xml
 from corehq.middleware import OPENROSA_ACCEPT_LANGUAGE
+from receiver.xml import ResponseNature
 
 def get_custom_response_message(sender, xform, **kwargs):
     """
@@ -31,6 +32,8 @@ def get_custom_response_message(sender, xform, **kwargs):
             message = app.success_message.get(lang)
             if message:
                 success_message = SuccessMessage(message, userID, domain=domain, tz=timedelta(hours=0)).render()
-                return ReceiverResult(xml.get_simple_response_xml(success_message), Certainty.STRONG)
+                return ReceiverResult(xml.get_simple_response_xml(
+                    success_message, nature=ResponseNature.SUBMIT_SUCCESS),
+                    Certainty.STRONG)
 
 successful_form_received.connect(get_custom_response_message)

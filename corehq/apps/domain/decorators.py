@@ -1,3 +1,4 @@
+from functools import wraps
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
@@ -50,9 +51,9 @@ def _redirect_for_login_or_domain(request, redirect_field_name, where):
 # into _inner().
 
 def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME, login_url=settings.LOGIN_URL):
-    def _outer( view_func ): 
+    def _outer(view_func):
+        @wraps(view_func)
         def _inner(req, domain, *args, **kwargs):
-
             user = req.user
             domain_name = normalize_domain_name(domain)
             domains = Domain.objects.filter(name=domain_name)
@@ -70,12 +71,7 @@ def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME, login_
                 else:
                     raise Http404
             else:
-                return _redirect_for_login_or_domain( req, redirect_field_name, login_url)
-
-        _inner.__name__ = view_func.__name__
-        _inner.__doc__ = view_func.__doc__
-        _inner.__module__ = view_func.__module__
-        _inner.__dict__.update(view_func.__dict__)
+                return _redirect_for_login_or_domain(req, redirect_field_name, login_url)
         
         return _inner
     return _outer
