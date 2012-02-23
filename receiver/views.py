@@ -14,6 +14,7 @@ from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.parsing import string_to_datetime
+from receiver.xml import ResponseNature
 
 def home(request):
     forms = get_db().view('couchforms/by_xmlns', group=True, group_level=1)
@@ -101,20 +102,31 @@ def post(request):
                 # in the event of errors, respond with the errors, and mark the problem
                 doc.problem = ", ".join(errors)
                 doc.save()
-                response = HttpResponse(xml.get_simple_response_xml(message=doc.problem), status=201)
+                response = HttpResponse(
+                    xml.get_simple_response_xml(
+                        message=doc.problem, 
+                        nature=ResponseNature.SUBMIT_ERROR), 
+                    status=201)
             elif responses:
                 # use the response with the highest priority if we got any
                 responses.sort()
                 response = HttpResponse(responses[-1].response, status=201)
             else:
                 # default to something generic 
-                response = HttpResponse(xml.get_simple_response_xml(message="Success! Received XForm id is: %s\n" % doc['_id']), 
-                                        status=201)
+                response = HttpResponse(
+                    xml.get_simple_response_xml(
+                        message="Success! Received XForm id is: %s\n" % doc['_id'],
+                        nature=ResponseNature.SUBMIT_SUCCESS), 
+                    status=201)
             return response
             
         
         def fail_actions_and_respond(doc):
-            response = HttpResponse(xml.get_simple_response_xml(message=doc.problem), status=201)
+            response = HttpResponse(
+                xml.get_simple_response_xml(
+                    message=doc.problem,
+                    nature=ResponseNature.SUBMIT_ERROR), 
+                status=201)
             return response
         
         
