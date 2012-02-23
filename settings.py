@@ -131,6 +131,7 @@ HQ_APPS = (
     'casexml.apps.case',
     'casexml.apps.phone',
     'corehq.apps.cleanup',
+    'corehq.apps.cloudcare',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
     'corehq.apps.hqadmin',
@@ -352,6 +353,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'builds',
         'case',
         'cleanup',
+        'cloudcare',
         'couch', # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
         'couchforms',
         'couchexport',
