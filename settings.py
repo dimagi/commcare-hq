@@ -180,9 +180,9 @@ TABS = [
     ("corehq.apps.reports.views.default", "Reports"),
     ("corehq.apps.app_manager.views.default", "Applications"),
     ("corehq.apps.sms.views.messaging", "Messages"),
-    ("corehq.apps.users.views.users", "Users"),
-    ("corehq.apps.domain.views.manage_domain", "My Domain"),
-    ("corehq.apps.hqadmin.views.default", "Admin", "is_superuser"),
+    ("corehq.apps.users.views.users", "Settings & Users"),
+    ("corehq.apps.domain.views.manage_domain", "Project Forwarding"),
+    ("corehq.apps.hqadmin.views.default", "Admin Reports", "is_superuser"),
 ]
 
 # after login, django redirects to this URL
@@ -415,7 +415,10 @@ STANDARD_REPORT_MAP = {
                            ],
     "Inspect Data" : ['corehq.apps.reports.standard.SubmitHistory',
                       'corehq.apps.reports.standard.CaseListReport',
-                           ]
+                      ],
+    "Raw Data" : ['corehq.apps.reports.standard.ExcelExportReport',
+                  'corehq.apps.reports.standard.CaseExportReport',
+                      ]
 }
 
 CUSTOM_REPORT_MAP = {
