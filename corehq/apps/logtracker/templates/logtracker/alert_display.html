@@ -1,0 +1,47 @@
+<html>
+<body>
+<h2>Commcare Error Alert</h2>
+<table>
+	<tr>
+		<td>Level</td>
+		<td>{{log.level}}</td>	
+	</tr>
+	<tr>
+		<td>Channel</td>
+		<td>{{log.channel}}</td>	
+	</tr>
+	<tr>
+		<td>Created</td>
+		<td>{{log.created|date}} {{log.created|time}}</td>	
+	</tr>
+	<tr>
+		<td>Message</td>
+		<td>{{log.message}}</td>	
+	</tr>
+	<tr>
+		<td>File Path</td>
+		<td>{{log.pathname}}</td>	
+	</tr>	
+	<tr>
+		<td>Function</td>
+		<td>{{log.funcname}}</td>	
+	</tr>
+	<tr>
+		<td>Module</td>
+		<td>{{log.module}}</td>	
+	</tr>
+	<tr>
+		<td>filename</td>
+		<td>{{log.filename}}:{{log.line_no}}</td>	
+	</tr>
+	<tr>
+		<td>Traceback</td>
+		<td>{{log.traceback}}</td>	
+	</tr>
+	<tr>
+		<td>Data Dump</td>
+		<td>{{log.data_dump}}</td>	
+	</tr>
+</table>
+</body>
+</html>
