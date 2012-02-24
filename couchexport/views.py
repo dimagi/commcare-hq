@@ -25,7 +25,8 @@ def export_data_async(request, filter=None, **kwargs):
                        request.GET.get("filename", None), 
                        request.GET.get("previous_export", None),
                        filter=filter)
-    return HttpResponseRedirect(reverse('retrieve_download', kwargs={'download_id': download_id}))
+    return HttpResponse(json.dumps(dict(download_url=reverse('retrieve_download', kwargs={'download_id': download_id}))))
+    #return HttpResponseRedirect(reverse('retrieve_download', kwargs={'download_id': download_id}))
     
 def export_data(request, **kwargs):
     """
