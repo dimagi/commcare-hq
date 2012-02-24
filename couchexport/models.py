@@ -122,7 +122,9 @@ class ExportTable(DocumentSchema):
         
     @property
     def col_dict(self):
-        return dict([c.index, c.display] for c in self.columns)
+        if not hasattr(self, "_col_dict"):
+            self._col_dict = dict([c.index, c.display] for c in self.columns)
+        return self._col_dict
     
     def get_column_configuration(self, schema):
         all_cols = schema.top_level_nodes
