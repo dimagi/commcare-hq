@@ -54,7 +54,7 @@ class DomainBoundModelChoiceField(forms.ModelChoiceField):
 ########################################################################################################
 
 class DomainSelectionForm(forms.Form):
-    domain_list = DomainModelChoiceField(queryset=Domain.objects.none(), empty_label=None, label="Project Lis")
+    domain_list = DomainModelChoiceField(queryset=Domain.objects.none(), empty_label=None, label="Project List")
 
     def __init__(self, domain_list=None, *args, **kwargs):
         super(DomainSelectionForm, self).__init__(*args, **kwargs)
