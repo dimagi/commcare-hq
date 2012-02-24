@@ -316,14 +316,22 @@ class XForm(WrappedNode):
         build_non_question_paths(self.data_node)
         return questions
 
-    def add_case_and_meta(self, form, application_version=None):
-        application_version = application_version or form.get_app().application_version
+    def add_case_and_meta(self, form):
+        if form.get_app().application_version == APP_V1:
+            self.add_case_and_meta_1(form)
+        else:
+            self.add_case_and_meta_2(form)
+
+    def add_case_and_meta_2(self):
+
+
+    def add_case_and_meta_1(self, form):
         case = self.case_node
 
         case_parent = self.data_node
         bind_parent = self.model_node
 
-        casexml, binds, transformation = self.create_casexml(form, application_version)
+        casexml, binds, transformation = self.create_casexml_1(form)
         if casexml:
             if case.exists():
                 case_parent.remove(case.xml)
@@ -398,7 +406,7 @@ class XForm(WrappedNode):
         """set the form's version attribute"""
         self.data_node.set('version', "%s" % version)
 
-    def create_casexml(self, form, version=APP_V1):
+    def create_casexml_1(self, form):
         from xml_utils import XMLTag as __
 
         actions = form.active_actions()

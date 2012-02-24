@@ -1102,7 +1102,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def set_custom_suite(self, value):
         self.put_attachment(value, 'custom_suite.xml')
 
-    def create_suite(self, template='app_manager/suite.xml'):
+    def create_suite(self):
+        template='app_manager/suite-%s.xml' % self.application_version
 
         return render_to_string(template, {
             'app': self,
