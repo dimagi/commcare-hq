@@ -1,6 +1,25 @@
 {% extends "reports/report_base.html" %}
 {% load xforms_extras %}
 
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        $(function() {
+           $('.export-action-download').click(function() {
+               var $modalBody = $("#export-download-status .modal-body");
+               $modalBody.text("Fetching...");
+               console.log("Going to...");
+               console.log($(this).data('dlocation'));
+               $.getJSON($(this).data('dlocation'), function(d) {
+                   console.log("supposedly things should have worked");
+                   console.log(d.download_url);
+                   $modalBody.empty().load(d.download_url);
+               });
+           });
+
+        });
+    </script>
+{% endblock %}
+
 {% block reportcontent %}
     <div class="hq-generic-report">
         <h2>Saved Custom Exports</h2>
@@ -37,7 +56,7 @@
                         </a>
                     </td>
                     <td>
-                        <a class="btn btn-danger" data-toggle="modal" class="delete_link" href="#delte-export-modal-{{ export.get_id }}"><i class="icon-remove icon-white"></i> Delete</a>
+                        <a class="btn btn-danger" data-toggle="modal" class="delete_link" href="#delete-export-modal-{{ export.get_id }}"><i class="icon-remove icon-white"></i> Delete</a>
                         {% include "reports/dialogs/delete_custom_export_dialog.html" %}
                      </td>
                  </tr>
@@ -96,8 +115,9 @@
                     </td>
                     <td class="cell-vertical-centered">
                         {% if form.submissions %}
-                            <a href='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}'
-                                class="export-ajax btn btn-primary"><i class="icon-download-alt icon-white"></i> Download</a> ({{ form.submissions }} rows)
+                            <a data-toggle="modal" href="#export-download-status" data-dlocation='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}'
+                                class="btn btn-primary export-action-download" ><i class="icon-download-alt icon-white"></i> Download</a> ({{ form.submissions }} rows)
+
                         {% else %}
                             No Forms
                         {% endif %}
@@ -107,5 +127,21 @@
             </tbody>
         </table>
     {% endif %}
+    </div>
+{% endblock %}
+
+{% block modals %}
+{{ block.super }}
+    <div id="export-download-status" class="modal hide fade">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">×</a>
+            <h3>Downloading Export Data for <span></span></h3>
+        </div>
+        <div class="modal-body">
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-danger" type="submit"><i class="icon-remove icon-white"></i> Delete</button>
+            <a href="#" class="btn" data-dismiss="modal">Close</a>
+        </div>
     </div>
 {% endblock %}
