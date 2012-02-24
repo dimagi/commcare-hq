@@ -180,6 +180,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn):
             "case_id": self.case_id,
             "user_id": self.user_id,
             "closed": self.closed,
+            "date_closed": self.closed_on,
             "xform_ids": self.xform_ids,
             # renamed
             "date_modified": self.modified_on,
