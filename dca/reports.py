@@ -172,13 +172,13 @@ class LendingGroupAggregate(object):
 
     # Utility functions
     def sum_all_groups(self, l):
-        return sum(map(lambda x: float(x), self._all(l)))
+        return sum(map(lambda x: float(x) if x else 0.0, self._all(l)))
 
     def avg_all_groups(self, l):
         if not len(self.groups): return None
         return self.sum_all_groups(l)/float(len(self.groups))
 
-    def currency(self, a): return "%s%.2f" % (self.curname, self.curval * float(a))
+    def currency(self, a): return "%s%.2f" % (self.curname, self.curval * float(a)) if a else "n/a"
 
     def div(self, a, b): return a/b if b else 0.0
 
