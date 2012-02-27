@@ -183,7 +183,10 @@ class LendingGroupAggregate(object):
     def div(self, a, b): return a/b if b else 0.0
 
     def pct(self, a, b):
-        return "%.1f%%" % (100.0 * (self.div(a, b)))
+        try:
+            return "%.1f%%" % (100.0 * (self.div(a, b)))
+        except TypeError:
+            return "n/a"
 
     def __getattr__(self, item):
         if not item:
