@@ -1402,9 +1402,9 @@ class RemoteApp(ApplicationBase):
         locations = []
         for resource in suite_xml.findall('*/resource'):
             try:
-                loc = resource.findtext('location[@authority="remote"]')
-            except Exception:
                 loc = resource.findtext('location[@authority="local"]')
+            except Exception:
+                loc = resource.findtext('location[@authority="remote"]')
             locations.append(loc)
         for location in locations:
             files.update((self.fetch_file(location),))
