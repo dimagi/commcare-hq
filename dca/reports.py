@@ -163,7 +163,7 @@ class LendingGroupAggregate(object):
             tmp = get_db().view('case/by_owner', key=[user._id, False], include_docs=True).all()
             for t in tmp:
                 groups.append(LendingGroup(CommCareCase.get(t['doc']['_id']), month, year))
-        self.groups = groups
+        self.groups = groups if groups else []
 
     def _all(self, l, flt=None):
         if flt:
@@ -290,7 +290,10 @@ class LendingGroupAggregate(object):
 
     @property
     def retention_rate(self):
-        return self.pct(self.num_members - self.dropouts_since_start_of_cycle, self.num_members)
+        if self.num_members:
+            return self.pct(self.num_members - self.dropouts_since_start_of_cycle, self.num_members)
+        else:
+            return "n/a"
 
     @property
     def change_in_members(self):
