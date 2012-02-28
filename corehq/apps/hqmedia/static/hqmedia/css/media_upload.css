@@ -37,7 +37,9 @@ a.view_media.inactive,
 .multimedia a.download-zip,
 .multimedia a.upload-zip {
     position: relative;
-    padding: 0.6em 0 0.6em 4em;
+    padding: 1em 1.5em 1em 4.8em;
+    color: #ffffff;
+    text-decoration: none;
 }
 
 .multimedia a.download-zip:before,
@@ -45,7 +47,7 @@ a.view_media.inactive,
     content: url('/static/hqmedia/img/download_zip.png');
     display: block;
     position: absolute;
-    top: 0;
+    top: 1px;
     left: 2px;
 }
 

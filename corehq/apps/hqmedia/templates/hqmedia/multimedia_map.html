@@ -10,6 +10,8 @@
 <script type="text/javascript" src="{{ STATIC_URL }}hqmedia/js/jquery.form.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}hqmedia/js/jquery.progressbar.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}hqmedia/js/hqmedia_upload.js"></script>
+{% endblock %}
+{% block js-inline %}{{ block.super }}
 <script type="text/javascript">
     $().ready(function () {
 
@@ -196,7 +198,7 @@
         {% include "hqmedia/partials/multimedia_zip_notice.html" %}
         <h2>Upload a ZIP of files</h2>
         <p>Use this option to quickly upload all of the multimedia files for your application.</p>
-        <p><a class="button upload-zip" href="{% url multimedia_upload domain 'zip' app.get_id %}">Upload ZIP</a></p>
+        <p><a class="btn btn-large btn-primary upload-zip" href="{% url multimedia_upload domain 'zip' app.get_id %}">Upload ZIP</a></p>
         <h2>Manage Multimedia</h2>
         <p>Upload or replace multimedia files one at a time linked by your application.</p>
         <h3 class="scary-settings-toggle"><a href="#"><span class="ui-icon"></span>Image Reference List</a></h3>
