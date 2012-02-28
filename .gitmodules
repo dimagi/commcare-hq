@@ -72,4 +72,4 @@
 	url = git://github.com/dimagi/hq-bootstrap.git
 [submodule "submodules/dca-reports"]
 	path = submodules/dca-reports
-	url = git://github.com/dimagi/dca-reports.gitd
+	url = git://github.com/dimagi/dca-reports.git
