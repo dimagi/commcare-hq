@@ -5,7 +5,7 @@ from django.forms.fields import *
 from django.forms.forms import Form
 from django.forms import Field, Widget
 from django.utils.datastructures import DotExpandedDict
-from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent
+from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_USER, RECIPIENT_CASE
 from dimagi.utils.parsing import string_to_datetime
 
 METHOD_CHOICES = (
@@ -13,6 +13,11 @@ METHOD_CHOICES = (
     #('email', 'Email'),
     #('test', 'Test'),
     ('callback', 'Callback')
+)
+
+RECIPIENT_CHOICES = (
+    (RECIPIENT_USER, "User"),
+    (RECIPIENT_CASE, "Case")
 )
 
 class CaseReminderForm(Form):
@@ -127,6 +132,7 @@ class ComplexCaseReminderForm(Form):
     nickname = CharField()
     case_type = CharField()
     method = ChoiceField(choices=METHOD_CHOICES)
+    recipient = ChoiceField(choices=RECIPIENT_CHOICES)
     start = CharField()
     start_offset = IntegerField()
     until = CharField()

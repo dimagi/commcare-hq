@@ -129,6 +129,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             h.nickname = form.cleaned_data["nickname"]
             h.default_lang = form.cleaned_data["default_lang"]
             h.method = form.cleaned_data["method"]
+            h.recipient = form.cleaned_data["recipient"]
             h.start = form.cleaned_data["start"]
             h.start_offset = form.cleaned_data["start_offset"]
             h.schedule_length = form.cleaned_data["schedule_length"]
@@ -145,6 +146,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                ,"nickname"              : h.nickname
                ,"default_lang"          : h.default_lang
                ,"method"                : h.method
+               ,"recipient"             : h.recipient
                ,"start"                 : h.start
                ,"start_offset"          : h.start_offset
                ,"schedule_length"       : h.schedule_length

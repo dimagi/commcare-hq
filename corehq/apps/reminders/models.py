@@ -21,6 +21,10 @@ UI_SIMPLE_FIXED = "SIMPLE_FIXED"
 UI_COMPLEX = "COMPLEX"
 UI_CHOICES = [UI_SIMPLE_FIXED, UI_COMPLEX]
 
+RECIPIENT_USER = "USER"
+RECIPIENT_CASE = "CASE"
+RECIPIENT_CHOICES = [RECIPIENT_USER, RECIPIENT_CASE]
+
 def is_true_value(val):
     return val == 'ok' or val == 'OK'
 
@@ -244,6 +248,7 @@ class CaseReminderHandler(Document):
     default_lang = StringProperty()
     method = StringProperty(choices=METHOD_CHOICES, default="sms")
     ui_type = StringProperty(choices=UI_CHOICES, default=UI_SIMPLE_FIXED)
+    recipient = StringProperty(choices=RECIPIENT_CHOICES, default=RECIPIENT_USER)
     
     # Attributes which define the reminder schedule
     start = StringProperty()
@@ -292,7 +297,11 @@ class CaseReminderHandler(Document):
         return  The CaseReminder
         """
         user = CommCareUser.get_by_user_id(case.user_id)
-        local_now = CaseReminderHandler.utc_to_local(user, now)
+        if self.recipient == RECIPIENT_USER:
+            local_now = CaseReminderHandler.utc_to_local(user, now)
+        else:
+            # self.recipient == RECIPIENT_CASE
+            local_now = CaseReminderHandler.utc_to_local(case, now)
         reminder = CaseReminder(
             domain=self.domain,
             case_id=case._id,
@@ -316,21 +325,26 @@ class CaseReminderHandler(Document):
         else:
             # EVENT_AS_SCHEDULE
             local_tmsp = datetime.combine(reminder.start_date, self.events[0].fire_time) + timedelta(days = (self.start_offset + self.events[0].day_num))
-            reminder.next_fire = CaseReminderHandler.timestamp_to_utc(reminder.user, local_tmsp)
+            if self.recipient == RECIPIENT_USER:
+                next_fire = CaseReminderHandler.timestamp_to_utc(reminder.user, local_tmsp)
+            else:
+                # self.recipient == RECIPIENT_CASE
+                next_fire = CaseReminderHandler.timestamp_to_utc(case, local_tmsp)
+            reminder.next_fire = next_fire
         return reminder
 
     @classmethod
-    def utc_to_local(cls, user, timestamp):
+    def utc_to_local(cls, contact, timestamp):
         """
-        Converts the given naive datetime from UTC to the user's time zone.
+        Converts the given naive datetime from UTC to the contact's time zone.
         
-        user        The user whose time zone to use.
+        contact     The contact whose time zone to use (must be an instance of CommCareMobileContactMixin).
         timestamp   The naive datetime.
         
         return      The converted timestamp, as a naive datetime.
         """
         try:
-            time_zone = timezone(str(user.user_data.get("time_zone")))
+            time_zone = timezone(str(contact.get_time_zone()))
             utc_datetime = pytz.utc.localize(timestamp)
             local_datetime = utc_datetime.astimezone(time_zone)
             naive_local_datetime = local_datetime.replace(tzinfo=None)
@@ -339,17 +353,17 @@ class CaseReminderHandler(Document):
             return timestamp
 
     @classmethod
-    def timestamp_to_utc(cls, user, timestamp):
+    def timestamp_to_utc(cls, contact, timestamp):
         """
-        Converts the given naive datetime from the user's time zone to UTC.
+        Converts the given naive datetime from the contact's time zone to UTC.
         
-        user        The user whose time zone to use.
+        contact     The contact whose time zone to use (must be an instance of CommCareMobileContactMixin).
         timestamp   The naive datetime.
         
         return      The converted timestamp, as a naive datetime.
         """
         try:
-            time_zone = timezone(str(user.user_data.get("time_zone")))
+            time_zone = timezone(str(contact.get_time_zone()))
             local_datetime = time_zone.localize(timestamp)
             utc_datetime = local_datetime.astimezone(pytz.utc)
             naive_utc_datetime = utc_datetime.replace(tzinfo=None)
@@ -417,7 +431,12 @@ class CaseReminderHandler(Document):
                     next_event = reminder.current_event
                     day_offset = self.start_offset + (self.schedule_length * (reminder.schedule_iteration_num - 1)) + next_event.day_num
                     reminder_datetime = datetime.combine(reminder.start_date, next_event.fire_time) + timedelta(days = day_offset)
-                    reminder.next_fire = CaseReminderHandler.timestamp_to_utc(reminder.user, reminder_datetime)
+                    if self.recipient == RECIPIENT_USER:
+                        next_fire = CaseReminderHandler.timestamp_to_utc(reminder.user, reminder_datetime)
+                    else:
+                        # self.recipient == RECIPIENT_CASE
+                        next_fire = CaseReminderHandler.timestamp_to_utc(reminder.case, reminder_datetime)
+                    reminder.next_fire = next_fire
 
     def should_fire(self, reminder, now):
         return now > reminder.next_fire
@@ -440,7 +459,11 @@ class CaseReminderHandler(Document):
         message = Message.render(message, case=reminder.case.case_properties())
         if reminder.method == "sms" or reminder.method == "callback":
             try:
-                phone_number = reminder.user.phone_number
+                if self.recipient == RECIPIENT_USER:
+                    phone_number = reminder.user.get_verified_number()
+                else:
+                    #self.recipient == RECIPIENT_CASE
+                    phone_number = reminder.case.get_verified_number()
             except Exception:
                 phone_number = ''
 
@@ -488,7 +511,7 @@ class CaseReminderHandler(Document):
         now = now or self.get_now()
         reminder = self.get_reminder(case)
         
-        if case.closed or case.type != self.case_type or not CommCareUser.get_by_user_id(case.user_id):
+        if case.closed or case.type != self.case_type or (self.recipient == RECIPIENT_USER and not CommCareUser.get_by_user_id(case.user_id)):
             if reminder:
                 reminder.retire()
         else:
