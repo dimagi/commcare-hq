@@ -708,7 +708,7 @@ class ExcelExportReport(StandardHQReport):
             startkey=startkey, endkey=endkey,
             include_docs=True)
 
-        for export in exports:
+        for export in exports.all():
             export.formname = xmlns_to_name(self.domain, export.index[1])
 
         self.context.update({

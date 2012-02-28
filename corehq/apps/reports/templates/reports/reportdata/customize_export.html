@@ -61,7 +61,7 @@
 {% endblock %}
 
 {% block reportpresentation %}
-    <form class="form-horizontal" method="post" action="{% url custom_export domain %}">
+    <form class="form-horizontal" method="post" action="{{ request.get_full_path }}">
         <input type="hidden" name="schema" value="{{ saved_export.schema_id }}" />
         <input type="hidden" name="table" value="{{ table_config.index }}" />
         <input type="hidden" name="order" id="order_input" value="" />
