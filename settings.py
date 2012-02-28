@@ -403,6 +403,10 @@ LOGGING = {
             'level':'WARNING',
             'class':'couchlog.handlers.CouchHandler',
         },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+        }
     },
     'loggers': {
         '': {
@@ -410,6 +414,11 @@ LOGGING = {
             'propagate': True,
             'level':'INFO',
         },
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': True,
+        }
     }
 }
 
