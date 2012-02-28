@@ -326,10 +326,10 @@ def form_data(request, domain, instance_id):
     cases = CommCareCase.view("case/by_xform_id", key=instance_id, reduce=False, include_docs=True).all()
     return render_to_response(request, "reports/reportdata/form_data.html",
                               dict(domain=domain,
-                                    instance=instance,
-                                    cases=cases,
-                                    form_data=dict(name=instance.get_form["@name"],
-                                                    modified=instance.get_form["case"]["date_modified"])))
+                                   instance=instance,
+                                   cases=cases,
+                                   form_data=dict(name=instance.get_form["@name"],
+                                                  modified=instance.received_on)))
 
 @login_and_domain_required
 def download_form(request, domain, instance_id):
