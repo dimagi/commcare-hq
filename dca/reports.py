@@ -656,9 +656,12 @@ class PerformanceReport(HQReport):
             if r:
                 row = [r[0]]
                 def _ga(x):
-                    if x:
-                        return getattr(lg, x)
-                    return ''
+                    try:
+                        if x:
+                            return getattr(lg, x)
+                        return ''
+                    except TypeError:
+                        return ''
                 row.extend(map(_ga, r[1:]))
                 self.context['rows'].append(row)
             else:
@@ -709,9 +712,12 @@ class PerformanceRatiosReport(HQReport):
             if r:
                 row = [r[0]]
                 def _ga(x):
-                    if x:
-                        return getattr(lg, x)
-                    return ''
+                    try:
+                        if x:
+                            return getattr(lg, x)
+                        return ''
+                    except TypeError:
+                        return ''
                 row.extend(map(_ga, r[1:]))
                 self.context['rows'].append(row)
             else:
