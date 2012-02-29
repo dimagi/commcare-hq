@@ -354,6 +354,8 @@ class XForm(WrappedNode):
                         conflicting.attrib[a] = bind.attrib[a]
                 else:
                     bind_parent.append(bind)
+            else:
+                bind_parent.append(bind)
 
         if not case_parent.exists():
             raise XFormError("Couldn't get the case XML from one of your forms. "
@@ -506,6 +508,10 @@ class XForm(WrappedNode):
             raise CaseError("To perform case actions you must either open a case or require a case to begin with")
 
         binds = []
+
+        def add_instance(id, src):
+            binds.insert(0, _make_elem('instance', {'id': id, 'src': src}))
+
         if form.requires == 'none' and not actions:
             case_block = None
         else:
@@ -518,8 +524,6 @@ class XForm(WrappedNode):
                     del d['relevant']
                 if len(d) > 1:
                     binds.append(_make_elem('bind', d))
-            def add_instance(id, src):
-                binds.append(_make_elem('instance', {'id': id, 'src': src}))
             def add_setvalue(ref, value, event='xforms-ready'):
                 binds.append(_make_elem('setvalue', {'ref': ref, 'value': value, 'event': event}))
 
@@ -559,9 +563,9 @@ class XForm(WrappedNode):
                     nodeset="case",
                     relevant=r,
                 )
-                add_bind(
-                    nodeset="case/@case_id",
-                    calculate="uuid()",
+                add_setvalue(
+                    ref="case/@case_id",
+                    value="uuid()",
                 )
                 add_bind(
                     nodeset="case/@user_id",
@@ -634,8 +638,8 @@ class XForm(WrappedNode):
 
             if needs_casedb_instance:
                 add_instance('casedb', src='jr://instance/casedb')
-            # always needs session instance for meta
-            add_instance('session', src='jr://instance/session')
+        # always needs session instance for meta
+        add_instance('commcaresession', src='jr://instance/session')
 
         def transformation():
             for trans in additional_transformations:

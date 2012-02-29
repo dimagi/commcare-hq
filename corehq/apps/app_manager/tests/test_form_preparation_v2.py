@@ -63,8 +63,9 @@ OPEN_CASE_SOURCE = """<?xml version="1.0"?>
 					</text>
 				</translation>
 			</itext>
+            <instance src="jr://instance/session" id="commcaresession"/>
 			<bind nodeset="case/@date_modified" type="dateTime" calculate="/data/meta/timeEnd"/>
-			<bind nodeset="case/@case_id" calculate="uuid()"/>
+			<setvalue ref="case/@case_id" event="xforms-ready" value="uuid()"/>
 			<bind nodeset="case/@user_id" calculate="/data/meta/userID"/>
 			<bind nodeset="case/create/case_name" calculate="/data/question1"/>
 			<setvalue ref="/data/meta/deviceID" event="xforms-ready" value="instance('commcaresession')/session/context/deviceid"/>
@@ -120,8 +121,9 @@ OPEN_CASE_EXTERNAL_ID_SOURCE = """<?xml version="1.0"?>
 					</text>
 				</translation>
 			</itext>
+            <instance src="jr://instance/session" id="commcaresession"/>
 			<bind nodeset="case/@date_modified" type="dateTime" calculate="/data/meta/timeEnd"/>
-			<bind nodeset="case/@case_id" calculate="uuid()"/>
+			<setvalue ref="case/@case_id" event="xforms-ready" value="uuid()"/>
 			<bind nodeset="case/@user_id" calculate="/data/meta/userID"/>
 			<bind nodeset="case/create/case_name" calculate="/data/question1"/>
 			<bind nodeset="case/update/external_id" calculate="/data/question1"/>
@@ -173,6 +175,7 @@ UPDATE_CASE_SOURCE = """<?xml version="1.0"?>
 					</text>
 				</translation>
 			</itext>
+            <instance src="jr://instance/session" id="commcaresession"/>
 			<bind nodeset="case/@date_modified" type="dateTime" calculate="/data/meta/timeEnd"/>
 			<bind nodeset="case/@case_id" calculate="instance('commcaresession')/session/data/case_id"/>
 			<bind nodeset="case/update/question1" relevant="count(/data/question1) &gt; 0" calculate="/data/question1"/>
@@ -229,8 +232,9 @@ OPEN_UPDATE_CASE_SOURCE = """<?xml version="1.0"?>
 					</text>
 				</translation>
 			</itext>
+            <instance src="jr://instance/session" id="commcaresession"/>
 			<bind nodeset="case/@date_modified" type="dateTime" calculate="/data/meta/timeEnd"/>
-			<bind nodeset="case/@case_id" calculate="uuid()"/>
+			<setvalue ref="case/@case_id" event="xforms-ready" value="uuid()"/>
 			<bind nodeset="case/@user_id" calculate="/data/meta/userID"/>
 			<bind nodeset="case/create/case_name" calculate="/data/question1"/>
 			<bind nodeset="case/update/question1" relevant="count(/data/question1) &gt; 0" calculate="/data/question1"/>
