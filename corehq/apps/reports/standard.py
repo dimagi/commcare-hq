@@ -1,6 +1,7 @@
 from _collections import defaultdict
 from datetime import timedelta, datetime
 import json
+import logging
 import sys
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -385,6 +386,8 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
         )
 
         form_types = set()
+        submissions = list(submissions)
+        logging.debug(submissions)
         for submission in submissions:
             try:
                 xmlns = submission['xmlns']
