@@ -3,5 +3,4 @@ localsettings.*
 *.py~
 /data
 corehq/apps/releasemanager/DimagiKeyStore
-corehq/apps/hqwebapp/static/hq-bootstrap
 corehq/apps/hq-bootstrap/static

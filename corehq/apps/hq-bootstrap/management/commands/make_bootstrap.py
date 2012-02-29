@@ -51,7 +51,7 @@ class Command(BaseCommand):
         for root_dir in self.root_dirs:
             full_root_dir = os.path.join(self.bootstrap_destination, root_dir)
             try:
-                os.mkdir(full_root_dir)
+                os.makedirs(full_root_dir)
             except OSError:
                 print "%s was already created. Cleaning it up." % full_root_dir
                 self.clear_dir(full_root_dir)
