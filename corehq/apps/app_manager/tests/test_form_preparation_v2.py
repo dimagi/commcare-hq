@@ -36,6 +36,7 @@ OPEN_CASE_SOURCE = """<?xml version="1.0"?>
 	<h:head>
 		<h:title>New Form</h:title>
 		<model>
+            <instance src="jr://instance/session" id="commcaresession"/>
 			<instance>
 				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/A22A5D53-037A-48DE-979B-BAA54734194E" uiVersion="1" version="3" name="New Form">
 					<question1/>
@@ -63,16 +64,15 @@ OPEN_CASE_SOURCE = """<?xml version="1.0"?>
 					</text>
 				</translation>
 			</itext>
-            <instance src="jr://instance/session" id="commcaresession"/>
-			<bind nodeset="case/@date_modified" type="dateTime" calculate="/data/meta/timeEnd"/>
-			<setvalue ref="case/@case_id" event="xforms-ready" value="uuid()"/>
-			<bind nodeset="case/@user_id" calculate="/data/meta/userID"/>
-			<bind nodeset="case/create/case_name" calculate="/data/question1"/>
+			<bind nodeset="/data/case/@date_modified" type="dateTime" calculate="/data/meta/timeEnd"/>
+			<setvalue ref="/data/case/@case_id" event="xforms-ready" value="uuid()"/>
+			<bind nodeset="/data/case/@user_id" calculate="/data/meta/userID"/>
+			<bind nodeset="/data/case/create/case_name" calculate="/data/question1"/>
 			<setvalue ref="/data/meta/deviceID" event="xforms-ready" value="instance('commcaresession')/session/context/deviceid"/>
 			<setvalue ref="/data/meta/timeStart" event="xforms-ready" value="now()"/>
-			<bind nodeset="meta/timeStart" type="xsd:dateTime"/>
+			<bind nodeset="/data/meta/timeStart" type="xsd:dateTime"/>
 			<setvalue ref="/data/meta/timeEnd" event="xforms-revalidate" value="now()"/>
-			<bind nodeset="meta/timeEnd" type="xsd:dateTime"/>
+			<bind nodeset="/data/meta/timeEnd" type="xsd:dateTime"/>
 			<setvalue ref="/data/meta/username" event="xforms-ready" value="instance('commcaresession')/session/context/username"/>
 			<setvalue ref="/data/meta/userID" event="xforms-ready" value="instance('commcaresession')/session/context/userid"/>
 			<setvalue ref="/data/meta/instanceID" event="xforms-ready" value="uuid()"/>
@@ -91,6 +91,7 @@ OPEN_CASE_EXTERNAL_ID_SOURCE = """<?xml version="1.0"?>
 	<h:head>
 		<h:title>New Form</h:title>
 		<model>
+            <instance src="jr://instance/session" id="commcaresession"/>
 			<instance>
 				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/A22A5D53-037A-48DE-979B-BAA54734194E" uiVersion="1" version="3" name="New Form">
 					<question1/>
@@ -121,17 +122,17 @@ OPEN_CASE_EXTERNAL_ID_SOURCE = """<?xml version="1.0"?>
 					</text>
 				</translation>
 			</itext>
-            <instance src="jr://instance/session" id="commcaresession"/>
-			<bind nodeset="case/@date_modified" type="dateTime" calculate="/data/meta/timeEnd"/>
-			<setvalue ref="case/@case_id" event="xforms-ready" value="uuid()"/>
-			<bind nodeset="case/@user_id" calculate="/data/meta/userID"/>
-			<bind nodeset="case/create/case_name" calculate="/data/question1"/>
-			<bind nodeset="case/update/external_id" calculate="/data/question1"/>
+
+			<bind nodeset="/data/case/@date_modified" type="dateTime" calculate="/data/meta/timeEnd"/>
+			<setvalue ref="/data/case/@case_id" event="xforms-ready" value="uuid()"/>
+			<bind nodeset="/data/case/@user_id" calculate="/data/meta/userID"/>
+			<bind nodeset="/data/case/create/case_name" calculate="/data/question1"/>
+			<bind nodeset="/data/case/update/external_id" calculate="/data/question1"/>
 			<setvalue ref="/data/meta/deviceID" event="xforms-ready" value="instance('commcaresession')/session/context/deviceid"/>
 			<setvalue ref="/data/meta/timeStart" event="xforms-ready" value="now()"/>
-			<bind nodeset="meta/timeStart" type="xsd:dateTime"/>
+			<bind nodeset="/data/meta/timeStart" type="xsd:dateTime"/>
 			<setvalue ref="/data/meta/timeEnd" event="xforms-revalidate" value="now()"/>
-			<bind nodeset="meta/timeEnd" type="xsd:dateTime"/>
+			<bind nodeset="/data/meta/timeEnd" type="xsd:dateTime"/>
 			<setvalue ref="/data/meta/username" event="xforms-ready" value="instance('commcaresession')/session/context/username"/>
 			<setvalue ref="/data/meta/userID" event="xforms-ready" value="instance('commcaresession')/session/context/userid"/>
 			<setvalue ref="/data/meta/instanceID" event="xforms-ready" value="uuid()"/>
@@ -149,6 +150,7 @@ UPDATE_CASE_SOURCE = """<?xml version="1.0"?>
 	<h:head>
 		<h:title>New Form</h:title>
 		<model>
+            <instance src="jr://instance/session" id="commcaresession"/>
 			<instance>
 				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/A22A5D53-037A-48DE-979B-BAA54734194E" uiVersion="1" version="3" name="New Form">
 					<question1/>
@@ -175,15 +177,15 @@ UPDATE_CASE_SOURCE = """<?xml version="1.0"?>
 					</text>
 				</translation>
 			</itext>
-            <instance src="jr://instance/session" id="commcaresession"/>
-			<bind nodeset="case/@date_modified" type="dateTime" calculate="/data/meta/timeEnd"/>
-			<bind nodeset="case/@case_id" calculate="instance('commcaresession')/session/data/case_id"/>
-			<bind nodeset="case/update/question1" relevant="count(/data/question1) &gt; 0" calculate="/data/question1"/>
+
+			<bind nodeset="/data/case/@date_modified" type="dateTime" calculate="/data/meta/timeEnd"/>
+			<bind nodeset="/data/case/@case_id" calculate="instance('commcaresession')/session/data/case_id"/>
+			<bind nodeset="/data/case/update/question1" relevant="count(/data/question1) &gt; 0" calculate="/data/question1"/>
 			<setvalue ref="/data/meta/deviceID" event="xforms-ready" value="instance('commcaresession')/session/context/deviceid"/>
 			<setvalue ref="/data/meta/timeStart" event="xforms-ready" value="now()"/>
-			<bind nodeset="meta/timeStart" type="xsd:dateTime"/>
+			<bind nodeset="/data/meta/timeStart" type="xsd:dateTime"/>
 			<setvalue ref="/data/meta/timeEnd" event="xforms-revalidate" value="now()"/>
-			<bind nodeset="meta/timeEnd" type="xsd:dateTime"/>
+			<bind nodeset="/data/meta/timeEnd" type="xsd:dateTime"/>
 			<setvalue ref="/data/meta/username" event="xforms-ready" value="instance('commcaresession')/session/context/username"/>
 			<setvalue ref="/data/meta/userID" event="xforms-ready" value="instance('commcaresession')/session/context/userid"/>
 			<setvalue ref="/data/meta/instanceID" event="xforms-ready" value="uuid()"/>
@@ -202,6 +204,7 @@ OPEN_UPDATE_CASE_SOURCE = """<?xml version="1.0"?>
 	<h:head>
 		<h:title>New Form</h:title>
 		<model>
+            <instance src="jr://instance/session" id="commcaresession"/>
 			<instance>
 				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/A22A5D53-037A-48DE-979B-BAA54734194E" uiVersion="1" version="3" name="New Form">
 					<question1/>
@@ -232,17 +235,17 @@ OPEN_UPDATE_CASE_SOURCE = """<?xml version="1.0"?>
 					</text>
 				</translation>
 			</itext>
-            <instance src="jr://instance/session" id="commcaresession"/>
-			<bind nodeset="case/@date_modified" type="dateTime" calculate="/data/meta/timeEnd"/>
-			<setvalue ref="case/@case_id" event="xforms-ready" value="uuid()"/>
-			<bind nodeset="case/@user_id" calculate="/data/meta/userID"/>
-			<bind nodeset="case/create/case_name" calculate="/data/question1"/>
-			<bind nodeset="case/update/question1" relevant="count(/data/question1) &gt; 0" calculate="/data/question1"/>
+
+			<bind nodeset="/data/case/@date_modified" type="dateTime" calculate="/data/meta/timeEnd"/>
+			<setvalue ref="/data/case/@case_id" event="xforms-ready" value="uuid()"/>
+			<bind nodeset="/data/case/@user_id" calculate="/data/meta/userID"/>
+			<bind nodeset="/data/case/create/case_name" calculate="/data/question1"/>
+			<bind nodeset="/data/case/update/question1" relevant="count(/data/question1) &gt; 0" calculate="/data/question1"/>
 			<setvalue ref="/data/meta/deviceID" event="xforms-ready" value="instance('commcaresession')/session/context/deviceid"/>
 			<setvalue ref="/data/meta/timeStart" event="xforms-ready" value="now()"/>
-			<bind nodeset="meta/timeStart" type="xsd:dateTime"/>
+			<bind nodeset="/data/meta/timeStart" type="xsd:dateTime"/>
 			<setvalue ref="/data/meta/timeEnd" event="xforms-revalidate" value="now()"/>
-			<bind nodeset="meta/timeEnd" type="xsd:dateTime"/>
+			<bind nodeset="/data/meta/timeEnd" type="xsd:dateTime"/>
 			<setvalue ref="/data/meta/username" event="xforms-ready" value="instance('commcaresession')/session/context/username"/>
 			<setvalue ref="/data/meta/userID" event="xforms-ready" value="instance('commcaresession')/session/context/userid"/>
 			<setvalue ref="/data/meta/instanceID" event="xforms-ready" value="uuid()"/>
