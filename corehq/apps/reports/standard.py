@@ -385,9 +385,13 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
             reduce=False
         )
 
+        logging.warning('startkey=%s&endkey=%s&include_docs=true&reduce=false' % (
+                json.dumps([self.domain, self.datespan.startdate_param]),
+                json.dumps([self.domain, self.datespan.enddate_param]),
+            )
+        )
         form_types = set()
-        submissions = list(submissions)
-        logging.debug(submissions)
+
         for submission in submissions:
             try:
                 xmlns = submission['xmlns']
