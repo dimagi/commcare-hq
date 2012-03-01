@@ -442,9 +442,9 @@ class DetailColumn(IndexedSchema):
         """
         return {
             'external-id': 'external_id',
-            'date-opened': '@date_opened',
+            'date-opened': 'date_opened',
             'status': '@status',
-            'name': '@case_name',
+            'name': 'case_name',
         }.get(self.field, self.field)
 class Detail(DocumentSchema):
     """
