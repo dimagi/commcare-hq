@@ -44,7 +44,7 @@
             <a href="{% url default_report domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
-            <a href="#">{{ report.name|default:"Unknown Report"|safe }}</a>
+            <div id="report-title"><a href="#">{{ report.name|default:"Unknown Report"|safe }}</a></div>
         </li>
     </ul>
 {% endblock %}
@@ -86,7 +86,7 @@
                 </div>
             </div>
             {% if show_time_notice %}{% include "hqwebapp/partials/time-notice.html"%}{% endif %}
-            {% block reportcontent %}Your report goes here{% endblock %}
+            <div id="report-content">{% block reportcontent %}Your report goes here{% endblock %}</div>
             {% endblock %}
         </div>
     </div>

@@ -1,6 +1,7 @@
 from _collections import defaultdict
 from datetime import timedelta, datetime
 import json
+import logging
 import sys
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -384,7 +385,13 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
             reduce=False
         )
 
+        logging.warning('startkey=%s&endkey=%s&include_docs=true&reduce=false' % (
+                json.dumps([self.domain, self.datespan.startdate_param]),
+                json.dumps([self.domain, self.datespan.enddate_param]),
+            )
+        )
         form_types = set()
+
         for submission in submissions:
             try:
                 xmlns = submission['xmlns']
