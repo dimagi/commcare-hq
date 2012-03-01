@@ -433,6 +433,19 @@ class DetailColumn(IndexedSchema):
         for dct in (self.header, self.enum):
             _rename_key(dct, old_lang, new_lang)
 
+    @property
+    def xpath(self):
+        """
+        Convert special names like date-opened to their casedb xpath equivalent (e.g. @date_opened).
+        Only ever called by 2.0 apps.
+
+        """
+        return {
+            'external-id': 'external_id',
+            'date-opened': '@date_opened',
+            'status': '@status',
+            'name': '@case_name',
+        }.get(self.field, self.field)
 class Detail(DocumentSchema):
     """
     Full configuration for a case selection screen
