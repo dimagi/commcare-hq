@@ -76,7 +76,7 @@ def deploy():
         _update_code()
         with enter_virtualenv():
             sudo('pip install -r requirements.txt', user=env.sudo_user)
-            sudo('make direct -C submodules/hq-bootstrap/', user=env.sudo_user)
+            sudo('python manage.py make_bootstrap direct-lessc', user=env.sudo_user)
             sudo('python manage.py sync_finish_couchdb', user=env.sudo_user)
             sudo('python manage.py syncdb --noinput', user=env.sudo_user)
             sudo('python manage.py migrate --noinput', user=env.sudo_user)

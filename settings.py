@@ -160,6 +160,7 @@ HQ_APPS = (
     'corehq.apps.registration',
     'corehq.apps.unicel',
     'corehq.apps.reports',
+    'corehq.apps.hq-bootstrap',
     'corehq.apps.builds',
     'corehq.apps.api',
     'corehq.couchapps',
