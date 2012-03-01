@@ -489,7 +489,8 @@ class XForm(WrappedNode):
                 self.model_node.append(bind)
 
     def add_instance(self, id, src):
-        self.model_node.insert(0, _make_elem('instance', {'id': id, 'src': src}))
+        # insert right after the main <instance> block
+        self.model_node.insert(1, _make_elem('instance', {'id': id, 'src': src}))
 
     def add_setvalue(self, ref, value, event='xforms-ready', type=None):
         ref = self.resolve_path(ref)
@@ -596,7 +597,7 @@ class XForm(WrappedNode):
                         relevant="count(%s) > 0" % path
                     )
             if 'close_case' in actions:
-                case_block(make_case_elem('close'))
+                case_block.append(make_case_elem('close'))
 
                 r = relevance(actions['close_case'])
                 self.add_bind(

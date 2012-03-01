@@ -36,7 +36,6 @@ OPEN_CASE_SOURCE = """<?xml version="1.0"?>
 	<h:head>
 		<h:title>New Form</h:title>
 		<model>
-            <instance src="jr://instance/session" id="commcaresession"/>
 			<instance>
 				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/A22A5D53-037A-48DE-979B-BAA54734194E" uiVersion="1" version="3" name="New Form">
 					<question1/>
@@ -56,6 +55,7 @@ OPEN_CASE_SOURCE = """<?xml version="1.0"?>
 					</orx:meta>
 				</data>
 			</instance>
+            <instance src="jr://instance/session" id="commcaresession"/>
 			<bind nodeset="/data/question1" type="xsd:string" required="true()"/>
 			<itext>
 				<translation lang="en" default="">
@@ -91,7 +91,6 @@ OPEN_CASE_EXTERNAL_ID_SOURCE = """<?xml version="1.0"?>
 	<h:head>
 		<h:title>New Form</h:title>
 		<model>
-            <instance src="jr://instance/session" id="commcaresession"/>
 			<instance>
 				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/A22A5D53-037A-48DE-979B-BAA54734194E" uiVersion="1" version="3" name="New Form">
 					<question1/>
@@ -114,6 +113,7 @@ OPEN_CASE_EXTERNAL_ID_SOURCE = """<?xml version="1.0"?>
 					</orx:meta>
 				</data>
 			</instance>
+            <instance src="jr://instance/session" id="commcaresession"/>
 			<bind nodeset="/data/question1" type="xsd:string" required="true()"/>
 			<itext>
 				<translation lang="en" default="">
@@ -150,7 +150,6 @@ UPDATE_CASE_SOURCE = """<?xml version="1.0"?>
 	<h:head>
 		<h:title>New Form</h:title>
 		<model>
-            <instance src="jr://instance/session" id="commcaresession"/>
 			<instance>
 				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/A22A5D53-037A-48DE-979B-BAA54734194E" uiVersion="1" version="3" name="New Form">
 					<question1/>
@@ -169,6 +168,7 @@ UPDATE_CASE_SOURCE = """<?xml version="1.0"?>
 					</orx:meta>
 				</data>
 			</instance>
+            <instance src="jr://instance/session" id="commcaresession"/>
 			<bind nodeset="/data/question1" type="xsd:string"/>
 			<itext>
 				<translation lang="en" default="">
@@ -204,7 +204,6 @@ OPEN_UPDATE_CASE_SOURCE = """<?xml version="1.0"?>
 	<h:head>
 		<h:title>New Form</h:title>
 		<model>
-            <instance src="jr://instance/session" id="commcaresession"/>
 			<instance>
 				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/A22A5D53-037A-48DE-979B-BAA54734194E" uiVersion="1" version="3" name="New Form">
 					<question1/>
@@ -227,6 +226,7 @@ OPEN_UPDATE_CASE_SOURCE = """<?xml version="1.0"?>
 					</orx:meta>
 				</data>
 			</instance>
+			<instance src="jr://instance/session" id="commcaresession"/>
 			<bind nodeset="/data/question1" type="xsd:string" required="true()"/>
 			<itext>
 				<translation lang="en" default="">
