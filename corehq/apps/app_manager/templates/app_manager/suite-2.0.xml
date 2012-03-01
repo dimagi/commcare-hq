@@ -93,7 +93,7 @@
             {% include "app_manager/suite/display.xml" with item=form locale_id=form.get_locale_id %}
         </command>
      {% if form.requires == "case" %}
-        <instance id="casedb" src="js://instance/casedb"/>
+        <instance id="casedb" src="jr://instance/casedb"/>
         <session>
             <datum id="case_id" function="instance('casedb')/casedb/case[@case_type='{{ module.case_type }}'][@status='open']" detail-select="m{{ module.id }}_case_short" detail-confirm="m{{ module.id }}_case_long"/>
         </session>
@@ -105,7 +105,7 @@
         <command id="m{{ module.id }}-case-list">
             <text><locale id="case_lists.m{{ module.id }}"/></text>
         </command>
-        <instance id="casedb" src="js://instance/casedb"/>
+        <instance id="casedb" src="jr://instance/casedb"/>
         <session>
             <datum id="case_id" function="instance('casedb')/casedb/case[@case_type='{{ module.case_type }}'][@status='open']" detail-select="m{{ module.id }}_case_short" detail-confirm="m{{ module.id }}_case_long"/>
         </session>
