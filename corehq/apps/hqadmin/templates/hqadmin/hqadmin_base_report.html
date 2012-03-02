@@ -8,17 +8,15 @@
 {% block content %}
 <div id="main_container">
     <div id="title-bar">
-        <ul class="nav pills">
-            <li class="dropdown" id="admin_report_dropdown">
-                <a class="dropdown-toggle" data-toggle="dropdown" href="#admin_report_dropdown">
-                    Select Admin Report
-                    <b class="caret"></b>
-                </a>
-                <ul class="dropdown-menu">
-                    {% include "hqadmin/partials/report_list.html" %}
-                </ul>
-            </li>
-        </ul>
+        <div class="btn-group">
+            <a class="dropdown-toggle btn" data-toggle="dropdown" style="text-decoration: none" href="#">
+                Select Admin Report
+                <b class="caret"></b>
+            </a>
+            <ul class="dropdown-menu nav-list" id="admin_report_dropdown">
+                {% include "hqadmin/partials/report_list.html" %}
+            </ul>
+        </div>
         <h1>{% block report-title %}Administrative Report{% endblock %}</h1>
     </div>
     <div id="report-content">

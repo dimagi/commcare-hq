@@ -324,11 +324,15 @@ def form_data(request, domain, instance_id):
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)
     cases = CommCareCase.view("case/by_xform_id", key=instance_id, reduce=False, include_docs=True).all()
+    try:
+        form_name = instance.get_form["@name"]
+    except KeyError:
+        form_name = "Untitled Form"
     return render_to_response(request, "reports/reportdata/form_data.html",
                               dict(domain=domain,
                                    instance=instance,
                                    cases=cases,
-                                   form_data=dict(name=instance.get_form["@name"],
+                                   form_data=dict(name=form_name,
                                                   modified=instance.received_on)))
 
 @login_and_domain_required

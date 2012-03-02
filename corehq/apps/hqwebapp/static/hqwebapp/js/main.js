@@ -43,7 +43,7 @@ var SaveButton = {
             }).button(),
             $saving: $('<span/>').text(SaveButton.message.SAVING).button().button('disable'),
             $saved: $('<span/>').text(SaveButton.message.SAVED).button().button('disable'),
-            ui: $('<div/>').css({textAlign: 'right'}),
+            ui: $('<div/>').css({float: 'right'}).addClass('btn'),
             setStateWhenReady: function (state) {
                 if (this.state === 'saving') {
                     this.nextState = state;
@@ -61,10 +61,12 @@ var SaveButton = {
                 this.$saved.detach();
                 this.$retry.detach();
                 if (state === 'save') {
+                    this.ui.addClass('btn-success').removeClass('disabled');
                     this.ui.append(this.$save);
                 } else if (state === 'saving') {
                     this.ui.append(this.$saving);
                 } else if (state === 'saved') {
+                    this.ui.addClass('disabled').removeClass('btn-success');
                     this.ui.append(this.$saved);
                 } else if (state === 'retry') {
                     this.ui.append(this.$retry);
