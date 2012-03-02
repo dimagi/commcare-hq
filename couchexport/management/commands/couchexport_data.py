@@ -19,9 +19,9 @@ class Command(LabelCommand):
         except ResourceNotFound:
             raise CommandError("Couldn't find an export with id %s" % export_id)
         
-        for export in config.full_exports:
-            filename = export.filename
+        for export_config in config.full_exports:
+            filename = export_config.filename
             with open(os.path.join(output_dir, filename), "wb") as f:
-                print "exporting %s to %s" % (export.name, output_dir)
-                export(export.index, f, format=export.format)
+                print "exporting %s to %s" % (export_config.name, output_dir)
+                export(export_config.index, f, format=export_config.format)
                 
