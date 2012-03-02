@@ -85,9 +85,15 @@ class XFormInstance(Document):
                             else:
                                 # it was empty, also a failure
                                 del ret[key]
+                    # also clean dicts, since those are not allowed
+                    for key in meta_block:
+                        if isinstance(meta_block[key], dict):
+                            ret[key] = ", ".join(\
+                                "%s:%s" % (k, v) \
+                                for k, v in meta_block[key].items())
                 return ret
             return Metadata(_clean(self._form[const.TAG_META]))
-            
+        
         return None
 
     def __unicode__(self):
