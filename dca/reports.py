@@ -135,7 +135,7 @@ class LendingGroup(object):
                 try:
                     return self.case[item]
                 except Exception:
-                    raise AttributeError("Couldn't find %s in either the collection or the case.")
+                    raise AttributeError("Couldn't find %s in either the collection or the case." % item)
 
 
 def _foo(x):
@@ -336,6 +336,7 @@ class LendingGroupAggregate(object):
 
     @property
     def loan_fund_utilization(self):
+        print "foo"
         return self.pct(self._value_of_loans_outstanding, self._value_of_loans_outstanding + self._loan_fund_cash_in_box_at_bank)
 
     @property
@@ -400,7 +401,10 @@ class LendingGroupAggregate(object):
 
     @property
     def _assets(self):
-        return self._loan_fund_cash_in_box_at_bank + self._value_of_loans_outstanding + self._cash_in_other_funds + self._property_now
+        try:
+            return self._loan_fund_cash_in_box_at_bank + self._value_of_loans_outstanding + self._cash_in_other_funds + self._property_now
+        except:
+            return 0
 
     @property
     def pct_loans_assets(self):
@@ -563,9 +567,12 @@ class PortfolioComparisonReport(HQReport):
             row = []
             lg = LendingGroupAggregate(user.full_name, [user._id], month, year, curval, curname)
             for v in self.columns:
-                if v[1]:
-                    row.append(getattr(lg, v[1]))
-                else:
+                try:
+                    if v[1]:
+                        row.append(getattr(lg, v[1]))
+                    else:
+                        row.append('-')
+                except TypeError:
                     row.append('-')
             rows.append(row)
 
@@ -660,7 +667,7 @@ class PerformanceReport(HQReport):
                         if x:
                             return getattr(lg, x)
                         return ''
-                    except TypeError:
+                    except (TypeError, AttributeError):
                         return ''
                 row.extend(map(_ga, r[1:]))
                 self.context['rows'].append(row)
