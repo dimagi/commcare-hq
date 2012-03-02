@@ -526,6 +526,10 @@ class XForm(WrappedNode):
                 type="dateTime",
                 calculate=self.resolve_path("meta/timeEnd")
             )
+            self.add_bind(
+                nodeset="case/@user_id",
+                calculate=self.resolve_path("meta/userID"),
+            )
 
             def relevance(action):
                 if action.condition.type == 'always':
@@ -551,10 +555,6 @@ class XForm(WrappedNode):
                 self.add_setvalue(
                     ref="case/@case_id",
                     value="uuid()",
-                )
-                self.add_bind(
-                    nodeset="case/@user_id",
-                    calculate=self.resolve_path("meta/userID"),
                 )
                 self.add_bind(
                     nodeset="case/create/case_name",
@@ -608,9 +608,9 @@ class XForm(WrappedNode):
             if 'case_preload' in actions:
                 needs_casedb_instance = True
                 for nodeset, property in actions['case_preload'].preload.items():
-                    self.add_bind(
-                        nodeset=nodeset,
-                        calculate="instance('casedb')/casedb/case[@case_id=%s]/%s" % (self.resolve_path('case/@case_id'), property),
+                    self.add_setvalue(
+                        ref=nodeset,
+                        value="instance('casedb')/casedb/case[@case_id=%s]/%s" % (self.resolve_path('case/@case_id'), property),
                     )
 
             if needs_casedb_instance:
