@@ -36,7 +36,7 @@ class SuccessMessageTest(TestCase):
 
         c = Client()
 
-        app = Application.new_app(self.domain, "Test App", "en", application_version=APP_V1)
+        app = Application.new_app(self.domain, "Test App", application_version=APP_V1)
         app.new_module("Test Module", "en")
         form = app.new_form(0, "Test Form", "en")
         form.xmlns = self.xmlns
