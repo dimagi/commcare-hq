@@ -1,22 +1,79 @@
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.db import models
 from couchdbkit.ext.django.schema import Document, StringProperty,\
-    BooleanProperty, DateTimeProperty
+    BooleanProperty, DateTimeProperty, IntegerProperty
 
-class CouchDomain(Document):
-    """
-    The model that will eventually store domains in couch.
-    """
+class Domain(Document):
+    """Domain is the highest level collection of people/stuff
+       in the system.  Pretty much everything happens at the
+       domain-level, including user membership, permission to
+       see data, reports, charts, etc."""
+
     name = StringProperty()
     is_active = BooleanProperty()
-    is_public = BooleanProperty()
+    is_public = BooleanProperty(default=False)
     date_created = DateTimeProperty()
+    default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     
-    def save(self, **kwargs):
-        # eventually we'll change the name of this object to just "Domain"
-        # so correctly set the doc type for future migration 
-        self.doc_type = "Domain"
-        super(CouchDomain, self).save(**kwargs)
+#    def save(self, **kwargs):
+#        # eventually we'll change the name of this object to just "Domain"
+#        # so correctly set the doc type for future migration
+#        self.doc_type = "Domain"
+#        super(CouchDomain, self).save(**kwargs)
+
+    @staticmethod
+    def active_for_user(user):
+        if not hasattr(user,'get_profile'):
+            # this had better be an anonymous user
+            return []
+        from corehq.apps.users.models import CouchUser
+        couch_user = CouchUser.from_django_user(user)
+        if couch_user:
+            domain_names = couch_user.get_domains()
+            return Domain.view("domain/by_status",
+                                    keys=[True, domain_names],
+                                    reduce=False).all()
+        else:
+            return []
+
+    @staticmethod
+    def all_for_user(user):
+        if not hasattr(user,'get_profile'):
+            # this had better be an anonymous user
+            return []
+        from corehq.apps.users.models import CouchUser
+        couch_user = CouchUser.from_django_user(user)
+        if couch_user:
+            domain_names = couch_user.get_domains()
+            return Domain.view("domain/domains",
+                                    keys=domain_names,
+                                    reduce=False).all()
+        else:
+            return []
+
+    def add(self, model_instance, is_active=True):
+        """
+        Add something to this domain, through the generic relation.
+        Returns the created membership object
+        """
+        # Add membership info to Couch
+        couch_user = model_instance.get_profile().get_couch_user()
+        couch_user.add_domain_membership(self.name)
+        couch_user.save()
+
+    def __unicode__(self):
+        return self.name
+
+    @classmethod
+    def get_by_name(cls, domain_name):
+        result = cls.view("domain/domains",
+                            key=domain_name,
+                            reduce=False,
+                            include_docs=True).first()
+        return result
+
+
+
 
 ##############################################################################################################
 #
@@ -26,7 +83,7 @@ class CouchDomain(Document):
 #
 # See ContentType.get_for_model() code for details.
 
-class Domain(models.Model):
+class OldDomain(models.Model):
     """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the 
        domain-level, including user membership, permission to 
@@ -46,27 +103,27 @@ class Domain(models.Model):
     def active_for_user(user):
         if not hasattr(user,'get_profile'):
             # this had better be an anonymous user
-            return Domain.objects.none()
+            return OldDomain.objects.none()
         from corehq.apps.users.models import CouchUser
         couch_user = CouchUser.from_django_user(user)
         if couch_user:
             domain_names = couch_user.get_domains()
-            return Domain.objects.filter(name__in=domain_names, is_active=True)
+            return OldDomain.objects.filter(name__in=domain_names, is_active=True)
         else:
-            return Domain.objects.none()
+            return OldDomain.objects.none()
 
     @staticmethod
     def all_for_user(user):
         if not hasattr(user,'get_profile'):
             # this had better be an anonymous user
-            return Domain.objects.none()
+            return OldDomain.objects.none()
         from corehq.apps.users.models import CouchUser
         couch_user = CouchUser.from_django_user(user)
         if couch_user:
             domain_names = couch_user.get_domains()
-            return Domain.objects.filter(name__in=domain_names)
+            return OldDomain.objects.filter(name__in=domain_names)
         else:
-            return Domain.objects.none()
+            return OldDomain.objects.none()
     
     def add(self, model_instance, is_active=True):
         """
@@ -83,34 +140,12 @@ class Domain(models.Model):
 
 ##############################################################################################################
 
-class RegistrationRequest(models.Model):
-    tos_confirmed = models.BooleanField(default=False)
-    # No verbose name on times and IPs - filled in on server
-    request_time = models.DateTimeField() 
-    request_ip = models.IPAddressField()
-    activation_guid = models.CharField(max_length=32, unique=True)
-    # confirm info is blank until a confirming click is received
-    confirm_time = models.DateTimeField(null=True, blank=True)
-    confirm_ip = models.IPAddressField(null=True, blank=True) 
-    domain = models.OneToOneField(Domain) 
-    new_user = models.ForeignKey(User, related_name='new_user') # Not clear if we'll always create a new user - might be many reqs to one user, thus FK 
-    # requesting_user is only filled in if a logged-in user requests a domain. 
-    requesting_user = models.ForeignKey(User, related_name='requesting_user', null=True, blank=True) # blank and null -> FK is optional.
-    
-    class Meta:
-        db_table = 'domain_registration_request'
+class Settings(Document):
+    domain = StringProperty()
+    max_users = IntegerProperty()
 
-# To be added:    
-# language
-# number pref
-# currency pref
-# date pref
-# time pref    
-
-##############################################################################################################
-
-class Settings(models.Model):
-    domain = models.OneToOneField(Domain)
+class OldSettings(models.Model):
+    domain = models.OneToOneField(OldDomain)
     max_users = models.PositiveIntegerField()
     
 ##############################################################################################################

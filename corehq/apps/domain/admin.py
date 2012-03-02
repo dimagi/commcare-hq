@@ -1,15 +1,16 @@
 from django.contrib import admin
-from corehq.apps.domain.models import Domain, RegistrationRequest, Settings
+from corehq.apps.domain.models import OldDomain, OldSettings
+from corehq.apps.registration.models import OldRegistrationRequest
 
 class DomainAdmin(admin.ModelAdmin):
-    model = Domain
+    model = OldDomain
 
 class RegistrationRequestAdmin(admin.ModelAdmin):
-    model = RegistrationRequest
+    model = OldRegistrationRequest
     
 class SettingsAdmin(admin.ModelAdmin):
-    model = Settings
+    model = OldSettings
 
-admin.site.register(Domain, DomainAdmin)    
-admin.site.register(RegistrationRequest, RegistrationRequestAdmin)
-admin.site.register(Settings, SettingsAdmin)
+admin.site.register(OldDomain, DomainAdmin)
+admin.site.register(OldRegistrationRequest, RegistrationRequestAdmin)
+admin.site.register(OldSettings, SettingsAdmin)

@@ -46,17 +46,17 @@ urlpatterns =\
         url(r'^domain/tos/$', direct_to_template, {'template': 'tos.html'}, name='tos'),
         url(r'^domain/select/$', 'select', name='domain_select'),
         
-        # Fancy regexp lets us get URLs that have an optional path component after registration_request/.
-        # The optional component is considered to begin with a /, and the whole URL ends with a /, so that the
-        # slash-append mechanism in Django works as desired. The key to making this work is to take the optional
-        # component's leading slash in a non-capturing group, denoted by ?:, and pick up the named param in 
-        # a named capturing group, denoted by ?P<kind>
-        url(r'^domain/registration_request(?:/(?P<kind>\w+))?/$', 'registration_request', name='domain_registration_request'),                                   
-        
-        # Same trick as above - make GUID optional
-        url(r'^domain/registration_confirm(?:/(?P<guid>\w+))?/$', 'registration_confirm',  name='domain_registration_confirm'),        
-        url(r'^domain/registration_resend_confirm_email/$', 'registration_resend_confirm_email', name='domain_registration_resend_confirm_email'),
-        
+#        # Fancy regexp lets us get URLs that have an optional path component after registration_request/.
+#        # The optional component is considered to begin with a /, and the whole URL ends with a /, so that the
+#        # slash-append mechanism in Django works as desired. The key to making this work is to take the optional
+#        # component's leading slash in a non-capturing group, denoted by ?:, and pick up the named param in
+#        # a named capturing group, denoted by ?P<kind>
+#        url(r'^domain/registration_request(?:/(?P<kind>\w+))?/$', 'registration_request', name='domain_registration_request'),
+#
+#        # Same trick as above - make GUID optional
+#        url(r'^domain/registration_confirm(?:/(?P<guid>\w+))?/$', 'registration_confirm',  name='domain_registration_confirm'),
+#        url(r'^domain/registration_resend_confirm_email/$', 'registration_resend_confirm_email', name='domain_registration_resend_confirm_email'),
+#
     ) +\
     patterns('django.contrib.auth.views',
         url(r'^accounts/password_change/$', 'password_change', auth_pages_path('password_change_form.html'), name='password_change'),
