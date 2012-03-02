@@ -48,15 +48,12 @@ def require_permission_to_edit_user(view_func):
             user = request.couch_user
             if user.is_superuser or user.user_id == couch_user_id or user.is_domain_admin():
                 go_ahead = True
-            elif domain == 'public':
-                go_ahead = True
             else:
                 couch_user = CouchUser.get_by_user_id(couch_user_id)
-                if couch_user:
-                    if couch_user.is_commcare_user() and request.couch_user.can_edit_commcare_users():
-                        go_ahead = True
-                    elif couch_user.is_web_user() and request.couch_user.can_edit_web_users():
-                        go_ahead = True
+                if couch_user.is_commcare_user() and request.couch_user.can_edit_commcare_users():
+                    go_ahead = True
+                elif couch_user.is_web_user() and request.couch_user.can_edit_web_users():
+                    go_ahead = True
         if go_ahead:
             return login_and_domain_required(view_func)(request, domain, couch_user_id, *args, **kwargs)
         else:
