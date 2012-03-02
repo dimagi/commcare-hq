@@ -5,6 +5,9 @@ from couchexport.shortcuts import export_data_shared
 import uuid
 from couchexport.tasks import export_async
 from django.core.urlresolvers import reverse
+from couchexport.models import GroupExportConfiguration, SavedBasicExport
+from django.shortcuts import render_to_response
+from django.template.context import RequestContext
 
 def _export_tag_or_bust(request):
     export_tag = request.GET.get("export_tag", "")
@@ -43,3 +46,16 @@ def export_data(request, **kwargs):
     else:
         return HttpResponse("Sorry, there was no data found for the tag '%s'." % export_tag)
     
+def view_export_group(request, group_id):
+    group = GroupExportConfiguration.get(group_id)
+    return render_to_response('couchexport/export_group.html',
+                              {"group" : group},
+                               context_instance=RequestContext(request))
+                           
+def download_saved_export(request, export_id):
+    export = SavedBasicExport.get(export_id)
+    attach = export._attachments[export.configuration.filename]
+    response = HttpResponse(mimetype=attach["content_type"])
+    response.write(export.fetch_attachment(export.configuration.filename))
+    response['Content-Disposition'] = 'attachment; filename=%s' % export.configuration.filename
+    return response

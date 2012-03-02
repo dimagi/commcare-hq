@@ -1,6 +1,6 @@
 from couchdbkit.ext.django.schema import Document, IntegerProperty, DictProperty,\
     Property, DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
-    StringListProperty
+    StringListProperty, DateTimeProperty, SchemaProperty
 import json
 from StringIO import StringIO
 from couchexport import util
@@ -288,4 +288,27 @@ class GroupExportConfiguration(Document):
     full_exports = SchemaListProperty(ExportConfiguration)
     custom_export_ids = StringListProperty()
     
+    @property
+    def saved_exports(self):
+        if not hasattr(self, "_saved_exports"):
+            self._saved_exports = \
+                [(export_config, 
+                  SavedBasicExport.view("couchexport/saved_exports", 
+                                        key=json.dumps(export_config.index),
+                                        include_docs=True,
+                                        reduce=False).one()) \
+                 for export_config in self.full_exports]
+        return self._saved_exports
+    
+class SavedBasicExport(Document):
+    """
+    A cache of an export that lives in couch.
+    Doesn't do anything smart, just works off an index
+    """
+    configuration = SchemaProperty(ExportConfiguration) 
+    last_updated = DateTimeProperty()
+    
+    @property
+    def size(self):
+        return self._attachments[self.configuration.filename]["length"]
     
