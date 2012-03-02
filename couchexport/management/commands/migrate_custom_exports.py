@@ -18,7 +18,7 @@ class Command(LabelCommand):
     def handle(self, *args, **options):
         if len(args) != 0: raise CommandError("This command doesn't expect arguments!")
             
-        for export in SavedExportSchema.view("couchexport/saved_exports", include_docs=True):
+        for export in SavedExportSchema.view("couchexport/saved_export_schemas", include_docs=True):
             print "migrating %s" % export
             assert len(export.tables) == 1, "there should only be 1 root table!"
             [table] = export.tables
