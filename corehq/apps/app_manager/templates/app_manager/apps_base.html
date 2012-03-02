@@ -149,6 +149,7 @@
                                     <a href="#" class="submit">{% trans 'From Example: Hello World' %}</a>
                                 </form>
                             </li>
+                            {% if user.is_superuser %}
                             <li>
                                 <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
                                     <input type="hidden" name="type" value="Application" />
@@ -156,6 +157,7 @@
                                     <a href="#" class="submit">{% trans 'Blank 2.x Application (Bleeding Edge)' %}</a>
                                 </form>
                             </li>
+                            {% endif %}
                             <li>
                                 <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
                                     <input type="hidden" name="type" value="RemoteApp" />
