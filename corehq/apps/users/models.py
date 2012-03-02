@@ -6,8 +6,10 @@ from __future__ import absolute_import
 from datetime import datetime
 import logging
 import re
+from corehq.apps import hqtimezones
 from dimagi.utils.make_uuid import random_hex
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
@@ -86,6 +88,7 @@ class DomainMembership(DocumentSchema):
     permissions = StringListProperty()
     last_login = DateTimeProperty()
     date_joined = DateTimeProperty()
+    timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
 
     class Meta:
         app_label = 'users'

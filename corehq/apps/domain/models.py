@@ -1,7 +1,9 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.conf import settings
 from couchdbkit.ext.django.schema import Document, StringProperty,\
     BooleanProperty, DateTimeProperty
+from corehq.apps.hqtimezones import fields as tz_fields
 
 class CouchDomain(Document):
     """
@@ -11,6 +13,7 @@ class CouchDomain(Document):
     is_active = BooleanProperty()
     is_public = BooleanProperty()
     date_created = DateTimeProperty()
+    timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     
     def save(self, **kwargs):
         # eventually we'll change the name of this object to just "Domain"
@@ -34,6 +37,7 @@ class Domain(models.Model):
 
     name  = models.CharField(max_length = 64, unique=True)
     is_active = models.BooleanField(default=False)
+    timezone = tz_fields.TimeZoneField()
     #description = models.CharField(max_length=255, null=True, blank=True)
     #timezone = models.CharField(max_length=64,null=True)
     
