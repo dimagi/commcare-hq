@@ -3,6 +3,7 @@ from dimagi.utils.couch.database import get_db
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
+from functools import wraps
 from dateutil.parser import parse, tz
 
 class ProjectOfficerReport(HQReport):
@@ -135,11 +136,16 @@ class LendingGroup(object):
                 try:
                     return self.case[item]
                 except Exception:
-                    raise AttributeError("Couldn't find %s in either the collection or the case." % item)
+                    try:
+                        return self.case['_doc'][item]
+                    except Exception:
+                        return None
+                        # raise AttributeError("Couldn't find %s in either the collection or the case." % item)
 
 
 def _foo(x):
-    y = parse(x.meta['timeEnd'])
+    print "foo"
+    y = parse(x.opened_on)
     z = parse(x.date_savings_started_this_cycle)
     a = y - z.replace(tzinfo=tz.tzutc())
     return a.days
@@ -168,11 +174,15 @@ class LendingGroupAggregate(object):
     def _all(self, l, flt=None):
         if flt:
             return map(l, filter(flt, self.groups))
-        return map(l, self.groups)
+        return filter(lambda x: x is not None, map(l, self.groups))
 
     # Utility functions
     def sum_all_groups(self, l):
-        return sum(map(lambda x: float(x) if x else 0.0, self._all(l)))
+        intr = self._all(l)
+        res = map(lambda x: float(x) if x else 0.0, intr)
+        r = sum(res)
+        print r
+        return r
 
     def avg_all_groups(self, l):
         if not len(self.groups): return None
@@ -194,9 +204,9 @@ class LendingGroupAggregate(object):
         if item.startswith('cur__'):
             return self.currency(self.__getattr__(item[5:]))
         elif item.startswith('avg__'):
-            return self.avg_all_groups(lambda x: x.__getattr__(item[5:]))
+            return self.avg_all_groups(lambda x: float(x.__getattr__(item[5:])))
         elif item.startswith('sum__'):
-            return self.sum_all_groups(lambda x: x.__getattr__(item[5:]))
+            return self.sum_all_groups(lambda x: int(x.__getattr__(item[5:])))
 
     # Columns
     @property
@@ -210,6 +220,22 @@ class LendingGroupAggregate(object):
     @property
     def avg_members(self):
         return self.avg_all_groups(lambda x: x.active_members_at_time_of_visit)
+
+    @property
+    def num_men(self):
+        return self.sum_all_groups(lambda x: x.active_men_at_time_of_visit)
+
+    @property
+    def avg_men(self):
+        return self.avg_all_groups(lambda x: x.active_men_at_time_of_visit)
+
+    @property
+    def num_women(self):
+        return self.sum_all_groups(lambda x: x.active_women_at_time_of_visit)
+
+    @property
+    def avg_women(self):
+        return self.avg_all_groups(lambda x: x.active_women_at_time_of_visit)
 
     @property
     def members_at_start_of_cycle(self):
@@ -293,15 +319,15 @@ class LendingGroupAggregate(object):
         if self.num_members:
             return self.pct(self.num_members - self.dropouts_since_start_of_cycle, self.num_members)
         else:
-            return "n/a"
+            return None
 
     @property
     def change_in_members(self):
-        return self.sum_all_groups(lambda x: int(x.active_members_at_time_of_visit) - int(x.members_at_start_of_cycle))
+        return self.sum_all_groups(lambda x: int(x.active_members_at_time_of_visit) - int(x.members_at_start_of_cycle) if x.active_members_at_time_of_visit is not None else 0.0)
 
     @property
     def avg_change_in_members(self):
-        return self.avg_all_groups(lambda x: int(x.active_members_at_time_of_visit) - int(x.members_at_start_of_cycle))
+        return self.avg_all_groups(lambda x: int(x.active_members_at_time_of_visit) - int(x.members_at_start_of_cycle) if x.active_members_at_time_of_visit is not None else 0.0)
 
     def pct_change_in_members(self):
         return self.pct(self.change_in_members, self.members_at_start_of_cycle)
@@ -336,7 +362,6 @@ class LendingGroupAggregate(object):
 
     @property
     def loan_fund_utilization(self):
-        print "foo"
         return self.pct(self._value_of_loans_outstanding, self._value_of_loans_outstanding + self._loan_fund_cash_in_box_at_bank)
 
     @property
@@ -589,9 +614,9 @@ class PerformanceReport(HQReport):
     _rows = [
         ('<h2>Group Profile</h2>',),
         ('Number of groups', 'num_groups', '', ''),
-        ('Total number of current members', 'sum__active_members_at_time_of_visit', '', 'avg__active_members_at_time_of_visit'),
-        ('Total men', 'sum__active_men_at_time_of_visit', '', 'avg__active_men_at_time_of_visit'),
-        ('Total women', 'sum__active_women_at_time_of_visit', '', 'avg__active_women_at_time_of_visit'),
+        ('Total number of current members', 'num_members', '', 'avg_members'),
+        ('Total men', 'num_men', '', 'avg_women'),
+        ('Total women', 'num_women', '', 'avg_women'),
         ('Total number of supervised groups', 'num_groups', '', ''),
         ('Total number of graduated groups', '', '', ''),
         ('Average age of group (weeks)', '','','avg_age_of_group'),
@@ -663,12 +688,12 @@ class PerformanceReport(HQReport):
             if r:
                 row = [r[0]]
                 def _ga(x):
-                    try:
-                        if x:
-                            return getattr(lg, x)
-                        return ''
-                    except (TypeError, AttributeError):
-                        return ''
+                    if x:
+                        r = getattr(lg, x)
+                    else:
+                        r = ''
+
+                    return r
                 row.extend(map(_ga, r[1:]))
                 self.context['rows'].append(row)
             else:
