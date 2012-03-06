@@ -5,7 +5,7 @@ import re
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.sms.api import send_sms
+from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
 from corehq.apps.users.models import CommCareUser
 import logging
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
@@ -460,14 +460,14 @@ class CaseReminderHandler(Document):
         if reminder.method == "sms" or reminder.method == "callback":
             try:
                 if self.recipient == RECIPIENT_USER:
-                    phone_number = reminder.user.get_verified_number()
+                    verified_number = reminder.user.get_verified_number()
                 else:
                     #self.recipient == RECIPIENT_CASE
-                    phone_number = reminder.case.get_verified_number()
+                    verified_number = reminder.case.get_verified_number()
             except Exception:
-                phone_number = ''
+                verified_number = None
 
-            return send_sms(reminder.domain, reminder.user_id, phone_number, message)
+            return send_sms_to_verified_number(verified_number, message)
         elif reminder.method == "test" or reminder.method == "callback_test":
             print(message)
             return True

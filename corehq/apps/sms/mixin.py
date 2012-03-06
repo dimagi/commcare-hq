@@ -12,6 +12,22 @@ class VerifiedNumber(Document):
     owner_doc_type  = StringProperty()
     owner_id        = StringProperty()
     phone_number    = StringProperty()
+    backend_id      = StringProperty() # points to a MobileBackend
+    
+    @property
+    def backend(self):
+        return MobileBackend.get(self.backend_id)
+
+class MobileBackend(Document):
+    """
+    Defines a backend to be used for sending / receiving SMS.
+    """
+    domain = ListProperty(StringProperty)   # A list of domains for which this backend is applicable
+    description = StringProperty()          # (optional) A description of this backend
+    inbound_module = StringProperty()       # The fully-qualified name of the inbound module to be used (must implement handle() method)
+    inbound_number = StringProperty()       # The number used for receiving inbound sms
+    outbound_module = StringProperty()      # The fully-qualified name of the inbound module to be used (must implement send() method)
+    outbound_params = DictProperty()        # The parameters which will be the keyword arguments sent to the outbound module's send() method
 
 class CommCareMobileContactMixin(object):
     """
@@ -28,9 +44,9 @@ class CommCareMobileContactMixin(object):
     
     def get_verified_number(self):
         """
-        Retrieves this contact's verified number by (self.doc_type, self._id).
+        Retrieves this contact's verified number entry by (self.doc_type, self._id).
         
-        return  the VerifiedNumber
+        return  the VerifiedNumber entry
         """
         v = VerifiedNumber.view("sms/verified_number_by_doc_type_id",
             startkey=[self.doc_type, self._id],
@@ -95,6 +111,4 @@ class CommCareMobileContactMixin(object):
         if v is not None:
             v.doc_type += "-Deleted"
             v.save()
-
-
 
