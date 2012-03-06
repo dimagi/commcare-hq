@@ -1,9 +1,10 @@
 {% extends base_template %}
+{% load hq_shared_tags %}
 {% block head %}
     {{ block.super }}
     {% include "imports/datatables.html" %}
-    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}hqadmin/css/style.css"/>
-    <script type="text/javascript" src="{{ STATIC_URL }}reports/javascripts/datepicker.js"></script>
+    <link rel="stylesheet" type="text/css" href="{% static 'hqadmin/css/style.css' %}"/>
+    <script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
 {% endblock %}
 {% block content %}
 <div id="main_container">

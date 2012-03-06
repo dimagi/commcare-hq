@@ -1,8 +1,9 @@
-<script src="{{ STATIC_URL }}hqwebapp/javascripts/jquery-ui/jquery-ui-1.8.16.min.js"></script>
-<script src="{{ STATIC_URL }}hqwebapp/js/main.js"></script>
-<script src="{{ STATIC_URL }}hqwebapp/js/shield.js"></script>
-<script src="{{ STATIC_URL }}hqwebapp/js/sugar.js"></script>
-<script src="{{ STATIC_URL }}hqwebapp/js/help.js"></script>
+{% load hq_shared_tags %}
+<script src="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+<script src="{% static 'hqwebapp/js/main.js' %}"></script>
+<script src="{% static 'hqwebapp/js/shield.js' %}"></script>
+<script src="{% static 'hqwebapp/js/sugar.js' %}"></script>
+<script src="{% static 'hqwebapp/js/help.js' %}"></script>
 
 <script type="text/javascript">
     $(function(){
