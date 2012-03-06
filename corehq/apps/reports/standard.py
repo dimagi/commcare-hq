@@ -698,7 +698,9 @@ class ExcelExportReport(StandardHQReport):
     template_name = "reports/reportdata/excel_export_data.html"
 
     def calc(self):
-        forms = get_db().view('reports/forms_by_xmlns', startkey=[self.domain, {}], endkey=[self.domain, {}, {}], group=True)
+        # This map for this view emits twice, once with app_id and once with {}, letting you join across all app_ids.
+        # However, we want to separate out by (app_id, xmlns) pair not just xmlns so we use [domain] to [domain, {}]
+        forms = get_db().view('reports/forms_by_xmlns', startkey=[self.domain], endkey=[self.domain, {}], group=True)
         forms = [x['value'] for x in forms]
 
         forms = sorted(forms, key=lambda form:\
