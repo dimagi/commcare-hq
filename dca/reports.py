@@ -575,15 +575,20 @@ class PortfolioComparisonReport(HQReport):
 
         self.context['curval'] = curval
         self.context['curname'] = curname
-        if not (group_id and month and year):
+        if not (month and year):
             return
 
 
         self.context['headers'] = map(lambda x: x[0], self.columns)
 
         rows = []
+        if group_id:
+            group = Group.get(group_id)
+            users = group.users
+        else:
+            users = CommCareUser.by_domain(self.domain).all()
 
-        group = Group.get(group_id)
+
 
         for user_id in group.users:
             user = CommCareUser.get(user_id)
@@ -671,14 +676,21 @@ class PerformanceReport(HQReport):
         year = self.request.GET.get("year", None)
         curval = float(self.request.GET.get("curval", 1.0))
         curname = self.request.GET.get("curname", "MK")
-        if not (group_id and month and year):
+        if not (month and year):
             return
 
         headers = ["Statistic", "Aggregate (All Groups)", "%", "Average (Per Group)"]
 
-        group = Group.get(group_id)
 
-        lg = LendingGroupAggregate(group.name, group.users, month, year, curval, curname)
+        if group_id:
+            group = Group.get(group_id)
+            group_name = group.name
+            users = group.users
+        else:
+            users = map(lambda x: x._id, CommCareUser.by_domain(self.domain).all())
+            group_name = "Everybody"
+
+        lg = LendingGroupAggregate(group_name, users, month, year, curval, curname)
 
         self.context['headers'] = headers
         self.context['rows'] = []
@@ -732,10 +744,15 @@ class PerformanceRatiosReport(HQReport):
 
         headers = ["Statistic", "Values"]
 
-        group = Group.get(group_id)
+        if group_id:
+            group = Group.get(group_id)
+            group_name = group.name
+            users = group.users
+        else:
+            users = map(lambda x: x._id, CommCareUser.by_domain(self.domain).all())
+            group_name = "Everybody"
 
-
-        lg = LendingGroupAggregate(group.name, group.users, month, year, curval, curname)
+        lg = LendingGroupAggregate(group_name, users, month, year, curval, curname)
 
         self.context['headers'] = headers
         self.context['rows'] = []
