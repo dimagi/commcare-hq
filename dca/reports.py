@@ -144,7 +144,6 @@ class LendingGroup(object):
 
 
 def _foo(x):
-    print "foo"
     y = parse(x.opened_on)
     z = parse(x.date_savings_started_this_cycle)
     a = y - z.replace(tzinfo=tz.tzutc())
@@ -181,7 +180,6 @@ class LendingGroupAggregate(object):
         intr = self._all(l)
         res = map(lambda x: float(x) if x else 0.0, intr)
         r = sum(res)
-        print r
         return r
 
     def avg_all_groups(self, l):
@@ -735,6 +733,7 @@ class PerformanceRatiosReport(HQReport):
         headers = ["Statistic", "Values"]
 
         group = Group.get(group_id)
+
 
         lg = LendingGroupAggregate(group.name, group.users, month, year, curval, curname)
 
