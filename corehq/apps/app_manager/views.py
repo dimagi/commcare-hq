@@ -4,6 +4,7 @@ import tempfile
 import uuid
 from wsgiref.util import FileWrapper
 import zipfile
+from corehq.apps.app_manager.const import APP_V1
 from django.utils import simplejson
 import os
 import re
@@ -538,12 +539,14 @@ def new_app(req, domain):
     "Adds an app to the database"
     lang = req.COOKIES.get('lang', "en")
     type = req.POST["type"]
-    application_version = req.POST['application_version']
+    application_version = req.POST.get('application_version', APP_V1)
     cls = str_to_cls[type]
-    app = cls.new_app(domain, "Untitled Application", lang=lang, application_version=application_version)
     if cls == Application:
+        app = cls.new_app(domain, "Untitled Application", lang=lang, application_version=application_version)
         app.new_module("Untitled Module", lang)
         app.new_form(0, "Untitled Form", lang)
+    else:
+        app = cls.new_app(domain, "Untitled Application", lang=lang)
     app.save()
     app_id = app.id
 
