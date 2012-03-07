@@ -319,6 +319,7 @@
                         {% endif %}
                         <th>Version</th>
                         <th>Build Date</th>
+                        <th>Build Time</th>
                         <th>CommCare Version</th>
                         <th>Preview (Beta)</th>
                     
@@ -345,6 +346,7 @@
                             {% endif %}
                             <td>{{ saved_app.version }}</td>
                             <td>{{ saved_app.built_on.date }}</td>
+                            <td>{{ saved_app.built_on.time }}</td>
                             <td>{% if saved_app.built_with.get_label %}{{ saved_app.built_with.get_label }}{% endif %}</td>
                             <td><a href="{% url emulator domain saved_app.id %}">Preview</a></td>
                             <td>
