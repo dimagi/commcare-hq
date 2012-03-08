@@ -64,18 +64,3 @@ class DomainRegistrationForm(forms.Form):
             if isinstance(self.cleaned_data[field], basestring):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
-
-
-class ResendConfirmationEmailForm(forms.Form):
-    requesting_user = forms.CharField(widget=forms.HiddenInput)
-
-    def clean_requesting_user(self):
-        data = self.cleaned_data['requesting_user']
-        dom_req = None
-        try:
-            dom_req = RegistrationRequest.get_request_for_username(data)
-        except Exception:
-            pass
-        if not dom_req:
-            raise forms.ValidationError("Your account has already been activated!")
-        return data

@@ -24,7 +24,6 @@ class Domain(Document):
 
     @staticmethod
     def active_for_user(user, is_active=True):
-        print "ACTIVE FOR USER", user
         if not hasattr(user,'get_profile'):
             # this had better be an anonymous user
             return []
@@ -32,7 +31,6 @@ class Domain(Document):
         couch_user = CouchUser.from_django_user(user)
         if couch_user:
             domain_names = couch_user.get_domains()
-            print domain_names
             return Domain.view("domain/by_status",
                                     keys=[[is_active, d] for d in domain_names],
                                     reduce=False,

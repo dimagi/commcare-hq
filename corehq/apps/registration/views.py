@@ -9,7 +9,7 @@ from django.shortcuts import redirect
 from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL
 from corehq.apps.domain.models import Domain
 from corehq.apps.registration.models import RegistrationRequest
-from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm, ResendConfirmationEmailForm
+from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm
 from corehq.apps.registration.utils import *
 from dimagi.utils.web import render_to_response, get_ip
 
@@ -45,7 +45,6 @@ def register_user(request):
 def register_domain(request):
     is_new = False
     referer_url = request.GET.get('referer', '')
-    print referer_url
 
     active_domains_for_user = Domain.active_for_user(request.user)
     if len(active_domains_for_user) <= 0 and not request.user.is_superuser:
