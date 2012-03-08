@@ -72,8 +72,17 @@ var CaseView = Backbone.View.extend({
 
         
 var CaseList = Backbone.Collection.extend({
+    initialize: function() {
+        _.bindAll(this, 'url', 'setUrl'); 
+    },
     model: Case,
-    // url: "{% url cloudcare_get_cases domain %}?user_id={{user_id}}"
+    url: function () {
+        return this.caseUrl;
+    },
+    setUrl: function (url) {
+        this.caseUrl = url;
+    }
+    
 });
 
 var CaseListView = Backbone.View.extend({
@@ -90,10 +99,16 @@ var CaseListView = Backbone.View.extend({
         this.caseList = new CaseList();
         this.caseList.bind('add', this.appendItem);
         this.caseList.bind('reset', this.appendAll);
-        this.caseList.reset(this.options.cases);
+        if (this.options.cases) {
+            this.caseList.reset(this.options.cases);
+        } else if (this.options.caseUrl) {
+            console.log("case url", this.options.caseUrl);
+            this.caseList.setUrl(this.options.caseUrl);
+            this.caseList.fetch();
+        }
+            
         this.render();
-      
-      
+
     },
     
     render: function () {
@@ -166,7 +181,7 @@ var CaseDetailsView = Backbone.View.extend({
 
 var CaseMainView = Backbone.View.extend({
     initialize: function () {
-        _.bindAll(this, 'render', 'selectCase'); 
+        _.bindAll(this, 'render', 'selectCase', 'fetchCaseList'); 
         var self = this;
         this.router = new CaseNavigation();
         this.router.on("route:case", function (caseId) {
@@ -180,7 +195,8 @@ var CaseMainView = Backbone.View.extend({
         });
         this.listView = new CaseListView({details: this.options.listDetails,
                                           cases: this.options.cases,
-                                          language: this.options.language});
+                                          language: this.options.language,
+                                          caseUrl: this.options.caseUrl });
         this.detailsView = new CaseDetailsView({details: this.options.summaryDetails,
                                                 language: this.options.language});
         this.listView.on("case:selected", function (caseView) {
@@ -201,6 +217,10 @@ var CaseMainView = Backbone.View.extend({
             this.detailsView.model = caseView.model;
         }
         this.detailsView.render();
+    },
+    
+    fetchCaseList: function () {
+        this.listView.caseList.fetch();
     },
     
     render: function () {
