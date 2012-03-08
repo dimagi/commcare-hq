@@ -3,6 +3,7 @@
 
 import os
 import logging
+from django.contrib import messages
 
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 
@@ -460,4 +461,12 @@ CUSTOM_REPORT_MAP = {
                    'dca.reports.PortfolioComparisonReport',
                    'dca.reports.PerformanceReport',
                    'dca.reports.PerformanceRatiosReport']
+}
+
+MESSAGE_TAGS = {
+    messages.INFO: 'alert-info',
+    messages.DEBUG: '',
+    messages.SUCCESS: 'alert-success',
+    messages.WARNING: 'alert-error',
+    messages.ERROR: 'alert-error',
 }
