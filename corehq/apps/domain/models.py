@@ -166,19 +166,3 @@ class OldDomain(models.Model):
         
     def __unicode__(self):
         return self.name
-
-##############################################################################################################
-
-class Settings(Document):
-    domain = StringProperty()
-    max_users = IntegerProperty()
-
-class OldSettings(models.Model):
-    domain = models.OneToOneField(OldDomain)
-    max_users = models.PositiveIntegerField()
-
-    class Meta():
-        db_table = "domain_settings"
-    
-##############################################################################################################
-from . import signals
