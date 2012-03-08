@@ -1,27 +1,43 @@
 {% extends login_template %}
 {% block title %}Domain Selection{% endblock title %}
 {% block login-content %}
-<form name="form" method="post" action="">
-    {% csrf_token %}
-    {% if request.user.is_authenticated %}
-        <h1>Accept Invitation</h1>
-        <p>Accept invitation to domain <b>{{ domain }}</b> as <b>{{ user.username }}</b>?</p>
-        <input type="submit" value="Accept" style="float: right"/>
-        <br style="clear: both"/>
-        <p>Not {{ user.username }}?</p>
-        <p>
-            <a href="?create=true">Create an account</a>
-                or
-            <a href="?switch=true">Switch accounts</a>
-        </p>
-    {% else %}
-        <h1>To accept the invitation please create an account</h1>
-        <br>
-        <p>Already have an account? <a href="{% url login %}?next={{request.path}}">Sign in now</a></p>
-        <table>
-        {{ form.as_table }}
-        </table>
-        <input type="submit" value="Create Account" />
-    {% endif %}
-</form>
+    <div class="row">
+        {% if request.user.is_authenticated %}
+            <div class="page-header">
+                <h1>Project Invitation <small>You've been invited to join "{{ domain }}".</small></h1>
+            </div>
+            <div class="span8">
+                <form name="form" method="post" action="" class="form-horizontal">
+                    {% csrf_token %}
+                    {{ form.as_table }}
+                    <fieldset>
+                        <legend>Accept Invite?</legend>
+                        <p>Would you like to accept the invitation to join the CommCare HQ project <strong>{{ domain }}</strong> as <strong>{{ user.username }}</strong>?</p>
+                    </fieldset>
+                    <button type="submit" class="btn btn-primary btn-large">Accept Invitation</button>
+                </form>
+            </div>
+            <div class="span4">
+                <aside class="well">
+                    <h3>Not {{ user.username }}?</h3>
+                    <a href="?create=true" class="btn">Create an Account</a><br />
+                    or<br />
+                    <a href="?switch=true" class="btn">Switch Accounts</a>
+                </aside>
+            </div>
+        {% else %}
+            <div class="page-header">
+                <h1>Project Invitation, Account Required<br /><small>To accept this project invitation, you must sign in to CommCare HQ.</small></h1>
+            </div>
+            <div class="span8">
+                <p>To accept the invitation, please <a href="{% url registration_new_user %}">create an account</a>.</p>
+            </div>
+            <div class="span4">
+                <aside class="well">
+                    <h3>Already have an account?</h3>
+                    <a href="{% url login %}?next={{ request.path }}" class="btn btn-primary btn-large">Sign In Now</a>
+                </aside>
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}

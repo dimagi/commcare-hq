@@ -1,8 +1,10 @@
 from datetime import datetime
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.db import transaction
 from django.forms.forms import Form
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL
 from corehq.apps.domain.models import Domain
@@ -42,6 +44,8 @@ def register_user(request):
 @login_required_late_eval_of_LOGIN_URL
 def register_domain(request):
     is_new = False
+    referer_url = request.GET.get('referer', '')
+    print referer_url
 
     active_domains_for_user = Domain.active_for_user(request.user)
     if len(active_domains_for_user) <= 0 and not request.user.is_superuser:
@@ -62,11 +66,18 @@ def register_domain(request):
                 return render_to_response(request, 'error.html', vals)
 
             request_new_domain(request, form, is_new)
+            requested_domain = form.cleaned_data['domain_name']
             if is_new:
-                vals = dict(alert_message="An email has been sent to %s." % request.user.username, requested_domain=form.cleaned_data['domain_name'])
+                vals = dict(alert_message="An email has been sent to %s." % request.user.username, requested_domain=requested_domain)
                 return render_to_response(request, 'registration/confirmation_sent.html', vals)
             else:
-                return redirect('domain_select')
+                messages.success(request, '<strong>The project {project_name} was successfully created!</strong> An email has been sent to {username} for your records.'.format(
+                    username=request.user.username,
+                    project_name=requested_domain
+                ), extra_tags="html")
+                if referer_url:
+                    return redirect(referer_url)
+                return HttpResponseRedirect(reverse("domain_homepage", args=[requested_domain]))
     else:
         form = DomainRegistrationForm() # An unbound form
 

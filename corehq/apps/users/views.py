@@ -57,7 +57,6 @@ def require_permission_to_edit_user(view_func):
         if go_ahead:
             return login_and_domain_required(view_func)(request, domain, couch_user_id, *args, **kwargs)
         else:
-            print "Can't access domain"
             raise Http404()
     return _inner
 

@@ -1,20 +1,8 @@
-{% extends base_template %}
-{% load hq_shared_tags %}
-
+{% extends "hqwebapp/centered.html" %}
 {% block title %}Login to CommCareHQ{% endblock title %}
 
-{# stuff to override old styles -- remove when everything is migrated over #}
-{% block oldstyle_tag %}{% endblock %}
-{% block oldstyle_imports %}{% endblock %}
-{% block oldstyle_hack_start %}{% endblock %}
-{% block oldstyle_hack_end %}{% endblock %}
-
-{% block layout_style %}hq-centered-content{% endblock %}
-
-{% block content %}
-<div class="container">
+{% block centered-content %}
     {% block login-content %}
     {% include "login_and_password/partials/login_form.html" %}
     {% endblock %}
-</div>
-{% endblock content %}     
+{% endblock centered-content %}

@@ -36,7 +36,8 @@ class UserRegistersSelfForm(NewWebUserRegistrationForm):
     def __init__(self, *args, **kwargs):
         # Value of 'kind' is irrelevant in this context
         super(UserRegistersSelfForm, self).__init__(None, *args, **kwargs)
-        del self.fields['domain_name']
+        if 'domain_name' in self.fields:
+            del self.fields['domain_name']
         
         
 ########################################################################################################

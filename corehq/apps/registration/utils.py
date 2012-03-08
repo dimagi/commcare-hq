@@ -116,7 +116,7 @@ The CommCareHQ Team
 
 def send_global_domain_registration_email(requesting_user, domain_name):
     DNS_name = Site.objects.get(id = settings.SITE_ID).domain
-    domain_link = reverse("domain_homepage", args=[domain_name])
+    domain_link = 'http://' + DNS_name + reverse("domain_homepage", args=[domain_name])
     wiki_link = 'http://wiki.commcarehq.org/display/commcarepublic/Home'
     users_link = 'http://groups.google.com/group/commcare-users'
 
