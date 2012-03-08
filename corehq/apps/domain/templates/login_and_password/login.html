@@ -1,16 +1,20 @@
 {% extends base_template %}
+{% load hq_shared_tags %}
 
-{% block title %}login{% endblock title %}
-{% block head %}
-    {{ block.super }}
-    <link rel="stylesheet" href="{{STATIC_URL}}domain/css/login.css?version=1"/>
-{% endblock %}
+{% block title %}Login to CommCareHQ{% endblock title %}
+
+{# stuff to override old styles -- remove when everything is migrated over #}
+{% block oldstyle_tag %}{% endblock %}
+{% block oldstyle_imports %}{% endblock %}
+{% block oldstyle_hack_start %}{% endblock %}
+{% block oldstyle_hack_end %}{% endblock %}
+
+{% block layout_style %}hq-centered-content{% endblock %}
 
 {% block content %}
-<div class="login-block">
+<div class="container">
     {% block login-content %}
     {% include "login_and_password/partials/login_form.html" %}
     {% endblock %}
 </div>
-
 {% endblock content %}     

@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 
-from corehq.apps.domain.forms import RegistrationRequestForm # Reuse to capture new user info
+from corehq.apps.registration.forms import NewWebUserRegistrationForm # Reuse to capture new user info
 
 
 ########################################################################################################
@@ -30,7 +30,7 @@ class UserEmailOnlyRegistrationRequestForm(_BaseForm, forms.Form):
     
 ########################################################################################################
     
-class UserRegistersSelfForm(RegistrationRequestForm): 
+class UserRegistersSelfForm(NewWebUserRegistrationForm):
     # Almost the same as we used in domain registration; just eliminate the domain and email fields
            
     def __init__(self, *args, **kwargs):
@@ -51,7 +51,7 @@ class AdminInvitesUserForm(_BaseForm, forms.Form):
     role = forms.ChoiceField(choices=Roles.get_role_labels())
     
     
-class AdminRegistersUserForm(RegistrationRequestForm): 
+class AdminRegistersUserForm(NewWebUserRegistrationForm):
     # As above. Need email now; still don't need domain. Don't need TOS. Do need the is_active flag,
     # and do need to relabel some things.
     is_domain_admin = forms.BooleanField(label='User is a domain administrator', initial=False, required=False)

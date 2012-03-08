@@ -29,10 +29,23 @@ class RegistrationRequest(Document):
         today = datetime.datetime.utcnow()
         yesterday = today - datetime.timedelta(1)
         result = cls.view("registration/requests_by_time",
-            startkey=yesterday,
-            endkey=today,
+            startkey=yesterday.isoformat(),
+            endkey=today.isoformat(),
             reduce=True).all()
+        if not result:
+            return 0
+        return result[0]['value']
+
+    @classmethod
+    def get_request_for_username(cls, username):
+        print "get request for ", username
+        result = cls.view("registration/requests_by_username",
+            key=username,
+            reduce=False,
+            include_docs=True).first()
         return result
+
+
 
 class OldRegistrationRequest(models.Model):
     tos_confirmed = models.BooleanField(default=False)

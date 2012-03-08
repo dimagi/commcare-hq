@@ -1,10 +1,11 @@
 import uuid
 from datetime import datetime
+from corehq.apps.registration.models import RegistrationRequest
 from dimagi.utils.web import get_ip
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
-from corehq.apps.domain.models import RegistrationRequest, Domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.django.email import send_HTML_email
 
@@ -26,30 +27,39 @@ def activate_new_user(form):
     new_user.date_joined = now
     new_user.save()
 
-def request_new_domain(request, form):
+def request_new_domain(request, form, new_user=True):
     now = datetime.utcnow()
 
     dom_req = RegistrationRequest()
-    dom_req.tos_confirmed = form.cleaned_data['tos_confirmed']
-    dom_req.request_time = now
-    dom_req.request_ip = get_ip(request)
-    dom_req.activation_guid = uuid.uuid1().hex
+    if new_user:
+        dom_req.tos_confirmed = form.cleaned_data['tos_confirmed']
+        dom_req.request_time = now
+        dom_req.request_ip = get_ip(request)
+        dom_req.activation_guid = uuid.uuid1().hex
 
-    new_domain = Domain(name=form.cleaned_data['domain_name'], is_active=False)
+    new_domain = Domain(name=form.cleaned_data['domain_name'],
+                        is_active=False,
+                        date_created=datetime.utcnow())
+    if not new_user:
+        new_domain.is_active = True
     new_domain.save()
-    dom_req.domain = new_domain
+
+    dom_req.domain = new_domain.name
 
     if request.user.is_authenticated():
         current_user = CouchUser.from_django_user(request.user)
         current_user.add_domain_membership(new_domain.name, is_admin=True)
         current_user.save()
-        dom_req.requesting_user = request.user
-        dom_req.new_user = request.user
+        dom_req.requesting_user_username = request.user.username
+        dom_req.new_user_username = request.user.username
 
-    dom_req.save()
-    send_domain_registration_email(dom_req.requesting_user.email,
-                                   dom_req.domain.name,
-                                   dom_req.activation_guid)
+    if new_user:
+        dom_req.save()
+        send_domain_registration_email(request.user.email,
+                                       dom_req.domain,
+                                       dom_req.activation_guid)
+    else:
+        send_global_domain_registration_email(request.user, new_domain.name)
 
 def send_domain_registration_email(recipient, domain_name, guid):
     DNS_name = Site.objects.get(id = settings.SITE_ID).domain
@@ -87,8 +97,8 @@ The CommCareHQ Team
 <p>Please <a href="{activation_link}">go here to activate your new domain</a>.  You will not be able to use your domain until you have confirmed this email address.</p>
 <p><strong>Domain name:</strong> {domain}</p>
 <p><strong>Username:</strong> {username}</p>
-<p>For help getting started, you can visit the <a href="{wiki_link}">CommCare Wiki</a>, the home of all CommCare documentation.
-<p>We also encourage you to join the <a href="{users_link}">commcare-users google group</a>, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list:</a>
+<p>For help getting started, you can visit the <a href="{wiki_link}">CommCare Wiki</a>, the home of all CommCare documentation.</p>
+<p>We also encourage you to join the <a href="{users_link}">commcare-users google group</a>, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list.</p>
 <p>If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page.  Our developers will look into the problem and communicate with you about a solution.</p>
 <p style="margin-top:1em">Thank you,</p>
 <p><strong>The CommCareHQ Team</strong></p>
@@ -102,3 +112,52 @@ The CommCareHQ Team
     subject = 'Welcome to CommCare HQ!'.format(**locals())
 
     send_HTML_email(subject, recipient, message_plaintext, message_html)
+
+
+def send_global_domain_registration_email(requesting_user, domain_name):
+    DNS_name = Site.objects.get(id = settings.SITE_ID).domain
+    domain_link = reverse("domain_homepage", args=[domain_name])
+    wiki_link = 'http://wiki.commcarehq.org/display/commcarepublic/Home'
+    users_link = 'http://groups.google.com/group/commcare-users'
+
+    message_plaintext = """
+Hello {name},
+
+You have successfully created and activated the domain "{domain}" for the CommCare HQ user "{username}".
+
+You may access your domain by following this link: {domain_link}
+
+Please remember, if you need help you can visit the CommCare Wiki, the home of all CommCare documentation.  Click this link to go directly to the guide to CommCare HQ:
+{wiki_link}
+
+If you haven't yet, we also encourage you to join the "commcare-users" google group, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list:
+{users_link}
+
+If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page.  Our developers will look into the problem and communicate with you about a solution.
+
+Thank you,
+
+The CommCareHQ Team
+
+"""
+
+    message_html = """
+<h1>New domain "{domain}" created!</h1>
+<p>Hello {name},</p>
+<p>You may now  <a href="{domain_link}">visit your newly created domain</a> with the CommCare HQ User <strong>{username}</strong>.</p>
+
+<p>Please remember, if you need help you can visit the <a href="{wiki_link}">CommCare Wiki</a>, the home of all CommCare documentation.</p>
+<p>We also encourage you to join the <a href="{users_link}">commcare-users google group</a>, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list.</p>
+<p>If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page.  Our developers will look into the problem and communicate with you about a solution.</p>
+<p style="margin-top:1em">Thank you,</p>
+<p><strong>The CommCareHQ Team</strong></p>
+<p>If your email viewer won't permit you to click on the registration link above, cut and paste the following link into your web browser:</p>
+{domain_link}
+"""
+    params = {"name": requesting_user.first_name, "domain": domain_name, "domain_link": domain_link, "username": requesting_user.email, "wiki_link": wiki_link, "users_link": users_link}
+    message_plaintext = message_plaintext.format(**params)
+    message_html = message_html.format(**params)
+
+    subject = 'CommCare HQ: New domain created!'.format(**locals())
+
+    send_HTML_email(subject, requesting_user.email, message_plaintext, message_html)

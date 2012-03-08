@@ -1,44 +1,8 @@
 {% extends login_template %}
+{% load hq_shared_tags %}
 
 {% block title %}Project Selection{% endblock title %}
 
 {% block login-content %}
-    <form name="form" method="post" action="{% url domain_select %}">
-        {% csrf_token %}
-        <h1>Select a Project</h1>
-        {% if form.non_field_errors %}
-            <div class="non_field_errors">
-                {{ form.non_field_errors }}
-            </div>
-        {% endif %}
 
-        {% if next %}
-            <input name="next" type="hidden" value="{{next}}" />
-        {% endif %}
-
-        <table>
-            {% for field in form.visible_fields %}
-                <tr>
-                    <td>{{ field.label_tag }}</td>
-                    <td>{{ field }}</td>
-                </tr>
-                {% if field.errors %}
-                    <tr>
-                        <td></td>
-                        <td class="field_errors">
-                            {{field.errors}}
-                        </td>
-                    </tr>
-                {% endif %}
-            {% endfor %}
-            <tr>
-                <td></td>
-                <td>
-                    <input type="submit" value="Submit"/>
-                </td>
-            </tr>
-        </table>
-
-    </form>
-    <p>You may also <a href="/a/public/">visit the CommCare demo project</a>.</p>
 {% endblock %}

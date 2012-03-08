@@ -38,6 +38,7 @@ class DomainMiddleware(object):
         # Lookup is done via the ContentTypes framework, stored in the domain_membership table
         # id(user) == id(request.user), so we can save a lookup into request by using 'user' alone    
         active_domains = Domain.active_for_user(user)
+        print active_domains
         user.active_domains = active_domains            
         user.selected_domain = None # default case
         domain_from_session = request.session.get(_SESSION_KEY_SELECTED_DOMAIN, None)

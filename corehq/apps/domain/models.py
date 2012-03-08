@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.conf import settings
 from django.db import models
 from couchdbkit.ext.django.schema import Document, StringProperty,\
@@ -22,7 +23,8 @@ class Domain(Document):
 #        super(CouchDomain, self).save(**kwargs)
 
     @staticmethod
-    def active_for_user(user):
+    def active_for_user(user, is_active=True):
+        print "ACTIVE FOR USER", user
         if not hasattr(user,'get_profile'):
             # this had better be an anonymous user
             return []
@@ -30,9 +32,11 @@ class Domain(Document):
         couch_user = CouchUser.from_django_user(user)
         if couch_user:
             domain_names = couch_user.get_domains()
+            print domain_names
             return Domain.view("domain/by_status",
-                                    keys=[True, domain_names],
-                                    reduce=False).all()
+                                    keys=[[is_active, d] for d in domain_names],
+                                    reduce=False,
+                                    include_docs=True).all()
         else:
             return []
 
@@ -47,7 +51,8 @@ class Domain(Document):
             domain_names = couch_user.get_domains()
             return Domain.view("domain/domains",
                                     keys=domain_names,
-                                    reduce=False).all()
+                                    reduce=False,
+                                    include_docs=True).all()
         else:
             return []
 
@@ -65,12 +70,33 @@ class Domain(Document):
         return self.name
 
     @classmethod
-    def get_by_name(cls, domain_name):
+    def get_by_name(cls, name):
         result = cls.view("domain/domains",
-                            key=domain_name,
+                            key=name,
                             reduce=False,
                             include_docs=True).first()
         return result
+
+    @classmethod
+    def get_or_create_with_name(cls, name, is_active=False):
+        result = cls.view("domain/domains",
+            key=name,
+            reduce=False,
+            include_docs=True).first()
+        if result:
+            return result
+        else:
+            new_domain = Domain(name=name,
+                            is_active=is_active,
+                            date_created=datetime.utcnow())
+            new_domain.save()
+            return new_domain
+
+    @classmethod
+    def get_all(cls):
+        return Domain.view("domain/domains",
+                            reduce=False,
+                            include_docs=True).all()
 
 
 
@@ -93,6 +119,9 @@ class OldDomain(models.Model):
     is_active = models.BooleanField(default=False)
     #description = models.CharField(max_length=255, null=True, blank=True)
     #timezone = models.CharField(max_length=64,null=True)
+
+    class Meta():
+        db_table = "domain_domain"
     
     # Utility function - gets active domains in which user has an active membership 
     # Note that User.is_active is not checked here - we're only concerned about usable
@@ -147,6 +176,9 @@ class Settings(Document):
 class OldSettings(models.Model):
     domain = models.OneToOneField(OldDomain)
     max_users = models.PositiveIntegerField()
+
+    class Meta():
+        db_table = "domain_settings"
     
 ##############################################################################################################
 from . import signals

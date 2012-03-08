@@ -54,7 +54,7 @@ class DomainBoundModelChoiceField(forms.ModelChoiceField):
 ########################################################################################################
 
 class DomainSelectionForm(forms.Form):
-    domain_list = DomainModelChoiceField(queryset=Domain.objects.none(), empty_label=None, label="Project List")
+    domain_list = DomainModelChoiceField(queryset=[], empty_label=None, label="Project List")
 
     def __init__(self, domain_list=None, *args, **kwargs):
         super(DomainSelectionForm, self).__init__(*args, **kwargs)
@@ -86,88 +86,6 @@ def clean_password(txt):
     if not pwd_pattern.match(txt):
         raise forms.ValidationError('Password may only contain letters, numbers, hyphens, and underscores')
     return txt
-    
-class RegistrationRequestForm(_BaseForm, forms.Form):
-    first_name  =  forms.CharField(label='First Name', max_length=User._meta.get_field('first_name').max_length)
-    last_name   =  forms.CharField(label='Last Name', max_length=User._meta.get_field('last_name').max_length)
-    email       =  forms.EmailField(label='Email Address',
-                                    max_length=User._meta.get_field('email').max_length, 
-                                    help_text='You will use this to log in')
-    domain_name =  forms.CharField(label='Project Name', max_length=Domain._meta.get_field('name').max_length)
-    password_1  =  forms.CharField(label='Password', max_length=max_pwd, widget=forms.PasswordInput(render_value=False))
-    password_2  =  forms.CharField(label='Password (reenter)', max_length=max_pwd, widget=forms.PasswordInput(render_value=False))
-    
-    tos_confirmed = forms.BooleanField(required=False, label='Agree to Terms of Service') # Must be set to False to have the clean_*() routine called
-        
-    def __init__(self, kind="new_user", *args, **kwargs):
-        super(RegistrationRequestForm, self).__init__(*args, **kwargs)
-        if kind=="existing_user":
-            del self.fields['first_name']
-            del self.fields['last_name']
-            del self.fields['email']
-            del self.fields['password_1']
-            del self.fields['password_2']        
-        
-    # Tests for unique name and domain are merely advisory at this point; because they happen before
-    # the attempted object insertion, another user could sneak a clashing name in before the insert.
-    # Thus, even if we pass these tests, we might fail upon insert (and will have to return an 
-    # error message accordingly).
-    
-    def clean_domain_name(self):
-        data = self.cleaned_data['domain_name'].strip().lower()
-        if not re.match("^%s$" % new_domain_re, data):
-            raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')
-        validate_email(format_username("a", data))
-        if Domain.objects.filter(name__iexact=data).count() > 0 or Domain.objects.filter(name__iexact=data.replace('-', '.')).count():
-            raise forms.ValidationError('Domain name already taken; please try another')
-        return data
- 
-    def clean_email(self):
-        data = self.cleaned_data['email'].strip()
-        if User.objects.filter(username__iexact=data).count() > 0:
-            raise forms.ValidationError('Username already taken; please try another')
-        return data
- 
-    def clean_tos_confirmed(self):
-        data = self.cleaned_data['tos_confirmed']
-        if data != True:
-            raise forms.ValidationError('You must agree to our Terms Of Service when submitting your registration request')        
-        return data
-
-    def clean_password_1(self):
-        return clean_password(self.cleaned_data.get('password_1'))
-
-    def clean_password_2(self):
-        pw2 = clean_password(self.cleaned_data.get('password_2'))
-        if self.clean_password_1() != pw2:
-            raise forms.ValidationError("Passwords do not match")
-        return pw2
-
-    
-    def clean(self):
-        super(_BaseForm, self).clean()
-        cleaned_data = self.cleaned_data
-
-        return cleaned_data
-
-########################################################################################################    
-
-class ResendConfirmEmailForm(_BaseForm, forms.Form):
-    domain_name =  forms.CharField(label='Project Name', max_length=Domain._meta.get_field('name').max_length)
-
-    def clean_domain_name(self):
-        data = self.cleaned_data['domain_name'].strip()
-        try:
-            # Store domain for use in the view function            
-            dom = Domain.objects.get(name=data)                        
-        except:
-            raise forms.ValidationError("We have no record of a request for domain ''"+ data + "'")
-        
-        self.retrieved_domain = dom              
-        if dom.is_active:
-                raise forms.ValidationError("Domain '"+ data + "' has already been activated")     
-               
-        return data    
 
 ########################################################################################################
 

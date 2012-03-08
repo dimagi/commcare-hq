@@ -1,42 +1,37 @@
-import sys, datetime, uuid
+import datetime
 from corehq.apps import receiverwrapper
-from django.conf import settings
-#from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
-from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
-from django.db import transaction
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 
 from django_tables import tables
 from django.shortcuts import redirect
 
 from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
-from corehq.apps.domain.forms import DomainSelectionForm, RegistrationRequestForm, ResendConfirmEmailForm, clean_password, UpdateSelfForm, UpdateSelfTable
-from corehq.apps.domain.models import Domain, RegistrationRequest
+from corehq.apps.domain.forms import DomainSelectionForm
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
-from corehq.apps.users.models import CouchUser, WebUser
 
-from dimagi.utils.web import render_to_response, get_ip
+from dimagi.utils.web import render_to_response
 from corehq.apps.users.views import require_can_edit_web_users
-from dimagi.utils.django.email import send_HTML_email
 from corehq.apps.receiverwrapper.forms import FormRepeaterForm
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 import json
-from dimagi.utils.post import post_data, simple_post
+from dimagi.utils.post import simple_post
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
+from lib.django_user_registration.models import RegistrationProfile
+
 @login_required_late_eval_of_LOGIN_URL
 def select( request, 
             redirect_field_name = REDIRECT_FIELD_NAME,
             domain_select_template = 'domain/select.html' ):
     
     domains_for_user = Domain.active_for_user(request.user)
-    if len(domains_for_user) == 0:
-        return redirect('registration_first_time_domain')
+    if not domains_for_user:
+        return redirect('registration_domain')
     
     redirect_to = request.REQUEST.get(redirect_field_name, '')    
     if request.method == 'POST': # If the form has been submitted...        

@@ -26,7 +26,7 @@ from dimagi.utils.django.email import send_HTML_email
 @domain_admin_required
 def register_with_possible_errors (request, backend, success_url=None, form_class=None,
                                    disallowed_url='registration_disallowed', # URL, not form
-                                   template_name='domain/user_registration/registration_form.html',
+                                   template_name='registration/domain_request.html',
                                    extra_context=None):
   
     backend = get_backend(backend)
@@ -69,7 +69,7 @@ def register_with_possible_errors (request, backend, success_url=None, form_clas
 #
 
 def activate_by_form (request, backend,
-             template_name='domain/user_registration/activation_failed.html',
+             template_name='registration/backend/activation_failed.html',
              success_url=None, extra_context=None, **kwargs):
 
     backend = get_backend(backend)

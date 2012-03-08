@@ -83,7 +83,7 @@ def get_report_analytics_tag(request):
 @register.simple_tag
 def domains_for_user(request):
     domain_list = Domain.active_for_user(request.user)
-    new_domain_url = reverse("domain_registration_request", args=["existing_user"]);
+    new_domain_url = reverse("registration_domain")
     lst = list()
     lst.append('<ul class="dropdown-menu nav-list dropdown-orange">')
     if len(domain_list) > 0:
