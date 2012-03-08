@@ -7,13 +7,8 @@
            $('.export-action-download').click(function() {
                var $modalBody = $("#export-download-status .modal-body");
                $modalBody.text("Fetching...");
-               console.log($(this).data("formname"));
                $("#export-download-status .modal-header h3 span").text($(this).data("formname"));
-               console.log("Going to...");
-               console.log($(this).data('dlocation'));
                $.getJSON($(this).data('dlocation'), function(d) {
-                   console.log("supposedly things should have worked");
-                   console.log(d.download_url);
                    $modalBody.empty().load(d.download_url);
                });
            });
@@ -54,7 +49,7 @@
                         </a>
                     </td>
                     <td class="cell-vertical-centered">
-                        <a class="btn btn-primary" data-toggle="modal" href="#export-download-status" data-formname="{{ export.formname }}" href="#export-download-status" data-dlocation='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?group={{ group.get_id }}{% if show_user_filter %}{% for f in toggle_users %}{% if f.show %}&ufilter={{ f.type }}{% endif %}{% endfor %}{% endif %}'>
+                        <a class="btn btn-primary" href="{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?group={{ group.get_id }}{% if show_user_filter %}{% for f in toggle_users %}{% if f.show %}&ufilter={{ f.type }}{% endif %}{% endfor %}{% endif %}" data-formname="{{ export.formname }}" href="#export-download-status" data-dlocation='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?group={{ group.get_id }}{% if show_user_filter %}{% for f in toggle_users %}{% if f.show %}&ufilter={{ f.type }}{% endif %}{% endfor %}{% endif %}'>
                             <i class="icon-download-alt icon-white"></i> Download Data
                         </a>
                     </td>
