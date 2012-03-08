@@ -113,7 +113,7 @@
                     </td>
                     <td class="cell-vertical-centered">
                         {% if form.submissions %}
-                            <a data-toggle="modal" href="#export-download-status" data-formname="{% if form.app %}{{ form.app.name }}{% else %}Unknown Forms{% endif %}" data-dlocation='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}'
+                            <a data-toggle="modal" href="#export-download-status" data-formname="{% if form.app %}{{ form.app.name }}{% else %}Unknown Forms{% endif %}" data-dlocation='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}&app_id={{ form.app.id }}'
                                 class="btn btn-primary export-action-download" ><i class="icon-download-alt icon-white"></i> Download</a> ({{ form.submissions }} rows)
                         {% else %}
                             No Forms
