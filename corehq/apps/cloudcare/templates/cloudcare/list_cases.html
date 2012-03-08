@@ -51,7 +51,7 @@
             var summaryDetails = {{case_long|safe}};
             var cases = {{ cases|safe }};
             window.mainView = new CaseMainView({
-			    el: $("#main-container"),
+			    el: "#main-container",
 			    listDetails: listDetails,
 			    summaryDetails: summaryDetails,
 			    cases: cases,
@@ -66,9 +66,5 @@
 {% endblock %}
 
 {% block content %}
-    <div id="main_container">
-        <section id="case-list"></section>
-        <section id="case-details"></section>
-        <div class="clear"></div>
-    </div>
+    <div id="main-container" />
 {% endblock %}

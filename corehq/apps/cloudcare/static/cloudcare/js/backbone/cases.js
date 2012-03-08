@@ -17,6 +17,7 @@ var Case = Backbone.Model.extend({
     initialize: function() {
         _.bindAll(this, 'getProperty'); 
     },
+    idAttribute: "case_id",
     
     getProperty: function (property) {
         if (property === "name") {
@@ -86,7 +87,6 @@ var CaseList = Backbone.Collection.extend({
 });
 
 var CaseListView = Backbone.View.extend({
-    el: $('#case-list'), 
     
     initialize: function(){
         _.bindAll(this, 'render', 'appendItem', 'appendAll'); 
@@ -102,18 +102,17 @@ var CaseListView = Backbone.View.extend({
         if (this.options.cases) {
             this.caseList.reset(this.options.cases);
         } else if (this.options.caseUrl) {
-            console.log("case url", this.options.caseUrl);
             this.caseList.setUrl(this.options.caseUrl);
             this.caseList.fetch();
         }
             
-        this.render();
-
+        
     },
     
     render: function () {
 	    var self = this;
-        var table = $("<table />").appendTo($(this.el));
+	    this.el = $('<section />').attr("id", "case-list").addClass("span4");
+        var table = $("<table />").addClass("table table-striped datatable").appendTo($(this.el));
         var thead = $("<thead />").appendTo(table);
         var theadrow = $("<tr />").appendTo(thead);
         _(this.detailsShort.get("columns")).each(function (col) {
@@ -123,6 +122,7 @@ var CaseListView = Backbone.View.extend({
         _(this.caseList.models).each(function(item){ 
             self.appendItem(item);
         });
+        return this;
     },
     appendItem: function (item) {
         var self = this;
@@ -145,7 +145,7 @@ var CaseListView = Backbone.View.extend({
         });
       
         $('table tbody', this.el).append(caseView.render().el);
-        this.caseMap[item.getProperty("case_id")] = caseView;
+        this.caseMap[item.id] = caseView;
       
     },
     appendAll: function () {
@@ -154,8 +154,6 @@ var CaseListView = Backbone.View.extend({
 });
 
 var CaseDetailsView = Backbone.View.extend({
-    el: $('#case-details'),
-    
     initialize: function(){
         _.bindAll(this, 'render'); 
       
@@ -166,9 +164,18 @@ var CaseDetailsView = Backbone.View.extend({
     
     render: function () {
         var self = this;
+        if (!this._everRendered) {
+            this.el = $('<section />').attr("id", "case-details").addClass("span8");
+            this._everRendered = true;    
+        }
         $(this.el).html(""); // clear
         if (this.model) {
-            var table = $("<table />").appendTo($(this.el));
+            var table = $("<table />").addClass("table table-striped datatable").appendTo($(this.el));
+            var thead = $("<thead />").appendTo(table);
+            var theadrow = $("<tr />").appendTo(thead);
+	        $("<th />").attr("colspan", "2").text("Case Details for " + self.model.getProperty("name")).appendTo(theadrow);
+	        var tbody = $("<tbody />").appendTo(table);
+	        
             _(this.details.get("columns")).each(function (col) {
                 var row = $("<tr />").appendTo(table);
                 $("<th />").text(col.header[self.options.language] || "?").appendTo(row);
@@ -180,8 +187,10 @@ var CaseDetailsView = Backbone.View.extend({
 });
 
 var CaseMainView = Backbone.View.extend({
+    
     initialize: function () {
-        _.bindAll(this, 'render', 'selectCase', 'fetchCaseList'); 
+        _.bindAll(this, 'render', 'selectCase', 'fetchCaseList');
+        this.el = this.options.el;
         var self = this;
         this.router = new CaseNavigation();
         this.router.on("route:case", function (caseId) {
@@ -195,13 +204,17 @@ var CaseMainView = Backbone.View.extend({
         });
         this.listView = new CaseListView({details: this.options.listDetails,
                                           cases: this.options.cases,
+                                          case_type: this.options.case_type,
                                           language: this.options.language,
                                           caseUrl: this.options.caseUrl });
+        $(this.listView.render().el).appendTo($(this.el));
         this.detailsView = new CaseDetailsView({details: this.options.summaryDetails,
                                                 language: this.options.language});
+        $(this.detailsView.render().el).appendTo($(this.el));
+        $("<div />").addClass("clear").appendTo($(this.el));
         this.listView.on("case:selected", function (caseView) {
             self.selectCase(caseView);
-            self.router.navigate("case/" + caseView.model.getProperty("case_id"));
+            self.router.navigate("case/" + caseView.model.id);
         });
         this.listView.on("case:deselected", function (caseView) {
             self.selectCase(null);
