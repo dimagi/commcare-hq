@@ -50,7 +50,7 @@
             var listDetails = {{case_short|safe}};
             var summaryDetails = {{case_long|safe}};
             var cases = {{ cases|safe }};
-            window.appView = new AppView({
+            window.mainView = new CaseMainView({
 			    el: $("#main-container"),
 			    listDetails: listDetails,
 			    summaryDetails: summaryDetails,

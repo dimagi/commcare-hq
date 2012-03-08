@@ -1,5 +1,5 @@
 
-var Navigation = Backbone.Router.extend({
+var CaseNavigation = Backbone.Router.extend({
     
     initialize: function() {
         // _.bindAll(this); 
@@ -164,11 +164,11 @@ var CaseDetailsView = Backbone.View.extend({
     },               
 });
 
-window.AppView = Backbone.View.extend({
+var CaseMainView = Backbone.View.extend({
     initialize: function () {
         _.bindAll(this, 'render', 'selectCase'); 
         var self = this;
-        this.router = new Navigation();
+        this.router = new CaseNavigation();
         this.router.on("route:case", function (caseId) {
             self.listView.caseMap[caseId].select();
         });
