@@ -247,7 +247,7 @@
 {% endblock %}
 
 {% block head %}{{ block.super }}
-    <link rel="stylesheet" href="{{ STATIC_URL }}hqmedia/css/media_upload.css"/>
+    <link rel="stylesheet" href="{% static 'hqmedia/css/media_upload.css' %}"/>
     <style>
         #custom-keys-help {
             width: 400px;
