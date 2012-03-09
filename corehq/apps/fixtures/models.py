@@ -13,6 +13,10 @@ class FixtureDataType(Document):
     name = StringProperty()
     fields = StringListProperty()
 
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.view('fixtures/data_types_by_domain', key=domain, reduce=False, include_docs=True)
+
 class FixtureDataItem(Document):
     domain = StringProperty()
     data_type_id = StringProperty()
@@ -23,6 +27,32 @@ class FixtureDataItem(Document):
         if not hasattr(self, '_data_type'):
             self._data_type = FixtureDataType.get(self.data_type_id)
         return self._data_type
+
+    def add_owner(self, owner, owner_type):
+        assert(owner.domain == self.domain)
+        o = FixtureOwnership(domain=self.domain, owner_type=owner_type, owner_id=owner.get_id, data_item_id=self.get_id)
+        o.save()
+        return o
+
+    def remove_owner(self, owner, owner_type):
+        for ownership in FixtureOwnership.view('fixtures/ownership',
+            key=['by data_item and ' + owner_type, self.domain, self.get_id, owner.get_id],
+            reduce=False,
+            include_docs=True
+        ):
+            ownership.delete()
+
+    def add_user(self, user):
+        return self.add_owner(user, 'user')
+
+    def remove_user(self, user):
+        return self.remove_owner(user, 'user')
+
+    def add_group(self, group):
+        return self.add_owner(group, 'group')
+
+    def remove_group(self, group):
+        return self.remove_owner(group, 'group')
 
     def type_check(self):
         fields = set(self.fields.keys())
@@ -77,6 +107,14 @@ class FixtureDataItem(Document):
             return cls.view('_all_docs', keys=list(fixture_ids))
         else:
             return fixture_ids
+
+    @classmethod
+    def by_data_type(cls, domain, data_type):
+        if isinstance(data_type, basestring):
+            data_type_id = data_type
+        else:
+            data_type_id = data_type.get_id
+        return cls.view('fixtures/data_items_by_domain_type', key=[domain, data_type], reduce=False, include_docs=True)
 
 class FixtureOwnership(Document):
     domain = StringProperty()

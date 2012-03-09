@@ -1,0 +1,123 @@
+{% extends base_template %}
+{% load hq_shared_tags %}
+
+{% block oldstyle_tag %}{% endblock %}
+{% block oldstyle_imports %}{% endblock %}
+{% block oldstyle_hack_start %}{% endblock %}
+{% block oldstyle_hack_end %}{% endblock %}
+
+{% block js %}{{ block.super }}
+<script src="{% static 'hqwebapp/javascripts/knockout-2.0.0.js' %}"></script>
+<script src="{% static 'hqwebapp/javascripts/knockout.mapping.js' %}"></script>
+{% endblock %}
+{% block js-inline %}
+    <script>
+        $(function () {
+            function makeDataType(o) {
+                var self = ko.mapping.fromJS(o),
+                    raw_fields = self.fields();
+                function makeDataItem(o) {
+                    var item = ko.mapping.fromJS(o);
+                    return item;
+                }
+                self.fields = ko.observableArray([]);
+                for (var i = 0; i < raw_fields.length; i += 1) {
+                    self.fields.push({
+                        tag: ko.observable(raw_fields[i])
+                    });
+                }
+                self.data_items = ko.observableArray([]);
+
+                self.addField = function () {
+                    self.fields.push({
+                        tag: ko.observable("")
+                    });
+                };
+                if (self._id) {
+                    $.ajax({
+                        url: 'data-items/' + self._id() + '/',
+                        type: 'get',
+                        dataType: 'json',
+                        success: function (data) {
+                            for (var i = 0; i < data.length; i += 1) {
+                                self.data_items.push(makeDataItem(data[i]));
+                            }
+                        }
+                    });
+                }
+
+                return self;
+            }
+            function App() {
+                var self = this;
+                self.data_types = ko.observableArray([]);
+
+                self.addDataType = function () {
+                    self.data_types.push(makeDataType({
+                        name: "",
+                        tag: "",
+                        fields: ko.observableArray([])
+                    }));
+                };
+                self.removeDataType = function (dataType) {
+                    self.data_types.destroy(dataType);
+                    dataType._delete = true;
+                };
+
+                $.ajax({
+                    url: 'data-types/',
+                    type: 'get',
+                    dataType: 'json',
+                    success: function (data) {
+                        for (var i = 0; i < data.length; i += 1) {
+                            self.data_types.push(makeDataType(data[i]));
+                        }
+                    }
+                });
+            }
+            ko.applyBindings(new App());
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div>
+        <div data-bind="foreach: data_types">
+            <section class="well">
+                <h1 data-bind="text: name"></h1>
+                <code data-bind="text: tag"></code>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <!-- ko foreach: fields -->
+                            <th class="span4">
+                                <span data-bind="text: tag"/>
+                            </th>
+                            <!-- /ko -->
+                            <th>
+                                <button class="btn" data-bind="click: addField">Add Field</button>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody data-bind="foreach: data_items">
+
+                        <tr data-bind="">
+                            <!-- ko foreach: $parent.fields -->
+                            <td>
+                                <span data-bind="text: $parent.fields[tag()]"/>
+                            </td>
+                            <!-- /ko -->
+                            <td>
+                                <button class="btn" data-bind="">Remove Item</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button class="btn" data-bind="click: $root.removeDataType">Remove Data Type</button>
+            </section>
+        </div>
+        <section>
+            <button class="btn" data-bind="click: addDataType">Add Data Type</button>
+        </section>
+    </div>
+{% endblock %}
