@@ -90,7 +90,7 @@ def export_response(file, format, filename, checkpoint=None):
         logging.exception("Error with filename: %r" % filename)
         filename = "data"
     finally:
-        response['Content-Disposition'] = 'attachment; filename={filename}.{format.extension}'.format(
+        response['Content-Disposition'] = 'attachment; filename="{filename}.{format.extension}"'.format(
             filename=filename,
             format=format
         )
