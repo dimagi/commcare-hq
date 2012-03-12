@@ -192,8 +192,19 @@ var ModuleListView = Backbone.View.extend({
             
         });
         moduleView.on("selected", function () {
-            self.trigger("module:selected", this);
+            if (self.selectedModuleView) {
+                self.selectedModuleView.deselect();
+            }
+            if (self.selectedModuleView !== this) {
+                self.selectedModuleView = this;
+                self.trigger("module:selected", this);
+            }
         });
+        moduleView.on("deselected", function () {
+            self.selectedModuleView = null;
+            self.trigger("module:deselected", this);
+        });
+      
         $('ul', this.el).append(moduleView.render().el);
     }
 });
@@ -206,19 +217,21 @@ var ModuleDetailsView = Backbone.View.extend({
     render: function () {
         var self = this;
         $(this.el).html("");
-        var formUl = $("<ul />").addClass("nav nav-list").appendTo($(this.el));
-        $("<li />").addClass("nav-header").text("Forms").appendTo(formUl);
-        _(this.model.forms).each(function (form) {
-            var formLi = $("<li />");
-            var formLink = $("<a />").text(form.getLocalized("name", self.options.language)).appendTo(formLi);
-            formLi.appendTo(formUl);
-            formLink.click(function () {
-                form.trigger("selected");
-            });
-            form.on("selected", function () {
-                self.trigger("form:selected", this);
-            });
-        });
+        if (this.model) {
+	        var formUl = $("<ul />").addClass("nav nav-list").appendTo($(this.el));
+	        $("<li />").addClass("nav-header").text("Forms").appendTo(formUl);
+	        _(this.model.forms).each(function (form) {
+	            var formLi = $("<li />");
+	            var formLink = $("<a />").text(form.getLocalized("name", self.options.language)).appendTo(formLi);
+	            formLi.appendTo(formUl);
+	            formLink.click(function () {
+	                form.trigger("selected");
+	            });
+	            form.on("selected", function () {
+	                self.trigger("form:selected", this);
+	            });
+	        });
+        }
         return this;
     }    
 });
@@ -258,7 +271,7 @@ var AppView = Backbone.View.extend({
                 });
                 modView.caseView.listView.on("case:selected", function (caseView) {
                     if (!modView.enterForm) {
-                        modView.enterForm = $("<a />").text("Enter Form").addClass("btn btn-primary").appendTo(
+                        modView.enterForm = $("<a />").text("Enter " + form.getLocalized("name", self.options.language)).addClass("btn btn-primary").appendTo(
                             $(modView.caseView.detailsView.el));
                     }
                     modView.enterForm.click(function () {
@@ -278,6 +291,9 @@ var AppView = Backbone.View.extend({
         this.moduleListView.on("module:selected", function (moduleView) {
             self.showModule(moduleView.model);
         });
+        this.moduleListView.on("module:deselected", function (app) {
+            self.showModule(null);
+        });
         
         this.setModel(this.model);
     },
@@ -293,8 +309,9 @@ var AppView = Backbone.View.extend({
         this.moduleDetailsView.render();
     },
     render: function () {
+        // clear details when rerendering
+        this.showModule(null);
         if (!this.model) {
-            // clear
             this.moduleListView.moduleList.reset([]);
         } else {
             this.moduleListView.moduleList.reset(this.model.modules);
