@@ -33,40 +33,17 @@ var Details = Backbone.Model.extend({
 });
     
     
-var CaseView = Backbone.View.extend({
+var CaseView = Selectable.extend({
     tagName: 'tr', // name of (orphan) root tag in this.el
     initialize: function() {
         _.bindAll(this, 'render', 'select', 'deselect', 'toggle');
         this.selected = false; 
     },
-    events: {
-        "click": "toggle"
-    },
-    toggle: function () {
-        if (this.selected) {
-            this.deselect();
-            this.trigger("deselected");
-        } else {
-            this.select();
-        }
-    }, 
-    select: function () {
-        this.selected = true;
-        $(this.el).addClass("selected");
-        this.trigger("selected");
-    }, 
-    
-    deselect: function () {
-        this.selected = false;
-        $(this.el).removeClass("selected");
-    }, 
-    
     render: function(){
         var self = this;
         _(this.options.columns).each(function (col) {
             $("<td />").text(self.model.getProperty(col.field) || "?").appendTo($(self.el));
         });
-        
         return this; 
     }
 });

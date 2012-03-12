@@ -1,13 +1,4 @@
 
-var getLocalizedString = function (property, language) {
-    return this.get(property)[language] || "?";
-};
-
-
-var getFormUrl = function(urlRoot, appId, moduleId, formId) {
-    // TODO: make this cleaner
-    return urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/";
-};
                
 var AppNavigation = Backbone.Router.extend({
     
@@ -22,36 +13,16 @@ var AppNavigation = Backbone.Router.extend({
     
 });
 
+
 var AppSummary = Backbone.Model.extend({
     idAttribute: "_id"
 });
 
-var AppSummaryView = Backbone.View.extend({
+var AppSummaryView = Selectable.extend({
     tagName: 'li', 
     initialize: function() {
         _.bindAll(this, 'render', 'toggle', 'select', 'deselect');
     },
-    events: {
-        "click": "toggle"
-    },
-    toggle: function () {
-        if (this.selected) {
-            this.deselect();
-            this.trigger("deselected");
-        } else {
-            this.select();
-        }
-    }, 
-    select: function () {
-        this.selected = true;
-        this.$el.addClass("active");
-        this.trigger("selected");
-    }, 
-    
-    deselect: function () {
-        this.selected = false;
-        this.$el.removeClass("active");
-    }, 
     render: function() {
         $("<a />").text(this.model.get("name")).appendTo($(this.el));
         return this; 
@@ -172,17 +143,11 @@ var Module = Backbone.Model.extend({
     } 
 });
 
-var ModuleView = Backbone.View.extend({
+var ModuleView = Selectable.extend({
     tagName: 'li', 
     initialize: function() {
-        _.bindAll(this, 'render', 'select');
+        _.bindAll(this, 'render', 'toggle', 'select', 'deselect');
     },
-    events: {
-        "click": "select"
-    },
-    select: function () {
-        this.trigger("selected");
-    }, 
     render: function() {
         $("<a />").text(this.model.getLocalized("name", this.options.language)).appendTo($(this.el));
         return this;
