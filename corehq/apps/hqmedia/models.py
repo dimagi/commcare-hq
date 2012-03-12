@@ -2,6 +2,7 @@ from StringIO import StringIO
 from PIL import Image
 from datetime import datetime
 import hashlib
+from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
 import magic
@@ -137,7 +138,12 @@ class HQMediaMixin(Document):
         map_item.multimedia_id = multimedia._id
         map_item.media_type = multimedia.doc_type
         self.multimedia_map[form_path] = map_item
-        self.save()
+        try:
+            self.save()
+        except ResourceConflict:
+            # Attempt to fetch the document again.
+            updated_doc = self.get(self._id)
+            updated_doc.create_mapping(multimedia, form_path)
 
     def get_map_display_data(self):
         for form_path, map_item in self.multimedia_map.items():
