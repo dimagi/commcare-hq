@@ -103,11 +103,23 @@ var App = Backbone.Model.extend({
         } 
     }
 });
+
 var Form = Backbone.Model.extend({
     initialize: function () {
         _.bindAll(this, 'getLocalized');
     },
     getLocalized: getLocalizedString
+});
+
+var FormView = Selectable.extend({
+    tagName: 'li', 
+    initialize: function() {
+        _.bindAll(this, 'render', 'toggle', 'select', 'deselect');
+    },
+    render: function () {
+        $("<a />").text(this.model.getLocalized("name", this.options.language)).appendTo($(this.el));
+        return this;
+    }
 });
 
 var Module = Backbone.Model.extend({
@@ -209,10 +221,10 @@ var ModuleListView = Backbone.View.extend({
     }
 });
 
-var ModuleDetailsView = Backbone.View.extend({
+var FormListView = Backbone.View.extend({
     el: $('#form-list'), 
     initialize: function () {
-        _.bindAll(this, 'render');
+        _.bindAll(this, 'render', 'appendForm');
     },
     render: function () {
         var self = this;
@@ -221,20 +233,35 @@ var ModuleDetailsView = Backbone.View.extend({
 	        var formUl = $("<ul />").addClass("nav nav-list").appendTo($(this.el));
 	        $("<li />").addClass("nav-header").text("Forms").appendTo(formUl);
 	        _(this.model.forms).each(function (form) {
-	            var formLi = $("<li />");
-	            var formLink = $("<a />").text(form.getLocalized("name", self.options.language)).appendTo(formLi);
-	            formLi.appendTo(formUl);
-	            formLink.click(function () {
-	                form.trigger("selected");
-	            });
-	            form.on("selected", function () {
-	                self.trigger("form:selected", this);
-	            });
+	            self.appendForm(form);
 	        });
         }
         return this;
-    }    
+    },
+    appendForm: function (form) {
+        var self = this;
+        var formView = new FormView({
+            model: form,
+            language: this.options.language
+        });
+        formView.on("selected", function () {
+            if (self.selectedFormView) {
+                self.selectedFormView.deselect();
+            }
+            if (self.selectedFormView !== this) {
+                self.selectedFormView = this;
+                self.trigger("form:selected", this.model);
+            }
+        });
+        formView.on("deselected", function () {
+            self.selectedFormView = null;
+            self.trigger("form:deselected", this.model);
+        });
+        
+	    $('ul', this.el).append(formView.render().el);
+    }
 });
+
 var AppView = Backbone.View.extend({
     
     initialize: function(){
@@ -243,51 +270,17 @@ var AppView = Backbone.View.extend({
         this.moduleListView = new ModuleListView({
             language: this.options.language
         });
-        this.moduleDetailsView = new ModuleDetailsView({
+        this.formListView = new FormListView({
             language: this.options.language
         });
         
-        this.moduleDetailsView.on("form:selected", function (form) {
-            var modView = this;
-            if (form.get("requires") === "none") {
-                // go play the form
-                var url = getFormUrl(self.options.urlRoot, form.get("app_id"), 
-                                     form.get("module_index"), form.get("index"));
-                window.location.href = url;
-                
-            } else if (form.get("requires") === "case") {
-                var listDetails = modView.model.getDetail("case_short");
-                var summaryDetails = modView.model.getDetail("case_long");
-                // clear anything existing
-                if (modView.caseView) {
-                    $(modView.caseView.el).html("");
-                }
-                modView.caseView = new CaseMainView({                    el: $("#cases"),
-                    listDetails: listDetails,
-                    summaryDetails: summaryDetails,
-                    language: modView.options.language,
-                    // TODO: clean up how filtering works
-                    caseUrl: self.options.caseUrlRoot + "?properties/case_type=" + modView.model.get("case_type")
-                });
-                modView.caseView.listView.on("case:selected", function (caseView) {
-                    if (!modView.enterForm) {
-                        modView.enterForm = $("<a />").text("Enter " + form.getLocalized("name", self.options.language)).addClass("btn btn-primary").appendTo(
-                            $(modView.caseView.detailsView.el));
-                    }
-                    modView.enterForm.click(function () {
-                        var url = getFormUrl(self.options.urlRoot, form.get("app_id"), form.get("module_index"), form.get("index"));
-                        window.location.href = url + "?case_id=" + caseView.model.id;
-                    });
-                });
-                modView.caseView.listView.on("case:deselected", function (caseView) {
-                    if (modView.enterForm) {
-                        modView.enterForm.detach();
-                        modView.enterForm = null;                      
-                    }
-                });
-            }
+        this.formListView.on("form:selected", function (form) {
+            self.selectForm(form);
+            
         });
-         
+        this.formListView.on("form:deselected", function (form) {
+            self.selectForm(null);
+        });
         this.moduleListView.on("module:selected", function (moduleView) {
             self.showModule(moduleView.model);
         });
@@ -305,8 +298,53 @@ var AppView = Backbone.View.extend({
 	    }
     },
     showModule: function (module) {
-        this.moduleDetailsView.model = module;
-        this.moduleDetailsView.render();
+        this.formListView.model = module;
+        this.formListView.render();
+    },
+    selectForm: function (form) {
+        var self = this;
+        var formListView = this.formListView;
+        if (form) {
+            if (form.get("requires") === "none") {
+	            // go play the form
+	            var url = getFormUrl(self.options.urlRoot, form.get("app_id"), 
+	                                 form.get("module_index"), form.get("index"));
+	            window.location.href = url;
+            } else if (form.get("requires") === "case") {
+	            var listDetails = formListView.model.getDetail("case_short");
+	            var summaryDetails = formListView.model.getDetail("case_long");
+	            // clear anything existing
+	            if (formListView.caseView) {
+	                $(formListView.caseView.el).html("");
+	            }
+	            formListView.caseView = new CaseMainView({                    
+	                el: $("#cases"),
+	                listDetails: listDetails,
+	                summaryDetails: summaryDetails,
+	                language: formListView.options.language,
+	                // TODO: clean up how filtering works
+	                caseUrl: self.options.caseUrlRoot + "?properties/case_type=" + formListView.model.get("case_type")
+	            });
+	            formListView.caseView.listView.on("case:selected", function (caseView) {
+	                formListView.enterForm = $("<a />").text("Enter " + form.getLocalized("name", self.options.language)).addClass("btn btn-primary").appendTo(
+	                        $(formListView.caseView.detailsView.el));
+	                formListView.enterForm.click(function () {
+	                    var url = getFormUrl(self.options.urlRoot, form.get("app_id"), form.get("module_index"), form.get("index"));
+	                    window.location.href = url + "?case_id=" + caseView.model.id;
+	                });
+	            });
+	            formListView.caseView.listView.on("case:deselected", function (caseView) {
+	                if (formListView.enterForm) {
+	                    formListView.enterForm.detach();
+	                    formListView.enterForm = null;                      
+	                }
+	            });
+	        }
+        } else {
+            if (formListView.caseView) {
+                $(formListView.caseView.el).html("");
+            }
+        }
     },
     render: function () {
         // clear details when rerendering
