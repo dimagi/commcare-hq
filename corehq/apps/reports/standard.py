@@ -713,7 +713,7 @@ class ExcelExportReport(StandardHQReport):
         # (serialized json) this is a little bit hacky, but works.
         startkey = json.dumps([self.domain, ""])[:-3]
         endkey = "%s{" % startkey
-        exports = SavedExportSchema.view("couchexport/saved_exports",
+        exports = SavedExportSchema.view("couchexport/saved_export_schemas",
             startkey=startkey, endkey=endkey,
             include_docs=True)
 
