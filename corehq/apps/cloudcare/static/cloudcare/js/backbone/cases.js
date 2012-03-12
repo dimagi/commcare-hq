@@ -105,8 +105,6 @@ var CaseListView = Backbone.View.extend({
             this.caseList.setUrl(this.options.caseUrl);
             this.caseList.fetch();
         }
-            
-        
     },
     
     render: function () {
