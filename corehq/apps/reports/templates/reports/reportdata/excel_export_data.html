@@ -49,7 +49,7 @@
                         </a>
                     </td>
                     <td class="cell-vertical-centered">
-                        <a class="btn btn-primary" href="{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?group={{ group.get_id }}{% if show_user_filter %}{% for f in toggle_users %}{% if f.show %}&ufilter={{ f.type }}{% endif %}{% endfor %}{% endif %}" data-formname="{{ export.formname }}" href="#export-download-status" data-dlocation='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?group={{ group.get_id }}{% if show_user_filter %}{% for f in toggle_users %}{% if f.show %}&ufilter={{ f.type }}{% endif %}{% endfor %}{% endif %}'>
+                        <a class="btn btn-primary" href="{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?group={{ group.get_id }}&startdate={{ datespan.startdate_display }}&enddate={{ datespan.enddate_display }}{% if show_user_filter %}{% for f in toggle_users %}{% if f.show %}&ufilter={{ f.type }}{% endif %}{% endfor %}{% endif %}" data-formname="{{ export.formname }}" href="#export-download-status" data-dlocation='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?group={{ group.get_id }}{% if show_user_filter %}{% for f in toggle_users %}{% if f.show %}&ufilter={{ f.type }}{% endif %}{% endfor %}{% endif %}'>
                             <i class="icon-download-alt icon-white"></i> Download Data
                         </a>
                     </td>
@@ -113,7 +113,7 @@
                     </td>
                     <td class="cell-vertical-centered">
                         {% if form.submissions %}
-                            <a data-toggle="modal" href="#export-download-status" data-formname="{% if form.app %}{{ form.app.name }}{% else %}Unknown Forms{% endif %}" data-dlocation='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}&app_id={{ form.app.id }}'
+                            <a data-toggle="modal" href="#export-download-status" data-formname="{% if form.app %}{{ form.app.name }}{% else %}Unknown Forms{% endif %}" data-dlocation='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_display }}&enddate={{ datespan.enddate_display }}&group={{ group.get_id }}&app_id={{ form.app.id }}'
                                 class="btn btn-primary export-action-download" ><i class="icon-download-alt icon-white"></i> Download</a> ({{ form.submissions }} rows)
                         {% else %}
                             No Forms

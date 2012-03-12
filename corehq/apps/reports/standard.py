@@ -144,7 +144,9 @@ class StandardDateHQReport(StandardHQReport):
             self.datespan = self.request.datespan
         super(StandardDateHQReport, self).get_global_params()
 
-
+    def get_report_context(self):
+        self.context['datespan'] = self.datespan
+        super(StandardDateHQReport, self).get_report_context()
 
 class CaseActivityReport(StandardTabularHQReport):
     name = 'Case Activity'
@@ -690,11 +692,12 @@ class SubmitTrendsReport(StandardDateHQReport):
             "user_id": self.individual,
         })
 
-class ExcelExportReport(StandardHQReport):
+class ExcelExportReport(StandardDateHQReport):
     name = "Export Submissions to Excel"
     slug = "excel_export_data"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField']
+              'corehq.apps.reports.fields.GroupField',
+              'corehq.apps.reports.fields.DatespanField']
     template_name = "reports/reportdata/excel_export_data.html"
 
     def calc(self):
