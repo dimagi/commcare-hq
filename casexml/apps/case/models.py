@@ -11,6 +11,7 @@ import logging
 from receiver.util import spoof_submission
 from couchforms.models import XFormInstance
 from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex
+from copy import copy
 
 """
 Couch models for commcare cases.  
@@ -209,6 +210,14 @@ class CommCareCase(CaseBase, IndexHoldingMixIn):
                 }) for index in self.indices
             ]),
         }
+    
+    def get_preloader_dict(self):
+        """
+        Gets the case as a dictionary for use in touchforms preloader framework
+        """
+        ret = copy(self._doc)
+        ret["case-id"] = self.get_id
+        return ret
 
     def get_server_modified_date(self):
         # gets (or adds) the server modified timestamp
