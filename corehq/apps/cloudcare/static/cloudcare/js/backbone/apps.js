@@ -29,13 +29,28 @@ var AppSummary = Backbone.Model.extend({
 var AppSummaryView = Backbone.View.extend({
     tagName: 'li', 
     initialize: function() {
-        _.bindAll(this, 'render', 'select');
+        _.bindAll(this, 'render', 'toggle', 'select', 'deselect');
     },
     events: {
-        "click": "select"
+        "click": "toggle"
     },
+    toggle: function () {
+        if (this.selected) {
+            this.deselect();
+            this.trigger("deselected");
+        } else {
+            this.select();
+        }
+    }, 
     select: function () {
+        this.selected = true;
+        this.$el.addClass("active");
         this.trigger("selected");
+    }, 
+    
+    deselect: function () {
+        this.selected = false;
+        this.$el.removeClass("active");
     }, 
     render: function() {
         $("<a />").text(this.model.get("name")).appendTo($(this.el));
@@ -70,9 +85,21 @@ var AppListView = Backbone.View.extend({
         var appView = new AppSummaryView({
             model: item
         });
+        
         appView.on("selected", function () {
-            self.trigger("app:selected", this);
+            if (self.selectedAppView) {
+                self.selectedAppView.deselect();
+            }
+            if (self.selectedAppView !== this) {
+                self.selectedAppView = this;
+                self.trigger("app:selected", this);
+            }
         });
+        appView.on("deselected", function () {
+            self.selectedAppView = null;
+            self.trigger("app:deselected", this);
+        });
+      
         $('ul', this.el).append(appView.render().el);
     }
 });
@@ -231,12 +258,10 @@ var ModuleDetailsView = Backbone.View.extend({
     }    
 });
 var AppView = Backbone.View.extend({
-    el: $('#app-list'), 
     
     initialize: function(){
-        _.bindAll(this, 'render', 'showModule');
+        _.bindAll(this, 'render', 'setModel', 'showModule');
         var self = this;
-        this.render();
         this.moduleListView = new ModuleListView({
             language: this.options.language
         });
@@ -287,18 +312,29 @@ var AppView = Backbone.View.extend({
          
         this.moduleListView.on("module:selected", function (moduleView) {
             self.showModule(moduleView.model);
-            
         });
-        this.model.on("modules-changed", function () {
-            self.moduleListView.moduleList.reset(this.modules);
-        });
+        
+        this.setModel(this.model);
+    },
+    setModel: function (app) {
+        this.model = app;
+        var self = this;
+        if (app) {
+            this.moduleListView.moduleList.reset(this.model.modules);
+	    }
     },
     showModule: function (module) {
         this.moduleDetailsView.model = module;
         this.moduleDetailsView.render();
     },
     render: function () {
-        var self = this;
+        if (!this.model) {
+            // clear
+            this.moduleListView.moduleList.reset([]);
+        } else {
+            this.moduleListView.moduleList.reset(this.model.modules);
+        }
+        return this;
     }
 });
 
@@ -323,21 +359,38 @@ var AppMainView = Backbone.View.extend({
         this.appListView.on("app:selected", function (app) {
             self.selectApp(app.model.id);
         });
-    },
-    
-    selectApp: function (appId) {
-        this.router.navigate("view/" + appId);
-        this.app = new App({
-            _id: appId,
+        this.appListView.on("app:deselected", function (app) {
+            self.selectApp(null);
         });
-        this.app.set("urlRoot", this.options.appUrlRoot);
-        this.app.fetch();
         this.appView = new AppView({
-            model: this.app,
+            // if you pass in model: it will auto-populate the view
+            model: this.options.model, 
             language: this.options.language,
             caseUrlRoot: this.options.caseUrlRoot,
             urlRoot: this.options.urlRoot
         });
+    },
+    
+    selectApp: function (appId) {
+        // TODO: this.router.navigate("view/" + appId);
+        var self = this;
+        if (appId === null) {
+            this.app = null;
+            this.appView.setModel(null);
+            this.appView.render();
+        }
+        else {
+            this.app = new App({
+	            _id: appId,
+	        });
+	        this.app.set("urlRoot", this.options.appUrlRoot);
+	        this.app.fetch({
+	            success: function (model, response) {
+	                self.appView.setModel(model);
+	                self.appView.render();           
+	            }
+	        });
+	    }
     },
     
     render: function () {
