@@ -20,7 +20,6 @@
 {% block reportcontent %}
     <div class="hq-generic-report">
         <h2>Saved Custom Exports</h2>
-
         {% if saved_exports %}
         <table class="export_data table table-striped">
             <thead>
@@ -39,7 +38,7 @@
                     <td>{{ export.name|default:"[blank]" }}</td>
                     <td>{{ export.formname }}</td>
                     <td class="cell-vertical-centered">
-                        <a class="btn" href='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?format=html'>
+                        <a class="btn" href='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?format=html&{{ request.META.QUERY_STRING }}'>
                             HTML Preview
                         </a>
                     </td>
@@ -49,7 +48,8 @@
                         </a>
                     </td>
                     <td class="cell-vertical-centered">
-                        <a class="btn btn-primary" href="{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?group={{ group.get_id }}{% if show_user_filter %}{% for f in toggle_users %}{% if f.show %}&ufilter={{ f.type }}{% endif %}{% endfor %}{% endif %}" data-formname="{{ export.formname }}" href="#export-download-status" data-dlocation='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?group={{ group.get_id }}{% if show_user_filter %}{% for f in toggle_users %}{% if f.show %}&ufilter={{ f.type }}{% endif %}{% endfor %}{% endif %}'>
+                    
+                        <a class="btn btn-primary" href="{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?{{ request.META.QUERY_STRING }}">
                             <i class="icon-download-alt icon-white"></i> Download Data
                         </a>
                     </td>
