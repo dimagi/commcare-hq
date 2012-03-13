@@ -60,6 +60,11 @@ def data_items(request, domain, data_type_id, data_item_id):
             setattr(original, attr, getattr(new, attr))
         original.save()
         return json_response(strip_json(original, disallow=['data_type_id']))
+    elif request.method == 'DELETE' and data_type_id:
+        o = FixtureDataItem.get(data_item_id)
+        assert(o.domain == domain and o.data_type.get_id == data_type_id)
+        o.delete()
+        return json_response({})
     else:
         return HttpResponseBadRequest()
 
