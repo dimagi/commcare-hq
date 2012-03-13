@@ -24,6 +24,8 @@ class Group(UndoableDocument):
     case_sharing = BooleanProperty()
 
     def add_user(self, couch_user_id):
+        if not isinstance(couch_user_id, basestring):
+            couch_user_id = couch_user_id.user_id
         if couch_user_id not in self.users:
             self.users.append(couch_user_id)
         self.save()
@@ -99,6 +101,11 @@ class Group(UndoableDocument):
     def by_domain(cls, domain):
         key = [domain]
         return cls.view('groups/by_name', startkey=key, endkey=key + [{}], include_docs=True)
+
+    @classmethod
+    def by_name(cls, domain, name):
+        return cls.view('groups/by_name', key=[domain, name], include_docs=True).one()
+
     @classmethod
     def by_user(cls, user, wrap=True):
         results = cls.view('groups/by_user', key=user.user_id, include_docs=wrap)

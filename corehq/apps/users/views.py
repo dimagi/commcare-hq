@@ -605,7 +605,7 @@ class UploadCommCareUsers(TemplateView):
     template_name = 'users/upload_commcare_users.html'
 
     required_headers = set(['username', 'password'])
-    allowed_headers = set(['phone-number', 'user_id', 'name']) | required_headers
+    allowed_headers = set(['phone-number', 'user_id', 'name', 'group-name *']) | required_headers
 
     def get_context_data(self, **kwargs):
         """TemplateView automatically calls this to render the view (on a get)"""
@@ -654,8 +654,38 @@ class UploadCommCareUsers(TemplateView):
     def create_or_update_users(self):
         usernames = set()
         user_ids = set()
+
+        class GroupMemoizer(object):
+            groups = {}
+            @classmethod
+            def get_group(cls, group_name):
+                Group.by_name(self.domain, group_name)
+                if not cls.groups.has_key(group_name):
+                    cls.groups[group_name] = Group(domain=self.domain, name=group_name, case_sharing=True)
+                return cls.groups[group_name]
+            @classmethod
+            def save_all(cls):
+                for group in cls.groups.values():
+                    group.save()
+
+
         for row in self.user_specs:
-            name, password, phone_number, user_id, username = (row.get(k) for k in sorted(self.allowed_headers))
+            data = {}
+            # collect all group-name * in a list; preserve everything else
+            for header, value in row.iteritems():
+                if ' ' in header:
+                    header = header.split(' ')[0] + ' *'
+                    if not data.has_key(header):
+                        data[header] = []
+                    if value:
+                        data[header].append(value)
+                else:
+                    data[header] = value
+
+            group_names, name, password, phone_number, user_id, username = (
+                data.get(k, [] if k[-1] == '*' else None) for k in sorted(self.allowed_headers)
+            )
+
             username = normalize_username(username, self.domain)
             status_row = {'username': raw_username(username)}
 
@@ -688,12 +718,15 @@ class UploadCommCareUsers(TemplateView):
                     if name:
                         user.set_full_name(name)
                     user.save()
+                    for group_name in group_names:
+                        GroupMemoizer.get_group(group_name).add_user(user)
+                    GroupMemoizer.save_all()
                 except Exception, e:
                     status_row['flag'] = 'error: %s' % e
             yield status_row
 
     def check_headers(self):
-        headers = set(self.user_specs.fieldnames)
+        headers = set([re.sub(r' .*', ' *', fieldname) for fieldname in self.user_specs.fieldnames])
 
         illegal_headers = headers - self.allowed_headers
         missing_headers = self.required_headers - headers
