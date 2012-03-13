@@ -1474,7 +1474,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
             raise Http404
 
     if domain:
-        try:    Domain.objects.get(name=domain)
+        try:    Domain.get_by_name(domain)
         except: raise Http404
 
         if app['domain'] != domain:

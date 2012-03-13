@@ -1,6 +1,6 @@
 from couchdbkit.ext.django.schema import Document
 from django.core.management.base import LabelCommand, CommandError
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import OldDomain
 from corehq.apps.domain.shortcuts import create_domain, create_user
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser
@@ -9,7 +9,7 @@ from dimagi.utils.couch.database import get_db
 class Command(LabelCommand):
      
     def handle(self, *args, **options):
-        django_domains = Domain.objects.all()
+        django_domains = OldDomain.objects.all()
         django_domain_names = set([domain.name for domain in django_domains])
         couch_domain_names = set([x['key'][0] for x in get_db().view('domain/docs', group_level=1).all()])
         couch_user_domain_names = set([x['key'] for x in get_db().view('users/by_domain', group=True).all()])

@@ -1,13 +1,17 @@
 {% extends "registration/base.html" %}
-{% block title %}Confirmation Email Sent{% endblock title %}
-{% block login-content %}
-<article>
-    <h1>{{ message_title }}</h1>
+{% block title %}Account Confirmed{% endblock title %}
+
+{% block step-title %}
+    {{ message_title }}{% if message_subtitle %} <small>{{ message_subtitle }}</small>{% endif %}
+{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+
+{% block registration-content %}
     {% if message_body %}<p>{{ message_body }}</p>{% endif %}
     {% if is_error %}
-        <p>In the meantime, you may explore the <a href="/a/public/">public demo domain for CommCare HQ.</a></p>
+        <p>You may try <a href="{% url registration_resend_domain_confirmation %}">resending the confirmation email</a>.</p>
+        <p>In the meantime, please explore the <a href="/a/public/">CommCare HQ Example Project.</a></p>
     {% else %}
-        <p>You may now <a href="{% url domain_select %}">use your domain</a>.</p>
+        <p>You may now access your project  <a href="{% url default_report requested_domain %}"><strong>{{ requested_domain }}</strong></a>.</p>
     {% endif %}
-</article>
 {% endblock %}

@@ -1,49 +1,105 @@
 {% extends "registration/base.html" %}
-{% block title %}Register a Domain{% endblock title %}
-{% block head  %}
-    {{ block.super }}
-    {% include "imports/jqmodal.html" %}
-    <style>
-        label[for="id_tos_confirmed"] {
-            font-size: .9em;
-            color: #333;
-        }
-    </style>
+{% block title %}New Project Space{% endblock title %}
+{% block js-inline  %}{{ block.super }}
+    <script type="text/javascript">
+        $(function() {
+            $("#termsOfServiceDomainModal").on("show", function() {
+               $(this).find(".modal-body").load("{% url tos %}");
+            });
+        });
+    </script>
 {% endblock %}
-{% block login-content %}
-<script>
-$().ready(function() {
-    $('#tos-placeholder').jqm({ajax: '@href', trigger: 'a.tos',
-                               ajaxText: "Please wait while we load that for you..." });
-});
-</script>
-<article>
-    <h1>Welcome to CommCare</h1>
-    <p>You've successfully joined CommCare HQ.</p>
-    <p>Your domain is your secure web portal into your CommCare project.  It will contain all form submissions from your CommCare mobile applications, as well as tools that help you easily create, deploy, and monitor your applications and workers.  For detailed documentation, please visit the <a href="http://wiki.commcarehq.org/display/commcarepublic/Home">CommCare Wiki</a>.</p>
-    <p>You may now do either of the following:</p>
-    <ol>
-        <li><a href="/a/public/">Explore the <strong>public demo domain</strong> for CommCare HQ.</a></li>
-        <li>
-            <form method="post" action="{% url registration_first_time_domain %}">
-                {% for field in form.visible_fields %}
-                    {% ifnotequal field.name 'tos_confirmed' %}
-                        <div>
-                            {{ field.label_tag }}
-                            {% if field.errors %}<p class="field-error">{{field.errors}}</p>{% endif %}
-                        </div>{{ field }}
-                    {% else %}
-                        <div class="tos">
-                            {% if field.errors %}<p class="field-error">{{field.errors}}</p>{% endif %}
-                            {{ field }}<label for="id_tos_confirmed">I have read and agree to the <a href="{% url tos %}" class="tos">Terms of Service</a></label>
-                        </div>
-                    {% endifnotequal %}
-                {% endfor %}
-                <p>You will be emailed a request to confirm your email address. In order to use your own domain, you must first confirm your email.</p>
-                <input type="submit" class="create-domain" value="Create Domain" />
-            </form>
-        </li>
-    </ol>
-</article>
-<div id="tos-placeholder"></div>
+
+{% block step-title %}
+    {% if is_new %}
+        Welcome to CommCare HQ! <small>It's time to create your first project.</small>
+    {% else %}
+        Create a New Project Space
+    {% endif %}
+{% endblock %}
+
+{% block breadcrumbs %}
+    {% if is_new %}
+        <ul class="breadcrumb breadcrumb-steps">
+            <li class="past">
+                Account Created for <strong>{{ request.user.first_name }}</strong>
+                <span class="divider">></span>
+            </li>
+            <li class="active">
+                Request a Project Space
+                <span class="divider">></span>
+            </li>
+            <li>
+                Confirm Account
+            </li>
+        </ul>
+    {% endif %}
+{% endblock %}
+
+{% block registration-content %}
+<div class="span8">
+    {% if is_new %}
+    <p>Congratulations, {{ request.user.first_name }}&mdash;you've successfully joined CommCare HQ.</p>
+    <p>Your CommCare HQ Project will contain all form submissions from your CommCare mobile applications, as well as tools that help you easily create, deploy, and monitor your applications and workers.</p>
+    <p>Before you can view any of your own data from CommCare, you will need to request a project space.</p>
+    {% endif %}
+    <form class="form-horizontal" method="post" action="{{ request.get_full_path }}">
+        <fieldset>
+            <legend>{% if is_new %}Request{% else %}Create{% endif %} a Project Space</legend>
+            {% for global_error in form.non_field_errors %}
+                <div class="alert alert-error">
+                    {{ global_error }}
+                </div>
+            {% endfor %}
+            {% for field in form.visible_fields %}
+                <div class="control-group{% if field.errors %} error{% endif %}">
+                    <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
+                    <div class="controls">
+                        {% ifnotequal field.name 'tos_confirmed' %}
+                            {{ field }}
+                        {% else %}
+                            <label class="checkbox">{{ field }} I have read and agree to the <a data-toggle="modal" data-target="#termsOfServiceDomainModal" href="#termsOfServiceDomainModal">CommCare HQ Terms of Service</a>.</label>
+                        {% endifnotequal %}
+                        <span class="help-inline"></span>
+                        {% for error in field.errors %}
+                            <span class="help-inline">{{ error }}</span>
+                        {% endfor %}
+                        {% if field.help_text %}
+                            <p class="help-block">
+                                {{ field.help_text }}
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </fieldset>
+        {% if is_new %}<div class="alert alert-info"><strong>You will be emailed a request to confirm your email address.</strong> In order to open your project, you must first confirm your email.</div>{% endif %}
+        <div class="form-actions"{% if not is_new %} style="margin-top:24px; padding-top:18px;"{% endif %}><button type="submit" class="btn btn-primary btn-large">{% if is_new %}Request{% else %}Create{% endif %} Project</button></div>
+    </form>
+</div>
+<div class="span4">
+    <aside class="well">
+        <h3>Explore an Example Project</h3>
+        <p>In need of ideas or just want to explore?</p>
+        <p>Take a peek at our <strong><a href="/a/public/">Example CommCare HQ Project</a></strong>.</p>
+    </aside>
+    <aside class="well">
+        For detailed documentation, please visit the <a href="http://wiki.commcarehq.org/display/commcarepublic/Home">CommCare Wiki</a>.
+    </aside>
+</div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    <div class="modal hide fade" id="termsOfServiceDomainModal">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h3>CommCare HQ Terms of Service</h3>
+        </div>
+        <div class="modal-body">
+            Loading Terms of Service...
+        </div>
+        <div class="modal-footer">
+            <a href="#" data-dismiss="modal" class="btn">Close</a>
+        </div>
+    </div>
 {% endblock %}

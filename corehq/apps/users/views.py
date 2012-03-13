@@ -19,8 +19,8 @@ from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpRespons
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
-from corehq.apps.domain.user_registration_backend import register_user
-from corehq.apps.domain.user_registration_backend.forms import AdminRegistersUserForm,\
+from corehq.apps.registration.user_registration_backend import register_user
+from corehq.apps.registration.user_registration_backend.forms import AdminRegistersUserForm,\
     AdminInvitesUserForm, UserRegistersSelfForm
 from corehq.apps.prescriptions.models import Prescription
 from corehq.apps.sms.views import get_sms_autocomplete_context
@@ -342,7 +342,8 @@ def domain_accounts(request, domain, couch_user_id, template="users/domain_accou
         couch_user.save()
         messages.success(request,'Domain added')
     my_domains = couch_user.get_domains()
-    context['other_domains'] = [d.name for d in Domain.objects.exclude(name__in=my_domains)]
+    all_domains = Domain.get_all()
+    context['other_domains'] = [d.name for d in all_domains if d.name not in my_domains]
     context.update({"user": request.user,
                     "domains": couch_user.get_domains(),
                     })

@@ -43,7 +43,7 @@ def get_hqadmin_base_context(request):
 @require_superuser
 def domain_list(request):
     # one wonders if this will eventually have to paginate
-    domains = Domain.objects.all().order_by("name")
+    domains = Domain.get_all()
     webuser_counts = defaultdict(lambda: 0)
     commcare_counts = defaultdict(lambda: 0)
     form_counts = defaultdict(lambda: 0)
@@ -183,7 +183,7 @@ def _cacheable_domain_activity_report(request):
     for landmark in landmarks:
         dates.append(now - timedelta(days=landmark))
 
-    domains = [{'name': domain.name} for domain in Domain.objects.all().order_by("name")]
+    domains = [{'name': domain.name} for domain in Domain.get_all()]
 
     for domain in domains:
         domain['users'] = dict([(user.user_id, {'raw_username': user.raw_username}) for user in CommCareUser.by_domain(domain['name'])])
@@ -218,7 +218,7 @@ def message_log_report(request):
     show_dates = True
     
     datespan = request.datespan
-    domains = Domain.objects.all().order_by("name")
+    domains = Domain.get_all()
     for dom in domains:
         dom.sms_incoming = MessageLog.count_incoming_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
         dom.sms_outgoing = MessageLog.count_outgoing_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
