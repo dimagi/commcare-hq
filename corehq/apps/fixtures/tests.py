@@ -1,5 +1,6 @@
 from xml.etree import ElementTree
 from casexml.apps.case.tests.util import check_xml_line_by_line
+from corehq.apps.fixtures import fixturegenerators
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FixtureOwnership
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
@@ -53,6 +54,19 @@ class FixtureDataTest(TestCase):
     def test_ownership(self):
         self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, wrap=False))
         self.assertItemsEqual([self.user.get_id], self.data_item.get_users(wrap=False))
+
+        fixture, = fixturegenerators.item_lists(self.user)
+
+        check_xml_line_by_line(self, """
+        <fixture id="item-list:contact" user_id="%s">
+            <contact_list>
+                <contact>
+                    <name>John</name>
+                    <number>+15555555555</number>
+                </contact>
+            </contact_list>
+        </fixture>
+        """ % self.user.user_id, ElementTree.tostring(fixture))
 
         self.data_item.remove_user(self.user)
         self.assertItemsEqual([], self.data_item.get_users())

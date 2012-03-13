@@ -1,3 +1,4 @@
+from collections import defaultdict
 from xml.etree import ElementTree
 from corehq.apps.users.models import CommCareUser
 from couchdbkit.ext.django.schema import Document, DictProperty, StringProperty, StringListProperty
@@ -98,13 +99,13 @@ class FixtureDataItem(Document):
 
         fixture_ids = set(
             get_db().view('fixtures/ownership',
-                key=['data_item by user', user.domain, user.user_id] + [['data_item by group', user.domain, group_id] for group_id in group_ids],
+                keys=[['data_item by user', user.domain, user.user_id]] + [['data_item by group', user.domain, group_id] for group_id in group_ids],
                 reduce=False,
                 wrapper=lambda r: r['value'],
             )
         )
         if wrap:
-            return cls.view('_all_docs', keys=list(fixture_ids))
+            return cls.view('_all_docs', keys=list(fixture_ids), include_docs=True)
         else:
             return fixture_ids
 
