@@ -2,6 +2,7 @@
 from collections import defaultdict
 from datetime import datetime
 import re
+from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import BadValueError
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
@@ -432,6 +433,19 @@ class DetailColumn(IndexedSchema):
         for dct in (self.header, self.enum):
             _rename_key(dct, old_lang, new_lang)
 
+    @property
+    def xpath(self):
+        """
+        Convert special names like date-opened to their casedb xpath equivalent (e.g. @date_opened).
+        Only ever called by 2.0 apps.
+
+        """
+        return {
+            'external-id': 'external_id',
+            'date-opened': 'date_opened',
+            'status': '@status',
+            'name': 'case_name',
+        }.get(self.field, self.field)
 class Detail(DocumentSchema):
     """
     Full configuration for a case selection screen
@@ -709,6 +723,9 @@ class ApplicationBase(VersionedDoc):
     # a=Alphanumeric, n=Numeric, x=Neither (not allowed)
     admin_password_charset = StringProperty(choices=['a', 'n', 'x'], default='n')
 
+    # This is here instead of in Application because it needs to be available in stub representation
+    application_version = StringProperty(default=APP_V1, choices=[APP_V1, APP_V2], required=False)
+
     @classmethod
     def wrap(cls, data):
         # scrape for old conventions and get rid of them
@@ -723,15 +740,15 @@ class ApplicationBase(VersionedDoc):
         if data.has_key("built_with") and isinstance(data['built_with'], basestring):
             data['built_with'] = BuildSpec.from_string(data['built_with']).to_json()
 
-        if not data.has_key("build_spec") or BuildSpec.wrap(data['build_spec']).is_null():
-            data['build_spec'] = CommCareBuildConfig.fetch().default.to_json()
-
         if data.has_key('native_input'):
             if not data.has_key('text_input'):
                 data['text_input'] = 'native' if data['native_input'] else 'roman'
             del data['native_input']
-            
-        return super(ApplicationBase, cls).wrap(data)
+
+        self = super(ApplicationBase, cls).wrap(data)
+        if not self.build_spec or self.build_spec.is_null():
+            self.build_spec = CommCareBuildConfig.fetch().get_default(self.application_version)
+        return self
 
     def is_remote_app(self):
         return False
@@ -1098,7 +1115,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def set_custom_suite(self, value):
         self.put_attachment(value, 'custom_suite.xml')
 
-    def create_suite(self, template='app_manager/suite.xml'):
+    def create_suite(self):
+        template='app_manager/suite-%s.xml' % self.application_version
 
         return render_to_string(template, {
             'app': self,
@@ -1163,8 +1181,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
 
     @classmethod
-    def new_app(cls, domain, name, lang="en"):
-        app = cls(domain=domain, modules=[], name=name, langs=[lang])
+    def new_app(cls, domain, name, application_version, lang="en"):
+        app = cls(domain=domain, modules=[], name=name, langs=[lang], application_version=application_version)
         return app
 
     def new_module(self, name, lang):
@@ -1271,6 +1289,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for m,module in enumerate(source['modules']):
             for f,form in enumerate(module['forms']):
                 change_unique_id(source['modules'][m]['forms'][f])
+
+
+    def get_xmlns_map(self):
+        map = defaultdict(list)
+        for form in self.get_forms():
+            map[form.xmlns].append(form)
+        return map
+
     def validate_app(self):
         xmlns_count = defaultdict(int)
         errors = []

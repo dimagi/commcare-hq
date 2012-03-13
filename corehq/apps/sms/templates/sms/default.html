@@ -1,5 +1,6 @@
 {% extends base_template %}
 {% load i18n %}
+{% load hq_shared_tags %}
 {% block page_imports %}
     {% include "imports/datatables.html" %}
     {% include "imports/checklist.html" %}
@@ -49,8 +50,8 @@
 {% endblock %}
 {% block head %}
     {{ block.super }}
-    <link rel="stylesheet" href="{{ STATIC_URL }}sms/css/sms.css" />
-    <link rel="stylesheet" href="{{ STATIC_URL }}hqwebapp/css/splits.css" />
+    <link rel="stylesheet" href="{% static 'sms/css/sms.css' %}" />
+    <link rel="stylesheet" href="{% static 'hqwebapp/css/splits.css' %}" />
     <style type="text/css">
         #character-count {
             color: #888888;

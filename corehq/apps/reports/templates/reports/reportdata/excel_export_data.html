@@ -7,13 +7,8 @@
            $('.export-action-download').click(function() {
                var $modalBody = $("#export-download-status .modal-body");
                $modalBody.text("Fetching...");
-               console.log($(this).data("formname"));
                $("#export-download-status .modal-header h3 span").text($(this).data("formname"));
-               console.log("Going to...");
-               console.log($(this).data('dlocation'));
                $.getJSON($(this).data('dlocation'), function(d) {
-                   console.log("supposedly things should have worked");
-                   console.log(d.download_url);
                    $modalBody.empty().load(d.download_url);
                });
            });
@@ -25,7 +20,6 @@
 {% block reportcontent %}
     <div class="hq-generic-report">
         <h2>Saved Custom Exports</h2>
-
         {% if saved_exports %}
         <table class="export_data table table-striped">
             <thead>
@@ -44,7 +38,7 @@
                     <td>{{ export.name|default:"[blank]" }}</td>
                     <td>{{ export.formname }}</td>
                     <td class="cell-vertical-centered">
-                        <a class="btn" href='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?format=html'>
+                        <a class="btn" href='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?format=html&{{ request.META.QUERY_STRING }}'>
                             HTML Preview
                         </a>
                     </td>
@@ -54,7 +48,8 @@
                         </a>
                     </td>
                     <td class="cell-vertical-centered">
-                        <a class="btn btn-primary" data-toggle="modal" href="#export-download-status" data-formname="{{ export.formname }}" href="#export-download-status" data-dlocation='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?group={{ group.get_id }}{% if show_user_filter %}{% for f in toggle_users %}{% if f.show %}&ufilter={{ f.type }}{% endif %}{% endfor %}{% endif %}'>
+                    
+                        <a class="btn btn-primary" href="{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?{{ request.META.QUERY_STRING }}">
                             <i class="icon-download-alt icon-white"></i> Download Data
                         </a>
                     </td>
@@ -118,7 +113,7 @@
                     </td>
                     <td class="cell-vertical-centered">
                         {% if form.submissions %}
-                            <a data-toggle="modal" href="#export-download-status" data-formname="{% if form.app %}{{ form.app.name }}{% else %}Unknown Forms{% endif %}" data-dlocation='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}'
+                            <a data-toggle="modal" href="#export-download-status" data-formname="{% if form.app %}{{ form.app.name }}{% else %}Unknown Forms{% endif %}" data-dlocation='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}&app_id={{ form.app.id }}'
                                 class="btn btn-primary export-action-download" ><i class="icon-download-alt icon-white"></i> Download</a> ({{ form.submissions }} rows)
                         {% else %}
                             No Forms

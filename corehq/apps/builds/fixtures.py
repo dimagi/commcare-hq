@@ -1,26 +1,56 @@
-commcare_build_config  = {
-   "default": {
-       "version": "1.1.1",
-       "latest": True,
+import json
+
+commcare_build_config  = json.loads("""{
+   "_id": "config--commcare-builds",
+   "doc_type": "CommCareBuildConfig",
+   "preview": {
+       "version": "1.2.1",
+       "build_number": null,
+       "latest": true
    },
+   "defaults": [{
+       "version": "1.2.1",
+       "build_number": null,
+       "latest": true
+   }, {
+       "version": "2.0.0",
+       "build_number": null,
+       "latest": true
+   }],
+   "application_versions": ["1.0", "2.0"],
    "menu": [
        {
-           "label": "CommCare 1.1.1",
            "build": {
                "version": "1.1.1",
-               "latest": True,
-           }
+               "build_number": null,
+               "latest": true
+           },
+           "label": "CommCare 1.1.1"
        },
        {
-           "label": "CommCare 1.2 (bleeding edge)",
            "build": {
-               "version": "1.2.0alpha",
-               "latest": True,
-           }
+               "version": "1.2.1",
+               "build_number": null,
+               "latest": true
+           },
+           "label": "CommCare 1.2.1"
+       },
+       {
+           "build": {
+               "version": "1.3.0",
+               "build_number": null,
+               "latest": true
+           },
+           "label": "CommCare 1.3 (RC5)"
+       },
+       {
+           "build": {
+               "version": "2.0.0",
+               "build_number": null,
+               "latest": true
+           },
+           "label": "CommCare 2.0 (unstable)"
        }
    ],
-   "preview": {
-       "version": "1.2.0alpha",
-       "latest": True,
-   },
-}
+   "ID": "config--commcare-builds"
+}""")

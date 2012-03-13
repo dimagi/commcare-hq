@@ -4,6 +4,7 @@ import tempfile
 import uuid
 from wsgiref.util import FileWrapper
 import zipfile
+from corehq.apps.app_manager.const import APP_V1
 from django.utils import simplejson
 import os
 import re
@@ -14,7 +15,7 @@ import sys
 from unidecode import unidecode
 from corehq.apps.hqmedia import utils
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
-    XForm
+    XForm, parse_xml
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.hqmedia import upload
 from corehq.apps.sms.views import get_sms_autocomplete_context
@@ -319,7 +320,6 @@ def get_apps_base_context(request, domain, app):
     for _app in ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}]):
         applications.append(_app)
 
-
     lang = request.GET.get('lang',
        request.COOKIES.get('lang', app.langs[0] if hasattr(app, 'langs') and app.langs else '')
     )
@@ -471,7 +471,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'app': app,
     })
     if app:
-        options = CommCareBuildConfig.fetch().menu
+        options = CommCareBuildConfig.fetch().get_menu(app.application_version)
         is_standard_build = [o.build.to_string() for o in options if o.build.to_string() == app.build_spec.to_string()]
         context.update({
             "commcare_build_options": options,
@@ -539,11 +539,14 @@ def new_app(req, domain):
     "Adds an app to the database"
     lang = req.COOKIES.get('lang', "en")
     type = req.POST["type"]
+    application_version = req.POST.get('application_version', APP_V1)
     cls = str_to_cls[type]
-    app = cls.new_app(domain, "Untitled Application", lang)
     if cls == Application:
+        app = cls.new_app(domain, "Untitled Application", lang=lang, application_version=application_version)
         app.new_module("Untitled Module", lang)
         app.new_form(0, "Untitled Form", lang)
+    else:
+        app = cls.new_app(domain, "Untitled Application", lang=lang)
     app.save()
     app_id = app.id
 
@@ -872,12 +875,24 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
                     # Then we remove excess newlines from the DOM output.
                     text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
                     prettyXml = text_re.sub('>\g<1></', px)
-                    prettyXml
                     xform = prettyXml
                 except Exception:
                     pass
             if xform:
-                form.source = xform
+                xform = XForm(xform)
+                duplicates = app.get_xmlns_map()[xform.data_node.tag_xmlns]
+                for duplicate in duplicates:
+                    if form == duplicate:
+                        continue
+                    else:
+                        print "XMLNS %s already in use" % xform.data_node.tag_xmlns
+                        data = xform.data_node.render()
+                        xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
+                        data = data.replace(xform.data_node.tag_xmlns, xmlns, 1)
+                        xform.instance_node.remove(xform.data_node.xml)
+                        xform.instance_node.append(parse_xml(data))
+                        break
+                form.source = xform.render()
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception, e:

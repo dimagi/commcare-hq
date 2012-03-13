@@ -20,34 +20,27 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
+    {# Put here to avoid the .hq-oldstyle styling. (js-inline gets dumped into the end of body) #}
+    {% if app.is_deleted %}
+    <div id="deleted-app-dialog" class="modal hide fade">
+        <div class="modal-header"><h1>Oops! This application was deleted.</h1></div>
+        <div class="modal-body">
+            <p>If you want your application back, click Restore.</p>
+        </div>
+        <div class="modal-footer">
+            <a href="{% url undo_delete_app domain app.id %}" class="post-link btn btn-primary">Restore</a>
+            <a href="#" class="btn" data-dismiss="modal">No thanks, get me out of here</a>
+        </div>
+    </div>
+    {% endif %}
     <script>
     $(function () {
-        $('#deleted-app-dialog').each(function () {
-            var shield = $('<div/>').css({
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                zIndex: 9999,
-                backgroundColor: 'black',
-                opacity: .7
-            });
-            $(this).detach().appendTo($('body')).css({
-                position: 'fixed',
-                width: 400
-            });
-            $('body').append(shield).css({
-                overflow: 'hidden'
-            });
-            $(window).resize(function() {
-                shield.css({
-                    width: $(window).width(),
-                    height: $(window).height()
-                });
-                $('#deleted-app-dialog').css({
-                    left: $(window).width()/2 - 200,
-                    top: Math.max($(window).height()/2 - 200, 100)
-                });
-            }).trigger('resize');
+        $('#deleted-app-dialog').modal({
+            backdrop: 'static',
+            keyboard: false,
+            show: true
+        }).on('hide', function () {
+            window.location = "{% url corehq.apps.app_manager.views.default domain %}";
         });
     });
     $(function() {
@@ -116,12 +109,6 @@
     <div id="main_container">
 
         {% if app %}
-            {% if app.is_deleted %}
-                <div id="deleted-app-dialog">
-                    <h1>Oops! This application was deleted.</h1>
-                    <p><a href="{% url undo_delete_app domain app.id %}" class="post-link">Click here</a> to restore.</p>
-                </div>
-            {% endif %}
         {% if error %}
         <div id="error">
             {% ifequal error 'app_exists' %}
@@ -139,6 +126,7 @@
                             <li>
                                 <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
                                     <input type="hidden" name="type" value="Application" />
+                                    <input type="hidden" name="application_version" value="1.0" />
                                     <a href="#" class="submit">{% trans 'Blank Application' %}</a>
                                 </form>
                             </li>
@@ -148,6 +136,15 @@
                                     <a href="#" class="submit">{% trans 'From Example: Hello World' %}</a>
                                 </form>
                             </li>
+                            {% if user.is_superuser %}
+                            <li>
+                                <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
+                                    <input type="hidden" name="type" value="Application" />
+                                    <input type="hidden" name="application_version" value="2.0" />
+                                    <a href="#" class="submit">{% trans 'Blank 2.x Application (Bleeding Edge)' %}</a>
+                                </form>
+                            </li>
+                            {% endif %}
                             <li>
                                 <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
                                     <input type="hidden" name="type" value="RemoteApp" />
@@ -168,7 +165,9 @@
                     {% for a in applications %}
                     <option value="{% url corehq.apps.app_manager.views.view_app domain a.id %}"
                             {% ifequal a.id app.id %}selected="" class="variable-app_name" {% endifequal %}>
-                        {{ a.name }}{% if a.get_doc_type == "RemoteApp" %} (remote){% endif %}
+                        {{ a.name }}
+                        {% if a.get_doc_type == "RemoteApp" %}(remote){% endif %}
+                        {% if a.application_version == '2.0' %}(2.x){% endif %}
                     </option>
                     {% endfor %}
                 </select>
@@ -193,6 +192,7 @@
                         <li>
                             <strong id="app_name" class="variable-app_name">{{ app.name }}</strong>
                             {% if app.get_doc_type == "RemoteApp" %}<strong>(remote)</strong>{% endif %}
+                            {% if app.application_version == "2.0" %}<strong>(2.x)</strong>{% endif %}
                             version <span id="version" class="variable-version">{{ app.version }}</span>
                         </li>
                     </ul>
@@ -319,6 +319,7 @@
                         {% endif %}
                         <th>Version</th>
                         <th>Build Date</th>
+                        <th>Build Time</th>
                         <th>CommCare Version</th>
                         <th>Preview (Beta)</th>
                     
@@ -345,6 +346,7 @@
                             {% endif %}
                             <td>{{ saved_app.version }}</td>
                             <td>{{ saved_app.built_on.date }}</td>
+                            <td>{{ saved_app.built_on.time }}</td>
                             <td>{% if saved_app.built_with.get_label %}{{ saved_app.built_with.get_label }}{% endif %}</td>
                             <td><a href="{% url emulator domain saved_app.id %}">Preview</a></td>
                             <td>
@@ -353,7 +355,7 @@
                                     <ul>
                                         <li>
                                             <a class="dialog_opener" href="">CommCare Files</a>
-                                            <div class="dialog jar_download_dialog" title="Installing CommCare for J2ME">
+                                            <div class="dialog jar_download_dialog" title="Install Build {{ saved_app.version }} for J2ME">
                                                 <ol>
                                                     <li>
                                                         Download <strong>both</strong> of the following files:
