@@ -15,7 +15,7 @@ MANAGERS = ADMINS
 
 
 # default to the system's timezone settings
-TIME_ZONE = "EST"
+TIME_ZONE = "UTC"
 
 
 # Language code for this installation. All choices can be found here:
