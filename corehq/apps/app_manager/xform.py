@@ -79,6 +79,9 @@ class WrappedNode(object):
     def exists(self):
         return self.xml is not None
 
+    def render(self):
+        return ET.tostring(self.xml)
+
 
 def raise_if_none(message):
     """
@@ -115,9 +118,6 @@ class XForm(WrappedNode):
         if not r['success']:
             raise XFormValidationError(r["errstring"])
         return self
-
-    def render(self):
-        return ET.tostring(self.xml)
     
     @property
     @raise_if_none("Can't find <model>")

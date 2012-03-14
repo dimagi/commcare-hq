@@ -15,7 +15,7 @@ import sys
 from unidecode import unidecode
 from corehq.apps.hqmedia import utils
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
-    XForm
+    XForm, parse_xml
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.hqmedia import upload
 from corehq.apps.sms.views import get_sms_autocomplete_context
@@ -875,12 +875,24 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
                     # Then we remove excess newlines from the DOM output.
                     text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
                     prettyXml = text_re.sub('>\g<1></', px)
-                    prettyXml
                     xform = prettyXml
                 except Exception:
                     pass
             if xform:
-                form.source = xform
+                xform = XForm(xform)
+                duplicates = app.get_xmlns_map()[xform.data_node.tag_xmlns]
+                for duplicate in duplicates:
+                    if form == duplicate:
+                        continue
+                    else:
+                        print "XMLNS %s already in use" % xform.data_node.tag_xmlns
+                        data = xform.data_node.render()
+                        xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
+                        data = data.replace(xform.data_node.tag_xmlns, xmlns, 1)
+                        xform.instance_node.remove(xform.data_node.xml)
+                        xform.instance_node.append(parse_xml(data))
+                        break
+                form.source = xform.render()
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception, e:

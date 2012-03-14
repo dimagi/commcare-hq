@@ -1289,6 +1289,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for m,module in enumerate(source['modules']):
             for f,form in enumerate(module['forms']):
                 change_unique_id(source['modules'][m]['forms'][f])
+
+
+    def get_xmlns_map(self):
+        map = defaultdict(list)
+        for form in self.get_forms():
+            map[form.xmlns].append(form)
+        return map
+
     def validate_app(self):
         xmlns_count = defaultdict(int)
         errors = []

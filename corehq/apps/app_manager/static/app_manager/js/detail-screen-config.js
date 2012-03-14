@@ -4,7 +4,14 @@ var DetailScreenConfig = (function () {
     "use strict";
     var DetailScreenConfig, Screen, Column;
     function formatEnum(obj, lang, langs) {
-        var key, visibleParts = [], invisibleParts = [], visibleValue, invisibleValue, i;
+        var key,
+            visibleParts = [],
+            invisibleParts = [],
+            cleaned_pairs = {},
+            input_list = [],
+            visibleValue,
+            invisibleValue,
+            i;
         for (key in obj) {
             if (obj.hasOwnProperty(key)) {
                 visibleValue = "";
@@ -19,25 +26,23 @@ var DetailScreenConfig = (function () {
                         }
                     }
                 }
+                cleaned_pairs[key] = visibleValue;
                 visibleParts.push(key + '=' + visibleValue);
-                invisibleParts.push(key + '=' + invisibleValue);
+                invisibleParts.push('"'+key+'":"' + invisibleValue +'"');
             }
         }
         return {
             visible: visibleParts.join(',\n'),
-            invisible: invisibleParts.join(',\n')
+            invisible: "{"+invisibleParts.join(',\n')+"}",
+            cleaned: cleaned_pairs
         };
     }
     function unformatEnum(text, lang, original) {
         var json, mapping, key,
             orig = JSON.parse(JSON.stringify(original));
-        text = text.replace('\n', ' ').replace(/^\s*/, '').replace(/\s*$/, '');
+
         if (text) {
-            json = '{"' +
-                text.replace(/\s*=\s*/g, '":"').
-                replace(/\s*,\s*/g, '","') +
-                '"}';
-            mapping = JSON.parse(json);
+            mapping = JSON.parse(text);
         } else {
             mapping = {};
         }
@@ -78,7 +83,6 @@ var DetailScreenConfig = (function () {
                     return value;
                 }
             }
-
             this.original.model = this.original.model || "case";
             this.original.field = this.original.field || "";
             this.original.header = this.original.header || {};
@@ -127,9 +131,9 @@ var DetailScreenConfig = (function () {
 
             (function () {
                 var f = formatEnum(that.original['enum'], that.lang, that.screen.langs);
-                that.enum_extra = uiElement.textarea().val(f.invisible);
-                that.enum_extra.setVisibleValue(f.visible);
-                that.enum_extra.ui.prepend($('<span/>').text(DetailScreenConfig.message.ENUM_EXTRA_LABEL));
+                that.enum_extra = uiElement.map_list(guidGenerator(), that.original.field);
+                that.enum_extra.ui.prepend($('<h4/>').text(DetailScreenConfig.message.ENUM_EXTRA_LABEL));
+                that.enum_extra.val(f.cleaned);
             }());
             this.late_flag_extra = uiElement.input().val(this.original.late_flag.toString());
             this.late_flag_extra.ui.prepend($('<span/>').text(DetailScreenConfig.message.LATE_FLAG_EXTRA_LABEL));
@@ -152,7 +156,7 @@ var DetailScreenConfig = (function () {
                 this[elements[i]].on('change', fireChange);
             }
 
-            this.$extra = $('<span/>');
+            this.$extra = $('<div/>');
             //this.setFormat(this.original.format);
 
             this.format.on('change', function () {
@@ -193,7 +197,7 @@ var DetailScreenConfig = (function () {
                 column.field = this.field.val();
                 column.header[this.lang] = this.header.val();
                 column.format = this.format.val();
-                column['enum'] = unformatEnum(this.enum_extra.val(), this.lang, column['enum']);
+                column['enum'] = unformatEnum(this.enum_extra.$formatted_view.val(), this.lang, column['enum']);
                 column.late_flag = parseInt(this.late_flag_extra.val(), 10);
                 if (!keepShortLong) {
                     delete column.includeInShort;

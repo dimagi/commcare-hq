@@ -7,7 +7,7 @@ var uiElement;
     var Input = function ($elem, getElemValue, setElemValue) {
         var that = this;
         eventize(this);
-        this.ui = $('<span/>');
+        this.ui = $('<div class="app-designer-input"/>');
         this.value = "";
         this.edit = true;
         this.getElemValue = function () {
@@ -132,6 +132,177 @@ var uiElement;
             };
             return function (options) {
                 return new Select(options);
+            };
+        }()),
+        map_list: (function() {
+            var KeyValList = function(guid, modal_title) {
+                var that = this;
+                eventize(this);
+                this.ui = $('<div class="enum-pairs" />');
+                this.value = {};
+                this.edit = true;
+                this.modal_id = 'enumModal-'+guid;
+                this.modal_title = modal_title;
+
+                this.$edit_view = $('<div />');
+                this.$noedit_view = $('<div />');
+                this.$formatted_view = $('<input type="hidden" />');
+                this.$modal_trigger = $('<a class="btn enum-edit" href="#'+this.modal_id+'" data-toggle="modal" />').html('<i class="icon icon-pencil"></i> Edit');
+
+                // Create new modal controller for this element
+                var $enumModal = $('<div id="'+this.modal_id+'" class="modal hide fade hq-enum-modal" />');
+                $enumModal.prepend('<div class="modal-header"><a class="close" data-dismiss="modal">×</a><h3>Edit Mapping for '+this.modal_title+'</h3></div>');
+                var $modal_form = $('<form class="form-horizontal hq-enum-editor" action="" />'),
+                    $modal_body = $('<div class="modal-body" style="max-height:372px; overflow-y: scroll;" />');
+                $modal_body.append($('<fieldset />'));
+                $modal_body.append('<div class="control-group"><a href="#" class="btn btn-success" data-enum-action="add"><i class="icon icon-white icon-plus"></i> Add Key => Value Mapping</a></div>');
+
+                $modal_form.append($modal_body);
+                $modal_form.append('<div class="modal-footer"><button class="btn btn-primary" data-dismiss="modal">Done</button></div>');
+                $enumModal.append($modal_form);
+
+                $('#hq-modal-home').append($enumModal);
+
+                $('#'+this.modal_id).on('hide', function() {
+                    var $inputMap = $(this).find('form .hq-input-map'),
+                        pairs = {};
+                    for (var i=0; i < $inputMap.length; i++) {
+                        var key = $($inputMap[i]).find('.enum-key').val(),
+                            mapVal = $($inputMap[i]).find('.enum-value').val();
+                        if (key !== undefined){
+                            pairs[key] = mapVal.toString();
+                        }
+                    }
+                    that.fire('change');
+                    that.val(pairs);
+                });
+
+                $('#'+this.modal_id+' a').click(function() {
+                    if($(this).attr('data-enum-action') == 'add') {
+                        $(this).parent().parent().find('fieldset').append(uiElement.input_map(true).ui);
+                        $(this).parent().parent().find('fieldset input.enum-key').last().focus();
+                    }
+                    if (!$(this).attr('data-dismiss'))
+                        return false;
+                });
+
+                this.setEdit(this.edit);
+            };
+            KeyValList.prototype = {
+                val: function(pairs) {
+                    if (pairs === undefined) {
+                        return this.value;
+                    } else {
+                        var $modal_fields = $('#'+this.modal_id+' form fieldset');
+                        $modal_fields.text('');
+                        this.$noedit_view.text('');
+                        this.$edit_view.text('');
+
+                        this.value = pairs;
+                        this.$formatted_view.val(JSON.stringify(this.value));
+                        for (var key in this.value) {
+                            $modal_fields.append(uiElement.input_map(true).val(key, this.value[key]).ui);
+                            this.$edit_view.append(uiElement.input_map(true).val(key, this.value[key]).setEdit(false).$noedit_view);
+                        }
+                    }
+
+                },
+                setEdit: function(edit) {
+                    this.edit = edit;
+                    this.$edit_view.detach();
+                    this.$noedit_view.detach();
+                    this.$modal_trigger.detach();
+                    if (this.edit) {
+                        this.$edit_view.appendTo(this.ui);
+                        this.$modal_trigger.appendTo(this.ui);
+                        this.$formatted_view.appendTo(this.ui);
+                    } else {
+                        this.$noedit_view.appendTo(this.ui);
+                    }
+                    return this;
+                }
+            };
+            return function (guid, modal_title) {
+                return new KeyValList(guid, modal_title);
+            };
+        }()),
+        input_map: (function() {
+            var InputMap = function (show_del_button) {
+                var that = this;
+                eventize(this);
+                this.ui = $('<div class="control-group hq-input-map" />');
+                this.value = {
+                    key: "",
+                    val: ""
+                };
+                this.edit = true;
+                this.show_delete = show_del_button;
+                this.on('change', function() {
+                    this.val(this.ui.find(".enum-key").val(), this.ui.find(".enum-value").val())
+                });
+                this.on('remove', function() {
+                    this.ui.remove();
+                });
+
+                this.$edit_view = $('<div />');
+                var key_input = $('<input type="text" class="input-small enum-key" placeholder="key" />'),
+                    val_input = $('<input type="text" class="input-large enum-value" placeholder="value" />');
+                key_input.change(function () {
+                    that.fire('change');
+                });
+                val_input.change(function() {
+                    that.fire('change');
+                });
+                this.$edit_view.append(key_input);
+                this.$edit_view.append(' => ')
+                this.$edit_view.append(val_input);
+                if(this.show_delete) {
+                    var $deleteButton = $('<a href="#" data-enum-action="remove" class="btn btn-danger" />');
+                    $deleteButton.append('<i class="icon icon-white icon-remove"></i> Delete');
+                    $deleteButton.click(function() {
+                        that.fire('remove');
+                        return false;
+                    });
+                    this.$edit_view.append(' ');
+                    this.$edit_view.append($deleteButton);
+                }
+                this.$noedit_view = $('<div />');
+
+                this.setEdit(this.edit);
+            };
+            InputMap.prototype = {
+                val: function(map_key, map_val) {
+                    if (map_key == undefined) {
+                        return this.value;
+                    } else {
+                        this.value = {
+                            key: map_key,
+                            val: map_val
+                        };
+                        this.$edit_view.find(".enum-key").val(map_key);
+                        this.$edit_view.find(".enum-value").val(map_val);
+                        if(map_key) {
+                            this.$noedit_view.text('"'+map_key+'" => "'+map_val+'"');
+                        }else{
+                            this.$noedit_view.text("");
+                        }
+                        return this;
+                    }
+                },
+                setEdit: function(edit) {
+                    this.edit = edit;
+                    this.$edit_view.detach();
+                    this.$noedit_view.detach();
+                    if (this.edit) {
+                        this.$edit_view.appendTo(this.ui);
+                    } else {
+                        this.$noedit_view.appendTo(this.ui);
+                    }
+                    return this;
+                }
+            };
+            return function (show_del_button) {
+                return new InputMap(show_del_button);
             };
         }()),
         checkbox: (function () {
