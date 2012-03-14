@@ -72,14 +72,7 @@ class FixtureDataItem(Document):
             xField.text = self.fields[field] if self.fields.has_key(field) else ""
         return xData
 
-    def get_users(self, wrap=True):
-        user_ids = set(
-            get_db().view('fixtures/ownership',
-                key=['user by data_item', self.domain, self.get_id],
-                reduce=False,
-                wrapper=lambda r: r['value']
-            )
-        )
+    def get_groups(self, wrap=True):
         group_ids = set(
             get_db().view('fixtures/ownership',
                 key=['group by data_item', self.domain, self.get_id],
@@ -87,6 +80,23 @@ class FixtureDataItem(Document):
                 wrapper=lambda r: r['value']
             )
         )
+        if wrap:
+            return set(Group.view('_all_docs', keys=list(group_ids), include_docs=True))
+        else:
+            return group_ids
+
+    def get_users(self, wrap=True, all=True):
+        user_ids = set(
+            get_db().view('fixtures/ownership',
+                key=['user by data_item', self.domain, self.get_id],
+                reduce=False,
+                wrapper=lambda r: r['value']
+            )
+        )
+        if all:
+            group_ids = self.get_groups(wrap=False)
+        else:
+            group_ids = set()
         users_in_groups = [group.get_users(only_commcare=True) for group in Group.view('_all_docs', keys=list(group_ids))]
         if wrap:
             return set(CommCareUser.view('_all_docs', keys=list(user_ids))) | set(users_in_groups)

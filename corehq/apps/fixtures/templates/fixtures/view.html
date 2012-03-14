@@ -162,7 +162,7 @@
 
                 if (self._id) {
                     $.ajax({
-                        url: 'data-items/' + self._id() + '/',
+                        url: 'data-items/' + self._id() + '/?groups=true',
                         type: 'get',
                         dataType: 'json',
                         success: function (data) {
@@ -320,7 +320,10 @@
                                 </dl>
                             </td>
                             <td>
-                                <h6>(No groups)</h6>
+                                <ul data-bind="foreach: groups">
+                                    <li data-bind="text: name"></li>
+                                </ul>
+                                <h6 data-bind="visible: !groups().length">(No groups)</h6>
                             </td>
                             <td>
                                 <h6>(No users)</h6>
