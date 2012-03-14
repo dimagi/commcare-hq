@@ -15,6 +15,7 @@ from corehq.apps.reports.custom import HQReport
 from corehq.apps.reports.display import xmlns_to_name, FormType
 from corehq.apps.reports.fields import FilterUsersField, CaseTypeField, SelectCHWField, datespan_default
 from corehq.apps.reports.models import HQUserType
+from corehq.apps.hqtimezones import utils as tz_utils
 from couchexport.models import SavedExportSchema
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
@@ -32,7 +33,8 @@ class StandardHQReport(HQReport):
     use_json = False
 
     def get_global_params(self):
-        # call this in 
+        # set up timezone info for report
+
         self.request_params = json_request(self.request.GET)
         hist_param = self.request_params.get('history', None)
         if hist_param:
@@ -142,6 +144,14 @@ class StandardDateHQReport(StandardHQReport):
     def get_global_params(self):
         if self.request.datespan.is_valid():
             self.datespan = self.request.datespan
+            print "old startdate", self.datespan.startdate
+            self.datespan.startdate = tz_utils.adjust_datetime_to_timezone(self.datespan.startdate,
+                                                                            self.timezone,
+                                                                            "UTC")
+            self.datespan.enddate = tz_utils.adjust_datetime_to_timezone(self.datespan.enddate,
+                                                                            self.timezone,
+                                                                            "UTC")
+            print "new startdate", self.datespan.startdate
         super(StandardDateHQReport, self).get_global_params()
 
 
@@ -160,7 +170,7 @@ class CaseActivityReport(StandardTabularHQReport):
         self.landmarks = [timedelta(days=l) for l in landmarks_param]+[None]
         self.now = datetime.utcnow()
         if self.history:
-            self.now = self.history
+            self.now = tz_utils.adjust_datetime_to_timezone(self.history, self.timezone, "UTC")
 
     def get_headers(self):
         return ["User"] + [util.define_sort_type("Last %s Days" % l.days if l else "Ever") for l in self.landmarks]

@@ -146,5 +146,8 @@ class DatespanField(ReportField):
         datespan_default(self.request)
         if self.request.datespan.is_valid():
             self.datespan = self.request.datespan
-        self.context['datespan'] = self.datespan
+        else:
+            
+        self.context['timezone'] = self.timezone
+        self.context['datespan'] = DateSpan.adjust_tz(self.datespan, "UTC", self.timezone)
 

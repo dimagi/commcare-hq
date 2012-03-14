@@ -7,7 +7,7 @@ from django_tables import tables
 from django.shortcuts import redirect
 
 from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
-from corehq.apps.domain.forms import DomainSelectionForm
+from corehq.apps.domain.forms import DomainSelectionForm, DomainGlobalSettingsForm
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 
@@ -189,3 +189,23 @@ def add_repeater(request, domain, repeater_type):
 def legacy_domain_name(request, domain, path):
     domain = normalize_domain_name(domain)
     return HttpResponseRedirect(get_domained_url(domain, path))
+
+@domain_admin_required
+def global_settings(request, domain, template="domain/global_settings.html"):
+    domain = Domain.get_by_name(domain)
+
+    if request.method == "POST":
+        # deal with saving the settings data
+        form = DomainGlobalSettingsForm(request.POST)
+        if form.is_valid():
+            if form.save(request, domain):
+                messages.success(request, "Global project settings saved!")
+            else:
+                messages.error(request, "There seems to have been an error saving your settings. Please try again!")
+    else:
+        form = DomainGlobalSettingsForm(initial={'default_timezone': domain.default_timezone})
+
+    return render_to_response(request, template, {
+        "domain": domain.name,
+        "form": form
+    })

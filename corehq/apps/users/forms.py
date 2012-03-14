@@ -1,9 +1,34 @@
 from django import forms
 from django.core.validators import EmailValidator, email_re
 from django.forms.widgets import PasswordInput, HiddenInput
+from django.utils.encoding import smart_str
 from django.utils.translation import ugettext_lazy as _
-from corehq.apps.users.models import CouchUser, WebUser, Roles
+from corehq.apps.hqtimezones.fields import TimeZoneField
+from corehq.apps.hqtimezones.forms import TimeZoneChoiceField
+from corehq.apps.users.models import CouchUser, WebUser, Roles, DomainMembership
 from corehq.apps.users.util import format_username
+
+class ProjectSettingsForm(forms.Form):
+    """
+    Form for updating a user's project settings
+    """
+    global_timezone = forms.CharField(initial="UTC", widget=forms.HiddenInput())
+    user_timezone = TimeZoneChoiceField(label="My Timezone", initial=global_timezone.initial, widget=forms.Select(attrs={'class': 'input-xlarge'}))
+
+    def clean_user_timezone(self):
+        data = self.cleaned_data['user_timezone']
+        timezone_field = TimeZoneField()
+        timezone_field.run_validators(data)
+        return smart_str(data)
+
+    def save(self, web_user, domain):
+        try:
+            web_user.get_domain_membership(domain).timezone = self.cleaned_data['user_timezone']
+            web_user.save()
+            return True
+        except Exception as e:
+            print e
+            return False
 
 class UserForm(forms.Form):
     """

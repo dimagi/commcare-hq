@@ -1,0 +1,13 @@
+{% extends "users/users_base.html" %}
+{% load hq_bootstrap_tags %}
+{% load i18n %}
+
+{% block user-view %}
+    <h1>Global Settings for Project "{{ domain }}"</h1>
+    <form class="form-horizontal" method="post">
+        {% bootstrap_form_errors form %}
+        {% bootstrap_fieldset form "Project Timezone" %}
+        <div class="form-actions"><button type="submit" class="btn btn-primary btn-large">Update Project Settings</button></div>
+    </form>
+
+{% endblock %}>

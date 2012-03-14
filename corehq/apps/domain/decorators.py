@@ -155,8 +155,7 @@ def domain_admin_required_ex( redirect_page_name = None ):
         redirect_page_name = getattr(settings, 'DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME', 'homepage')                                                                                                 
     def _outer( view_func ): 
         def _inner(request, *args, **kwargs):
-            # TODO fix this to use the couch membership code
-            if not request.user.is_selected_dom_admin():
+            if not request.couch_user.is_domain_admin:
                 return HttpResponseRedirect(reverse(redirect_page_name))
             return view_func(request, *args, **kwargs)
 
