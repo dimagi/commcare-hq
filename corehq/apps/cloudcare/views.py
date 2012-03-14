@@ -8,15 +8,31 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
-from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_apps
+from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_cloudcare_apps
 from touchforms.formplayer.models import PlaySession
 from dimagi.utils.couch import safe_index
 from corehq.apps.app_manager.const import APP_V2
+from dimagi.utils.parsing import string_to_boolean
 
 @login_and_domain_required
 def app_list(request, domain):
-    apps = get_apps(domain)
+    
+    apps = get_cloudcare_apps(domain)
+    debug = string_to_boolean(request.REQUEST.get("debug", "false"))
     language = request.REQUEST.get("language", "en")
+    
+    def _app_latest_build_json(app_id):
+        build = ApplicationBase.view('app_manager/saved_app',
+                                     startkey=[domain, app["_id"], {}],
+                                     endkey=[domain, app["_id"]],
+                                     descending=True,
+                                     limit=1).one()
+        return build._doc if build else None
+                                     
+    if not debug:
+        # replace the apps with the last build of each app
+        apps = [_app_latest_build_json(app["_id"])for app in apps]
+
     return render_to_response(request, "cloudcare/list_apps.html", 
                               {"domain": domain,
                                "language": language,
@@ -41,6 +57,7 @@ def enter_form(request, domain, app_id, module_id, form_id):
                              'app_version': '2.0',
                              'username': request.user.username,
                              'user_id': request.couch_user.get_id,
+                             "domain": domain
                             }
         if case_id:
             commcare_context["case_id"] = case_id

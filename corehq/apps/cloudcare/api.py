@@ -14,11 +14,10 @@ def get_owned_cases(domain, user_id):
     cases = CommCareCase.view('case/by_owner', keys=keys, include_docs=True)
     return [case.get_json() for case in cases]
 
-def get_apps(domain):
+def get_cloudcare_apps(domain):
     return map(lambda app: app._doc, 
-               filter(lambda app: app.doc_type == "Application",
-                      ApplicationBase.view('app_manager/applications_brief', 
-                                           startkey=[domain], endkey=[domain, {}])))
+               ApplicationBase.view('cloudcare/cloudcare_apps', 
+                                    startkey=[domain], endkey=[domain, {}]))
 
 def get_app(domain, app_id):
     app = Application.get(app_id)
