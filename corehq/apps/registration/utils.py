@@ -9,12 +9,12 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.django.email import send_HTML_email
 
-def activate_new_user(form):
+def activate_new_user(form, is_domain_admin=True, domain=None):
     username = form.cleaned_data['email']
     password = form.cleaned_data['password']
     full_name = form.cleaned_data['full_name']
 
-    new_user = WebUser.create(None, username, password, is_admin=True)
+    new_user = WebUser.create(domain, username, password, is_admin=is_domain_admin)
     new_user.first_name = full_name[0]
     new_user.last_name = full_name[1]
     new_user.email = username
@@ -26,6 +26,8 @@ def activate_new_user(form):
     new_user.last_login = now
     new_user.date_joined = now
     new_user.save()
+
+    return new_user
 
 def request_new_domain(request, form, new_user=True):
     now = datetime.utcnow()

@@ -27,18 +27,6 @@ class UserEmailOnlyRegistrationRequestForm(_BaseForm, forms.Form):
     def clean_username(self):
         data = self.cleaned_data['email'].strip()        
         return data
-    
-########################################################################################################
-    
-class UserRegistersSelfForm(NewWebUserRegistrationForm):
-    # Almost the same as we used in domain registration; just eliminate the domain and email fields
-           
-    def __init__(self, *args, **kwargs):
-        # Value of 'kind' is irrelevant in this context
-        super(UserRegistersSelfForm, self).__init__(None, *args, **kwargs)
-        if 'domain_name' in self.fields:
-            del self.fields['domain_name']
-        
         
 ########################################################################################################
         
