@@ -1,4 +1,4 @@
-{% extends base_template %}
+{% extends "cloudcare/base.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -12,6 +12,9 @@
             min-width: 500px;
             position: relative;
         }
+        .clear {
+            clear: both;
+        }
         #case-list {
             float: left;
             width: 30%;
@@ -20,8 +23,8 @@
             float: left;
             width: 100%;
         }
-        #case-details {
-            margin-left: 4em;
+        #case-details table {
+            width: 60%;
         }
         .clear {
             clear: both;
@@ -42,30 +45,46 @@
     <script src="{% static 'cloudcare/js/case-edit-form.js' %}"></script>
     <script src="{% static 'hqwebapp/javascripts/backbone.js' %}"></script>
     <script src="{% static 'cloudcare/js/backbone/shared.js' %}"></script>
+    <script src="{% static 'cloudcare/js/backbone/apps.js' %}"></script>
     <script src="{% static 'cloudcare/js/backbone/cases.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
-    <script>
-        $(function () {
-            var language = "{{ language }}";
-            var listDetails = {{case_short|safe}};
-            var summaryDetails = {{case_long|safe}};
-            var cases = {{ cases|safe }};
-            window.mainView = new CaseMainView({
-			    el: "#main-container",
-			    listDetails: listDetails,
-			    summaryDetails: summaryDetails,
-			    cases: cases,
-			    language: language
-			});
-			Backbone.history.start();
-			// TODO: when we figure out what to do about get params, use this
-			// Backbone.history.start({pushState: true, root: "{% url cloudcare_case_list domain %}"});
-            
-        }());
-    </script>
+<script>
+
+    $(function () {
+        var urlRoot = "{% url cloudcare_app_list domain %}";
+        var appUrlRoot = "{% url cloudcare_get_apps domain %}";
+        var caseUrlRoot = "{% url cloudcare_get_cases domain %}"; 
+        var language = "{{ language }}";
+        var apps = {{ apps|safe }};
+        window.mainView = new AppMainView({
+			apps: apps,
+			language: language,
+			urlRoot: urlRoot,
+			appUrlRoot: appUrlRoot,
+			caseUrlRoot: caseUrlRoot
+        });
+        // TODO: when we figure out what to do about get params, use this
+        //Backbone.history.start({pushState: true, root: "{% url cloudcare_app_list domain %}"});
+    }());
+
+</script>
 {% endblock %}
 
 {% block content %}
-    <div id="main-container" />
+<div class="row-fluid">
+    <div class="sidebar span2">
+        <section id="app-main" >
+         <nav id="app-list" ></nav>
+         <nav id="module-list" ></nav>
+         <nav id="form-list" ></section>
+        </section>
+    </div>
+    <div class="hq-content span10">
+        <div class="row-fluid">     
+            <section id="cases"></section>
+        </div>
+    </div>
+</div>
+    
 {% endblock %}
