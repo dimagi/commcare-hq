@@ -102,7 +102,10 @@ Please make sure you're still in the root directory of commcare-hq and that you 
     ./manage.py migrate
     ./manage.py collectstatic
     ./manage.py createsuperuser
-    make -C submodules/hq-bootstrap/
+    
+Follow the HQ-Bootstrap instructions at [https://github.com/dimagi/hq-bootstrap](https://github.com/dimagi/hq-bootstrap) to install NodeJS, npm, lessc and Uglify-JS. Then run:
+
+    ./manage.py make_bootstrap
 
 
 ### Test your install of CommCare HQ
