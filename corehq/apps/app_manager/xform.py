@@ -610,7 +610,7 @@ class XForm(WrappedNode):
                 for nodeset, property in actions['case_preload'].preload.items():
                     self.add_setvalue(
                         ref=nodeset,
-                        value="instance('casedb')/casedb/case[@case_id=%s]/%s" % (self.resolve_path('case/@case_id'), property),
+                        value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/%s" % property,
                     )
 
             if needs_casedb_instance:
