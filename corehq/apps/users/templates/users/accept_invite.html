@@ -12,7 +12,7 @@
                     {{ form.as_table }}
                     <fieldset>
                         <legend>Accept Invite?</legend>
-                        <p>Would you like to accept the invitation to join the CommCare HQ project <strong>{{ domain }}</strong> as <strong>{{ user.username }}</strong>?</p>
+                        <p>{% if invited_user %}<strong>Note:</strong> You are signed in with an email different from the invited email, {{ invited_user }}. Are you sure you want{% else %}Would you like{% endif %} to accept the invitation to join the CommCare HQ project <strong>{{ domain }}</strong> as <strong>{{ user.username }}</strong>?</p>
                     </fieldset>
                     <button type="submit" class="btn btn-primary btn-large">Accept Invitation</button>
                 </form>
@@ -27,10 +27,32 @@
             </div>
         {% else %}
             <div class="page-header">
-                <h1>Project Invitation, Account Required<br /><small>To accept this project invitation, you must sign in to CommCare HQ.</small></h1>
+                <h1>Project Invitation, Account Required<br /><small>To accept this project invitation, you must create an account on CommCare HQ.</small></h1>
             </div>
             <div class="span8">
-                <p>To accept the invitation, please <a href="{% url registration_new_user %}">create an account</a>.</p>
+                <form name="form" method="post" action="" class="form-horizontal">
+                    {% csrf_token %}
+                    {% for global_error in form.non_field_errors %}
+                        <div class="alert alert-error">
+                            {{ global_error }}
+                        </div>
+                    {% endfor %}
+                    <fieldset>
+                        <legend>New User Information</legend>
+                        {% for field in form.visible_fields %}
+                        <div class="control-group{% if field.errors %} error{% endif %}">
+                            <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
+                            <div class="controls">
+                                {{ field }}
+                                {% for error in field.errors %}
+                                    <span class="help-inline">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </fieldset>
+                    <div class="form-actions"><button type="submit" class="btn btn-primary btn-large">Create Account</button></div>
+                </form>
             </div>
             <div class="span4">
                 <aside class="well">

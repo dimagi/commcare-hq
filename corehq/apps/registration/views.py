@@ -142,7 +142,7 @@ def confirm_domain(request, guid=None):
     if requested_domain.is_active:
         assert(req.confirm_time is not None and req.confirm_ip is not None)
         vals['message_title'] = 'Already Activated'
-        vals['message_body'] = 'Your account has already been activated. No further validation is required.'
+        vals['message_body'] = 'Your account %s has already been activated. No further validation is required.' % req.new_user_username
         vals['is_error'] = False
         return render_to_response(request, 'registration/confirmation_complete.html', vals)
 

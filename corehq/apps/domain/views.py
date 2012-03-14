@@ -1,4 +1,6 @@
 import datetime
+from django.contrib.auth.views import password_reset_confirm
+from django.views.decorators.csrf import csrf_protect
 from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
