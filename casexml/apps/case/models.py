@@ -393,7 +393,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn):
 
     def dynamic_case_properties(self):
         """(key, value) tuples sorted by key"""
-        return sorted(self.dynamic_properties().items())
+        return sorted([(key, value) for key, value in self.dynamic_properties().items() if not key.startswith('-')])
 
     def save(self, **params):
         self.server_modified_on = datetime.utcnow()
