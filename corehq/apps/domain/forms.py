@@ -20,8 +20,8 @@ from corehq.apps.domain.models import Domain
 #
 # super(_BaseForm, self).clean() in any derived class that overrides clean()
 from corehq.apps.domain.utils import new_domain_re
-from corehq.apps.hqtimezones.fields import TimeZoneField
-from corehq.apps.hqtimezones.forms import TimeZoneChoiceField
+from dimagi.utils.timezones.fields import TimeZoneField
+from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from corehq.apps.users.util import format_username
 
 class _BaseForm(object):

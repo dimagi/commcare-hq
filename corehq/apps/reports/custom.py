@@ -6,6 +6,7 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext, Context
 from django.template.loader import render_to_string
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from dimagi.utils.modules import to_function
 from tempfile import NamedTemporaryFile
@@ -41,7 +42,11 @@ class HQReport(object):
 
         requesting_user = WebUser.get_by_user_id(self.request.couch_user.user_id)
         domain_membership = requesting_user.get_domain_membership(self.domain)
-        self.timezone = domain_membership.timezone
+        if domain_membership:
+            self.timezone = domain_membership.timezone
+        else:
+            current_domain = Domain.get_by_name(self.domain)
+            self.timezone = current_domain.default_timezone
         print "Timezone for this report ", self.timezone
 
         if not self.rows:

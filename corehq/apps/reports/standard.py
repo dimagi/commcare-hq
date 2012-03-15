@@ -15,13 +15,13 @@ from corehq.apps.reports.custom import HQReport
 from corehq.apps.reports.display import xmlns_to_name, FormType
 from corehq.apps.reports.fields import FilterUsersField, CaseTypeField, SelectCHWField, datespan_default
 from corehq.apps.reports.models import HQUserType
-from corehq.apps.hqtimezones import utils as tz_utils
 from couchexport.models import SavedExportSchema
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import DatatablesParams
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request, get_url_base
 
 DATE_FORMAT = "%Y-%m-%d"
@@ -33,8 +33,6 @@ class StandardHQReport(HQReport):
     use_json = False
 
     def get_global_params(self):
-        # set up timezone info for report
-
         self.request_params = json_request(self.request.GET)
         hist_param = self.request_params.get('history', None)
         if hist_param:
@@ -139,6 +137,7 @@ class StandardDateHQReport(StandardHQReport):
 
     def __init__(self, domain, request, base_context = {}):
         super(StandardDateHQReport, self).__init__(domain, request, base_context)
+        self.datespan = DateSpan.since(7, format="%Y-%m-%d", timezone=self.timezone)
         datespan_default(self.request)
 
     def get_global_params(self):
@@ -279,8 +278,8 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
         results = get_db().view(
             self.couch_view,
             group=True,
-            startkey=[self.domain, self.request.datespan.startdate.isoformat()],
-            endkey=[self.domain, self.request.datespan.enddate.isoformat(), {}]
+            startkey=[self.domain, tz_utils.adjust_datetime_to_timezone(self.request.datespan.startdate, self.timezone, "UTC").isoformat()],
+            endkey=[self.domain, tz_utils.adjust_datetime_to_timezone(self.request.datespan.enddate, self.timezone, "UTC").isoformat(), {}]
         ).all()
         user_map = dict([(user.user_id, i) for (i, user) in enumerate(self.users)])
         userIDs = [user.user_id for user in self.users]

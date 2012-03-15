@@ -4,7 +4,7 @@ from django.db import models
 from django.conf import settings
 from couchdbkit.ext.django.schema import Document, StringProperty,\
     BooleanProperty, DateTimeProperty, IntegerProperty
-from corehq.apps.hqtimezones import fields as tz_fields
+from dimagi.utils.timezones import fields as tz_fields
 
 
 class Domain(Document):

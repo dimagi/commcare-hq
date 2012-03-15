@@ -7,7 +7,7 @@
         {{ field }}
     {% endfor %}
     {% bootstrap_fieldset proj_settings_form "User-Specific Project Settings" %}
-    <div class="form-actions"><button type="submit" class="btn btn-primary btn-large">Update My Project Settings</button></div>
+    <div class="form-actions"><button type="submit" id="update-proj-settings" class="btn btn-large disabled">Update My Project Settings</button></div>
 </form>
 <script type="text/javascript">
     $(function() {
@@ -16,6 +16,14 @@
 
         var $matchMessage = $('<span class="matched-message help-inline" />');
         $userTimezone.parent().append($matchMessage);
+
+        var $matchTzButton = $('<a href="#" class="btn" style="margin-left: 1em;" />').text("Reset to Default");
+        $matchTzButton.click(function () {
+            $userTimezone.val($globalTimezone.val());
+            $userTimezone.change();
+            return false;
+        });
+        $userTimezone.after($matchTzButton);
 
         var $globalTimezoneStatus = $('<div class="control-group" />');
         $globalTimezoneStatus.append($('<label class="control-label" />').text('Global Timezone:'));
@@ -26,6 +34,13 @@
         compare_global_user_timezones();
         $userTimezone.change(function () {
           compare_global_user_timezones();
+            $('#update-proj-settings').addClass('btn-primary').removeClass('disabled');
+
+        });
+
+        $('#update-proj-settings').click(function () {
+            if ($(this).hasClass('disabled'))
+                return false;
         });
 
         function compare_global_user_timezones() {

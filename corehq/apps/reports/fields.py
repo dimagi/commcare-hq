@@ -140,14 +140,15 @@ class SelectCHWField(ReportField):
 class DatespanField(ReportField):
     slug = "datespan"
     template = "reports/fields/datespan.html"
-    datespan = DateSpan.since(7, format="%Y-%m-%d")
+
+    def __init__(self, request, domain=None, timezone="UTC"):
+        super(DatespanField, self).__init__(request, domain, timezone)
+        self.datespan = DateSpan.since(7, format="%Y-%m-%d", timezone=self.timezone)
 
     def update_context(self):
         datespan_default(self.request)
         if self.request.datespan.is_valid():
             self.datespan = self.request.datespan
-        else:
-            
         self.context['timezone'] = self.timezone
-        self.context['datespan'] = DateSpan.adjust_tz(self.datespan, "UTC", self.timezone)
+        self.context['datespan'] = self.datespan
 
