@@ -42,7 +42,7 @@ var CaseView = Selectable.extend({
     render: function(){
         var self = this;
         _(this.options.columns).each(function (col) {
-            $("<td />").text(self.model.getProperty(col.field) || "?").appendTo($(self.el));
+            $("<td />").text(self.model.getProperty(col.field) || "?").appendTo(self.el);
         });
         return this; 
     }
@@ -112,11 +112,13 @@ var CaseListView = Backbone.View.extend({
             if (self.selectedCaseView !== this) {
                 self.selectedCaseView = this;
                 self.trigger("case:selected", this);
+                cloudCare.dispatch.trigger("case:selected", this);
             } 
         });
         caseView.on("deselected", function () {
             self.selectedCaseView = null;
             self.trigger("case:deselected", this);
+            cloudCare.dispatch.trigger("case:deselected", this);
         });
       
         $('table tbody', this.el).append(caseView.render().el);
@@ -187,11 +189,11 @@ var CaseMainView = Backbone.View.extend({
                                                 language: this.options.language});
         $(this.detailsView.render().el).appendTo($(this.el));
         $("<div />").addClass("clear").appendTo($(this.el));
-        this.listView.on("case:selected", function (caseView) {
+        cloudCare.dispatch.on("case:selected", function (caseView) {
             self.selectCase(caseView);
             self.router.navigate("case/" + caseView.model.id);
         });
-        this.listView.on("case:deselected", function (caseView) {
+        cloudCare.dispatch.on("case:deselected", function (caseView) {
             self.selectCase(null);
             self.router.navigate("");
         });

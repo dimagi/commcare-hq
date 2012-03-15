@@ -1,5 +1,7 @@
+cloudCare = {};
 
-               
+cloudCare.dispatch = _.extend({}, Backbone.Events);
+
 var AppNavigation = Backbone.Router.extend({
     
     initialize: function() {
@@ -7,8 +9,11 @@ var AppNavigation = Backbone.Router.extend({
     },
     
     routes: {
-        "view/:app":   "app",    // #view/appid
-        "":            "clear"
+        "view/:app":                        "app",                              
+        "view/:app/:module":                "app:module",               
+        "view/:app/:module/:form":          "app:module:form",               
+        "view/:app/:module/:form/:case":    "app:module:form:case",    
+        "":                                 "clear"
     },
     
 });
@@ -37,9 +42,10 @@ var AppListView = Backbone.View.extend({
     el: $('#app-list'), 
     
     initialize: function(){
-        _.bindAll(this, 'render', 'appendItem');
+        _.bindAll(this, 'render', 'appendItem', "getAppView", "clearSelectionState");
         this.appList = new AppList();
         this.appList.reset(this.options.apps);
+        this._appViews = {};
         this.render();
     },
     
@@ -57,21 +63,33 @@ var AppListView = Backbone.View.extend({
             model: item
         });
         
+        this._appViews[item.id] = appView;
+        
         appView.on("selected", function () {
             if (self.selectedAppView) {
                 self.selectedAppView.deselect();
             }
             if (self.selectedAppView !== this) {
                 self.selectedAppView = this;
-                self.trigger("app:selected", this);
+                cloudCare.dispatch.trigger("app:selected", this);
             }
         });
         appView.on("deselected", function () {
             self.selectedAppView = null;
-            self.trigger("app:deselected", this);
+            cloudCare.dispatch.trigger("app:deselected", this);
         });
       
         $('ul', this.el).append(appView.render().el);
+    },
+    getAppView: function (appId) {
+        return this._appViews[appId];
+    },
+    
+    clearSelectionState: function () {
+        this.selectedAppView = null;
+        _(_(this._appViews).values()).each(function (view) {
+            view.deselect();
+        });
     }
 });
 
@@ -99,7 +117,6 @@ var App = Backbone.Model.extend({
                 index++;
                 return ret;
             });
-            this.trigger("modules-changed");
         } 
     }
 });
@@ -173,7 +190,7 @@ var ModuleList = Backbone.Collection.extend({
 var ModuleListView = Backbone.View.extend({
     el: $('#module-list'), 
     initialize: function () {
-        _.bindAll(this, 'render', 'appendItem', 'updateModules');
+        _.bindAll(this, 'render', 'appendItem', 'updateModules', 'getModuleView', 'clearSelectionState');
         var self = this;
         this.moduleList = new ModuleList([], {
             language: this.options.language
@@ -189,12 +206,15 @@ var ModuleListView = Backbone.View.extend({
     updateModules: function () {
         // clear
         $(this.el).html("");
+        this._moduleViews = {};
+        
         var self = this;
         var ul = $("<ul />").addClass("nav nav-list").appendTo($(this.el));
         $("<li />").addClass("nav-header").text("Modules").appendTo(ul);
         _(this.moduleList.models).each(function(item){ 
             self.appendItem(item);
         });
+        self.trigger("modules:updated");
     },
     appendItem: function (item) {
         var self = this;
@@ -203,28 +223,40 @@ var ModuleListView = Backbone.View.extend({
             language: this.options.language
             
         });
+        this._moduleViews[item.get("index")] = moduleView;
+        
         moduleView.on("selected", function () {
             if (self.selectedModuleView) {
                 self.selectedModuleView.deselect();
             }
             if (self.selectedModuleView !== this) {
                 self.selectedModuleView = this;
-                self.trigger("module:selected", this);
+                cloudCare.dispatch.trigger("module:selected", this.model);
             }
         });
         moduleView.on("deselected", function () {
             self.selectedModuleView = null;
-            self.trigger("module:deselected", this);
+            cloudCare.dispatch.trigger("module:deselected", this.model);
         });
       
         $('ul', this.el).append(moduleView.render().el);
+    },
+    getModuleView: function (moduleIndex) {
+        return this._moduleViews[moduleIndex];
+    },
+    clearSelectionState: function () {
+        this.selectedModuleView = null;
+        _(_(this._moduleViews).values()).each(function (view) {
+            view.deselect();
+        });
     }
 });
 
 var FormListView = Backbone.View.extend({
     el: $('#form-list'), 
     initialize: function () {
-        _.bindAll(this, 'render', 'appendForm');
+        _.bindAll(this, 'render', 'appendForm', 'getFormView', 'clearSelectionState');
+        this._formViews = {};
     },
     render: function () {
         var self = this;
@@ -244,21 +276,31 @@ var FormListView = Backbone.View.extend({
             model: form,
             language: this.options.language
         });
+        this._formViews[form.get("index")] = formView;
         formView.on("selected", function () {
             if (self.selectedFormView) {
                 self.selectedFormView.deselect();
             }
             if (self.selectedFormView !== this) {
                 self.selectedFormView = this;
-                self.trigger("form:selected", this.model);
+                cloudCare.dispatch.trigger("form:selected", this.model);
             }
         });
         formView.on("deselected", function () {
             self.selectedFormView = null;
-            self.trigger("form:deselected", this.model);
+            cloudCare.dispatch.trigger("form:deselected", this.model);
         });
         
 	    $('ul', this.el).append(formView.render().el);
+    },
+    clearSelectionState: function () {
+        this.selectedFormView = null;
+        _(_(this._formViews).values()).each(function (view) {
+            view.deselect();
+        });
+    },
+    getFormView: function (formIndex) {
+        return this._formViews[formIndex];
     }
 });
 
@@ -274,28 +316,26 @@ var AppView = Backbone.View.extend({
             language: this.options.language
         });
         
-        this.formListView.on("form:selected", function (form) {
+        cloudCare.dispatch.on("form:selected", function (form) {
             self.selectForm(form);
             
         });
-        this.formListView.on("form:deselected", function (form) {
+        cloudCare.dispatch.on("form:deselected", function (form) {
             self.selectForm(null);
+            // self.trigger("form:deselected", form);
         });
-        this.moduleListView.on("module:selected", function (moduleView) {
-            self.showModule(moduleView.model);
+        cloudCare.dispatch.on("module:selected", function (module) {
+            self.showModule(module);
         });
-        this.moduleListView.on("module:deselected", function (app) {
+        cloudCare.dispatch.on("module:deselected", function (module) {
             self.showModule(null);
+            
         });
         
         this.setModel(this.model);
     },
     setModel: function (app) {
         this.model = app;
-        var self = this;
-        if (app) {
-            this.moduleListView.moduleList.reset(this.model.modules);
-	    }
     },
     showModule: function (module) {
         this.formListView.model = module;
@@ -306,7 +346,7 @@ var AppView = Backbone.View.extend({
         var formListView = this.formListView;
         if (form) {
             if (form.get("requires") === "none") {
-	            // go play the form
+	            // go play the form. this is pretty sketchy
 	            var url = getFormUrl(self.options.urlRoot, form.get("app_id"), 
 	                                 form.get("module_index"), form.get("index"));
 	            window.location.href = url;
@@ -325,7 +365,7 @@ var AppView = Backbone.View.extend({
 	                // TODO: clean up how filtering works
 	                caseUrl: self.options.caseUrlRoot + "?properties/case_type=" + formListView.model.get("case_type")
 	            });
-	            formListView.caseView.listView.on("case:selected", function (caseView) {
+	            cloudCare.dispatch.on("case:selected", function (caseView) {
 	                formListView.enterForm = $("<a />").text("Enter " + form.getLocalized("name", self.options.language)).addClass("btn btn-primary").appendTo(
 	                        $(formListView.caseView.detailsView.el));
 	                formListView.enterForm.click(function () {
@@ -333,12 +373,16 @@ var AppView = Backbone.View.extend({
 	                    window.location.href = url + "?case_id=" + caseView.model.id;
 	                });
 	            });
-	            formListView.caseView.listView.on("case:deselected", function (caseView) {
+	            cloudCare.dispatch.on("case:deselected", function (caseView) {
 	                if (formListView.enterForm) {
 	                    formListView.enterForm.detach();
 	                    formListView.enterForm = null;                      
 	                }
 	            });
+	            // This is pretty sketchy, but only trigger the form:selected event
+	            // if the form requires a case, since the other pathways navigate to 
+	            // new pages. 
+	            //this.trigger("form:selected", form);
 	        }
         } else {
             if (formListView.caseView) {
@@ -362,24 +406,22 @@ var AppMainView = Backbone.View.extend({
     el: $('#app-main'),
      
     initialize: function () {
-        _.bindAll(this, 'render', 'selectApp'); 
+        _.bindAll(this, 'render', 'selectApp', "clearCases", "clearForms", "clearModules", "clearAll");
         var self = this;
+
+        this._selectedModule = null;
         this.router = new AppNavigation();
-        this.router.on("route:app", function (appId) {
-            // TODO
-            self.selectApp(appId);
-        });
-        this.router.on("route:clear", function () {
-            // TODO
-        });
         this.appListView = new AppListView({
             apps: this.options.apps,
             language: this.options.language
         });
-        this.appListView.on("app:selected", function (app) {
+        cloudCare.dispatch.on("app:selected", function (app) {
+            self.router.navigate("view/" + app.model.id);
             self.selectApp(app.model.id);
         });
-        this.appListView.on("app:deselected", function (app) {
+        cloudCare.dispatch.on("app:deselected", function (app) {
+            this._selectedModule = null;
+            self.router.navigate("");
             self.selectApp(null);
         });
         this.appView = new AppView({
@@ -389,15 +431,96 @@ var AppMainView = Backbone.View.extend({
             caseUrlRoot: this.options.caseUrlRoot,
             urlRoot: this.options.urlRoot
         });
+        this.appView.moduleListView.on("modules:updated", function () {
+            // this selects an appropriate module any time they are updated.
+            // we have to be careful to clear this field anytime a module
+            // is deselected
+            if (self._selectedModule !== null) {
+                this.getModuleView(self._selectedModule).select();
+            }
+            self._selectedModule = null;
+        });
+        // incoming routes
+        this.router.on("route:clear", function () {
+            self.clearAll();
+        });
+        
+        var selectApp = function (appId) {
+            self.appListView.getAppView(appId).select();
+        };
+        
+        var selectModule = function (moduleIndex) {
+            var modView = self.appView.moduleListView.getModuleView(moduleIndex);
+            if (modView) {
+                modView.select();
+            }
+            // other event handling magic uses this to select the module
+            // after it gets loaded. 
+            self._selectedModule = moduleIndex;
+        };
+        
+        var selectForm = function (formIndex) {
+            formView = self.appView.formListView.getFormView(formIndex);
+            if (formView) {
+                formView.select();
+            } 
+            self._selectedForm = formIndex;
+        };
+        
+        this.router.on("route:app", function (appId) {
+            self.clearModules();
+            selectApp(appId);
+        });
+        this.router.on("route:app:module", function (appId, moduleIndex) {
+            self.clearForms();
+            selectApp(appId);
+            selectModule(moduleIndex);
+        });
+        this.router.on("route:app:module:form", function (appId, moduleIndex, formIndex) {
+            self.clearForms();
+            selectApp(appId);
+            selectModule(moduleIndex);
+            selectForm(formIndex);
+        });
+        
+        
+        // setting routes
+        cloudCare.dispatch.on("module:selected", function (module) {
+            self.router.navigate("view/" + module.get("app_id") + 
+                                 "/" + module.get("index"));
+            self.trigger("module:selected");
+        });
+        self.on("module:selected", function () {
+            // magic pairing with the above to support proper selection ordering
+            if (self._selectedForm !== null) {
+                self.appView.formListView.getFormView(self._selectedForm).select();
+            }
+            self._selectedForm = null;
+        });
+        
+        cloudCare.dispatch.on("module:deselected", function (module) {
+            self.router.navigate("view/" + module.get("app_id"));
+            self.clearModules();
+        });
+        cloudCare.dispatch.on("form:selected", function (form) {
+            self.router.navigate("view/" + form.get("app_id") + 
+                                 "/" + form.get("module_index") + 
+                                 "/" + form.get("index"));
+            
+        });
+        cloudCare.dispatch.on("form:deselected", function (form) {
+            self.router.navigate("view/" + form.get("app_id") + 
+                                 "/" + form.get("module_index"));
+            self.clearForms();
+        });
+        
     },
     
     selectApp: function (appId) {
-        // TODO: this.router.navigate("view/" + appId);
         var self = this;
         if (appId === null) {
-            this.app = null;
-            this.appView.setModel(null);
-            this.appView.render();
+            this.clearAll();
+            
         }
         else {
             this.app = new App({
@@ -411,6 +534,28 @@ var AppMainView = Backbone.View.extend({
 	            }
 	        });
 	    }
+    },
+    clearCases: function () {
+        // TODO
+    },
+    clearForms: function () {
+        this.clearCases();
+        this._selectedForm = null;
+        this.appView.formListView.clearSelectionState();
+        this.appView.selectForm(null);
+    },
+    clearModules: function () {
+        this.clearForms();
+        this._selectedModule = null;
+        this.appView.moduleListView.clearSelectionState();
+        this.appView.showModule(null);
+    },
+    clearAll: function () {
+        this.clearModules();
+        this.appListView.clearSelectionState();
+        this.app = null;
+        this.appView.setModel(null);
+        this.appView.render();
     },
     
     render: function () {

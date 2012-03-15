@@ -65,7 +65,8 @@
 			caseUrlRoot: caseUrlRoot
         });
         // TODO: when we figure out what to do about get params, use this
-        //Backbone.history.start({pushState: true, root: "{% url cloudcare_app_list domain %}"});
+        // Backbone.history.start({pushState: true, root: "{% url cloudcare_app_list domain %}"});
+        Backbone.history.start({pushState: false, root: "{% url cloudcare_app_list domain %}"});
     }());
 
 </script>
@@ -77,7 +78,7 @@
         <section id="app-main" >
          <nav id="app-list" ></nav>
          <nav id="module-list" ></nav>
-         <nav id="form-list" ></section>
+         <nav id="form-list" ></nav>
         </section>
     </div>
     <div class="hq-content span10">
