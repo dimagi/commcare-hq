@@ -179,9 +179,9 @@ class DateSpan(object):
         for year in range(self.startdate.year, self.enddate.year + 1):
             startmonth = 1
             endmonth = 12
-            if year == self.startdate.year:
+            if year == int(self.startdate.year):
                 startmonth = self.startdate.month
-            elif year == self.enddate.year:
+            if year == int(self.enddate.year):
                 endmonth = self.enddate.month
             for month in range(startmonth, endmonth + 1):
                 yield (year, month)
