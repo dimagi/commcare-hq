@@ -33,7 +33,7 @@ def app_list(request, domain):
         # replace the apps with the last build of each app
         apps = [_app_latest_build_json(app["_id"])for app in apps]
 
-    return render_to_response(request, "cloudcare/list_apps.html", 
+    return render_to_response(request, "cloudcare/cloudcare_home.html", 
                               {"domain": domain,
                                "language": language,
                                "apps": json.dumps(apps)})
