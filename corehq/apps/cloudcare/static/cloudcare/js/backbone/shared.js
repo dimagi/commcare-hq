@@ -7,7 +7,7 @@ var getLocalizedString = function (property, language) {
 
 var getFormUrl = function(urlRoot, appId, moduleId, formId) {
     // TODO: make this cleaner
-    return urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/";
+    return urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/enter/";
 };
 
 /*
