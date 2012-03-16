@@ -410,24 +410,25 @@ var AppMainView = Backbone.View.extend({
     el: $('#app-main'),
      
     initialize: function () {
-        _.bindAll(this, 'render', 'selectApp', "clearCases", "clearForms", "clearModules", "clearAll");
+        _.bindAll(this, 'render', 'selectApp', "clearCases", "clearForms", "clearModules", "clearAll", "navigate");
         var self = this;
 
         this._selectedModule = null;
         this._selectedForm = null;
         this._selectedCase = null;
+        this._navEnabled = true;
         this.router = new AppNavigation();
         this.appListView = new AppListView({
             apps: this.options.apps,
             language: this.options.language
         });
         cloudCare.dispatch.on("app:selected", function (app) {
-            self.router.navigate("view/" + app.model.id);
+            self.navigate("view/" + app.model.id);
             self.selectApp(app.model.id);
         });
         cloudCare.dispatch.on("app:deselected", function (app) {
             this._selectedModule = null;
-            self.router.navigate("");
+            self.navigate("");
             self.selectApp(null);
         });
         this.appView = new AppView({
@@ -437,28 +438,8 @@ var AppMainView = Backbone.View.extend({
             caseUrlRoot: this.options.caseUrlRoot,
             urlRoot: this.options.urlRoot
         });
-        this.appView.moduleListView.on("modules:updated", function () {
-            // this selects an appropriate module any time they are updated.
-            // we have to be careful to clear this field anytime a module
-            // is deselected
-            if (self._selectedModule !== null) {
-                this.getModuleView(self._selectedModule).select();
-            }
-            self._selectedModule = null;
-        });
-        cloudCare.dispatch.on("cases:updated", function () {
-            // same trick but with cases
-            if (self._selectedCase !== null) {
-                self.appView.formListView.caseView.listView.caseMap[self._selectedCase].select();
-            }
-            self._selectedCase = null;
-        });
-
-        // incoming routes
-        this.router.on("route:clear", function () {
-            self.clearAll();
-        });
         
+        // utilities
         var selectApp = function (appId) {
             self.appListView.getAppView(appId).select();
         };
@@ -492,33 +473,75 @@ var AppMainView = Backbone.View.extend({
             self._selectedCase = caseId; 
         };
         
-        this.router.on("route:app", function (appId) {
+        var pauseNav = function (f) {
+            // wrapper to prevent navigation during the execution 
+            // of a function 
+            var wrappedF = function () {
+                try {
+                    self._navEnabled = false;
+                    return f.apply(this, arguments);
+                } finally {
+                    self._navEnabled = true;
+                }
+            };
+            return wrappedF;
+        };
+        
+        // incoming routes
+        
+        this.router.on("route:clear", pauseNav(function () {
+            self.clearAll();
+        }));
+        
+        
+        this.router.on("route:app", pauseNav(function (appId) {
             self.clearModules();
             selectApp(appId);
-        });
-        this.router.on("route:app:module", function (appId, moduleIndex) {
+        }));
+        
+        this.router.on("route:app:module", pauseNav(function (appId, moduleIndex) {
             self.clearForms();
             selectApp(appId);
             selectModule(moduleIndex);
-        });
-        this.router.on("route:app:module:form", function (appId, moduleIndex, formIndex) {
+        }));
+        this.router.on("route:app:module:form", pauseNav(function (appId, moduleIndex, formIndex) {
             self.clearForms();
             selectApp(appId);
             selectModule(moduleIndex);
             selectForm(formIndex);
-        });
-        this.router.on("route:app:module:form:case", function (appId, moduleIndex, formIndex, caseId) {
+        }));
+        this.router.on("route:app:module:form:case", pauseNav(function (appId, moduleIndex, formIndex, caseId) {
             self.clearCases();
             selectApp(appId);
             selectModule(moduleIndex);
             selectForm(formIndex);
             selectCase(caseId);
-        });
+        }));
         
+        // these are also incoming routes, that look funny because of how the event
+        // spaghetti resolves.
+        this.appView.moduleListView.on("modules:updated", pauseNav(function () {
+            // this selects an appropriate module any time they are updated.
+            // we have to be careful to clear this field anytime a module
+            // is deselected
+            if (self._selectedModule !== null) {
+                this.getModuleView(self._selectedModule).select();
+            }
+            self._selectedModule = null;
+        }));
+        cloudCare.dispatch.on("cases:updated", pauseNav(function () {
+            // same trick but with cases
+            if (self._selectedCase !== null) {
+                self.appView.formListView.caseView.listView.caseMap[self._selectedCase].select();
+            }
+            self._selectedCase = null;
+        }));
+
         
         // setting routes
+        
         cloudCare.dispatch.on("module:selected", function (module) {
-            self.router.navigate("view/" + module.get("app_id") + 
+            self.navigate("view/" + module.get("app_id") + 
                                  "/" + module.get("index"));
             // hack to resolve annoying event-driven dependencies (see below)
             self.trigger("module:selected");
@@ -532,35 +555,41 @@ var AppMainView = Backbone.View.extend({
         });
         
         cloudCare.dispatch.on("module:deselected", function (module) {
-            self.router.navigate("view/" + module.get("app_id"));
+            self.navigate("view/" + module.get("app_id"));
             self.clearModules();
         });
         cloudCare.dispatch.on("form:selected", function (form) {
-            self.router.navigate("view/" + form.get("app_id") + 
+            self.navigate("view/" + form.get("app_id") + 
                                  "/" + form.get("module_index") + 
                                  "/" + form.get("index"));
             
         });
         cloudCare.dispatch.on("form:deselected", function (form) {
-            self.router.navigate("view/" + form.get("app_id") + 
+            self.navigate("view/" + form.get("app_id") + 
                                  "/" + form.get("module_index"));
             self.clearForms();
         });
         cloudCare.dispatch.on("case:selected", function (caseModel) {
             var appConfig = caseModel.get("appConfig");
-            self.router.navigate("view/" + appConfig.app_id + 
+            self.navigate("view/" + appConfig.app_id + 
                                  "/" + appConfig.module_index + 
                                  "/" + appConfig.form_index +
                                  "/" + caseModel.id);
         });
         cloudCare.dispatch.on("case:deselected", function (caseModel) {
             var appConfig = caseModel.get("appConfig");
-            self.router.navigate("view/" + appConfig.app_id + 
+            self.navigate("view/" + appConfig.app_id + 
                                  "/" + appConfig.module_index + 
                                  "/" + appConfig.form_index);
         });
         
         
+    },
+    
+    navigate: function (path) {
+        if (this._navEnabled) {
+            this.router.navigate(path);
+        }
     },
     
     selectApp: function (appId) {
