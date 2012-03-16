@@ -52,7 +52,7 @@
 <script>
 
     $(function () {
-        var urlRoot = "{% url cloudcare_app_list domain %}";
+        var urlRoot = "{% url cloudcare_app_list domain '' %}";
         var appUrlRoot = "{% url cloudcare_get_apps domain %}";
         var caseUrlRoot = "{% url cloudcare_get_cases domain %}"; 
         var language = "{{ language }}";
@@ -65,8 +65,7 @@
 			caseUrlRoot: caseUrlRoot
         });
         // TODO: when we figure out what to do about get params, use this
-        // Backbone.history.start({pushState: true, root: "{% url cloudcare_app_list domain %}"});
-        Backbone.history.start({pushState: false, root: "{% url cloudcare_app_list domain %}"});
+        Backbone.history.start({pushState: true, root: urlRoot});
     }());
 
 </script>
