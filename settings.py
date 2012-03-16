@@ -155,7 +155,6 @@ HQ_APPS = (
     'corehq.apps.prescriptions',
     'corehq.apps.translations',
     'corehq.apps.users',
-    'corehq.apps.hqtimezones',
     'corehq.apps.ota',
     'corehq.apps.groups',
     'corehq.apps.sms',
