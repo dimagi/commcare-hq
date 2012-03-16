@@ -48,10 +48,10 @@ class PathfinderPatientGroup(QueryableList):
         self._no_need = lambda x: x['registration_and_followup_hiv'] == 'no_need'
         self._opted_out = lambda x: x['registration_and_followup_hiv'] == 'opted_out'
 
-        self._vct = lambda x: x['referrals_hiv'].count('counselling_and_testing') > 0
-        self._ois = lambda x: x['referrals_hiv'].count('opportunistic_infections') > 0
-        self._ctc = lambda x: x['referrals_hiv'].count('referred_to_ctc') > 0
-        self._pmtct = lambda x: x['referrals_hiv'].count('prevention_from_mother_to_child') > 0
-        self._fp = lambda x: x['referrals_hiv'].count('ref_fp') > 0
-        self._sg = lambda x: x['referrals_hiv'].count('other_services') > 0
-        self._tb = lambda x: x['referrals_hiv'].count('tb_clinic') > 0
+        self._vct = lambda x: x['referrals_hiv'].lower().count('kupima') > 0
+        self._ois = lambda x: x['referrals_hiv'].lower().count('nyemelezi') > 0
+        self._ctc = lambda x: x['referrals_hiv'].lower().count('ctc') > 0
+        self._pmtct = lambda x: x['referrals_hiv'].lower().count('pmtct') > 0
+        self._fp = lambda x: x['referrals_hiv'].lower().count('uzazi') > 0
+        self._sg = lambda x: x['referrals_hiv'].lower().count('vikundi') > 0
+        self._tb = lambda x: x['referrals_hiv'].lower().count('tb') > 0
