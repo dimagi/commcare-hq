@@ -69,7 +69,7 @@ class FixtureDataItem(Document):
         xData = ElementTree.Element(self.data_type.tag)
         for field in self.data_type.fields:
             xField = ElementTree.SubElement(xData, field)
-            xField.text = self.fields[field] if self.fields.has_key(field) else ""
+            xField.text = unicode(self.fields[field]) if self.fields.has_key(field) else ""
         return xData
 
     def get_groups(self, wrap=True):
@@ -85,7 +85,7 @@ class FixtureDataItem(Document):
         else:
             return group_ids
 
-    def get_users(self, wrap=True, all=True):
+    def get_users(self, wrap=True, include_groups=False):
         user_ids = set(
             get_db().view('fixtures/ownership',
                 key=['user by data_item', self.domain, self.get_id],
@@ -93,15 +93,21 @@ class FixtureDataItem(Document):
                 wrapper=lambda r: r['value']
             )
         )
-        if all:
+        if include_groups:
             group_ids = self.get_groups(wrap=False)
         else:
             group_ids = set()
-        users_in_groups = [group.get_users(only_commcare=True) for group in Group.view('_all_docs', keys=list(group_ids))]
+        users_in_groups = [group.get_users(only_commcare=True) for group in Group.view('_all_docs',
+            keys=list(group_ids),
+            include_docs=True
+        )]
         if wrap:
-            return set(CommCareUser.view('_all_docs', keys=list(user_ids))) | set(users_in_groups)
+            return set(CommCareUser.view('_all_docs', keys=list(user_ids), include_docs=True)).union(*users_in_groups)
         else:
             return user_ids | set([user.get_id for user in users_in_groups])
+
+    def get_all_users(self, wrap=True):
+        return self.get_users(wrap=wrap, include_groups=True)
 
     @classmethod
     def by_user(cls, user, wrap=True):

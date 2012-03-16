@@ -3,6 +3,7 @@ from xml.etree import ElementTree
 from casexml.apps.case.xml import V2
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.users.models import CommCareUser
+from couchdbkit.exceptions import ResourceNotFound
 
 def item_lists(user, version=V2, last_sync=None):
     if isinstance(user, CommCareUser):
@@ -17,9 +18,12 @@ def item_lists(user, version=V2, last_sync=None):
     items_by_type = defaultdict(list)
 
     for item in items:
-        items_by_type[item.data_type_id].append(item)
         if not data_types.has_key(item.data_type_id):
-            data_types[item.data_type_id] = FixtureDataType.get(item.data_type_id)
+            try:
+                data_types[item.data_type_id] = FixtureDataType.get(item.data_type_id)
+            except ResourceNotFound:
+                continue
+        items_by_type[item.data_type_id].append(item)
         item._data_type = data_types[item.data_type_id]
 
     fixtures = []

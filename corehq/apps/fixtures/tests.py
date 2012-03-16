@@ -53,7 +53,7 @@ class FixtureDataTest(TestCase):
 
     def test_ownership(self):
         self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, wrap=False))
-        self.assertItemsEqual([self.user.get_id], self.data_item.get_users(wrap=False))
+        self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
 
         fixture, = fixturegenerators.item_lists(self.user)
 
@@ -69,7 +69,7 @@ class FixtureDataTest(TestCase):
         """ % self.user.user_id, ElementTree.tostring(fixture))
 
         self.data_item.remove_user(self.user)
-        self.assertItemsEqual([], self.data_item.get_users())
+        self.assertItemsEqual([], self.data_item.get_all_users())
 
         self.fixture_ownership = self.data_item.add_user(self.user)
-        self.assertItemsEqual([self.user.get_id], self.data_item.get_users(wrap=False))
+        self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))

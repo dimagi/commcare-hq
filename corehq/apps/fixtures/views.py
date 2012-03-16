@@ -36,23 +36,44 @@ def strip_json(obj, disallow_basic=None, disallow=None):
 
 @require_can_edit_fixtures
 def data_types(request, domain, data_type_id):
-    if request.method == 'POST' and data_type_id is None:
-        o = FixtureDataType(domain=domain, **json.load(request))
-        o.save()
-        return json_response(strip_json(o))
-    elif request.method == 'GET' and data_type_id is None:
-        return json_response([strip_json(x) for x in FixtureDataType.by_domain(domain)])
-    elif request.method == 'GET' and data_type_id:
-        return json_response(strip_json(FixtureDataType.get(data_type_id)))
-    elif request.method == 'PUT' and data_type_id:
-        original = FixtureDataType.get(data_type_id)
-        new = FixtureDataType(domain=domain, **json.load(request))
-        for attr in 'tag', 'name', 'fields':
-            setattr(original, attr, getattr(new, attr))
-        original.save()
-        return json_response(strip_json(original))
-    else:
-        return HttpResponseBadRequest()
+    if data_type_id:
+        data_type = FixtureDataType.get(data_type_id)
+
+        assert(data_type.doc_type == FixtureDataType._doc_type)
+        assert(data_type.domain == domain)
+
+        if request.method == 'GET':
+            return json_response(strip_json(data_type))
+
+        elif request.method == 'PUT':
+            new = FixtureDataType(domain=domain, **json.load(request))
+            for attr in 'tag', 'name', 'fields':
+                setattr(data_type, attr, getattr(new, attr))
+            data_type.save()
+            return json_response(strip_json(data_type))
+
+        elif request.method == 'DELETE':
+            for item in FixtureDataItem.by_data_type(domain, data_type.get_id):
+                item.delete()
+            data_type.delete()
+            return json_response({})
+
+    elif data_type_id is None:
+
+        if request.method == 'POST':
+            data_type = FixtureDataType(domain=domain, **json.load(request))
+            data_type.save()
+            return json_response(strip_json(data_type))
+
+        elif request.method == 'GET':
+            return json_response([strip_json(x) for x in FixtureDataType.by_domain(domain)])
+
+    return HttpResponseBadRequest()
+
+
+def prepare_user(user):
+    user.username = user.raw_username
+    return strip_json(user, disallow=['password'])
 
 @require_can_edit_fixtures
 def data_items(request, domain, data_type_id, data_item_id):
@@ -63,7 +84,12 @@ def data_items(request, domain, data_type_id, data_item_id):
             ret['groups'] = []
             for group in item.get_groups():
                 ret['groups'].append(strip_json(group))
+        if request.GET.get('users') == 'true':
+            ret['users'] = []
+            for user in item.get_users():
+                ret['users'].append(prepare_user(user))
         return ret
+
     if request.method == 'POST' and data_item_id is None:
         o = FixtureDataItem(domain=domain, data_type_id=data_type_id, **json.load(request))
         o.save()
@@ -74,20 +100,76 @@ def data_items(request, domain, data_type_id, data_item_id):
         o = FixtureDataItem.get(data_item_id)
         assert(o.domain == domain and o.data_type.get_id == data_type_id)
         return json_response(prepare_item(o))
-    elif request.method == 'PUT' and data_type_id:
+    elif request.method == 'PUT' and data_item_id:
         original = FixtureDataItem.get(data_item_id)
         new = FixtureDataItem(domain=domain, **json.load(request))
         for attr in 'fields',:
             setattr(original, attr, getattr(new, attr))
         original.save()
         return json_response(strip_json(original, disallow=['data_type_id']))
-    elif request.method == 'DELETE' and data_type_id:
+    elif request.method == 'DELETE' and data_item_id:
         o = FixtureDataItem.get(data_item_id)
         assert(o.domain == domain and o.data_type.get_id == data_type_id)
         o.delete()
         return json_response({})
     else:
         return HttpResponseBadRequest()
+
+def data_item_groups(request, domain, data_type_id, data_item_id, group_id):
+    data_type = FixtureDataType.get(data_type_id)
+    data_item = FixtureDataItem.get(data_item_id)
+    group = Group.get(group_id)
+    assert(data_type.doc_type == FixtureDataType._doc_type)
+    assert(data_type.domain == domain)
+    assert(data_item.doc_type == FixtureDataItem._doc_type)
+    assert(data_item.domain == domain)
+    assert(data_item.data_type_id == data_type_id)
+    assert(group.doc_type == Group._doc_type)
+    assert(group.domain == domain)
+
+    print request.method
+
+    if request.method == 'POST':
+        data_item.add_group(group)
+        return json_response({})
+    elif request.method == 'DELETE':
+        data_item.remove_group(group)
+        return json_response({})
+    else:
+        return HttpResponseBadRequest()
+
+def data_item_users(request, domain, data_type_id, data_item_id, user_id):
+    data_type = FixtureDataType.get(data_type_id)
+    data_item = FixtureDataItem.get(data_item_id)
+    user = CommCareUser.get(user_id)
+    assert(data_type.doc_type == FixtureDataType._doc_type)
+    assert(data_type.domain == domain)
+    assert(data_item.doc_type == FixtureDataItem._doc_type)
+    assert(data_item.domain == domain)
+    assert(data_item.data_type_id == data_type_id)
+    assert(user.doc_type == CommCareUser._doc_type)
+    assert(user.domain == domain)
+
+    print request.method
+
+    if request.method == 'POST':
+        data_item.add_user(user)
+        return json_response({})
+    elif request.method == 'DELETE':
+        data_item.remove_user(user)
+        return json_response({})
+    else:
+        return HttpResponseBadRequest()
+
+@require_can_edit_fixtures
+def groups(request, domain):
+    groups = Group.by_domain(domain)
+    return json_response(map(strip_json, groups))
+
+@require_can_edit_fixtures
+def users(request, domain):
+    users = CommCareUser.by_domain(domain)
+    return json_response(map(prepare_user, users))
 
 @require_can_edit_fixtures
 def view(request, domain, template='fixtures/view.html'):
