@@ -5,7 +5,7 @@ from dimagi.utils.web import get_url_base
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db.models.signals import post_save
-from corehq.apps.domain.models import Domain, CouchDomain, RegistrationRequest
+from corehq.apps.domain.models import Domain
 
 
 def send_new_domain_email(sender, instance, created, **kwargs):
@@ -27,18 +27,20 @@ def send_new_domain_email(sender, instance, created, **kwargs):
 
 
 def update_couch_domain(sender, instance, created, **kwargs):
-    couch_domain = CouchDomain.view("domain/domains", key=instance.name, 
+    couch_domain = Domain.view("domain/domains", key=instance.name,
                                     reduce=False, include_docs=True).one()
     if couch_domain:
         if couch_domain.is_active != instance.is_active:
             couch_domain.is_active = instance.is_active
             couch_domain.save()
     else:
-        couch_domain = CouchDomain(name=instance.name, 
-                                   is_active=instance.is_active,
-                                   is_public=False,
-                                   date_created=datetime.utcnow())
+        couch_domain = Domain(name=instance.name,
+                               is_active=instance.is_active,
+                               is_public=False,
+                               date_created=datetime.utcnow())
         couch_domain.save()
-    
-post_save.connect(update_couch_domain, sender=Domain)
-post_save.connect(send_new_domain_email, sender=RegistrationRequest)
+
+# BIYEUN: deal with these
+
+#post_save.connect(update_couch_domain, sender=Domain)
+#post_save.connect(send_new_domain_email, sender=RegistrationRequest)

@@ -83,13 +83,13 @@ def get_report_analytics_tag(request):
 @register.simple_tag
 def domains_for_user(request):
     domain_list = Domain.active_for_user(request.user)
-    new_domain_url = reverse("domain_registration_request", args=["existing_user"]);
+    new_domain_url = reverse("registration_domain")
     lst = list()
     lst.append('<ul class="dropdown-menu nav-list dropdown-orange">')
     if len(domain_list) > 0:
         lst.append('<li class="nav-header">My Projects</li>')
         for domain in domain_list:
-            default_url = reverse("default_report", args=[domain.name])
+            default_url = reverse("domain_homepage", args=[domain.name])
             lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.name))
         lst.append('<li class="divider"></li>')
         lst.append('<li><a href="/a/public/">View Demo Project</a></li>')
@@ -101,3 +101,16 @@ def domains_for_user(request):
     lst.append("</ul>")
 
     return "".join(lst)
+
+@register.simple_tag
+def list_my_domains(request):
+    domain_list = Domain.active_for_user(request.user)
+    lst = list()
+    lst.append('<ul class="nav nav-pills nav-stacked">')
+    for domain in domain_list:
+        default_url = reverse("domain_homepage", args=[domain.name])
+        lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.name))
+    lst.append('</ul>')
+
+    return "".join(lst)
+

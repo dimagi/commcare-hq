@@ -971,7 +971,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     profile = DictProperty() #SchemaProperty(Profile)
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
-
+    cloudcare_enabled = BooleanProperty(default=False)
+    
     @classmethod
     def wrap(cls, data):
         for module in data['modules']:
@@ -1474,7 +1475,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
             raise Http404
 
     if domain:
-        try:    Domain.objects.get(name=domain)
+        try:    Domain.get_by_name(domain)
         except: raise Http404
 
         if app['domain'] != domain:
