@@ -247,8 +247,8 @@ def update_patients_with_followups(domain, patients, caseid_set, year, month):
             p['medication_given'] += fp['medication_given'] + " "
         if "services_given" in fp and fp['services_given']:
             p['services'] += fp['services_given'] + " "
-        if "any_referral" in fp and fp['any_referral']:
-            p['referrals'] += fp['any_referral'] + " "
+        if "any_referral" in fp and fp['any_referral'] == "yes":
+            p['referrals'] += fp['referrals'] + " "
         p.update(fp)
 
 
