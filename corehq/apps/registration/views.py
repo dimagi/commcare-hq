@@ -154,6 +154,8 @@ def confirm_domain(request, guid=None):
     requested_domain.save()
     requesting_user = WebUser.get_by_username(req.new_user_username)
 
+    send_new_domain_request_update_email(requesting_user, get_ip(request), requested_domain.name, is_confirming=True)
+
     vals['message_title'] = 'Account Confirmed'
     vals['message_subtitle'] = 'Thank you for activating your account, %s!' % requesting_user.first_name
     vals['message_body'] = 'Your account has been successfully activated. Thank you for taking the time to confirm your email address: %s.' % requesting_user.username

@@ -1,7 +1,9 @@
+import logging
 import uuid
 from datetime import datetime
+from django.core.mail import send_mail
 from corehq.apps.registration.models import RegistrationRequest
-from dimagi.utils.web import get_ip
+from dimagi.utils.web import get_ip, get_url_base
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
@@ -63,6 +65,8 @@ def request_new_domain(request, form, new_user=True):
     else:
         send_global_domain_registration_email(request.user, new_domain.name)
 
+    send_new_domain_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=new_user)
+
 def send_domain_registration_email(recipient, domain_name, guid):
     DNS_name = Site.objects.get(id = settings.SITE_ID).domain
     activation_link = 'http://' + DNS_name + reverse('registration_confirm_domain') + guid + '/'
@@ -113,7 +117,10 @@ The CommCareHQ Team
 
     subject = 'Welcome to CommCare HQ!'.format(**locals())
 
-    send_HTML_email(subject, recipient, message_plaintext, message_html)
+    try:
+        send_HTML_email(subject, recipient, message_plaintext, message_html)
+    except Exception:
+        logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
 
 def send_global_domain_registration_email(requesting_user, domain_name):
@@ -162,4 +169,32 @@ The CommCareHQ Team
 
     subject = 'CommCare HQ: New domain created!'.format(**locals())
 
-    send_HTML_email(subject, requesting_user.email, message_plaintext, message_html)
+    try:
+        send_HTML_email(subject, requesting_user.email, message_plaintext, message_html)
+    except Exception:
+        logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
+
+def send_new_domain_request_update_email(user, requesting_ip, domain_name, is_new_user=False, is_confirming=False):
+    if is_confirming:
+        message = "A (basically) brand new user just confirmed his/her account. The project space requested was %s." % domain_name
+    elif is_new_user:
+        message = "A brand new user just requested a project space called %s." % domain_name
+    else:
+        message = "An existing user just created a new project space called %s." % domain_name
+    message = """%s
+
+Details include...
+
+Username: %s
+IP Address: %s
+
+You can view the domain here: %s""" % (
+        message,
+        user.username,
+        requesting_ip,
+        get_url_base() + "/a/%s/" % domain_name)
+    try:
+        recipients = settings.NEW_DOMAIN_RECIPIENTS
+        send_mail("New Domain: %s" % domain_name, message, settings.EMAIL_LOGIN, recipients)
+    except Exception:
+        logging.warning("Can't send email, but the message was:\n%s" % message)
