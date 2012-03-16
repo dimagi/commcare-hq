@@ -1,7 +1,9 @@
 from datetime import date, datetime, timedelta, time
 from calendar import month_name
+import pytz
 from dimagi.utils.logging import log_exception
 from dimagi.utils.parsing import string_to_datetime
+from dimagi.utils.timezones import utils as tz_utils
 from dateutil.rrule import *
 
 def force_to_date(val):
@@ -67,17 +69,24 @@ class DateSpan(object):
     A useful class for representing a date span
     """
     
-    def __init__(self, startdate, enddate, format=DEFAULT_DATE_FORMAT, inclusive=True):
+    def __init__(self, startdate, enddate, format=DEFAULT_DATE_FORMAT, inclusive=True, timezone=pytz.utc):
         self.startdate = startdate
         self.enddate = enddate
         self.format = format
         self.inclusive = inclusive
         self.is_default = False
-    
+        self.timezone = timezone
+
     @property
     def startdate_param(self):
         if self.startdate:
             return self.startdate.strftime(self.format)
+
+    @property
+    def startdate_param_utc(self):
+        if self.startdate:
+            adjusted_startdate = tz_utils.adjust_datetime_to_timezone(self.startdate, self.timezone.zone, pytz.utc.zone)
+            return adjusted_startdate.strftime(self.format)
 
     @property
     def startdate_display(self):
@@ -90,6 +99,14 @@ class DateSpan(object):
             # you need to add a day to enddate if your dates are meant to be inclusive
             offset = timedelta(days=1 if self.inclusive else 0)
             return (self.enddate + offset).strftime(self.format)
+
+    @property
+    def enddate_param_utc(self):
+        if self.enddate:
+            # you need to add a day to enddate if your dates are meant to be inclusive
+            adjusted_enddate = tz_utils.adjust_datetime_to_timezone(self.enddate, self.timezone.zone, pytz.utc.zone)
+            offset = timedelta(days=1 if self.inclusive else 0)
+            return (adjusted_enddate + offset).strftime(self.format)
 
     @property
     def end_of_end_day(self):
@@ -143,7 +160,7 @@ class DateSpan(object):
         return DateSpan(start, end, format)
     
     @classmethod
-    def since(cls, days, enddate=None, format=DEFAULT_DATE_FORMAT):
+    def since(cls, days, enddate=None, format=DEFAULT_DATE_FORMAT, timezone=pytz.utc):
         """
         Generate a DateSpan ending with a certain date, and going back 
         N days. The enddate defaults to tomorrow midnight 
@@ -152,10 +169,10 @@ class DateSpan(object):
         Will always ignore times.
         """
         if enddate is None:
-            enddate = datetime.utcnow()
+            enddate = datetime.now(tz=timezone)
         end = datetime(enddate.year, enddate.month, enddate.day)
         start = end - timedelta(days=days)
-        return DateSpan(start, end, format)
+        return DateSpan(start, end, format, timezone=timezone)
                     
     
     def parse(self, startdate_str, enddate_str, parse_format, display_format=None):
