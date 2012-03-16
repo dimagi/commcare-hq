@@ -30,7 +30,6 @@ class ExportWriter(object):
                 used_headers.append(ret)
                 return ret
             
-            
             assert(len(table) == 1)
             row = table[0]
             # make sure we trim the headers
