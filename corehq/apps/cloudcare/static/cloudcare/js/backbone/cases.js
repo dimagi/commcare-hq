@@ -105,24 +105,26 @@ var CaseListView = Backbone.View.extend({
             model: item,
             columns: this.detailsShort.get("columns")
         });
+        // set the app config on the case if it's there
+        // so that other events can access it later
+        item.set("appConfig", this.options.appConfig);
         caseView.on("selected", function () {
             if (self.selectedCaseView) {
                 self.selectedCaseView.deselect();
             }
             if (self.selectedCaseView !== this) {
                 self.selectedCaseView = this;
-                self.trigger("case:selected", this);
-                cloudCare.dispatch.trigger("case:selected", this);
+                cloudCare.dispatch.trigger("case:selected", this.model);
             } 
         });
         caseView.on("deselected", function () {
             self.selectedCaseView = null;
-            self.trigger("case:deselected", this);
-            cloudCare.dispatch.trigger("case:deselected", this);
+            cloudCare.dispatch.trigger("case:deselected", this.model);
         });
       
         $('table tbody', this.el).append(caseView.render().el);
         this.caseMap[item.id] = caseView;
+        
       
     },
     appendAll: function () {
@@ -183,28 +185,32 @@ var CaseMainView = Backbone.View.extend({
                                           cases: this.options.cases,
                                           case_type: this.options.case_type,
                                           language: this.options.language,
-                                          caseUrl: this.options.caseUrl });
+                                          caseUrl: this.options.caseUrl,
+                                          appConfig: this.options.appConfig});
         $(this.listView.render().el).appendTo($(this.el));
         this.detailsView = new CaseDetailsView({details: this.options.summaryDetails,
-                                                language: this.options.language});
+                                                language: this.options.language,
+                                                appConfig: this.options.appConfig});
         $(this.detailsView.render().el).appendTo($(this.el));
         $("<div />").addClass("clear").appendTo($(this.el));
-        cloudCare.dispatch.on("case:selected", function (caseView) {
-            self.selectCase(caseView);
-            self.router.navigate("case/" + caseView.model.id);
+        cloudCare.dispatch.on("case:selected", function (caseModel) {
+            self.selectCase(caseModel);
+            // routing now wholly handled by cloudcare
+            //self.router.navigate("case/" + caseView.model.id);
         });
-        cloudCare.dispatch.on("case:deselected", function (caseView) {
+        cloudCare.dispatch.on("case:deselected", function (caseModel) {
             self.selectCase(null);
-            self.router.navigate("");
+            // routing now wholly handled by cloudcare
+            //self.router.navigate("");
         });
         
     },
     
-    selectCase: function (caseView) {
-        if (caseView === null) {
+    selectCase: function (caseModel) {
+        if (caseModel === null) {
             this.detailsView.model = null;
         } else {
-            this.detailsView.model = caseView.model;
+            this.detailsView.model = caseModel;
         }
         this.detailsView.render();
     },
