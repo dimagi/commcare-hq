@@ -342,7 +342,7 @@ UPDATE_PRELOAD_CASE_SOURCE = """<?xml version="1.0"?>
 			<bind nodeset="/data/case/@user_id" calculate="/data/meta/userID"/>
 			<bind nodeset="/data/case/@case_id" calculate="instance('commcaresession')/session/data/case_id"/>
 			<bind nodeset="/data/case/update/question1" relevant="count(/data/question1) &gt; 0" calculate="/data/question1"/>
-			<setvalue ref="/data/question1" event="xforms-ready" value="instance('casedb')/casedb/case[@case_id=/data/case/@case_id]/question1"/>
+			<setvalue ref="/data/question1" event="xforms-ready" value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/question1"/>
 			<setvalue ref="/data/meta/deviceID" event="xforms-ready" value="instance('commcaresession')/session/context/deviceid"/>
 			<setvalue ref="/data/meta/timeStart" event="xforms-ready" value="now()"/>
 			<bind nodeset="/data/meta/timeStart" type="xsd:dateTime"/>

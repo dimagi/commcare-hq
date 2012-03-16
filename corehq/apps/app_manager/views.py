@@ -1139,6 +1139,8 @@ def edit_app_attr(req, domain, app_id, attr):
         'text_input', 'build_spec', 'show_user_registration',
         'use_custom_suite', 'custom_suite',
         'admin_password',
+        # Application only
+        'cloudcare_enabled',
         # RemoteApp only
         'profile_url',
     ]
@@ -1177,7 +1179,14 @@ def edit_app_attr(req, domain, app_id, attr):
         admin_password = req.POST.get('admin_password')
         if admin_password:
             app.set_admin_password(admin_password)
-    # For RemoteApp
+    
+    # For Normal Apps
+    if should_edit("cloudcare_enabled"):
+        if app.get_doc_type() not in ("Application",):
+            raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
+        app.cloudcare_enabled = bool(json.loads(req.POST['cloudcare_enabled']))
+    
+    # For RemoteApps
     if should_edit("profile_url"):
         if app.get_doc_type() not in ("RemoteApp",):
             raise Exception("App type %s does not support profile url" % app.get_doc_type())
