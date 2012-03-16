@@ -6,8 +6,8 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext, Context
 from django.template.loader import render_to_string
-from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser
+import pytz
+from corehq.apps.reports import util
 from dimagi.utils.modules import to_function
 from tempfile import NamedTemporaryFile
 from couchexport.models import Format
@@ -31,7 +31,6 @@ class HQReport(object):
     show_time_notice = False
     fields = []
     exportable = False
-    timezone = "UTC"
 
     def __init__(self, domain, request, base_context = None):
         base_context = base_context or {}
@@ -40,14 +39,8 @@ class HQReport(object):
         self.domain = domain
         self.request = request
 
-        requesting_user = WebUser.get_by_user_id(self.request.couch_user.user_id)
-        domain_membership = requesting_user.get_domain_membership(self.domain)
-        if domain_membership:
-            self.timezone = domain_membership.timezone
-        else:
-            current_domain = Domain.get_by_name(self.domain)
-            self.timezone = current_domain.default_timezone
-        print "Timezone for this report ", self.timezone
+        self.timezone = util.get_timezone(self.request.couch_user.user_id, domain)
+        print "Timezone for this report ", self.timezone.zone
 
         if not self.rows:
             self.rows = []
@@ -144,7 +137,7 @@ class ReportField(object):
     template = ""
     context = Context()
 
-    def __init__(self, request, domain=None, timezone="UTC"):
+    def __init__(self, request, domain=None, timezone=pytz.utc):
         self.request = request
         self.domain = domain
         self.timezone = timezone

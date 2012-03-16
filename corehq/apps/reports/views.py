@@ -271,7 +271,8 @@ def export_custom_data(req, domain, export_id):
 
 @login_and_domain_required
 def case_details(request, domain, case_id):
-    report_name = "Case Details"
+    web_user = WebUser.get_by_user_id(request.couch_user.user_id)
+
     try:
         case = CommCareCase.get(case_id)
         report_name = 'Details for Case "%s"' % case.name

@@ -5,6 +5,10 @@ from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_id_to_username
 from dimagi.utils.couch.database import get_db
+import pytz
+from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import WebUser
+from dimagi.utils.timezones import utils as tz_utils
 
 def report_context(domain,
             report_partial=None,
@@ -236,3 +240,17 @@ def app_export_filter(doc, app_id):
         return not doc.has_key('app_id')
     else:
         return True
+
+def get_timezone(couch_user_id, domain):
+    requesting_user = WebUser.get_by_user_id(couch_user_id)
+    domain_membership = requesting_user.get_domain_membership(domain)
+    if domain_membership:
+        timezone = domain_membership.timezone
+    else:
+        current_domain = Domain.get_by_name(domain)
+        try:
+            timezone = tz_utils.coerce_timezone_value(current_domain.default_timezone)
+        except pytz.UnknownTimeZoneError:
+            timezone = pytz.utc
+    return timezone
+
