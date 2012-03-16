@@ -101,6 +101,48 @@ def export_from_tables(tables, file, format, max_column_size=2000):
     else:
         raise Exception("Unsupported export format: %s!" % format)
     
+
+def export_raw(headers, data, file, format=Format.XLS_2007, 
+               max_column_size=2000, separator='|'):
+    """
+    Do a raw export from an in-memory representation of headers and data.
+    Headers should be a list of (tablename, table) tuples with only one
+    row (containing the headers) in the table.
+    
+    data_table should have the same format but can support multiple rows
+    per table if needed.
+    
+    Example:
+    
+    headers:
+     (("employee", ("id", "name", "gender")),
+      ("building", ("id", "name", "address")))
+    
+    data:
+     (("employee", (("1", "cory", "m"),
+                    ("2", "christian", "m"),
+                    ("3", "amelia", "f"))),
+      ("building", (("1", "dimagi", "585 mass ave."),
+                    ("2", "old dimagi", "529 main st."))))
+    
+    """
+    # transform docs onto output and save
+    writer = get_writer(format)
+    
+    
+    # format the headers the way the export likes them
+    headers = map(lambda table_headers: (table_headers[0], 
+                                         [FormattedRow(table_headers[1])]),
+                  headers)
+    writer.open(headers, file)
+    
+    # do the same for the data
+    data = map(lambda table_data: (table_data[0],
+                                   [FormattedRow(row) for row in table_data[1]]),
+               data)
+    writer.write(data)
+    writer.close()
+    
 def export(schema_index, file, format=Format.XLS_2007, 
            previous_export_id=None, filter=None, 
            max_column_size=2000, separator='|'):
