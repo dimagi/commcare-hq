@@ -172,7 +172,8 @@ HQ_APPS = (
     'phonelog',
     'pathfinder',
     'hutch',
-    'dca'
+    'dca',
+    'loadtest',
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
