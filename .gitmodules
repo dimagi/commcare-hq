@@ -75,4 +75,4 @@
 	url = git://github.com/dimagi/dca-reports.git
 [submodule "submodules/cchq-load-testing"]
 	path = submodules/cchq-load-testing
-	url = git@github.com:dimagi/cchq-load-testing.git
+	url = git://github.com/dimagi/cchq-load-testing.git
