@@ -494,6 +494,13 @@ class Detail(DocumentSchema):
     def display(self):
         return "short" if self.type.endswith('short') else 'long'
 
+    def filter_xpath(self):
+        filters = []
+        for i,column in enumerate(self.columns):
+            if column.format == 'filter':
+                filters.append("(%s)" % column.filter_xpath.replace('.', '%s_%s_%s' % (column.model, column.field, i)))
+        return ' && '.join(filters)
+
 class CaseList(IndexedSchema):
     label = DictProperty()
     show = BooleanProperty(default=False)

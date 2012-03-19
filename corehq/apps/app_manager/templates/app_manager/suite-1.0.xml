@@ -35,7 +35,12 @@
    {% if detail.columns %}
     <detail id="m{{ module.id }}_{{ detail.type }}">
         <title><text><locale id="m{{ module.id }}.{{ detail.type }}.title"/></text></title>
-        <filter><case case-type="{{ module.case_type }}"/></filter>
+        <filter>
+            {% if detail.filter_xpath %}
+            <raw function="{{ detail.filter_xpath }}"/>
+            {% endif %}
+            <case case-type="{{ module.case_type }}"/>
+        </filter>
         <model>
             <data>
                 {% for d in detail.columns %}
