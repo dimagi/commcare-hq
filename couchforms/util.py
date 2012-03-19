@@ -17,6 +17,7 @@ from dimagi.utils.couch import uid
 import re
 from dimagi.utils.post import post_authenticated_data, post_unauthenticated_data
 from restkit.errors import ResourceNotFound
+from lxml import etree
 
 def post_from_settings(instance, extras={}):
     url = settings.XFORMS_POST_URL if not extras else "%s?%s" % \
@@ -75,10 +76,24 @@ def post_xform_to_couch(instance, attachments={}):
             # this is an update conflict, i.e. the uid in the form was the same.
             # log it and flag it.
             def _extract_id_from_raw_xml(xml):
-                # TODO: this is brittle as hell. Fix.
-                _PATTERNS = (r"<instanceID>(\w+)</instanceID>", r"<uid>(\w+)</uid>", r"<uuid>(\w+)</uuid>")
+                
+                # this is the standard openrosa way of doing things
+                parsed = etree.XML(xml)
+                meta_ns = "http://openrosa.org/jr/xforms"
+                val = parsed.find("{%(ns)s}meta/{%(ns)s}instanceID" % \
+                                  {"ns": meta_ns})
+                if val is not None and val.text:
+                    return val.text
+                
+                # if we get here search more creatively for some of the older
+                # formats
+                _PATTERNS = (r"<instanceID>(\w+)</instanceID>", 
+                             r"<uid>(\w+)</uid>", 
+                             r"<uuid>(\w+)</uuid>")
                 for pattern in _PATTERNS:
-                    if re.search(pattern, xml): return re.search(pattern, xml).groups()[0]
+                    if re.search(pattern, xml): 
+                        return re.search(pattern, xml).groups()[0]
+                
                 logging.error("Unable to find conflicting matched uid in form: %s" % xml)
                 return ""
             conflict_id = _extract_id_from_raw_xml(instance)
