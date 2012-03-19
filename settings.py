@@ -3,6 +3,7 @@
 
 import os
 import logging
+from django.contrib import messages
 
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 
@@ -14,7 +15,7 @@ MANAGERS = ADMINS
 
 
 # default to the system's timezone settings
-TIME_ZONE = "EST"
+TIME_ZONE = "UTC"
 
 
 # Language code for this installation. All choices can be found here:
@@ -150,6 +151,7 @@ HQ_APPS = (
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
+    'corehq.apps.fixtures',
     'corehq.apps.reminders',
     'corehq.apps.prescriptions',
     'corehq.apps.translations',
@@ -172,7 +174,8 @@ HQ_APPS = (
     'phonelog',
     'pathfinder',
     'hutch',
-    'dca'
+    'dca',
+    'loadtest',
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
@@ -244,7 +247,10 @@ PAGINATOR_MAX_PAGE_LINKS = 5
 OPENROSA_VERSION = "1.0"
 
 # OTA restore fixture generators
-FIXTURE_GENERATORS = ["corehq.apps.users.fixturegenerators.user_groups"]
+FIXTURE_GENERATORS = [
+    "corehq.apps.users.fixturegenerators.user_groups",
+    "corehq.apps.fixtures.fixturegenerators.item_lists",
+]
 
 # xep_hq_server settings
 XEP_AUTHORIZE = 'corehq.apps.app_manager.models.authorize_xform_edit'
@@ -349,6 +355,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'hqadmin',
         'domain',
         'forms',
+        'fixtures',
         'groups',
         'hqcase',
         'hqmedia',
@@ -460,4 +467,12 @@ CUSTOM_REPORT_MAP = {
                    'dca.reports.PortfolioComparisonReport',
                    'dca.reports.PerformanceReport',
                    'dca.reports.PerformanceRatiosReport']
+}
+
+MESSAGE_TAGS = {
+    messages.INFO: 'alert-info',
+    messages.DEBUG: '',
+    messages.SUCCESS: 'alert-success',
+    messages.WARNING: 'alert-error',
+    messages.ERROR: 'alert-error',
 }

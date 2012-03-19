@@ -4,6 +4,7 @@ decorator==3.3.2
 django==1.3
 django-celery==2.2.4
 django-kombu==0.9.1
+django-digest
 djtables==0.1.1
 Fabric==1.3.3
 gunicorn==0.12.0
@@ -23,3 +24,4 @@ tropo-webapi-python==0.1.3
 unidecode
 xlutils==1.4.1
 mock==0.8.0
+requests
