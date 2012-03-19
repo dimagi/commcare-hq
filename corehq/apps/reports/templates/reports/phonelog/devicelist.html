@@ -1,5 +1,16 @@
 {% extends 'reports/report_base.html' %}
 
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url default_report domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <a href="{% url phonelog_devices domain=domain %}">Device List</a>
+        </li>
+    </ul>
+{% endblock %}
+
 {% block reportpresentation %}
 <table class="table table-striped datatable">
     {% include 'phonelog/devicelist.html' %}

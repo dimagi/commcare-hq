@@ -1051,6 +1051,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return form.validate_form().render_xform()
 
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
+        def non_empty_only(dct):
+            return dict([(key, value) for key, value in dct.items() if value])
         if lang != "default":
             messages = {"cchq.case": "Case", "cchq.referral": "Referral"}
 
@@ -1059,7 +1061,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'langs': [lang] + self.langs,
             })
             custom = commcare_translations.loads(custom)
-            messages.update(custom)
+            messages.update(non_empty_only(custom))
 
             # include language code names
             for lc in self.langs:
@@ -1070,7 +1072,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             cc_trans = commcare_translations.load_translations(lang)
             messages.update(cc_trans)
 
-            messages.update(self.translations.get(lang, {}))
+            messages.update(non_empty_only(self.translations.get(lang, {})))
         else:
             messages = {}
             for lc in reversed(self.langs):

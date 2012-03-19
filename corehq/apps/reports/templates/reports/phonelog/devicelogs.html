@@ -1,9 +1,22 @@
 {% extends 'reports/report_base.html' %}
 
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url default_report domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li>
+            <a href="{% url phonelog_devices domain=domain %}">Device List</a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <div id="report-title"><a href="#">Logs for device "{{ device }}"</a></div>
+        </li>
+    </ul>
+{% endblock %}
+
 {% block reportpresentation %}
-    <div class="row-fluid" style="text-align: center;">
-        <a class="btn btn-primary" href="{% url device_log_raw domain device %}">View Raw Logs</a>
-        <a class="btn btn-primary" href="{% url phonelog_devices domain=domain %}">Back to Device List</a>
+    <div class="row-fluid" style="text-align: right;">
+        <a class="btn btn-primary" style="margin: 1em;" href="{% url device_log_raw domain device %}">View Raw Logs</a>
     </div>
     {% include 'phonelog/devicelogs.html' %}
 {% endblock %}
