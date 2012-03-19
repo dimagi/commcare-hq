@@ -1,9 +1,11 @@
 import types
 from datetime import date, datetime
 from django import template
+import pytz
 from couchforms import util
 from django.utils.html import escape
 from couchforms.models import XFormInstance
+from dimagi.utils.timezones import utils as tz_utils
 
 register = template.Library()
 
@@ -88,10 +90,10 @@ def render_form_xml(form):
     return '<pre id="formatted-form-xml" class="prettyprint linenums"><code class="language-xml">%s</code></pre>' % escape(form.get_xml().replace("><", ">\n<"))
 
 @register.simple_tag
-def form_inline_display(form_id):
+def form_inline_display(form_id, timezone=pytz.utc):
     if form_id:
         form = XFormInstance.get(form_id)
         if form:
-            return "%s: %s" % (form.received_on.date(), form.xmlns)
+            return "%s: %s" % (tz_utils.adjust_datetime_to_timezone(form.received_on, pytz.utc.zone, timezone.zone).date(), form.xmlns)
         return "missing form: %s" % form_id
     return "empty form id found"
