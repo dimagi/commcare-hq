@@ -498,7 +498,7 @@ class Detail(DocumentSchema):
         filters = []
         for i,column in enumerate(self.columns):
             if column.format == 'filter':
-                filters.append("(%s)" % column.filter_xpath.replace('.', '%s_%s_%s' % (column.model, column.field, i)))
+                filters.append("(%s)" % column.filter_xpath.replace('.', '%s_%s_%s' % (column.model, column.field, i + 1)))
         return ' && '.join(filters)
 
 class CaseList(IndexedSchema):
