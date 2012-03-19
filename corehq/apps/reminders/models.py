@@ -467,7 +467,7 @@ class CaseReminderHandler(Document):
             except Exception:
                 verified_number = None
 
-            return send_sms_to_verified_number(verified_number, message)
+            return send_sms_to_verified_number(reminder.domain, verified_number, message)
         elif reminder.method == "test" or reminder.method == "callback_test":
             print(message)
             return True

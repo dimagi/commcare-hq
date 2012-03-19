@@ -1,5 +1,5 @@
 function(doc) {
-  if (doc.doc_type == "MessageLog") {
-    	emit([doc.domain, doc.date], null);
+  if (doc.base_doc == "MessageLog") {
+    	emit([doc.doc_type, doc.domain, doc.date], null);
     }
 }

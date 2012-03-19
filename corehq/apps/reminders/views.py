@@ -165,23 +165,5 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
        ,"form":     form
     })
 
-@csrf_exempt
-def callback(request, domain):
-    if request.method == "POST":
-        data = json.loads(request.raw_post_data)
-        caller_id = data["session"]["from"]["id"]
-        user = CouchUser.get_by_default_phone(caller_id)
-        #
-        c = CaseReminderCallback()
-        c.phone_number = caller_id
-        c.timestamp = datetime.utcnow()
-        if user is not None:
-            c.user_id = user._id
-        c.save()
-        #
-        t = Tropo()
-        t.reject()
-        return HttpResponse(t.RenderJson())
-    else:
-        return HttpResponseBadRequest("Bad Request")
+
 

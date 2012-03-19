@@ -1,14 +1,14 @@
 from datetime import datetime
 from django.test import TestCase
 from django.test.client import Client
-from corehq.apps.sms.models import MessageLog
+from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.unicel.api import InboundParams, INCOMING, DATE_FORMAT
 
 class IncomingPostTest(TestCase):
 
     def setUp(self):
-        all_logs = MessageLog.all()
+        all_logs = SMSLog.all()
         for log in all_logs:
             log.delete()
         self.user = 'username'
@@ -34,8 +34,8 @@ class IncomingPostTest(TestCase):
         client = Client()
         response = client.post('/unicel/in/', fake_post)
         self.assertEqual(200, response.status_code)
-        self.assertEqual(1, MessageLog.count_by_domain(self.domain))
-        log = MessageLog.by_domain_dsc(self.domain).all()[0]
+        self.assertEqual(1, SMSLog.count_by_domain(self.domain))
+        log = SMSLog.by_domain_dsc(self.domain).all()[0]
         self.assertEqual(self.message_ascii, log.text)
         self.assertEqual(INCOMING, log.direction)
         self.assertEqual(log.date.strftime(DATE_FORMAT),
@@ -51,8 +51,8 @@ class IncomingPostTest(TestCase):
         client = Client()
         response = client.get('/unicel/in/', fake_post)
         self.assertEqual(200, response.status_code)
-        self.assertEqual(1, MessageLog.count_by_domain(self.domain))
-        log = MessageLog.by_domain_dsc(self.domain).all()[0]
+        self.assertEqual(1, SMSLog.count_by_domain(self.domain))
+        log = SMSLog.by_domain_dsc(self.domain).all()[0]
         self.assertEqual(self.message_utf_hex.decode("hex").decode("utf_16_be"),
                         log.text)
         self.assertEqual(INCOMING, log.direction)
