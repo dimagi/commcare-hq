@@ -3,6 +3,7 @@
 
 import os
 import logging
+from django.contrib import messages
 
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 
@@ -14,7 +15,7 @@ MANAGERS = ADMINS
 
 
 # default to the system's timezone settings
-TIME_ZONE = "EST"
+TIME_ZONE = "UTC"
 
 
 # Language code for this installation. All choices can be found here:
@@ -44,13 +45,15 @@ STATIC_URL = '/static/'
 filepath = os.path.abspath(os.path.dirname(__file__))
 
 STATICFILES_FINDERS = (
-    "staticfiles.finders.FileSystemFinder",
-    "staticfiles.finders.AppDirectoriesFinder"
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder"
 )
 
 STATICFILES_DIRS = (
     ('formdesigner', os.path.join(filepath,'submodules', 'formdesigner')),
 )
+
+DJANGO_LOG_FILE = "%s/%s" % (filepath, "commcarehq.django.log")
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -77,6 +80,7 @@ MIDDLEWARE_CLASSES = [
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.apps.domain.middleware.DomainMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
+    'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
 ]
 
@@ -89,7 +93,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     "django.core.context_processors.media",
     "django.core.context_processors.request",
     "django.contrib.messages.context_processors.messages",
-    'staticfiles.context_processors.static',
+    'django.core.context_processors.static',
     "corehq.util.context_processors.base_template", # sticks the base template inside all responses
     "corehq.util.context_processors.google_analytics",
 ]
@@ -108,7 +112,7 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     #'django.contrib.messages', # don't need this for messages and it's causing some error
-    'staticfiles', #soon to be django.contrib.staticfiles in 1.3
+    'django.contrib.staticfiles', 
     'south',
     'djcelery',    # pip install django-celery
     'djtables',    # pip install djtables
@@ -130,13 +134,14 @@ HQ_APPS = (
     'casexml.apps.case',
     'casexml.apps.phone',
     'corehq.apps.cleanup',
+    'corehq.apps.cloudcare',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
     'corehq.apps.hqadmin',
     'corehq.apps.hqcase',
     'corehq.apps.hqwebapp',
-    'corehq.apps.logtracker',
     'corehq.apps.docs',
+    'corehq.apps.hqmedia',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -146,6 +151,7 @@ HQ_APPS = (
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
+    'corehq.apps.fixtures',
     'corehq.apps.reminders',
     'corehq.apps.prescriptions',
     'corehq.apps.translations',
@@ -156,6 +162,7 @@ HQ_APPS = (
     'corehq.apps.registration',
     'corehq.apps.unicel',
     'corehq.apps.reports',
+    'corehq.apps.hq-bootstrap',
     'corehq.apps.builds',
     'corehq.apps.api',
     'corehq.couchapps',
@@ -166,6 +173,9 @@ HQ_APPS = (
     'touchforms.formplayer',
     'phonelog',
     'pathfinder',
+    'hutch',
+    'dca',
+    'loadtest',
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
@@ -176,15 +186,14 @@ TABS = [
     ("corehq.apps.reports.views.default", "Reports"),
     ("corehq.apps.app_manager.views.default", "Applications"),
     ("corehq.apps.sms.views.messaging", "Messages"),
-    ("corehq.apps.users.views.users", "Users"),
-    ("corehq.apps.domain.views.manage_domain", "My Domain"),
-    ("corehq.apps.hqadmin.views.default", "Admin", "is_superuser"),
+    ("corehq.apps.users.views.users", "Settings & Users"),
+    ("corehq.apps.domain.views.manage_domain", "Project Forwarding"),
+    ("corehq.apps.hqadmin.views.default", "Admin Reports", "is_superuser"),
 ]
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL='/'
-
 
 ####### Domain settings  #######
 
@@ -209,6 +218,7 @@ DOMAIN_SYNCS = { }
 DOMAIN_SYNC_APP_NAME_MAP = {}
 DOMAIN_SYNC_DATABASE_NAME = "commcarehq-public"
 
+
 ####### Release Manager App settings  #######
 RELEASE_FILE_PATH=os.path.join("data","builds")
 
@@ -222,11 +232,6 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 BASE_TEMPLATE="hqwebapp/base.html"
 LOGIN_TEMPLATE="login_and_password/login.html"
 LOGGEDOUT_TEMPLATE="loggedout.html"
-
-#logtracker settings variables
-LOGTRACKER_ALERT_EMAILS = []
-LOGTRACKER_LOG_THRESHOLD = 30
-LOGTRACKER_ALERT_THRESHOLD = 40
 
 # email settings: these ones are the custom hq ones
 EMAIL_LOGIN="user@domain.com"
@@ -242,22 +247,16 @@ PAGINATOR_MAX_PAGE_LINKS = 5
 OPENROSA_VERSION = "1.0"
 
 # OTA restore fixture generators
-FIXTURE_GENERATORS = ["corehq.apps.users.fixturegenerators.user_groups"]
+FIXTURE_GENERATORS = [
+    "corehq.apps.users.fixturegenerators.user_groups",
+    "corehq.apps.fixtures.fixturegenerators.item_lists",
+]
 
 # xep_hq_server settings
 XEP_AUTHORIZE = 'corehq.apps.app_manager.models.authorize_xform_edit'
 XEP_GET_XFORM = 'corehq.apps.app_manager.models.get_xform'
 XEP_PUT_XFORM = 'corehq.apps.app_manager.models.put_xform'
 GET_URL_BASE  = 'dimagi.utils.web.get_url_base'
-
-
-DJANGO_LOG_FILE = "/var/log/commcarehq.django.log"
-LOG_SIZE = 1000000
-LOG_LEVEL   = "DEBUG"
-LOG_FILE    = "/var/log/commcarehq.router.log"
-LOG_FORMAT  = "[%(name)s]: %(message)s"
-LOG_BACKUPS = 256 # number of logs to keep
-
 
 SMS_GATEWAY_URL = "http://localhost:8001/"
 SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&text=%(message)s"
@@ -276,14 +275,15 @@ XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 # couchlog
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
-COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables/js/jquery.dataTables.min.js")
-COUCHLOG_THRESHOLD = logging.WARNING
+COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables-1.8.2/js/jquery.dataTables.min.js")
 
 # couchlog/case search
 LUCENE_ENABLED = False
 
 # sofabed
 FORMDATA_MODEL = 'hqsofabed.HQFormData'  
+
+
 
 # unicel sms config
 UNICEL_CONFIG = {"username": "Dimagi",
@@ -297,7 +297,6 @@ AUDIT_VIEWS = [
     'corehq.apps.domain.views.registration_confirm',
     'corehq.apps.domain.views.password_change',
     'corehq.apps.domain.views.password_change_done',
-
     'corehq.apps.reports.views.submit_history',
     'corehq.apps.reports.views.active_cases',
     'corehq.apps.reports.views.submit_history',
@@ -348,6 +347,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'builds',
         'case',
         'cleanup',
+        'cloudcare',
         'couch', # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
         'couchforms',
         'couchexport',
@@ -355,8 +355,10 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'hqadmin',
         'domain',
         'forms',
+        'fixtures',
         'groups',
         'hqcase',
+        'hqmedia',
         'migration',
         'phone',
         'receiverwrapper',
@@ -370,10 +372,11 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'xep_hq_server',
         'phonelog',
         'pathfinder',
-        'registration'
+        'registration',
+        'hutch',
+        'dca'
     ]
 ]
-
 
 
 
@@ -381,12 +384,51 @@ INSTALLED_APPS += LOCAL_APPS
 
 MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
 
-try:
-    LOG_FORMAT
-except Exception:
-    LOG_FORMAT = "%(asctime)s %(levelname)-8s - %(name)-26s %(message)s"
-
-logging.basicConfig(filename=DJANGO_LOG_FILE, format=LOG_FORMAT)
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+    'handlers': {
+        'console':{
+            'level':'INFO',
+            'class':'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'file' : {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': DJANGO_LOG_FILE
+        },
+        'couchlog':{
+            'level':'WARNING',
+            'class':'couchlog.handlers.CouchHandler',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+        }
+    },
+    'loggers': {
+        '': {
+            'handlers':['console', 'file', 'couchlog'],
+            'propagate': True,
+            'level':'INFO',
+        },
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': True,
+        }
+    }
+}
 
 # these are the official django settings
 # which really we should be using over the
@@ -408,5 +450,29 @@ STANDARD_REPORT_MAP = {
                            ],
     "Inspect Data" : ['corehq.apps.reports.standard.SubmitHistory',
                       'corehq.apps.reports.standard.CaseListReport',
-                           ]
+                      ],
+    "Raw Data" : ['corehq.apps.reports.standard.ExcelExportReport',
+                  'corehq.apps.reports.standard.CaseExportReport',
+                      ]
+}
+
+CUSTOM_REPORT_MAP = {
+    "pathfinder": [
+                   'pathfinder.models.PathfinderHBCReport',
+                   'pathfinder.models.PathfinderProviderReport',
+                   'pathfinder.models.PathfinderWardSummaryReport'
+                   ],
+    "dca-malawi": [
+                   'dca.reports.ProjectOfficerReport',
+                   'dca.reports.PortfolioComparisonReport',
+                   'dca.reports.PerformanceReport',
+                   'dca.reports.PerformanceRatiosReport']
+}
+
+MESSAGE_TAGS = {
+    messages.INFO: 'alert-info',
+    messages.DEBUG: '',
+    messages.SUCCESS: 'alert-success',
+    messages.WARNING: 'alert-error',
+    messages.ERROR: 'alert-error',
 }
