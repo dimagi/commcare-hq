@@ -86,10 +86,14 @@
 </thead>
 <tbody>
 {% for action in case.actions %}
-    <tr><td>{{ action.date }}</td><td>{{ action.action_type }}</td><td>
-    {# this makes one call to couch per action, which could be optimized but shouldn't be a big deal since it's small amounts of data #}
-    <p class="xform_ref" {% if action.xform_id %}data-formid="{{ action.xform_id }}"{% endif %}>{% form_inline_display action.xform_id %}</p>
-    </td></tr>
+    <tr>
+        <td>{% utc_to_timezone action.date timezone %}</td>
+        <td>{{ action.action_type }}</td>
+        <td>
+            {# this makes one call to couch per action, which could be optimized but shouldn't be a big deal since it's small amounts of data #}
+            <p class="xform_ref" {% if action.xform_id %}data-formid="{{ action.xform_id }}"{% endif %}>{% form_inline_display action.xform_id timezone %}</p>
+        </td>
+    </tr>
 {% endfor %}
 </tbody>
 </table>
