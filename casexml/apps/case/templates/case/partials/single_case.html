@@ -1,4 +1,5 @@
 {% load xform_tags %}
+{% load timezone_tags %}
 <h2>Case Details</h2>
 <table class="table table-striped case_details">
 <thead>
@@ -9,11 +10,11 @@
 </thead>
 <tbody>
     <tr><td>name</td><td>{{ case.name }}</td></tr>
-    <tr><td>opened_on</td><td>{{ case.opened_on }}</td></tr>
-    <tr><td>modified_on</td><td>{{ case.modified_on }}</td></tr>
+    <tr><td>opened_on</td><td>{%  utc_to_timezone case.opened_on timezone %}</td></tr>
+    <tr><td>modified_on</td><td>{% utc_to_timezone case.modified_on timezone %}</td></tr>
     <tr><td>type</td><td>{{ case.type }}</td></tr>
     <tr><td>closed?</td><td>{{ case.closed|yesno }}</td></tr>
-    <tr><td>closed_on</td><td>{{ case.closed_on }}</td></tr>
+    <tr><td>closed_on</td><td>{% utc_to_timezone case.closed_on timezone %}</td></tr>
     <tr><td>domain</td><td>{{ case.domain }}</td></tr>
     <tr><td>external_id</td><td>{{ case.external_id }}</td></tr>
     <tr><td>user_id</td><td>{{ case.user_id }}</td></tr>
@@ -62,9 +63,9 @@
 <tbody>
 {% for referral in case.referrals %}
     <tr>
-        <td>{{ referral.opened_on }}</td>
+        <td>{% utc_to_timezone referral.opened_on timezone %}</td>
         <td>{{ referral.type }}</td>
-        <td>{{ referral.modified_on }}</td>
+        <td>{% utc_to_timezone referral.modified_on timezone %}</td>
         <td>{{ referral.closed|yesno:"closed,open" }}</td>
     </tr>
 {% empty %}
