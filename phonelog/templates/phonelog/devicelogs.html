@@ -1,12 +1,9 @@
 <div class="row-fluid dataTables_control">
-    <div class="span5">
-        <a class="btn" href="{% url phonelog_devices domain=domain %}">back to device list</a>
-    </div>
+    <div class="span5">&nbsp;</div>
     <div class="span7">
         <div class="dataTables_paginate paging_bootstrap pagination">
             <ul>
                 <li class="prev{% if not more_prev %} disabled{% endif %}"><a href="{% if more_prev %}?limit={{ limit }}&skip={{ earlier_skip }}{% else %}#{% endif %}">&larr; Previous</a></li>
-                <li class="active"><a href="#">1</a></li>
                 <li class="next{% if not more_next %} disabled{% endif %}"><a href="{% if more_next %}limit={{ limit }}&skip={{ later_skip }}{% else %}#{% endif %}">Next &rarr; </a></li>
             </ul>
         </div>
@@ -62,14 +59,11 @@
 </table>
 
 <div class="row-fluid dataTables_control">
-    <div class="span5">
-        <a class="btn" href="{% url phonelog_devices domain=domain %}">back to device list</a>
-    </div>
+    <div class="span5">&nbsp;</div>
     <div class="span7">
         <div class="dataTables_paginate paging_bootstrap pagination">
             <ul>
                 <li class="prev{% if not more_prev %} disabled{% endif %}"><a href="{% if more_prev %}?limit={{ limit }}&skip={{ earlier_skip }}{% else %}#{% endif %}">&larr; Previous</a></li>
-                <li class="active"><a href="#">1</a></li>
                 <li class="next{% if not more_next %} disabled{% endif %}"><a href="{% if more_next %}limit={{ limit }}&skip={{ later_skip }}{% else %}#{% endif %}">Next &rarr; </a></li>
             </ul>
         </div>
