@@ -1,4 +1,12 @@
 {% extends 'reports/report_base.html' %}
+{% block js-inline %}{{ block.super }}
+<script type="text/javascript">
+    $(function () {
+        $('.dataTables_wrapper').prepend('<a class="btn btn-primary" href="{% url device_log_raw domain device %}">View Raw Logs</a>');
+    });
+</script>
+{% endblock %}
+
 {% block reportpresentation %}
     <a class="btn btn-primary" href="{% url device_log_raw domain device %}">View Raw Logs</a>
     {% include 'phonelog/devicelogs.html' %}
