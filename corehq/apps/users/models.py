@@ -6,6 +6,7 @@ from __future__ import absolute_import
 from datetime import datetime
 import logging
 import re
+from corehq.apps.domain.models import Domain
 from dimagi.utils.make_uuid import random_hex
 
 from django.conf import settings
@@ -743,7 +744,9 @@ class WebUser(CouchUser):
                 if domain not in self.domains:
                     raise self.Inconsistent("Domain '%s' is in domain_memberships but not domains" % domain)
                 return
+        domain_obj = Domain.get_by_name(domain)
         self.domain_memberships.append(DomainMembership(domain=domain,
+                                                        timezone=domain_obj.default_timezone,
                                                         **kwargs))
         self.domains.append(domain)
 

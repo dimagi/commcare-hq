@@ -1,3 +1,5 @@
+{% load timezone_tags %}
+
 <table class="datatable"  width="100%">
 	<thead>
 		<tr>
@@ -18,7 +20,7 @@
 				{% else %}Sent
 				{% endif %}
 			</td>
-			<td>{{ message.date|date:"D, M d, G:i:s" }}</td>
+			<td>{% utc_to_timezone message.date timezone %}</td>
 			<td>{{ message.text }}</td>
 		</tr>
 		{% endfor %}
