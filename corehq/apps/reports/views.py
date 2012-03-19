@@ -271,7 +271,7 @@ def export_custom_data(req, domain, export_id):
 
 @login_and_domain_required
 def case_details(request, domain, case_id):
-    web_user = WebUser.get_by_user_id(request.couch_user.user_id)
+    timezone = util.get_timezone(request.couch_user.user_id, domain)
 
     try:
         case = CommCareCase.get(case_id)
@@ -292,7 +292,8 @@ def case_details(request, domain, case_id):
         "report": {
             "name": report_name
         },
-        "is_tabular": True
+        "is_tabular": True,
+        "timezone": timezone
     })
 
 @login_or_digest
