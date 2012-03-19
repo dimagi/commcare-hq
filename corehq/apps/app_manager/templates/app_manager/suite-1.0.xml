@@ -50,9 +50,11 @@
         </model>
      {% for d in detail.columns %}
         <field>
+            {% if d.format != 'filter' %}
             <header{% if d.format == "late-flag" or d.format == "invisible" %}{% if detail.display == "short" %} width="0"{% endif %}{% endif %}>
                 <text><locale id="m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.counter }}.header"/></text>
             </header>
+            {% endif %}
          {% if d.format == "plain" or d.format == "phone" and detail.type == "case_short" or d.format == "phone" and detail.type == "ref_short" %}
             <template><text><xpath function="/data/{{ d.model }}_{{ d.field }}_{{ forloop.counter }}"/></text></template>
          {% else %}{% ifequal d.format "date" %}
