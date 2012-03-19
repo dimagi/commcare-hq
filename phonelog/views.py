@@ -64,7 +64,7 @@ def overview_list(db, domain):
 def devices(request, domain, template='phonelog/devicelist.html', context=None):
     context = context or {}
     entries = overview_list(get_db(), domain)
-    context.update({'entries': entries, 'domain': domain})
+    context.update({'entries': entries, 'domain': domain, 'is_tabular': True})
     return render_to_response(request, template, context)
 
 @login_and_domain_required
@@ -210,7 +210,7 @@ def device_log(request, domain, device, template='phonelog/devicelogs.html', con
                 prev_row = r
                     
             yield r
-
+    print "TEST"
     context.update({
         'logs': annotate_logs(logdata),
         'limit': limit,
@@ -219,7 +219,8 @@ def device_log(request, domain, device, template='phonelog/devicelogs.html', con
         'earlier_skip': earlier_skip,
         'later_skip': later_skip,
         'domain': domain,
-        'device': device
+        'device': device,
+        'is_tabular': True
     })
 
     return render_to_response(request, template, context)

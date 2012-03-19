@@ -1,25 +1,25 @@
 <thead>
-    <tr style="font-size: 80%;">
+    <tr>
         <th>User</th>
         <th>First report</th>
         <th>Latest report</th>
-        <th align="center">Device ID</th>
-        <th align="center">Comments</th>
+        <th>Device ID</th>
+        <th>Comments</th>
     </tr>
 </thead>
 <tbody>
 {% for e in entries %}
     <tr>
-        <td style="font-weight: bold;">{{ e.user|default:"<span style=\"font-weight: normal; font-style: italic;\">&mdash;no user&mdash;</span>" }}</td>
-        <td><b>{{ e.first|date:"M d"}}</b>, <span style="font-size: 80%">{{ e.first|date:"Y" }} <span style="color: #888;">{{ e.first|date:"H:i" }} UTC</span></span></td>
-        <td><b>{{ e.last|date:"M d"}}</b>, <span style="font-size: 80%">{{ e.last|date:"Y" }} <span style="color: #888;">{{ e.last|date:"H:i" }} UTC</span></span></td>
-        <td style="font-family: monospace; font-size: 120%;"><a href="{% url device_log domain e.device  %}">{{ e.device }}</a></td>
-        <td style="font-size: 80%;">
-            {% if e.other_users %}other users on this device: {{ e.other_users|join:", " }}<br>{% endif %}
+        <td>{{ e.user|default:"&mdash;no user&mdash;" }}</td>
+        <td>{{ e.first|date:"M d"}}, {{ e.first|date:"Y" }} {{ e.first|date:"H:i" }} UTC</td>
+        <td>{{ e.last|date:"M d"}}, {{ e.last|date:"Y" }} {{ e.last|date:"H:i" }} UTC</td>
+        <td><a href="{% url device_log domain e.device  %}">{{ e.device }}</a></td>
+        <td>
+            {% if e.other_users %}other users on this device: {{ e.other_users|join:", " }}{% endif %}
         </td>
     </tr>
-</tbody>
 {% endfor %}
+</tbody>
 
 {% comment %}
 {% extends "layout.html" %}
