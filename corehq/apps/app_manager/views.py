@@ -29,7 +29,7 @@ from corehq.apps.app_manager.forms import NewXFormForm, NewModuleForm
 from corehq.apps.hqmedia.forms import HQMediaZipUploadForm, HQMediaFileUploadForm
 from corehq.apps.hqmedia.models import CommCareMultimedia, CommCareImage, CommCareAudio
 
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve
@@ -835,7 +835,8 @@ def _handle_media_edits(request, item, should_edit, resp):
             setattr(item, attribute, val)
 
 @require_POST
-@require_permission('edit-apps')
+@require_permission('edit-apps', None)
+@login_or_digest
 def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     """
     Called to edit any (supported) form attribute, given by attr

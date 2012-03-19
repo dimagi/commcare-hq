@@ -2,13 +2,14 @@ from functools import wraps
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden
 from django.utils.http import urlquote
 
 ########################################################################################################
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser
+from django_digest.decorators import httpdigest
 
 REDIRECT_FIELD_NAME = 'next'
 
@@ -84,6 +85,20 @@ def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME, login_
 #
 
 login_and_domain_required = login_and_domain_required_ex()
+
+def login_or_digest(fn):
+    def safe_fn(request, domain, *args, **kwargs):
+        if not request.user.is_authenticated():
+            def _inner(request, domain, *args, **kwargs):
+                couch_user = CouchUser.from_django_user(request.user)
+                if couch_user.is_web_user() and couch_user.is_member_of(domain):
+                    return fn(request, domain, *args, **kwargs)
+                else:
+                    return HttpResponseForbidden()
+            return httpdigest(_inner)(request, domain, *args, **kwargs)
+        else:
+            return login_and_domain_required(fn)(request, domain, *args, **kwargs)
+    return safe_fn
 
 # For views that are inside a class
 def cls_login_and_domain_required(func):
