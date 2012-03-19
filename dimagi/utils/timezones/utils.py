@@ -25,7 +25,7 @@ def adjust_datetime_to_timezone(value, from_tz, to_tz=None):
 
 def coerce_timezone_value(value):
     try:
-        return pytz.timezone(value)
+        return pytz.timezone(str(value))
     except pytz.UnknownTimeZoneError:
         raise ValidationError("Unknown timezone")
 
