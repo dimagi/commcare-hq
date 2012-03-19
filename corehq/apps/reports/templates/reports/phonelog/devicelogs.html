@@ -1,5 +1,5 @@
 {% extends 'reports/report_base.html' %}
-{% block reportcontent %}
+{% block reportpresentation %}
     <a class="btn btn-primary" href="{% url device_log_raw domain device %}">View Raw Logs</a>
     {% include 'phonelog/devicelogs.html' %}
 {% endblock %}

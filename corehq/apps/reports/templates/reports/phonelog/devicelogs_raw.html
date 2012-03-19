@@ -1,20 +1,7 @@
 {% extends 'reports/report_base.html' %}
-{% block reportcontent %}
-    <a id="view_formatted" href="{% url device_log domain device %}">View Formatted Logs</a>
-    <div class="devicelogs">
-    <table >
+{% block reportpresentation %}
+    <a class="btn btn-primary" id="view_formatted" href="{% url device_log domain device %}">View Formatted Logs</a>
+    <table class="table table-striped datatable" >
         {% include 'phonelog/devicelogs_raw.html' %}
     </table>
-    </div>
-    <style>
-    .devicelogs {
-        margin: 1em;
-        clear: both;
-    }
-    
-    #view_formatted {
-        float: right;
-        margin: 1em;
-    }
-    </style>
 {% endblock %}

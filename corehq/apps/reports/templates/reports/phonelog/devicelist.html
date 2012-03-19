@@ -1,10 +1,7 @@
 {% extends 'reports/report_base.html' %}
 
 {% block reportpresentation %}
-<div class="">
-
-    <table class="table table-striped datatable">
-        {% include 'phonelog/devicelist.html' %}
-    </table>
-</div>
+<table class="table table-striped datatable">
+    {% include 'phonelog/devicelist.html' %}
+</table>
 {% endblock %}
