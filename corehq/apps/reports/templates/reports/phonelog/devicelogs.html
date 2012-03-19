@@ -1,34 +1,5 @@
 {% extends 'reports/report_base.html' %}
-{% block head %}
-    {{ block.super }}
-    <style>
-        .duplicate {
-            background: #ccc;
-            display: none;
-        }
-        .nobr {
-            white-space: nowrap;
-        }
-        th {
-            white-space: nowrap;
-        }
-        .fullversion {
-            display: none;
-        }
-    .devicelogs {
-        margin: 1em;
-        clear: both;
-    }
-    
-    #view_raw {
-        float: right;
-        margin: 1em;
-    }
-    </style>
-{% endblock %}
 {% block reportcontent %}
-    <a id="view_raw" href="{% url device_log_raw domain device %}">View Raw Logs</a>
-    <div class="devicelogs">
-        {% include 'phonelog/devicelogs.html' %}
-    </div>
+    <a class="btn btn-primary" href="{% url device_log_raw domain device %}">View Raw Logs</a>
+    {% include 'phonelog/devicelogs.html' %}
 {% endblock %}
