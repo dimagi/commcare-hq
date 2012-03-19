@@ -208,9 +208,8 @@ def device_log(request, domain, device, template='phonelog/devicelogs.html', con
                     }
                 
                 prev_row = r
-                    
             yield r
-    print "TEST"
+
     context.update({
         'logs': annotate_logs(logdata),
         'limit': limit,
