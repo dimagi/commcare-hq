@@ -938,7 +938,7 @@ class ApplicationBase(VersionedDoc):
             copy.short_url = bitly.shorten(
                 get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
             )
-        except URLError:
+        except (URLError, Exception):
             # for offline only
             logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
             copy.short_url = None

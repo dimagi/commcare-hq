@@ -20,6 +20,15 @@ def JSON(obj):
     return mark_safe(json.dumps(obj, default=json_handler))
 
 @register.filter
+def BOOL(obj):
+    try:
+        obj = obj.to_json()
+    except AttributeError:
+        pass
+
+    return 'true' if obj else 'false'
+
+@register.filter
 def dict_lookup(dict, key):
     '''Get an item from a dictionary.'''
     return dict.get(key)

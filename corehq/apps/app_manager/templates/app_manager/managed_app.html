@@ -14,6 +14,14 @@
     </script>
     {% endif %}
 {% endblock %}
+{% block head %}{{ block.super }}
+    <style>
+        .hq-oldstyle .nav-pills .active > a {
+            color: white;
+            background-color: #1557A2;
+        }
+    </style>
+{% endblock %}
 {% block app-content %}
     <div id="langs" class="container">
         Language:
@@ -25,12 +33,27 @@
                 </option>
             {% endfor %}
         </select>
+        <ul class="nav nav-pills" style="float: right;">
+            <li {% if not release_manager %}class="active"{% endif %}>
+            <a href="{% url view_app domain app.id %}?edit={{ edit|BOOL }}">
+                Structure and Configuration
+            </a>
+            </li>
+            <li {% if release_manager %}class="active"{% endif %}>
+                <a href="{% url release_manager domain app.id %}?edit={{ edit|BOOL }}">
+                    Release Manager
+                </a>
+            </li>
+        </ul>
+        <h2 >
+
+        </h2>
     </div>
     <div id="modules-form-view-wrapper" class="sidebar-wrapper">
         <div id="modules" class="sidebar">
         <!--h2 id="modules-header">Modules</h2-->
-        <h2 {% if not module and not form %}class="selected"{% endif %}>
-            <a href="{% url view_app domain app.id %}?edit={{ edit|JSON }}" class="variable-app_name">{{ app.name }}
+        <h2 {% if not module and not form and not release_manager %}class="selected"{% endif %}>
+            <a href="{% url view_app domain app.id %}?edit={{ edit|BOOL }}" class="variable-app_name">{{ app.name }}
             </a>
         </h2>
             {% if app.get_doc_type == "Application" %}
@@ -43,7 +66,7 @@
                         </li>
                     {% endif %}
                         <li class="sort-disabled{% if is_user_registration %} selected{% endif %}" id="user-registration-nav-link">
-                            <a href="{% url view_user_registration domain app.id %}?edit={{ edit|JSON }}">User Registration</a>
+                            <a href="{% url view_user_registration domain app.id %}?edit={{ edit|BOOL }}">User Registration</a>
                         </li>
                     {% with module as selected_module %}
                         {% for module in app.get_modules %}
@@ -55,7 +78,7 @@
                                     {% if edit %}
                                         <span class="drag_handle"></span>
                                     {% endif %}
-                                    <a href="{% url view_module domain app.id module.id %}?edit={{ edit|JSON }}"
+                                    <a href="{% url view_module domain app.id module.id %}?edit={{ edit|BOOL }}"
                                        {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
                                         {{ module.name|trans:langs }}
                                     </a>
@@ -78,7 +101,7 @@
                                                 {% if edit %}
                                                     <span class="drag_handle"></span>
                                                 {% endif %}
-                                                <a href="{% url view_form domain app.id module.id form.id %}?edit={{ edit|JSON }}"
+                                                <a href="{% url view_form domain app.id module.id form.id %}?edit={{ edit|BOOL }}"
                                                    {% if form == selected_form %}class="variable-form_name"{% endif %}>
                                                     {{ form.name|trans:langs }}
                                                 </a>
@@ -90,7 +113,7 @@
                                     {% endif %}
                                     {% if edit %}
                                         <li class="sort-disabled">
-                                            <form action="{% url corehq.apps.app_manager.views.new_form domain app.id module.id %}?edit={{ edit|JSON }}"
+                                            <form action="{% url corehq.apps.app_manager.views.new_form domain app.id module.id %}?edit={{ edit|BOOL }}"
                                                   method="post">
                                                 <a class="new_link submit_on_click" id="new_form" href="#">Form</a>
                                             </form>
