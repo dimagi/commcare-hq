@@ -1,8 +1,11 @@
-cloudCare = {};
+
+if (typeof cloudCare === 'undefined') {
+    var cloudCare = {};
+}
 
 cloudCare.dispatch = _.extend({}, Backbone.Events);
 
-var AppNavigation = Backbone.Router.extend({
+cloudCare.AppNavigation = Backbone.Router.extend({
     
     initialize: function() {
         // _.bindAll(this); 
@@ -19,11 +22,11 @@ var AppNavigation = Backbone.Router.extend({
 });
 
 
-var AppSummary = Backbone.Model.extend({
+cloudCare.AppSummary = Backbone.Model.extend({
     idAttribute: "_id"
 });
 
-var AppSummaryView = Selectable.extend({
+cloudCare.AppSummaryView = Selectable.extend({
     tagName: 'li', 
     initialize: function() {
         _.bindAll(this, 'render', 'toggle', 'select', 'deselect');
@@ -34,16 +37,16 @@ var AppSummaryView = Selectable.extend({
     }
 });
 
-var AppList = Backbone.Collection.extend({
-    model: AppSummary,
+cloudCare.AppList = Backbone.Collection.extend({
+    model: cloudCare.AppSummary,
 });
 
-var AppListView = Backbone.View.extend({
+cloudCare.AppListView = Backbone.View.extend({
     el: $('#app-list'), 
     
     initialize: function(){
         _.bindAll(this, 'render', 'appendItem', "getAppView", "clearSelectionState");
-        this.appList = new AppList();
+        this.appList = new cloudCare.AppList();
         this.appList.reset(this.options.apps);
         this._appViews = {};
         this.render();
@@ -59,7 +62,7 @@ var AppListView = Backbone.View.extend({
     },
     appendItem: function (item) {
         var self = this;
-        var appView = new AppSummaryView({
+        var appView = new cloudCare.AppSummaryView({
             model: item
         });
         
@@ -93,7 +96,7 @@ var AppListView = Backbone.View.extend({
     }
 });
 
-var App = Backbone.Model.extend({
+cloudCare.App = Backbone.Model.extend({
     idAttribute: "_id",
     initialize: function () {
         _.bindAll(this, "updateModules");
@@ -111,7 +114,7 @@ var App = Backbone.Model.extend({
         if (this.get("modules")) {
             var index = 0;
             this.modules = _(this.get("modules")).map(function (module) {
-                var ret = new Module(module);
+                var ret = new cloudCare.Module(module);
                 ret.set("app_id", self.id);
                 ret.set("index", index);
                 index++;
@@ -121,14 +124,14 @@ var App = Backbone.Model.extend({
     }
 });
 
-var Form = Backbone.Model.extend({
+cloudCare.Form = Backbone.Model.extend({
     initialize: function () {
         _.bindAll(this, 'getLocalized');
     },
     getLocalized: getLocalizedString
 });
 
-var FormView = Selectable.extend({
+cloudCare.FormView = Selectable.extend({
     tagName: 'li', 
     initialize: function() {
         _.bindAll(this, 'render', 'toggle', 'select', 'deselect');
@@ -139,7 +142,7 @@ var FormView = Selectable.extend({
     }
 });
 
-var Module = Backbone.Model.extend({
+cloudCare.Module = Backbone.Model.extend({
     initialize: function () {
         _.bindAll(this, 'getLocalized', 'updateForms', 'getDetail');
         this.updateForms();
@@ -160,7 +163,8 @@ var Module = Backbone.Model.extend({
         if (this.get("forms")) {
             var index = 0;
             this.forms = _(this.get("forms")).map(function (form) {
-                var ret = new Form(form);
+                var ret = new cloudCare.Form(form);
+                console.log(ret);
                 ret.set("app_id", self.get("app_id"));
                 ret.set("module_index", self.get("index"));
                 ret.set("index", index);
@@ -172,7 +176,7 @@ var Module = Backbone.Model.extend({
     } 
 });
 
-var ModuleView = Selectable.extend({
+cloudCare.ModuleView = Selectable.extend({
     tagName: 'li', 
     initialize: function() {
         _.bindAll(this, 'render', 'toggle', 'select', 'deselect');
@@ -183,16 +187,16 @@ var ModuleView = Selectable.extend({
     }
 });
 
-var ModuleList = Backbone.Collection.extend({
-    model: Module
+cloudCare.ModuleList = Backbone.Collection.extend({
+    model: cloudCare.Module
 });
 
-var ModuleListView = Backbone.View.extend({
+cloudCare.ModuleListView = Backbone.View.extend({
     el: $('#module-list'), 
     initialize: function () {
         _.bindAll(this, 'render', 'appendItem', 'updateModules', 'getModuleView', 'clearSelectionState');
         var self = this;
-        this.moduleList = new ModuleList([], {
+        this.moduleList = new cloudCare.ModuleList([], {
             language: this.options.language
         });
         this.moduleList.on("reset", function () {
@@ -218,7 +222,7 @@ var ModuleListView = Backbone.View.extend({
     },
     appendItem: function (item) {
         var self = this;
-        var moduleView = new ModuleView({
+        var moduleView = new cloudCare.ModuleView({
             model: item,
             language: this.options.language
             
@@ -252,7 +256,7 @@ var ModuleListView = Backbone.View.extend({
     }
 });
 
-var FormListView = Backbone.View.extend({
+cloudCare.FormListView = Backbone.View.extend({
     el: $('#form-list'), 
     initialize: function () {
         _.bindAll(this, 'render', 'appendForm', 'getFormView', 'clearSelectionState');
@@ -272,7 +276,7 @@ var FormListView = Backbone.View.extend({
     },
     appendForm: function (form) {
         var self = this;
-        var formView = new FormView({
+        var formView = new cloudCare.FormView({
             model: form,
             language: this.options.language
         });
@@ -304,15 +308,15 @@ var FormListView = Backbone.View.extend({
     }
 });
 
-var AppView = Backbone.View.extend({
+cloudCare.AppView = Backbone.View.extend({
     
     initialize: function(){
         _.bindAll(this, 'render', 'setModel', 'showModule');
         var self = this;
-        this.moduleListView = new ModuleListView({
+        this.moduleListView = new cloudCare.ModuleListView({
             language: this.options.language
         });
-        this.formListView = new FormListView({
+        this.formListView = new cloudCare.FormListView({
             language: this.options.language
         });
         
@@ -357,7 +361,7 @@ var AppView = Backbone.View.extend({
 	            if (formListView.caseView) {
 	                $(formListView.caseView.el).html("");
 	            }
-	            formListView.caseView = new CaseMainView({                    
+	            formListView.caseView = new cloudCare.CaseMainView({                    
 	                el: $("#cases"),
 	                listDetails: listDetails,
 	                summaryDetails: summaryDetails,
@@ -406,7 +410,7 @@ var AppView = Backbone.View.extend({
     }
 });
 
-var AppMainView = Backbone.View.extend({
+cloudCare.AppMainView = Backbone.View.extend({
     el: $('#app-main'),
      
     initialize: function () {
@@ -417,8 +421,8 @@ var AppMainView = Backbone.View.extend({
         this._selectedForm = null;
         this._selectedCase = null;
         this._navEnabled = true;
-        this.router = new AppNavigation();
-        this.appListView = new AppListView({
+        this.router = new cloudCare.AppNavigation();
+        this.appListView = new cloudCare.AppListView({
             apps: this.options.apps,
             language: this.options.language
         });
@@ -431,7 +435,7 @@ var AppMainView = Backbone.View.extend({
             self.navigate("");
             self.selectApp(null);
         });
-        this.appView = new AppView({
+        this.appView = new cloudCare.AppView({
             // if you pass in model: it will auto-populate the view
             model: this.options.model, 
             language: this.options.language,
@@ -599,7 +603,7 @@ var AppMainView = Backbone.View.extend({
             
         }
         else {
-            this.app = new App({
+            this.app = new cloudCare.App({
 	            _id: appId,
 	        });
 	        this.app.set("urlRoot", this.options.appUrlRoot);
