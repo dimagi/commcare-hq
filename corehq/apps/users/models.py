@@ -700,7 +700,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
     def get_time_zone(self):
         try:
             time_zone = self.user_data["time_zone"]
-        except Exception:
+        except Exception as e:
             # Gracefully handle when user_data is None, or does not have a "time_zone" entry
             time_zone = None
         return time_zone

@@ -3,6 +3,8 @@ from django.test.testcases import TestCase
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reminders.models import *
 from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.sms.models import CallLog
+from corehq.apps.sms.mixin import VerifiedNumber
 
 class ReminderTestCase(TestCase):
     """
@@ -314,7 +316,6 @@ class ReminderCallbackTestCase(TestCase):
         cls.handler.save()
         cls.user_id = "USER-ID-109349"
         cls.user = CommCareUser.create(cls.domain, 'chw.bob3', '****', uuid=cls.user_id)
-        cls.user.phone_numbers = ["+15551234"]
         cls.user.user_data["time_zone"]="Africa/Nairobi"
         cls.user.save()
         cls.case = CommCareCase(
@@ -323,6 +324,7 @@ class ReminderCallbackTestCase(TestCase):
             user_id=cls.user_id
         )
         cls.case.save()
+        cls.user.save_verified_number("15551234")
 
     def test_ok(self):
         self.assertEqual(self.handler.get_reminder(self.case), None)
@@ -361,10 +363,12 @@ class ReminderCallbackTestCase(TestCase):
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
         
         # Create a callback
-        c = CaseReminderCallback(
-            phone_number="+15551234"
-           ,timestamp = datetime(year=2012, month=1, day=1, hour=8, minute=5)
-           ,user_id=self.user_id
+        c = CallLog(
+            couch_recipient_doc_type    = "CouchUser",
+            couch_recipient             = self.user_id,
+            phone_number                = "15551234",
+            direction                   = "I",
+            date                        = datetime(year=2012, month=1, day=1, hour=8, minute=5)
         )
         c.save()
         
@@ -451,10 +455,12 @@ class ReminderCallbackTestCase(TestCase):
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
         
         # Create a callback
-        c = CaseReminderCallback(
-            phone_number="+15551234"
-           ,timestamp = datetime(year=2012, month=1, day=3, hour=8, minute=22)
-           ,user_id=self.user_id
+        c = CallLog(
+            couch_recipient_doc_type    = "CouchUser",
+            couch_recipient             = self.user_id,
+            phone_number                = "15551234",
+            direction                   = "I",
+            date                        = datetime(year=2012, month=1, day=3, hour=8, minute=22)
         )
         c.save()
         

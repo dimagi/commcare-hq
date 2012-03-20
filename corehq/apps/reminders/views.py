@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm
-from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, CaseReminderCallback, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET
+from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.web import render_to_response
 from dimagi.utils.parsing import string_to_datetime

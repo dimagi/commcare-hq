@@ -2,13 +2,16 @@
 # vim: ai ts=4 sts=4 et sw=4
 from couchdbkit.ext.django.schema import *
 
+from datetime import datetime
 from django.db import models
 from corehq.apps.users.models import CouchUser, CommCareUser
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.mixins import UnicodeMixIn
+from dimagi.utils.parsing import json_format_datetime
 
 INCOMING = "I"
 OUTGOING = "O"
+NOT_APPLICABLE = "X"
 
 DIRECTION_CHOICES = (
     (INCOMING, "Incoming"),
@@ -187,6 +190,28 @@ class CallLog(MessageLog):
     def count_outgoing_by_domain(cls, domain, start_date = None, end_date = {}):
         MessageLog.count_outgoing_by_domain(domain, start_date, end_date, "CallLog")
 
+    @classmethod
+    def inbound_call_exists(cls, verified_number, after_timestamp):
+        """
+        Checks to see if an inbound call exists for the given number after the given timestamp.
+        
+        verified_number The VerifiedNumber entry for which to check the existence of a call.
+        after_timestamp The datetime after which to check for the existence of a call.
+        
+        return          True if a call exists in the CallLog, False if not.
+        """
+        if verified_number is None:
+            return False
+        start_timestamp = json_format_datetime(after_timestamp)
+        end_timestamp = json_format_datetime(datetime.utcnow())
+        reduced = MessageLog.view("sms/by_phone_number_direction_date",
+                    startkey=["CallLog", verified_number.phone_number, INCOMING] + [start_timestamp],
+                    endkey=["CallLog", verified_number.phone_number, INCOMING] + [end_timestamp],
+                    reduce=True).all()
+        if reduced:
+            return (reduced[0]['value'] > 0)
+        else:
+            return False
 
 class MessageLogOld(models.Model):
     couch_recipient    = models.TextField()

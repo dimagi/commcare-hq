@@ -6,6 +6,7 @@ from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
+from corehq.apps.sms.models import CallLog
 from corehq.apps.users.models import CommCareUser
 import logging
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
@@ -97,34 +98,6 @@ class CaseReminderEvent(DocumentSchema):
     fire_time = TimeProperty()
     message = DictProperty()
     callback_timeout_intervals = ListProperty(IntegerProperty)
-
-class CaseReminderCallback(Document):
-    """
-    A CaseReminderCallback object logs the callback response for a CaseReminder 
-    with method "callback".
-    """
-    phone_number = StringProperty()
-    timestamp = DateTimeProperty()
-    user_id = StringProperty()
-    
-    @classmethod
-    def callback_exists(cls, user_id, after_timestamp):
-        """
-        Checks to see if a callback exists for the given user after the given timestamp.
-        
-        user_id         The user for whom to check the existence of a callback.
-        after_timestamp The datetime after which to check for the existence of a callback.
-        
-        return          True if a callback exists, False if not.
-        """
-        start_timestamp = json_format_datetime(after_timestamp)
-        end_timestamp = json_format_datetime(datetime.utcnow())
-        c = CaseReminderCallback.view("reminders/callbacks_by_user_timestamp"
-           ,startkey = [user_id, start_timestamp]
-           ,endkey = [user_id, end_timestamp]
-           ,include_docs = True
-        ).one()
-        return (c is not None)
 
 class CaseReminderHandler(Document):
     """
@@ -449,24 +422,25 @@ class CaseReminderHandler(Document):
         
         return      True on success, False on failure
         """
+        # Retrieve the VerifiedNumber entry for the recipient
+        try:
+            if self.recipient == RECIPIENT_USER:
+                verified_number = reminder.user.get_verified_number()
+            else:
+                #self.recipient == RECIPIENT_CASE
+                verified_number = reminder.case.get_verified_number()
+        except Exception:
+            verified_number = None
+        
         # If it is a callback reminder and the callback has been received, skip sending the next timeout message
         if (reminder.method == "callback" or reminder.method == "callback_test") and len(reminder.current_event.callback_timeout_intervals) > 0:
-            if CaseReminderCallback.callback_exists(reminder.user_id, reminder.last_fired):
+            if CallLog.inbound_call_exists(verified_number, reminder.last_fired):
                 reminder.callback_received = True
                 return True
         reminder.last_fired = self.get_now()
         message = reminder.current_event.message.get(reminder.lang, reminder.current_event.message[self.default_lang])
         message = Message.render(message, case=reminder.case.case_properties())
         if reminder.method == "sms" or reminder.method == "callback":
-            try:
-                if self.recipient == RECIPIENT_USER:
-                    verified_number = reminder.user.get_verified_number()
-                else:
-                    #self.recipient == RECIPIENT_CASE
-                    verified_number = reminder.case.get_verified_number()
-            except Exception:
-                verified_number = None
-
             return send_sms_to_verified_number(reminder.domain, verified_number, message)
         elif reminder.method == "test" or reminder.method == "callback_test":
             print(message)
