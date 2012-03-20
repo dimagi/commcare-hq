@@ -1,6 +1,6 @@
-<script type="text/javascript">
 {% with chartdiv|default:"pieplaceholder" as chartdiv %}
     {% with hoverdiv|default:"piehoverplaceholder" as hoverdiv %}
+    <script type="text/javascript">
         $(document).ready(function() {
             var data = [
             {% for point in chart_data %}
@@ -58,7 +58,7 @@
     </script>
     <div class="hq-graphic-report">
         <div id="{{ hoverdiv }}" class="well">
-            Hover over a slice below for more information.
+            {% if chart_data %}Hover over a slice below for more information.{% else %}No data is available. Please submit more forms!{% endif %}
         </div>
         <div id="{{ chartdiv }}" class="hq-graph" style="width:{{graph_width|default:300}}px; height:{{graph_height|default:300}}px;"></div>
     </div>
