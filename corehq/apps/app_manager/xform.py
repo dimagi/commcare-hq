@@ -545,6 +545,7 @@ class XForm(WrappedNode):
                 case_type_node.text = form.get_case_type()
                 create_block.extend([
                     make_case_elem('case_name'),
+                    make_case_elem('owner_id'),
                     case_type_node,
                 ])
                 r = relevance(actions['open_case'])
@@ -559,6 +560,10 @@ class XForm(WrappedNode):
                 self.add_bind(
                     nodeset="case/create/case_name",
                     calculate=self.resolve_path(actions['open_case'].name_path),
+                )
+                self.add_bind(
+                    nodeset="case/create/owner_id",
+                    calculate=self.resolve_path("case/@user_id"),
                 )
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     extra_updates.append(make_case_elem('external_id'))
