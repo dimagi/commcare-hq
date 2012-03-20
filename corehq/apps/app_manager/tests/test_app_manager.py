@@ -17,7 +17,7 @@ class AppManagerTest(TestCase):
 
     def setUp(self):
         self.domain = 'test-domain'
-        Domain.objects.get_or_create(name=self.domain)
+        Domain.get_or_create_with_name(self.domain)
         self.app = Application.new_app("test_domain", "TestApp", application_version=APP_V1)
 
         for i in range(3):

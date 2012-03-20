@@ -16,7 +16,7 @@ from corehq.apps.hqwebapp.forms import EmailAuthenticationForm
 
 from dimagi.utils.web import render_to_response, get_url_base
 from django.core.urlresolvers import reverse
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, OldDomain
 from django.template import loader
 from django.template.context import RequestContext
 
@@ -50,12 +50,12 @@ def redirect_to_default(req, domain=None):
     else:
         if domain:
             domain = normalize_domain_name(domain)
-            domains = Domain.objects.filter(name=domain)
+            domains = [Domain.get_by_name(domain)]
         else:
             domains = Domain.active_for_user(req.user)
-        if   0 == domains.count() and not req.user.is_superuser:
+        if   0 == len(domains) and not req.user.is_superuser:
             return no_permissions(req)
-        elif 1 == domains.count():
+        elif 1 == len(domains):
             #url = reverse('corehq.apps.app_manager.views.default', args=[domains[0].name])
             url = reverse('corehq.apps.reports.views.default', args=[domains[0].name])
         else:
@@ -91,7 +91,7 @@ def server_up(req):
     return HttpResponse("success")
 
 def no_permissions(request):
-    return redirect('registration_first_time_domain')
+    return redirect('registration_domain')
 
 def login(req, template_name="login_and_password/login.html"):
     # this view, and the one below, is overridden because

@@ -245,12 +245,10 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         )
 
     def is_member_of(self, domain_qs):
-        if isinstance(domain_qs, basestring):
+        try:
+            return domain_qs.name in self.get_domains() or self.is_superuser
+        except Exception:
             return domain_qs in self.get_domains() or self.is_superuser
-        membership_count = domain_qs.filter(name__in=self.get_domains()).count()
-        if membership_count > 0:
-            return True
-        return False
 
     # for synching
     def sync_from_django_user(self, django_user):

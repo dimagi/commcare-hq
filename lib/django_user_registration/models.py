@@ -250,12 +250,12 @@ class RegistrationProfile(models.Model):
 # Changed location of the activation email templates.
 # These should never have been hard-coded! 
 
-        subject = render_to_string('domain/user_registration/activation_email_subject.txt',
+        subject = render_to_string('registration/backend/activation_email_subject.txt',
                                    ctx_dict)
         # Email subject *must not* contain newlines
         subject = ''.join(subject.splitlines())
         
-        message = render_to_string('domain/user_registration/activation_email.txt',
+        message = render_to_string('registration/backend/activation_email.txt',
                                    ctx_dict)
         
         self.user.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)

@@ -10,7 +10,7 @@ def create_user_and_domain(username='brian',
        'brian'/'test'.  Returns these two objects in a tuple 
        as (domain, user).  The parameters are configurable."""
     try:
-        domain = Domain.objects.get(name=domain_name)
+        domain = Domain.get_by_name(domain_name)
         print "WARNING: tried to create domain %s but it already exists!" % domain_name
         print "Are all your tests cleaning up properly?"
     except Domain.DoesNotExist:

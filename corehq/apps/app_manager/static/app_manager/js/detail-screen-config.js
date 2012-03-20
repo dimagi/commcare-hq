@@ -89,6 +89,7 @@ var DetailScreenConfig = (function () {
             this.original.format = this.original.format || "plain";
             this.original['enum'] = this.original['enum'] || {};
             this.original.late_flag = this.original.late_flag || 30;
+            this.original.filter_xpath = this.original.filter_xpath || "";
 
             this.screen = screen;
             this.lang = screen.lang;
@@ -126,7 +127,8 @@ var DetailScreenConfig = (function () {
                 {value: "phone", label: DetailScreenConfig.message.PHONE_FORMAT},
                 {value: "enum", label: DetailScreenConfig.message.ENUM_FORMAT},
                 {value: "late-flag", label: DetailScreenConfig.message.LATE_FLAG_FORMAT},
-                {value: "invisible", label: DetailScreenConfig.message.INVISIBLE_FORMAT}
+                {value: "invisible", label: DetailScreenConfig.message.INVISIBLE_FORMAT},
+                {value: "filter", label: DetailScreenConfig.message.FILTER_XPATH_FORMAT}
             ]).val(this.original.format || null);
 
             (function () {
@@ -137,6 +139,10 @@ var DetailScreenConfig = (function () {
             }());
             this.late_flag_extra = uiElement.input().val(this.original.late_flag.toString());
             this.late_flag_extra.ui.prepend($('<span/>').text(DetailScreenConfig.message.LATE_FLAG_EXTRA_LABEL));
+
+            this.filter_xpath_extra = uiElement.input().val(this.original.filter_xpath.toString());
+            this.filter_xpath_extra.ui.prepend($('<span/>').text(DetailScreenConfig.message.FILTER_XPATH_EXTRA_LABEL));
+
             elements = [
                 'includeInShort',
                 'includeInLong',
@@ -145,7 +151,8 @@ var DetailScreenConfig = (function () {
                 'header',
                 'format',
                 'enum_extra',
-                'late_flag_extra'
+                'late_flag_extra',
+                'filter_xpath_extra'
             ];
 
             function fireChange() {
@@ -165,6 +172,8 @@ var DetailScreenConfig = (function () {
                     that.$extra.append(that.enum_extra.ui);
                 } else if (this.val() === 'late-flag') {
                     that.$extra.append(that.late_flag_extra.ui);
+                } else if (this.val() === 'filter') {
+                    that.$extra.append(that.filter_xpath_extra.ui);
                 }
             }).fire('change');
 
@@ -199,6 +208,7 @@ var DetailScreenConfig = (function () {
                 column.format = this.format.val();
                 column['enum'] = unformatEnum(this.enum_extra.$formatted_view.val(), this.lang, column['enum']);
                 column.late_flag = parseInt(this.late_flag_extra.val(), 10);
+                column.filter_xpath = this.filter_xpath_extra.val();
                 if (!keepShortLong) {
                     delete column.includeInShort;
                     delete column.includeInLong;
@@ -254,6 +264,7 @@ var DetailScreenConfig = (function () {
                 column.format.setEdit(that.edit);
                 column.enum_extra.setEdit(that.edit);
                 column.late_flag_extra.setEdit(that.edit);
+                column.filter_xpath_extra.setEdit(that.edit);
                 column.setGrip(true);
                 column.on('change', fireChange);
                 return column;
@@ -268,6 +279,7 @@ var DetailScreenConfig = (function () {
                 column.format.setEdit(false);
                 column.enum_extra.setEdit(false);
                 column.late_flag_extra.setEdit(false);
+                column.filter_xpath_extra.setEdit(false);
                 column.setGrip(false);
                 return column;
             }
@@ -597,6 +609,8 @@ var DetailScreenConfig = (function () {
         ENUM_EXTRA_LABEL: 'Mapping: ',
         LATE_FLAG_FORMAT: 'Late Flag',
         LATE_FLAG_EXTRA_LABEL: 'Days late: ',
+        FILTER_XPATH_FORMAT: 'Filter (Advanced)',
+        FILTER_XPATH_EXTRA_LABEL: 'Filter XPath',
         INVISIBLE_FORMAT: 'Search Only',
 
         ADD_COLUMN: 'Add to list',
