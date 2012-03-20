@@ -1,9 +1,11 @@
 from couchdbkit.ext.django.schema import *
+from dimagi.utils.mixins import UnicodeMixIn
 
 """
 Shared models live here to avoid cyclical import issues
 """
-class CommCareCaseIndex(DocumentSchema):
+
+class CommCareCaseIndex(DocumentSchema, UnicodeMixIn):
     """
     In CaseXML v2 we support indices, which link a case to other cases.
     """
@@ -11,9 +13,12 @@ class CommCareCaseIndex(DocumentSchema):
     referenced_type = StringProperty()
     referenced_id = StringProperty()
     
-    def get_referenced_case(self):
+    @property
+    def referenced_case(self):
         from casexml.apps.case.models import CommCareCase
-        return CommCareCase.get(self.referenced_id)
+        if not hasattr(self, "_case"):
+            self._case = CommCareCase.get(self.referenced_id)
+        return self._case
     
     @classmethod
     def from_case_index_update(cls, index):
