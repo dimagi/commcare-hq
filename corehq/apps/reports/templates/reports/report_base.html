@@ -1,12 +1,6 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load hq_shared_tags %}
 
-{# stuff to override old styles -- remove when everything is migrated over #}
-{% block oldstyle_tag %}{% endblock %}
-{% block oldstyle_imports %}{% endblock %}
-{% block oldstyle_hack_start %}{% endblock %}
-{% block oldstyle_hack_end %}{% endblock %}
-
 {% block js %}{{ block.super }}
 {% include "imports/datatables.bootstrap.html" %}
 {% include "imports/flot.html" %}
