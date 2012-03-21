@@ -452,7 +452,9 @@ STANDARD_REPORT_MAP = {
                       ],
     "Raw Data" : ['corehq.apps.reports.standard.ExcelExportReport',
                   'corehq.apps.reports.standard.CaseExportReport',
-                      ]
+                      ],
+    "Manage Deployments" : ['corehq.apps.reports.standard.ApplicationStatusReport',
+                  ]
 }
 
 CUSTOM_REPORT_MAP = {
