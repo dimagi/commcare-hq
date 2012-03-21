@@ -698,14 +698,60 @@ class ExcelExportReport(StandardHQReport):
     def calc(self):
         # This map for this view emits twice, once with app_id and once with {}, letting you join across all app_ids.
         # However, we want to separate out by (app_id, xmlns) pair not just xmlns so we use [domain] to [domain, {}]
-        forms = get_db().view('reports/forms_by_xmlns', startkey=[self.domain], endkey=[self.domain, {}], group=True)
-        forms = [x['value'] for x in forms]
+        forms = []
+        unknown_forms = []
+        for f in get_db().view('reports/forms_by_xmlns', startkey=[self.domain], endkey=[self.domain, {}], group=True):
+            form = f['value']
+            if 'app' in form:
+                form['has_app'] = True
+            else:
+                app_id = f['key'][1] or ''
+                form['app'] = {
+                    'id': app_id
+                }
+                form['has_app'] = False
+                unknown_forms.append(form)
+            forms.append(form)
 
         forms = sorted(forms, key=lambda form:\
             (0, form['app']['name'], form.get('module', {'id': -1})['id'], form.get('form', {'id': -1})['id'])\
-            if 'app' in form else\
-            (1, form['xmlns'])
+            if form['has_app'] else\
+            (1, form['xmlns'], form['app']['id'])
         )
+        if unknown_forms:
+            apps = get_db().view('reports/forms_by_xmlns',
+                startkey=['^Application', self.domain],
+                endkey=['^Application', self.domain, {}],
+                reduce=False,
+            )
+            possibilities = defaultdict(list)
+            for app in apps:
+                # index by xmlns
+                x = app['value']
+                x['has_app'] = True
+                possibilities[app['key'][2]].append(x)
+
+            for form in unknown_forms:
+                if form['app']['id']:
+                    try:
+                        app = Application.get(form['app']['id'])
+                    except Exception:
+                        form['app_does_not_exist'] = True
+                    else:
+                        if app.domain != self.domain:
+                            logging.error("submission tagged with app from wrong domain: %s" % app.get_id)
+                        else:
+                            if app.copy_of:
+                                app = Application.get(app.copy_of)
+                                form['app_copy'] = {'id': app.get_id, 'name': app.name}
+                            if app.is_deleted():
+                                form['app_deleted'] = {'id': app.get_id}
+                else:
+                    form['possibilities'] = possibilities[form['xmlns']]
+                    if form['possibilities']:
+                        form['duplicate'] = True
+                    else:
+                        form['no_suggestions'] = True
 
         # add saved exports. because of the way in which the key is stored
         # (serialized json) this is a little bit hacky, but works.

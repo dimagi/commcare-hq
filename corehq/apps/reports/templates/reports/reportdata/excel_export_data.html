@@ -1,6 +1,9 @@
 {% extends "reports/report_base.html" %}
 {% load xforms_extras %}
+{% load hq_shared_tags %}
+{% block js %}{{ block.super }}
 
+{% endblock %}
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function() {
@@ -12,7 +15,60 @@
                    $modalBody.empty().load(d.download_url);
                });
            });
-
+        });
+        $(function () {
+            // postGo is copied from main.js since that's now not being included, ever since the redesign
+            function postGo (url, params) {
+                var $form = $("<form>")
+                        .attr("method", "post")
+                        .attr("action", url);
+                $.each(params, function (name, value) {
+                    $("<input type='hidden'>")
+                            .attr("name", name)
+                            .attr("value", value)
+                            .appendTo($form);
+                });
+                $form.appendTo("body");
+                $form.submit();
+            }
+            $('.fix-submissions-link').click(function () {
+                var action = $(this).attr('href'),
+                    app_id = $(this).data('app_id'),
+                    xmlns = $(this).data('xmlns'),
+                    new_app_id = $(this).data('new_app_id'),
+                    next = window.location,
+                    modal = $('<div class="modal">').append(
+                    '<div class="modal-header">' +
+                        '<a class="close" data-dismiss="modal">×</a>' +
+                        '<h3>Fix Submissions (Sorry this is really technical!)</h3>' +
+                    '</div>',
+                    '<div class="modal-body">' +
+                        '<p>All of the submissions matching the following criteria:</p>' +
+                        '<ul>' +
+                            '<li>XMLNS=' + xmlns + '</li>' +
+                            '<li>app_id=' + app_id + '</li>' +
+                        '</ul>' +
+                        '<p>will be moved retagged as follows:</p>' +
+                        '<ul>' +
+                            '<li>app_id=' + new_app_id + '</li>' +
+                        '</ul>' +
+                    '</div>',
+                    $('<div class="modal-footer">').append(
+                        '<a class="btn" data-dismiss="modal">Cancel</a>',
+                        $('<button type="submit" class="btn btn-primary">Fix</button>').click(function () {
+                            postGo(action, {
+                                app_id: app_id,
+                                xmlns: xmlns,
+                                new_app_id: new_app_id,
+                                next: next
+                            });
+                        })
+                    )
+                );
+                $('<input type="hidden">')
+                modal.modal().appendTo('body');
+                return false;
+            });
         });
     </script>
 {% endblock %}
@@ -85,7 +141,7 @@
                 <tr class="{% cycle "odd" "even" %}">
                     <td>
                         {% ifchanged %}
-                            {% if form.app %}
+                            {% if form.has_app %}
                                 {{ form.app.name }}
                             {% else %}
                                 Unknown Forms <!---->
@@ -94,7 +150,7 @@
                     </td>
                     <td>
                         {% ifchanged %}
-                            {% if form.app and not form.is_user_registration %}
+                            {% if form.has_app and not form.is_user_registration %}
                                 <!--Make sure to check if {{ form.app.name }} changed-->
                                 {{ form.module.name|trans:form.app.langs }}
                             {% else %}
@@ -103,8 +159,56 @@
                         {% endifchanged %}
                     </td>
                     <td>
-                        {% include "reports/partials/form_name.html" %}
-                        {% if form.duplicate %}(Multiple Forms){% endif %}
+                    {% include "reports/partials/form_name.html" %}
+                    {% if not form.has_app %}
+                        <h5>Potential Issues:</h5>
+                        <ul>
+                        {% if form.app_copy %}
+                            <li>
+                                Hmm. I think these should belong to application "{{ form.app_copy.name }}".
+                                <a href="{% url change_submissions_app_id domain %}" class="fix-submissions-link"
+                                    data-app_id="{{ form.app.id }}"
+                                    data-xmlns="{{ form.xmlns }}"
+                                    data-new_app_id="{{ form.app_copy.id }}">Fix</a>
+                            </li>
+                        {% endif %}
+                        {% if form.app_does_not_exist %}
+                            <li>These submissions are tagged as if they belong to an application that doesn't exist.</li>
+                        {% endif %}
+                        {% if form.app_deleted %}
+                            <li>
+                                These submissions belong to an app that has been deleted.
+                                (<a href="{% url view_app domain form.app_deleted.id %}"
+                                    target="_blank">View to restore app</a>.)
+                            </li>
+                        {% endif %}
+                        {% if form.duplicate %}
+                            <li>
+                                <p>These submissions could belong to one of the following forms:</p>
+                                <ul>
+                                    {% for possibility in form.possibilities %}
+                                    <li>
+                                        {{ possibility.app.name }} &gt;
+                                        {% if not app.is_user_registration %}
+                                        {{ possibility.module.name|trans:possibility.app.langs }} &gt;
+                                        {% endif %}
+                                        {% with possibility as form %}
+                                        {% include "reports/partials/form_name.html" %}
+                                        {% endwith %}
+                                        <a href="{% url change_submissions_app_id domain %}" class="fix-submissions-link"
+                                           data-app_id="{{ form.app.id }}"
+                                           data-xmlns="{{ form.xmlns }}"
+                                           data-new_app_id="{{ possibility.app.id }}">Select this option</a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </li>
+                        {% endif %}
+                        </ul>
+                        {% if form.no_suggestions %}
+                            <h6>No suggestions</h6>
+                        {% endif %}
+                    {% endif %}
                     </td>
                     <td class="cell-vertical-centered">
                         {% if form.xmlns != None %}
@@ -113,7 +217,7 @@
                     </td>
                     <td class="cell-vertical-centered">
                         {% if form.submissions %}
-                            <a data-toggle="modal" href="#export-download-status" data-formname="{% if form.app %}{{ form.app.name }}{% else %}Unknown Forms{% endif %}" data-dlocation='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}&app_id={{ form.app.id }}'
+                            <a data-toggle="modal" href="#export-download-status" data-formname="{% if form.has_app %}{{ form.app.name }}{% else %}Unknown Forms{% endif %}" data-dlocation='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_param }}&enddate={{ datespan.enddate_param }}&group={{ group.get_id }}&app_id={{ form.app.id }}'
                                 class="btn btn-primary export-action-download" ><i class="icon-download-alt icon-white"></i> Download</a> ({{ form.submissions }} rows)
                         {% else %}
                             No Forms
