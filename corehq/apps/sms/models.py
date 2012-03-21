@@ -45,6 +45,70 @@ class MessageLog(Document, UnicodeMixIn):
                 return CommCareCase.get(self.couch_recipient).name
         return self.phone_number
 
+    @classmethod
+    def by_domain_asc(cls, domain):
+        if cls.__name__ == "MessageLog":
+            raise NotImplementedError("Log queries not yet implemented for base class")
+        return cls.view("sms/by_domain",
+                    reduce=False,
+                    startkey=[domain, cls.__name__],
+                    endkey=[domain, cls.__name__] + [{}],
+                    include_docs=True,
+                    descending=False)
+
+    @classmethod
+    def by_domain_dsc(cls, domain):
+        if cls.__name__ == "MessageLog":
+            raise NotImplementedError("Log queries not yet implemented for base class")
+        return cls.view("sms/by_domain",
+                    reduce=False,
+                    startkey=[domain, cls.__name__] + [{}],
+                    endkey=[domain, cls.__name__],
+                    include_docs=True,
+                    descending=True)
+
+    @classmethod
+    def count_by_domain(cls, domain, start_date = None, end_date = {}):
+        if cls.__name__ == "MessageLog":
+            raise NotImplementedError("Log queries not yet implemented for base class")
+        if not end_date:
+            end_date = {}
+        reduced = cls.view("sms/by_domain",
+                            startkey=[domain, cls.__name__] + [start_date],
+                            endkey=[domain, cls.__name__] + [end_date],
+                            reduce=True).all()
+        if reduced:
+            return reduced[0]['value']
+        return 0
+
+    @classmethod
+    def count_incoming_by_domain(cls, domain, start_date = None, end_date = {}):
+        if cls.__name__ == "MessageLog":
+            raise NotImplementedError("Log queries not yet implemented for base class")
+        if not end_date:
+            end_date = {}
+        reduced = cls.view("sms/direction_by_domain",
+                            startkey=[domain, cls.__name__, "I"] + [start_date],
+                            endkey=[domain, cls.__name__, "I"] + [end_date],
+                            reduce=True).all()
+        if reduced:
+            return reduced[0]['value']
+        return 0
+
+    @classmethod
+    def count_outgoing_by_domain(cls, domain, start_date = None, end_date = {}):
+        if cls.__name__ == "MessageLog":
+            raise NotImplementedError("Log queries not yet implemented for base class")
+        if not end_date:
+            end_date = {}
+        reduced = cls.view("sms/direction_by_domain",
+                            startkey=[domain, cls.__name__, "O"] + [start_date],
+                            endkey=[domain, cls.__name__, "O"] + [end_date],
+                            reduce=True).all()
+        if reduced:
+            return reduced[0]['value']
+        return 0
+
 class SMSLog(MessageLog):
     text = StringProperty()
     
@@ -56,137 +120,12 @@ class SMSLog(MessageLog):
 
         to_from = (self.direction == INCOMING) and "from" or "to"
         return "%s (%s %s)" % (str, to_from, self.phone_number)
-    
-    @classmethod
-    def all(cls, doc_type=None):
-        return MessageLog.view("sms/by_domain",
-                    startkey=["SMSLog"],
-                    endkey=["SMSLog"] + [{}],
-                    include_docs=True,
-                    reduce=False)
-
-    @classmethod
-    def by_domain_asc(cls, domain, doc_type=None):
-        return cls.view("sms/by_domain",
-                    reduce=False,
-                    startkey=["SMSLog", domain],
-                    endkey=["SMSLog", domain] + [{}],
-                    include_docs=True,
-                    descending=False)
-
-    @classmethod
-    def by_domain_dsc(cls, domain, doc_type=None):
-        return cls.view("sms/by_domain",
-                    reduce=False,
-                    startkey=["SMSLog", domain] + [{}],
-                    endkey=["SMSLog", domain],
-                    include_docs=True,
-                    descending=True)
-
-    @classmethod
-    def count_by_domain(cls, domain, start_date = None, end_date = {}, doc_type=None):
-        if not end_date:
-            end_date = {}
-        reduced = MessageLog.view("sms/by_domain",
-                            startkey=["SMSLog", domain] + [start_date],
-                            endkey=["SMSLog", domain] + [end_date],
-                            reduce=True).all()
-        if reduced:
-            return reduced[0]['value']
-        return 0
-
-    @classmethod
-    def count_incoming_by_domain(cls, domain, start_date = None, end_date = {}, doc_type=None):
-        if not end_date:
-            end_date = {}
-        reduced = MessageLog.view("sms/direction_by_domain",
-                            startkey=["SMSLog", domain, "I"] + [start_date],
-                            endkey=["SMSLog", domain, "I"] + [end_date],
-                            reduce=True).all()
-        if reduced:
-            return reduced[0]['value']
-        return 0
-
-    @classmethod
-    def count_outgoing_by_domain(cls, domain, start_date = None, end_date = {}, doc_type=None):
-        if not end_date:
-            end_date = {}
-        reduced = MessageLog.view("sms/direction_by_domain",
-                            startkey=["SMSLog", domain, "O"] + [start_date],
-                            endkey=["SMSLog", domain, "O"] + [end_date],
-                            reduce=True).all()
-        if reduced:
-            return reduced[0]['value']
-        return 0
-
 
 class CallLog(MessageLog):
     
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
         return "Call %s %s" % (to_from, self.phone_number)
-    
-    @classmethod
-    def all(cls, doc_type=None):
-        return MessageLog.view("sms/by_domain",
-                    startkey=["CallLog"],
-                    endkey=["CallLog"] + [{}],
-                    include_docs=True,
-                    reduce=False)
-
-    @classmethod
-    def by_domain_asc(cls, domain, doc_type=None):
-        return cls.view("sms/by_domain",
-                    reduce=False,
-                    startkey=["CallLog", domain],
-                    endkey=["CallLog", domain] + [{}],
-                    include_docs=True,
-                    descending=False)
-
-    @classmethod
-    def by_domain_dsc(cls, domain, doc_type=None):
-        return cls.view("sms/by_domain",
-                    reduce=False,
-                    startkey=["CallLog", domain] + [{}],
-                    endkey=["CallLog", domain],
-                    include_docs=True,
-                    descending=True)
-
-    @classmethod
-    def count_by_domain(cls, domain, start_date = None, end_date = {}, doc_type=None):
-        if not end_date:
-            end_date = {}
-        reduced = MessageLog.view("sms/by_domain",
-                            startkey=["CallLog", domain] + [start_date],
-                            endkey=["CallLog", domain] + [end_date],
-                            reduce=True).all()
-        if reduced:
-            return reduced[0]['value']
-        return 0
-
-    @classmethod
-    def count_incoming_by_domain(cls, domain, start_date = None, end_date = {}, doc_type=None):
-        if not end_date:
-            end_date = {}
-        reduced = MessageLog.view("sms/direction_by_domain",
-                            startkey=["CallLog", domain, "I"] + [start_date],
-                            endkey=["CallLog", domain, "I"] + [end_date],
-                            reduce=True).all()
-        if reduced:
-            return reduced[0]['value']
-        return 0
-
-    @classmethod
-    def count_outgoing_by_domain(cls, domain, start_date = None, end_date = {}, doc_type=None):
-        if not end_date:
-            end_date = {}
-        reduced = MessageLog.view("sms/direction_by_domain",
-                            startkey=["CallLog", domain, "O"] + [start_date],
-                            endkey=["CallLog", domain, "O"] + [end_date],
-                            reduce=True).all()
-        if reduced:
-            return reduced[0]['value']
-        return 0
 
     @classmethod
     def inbound_call_exists(cls, verified_number, after_timestamp):

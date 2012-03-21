@@ -8,12 +8,12 @@ from corehq.apps.unicel.api import InboundParams, INCOMING, DATE_FORMAT
 class IncomingPostTest(TestCase):
 
     def setUp(self):
-        all_logs = SMSLog.all()
+        self.domain = 'mockdomain'
+        all_logs = SMSLog.by_domain_asc(self.domain).all()
         for log in all_logs:
             log.delete()
         self.user = 'username'
         self.password = 'password'
-        self.domain = 'mockdomain'
         self.number = 5555551234
         self.couch_user = WebUser.create(self.domain, self.user, self.password)
         self.couch_user.add_phone_number(self.number)
