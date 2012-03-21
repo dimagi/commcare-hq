@@ -39,13 +39,14 @@ NO_ACTIONS_SOURCE = """<?xml version="1.0"?>
 			<instance>
 				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/A22A5D53-037A-48DE-979B-BAA54734194E" uiVersion="1" version="3" name="New Form">
 					<question1/>
-					<orx:meta>
+					<orx:meta xmlns:cc="http://commcarehq.org/xforms">
 						<orx:deviceID/>
 						<orx:timeStart/>
 						<orx:timeEnd/>
 						<orx:username/>
 						<orx:userID/>
 						<orx:instanceID/>
+						<cc:appVersion/>
 					</orx:meta>
 				</data>
 			</instance>
@@ -66,6 +67,7 @@ NO_ACTIONS_SOURCE = """<?xml version="1.0"?>
 			<setvalue ref="/data/meta/username" event="xforms-ready" value="instance('commcaresession')/session/context/username"/>
 			<setvalue ref="/data/meta/userID" event="xforms-ready" value="instance('commcaresession')/session/context/userid"/>
 			<setvalue ref="/data/meta/instanceID" event="xforms-ready" value="uuid()"/>
+			<setvalue ref="/data/meta/appVersion" event="xforms-ready" value="instance('commcaresession')/session/context/appversion"/>
 		</model>
 	</h:head>
 	<h:body>
@@ -91,13 +93,14 @@ OPEN_CASE_SOURCE = """<?xml version="1.0"?>
 							<case_type>test_case_type</case_type>
 						</create>
 					</case>
-					<orx:meta>
+					<orx:meta xmlns:cc="http://commcarehq.org/xforms">
 						<orx:deviceID/>
 						<orx:timeStart/>
 						<orx:timeEnd/>
 						<orx:username/>
 						<orx:userID/>
 						<orx:instanceID/>
+						<cc:appVersion/>
 					</orx:meta>
 				</data>
 			</instance>
@@ -123,6 +126,7 @@ OPEN_CASE_SOURCE = """<?xml version="1.0"?>
 			<setvalue ref="/data/meta/username" event="xforms-ready" value="instance('commcaresession')/session/context/username"/>
 			<setvalue ref="/data/meta/userID" event="xforms-ready" value="instance('commcaresession')/session/context/userid"/>
 			<setvalue ref="/data/meta/instanceID" event="xforms-ready" value="uuid()"/>
+			<setvalue ref="/data/meta/appVersion" event="xforms-ready" value="instance('commcaresession')/session/context/appversion"/>
 		</model>
 	</h:head>
 	<h:body>
@@ -151,13 +155,14 @@ OPEN_CASE_EXTERNAL_ID_SOURCE = """<?xml version="1.0"?>
 							<external_id/>
 						</update>
 					</case>
-					<orx:meta>
+					<orx:meta xmlns:cc="http://commcarehq.org/xforms">
 						<orx:deviceID/>
 						<orx:timeStart/>
 						<orx:timeEnd/>
 						<orx:username/>
 						<orx:userID/>
 						<orx:instanceID/>
+						<cc:appVersion/>
 					</orx:meta>
 				</data>
 			</instance>
@@ -185,6 +190,7 @@ OPEN_CASE_EXTERNAL_ID_SOURCE = """<?xml version="1.0"?>
 			<setvalue ref="/data/meta/username" event="xforms-ready" value="instance('commcaresession')/session/context/username"/>
 			<setvalue ref="/data/meta/userID" event="xforms-ready" value="instance('commcaresession')/session/context/userid"/>
 			<setvalue ref="/data/meta/instanceID" event="xforms-ready" value="uuid()"/>
+			<setvalue ref="/data/meta/appVersion" event="xforms-ready" value="instance('commcaresession')/session/context/appversion"/>
 		</model>
 	</h:head>
 	<h:body>
@@ -207,13 +213,14 @@ UPDATE_CASE_SOURCE = """<?xml version="1.0"?>
 							<question1/>
 						</update>
 					</case>
-					<orx:meta>
+					<orx:meta xmlns:cc="http://commcarehq.org/xforms">
 						<orx:deviceID/>
 						<orx:timeStart/>
 						<orx:timeEnd/>
 						<orx:username/>
 						<orx:userID/>
 						<orx:instanceID/>
+						<cc:appVersion/>
 					</orx:meta>
 				</data>
 			</instance>
@@ -239,6 +246,7 @@ UPDATE_CASE_SOURCE = """<?xml version="1.0"?>
 			<setvalue ref="/data/meta/username" event="xforms-ready" value="instance('commcaresession')/session/context/username"/>
 			<setvalue ref="/data/meta/userID" event="xforms-ready" value="instance('commcaresession')/session/context/userid"/>
 			<setvalue ref="/data/meta/instanceID" event="xforms-ready" value="uuid()"/>
+			<setvalue ref="/data/meta/appVersion" event="xforms-ready" value="instance('commcaresession')/session/context/appversion"/>
 		</model>
 	</h:head>
 	<h:body>
@@ -267,13 +275,14 @@ OPEN_UPDATE_CASE_SOURCE = """<?xml version="1.0"?>
 							<question1/>
 						</update>
 					</case>
-					<orx:meta>
+					<orx:meta xmlns:cc="http://commcarehq.org/xforms">
 						<orx:deviceID/>
 						<orx:timeStart/>
 						<orx:timeEnd/>
 						<orx:username/>
 						<orx:userID/>
 						<orx:instanceID/>
+						<cc:appVersion/>
 					</orx:meta>
 				</data>
 			</instance>
@@ -301,6 +310,7 @@ OPEN_UPDATE_CASE_SOURCE = """<?xml version="1.0"?>
 			<setvalue ref="/data/meta/username" event="xforms-ready" value="instance('commcaresession')/session/context/username"/>
 			<setvalue ref="/data/meta/userID" event="xforms-ready" value="instance('commcaresession')/session/context/userid"/>
 			<setvalue ref="/data/meta/instanceID" event="xforms-ready" value="uuid()"/>
+			<setvalue ref="/data/meta/appVersion" event="xforms-ready" value="instance('commcaresession')/session/context/appversion"/>
 		</model>
 	</h:head>
 	<h:body>
@@ -324,13 +334,14 @@ UPDATE_PRELOAD_CASE_SOURCE = """<?xml version="1.0"?>
 							<question1/>
 						</update>
 					</case>
-					<orx:meta>
+					<orx:meta xmlns:cc="http://commcarehq.org/xforms">
 						<orx:deviceID/>
 						<orx:timeStart/>
 						<orx:timeEnd/>
 						<orx:username/>
 						<orx:userID/>
 						<orx:instanceID/>
+						<cc:appVersion/>
 					</orx:meta>
 				</data>
 			</instance>
@@ -357,6 +368,7 @@ UPDATE_PRELOAD_CASE_SOURCE = """<?xml version="1.0"?>
 			<setvalue ref="/data/meta/username" event="xforms-ready" value="instance('commcaresession')/session/context/username"/>
 			<setvalue ref="/data/meta/userID" event="xforms-ready" value="instance('commcaresession')/session/context/userid"/>
 			<setvalue ref="/data/meta/instanceID" event="xforms-ready" value="uuid()"/>
+			<setvalue ref="/data/meta/appVersion" event="xforms-ready" value="instance('commcaresession')/session/context/appversion"/>
 		</model>
 	</h:head>
 	<h:body>
@@ -378,13 +390,14 @@ CLOSE_CASE_SOURCE = """<?xml version="1.0"?>
 					<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" user_id="" date_modified="">
 						<close/>
 					</case>
-					<orx:meta>
+					<orx:meta xmlns:cc="http://commcarehq.org/xforms">
 						<orx:deviceID/>
 						<orx:timeStart/>
 						<orx:timeEnd/>
 						<orx:username/>
 						<orx:userID/>
 						<orx:instanceID/>
+						<cc:appVersion/>
 					</orx:meta>
 				</data>
 			</instance>
@@ -408,6 +421,7 @@ CLOSE_CASE_SOURCE = """<?xml version="1.0"?>
 			<setvalue ref="/data/meta/username" event="xforms-ready" value="instance('commcaresession')/session/context/username"/>
 			<setvalue ref="/data/meta/userID" event="xforms-ready" value="instance('commcaresession')/session/context/userid"/>
 			<setvalue ref="/data/meta/instanceID" event="xforms-ready" value="uuid()"/>
+			<setvalue ref="/data/meta/appVersion" event="xforms-ready" value="instance('commcaresession')/session/context/appversion"/>
 		</model>
 	</h:head>
 	<h:body>
