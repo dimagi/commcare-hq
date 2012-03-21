@@ -337,14 +337,16 @@ def get_apps_base_context(request, domain, app):
     edit = (request.GET.get('edit', 'true') == 'true') and\
            (request.couch_user.can_edit_apps(domain) or request.user.is_superuser)
 
-    latest_app_version = ApplicationBase.view('app_manager/saved_app',
-        startkey=[domain, app.id, {}],
-        endkey=[domain, app.id],
-        descending=True,
-        limit=1,
-    ).one()
-    latest_app_version = latest_app_version.version if latest_app_version else -1
-
+    if app:
+        latest_app_version = ApplicationBase.view('app_manager/saved_app',
+            startkey=[domain, app.id, {}],
+            endkey=[domain, app.id],
+            descending=True,
+            limit=1,
+        ).one()
+        latest_app_version = latest_app_version.version if latest_app_version else -1
+    else:
+        latest_app_version = -1
     context = locals()
     del context['request']
 
