@@ -8,7 +8,7 @@ def require_permission(permission, login_decorator=login_and_domain_required):
                 if login_decorator:
                     return login_decorator(view_func)(request, domain, *args, **kwargs)
                 else:
-                    return view_func
+                    return view_func(request, domain, *args, **kwargs)
             else:
                 return HttpResponseForbidden()
         return _inner

@@ -90,11 +90,12 @@ def login_or_digest(fn):
     def safe_fn(request, domain, *args, **kwargs):
         if not request.user.is_authenticated():
             def _inner(request, domain, *args, **kwargs):
-                couch_user = CouchUser.from_django_user(request.user)
+                request.couch_user = couch_user = CouchUser.from_django_user(request.user)
                 if couch_user.is_web_user() and couch_user.is_member_of(domain):
                     return fn(request, domain, *args, **kwargs)
                 else:
                     return HttpResponseForbidden()
+
             return httpdigest(_inner)(request, domain, *args, **kwargs)
         else:
             return login_and_domain_required(fn)(request, domain, *args, **kwargs)

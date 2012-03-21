@@ -835,8 +835,8 @@ def _handle_media_edits(request, item, should_edit, resp):
             setattr(item, attribute, val)
 
 @require_POST
-@require_permission('edit-apps', None)
 @login_or_digest
+@require_permission('edit-apps', None)
 def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     """
     Called to edit any (supported) form attribute, given by attr
@@ -903,7 +903,6 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
                     if form == duplicate:
                         continue
                     else:
-                        print "XMLNS %s already in use" % xform.data_node.tag_xmlns
                         data = xform.data_node.render()
                         xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
                         data = data.replace(xform.data_node.tag_xmlns, xmlns, 1)
@@ -1418,7 +1417,7 @@ def download_multimedia_zip(req, domain, app_id):
             path = form_path.replace(utils.MULTIMEDIA_PREFIX, "")
             hqZip.writestr(path, data)
         except (NameError, ResourceNotFound) as e:
-            print e, " on ", form_path, media_item
+            logging.warning("%s on %s %s" % (e, form_path, media_item))
             return HttpResponseServerError("There was an error gathering some of the multimedia for this application.")
     hqZip.close()
     response = HttpResponse(mimetype="application/zip")
