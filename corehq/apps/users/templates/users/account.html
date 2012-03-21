@@ -1,29 +1,23 @@
 {% extends "users/users_base.html" %}
 
-{% block head %}
-    {{ block.super }}
-    <script>
-	    $(function() {
-            $( "#user_settings_tabs" ).tabs({
-                cookie: {
-                    // store cookie for a day
-                    expires: 1
-                }
-            }).removeClass('ui-corner-all ui-widget-content').css({padding: "0px"})
-              .find('.ui-tabs-nav').removeClass('ui-corner-all');
-
-            $('#id_role [value=""]').each(function () {
-                if (!$(this).is(':selected')) {
-                    $(this).detach();
-                }
-            });
-        });
-	</script>
-    <style>
-        .next-to-sidebar {
-            padding: 0;
-        }
-    </style>
+{% block js-inline %}{{ block.super }}
+{#    <script type="text/javascript">#}
+{#	    $(function() {#}
+{#            $( "#user_settings_tabs" ).tabs({#}
+{#                cookie: {#}
+{#                    // store cookie for a day#}
+{#                    expires: 1#}
+{#                }#}
+{#            }).removeClass('ui-corner-all ui-widget-content').css({padding: "0px"})#}
+{#              .find('.ui-tabs-nav').removeClass('ui-corner-all');#}
+{##}
+{#            $('#id_role [value=""]').each(function () {#}
+{#                if (!$(this).is(':selected')) {#}
+{#                    $(this).detach();#}
+{#                }#}
+{#            });#}
+{#        });#}
+{#	</script>#}
 {% endblock %}
 
 {% block web_users_indicator %}
@@ -33,6 +27,7 @@
         </ul>
     {% endif %}
 {% endblock %}
+
 {% block commcare_users_indicator %}
     {% if couch_user.user_id != request.couch_user.user_id and couch_user.is_commcare_user %}
         <ul>
@@ -41,9 +36,19 @@
     {% endif %}
 {% endblock %}
 
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url users_default domain %}"><strong>Project Settings</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <a href="#">Account Settings</a>
+        </li>
+    </ul>
+{% endblock %}
+
 
 {% block user-view %}
-    <h1>Account Settings</h1>
     <div id="user_settings_tabs">
         <ul>
             <li><a href="#basic-info">Basic</a></li>

@@ -1,60 +1,72 @@
-{% extends base_template %}
+{% extends "hqwebapp/two_column.html" %}
+{% load hq_shared_tags %}
+
 {% block page_imports %}
     <link rel="stylesheet" href="{{ STATIC_URL }}users/css/users.css?version=1" />
 {% endblock %}
-{% block head %}
-    {{ block.super }}
-    <script src="/static/users/js/users.js?version=1"></script>
+{% block js %}{{ block.super }}
+{#    <script src="{% static 'users/js/users.js' %}"></script>#}
 {% endblock %}
-{% block content %}
-    <div id="main_container">
-        <div class="sidebar-wrapper">
-            <div class="sidebar" id="user-options">
-                <strong>My Account</strong>
-                <ul>
-                    <li><a href="{% url user_account domain request.couch_user.user_id %}">Account Settings</a>
-                            {% block account_indicator %}{% endblock %}
-                    </li>
-                    <li><a href="{% url change_my_password domain %}">Change Password</a></li>
-                </ul>
-                {% if request.couch_user.can_edit_web_users or request.couch_user.can_edit_commcare_users %}
-                    <strong>User Management</strong>
-                    <ul>
-                        {% if request.couch_user.can_edit_web_users %}
-                        <li><a href="{% url web_users domain %}">Web Users</a>
-                            {% block web_users_indicator %}{% endblock %}
-                        </li>
-                        {% endif %}
-                        {% if request.couch_user.can_edit_commcare_users %}
-                        <li><a href="{% url commcare_users domain %}">CommCare Users</a>
-                            {% block commcare_users_indicator %}{% endblock %}
-                        </li>
-                        <li><a href="{% url all_groups domain %}">Groups</a>
-                            {% block groups_indicator %}{% endblock %}
-                        </li>
-                        {% endif %}
-                    </ul>
-                {% endif %}
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        $(function () {
+            $('#users-main-nav li a').each(function(e) {
+                console.log($(this).attr('href'));
+                if ($(this).attr('href') == '{{ request.path }}')
+                    $(this).parent().addClass('active');
+            });
+        });
+    </script>
+{% endblock %}
 
-                {% if request.couch_user.is_domain_admin %}
-                <strong>Project Administration</strong>
-                    <ul>
-                        <li><a href="{% url domain_global_settings domain %}">Global Settings</a></li>
-                    </ul>
-                {% endif %}
-            </div>
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url users_default domain %}"><strong>Project Settings</strong></a>
+        </li>
+    </ul>
+{% endblock %}
 
-            <article id="user-view">
-                {% block user-view %}
-                    <p class="message">Click on the menu to the left to edit your settings.</p>
-                {% endblock %}
-                {% if error %}
-                    <div id="error_msg">
-                        {{ error }}
-                    </div>
-                {% endif %}
-            </article>
-
+{% block sidebar %}
+<nav>
+    <ul class="nav nav-list" id="users-main-nav">
+        <li class="nav-header">My Account</li>
+        <li><a href="{% url user_account domain request.couch_user.user_id %}">Account Settings</a>
+            {% block account_indicator %}{% endblock %}
+        </li>
+        <li><a href="{% url change_my_password domain %}">Change Password</a></li>
+    {% if request.couch_user.can_edit_web_users or request.couch_user.can_edit_commcare_users %}
+        <li class="nav-header">User Management</li>
+        {% if request.couch_user.can_edit_web_users %}
+            <li><a href="{% url web_users domain %}">Web Users</a>
+                {% block web_users_indicator %}{% endblock %}
+            </li>
+        {% endif %}
+        {% if request.couch_user.can_edit_commcare_users %}
+            <li><a href="{% url commcare_users domain %}">CommCare Users</a>
+                {% block commcare_users_indicator %}{% endblock %}
+            </li>
+            <li><a href="{% url all_groups domain %}">Groups</a>
+                {% block groups_indicator %}{% endblock %}
+            </li>
+        {% endif %}
+    {% endif %}
+    {% if request.couch_user.is_domain_admin %}
+        <li class="nav-header">Project Administration</li>
+        <li><a href="{% url domain_global_settings domain %}">Global Settings</a></li>
+    {% endif %}
+    </ul>
+</nav>
+{% endblock %}
+{% block main_column %}
+<article id="user-view">
+    {% block user-view %}
+        <p class="message">Click on the menu to the left to edit your settings.</p>
+    {% endblock %}
+    {% if error %}
+        <div id="error_msg">
+            {{ error }}
         </div>
-    </div>
+    {% endif %}
+</article>
 {% endblock %}
