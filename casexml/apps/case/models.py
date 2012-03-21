@@ -12,6 +12,8 @@ from receiver.util import spoof_submission
 from couchforms.models import XFormInstance
 from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex
 from copy import copy
+import itertools
+from dimagi.utils.couch.database import get_db
 
 """
 Couch models for commcare cases.  
@@ -173,7 +175,18 @@ class CommCareCase(CaseBase, IndexHoldingMixIn):
     def __get_case_id(self):        return self._id
     def __set_case_id(self, id):    self._id = id
     case_id = property(__get_case_id, __set_case_id)
-
+    
+    @property
+    def reverse_indices(self):
+        return map(lambda row: CommCareCaseIndex.wrap(row["value"]), 
+                   get_db().view("case/related", 
+                                 key=[self.domain, self.get_id,"reverse_index"],
+                                 reduce=False).all())
+        
+    @property
+    def all_indices(self):
+        return itertools.chain(self.indices, self.reverse_indices)
+        
     def get_json(self):
         return {
             # referrals and actions excluded here

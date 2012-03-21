@@ -75,6 +75,35 @@
 </tbody>
 </table>
 
+<h2>Related Cases</h2>
+<table class="table table-striped case_history">
+<thead>
+    <tr>
+        <th>Name</th>
+        <th>Relation</th>
+        <th>Type</th>
+        <th>Date Opened</th>
+        <th>Date Modified</th>
+        <th>Status</th>
+    </tr>
+</thead>
+<tbody>
+{% for case_index in case.all_indices %}
+    <tr>
+        <td class="case_ref" data-caseid="{{ case_index.referenced_id }}">{{ case_index.referenced_case.name }}</td>
+        <td>{{ case_index.referenced_type }}</td>
+        <td>{{ case_index.referenced_case.type }}</td>
+        <td>{{ case_index.referenced_case.opened_on}}</td>
+        <td>{{ case_index.referenced_case.modified_on}}</td>
+        <td>{{ case_index.referenced_case.closed|yesno:"closed,open" }}</td>
+    </tr>
+{% empty %}
+    <tr><td colspan="4" class="no_data">No related cases</td></tr>
+{% endfor %}
+
+</tbody>
+</table>
+
 <h2>Case History</h2>
 <table class="table table-striped case_history">
 <thead>
