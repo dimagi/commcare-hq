@@ -126,7 +126,6 @@ class SelectApplicationField(ReportField):
         apps_for_domain = get_db().view("app_manager/applications_brief",
             startkey=[self.domain],
             endkey=[self.domain, {}],
-            reduce=False,
             include_docs=True).all()
         available_apps = [dict(name="%s (%s)" % (app['value']['name'], app['value']['version']), id=app['value']['_id']) for app in apps_for_domain]
         self.context['selected_app'] = self.request.GET.get('app','')
