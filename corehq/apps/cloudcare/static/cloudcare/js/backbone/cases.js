@@ -1,18 +1,9 @@
 
-var CaseNavigation = Backbone.Router.extend({
-    
-    initialize: function() {
-        // _.bindAll(this); 
-    },
-    
-    routes: {
-        "case/:case":  "case",    // #view/caseid
-        "":            "clear"
-    },
-    
-});
+if (typeof cloudCare === 'undefined') {
+    var cloudCare = {};
+}
 
-var Case = Backbone.Model.extend({
+cloudCare.Case = Backbone.Model.extend({
     
     initialize: function() {
         _.bindAll(this, 'getProperty'); 
@@ -28,12 +19,12 @@ var Case = Backbone.Model.extend({
     }
 });
 
-var Details = Backbone.Model.extend({
+cloudCare.Details = Backbone.Model.extend({
     // nothing here yet
 });
     
     
-var CaseView = Selectable.extend({
+cloudCare.CaseView = Selectable.extend({
     tagName: 'tr', // name of (orphan) root tag in this.el
     initialize: function() {
         _.bindAll(this, 'render', 'select', 'deselect', 'toggle');
@@ -42,18 +33,18 @@ var CaseView = Selectable.extend({
     render: function(){
         var self = this;
         _(this.options.columns).each(function (col) {
-            $("<td />").text(self.model.getProperty(col.field) || "?").appendTo($(self.el));
+            $("<td />").text(self.model.getProperty(col.field) || "?").appendTo(self.el);
         });
         return this; 
     }
 });
 
         
-var CaseList = Backbone.Collection.extend({
+cloudCare.CaseList = Backbone.Collection.extend({
     initialize: function() {
         _.bindAll(this, 'url', 'setUrl'); 
     },
-    model: Case,
+    model: cloudCare.Case,
     url: function () {
         return this.caseUrl;
     },
@@ -63,17 +54,17 @@ var CaseList = Backbone.Collection.extend({
     
 });
 
-var CaseListView = Backbone.View.extend({
+cloudCare.CaseListView = Backbone.View.extend({
     
     initialize: function(){
         _.bindAll(this, 'render', 'appendItem', 'appendAll'); 
       
         this.caseMap = {};
       
-        this.detailsShort = new Details();
+        this.detailsShort = new cloudCare.Details();
         this.detailsShort.set(this.options.details);
       
-        this.caseList = new CaseList();
+        this.caseList = new cloudCare.CaseList();
         this.caseList.bind('add', this.appendItem);
         this.caseList.bind('reset', this.appendAll);
         if (this.options.cases) {
@@ -101,26 +92,30 @@ var CaseListView = Backbone.View.extend({
     },
     appendItem: function (item) {
         var self = this;
-        var caseView = new CaseView({
+        var caseView = new cloudCare.CaseView({
             model: item,
             columns: this.detailsShort.get("columns")
         });
+        // set the app config on the case if it's there
+        // so that other events can access it later
+        item.set("appConfig", this.options.appConfig);
         caseView.on("selected", function () {
             if (self.selectedCaseView) {
                 self.selectedCaseView.deselect();
             }
             if (self.selectedCaseView !== this) {
                 self.selectedCaseView = this;
-                self.trigger("case:selected", this);
+                cloudCare.dispatch.trigger("case:selected", this.model);
             } 
         });
         caseView.on("deselected", function () {
             self.selectedCaseView = null;
-            self.trigger("case:deselected", this);
+            cloudCare.dispatch.trigger("case:deselected", this.model);
         });
       
         $('table tbody', this.el).append(caseView.render().el);
         this.caseMap[item.id] = caseView;
+        
       
     },
     appendAll: function () {
@@ -128,11 +123,11 @@ var CaseListView = Backbone.View.extend({
     }, 
 });
 
-var CaseDetailsView = Backbone.View.extend({
+cloudCare.CaseDetailsView = Backbone.View.extend({
     initialize: function(){
         _.bindAll(this, 'render'); 
       
-        this.details = new Details();
+        this.details = new cloudCare.Details();
         this.details.set(this.options.details);
         this.render();
     },
@@ -161,48 +156,38 @@ var CaseDetailsView = Backbone.View.extend({
     },               
 });
 
-var CaseMainView = Backbone.View.extend({
+cloudCare.CaseMainView = Backbone.View.extend({
     
     initialize: function () {
         _.bindAll(this, 'render', 'selectCase', 'fetchCaseList');
         this.el = this.options.el;
         var self = this;
-        this.router = new CaseNavigation();
-        this.router.on("route:case", function (caseId) {
-            self.listView.caseMap[caseId].select();
-        });
-        this.router.on("route:clear", function () {
-            if (self.listView.selectedCaseView) {
-                self.listView.selectedCaseView.deselect();
-                self.listView.selectedCaseView.trigger("deselected");
-            }
-        });
-        this.listView = new CaseListView({details: this.options.listDetails,
+        this.listView = new cloudCare.CaseListView({details: this.options.listDetails,
                                           cases: this.options.cases,
                                           case_type: this.options.case_type,
                                           language: this.options.language,
-                                          caseUrl: this.options.caseUrl });
+                                          caseUrl: this.options.caseUrl,
+                                          appConfig: this.options.appConfig});
         $(this.listView.render().el).appendTo($(this.el));
-        this.detailsView = new CaseDetailsView({details: this.options.summaryDetails,
-                                                language: this.options.language});
+        this.detailsView = new cloudCare.CaseDetailsView({details: this.options.summaryDetails,
+                                                language: this.options.language,
+                                                appConfig: this.options.appConfig});
         $(this.detailsView.render().el).appendTo($(this.el));
         $("<div />").addClass("clear").appendTo($(this.el));
-        this.listView.on("case:selected", function (caseView) {
-            self.selectCase(caseView);
-            self.router.navigate("case/" + caseView.model.id);
+        cloudCare.dispatch.on("case:selected", function (caseModel) {
+            self.selectCase(caseModel);
         });
-        this.listView.on("case:deselected", function (caseView) {
+        cloudCare.dispatch.on("case:deselected", function (caseModel) {
             self.selectCase(null);
-            self.router.navigate("");
         });
         
     },
     
-    selectCase: function (caseView) {
-        if (caseView === null) {
+    selectCase: function (caseModel) {
+        if (caseModel === null) {
             this.detailsView.model = null;
         } else {
-            this.detailsView.model = caseView.model;
+            this.detailsView.model = caseModel;
         }
         this.detailsView.render();
     },

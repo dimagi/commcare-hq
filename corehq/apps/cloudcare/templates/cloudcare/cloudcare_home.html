@@ -47,17 +47,30 @@
     <script src="{% static 'cloudcare/js/backbone/shared.js' %}"></script>
     <script src="{% static 'cloudcare/js/backbone/apps.js' %}"></script>
     <script src="{% static 'cloudcare/js/backbone/cases.js' %}"></script>
+    
+    {# touchforms includes #}
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/jquery-1.4.2.min.js' %}"></script>
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/jquery-ui.min.js' %}"></script>
+    <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/themes/ui-lightness/jquery-ui.css">
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/shortcut.js' %}"></script>
+
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/xforgasm.js' %}?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/formnav-all.js' %}?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/entrycontrols_full.js' %}?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/fullform-ui.js' %}?version={{app_version}}"></script>
+    <link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
+    
 {% endblock %}
 {% block js-inline %}{{ block.super }}
 <script>
 
     $(function () {
-        var urlRoot = "{% url cloudcare_app_list domain %}";
+        var urlRoot = "{% url cloudcare_app_list domain '' %}";
         var appUrlRoot = "{% url cloudcare_get_apps domain %}";
         var caseUrlRoot = "{% url cloudcare_get_cases domain %}"; 
         var language = "{{ language }}";
         var apps = {{ apps|safe }};
-        window.mainView = new AppMainView({
+        window.mainView = new cloudCare.AppMainView({
 			apps: apps,
 			language: language,
 			urlRoot: urlRoot,
@@ -65,7 +78,7 @@
 			caseUrlRoot: caseUrlRoot
         });
         // TODO: when we figure out what to do about get params, use this
-        //Backbone.history.start({pushState: true, root: "{% url cloudcare_app_list domain %}"});
+        Backbone.history.start({pushState: true, root: urlRoot});
     }());
 
 </script>
@@ -77,7 +90,7 @@
         <section id="app-main" >
          <nav id="app-list" ></nav>
          <nav id="module-list" ></nav>
-         <nav id="form-list" ></section>
+         <nav id="form-list" ></nav>
         </section>
     </div>
     <div class="hq-content span10">
