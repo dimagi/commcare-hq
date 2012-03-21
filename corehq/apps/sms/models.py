@@ -47,81 +47,6 @@ class MessageLog(Document, UnicodeMixIn):
                 return CommCareCase.get(self.couch_recipient).name
         return self.phone_number
 
-    # Couch view wrappers
-    @classmethod
-    def all(cls, doc_type=None):
-        start_doc_type  = doc_type if doc_type is not None else "A"
-        end_doc_type    = doc_type if doc_type is not None else "Z"
-        return MessageLog.view("sms/by_domain",
-                    startkey=[start_doc_type],
-                    endkey=[end_doc_type] + [{}],
-                    include_docs=True,
-                    reduce=False)
-
-    @classmethod
-    def by_domain_asc(cls, domain, doc_type=None):
-        start_doc_type  = doc_type if doc_type is not None else "A"
-        end_doc_type    = doc_type if doc_type is not None else "Z"
-        return cls.view("sms/by_domain",
-                    reduce=False,
-                    startkey=[start_doc_type, domain],
-                    endkey=[end_doc_type, domain] + [{}],
-                    include_docs=True,
-                    descending=False)
-
-    @classmethod
-    def by_domain_dsc(cls, domain, doc_type=None):
-        start_doc_type  = doc_type if doc_type is not None else "A"
-        end_doc_type    = doc_type if doc_type is not None else "Z"
-        return cls.view("sms/by_domain",
-                    reduce=False,
-                    startkey=[start_doc_type, domain] + [{}],
-                    endkey=[end_doc_type, domain],
-                    include_docs=True,
-                    descending=True)
-
-    @classmethod
-    def count_by_domain(cls, domain, start_date = None, end_date = {}, doc_type=None):
-        start_doc_type  = doc_type if doc_type is not None else "A"
-        end_doc_type    = doc_type if doc_type is not None else "Z"
-        if not end_date:
-            end_date = {}
-        reduced = MessageLog.view("sms/by_domain",
-                            startkey=[start_doc_type, domain] + [start_date],
-                            endkey=[end_doc_type, domain] + [end_date],
-                            reduce=True).all()
-        if reduced:
-            return reduced[0]['value']
-        return 0
-
-    @classmethod
-    def count_incoming_by_domain(cls, domain, start_date = None, end_date = {}, doc_type=None):
-        start_doc_type  = doc_type if doc_type is not None else "A"
-        end_doc_type    = doc_type if doc_type is not None else "Z"
-        if not end_date:
-            end_date = {}
-        reduced = MessageLog.view("sms/direction_by_domain",
-                            startkey=[start_doc_type, domain, "I"] + [start_date],
-                            endkey=[end_doc_type, domain, "I"] + [end_date],
-                            reduce=True).all()
-        if reduced:
-            return reduced[0]['value']
-        return 0
-
-    @classmethod
-    def count_outgoing_by_domain(cls, domain, start_date = None, end_date = {}, doc_type=None):
-        start_doc_type  = doc_type if doc_type is not None else "A"
-        end_doc_type    = doc_type if doc_type is not None else "Z"
-        if not end_date:
-            end_date = {}
-        reduced = MessageLog.view("sms/direction_by_domain",
-                            startkey=[start_doc_type, domain, "O"] + [start_date],
-                            endkey=[end_doc_type, domain, "O"] + [end_date],
-                            reduce=True).all()
-        if reduced:
-            return reduced[0]['value']
-        return 0
-
 class SMSLog(MessageLog):
     text = StringProperty()
     
@@ -135,28 +60,66 @@ class SMSLog(MessageLog):
         return "%s (%s %s)" % (str, to_from, self.phone_number)
     
     @classmethod
-    def all(cls):
-        MessageLog.all("SMSLog")
+    def all(cls, doc_type=None):
+        return MessageLog.view("sms/by_domain",
+                    startkey=["SMSLog"],
+                    endkey=["SMSLog"] + [{}],
+                    include_docs=True,
+                    reduce=False)
 
     @classmethod
-    def by_domain_asc(cls, domain):
-        MessageLog.by_domain_asc(domain, "SMSLog")
+    def by_domain_asc(cls, domain, doc_type=None):
+        return cls.view("sms/by_domain",
+                    reduce=False,
+                    startkey=["SMSLog", domain],
+                    endkey=["SMSLog", domain] + [{}],
+                    include_docs=True,
+                    descending=False)
 
     @classmethod
-    def by_domain_dsc(cls, domain):
-        MessageLog.by_domain_dsc(domain, "SMSLog")
+    def by_domain_dsc(cls, domain, doc_type=None):
+        return cls.view("sms/by_domain",
+                    reduce=False,
+                    startkey=["SMSLog", domain] + [{}],
+                    endkey=["SMSLog", domain],
+                    include_docs=True,
+                    descending=True)
 
     @classmethod
-    def count_by_domain(cls, domain, start_date = None, end_date = {}):
-        MessageLog.count_by_domain(domain, start_date, end_date, "SMSLog")
+    def count_by_domain(cls, domain, start_date = None, end_date = {}, doc_type=None):
+        if not end_date:
+            end_date = {}
+        reduced = MessageLog.view("sms/by_domain",
+                            startkey=["SMSLog", domain] + [start_date],
+                            endkey=["SMSLog", domain] + [end_date],
+                            reduce=True).all()
+        if reduced:
+            return reduced[0]['value']
+        return 0
 
     @classmethod
-    def count_incoming_by_domain(cls, domain, start_date = None, end_date = {}):
-        MessageLog.count_incoming_by_domain(domain, start_date, end_date, "SMSLog")
+    def count_incoming_by_domain(cls, domain, start_date = None, end_date = {}, doc_type=None):
+        if not end_date:
+            end_date = {}
+        reduced = MessageLog.view("sms/direction_by_domain",
+                            startkey=["SMSLog", domain, "I"] + [start_date],
+                            endkey=["SMSLog", domain, "I"] + [end_date],
+                            reduce=True).all()
+        if reduced:
+            return reduced[0]['value']
+        return 0
 
     @classmethod
-    def count_outgoing_by_domain(cls, domain, start_date = None, end_date = {}):
-        MessageLog.count_outgoing_by_domain(domain, start_date, end_date, "SMSLog")
+    def count_outgoing_by_domain(cls, domain, start_date = None, end_date = {}, doc_type=None):
+        if not end_date:
+            end_date = {}
+        reduced = MessageLog.view("sms/direction_by_domain",
+                            startkey=["SMSLog", domain, "O"] + [start_date],
+                            endkey=["SMSLog", domain, "O"] + [end_date],
+                            reduce=True).all()
+        if reduced:
+            return reduced[0]['value']
+        return 0
 
 
 class CallLog(MessageLog):
@@ -167,28 +130,66 @@ class CallLog(MessageLog):
         return "Call %s %s" % (to_from, self.phone_number)
     
     @classmethod
-    def all(cls):
-        MessageLog.all("CallLog")
+    def all(cls, doc_type=None):
+        return MessageLog.view("sms/by_domain",
+                    startkey=["CallLog"],
+                    endkey=["CallLog"] + [{}],
+                    include_docs=True,
+                    reduce=False)
 
     @classmethod
-    def by_domain_asc(cls, domain):
-        MessageLog.by_domain_asc(domain, "CallLog")
+    def by_domain_asc(cls, domain, doc_type=None):
+        return cls.view("sms/by_domain",
+                    reduce=False,
+                    startkey=["CallLog", domain],
+                    endkey=["CallLog", domain] + [{}],
+                    include_docs=True,
+                    descending=False)
 
     @classmethod
-    def by_domain_dsc(cls, domain):
-        MessageLog.by_domain_dsc(domain, "CallLog")
+    def by_domain_dsc(cls, domain, doc_type=None):
+        return cls.view("sms/by_domain",
+                    reduce=False,
+                    startkey=["CallLog", domain] + [{}],
+                    endkey=["CallLog", domain],
+                    include_docs=True,
+                    descending=True)
 
     @classmethod
-    def count_by_domain(cls, domain, start_date = None, end_date = {}):
-        MessageLog.count_by_domain(domain, start_date, end_date, "CallLog")
+    def count_by_domain(cls, domain, start_date = None, end_date = {}, doc_type=None):
+        if not end_date:
+            end_date = {}
+        reduced = MessageLog.view("sms/by_domain",
+                            startkey=["CallLog", domain] + [start_date],
+                            endkey=["CallLog", domain] + [end_date],
+                            reduce=True).all()
+        if reduced:
+            return reduced[0]['value']
+        return 0
 
     @classmethod
-    def count_incoming_by_domain(cls, domain, start_date = None, end_date = {}):
-        MessageLog.count_incoming_by_domain(domain, start_date, end_date, "CallLog")
+    def count_incoming_by_domain(cls, domain, start_date = None, end_date = {}, doc_type=None):
+        if not end_date:
+            end_date = {}
+        reduced = MessageLog.view("sms/direction_by_domain",
+                            startkey=["CallLog", domain, "I"] + [start_date],
+                            endkey=["CallLog", domain, "I"] + [end_date],
+                            reduce=True).all()
+        if reduced:
+            return reduced[0]['value']
+        return 0
 
     @classmethod
-    def count_outgoing_by_domain(cls, domain, start_date = None, end_date = {}):
-        MessageLog.count_outgoing_by_domain(domain, start_date, end_date, "CallLog")
+    def count_outgoing_by_domain(cls, domain, start_date = None, end_date = {}, doc_type=None):
+        if not end_date:
+            end_date = {}
+        reduced = MessageLog.view("sms/direction_by_domain",
+                            startkey=["CallLog", domain, "O"] + [start_date],
+                            endkey=["CallLog", domain, "O"] + [end_date],
+                            reduce=True).all()
+        if reduced:
+            return reduced[0]['value']
+        return 0
 
     @classmethod
     def inbound_call_exists(cls, verified_number, after_timestamp):
