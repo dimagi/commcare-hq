@@ -14,14 +14,6 @@
     </script>
     {% endif %}
 {% endblock %}
-{% block head %}{{ block.super }}
-    <style>
-        .hq-oldstyle .nav-pills .active > a {
-            color: white;
-            background-color: #1557A2;
-        }
-    </style>
-{% endblock %}
 {% block app-content %}
     <div id="langs" class="container">
         Language:
@@ -33,21 +25,7 @@
                 </option>
             {% endfor %}
         </select>
-        <ul class="nav nav-pills" style="float: right;">
-            <li {% if not release_manager %}class="active"{% endif %}>
-            <a href="{% url view_app domain app.id %}?edit={{ edit|BOOL }}">
-                Structure and Configuration
-            </a>
-            </li>
-            <li {% if release_manager %}class="active"{% endif %}>
-                <a href="{% url release_manager domain app.id %}?edit={{ edit|BOOL }}">
-                    Release Manager
-                </a>
-            </li>
-        </ul>
-        <h2 >
-
-        </h2>
+        {% include 'app_manager/partials/release-manager-nav.html' %}
     </div>
     <div id="modules-form-view-wrapper" class="sidebar-wrapper">
         <div id="modules" class="sidebar">

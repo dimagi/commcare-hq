@@ -8,6 +8,15 @@
     <link rel="stylesheet" href="{% static 'hq-bootstrap/css/old/app_manager.css' %}"/>
     {% include "imports/jqmodal.html" %}
     <link href="{% static 'formdesigner/css/chosen.css' %}" rel="stylesheet" />
+    <style>
+        .hq-oldstyle .nav-pills .active > a {
+            color: white;
+            background-color: #1557A2;
+        }
+        #release-manager-nav {
+            float: right;
+        }
+    </style>
 {% endblock %}
 
 {% block js %}{{ block.super }}
