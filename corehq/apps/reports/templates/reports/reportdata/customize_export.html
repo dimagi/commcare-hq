@@ -60,7 +60,7 @@
     </ul>
 {% endblock %}
 
-{% block reportpresentation %}
+{% block main_column %}
     <form class="form-horizontal" method="post" action="{{ request.get_full_path }}">
         <input type="hidden" name="schema" value="{{ saved_export.schema_id }}" />
         <input type="hidden" name="table" value="{{ table_config.index }}" />

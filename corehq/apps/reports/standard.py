@@ -59,6 +59,7 @@ class StandardHQReport(HQReport):
 
     def get_report_context(self):
         self.context['standard_report'] = True
+        self.context['layout_flush_content'] = True
         self.build_selector_form()
         self.context.update(util.report_context(self.domain,
                                         report_partial = self.report_partial,
@@ -515,7 +516,7 @@ class CaseListReport(PaginatedHistoryHQReport):
     def paginate_rows(self, skip, limit):
         rows = []
         self.count = 0
-        
+
         if settings.LUCENE_ENABLED:
             search_key = self.request_params.get("sSearch", "")
             query = "domain:(%s)" % self.domain
@@ -566,7 +567,7 @@ class CaseListReport(PaginatedHistoryHQReport):
                     (reverse('case_details', args=[self.domain, case_id]),
                      case_name)
 
-    
+
 class SubmissionTimesReport(StandardHQReport):
     name = "Submission Times"
     slug = "submit_time_punchcard"
@@ -666,7 +667,7 @@ class SubmitDistributionReport(StandardHQReport):
                                                             (row["value"], form_name)}
         for value in predata.values():
             data.append(value)
-        
+
         self.context.update({
             "chart_data": data,
             "user_id": self.individual,

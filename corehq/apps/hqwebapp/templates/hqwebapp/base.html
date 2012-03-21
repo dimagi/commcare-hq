@@ -28,7 +28,7 @@
 
     </head>
     <body>
-        <div class="hq-container-fluid {% block layout_style %}hq-double-col{% endblock %}{% block oldstyle_tag %} old-style{% endblock %}">
+        <div class="hq-container-fluid {% block layout_style %}{% endblock %}{% block oldstyle_tag %} old-style{% endblock %}">
             <header class="hq-navbar">
                 <hgroup>
                     <h1><a href="{% url homepage %}"><img src="{% static 'hq-bootstrap/img/commcare-logo.png' %}" alt="CommCare HQ" /></a></h1>
