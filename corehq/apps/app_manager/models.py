@@ -938,7 +938,7 @@ class ApplicationBase(VersionedDoc):
             copy.short_url = bitly.shorten(
                 get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
             )
-        except URLError:
+        except (URLError, Exception):
             # for offline only
             logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
             copy.short_url = None
@@ -1315,11 +1315,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for module in self.get_modules():
             if not module.forms:
                 errors.append({'type': "no forms", "module": {"id": module.id, "name": module.name}})
+
+        for obj in self.get_forms(bare=False):
             needs_case_type = False
             needs_case_detail = False
             needs_referral_detail = False
 
-        for obj in self.get_forms(bare=False):
             module = obj.get('module')
             form = obj.get('form')
             form_type = obj.get('type')
@@ -1356,9 +1357,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if module:
                 if needs_case_type and not module.case_type:
                     errors.append({'type': "no case type", "module": {"id": module.id, "name": module.name}})
-                if needs_case_detail and not (module.get_detail('case_short').columns and module.get_detail('case_long').columns):
+                if needs_case_detail and not module.get_detail('case_short').columns:
                     errors.append({'type': "no case detail", "module": {"id": module.id, "name": module.name}})
-                if needs_referral_detail and not (module.get_detail('ref_short').columns and module.get_detail('ref_long').columns):
+                if needs_referral_detail and not module.get_detail('ref_short').columns:
                     errors.append({'type': "no ref detail", "module": {"id": module.id, "name": module.name}})
 
             # make sure that there aren't duplicate xmlns's

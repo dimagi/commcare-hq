@@ -605,21 +605,6 @@
                 <tbody id="other-commcare-settings"></tbody>
             </table>
         </div>
-        {% if user.is_superuser %}
-        <div class="scary-settings-toggle" >
-            <a href="#"><span class="ui-icon"></span>CloudCare Settings</a>
-        </div>
-        <div class="scary-settings">
-            <div id="cloudcare-settings">
-                <form class="save-button-form" id="cloudcare-settings" method="post" action="{% url edit_app_attr domain app.id 'all' %}">
-		        <div class="config">
-		            <div class="save-button-holder"></div>
-		            
-		        </div>
-		        </form>
-		    </div>
-        </div>
-        {% endif %}
         
     {% endif %}
     <div>

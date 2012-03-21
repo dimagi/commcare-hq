@@ -334,16 +334,19 @@ def get_apps_base_context(request, domain, app):
             lang = app.langs[0]
         langs = [lang] + app.langs
 
+    edit = (request.GET.get('edit', 'true') == 'true') and\
+           (request.couch_user.can_edit_apps(domain) or request.user.is_superuser)
+
     if app:
-        saved_apps = ApplicationBase.view('app_manager/saved_app',
+        latest_app_version = ApplicationBase.view('app_manager/saved_app',
             startkey=[domain, app.id, {}],
             endkey=[domain, app.id],
-            descending=True
-        ).all()
+            descending=True,
+            limit=1,
+        ).one()
+        latest_app_version = latest_app_version.version if latest_app_version else -1
     else:
-        saved_apps = []
-
-
+        latest_app_version = -1
     context = locals()
     del context['request']
 
@@ -361,8 +364,26 @@ def get_apps_base_context(request, domain, app):
     context.update({
         'URL_BASE': get_url_base(),
         'build_errors': build_errors,
+        'edit': edit,
+        'latest_app_version': latest_app_version,
     })
     return context
+
+def release_manager(request, domain, app_id, template='app_manager/releases.html'):
+    app = get_app(domain, app_id)
+    context = get_apps_base_context(request, domain, app)
+    saved_apps = ApplicationBase.view('app_manager/saved_app',
+        startkey=[domain, app.id, {}],
+        endkey=[domain, app.id],
+        descending=True
+    ).all()
+    context.update({
+        'release_manager': True,
+        'saved_apps': saved_apps
+    })
+    response = render_to_response(request, template, context)
+    response.set_cookie('lang', _encode_if_unicode(context['lang']))
+    return response
 
 def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False):
     """
@@ -374,9 +395,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         form_id=None
         messages.error(req, 'Oops! We could not complete your request. Please try again')
         return back_to_main(req, domain, app_id)
-
-    edit = (req.GET.get('edit', 'true') == 'true') and \
-           (req.couch_user.can_edit_apps(domain) or req.user.is_superuser)
 
     if form_id and not module_id:
         return bail()
@@ -395,6 +413,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         return bail()
 
     base_context = get_apps_base_context(req, domain, app)
+    edit = base_context['edit']
     applications = base_context['applications']
     if not app and applications:
         app_id = applications[0]['id']
@@ -432,8 +451,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
         'new_module_form': NewModuleForm(),
         'new_xform_form': NewXFormForm(),
-        'edit': edit,
-
 #        'factory_apps': factory_apps,
     }
     context.update(base_context)
