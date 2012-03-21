@@ -3,8 +3,9 @@ from django.test.testcases import TestCase
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reminders.models import *
 from corehq.apps.users.models import CouchUser, CommCareUser
-from corehq.apps.sms.models import CallLog
+from corehq.apps.sms.models import CallLog, EventLog, MISSED_EXPECTED_CALLBACK
 from corehq.apps.sms.mixin import VerifiedNumber
+from dimagi.utils.parsing import json_format_datetime
 
 class ReminderTestCase(TestCase):
     """
@@ -364,7 +365,7 @@ class ReminderCallbackTestCase(TestCase):
         
         # Create a callback
         c = CallLog(
-            couch_recipient_doc_type    = "CouchUser",
+            couch_recipient_doc_type    = "CommCareUser",
             couch_recipient             = self.user_id,
             phone_number                = "15551234",
             direction                   = "I",
@@ -421,7 +422,15 @@ class ReminderCallbackTestCase(TestCase):
         self.assertEqual(reminder.next_fire, datetime(year=2012, month=1, day=3, hour=7, minute=0))
         self.assertEqual(reminder.schedule_iteration_num, 3)
         self.assertEqual(reminder.current_event_sequence_num, 0)
-        self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
+        self.assertEqual(reminder.last_fired, datetime(year=2012, month=1, day=2, hour=8, minute=15))
+        
+        # Ensure that a missed call was logged
+        missed_call_datetime = json_format_datetime(CaseReminderHandler.now)
+        missed_call = EventLog.view("sms/event_by_domain_date_recipient",
+                        key=["test", missed_call_datetime, "CommCareUser", self.user_id],
+                        include_docs=True).one()
+        self.assertNotEqual(missed_call, None)
+        self.assertEqual(missed_call.event_type, MISSED_EXPECTED_CALLBACK)
         
         ######################
         # Day3, 10:00 reminder
@@ -456,7 +465,7 @@ class ReminderCallbackTestCase(TestCase):
         
         # Create a callback
         c = CallLog(
-            couch_recipient_doc_type    = "CouchUser",
+            couch_recipient_doc_type    = "CommCareUser",
             couch_recipient             = self.user_id,
             phone_number                = "15551234",
             direction                   = "I",

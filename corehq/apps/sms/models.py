@@ -11,16 +11,14 @@ from dimagi.utils.parsing import json_format_datetime
 
 INCOMING = "I"
 OUTGOING = "O"
-NOT_APPLICABLE = "X"
 
 DIRECTION_CHOICES = (
     (INCOMING, "Incoming"),
     (OUTGOING, "Outgoing"))
 
-INBOUND_CALL = "CALL"
 MISSED_EXPECTED_CALLBACK = "CALLBACK_MISSED"
 
-CALL_TYPE_CHOICES = [INBOUND_CALL, MISSED_EXPECTED_CALLBACK]
+EVENT_TYPE_CHOICES = [MISSED_EXPECTED_CALLBACK]
 
 class MessageLog(Document, UnicodeMixIn):
     base_doc                    = "MessageLog"
@@ -123,7 +121,6 @@ class SMSLog(MessageLog):
 
 
 class CallLog(MessageLog):
-    call_type = StringProperty(choices=CALL_TYPE_CHOICES, default=INBOUND_CALL)
     
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
@@ -213,6 +210,14 @@ class CallLog(MessageLog):
             return (reduced[0]['value'] > 0)
         else:
             return False
+
+class EventLog(Document):
+    domain                      = StringProperty()
+    date                        = DateTimeProperty()
+    couch_recipient_doc_type    = StringProperty()
+    couch_recipient             = StringProperty()
+    event_type                  = StringProperty(choices=EVENT_TYPE_CHOICES)
+
 
 class MessageLogOld(models.Model):
     couch_recipient    = models.TextField()

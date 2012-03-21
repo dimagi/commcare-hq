@@ -1,5 +1,5 @@
 from datetime import datetime
-from corehq.apps.sms.models import CallLog, INCOMING, INBOUND_CALL
+from corehq.apps.sms.models import CallLog, INCOMING
 from corehq.apps.sms.mixin import VerifiedNumber
 
 
@@ -14,7 +14,6 @@ def incoming(domain, phone_number):
         phone_number    = phone_number,
         direction       = INCOMING,
         date            = datetime.utcnow(),
-        call_type       = INBOUND_CALL
     )
     if v is not None:
         msg.couch_recipient_doc_type = v.owner_doc_type

@@ -6,7 +6,7 @@ from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
-from corehq.apps.sms.models import CallLog
+from corehq.apps.sms.models import CallLog, EventLog, MISSED_EXPECTED_CALLBACK
 from corehq.apps.users.models import CommCareUser
 import logging
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
@@ -436,6 +436,18 @@ class CaseReminderHandler(Document):
         if (reminder.method == "callback" or reminder.method == "callback_test") and len(reminder.current_event.callback_timeout_intervals) > 0:
             if CallLog.inbound_call_exists(verified_number, reminder.last_fired):
                 reminder.callback_received = True
+                return True
+            elif len(reminder.current_event.callback_timeout_intervals) == reminder.callback_try_count:
+                # On the last callback timeout, instead of sending the SMS again, log the missed callback
+                event = EventLog(
+                    domain          = reminder.domain,
+                    date            = self.get_now(),
+                    event_type      = MISSED_EXPECTED_CALLBACK
+                )
+                if verified_number is not None:
+                    event.couch_recipient_doc_type = verified_number.owner_doc_type
+                    event.couch_recipient = verified_number.owner_id
+                event.save()
                 return True
         reminder.last_fired = self.get_now()
         message = reminder.current_event.message.get(reminder.lang, reminder.current_event.message[self.default_lang])
