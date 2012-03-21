@@ -739,9 +739,9 @@ class CaseExportReport(StandardHQReport):
     def calc(self):
         pass
 
-class PhoneStatusReport(StandardTabularHQReport):
-    name = "Phone Status"
-    slug = "phone_status"
+class ApplicationStatusReport(StandardTabularHQReport):
+    name = "Application Status"
+    slug = "app_status"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.SelectApplicationField']
