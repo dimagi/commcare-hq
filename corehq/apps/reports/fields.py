@@ -1,4 +1,5 @@
 from corehq.apps.app_manager.models import Application
+import pytz
 from corehq.apps.reports import util
 from corehq.apps.reports.custom import ReportField
 from corehq.apps.groups.models import Group
@@ -155,11 +156,12 @@ class SelectCHWField(ReportField):
 class DatespanField(ReportField):
     slug = "datespan"
     template = "reports/fields/datespan.html"
-    datespan = DateSpan.since(7, format="%Y-%m-%d")
 
     def update_context(self):
-        datespan_default(self.request)
+        self.datespan = DateSpan.since(7, format="%Y-%m-%d", timezone=self.timezone)
         if self.request.datespan.is_valid():
-            self.datespan = self.request.datespan
+            self.datespan.startdate = self.request.datespan.startdate
+            self.datespan.enddate = self.request.datespan.enddate
+        self.context['timezone'] = self.timezone.zone
         self.context['datespan'] = self.datespan
 

@@ -1,3 +1,4 @@
 <div class="alert alert-info alert-full">
-    <strong>The current date and time is {{ now }} GMT.</strong> (All dates are in GMT)
+    <strong>The current date and time is {% if timezone %}{{ timezone_now }} {{ timezone }}{% else %}{{ now }} GMT{% endif %}.</strong>
+    (All dates are in {% if timezone %}{{ timezone }}{% else %}GMT{% endif %}.)
 </div>

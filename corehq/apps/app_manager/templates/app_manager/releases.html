@@ -2,6 +2,7 @@
 {% load xforms_extras %}
 {% load url_extras %}
 {% load hq_shared_tags %}
+{% load timezone_tags %}
 {% load i18n %}
 {% block form-view %}
     <form id="make-new-build" action="{% url corehq.apps.app_manager.views.save_copy domain app.id %}" method="post">
@@ -123,8 +124,8 @@
             </td>
             {% endif %}
             <td>{{ saved_app.version }}</td>
-            <td>{{ saved_app.built_on.date }}</td>
-            <td>{{ saved_app.built_on.time }}</td>
+            <td>{% utc_to_timezone saved_app.built_on timezone "%b %d, %Y" %}</td>
+            <td>{% utc_to_timezone saved_app.built_on timezone "%H:%M %Z" %}</td>
             <td>{% if saved_app.built_with.get_label %}{{ saved_app.built_with.get_label }}{% endif %}</td>
             <td>
                 <div class="download-dropdown">

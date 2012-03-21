@@ -2,6 +2,7 @@
 {% load xforms_extras %}
 {% load url_extras %}
 {% load hq_shared_tags %}
+{% load timezone_tags %}
 {% load i18n %}
 
 {% block head %}{{ block.super }}
@@ -221,7 +222,6 @@
                     {% endif %}
                 </div>
             {% endif %}
-
         </div>
         <div>
             {% block app-content %}

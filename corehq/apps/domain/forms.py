@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 
 import django_tables as tables
 from django.core.validators import validate_email
+from django.utils.encoding import smart_str
 
 from corehq.apps.domain.middleware import _SESSION_KEY_SELECTED_DOMAIN
 from corehq.apps.domain.models import Domain
@@ -19,6 +20,8 @@ from corehq.apps.domain.models import Domain
 #
 # super(_BaseForm, self).clean() in any derived class that overrides clean()
 from corehq.apps.domain.utils import new_domain_re
+from dimagi.utils.timezones.fields import TimeZoneField
+from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from corehq.apps.users.util import format_username
 
 class _BaseForm(object):
@@ -71,6 +74,25 @@ class DomainSelectionForm(forms.Form):
         request.session[selected_domain_key] = d
         request.user.selected_domain = d                                                          
         return True
+
+########################################################################################################
+
+class DomainGlobalSettingsForm(forms.Form):
+    default_timezone = TimeZoneChoiceField(label="Default Timezone", initial="UTC")
+
+    def clean_default_timezone(self):
+        data = self.cleaned_data['default_timezone']
+        timezone_field = TimeZoneField()
+        timezone_field.run_validators(data)
+        return smart_str(data)
+
+    def save(self, request, domain):
+        try:
+            domain.default_timezone = self.cleaned_data['default_timezone']
+            domain.save()
+            return True
+        except Exception:
+            return False
 
 ########################################################################################################
 

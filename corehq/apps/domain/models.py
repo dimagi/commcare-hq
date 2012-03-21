@@ -1,8 +1,11 @@
 from datetime import datetime
 from django.conf import settings
 from django.db import models
+from django.conf import settings
 from couchdbkit.ext.django.schema import Document, StringProperty,\
     BooleanProperty, DateTimeProperty, IntegerProperty
+from dimagi.utils.timezones import fields as tz_fields
+
 
 class Domain(Document):
     """Domain is the highest level collection of people/stuff
@@ -115,6 +118,7 @@ class OldDomain(models.Model):
 
     name  = models.CharField(max_length = 64, unique=True)
     is_active = models.BooleanField(default=False)
+    timezone = tz_fields.TimeZoneField()
     #description = models.CharField(max_length=255, null=True, blank=True)
     #timezone = models.CharField(max_length=64,null=True)
 

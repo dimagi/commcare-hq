@@ -54,8 +54,8 @@ def get_user_data(domain, user_id, xmlns, datespan):
     
     """
     
-    startkey = ["uxd", domain, user_id, xmlns, datespan.startdate_param]
-    endkey = ["uxd", domain, user_id, xmlns, datespan.enddate_param]
+    startkey = ["uxd", domain, user_id, xmlns, datespan.startdate_param_utc]
+    endkey = ["uxd", domain, user_id, xmlns, datespan.enddate_param_utc]
     try:
         return get_db().view("formtrends/form_duration_by_user",
              startkey=startkey,

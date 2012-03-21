@@ -35,6 +35,13 @@
                         {% endif %}
                     </ul>
                 {% endif %}
+
+                {% if request.couch_user.is_domain_admin %}
+                <strong>Project Administration</strong>
+                    <ul>
+                        <li><a href="{% url domain_global_settings domain %}">Global Settings</a></li>
+                    </ul>
+                {% endif %}
             </div>
 
             <article id="user-view">

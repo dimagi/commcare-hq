@@ -253,7 +253,8 @@ def export_custom_data(req, domain, export_id):
 
 @login_and_domain_required
 def case_details(request, domain, case_id):
-    report_name = "Case Details"
+    timezone = util.get_timezone(request.couch_user.user_id, domain)
+
     try:
         case = CommCareCase.get(case_id)
         report_name = 'Details for Case "%s"' % case.name
@@ -273,7 +274,8 @@ def case_details(request, domain, case_id):
         "report": {
             "name": report_name
         },
-        "layout_flush_content": True
+        "layout_flush_content": True,
+        "timezone": timezone
     })
 
 @login_or_digest
@@ -303,6 +305,7 @@ def download_cases(request, domain):
 
 @login_and_domain_required
 def form_data(request, domain, instance_id):
+    timezone = util.get_timezone(request.couch_user.user_id, domain)
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)
     cases = CommCareCase.view("case/by_xform_id", key=instance_id, reduce=False, include_docs=True).all()
@@ -314,6 +317,7 @@ def form_data(request, domain, instance_id):
                               dict(domain=domain,
                                    instance=instance,
                                    cases=cases,
+                                   timezone=timezone,
                                    form_data=dict(name=form_name,
                                                   modified=instance.received_on)))
 

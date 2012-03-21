@@ -28,7 +28,7 @@ from corehq.apps.prescriptions.models import Prescription
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.forms import UserForm, CommCareAccountForm
+from corehq.apps.users.forms import UserForm, CommCareAccountForm, ProjectSettingsForm
 from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord, Permissions
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
@@ -285,6 +285,28 @@ def account(request, domain, couch_user_id, template="users/account.html"):
         # for commcare-accounts tab
 #        "other_commcare_accounts": other_commcare_accounts,
     })
+
+    #project settings tab
+    if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user():
+        web_user = WebUser.get_by_user_id(couch_user.user_id)
+        dm = web_user.get_domain_membership(domain)
+        if dm:
+            domain_obj = Domain.get_by_name(domain)
+            if request.method == "POST" and request.POST['form_type'] == "project-settings":
+                # deal with project settings data
+                project_settings_form = ProjectSettingsForm(request.POST)
+                if project_settings_form.is_valid():
+                    if project_settings_form.save(web_user, domain):
+                        messages.success(request, "Your project settings were successfully saved!")
+                    else:
+                        messages.error(request, "There seems to have been an error saving your project settings. Please try again!")
+            else:
+                project_settings_form = ProjectSettingsForm(initial={'global_timezone': domain_obj.default_timezone,
+                                                                    'user_timezone': dm.timezone})
+            context.update({
+                'proj_settings_form': project_settings_form
+            })
+
     # for basic tab
     context.update(_handle_user_form(request, domain, couch_user))
     return render_to_response(request, template, context)

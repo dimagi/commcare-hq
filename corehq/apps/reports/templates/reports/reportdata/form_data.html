@@ -1,6 +1,7 @@
 {% extends "reports/report_base.html" %}
 {% load xform_tags %}
 {% load case_tags %}
+{% load timezone_tags %}
 
 {% block head %}{{ block.super }}
     {% include "imports/bootstrap.google-prettify.html" %}
@@ -38,7 +39,7 @@
             <a href="{% url report_dispatcher domain 'submit_history' %}">Submit History</a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
-            <a href="#">Form Data for "{{ form_data.name }}"{% if form_data.modified %}&mdash;modified {{ form_data.modified }}{% endif %}</a>
+            <a href="#">Form Data for "{{ form_data.name }}"{% if form_data.modified %}&mdash;modified {% utc_to_timezone form_data.modified timezone %}{% endif %}</a>
         </li>
     </ul>
 {% endblock %}

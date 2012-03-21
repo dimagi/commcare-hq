@@ -27,6 +27,7 @@ from dimagi.utils.web import render_to_response, json_response, json_request
 
 from corehq.apps.app_manager.forms import NewXFormForm, NewModuleForm
 from corehq.apps.hqmedia.forms import HQMediaZipUploadForm, HQMediaFileUploadForm
+from corehq.apps.reports import util as report_utils
 from corehq.apps.hqmedia.models import CommCareMultimedia, CommCareImage, CommCareAudio
 
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
@@ -390,6 +391,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     This is the main view for the app. All other views redirect to here.
 
     """
+    timezone = report_utils.get_timezone(req.couch_user.user_id, domain)
+
     def bail():
         module_id=None
         form_id=None
@@ -451,6 +454,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
         'new_module_form': NewModuleForm(),
         'new_xform_form': NewXFormForm(),
+        'timezone': timezone
 #        'factory_apps': factory_apps,
     }
     context.update(base_context)
@@ -544,7 +548,7 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None, is_user_reg
     context.update(locals())
     context.update({
         'edit': True,
-        'editor_url': settings.EDITOR_URL,
+        'editor_url': settings.EDITOR_URL
     })
     return render_to_response(req, 'app_manager/form_designer.html', context)
 
