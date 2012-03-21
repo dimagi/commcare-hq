@@ -3,11 +3,14 @@ from datetime import timedelta, datetime
 import json
 import logging
 import sys
+import dateutil
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import yesno
+import pytz
 from restkit.errors import RequestFailed
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.app_manager.models import Application
 from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports import util
 from corehq.apps.reports.calc import entrytimes
@@ -735,3 +738,62 @@ class CaseExportReport(StandardHQReport):
 
     def calc(self):
         pass
+
+class PhoneStatusReport(StandardTabularHQReport):
+    name = "Phone Status"
+    slug = "phone_status"
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.GroupField',
+              'corehq.apps.reports.fields.SelectApplicationField']
+
+    def get_headers(self):
+        return ["Username", util.define_sort_type("Last Seen"), "CommCare Version", "Application (Version)"]
+
+    def get_parameters(self):
+        self.selected_app = self.request_params.get('app', '')
+
+    def get_rows(self):
+        rows = []
+        for user in self.users:
+            last_seen = util.create_sort_key("Never", -1)
+            version = "---"
+            app_name = "---"
+            is_unknown = True
+
+            endkey = [self.domain, user.userID]
+            startkey = [self.domain, user.userID, {}]
+            data = get_db().view("reports/last_seen_submission",
+                startkey=startkey,
+                endkey=endkey,
+                include_docs=True,
+                descending=True,
+                reduce=False).first()
+
+            if data:
+                data = data['value']
+                received_date = data['time']
+                now = datetime.now(tz=pytz.utc)
+                time = datetime.replace(dateutil.parser.parse(received_date), tzinfo=pytz.utc)
+                dtime = now - time
+                if dtime.days < 1:
+                    dtext = "Today"
+                elif dtime.days < 2:
+                    dtext = "Yesterday"
+                else:
+                    dtext = "%s days ago" % dtime.days
+                last_seen = util.create_sort_key(dtext, dtime.days)
+                try:
+                    app = Application.get(data['app_id'])
+                    is_unknown = False
+                    if self.selected_app and self.selected_app != app._id:
+                        continue
+                    version = app.application_version
+                    app_name = "%s (%s)" % (app.name, app.version)
+                except Exception:
+                    version = "unknown"
+                    app_name = "unknown"
+            if is_unknown and self.selected_app:
+                continue
+            row = [user.username_in_report, last_seen, version, app_name]
+            rows.append(row)
+        return rows
