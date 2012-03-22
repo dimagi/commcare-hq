@@ -143,7 +143,7 @@ class DateSpan(object):
         return DateSpan(start, end, format)
     
     @classmethod
-    def since(cls, days, enddate=None, format=DEFAULT_DATE_FORMAT):
+    def since(cls, days, enddate=None, format=DEFAULT_DATE_FORMAT, inclusive=True):
         """
         Generate a DateSpan ending with a certain date, and going back 
         N days. The enddate defaults to tomorrow midnight 
@@ -152,9 +152,9 @@ class DateSpan(object):
         Will always ignore times.
         """
         if enddate is None:
-            enddate = datetime.utcnow()
+            enddate = datetime.utcnow() + timedelta(days=0 if inclusive else 1)
         end = datetime(enddate.year, enddate.month, enddate.day)
-        start = end - timedelta(days=days)
+        start = end - timedelta(days=days - 1 if inclusive else days)
         return DateSpan(start, end, format)
                     
     
