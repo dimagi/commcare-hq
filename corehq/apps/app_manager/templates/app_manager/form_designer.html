@@ -35,6 +35,7 @@
                 saveUrl: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',
                 form: {{ form.source|JSON }},
                 langs: {{ app.langs|JSON }},
+                formName: "{{ form.name|trans:app.langs }}",
                 displayLanguage: {{ lang|JSON }}
             });
             formdesigner.on('form-saved', function (args) {

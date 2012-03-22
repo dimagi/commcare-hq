@@ -1,3 +1,4 @@
+from corehq.apps.app_manager.models import Application
 from corehq.apps.reports import util
 from corehq.apps.reports.custom import ReportField
 from corehq.apps.groups.models import Group
@@ -116,6 +117,19 @@ class SelectFormField(ReportField):
 
 class SelectAllFormField(SelectFormField):
     select_all = True
+
+class SelectApplicationField(ReportField):
+    slug = "select_app"
+    template = "reports/fields/select_app.html"
+
+    def update_context(self):
+        apps_for_domain = get_db().view("app_manager/applications_brief",
+            startkey=[self.domain],
+            endkey=[self.domain, {}],
+            include_docs=True).all()
+        available_apps = [dict(name="%s (%s)" % (app['value']['name'], app['value']['version']), id=app['value']['_id']) for app in apps_for_domain]
+        self.context['selected_app'] = self.request.GET.get('app','')
+        self.context['available_apps'] = available_apps
 
 class SelectCHWField(ReportField):
     slug = "select_chw"
