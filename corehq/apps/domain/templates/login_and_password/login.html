@@ -1,16 +1,8 @@
-{% extends base_template %}
+{% extends "hqwebapp/centered.html" %}
+{% block title %}Login to CommCareHQ{% endblock title %}
 
-{% block title %}login{% endblock title %}
-{% block head %}
-    {{ block.super }}
-    <link rel="stylesheet" href="{{STATIC_URL}}domain/css/login.css?version=1"/>
-{% endblock %}
-
-{% block content %}
-<div class="login-block">
+{% block centered-content %}
     {% block login-content %}
     {% include "login_and_password/partials/login_form.html" %}
     {% endblock %}
-</div>
-
-{% endblock content %}     
+{% endblock centered-content %}

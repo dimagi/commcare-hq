@@ -26,7 +26,7 @@
         .clear {
             clear: both;
         }
-        tr.selected {
+        tr.active {
             background-color: #f5f5ff;
         }
     </style>
@@ -41,7 +41,8 @@
     <script src="{% static 'cloudcare/js/casexml.js' %}"></script>
     <script src="{% static 'cloudcare/js/case-edit-form.js' %}"></script>
     <script src="{% static 'hqwebapp/javascripts/backbone.js' %}"></script>
-    <script src="{% static 'cloudcare/js/backbone/case-list.js' %}"></script>
+    <script src="{% static 'cloudcare/js/backbone/shared.js' %}"></script>
+    <script src="{% static 'cloudcare/js/backbone/cases.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     <script>
@@ -50,8 +51,8 @@
             var listDetails = {{case_short|safe}};
             var summaryDetails = {{case_long|safe}};
             var cases = {{ cases|safe }};
-            window.appView = new AppView({
-			    el: $("#main-container"),
+            window.mainView = new CaseMainView({
+			    el: "#main-container",
 			    listDetails: listDetails,
 			    summaryDetails: summaryDetails,
 			    cases: cases,
@@ -66,9 +67,5 @@
 {% endblock %}
 
 {% block content %}
-    <div id="main_container">
-        <section id="case-list"></section>
-        <section id="case-details"></section>
-        <div class="clear"></div>
-    </div>
+    <div id="main-container" />
 {% endblock %}

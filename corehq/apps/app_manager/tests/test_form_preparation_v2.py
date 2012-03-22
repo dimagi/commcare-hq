@@ -87,6 +87,7 @@ OPEN_CASE_SOURCE = """<?xml version="1.0"?>
 					<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" user_id="" date_modified="">
 						<create>
 							<case_name/>
+							<owner_id/>
 							<case_type>test_case_type</case_type>
 						</create>
 					</case>
@@ -113,6 +114,7 @@ OPEN_CASE_SOURCE = """<?xml version="1.0"?>
 			<bind nodeset="/data/case/@user_id" calculate="/data/meta/userID"/>
 			<setvalue ref="/data/case/@case_id" event="xforms-ready" value="uuid()"/>
 			<bind nodeset="/data/case/create/case_name" calculate="/data/question1"/>
+			<bind nodeset="/data/case/create/owner_id" calculate="/data/case/@user_id"/>
 			<setvalue ref="/data/meta/deviceID" event="xforms-ready" value="instance('commcaresession')/session/context/deviceid"/>
 			<setvalue ref="/data/meta/timeStart" event="xforms-ready" value="now()"/>
 			<bind nodeset="/data/meta/timeStart" type="xsd:dateTime"/>
@@ -142,6 +144,7 @@ OPEN_CASE_EXTERNAL_ID_SOURCE = """<?xml version="1.0"?>
 					<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" user_id="" date_modified="">
 						<create>
 							<case_name/>
+							<owner_id/>
 							<case_type>test_case_type</case_type>
 						</create>
 						<update>
@@ -172,6 +175,7 @@ OPEN_CASE_EXTERNAL_ID_SOURCE = """<?xml version="1.0"?>
 			<bind nodeset="/data/case/@user_id" calculate="/data/meta/userID"/>
 			<setvalue ref="/data/case/@case_id" event="xforms-ready" value="uuid()"/>
 			<bind nodeset="/data/case/create/case_name" calculate="/data/question1"/>
+			<bind nodeset="/data/case/create/owner_id" calculate="/data/case/@user_id"/>
 			<bind nodeset="/data/case/update/external_id" calculate="/data/question1"/>
 			<setvalue ref="/data/meta/deviceID" event="xforms-ready" value="instance('commcaresession')/session/context/deviceid"/>
 			<setvalue ref="/data/meta/timeStart" event="xforms-ready" value="now()"/>
@@ -256,6 +260,7 @@ OPEN_UPDATE_CASE_SOURCE = """<?xml version="1.0"?>
 					<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" user_id="" date_modified="">
 						<create>
 							<case_name/>
+							<owner_id/>
 							<case_type>test_case_type</case_type>
 						</create>
 						<update>
@@ -286,6 +291,7 @@ OPEN_UPDATE_CASE_SOURCE = """<?xml version="1.0"?>
 			<bind nodeset="/data/case/@user_id" calculate="/data/meta/userID"/>
 			<setvalue ref="/data/case/@case_id" event="xforms-ready" value="uuid()"/>
 			<bind nodeset="/data/case/create/case_name" calculate="/data/question1"/>
+			<bind nodeset="/data/case/create/owner_id" calculate="/data/case/@user_id"/>
 			<bind nodeset="/data/case/update/question1" relevant="count(/data/question1) &gt; 0" calculate="/data/question1"/>
 			<setvalue ref="/data/meta/deviceID" event="xforms-ready" value="instance('commcaresession')/session/context/deviceid"/>
 			<setvalue ref="/data/meta/timeStart" event="xforms-ready" value="now()"/>
@@ -342,7 +348,7 @@ UPDATE_PRELOAD_CASE_SOURCE = """<?xml version="1.0"?>
 			<bind nodeset="/data/case/@user_id" calculate="/data/meta/userID"/>
 			<bind nodeset="/data/case/@case_id" calculate="instance('commcaresession')/session/data/case_id"/>
 			<bind nodeset="/data/case/update/question1" relevant="count(/data/question1) &gt; 0" calculate="/data/question1"/>
-			<setvalue ref="/data/question1" event="xforms-ready" value="instance('casedb')/casedb/case[@case_id=/data/case/@case_id]/question1"/>
+			<setvalue ref="/data/question1" event="xforms-ready" value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/question1"/>
 			<setvalue ref="/data/meta/deviceID" event="xforms-ready" value="instance('commcaresession')/session/context/deviceid"/>
 			<setvalue ref="/data/meta/timeStart" event="xforms-ready" value="now()"/>
 			<bind nodeset="/data/meta/timeStart" type="xsd:dateTime"/>

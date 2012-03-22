@@ -3,11 +3,14 @@ from datetime import timedelta, datetime
 import json
 import logging
 import sys
+import dateutil
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import yesno
+import pytz
 from restkit.errors import RequestFailed
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.app_manager.models import Application
 from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports import util
 from corehq.apps.reports.calc import entrytimes
@@ -387,11 +390,6 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
             reduce=False
         )
 
-        logging.warning('startkey=%s&endkey=%s&include_docs=true&reduce=false' % (
-                json.dumps([self.domain, self.datespan.startdate_param]),
-                json.dumps([self.domain, self.datespan.enddate_param]),
-            )
-        )
         form_types = set()
 
         for submission in submissions:
@@ -703,20 +701,66 @@ class ExcelExportReport(StandardDateHQReport):
     def calc(self):
         # This map for this view emits twice, once with app_id and once with {}, letting you join across all app_ids.
         # However, we want to separate out by (app_id, xmlns) pair not just xmlns so we use [domain] to [domain, {}]
-        forms = get_db().view('reports/forms_by_xmlns', startkey=[self.domain], endkey=[self.domain, {}], group=True)
-        forms = [x['value'] for x in forms]
+        forms = []
+        unknown_forms = []
+        for f in get_db().view('reports/forms_by_xmlns', startkey=[self.domain], endkey=[self.domain, {}], group=True):
+            form = f['value']
+            if 'app' in form:
+                form['has_app'] = True
+            else:
+                app_id = f['key'][1] or ''
+                form['app'] = {
+                    'id': app_id
+                }
+                form['has_app'] = False
+                unknown_forms.append(form)
+            forms.append(form)
 
         forms = sorted(forms, key=lambda form:\
-            (0, form['app']['name'], form.get('module', {'id': -1})['id'], form.get('form', {'id': -1})['id'])\
-            if 'app' in form else\
-            (1, form['xmlns'])
+            (0, form['app']['name'], form['app']['id'], form.get('module', {'id': -1})['id'], form.get('form', {'id': -1})['id'])\
+            if form['has_app'] else\
+            (1, form['xmlns'], form['app']['id'])
         )
+        if unknown_forms:
+            apps = get_db().view('reports/forms_by_xmlns',
+                startkey=['^Application', self.domain],
+                endkey=['^Application', self.domain, {}],
+                reduce=False,
+            )
+            possibilities = defaultdict(list)
+            for app in apps:
+                # index by xmlns
+                x = app['value']
+                x['has_app'] = True
+                possibilities[app['key'][2]].append(x)
+
+            for form in unknown_forms:
+                if form['app']['id']:
+                    try:
+                        app = Application.get(form['app']['id'])
+                    except Exception:
+                        form['app_does_not_exist'] = True
+                    else:
+                        if app.domain != self.domain:
+                            logging.error("submission tagged with app from wrong domain: %s" % app.get_id)
+                        else:
+                            if app.copy_of:
+                                app = Application.get(app.copy_of)
+                                form['app_copy'] = {'id': app.get_id, 'name': app.name}
+                            if app.is_deleted():
+                                form['app_deleted'] = {'id': app.get_id}
+                else:
+                    form['possibilities'] = possibilities[form['xmlns']]
+                    if form['possibilities']:
+                        form['duplicate'] = True
+                    else:
+                        form['no_suggestions'] = True
 
         # add saved exports. because of the way in which the key is stored
         # (serialized json) this is a little bit hacky, but works.
         startkey = json.dumps([self.domain, ""])[:-3]
         endkey = "%s{" % startkey
-        exports = SavedExportSchema.view("couchexport/saved_exports",
+        exports = SavedExportSchema.view("couchexport/saved_export_schemas",
             startkey=startkey, endkey=endkey,
             include_docs=True)
 
@@ -738,3 +782,62 @@ class CaseExportReport(StandardHQReport):
 
     def calc(self):
         pass
+
+class ApplicationStatusReport(StandardTabularHQReport):
+    name = "Application Status"
+    slug = "app_status"
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.GroupField',
+              'corehq.apps.reports.fields.SelectApplicationField']
+
+    def get_headers(self):
+        return ["Username", util.define_sort_type("Last Seen"), "CommCare Version", "Application (Version)"]
+
+    def get_parameters(self):
+        self.selected_app = self.request_params.get('app', '')
+
+    def get_rows(self):
+        rows = []
+        for user in self.users:
+            last_seen = util.create_sort_key("Never", -1)
+            version = "---"
+            app_name = "---"
+            is_unknown = True
+
+            endkey = [self.domain, user.userID]
+            startkey = [self.domain, user.userID, {}]
+            data = get_db().view("reports/last_seen_submission",
+                startkey=startkey,
+                endkey=endkey,
+                include_docs=True,
+                descending=True,
+                reduce=False).first()
+
+            if data:
+                data = data['value']
+                received_date = data['time']
+                now = datetime.now(tz=pytz.utc)
+                time = datetime.replace(dateutil.parser.parse(received_date), tzinfo=pytz.utc)
+                dtime = now - time
+                if dtime.days < 1:
+                    dtext = "Today"
+                elif dtime.days < 2:
+                    dtext = "Yesterday"
+                else:
+                    dtext = "%s days ago" % dtime.days
+                last_seen = util.create_sort_key(dtext, dtime.days)
+                try:
+                    app = Application.get(data['app_id'])
+                    is_unknown = False
+                    if self.selected_app and self.selected_app != app._id:
+                        continue
+                    version = app.application_version
+                    app_name = "%s (%s)" % (app.name, app.version)
+                except Exception:
+                    version = "unknown"
+                    app_name = "unknown"
+            if is_unknown and self.selected_app:
+                continue
+            row = [user.username_in_report, last_seen, version, app_name]
+            rows.append(row)
+        return rows

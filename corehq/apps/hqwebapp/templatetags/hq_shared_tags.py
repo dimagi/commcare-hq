@@ -20,6 +20,15 @@ def JSON(obj):
     return mark_safe(json.dumps(obj, default=json_handler))
 
 @register.filter
+def BOOL(obj):
+    try:
+        obj = obj.to_json()
+    except AttributeError:
+        pass
+
+    return 'true' if obj else 'false'
+
+@register.filter
 def dict_lookup(dict, key):
     '''Get an item from a dictionary.'''
     return dict.get(key)
@@ -81,23 +90,41 @@ def get_report_analytics_tag(request):
     return ''
 
 @register.simple_tag
-def domains_for_user(request):
-    domain_list = Domain.active_for_user(request.user)
-    new_domain_url = reverse("domain_registration_request", args=["existing_user"]);
+def domains_for_user(request, selected_domain=None):
     lst = list()
     lst.append('<ul class="dropdown-menu nav-list dropdown-orange">')
-    if len(domain_list) > 0:
-        lst.append('<li class="nav-header">My Projects</li>')
-        for domain in domain_list:
-            default_url = reverse("default_report", args=[domain.name])
-            lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.name))
+    new_domain_url = reverse("registration_domain")
+    if selected_domain == 'public':
+        # viewing the public domain with a different db, so the user's domains can't readily be accessed.
+        lst.append('<li><a href="%s">Back to My Projects...</a></li>' % reverse("domain_select"))
         lst.append('<li class="divider"></li>')
-        lst.append('<li><a href="/a/public/">View Demo Project</a></li>')
     else:
-        lst.append('<li class="nav-header">Example Projects</li>')
-        lst.append('<li><a href="/a/public/">CommCare Demo Project</a></li>')
-        lst.append('<li class="divider"></li>')
+        domain_list = Domain.active_for_user(request.user)
+        if len(domain_list) > 0:
+            lst.append('<li class="nav-header">My Projects</li>')
+            for domain in domain_list:
+                default_url = reverse("domain_homepage", args=[domain.name])
+                lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.name))
+            lst.append('<li class="divider"></li>')
+            lst.append('<li><a href="/a/public/">View Demo Project</a></li>')
+        else:
+            lst.append('<li class="nav-header">Example Projects</li>')
+            lst.append('<li><a href="/a/public/">CommCare Demo Project</a></li>')
+            lst.append('<li class="divider"></li>')
     lst.append('<li><a href="%s">New Project...</a></li>' % new_domain_url)
     lst.append("</ul>")
 
     return "".join(lst)
+
+@register.simple_tag
+def list_my_domains(request):
+    domain_list = Domain.active_for_user(request.user)
+    lst = list()
+    lst.append('<ul class="nav nav-pills nav-stacked">')
+    for domain in domain_list:
+        default_url = reverse("domain_homepage", args=[domain.name])
+        lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.name))
+    lst.append('</ul>')
+
+    return "".join(lst)
+

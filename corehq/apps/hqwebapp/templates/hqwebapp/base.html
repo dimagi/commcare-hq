@@ -28,7 +28,7 @@
 
     </head>
     <body>
-        <div class="hq-container-fluid hq-double-col{% block oldstyle_tag %} old-style{% endblock %}">
+        <div class="hq-container-fluid {% block layout_style %}hq-double-col{% endblock %}{% block oldstyle_tag %} old-style{% endblock %}">
             <header class="hq-navbar">
                 <hgroup>
                     <h1><a href="{% url homepage %}"><img src="{% static 'hq-bootstrap/img/commcare-logo.png' %}" alt="CommCare HQ" /></a></h1>
@@ -54,20 +54,23 @@
                         </ul>
                         {% endblock %}
                         <div class="btn-toolbar secondary-nav">
-                            {% if domain %}
                             <div class="btn-group">
+
                                 <a class="btn btn-project dropdown-toggle" data-toggle="dropdown" href="#">
                                     <i class="icon-hq-white icon-hq-logo"></i>
-                                    {{ domain }}
+                                    {% if domain %}{% ifequal domain 'public' %}CommCare HQ Demo Project{% else %}{{ domain }}{% endifequal %}{% else %}No Domain Selected{% endif %}
                                     <span class="caret"></span>
                                 </a>
-                                {% domains_for_user request %}
+                                {% if domain %}
+                                    {% domains_for_user request domain %}
+                                {% else %}
+                                    {% domains_for_user request %}
+                                {% endif %}
                             </div>
-                            {% endif %}
                             <div class="btn-group">
                                 <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
                                     <i class="icon-hq-white icon-hq-person"></i>
-                                    {{ user.username }}
+                                    {{ user.first_name }} {{ user.last_name }}
                                     {% with request.couch_user.role_label as role %}
                                         {% if role %}
                                             ({{ role }})
@@ -76,6 +79,9 @@
                                     <span class="caret"></span>
                                 </a>
                                 <ul class="dropdown-menu nav-list dropdown-blue right-align">
+                                    <li class="nav-header">Signed in as:</li>
+                                    <li>{{ user.username }}</li>
+                                    <li class="divider"></li>
                                     <li><a href="/accounts/logout">Sign Out</a></li>
                                 </ul>
                             </div>
@@ -94,7 +100,7 @@
                 {% block messages %}
                 {% if messages %}
                     {% for message in messages %}
-                        <div class="alert fade in alert-block alert-full{% if message.tags %} alert-{{ message.tags }}{% endif %}">
+                        <div class="alert fade in alert-block alert-full{% if message.tags %} {{ message.tags }}{% endif %}">
                             <a class="close" data-dismiss="alert" href="#">&times;</a>
                             {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
                         </div>
@@ -129,7 +135,7 @@
             </div>
             {% endif %}
         </footer>
-
+        <div id="hq-modal-home">
         {% block modals %}
         <div class="modal hide fade" id="reportIssueModal">
             <div class="modal-header">
@@ -182,7 +188,7 @@
             </form>
         </div>
         {% endblock %}
-
+        </div>
         <!--Begin javascript -->
         <script src="{% static 'hq-bootstrap/js/bootstrap.min.js' %}"></script>
         <script src="{% static 'hq-bootstrap/js/jquery.form.js' %}"></script>

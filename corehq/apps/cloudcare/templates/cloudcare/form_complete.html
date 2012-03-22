@@ -1,0 +1,26 @@
+{% extends base_template %}
+{% load hq_shared_tags %}
+{% block js %}{{ block.super }}
+    <script src="{% static 'cloudcare/js/post.js' %}"></script>
+{% endblock %}
+{% block js-inline %}{{ block.super }}
+<script>
+        $(function () {
+            var language = "{{ language }}";
+            var instance = "{{ session.get_instance|safe|escapejs}}";
+            var submitUrl = "{% url receiver_post_with_app_id domain app_id %}";
+            var returnUrl = "{% url cloudcare_app_list domain '' %}" + "view/{{ app_id }}/{{ module_id }}";
+            console.log(instance);
+            $.ajax({
+                type: 'POST',
+                url: submitUrl,
+                data: instance,
+                success: function () {
+                    window.location.href = returnUrl;
+                }
+            });
+        }());
+</script>
+{% endblock %}
+{% block content %}
+{% endblock %}

@@ -10,14 +10,14 @@ from django.views.generic.simple import direct_to_template
 from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
 from django_user_registration.views import activate
 from django_user_registration.views import register
-from corehq.apps.domain.user_registration_backend import activate_by_form, register_with_possible_errors
+from corehq.apps.registration.user_registration_backend import activate_by_form, register_with_possible_errors
 
 
 urlpatterns = patterns('',
                        
                        url(r'^register/closed/$',
                            direct_to_template,
-                           { 'template': 'domain/user_registration/registration_closed.html' },
+                           { 'template': 'registration/backend/registration_closed.html' },
                            name='registration_disallowed'),      
 
                        # Activation keys get matched by \w+ instead of the more specific
@@ -29,11 +29,11 @@ urlpatterns = patterns('',
                        # at activation time, we can't use the default 'activate.' Had to rewrite it.             
                        url(r'^activate/user_inputs_data/(?P<activation_key>\w+)/$',
                            activate_by_form,
-                           { 'backend': 'corehq.apps.domain.user_registration_backend.UserRegistersSelfBackend' },
+                           { 'backend': 'corehq.apps.registration.user_registration_backend.UserRegistersSelfBackend' },
                            name='registration_activate_user_inputs_data'),                                                   
                                                                    
                        url(r'^activate/complete(?:/(?P<caller>\w+))?(?:/(?P<account>\w+))?/$',
                            direct_to_template,
-                           { 'template': 'domain/user_registration/activation_complete.html' },
+                           { 'template': 'registration/backend/activation_complete.html' },
                            name='registration_activation_complete')                                            
                        )

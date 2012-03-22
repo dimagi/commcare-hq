@@ -1,6 +1,9 @@
 {% extends "reports/report_base.html" %}
 {% load xforms_extras %}
+{% load hq_shared_tags %}
+{% block js %}{{ block.super }}
 
+{% endblock %}
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function() {
@@ -12,7 +15,59 @@
                    $modalBody.empty().load(d.download_url);
                });
            });
-
+        });
+        $(function () {
+            // postGo is copied from main.js since that's now not being included, ever since the redesign
+            function postGo (url, params) {
+                var $form = $("<form>")
+                        .attr("method", "post")
+                        .attr("action", url);
+                $.each(params, function (name, value) {
+                    $("<input type='hidden'>")
+                            .attr("name", name)
+                            .attr("value", value)
+                            .appendTo($form);
+                });
+                $form.appendTo("body");
+                $form.submit();
+            }
+            $('.fix-submissions-link').click(function () {
+                var action = $(this).attr('href'),
+                    app_id = $(this).data('app_id'),
+                    xmlns = $(this).data('xmlns'),
+                    new_app_id = $(this).data('new_app_id'),
+                    new_app_name = $(this).data('new_app_name'),
+                    next = window.location,
+                    modal = $('<div class="modal">').append(
+                    '<div class="modal-header">' +
+                        '<a class="close" data-dismiss="modal">×</a>' +
+                        '<h3>Fix Submissions (Sorry this is really technical!)</h3>' +
+                    '</div>',
+                    '<div class="modal-body">' +
+                        '<p>All of the submissions matching the following criteria:</p>' +
+                        '<ul>' +
+                            '<li>The XML Namespace is <code>' + xmlns + '</code></li>' +
+                            '<li>The Application is ' + (app_id ? "unknown (<code>" + app_id + "</code>)" : "not set") + '</li>' +
+                        '</ul>' +
+                        '<p>will be moved to application "' + new_app_name + '".</p>' +
+                    '</div>',
+                    $('<div class="modal-footer">').append(
+                        '<a class="btn" data-dismiss="modal">Cancel</a>',
+                        $('<button type="submit" class="btn btn-primary">Fix</button>').click(function () {
+                            postGo(action, {
+                                app_id: app_id,
+                                xmlns: xmlns,
+                                new_app_id: new_app_id,
+                                next: next
+                            });
+                            $(this).addClass('disabled');
+                        })
+                    )
+                );
+                $('<input type="hidden">')
+                modal.modal().appendTo('body');
+                return false;
+            });
         });
     </script>
 {% endblock %}
@@ -20,7 +75,6 @@
 {% block reportcontent %}
     <div class="hq-generic-report">
         <h2>Saved Custom Exports</h2>
-
         {% if saved_exports %}
         <table class="export_data table table-striped">
             <thead>
@@ -39,7 +93,7 @@
                     <td>{{ export.name|default:"[blank]" }}</td>
                     <td>{{ export.formname }}</td>
                     <td class="cell-vertical-centered">
-                        <a class="btn" href='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?format=html'>
+                        <a class="btn" href='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?format=html&{{ request.META.QUERY_STRING|safe }}'>
                             HTML Preview
                         </a>
                     </td>
@@ -49,7 +103,7 @@
                         </a>
                     </td>
                     <td class="cell-vertical-centered">
-                        <a class="btn btn-primary" href="{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?group={{ group.get_id }}&startdate={{ datespan.startdate_display }}&enddate={{ datespan.enddate_display }}{% if show_user_filter %}{% for f in toggle_users %}{% if f.show %}&ufilter={{ f.type }}{% endif %}{% endfor %}{% endif %}" data-formname="{{ export.formname }}" href="#export-download-status" data-dlocation='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?group={{ group.get_id }}{% if show_user_filter %}{% for f in toggle_users %}{% if f.show %}&ufilter={{ f.type }}{% endif %}{% endfor %}{% endif %}'>
+                        <a class="btn btn-primary" href="{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?{{ request.META.QUERY_STRING|safe }}">
                             <i class="icon-download-alt icon-white"></i> Download Data
                         </a>
                     </td>
@@ -78,6 +132,7 @@
                 <th>Form</th>
                 <th>Custom Export</th>
                 <th>Download</th>
+                <th>Total Submissions</th>
             </tr>
             </thead>
             <tbody>
@@ -85,26 +140,78 @@
                 <tr class="{% cycle "odd" "even" %}">
                     <td>
                         {% ifchanged %}
-                            {% if form.app %}
+                            {% if form.has_app %}
                                 {{ form.app.name }}
+                                <!-- Make sure to check whether {{ form.app.id }} changed -->
                             {% else %}
-                                Unknown Forms <!---->
+                                <h6>No Application</h6>
                             {% endif %}
                         {% endifchanged %}
                     </td>
                     <td>
                         {% ifchanged %}
-                            {% if form.app and not form.is_user_registration %}
-                                <!--Make sure to check if {{ form.app.name }} changed-->
+                            {% if form.has_app and not form.is_user_registration %}
+                                <!--Make sure to check whether {{ form.app.id }} changed-->
                                 {{ form.module.name|trans:form.app.langs }}
+                                <!--Make sure to check whether {{ form.module.id }} changed-->
                             {% else %}
                                 <!---->
                             {% endif %}
                         {% endifchanged %}
                     </td>
                     <td>
-                        {% include "reports/partials/form_name.html" %}
-                        {% if form.duplicate %}(Multiple Forms){% endif %}
+                    {% include "reports/partials/form_name.html" %}
+                    {% if not form.has_app %}
+                        <h5>Suggestions:</h5>
+                        <ul>
+                        {% if form.app_copy %}
+                            <li>
+                                Hmm. I think these should belong to application "{{ form.app_copy.name }}".
+                                <a href="{% url change_submissions_app_id domain %}" class="fix-submissions-link"
+                                    data-app_id="{{ form.app.id }}"
+                                    data-xmlns="{{ form.xmlns }}"
+                                    data-new_app_id="{{ form.app_copy.id }}"
+                                    data-new_app_name="{{ form.app_copy.name }}">Fix</a>
+                            </li>
+                        {% endif %}
+                        {% if form.app_does_not_exist %}
+                            <li>These submissions are tagged as if they belong to an application that doesn't exist.</li>
+                        {% endif %}
+                        {% if form.app_deleted %}
+                            <li>
+                                These submissions belong to an app that has been deleted.
+                                (<a href="{% url view_app domain form.app_deleted.id %}"
+                                    target="_blank">View to restore app</a>.)
+                            </li>
+                        {% endif %}
+                        {% if form.duplicate %}
+                            <li>
+                                <p>These submissions could belong to one of the following forms:</p>
+                                <ul>
+                                    {% for possibility in form.possibilities %}
+                                    <li>
+                                        {{ possibility.app.name }} &gt;
+                                        {% if not app.is_user_registration %}
+                                        {{ possibility.module.name|trans:possibility.app.langs }} &gt;
+                                        {% endif %}
+                                        {% with possibility as form %}
+                                        {% include "reports/partials/form_name.html" %}
+                                        {% endwith %}
+                                        <a href="{% url change_submissions_app_id domain %}" class="fix-submissions-link"
+                                           data-app_id="{{ form.app.id }}"
+                                           data-xmlns="{{ form.xmlns }}"
+                                           data-new_app_id="{{ possibility.app.id }}"
+                                           data-new_app_name="{{ possibility.app.name }}">Select this option</a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </li>
+                        {% endif %}
+                        </ul>
+                        {% if form.no_suggestions %}
+                            <h6>No suggestions</h6>
+                        {% endif %}
+                    {% endif %}
                     </td>
                     <td class="cell-vertical-centered">
                         {% if form.xmlns != None %}
@@ -113,11 +220,14 @@
                     </td>
                     <td class="cell-vertical-centered">
                         {% if form.submissions %}
-                            <a data-toggle="modal" href="#export-download-status" data-formname="{% if form.app %}{{ form.app.name }}{% else %}Unknown Forms{% endif %}" data-dlocation='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&startdate={{ datespan.startdate_display }}&enddate={{ datespan.enddate_display }}&group={{ group.get_id }}&app_id={{ form.app.id }}'
-                                class="btn btn-primary export-action-download" ><i class="icon-download-alt icon-white"></i> Download</a> ({{ form.submissions }} rows)
+                            <a data-toggle="modal" href="#export-download-status" data-formname="{% include 'reports/partials/form_name.html' %}" data-dlocation='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&app_id={{ form.app.id }}&{{ request.META.QUERY_STRING|safe }}'
+                                class="btn btn-primary export-action-download" ><i class="icon-download-alt icon-white"></i> Download</a>
                         {% else %}
                             No Forms
                         {% endif %}
+                    </td>
+                    <td>
+                        {{ form.submissions }}
                     </td>
                 </tr>
                 {% endfor %}

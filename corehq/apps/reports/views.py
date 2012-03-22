@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 import json
 from corehq.apps.reports import util, standard
 from corehq.apps.users.export import export_users
-from corehq.apps.users.models import CouchUser, CommCareUser
 import couchexport
 from couchexport.util import FilterFunction
 from couchforms.models import XFormInstance
@@ -12,10 +11,9 @@ from dimagi.utils.web import json_request, render_to_response
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.modules import to_function
 from django.conf import settings
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, Http404, HttpResponseNotFound
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, HttpResponseNotFound
 from django.core.urlresolvers import reverse
-from django_digest.decorators import httpdigest
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 import couchforms.views as couchforms_views
 from django.contrib import messages
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
@@ -42,22 +40,6 @@ datespan_default = datespan_in_request(
     to_param="enddate",
     default_days=7,
 )
-
-def login_or_digest(fn):
-    def safe_fn(request, domain, *args, **kwargs):
-        if not request.user.is_authenticated():
-            def _inner(request, domain, *args, **kwargs):
-                couch_user = CouchUser.from_django_user(request.user)
-                if couch_user.is_web_user() and couch_user.is_member_of(domain):
-                    return fn(request, domain, *args, **kwargs)
-                else:
-                    return HttpResponseForbidden()
-            return httpdigest(_inner)(request, domain, *args, **kwargs)
-        else:
-            return login_and_domain_required(fn)(request, domain, *args, **kwargs)
-    return safe_fn
-
-
 
 @login_and_domain_required
 def default(request, domain):
@@ -238,10 +220,12 @@ def delete_custom_export(req, domain, export_id):
 
 
 @login_or_digest
+@datespan_default
 def export_custom_data(req, domain, export_id):
     """
     Export data from a saved export schema
     """
+
     saved_export = SavedExportSchema.get(export_id)
     next = req.GET.get("next", "")
     format = req.GET.get("format", "")

@@ -419,6 +419,19 @@
                         </td>
                     </tr>
                     {% endif %}
+                    <tr>
+                        <th><label for="cloudcare-enabled-select">CloudCare Enabled?</label></th>
+                        <td>
+                            {% if edit %}
+                                <select id="cloudcare-enabled-select" name="cloudcare_enabled" data-value="{{ app.cloudcare_enabled|JSON }}">
+                                    <option value="false">No</option>
+                                    <option value="true">Yes</option>
+                                </select>
+                            {% else %}
+                                {% if app.cloudcare_enabled %}Yes{% else %}No{% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
                 </tbody>
                 {% endif %}
             {% endif %}
@@ -592,6 +605,7 @@
                 <tbody id="other-commcare-settings"></tbody>
             </table>
         </div>
+        
     {% endif %}
     <div>
         <form method="get" action='{% url import_app domain %}' style="font-size: .8em; text-align: right;">

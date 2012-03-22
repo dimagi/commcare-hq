@@ -494,6 +494,13 @@ class Detail(DocumentSchema):
     def display(self):
         return "short" if self.type.endswith('short') else 'long'
 
+    def filter_xpath(self):
+        filters = []
+        for i,column in enumerate(self.columns):
+            if column.format == 'filter':
+                filters.append("(%s)" % column.filter_xpath.replace('.', '%s_%s_%s' % (column.model, column.field, i + 1)))
+        return ' && '.join(filters)
+
 class CaseList(IndexedSchema):
     label = DictProperty()
     show = BooleanProperty(default=False)
@@ -931,7 +938,7 @@ class ApplicationBase(VersionedDoc):
             copy.short_url = bitly.shorten(
                 get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
             )
-        except URLError:
+        except (URLError, Exception):
             # for offline only
             logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
             copy.short_url = None
@@ -971,7 +978,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     profile = DictProperty() #SchemaProperty(Profile)
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
-
+    cloudcare_enabled = BooleanProperty(default=False)
+    
     @classmethod
     def wrap(cls, data):
         for module in data['modules']:
@@ -1050,6 +1058,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return form.validate_form().render_xform()
 
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
+        def non_empty_only(dct):
+            return dict([(key, value) for key, value in dct.items() if value])
         if lang != "default":
             messages = {"cchq.case": "Case", "cchq.referral": "Referral"}
 
@@ -1058,7 +1068,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'langs': [lang] + self.langs,
             })
             custom = commcare_translations.loads(custom)
-            messages.update(custom)
+            messages.update(non_empty_only(custom))
 
             # include language code names
             for lc in self.langs:
@@ -1069,7 +1079,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             cc_trans = commcare_translations.load_translations(lang)
             messages.update(cc_trans)
 
-            messages.update(self.translations.get(lang, {}))
+            messages.update(non_empty_only(self.translations.get(lang, {})))
         else:
             messages = {}
             for lc in reversed(self.langs):
@@ -1305,11 +1315,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for module in self.get_modules():
             if not module.forms:
                 errors.append({'type': "no forms", "module": {"id": module.id, "name": module.name}})
+
+        for obj in self.get_forms(bare=False):
             needs_case_type = False
             needs_case_detail = False
             needs_referral_detail = False
 
-        for obj in self.get_forms(bare=False):
             module = obj.get('module')
             form = obj.get('form')
             form_type = obj.get('type')
@@ -1346,9 +1357,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if module:
                 if needs_case_type and not module.case_type:
                     errors.append({'type': "no case type", "module": {"id": module.id, "name": module.name}})
-                if needs_case_detail and not (module.get_detail('case_short').columns and module.get_detail('case_long').columns):
+                if needs_case_detail and not module.get_detail('case_short').columns:
                     errors.append({'type': "no case detail", "module": {"id": module.id, "name": module.name}})
-                if needs_referral_detail and not (module.get_detail('ref_short').columns and module.get_detail('ref_long').columns):
+                if needs_referral_detail and not module.get_detail('ref_short').columns:
                     errors.append({'type': "no ref detail", "module": {"id": module.id, "name": module.name}})
 
             # make sure that there aren't duplicate xmlns's
@@ -1474,7 +1485,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
             raise Http404
 
     if domain:
-        try:    Domain.objects.get(name=domain)
+        try:    Domain.get_by_name(domain)
         except: raise Http404
 
         if app['domain'] != domain:

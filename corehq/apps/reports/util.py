@@ -1,7 +1,6 @@
 from datetime import datetime
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.fields import FilterUsersField
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_id_to_username
@@ -224,7 +223,7 @@ def define_sort_type(text, type=SORT_TYPE_NUMERIC):
 
 def app_export_filter(doc, app_id):
     if app_id:
-        return (doc['app_id'] == app_id) if doc.has_key('app_id') else True
+        return (doc['app_id'] == app_id) if doc.has_key('app_id') else False
     elif app_id == '':
         return not doc.has_key('app_id')
     else:
@@ -259,7 +258,7 @@ def group_filter(doc, group):
         return True
 
 def create_export_filter(request, domain):
-
+    from corehq.apps.reports.fields import FilterUsersField
     app_id = request.GET.get('app_id', None)
 
     filter = FilterFunction(instances) & FilterFunction(app_export_filter, app_id=app_id)
@@ -267,10 +266,10 @@ def create_export_filter(request, domain):
 
     group, users = get_group_params(domain, **json_request(request.GET))
 
-    user_filter, _ = FilterUsersField.get_user_filter(request)
+    user_filters, use_user_filters = FilterUsersField.get_user_filter(request)
 
-    if user_filter:
-        users_matching_filter = map(lambda x: x._id, get_all_users_by_domain(domain, filter_users=user_filter))
+    if user_filters and use_user_filters:
+        users_matching_filter = map(lambda x: x._id, get_all_users_by_domain(domain, filter_users=user_filters))
         filter &= FilterFunction(users_filter, users=users_matching_filter)
     else:
         filter &= FilterFunction(group_filter, group=group)

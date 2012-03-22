@@ -1,0 +1,22 @@
+{% extends base_template %}
+{% load hq_shared_tags %}
+{% block js %}{{ block.super }}
+    <script src="{% static 'cloudcare/js/post.js' %}"></script>
+{% endblock %}
+{% block js-inline %}{{ block.super }}
+<script>
+        $(function () {
+            var formText = "{{ form.render_xform|safe|escapejs}}";
+            var formplayerUrl = "{% url xform_play_remote %}";
+            var context = "{{ commcare_context|safe|escapejs }}";
+            postToUrl(formplayerUrl, {
+                xform: formText,
+                input_mode: "full",
+                next: "{% url cloudcare_form_complete domain app_id module_id form_id %}",
+                data: context
+            });
+        }());
+</script>
+{% endblock %}
+{% block content %}
+{% endblock %}
