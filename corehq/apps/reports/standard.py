@@ -714,7 +714,7 @@ class ExcelExportReport(StandardHQReport):
             forms.append(form)
 
         forms = sorted(forms, key=lambda form:\
-            (0, form['app']['name'], form.get('module', {'id': -1})['id'], form.get('form', {'id': -1})['id'])\
+            (0, form['app']['name'], form['app']['id'], form.get('module', {'id': -1})['id'], form.get('form', {'id': -1})['id'])\
             if form['has_app'] else\
             (1, form['xmlns'], form['app']['id'])
         )
