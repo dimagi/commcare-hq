@@ -3,6 +3,7 @@ from StringIO import StringIO
 import csv
 import json
 from django.template.loader import render_to_string
+from openpyxl import style
 
 class ExportWriter(object):
     max_table_name_size = 500
@@ -123,7 +124,11 @@ class Excel2007ExportWriter(ExportWriter):
     
     def _write_row(self, sheet_index, row):
         sheet = self.tables[sheet_index]
-        sheet.append([unicode(v) for v in row.get_data()]) 
+        row_idx = len(sheet.row_dimensions)
+        sheet.append([unicode(v) for v in row.get_data()])
+        for i, _ in enumerate(row.get_data()):
+            sheet.cell(row=row_idx, column=i).style.number_format.format_code = style.NumberFormat.FORMAT_TEXT
+
     
     def _close(self):
         """
