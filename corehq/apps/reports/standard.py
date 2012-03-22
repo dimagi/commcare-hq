@@ -770,6 +770,7 @@ class ExcelExportReport(StandardDateHQReport):
         self.context.update({
             "forms": forms,
             "saved_exports": exports,
+            "edit": self.request.GET.get('edit') == 'true'
         })
 
 class CaseExportReport(StandardHQReport):
