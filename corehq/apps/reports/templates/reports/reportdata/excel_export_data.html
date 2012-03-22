@@ -36,6 +36,7 @@
                     app_id = $(this).data('app_id'),
                     xmlns = $(this).data('xmlns'),
                     new_app_id = $(this).data('new_app_id'),
+                    new_app_name = $(this).data('new_app_name'),
                     next = window.location,
                     modal = $('<div class="modal">').append(
                     '<div class="modal-header">' +
@@ -45,13 +46,10 @@
                     '<div class="modal-body">' +
                         '<p>All of the submissions matching the following criteria:</p>' +
                         '<ul>' +
-                            '<li>XMLNS=' + xmlns + '</li>' +
-                            '<li>app_id=' + app_id + '</li>' +
+                            '<li>The XML Namespace is <code>' + xmlns + '</code></li>' +
+                            '<li>The Application is ' + (app_id ? "unknown (<code>" + app_id + "</code>)" : "not set") + '</li>' +
                         '</ul>' +
-                        '<p>will be retagged as follows:</p>' +
-                        '<ul>' +
-                            '<li>app_id=' + new_app_id + '</li>' +
-                        '</ul>' +
+                        '<p>will be moved to application "' + new_app_name + '".</p>' +
                     '</div>',
                     $('<div class="modal-footer">').append(
                         '<a class="btn" data-dismiss="modal">Cancel</a>',
@@ -143,16 +141,18 @@
                         {% ifchanged %}
                             {% if form.has_app %}
                                 {{ form.app.name }}
+                                <!-- Make sure to check whether {{ form.app.id }} changed -->
                             {% else %}
-                                Unknown Forms <!---->
+                                <h6>No Application</h6>
                             {% endif %}
                         {% endifchanged %}
                     </td>
                     <td>
                         {% ifchanged %}
                             {% if form.has_app and not form.is_user_registration %}
-                                <!--Make sure to check if {{ form.app.name }} changed-->
+                                <!--Make sure to check whether {{ form.app.id }} changed-->
                                 {{ form.module.name|trans:form.app.langs }}
+                                <!--Make sure to check whether {{ form.module.id }} changed-->
                             {% else %}
                                 <!---->
                             {% endif %}
@@ -161,7 +161,7 @@
                     <td>
                     {% include "reports/partials/form_name.html" %}
                     {% if not form.has_app %}
-                        <h5>Potential Issues:</h5>
+                        <h5>Suggestions:</h5>
                         <ul>
                         {% if form.app_copy %}
                             <li>
@@ -169,7 +169,8 @@
                                 <a href="{% url change_submissions_app_id domain %}" class="fix-submissions-link"
                                     data-app_id="{{ form.app.id }}"
                                     data-xmlns="{{ form.xmlns }}"
-                                    data-new_app_id="{{ form.app_copy.id }}">Fix</a>
+                                    data-new_app_id="{{ form.app_copy.id }}"
+                                    data-new_app_name="{{ form.app_copy.name }}">Fix</a>
                             </li>
                         {% endif %}
                         {% if form.app_does_not_exist %}
@@ -198,7 +199,8 @@
                                         <a href="{% url change_submissions_app_id domain %}" class="fix-submissions-link"
                                            data-app_id="{{ form.app.id }}"
                                            data-xmlns="{{ form.xmlns }}"
-                                           data-new_app_id="{{ possibility.app.id }}">Select this option</a>
+                                           data-new_app_id="{{ possibility.app.id }}"
+                                           data-new_app_name="{{ possibility.app.name }}">Select this option</a>
                                     </li>
                                     {% endfor %}
                                 </ul>
