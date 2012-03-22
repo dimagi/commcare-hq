@@ -133,6 +133,7 @@ class Excel2007ExportWriter(ExportWriter):
         
 
 class Excel2003ExportWriter(ExportWriter):
+    max_table_name_size = 31
     
     def _init(self):
         try:
