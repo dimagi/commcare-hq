@@ -151,6 +151,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn):
     the actions in sequence.
     """
     domain = StringProperty()
+    export_tag = StringListProperty()
     xform_ids = StringListProperty()
 
     external_id = StringProperty()
