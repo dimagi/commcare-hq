@@ -110,6 +110,23 @@
             commcareVersion: {{ app.commcare_minor_release|JSON }}
         });
     });
+    $(function () {
+        $('.btn-langcode-preprocessed').each( function () {
+            langcodeTag.button_tag($(this), $(this).text());
+            if ($(this).hasClass('langcode-input')) {
+                var $langcodeInput = $(this).parent().find("input");
+                var that = this;
+                if ($langcodeInput) {
+                    $langcodeInput.change(function () {
+                        if ($(this).val() == "")
+                            $(that).show();
+                        else
+                            $(that).hide();
+                    });
+                }
+            }
+        });
+    });
     </script>
 {% endblock %}
 

@@ -77,7 +77,7 @@ def export_data(req, domain):
                 return False
         filter = _ufilter
     else:
-        filter = util.create_group_filter(group)
+        filter = FilterFunction(util.group_filter, group=group)
 
     errors_filter = instances if not include_errors else None
 
@@ -108,10 +108,9 @@ def export_data_async(req, domain):
     except ValueError:
         return HttpResponseBadRequest()
 
-    app_id = req.GET.get('app_id', None)
     assert(export_tag[0] == domain)
 
-    filter = FilterFunction(instances) & FilterFunction(util.app_export_filter, app_id=app_id)
+    filter = util.create_export_filter(req, domain)
 
     return couchexport_views.export_data_async(req, filter=filter)
     
@@ -219,30 +218,22 @@ def delete_custom_export(req, domain, export_id):
     messages.success(req, "Custom export was deleted.")
     return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug]))
 
+
 @login_or_digest
+@datespan_default
 def export_custom_data(req, domain, export_id):
     """
     Export data from a saved export schema
     """
+
     saved_export = SavedExportSchema.get(export_id)
-    group, users = util.get_group_params(domain, **json_request(req.GET))
-    format = req.GET.get("format", "")
     next = req.GET.get("next", "")
+    format = req.GET.get("format", "")
+
     if not next:
         next = reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug])
 
-    user_filter, _ = FilterUsersField.get_user_filter(req)
-
-    if user_filter:
-        users_matching_filter = map(lambda x: x._id, get_all_users_by_domain(domain, filter_users=user_filter))
-        def _ufilter(user):
-            try:
-                return user['form']['meta']['userID'] in users_matching_filter
-            except KeyError:
-                return False
-        filter = _ufilter
-    else:
-        filter = util.create_group_filter(group)
+    filter = util.create_export_filter(req, domain)
 
     resp = saved_export.download_data(format, filter=filter)
     if resp:

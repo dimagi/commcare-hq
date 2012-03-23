@@ -4,11 +4,15 @@ from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_id_to_username
+from couchexport.util import FilterFunction
+from couchforms.filters import instances
 from dimagi.utils.couch.database import get_db
 import pytz
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from dimagi.utils.timezones import utils as tz_utils
+from dimagi.utils.web import json_request
+from django.conf import settings
 
 def report_context(domain,
             report_partial=None,
@@ -143,18 +147,6 @@ def get_group_params(domain, group='', users=None, user_id_only=False, **kwargs)
         users = sorted(users, key=lambda user: user.user_id)
     return group, users
 
-def create_group_filter(group):
-    if group:
-        user_ids = set(group.get_user_ids())
-        def group_filter(doc):
-            try:
-                return doc['form']['meta']['userID'] in user_ids
-            except KeyError:
-                return False
-    else:
-        group_filter = None
-    return group_filter
-
 # New HQReport Structure stuff. There's a lot of duplicate code from above, only because I don't want to ruin any old
 # reports until everything is fully refactored....
 
@@ -235,7 +227,7 @@ def define_sort_type(text, type=SORT_TYPE_NUMERIC):
 
 def app_export_filter(doc, app_id):
     if app_id:
-        return (doc['app_id'] == app_id) if doc.has_key('app_id') else True
+        return (doc['app_id'] == app_id) if doc.has_key('app_id') else False
     elif app_id == '':
         return not doc.has_key('app_id')
     else:
@@ -257,3 +249,48 @@ def get_timezone(couch_user_id, domain):
             timezone = pytz.utc
     return timezone
 
+def datespan_export_filter(doc, datespan):
+    try:
+        received_on = doc['received_on']
+    except Exception:
+        if settings.DEBUG:
+            raise
+        return False
+
+    if datespan.startdate_param <= received_on < datespan.enddate_param:
+        return True
+    return False
+
+def users_filter(doc, users):
+    try:
+        return doc['form']['meta']['userID'] in users
+    except KeyError:
+        return False
+
+def group_filter(doc, group):
+    if group:
+        user_ids = set(group.get_user_ids())
+        try:
+            return doc['form']['meta']['userID'] in user_ids
+        except KeyError:
+            return False
+    else:
+        return True
+
+def create_export_filter(request, domain):
+    from corehq.apps.reports.fields import FilterUsersField
+    app_id = request.GET.get('app_id', None)
+
+    filter = FilterFunction(instances) & FilterFunction(app_export_filter, app_id=app_id)
+    filter &= FilterFunction(datespan_export_filter, datespan=request.datespan)
+
+    group, users = get_group_params(domain, **json_request(request.GET))
+
+    user_filters, use_user_filters = FilterUsersField.get_user_filter(request)
+
+    if user_filters and use_user_filters:
+        users_matching_filter = map(lambda x: x._id, get_all_users_by_domain(domain, filter_users=user_filters))
+        filter &= FilterFunction(users_filter, users=users_matching_filter)
+    else:
+        filter &= FilterFunction(group_filter, group=group)
+    return filter

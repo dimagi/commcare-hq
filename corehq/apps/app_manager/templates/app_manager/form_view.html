@@ -227,7 +227,7 @@
     {% if is_user_registration %}
         <h3>User Registration</h3>
     {% else %}
-        <h3 class="variable-form_name">{{ form.name|trans:langs }}</h3>
+        <h3 class="variable-form_name">{{ form.name|html_trans:langs|safe }}</h3>
     {% endif %}
 
     {% if nav_form %}
@@ -240,9 +240,9 @@
                         <th>Form Name</th>
                         <td>
                             {% if edit %}
-                                <input class="wide" type="text" name="name" value="{{ form.name|trans:langs }}" />
+                                {{ form.name|input_trans:langs|safe }}
                             {% else %}
-                                {{ form.name|trans:langs }}
+                                {{ form.name|html_trans:langs|safe }}
                             {% endif %}
                         </td>
                     </tr>

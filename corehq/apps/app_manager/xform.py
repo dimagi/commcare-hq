@@ -32,7 +32,8 @@ namespaces = dict(
     ev="{http://www.w3.org/2001/xml-events}",
     orx="{http://openrosa.org/jr/xforms}",
     reg="{http://openrosa.org/user/registration}",
-    cx2="{%s}" % V2_NAMESPACE
+    cx2="{%s}" % V2_NAMESPACE,
+    cc="{http://commcarehq.org/xforms}",
 )
 
 def _make_elem(tag, attr=None):
@@ -357,11 +358,19 @@ class XForm(WrappedNode):
             not case_parent.find('{orx}Meta').exists() and\
             not case_parent.find('{x}Meta').exists():
             orx = namespaces['orx'][1:-1]
-            nsmap = {None: orx}
+            nsmap = {None: orx, 'cc': namespaces['cc'][1:-1]}
 
             meta = ET.Element("{orx}meta".format(**namespaces), nsmap=nsmap)
-            for tag in ('deviceID', 'timeStart', 'timeEnd', 'username', 'userID', 'instanceID'):
-                meta.append(ET.Element(("{orx}%s"%tag).format(**namespaces), nsmap=nsmap))
+            for tag in (
+                '{orx}deviceID',
+                '{orx}timeStart',
+                '{orx}timeEnd',
+                '{orx}username',
+                '{orx}userID',
+                '{orx}instanceID',
+                '{cc}appVersion',
+            ):
+                meta.append(ET.Element(tag.format(**namespaces), nsmap=nsmap))
 
             case_parent.append(meta)
 
@@ -391,6 +400,10 @@ class XForm(WrappedNode):
             self.add_setvalue(
                 ref="meta/instanceID",
                 value="uuid()"
+            )
+            self.add_setvalue(
+                ref="meta/appVersion",
+                value="instance('commcaresession')/session/context/appversion"
             )
 
     def add_case_and_meta_1(self, form):

@@ -47,6 +47,9 @@ class Command(BaseCommand):
             self.uglifyjs = "/opt/UglifyJS/bin/uglifyjs"
             print "NOTICE: Using uglifyjs as '%s'" % self.uglifyjs
 
+        if "vellum" in args:
+            self.bootstrap_destination = "submodules/formdesigner/hq-bootstrap-standalone"
+
         # make sure all of the root dirs exist
         for root_dir in self.root_dirs:
             full_root_dir = os.path.join(self.bootstrap_destination, root_dir)
