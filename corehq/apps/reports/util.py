@@ -7,15 +7,12 @@ from corehq.apps.users.util import user_id_to_username
 from couchexport.util import FilterFunction
 from couchforms.filters import instances
 from dimagi.utils.couch.database import get_db
-<<<<<<< HEAD
 import pytz
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from dimagi.utils.timezones import utils as tz_utils
-=======
 from dimagi.utils.web import json_request
 from django.conf import settings
->>>>>>> aa959237be65a1626729ba3371209725f33097fe
 
 def report_context(domain,
             report_partial=None,
