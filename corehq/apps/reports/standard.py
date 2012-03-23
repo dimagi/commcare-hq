@@ -396,7 +396,7 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
             endkey=[self.domain, self.datespan.enddate_param_utc],
             include_docs=True,
             reduce=False
-        )g
+        )
         form_types = set()
 
         for submission in submissions:
