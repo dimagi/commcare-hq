@@ -25,12 +25,13 @@
                 </option>
             {% endfor %}
         </select>
+        {% include 'app_manager/partials/release-manager-nav.html' %}
     </div>
     <div id="modules-form-view-wrapper" class="sidebar-wrapper">
         <div id="modules" class="sidebar">
         <!--h2 id="modules-header">Modules</h2-->
-        <h2 {% if not module and not form %}class="selected"{% endif %}>
-            <a href="{% url view_app domain app.id %}?edit={{ edit|JSON }}" class="variable-app_name">{{ app.name }}
+        <h2 {% if not module and not form and not release_manager %}class="selected"{% endif %}>
+            <a href="{% url view_app domain app.id %}?edit={{ edit|BOOL }}" class="variable-app_name">{{ app.name }}
             </a>
         </h2>
             {% if app.get_doc_type == "Application" %}
@@ -43,7 +44,7 @@
                         </li>
                     {% endif %}
                         <li class="sort-disabled{% if is_user_registration %} selected{% endif %}" id="user-registration-nav-link">
-                            <a href="{% url view_user_registration domain app.id %}?edit={{ edit|JSON }}">User Registration</a>
+                            <a href="{% url view_user_registration domain app.id %}?edit={{ edit|BOOL }}">User Registration</a>
                         </li>
                     {% with module as selected_module %}
                         {% for module in app.get_modules %}
@@ -55,9 +56,9 @@
                                     {% if edit %}
                                         <span class="drag_handle"></span>
                                     {% endif %}
-                                    <a href="{% url view_module domain app.id module.id %}?edit={{ edit|JSON }}"
+                                    <a href="{% url view_module domain app.id module.id %}?edit={{ edit|BOOL }}"
                                        {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
-                                        {{ module.name|trans:langs }}
+                                        {{ module.name|html_trans:langs|safe }}
                                     </a>
                                 </div>
                                 <ul class="{% ifequal module.id selected_module.id %}selected{% endifequal %} {% if edit %}sortable{% endif %}">
@@ -78,9 +79,9 @@
                                                 {% if edit %}
                                                     <span class="drag_handle"></span>
                                                 {% endif %}
-                                                <a href="{% url view_form domain app.id module.id form.id %}?edit={{ edit|JSON }}"
+                                                <a href="{% url view_form domain app.id module.id form.id %}?edit={{ edit|BOOL }}"
                                                    {% if form == selected_form %}class="variable-form_name"{% endif %}>
-                                                    {{ form.name|trans:langs }}
+                                                    {{ form.name|html_trans:langs|safe }}
                                                 </a>
                                             </li>
                                         {% endfor %}
@@ -90,7 +91,7 @@
                                     {% endif %}
                                     {% if edit %}
                                         <li class="sort-disabled">
-                                            <form action="{% url corehq.apps.app_manager.views.new_form domain app.id module.id %}?edit={{ edit|JSON }}"
+                                            <form action="{% url corehq.apps.app_manager.views.new_form domain app.id module.id %}?edit={{ edit|BOOL }}"
                                                   method="post">
                                                 <a class="new_link submit_on_click" id="new_form" href="#">Form</a>
                                             </form>

@@ -35,7 +35,12 @@
    {% if detail.columns %}
     <detail id="m{{ module.id }}_{{ detail.type }}">
         <title><text><locale id="m{{ module.id }}.{{ detail.type }}.title"/></text></title>
-        <filter><case case-type="{{ module.case_type }}"/></filter>
+        <filter>
+            {% if detail.filter_xpath %}
+            <raw function="{{ detail.filter_xpath }}"/>
+            {% endif %}
+            <case case-type="{{ module.case_type }}"/>
+        </filter>
         <model>
             <data>
                 {% for d in detail.columns %}
@@ -44,6 +49,7 @@
             </data>
         </model>
      {% for d in detail.columns %}
+        {% if d.format != 'filter' %}
         <field>
             <header{% if d.format == "late-flag" or d.format == "invisible" %}{% if detail.display == "short" %} width="0"{% endif %}{% endif %}>
                 <text><locale id="m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.counter }}.header"/></text>
@@ -86,6 +92,8 @@
          {% endif %}{% endifequal %}{% endifequal %}{% endifequal %}{% endifequal %}{% endif %}{% endifequal %}{% endifequal %}{% endif %}
 
         </field>
+        {% endif %}
+
      {% endfor %}
     </detail>
    {% endif %}

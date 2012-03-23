@@ -1,10 +1,61 @@
 /*globals $, eventize, _ */
+
+var langcodeTag;
+
+(function () {
+    'use strict';
+
+    langcodeTag = {
+        LANG_DELIN: "{{[[*LANG*]]}}",
+        button_tag: (function () {
+            var LangCodeButton = function ($elem, new_lang) {
+                this.button = $elem;
+                this.button.click(function () {
+                    return false;
+                });
+                this.lang_code = new_lang;
+                this.lang(new_lang);
+            };
+            LangCodeButton.prototype = {
+                lang: function (value) {
+                    if (value === undefined) {
+                        return this.lang_code;
+                    } else {
+                        this.lang_code = value;
+                        this.button.text(this.lang_code);
+                        this.button.popover({
+                            title: "Using '" + this.lang_code + "' Value",
+                            content: "There is no translation available for the currently selected language.<br /><br />Using text from the <strong>[" +
+                                this.lang_code + "]</strong> language by default. Edit the value and save to override defaults."
+                        });
+                    }
+                }
+            };
+            return function ($elem, new_lang) {
+                return new LangCodeButton($elem, new_lang);
+            };
+        }()),
+        translate_delim: (function () {
+            return function (value) {
+                var values = value.split(langcodeTag.LANG_DELIN);
+                var langcode = null;
+                if (values.length > 1)
+                    langcode = values[1];
+                return {
+                    value: values[0],
+                    lang: langcode
+                };
+            };
+        }())
+    };
+
+}());
+
 var uiElement;
 (function () {
     'use strict';
 
-
-    var Input = function ($elem, getElemValue, setElemValue) {
+    var Input = function ($elem, getElemValue, setElemValue, setPlaceholderValue) {
         var that = this;
         eventize(this);
         this.ui = $('<div class="app-designer-input"/>');
@@ -15,6 +66,9 @@ var uiElement;
         };
         this.setElemValue = function (value) {
             setElemValue($elem, value);
+        };
+        this.setPlaceholderValue = function (value) {
+            setPlaceholderValue($elem, value);
         };
 
         this.$edit_view = $elem.bind('change textchange', function () {
@@ -39,17 +93,31 @@ var uiElement;
             }
         },
         setVisibleValue: function (value) {
-            this.setElemValue(value);
-            this.$noedit_view.text(value);
+            var translated = langcodeTag.translate_delim(value);
+            this.ui.find('.lang-text').remove();
+            if (translated.lang) {
+                var langcode_button = langcodeTag.button_tag($('<a href="#" class="btn btn-inverse btn-mini lang-text" style="color:#ffffff; text-decoration: none;" />'),
+                    translated.lang);
+                this.ui.append(langcode_button.button);
+                this.setPlaceholderValue(translated.value);
+                this.$edit_view.change(function () {
+                    if ($(this).val() == "")
+                        langcode_button.button.show();
+                    else
+                        langcode_button.button.hide();
+                });
+            } else
+                this.setElemValue(translated.value);
+            this.$noedit_view.text(translated.value);
         },
         setEdit: function (edit) {
             this.edit = edit;
             this.$edit_view.detach();
             this.$noedit_view.detach();
             if (this.edit) {
-                this.$edit_view.appendTo(this.ui);
+                this.$edit_view.prependTo(this.ui);
             } else {
-                this.$noedit_view.appendTo(this.ui);
+                this.$noedit_view.prependTo(this.ui);
             }
             return this;
         }
@@ -62,6 +130,8 @@ var uiElement;
                     return $elem.val();
                 }, function ($elem, value) {
                     return $elem.val(value);
+                }, function ($elem, value){
+                    return $elem.attr('placeholder', value);
                 });
             };
         }()),
@@ -69,7 +139,9 @@ var uiElement;
             return new Input($('<textarea/>'), function ($elem) {
                 return $elem.val();
             }, function ($elem, value) {
-                return $elem.val(value);
+                return $elem.val($elem, value);
+            }, function ($elem, value){
+                $elem.attr('placeholder', value);
             });
         },
         select: (function () {
@@ -140,6 +212,7 @@ var uiElement;
                 eventize(this);
                 this.ui = $('<div class="enum-pairs" />');
                 this.value = {};
+                this.translated_value = {};
                 this.edit = true;
                 this.modal_id = 'enumModal-'+guid;
                 this.modal_title = modal_title;
@@ -189,8 +262,8 @@ var uiElement;
                 this.setEdit(this.edit);
             };
             KeyValList.prototype = {
-                val: function(pairs) {
-                    if (pairs === undefined) {
+                val: function(original_pairs, translated_pairs) {
+                    if (original_pairs === undefined) {
                         return this.value;
                     } else {
                         var $modal_fields = $('#'+this.modal_id+' form fieldset');
@@ -198,11 +271,14 @@ var uiElement;
                         this.$noedit_view.text('');
                         this.$edit_view.text('');
 
-                        this.value = pairs;
+                        this.value = original_pairs;
+                        if (translated_pairs != undefined) {
+                            this.translated_value = translated_pairs;
+                        }
                         this.$formatted_view.val(JSON.stringify(this.value));
                         for (var key in this.value) {
-                            $modal_fields.append(uiElement.input_map(true).val(key, this.value[key]).ui);
-                            this.$edit_view.append(uiElement.input_map(true).val(key, this.value[key]).setEdit(false).$noedit_view);
+                            $modal_fields.append(uiElement.input_map(true).val(key, this.value[key], this.translated_value[key]).ui);
+                            this.$edit_view.append(uiElement.input_map(true).val(key, this.value[key], this.translated_value[key]).setEdit(false).$noedit_view);
                         }
                     }
 
@@ -271,7 +347,7 @@ var uiElement;
                 this.setEdit(this.edit);
             };
             InputMap.prototype = {
-                val: function(map_key, map_val) {
+                val: function(map_key, map_val, translated_map_val) {
                     if (map_key == undefined) {
                         return this.value;
                     } else {
@@ -281,6 +357,20 @@ var uiElement;
                         };
                         this.$edit_view.find(".enum-key").val(map_key);
                         this.$edit_view.find(".enum-value").val(map_val);
+                        if (map_val == "" && translated_map_val != undefined && translated_map_val != "") {
+                            this.$edit_view.find(".enum-value").attr("placeholder", translated_map_val.value);
+                            var $langcodeButton = langcodeTag.button_tag($('<a href="#" class="btn btn-inverse btn-mini lang-text" style="color:#ffffff; text-decoration: none;" />'),
+                                translated_map_val.lang);
+                            $langcodeButton.button.attr("style", "margin-left: 3px; margin-right: 10px;");
+                            this.$edit_view.find(".enum-value").after($langcodeButton.button);
+                            this.on('change', function () {
+                                if (this.$edit_view.find(".enum-value").val() == "")
+                                    $langcodeButton.button.show();
+                                else
+                                    $langcodeButton.button.hide();
+                            })
+
+                        }
                         if(map_key) {
                             this.$noedit_view.text('"'+map_key+'" => "'+map_val+'"');
                         }else{

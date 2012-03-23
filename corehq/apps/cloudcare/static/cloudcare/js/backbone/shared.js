@@ -7,7 +7,7 @@ var getLocalizedString = function (property, language) {
 
 var getFormUrl = function(urlRoot, appId, moduleId, formId) {
     // TODO: make this cleaner
-    return urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/";
+    return urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/enter/";
 };
 
 /*
@@ -26,9 +26,11 @@ var Selectable = Backbone.View.extend({
         }
     }, 
     select: function () {
-        this.selected = true;
-        this.$el.addClass("active");
-        this.trigger("selected");
+        if (!this.selected) {
+	        this.selected = true;
+	        this.$el.addClass("active");
+	        this.trigger("selected");
+        }
     }, 
     
     deselect: function () {

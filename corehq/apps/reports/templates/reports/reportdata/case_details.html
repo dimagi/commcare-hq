@@ -5,16 +5,26 @@
 {% block js-inline %}{{ block.super }}
     <script>
     $(document).ready(function() {
-        // this adds a clickable link to our form elements
+        // this adds clickable links to our form and case elements
         var form_lookup_dict = {{ form_lookups|JSON }};
-        var url_base = "{% url render_form_data domain 'placeholder_formid' %}";
-        var link_template = '<a href="placeholder_url">placeholder_text</a>'
+        var urlBase = "{% url render_form_data domain 'placeholder-formid' %}";
+        var link_template = '<a href="placeholder-url">placeholder-text</a>'
         $(".xform_ref").each(function() {
             var formid = $(this).data("formid");
             if (formid) {
                 var text = form_lookup_dict[formid];
-                var url = url_base.replace("placeholder_formid", formid);
-                var body = link_template.replace("placeholder_url", url).replace("placeholder_text", text);
+                var url = urlBase.replace("placeholder-formid", formid);
+                var body = link_template.replace("placeholder-url", url).replace("placeholder-text", text);
+                $(this).html(body);
+            }
+        });
+        
+        var caseUrlBase = "{% url case_details domain 'placeholder-caseid' %}";
+        $(".case_ref").each(function() {
+            var caseid = $(this).data("caseid");
+            if (caseid) {
+                var url = caseUrlBase.replace("placeholder-caseid", caseid);
+                var body = link_template.replace("placeholder-url", url).replace("placeholder-text", $(this).text());
                 $(this).html(body);
             }
         });

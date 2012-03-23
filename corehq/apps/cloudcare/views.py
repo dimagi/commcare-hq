@@ -15,8 +15,7 @@ from corehq.apps.app_manager.const import APP_V2
 from dimagi.utils.parsing import string_to_boolean
 
 @login_and_domain_required
-def app_list(request, domain):
-    
+def app_list(request, domain, urlPath):
     apps = get_cloudcare_apps(domain)
     debug = string_to_boolean(request.REQUEST.get("debug", "false"))
     language = request.REQUEST.get("language", "en")
@@ -37,11 +36,6 @@ def app_list(request, domain):
                               {"domain": domain,
                                "language": language,
                                "apps": json.dumps(apps)})
-
-@login_and_domain_required
-def view_app(request, domain, app_id):
-    # TODO
-    return HttpResponse("fixme")
 
 @login_and_domain_required
 def enter_form(request, domain, app_id, module_id, form_id):

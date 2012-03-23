@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 import json
 from corehq.apps.reports import util, standard
 from corehq.apps.users.export import export_users
-from corehq.apps.users.models import CouchUser, CommCareUser
 import couchexport
 from couchexport.util import FilterFunction
 from couchforms.models import XFormInstance
@@ -12,10 +11,9 @@ from dimagi.utils.web import json_request, render_to_response
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.modules import to_function
 from django.conf import settings
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, Http404, HttpResponseNotFound
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, HttpResponseNotFound
 from django.core.urlresolvers import reverse
-from django_digest.decorators import httpdigest
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 import couchforms.views as couchforms_views
 from django.contrib import messages
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
@@ -42,22 +40,6 @@ datespan_default = datespan_in_request(
     to_param="enddate",
     default_days=7,
 )
-
-def login_or_digest(fn):
-    def safe_fn(request, domain, *args, **kwargs):
-        if not request.user.is_authenticated():
-            def _inner(request, domain, *args, **kwargs):
-                couch_user = CouchUser.from_django_user(request.user)
-                if couch_user.is_web_user() and couch_user.is_member_of(domain):
-                    return fn(request, domain, *args, **kwargs)
-                else:
-                    return HttpResponseForbidden()
-            return httpdigest(_inner)(request, domain, *args, **kwargs)
-        else:
-            return login_and_domain_required(fn)(request, domain, *args, **kwargs)
-    return safe_fn
-
-
 
 @login_and_domain_required
 def default(request, domain):
@@ -95,7 +77,7 @@ def export_data(req, domain):
                 return False
         filter = _ufilter
     else:
-        filter = util.create_group_filter(group)
+        filter = FilterFunction(util.group_filter, group=group)
 
     errors_filter = instances if not include_errors else None
 
@@ -126,10 +108,9 @@ def export_data_async(req, domain):
     except ValueError:
         return HttpResponseBadRequest()
 
-    app_id = req.GET.get('app_id', None)
     assert(export_tag[0] == domain)
 
-    filter = FilterFunction(instances) & FilterFunction(util.app_export_filter, app_id=app_id)
+    filter = util.create_export_filter(req, domain)
 
     return couchexport_views.export_data_async(req, filter=filter)
     
@@ -237,30 +218,22 @@ def delete_custom_export(req, domain, export_id):
     messages.success(req, "Custom export was deleted.")
     return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug]))
 
+
 @login_or_digest
+@datespan_default
 def export_custom_data(req, domain, export_id):
     """
     Export data from a saved export schema
     """
+
     saved_export = SavedExportSchema.get(export_id)
-    group, users = util.get_group_params(domain, **json_request(req.GET))
-    format = req.GET.get("format", "")
     next = req.GET.get("next", "")
+    format = req.GET.get("format", "")
+
     if not next:
         next = reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug])
 
-    user_filter, _ = FilterUsersField.get_user_filter(req)
-
-    if user_filter:
-        users_matching_filter = map(lambda x: x._id, get_all_users_by_domain(domain, filter_users=user_filter))
-        def _ufilter(user):
-            try:
-                return user['form']['meta']['userID'] in users_matching_filter
-            except KeyError:
-                return False
-        filter = _ufilter
-    else:
-        filter = util.create_group_filter(group)
+    filter = util.create_export_filter(req, domain)
 
     resp = saved_export.download_data(format, filter=filter)
     if resp:
