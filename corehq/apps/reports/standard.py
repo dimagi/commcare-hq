@@ -147,7 +147,9 @@ class StandardDateHQReport(StandardHQReport):
             self.datespan = self.request.datespan
         super(StandardDateHQReport, self).get_global_params()
 
-
+    def get_report_context(self):
+        self.context['datespan'] = self.datespan
+        super(StandardDateHQReport, self).get_report_context()
 
 class CaseActivityReport(StandardTabularHQReport):
     name = 'Case Activity'
@@ -688,24 +690,79 @@ class SubmitTrendsReport(StandardDateHQReport):
             "user_id": self.individual,
         })
 
-class ExcelExportReport(StandardHQReport):
+class ExcelExportReport(StandardDateHQReport):
     name = "Export Submissions to Excel"
     slug = "excel_export_data"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField']
+              'corehq.apps.reports.fields.GroupField',
+              'corehq.apps.reports.fields.DatespanField']
     template_name = "reports/reportdata/excel_export_data.html"
 
     def calc(self):
         # This map for this view emits twice, once with app_id and once with {}, letting you join across all app_ids.
         # However, we want to separate out by (app_id, xmlns) pair not just xmlns so we use [domain] to [domain, {}]
-        forms = get_db().view('reports/forms_by_xmlns', startkey=[self.domain], endkey=[self.domain, {}], group=True)
-        forms = [x['value'] for x in forms]
+        forms = []
+        unknown_forms = []
+        for f in get_db().view('reports/forms_by_xmlns', startkey=[self.domain], endkey=[self.domain, {}], group=True):
+            form = f['value']
+            if 'app' in form:
+                form['has_app'] = True
+            else:
+                app_id = f['key'][1] or ''
+                form['app'] = {
+                    'id': app_id
+                }
+                form['has_app'] = False
+                unknown_forms.append(form)
+            forms.append(form)
 
         forms = sorted(forms, key=lambda form:\
-            (0, form['app']['name'], form.get('module', {'id': -1})['id'], form.get('form', {'id': -1})['id'])\
-            if 'app' in form else\
-            (1, form['xmlns'])
+            (0, form['app']['name'], form['app']['id'], form.get('module', {'id': -1})['id'], form.get('form', {'id': -1})['id'])\
+            if form['has_app'] else\
+            (1, form['xmlns'], form['app']['id'])
         )
+        if unknown_forms:
+            apps = get_db().view('reports/forms_by_xmlns',
+                startkey=['^Application', self.domain],
+                endkey=['^Application', self.domain, {}],
+                reduce=False,
+            )
+            possibilities = defaultdict(list)
+            for app in apps:
+                # index by xmlns
+                x = app['value']
+                x['has_app'] = True
+                possibilities[app['key'][2]].append(x)
+
+            class AppCache(dict):
+                def __getitem__(self, item):
+                    if not self.has_key(item):
+                        self[app] = Application.get(item)
+                    return super(AppCache, self).get(item)
+
+            app_cache = AppCache()
+
+            for form in unknown_forms:
+                if form['app']['id']:
+                    try:
+                        app = app_cache[form['app']['id']]
+                    except Exception:
+                        form['app_does_not_exist'] = True
+                    else:
+                        if app.domain != self.domain:
+                            logging.error("submission tagged with app from wrong domain: %s" % app.get_id)
+                        else:
+                            if app.copy_of:
+                                app = app_cache[app.copy_of]
+                                form['app_copy'] = {'id': app.get_id, 'name': app.name}
+                            if app.is_deleted():
+                                form['app_deleted'] = {'id': app.get_id}
+                else:
+                    form['possibilities'] = possibilities[form['xmlns']]
+                    if form['possibilities']:
+                        form['duplicate'] = True
+                    else:
+                        form['no_suggestions'] = True
 
         # add saved exports. because of the way in which the key is stored
         # (serialized json) this is a little bit hacky, but works.
@@ -721,6 +778,7 @@ class ExcelExportReport(StandardHQReport):
         self.context.update({
             "forms": forms,
             "saved_exports": exports,
+            "edit": self.request.GET.get('edit') == 'true'
         })
 
 class CaseExportReport(StandardHQReport):

@@ -19,6 +19,7 @@ function (doc) {
                     };
                     emit([app.domain, app._id, form.xmlns], value);
                     emit([app.domain, {}, form.xmlns], value);
+                    emit(['^Application', app.domain, form.xmlns], value);
                 }
             }
         }
@@ -42,6 +43,7 @@ function (doc) {
             };
             emit([doc.domain, doc.app_id, doc.xmlns], value);
             emit([doc.domain, {}, doc.xmlns], value);
+            emit(['^XFormInstance', doc.domain, doc.app_id, doc.xmlns], value);
         }
     }
 }
