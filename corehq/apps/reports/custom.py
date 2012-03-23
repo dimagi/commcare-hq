@@ -40,7 +40,6 @@ class HQReport(object):
         self.request = request
 
         self.timezone = util.get_timezone(self.request.couch_user.user_id, domain)
-        print "Timezone for this report ", self.timezone.zone
 
         if not self.rows:
             self.rows = []
