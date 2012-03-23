@@ -74,6 +74,13 @@
                 }
             });
         });
+        (function () {
+            $('.all-users-all-time').popover({
+                title: "All users over all time",
+                content: "This number includes submissions that may not match your filter.",
+                placement: 'left'
+            });
+        }());
     </script>
 {% endblock %}
 
@@ -232,7 +239,9 @@
                         {% endif %}
                     </td>
                     <td>
-                        {{ form.submissions }}
+                        {{ form.submissions }} {% if form.submissions %}
+                        <i class="icon-info-sign all-users-all-time">
+                        </i>{% endif %}
                     </td>
                 </tr>
                 {% endfor %}
