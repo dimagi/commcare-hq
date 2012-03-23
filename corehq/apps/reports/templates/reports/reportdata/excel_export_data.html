@@ -185,8 +185,8 @@
                         {% if form.app_deleted %}
                             <li>
                                 These submissions belong to an app that has been deleted.
-                                (<a href="{% url view_app domain form.app_deleted.id %}"
-                                    target="_blank">View to restore app</a>.)
+                                {% if edit %}(<a href="{% url view_app domain form.app_deleted.id %}"
+                                    target="_blank">View to restore app</a>.){% endif %}
                             </li>
                         {% endif %}
                         {% if form.duplicate %}

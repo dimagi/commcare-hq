@@ -734,10 +734,18 @@ class ExcelExportReport(StandardDateHQReport):
                 x['has_app'] = True
                 possibilities[app['key'][2]].append(x)
 
+            class AppCache(dict):
+                def __getitem__(self, item):
+                    if not self.has_key(item):
+                        self[app] = Application.get(item)
+                    return super(AppCache, self).get(item)
+
+            app_cache = AppCache()
+
             for form in unknown_forms:
                 if form['app']['id']:
                     try:
-                        app = Application.get(form['app']['id'])
+                        app = app_cache[form['app']['id']]
                     except Exception:
                         form['app_does_not_exist'] = True
                     else:
@@ -745,7 +753,7 @@ class ExcelExportReport(StandardDateHQReport):
                             logging.error("submission tagged with app from wrong domain: %s" % app.get_id)
                         else:
                             if app.copy_of:
-                                app = Application.get(app.copy_of)
+                                app = app_cache[app.copy_of]
                                 form['app_copy'] = {'id': app.get_id, 'name': app.name}
                             if app.is_deleted():
                                 form['app_deleted'] = {'id': app.get_id}
