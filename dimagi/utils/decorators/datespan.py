@@ -4,7 +4,7 @@ from dimagi.utils.dates import DateSpan
 from datetime import datetime
 
 def datespan_in_request(from_param="from", to_param="to", 
-                        format_string="%Y-%m-%d", default_days=30):
+                        format_string="%Y-%m-%d", default_days=30, inclusive=True):
     """
     Wraps a request with dates based on url params or defaults and
     Checks date validity.
@@ -40,7 +40,7 @@ def datespan_in_request(from_param="from", to_param="to",
                     req.datespan = DateSpan(startdate, enddate, format_string)
                 else:        
                     # default to the last N days
-                    req.datespan = DateSpan.since(default_days, format=format_string)
+                    req.datespan = DateSpan.since(default_days, format=format_string, inclusive=inclusive)
                     req.datespan.is_default = True
                     
             return f(*args, **kwargs) 
