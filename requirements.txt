@@ -24,3 +24,4 @@ tropo-webapi-python==0.1.3
 unidecode
 xlutils==1.4.1
 mock==0.8.0
+requests
