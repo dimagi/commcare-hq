@@ -39,10 +39,11 @@ class MessageLog(Document, UnicodeMixIn):
     @property
     def username(self):
         if self.couch_recipient:
-            if self.couch_recipient_doc_type == "CouchUser":
-                return CouchUser.get_by_user_id(self.couch_recipient).username
-            elif self.couch_recipient_doc_type == "CommCareCase":
+            if self.couch_recipient_doc_type == "CommCareCase":
                 return CommCareCase.get(self.couch_recipient).name
+            else:
+                # Must be a user
+                return CouchUser.get_by_user_id(self.couch_recipient).username
         return self.phone_number
 
     @classmethod
@@ -137,7 +138,7 @@ class CallLog(MessageLog):
         
         return          True if a call exists in the CallLog, False if not.
         """
-        if verified_number is None:
+        if verified_number is None or after_timestamp is None:
             return False
         start_timestamp = json_format_datetime(after_timestamp)
         end_timestamp = json_format_datetime(datetime.utcnow())

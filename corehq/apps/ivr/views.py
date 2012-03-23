@@ -2,6 +2,7 @@ import json
 from tropo import Tropo
 from corehq.apps.ivr.api import incoming
 from django.http import HttpResponse, HttpResponseBadRequest
+from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
 def tropo(request, domain):

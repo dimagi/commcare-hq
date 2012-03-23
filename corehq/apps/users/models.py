@@ -705,6 +705,14 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
             time_zone = None
         return time_zone
     
+    def get_language_code(self):
+        try:
+            lang = self.user_data["language_code"]
+        except Exception as e:
+            # Gracefully handle when user_data is None, or does not have a "language_code" entry
+            lang = None
+        return lang
+    
 class WebUser(CouchUser):
     domains = StringListProperty()
     domain_memberships = SchemaListProperty(DomainMembership)

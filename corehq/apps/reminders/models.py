@@ -116,10 +116,7 @@ class CaseReminderHandler(Document):
 
     until   This defines when the reminders should stop being sent. Once this condition 
             is reached, the CaseReminder is deactivated.
-            Examples:   until="edd"
-                            - The reminders will stop being sent for a CommCareCase on 
-                              the date defined by the CommCareCase's "edd" property.
-                        until="followup_1_complete"
+            Examples:   until="followup_1_complete"
                             - The reminders will stop being sent for a CommCareCase when 
                               the CommCareCase's "followup_1_complete" property equals "ok".
 
@@ -155,7 +152,7 @@ class CaseReminderHandler(Document):
     This CaseReminderHandler can be used to send an hourly message starting one day (start_offset=1)
     after "form1_completed", and will keep sending the message every hour until "form2_completed". So,
     if "form1_completed" is reached on January 1, 2012, at 9:46am, the reminders will begin being sent
-    at January 2, 2012, at 9:46am and every hour subsequently until "form2_completed". Specifically,
+    at January 2, 2012, at 10:46am and every hour subsequently until "form2_completed". Specifically,
     when "event_interpretation" is EVENT_AS_OFFSET:
         day_num         is interpreted to be a number of days after the last fire
         fire_time       is interpreted to be a number of hours, minutes, and seconds after the last fire
@@ -203,11 +200,7 @@ class CaseReminderHandler(Document):
 
     nickname        A simple name used to describe this CaseReminderHandler.
 
-    lang_property   If given, will be used to select the appropriate translation of a message before it is sent
-                    out. For example, if this attribute is "lang", the system will check the CaseReminder's 
-                    user.user_data.lang for the correct language.
-
-    default_lang    Default language to use in case the language specified by "lang_property" is not found.
+    default_lang    Default language to use in case no translation is found for the recipient's language.
 
     method          Set to "sms" to send simple sms reminders at the proper intervals.
                     Set to "callback" to send sms reminders and to enable the checked of "callback_timeout_intervals" on each event.
@@ -217,7 +210,6 @@ class CaseReminderHandler(Document):
     domain = StringProperty()
     case_type = StringProperty()
     nickname = StringProperty()
-    lang_property = StringProperty()
     default_lang = StringProperty()
     method = StringProperty(choices=METHOD_CHOICES, default="sms")
     ui_type = StringProperty(choices=UI_CHOICES, default=UI_SIMPLE_FIXED)
@@ -282,7 +274,6 @@ class CaseReminderHandler(Document):
             user_id=case.user_id,
             method=self.method,
             active=True,
-            lang=self.default_lang,
             start_date=date(local_now.year,local_now.month,local_now.day),
             schedule_iteration_num=1,
             current_event_sequence_num=0,
@@ -422,15 +413,24 @@ class CaseReminderHandler(Document):
         
         return      True on success, False on failure
         """
+        # Get the proper recipient
+        if self.recipient == RECIPIENT_USER:
+            recipient = reminder.user
+        else:
+            #self.recipient == RECIPIENT_CASE
+            recipient = reminder.case
+        
         # Retrieve the VerifiedNumber entry for the recipient
         try:
-            if self.recipient == RECIPIENT_USER:
-                verified_number = reminder.user.get_verified_number()
-            else:
-                #self.recipient == RECIPIENT_CASE
-                verified_number = reminder.case.get_verified_number()
+            verified_number = recipient.get_verified_number()
         except Exception:
             verified_number = None
+            
+        # Get the language of the recipient
+        try:
+            lang = recipient.get_language_code()
+        except Exception:
+            lang = None
         
         # If it is a callback reminder and the callback has been received, skip sending the next timeout message
         if (reminder.method == "callback" or reminder.method == "callback_test") and len(reminder.current_event.callback_timeout_intervals) > 0:
@@ -450,7 +450,7 @@ class CaseReminderHandler(Document):
                 event.save()
                 return True
         reminder.last_fired = self.get_now()
-        message = reminder.current_event.message.get(reminder.lang, reminder.current_event.message[self.default_lang])
+        message = reminder.current_event.message.get(lang, reminder.current_event.message[self.default_lang])
         message = Message.render(message, case=reminder.case.case_properties())
         if reminder.method == "sms" or reminder.method == "callback":
             return send_sms_to_verified_number(reminder.domain, verified_number, message)
@@ -556,10 +556,6 @@ class CaseReminderHandler(Document):
                     reminder.next_fire = now
                 reminder.active = active
             if reminder:
-                try:
-                    reminder.lang = reminder.user.user_data.get(self.lang_property) or self.default_lang
-                except Exception:
-                    reminder.lang = self.default_lang
                 reminder.save()
 
     def save(self, **params):
@@ -634,7 +630,6 @@ class CaseReminder(Document):
     next_fire = DateTimeProperty()                  # The date and time that the next message should go out
     last_fired = DateTimeProperty()                 # The date and time that the last message went out
     active = BooleanProperty(default=False)         # True if active, False if deactivated
-    lang = StringProperty()                         # Language the reminder should be sent in
     start_date = DateProperty()                     # For CaseReminderHandlers with event_interpretation=SCHEDULE, this is the date (in the recipient's time zone) from which all event times are calculated
     schedule_iteration_num = IntegerProperty()      # The current iteration through the cycle of self.handler.events
     current_event_sequence_num = IntegerProperty()  # The current event number (index to self.handler.events)

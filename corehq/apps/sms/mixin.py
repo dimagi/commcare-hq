@@ -42,6 +42,13 @@ class CommCareMobileContactMixin(object):
         """
         raise NotImplementedError("Subclasses of CommCareMobileContactMixin must implement method get_time_zone().")
     
+    def get_language_code(self):
+        """
+        This method should be implemented by all subclasses of CommCareMobileContactMixin,
+        and must return the preferred language code of the contact. For example, "en".
+        """
+        raise NotImplementedError("Subclasses of CommCareMobileContactMixin must implement method get_language_code().")
+    
     def get_verified_number(self):
         """
         Retrieves this contact's verified number entry by (self.doc_type, self._id).
