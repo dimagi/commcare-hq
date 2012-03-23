@@ -294,4 +294,3 @@ def create_export_filter(request, domain):
     else:
         filter &= FilterFunction(group_filter, group=group)
     return filter
-g
