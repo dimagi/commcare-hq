@@ -454,7 +454,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
         'new_module_form': NewModuleForm(),
         'new_xform_form': NewXFormForm(),
-        'timezone': timezoneg
+        'timezone': timezone
 #        'factory_apps': factory_apps,
     }
     context.update(base_context)
