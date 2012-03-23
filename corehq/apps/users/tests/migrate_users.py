@@ -102,6 +102,7 @@ WEB_USER = json.loads("""{
                "is_admin": true,
                "permissions": [
                ],
+               "timezone": "UTC",
                "date_joined": null
            }
        ],
@@ -164,6 +165,7 @@ WEB_USER_TARGET = json.loads("""{
            "is_admin": true,
            "permissions": [
            ],
+           "timezone": "UTC",
            "date_joined": null
         }
     ],
