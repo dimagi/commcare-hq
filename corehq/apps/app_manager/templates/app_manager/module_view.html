@@ -44,7 +44,7 @@
         </form>
     </div>
     {% endif %}
-    <h3 class="variable-module_name">{{ module.name|trans:langs }}</h3>
+    <h3 class="variable-module_name">{{ module.name|html_trans:langs|safe }}</h3>
 
     <h4>Module Settings</h4>
 
@@ -59,7 +59,7 @@
                             Module Name
                         </th>
                         <td>
-                            <input type="text" name="name" value="{{ module.name|trans:langs }}" />
+                            {{ module.name|input_trans:langs|safe }}
                         </td>
                     </tr>
                     {% with module as item %}
@@ -120,7 +120,7 @@
                     <tr>
                         <th>Module Name</th>
                         <td>
-                            {{ module.name|trans:langs }}
+                            {{ module.name|html_trans:langs|safe }}
                         </td>
                     </tr>
                     <tr>

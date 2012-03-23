@@ -58,7 +58,7 @@
                                     {% endif %}
                                     <a href="{% url view_module domain app.id module.id %}?edit={{ edit|BOOL }}"
                                        {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
-                                        {{ module.name|trans:langs }}
+                                        {{ module.name|html_trans:langs|safe }}
                                     </a>
                                 </div>
                                 <ul class="{% ifequal module.id selected_module.id %}selected{% endifequal %} {% if edit %}sortable{% endif %}">
@@ -81,7 +81,7 @@
                                                 {% endif %}
                                                 <a href="{% url view_form domain app.id module.id form.id %}?edit={{ edit|BOOL }}"
                                                    {% if form == selected_form %}class="variable-form_name"{% endif %}>
-                                                    {{ form.name|trans:langs }}
+                                                    {{ form.name|html_trans:langs|safe }}
                                                 </a>
                                             </li>
                                         {% endfor %}
