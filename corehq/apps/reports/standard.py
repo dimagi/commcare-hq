@@ -566,9 +566,10 @@ class CaseListReport(PaginatedHistoryHQReport):
             yesno(case.closed, "closed,open")
         ]
 
-    @classmethod
-    def date_to_json(cls, date):
-        return tz_utils.adjust_datetime_to_timezone(date, pytz.utc.zone, self.timezone.zone).strftime('%Y-%m-%d %H:%M:%S') if date else "",
+    def date_to_json(self, date):
+        return tz_utils.adjust_datetime_to_timezone\
+            (date, pytz.utc.zone, self.timezone.zone).strftime\
+            ('%Y-%m-%d %H:%M:%S') if date else ""
 
     def case_data_link(self, case_id, case_name):
         return "<a class='ajax_dialog' href='%s'>%s</a>" % \
