@@ -234,15 +234,14 @@ def app_export_filter(doc, app_id):
         return True
 
 def get_timezone(couch_user_id, domain):
-    print couch_user_id
-    print domain
+    if couch_user_id is None:
+        return pytz.utc
     requesting_user = WebUser.get_by_user_id(couch_user_id)
     domain_membership = requesting_user.get_domain_membership(domain)
     if domain_membership:
         timezone = tz_utils.coerce_timezone_value(domain_membership.timezone)
     else:
         current_domain = Domain.get_by_name(domain)
-        print current_domain.default_timezone
         try:
             timezone = tz_utils.coerce_timezone_value(current_domain.default_timezone)
         except pytz.UnknownTimeZoneError:

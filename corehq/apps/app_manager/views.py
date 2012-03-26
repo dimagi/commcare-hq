@@ -367,6 +367,7 @@ def get_apps_base_context(request, domain, app):
         'build_errors': build_errors,
         'edit': edit,
         'latest_app_version': latest_app_version,
+        'timezone': report_utils.get_timezone(request.couch_user.user_id, domain)
     })
     return context
 
@@ -391,8 +392,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     This is the main view for the app. All other views redirect to here.
 
     """
-    timezone = report_utils.get_timezone(req.couch_user.user_id, domain)
-
+    
     def bail():
         module_id=None
         form_id=None

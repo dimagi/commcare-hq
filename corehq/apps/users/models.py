@@ -745,6 +745,9 @@ class WebUser(CouchUser):
                     raise self.Inconsistent("Domain '%s' is in domain_memberships but not domains" % domain)
                 return
         domain_obj = Domain.get_by_name(domain)
+        if not domain_obj:
+            domain_obj = Domain(is_active=True, name=domain, date_created=datetime.utcnow())
+            domain_obj.save()
         self.domain_memberships.append(DomainMembership(domain=domain,
                                                         timezone=domain_obj.default_timezone,
                                                         **kwargs))

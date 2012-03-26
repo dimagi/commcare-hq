@@ -1,5 +1,3 @@
-from corehq.apps.app_manager.models import Application
-import pytz
 from corehq.apps.reports import util
 from corehq.apps.reports.custom import ReportField
 from corehq.apps.groups.models import Group
