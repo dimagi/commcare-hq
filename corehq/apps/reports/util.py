@@ -234,6 +234,8 @@ def app_export_filter(doc, app_id):
         return True
 
 def get_timezone(couch_user_id, domain):
+    if couch_user_id is None:
+        return pytz.utc
     requesting_user = WebUser.get_by_user_id(couch_user_id)
     domain_membership = requesting_user.get_domain_membership(domain)
     if domain_membership:
