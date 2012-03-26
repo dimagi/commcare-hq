@@ -112,12 +112,12 @@ def back_to_main(req, domain, app_id=None, module_id=None, form_id=None, unique_
             2: 'view_app',
             3: 'view_module',
             4: 'view_form',
-        }[len(args)]
-    
+            }[len(args)]
+
     return HttpResponseRedirect("%s%s" % (
         reverse('corehq.apps.app_manager.views.%s' % view_name, args=args),
         "?%s" % urlencode(params) if params else ""
-    ))
+        ))
 
 def _get_xform_source(request, app, form, filename="form.xml"):
     download = json.loads(request.GET.get('download', 'false'))
@@ -313,7 +313,7 @@ def get_form_view_context(request, form, langs, is_user_registration):
         'form_actions': form.actions.to_json(),
         'case_reserved_words_json': load_case_reserved_words(),
         'is_user_registration': is_user_registration,
-    }
+        }
 
 def get_apps_base_context(request, domain, app):
 
@@ -322,7 +322,7 @@ def get_apps_base_context(request, domain, app):
         applications.append(_app)
 
     lang = request.GET.get('lang',
-       request.COOKIES.get('lang', app.langs[0] if hasattr(app, 'langs') and app.langs else '')
+        request.COOKIES.get('lang', app.langs[0] if hasattr(app, 'langs') and app.langs else '')
     )
 
     if app and hasattr(app, 'langs'):
@@ -392,7 +392,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     This is the main view for the app. All other views redirect to here.
 
     """
-    
+
     def bail():
         module_id=None
         form_id=None
@@ -454,9 +454,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
         'new_module_form': NewModuleForm(),
         'new_xform_form': NewXFormForm(),
-        'timezone': timezone
-#        'factory_apps': factory_apps,
-    }
+        }
     context.update(base_context)
     if app and not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(context['lang'], {})})
@@ -490,7 +488,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'force_edit': force_edit,
         'error':error,
         'app': app,
-    })
+        })
     if app:
         options = CommCareBuildConfig.fetch().get_menu(app.application_version)
         is_standard_build = [o.build.to_string() for o in options if o.build.to_string() == app.build_spec.to_string()]
@@ -685,7 +683,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         "name": None, "case_label": None, "referral_label": None,
         'media_image': None, 'media_audio': None,
         "case_list": ('case_list-show', 'case_list-label'),
-    }
+        }
 
     if attr not in attributes:
         return HttpResponseBadRequest()
@@ -765,7 +763,7 @@ def edit_module_detail(req, domain, app_id, module_id):
     column = dict((key, req.POST.get(key)) for key in (
         'header', 'model', 'field', 'format',
         'enum', 'late_flag', 'advanced'
-    ))
+        ))
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
     lang = req.COOKIES.get('lang', app.langs[0])
@@ -846,7 +844,7 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     Called to edit any (supported) form attribute, given by attr
 
     """
-    
+
     app = get_app(domain, app_id)
     form = app.get_form(unique_form_id)
     lang = req.COOKIES.get('lang', app.langs[0])
@@ -929,7 +927,7 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
         form.put_in_root = True if put_in_root == "True" else False
 
     _handle_media_edits(req, form, should_edit, resp)
-    
+
     app.save(resp)
     if ajax:
         return HttpResponse(json.dumps(resp))
@@ -1023,16 +1021,16 @@ def multimedia_upload(request, domain, kind, app_id):
             cache_handler.data['error_list'] = response_errors
             cache_handler.save()
         return HttpResponse(simplejson.dumps(response_errors))
-    
+
     form = HQMediaZipUploadForm()
     progress_id = uuid.uuid4()
 
     return render_to_response(request, "hqmedia/upload_zip.html",
-                              {"domain": domain,
-                               "app": app,
-                               "zipform": form,
-                               "progress_id": progress_id,
-                               "progress_id_varname": upload.HQMediaCacheHandler.X_PROGRESS_ID})
+            {"domain": domain,
+             "app": app,
+             "zipform": form,
+             "progress_id": progress_id,
+             "progress_id_varname": upload.HQMediaCacheHandler.X_PROGRESS_ID})
 
 @require_permission('edit-apps')
 def multimedia_map(request, domain, app_id):
@@ -1043,18 +1041,18 @@ def multimedia_map(request, domain, app_id):
     audio, missing_audio_refs = app.get_template_map(sorted_audio, domain)
 
     fileform = HQMediaFileUploadForm()
-    
+
     return render_to_response(request, "hqmedia/multimedia_map.html",
-                              {"domain": domain,
-                               "app": app,
-                               "multimedia": {
-                                   "images": images,
-                                   "audio": audio
-                               },
-                               "fileform": fileform,
-                               "progress_id_varname": upload.HQMediaCacheHandler.X_PROGRESS_ID,
-                               "missing_image_refs": missing_image_refs,
-                               "missing_audio_refs": missing_audio_refs})
+            {"domain": domain,
+             "app": app,
+             "multimedia": {
+                 "images": images,
+                 "audio": audio
+             },
+             "fileform": fileform,
+             "progress_id_varname": upload.HQMediaCacheHandler.X_PROGRESS_ID,
+             "missing_image_refs": missing_image_refs,
+             "missing_audio_refs": missing_audio_refs})
 
 @require_GET
 @login_and_domain_required
@@ -1123,8 +1121,8 @@ def edit_app_translations(request, domain, app_id):
     params  = json_request(request.POST)
     lang    = params.get('lang')
     translations = params.get('translations')
-#    key     = params.get('key')
-#    value   = params.get('value')
+    #    key     = params.get('key')
+    #    value   = params.get('value')
     app = get_app(domain, app_id)
     app.set_translations(lang, translations)
     response = {}
@@ -1164,7 +1162,7 @@ def edit_app_attr(req, domain, app_id, attr):
         'cloudcare_enabled',
         # RemoteApp only
         'profile_url',
-    ]
+        ]
     if attr not in attributes:
         return HttpResponseBadRequest()
 
@@ -1200,13 +1198,13 @@ def edit_app_attr(req, domain, app_id, attr):
         admin_password = req.POST.get('admin_password')
         if admin_password:
             app.set_admin_password(admin_password)
-    
+
     # For Normal Apps
     if should_edit("cloudcare_enabled"):
         if app.get_doc_type() not in ("Application",):
             raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
         app.cloudcare_enabled = bool(json.loads(req.POST['cloudcare_enabled']))
-    
+
     # For RemoteApps
     if should_edit("profile_url"):
         if app.get_doc_type() not in ("RemoteApp",):
@@ -1340,7 +1338,7 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
     return render_to_response(req, template, {
         'app': req.app,
         'files': sorted(req.app.create_all_files().items()),
-    })
+        })
 
 @safe_download
 def download_profile(req, domain, app_id):
@@ -1354,7 +1352,7 @@ def download_profile(req, domain, app_id):
 
 def odk_install(req, domain, app_id):
     return render_to_response(req, "app_manager/odk_install.html",
-                              {"domain": domain, "app": get_app(domain, app_id)})
+            {"domain": domain, "app": get_app(domain, app_id)})
 
 def odk_qr_code(req, domain, app_id):
     qr_code = get_app(domain, app_id).get_odk_qr_code()
@@ -1429,7 +1427,7 @@ def download_multimedia_zip(req, domain, app_id):
     temp.seek(0)
     response.write(temp.read())
     return response
-    
+
 
 @safe_download
 def download_jad(req, domain, app_id):
@@ -1477,7 +1475,7 @@ def download_jar(req, domain, app_id):
 def download_test_jar(request):
     with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'CommCare.jar')) as f:
         jar = f.read()
-    
+
     response = HttpResponse(mimetype="application/java-archive")
     response['Content-Disposition'] = "filename=CommCare.jar"
     response['Content-Length'] = len(jar)

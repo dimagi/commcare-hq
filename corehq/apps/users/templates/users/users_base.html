@@ -11,9 +11,23 @@
     <script type="text/javascript">
         $(function () {
             $('#users-main-nav li a').each(function(e) {
-                console.log($(this).attr('href'));
                 if ($(this).attr('href') == '{{ request.path }}')
                     $(this).parent().addClass('active');
+            });
+            var activeTabCookie = 'active_tab',
+                last_active_tab = $.cookie(activeTabCookie);
+            if(last_active_tab) {
+                $(last_active_tab).addClass('active');
+                $('#project-settings-tabs a[href="'+last_active_tab+'"]').parent().addClass('active');
+            } else {
+                var first_tab = $('#project-settings-tabs a[data-toggle="tab"]').first();
+                first_tab.parent().addClass('active');
+                $(first_tab.attr('href')).addClass('active');
+            }
+            $('#project-settings-tabs a[data-toggle="tab"]').on('shown', function (e) {
+                $.cookie(activeTabCookie, $(this).attr('href'),
+                        {path: '{{ request.path }}',
+                        expires: 1});
             });
         });
     </script>

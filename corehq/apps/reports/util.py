@@ -2,7 +2,7 @@ from datetime import datetime
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import user_id_to_username
 from couchexport.util import FilterFunction
 from couchforms.filters import instances
@@ -236,7 +236,10 @@ def app_export_filter(doc, app_id):
 def get_timezone(couch_user_id, domain):
     if couch_user_id is None:
         return pytz.utc
-    requesting_user = WebUser.get_by_user_id(couch_user_id)
+    try:
+        requesting_user = WebUser.get_by_user_id(couch_user_id)
+    except CouchUser.AccountTypeError:
+        return pytz.utc
     domain_membership = requesting_user.get_domain_membership(domain)
     if domain_membership:
         timezone = tz_utils.coerce_timezone_value(domain_membership.timezone)
