@@ -172,6 +172,7 @@ class SavedExportSchema(Document, UnicodeMixIn):
     schema_id = StringProperty()
     tables = SchemaListProperty(ExportTable)
     filter_function = StringProperty()
+    type = StringProperty()
     
     def __unicode__(self):
         return "%s (%s)" % (self.name, self.index)
