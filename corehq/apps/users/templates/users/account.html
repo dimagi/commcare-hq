@@ -4,7 +4,7 @@
 {% block web_users_indicator %}
     {% if couch_user.user_id != request.couch_user.user_id and not couch_user.is_commcare_user %}
         <ul class="nav nav-list">
-            <li class="active"><a href="#">{{ couch_user.username_in_report|safe }}</a></li>
+            <li class="active"><a href="#">{{ couch_user.html_username|safe }}</a></li>
         </ul>
     {% endif %}
 {% endblock %}
@@ -22,16 +22,14 @@
         <li>
             <a href="{% url users_default domain %}"><strong>Project Settings</strong></a> <span class="divider">&gt;</span>
         </li>
-        {% if couch_user.user_id != request.couch_user.user_id and not couch_user.is_commcare_user %}
+        {% if couch_user.user_id != request.couch_user.user_id %}
             <li>
-                <a href="{% url web_users domain %}">Web Users</a> <span class="divider">&gt;</span>
-            </li>
-            <li class="active">
-                <a href="#">Account Settings <small>{{ couch_user.username }}</small></a>
-            </li>
-        {% else if couch_user.user_id != request.couch_user.user_id and couch_user.is_commcare_user %}
-            <li>
-                <a href="{% url web_users domain %}">Case Workers</a> <span class="divider">&gt;</span>
+                {% if not couch_user.is_commcare_user %}
+                    <a href="{% url web_users domain %}">Web Users</a>
+                {% else %}
+                    <a href="{% url commcare_users domain %}">CommCare Users</a>
+                {% endif %}
+                <span class="divider">&gt;</span>
             </li>
             <li class="active">
                 <a href="#">User Settings <small>{{ couch_user.username }}</small></a>
@@ -61,7 +59,7 @@
     </ul>
     <div class="tab-content" id="settings">
         <div class="tab-pane" id="basic-info">
-            <form class="form form-horizontal" name="user_details" method="post">
+            <form class="form form-horizontal hq-inset" name="user_details" method="post">
                 <input type="hidden" name="form_type" value="basic-info" />
                 {% bootstrap_form_errors form %}
                 <fieldset>
@@ -92,7 +90,7 @@
                 <div class="form-actions"><button type="submit" class="btn btn-primary">Update Information</button></div>
             </form>
 
-            <div class="form form-horizontal">
+            <div class="form form-horizontal hq-inset">
                 <fieldset>
                     {% for phone_number in phone_numbers %}
                         {% if forloop.first %}<legend>Registered Phone Numbers</legend>{% endif %}
@@ -105,7 +103,7 @@
                     {% endfor %}
                 </fieldset>
             </div>
-            <form class="form form-horizontal" name="add_phone_number" method="post">
+            <form class="form form-horizontal hq-inset" name="add_phone_number" method="post">
                 <input type="hidden" name="form_type" value="phone-numbers" />
                 <fieldset>
                     <legend>Add a New Number</legend>
@@ -153,13 +151,13 @@
                 <a class="close" data-dismiss="modal">&times;</a>
                 <h3>Delete +{{ phone_number }}?</h3>
             </div>
-            <form class="form form-horizontal" name="delete_phone_number" action="{% url delete_phone_number domain couch_user.couch_id %}?phone_number={{phone_number|urlencode}}" method="post">
+            <form class="form form-horizontal hq-form" name="delete_phone_number" action="{% url delete_phone_number domain couch_user.couch_id %}?phone_number={{phone_number|urlencode}}" method="post">
                 <div class="modal-body">
                     <p>Are you sure you want to delete the phone number: "+{{ phone_number }}"?</p>
                 </div>
                 <div class="modal-footer">
-                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
                     <button type="submit" class="btn btn-danger"><i class="icon icon-remove icon-white"></i> Delete</button>
+                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
                 </div>
             </form>
         </div>

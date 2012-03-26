@@ -11,6 +11,7 @@
     <script type="text/javascript">
         $(function () {
             $('#users-main-nav li a').each(function(e) {
+                console.log($(this).attr('href') + ", " + '{{ request.path }}');
                 if ($(this).attr('href') == '{{ request.path }}')
                     $(this).parent().addClass('active');
             });

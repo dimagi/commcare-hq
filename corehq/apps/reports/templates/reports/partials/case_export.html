@@ -1,4 +1,4 @@
-<form class="form-horizontal form-report" action="{% url download_cases domain %}" method="get">
+<form class="form-horizontal hq-inset hq-form-report" action="{% url download_cases domain %}" method="get">
     <input type="hidden" name="group" value="{{ group.get_id }}"/>
     {% for f in toggle_users %}
         {% if f.show %}

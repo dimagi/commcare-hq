@@ -1,6 +1,6 @@
 {% extends "users/users_base.html" %}
 {% load i18n %}
-{% block js-inline %}
+{% block js-inline %}{{ block.super }}
     <script>
         $(function () {
             function selectText(element) {
