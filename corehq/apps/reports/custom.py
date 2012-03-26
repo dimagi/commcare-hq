@@ -39,7 +39,10 @@ class HQReport(object):
         self.domain = domain
         self.request = request
 
-        self.timezone = util.get_timezone(self.request.couch_user.user_id, domain)
+        try:
+            self.timezone = util.get_timezone(self.request.couch_user.user_id, domain)
+        except AttributeError:
+            self.timezone = util.get_timezone(None, domain)
 
         if not self.rows:
             self.rows = []
