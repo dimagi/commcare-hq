@@ -1,0 +1,146 @@
+{% extends "reports/report_base.html" %}
+{% load xforms_extras %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        $(function() {
+           $('.export-action-download').click(function() {
+               var $modalBody = $("#export-download-status .modal-body");
+               $modalBody.text("Fetching...");
+               console.log($(this).data("formname"));
+               $("#export-download-status .modal-header h3 span").text($(this).data("formname"));
+               console.log("Going to...");
+               console.log($(this).data('dlocation'));
+               $.getJSON($(this).data('dlocation'), function(d) {
+                   console.log("supposedly things should have worked");
+                   console.log(d.download_url);
+                   $modalBody.empty().load(d.download_url);
+               });
+           });
+        });
+    </script>
+{% endblock %}
+
+{% block reportcontent %}
+    <form class="form-horizontal form-report" action="{% url download_cases domain %}" method="get">
+        <input type="hidden" name="group" value="{{ group.get_id }}"/>
+        {% for f in toggle_users %}
+            {% if f.show %}
+                <input type="hidden" name="ufilter" value="{{ f.type }}" />
+            {% endif %}
+        {% endfor %}
+        <fieldset>
+            <legend>Download Settings</legend>
+            <div class="control-group">
+                <label for="include-closed-select" class="control-label">Download</label>
+                <div class="controls">
+                    <select class="input-small" name="include_closed" id="include-closed-select">
+                        <option value="false">all open</option>
+                        <option value="true">all</option>
+                    </select> cases, all referrals, and all CHW users.
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-large"><i class="icon-download-alt icon-white"></i> Download</button>
+        </div>
+    </form>
+
+
+    <div class="hq-generic-report form-horizontal">
+        <h2>Saved Custom Exports</h2>
+
+        {% if saved_exports %}
+        <table class="export_data table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Preview</th>
+                    <th>Edit</th>
+                    <th>Download</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for export in saved_exports %}
+                <tr class="{% cycle "odd" "even" %}">
+                    <td>{{ export.name|default:"[blank]" }}</td>
+                    <td class="cell-vertical-centered">
+                        <a class="btn" href='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?type=case&format=html'>
+                            HTML Preview
+                        </a>
+                    </td>
+                    <td class="cell-vertical-centered">
+                        <a class="btn btn-info" href='{% url corehq.apps.reports.views.edit_custom_export domain export.get_id %}?type=case'>
+                            <i class="icon-pencil icon-white"></i> Edit
+                        </a>
+                    </td>
+                    <td class="cell-vertical-centered">
+                        <a class="btn btn-primary" href="{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?type=case&group={{ group.get_id }}{% if show_user_filter %}{% for f in toggle_users %}{% if f.show %}&ufilter={{ f.type }}{% endif %}{% endfor %}{% endif %}">
+                            <i class="icon-download-alt icon-white"></i> Download Data
+                        </a>
+                    </td>
+                    <td class="cell-vertical-centered">
+                        <a class="btn btn-danger" data-toggle="modal" class="delete_link" href="#delete-export-modal-{{ export.get_id }}"><i class="icon-remove icon-white"></i> Delete</a>
+                        {% include "reports/dialogs/delete_custom_export_dialog.html" %}
+                     </td>
+                 </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="alert alert-info">
+            <strong>No Custom Exports yet!</strong> Click "Create Custom Export" on a form below to make one.
+        </div>
+        {% endif %}
+
+        {% if case_types %}
+            <h2>Export cases</h2>
+            <table class="export_data table table-striped">
+                <thead>
+                <tr>
+                    <th>Case Type</th>
+                    <th>Custom Export</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for case in case_types %}
+                    <tr class="{% cycle "odd" "even" %}">
+                        <td>
+                            {% ifchanged %}
+                                {% if case %}
+                                    {{ case }}
+                                {% else %}
+                                    Unknown Case <!---->
+                                {% endif %}
+                            {% endifchanged %}
+                        </td>
+                        <td class="cell-vertical-centered">
+                            {% if case %}
+                                <a class="btn" href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ case }}"&type=case'><i class="icon-star-empty"></i> Create Custom Export</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+    </div>
+{% endblock %}
+
+{% block modals %}
+{{ block.super }}
+    <div id="export-download-status" class="modal hide fade">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">×</a>
+            <h3>Downloading Export Data for '<span></span>'</h3>
+        </div>
+        <div class="modal-body downloader">
+        </div>
+        <div class="modal-footer">
+            <a href="#" class="btn" data-dismiss="modal">Close</a>
+        </div>
+    </div>
+{% endblock %}

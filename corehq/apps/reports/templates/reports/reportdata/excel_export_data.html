@@ -110,7 +110,7 @@
                         </a>
                     </td>
                     <td class="cell-vertical-centered">
-                        <a class="btn btn-info" href='{% url corehq.apps.reports.views.edit_custom_export domain export.get_id %}'>
+                        <a class="btn btn-info" href='{% url corehq.apps.reports.views.edit_custom_export domain export.get_id %}?type=form'>
                             <i class="icon-pencil icon-white"></i> Edit
                         </a>
                     </td>
@@ -227,7 +227,7 @@
                     </td>
                     <td class="cell-vertical-centered">
                         {% if form.xmlns != None %}
-                            <a class="btn" href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ form.xmlns }}"'><i class="icon-star-empty"></i> Create Custom Export</a>
+                            <a class="btn" href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ form.xmlns }}"&type=form'><i class="icon-star-empty"></i> Create Custom Export</a>
                         {% endif %}
                     </td>
                     <td class="cell-vertical-centered">
