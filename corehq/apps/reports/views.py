@@ -86,7 +86,10 @@ def export_data(req, domain):
     if kwargs['format'] == 'raw':
         resp = export_raw_data([domain, export_tag], filename=export_tag)
     else:
-        resp = export_data_shared([domain,export_tag], **kwargs)
+        try:
+            resp = export_data_shared([domain,export_tag], **kwargs)
+        except Exception as e:
+            return HttpResponseBadRequest(e)
     if resp:
         return resp
     else:
