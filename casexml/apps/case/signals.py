@@ -13,7 +13,7 @@ def process_cases(sender, xform, **kwargs):
         def attach_domain(case):
             case.domain = domain
             if domain and hasattr(case, 'type'):
-                case.export_tag = [domain, case.type]
+                case['#export_tag'] = ["domain", "type"]
             return case
         cases = [attach_domain(case) for case in cases]
     map(lambda case: case.save(), cases)
