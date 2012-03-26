@@ -175,7 +175,7 @@ def json_handler(obj):
     elif isinstance(obj, Decimal):
         return float(obj) # warning, potential loss of precision
     else:
-        raise TypeError("%r is not json serializable" % obj)
+        return json.JSONEncoder().default(obj)
 
 def json_response(obj, **kwargs):
     if not kwargs.has_key('default'):
