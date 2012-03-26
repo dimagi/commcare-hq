@@ -3,6 +3,7 @@ import csv
 import json
 import zipfile
 from StringIO import StringIO
+from dimagi.utils.web import json_handler
 from django.conf import settings
 from couchexport.models import ExportSchema, Format
 from couchdbkit.client import Database
@@ -393,7 +394,8 @@ class ConstantEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Constant):
             return obj.message
-        return json.JSONEncoder.default(self, obj)
+        else:
+            return json_handler(obj)
 
 def _export_json(tables, file):
     new_tables = dict()
