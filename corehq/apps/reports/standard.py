@@ -843,8 +843,8 @@ class ApplicationStatusReport(StandardTabularHQReport):
             if data:
                 data = data['value']
                 received_date = data['time']
-                now = datetime.now(tz=pytz.utc)
-                time = datetime.replace(dateutil.parser.parse(received_date), tzinfo=pytz.utc)
+                now = datetime.datetime.now(tz=pytz.utc)
+                time = datetime.datetime.replace(dateutil.parser.parse(received_date), tzinfo=pytz.utc)
                 dtime = now - time
                 if dtime.days < 1:
                     dtext = "Today"
