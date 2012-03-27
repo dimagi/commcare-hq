@@ -108,14 +108,15 @@ def export_data_async(req, domain):
 
     try:
         export_tag = json.loads(req.GET.get("export_tag", "null") or "null")
+        export_type = req.GET.get("type", "form")
     except ValueError:
         return HttpResponseBadRequest()
 
     assert(export_tag[0] == domain)
 
-    filter = util.create_export_filter(req, domain)
+    filter = util.create_export_filter(req, domain, export_type=export_type)
 
-    return couchexport_views.export_data_async(req, filter=filter)
+    return couchexport_views.export_data_async(req, filter=filter, type=export_type)
     
 @login_and_domain_required
 def custom_export(req, domain):
@@ -240,11 +241,12 @@ def export_custom_data(req, domain, export_id):
     saved_export = SavedExportSchema.get(export_id)
     next = req.GET.get("next", "")
     format = req.GET.get("format", "")
+    export_type = req.GET.get("type", "")
 
     if not next:
         next = reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug])
 
-    filter = util.create_export_filter(req, domain, type=type)
+    filter = util.create_export_filter(req, domain, export_type=export_type)
 
     resp = saved_export.download_data(format, filter=filter)
     if resp:
