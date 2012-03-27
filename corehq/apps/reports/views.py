@@ -3,6 +3,7 @@ import json
 from corehq.apps.reports import util, standard
 from corehq.apps.users.export import export_users
 import couchexport
+from couchexport.export import UnsupportedExportFormat
 from couchexport.util import FilterFunction
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
@@ -88,7 +89,7 @@ def export_data(req, domain):
     else:
         try:
             resp = export_data_shared([domain,export_tag], **kwargs)
-        except Exception as e:
+        except UnsupportedExportFormat as e:
             return HttpResponseBadRequest(e)
     if resp:
         return resp
