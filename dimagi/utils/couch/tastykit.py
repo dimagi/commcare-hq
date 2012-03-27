@@ -138,3 +138,54 @@ class CouchdbkitResource(Resource):
 
     def rollback(self, bundles):
         pass
+
+
+class ParameterizedResource(CouchdbkitResource):
+
+    """
+    More refined CouchDBkitResource, converts return values to datatables.net compatible json. Work in progress, as this class was created because DataTables mixin didn't seem to work.
+    Also, datatables params can be tweaked so serialization alteration here needn't be necessary.
+    """
+    def get_object_list(self, request):
+        """
+        Assumes that the document type and the view correspond
+        """
+        limit_option, skip_option = self._get_limit_skip(request)
+        results = self._meta.doc_class.view(self._meta.view_name, include_docs=True, limit=limit_option, skip=skip_option).all()
+        return results
+
+    def obj_get_list(self, request=None, **kwargs):
+        limit_option, skip_option = self._get_limit_skip(request)
+        results = self._meta.doc_class.view(self._meta.view_name, include_docs=True, key=request.user.username,  skip=skip_option, limit=limit_option).all()
+        return results
+
+    def obj_get(self, request=None, **kwargs):
+        """
+        Assume a fully formed couchdbkit document.
+        """
+        document = self._doctype().get(kwargs['pk'])
+        return document
+    def get_list(self, request, **kwargs):
+        """
+        Returns a serialized list of resources.
+
+        Calls ``obj_get_list`` to provide the data, then handles that result
+        set and serializes it.
+
+        Should return a HttpResponse (200 OK).
+        """
+        # TODO: Uncached for now. Invalidation that works for everyone may be
+        #       impossible.
+        objects = self.obj_get_list(request=request, **self.remove_api_resource_names(kwargs))
+        sorted_objects = self.apply_sorting(objects, options=request.GET)
+
+        paginator = self._meta.paginator_class(request.GET, sorted_objects, resource_uri=self.get_resource_list_uri(), limit=self._meta.limit)
+        to_be_serialized = paginator.page()
+        to_be_serialized['aaData'] = to_be_serialized['objects']
+        del(to_be_serialized['objects'])
+
+        # Dehydrate the bundles in preparation for serialization.
+        bundles = [self.build_bundle(obj=obj, request=request) for obj in to_be_serialized['aaData']]
+        to_be_serialized['aaData'] = [self.full_dehydrate(bundle) for bundle in bundles]
+        to_be_serialized = self.alter_list_data_to_serialize(request, to_be_serialized)
+        return self.create_response(request, to_be_serialized)
