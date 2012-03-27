@@ -1,9 +1,5 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load hq_shared_tags %}
-
-{% block page_imports %}
-    <link rel="stylesheet" href="{{ STATIC_URL }}users/css/users.css?version=1" />
-{% endblock %}
 {% block js %}{{ block.super }}
 {#    <script src="{% static 'users/js/users.js' %}"></script>#}
 {% endblock %}
@@ -74,14 +70,12 @@
 </nav>
 {% endblock %}
 {% block main_column %}
-<article id="user-view">
-    {% block user-view %}
-        <p class="message">Click on the menu to the left to edit your settings.</p>
-    {% endblock %}
-    {% if error %}
-        <div id="error_msg">
-            {{ error }}
-        </div>
-    {% endif %}
-</article>
+{% block user-view %}
+    <p class="message">Click on the menu to the left to edit your settings.</p>
+{% endblock %}
+{% if error %}
+    <div id="error_msg">
+        {{ error }}
+    </div>
+{% endif %}
 {% endblock %}

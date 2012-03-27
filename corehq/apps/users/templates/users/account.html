@@ -59,7 +59,7 @@
     </ul>
     <div class="tab-content" id="settings">
         <div class="tab-pane" id="basic-info">
-            <form class="form form-horizontal hq-inset" name="user_details" method="post">
+            <form class="form form-horizontal" name="user_details" method="post">
                 <input type="hidden" name="form_type" value="basic-info" />
                 {% bootstrap_form_errors form %}
                 <fieldset>
@@ -90,7 +90,7 @@
                 <div class="form-actions"><button type="submit" class="btn btn-primary">Update Information</button></div>
             </form>
 
-            <div class="form form-horizontal hq-inset">
+            <div class="form form-horizontal">
                 <fieldset>
                     {% for phone_number in phone_numbers %}
                         {% if forloop.first %}<legend>Registered Phone Numbers</legend>{% endif %}
@@ -103,7 +103,7 @@
                     {% endfor %}
                 </fieldset>
             </div>
-            <form class="form form-horizontal hq-inset" name="add_phone_number" method="post">
+            <form class="form form-horizontal" name="add_phone_number" method="post">
                 <input type="hidden" name="form_type" value="phone-numbers" />
                 <fieldset>
                     <legend>Add a New Number</legend>
