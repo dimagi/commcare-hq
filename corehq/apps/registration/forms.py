@@ -42,7 +42,7 @@ class DomainRegistrationForm(forms.Form):
     """
     Form for creating a domain for the first time
     """
-    domain_name =  forms.CharField(label='Project Name:')
+    domain_name =  forms.CharField(label='Project Name:', max_length=25)
     tos_confirmed = forms.BooleanField(required=False, label="Terms of Service") # Must be set to False to have the clean_*() routine called
 
     def clean_domain_name(self):

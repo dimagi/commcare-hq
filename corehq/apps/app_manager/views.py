@@ -490,7 +490,10 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'app': app,
     })
     if app:
-        options = CommCareBuildConfig.fetch().get_menu(app.application_version)
+        if app.is_remote_app():
+            options = CommCareBuildConfig.fetch().get_menu()
+        else:
+            options = CommCareBuildConfig.fetch().get_menu(app.application_version)
         is_standard_build = [o.build.to_string() for o in options if o.build.to_string() == app.build_spec.to_string()]
         context.update({
             "commcare_build_options": options,
@@ -556,7 +559,7 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None, is_user_reg
 @require_permission('edit-apps')
 def new_app(req, domain):
     "Adds an app to the database"
-    lang = req.COOKIES.get('lang', "en")
+    lang = req.COOKIES.get('lang') or 'en'
     type = req.POST["type"]
     application_version = req.POST.get('application_version', APP_V1)
     cls = str_to_cls[type]

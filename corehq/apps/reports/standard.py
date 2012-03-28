@@ -16,14 +16,14 @@ from corehq.apps.reports import util
 from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.custom import HQReport
 from corehq.apps.reports.display import xmlns_to_name, FormType
-from corehq.apps.reports.fields import FilterUsersField, CaseTypeField, SelectCHWField, datespan_default
+from corehq.apps.reports.fields import FilterUsersField, CaseTypeField, SelectCHWField
 from corehq.apps.reports.models import HQUserType
 from couchexport.models import SavedExportSchema
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import DatatablesParams
-from dimagi.utils.dates import DateSpan
-from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.dates import DateSpan, force_to_datetime
+from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request, get_url_base
 
@@ -137,14 +137,21 @@ class PaginatedHistoryHQReport(StandardTabularHQReport):
 
 class StandardDateHQReport(StandardHQReport):
 
-    def __init__(self, domain, request, base_context = {}):
+    def __init__(self, domain, request, base_context=None):
+        base_context = base_context or {}
         super(StandardDateHQReport, self).__init__(domain, request, base_context)
-        self.datespan = DateSpan.since(7, format="%Y-%m-%d", timezone=self.timezone)
+        self.datespan = self.get_default_datespan()
+        self.datespan.is_default = True
+
+    def get_default_datespan(self):
+        return DateSpan.since(7, format="%Y-%m-%d", timezone=self.timezone)
 
     def get_global_params(self):
-        if self.request.datespan.is_valid():
+        if self.request.datespan.is_valid() and not self.request.datespan.is_default:
             self.datespan.enddate = self.request.datespan.enddate
             self.datespan.startdate = self.request.datespan.startdate
+            self.datespan.is_default = False
+        self.request.datespan = self.datespan
         super(StandardDateHQReport, self).get_global_params()
 
     def get_report_context(self):
@@ -450,7 +457,7 @@ class FormCompletionTrendsReport(StandardTabularHQReport, StandardDateHQReport):
             globalmin = sys.maxint
             globalmax = 0
             for user in self.users:
-                datadict = entrytimes.get_user_data(self.domain, user.user_id, form, self.request.datespan)
+                datadict = entrytimes.get_user_data(self.domain, user.user_id, form, self.datespan)
                 rows.append([user.username_in_report,
                              to_minutes(float(datadict["sum"]), float(datadict["count"])),
                              to_minutes(datadict["min"]),
@@ -557,7 +564,11 @@ class CaseListReport(PaginatedHistoryHQReport):
         else:
             raise ValueError("Can't construct case object from row result %s" % row)
 
+        if case.domain != self.domain:
+            logging.error("case.domain != self.domain; %r and %r, respectively" % (case.domain, self.domain))
+
         assert(case.domain == self.domain)
+
         return ([] if self.case_type else [case.type]) + [
             self.case_data_link(row['id'], case.name),
             self.usernames[case.user_id],
@@ -715,7 +726,20 @@ class ExcelExportReport(StandardDateHQReport):
               'corehq.apps.reports.fields.DatespanField']
     template_name = "reports/reportdata/excel_export_data.html"
 
+    def get_default_datespan(self):
+        datespan = super(ExcelExportReport, self).get_default_datespan()
+        datespan.startdate = get_db().view('reports/all_submissions',
+            startkey=[self.domain],
+            limit=1,
+            descending=False,
+            reduce=False,
+            # The final 'Z' makes the datetime parse with tzinfo=tzlocal()
+            wrapper=lambda x: string_to_datetime(x['key'][1]).replace(tzinfo=None)
+        ).one()
+        return datespan
+
     def calc(self):
+        print self.datespan
         # This map for this view emits twice, once with app_id and once with {}, letting you join across all app_ids.
         # However, we want to separate out by (app_id, xmlns) pair not just xmlns so we use [domain] to [domain, {}]
         forms = []
@@ -797,8 +821,16 @@ class ExcelExportReport(StandardDateHQReport):
         self.context.update({
             "forms": forms,
             "saved_exports": exports,
-            "edit": self.request.GET.get('edit') == 'true'
+            "edit": self.request.GET.get('edit') == 'true',
+            "get_filter_params": self.get_filter_params(),
         })
+
+    def get_filter_params(self):
+        params = self.request.GET.copy()
+        params['startdate'] = self.datespan.startdate_display
+        params['enddate'] = self.datespan.enddate_display
+        return params
+
 
 class CaseExportReport(StandardHQReport):
     name = "Export Cases, Referrals, and Users"
