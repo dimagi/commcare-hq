@@ -557,7 +557,11 @@ class CaseListReport(PaginatedHistoryHQReport):
         else:
             raise ValueError("Can't construct case object from row result %s" % row)
 
+        if case.domain != self.domain:
+            logging.error("case.domain != self.domain; %r and %r, respectively" % (case.domain, self.domain))
+
         assert(case.domain == self.domain)
+
         return ([] if self.case_type else [case.type]) + [
             self.case_data_link(row['id'], case.name),
             self.usernames[case.user_id],
