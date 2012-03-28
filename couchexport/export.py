@@ -315,10 +315,11 @@ class FormattedRow(object):
     
     The id should be an iterable (compound ids are supported). 
     """
-    def __init__(self, data, id=None, separator="."):
+    def __init__(self, data, id=None, separator=".", id_index=0):
         self.data = data
         self.id = id
         self.separator = separator
+        self.id_index = id_index
     
     def has_id(self):
         return self.id is not None
@@ -330,11 +331,14 @@ class FormattedRow(object):
         return self.separator.join(map(unicode, self.id))
     
     def get_data(self):
-        if self.has_id():
+        for i, val in enumerate(self.data):
+            if self.has_id() and i == self.id_index:
+                yield self.formatted_id
+            yield val
+        # if the ID is last the condition never gets triggerred
+        # during the loop, so do it here
+        if self.has_id() and self.id_index >= len(self.data):
             yield self.formatted_id
-        for val in self.data:
-            yield val        
-
         
 def format_tables(tables, id_label='id', separator='.', include_headers=True,
                       include_data=True):
