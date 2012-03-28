@@ -501,6 +501,16 @@ class Detail(DocumentSchema):
                 filters.append("(%s)" % column.filter_xpath.replace('.', '%s_%s_%s' % (column.model, column.field, i + 1)))
         return ' && '.join(filters)
 
+    def filter_xpath_2(self):
+        filters = []
+        for i,column in enumerate(self.columns):
+            if column.format == 'filter':
+                filters.append("(%s)" % column.filter_xpath.replace('.', column.xpath))
+        if filters:
+            return '[%s]' % (' && '.join(filters))
+        else:
+            return ''
+
 class CaseList(IndexedSchema):
     label = DictProperty()
     show = BooleanProperty(default=False)
