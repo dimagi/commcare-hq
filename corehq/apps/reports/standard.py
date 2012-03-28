@@ -819,8 +819,16 @@ class ExcelExportReport(StandardDateHQReport):
         self.context.update({
             "forms": forms,
             "saved_exports": exports,
-            "edit": self.request.GET.get('edit') == 'true'
+            "edit": self.request.GET.get('edit') == 'true',
+            "get_filter_params": self.get_filter_params(),
         })
+
+    def get_filter_params(self):
+        params = self.request.GET.copy()
+        params['startdate'] = self.datespan.startdate_display
+        params['enddate'] = self.datespan.enddate_display
+        return params
+
 
 class CaseExportReport(StandardHQReport):
     name = "Export Cases, Referrals, and Users"
