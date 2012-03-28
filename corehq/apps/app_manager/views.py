@@ -5,6 +5,7 @@ import uuid
 from wsgiref.util import FileWrapper
 import zipfile
 from corehq.apps.app_manager.const import APP_V1
+from dimagi.utils.couch.resource_conflict import repeat, retry_resource
 from django.utils import simplejson
 import os
 import re
@@ -387,6 +388,7 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
 
+@retry_resource(3)
 def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False):
     """
     This is the main view for the app. All other views redirect to here.
@@ -458,6 +460,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     context.update(base_context)
     if app and not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(context['lang'], {})})
+
     if app and app.get_doc_type() == 'Application':
         sorted_images, sorted_audio = utils.get_sorted_multimedia_refs(app)
         multimedia_images, missing_image_refs = app.get_template_map(sorted_images, domain)

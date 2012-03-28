@@ -33,15 +33,18 @@ def html_trans(name, langs=["default"]):
 
 @register.filter
 def input_trans(name, langs=["default"]):
+    template='<input class="wide" type="text" name="name" value="%(value)s" placeholder="%(placeholder)s" />'
     for lang in langs:
         if lang in name:
-            template='<input class="wide" type="text" name="name" value="%(value)s" placeholder="%(placeholder)s" />'
             if langs and lang == langs[0]:
                 return template % {"value": name[lang], "placeholder": ""}
             else:
                 return template % {"value": "", "placeholder": name[lang]} + \
                        LANG_BUTTON % {"lang": lang, "extra_class": " langcode-input"}
-    return ""
+    default = "Untitled"
+    if 'en' in name:
+        default = name['en']
+    return template % {"value": "", "placeholder": default }
 
 @register.filter
 def clean_trans(name, langs=["default"]):
