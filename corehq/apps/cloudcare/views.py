@@ -5,7 +5,8 @@ from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.web import render_to_response, json_response, json_handler
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse,\
+    HttpResponseBadRequest
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
 from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_cloudcare_apps
@@ -151,7 +152,12 @@ def get_groups(request, domain, user_id):
 
 @cloudcare_api
 def get_cases(request, domain):
-    user_id = request.couch_user.get_id 
+    user_id = request.couch_user.get_id if request.couch_user.is_commcare_user() \
+              else request.REQUEST.get("user_id", "")
+    
+    if not user_id:
+        return HttpResponseBadRequest("Must specify user_id!")
+    
     cases = get_owned_cases(domain, user_id)
     if request.REQUEST:
         def _filter(case):
