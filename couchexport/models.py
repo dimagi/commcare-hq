@@ -158,7 +158,9 @@ class ExportTable(DocumentSchema):
         for row in data:
             row_data = list(row.get_data())
             id = row_data[self._header_to_index_map["id"]] if "id" in self._cols else None
-            ret.append(FormattedRow([row_data[self._header_to_index_map[col]] for col in self._cols if col != "id"], id))
+            ret.append(FormattedRow([row_data[self._header_to_index_map[col]] \
+                                              for col in self._cols if col != "id"], 
+                                    id, id_index=self._cols.index("id") if id else 0))
         return ret
     
 class SavedExportSchema(Document, UnicodeMixIn):
