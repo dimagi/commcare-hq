@@ -6,7 +6,7 @@ from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
-from corehq.apps.sms.models import CallLog, EventLog, MISSED_EXPECTED_CALLBACK
+from corehq.apps.sms.models import CallLog, EventLog, MISSED_EXPECTED_CALLBACK, CommConnectCase
 from corehq.apps.users.models import CommCareUser
 import logging
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
@@ -263,10 +263,10 @@ class CaseReminderHandler(Document):
         """
         user = CommCareUser.get_by_user_id(case.user_id)
         if self.recipient == RECIPIENT_USER:
-            local_now = CaseReminderHandler.utc_to_local(user, now)
+            recipient = user
         else:
-            # self.recipient == RECIPIENT_CASE
-            local_now = CaseReminderHandler.utc_to_local(case, now)
+            recipient = CommConnectCase.get(case._id)
+        local_now = CaseReminderHandler.utc_to_local(recipient, now)
         reminder = CaseReminder(
             domain=self.domain,
             case_id=case._id,
@@ -289,12 +289,7 @@ class CaseReminderHandler(Document):
         else:
             # EVENT_AS_SCHEDULE
             local_tmsp = datetime.combine(reminder.start_date, self.events[0].fire_time) + timedelta(days = (self.start_offset + self.events[0].day_num))
-            if self.recipient == RECIPIENT_USER:
-                next_fire = CaseReminderHandler.timestamp_to_utc(reminder.user, local_tmsp)
-            else:
-                # self.recipient == RECIPIENT_CASE
-                next_fire = CaseReminderHandler.timestamp_to_utc(case, local_tmsp)
-            reminder.next_fire = next_fire
+            reminder.next_fire = CaseReminderHandler.timestamp_to_utc(recipient, local_tmsp)
         return reminder
 
     @classmethod
@@ -395,12 +390,7 @@ class CaseReminderHandler(Document):
                     next_event = reminder.current_event
                     day_offset = self.start_offset + (self.schedule_length * (reminder.schedule_iteration_num - 1)) + next_event.day_num
                     reminder_datetime = datetime.combine(reminder.start_date, next_event.fire_time) + timedelta(days = day_offset)
-                    if self.recipient == RECIPIENT_USER:
-                        next_fire = CaseReminderHandler.timestamp_to_utc(reminder.user, reminder_datetime)
-                    else:
-                        # self.recipient == RECIPIENT_CASE
-                        next_fire = CaseReminderHandler.timestamp_to_utc(reminder.case, reminder_datetime)
-                    reminder.next_fire = next_fire
+                    reminder.next_fire = CaseReminderHandler.timestamp_to_utc(reminder.recipient, reminder_datetime)
 
     def should_fire(self, reminder, now):
         return now > reminder.next_fire
@@ -414,11 +404,7 @@ class CaseReminderHandler(Document):
         return      True on success, False on failure
         """
         # Get the proper recipient
-        if self.recipient == RECIPIENT_USER:
-            recipient = reminder.user
-        else:
-            #self.recipient == RECIPIENT_CASE
-            recipient = reminder.case
+        recipient = reminder.recipient
         
         # Retrieve the VerifiedNumber entry for the recipient
         try:
@@ -656,6 +642,13 @@ class CaseReminder(Document):
         except Exception:
             self.retire()
             return None
+
+    @property
+    def recipient(self):
+        if self.handler.recipient == RECIPIENT_USER:
+            return self.user
+        else:
+            return CommConnectCase.get(self.case_id)
 
     def retire(self):
         self.doc_type += "-Deleted"

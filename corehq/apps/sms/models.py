@@ -8,6 +8,8 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
+from casexml.apps.case.signals import case_post_save
+from .mixin import CommCareMobileContactMixin
 
 INCOMING = "I"
 OUTGOING = "O"
@@ -186,3 +188,37 @@ class MessageLogOld(models.Model):
         if self.couch_recipient:
             return CouchUser.get_by_user_id(self.couch_recipient).username
         return self.phone_number
+
+
+class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
+    
+    def case_changed(self):
+        contact_phone_number = self.get_case_property("contact_phone_number")
+        contact_phone_number_is_verified = self.get_case_property("contact_phone_number_is_verified")
+        if(contact_phone_number is not None and contact_phone_number_is_verified):
+            try:
+                self.save_verified_number(contact_phone_number, True)
+            except:
+                #TODO: Handle exception
+                pass
+        else:
+            #TODO: Start phone verification workflow
+            pass
+    
+    def get_time_zone(self):
+        return self.get_case_property("time_zone")
+
+    def get_language_code(self):
+        return self.get_case_property("language_code")
+
+
+def case_changed_receiver(sender, case, **kwargs):
+    c = CommConnectCase.get(case._id)
+    c.case_changed()
+
+
+case_post_save.connect(case_changed_receiver, CommCareCase)
+
+
+
+

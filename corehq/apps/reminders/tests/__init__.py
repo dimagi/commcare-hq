@@ -325,7 +325,7 @@ class ReminderCallbackTestCase(TestCase):
             user_id=cls.user_id
         )
         cls.case.save()
-        cls.user.save_verified_number("15551234")
+        cls.user.save_verified_number("15551234", True)
 
     def test_ok(self):
         self.assertEqual(self.handler.get_reminder(self.case), None)

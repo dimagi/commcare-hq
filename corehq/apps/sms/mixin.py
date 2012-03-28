@@ -1,8 +1,16 @@
 import re
-from django.core.exceptions import ValidationError
 from couchdbkit.ext.django.schema import *
 
 phone_number_re = re.compile("^\d+$")
+
+class PhoneNumberException(Exception):
+    pass
+
+class InvalidFormatException(PhoneNumberException):
+    pass
+
+class PhoneNumberInUseException(PhoneNumberException):
+    pass
 
 class VerifiedNumber(Document):
     """
@@ -13,6 +21,7 @@ class VerifiedNumber(Document):
     owner_id        = StringProperty()
     phone_number    = StringProperty()
     backend_id      = StringProperty() # points to a MobileBackend
+    verified        = BooleanProperty()
     
     @property
     def backend(self):
@@ -67,18 +76,18 @@ class CommCareMobileContactMixin(object):
         Validates that the given phone number consists of all digits.
         
         return  void
-        raises  ValidationError if the phone number format is invalid
+        raises  InvalidFormatException if the phone number format is invalid
         """
         if not phone_number_re.match(phone_number):
-            raise ValidationError("Phone number format must consist of only digits.")
+            raise InvalidFormatException("Phone number format must consist of only digits.")
     
     def verify_unique_number(self, phone_number):
         """
         Verifies that the given phone number is not already in use by any other contacts.
         
         return  void
-        raises  ValidationError if the phone number format is invalid
-        raises  ValidationError if the phone number is already in use by another contact
+        raises  InvalidFormatException if the phone number format is invalid
+        raises  PhoneNumberInUseException if the phone number is already in use by another contact
         """
         self.validate_number_format(phone_number)
         v = VerifiedNumber.view("sms/verified_number_by_number",
@@ -87,15 +96,15 @@ class CommCareMobileContactMixin(object):
             include_docs=True
         ).one()
         if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self._id):
-            raise ValidationError("Phone number is already in use.")
+            raise PhoneNumberInUseException("Phone number is already in use.")
     
-    def save_verified_number(self, phone_number):
+    def save_verified_number(self, phone_number, verified):
         """
         Saves the given phone number as this contact's verified phone number.
         
         return  void
-        raises  ValidationError if the phone number format is invalid
-        raises  ValidationError if the phone number is already in use by another contact
+        raises  InvalidFormatException if the phone number format is invalid
+        raises  PhoneNumberInUseException if the phone number is already in use by another contact
         """
         self.verify_unique_number(phone_number)
         v = self.get_verified_number()
@@ -105,6 +114,7 @@ class CommCareMobileContactMixin(object):
                 owner_id = self._id
             )
         v.phone_number = phone_number
+        v.verified = verified
         v.save()
 
     def delete_verified_number(self):
