@@ -25,9 +25,3 @@ class Command(LabelCommand):
                 print "migrated"
             else:
                 print "nothing to do"
-
-        for schema in SavedExportSchema.view("couchexport/saved_export_schemas", include_docs=True):
-            schema.type = "form"
-            if not options["dryrun"]:
-                schema.save()
-            print "migrated all saved export schema"
