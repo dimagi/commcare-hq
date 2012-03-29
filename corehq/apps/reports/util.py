@@ -2,7 +2,7 @@ from datetime import datetime
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import user_id_to_username
 from couchexport.util import FilterFunction
 from couchforms.filters import instances
