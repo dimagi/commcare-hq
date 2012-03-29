@@ -17,6 +17,7 @@ class VerifiedNumber(Document):
     There should only be one VerifiedNumber entry per (owner_doc_type, owner_id), and
     each VerifiedNumber.phone_number should be unique across all entries.
     """
+    domain          = StringProperty()
     owner_doc_type  = StringProperty()
     owner_id        = StringProperty()
     phone_number    = StringProperty()
@@ -98,7 +99,7 @@ class CommCareMobileContactMixin(object):
         if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self._id):
             raise PhoneNumberInUseException("Phone number is already in use.")
     
-    def save_verified_number(self, phone_number, verified, backend_id):
+    def save_verified_number(self, domain, phone_number, verified, backend_id):
         """
         Saves the given phone number as this contact's verified phone number.
         
@@ -113,6 +114,7 @@ class CommCareMobileContactMixin(object):
                 owner_doc_type = self.doc_type,
                 owner_id = self._id
             )
+        v.domain = domain
         v.phone_number = phone_number
         v.verified = verified
         v.backend_id = backend_id

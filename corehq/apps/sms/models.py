@@ -198,7 +198,7 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
         contact_backend_id = self.get_case_property("contact_backend_id")
         if(contact_phone_number is not None and contact_phone_number_is_verified):
             try:
-                self.save_verified_number(contact_phone_number, True, contact_backend_id)
+                self.save_verified_number(self.domain, contact_phone_number, True, contact_backend_id)
             except:
                 #TODO: Handle exception
                 pass

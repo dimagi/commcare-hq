@@ -8,7 +8,6 @@ import re
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
-from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.sms.api import send_sms
 from corehq.apps.users.models import CouchUser
 from corehq.apps.sms.models import SMSLog, INCOMING
@@ -17,7 +16,6 @@ from dimagi.utils.web import render_to_response
 from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.couch.database import get_db
 from django.contrib import messages
-from tropo import Tropo
 
 @login_and_domain_required
 def messaging(request, domain, template="sms/default.html"):
@@ -147,28 +145,5 @@ def send_to_recipients(request, domain):
         reverse(messaging, args=[domain])
     )
 
-
-@csrf_exempt
-def tropo(request, domain):
-    """
-    Handles tropo requests
-    """
-    if request.method == "POST":
-        data = json.loads(request.raw_post_data)
-        session = data["session"]
-        if "parameters" in session:
-            params = session["parameters"]
-            if ("_send_sms" in params) and ("numberToDial" in params) and ("msg" in params):
-                numberToDial = params["numberToDial"]
-                msg = params["msg"]
-                t = Tropo()
-                t.call(to = numberToDial, network = "SMS")
-                t.say(msg)
-                return HttpResponse(t.RenderJson())
-        t = Tropo()
-        t.hangup()
-        return HttpResponse(t.RenderJson())
-    else:
-        return HttpResponseBadRequest()
 
 

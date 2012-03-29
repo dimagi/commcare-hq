@@ -20,4 +20,3 @@ def send(msg, *args, **kwargs):
     response = urlopen(url).read()
     print response
 
-

@@ -44,7 +44,7 @@ def send_sms(domain, id, phone_number, text):
         logging.exception("Problem sending SMS to %s" % phone_number)
         return False
 
-def send_sms_to_verified_number(domain, verified_number, text):
+def send_sms_to_verified_number(verified_number, text):
     """
     Sends an sms using the given verified phone number entry.
     
@@ -63,7 +63,7 @@ def send_sms_to_verified_number(domain, verified_number, text):
             phone_number                = verified_number.phone_number,
             direction                   = OUTGOING,
             date                        = datetime.utcnow(),
-            domain                      = domain,
+            domain                      = verified_number.domain,
             text                        = text
         )
         module.send(msg, **kwargs)

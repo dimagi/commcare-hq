@@ -439,7 +439,7 @@ class CaseReminderHandler(Document):
         message = reminder.current_event.message.get(lang, reminder.current_event.message[self.default_lang])
         message = Message.render(message, case=reminder.case.case_properties())
         if reminder.method == "sms" or reminder.method == "callback":
-            return send_sms_to_verified_number(reminder.domain, verified_number, message)
+            return send_sms_to_verified_number(verified_number, message)
         elif reminder.method == "test" or reminder.method == "callback_test":
             print(message)
             return True
