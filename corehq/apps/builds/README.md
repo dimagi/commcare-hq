@@ -1,0 +1,1 @@
+1. Go here http://build.dimagi.com:250/ and click "Login as a Guest User"
