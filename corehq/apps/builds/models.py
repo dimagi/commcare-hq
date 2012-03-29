@@ -215,3 +215,8 @@ class CommCareBuildConfig(Document):
             return filter(lambda x: x.build.major_release() == major, self.menu)
         else:
             return self.menu
+
+
+class BuildRecord(BuildSpec):
+    signed = BooleanProperty(default=True)
+    datetime = DateTimeProperty(required=False)
