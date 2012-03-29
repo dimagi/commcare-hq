@@ -27,7 +27,7 @@
                 {% if not couch_user.is_commcare_user %}
                     <a href="{% url web_users domain %}">Web Users</a>
                 {% else %}
-                    <a href="{% url commcare_users domain %}">CommCare Users</a>
+                    <a href="{% url commcare_users domain %}">Case Workers</a>
                 {% endif %}
                 <span class="divider">&gt;</span>
             </li>

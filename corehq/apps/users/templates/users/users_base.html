@@ -42,10 +42,10 @@
 <nav>
     <ul class="nav nav-list" id="users-main-nav">
         <li class="nav-header">My Account</li>
-        <li><a href="{% url user_account domain request.couch_user.user_id %}">Account Settings</a>
+        <li><a href="{% url user_account domain request.couch_user.user_id %}">My Account Settings</a>
             {% block account_indicator %}{% endblock %}
         </li>
-        <li><a href="{% url change_my_password domain %}">Change Password</a></li>
+        <li><a href="{% url change_my_password domain %}">Change My Password</a></li>
     {% if request.couch_user.can_edit_web_users or request.couch_user.can_edit_commcare_users %}
         <li class="nav-header">User Management</li>
         {% if request.couch_user.can_edit_web_users %}
@@ -54,7 +54,7 @@
             </li>
         {% endif %}
         {% if request.couch_user.can_edit_commcare_users %}
-            <li><a href="{% url commcare_users domain %}">CommCare Users</a>
+            <li><a href="{% url commcare_users domain %}">Case Workers</a>
                 {% block commcare_users_indicator %}{% endblock %}
             </li>
             <li><a href="{% url all_groups domain %}">Groups</a>
@@ -69,13 +69,14 @@
     </ul>
 </nav>
 {% endblock %}
+
 {% block main_column %}
-{% block user-view %}
-    <p class="message">Click on the menu to the left to edit your settings.</p>
-{% endblock %}
-{% if error %}
-    <div id="error_msg">
-        {{ error }}
-    </div>
-{% endif %}
+    {% block user-view %}
+        <p class="message">Click on the menu to the left to edit your settings.</p>
+    {% endblock %}
+    {% if error %}
+        <div id="error_msg">
+            {{ error }}
+        </div>
+    {% endif %}
 {% endblock %}

@@ -7,7 +7,7 @@ class HQUserType:
     DEMO_USER = 1
     ADMIN = 2
     UNKNOWN = 3
-    human_readable = ["CommCare Users",
+    human_readable = ["Case Workers",
                       "demo_user",
                       "admin",
                       "Unknown Users"]
