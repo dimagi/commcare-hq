@@ -1,7 +1,7 @@
 from StringIO import StringIO
 from django.test import TestCase
 from django.test.client import Client
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.users.models import CommCareUser
 from datetime import datetime, timedelta
@@ -36,7 +36,7 @@ class SuccessMessageTest(TestCase):
 
         c = Client()
 
-        app = Application.new_app(self.domain, "Test App", "en")
+        app = Application.new_app(self.domain, "Test App", application_version=APP_V1)
         app.new_module("Test Module", "en")
         form = app.new_form(0, "Test Form", "en")
         form.xmlns = self.xmlns

@@ -1,0 +1,21 @@
+import dateutil
+from django import template
+import pytz
+from dimagi.utils.timezones import utils as tz_utils
+import datetime
+
+register = template.Library()
+
+@register.simple_tag
+def utc_to_timezone(date, timezone, dest_fmt="%b %d, %Y %H:%M %Z"):
+    if not timezone:
+        timezone = pytz.utc
+    if not date:
+        return "---"
+    if not isinstance(date, datetime.datetime):
+        try:
+            date = datetime.datetime.replace(dateutil.parser.parse(date), tzinfo=pytz.utc)
+        except Exception as e:
+            print "exception with timezone parsing %s" % e
+            return date
+    return tz_utils.adjust_datetime_to_timezone(date, pytz.utc, timezone.zone).strftime(dest_fmt)

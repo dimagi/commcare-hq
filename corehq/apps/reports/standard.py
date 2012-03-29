@@ -1,23 +1,30 @@
 from _collections import defaultdict
-from datetime import timedelta, datetime
+import datetime
+import json
+import logging
 import sys
+import dateutil
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import yesno
+import pytz
 from restkit.errors import RequestFailed
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.app_manager.models import Application
 from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports import util
 from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.custom import HQReport
 from corehq.apps.reports.display import xmlns_to_name, FormType
-from corehq.apps.reports.fields import FilterUsersField, CaseTypeField, SelectCHWField, datespan_default
+from corehq.apps.reports.fields import FilterUsersField, CaseTypeField, SelectCHWField
 from corehq.apps.reports.models import HQUserType
+from couchexport.models import SavedExportSchema
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import DatatablesParams
-from dimagi.utils.dates import DateSpan
-from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.dates import DateSpan, force_to_datetime
+from dimagi.utils.parsing import json_format_datetime, string_to_datetime
+from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request, get_url_base
 
 DATE_FORMAT = "%Y-%m-%d"
@@ -29,11 +36,10 @@ class StandardHQReport(HQReport):
     use_json = False
 
     def get_global_params(self):
-        # call this in 
         self.request_params = json_request(self.request.GET)
         hist_param = self.request_params.get('history', None)
         if hist_param:
-            self.history = datetime.strptime(hist_param, DATE_FORMAT)
+            self.history = datetime.datetime.strptime(hist_param, DATE_FORMAT)
         self.user_filter, _ = FilterUsersField.get_user_filter(self.request)
 
         self.group = self.request_params.get('group','')
@@ -130,18 +136,27 @@ class PaginatedHistoryHQReport(StandardTabularHQReport):
 
 
 class StandardDateHQReport(StandardHQReport):
-    datespan = DateSpan.since(7, format="%Y-%m-%d")
 
-    def __init__(self, domain, request, base_context = {}):
+    def __init__(self, domain, request, base_context=None):
+        base_context = base_context or {}
         super(StandardDateHQReport, self).__init__(domain, request, base_context)
-        datespan_default(self.request)
+        self.datespan = self.get_default_datespan()
+        self.datespan.is_default = True
+
+    def get_default_datespan(self):
+        return DateSpan.since(7, format="%Y-%m-%d", timezone=self.timezone)
 
     def get_global_params(self):
-        if self.request.datespan.is_valid():
-            self.datespan = self.request.datespan
+        if self.request.datespan.is_valid() and not self.request.datespan.is_default:
+            self.datespan.enddate = self.request.datespan.enddate
+            self.datespan.startdate = self.request.datespan.startdate
+            self.datespan.is_default = False
+        self.request.datespan = self.datespan
         super(StandardDateHQReport, self).get_global_params()
 
-
+    def get_report_context(self):
+        self.context['datespan'] = self.datespan
+        super(StandardDateHQReport, self).get_report_context()
 
 class CaseActivityReport(StandardTabularHQReport):
     name = 'Case Activity'
@@ -154,8 +169,8 @@ class CaseActivityReport(StandardTabularHQReport):
 
     def get_parameters(self):
         landmarks_param = self.request_params.get('landmarks', [30,60,120])
-        self.landmarks = [timedelta(days=l) for l in landmarks_param]+[None]
-        self.now = datetime.utcnow()
+        self.landmarks = [datetime.timedelta(days=l) for l in landmarks_param]+[None]
+        self.now = datetime.datetime.now(tz=self.timezone)
         if self.history:
             self.now = self.history
 
@@ -232,11 +247,12 @@ class CaseActivityReport(StandardTabularHQReport):
 
 
     def get_number_cases_updated(self, user_id, landmark=None):
-        start_time_json = json_format_datetime(self.now - landmark) if landmark else ""
+        utc_now = tz_utils.adjust_datetime_to_timezone(self.now, self.timezone.zone, pytz.utc.zone)
+        start_time_json = json_format_datetime(utc_now - landmark) if landmark else ""
         key = [self.domain, self.case_type or {}, user_id]
         r = get_db().view('case/by_last_date',
             startkey=key + [start_time_json],
-            endkey=key + [json_format_datetime(self.now)],
+            endkey=key + [json_format_datetime(utc_now)],
             group=True,
             group_level=0
         ).one()
@@ -257,17 +273,24 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
     def get_headers(self):
         self.dates = [self.datespan.startdate]
         while self.dates[-1] < self.datespan.enddate:
-            self.dates.append(self.dates[-1] + timedelta(days=1))
+            self.dates.append(self.dates[-1] + datetime.timedelta(days=1))
         return ["Username"] + [util.define_sort_type(d.strftime(DATE_FORMAT)) for d in self.dates] + [util.define_sort_type("Total")]
 
     def get_rows(self):
-        date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
+        utc_dates = [tz_utils.adjust_datetime_to_timezone(date, self.timezone.zone, pytz.utc.zone) for date in self.dates]
+        print utc_dates
+        date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(utc_dates)])
+        print date_map
+        date_map_ther = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
+        print date_map_ther
 
         results = get_db().view(
             self.couch_view,
             group=True,
-            startkey=[self.domain, self.request.datespan.startdate.isoformat()],
-            endkey=[self.domain, self.request.datespan.enddate.isoformat(), {}]
+            startkey=[self.domain,
+                      tz_utils.adjust_datetime_to_timezone(self.datespan.startdate, self.timezone.zone, pytz.utc.zone).isoformat()],
+            endkey=[self.domain,
+                    tz_utils.adjust_datetime_to_timezone(self.datespan.enddate, self.timezone.zone, pytz.utc.zone).isoformat(), {}]
         ).all()
         user_map = dict([(user.user_id, i) for (i, user) in enumerate(self.users)])
         userIDs = [user.user_id for user in self.users]
@@ -316,7 +339,7 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
         self.form_types = self.get_relevant_form_types()
 
     def get_headers(self):
-        form_names = form_names = [xmlns_to_name(*id_tuple) for id_tuple in self.form_types]
+        form_names = [xmlns_to_name(*id_tuple) for id_tuple in self.form_types]
         form_names = [name.replace("/", " / ") for name in form_names]
 
         if self.form_types:
@@ -352,8 +375,8 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
     def get_submissions_by_form_json(self):
         userIDs = [user.user_id for user in self.users]
         submissions = XFormInstance.view('reports/all_submissions',
-            startkey=[self.domain, self.datespan.startdate_param],
-            endkey=[self.domain, self.datespan.enddate_param],
+            startkey=[self.domain, self.datespan.startdate_param_utc],
+            endkey=[self.domain, self.datespan.enddate_param_utc],
             include_docs=True,
             reduce=False
         )
@@ -376,13 +399,13 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
     def get_relevant_form_types(self):
         userIDs = [user.user_id for user in self.users]
         submissions = XFormInstance.view('reports/all_submissions',
-            startkey=[self.domain, self.datespan.startdate_param],
-            endkey=[self.domain, self.datespan.enddate_param],
+            startkey=[self.domain, self.datespan.startdate_param_utc],
+            endkey=[self.domain, self.datespan.enddate_param_utc],
             include_docs=True,
             reduce=False
         )
-
         form_types = set()
+
         for submission in submissions:
             try:
                 xmlns = submission['xmlns']
@@ -429,12 +452,12 @@ class FormCompletionTrendsReport(StandardTabularHQReport, StandardDateHQReport):
                     return None
                 elif d:
                     val_in_ms /= d
-                return timedelta(seconds=int((val_in_ms + 500)/1000))
+                return datetime.timedelta(seconds=int((val_in_ms + 500)/1000))
 
             globalmin = sys.maxint
             globalmax = 0
             for user in self.users:
-                datadict = entrytimes.get_user_data(self.domain, user.user_id, form, self.request.datespan)
+                datadict = entrytimes.get_user_data(self.domain, user.user_id, form, self.datespan)
                 rows.append([user.username_in_report,
                              to_minutes(float(datadict["sum"]), float(datadict["count"])),
                              to_minutes(datadict["min"]),
@@ -470,7 +493,7 @@ class SubmitHistory(PaginatedHistoryHQReport):
         history = all_hist.extra(order_by=['-received_on'])[skip:skip+limit]
         for data in history:
             if data.userID in self.userIDs:
-                time = data.received_on
+                time = tz_utils.adjust_datetime_to_timezone(data.received_on, pytz.utc.zone, self.timezone.zone)
                 time = time.strftime("%Y-%m-%d %H:%M:%S")
                 xmlns = data.xmlns
                 xmlns = xmlns_to_name(self.domain, xmlns)
@@ -541,7 +564,11 @@ class CaseListReport(PaginatedHistoryHQReport):
         else:
             raise ValueError("Can't construct case object from row result %s" % row)
 
+        if case.domain != self.domain:
+            logging.error("case.domain != self.domain; %r and %r, respectively" % (case.domain, self.domain))
+
         assert(case.domain == self.domain)
+
         return ([] if self.case_type else [case.type]) + [
             self.case_data_link(row['id'], case.name),
             self.usernames[case.user_id],
@@ -550,9 +577,10 @@ class CaseListReport(PaginatedHistoryHQReport):
             yesno(case.closed, "closed,open")
         ]
 
-    @classmethod
-    def date_to_json(cls, date):
-        return date.strftime('%Y-%m-%d %H:%M:%S') if date else "",
+    def date_to_json(self, date):
+        return tz_utils.adjust_datetime_to_timezone\
+            (date, pytz.utc.zone, self.timezone.zone).strftime\
+            ('%Y-%m-%d %H:%M:%S') if date else ""
 
     def case_data_link(self, case_id, case_name):
         return "<a class='ajax_dialog' href='%s'>%s</a>" % \
@@ -580,8 +608,17 @@ class SubmissionTimesReport(StandardHQReport):
                                  group=True)
             for row in view:
                 domain, _user, day, hour = row["key"]
+
+                #adjust to timezone
+                now = datetime.datetime.utcnow()
+                report_time = datetime.datetime(now.year, now.month, now.day, hour, tzinfo=pytz.utc)
+                report_time = tz_utils.adjust_datetime_to_timezone(report_time, pytz.utc.zone, self.timezone.zone)
+                hour = report_time.hour
+
                 data["%d %02d" % (day, hour)] = data["%d %02d" % (day, hour)] + row["value"]
         self.context["chart_url"] = self.generate_chart(data)
+        self.context["timezone_now"] = datetime.datetime.now(tz=self.timezone)
+        self.context["timezone"] = self.timezone.zone
 
     @classmethod
     def generate_chart(cls, data, width=950, height=300):
@@ -680,3 +717,185 @@ class SubmitTrendsReport(StandardDateHQReport):
         self.context.update({
             "user_id": self.individual,
         })
+
+class ExcelExportReport(StandardDateHQReport):
+    name = "Export Submissions to Excel"
+    slug = "excel_export_data"
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.GroupField',
+              'corehq.apps.reports.fields.DatespanField']
+    template_name = "reports/reportdata/excel_export_data.html"
+
+    def get_default_datespan(self):
+        datespan = super(ExcelExportReport, self).get_default_datespan()
+        datespan.startdate = get_db().view('reports/all_submissions',
+            startkey=[self.domain],
+            limit=1,
+            descending=False,
+            reduce=False,
+            # The final 'Z' makes the datetime parse with tzinfo=tzlocal()
+            wrapper=lambda x: string_to_datetime(x['key'][1]).replace(tzinfo=None)
+        ).one()
+        return datespan
+
+    def calc(self):
+        print self.datespan
+        # This map for this view emits twice, once with app_id and once with {}, letting you join across all app_ids.
+        # However, we want to separate out by (app_id, xmlns) pair not just xmlns so we use [domain] to [domain, {}]
+        forms = []
+        unknown_forms = []
+        for f in get_db().view('reports/forms_by_xmlns', startkey=[self.domain], endkey=[self.domain, {}], group=True):
+            form = f['value']
+            if 'app' in form:
+                form['has_app'] = True
+            else:
+                app_id = f['key'][1] or ''
+                form['app'] = {
+                    'id': app_id
+                }
+                form['has_app'] = False
+                unknown_forms.append(form)
+            forms.append(form)
+
+        forms = sorted(forms, key=lambda form:\
+            (0, form['app']['name'], form['app']['id'], form.get('module', {'id': -1})['id'], form.get('form', {'id': -1})['id'])\
+            if form['has_app'] else\
+            (1, form['xmlns'], form['app']['id'])
+        )
+        if unknown_forms:
+            apps = get_db().view('reports/forms_by_xmlns',
+                startkey=['^Application', self.domain],
+                endkey=['^Application', self.domain, {}],
+                reduce=False,
+            )
+            possibilities = defaultdict(list)
+            for app in apps:
+                # index by xmlns
+                x = app['value']
+                x['has_app'] = True
+                possibilities[app['key'][2]].append(x)
+
+            class AppCache(dict):
+                def __getitem__(self, item):
+                    if not self.has_key(item):
+                        self[app] = Application.get(item)
+                    return super(AppCache, self).get(item)
+
+            app_cache = AppCache()
+
+            for form in unknown_forms:
+                if form['app']['id']:
+                    try:
+                        app = app_cache[form['app']['id']]
+                    except Exception:
+                        form['app_does_not_exist'] = True
+                    else:
+                        if app.domain != self.domain:
+                            logging.error("submission tagged with app from wrong domain: %s" % app.get_id)
+                        else:
+                            if app.copy_of:
+                                app = app_cache[app.copy_of]
+                                form['app_copy'] = {'id': app.get_id, 'name': app.name}
+                            if app.is_deleted():
+                                form['app_deleted'] = {'id': app.get_id}
+                else:
+                    form['possibilities'] = possibilities[form['xmlns']]
+                    if form['possibilities']:
+                        form['duplicate'] = True
+                    else:
+                        form['no_suggestions'] = True
+
+        # add saved exports. because of the way in which the key is stored
+        # (serialized json) this is a little bit hacky, but works.
+        startkey = json.dumps([self.domain, ""])[:-3]
+        endkey = "%s{" % startkey
+        exports = SavedExportSchema.view("couchexport/saved_export_schemas",
+            startkey=startkey, endkey=endkey,
+            include_docs=True)
+
+        for export in exports.all():
+            export.formname = xmlns_to_name(self.domain, export.index[1])
+
+        self.context.update({
+            "forms": forms,
+            "saved_exports": exports,
+            "edit": self.request.GET.get('edit') == 'true',
+            "get_filter_params": self.get_filter_params(),
+        })
+
+    def get_filter_params(self):
+        params = self.request.GET.copy()
+        params['startdate'] = self.datespan.startdate_display
+        params['enddate'] = self.datespan.enddate_display
+        return params
+
+
+class CaseExportReport(StandardHQReport):
+    name = "Export Cases, Referrals, and Users"
+    slug = "case_export"
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.GroupField']
+    template_name = "reports/basic_report.html"
+    report_partial = "reports/partials/case_export.html"
+
+    def calc(self):
+        pass
+
+class ApplicationStatusReport(StandardTabularHQReport):
+    name = "Application Status"
+    slug = "app_status"
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.GroupField',
+              'corehq.apps.reports.fields.SelectApplicationField']
+
+    def get_headers(self):
+        return ["Username", util.define_sort_type("Last Seen"), "CommCare Version", "Application (Version)"]
+
+    def get_parameters(self):
+        self.selected_app = self.request_params.get('app', '')
+
+    def get_rows(self):
+        rows = []
+        for user in self.users:
+            last_seen = util.create_sort_key("Never", -1)
+            version = "---"
+            app_name = "---"
+            is_unknown = True
+
+            endkey = [self.domain, user.userID]
+            startkey = [self.domain, user.userID, {}]
+            data = get_db().view("reports/last_seen_submission",
+                startkey=startkey,
+                endkey=endkey,
+                include_docs=True,
+                descending=True,
+                reduce=False).first()
+
+            if data:
+                data = data['value']
+                received_date = data['time']
+                now = datetime.datetime.now(tz=pytz.utc)
+                time = datetime.datetime.replace(dateutil.parser.parse(received_date), tzinfo=pytz.utc)
+                dtime = now - time
+                if dtime.days < 1:
+                    dtext = "Today"
+                elif dtime.days < 2:
+                    dtext = "Yesterday"
+                else:
+                    dtext = "%s days ago" % dtime.days
+                last_seen = util.create_sort_key(dtext, dtime.days)
+                try:
+                    app = Application.get(data['app_id'])
+                    is_unknown = False
+                    if self.selected_app and self.selected_app != app._id:
+                        continue
+                    version = app.application_version
+                    app_name = "%s (%s)" % (app.name, app.version)
+                except Exception:
+                    version = "unknown"
+                    app_name = "unknown"
+            if is_unknown and self.selected_app:
+                continue
+            row = [user.username_in_report, last_seen, version, app_name]
+            rows.append(row)
+        return rows

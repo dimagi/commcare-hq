@@ -1,25 +1,23 @@
 {% extends base_template %}
+{% load hq_shared_tags %}
 {% block head %}
     {{ block.super }}
     {% include "imports/datatables.html" %}
-    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}hqadmin/css/style.css"/>
-    <script src="{{ STATIC_URL }}hqwebapp/js/dropdown.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}reports/javascripts/dropdown.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}reports/javascripts/datepicker.js"></script>
+    <link rel="stylesheet" type="text/css" href="{% static 'hqadmin/css/style.css' %}"/>
+    <script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
 {% endblock %}
 {% block content %}
 <div id="main_container">
     <div id="title-bar">
-        <ul>
-            <li>
-                <div id="report_dropdown">
-                    <span>Select Report</span>
-                    <div>
-                        {% include "hqadmin/partials/report_list.html" %}
-                    </div>
-                </div>
-            </li>
-        </ul>
+        <div class="btn-group">
+            <a class="dropdown-toggle btn" data-toggle="dropdown" style="text-decoration: none" href="#">
+                Select Admin Report
+                <b class="caret"></b>
+            </a>
+            <ul class="dropdown-menu nav-list" id="admin_report_dropdown">
+                {% include "hqadmin/partials/report_list.html" %}
+            </ul>
+        </div>
         <h1>{% block report-title %}Administrative Report{% endblock %}</h1>
     </div>
     <div id="report-content">

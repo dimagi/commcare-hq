@@ -16,6 +16,7 @@ from dimagi.utils.web import render_to_response
 from corehq.apps.domain.decorators import login_and_domain_required
 from dimagi.utils.couch.database import get_db
 from django.contrib import messages
+from corehq.apps.reports import util as report_utils
 
 @login_and_domain_required
 def messaging(request, domain, template="sms/default.html"):
@@ -23,6 +24,9 @@ def messaging(request, domain, template="sms/default.html"):
     context['domain'] = domain
     context['messagelog'] = SMSLog.by_domain_dsc(domain)
     context['now'] = datetime.utcnow()
+    tz = report_utils.get_timezone(request.couch_user.user_id, domain)
+    context['timezone'] = tz
+    context['timezone_now'] = datetime.now(tz=tz)
     return render_to_response(request, template, context)
 
 def post(request, domain):

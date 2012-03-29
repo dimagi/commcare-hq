@@ -1,0 +1,49 @@
+<label class="control-label">User Type</label>
+<div class="controls">
+{% if show_user_filter %}
+    <div id="user-filter-buttons" class="btn-group" data-toggle="buttons-checkbox">
+    {% for user in toggle_users %}
+        <button class="btn{% if user.show %} btn-success{% else %} active{% endif %}" data-checkfilter="user-filter-{{ forloop.counter }}">{{ user.name }}</button>
+    {% endfor %}
+    </div>
+    {% for user in toggle_users %}
+       <input type="checkbox" name="ufilter" value="{{ user.type }}" class="hide" id="user-filter-{{ forloop.counter }}" {% if user.show %}checked="checked"{% endif %}/>
+    {% endfor %}
+{% else %}
+    <div id="user-filter-buttons" class="btn-group" data-toggle="buttons-checkbox">
+        <button class="btn btn-success">CommCare Users Only</button>
+    </div>
+{% endif %}
+</div>
+
+<script type="text/javascript">
+    $(function() {
+        $("#user-filter-buttons button").click(function(e) {
+            e.preventDefault();
+
+            var $activeCheckbox = $('#'+$(this).data("checkfilter"));
+
+            if($(this).hasClass('active')) {
+                console.log("activate");
+                $(this).addClass('btn-success');
+                $activeCheckbox.attr("checked", true);
+            } else {
+                console.log("de-activate");
+                $(this).removeClass('btn-success');
+                $activeCheckbox.attr("checked", false);
+            }
+
+            if(!$('#user-filter-buttons').children().hasClass('btn-success')) {
+                console.log("exception");
+                var $firstChild = $('#user-filter-buttons').children().first();
+                $firstChild.addClass('btn-success');
+                $('#'+$firstChild.data("checkfilter")).attr("checked", true);
+                if ($(this).data("checkfilter") != $firstChild.data("checkfilter")) {
+                    $firstChild.removeClass('active');
+                } else {
+                    return false;
+                }
+            }
+        });
+    });
+</script>

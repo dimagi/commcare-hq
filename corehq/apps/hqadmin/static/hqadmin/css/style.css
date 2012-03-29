@@ -23,26 +23,7 @@ h2 {
     background-color: #EEE;
     border-bottom: 1px solid #CCC;
 }
-#title-bar > ul {
-    display: table-row;
-    position: absolute;
-}
-#title-bar > ul > li {
-    border-right: 1px solid #CCC;
-    padding: 0 .5em;
-    display: table-cell;
-}
-#title-bar > ul > li:last-child {
-    border-right: none;
-}
-ul#report-list a {
-    display: block;
-    padding: 1em 1em;
-}
-ul#report-list a:hover {
-    background-color: #0067B1;
-    color: #ffffff;
-}
+
 #report-content {
     padding: 1em 0;
 }

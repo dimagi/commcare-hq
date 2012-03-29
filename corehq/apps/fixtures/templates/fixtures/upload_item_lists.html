@@ -1,0 +1,16 @@
+{% extends base_template %}
+{% load hq_shared_tags %}
+
+{% block oldstyle_tag %}{% endblock %}
+{% block oldstyle_imports %}{% endblock %}
+{% block oldstyle_hack_start %}{% endblock %}
+{% block oldstyle_hack_end %}{% endblock %}
+
+{% block content %}
+    <div>
+        <form action="" method="post" enctype="multipart/form-data">
+            <input type="file" name="file"/>
+            <button class="btn btn-primary" type="submit">Upload</button>
+        </form>
+    </div>
+{% endblock %}

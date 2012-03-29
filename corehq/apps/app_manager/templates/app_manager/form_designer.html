@@ -35,6 +35,7 @@
                 saveUrl: '{% url edit_form_attr domain app.id form.get_unique_id "xform" %}',
                 form: {{ form.source|JSON }},
                 langs: {{ app.langs|JSON }},
+                formName: "{{ form.name|trans:app.langs }}",
                 displayLanguage: {{ lang|JSON }}
             });
             formdesigner.on('form-saved', function (args) {
@@ -64,7 +65,7 @@
         #breadcrumbs {
             border-bottom: 1px solid #EEE;
             margin-bottom: 10px;
-            padding: 0 10px 10px 10px;
+            padding: 10px 10px 10px 10px;
             font-size: 1.1em;
         }
         #breadcrumbs > ul {
@@ -89,19 +90,22 @@
           clear: both;
           visibility: hidden;
         }
+        .hq-oldstyle #main_container {
+            padding: 0;
+        }
+        #formdesigner:after {
+            content: ".";
+            display: block;
+            height: 2px;
+            clear: both;
+            visibility: hidden;
+        }
     </style>
 {% endblock %}
 
 {% block app-content %}
+    {% include 'app_manager/partials/release-manager-nav.html' %}
     <div id="breadcrumbs">
-        {% if not is_user_registration %}
-            <form method="POST" id="purcforms-link" action="{% url xep_hq_server.views.initiate form.get_unique_id %}">
-                {% csrf_token %}
-                <input type="hidden" name="callback" value="{{ URL_BASE }}{{ request.get_full_path|safe}}" />
-                <input type="hidden" name="editor" value="{{ editor_url }}" />
-                <a class="submit" href="#">Looking for the old form designer?</a>
-            </form>
-        {% endif %}
         <ul>
             <li><a href="{% url view_app domain app.id %}?edit=true">{{ app.name }}</a></li>
             {% if is_user_registration %}

@@ -2,6 +2,7 @@
 from collections import defaultdict
 from datetime import datetime
 import re
+from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import BadValueError
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
@@ -12,7 +13,7 @@ from restkit.errors import ResourceError
 import commcare_translations
 from corehq.apps.app_manager import fixtures
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError
-from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig
+from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
@@ -432,6 +433,19 @@ class DetailColumn(IndexedSchema):
         for dct in (self.header, self.enum):
             _rename_key(dct, old_lang, new_lang)
 
+    @property
+    def xpath(self):
+        """
+        Convert special names like date-opened to their casedb xpath equivalent (e.g. @date_opened).
+        Only ever called by 2.0 apps.
+
+        """
+        return {
+            'external-id': 'external_id',
+            'date-opened': 'date_opened',
+            'status': '@status',
+            'name': 'case_name',
+        }.get(self.field, self.field)
 class Detail(DocumentSchema):
     """
     Full configuration for a case selection screen
@@ -479,6 +493,23 @@ class Detail(DocumentSchema):
     @property
     def display(self):
         return "short" if self.type.endswith('short') else 'long'
+
+    def filter_xpath(self):
+        filters = []
+        for i,column in enumerate(self.columns):
+            if column.format == 'filter':
+                filters.append("(%s)" % column.filter_xpath.replace('.', '%s_%s_%s' % (column.model, column.field, i + 1)))
+        return ' && '.join(filters)
+
+    def filter_xpath_2(self):
+        filters = []
+        for i,column in enumerate(self.columns):
+            if column.format == 'filter':
+                filters.append("(%s)" % column.filter_xpath.replace('.', column.xpath))
+        if filters:
+            return '[%s]' % (' && '.join(filters))
+        else:
+            return ''
 
 class CaseList(IndexedSchema):
     label = DictProperty()
@@ -700,7 +731,8 @@ class ApplicationBase(VersionedDoc):
 
     # The following properties should only appear on saved builds
     # built_with stores a record of CommCare build used in a saved app
-    built_with = SchemaProperty(BuildSpec)
+    built_with = SchemaProperty(BuildRecord)
+    build_signed = BooleanProperty(default=True)
     built_on = DateTimeProperty(required=False)
     build_comment = StringProperty()
 
@@ -708,6 +740,9 @@ class ApplicationBase(VersionedDoc):
     admin_password = StringProperty()
     # a=Alphanumeric, n=Numeric, x=Neither (not allowed)
     admin_password_charset = StringProperty(choices=['a', 'n', 'x'], default='n')
+
+    # This is here instead of in Application because it needs to be available in stub representation
+    application_version = StringProperty(default=APP_V1, choices=[APP_V1, APP_V2], required=False)
 
     @classmethod
     def wrap(cls, data):
@@ -723,15 +758,15 @@ class ApplicationBase(VersionedDoc):
         if data.has_key("built_with") and isinstance(data['built_with'], basestring):
             data['built_with'] = BuildSpec.from_string(data['built_with']).to_json()
 
-        if not data.has_key("build_spec") or BuildSpec.wrap(data['build_spec']).is_null():
-            data['build_spec'] = CommCareBuildConfig.fetch().default.to_json()
-
         if data.has_key('native_input'):
             if not data.has_key('text_input'):
                 data['text_input'] = 'native' if data['native_input'] else 'roman'
             del data['native_input']
-            
-        return super(ApplicationBase, cls).wrap(data)
+
+        self = super(ApplicationBase, cls).wrap(data)
+        if not self.build_spec or self.build_spec.is_null():
+            self.build_spec = CommCareBuildConfig.fetch().get_default(self.application_version)
+        return self
 
     def is_remote_app(self):
         return False
@@ -848,7 +883,12 @@ class ApplicationBase(VersionedDoc):
             self.put_attachment(jadjar.jad, 'CommCare.jad')
             self.put_attachment(jadjar.jar, 'CommCare.jar')
             self.built_on = built_on
-            self.built_with = BuildSpec(version=jadjar.version, build_number=jadjar.build_number)
+            self.built_with = BuildRecord(
+                version=jadjar.version,
+                build_number=jadjar.build_number,
+                signed=jadjar.signed,
+                datetime=built_on,
+            )
             self.save(increment_version=False)
             return jadjar.jad, jadjar.jar
 
@@ -914,7 +954,7 @@ class ApplicationBase(VersionedDoc):
             copy.short_url = bitly.shorten(
                 get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
             )
-        except URLError:
+        except (URLError, Exception):
             # for offline only
             logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
             copy.short_url = None
@@ -954,7 +994,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     profile = DictProperty() #SchemaProperty(Profile)
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
-
+    cloudcare_enabled = BooleanProperty(default=False)
+    
     @classmethod
     def wrap(cls, data):
         for module in data['modules']:
@@ -1033,6 +1074,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return form.validate_form().render_xform()
 
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
+        def non_empty_only(dct):
+            return dict([(key, value) for key, value in dct.items() if value])
         if lang != "default":
             messages = {"cchq.case": "Case", "cchq.referral": "Referral"}
 
@@ -1041,7 +1084,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'langs': [lang] + self.langs,
             })
             custom = commcare_translations.loads(custom)
-            messages.update(custom)
+            messages.update(non_empty_only(custom))
 
             # include language code names
             for lc in self.langs:
@@ -1052,7 +1095,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             cc_trans = commcare_translations.load_translations(lang)
             messages.update(cc_trans)
 
-            messages.update(self.translations.get(lang, {}))
+            messages.update(non_empty_only(self.translations.get(lang, {})))
         else:
             messages = {}
             for lc in reversed(self.langs):
@@ -1098,7 +1141,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def set_custom_suite(self, value):
         self.put_attachment(value, 'custom_suite.xml')
 
-    def create_suite(self, template='app_manager/suite.xml'):
+    def create_suite(self):
+        template='app_manager/suite-%s.xml' % self.application_version
 
         return render_to_string(template, {
             'app': self,
@@ -1163,8 +1207,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
 
     @classmethod
-    def new_app(cls, domain, name, lang="en"):
-        app = cls(domain=domain, modules=[], name=name, langs=[lang])
+    def new_app(cls, domain, name, application_version, lang="en"):
+        app = cls(domain=domain, modules=[], name=name, langs=[lang], application_version=application_version)
         return app
 
     def new_module(self, name, lang):
@@ -1271,6 +1315,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for m,module in enumerate(source['modules']):
             for f,form in enumerate(module['forms']):
                 change_unique_id(source['modules'][m]['forms'][f])
+
+
+    def get_xmlns_map(self):
+        map = defaultdict(list)
+        for form in self.get_forms():
+            map[form.xmlns].append(form)
+        return map
+
     def validate_app(self):
         xmlns_count = defaultdict(int)
         errors = []
@@ -1279,11 +1331,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for module in self.get_modules():
             if not module.forms:
                 errors.append({'type': "no forms", "module": {"id": module.id, "name": module.name}})
+
+        for obj in self.get_forms(bare=False):
             needs_case_type = False
             needs_case_detail = False
             needs_referral_detail = False
 
-        for obj in self.get_forms(bare=False):
             module = obj.get('module')
             form = obj.get('form')
             form_type = obj.get('type')
@@ -1320,9 +1373,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if module:
                 if needs_case_type and not module.case_type:
                     errors.append({'type': "no case type", "module": {"id": module.id, "name": module.name}})
-                if needs_case_detail and not (module.get_detail('case_short').columns and module.get_detail('case_long').columns):
+                if needs_case_detail and not module.get_detail('case_short').columns:
                     errors.append({'type': "no case detail", "module": {"id": module.id, "name": module.name}})
-                if needs_referral_detail and not (module.get_detail('ref_short').columns and module.get_detail('ref_long').columns):
+                if needs_referral_detail and not module.get_detail('ref_short').columns:
                     errors.append({'type': "no ref detail", "module": {"id": module.id, "name": module.name}})
 
             # make sure that there aren't duplicate xmlns's
@@ -1402,9 +1455,9 @@ class RemoteApp(ApplicationBase):
         locations = []
         for resource in suite_xml.findall('*/resource'):
             try:
-                loc = resource.findtext('location[@authority="remote"]')
-            except Exception:
                 loc = resource.findtext('location[@authority="local"]')
+            except Exception:
+                loc = resource.findtext('location[@authority="remote"]')
             locations.append(loc)
         for location in locations:
             files.update((self.fetch_file(location),))
@@ -1448,7 +1501,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
             raise Http404
 
     if domain:
-        try:    Domain.objects.get(name=domain)
+        try:    Domain.get_by_name(domain)
         except: raise Http404
 
         if app['domain'] != domain:

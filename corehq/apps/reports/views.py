@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 import json
 from corehq.apps.reports import util, standard
 from corehq.apps.users.export import export_users
-from corehq.apps.users.models import CouchUser, CommCareUser
 import couchexport
+from couchexport.export import UnsupportedExportFormat
 from couchexport.util import FilterFunction
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
@@ -12,10 +12,9 @@ from dimagi.utils.web import json_request, render_to_response
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.modules import to_function
 from django.conf import settings
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, Http404, HttpResponseNotFound
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, HttpResponseNotFound
 from django.core.urlresolvers import reverse
-from django_digest.decorators import httpdigest
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 import couchforms.views as couchforms_views
 from django.contrib import messages
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
@@ -32,7 +31,6 @@ from couchexport.shortcuts import export_data_shared, export_raw_data
 from django.views.decorators.http import require_POST
 from couchforms.filters import instances
 from couchdbkit.exceptions import ResourceNotFound
-from mock import self
 from fields import FilterUsersField
 from util import get_all_users_by_domain
 
@@ -43,22 +41,6 @@ datespan_default = datespan_in_request(
     to_param="enddate",
     default_days=7,
 )
-
-def login_or_digest(fn):
-    def safe_fn(request, domain, *args, **kwargs):
-        if not request.user.is_authenticated():
-            def _inner(request, domain, *args, **kwargs):
-                couch_user = CouchUser.from_django_user(request.user)
-                if couch_user.is_web_user() and couch_user.is_member_of(domain):
-                    return fn(request, domain, *args, **kwargs)
-                else:
-                    return HttpResponseForbidden()
-            return httpdigest(_inner)(request, domain, *args, **kwargs)
-        else:
-            return login_and_domain_required(fn)(request, domain, *args, **kwargs)
-    return safe_fn
-
-
 
 @login_and_domain_required
 def default(request, domain):
@@ -96,23 +78,26 @@ def export_data(req, domain):
                 return False
         filter = _ufilter
     else:
-        filter = util.create_group_filter(group)
+        filter = FilterFunction(util.group_filter, group=group)
 
     errors_filter = instances if not include_errors else None
 
     kwargs['filter'] = couchexport.util.intersect_filters(filter, errors_filter)
-    
+
     if kwargs['format'] == 'raw':
         resp = export_raw_data([domain, export_tag], filename=export_tag)
     else:
-        resp = export_data_shared([domain,export_tag], **kwargs)
+        try:
+            resp = export_data_shared([domain,export_tag], **kwargs)
+        except UnsupportedExportFormat as e:
+            return HttpResponseBadRequest(e)
     if resp:
         return resp
     else:
         messages.error(req, "Sorry, there was no data found for the tag '%s'." % export_tag)
         next = req.GET.get("next", "")
         if not next:
-            next = reverse('excel_export_data_report', args=[domain])
+            next = reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug])
         return HttpResponseRedirect(next)
 
 @login_and_domain_required
@@ -127,10 +112,9 @@ def export_data_async(req, domain):
     except ValueError:
         return HttpResponseBadRequest()
 
-    app_id = req.GET.get('app_id', None)
     assert(export_tag[0] == domain)
 
-    filter = FilterFunction(instances) & FilterFunction(util.app_export_filter, app_id=app_id)
+    filter = util.create_export_filter(req, domain)
 
     return couchexport_views.export_data_async(req, filter=filter)
     
@@ -156,7 +140,7 @@ def custom_export(req, domain):
                                    columns=export_cols)
         include_errors = req.POST.get("include-errors", "")
         filter_function = "couchforms.filters.instances" if not include_errors else ""
-        
+
         export_def = SavedExportSchema(index=export_tag, 
                                        schema_id=req.POST["schema"],
                                        name=req.POST["name"],
@@ -174,15 +158,15 @@ def custom_export(req, domain):
         saved_export = SavedExportSchema.default(schema, name="%s: %s" %\
                                                  (xmlns_to_name(domain, export_tag[1]),
                                                   datetime.utcnow().strftime("%d-%m-%Y")))
-        return render_to_response(req, "reports/customize_export.html",
+        return render_to_response(req, "reports/reportdata/customize_export.html",
                                   {"saved_export": saved_export,
                                    "table_config": saved_export.table_configuration[0],
                                    "domain": domain})
     else:
-        messages.info(req, "No data found for that form "
-                      "(%s). Submit some data before creating an export!" % \
-                      xmlns_to_name(domain, export_tag[1]))
-        return HttpResponseRedirect(reverse('excel_export_data_report', args=[domain]))
+        messages.warning(req, "<strong>No data found for that form "
+                      "(%s).</strong> Submit some data before creating an export!" % \
+                      xmlns_to_name(domain, export_tag[1]), extra_tags="html")
+        return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug]))
         
 @login_and_domain_required
 def edit_custom_export(req, domain, export_id):
@@ -194,7 +178,7 @@ def edit_custom_export(req, domain, export_id):
     if req.method == "POST":
         table = req.POST["table"]
         
-        cols = req.POST['order'].strip().split(" ")#[col[:-4] for col in req.POST if col.endswith("_val")]
+        cols = req.POST['order'].strip().split()#[col[:-4] for col in req.POST if col.endswith("_val")]
         export_cols = [ExportColumn(index=col, 
                                     display=req.POST["%s_display" % col]) \
                        for col in cols]
@@ -222,7 +206,7 @@ def edit_custom_export(req, domain, export_id):
 #    else:
     table_config = saved_export.table_configuration[0]
         
-    return render_to_response(req, "reports/customize_export.html", 
+    return render_to_response(req, "reports/reportdata/customize_export.html",
                               {"saved_export": saved_export,
                                "table_config": table_config,
                                "domain": domain})
@@ -236,32 +220,24 @@ def delete_custom_export(req, domain, export_id):
     saved_export = SavedExportSchema.get(export_id)
     saved_export.delete()
     messages.success(req, "Custom export was deleted.")
-    return HttpResponseRedirect(reverse('excel_export_data_report', args=[domain]))
+    return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug]))
+
 
 @login_or_digest
+@datespan_default
 def export_custom_data(req, domain, export_id):
     """
     Export data from a saved export schema
     """
+
     saved_export = SavedExportSchema.get(export_id)
-    group, users = util.get_group_params(domain, **json_request(req.GET))
-    format = req.GET.get("format", "")
     next = req.GET.get("next", "")
+    format = req.GET.get("format", "")
+
     if not next:
-        next = reverse('excel_export_data_report', args=[domain])
+        next = reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug])
 
-    user_filter, _ = FilterUsersField.get_user_filter(req)
-
-    if user_filter:
-        users_matching_filter = map(lambda x: x._id, get_all_users_by_domain(domain, filter_users=user_filter))
-        def _ufilter(user):
-            try:
-                return user['form']['meta']['userID'] in users_matching_filter
-            except KeyError:
-                return False
-        filter = _ufilter
-    else:
-        filter = util.create_group_filter(group)
+    filter = util.create_export_filter(req, domain)
 
     resp = saved_export.download_data(format, filter=filter)
     if resp:
@@ -272,8 +248,11 @@ def export_custom_data(req, domain, export_id):
 
 @login_and_domain_required
 def case_details(request, domain, case_id):
+    timezone = util.get_timezone(request.couch_user.user_id, domain)
+
     try:
         case = CommCareCase.get(case_id)
+        report_name = 'Details for Case "%s"' % case.name
     except ResourceNotFound:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake plase report an issue.")
         return HttpResponseRedirect(reverse("submit_history_report", args=[domain]))
@@ -283,27 +262,16 @@ def case_details(request, domain, case_id):
                          "%s: %s" % (form.received_on.date(), xmlns_to_name(domain, form.xmlns))) \
                         for form in [XFormInstance.get(id) for id in case.xform_ids] \
                         if form)
-    return render_to_response(request, "reports/case_details.html", {
+    return render_to_response(request, "reports/reportdata/case_details.html", {
         "domain": domain,
         "case_id": case_id,
         "form_lookups": form_lookups,
         "report": {
-            "name": "Case Details"
-        }
+            "name": report_name
+        },
+        "is_tabular": True,
+        "timezone": timezone
     })
-
-@login_and_domain_required
-def case_export(request, domain, template='reports/basic_report.html',
-                                    report_partial='reports/partials/case_export.html'):
-    group, users = util.get_group_params(domain, **json_request(request.GET))
-    context = util.report_context(domain, report_partial,
-        title="Export cases, referrals, and users",
-        group=group,
-    )
-    toggle, show_filter = FilterUsersField.get_user_filter(request)
-    context['show_user_filter'] = show_filter
-    context['toggle_users'] = toggle
-    return render_to_response(request, template, context)
 
 @login_or_digest
 @login_and_domain_required
@@ -331,50 +299,22 @@ def download_cases(request, domain):
     return response
 
 @login_and_domain_required
-@datespan_default
-def excel_export_data(request, domain, template="reports/excel_export_data.html"):
-    group, users = util.get_group_params(domain, **json_request(request.GET))
-    ufilter = request.GET.get('ufilter', None)
-    forms = get_db().view('reports/forms_by_xmlns', startkey=[domain], endkey=[domain, {}], group=True)
-    forms = [x['value'] for x in forms]
-
-    forms = sorted(forms, key=lambda form: \
-        (0, form['app']['name'], form.get('module', {'id': -1})['id'], form.get('form', {'id': -1})['id']) \
-        if 'app' in form else \
-        (1, form['xmlns'])
-    )
-
-
-    # add saved exports. because of the way in which the key is stored
-    # (serialized json) this is a little bit hacky, but works.
-    startkey = json.dumps([domain, ""])[:-3]
-    endkey = "%s{" % startkey
-    exports = SavedExportSchema.view("couchexport/saved_exports",
-                                     startkey=startkey, endkey=endkey,
-                                     include_docs=True)
-    for export in exports:
-        export.formname = xmlns_to_name(domain, export.index[1])
-
-    context = util.report_context(domain, title="Export Data to Excel", #datespan=request.datespan
-        group=group
-    )
-    toggle, show_filter = FilterUsersField.get_user_filter(request)
-    context['show_user_filter'] = show_filter
-    context['toggle_users'] = toggle
-    context.update({
-        "forms": forms,
-        "saved_exports": exports,
-    })
-    return render_to_response(request, template, context)
-
-@login_and_domain_required
 def form_data(request, domain, instance_id):
+    timezone = util.get_timezone(request.couch_user.user_id, domain)
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)
     cases = CommCareCase.view("case/by_xform_id", key=instance_id, reduce=False, include_docs=True).all()
-    return render_to_response(request, "reports/form_data.html",
-                              dict(domain=domain,instance=instance,
-                                   cases=cases))
+    try:
+        form_name = instance.get_form["@name"]
+    except KeyError:
+        form_name = "Untitled Form"
+    return render_to_response(request, "reports/reportdata/form_data.html",
+                              dict(domain=domain,
+                                   instance=instance,
+                                   cases=cases,
+                                   timezone=timezone,
+                                   form_data=dict(name=form_name,
+                                                  modified=instance.received_on)))
 
 @login_and_domain_required
 def download_form(request, domain, instance_id):

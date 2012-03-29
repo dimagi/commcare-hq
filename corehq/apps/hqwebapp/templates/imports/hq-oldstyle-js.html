@@ -1,0 +1,14 @@
+{% load hq_shared_tags %}
+<script src="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+<script src="{% static 'hqwebapp/js/main.js' %}"></script>
+<script src="{% static 'hqwebapp/js/shield.js' %}"></script>
+<script src="{% static 'hqwebapp/js/sugar.js' %}"></script>
+<script src="{% static 'hqwebapp/js/help.js' %}"></script>
+
+<script type="text/javascript">
+    $(function(){
+        $(".hq-oldstyle").show();
+        $(".hq-oldstyle .button").addClass("btn");
+        $('.hq-oldstyle input[type="submit"]').addClass("btn").addClass("btn-primary");
+    })
+</script>

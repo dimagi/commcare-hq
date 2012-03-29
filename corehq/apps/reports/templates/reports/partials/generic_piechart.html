@@ -1,65 +1,66 @@
-<script>
 {% with chartdiv|default:"pieplaceholder" as chartdiv %}
-{% with hoverdiv|default:"piehoverplaceholder" as hoverdiv %}
-    $(document).ready(function() {
-        var data = [
-        {% for point in chart_data %}
-            { label: "{{ point.display }}",  data: {{ point.value }}{% if point.color %}, color: "{{ point.color }}" {% endif %}} ,
-        {% endfor %}
-        ];
-        function hasData(data) {
-            for (var i in data) {
-                var val = data[i]["data"];
-                if (val > 0) {
-                    return true;
-                }
-            }
-        };
-        function pieHover(event, pos, obj)
-        {
-            percent = parseFloat(obj.series.percent).toFixed(0);
+    {% with hoverdiv|default:"piehoverplaceholder" as hoverdiv %}
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var data = [
             {% for point in chart_data %}
-            if(obj.series.label=="{{ point.display }}") {
-                $("#{{ hoverdiv }}").html('<span style="font-weight: bold; color: '+obj.series.color+'">'+percent+'% {{ point.description }}</span>');
-            }
+                { label: "{{ point.display }}",  data: {{ point.value }}{% if point.color %}, color: "{{ point.color }}" {% endif %}} ,
             {% endfor %}
-        };
-        
-        if (true) {
-            $.plot($("#{{ chartdiv }}"), data,
-                {
-                    series: {
-                        pie: {
-                            show: true,
-                            radius: 1,
-                            label: {
-                                show: true,
-                                radius: .5,
-                                formatter: function(label, series){
-                                    return '<div style="font-size:8pt;text-align:center;padding:2px;color:white;">'+label+'<br/>'+Math.round(series.percent)+'%</div>';
-                                },
-                                background: { opacity: 0.8 }
-                            }
-                        }
-                    },
-                    grid: {
-                        hoverable: true
-                    },
-                    legend: {
-                        show: false
+            ];
+            function hasData(data) {
+                for (var i in data) {
+                    var val = data[i]["data"];
+                    if (val > 0) {
+                        return true;
                     }
-                });
-        }
-        else {
-              $('#{{ chartdiv }}').html("<h4>No data</h4>");
-        }
-        $("#{{ chartdiv }}").bind("plothover", pieHover);
-    })
-</script>
-<div id="{{ chartdiv }}" style="width:{{graph_width|default:300}}px; height:{{graph_height|default:300}}px" ></div>
-<div id="{{ hoverdiv }}" style="text-align:center;">
-    {# This div is where the hover text hint shows up #}
-    &nbsp;
-</div>
-{% endwith %}
+                }
+            };
+            function pieHover(event, pos, obj) {
+                var percent = parseFloat(obj.series.percent).toFixed(0);
+                {% for point in chart_data %}
+                if(obj.series.label=="{{ point.display }}") {
+                    $("#{{ hoverdiv }}").html(percent + "% {{ point.description }}");
+                    $("#{{ hoverdiv }}").prepend($('<span />').addClass("legend-square").attr("style", "background-color:"+obj.series.color+";"));
+                }
+                {% endfor %}
+            };
+
+            if (true) {
+                $.plot($("#{{ chartdiv }}"), data,
+                    {
+                        series: {
+                            pie: {
+                                show: true,
+                                radius: 1,
+                                label: {
+                                    show: true,
+                                    radius: .5,
+                                    formatter: function(label, series){
+                                        return '<div style="font-size:8pt;text-align:center;padding:2px;color:white;">'+label+'<br/>'+Math.round(series.percent)+'%</div>';
+                                    },
+                                    background: { opacity: 0.8 }
+                                }
+                            }
+                        },
+                        grid: {
+                            hoverable: true
+                        },
+                        legend: {
+                            show: false
+                        }
+                    });
+            }
+            else {
+                  $('#{{ chartdiv }}').html("<h4>No data</h4>");
+            }
+            $("#{{ chartdiv }}").bind("plothover", pieHover);
+        })
+    </script>
+    <div class="hq-graphic-report">
+        <div id="{{ hoverdiv }}" class="well">
+            {% if chart_data %}Hover over a slice below for more information.{% else %}No data is available. Please submit more forms!{% endif %}
+        </div>
+        <div id="{{ chartdiv }}" class="hq-graph" style="width:{{graph_width|default:300}}px; height:{{graph_height|default:300}}px;"></div>
+    </div>
+    {% endwith %}
 {% endwith %}

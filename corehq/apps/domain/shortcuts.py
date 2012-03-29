@@ -6,7 +6,7 @@ from corehq.apps.domain.models import Domain
 from django.contrib.auth.models import User
 
 def create_domain(name, active=True):
-    return Domain.objects.get_or_create(name=name, is_active=active)[0]
+    return Domain.get_or_create_with_name(name=name, is_active=active)
 
 def create_user(username, password, is_staff=False, is_superuser=False, is_active=True, **kwargs):
     user = User()

@@ -266,7 +266,10 @@ class CouchUser(Document, UnicodeMixIn):
 
     def get_active_domains(self):
         domain_names = self.domain_names
-        return Domain.objects.filter(name__in=domain_names)
+        return Domain.view("domain/domains",
+                            keys=domain_names,
+                            reduce=False,
+                            include_docs=True).all()
 
     def is_member_of(self, domain_qs):
         if isinstance(domain_qs, basestring):

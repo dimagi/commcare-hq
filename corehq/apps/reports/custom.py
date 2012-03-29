@@ -6,6 +6,8 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext, Context
 from django.template.loader import render_to_string
+import pytz
+from corehq.apps.reports import util
 from dimagi.utils.modules import to_function
 from tempfile import NamedTemporaryFile
 from couchexport.models import Format
@@ -36,6 +38,12 @@ class HQReport(object):
             raise NotImplementedError
         self.domain = domain
         self.request = request
+
+        try:
+            self.timezone = util.get_timezone(self.request.couch_user.user_id, domain)
+        except AttributeError:
+            self.timezone = util.get_timezone(None, domain)
+
         if not self.rows:
             self.rows = []
         self.context = base_context
@@ -56,7 +64,7 @@ class HQReport(object):
         field_classes = []
         for f in self.fields:
             klass = to_function(f)
-            field_classes.append(klass(self.request, self.domain))
+            field_classes.append(klass(self.request, self.domain, self.timezone))
         self.context['custom_fields'] = [{"field": f.render(), "slug": f.slug} for f in field_classes]
 
     def get_report_context(self):
@@ -131,9 +139,10 @@ class ReportField(object):
     template = ""
     context = Context()
 
-    def __init__(self, request, domain=None):
+    def __init__(self, request, domain=None, timezone=pytz.utc):
         self.request = request
         self.domain = domain
+        self.timezone = timezone
 
     def render(self):
         if not self.template: return ""
@@ -164,7 +173,7 @@ class YearField(ReportField):
 
 class ExampleInputField(ReportField):
     slug = "example-input"
-    template = "reports/partials/example-input-select.html"
+    template = "reports/fields/example-input-select.html"
 
     def update_context(self):
         self.context['example_input_default'] = "Some Example Text"

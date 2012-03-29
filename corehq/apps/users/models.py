@@ -6,8 +6,10 @@ from __future__ import absolute_import
 from datetime import datetime
 import logging
 import re
+from corehq.apps.domain.models import Domain
 from dimagi.utils.make_uuid import random_hex
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
@@ -87,6 +89,7 @@ class DomainMembership(DocumentSchema):
     permissions = StringListProperty()
     last_login = DateTimeProperty()
     date_joined = DateTimeProperty()
+    timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
 
     class Meta:
         app_label = 'users'
@@ -246,12 +249,10 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         )
 
     def is_member_of(self, domain_qs):
-        if isinstance(domain_qs, basestring):
+        try:
+            return domain_qs.name in self.get_domains() or self.is_superuser
+        except Exception:
             return domain_qs in self.get_domains() or self.is_superuser
-        membership_count = domain_qs.filter(name__in=self.get_domains()).count()
-        if membership_count > 0:
-            return True
-        return False
 
     # for synching
     def sync_from_django_user(self, django_user):
@@ -760,7 +761,12 @@ class WebUser(CouchUser):
                 if domain not in self.domains:
                     raise self.Inconsistent("Domain '%s' is in domain_memberships but not domains" % domain)
                 return
+        domain_obj = Domain.get_by_name(domain)
+        if not domain_obj:
+            domain_obj = Domain(is_active=True, name=domain, date_created=datetime.utcnow())
+            domain_obj.save()
         self.domain_memberships.append(DomainMembership(domain=domain,
+                                                        timezone=domain_obj.default_timezone,
                                                         **kwargs))
         self.domains.append(domain)
 

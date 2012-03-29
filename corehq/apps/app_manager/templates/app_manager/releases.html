@@ -1,0 +1,191 @@
+{% extends "app_manager/managed_app.html" %}
+{% load xforms_extras %}
+{% load url_extras %}
+{% load timezone_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block form-view %}
+    <form id="make-new-build" action="{% url corehq.apps.app_manager.views.save_copy domain app.id %}" method="post">
+        <input type="hidden" name="next" value="{{ request.get_full_path }}" />
+        <input type="hidden" name="comment" value="" />
+        <input type="submit" value="Make New Build" />
+    </form>
+    {% if build_errors %}
+    <div class="message">
+        Build Failed!
+        <ul id="build-errors">
+            {% for error in build_errors %}
+            <li>
+                {% if error.type == "invalid xml" %}
+                {% if error.form.content %}
+                Invalid xml in form
+                {% else %}
+                Blank form
+                {% endif %}
+                {% include "app_manager/partials/form_error_message.html" %}
+                {% else %}
+                {% if error.type == "no ref detail" %}
+                Module
+                <a href="{% url view_module domain app.id error.module.id %}">
+                    {{ error.module.name|trans:langs }}</a>
+                uses referrals but doesn't have
+                detail screens configured for referrals.
+                {% else %}
+                {% if error.type == "no case detail" %}
+                Module
+                <a href="{% url view_module domain app.id error.module.id %}">
+                    {{ error.module.name|trans:langs }}</a>
+                uses cases but doesn't have
+                detail screens configured for cases.
+                {% else %}
+                {% if error.type == "no modules" %}
+                This application has no modules.
+                {% else %}
+                {% if error.type == "no forms" %}
+                Module
+                <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                has no forms.
+                {% else %}
+                {% if error.type == "no case type" %}
+                Module
+                <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
+                uses cases but doesn't have a
+                case type defined.
+                {% else %}
+                {% if error.type == "form error" %}
+                One or more forms are invalid: check all your forms for error messages.
+                {% else %}
+                {% if error.type == "duplicate xmlns" %}
+                You have two forms with the xmlns "{{ error.xmlns }}"
+                {% else %}
+                {% if error.type == "update_case uses reserved word" %}
+                Case Update uses reserved word "{{ error.word }}"
+                in form
+                {% include "app_manager/partials/form_error_message.html" %}
+                {% else %}
+                {% if error.type == "update_case word illegal" %}
+                Case Update "{{ error.word }}" should start with a letter and only contain letters, numbers, '-', and '_'
+                in form {% include "app_manager/partials/form_error_message.html" %}
+                {% else %}
+                {% if error.type == "path error" %}
+                The case configuration in form
+                {% include "app_manager/partials/form_error_message.html" %}
+                contains the invalid path "{{ error.path }}".
+                {% else %}
+                {% if error.type == "remote error" %}
+                Remote Error: {{ error.message }}
+                {% else %}
+                {{ error.message }}
+                {% endif %}
+                {% endif %}
+                {% endif %}
+                {% endif %}
+                {% endif %}
+                {% endif %}
+                {% endif %}
+                {% endif %}
+                {% endif %}
+                {% endif %}
+                {% endif %}
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    <table class="config">
+        <tr>
+            {% if edit %}
+            <th></th>
+            {% endif %}
+            <th>Version</th>
+            <th colspan="2">Build Date &amp; Time</th>
+            <th>CommCare Binary</th>
+
+            <th></th>
+            {% if edit %}
+            <th></th>
+            {% endif %}
+            <th>Comment</th>
+
+        </tr>
+        {% for saved_app in saved_apps %}
+        <tr>
+            {% if edit %}
+            <td>
+                <form action="{% url corehq.apps.app_manager.views.delete_copy domain app.id %}"
+                      data-title="Delete Build"
+                      data-message="Are you sure you want to delete this build (version {{ saved_app.version }})?"
+                      method="post">
+                    <input type="hidden" name="saved_app" value="{{ saved_app.id }}" />
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}" />
+                    <a class="delete_link confirm-submit" href="#"></a>
+                </form>
+            </td>
+            {% endif %}
+            <td>{{ saved_app.version }}</td>
+            <td>{% utc_to_timezone saved_app.built_on timezone "%b %d, %Y" %}</td>
+            <td>{% utc_to_timezone saved_app.built_on timezone "%H:%M %Z" %}</td>
+            <td>
+                {% if saved_app.built_with.get_label %}{{ saved_app.built_with.get_label }}{% endif %}
+                {% if not saved_app.built_with.signed %}<h6>Unsigned Jar</h6>{% endif %}
+            </td>
+            <td>
+                <div class="download-dropdown">
+                    <span>Deploy</span>
+                    <ul>
+                        <li>
+                            <a href="{% url emulator domain saved_app.id %}">Preview</a>
+                        </li>
+                        <li>
+                            <a class="dialog_opener" href="">CommCare Files</a>
+                            <div class="dialog jar_download_dialog" title="Install Build {{ saved_app.version }} for J2ME">
+                                <ol>
+                                    <li>
+                                        Download <strong>both</strong> of the following files:
+                                        <p><a href="{% url corehq.apps.app_manager.views.download_jad domain saved_app.id %}">Download CommCare.jad</a></p>
+                                        <p><a href="{% url corehq.apps.app_manager.views.download_jar domain saved_app.id %}">Download CommCare.jar</a></p>
+                                    </li>
+                                    <li>
+                                        For help on how to install, see our <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Set+Up+Mobile+Phone">Set Up Mobile Phone</a>.
+                                    </li>
+                                    <li>
+                                        If you have any issues with the installation, please refer to
+                                        <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Troubleshooting+Phone+Problems">Troubleshooting Phone Problems</a>.
+                                    </li>
+                                </ol>
+
+                            </div>
+                        </li>
+                        <li>
+                            <a class="dialog_opener" href="">Send to Phones by SMS</a>
+                            <div class="dialog send_app_dialog" title="Send Out Version {{ saved_app.version }}">
+                                <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
+                                    <label>Send to: </label>
+                                    <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
+                                    <textarea name="message">Update to CommCare "{{ app.name }}" version {{ saved_app.version }}: {{ saved_app.short_url }}</textarea>
+                                    <input type="submit" value="Send"/>
+                                </form>
+                            </div>
+                        </li>
+                        <li>
+                            <a href="{% url corehq.apps.app_manager.views.odk_install domain saved_app.id %}" class="odk_install">Download to CommCare ODK</a>
+                        </li>
+                    </ul>
+                </div>
+            </td>
+            {% if edit %}
+            <td>
+                {% if saved_app.version != app.version %}
+                <form action="{% url corehq.apps.app_manager.views.revert_to_copy domain app.id %}" method="post">
+                    <input type="hidden" name="saved_app" value="{{ saved_app.id }}" />
+                    <input type="submit" value="Revert" />
+                </form>
+                {% endif %}
+            </td>
+            {% endif %}
+            <td>{% if saved_app.build_comment %}{{ saved_app.build_comment }}{% else %}<h6>(No Comment)</h6>{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

@@ -52,7 +52,8 @@
             {% endif %}
             {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
             <li><a href="#scheduled-reports">My Scheduled Reports</a></li>
-            <li><a href="#domains">My Domains</a></li>
+            {% if proj_settings_form %}<li><a href="#project-settings">Project "{{ domain }}" Settings</a></li>{% endif %}
+            <li><a href="#domains">My Projects</a></li>
             {% endif %}
         </ul>
         <div id="basic-info">
@@ -83,6 +84,11 @@
         <div id="scheduled-reports">
             {% include "users/partial/scheduled_reports.html" %}
         </div>
+        {% if proj_settings_form %}
+        <div id="project-settings">
+            {% include "users/partial/project_settings.html" %}
+        </div>
+        {% endif %}
         <div id="domains">
             {% include "users/partial/domain_accounts.html" %}
         </div>

@@ -1,5 +1,10 @@
+<div class="hq-graphic-report">
 {% if chart_url %}
-<img src="{{chart_url}}"></img>
+<div class="hq-graph">
+    <h2>Submission Times (Hour vs. Weekday)</h2>
+    <img src="{{chart_url}}" />
+</div>
 {% else %}
-<p class="notice">No data available</p>
+<div class="alert">No data available.</div>
 {% endif %}
+</div>

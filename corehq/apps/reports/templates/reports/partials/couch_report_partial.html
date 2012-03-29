@@ -1,9 +1,8 @@
-
-<table class="datatable" data-source="{{ ajax_source }}">
+<table class="table table-striped datatable" data-source="{{ ajax_source }}">
     <thead>
         <tr>
             {% for heading in headings %}
-                        <th>{{ heading }}</th>
+            <th>{{ heading }}</th>
             {% endfor %}
         </tr>
     </thead>

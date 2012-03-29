@@ -1,6 +1,7 @@
 from datetime import datetime
 import logging
 from zipfile import ZipFile
+from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import ResourceNotFound, BadValueError
 from couchdbkit.ext.django.schema import *
 from corehq.apps.builds.fixtures import commcare_build_config
@@ -70,23 +71,27 @@ class CommCareBuild(Document):
         """f should be a file-like object or a path to a zipfile"""
         self = cls(build_number=build_number, version=version, time=datetime.utcnow())
         self.save()
+
+        z = ZipFile(f)
         try:
-            z = ZipFile(f)
             for name in z.namelist():
                 path = name.split('/')
                 if path[0] == "dist" and path[-1] != "":
                     path = '/'.join(path[1:])
                     self.put_file(z.read(name), path)
         except:
-            z.close()
             self.delete()
             raise
-        z.close()
+        finally:
+            z.close()
         return self
 
     def minor_release(self):
         major, minor, _ = self.version.split('.')
         return int(major), int(minor)
+    def major_release(self):
+        major, _, _ = self.version.split('.')
+        return int(major)
 
     @classmethod
     def get_build(cls, version, build_number=None, latest=False):
@@ -162,6 +167,8 @@ class BuildSpec(DocumentSchema):
 
     def minor_release(self):
         return ".".join(self.version.split('.')[:2])
+    def major_release(self):
+        return self.version.split('.')[0]
 
 class BuildMenuItem(DocumentSchema):
     build = SchemaProperty(BuildSpec)
@@ -177,8 +184,9 @@ class BuildMenuItem(DocumentSchema):
 class CommCareBuildConfig(Document):
     ID = "config--commcare-builds"
     preview = SchemaProperty(BuildSpec)
-    default = SchemaProperty(BuildSpec)
-    menu    = SchemaListProperty(BuildMenuItem)
+    defaults = SchemaListProperty(BuildSpec)
+    application_versions = StringListProperty()
+    menu = SchemaListProperty(BuildMenuItem)
 
     @classmethod
     def bootstrap(cls):
@@ -193,3 +201,22 @@ class CommCareBuildConfig(Document):
             return cls.get(cls.ID.default)
         except Exception:
             return cls.bootstrap()
+
+    def get_default(self, application_version):
+        i = self.application_versions.index(application_version)
+        return self.defaults[i]
+
+    def get_menu(self, application_version=None):
+        if application_version:
+            major = {
+                APP_V1: '1',
+                APP_V2: '2',
+            }[application_version]
+            return filter(lambda x: x.build.major_release() == major, self.menu)
+        else:
+            return self.menu
+
+
+class BuildRecord(BuildSpec):
+    signed = BooleanProperty(default=True)
+    datetime = DateTimeProperty(required=False)

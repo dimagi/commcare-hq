@@ -5,6 +5,7 @@ from corehq.apps.domain.forms import clean_password, max_pwd, _BaseForm
 from django.core.validators import validate_email
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import new_domain_re
+from corehq.apps.registration.models import RegistrationRequest
 
 class NewWebUserRegistrationForm(forms.Form):
     """
@@ -37,25 +38,25 @@ class NewWebUserRegistrationForm(forms.Form):
         return self.cleaned_data
 
 
-class FirstTimeDomainRegistrationForm(forms.Form):
+class DomainRegistrationForm(forms.Form):
     """
     Form for creating a domain for the first time
     """
-    domain_name =  forms.CharField(label='Create my own domain with the name:', max_length=Domain._meta.get_field('name').max_length)
-    tos_confirmed = forms.BooleanField(required=False, label="I agree to CommCare's Terms of Service") # Must be set to False to have the clean_*() routine called
+    domain_name =  forms.CharField(label='Project Name:', max_length=25)
+    tos_confirmed = forms.BooleanField(required=False, label="Terms of Service") # Must be set to False to have the clean_*() routine called
 
     def clean_domain_name(self):
         data = self.cleaned_data['domain_name'].strip().lower()
         if not re.match("^%s$" % new_domain_re, data):
             raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')
-        if Domain.objects.filter(name__iexact=data).count() > 0 or Domain.objects.filter(name__iexact=data.replace('-', '.')).count():
-            raise forms.ValidationError('Domain name already taken; please try another')
+        if Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.')):
+            raise forms.ValidationError('Project name already taken---please try another')
         return data
 
     def clean_tos_confirmed(self):
         data = self.cleaned_data['tos_confirmed']
         if data != True:
-            raise forms.ValidationError('You must agree to our Terms Of Service in order to create your own domain')
+            raise forms.ValidationError('You must agree to our Terms Of Service in order to create your own project.')
         return data
 
     def clean(self):
@@ -63,19 +64,3 @@ class FirstTimeDomainRegistrationForm(forms.Form):
             if isinstance(self.cleaned_data[field], basestring):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
-
-
-class ResendConfirmationEmailForm(forms.Form):
-    domain_name = forms.CharField(label='Requested domain name:', max_length=Domain._meta.get_field('name').max_length)
-
-    def clean_domain_name(self):
-        data = self.cleaned_data['domain_name'].strip()
-        try:
-            # Store domain for use in the view function
-            dom = Domain.objects.get(name=data)
-        except:
-            raise forms.ValidationError("We have no record of a request for domain '%s'." % data)
-        self.retrieved_domain = dom
-        if dom.is_active:
-                raise forms.ValidationError("Your domain '%s' has already been activated." % data)
-        return data

@@ -6,6 +6,8 @@ import urllib
 from datetime import datetime
 import csv
 import io
+from corehq.apps.registration.forms import NewWebUserRegistrationForm
+from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.users.util import format_username, normalize_username, raw_username
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.excel import Excel2007DictReader
@@ -19,14 +21,14 @@ from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpRespons
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
-from corehq.apps.domain.user_registration_backend import register_user
-from corehq.apps.domain.user_registration_backend.forms import AdminRegistersUserForm,\
-    AdminInvitesUserForm, UserRegistersSelfForm
+from corehq.apps.registration.user_registration_backend import register_user
+from corehq.apps.registration.user_registration_backend.forms import AdminRegistersUserForm,\
+    AdminInvitesUserForm
 from corehq.apps.prescriptions.models import Prescription
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.forms import UserForm, CommCareAccountForm
+from corehq.apps.users.forms import UserForm, CommCareAccountForm, ProjectSettingsForm
 from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord, Permissions
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
@@ -144,10 +146,13 @@ def accept_invitation(request, domain, invitation_id):
         messages.error(request, "Sorry that invitation has already been used up. "
                        "If you feel this is a mistake please ask the inviter for "
                        "another invitation.")
-        return HttpResponseRedirect(reverse("homepage"))
+        return HttpResponseRedirect(reverse("login"))
     if request.user.is_authenticated():
         # if you are already authenticated, just add the domain to your 
         # list of domains
+        if request.couch_user.username != invitation.email:
+            messages.error(request, "The invited user %s and your user %s do not match!" % (invitation.email, request.couch_user.username))
+
         if request.method == "POST":
             couch_user = CouchUser.from_django_user(request.user)
             couch_user.add_domain_membership(domain=domain)
@@ -158,28 +163,22 @@ def accept_invitation(request, domain, invitation_id):
             messages.success(request, "You have been added to the %s domain" % domain)
             return HttpResponseRedirect(reverse("domain_homepage", args=[domain,]))
         else:
-            return render_to_response(request, 'users/accept_invite.html', {'domain': domain})
+            return render_to_response(request, 'users/accept_invite.html', {'domain': domain,
+                                                                            "invited_user": invitation.email if request.couch_user.username != invitation.email else ""})
     else:
         # if you're not authenticated we need you to fill out your information
         if request.method == "POST":
-            form = UserRegistersSelfForm(request.POST)
+            form = NewWebUserRegistrationForm(request.POST)
             if form.is_valid():
-                data = form.cleaned_data
-                assert(data['password_1'] == data['password_2'])
-                data['password'] = data['password_1']
-                del data['password_1']
-                del data['password_2']
-                del data["tos_confirmed"]  
-                user = register_user(invitation.domain, send_email=False,
-                                     is_domain_admin=False, **data)
+                user = activate_new_user(form, is_domain_admin=False, domain=invitation.domain)
                 user.set_role(domain, invitation.role)
                 user.save()
                 invitation.is_accepted = True
                 invitation.save()
-                messages.success(request, "User account for %s created! You may now login." % data["email"])
+                messages.success(request, "User account for %s created! You may now login." % form.cleaned_data["email"])
                 return HttpResponseRedirect(reverse("login"))
         else:
-            form = UserRegistersSelfForm(initial={'email': invitation.email})
+            form = NewWebUserRegistrationForm(initial={'email': invitation.email})
         
         return render_to_response(request, "users/accept_invite.html", {"form": form})
 
@@ -286,6 +285,28 @@ def account(request, domain, couch_user_id, template="users/account.html"):
         # for commcare-accounts tab
 #        "other_commcare_accounts": other_commcare_accounts,
     })
+
+    #project settings tab
+    if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user():
+        web_user = WebUser.get_by_user_id(couch_user.user_id)
+        dm = web_user.get_domain_membership(domain)
+        if dm:
+            domain_obj = Domain.get_by_name(domain)
+            if request.method == "POST" and request.POST['form_type'] == "project-settings":
+                # deal with project settings data
+                project_settings_form = ProjectSettingsForm(request.POST)
+                if project_settings_form.is_valid():
+                    if project_settings_form.save(web_user, domain):
+                        messages.success(request, "Your project settings were successfully saved!")
+                    else:
+                        messages.error(request, "There seems to have been an error saving your project settings. Please try again!")
+            else:
+                project_settings_form = ProjectSettingsForm(initial={'global_timezone': domain_obj.default_timezone,
+                                                                    'user_timezone': dm.timezone})
+            context.update({
+                'proj_settings_form': project_settings_form
+            })
+
     # for basic tab
     context.update(_handle_user_form(request, domain, couch_user))
     return render_to_response(request, template, context)
@@ -342,7 +363,8 @@ def domain_accounts(request, domain, couch_user_id, template="users/domain_accou
         couch_user.save()
         messages.success(request,'Domain added')
     my_domains = couch_user.get_domains()
-    context['other_domains'] = [d.name for d in Domain.objects.exclude(name__in=my_domains)]
+    all_domains = Domain.get_all()
+    context['other_domains'] = [d.name for d in all_domains if d.name not in my_domains]
     context.update({"user": request.user,
                     "domains": couch_user.get_domains(),
                     })
@@ -605,7 +627,7 @@ class UploadCommCareUsers(TemplateView):
     template_name = 'users/upload_commcare_users.html'
 
     required_headers = set(['username', 'password'])
-    allowed_headers = set(['phone-number', 'user_id', 'name']) | required_headers
+    allowed_headers = set(['phone-number', 'user_id', 'name', 'group-name *']) | required_headers
 
     def get_context_data(self, **kwargs):
         """TemplateView automatically calls this to render the view (on a get)"""
@@ -654,8 +676,38 @@ class UploadCommCareUsers(TemplateView):
     def create_or_update_users(self):
         usernames = set()
         user_ids = set()
+
+        class GroupMemoizer(object):
+            groups = {}
+            @classmethod
+            def get_group(cls, group_name):
+                Group.by_name(self.domain, group_name)
+                if not cls.groups.has_key(group_name):
+                    cls.groups[group_name] = Group(domain=self.domain, name=group_name, case_sharing=True)
+                return cls.groups[group_name]
+            @classmethod
+            def save_all(cls):
+                for group in cls.groups.values():
+                    group.save()
+
+
         for row in self.user_specs:
-            name, password, phone_number, user_id, username = (row.get(k) for k in sorted(self.allowed_headers))
+            data = {}
+            # collect all group-name * in a list; preserve everything else
+            for header, value in row.iteritems():
+                if ' ' in header:
+                    header = header.split(' ')[0] + ' *'
+                    if not data.has_key(header):
+                        data[header] = []
+                    if value:
+                        data[header].append(value)
+                else:
+                    data[header] = value
+
+            group_names, name, password, phone_number, user_id, username = (
+                data.get(k, [] if k[-1] == '*' else None) for k in sorted(self.allowed_headers)
+            )
+
             username = normalize_username(username, self.domain)
             status_row = {'username': raw_username(username)}
 
@@ -688,12 +740,15 @@ class UploadCommCareUsers(TemplateView):
                     if name:
                         user.set_full_name(name)
                     user.save()
+                    for group_name in group_names:
+                        GroupMemoizer.get_group(group_name).add_user(user)
+                    GroupMemoizer.save_all()
                 except Exception, e:
                     status_row['flag'] = 'error: %s' % e
             yield status_row
 
     def check_headers(self):
-        headers = set(self.user_specs.fieldnames)
+        headers = set([re.sub(r' .*', ' *', fieldname) for fieldname in self.user_specs.fieldnames])
 
         illegal_headers = headers - self.allowed_headers
         missing_headers = self.required_headers - headers

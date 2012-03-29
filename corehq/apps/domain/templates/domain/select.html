@@ -1,44 +1,26 @@
 {% extends login_template %}
+{% load hq_shared_tags %}
 
-{% block title %}Domain Selection{% endblock title %}
+{% block title %}Project Selection{% endblock title %}
 
 {% block login-content %}
-    <form name="form" method="post" action="{% url domain_select %}">
-        {% csrf_token %}
-        <h1>Select a domain</h1>
-        {% if form.non_field_errors %}
-            <div class="non_field_errors">
-                {{ form.non_field_errors }}
-            </div>
-        {% endif %}
-
-        {% if next %}
-            <input name="next" type="hidden" value="{{next}}" />
-        {% endif %}
-
-        <table>
-            {% for field in form.visible_fields %}
-                <tr>
-                    <td>{{ field.label_tag }}</td>
-                    <td>{{ field }}</td>
-                </tr>
-                {% if field.errors %}
-                    <tr>
-                        <td></td>
-                        <td class="field_errors">
-                            {{field.errors}}
-                        </td>
-                    </tr>
-                {% endif %}
-            {% endfor %}
-            <tr>
-                <td></td>
-                <td>
-                    <input type="submit" value="Submit"/>
-                </td>
-            </tr>
-        </table>
-
-    </form>
-    <p>You may also <a href="/a/public/">visit the CommCare demo domain</a>.</p>
+<div class="row">
+    <div class="page-header">
+        <h1>My Projects</h1>
+    </div>
+    <div class="span8">
+        <p>The following is a list of projects that your account is associated with:</p>
+        {% list_my_domains request %}
+    </div>
+    <div class="span4">
+        <aside class="well">
+            <h3>Have a new idea?</h3>
+            <a class="btn btn-primary" href="{% url registration_domain %}">Create a New Project</a>
+        </aside>
+        <aside class="well">
+            <h3>Need ideas?</h3>
+            <p>Visit the <a href="/a/public/">CommCare HQ Example Project</a>.</p>
+        </aside>
+    </div>
+</div>
 {% endblock %}

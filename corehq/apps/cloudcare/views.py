@@ -2,15 +2,92 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.cloudcare.models import CaseSpec
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp.views import logout
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.web import render_to_response, json_response, json_handler
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse,\
+    HttpResponseBadRequest
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
-from corehq.apps.cloudcare.api import get_owned_cases
-from corehq.apps.app_manager.views import get_apps_base_context
+from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_cloudcare_apps
+from touchforms.formplayer.models import PlaySession
+from dimagi.utils.couch import safe_index
+from corehq.apps.app_manager.const import APP_V2
+from dimagi.utils.parsing import string_to_boolean
+
+@login_and_domain_required
+def app_list(request, domain, urlPath):
+    apps = get_cloudcare_apps(domain)
+    debug = string_to_boolean(request.REQUEST.get("debug", "false"))
+    language = request.REQUEST.get("language", "en")
+    
+    def _app_latest_build_json(app_id):
+        build = ApplicationBase.view('app_manager/saved_app',
+                                     startkey=[domain, app["_id"], {}],
+                                     endkey=[domain, app["_id"]],
+                                     descending=True,
+                                     limit=1).one()
+        return build._doc if build else None
+                                     
+    if not debug:
+        # replace the apps with the last build of each app
+        apps = [_app_latest_build_json(app["_id"])for app in apps]
+
+    return render_to_response(request, "cloudcare/cloudcare_home.html", 
+                              {"domain": domain,
+                               "language": language,
+                               "apps": json.dumps(apps)})
+
+@login_and_domain_required
+def enter_form(request, domain, app_id, module_id, form_id):
+    app = Application.get(app_id)
+    module = app.get_module(module_id)
+    form = module.get_form(form_id)
+    
+    device_id = "cloudcare"
+    case_id = request.REQUEST.get("case_id")
+    
+    if app.application_version == APP_V2:
+        commcare_context = { 'device_id': device_id,
+                             'app_version': '2.0',
+                             'username': request.user.username,
+                             'user_id': request.couch_user.get_id,
+                             "domain": domain
+                            }
+        if case_id:
+            commcare_context["case_id"] = case_id
+    else:
+        # assume V1 / preloader structure
+        commcare_context = {"meta": {"UserID":   request.couch_user.get_id,
+                                     "UserName":  request.user.username},
+                            "property": {"deviceID": device_id}}
+        # check for a case id and update preloader appropriately
+        if case_id:
+            case = CommCareCase.get(case_id)
+            commcare_context["case"] = case.get_preloader_dict()
+
+    return render_to_response(request, "cloudcare/play_form.html",
+                              {"domain": domain, 
+                               "form": form, 
+                               "commcare_context": json.dumps(commcare_context),
+                               "app_id": app_id, 
+                               "module_id": module_id,
+                               "form_id": form_id})
+
+@login_and_domain_required
+def form_complete(request, domain, app_id, module_id, form_id):
+    app = Application.get(app_id)
+    module = app.get_module(module_id)
+    form = module.get_form(form_id)
+    session_id = request.REQUEST.get("session_id")
+    session = PlaySession.get(session_id) if session_id else None
+    return render_to_response(request, "cloudcare/form_complete.html",
+                              {"domain": domain, 
+                               "session": session, 
+                               "app_id": app_id, 
+                               "module_id": module_id,
+                               "form_id": form_id})
+
 
 @login_and_domain_required
 def case_list(request, domain):
@@ -75,4 +152,27 @@ def get_groups(request, domain, user_id):
 
 @cloudcare_api
 def get_cases(request, domain):
-    return json_response(get_owned_cases(domain, request.GET['user_id']))
+    user_id = request.couch_user.get_id if request.couch_user.is_commcare_user() \
+              else request.REQUEST.get("user_id", "")
+    
+    if not user_id:
+        return HttpResponseBadRequest("Must specify user_id!")
+    
+    cases = get_owned_cases(domain, user_id)
+    if request.REQUEST:
+        def _filter(case):
+            for path, val in request.REQUEST.items():
+                if safe_index(case, path.split("/")) != val:
+                    return False
+            return True
+        cases = filter(_filter, cases)
+        
+    return json_response(cases)
+
+@cloudcare_api
+def get_apps_api(request, domain):
+    return json_response(get_apps(domain))
+
+@cloudcare_api
+def get_app_api(request, domain, app_id):
+    return json_response(get_app(domain, app_id))

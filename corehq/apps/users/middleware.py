@@ -3,7 +3,7 @@ import django.core.exceptions
 
 ############################################################################################################
 from corehq.apps.users.models import CouchUser, PublicUser, InvalidUser
-from corehq.apps.domain.models import CouchDomain
+from corehq.apps.domain.models import Domain
 
 class UsersMiddleware(object):
     def __init__(self):        
@@ -24,7 +24,7 @@ class UsersMiddleware(object):
             if 'domain' in view_kwargs:
                 domain = view_kwargs['domain']
                 if not request.couch_user:
-                    couch_domain = CouchDomain.view("domain/domains", key=domain, 
+                    couch_domain = Domain.view("domain/domains", key=domain,
                                                     reduce=False, include_docs=True).one()
                     if couch_domain and couch_domain.is_public:
                         request.couch_user = PublicUser(domain)

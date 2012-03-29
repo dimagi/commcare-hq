@@ -13,7 +13,7 @@ def get_sorted_multimedia_refs(app):
                 parsed = f.wrapped_xform()
                 if not parsed.exists():
                     continue
-                parsed.validate()
+                f.validate_form()
                 parsed_forms[f] = parsed
                 for i in parsed.image_references:
                     if i not in images:
@@ -45,7 +45,7 @@ def get_multimedia_filenames(app):
                 parsed = f.wrapped_xform()
                 if not parsed.exists():
                     continue
-                parsed.validate()
+                f.validate_form()
                 parsed_forms[f] = parsed
                 for i in parsed.image_references:
                     if i and i not in images:

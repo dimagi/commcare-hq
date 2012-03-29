@@ -7,7 +7,7 @@ Replace these with more appropriate tests for your application.
 import os
 
 from django.test import TestCase
-from corehq.apps.app_manager.models import Application, DetailColumn, import_app
+from corehq.apps.app_manager.models import Application, DetailColumn, import_app, APP_V1
 from corehq.apps.builds.models import CommCareBuild, BuildSpec
 from corehq.apps.domain.models import Domain
 
@@ -17,8 +17,8 @@ class AppManagerTest(TestCase):
 
     def setUp(self):
         self.domain = 'test-domain'
-        Domain.objects.get_or_create(name=self.domain)
-        self.app = Application.new_app("test_domain", "TestApp")
+        Domain.get_or_create_with_name(self.domain)
+        self.app = Application.new_app("test_domain", "TestApp", application_version=APP_V1)
 
         for i in range(3):
             module = self.app.new_module("Module%d" % i, "en")

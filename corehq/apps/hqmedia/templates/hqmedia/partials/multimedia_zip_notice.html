@@ -2,7 +2,7 @@
 {% if multimedia.images.items and multimedia.audio.items %}
     <h2>Download a ZIP of all the files referenced by the CommCare application "{{ app.name }}"</h2>
     <p>This .zip file is structured to match the multimedia paths referenced in your CommCare application.</p>
-    <p><a class="button download-zip" href="{% url download_multimedia_zip domain app.get_id  %}">Download ZIP</a></p>
+    <p><a class="btn btn-large btn-primary download-zip" href="{% url download_multimedia_zip domain app.get_id  %}">Download ZIP</a></p>
 {% else %}
     <aside class="notice">
         <h3>Notice</h3>

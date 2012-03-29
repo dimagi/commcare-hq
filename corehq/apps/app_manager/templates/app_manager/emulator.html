@@ -10,9 +10,10 @@
 {% block head %}
     {{ block.super }}
     <style>
-        #main_container {
+        .hq-oldstyle #main_container {
             width: 266px;
             margin: auto;
+            padding: 0;
         }
         applet {
             margin: 20px;
@@ -45,7 +46,7 @@
 {% block content %}
     <div id="main_container">
         <div id="emu-back">
-            <a href="{% url corehq.apps.app_manager.views.view_app domain app.id %}">Back to Release Manager</a>
+            <a href="{% url release_manager domain app.id %}">Back to Release Manager</a>
         </div>
         <div id="emu-warning">
             <span class="caution">Caution</span>: Will make <strong>real</strong> submissions: will modify cases, register users, etc.

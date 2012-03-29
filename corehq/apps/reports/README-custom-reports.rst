@@ -21,15 +21,19 @@ Here is how to create a class-based custom report in HQ.
 
        class ExampleInputField(ReportField):
            slug = "example-input"
-           template = "reports/partials/example-input-select.html"
+           template = "reports/fields/example-input-select.html"
 
            def update_context(self):
                self.context['example_input_default'] = "Some Example Text"
 
    Create the partial template for the field::
 
-        <label for="example-input">Example Text Input:</label>
-        <input type="text" id="example-input" name="example-input" value="{{ example_input_default }}" />
+        <div class="control-group">
+            <label for="example-input" class="control-label">Example Text Input:</label>
+            <div class="controls">
+                <input type="text" id="example-input" name="example-input" value="{{ example_input_default }}" />
+            </div>
+        </div>
 
    Add a reference to it to the "fields" property of your new class::
 
