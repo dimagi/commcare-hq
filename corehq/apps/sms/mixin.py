@@ -98,7 +98,7 @@ class CommCareMobileContactMixin(object):
         if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self._id):
             raise PhoneNumberInUseException("Phone number is already in use.")
     
-    def save_verified_number(self, phone_number, verified):
+    def save_verified_number(self, phone_number, verified, backend_id):
         """
         Saves the given phone number as this contact's verified phone number.
         
@@ -115,6 +115,7 @@ class CommCareMobileContactMixin(object):
             )
         v.phone_number = phone_number
         v.verified = verified
+        v.backend_id = backend_id
         v.save()
 
     def delete_verified_number(self):

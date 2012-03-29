@@ -195,9 +195,10 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
     def case_changed(self):
         contact_phone_number = self.get_case_property("contact_phone_number")
         contact_phone_number_is_verified = self.get_case_property("contact_phone_number_is_verified")
+        contact_backend_id = self.get_case_property("contact_backend_id")
         if(contact_phone_number is not None and contact_phone_number_is_verified):
             try:
-                self.save_verified_number(contact_phone_number, True)
+                self.save_verified_number(contact_phone_number, True, contact_backend_id)
             except:
                 #TODO: Handle exception
                 pass
