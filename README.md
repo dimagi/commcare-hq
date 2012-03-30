@@ -137,6 +137,11 @@ Note: To create a domain and user without going through the signup, use
 
     ./manage.py celery -B
 
+### Get CommCare Binaries
+
+In order to build and download a CommCare mobile app from your instance of CommCare HQ, you need to follow
+our instructions for how to download and load CommCare binaries from the Dimagi build server:
+https://github.com/dimagi/core-hq/blob/master/corehq/apps/builds/README.md
 
 A Note about requirements.txt
 -----------------------------
