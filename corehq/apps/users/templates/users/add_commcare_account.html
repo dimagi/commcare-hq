@@ -1,19 +1,32 @@
 {% extends "users/users_base.html" %}
 {% load i18n %}
+{% load hq_bootstrap_tags %}
+
 {% block commcare_users_indicator %}
-    <ul>
-        <li class="selected">New CommCare User</li>
+    <ul class="nav nav-list">
+        <li class="active"><a href="#">New Case Worker</a></li>
+    </ul>
+{% endblock %}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url users_default domain %}"><strong>Project Settings</strong></a> <span class="divider">&gt;</span>
+        </li>
+        <li>
+            <a href="{% url commcare_users domain %}">Case Workers</a> <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <a href="#">New Case Worker</a>
+        </li>
     </ul>
 {% endblock %}
 
 {% block user-view %}
-<h1>Create a new CommCare Account</h1>
-	<form method="POST">
-	<form>
-		<table>
-			{{ form.as_table }}
-		</table>
-	<input id="id_domain" name="domain" type="hidden" value="{{ domain }}" />
-	<input type="submit" value="Ok" />
+	<form class="form form-horizontal" method="post">
+        {% bootstrap_form_errors form %}
+        <input id="id_domain" name="domain" type="hidden" value="{{ domain }}" />
+        {% bootstrap_fieldset form "Create new Case Worker account" %}
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Create Case Worker</button></div>
 	</form>
 {% endblock %}

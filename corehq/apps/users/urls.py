@@ -48,7 +48,4 @@ urlpatterns = patterns('corehq.apps.users.views',
 
     url(r'^test_autocomplete/$', 'test_autocomplete'),
     url(r'^user_domain_transfer/(?P<prescription_id>[\w-]+)/$', 'user_domain_transfer', name='user_domain_transfer')
-    ) + \
-    patterns('corehq.apps.domain.views',
-        url(r'^users/domain_settings/$', 'global_settings', name="domain_global_settings"),
     )

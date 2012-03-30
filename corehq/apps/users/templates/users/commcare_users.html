@@ -4,52 +4,43 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function(){
+            var help_text = {
+                "Archive User": "Archive a user if they are no longer active, and they will stop appearing in reports to reduce clutter. " +
+                        "Archiving is completely reversible, so you can always reactivate them later.",
+                "Delete User": "Deleting a user removes any record of them, including all of the forms they ever submitted and their " +
+                        "associated cases. We recommend only deleting users that never corresponded to real people to begin with, " +
+                        "such as users created while testing an application.<br /><br />If you are unsure, it is safer to <strong>archive</strong> a user."
+            };
             $('.reset-password-form').submit(function(){
                 $(this).ajaxSubmit({
                     url: $(this).attr('action'),
+                    type: 'POST',
+                    dataType: 'json',
                     success: function (response, status, xhr, form) {
-                        console.log("SUBMITTED");
-                        console.log(response);
-                        console.log(status);
+                        if (response.status == "OK") {
+                            form.find('.modal-body').html($('<p />').text('Password changed successfully!'));
+                            form.find('button[type="submit"]').addClass('disabled');
+                            form.find('.modal-footer a').text("Close");
+                            form.parent().on('hidden', function() {
+                                form.find('.modal-body').html(response.formHTML);
+                                form.find('button[type="submit"]').removeClass('disabled');
+                                form.find('.modal-footer a').text("Cancel");
+                            })
+                        }else if (response.formHTML) {
+                            form.find('.modal-body').html(response.formHTML);
+                        }
                     }
                 });
                 return false;
-//                var that = this,
-//                    url = $(this).attr('data-src'),
-//                    loadingMessage = "<p>Loading...</p>";
-//
-//                $(this).find('.no-match-error-text').hide();
-//                function setContent(html) {
-//                    var $content = $(html);
-//                    $(that).find('> div').html($content);
-//                    COMMCAREHQ.initBlock($content);
-//                }
-//                $(this).bind('dialogopen', function(){
-//                    $(that).dialog('widget').css({width: "400px"});
-//                }).delegate('form', 'submit', function(){
-//                    if ($(this).find('[name="new_password1"]').val() !==
-//                            $(this).find('[name="new_password2"]').val()) {
-//                        $(this).find('.no-match-error-text').show();
-//                        return false;
-//                    } else {
-//                        $(this).find('.no-match-error-text').hide();
-//                    }
-//                    setContent(loadingMessage);
-//                    $.ajaxForm({
-//                        url: url,
-//                        data: $(this).serialize(),
-//                        dataType: "json",
-//                        type: "POST",
-//                        success: function(data){
-//                            if(data.status === "ok") {
-//                                window.location.reload();
-//                            } else {
-//                                setContent(data.formHTML);
-//                            }
-//                        }
-//                    });
-//                    return false;
-//                });
+            });
+            $('.help_popover').popover({
+                placement: 'left',
+                title: function () {
+                    return $(this).attr('data-help-key');
+                },
+                content: function () {
+                    return help_text[$(this).attr('data-help-key')];
+                }
             });
         });
     </script>
@@ -79,8 +70,8 @@
                     <th>{% trans "Cases" %}</th>
                     <th>{% trans "Phone" %}</th>
                     {% if couch_user.can_edit_commcare_users %}
-                    <th>{% trans "Archive" %} <span class="help-link" data-help-key="users/archive"></span></th>
-                    <th>{% trans "Delete" %} <span class="help-link" data-help-key="users/delete"></span></th>
+                    <th class="help_popover" data-help-key="Archive User"><div >{% trans "Archive" %} <i class="icon icon-question-sign"></i></div></th>
+                    <th class="help_popover" data-help-key="Delete User"><div >{% trans "Delete" %} <i class="icon icon-question-sign"></i></div></th>
                     {% endif %}
                 </tr>
             </thead>
@@ -89,7 +80,7 @@
                 {% ifchanged user.is_active %}
                     {% if not user.is_active %}
                     <tr>
-                        <td colspan="8">Archived Users</td>
+                        <td colspan="8">Archived Case Workers</td>
                     </tr>
                     {% endif %}
                 {% endifchanged %}
@@ -103,31 +94,13 @@
                                 <a class="close" data-dismiss="modal">&times;</a>
                                 <h3>Reset Password for <small>{{ user.html_username|safe }}</small></h3>
                             </div>
-                            <form class="form form-horizontal hq-form reset-password-form" action="{% url change_password domain user.user_id %}" method="post">
+                            <form class="form form-horizontal reset-password-form" action="{% url change_password domain user.user_id %}" method="post">
                                 <div class="modal-body">
-                                    <div class="control-group">
-                                        <label class="control-label" for="id_new_password1">
-                                            New password:
-                                        </label>
-                                        <div class="controls">
-                                            <input type="password" name="new_password1" id="id_new_password1"/>
-                                        </div>
-                                    </div>
-                                    <div class="control-group">
-                                        <label class="control-label" for="id_new_password2">
-                                            New password confirmation:
-                                        </label>
-                                        <div class="controls">
-                                            <input type="password" name="new_password2" id="id_new_password2"/>
-                                        </div>
-                                    </div>
-{#                                    <ul class="errorList">#}
-{#                                        <li class="no-match-error-text">The two password fields didn't match.</li>#}
-{#                                    </ul>#}
+                                    {% include 'users/partial/reset_password.html' %}
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="submit" class="btn btn-primary">Reset</button>
                                     <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                                    <button type="submit" class="btn btn-primary">Reset Password</button>
                                 </div>
                             </form>
                         </div>
@@ -147,41 +120,51 @@
                     <td>
                         {% if user.is_active %}
                         <form action="{% url archive_commcare_user domain user.user_id %}">
-                            <input type="submit" value="archive"/>
+                            <button type="submit" class="btn">Archive</button>
                         </form>
                         {% else %}
                             <form action="{% url unarchive_commcare_user domain user.user_id %}" method="post">
-                                <input type="submit" value="unarchive"/>
+                                <button type="submit" class="btn">Unarchive</button>
                             </form>
                         {% endif %}
                     </td>
                     <td>
-                            <form action="{% url delete_commcare_user domain user.user_id %}"
-                                  method="post"
-                                  data-title="Delete User?"
-                                  data-message="Are you sure you want to permanently delete {{ user.raw_username }} and all of their form submissions?">
-                                <input type="submit" class="confirm-submit" value="delete"/>
+                        <a href="#delete_user_{{ user.user_id }}" data-toggle="modal" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Delete</a>
+                        <div id="delete_user_{{ user.user_id }}" class="modal hide fade">
+                            <div class="modal-header">
+                                <a class="close" data-dismiss="modal">&times;</a>
+                                <h3>Delete Case Worker {{ user.raw_username }}?</h3>
+                            </div>
+                            <form class="form form-horizontal" action="{% url delete_commcare_user domain user.user_id %}" method="post">
+                                <div class="modal-body">
+                                    <p>Are you sure you want to permanently delete <strong>{{ user.raw_username }}</strong> and all of their form submissions?</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                                    <button type="submit" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Delete Case Worker</button>
+                                </div>
                             </form>
+                        </div>
                     </td>
                     {% endif %}
                 </tr>
             {% endfor %}
         {% else %}
-            <tr><td colspan="8">There are no CommCare users in this domain.</td></tr>
+            <tr><td colspan="8">There are no Case Workers for this domain.</td></tr>
         {% endif %}
         {% if not show_inactive %}
             <tr>
                 <td colspan="8">
-                    <a href="./?show_inactive=true">Show Archived Users</a>
+                    <a href="./?show_inactive=true">Show Archived Case Workers</a>
                 </td>
             </tr>
         {% endif %}
         </tbody>
     </table>
     <div>
-        <a class="new_link" href="{% url add_commcare_account domain %}">CommCare User</a>
+        <a class="btn btn-success" href="{% url add_commcare_account domain %}"><i class="icon icon-white icon-plus"></i> New Case Worker</a>
         or
-        <a href="{% url upload_commcare_users domain %}">Bulk Upload</a>
+        <a class="btn" href="{% url upload_commcare_users domain %}">Bulk Upload</a>
     </div>
 </div>
 {% endblock %}

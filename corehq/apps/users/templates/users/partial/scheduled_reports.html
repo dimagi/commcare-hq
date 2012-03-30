@@ -38,7 +38,7 @@
                     </div>
                 </td>
                 <td>
-                    <form style="margin:0;" name="test_report" action="{% url test_scheduled_report domain couch_user.couch_id report.get_id %}" method="post">
+                    <form name="test_report" action="{% url test_scheduled_report domain couch_user.couch_id report.get_id %}" method="post">
                         <a class="btn btn-info" href="#" onclick="$(this).closest('form').submit()"><i class="icon icon-white icon-envelope"></i> Send</a>
                     </form>
                 </td>

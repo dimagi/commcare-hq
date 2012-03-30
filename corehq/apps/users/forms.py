@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.forms import SetPasswordForm
 from django.core.validators import EmailValidator, email_re
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.encoding import smart_str
@@ -83,5 +84,15 @@ class CommCareAccountForm(forms.Form):
         return self.cleaned_data
 
 validate_username = EmailValidator(email_re, _(u'Username contains invalid characters.'), 'invalid')
+
+class CommCareChangePasswordForm(SetPasswordForm):
+
+    def clean_new_password1(self):
+        password1 = self.cleaned_data['new_password1']
+        try:
+            int(password1)
+        except ValueError:
+            raise forms.ValidationError("Password should contain only numbers.")
+        return password1
 
 
