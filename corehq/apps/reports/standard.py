@@ -888,16 +888,21 @@ class ApplicationStatusReport(StandardTabularHQReport):
                 else:
                     build_id = "unknown"
 
+                form_data = data.get_form
                 try:
-                    app = Application.get(data.app_id)
-                    is_unknown = False
-                    if self.selected_app and self.selected_app != data.app_id:
-                        continue
-                    version = app.application_version
-                    app_name = "%s [%s]" % (app.name, build_id)
-                except Exception:
-                    version = "unknown"
-                    app_name = "unknown"
+                    app_name = form_data['meta']['appVersion']['#text']
+                    version = "2.0 Remote"
+                except KeyError:
+                    try:
+                        app = Application.get(data.app_id)
+                        is_unknown = False
+                        if self.selected_app and self.selected_app != data.app_id:
+                            continue
+                        version = app.application_version
+                        app_name = "%s [%s]" % (app.name, build_id)
+                    except Exception:
+                        version = "unknown"
+                        app_name = "unknown"
             if is_unknown and self.selected_app:
                 continue
             row = [user.username_in_report, last_seen, version, app_name]
