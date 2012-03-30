@@ -156,6 +156,7 @@ HQ_APPS = (
     'corehq.apps.prescriptions',
     'corehq.apps.translations',
     'corehq.apps.users',
+    'corehq.apps.settings',
     'corehq.apps.ota',
     'corehq.apps.groups',
     'corehq.apps.sms',
@@ -186,8 +187,7 @@ TABS = [
     ("corehq.apps.reports.views.default", "Reports"),
     ("corehq.apps.app_manager.views.default", "Applications"),
     ("corehq.apps.sms.views.messaging", "Messages"),
-    ("corehq.apps.users.views.users", "Project Settings"),
-    ("corehq.apps.domain.views.manage_domain", "Project Forwarding"),
+    ("corehq.apps.settings.views.default", "Project Settings"),
     ("corehq.apps.hqadmin.views.default", "Admin Reports", "is_superuser"),
 ]
 
