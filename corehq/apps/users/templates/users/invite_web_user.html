@@ -18,12 +18,9 @@
 {% endblock %}
 
 {% block user-view %}
-    <div class="tab-content">
-        <form class="form form-horizontal" method="post" action="">
-            {% bootstrap_form_errors registration_form %}
-            {% bootstrap_fieldset registration_form "Information for the person you would like to invite to your project" %}
-            <div class="form-actions"><button type="submit" class="btn btn-primary">Send Invite</button></div>
-        </form>
-    </div>
-
+    <form class="form form-horizontal" method="post" action="">
+        {% bootstrap_form_errors registration_form %}
+        {% bootstrap_fieldset registration_form "Information for the person you would like to invite to your project" %}
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Send Invite</button></div>
+    </form>
 {% endblock %}

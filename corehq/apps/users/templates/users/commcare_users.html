@@ -55,7 +55,7 @@
 
 
 {% block user-view %}
-<div class="tab-content">
+    <div>
     <h2>List of {% commcare_user %}s for Project "{{ domain }}"</h2>
     <p>{% commcare_user %}s can submit forms from phones running the CommCare Application. While {% commcare_user %}s can login to CommCare HQ and view project data, <br />they are bound to a particular project on CommCare HQ and cannot manage the project or create additional projects and users.</p>
     <table class="table table-striped table-bordered">
@@ -160,10 +160,10 @@
         {% endif %}
         </tbody>
     </table>
+    </div>
     <div>
         <a class="btn btn-success" href="{% url add_commcare_account domain %}"><i class="icon icon-white icon-plus"></i> New {% commcare_user %}</a>
         or
         <a class="btn" href="{% url upload_commcare_users domain %}">Bulk Upload</a>
     </div>
-</div>
 {% endblock %}

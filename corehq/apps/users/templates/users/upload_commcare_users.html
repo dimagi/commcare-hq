@@ -30,33 +30,31 @@
 {% endblock %}
 
 {% block user-view %}
-    <div class="tab-content">
-        <h2>Steps to Upload {% commcare_user %}s in Bulk</h2>
-        <p>
-            <ol>
-                <li>
-                    Download the example file: <a href="{% static 'users/xlsx/users.xlsx' %}">users.xlsx</a>
-                </li>
-                <li>
-                    Fill it out with your users' information
-                </li>
-                <li>
-                    Use the form below to upload your completed file.
-                </li>
-            </ol>
-        </p>
-        <form class="form form-horizontal" action="" method="post" enctype="multipart/form-data">
-            <input type="hidden" name="redirect" value="{% url commcare_users domain %}"/>
-            <fieldset>
-                <legend>Choose a file for upload</legend>
-                <div class="control-group">
-                    <label for="bulk_upload_file" class="control-label">Users File</label>
-                    <div class="controls">
-                        <input id="bulk_upload_file" type="file" name="file" data-bind="value: file"/>
-                    </div>
+    <h2>Steps to Upload {% commcare_user %}s in Bulk</h2>
+    <p>
+        <ol>
+            <li>
+                Download the example file: <a href="{% static 'users/xlsx/users.xlsx' %}">users.xlsx</a>
+            </li>
+            <li>
+                Fill it out with your users' information
+            </li>
+            <li>
+                Use the form below to upload your completed file.
+            </li>
+        </ol>
+    </p>
+    <form class="form form-horizontal" action="" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="redirect" value="{% url commcare_users domain %}"/>
+        <fieldset>
+            <legend>Choose a file for upload</legend>
+            <div class="control-group">
+                <label for="bulk_upload_file" class="control-label">Users File</label>
+                <div class="controls">
+                    <input id="bulk_upload_file" type="file" name="file" data-bind="value: file"/>
                 </div>
-            </fieldset>
-            <div class="form-actions"><button type="submit" class="btn btn-primary" data-bind="visible: file() !== null">Create {% commcare_user %}s</button></div>
-        </form>
-    </div>
+            </div>
+        </fieldset>
+        <div class="form-actions"><button type="submit" class="btn btn-primary" data-bind="visible: file() !== null">Create {% commcare_user %}s</button></div>
+    </form>
 {% endblock %}

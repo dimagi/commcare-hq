@@ -54,11 +54,9 @@
 {% endblock %}
 
 {% block user-view %}
-<div class="tab-content">
-    <form class="form form-horizontal" method="post" action="">
-        {% bootstrap_form_errors form %}
-        {% bootstrap_fieldset form "Forwarding Settings" %}
-        <div class="form-actions"><button type="submit" class="btn btn-primary">Start Forwarding</button></div>
-    </form>
-</div>
+<form class="form form-horizontal" method="post" action="">
+    {% bootstrap_form_errors form %}
+    {% bootstrap_fieldset form "Forwarding Settings" %}
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Start Forwarding</button></div>
+</form>
 {% endblock %}
