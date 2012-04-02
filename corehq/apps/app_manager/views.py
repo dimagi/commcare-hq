@@ -1501,6 +1501,7 @@ def download_raw_jar(req, domain, app_id):
     response['Content-Type'] = "application/java-archive"
     return response
 
+@login_and_domain_required
 def emulator(req, domain, app_id, template="app_manager/emulator.html"):
     copied_app = app = get_app(domain, app_id)
     if app.copy_of:
