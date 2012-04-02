@@ -63,6 +63,8 @@ urlpatterns = patterns('',
     (r'^downloads/temp/', include('soil.urls')),
     (r'^test/CommCare.jar', 'corehq.apps.app_manager.views.download_test_jar'),
     (r'^translations/', include('corehq.apps.translations.urls')),
+    (r'^500/$', 'django.views.generic.simple.direct_to_template', {'template': '500.html'}),
+    (r'^404/$', 'django.views.generic.simple.direct_to_template', {'template': '404.html'}),
 ) + patterns('', *LOCAL_APP_URLS)
 
 
