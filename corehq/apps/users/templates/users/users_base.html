@@ -69,7 +69,7 @@
         {% if request.couch_user.is_domain_admin %}
         <li><a href="{% url domain_global_settings domain %}">Global Settings</a></li>
         {% endif %}
-        <li><a href="{% url domain_forwarding domain %}">Forwarding</a>
+        <li><a href="{% url domain_forwarding domain %}">Data Forwarding</a>
             {% block forwarding_indicator %}{% endblock %}
         </li>
     {% endif %}
