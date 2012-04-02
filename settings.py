@@ -478,3 +478,6 @@ MESSAGE_TAGS = {
     messages.WARNING: 'alert-error',
     messages.ERROR: 'alert-error',
 }
+
+COMMCARE_USER_TERM = "Mobile Worker"
+WEB_USER_TERM = "Web User"
