@@ -25,17 +25,14 @@
             var $activeCheckbox = $('#'+$(this).data("checkfilter"));
 
             if($(this).hasClass('active')) {
-                console.log("activate");
                 $(this).addClass('btn-success');
                 $activeCheckbox.attr("checked", true);
             } else {
-                console.log("de-activate");
                 $(this).removeClass('btn-success');
                 $activeCheckbox.attr("checked", false);
             }
 
             if(!$('#user-filter-buttons').children().hasClass('btn-success')) {
-                console.log("exception");
                 var $firstChild = $('#user-filter-buttons').children().first();
                 $firstChild.addClass('btn-success');
                 $('#'+$firstChild.data("checkfilter")).attr("checked", true);
