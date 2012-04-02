@@ -28,7 +28,6 @@ class ProjectSettingsForm(forms.Form):
             web_user.save()
             return True
         except Exception as e:
-            print e
             return False
 
 class UserForm(forms.Form):

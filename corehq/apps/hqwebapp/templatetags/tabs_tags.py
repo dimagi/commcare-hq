@@ -88,8 +88,6 @@ class TabsNode(template.Node):
         
         tabs = [Tab(*args, domain=domain) for args in settings.TABS]
         for tab in tabs:
-            print request.get_full_path()
-            print tab.url
             tab.is_active = request.get_full_path().startswith(tab.url)
             tab.visible = tab.has_permission(request.user)                    
         context[self.varname] = tabs

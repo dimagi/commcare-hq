@@ -279,11 +279,7 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
 
     def get_rows(self):
         utc_dates = [tz_utils.adjust_datetime_to_timezone(date, self.timezone.zone, pytz.utc.zone) for date in self.dates]
-        print utc_dates
         date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(utc_dates)])
-        print date_map
-        date_map_ther = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
-        print date_map_ther
 
         results = get_db().view(
             self.couch_view,
@@ -740,7 +736,6 @@ class ExcelExportReport(StandardDateHQReport):
         return datespan
 
     def calc(self):
-        print self.datespan
         # This map for this view emits twice, once with app_id and once with {}, letting you join across all app_ids.
         # However, we want to separate out by (app_id, xmlns) pair not just xmlns so we use [domain] to [domain, {}]
         forms = []

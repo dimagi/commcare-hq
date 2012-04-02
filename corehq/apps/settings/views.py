@@ -8,7 +8,6 @@ def default(request, domain):
 
 @login_and_domain_required
 def redirect_users(request, domain, old_url=""):
-    print old_url
     return HttpResponseRedirect(reverse("users_default", args=[domain]))
 
 @login_and_domain_required
