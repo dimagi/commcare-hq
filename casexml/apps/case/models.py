@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import re
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
@@ -407,7 +408,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn):
 
     def dynamic_case_properties(self):
         """(key, value) tuples sorted by key"""
-        return sorted([(key, value) for key, value in self.dynamic_properties().items() if not key.startswith('-')])
+        return sorted([(key, value) for key, value in self.dynamic_properties().items() if re.search(r'^[a-zA-Z]', key)])
 
     def save(self, **params):
         self.server_modified_on = datetime.utcnow()
