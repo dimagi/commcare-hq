@@ -131,7 +131,13 @@
             </div>
             {% endif %}
 
-            <div class="footer-text footer-left">Copyright &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a></div>
+            <div class="footer-text footer-left">
+                Copyright &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
+                {% if user.is_authenticated %}
+                    &nbsp;|&nbsp;
+                    <a href="http://www.commcarehq.org/home">Learn more about CommCare HQ</a>.
+                {% endif %}
+            </div>
 
             {% if user.is_authenticated %}
             <div class="footer-right">
