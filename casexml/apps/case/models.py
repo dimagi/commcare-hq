@@ -416,6 +416,10 @@ class CommCareCase(CaseBase, IndexHoldingMixIn):
 
     def to_xml(self, version):
         from xml.etree import ElementTree
-        return ElementTree.tostring(get_case_element(self, ('create', 'update'), version))
+        if self.closed:
+            elem = get_case_element(self, ('close'), version)
+        else:
+            elem = get_case_element(self, ('create', 'update'), version)
+        return ElementTree.tostring(elem)
 
 import casexml.apps.case.signals
