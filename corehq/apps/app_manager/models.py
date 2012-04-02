@@ -13,7 +13,7 @@ from restkit.errors import ResourceError
 import commcare_translations
 from corehq.apps.app_manager import fixtures
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError
-from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig
+from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
@@ -731,7 +731,8 @@ class ApplicationBase(VersionedDoc):
 
     # The following properties should only appear on saved builds
     # built_with stores a record of CommCare build used in a saved app
-    built_with = SchemaProperty(BuildSpec)
+    built_with = SchemaProperty(BuildRecord)
+    build_signed = BooleanProperty(default=True)
     built_on = DateTimeProperty(required=False)
     build_comment = StringProperty()
 
@@ -882,7 +883,12 @@ class ApplicationBase(VersionedDoc):
             self.put_attachment(jadjar.jad, 'CommCare.jad')
             self.put_attachment(jadjar.jar, 'CommCare.jar')
             self.built_on = built_on
-            self.built_with = BuildSpec(version=jadjar.version, build_number=jadjar.build_number)
+            self.built_with = BuildRecord(
+                version=jadjar.version,
+                build_number=jadjar.build_number,
+                signed=jadjar.signed,
+                datetime=built_on,
+            )
             self.save(increment_version=False)
             return jadjar.jad, jadjar.jar
 

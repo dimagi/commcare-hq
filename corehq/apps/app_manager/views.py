@@ -372,6 +372,7 @@ def get_apps_base_context(request, domain, app):
     })
     return context
 
+@login_and_domain_required
 def release_manager(request, domain, app_id, template='app_manager/releases.html'):
     app = get_app(domain, app_id)
     context = get_apps_base_context(request, domain, app)
@@ -1500,6 +1501,7 @@ def download_raw_jar(req, domain, app_id):
     response['Content-Type'] = "application/java-archive"
     return response
 
+@login_and_domain_required
 def emulator(req, domain, app_id, template="app_manager/emulator.html"):
     copied_app = app = get_app(domain, app_id)
     if app.copy_of:

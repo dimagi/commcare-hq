@@ -81,9 +81,9 @@
                 <label for="format-select" class="control-label">Default file type: </label>
                 <div class="controls">
                     <select name="format" id="format-select" >
-                        <option value="csv"{% if saved_export.default_format == "csv"%} selected="selected"{% endif %}>CSV (Zip file)</option>
                         <option value="xlsx"{% if saved_export.default_format == "xlsx"%} selected="selected"{% endif %}>Excel 2007</option>
                         <option value="xls"{% if saved_export.default_format == "xls" %} selected="selected"{% endif %}>Excel (older versions)</option>
+                        <option value="csv"{% if saved_export.default_format == "csv"%} selected="selected"{% endif %}>CSV (Zip file)</option>
                     </select>
                 </div>
             </div>
