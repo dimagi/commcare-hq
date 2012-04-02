@@ -15,6 +15,7 @@ handler500 = 'corehq.apps.hqwebapp.views.server_error'
 handler404 = 'corehq.apps.hqwebapp.views.not_found'
 
 from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specific
+from corehq.apps.settings.urls import domain_specific as settings_domain_specific
 from corehq.apps.settings.urls import users_redirect, domain_redirect
 domain_specific = patterns('',
     (r'^apps/', include('corehq.apps.app_manager.urls')),
@@ -22,7 +23,7 @@ domain_specific = patterns('',
     # not have a slash, so don't include it at the root urlconf
     (r'^receiver', include('corehq.apps.receiverwrapper.urls')),
     (r'^migration/', include('corehq.apps.migration.urls')),
-    (r'^settings/', include('corehq.apps.settings.urls')),
+    (r'^settings/', include(settings_domain_specific)),
     (r'^users/', include(users_redirect)),
     (r'^domain/', include(domain_redirect)),
     (r'^groups/', include('corehq.apps.groups.urls')),
