@@ -1,6 +1,62 @@
 {% extends "error_base.html" %}
-{% block title %}500 Error {% endblock %}
-{% block content %}
-<div id="bigfail"><p>500</p></div>
-<p class="error">Sorry, something unexpected just went wrong, and we're very sorry about it. This problem has been logged and we're already hard at work figuring out the issue! </p>
+{% load hq_shared_tags %}
+{% block title %}500 Error{% endblock %}
+{% block js-inline %}
+    <script type="text/javascript">
+        $(function () {
+            $('#sad-danny').popover({
+                            title: 'This is Danny, one of our best developers.',
+                            content: "Danny is pretty sad that you had to encounter this issue. He's making sure it gets fixed as soon as possible."
+            });
+        });
+    </script>
+{% endblock %}
+{% block centered-content %}
+    <div class="page-header">
+        <h1>500
+            <small>Sorry, something unexpected just went wrong, and we're very sorry about it.</small>
+        </h1>
+    </div>
+    <div class="row">
+        <div class="span4">
+            <p><img id="sad-danny" src="{% static 'hqwebapp/img/sad_danny.jpg' %}" alt="Sad Danny is Sad" /></p>
+            <blockquote><p>This problem has been logged and we're already hard at work figuring out the issue.</p></blockquote>
+        </div>
+        <div class="span8">
+            <form class="well form form-horizontal" style="padding-bottom: 0;" action="{% url bug_report %}" method="post">
+                <input type="hidden" id="bug-report-url" name="url"/>
+                <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
+                <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
+                <input type="hidden" id="bug-report-app_id" name="app_id" value="{{ app.id }}"/>
+                <input type="hidden" id="bug-report-now" name="now" value="true" />
+                <input type="hidden" id="bug-report-now" name="when" value="right now" />
+                <input type="hidden" name="five-hundred-report" value="true" />
+
+                {{ now }}
+                <fieldset>
+                    <legend>Report an Issue <small>Help us get this problem fixed faster.</small></legend>
+                    <p>We would appreciate it a lot if you could provide us any additional info about what happened before you encountered this problem.</p>
+                    <div class="control-group">
+                        <label class="control-label" for="bug-report-subject">Short Description</label>
+                        <div class="controls">
+                            <input type="text" class="input-xlarge" name="subject" id="bug-report-subject">
+                            <p class="help-block">Please summarize the issue in one sentence&mdash;the message field below should contain more detail.</p>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label" for="bug-report-message">Full Description</label>
+                        <div class="controls">
+                            <textarea class="input-xlarge" name="message" id="bug-report-message" rows="10"></textarea>
+                            <p class="help-block">Please try to include as much information as possible.
+                            </p>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Submit Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
 {% endblock %}
