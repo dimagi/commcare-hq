@@ -127,7 +127,10 @@
             <td>{{ saved_app.version }}</td>
             <td>{% utc_to_timezone saved_app.built_on timezone "%b %d, %Y" %}</td>
             <td>{% utc_to_timezone saved_app.built_on timezone "%H:%M %Z" %}</td>
-            <td>{% if saved_app.built_with.get_label %}{{ saved_app.built_with.get_label }}{% endif %}</td>
+            <td>
+                {% if saved_app.built_with.get_label %}{{ saved_app.built_with.get_label }}{% endif %}
+                {% if not saved_app.built_with.signed %}<h6>Unsigned Jar</h6>{% endif %}
+            </td>
             <td>
                 <div class="download-dropdown">
                     <span>Deploy</span>

@@ -850,7 +850,7 @@ class ApplicationStatusReport(StandardTabularHQReport):
               'corehq.apps.reports.fields.SelectApplicationField']
 
     def get_headers(self):
-        return ["Username", util.define_sort_type("Last Seen"), "CommCare Version", "Application (Version)"]
+        return ["Username", util.define_sort_type("Last Seen"), "CommCare Version", "Application [Deployed Build]"]
 
     def get_parameters(self):
         self.selected_app = self.request_params.get('app', '')
@@ -865,7 +865,7 @@ class ApplicationStatusReport(StandardTabularHQReport):
 
             endkey = [self.domain, user.userID]
             startkey = [self.domain, user.userID, {}]
-            data = get_db().view("reports/last_seen_submission",
+            data = XFormInstance.view("reports/last_seen_submission",
                 startkey=startkey,
                 endkey=endkey,
                 include_docs=True,
@@ -873,10 +873,8 @@ class ApplicationStatusReport(StandardTabularHQReport):
                 reduce=False).first()
 
             if data:
-                data = data['value']
-                received_date = data['time']
                 now = datetime.datetime.now(tz=pytz.utc)
-                time = datetime.datetime.replace(dateutil.parser.parse(received_date), tzinfo=pytz.utc)
+                time = datetime.datetime.replace(data.received_on, tzinfo=pytz.utc)
                 dtime = now - time
                 if dtime.days < 1:
                     dtext = "Today"
@@ -885,16 +883,27 @@ class ApplicationStatusReport(StandardTabularHQReport):
                 else:
                     dtext = "%s days ago" % dtime.days
                 last_seen = util.create_sort_key(dtext, dtime.days)
+
+                if data.version != '1':
+                    build_id = data.version
+                else:
+                    build_id = "unknown"
+
+                form_data = data.get_form
                 try:
-                    app = Application.get(data['app_id'])
-                    is_unknown = False
-                    if self.selected_app and self.selected_app != app._id:
-                        continue
-                    version = app.application_version
-                    app_name = "%s (%s)" % (app.name, app.version)
-                except Exception:
-                    version = "unknown"
-                    app_name = "unknown"
+                    app_name = form_data['meta']['appVersion']['#text']
+                    version = "2.0 Remote"
+                except KeyError:
+                    try:
+                        app = Application.get(data.app_id)
+                        is_unknown = False
+                        if self.selected_app and self.selected_app != data.app_id:
+                            continue
+                        version = app.application_version
+                        app_name = "%s [%s]" % (app.name, build_id)
+                    except Exception:
+                        version = "unknown"
+                        app_name = "unknown"
             if is_unknown and self.selected_app:
                 continue
             row = [user.username_in_report, last_seen, version, app_name]

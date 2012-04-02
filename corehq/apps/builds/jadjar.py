@@ -2,7 +2,7 @@ from StringIO import StringIO
 from datetime import datetime
 import itertools
 from zipfile import ZipFile, ZIP_DEFLATED
-import settings
+from django.conf import settings
 import shlex
 from subprocess import Popen, PIPE
 from tempfile import NamedTemporaryFile
@@ -105,12 +105,13 @@ def sign_jar(jad, jar):
     return jad.render()
 
 class JadJar(object):
-    def __init__(self, jad, jar, version=None, build_number=None):
+    def __init__(self, jad, jar, version=None, build_number=None, signed=False):
         jad, jar = [j.read() if hasattr(j, 'read') else j for j in (jad, jar)]
         self._jad = jad
         self._jar = jar
         self.version = version
         self.build_number = build_number
+        self.signed = signed
 
     @property
     def jad(self):
@@ -133,14 +134,17 @@ class JadJar(object):
         buffer.close()
 
         # update and sign jad
+        signed = False
         if self.jad:
             jad = JadDict.from_jad(self.jad)
             jad.update({
                 'MIDlet-Jar-Size': len(jar),
             })
             jad.update(jad_properties)
-            jad = sign_jar(jad, jar)
+            if hasattr(settings, 'JAR_SIGN'):
+                jad = sign_jar(jad, jar)
+                signed = True
         else:
             jad = None
             
-        return JadJar(jad, jar, self.version, self.build_number)
+        return JadJar(jad, jar, self.version, self.build_number, signed=signed)

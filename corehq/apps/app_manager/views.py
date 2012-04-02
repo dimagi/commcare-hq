@@ -372,6 +372,7 @@ def get_apps_base_context(request, domain, app):
     })
     return context
 
+@login_and_domain_required
 def release_manager(request, domain, app_id, template='app_manager/releases.html'):
     app = get_app(domain, app_id)
     context = get_apps_base_context(request, domain, app)

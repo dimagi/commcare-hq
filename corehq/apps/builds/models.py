@@ -71,18 +71,19 @@ class CommCareBuild(Document):
         """f should be a file-like object or a path to a zipfile"""
         self = cls(build_number=build_number, version=version, time=datetime.utcnow())
         self.save()
+
+        z = ZipFile(f)
         try:
-            z = ZipFile(f)
             for name in z.namelist():
                 path = name.split('/')
                 if path[0] == "dist" and path[-1] != "":
                     path = '/'.join(path[1:])
                     self.put_file(z.read(name), path)
         except:
-            z.close()
             self.delete()
             raise
-        z.close()
+        finally:
+            z.close()
         return self
 
     def minor_release(self):
@@ -214,3 +215,8 @@ class CommCareBuildConfig(Document):
             return filter(lambda x: x.build.major_release() == major, self.menu)
         else:
             return self.menu
+
+
+class BuildRecord(BuildSpec):
+    signed = BooleanProperty(default=True)
+    datetime = DateTimeProperty(required=False)
