@@ -1,13 +1,14 @@
 from datetime import datetime
 from couchdbkit.ext.django.schema import *
 from dimagi.utils.mixins import UnicodeMixIn
+import settings
 
 class HQUserType:
     REGISTERED = 0
     DEMO_USER = 1
     ADMIN = 2
     UNKNOWN = 3
-    human_readable = ["Case Workers",
+    human_readable = [settings.COMMCARE_USER_TERM,
                       "demo_user",
                       "admin",
                       "Unknown Users"]

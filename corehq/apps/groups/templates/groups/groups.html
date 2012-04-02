@@ -1,55 +1,90 @@
 {% extends "users/users_base.html" %}
 {% load i18n %}
+
+{% block subsection-title %}
+    <li>
+        <a href="{% url all_groups domain %}">Groups</a> <span class="divider">&gt;</span>
+    </li>
+    <li class="active">
+        <a href="#">Membership Info</a>
+    </li>
+{% endblock %}
+
+{% block groups_indicator %}
+    <ul class="nav nav-list">
+        <li class="active"><a href="#">Membership Info</a></li>
+    </ul>
+{% endblock %}
+
 {% block user-view %}
-<div class='all_users'>
-	<h1>GROUPS ASSOCIATED WITH {{ couch_user.user_id }}</h1>
-	<table class='big_border'>
-	<tr><td></td>
-		<td>{% trans "Group Name" %}</td>
-		<td></td>
-	</tr>
-	{% for group in groups %}
-	<tr><td></td>
-		<td>{{ group.name }}</td>
-    	<td><a class="delete_link" href="#">>{% trans "Leave" %}</a>
-	        <div class="dialog delete_dialog" title="Leave {{ group }}?">
-	            <form  name="leave_group" action="{% url leave_group domain group.get_id couch_user.couch_id %}" method="POST">
-	                <table>
-	                    <tr><td>
-	                    Are you sure you want to leave the group "{{ group.name }}"?
-	                    </td></tr>
-	                </table>
-	                <input type="submit" value="Delete" />
-	            </form>
-	        </div>
-    	</td>
-	</tr>
-	{% endfor %}
+<div class="tab-content">
+	<h2>Group Membership Information <small>for {{ couch_user.username }} ({{ couch_user.user_id }})</small></h2>
+	<table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th class="span6">{% trans "Group Name" %}</th>
+                <th class="span6">{% trans "Action" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for group in groups %}
+            <tr>
+                <td>{{ group.name }}</td>
+                <td>
+                    <a class="btn btn-primary" href="#leave_group_{{ couch_user.user_id }}" data-toggle="modal"><i class="icon icon-white icon-minus"></i> {% trans "Leave Group" %}</a>
+                    <div id="leave_group_{{ couch_user.user_id }}" class="modal hide fade">
+                        <div class="modal-header">
+                            <a class="close" data-dismiss="modal">&times;</a>
+                            <h3>Leave the group {{ group.name }}?</h3>
+                        </div>
+                        <form name="leave_group" action="{% url leave_group domain group.get_id couch_user.couch_id %}" method="post">
+                            <div class="modal-body">
+                                <p>Are you sure you want to have the user <strong>{{ couch_user.username }}</strong> leave the group <strong>{{ group.name }}</strong>?</p>
+                            </div>
+                            <div class="modal-footer">
+                                <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                                <button type="submit" class="btn btn-primary"><i class="icon icon-minus icon-white"></i> Leave Group</button>
+                            </div>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
 	</table>
 
-	<h1>{% blocktrans with domain|upper as domain %}ALL GROUPS IN DOMAIN {{ domain }}{% endblocktrans %}</h1>
-	<table class='big_border'>
-	<tr><td></td>
-		<td>{% trans "Domain Name" %}</td>
-		<td></td>
-	</tr>
-	{% for group in other_groups %}
-	<tr><td></td>
-		<td>{{ group.name }}</a></td>
-    	<td><a class="add_link" href="#">Join</a>
-	        <div class="add_dialog" title="Add {{ group }}?">
-	            <form  name="join_group" action="{% url join_group domain group.get_id couch_user.user_id %}" method="POST">
-	                <table>
-	                    <tr><td>
-	                    Are you sure you want to join the group "{{ group.name }}"?
-	                    </td></tr>
-	                </table>
-	                <input type="submit" value="Add" />
-	            </form>
-	        </div>
-    	</td>
-	</tr>
-	{% endfor %}
+	<h2>All Groups in the Project "{{ domain }}"</h2>
+	<table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th class="span6">{% trans "Group Name" %}</th>
+                <th class="span6">{% trans "Action" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for group in other_groups %}
+        <tr>
+            <td>{{ group.name }}</td>
+            <td><a class="btn btn-success" href="#join_group_{{ couch_user.user_id }}" data-toggle="modal"><i class="icon icon-white icon-plus"></i> Join</a>
+                <div id="join_group_{{ couch_user.user_id }}" class="modal hide fade">
+                    <div class="modal-header">
+                        <a class="close" data-dismiss="modal">&times;</a>
+                        <h3>Join the group {{ group.name }}?</h3>
+                    </div>
+                    <form name="join_group" action="{% url join_group domain group.get_id couch_user.user_id %}" method="post">
+                        <div class="modal-body">
+                            <p>Are you sure you want to have the user <strong>{{ couch_user.username }}</strong> join the group <strong>{{ group.name }}</strong>?</p>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                            <button type="submit" class="btn btn-success"><i class="icon icon-plus icon-white"></i> Join Group</button>
+                        </div>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
 	</table>
 </div>
 {% endblock %}

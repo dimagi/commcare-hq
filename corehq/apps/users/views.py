@@ -91,27 +91,6 @@ def web_users(request, domain, template="users/web_users.html"):
     return render_to_response(request, template, context)
 
 @require_can_edit_web_users
-@transaction.commit_on_success
-def create_web_user(request, domain, template="users/create_web_user.html"):
-    if request.method == "POST":
-        form = AdminRegistersUserForm(request.POST)
-        if form.is_valid():
-            data = form.cleaned_data
-            assert(data['password_1'] == data['password_2'])
-            data['password'] = data['password_1']
-            del data['password_1']
-            del data['password_2']
-            new_user = register_user(domain, send_email=True, **data)
-            return HttpResponseRedirect(reverse("web_users", args=[domain]))
-    else:
-        form = AdminRegistersUserForm()
-    context = _users_context(request, domain)
-    context.update(
-        registration_form=form
-    )
-    return render_to_response(request, template, context)
-
-@require_can_edit_web_users
 @require_POST
 def remove_web_user(request, domain, couch_user_id):
     user = WebUser.get_by_user_id(couch_user_id, domain)
@@ -421,6 +400,7 @@ def change_my_password(request, domain, template="users/change_my_password.html"
         form = PasswordChangeForm(user=request.user, data=request.POST)
         if form.is_valid():
             form.save()
+            messages.success(request, "Your password was successfully changed!")
             return HttpResponseRedirect(reverse('user_account', args=[domain, request.couch_user._id]))
     else:
         form = PasswordChangeForm(user=request.user)

@@ -1,23 +1,35 @@
 {% extends "users/users_base.html" %}
+{% load hq_shared_tags %}
+
+{% block web_users_indicator %}
+    <ul>
+        <li class="selected">Transfer {% commcare_user %}s</li>
+    </ul>
+{% endblock %}
 
 {% block user-view %}
-    <h1>Transfer CommCare Users</h1>
+<div class="tab-content">
+    <form class="form form-horizontal" action="" method="post">
+        <fieldset>
+            <legend>Transfer Users</legend>
+            {% for user in commcare_users %}
+                <div class="control-group">
+                    <label for="u_{{ user.user_id }}"></label>
+                        <input type="checkbox" name="user_id" id="u_{{ user.user_id }}" value="{{ user.user_id }}"/>
+                        <label for="u_{{ user.user_id }}">{{ user.raw_username }}</label>
+                </div>
+            {% endfor %}
+        </fieldset>
+        <div class="control-group">
+            <label class="control-label">Transfer users</label>
+            <div class="controls">
 
-
-    <form action="" method="post">
+            </div>
+        </div>
         <table>
             <tr>
-                <th>Transfer users</th>
-                <td>
-                    {% for user in commcare_users %}
-                        <ul>
-                            <li>
-                                <input type="checkbox" name="user_id" id="u_{{ user.user_id }}" value="{{ user.user_id }}"/>
-                                <label for="u_{{ user.user_id }}">{{ user.raw_username }}</label>
-                            </li>
-                        </ul>
-                    {% endfor %}
-                </td>
+                <th></th>
+
             </tr>
             <tr>
                 <th>to domain</th>
@@ -36,5 +48,5 @@
         </table>
         <input type="submit" value="Transfer "/>
     </form>
-
+</div>
 {% endblock %}

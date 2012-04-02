@@ -744,13 +744,19 @@ class WebUser(CouchUser):
                 if domain not in self.domains:
                     raise self.Inconsistent("Domain '%s' is in domain_memberships but not domains" % domain)
                 return
+
         domain_obj = Domain.get_by_name(domain)
         if not domain_obj:
             domain_obj = Domain(is_active=True, name=domain, date_created=datetime.utcnow())
             domain_obj.save()
-        self.domain_memberships.append(DomainMembership(domain=domain,
-                                                        timezone=domain_obj.default_timezone,
-                                                        **kwargs))
+
+        if kwargs.get('timezone'):
+            domain_membership = DomainMembership(domain=domain, **kwargs)
+        else:
+            domain_membership = DomainMembership(domain=domain,
+                                            timezone=domain_obj.default_timezone,
+                                            **kwargs)
+        self.domain_memberships.append(domain_membership)
         self.domains.append(domain)
 
     def delete_domain_membership(self, domain, create_record=False):
@@ -945,6 +951,7 @@ class RemoveWebUserRecord(DeleteRecord):
 
     def undo(self):
         user = WebUser.get_by_user_id(self.user_id)
+        print "DM", self.domain_membership._doc
         user.add_domain_membership(**self.domain_membership._doc)
         user.save()
 

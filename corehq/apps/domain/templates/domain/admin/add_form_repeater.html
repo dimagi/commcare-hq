@@ -1,55 +1,64 @@
-{% extends "domain/admin/domain_admin_base.html" %}
-{% block head %}
-    {{ block.super }}
-    <script>
-    $(function() {
-        // styling
-        $('#notify').addClass("hidden");
-        // test url
-        $('#test-url').click(function () { 
-            var url = $("#id_url").val();
-            jQuery.post("{% url test_repeater domain %}", {url: url},
-                        function(data){
-                            json_res = JSON.parse(data);
-                            notice = $('#notify');
-                            notice.removeClass("hidden success error");
-                            if (json_res.status) {
-                                msg = json_res.status + ": " + json_res.response;
-                            } else {
-                                msg = json_res.response;
-                            }
-                            if (json_res.success) {
-                                notice.addClass("success");
-                                notice.text("Success! Response is: " + msg);
-                            } else {
-                                notice.addClass("error");
-                                notice.text("Failed! Response is: " + msg);
-                            }
-                        });
+{% extends "users/users_base.html" %}
+{% load hq_bootstrap_tags %}
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(function() {
+            var $testLinkButton = $('<a style="margin-left: 5px;" class="btn btn-info hide" href="#" />'),
+                     $testLabel = $('<span style="margin-left: 5px;" class="label" />');
+            $testLinkButton.text("Test Link");
+            $testLinkButton.click(function () {
+                var url = $("#id_url").val();
+                jQuery.post("{% url test_repeater domain %}", {url: url}, function(data){
+                    json_res = JSON.parse(data);
+                    $testLabel.removeClass("hide label-important label-success");
+                    if (json_res.status) {
+                        msg = json_res.status + ": " + json_res.response;
+                    } else {
+                        msg = json_res.response;
+                    }
+                    if (json_res.success) {
+                        $testLabel.addClass("label-success");
+                        $testLabel.text("Success! Response is: " + msg);
+                    } else {
+                        $testLabel.addClass("label-important");
+                        $testLabel.text("Failed! Response is: " + msg);
+                    }
+                });
+            });
+            $('#id_url').after($testLinkButton);
+            $testLinkButton.after($testLabel.addClass('hide'));
+            $('#id_url').change(function () {
+                if ($(this).val()) {
+                    $testLinkButton.removeClass('hide');
+                } else {
+                    $testLinkButton.addClass('hide');
+                }
+            });
         });
-    });
     </script>
-    <style>
-        #test-url { padding-left:2em; }
-        .error, .success {padding:.8em;margin-top:1em;margin-bottom:1em;border:2px solid #ddd;}
-        .success {background:#E6EFC2;color:#264409;border-color:#C6D880;}
-        .error {background:#FBE3E4;color:#8a1f11;border-color:#FBC2C4;}
-    </style>
 {% endblock %}
-{% block content %}
-<div id="main_container">
-    <div id="domain_forwarding">
-        <h2 id="header">Forward {% if repeater_type == "FormRepeater"  %}Forms{% else %}Cases{% endif %}</h2>
-        <div id="content" >
-			<form method="post" action="">
-			<table>
-			    {{form.as_table}}
-			    <tr><td></td><td><input type="submit" value="Start Forwarding" />
-			                     <a id="test-url" href="#">Test this link!</a>
-			                     <div id="notify"></div></td></tr>
-			</table>
-        </form>
-        </div>
-    </div>
+
+{% block subsection-title %}
+    <li>
+        <a href="{% url domain_forwarding domain %}">Project Forwarding</a> <span class="divider">&gt;</span>
+    </li>
+    <li class="active">
+        <a href="#">Forward {% if repeater_type == "FormRepeater" %}Forms{% else %}Cases{% endif %}</a>
+    </li>
+{% endblock %}
+
+{% block forwarding_indicator %}
+    <ul class="nav nav-list">
+        <li class="active"><a href="#">Forward {% if repeater_type == "FormRepeater" %}Forms{% else %}Cases{% endif %}</a></li>
+    </ul>
+{% endblock %}
+
+{% block user-view %}
+<div class="tab-content">
+    <form class="form form-horizontal" method="post" action="">
+        {% bootstrap_form_errors form %}
+        {% bootstrap_fieldset form "Forwarding Settings" %}
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Start Forwarding</button></div>
+    </form>
 </div>
 {% endblock %}

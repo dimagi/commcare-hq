@@ -1,4 +1,5 @@
 {% extends "users/users_base.html" %}
+{% load hq_shared_tags %}
 {% load hq_bootstrap_tags %}
 
 {% block web_users_indicator %}
@@ -17,31 +18,25 @@
     {% endif %}
 {% endblock %}
 
-{% block page-title %}
-    <ul class="breadcrumb">
+{% block subsection-title %}
+    {% if couch_user.user_id != request.couch_user.user_id %}
         <li>
-            <a href="{% url users_default domain %}"><strong>Project Settings</strong></a> <span class="divider">&gt;</span>
+            {% if not couch_user.is_commcare_user %}
+                <a href="{% url web_users domain %}">{% hq_web_user %}s</a>
+            {% else %}
+                <a href="{% url commcare_users domain %}">{% commcare_user %}s</a>
+            {% endif %}
+            <span class="divider">&gt;</span>
         </li>
-        {% if couch_user.user_id != request.couch_user.user_id %}
-            <li>
-                {% if not couch_user.is_commcare_user %}
-                    <a href="{% url web_users domain %}">Web Users</a>
-                {% else %}
-                    <a href="{% url commcare_users domain %}">Case Workers</a>
-                {% endif %}
-                <span class="divider">&gt;</span>
-            </li>
-            <li class="active">
-                <a href="#">User Settings <small>{{ couch_user.username }}</small></a>
-            </li>
-        {% else %}
-            <li class="active">
-                <a href="#">My Account Settings</a>
-            </li>
-        {% endif %}
-    </ul>
+        <li class="active">
+            <a href="#">User Settings <small>{{ couch_user.username }}</small></a>
+        </li>
+    {% else %}
+        <li class="active">
+            <a href="#">My Account Settings</a>
+        </li>
+    {% endif %}
 {% endblock %}
-
 
 {% block user-view %}
     <ul class="nav nav-tabs" id="project-settings-tabs">
@@ -156,8 +151,8 @@
                     <p>Are you sure you want to delete the phone number: "+{{ phone_number }}"?</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-danger"><i class="icon icon-remove icon-white"></i> Delete</button>
                     <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                    <button type="submit" class="btn btn-danger"><i class="icon icon-remove icon-white"></i> Delete</button>
                 </div>
             </form>
         </div>

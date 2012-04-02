@@ -7,9 +7,10 @@ def default(request, domain):
     return HttpResponseRedirect(reverse("users_default", args=[domain]))
 
 @login_and_domain_required
-def redirect_users(request, domain):
+def redirect_users(request, domain, old_url=""):
+    print old_url
     return HttpResponseRedirect(reverse("users_default", args=[domain]))
 
 @login_and_domain_required
-def redirect_domain_settings(request, domain):
-    return HttpResponseRedirect(reverse("domain_global_settings", args=[domain]))
+def redirect_domain_settings(request, domain, old_url=""):
+    return HttpResponseRedirect(reverse("domain_forwarding", args=[domain]))

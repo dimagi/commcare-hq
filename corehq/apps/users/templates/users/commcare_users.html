@@ -1,5 +1,6 @@
 {% extends "users/users_base.html" %}
 {% load i18n %}
+{% load hq_shared_tags %}
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
@@ -46,19 +47,17 @@
     </script>
 {% endblock %}
 
-{% block page-title %}
-    <ul class="breadcrumb">
-        <li>
-            <a href="{% url users_default domain %}"><strong>Project Settings</strong></a> <span class="divider">&gt;</span>
-        </li>
-        <li class="active">
-            <a href="#">Case Workers</a>
-        </li>
-    </ul>
+{% block subsection-title %}
+    <li class="active">
+        <a href="#">{% commcare_user %}s</a>
+    </li>
 {% endblock %}
+
 
 {% block user-view %}
 <div class="tab-content">
+    <h2>List of {% commcare_user %}s for Project "{{ domain }}"</h2>
+    <p>{% commcare_user %}s can submit forms from phones running the CommCare Application. While {% commcare_user %}s can login to CommCare HQ and view project data, <br />they are bound to a particular project on CommCare HQ and cannot manage the project or create additional projects and users.</p>
     <table class="table table-striped table-bordered">
         {% if commcare_users %}
             <thead>
@@ -80,7 +79,7 @@
                 {% ifchanged user.is_active %}
                     {% if not user.is_active %}
                     <tr>
-                        <td colspan="8">Archived Case Workers</td>
+                        <td colspan="8">Archived {% commcare_user %}s</td>
                     </tr>
                     {% endif %}
                 {% endifchanged %}
@@ -141,7 +140,7 @@
                                 </div>
                                 <div class="modal-footer">
                                     <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                                    <button type="submit" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Delete Case Worker</button>
+                                    <button type="submit" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Delete {% commcare_user %}</button>
                                 </div>
                             </form>
                         </div>
@@ -150,19 +149,19 @@
                 </tr>
             {% endfor %}
         {% else %}
-            <tr><td colspan="8">There are no Case Workers for this domain.</td></tr>
+            <tr><td colspan="8">There are no {% commcare_user %}s for this domain.</td></tr>
         {% endif %}
         {% if not show_inactive %}
             <tr>
                 <td colspan="8">
-                    <a href="./?show_inactive=true">Show Archived Case Workers</a>
+                    <a href="./?show_inactive=true">Show Archived {% commcare_user %}s</a>
                 </td>
             </tr>
         {% endif %}
         </tbody>
     </table>
     <div>
-        <a class="btn btn-success" href="{% url add_commcare_account domain %}"><i class="icon icon-white icon-plus"></i> New Case Worker</a>
+        <a class="btn btn-success" href="{% url add_commcare_account domain %}"><i class="icon icon-white icon-plus"></i> New {% commcare_user %}</a>
         or
         <a class="btn" href="{% url upload_commcare_users domain %}">Bulk Upload</a>
     </div>

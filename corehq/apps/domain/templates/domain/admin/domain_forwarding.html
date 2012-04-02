@@ -1,24 +1,40 @@
-{% extends "domain/admin/domain_admin_base.html" %}
+{% extends "users/users_base.html" %}
 {% load i18n %}
-{% block content %}
-<div id="main_container">
-    <div id="domain_forwarding">
-        <h2>Project Forwarding</h2>
-        <div id="content">
-        {% for cls, form_repeaters in repeaters %}
-            <h3>Forward {% if cls == "FormRepeater" %}Forms{% else %}Cases{% endif %}:</h3>
+
+{% block subsection-title %}
+    <li>
+        <a href="{% url domain_forwarding domain %}">Project Forwarding</a>
+    </li>
+{% endblock %}
+
+{% block user-view %}
+    {% for cls, form_repeaters in repeaters %}
+    <div class="tab-content" style="padding-bottom:2em;">
+        <h2>Forward {% if cls == "FormRepeater" %}Forms{% else %}Cases{% endif %}:</h2>
+        {% if form_repeaters %}
+            <table class="table table-striped table-bordered">
             {% if form_repeaters %}
-                <table>
-                {% for repeater in form_repeaters %}
-                    {% include "domain/admin/repeater_row.html" %}
-                {% endfor %}
-                </table>
-            {% else %}
-                <p>You haven't configured any urls to forward to yet.</p>
+            <thead>
+                <tr>
+                    <th class="span6">
+                        Url
+                    </th>
+                    <th class="span6">
+                        Action
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
             {% endif %}
-            <a class="new_link" href="{% url add_repeater domain cls %}">Add a forwarding location</a>
-        {% endfor %}
-        </div>
+            {% for repeater in form_repeaters %}
+                {% include "domain/admin/repeater_row.html" %}
+            {% endfor %}
+            </tbody>
+            </table>
+        {% else %}
+            <p>You haven't configured any urls to forward to yet.</p>
+        {% endif %}
+        <a class="btn btn-success" href="{% url add_repeater domain cls %}"><i class="icon icon-white icon-plus"></i> Add a forwarding location</a>
     </div>
-</div>
+    {% endfor %}
 {% endblock %}

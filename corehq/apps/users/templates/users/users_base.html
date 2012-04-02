@@ -1,13 +1,13 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load hq_shared_tags %}
-{% block js %}{{ block.super }}
-{#    <script src="{% static 'users/js/users.js' %}"></script>#}
+{% block js %} {{ block.super }}
+    <script type="text/javascript" src="{% static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
 {% endblock %}
-{% block js-inline %}{{ block.super }}
+{% block js-inline %} {{ block.super }}
     <script type="text/javascript">
         $(function () {
+            COMMCAREHQ.initBlock($('.hq-content'));
             $('#users-main-nav li a').each(function(e) {
-                console.log($(this).attr('href') + ", " + '{{ request.path }}');
                 if ($(this).attr('href') == '{{ request.path }}')
                     $(this).parent().addClass('active');
             });
@@ -33,8 +33,10 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url users_default domain %}"><strong>Project Settings</strong></a>
+            <a href="{% url users_default domain %}"><strong>Project Settings</strong></a> <span class="divider">&gt;</span>
         </li>
+        {% block subsection-title %}
+        {% endblock %}
     </ul>
 {% endblock %}
 
@@ -49,12 +51,12 @@
     {% if request.couch_user.can_edit_web_users or request.couch_user.can_edit_commcare_users %}
         <li class="nav-header">User Management</li>
         {% if request.couch_user.can_edit_web_users %}
-            <li><a href="{% url web_users domain %}">Web Users</a>
+            <li><a href="{% url web_users domain %}">{% hq_web_user %}s</a>
                 {% block web_users_indicator %}{% endblock %}
             </li>
         {% endif %}
         {% if request.couch_user.can_edit_commcare_users %}
-            <li><a href="{% url commcare_users domain %}">Case Workers</a>
+            <li><a href="{% url commcare_users domain %}">{% commcare_user %}s</a>
                 {% block commcare_users_indicator %}{% endblock %}
             </li>
             <li><a href="{% url all_groups domain %}">Groups</a>
@@ -62,9 +64,14 @@
             </li>
         {% endif %}
     {% endif %}
-    {% if request.couch_user.is_domain_admin %}
+    {% if request.couch_user.can_edit_web_users  %}
         <li class="nav-header">Project Administration</li>
+        {% if request.couch_user.is_domain_admin %}
         <li><a href="{% url domain_global_settings domain %}">Global Settings</a></li>
+        {% endif %}
+        <li><a href="{% url domain_forwarding domain %}">Forwarding</a>
+            {% block forwarding_indicator %}{% endblock %}
+        </li>
     {% endif %}
     </ul>
 </nav>

@@ -70,7 +70,11 @@
                             <div class="btn-group">
                                 <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
                                     <i class="icon-hq-white icon-hq-person"></i>
-                                    {{ user.first_name }} {{ user.last_name }}
+                                    {% if user.first_name %}
+                                        {{ user.first_name }} {{ user.last_name }}
+                                    {% else %}
+                                        {{ user.username }}
+                                    {% endif %}
                                     {% with request.couch_user.role_label as role %}
                                         {% if role %}
                                             ({{ role }})
