@@ -8,6 +8,11 @@
             </tr>
         </thead>
         <tbody>
+        {% if not domains %}
+            <tr>
+                <td colspan="2">You are currently not an administrator of any projects.</td>
+            </tr>
+        {% endif %}
         {% for dom in domains %}
             <tr>
                 <td><a href="{% url domain_homepage dom %}">{{ dom }}</a></td>
