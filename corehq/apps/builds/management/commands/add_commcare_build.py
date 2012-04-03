@@ -4,12 +4,13 @@ from corehq.apps.builds.models import CommCareBuild
 
 class Command(BaseCommand):
     args = '<build_path> <version> <build_number>'
-    help = 'Adds a commcare build, labeled with the version (x.y.z) and build_number (an incrementing integer)'
+    help = ('Adds a commcare build, labeled with the version (x.y.z) and build_number (an incrementing integer)\n'
+            'to get started see https://github.com/dimagi/core-hq/blob/master/corehq/apps/builds/README.md')
     def handle(self, *args, **options):
         try:
             build_path, version, build_number = args
         except ValueError:
-            raise CommandError('Usage: %s' % self.args)
+            raise CommandError('Usage: %s\n%s' % (self.args, self.help))
 
         try:
             build_number = int(build_number)
