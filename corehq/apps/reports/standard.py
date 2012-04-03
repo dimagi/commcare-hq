@@ -785,6 +785,9 @@ class ExcelExportReport(StandardDateHQReport):
                         app = app_cache[form['app']['id']]
                     except Exception:
                         form['app_does_not_exist'] = True
+                        form['possibilities'] = possibilities[form['xmlns']]
+                        if form['possibilities']:
+                            form['duplicate'] = True
                     else:
                         if app.domain != self.domain:
                             logging.error("submission tagged with app from wrong domain: %s" % app.get_id)
