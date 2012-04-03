@@ -187,7 +187,7 @@ TABS = [
     ("corehq.apps.reports.views.default", "Reports"),
     ("corehq.apps.app_manager.views.default", "Applications"),
     ("corehq.apps.sms.views.messaging", "Messages"),
-    ("corehq.apps.settings.views.default", "Project Settings"),
+    ("corehq.apps.settings.views.default", "Settings & Users"),
     ("corehq.apps.hqadmin.views.default", "Admin Reports", "is_superuser"),
 ]
 
