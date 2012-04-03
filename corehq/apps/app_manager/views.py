@@ -463,15 +463,16 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update({"translations": app.translations.get(context['lang'], {})})
 
     if app and app.get_doc_type() == 'Application':
-        sorted_images, sorted_audio = utils.get_sorted_multimedia_refs(app)
-        multimedia_images, missing_image_refs = app.get_template_map(sorted_images, domain)
-        multimedia_audio, missing_audio_refs = app.get_template_map(sorted_audio, domain)
+        images, audio, has_error = utils.get_multimedia_filenames(app)
+        multimedia_images, missing_image_refs = app.get_template_map(images, domain)
+        multimedia_audio, missing_audio_refs = app.get_template_map(audio, domain)
         context.update({
             'missing_image_refs': missing_image_refs,
             'missing_audio_refs': missing_audio_refs,
             'multimedia': {
                 'images': multimedia_images,
-                'audio': multimedia_audio
+                'audio': multimedia_audio,
+                'has_error': has_error
             }
         })
 
@@ -1042,7 +1043,7 @@ def multimedia_upload(request, domain, kind, app_id):
 @require_permission('edit-apps')
 def multimedia_map(request, domain, app_id):
     app = get_app(domain, app_id)
-    sorted_images, sorted_audio = utils.get_sorted_multimedia_refs(app)
+    sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
 
     images, missing_image_refs = app.get_template_map(sorted_images, domain)
     audio, missing_audio_refs = app.get_template_map(sorted_audio, domain)
@@ -1054,7 +1055,8 @@ def multimedia_map(request, domain, app_id):
                                "app": app,
                                "multimedia": {
                                    "images": images,
-                                   "audio": audio
+                                   "audio": audio,
+                                   "has_error": has_error
                                },
                                "fileform": fileform,
                                "progress_id_varname": upload.HQMediaCacheHandler.X_PROGRESS_ID,
