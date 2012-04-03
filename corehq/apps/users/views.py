@@ -28,7 +28,7 @@ from corehq.apps.prescriptions.models import Prescription
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.forms import UserForm, CommCareAccountForm, ProjectSettingsForm, CommCareChangePasswordForm
+from corehq.apps.users.forms import UserForm, CommCareAccountForm, ProjectSettingsForm
 from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord, Permissions
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
@@ -196,7 +196,7 @@ def commcare_users(request, domain, template="users/commcare_users.html"):
     context.update({
         'commcare_users': users,
         'show_inactive': show_inactive,
-        'reset_password_form': CommCareChangePasswordForm(user="")
+        'reset_password_form': SetPasswordForm(user="")
     })
     return render_to_response(request, template, context)
 
@@ -377,13 +377,13 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
         raise Http404
     django_user = commcare_user.get_django_user()
     if request.method == "POST":
-        form = CommCareChangePasswordForm(user=django_user, data=request.POST)
+        form = SetPasswordForm(user=django_user, data=request.POST)
         if form.is_valid():
             form.save()
             json_dump['status'] = 'OK'
-            form = CommCareChangePasswordForm(user=django_user)
+            form = SetPasswordForm(user=django_user)
     else:
-        form = CommCareChangePasswordForm(user=django_user)
+        form = SetPasswordForm(user=django_user)
     context = _users_context(request, domain)
     context.update({
         'reset_password_form': form,

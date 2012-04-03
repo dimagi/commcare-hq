@@ -84,14 +84,4 @@ class CommCareAccountForm(forms.Form):
 
 validate_username = EmailValidator(email_re, _(u'Username contains invalid characters.'), 'invalid')
 
-class CommCareChangePasswordForm(SetPasswordForm):
-
-    def clean_new_password1(self):
-        password1 = self.cleaned_data['new_password1']
-        try:
-            int(password1)
-        except ValueError:
-            raise forms.ValidationError("Password should contain only numbers.")
-        return password1
-
 
