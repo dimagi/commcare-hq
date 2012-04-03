@@ -33,7 +33,7 @@ class HQMediaZipUploadForm(forms.Form):
                 return zip
 
     def save(self, domain, app, username, cache_handler=None):
-        orig_images, orig_audio = utils.get_multimedia_filenames(app)
+        orig_images, orig_audio, _ = utils.get_multimedia_filenames(app)
         form_images = [i.replace(utils.MULTIMEDIA_PREFIX, '').lower().strip() for i in orig_images]
         form_audio = [a.replace(utils.MULTIMEDIA_PREFIX, '').lower().strip() for a in orig_audio]
 
