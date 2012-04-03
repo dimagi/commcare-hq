@@ -11,54 +11,7 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    <script>
-{#        $(function () {#}
-{#            var groupName = {{ group.name|JSON }},#}
-{#                groupCaseSharing = {{ group.case_sharing|JSON }},#}
-{#                selectedGroupTab = $('#group-list > .selected'),#}
-{#                pencil = $('<span/>').addClass('ui-icon ui-icon-pencil').css({'float': 'right'}),#}
-{#                editLink = $('<a href="#"/>').append(pencil).click(function (e) {#}
-{#                        e.preventDefault();#}
-{#                        var offset = pencil.offset();#}
-{#                        offset.top -= editorPopup.outerHeight();#}
-{#                        offset.left += pencil.outerWidth();#}
-{#                        Shield.open(editorPopup.css(offset));#}
-{#                        $("#group-name-input").focus().select();#}
-{#                    }).prependTo(selectedGroupTab),#}
-{#                editorPopup = $('<div/>').addClass('edit-group-name-popup ui-widget shadow ui-corner-top ui-corner-br');#}
-{#            $('<form/>').attr({method: "POST", action: "{% url edit_group domain group.get_id %}"}).append(#}
-{#                $('<table/>').append(#}
-{#                    $('<tr/>').append(#}
-{#                        $('<td/>').append(#}
-{#                            $('<label for="group-name-input"/>').text('Group Name: ')#}
-{#                        ),#}
-{#                        $('<td/>').append(#}
-{#                            $('<input type="text" id="group-name-input"/>').attr({name: 'name'}).val(groupName)#}
-{#                        )#}
-{#                    ),#}
-{#                    $('<tr/>').append(#}
-{#                        $('<td/>').append(#}
-{#                            $('<label for="group-case-sharing-input"/>').text('Case Sharing: ')#}
-{#                        ),#}
-{#                        $('<td/>').append(#}
-{#                            $('<select id="group-case-sharing-input"/>').attr({name: 'case_sharing'}).append(#}
-{#                                $('<option/>').attr({value: 'false'}).text('Off'),#}
-{#                                $('<option/>').attr({value: 'true'}).text('On')#}
-{#                            ).val(JSON.stringify(groupCaseSharing))#}
-{#                        )#}
-{#                    )#}
-{#                ),#}
-{#                $('<div/>').append(#}
-{#                    $('<a href="#"/>').addClass('submit button').text("Save").css({'float': 'right', marginLeft: '.5em'}),#}
-{#                    $('<a href="#"/>').addClass('button').text('Cancel').css('float', 'right').click(function (e) {#}
-{#                        e.preventDefault();#}
-{#                        Shield.close();#}
-{#                    })#}
-{#                )#}
-{#            ).appendTo(editorPopup);#}
-{#            editorPopup.appendTo($('body')).hide();#}
-{#            COMMCAREHQ.initBlock(editorPopup);#}
-{#        });#}
+    <script type="text/javascript">
         $(function () {
             var i, j, index,
                 wrapper = $('#non-members'),
@@ -112,6 +65,7 @@
                             <input type="text" value="{{ group.name }}" name="name" id="group-name-input" />
                         </div>
                     </div>
+                {% if user.is_superuser %}
                     <div class="control-group">
                         <label class="control-label" for="group-case-sharing-input">Case Sharing</label>
                         <div class="controls">
@@ -121,6 +75,7 @@
                             </select>
                         </div>
                     </div>
+                {% endif %}
                 </div>
                 <div class="modal-footer">
                     <a href="#" class="btn" data-dismiss="modal">Cancel</a>
