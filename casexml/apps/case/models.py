@@ -205,7 +205,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn):
             "server_date_modified": self.server_modified_on,
             # renamed
             "server_date_opened": self.server_modified_on,
-            "properties": dict(self.dynamic_properties().items() + {
+            "properties": dict(self.dynamic_case_properties() + {
                 "external_id": self.external_id,
                 "owner_id": self.owner_id,
                 # renamed
