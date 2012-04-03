@@ -8,7 +8,7 @@
 
         <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
 
-        <link rel="stylesheet" media="screen" href="{% static 'hq-bootstrap/css/hq-bootstrap.css' %}"/>
+        <link rel="stylesheet" media="screen" href="{% static 'hq-bootstrap/css/hq-bootstrap.css' %}?v=2"/>
 
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hq-bootstrap/js/jquery-1.7.1.min.js' %}"></script>
@@ -200,7 +200,7 @@
         {% endblock %}
         </div>
         <!--Begin javascript -->
-        <script src="{% static 'hq-bootstrap/js/bootstrap.min.js' %}"></script>
+        <script src="{% static 'hq-bootstrap/js/bootstrap.min.js' %}?v=2"></script>
         <script src="{% static 'hq-bootstrap/js/jquery.form.js' %}"></script>
 
         {% block js %}
