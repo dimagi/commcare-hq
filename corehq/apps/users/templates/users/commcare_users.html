@@ -58,6 +58,15 @@
     <div>
     <h2>List of {% commcare_user %}s for Project "{{ domain }}"</h2>
     <p>{% commcare_user %}s can submit forms from phones running the CommCare Application. While {% commcare_user %}s can login to CommCare HQ and view project data, <br />they are bound to a particular project on CommCare HQ and cannot manage the project or create additional projects and users.</p>
+    <div class="btn-toolbar">
+        {% if not show_inactive %}
+        <a class="btn btn-primary pull-right" href="./?show_inactive=true">Show Archived {% commcare_user %}s</a>
+        {% endif %}
+        <a class="btn btn-success" href="{% url add_commcare_account domain %}"><i class="icon icon-white icon-plus"></i> New {% commcare_user %}</a>
+        or
+        <a class="btn" href="{% url upload_commcare_users domain %}">Bulk Upload</a>
+    </div>
+
     <table class="table table-striped table-bordered">
         {% if commcare_users %}
             <thead>
@@ -79,7 +88,7 @@
                 {% ifchanged user.is_active %}
                     {% if not user.is_active %}
                     <tr>
-                        <td colspan="8">Archived {% commcare_user %}s</td>
+                        <th colspan="{% if couch_user.can_edit_commcare_users %}8{% else %}6{% endif %}">Archived {% commcare_user %}s</th>
                     </tr>
                     {% endif %}
                 {% endifchanged %}
@@ -132,11 +141,17 @@
                         <div id="delete_user_{{ user.user_id }}" class="modal hide fade">
                             <div class="modal-header">
                                 <a class="close" data-dismiss="modal">&times;</a>
-                                <h3>Delete Case Worker {{ user.raw_username }}?</h3>
+                                <h3>Delete {% commcare_user %} {{ user.raw_username }}? <small>Permanent Action</small></h3>
                             </div>
                             <form class="form form-horizontal" action="{% url delete_commcare_user domain user.user_id %}" method="post">
                                 <div class="modal-body">
-                                    <p>Are you sure you want to permanently delete <strong>{{ user.raw_username }}</strong> and all of their form submissions?</p>
+                                    <p>Are you sure you want to permanently delete <strong>{{ user.raw_username }}</strong>?</p>
+                                    <p>This action:</p>
+                                    <ul>
+                                        <li>Will delete <strong>all</strong> of {{ user.raw_username }}'s form submissions.</li>
+                                        <li>Is permanent.</li>
+                                    </ul>
+                                    <p>If you ever want to use {{ user.raw_username }}'s data in the future, we suggest that you use the <strong>Archive User</strong> option.</p>
                                 </div>
                                 <div class="modal-footer">
                                     <a href="#" data-dismiss="modal" class="btn">Cancel</a>
@@ -151,19 +166,10 @@
         {% else %}
             <tr><td colspan="8">There are no {% commcare_user %}s for this domain.</td></tr>
         {% endif %}
-        {% if not show_inactive %}
-            <tr>
-                <td colspan="8">
-                    <a href="./?show_inactive=true">Show Archived {% commcare_user %}s</a>
-                </td>
-            </tr>
-        {% endif %}
         </tbody>
     </table>
     </div>
     <div>
-        <a class="btn btn-success" href="{% url add_commcare_account domain %}"><i class="icon icon-white icon-plus"></i> New {% commcare_user %}</a>
-        or
-        <a class="btn" href="{% url upload_commcare_users domain %}">Bulk Upload</a>
+
     </div>
 {% endblock %}

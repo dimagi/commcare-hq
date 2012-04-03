@@ -51,7 +51,13 @@
 <div class="row-fluid">
     <div class="span12">
         <h2>Group "{{ group.name }}"</h2>
-        <a href="#editGroupSettings" class="btn" data-toggle="modal"><i class="icon icon-pencil"></i> Edit Settings</a>
+        <div class="btn-toolbar">
+            <a href="#editGroupSettings" class="btn" data-toggle="modal"><i class="icon icon-pencil"></i> Edit Settings</a>
+            <form name="delete_group" style="margin-right: 45px;" class="pull-right" action="{% url delete_group domain group.get_id %}" method="post">
+                <button class="btn btn-danger" type="submit"><i class="icon icon-white icon-remove"></i> Delete Group "{{ group.name }}"</button>
+            </form>
+        </div>
+
         <div class="modal hide fade" id="editGroupSettings">
             <div class="modal-header">
                 <a class="close" data-dismiss="modal">×</a>
@@ -83,9 +89,7 @@
                 </div>
             </form>
         </div>
-        <form name="delete_group" style="margin-right: 45px;" class="pull-right" action="{% url delete_group domain group.get_id %}" method="post">
-            <button class="btn btn-danger" type="submit"><i class="icon icon-white icon-remove"></i> Delete Group "{{ group.name }}"</button>
-        </form>
+
     </div>
 </div>
 {% endblock %}
