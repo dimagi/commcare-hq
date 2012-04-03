@@ -33,7 +33,7 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url users_default domain %}"><strong>Project Settings</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url users_default domain %}"><strong>Settings &amp; Users</strong></a> <span class="divider">&gt;</span>
         </li>
         {% block subsection-title %}
         {% endblock %}
@@ -43,27 +43,28 @@
 {% block sidebar %}
 <nav>
     <ul class="nav nav-list" id="users-main-nav">
+    {% if request.couch_user.can_edit_web_users or request.couch_user.can_edit_commcare_users %}
+            <li class="nav-header">User Management</li>
+            {% if request.couch_user.can_edit_web_users %}
+                <li><a href="{% url web_users domain %}">{% hq_web_user %}s</a>
+                    {% block web_users_indicator %}{% endblock %}
+                </li>
+            {% endif %}
+            {% if request.couch_user.can_edit_commcare_users %}
+                <li><a href="{% url commcare_users domain %}">{% commcare_user %}s</a>
+                    {% block commcare_users_indicator %}{% endblock %}
+                </li>
+                <li><a href="{% url all_groups domain %}">Groups</a>
+                    {% block groups_indicator %}{% endblock %}
+                </li>
+            {% endif %}
+    {% endif %}
         <li class="nav-header">My Account</li>
         <li><a href="{% url user_account domain request.couch_user.user_id %}">My Account Settings</a>
             {% block account_indicator %}{% endblock %}
         </li>
         <li><a href="{% url change_my_password domain %}">Change My Password</a></li>
-    {% if request.couch_user.can_edit_web_users or request.couch_user.can_edit_commcare_users %}
-        <li class="nav-header">User Management</li>
-        {% if request.couch_user.can_edit_web_users %}
-            <li><a href="{% url web_users domain %}">{% hq_web_user %}s</a>
-                {% block web_users_indicator %}{% endblock %}
-            </li>
-        {% endif %}
-        {% if request.couch_user.can_edit_commcare_users %}
-            <li><a href="{% url commcare_users domain %}">{% commcare_user %}s</a>
-                {% block commcare_users_indicator %}{% endblock %}
-            </li>
-            <li><a href="{% url all_groups domain %}">Groups</a>
-                {% block groups_indicator %}{% endblock %}
-            </li>
-        {% endif %}
-    {% endif %}
+
     {% if request.couch_user.can_edit_web_users  %}
         <li class="nav-header">Project Administration</li>
         {% if request.couch_user.is_domain_admin %}
