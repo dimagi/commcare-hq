@@ -18,7 +18,8 @@ from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specifi
 from corehq.apps.domain.urls import domain_specific as domain_domain_specific
 domain_specific = patterns('',
     (r'^apps/', include('corehq.apps.app_manager.urls')),
-    # the receiver needs to accept posts at an endpoint that might 
+    (r'^api/', include('corehq.apps.api.urls')),
+    # the receiver needs to accept posts at an endpoint that might
     # not have a slash, so don't include it at the root urlconf
     (r'^receiver', include('corehq.apps.receiverwrapper.urls')),
     (r'^migration/', include('corehq.apps.migration.urls')),
