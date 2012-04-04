@@ -24,7 +24,7 @@ EVENT_TYPE_CHOICES = [MISSED_EXPECTED_CALLBACK]
 
 class MessageLog(Document, UnicodeMixIn):
     base_doc                    = "MessageLog"
-    couch_recipient_doc_type    = StringProperty(default="CouchUser")
+    couch_recipient_doc_type    = StringProperty() # "CommCareUser" or "CouchUser"
     couch_recipient             = StringProperty()
     phone_number                = StringProperty()
     direction                   = StringProperty()
@@ -40,13 +40,17 @@ class MessageLog(Document, UnicodeMixIn):
 
     @property
     def username(self):
+        name = self.phone_number
         if self.couch_recipient:
-            if self.couch_recipient_doc_type == "CommCareCase":
-                return CommCareCase.get(self.couch_recipient).name
-            else:
-                # Must be a user
-                return CouchUser.get_by_user_id(self.couch_recipient).username
-        return self.phone_number
+            try:
+                if self.couch_recipient_doc_type == "CommCareCase":
+                    name = CommCareCase.get(self.couch_recipient).name
+                else:
+                    # Must be a user
+                    name = CouchUser.get_by_user_id(self.couch_recipient).username
+            except Exception as e:
+                pass
+        return name
 
     @classmethod
     def by_domain_asc(cls, domain):
@@ -144,7 +148,7 @@ class CallLog(MessageLog):
             return False
         start_timestamp = json_format_datetime(after_timestamp)
         end_timestamp = json_format_datetime(datetime.utcnow())
-        reduced = MessageLog.view("sms/by_phone_number_direction_date",
+        reduced = cls.view("sms/by_phone_number_direction_date",
                     startkey=["CallLog", verified_number.phone_number, INCOMING] + [start_timestamp],
                     endkey=["CallLog", verified_number.phone_number, INCOMING] + [end_timestamp],
                     reduce=True).all()

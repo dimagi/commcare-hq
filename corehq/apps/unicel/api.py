@@ -70,6 +70,7 @@ def create_from_request(request):
     recipient = recipients[0].get_id if len(recipients) == 1 else "" 
     
     log = SMSLog(couch_recipient=recipient,
+                        couch_recipient_doc_type="CouchUser",
                         phone_number=sender,
                         direction=INCOMING,
                         date=actual_timestamp,

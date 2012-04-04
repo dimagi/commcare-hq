@@ -32,6 +32,7 @@ def send_sms(domain, id, phone_number, text):
     phone_number = clean_phone_number(phone_number)
     msg = SMSLog(domain=domain,
                      couch_recipient=id, 
+                     couch_recipient_doc_type="CouchUser",
                      phone_number=phone_number,
                      direction=OUTGOING,
                      date = datetime.utcnow(),

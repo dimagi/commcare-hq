@@ -1,6 +1,5 @@
 from django.http import HttpResponse
 from corehq.apps.sms.util import domains_for_phone, users_for_phone
-from corehq.apps.sms.models import MessageLog
 from corehq.apps.unicel import api
 
 
