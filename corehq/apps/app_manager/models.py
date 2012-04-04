@@ -335,7 +335,7 @@ class FormBase(DocumentSchema):
                     paths.add(action.condition.question)
                 if hasattr(action, 'name_path'):
                     paths.add(action.name_path)
-                if hasattr(action, 'external_id'):
+                if hasattr(action, 'external_id') and action.external_id:
                     paths.add(action.external_id)
 
             if self.actions.update_case.is_active():
