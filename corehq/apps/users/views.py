@@ -80,35 +80,18 @@ def _users_context(request, domain):
 
 @login_and_domain_required
 def users(request, domain):
-    return HttpResponseRedirect(reverse(
-        "user_account",
-        args=[domain, request.couch_user._id],
-    ))
+    response = reverse("user_account", args=[domain, request.couch_user._id])
+    if request.couch_user:
+        user = WebUser.get_by_user_id(request.couch_user._id, domain)
+        if user and user.has_permission(domain, Permissions.EDIT_WEB_USERS):
+            response = reverse("web_users", args=[domain])
+        elif user and user.has_permission(domain, Permissions.EDIT_COMMCARE_USERS):
+            response = reverse("commcare_users", args=[domain])
+    return HttpResponseRedirect(response)
 
 @require_can_edit_web_users
 def web_users(request, domain, template="users/web_users.html"):
     context = _users_context(request, domain)
-    return render_to_response(request, template, context)
-
-@require_can_edit_web_users
-@transaction.commit_on_success
-def create_web_user(request, domain, template="users/create_web_user.html"):
-    if request.method == "POST":
-        form = AdminRegistersUserForm(request.POST)
-        if form.is_valid():
-            data = form.cleaned_data
-            assert(data['password_1'] == data['password_2'])
-            data['password'] = data['password_1']
-            del data['password_1']
-            del data['password_2']
-            new_user = register_user(domain, send_email=True, **data)
-            return HttpResponseRedirect(reverse("web_users", args=[domain]))
-    else:
-        form = AdminRegistersUserForm()
-    context = _users_context(request, domain)
-    context.update(
-        registration_form=form
-    )
     return render_to_response(request, template, context)
 
 @require_can_edit_web_users
@@ -216,7 +199,8 @@ def commcare_users(request, domain, template="users/commcare_users.html"):
         users.extend(CommCareUser.by_domain(domain, is_active=False))
     context.update({
         'commcare_users': users,
-        'show_inactive': show_inactive
+        'show_inactive': show_inactive,
+        'reset_password_form': SetPasswordForm(user="")
     })
     return render_to_response(request, template, context)
 
@@ -392,6 +376,7 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
     # copied from auth's password_change
 
     commcare_user = CommCareUser.get_by_user_id(login_id, domain)
+    json_dump = {}
     if not commcare_user:
         raise Http404
     django_user = commcare_user.get_django_user()
@@ -399,14 +384,16 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
         form = SetPasswordForm(user=django_user, data=request.POST)
         if form.is_valid():
             form.save()
-            return HttpResponse(json.dumps({'status': 'ok'}))
+            json_dump['status'] = 'OK'
+            form = SetPasswordForm(user=django_user)
     else:
         form = SetPasswordForm(user=django_user)
     context = _users_context(request, domain)
     context.update({
-        'form': form,
+        'reset_password_form': form,
     })
-    return HttpResponse(json.dumps({'formHTML': render_to_string(template, context)}))
+    json_dump['formHTML'] = render_to_string(template, context)
+    return HttpResponse(json.dumps(json_dump))
 
 
 # this view can only change the current user's password
@@ -417,6 +404,7 @@ def change_my_password(request, domain, template="users/change_my_password.html"
         form = PasswordChangeForm(user=request.user, data=request.POST)
         if form.is_valid():
             form.save()
+            messages.success(request, "Your password was successfully changed!")
             return HttpResponseRedirect(reverse('user_account', args=[domain, request.couch_user._id]))
     else:
         form = PasswordChangeForm(user=request.user)

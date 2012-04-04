@@ -59,6 +59,7 @@ class StandardHQReport(HQReport):
 
     def get_report_context(self):
         self.context['standard_report'] = True
+        self.context['layout_flush_content'] = True
         self.build_selector_form()
         self.context.update(util.report_context(self.domain,
                                         report_partial = self.report_partial,
@@ -278,11 +279,7 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
 
     def get_rows(self):
         utc_dates = [tz_utils.adjust_datetime_to_timezone(date, self.timezone.zone, pytz.utc.zone) for date in self.dates]
-        print utc_dates
         date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(utc_dates)])
-        print date_map
-        date_map_ther = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
-        print date_map_ther
 
         results = get_db().view(
             self.couch_view,
@@ -531,7 +528,7 @@ class CaseListReport(PaginatedHistoryHQReport):
     def paginate_rows(self, skip, limit):
         rows = []
         self.count = 0
-        
+
         if settings.LUCENE_ENABLED:
             search_key = self.request_params.get("sSearch", "")
             query = "domain:(%s)" % self.domain
@@ -587,7 +584,7 @@ class CaseListReport(PaginatedHistoryHQReport):
                     (reverse('case_details', args=[self.domain, case_id]),
                      case_name)
 
-    
+
 class SubmissionTimesReport(StandardHQReport):
     name = "Submission Times"
     slug = "submit_time_punchcard"
@@ -696,7 +693,7 @@ class SubmitDistributionReport(StandardHQReport):
                                                             (row["value"], form_name)}
         for value in predata.values():
             data.append(value)
-        
+
         self.context.update({
             "chart_data": data,
             "user_id": self.individual,
@@ -739,7 +736,6 @@ class ExcelExportReport(StandardDateHQReport):
         return datespan
 
     def calc(self):
-        print self.datespan
         # This map for this view emits twice, once with app_id and once with {}, letting you join across all app_ids.
         # However, we want to separate out by (app_id, xmlns) pair not just xmlns so we use [domain] to [domain, {}]
         forms = []
@@ -789,6 +785,9 @@ class ExcelExportReport(StandardDateHQReport):
                         app = app_cache[form['app']['id']]
                     except Exception:
                         form['app_does_not_exist'] = True
+                        form['possibilities'] = possibilities[form['xmlns']]
+                        if form['possibilities']:
+                            form['duplicate'] = True
                     else:
                         if app.domain != self.domain:
                             logging.error("submission tagged with app from wrong domain: %s" % app.get_id)
@@ -849,7 +848,7 @@ class ApplicationStatusReport(StandardTabularHQReport):
               'corehq.apps.reports.fields.SelectApplicationField']
 
     def get_headers(self):
-        return ["Username", util.define_sort_type("Last Seen"), "CommCare Version", "Application (Version)"]
+        return ["Username", util.define_sort_type("Last Seen"), "CommCare Version", "Application [Deployed Build]"]
 
     def get_parameters(self):
         self.selected_app = self.request_params.get('app', '')
@@ -864,7 +863,7 @@ class ApplicationStatusReport(StandardTabularHQReport):
 
             endkey = [self.domain, user.userID]
             startkey = [self.domain, user.userID, {}]
-            data = get_db().view("reports/last_seen_submission",
+            data = XFormInstance.view("reports/last_seen_submission",
                 startkey=startkey,
                 endkey=endkey,
                 include_docs=True,
@@ -872,10 +871,8 @@ class ApplicationStatusReport(StandardTabularHQReport):
                 reduce=False).first()
 
             if data:
-                data = data['value']
-                received_date = data['time']
                 now = datetime.datetime.now(tz=pytz.utc)
-                time = datetime.datetime.replace(dateutil.parser.parse(received_date), tzinfo=pytz.utc)
+                time = datetime.datetime.replace(data.received_on, tzinfo=pytz.utc)
                 dtime = now - time
                 if dtime.days < 1:
                     dtext = "Today"
@@ -884,16 +881,27 @@ class ApplicationStatusReport(StandardTabularHQReport):
                 else:
                     dtext = "%s days ago" % dtime.days
                 last_seen = util.create_sort_key(dtext, dtime.days)
+
+                if data.version != '1':
+                    build_id = data.version
+                else:
+                    build_id = "unknown"
+
+                form_data = data.get_form
                 try:
-                    app = Application.get(data['app_id'])
-                    is_unknown = False
-                    if self.selected_app and self.selected_app != app._id:
-                        continue
-                    version = app.application_version
-                    app_name = "%s (%s)" % (app.name, app.version)
-                except Exception:
-                    version = "unknown"
-                    app_name = "unknown"
+                    app_name = form_data['meta']['appVersion']['#text']
+                    version = "2.0 Remote"
+                except KeyError:
+                    try:
+                        app = Application.get(data.app_id)
+                        is_unknown = False
+                        if self.selected_app and self.selected_app != data.app_id:
+                            continue
+                        version = app.application_version
+                        app_name = "%s [%s]" % (app.name, build_id)
+                    except Exception:
+                        version = "unknown"
+                        app_name = "unknown"
             if is_unknown and self.selected_app:
                 continue
             row = [user.username_in_report, last_seen, version, app_name]

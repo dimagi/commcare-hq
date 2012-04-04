@@ -1,6 +1,7 @@
 from datetime import datetime
 import logging
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
@@ -123,6 +124,7 @@ def bug_report(req):
     )])
 
     report['datetime'] = datetime.utcnow()
+
     report['time_description'] = u'just now' if report['now'] else u'earlier: {when}'.format(**report)
     if report['app_id']:
         app = import_app(report['app_id'], BUG_REPORTS_DOMAIN)
@@ -145,7 +147,8 @@ def bug_report(req):
     from django.core.mail.message import EmailMessage
     from django.core.mail import send_mail
 
-
+    if req.POST.get('five-hundred-report'):
+        message = "%s \n\n This messge was reported from a 500 error page! Please fix this ASAP (as if you wouldn't anyway)..." % message
     email = EmailMessage(
         subject,
         message,
@@ -154,5 +157,10 @@ def bug_report(req):
         headers = {'Reply-To': report['username']}
     )
     email.send(fail_silently=False)
-    
+
+
+    if req.POST.get('five-hundred-report'):
+        messages.success(req, "Your CommCare HQ Issue Report has been sent. We are working quickly to resolve this problem.")
+        return HttpResponseRedirect(reverse('homepage'))
+
     return HttpResponse()

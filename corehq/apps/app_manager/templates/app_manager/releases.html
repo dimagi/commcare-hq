@@ -3,6 +3,7 @@
 {% load url_extras %}
 {% load timezone_tags %}
 {% load hq_shared_tags %}
+{% load timezone_tags %}
 {% load i18n %}
 {% block form-view %}
     <form id="make-new-build" action="{% url corehq.apps.app_manager.views.save_copy domain app.id %}" method="post">

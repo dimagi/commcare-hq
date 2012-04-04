@@ -2,71 +2,77 @@
 {% load i18n %}
 
 {% block head %}{{ block.super }}
-    <style>
-        .next-to-sidebar {
-            padding: 0;
-        }
-        .group-name-input {
-            width: 100px !important;
-        }
-        #group-list {
-            margin: 0;
-        }
-        #group-list > div {
-            border: 1px solid white;
-            padding: 5px 10px;
-        }
-        #group-list > div.selected {
-            border: 1px solid #BBB;
-            border-right: 1px solid white;
-            background: white;
-            position: relative;
-            left: 2px;
-            padding-left: 8px;
-            padding-right: 12px;
-        }
-        #group-list > div.selected a {
-            color: #000000;
-        }
-        #group-layout {
-            width: 100%;
-        }
-        #group-layout > tbody > tr > td {
-        }
-        #group-layout > tbody > tr > td:first-child {
-            padding: 5px 0 5px 5px;
-        }
-    </style>
+{#    <style>#}
+{#        .next-to-sidebar {#}
+{#            padding: 0;#}
+{#        }#}
+{#        .group-name-input {#}
+{#            width: 100px !important;#}
+{#        }#}
+{#        #group-list {#}
+{#            margin: 0;#}
+{#        }#}
+{#        #group-list > div {#}
+{#            border: 1px solid white;#}
+{#            padding: 5px 10px;#}
+{#        }#}
+{#        #group-list > div.selected {#}
+{#            border: 1px solid #BBB;#}
+{#            border-right: 1px solid white;#}
+{#            background: white;#}
+{#            position: relative;#}
+{#            left: 2px;#}
+{#            padding-left: 8px;#}
+{#            padding-right: 12px;#}
+{#        }#}
+{#        #group-list > div.selected a {#}
+{#            color: #000000;#}
+{#        }#}
+{#        #group-layout {#}
+{#            width: 100%;#}
+{#        }#}
+{#        #group-layout > tbody > tr > td {#}
+{#        }#}
+{#        #group-layout > tbody > tr > td:first-child {#}
+{#            padding: 5px 0 5px 5px;#}
+{#        }#}
+{#    </style>#}
 
 {% endblock %}
+
+{% block subsection-title %}
+    <li class="active">
+        <a href="#">Groups</a>
+    </li>
+{% endblock %}
+
 {% block user-view %}
-    <h1>Groups</h1>
-    {% if not all_groups %}
-        <div style="padding: 10px 5px 2px 15px; color: #666">No groups</div>
-    {% endif %}
-    <table id="group-layout"><tr>
-        <td style="width: 150px;">
-            <div id="group-list">
-                {% with group as this_group %}
+    {% block group-info %}
+        {% if all_groups %}
+            <h2>Select a group:</h2>
+        {% else %}
+            <h2>Create your first group:</h2>
+        {% endif %}
+    {% endblock %}
+
+    <div class="tabbable tabs-left row-fluid">
+        <ul class="nav nav-tabs span2">
+            {% with group as this_group %}
                 {% for group in all_groups %}
-                    <div class="ui-corner-left {% if this_group.get_id == group.get_id %}selected{% endif %}">
+                    <li {% if this_group.get_id == group.get_id %}class="active"{% endif %}>
                         <a href="{% url group_members domain group.get_id %}">{{ group.name }}</a>
-                    </div>
+                    </li>
                 {% endfor %}
-                {% endwith %}
-                <p style="margin-top: 5px;">Add a new group:</p>
-                <div>
-                    <form method="POST" action="{% url add_group domain %}">
-                        <input type="text" class="group-name-input" style="float: left;" name="group_name"/>
-                        <a class="submit" href="#"><span class="ui-icon ui-icon-plusthick"></span></a>
-                    </form>
-                </div>
-            </div>
-        </td>
-        <td>
+            {% endwith %}
+        </ul>
+        <div class="tab-content span9">
             {% block group-view %}
             {% endblock %}
-            </td>
-    </tr></table>
+        </div>
+    </div>
+    <form class="well form-inline" method="post" action="{% url add_group domain %}">
+        <input type="text" placeholder="Group Name" id="id_group_name" name="group_name" />
+        <button class="btn btn-success" type="submit">Create Group</button>
+    </form>
 {% endblock %}
 

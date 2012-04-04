@@ -1,3 +1,4 @@
+{% load hq_shared_tags %}
 <label class="control-label">User Type</label>
 <div class="controls">
 {% if show_user_filter %}
@@ -11,7 +12,7 @@
     {% endfor %}
 {% else %}
     <div id="user-filter-buttons" class="btn-group" data-toggle="buttons-checkbox">
-        <button class="btn btn-success">CommCare Users Only</button>
+        <button class="btn btn-success">{% commcare_user %}s Only</button>
     </div>
 {% endif %}
 </div>
@@ -24,17 +25,14 @@
             var $activeCheckbox = $('#'+$(this).data("checkfilter"));
 
             if($(this).hasClass('active')) {
-                console.log("activate");
                 $(this).addClass('btn-success');
                 $activeCheckbox.attr("checked", true);
             } else {
-                console.log("de-activate");
                 $(this).removeClass('btn-success');
                 $activeCheckbox.attr("checked", false);
             }
 
             if(!$('#user-filter-buttons').children().hasClass('btn-success')) {
-                console.log("exception");
                 var $firstChild = $('#user-filter-buttons').children().first();
                 $firstChild.addClass('btn-success');
                 $('#'+$firstChild.data("checkfilter")).attr("checked", true);

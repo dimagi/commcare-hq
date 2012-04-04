@@ -119,10 +119,10 @@ def _dict_for_one_user( user, domain ):
     return retval                     
            
 @require_can_edit_web_users
-def manage_domain(request, domain):
+def domain_forwarding(request, domain):
     form_repeaters = FormRepeater.by_domain(domain)
     case_repeaters = CaseRepeater.by_domain(domain)
-    return render_to_response(request, "domain/admin/manage_domain.html", {
+    return render_to_response(request, "domain/admin/domain_forwarding.html", {
         "domain": domain,
         "repeaters": (
             ("FormRepeater", form_repeaters),
@@ -136,7 +136,7 @@ def drop_repeater(request, domain, repeater_id):
     rep = FormRepeater.get(repeater_id)
     rep.retire()
     messages.success(request, "Form forwarding stopped!")
-    return HttpResponseRedirect(reverse("corehq.apps.domain.views.manage_domain", args=[domain]))
+    return HttpResponseRedirect(reverse("corehq.apps.domain.views.domain_forwarding", args=[domain]))
     
 @require_POST
 @require_can_edit_web_users
@@ -179,7 +179,7 @@ def add_repeater(request, domain, repeater_type):
             repeater = cls(domain=domain, url=form.cleaned_data["url"])
             repeater.save()
             messages.success(request, "Forwarding setup to %s" % repeater.url)
-            return HttpResponseRedirect(reverse("corehq.apps.domain.views.manage_domain", args=[domain]))
+            return HttpResponseRedirect(reverse("corehq.apps.domain.views.domain_forwarding", args=[domain]))
     else:
         form = FormRepeaterForm()
     return render_to_response(request, "domain/admin/add_form_repeater.html", {
@@ -193,7 +193,7 @@ def legacy_domain_name(request, domain, path):
     return HttpResponseRedirect(get_domained_url(domain, path))
 
 @domain_admin_required
-def global_settings(request, domain, template="domain/global_settings.html"):
+def global_settings(request, domain, template="domain/admin/global_settings.html"):
     domain = Domain.get_by_name(domain)
 
     if request.method == "POST":

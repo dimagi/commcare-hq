@@ -128,3 +128,11 @@ def list_my_domains(request):
 
     return "".join(lst)
 
+@register.simple_tag
+def commcare_user():
+    return settings.COMMCARE_USER_TERM
+
+@register.simple_tag
+def hq_web_user():
+    return settings.WEB_USER_TERM
+

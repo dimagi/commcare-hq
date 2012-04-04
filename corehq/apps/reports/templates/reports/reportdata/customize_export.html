@@ -60,7 +60,7 @@
     </ul>
 {% endblock %}
 
-{% block reportpresentation %}
+{% block main_column %}
     <form class="form-horizontal" method="post" action="{{ request.get_full_path }}">
         <input type="hidden" name="schema" value="{{ saved_export.schema_id }}" />
         <input type="hidden" name="table" value="{{ table_config.index }}" />
@@ -77,9 +77,9 @@
                 <label for="format-select" class="control-label">Default file type: </label>
                 <div class="controls">
                     <select name="format" id="format-select" >
-                        <option value="csv"{% if saved_export.default_format == "csv"%} selected="selected"{% endif %}>CSV (Zip file)</option>
                         <option value="xlsx"{% if saved_export.default_format == "xlsx"%} selected="selected"{% endif %}>Excel 2007</option>
                         <option value="xls"{% if saved_export.default_format == "xls" %} selected="selected"{% endif %}>Excel (older versions)</option>
+                        <option value="csv"{% if saved_export.default_format == "csv"%} selected="selected"{% endif %}>CSV (Zip file)</option>
                     </select>
                 </div>
             </div>

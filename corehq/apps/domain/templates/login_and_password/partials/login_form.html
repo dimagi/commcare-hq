@@ -39,7 +39,7 @@
                 </div>
             {% endfor %}
             </fieldset>
-            <div class="form-actions"><button type="submit" class="btn btn-primary btn-large">Sign In</button></div>
+            <div class="form-actions"><button tabindex="3" type="submit" class="btn btn-primary btn-large">Sign In</button></div>
         </form>
     </div>
     <div class="span4">
@@ -51,3 +51,9 @@
         </aside>
     </div>
 </div>
+<script type="text/javascript">
+    $(function () {
+        $('#id_username').attr('tabindex', '1');
+        $('#id_password').attr('tabindex', '2');
+    });
+</script>

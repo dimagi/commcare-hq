@@ -269,7 +269,7 @@ def case_details(request, domain, case_id):
         "report": {
             "name": report_name
         },
-        "is_tabular": True,
+        "layout_flush_content": True,
         "timezone": timezone
     })
 

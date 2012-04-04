@@ -1,60 +1,90 @@
-{% extends base_template %}
-{% block page_imports %}
-    <link rel="stylesheet" href="{{ STATIC_URL }}users/css/users.css?version=1" />
+{% extends "hqwebapp/two_column.html" %}
+{% load hq_shared_tags %}
+{% block js %} {{ block.super }}
+    <script type="text/javascript" src="{% static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
 {% endblock %}
-{% block head %}
-    {{ block.super }}
-    <script src="/static/users/js/users.js?version=1"></script>
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(function () {
+            COMMCAREHQ.initBlock($('.hq-content'));
+            $('#users-main-nav li a').each(function(e) {
+                if ($(this).attr('href') == '{{ request.path }}')
+                    $(this).parent().addClass('active');
+            });
+            var activeTabCookie = 'active_tab',
+                last_active_tab = $.cookie(activeTabCookie);
+            if(last_active_tab) {
+                $(last_active_tab).addClass('active');
+                $('#project-settings-tabs a[href="'+last_active_tab+'"]').parent().addClass('active');
+            } else {
+                var first_tab = $('#project-settings-tabs a[data-toggle="tab"]').first();
+                first_tab.parent().addClass('active');
+                $(first_tab.attr('href')).addClass('active');
+            }
+            $('#project-settings-tabs a[data-toggle="tab"]').on('shown', function (e) {
+                $.cookie(activeTabCookie, $(this).attr('href'),
+                        {path: '{{ request.path }}',
+                        expires: 1});
+            });
+        });
+    </script>
 {% endblock %}
-{% block content %}
-    <div id="main_container">
-        <div class="sidebar-wrapper">
-            <div class="sidebar" id="user-options">
-                <strong>My Account</strong>
-                <ul>
-                    <li><a href="{% url user_account domain request.couch_user.user_id %}">Account Settings</a>
-                            {% block account_indicator %}{% endblock %}
-                    </li>
-                    <li><a href="{% url change_my_password domain %}">Change Password</a></li>
-                </ul>
-                {% if request.couch_user.can_edit_web_users or request.couch_user.can_edit_commcare_users %}
-                    <strong>User Management</strong>
-                    <ul>
-                        {% if request.couch_user.can_edit_web_users %}
-                        <li><a href="{% url web_users domain %}">Web Users</a>
-                            {% block web_users_indicator %}{% endblock %}
-                        </li>
-                        {% endif %}
-                        {% if request.couch_user.can_edit_commcare_users %}
-                        <li><a href="{% url commcare_users domain %}">CommCare Users</a>
-                            {% block commcare_users_indicator %}{% endblock %}
-                        </li>
-                        <li><a href="{% url all_groups domain %}">Groups</a>
-                            {% block groups_indicator %}{% endblock %}
-                        </li>
-                        {% endif %}
-                    </ul>
-                {% endif %}
 
-                {% if request.couch_user.is_domain_admin %}
-                <strong>Project Administration</strong>
-                    <ul>
-                        <li><a href="{% url domain_global_settings domain %}">Global Settings</a></li>
-                    </ul>
-                {% endif %}
-            </div>
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url settings_default domain %}"><strong>Settings &amp; Users</strong></a> <span class="divider">&gt;</span>
+        </li>
+        {% block subsection-title %}
+        {% endblock %}
+    </ul>
+{% endblock %}
 
-            <article id="user-view">
-                {% block user-view %}
-                    <p class="message">Click on the menu to the left to edit your settings.</p>
-                {% endblock %}
-                {% if error %}
-                    <div id="error_msg">
-                        {{ error }}
-                    </div>
-                {% endif %}
-            </article>
+{% block sidebar %}
+<nav>
+    <ul class="nav nav-list" id="users-main-nav">
+    {% if request.couch_user.can_edit_web_users or request.couch_user.can_edit_commcare_users %}
+            <li class="nav-header">User Management</li>
+            {% if request.couch_user.can_edit_web_users %}
+                <li><a href="{% url web_users domain %}">{% hq_web_user %}s</a>
+                    {% block web_users_indicator %}{% endblock %}
+                </li>
+            {% endif %}
+            {% if request.couch_user.can_edit_commcare_users %}
+                <li><a href="{% url commcare_users domain %}">{% commcare_user %}s</a>
+                    {% block commcare_users_indicator %}{% endblock %}
+                </li>
+                <li><a href="{% url all_groups domain %}">Groups</a>
+                    {% block groups_indicator %}{% endblock %}
+                </li>
+            {% endif %}
+    {% endif %}
+        <li class="nav-header">My Account</li>
+        <li><a href="{% url user_account domain request.couch_user.user_id %}">My Account Settings</a>
+            {% block account_indicator %}{% endblock %}
+        </li>
+        <li><a href="{% url change_my_password domain %}">Change My Password</a></li>
 
+    {% if request.couch_user.can_edit_web_users  %}
+        <li class="nav-header">Project Administration</li>
+        {% if request.couch_user.is_domain_admin %}
+        <li><a href="{% url domain_global_settings domain %}">Global Settings</a></li>
+        {% endif %}
+        <li><a href="{% url domain_forwarding domain %}">Data Forwarding</a>
+            {% block forwarding_indicator %}{% endblock %}
+        </li>
+    {% endif %}
+    </ul>
+</nav>
+{% endblock %}
+
+{% block main_column %}
+    {% block user-view %}
+        <p class="message">Click on the menu to the left to edit your settings.</p>
+    {% endblock %}
+    {% if error %}
+        <div id="error_msg">
+            {{ error }}
         </div>
-    </div>
+    {% endif %}
 {% endblock %}

@@ -1,11 +1,6 @@
-<div>
-    <table class="user_data">
+<dl class="dl-horizontal">
 {% for key, val in couch_user.user_data.items %}
-          <tr>
-              <th>{{ key }}:</th>
-              <td>{{ val }}</td>
-          </tr>
+    <dt>{{ key }}</dt>
+    <dd>{{ val }}</dd>
 {% endfor %}
-    </table>
-</div>
-
+</dl>
