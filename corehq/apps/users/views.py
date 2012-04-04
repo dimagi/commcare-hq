@@ -256,10 +256,14 @@ def account(request, domain, couch_user_id, template="users/account.html"):
             messages.error(request, "Please enter digits only")
 
     # domain-accounts tab
-    if request.user.is_superuser and not couch_user.is_commcare_user():
-        my_domains = couch_user.get_domains()
+    if not couch_user.is_commcare_user():
+        all_domains = couch_user.get_domains()
+        admin_domains = []
+        for d in all_domains:
+            if couch_user.has_permission(d, Permissions.EDIT_WEB_USERS) and couch_user.has_permission(d, Permissions.EDIT_COMMCARE_USERS):
+                admin_domains.append(d)
         context.update({"user": request.user,
-                        "domains": my_domains
+                        "domains": admin_domains
                         })
     # scheduled reports tab
     context.update({
