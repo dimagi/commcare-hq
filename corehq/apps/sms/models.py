@@ -24,7 +24,7 @@ EVENT_TYPE_CHOICES = [MISSED_EXPECTED_CALLBACK]
 
 class MessageLog(Document, UnicodeMixIn):
     base_doc                    = "MessageLog"
-    couch_recipient_doc_type    = StringProperty() # "CommCareUser" or "CouchUser"
+    couch_recipient_doc_type    = StringProperty() # "CommCareCase" or "CouchUser"
     couch_recipient             = StringProperty()
     phone_number                = StringProperty()
     direction                   = StringProperty()

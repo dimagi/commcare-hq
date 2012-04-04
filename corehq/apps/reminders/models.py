@@ -439,7 +439,18 @@ class CaseReminderHandler(Document):
         message = reminder.current_event.message.get(lang, reminder.current_event.message[self.default_lang])
         message = Message.render(message, case=reminder.case.case_properties())
         if reminder.method == "sms" or reminder.method == "callback":
-            return send_sms_to_verified_number(verified_number, message)
+            if verified_number is not None:
+                return send_sms_to_verified_number(verified_number, message)
+            elif self.recipient == RECIPIENT_USER:
+                # If there is no verified number, but the recipient is a CommCareUser, still try to send it
+                try:
+                    phone_number = reminder.user.phone_number
+                except Exception:
+                    # If the user has no phone number, we cannot send any SMS
+                    return False
+                return send_sms(reminder.domain, reminder.user_id, phone_number, message)
+            else:
+                return False
         elif reminder.method == "test" or reminder.method == "callback_test":
             print(message)
             return True
