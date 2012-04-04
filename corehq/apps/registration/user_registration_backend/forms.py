@@ -1,3 +1,4 @@
+import json
 from django import forms
 from django.contrib.auth.models import User
 
@@ -38,7 +39,17 @@ class AdminInvitesUserForm(_BaseForm, forms.Form):
                                     max_length=User._meta.get_field('email').max_length)
 #    is_domain_admin = forms.BooleanField(label='User is a domain administrator', initial=False, required=False)
     role = forms.ChoiceField(choices=Roles.get_role_labels(), label="Project Role")
-    
+
+    def __init__(self, data=None, excluded_emails=None, *args, **kwargs):
+        super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
+        self.excluded_emails = excluded_emails or []
+
+    def clean_email(self):
+        email = self.cleaned_data['email'].strip()
+        if email in self.excluded_emails:
+            raise forms.ValidationError("A user with this email address is already in this domain.")
+        return email
+
     
 class AdminRegistersUserForm(NewWebUserRegistrationForm):
     # As above. Need email now; still don't need domain. Don't need TOS. Do need the is_active flag,

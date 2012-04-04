@@ -169,7 +169,7 @@ def accept_invitation(request, domain, invitation_id):
 @require_can_edit_web_users
 def invite_web_user(request, domain, template="users/invite_web_user.html"):
     if request.method == "POST":
-        form = AdminInvitesUserForm(request.POST)
+        form = AdminInvitesUserForm(request.POST, excluded_emails=[user.username for user in WebUser.by_domain(domain)])
         if form.is_valid():
             data = form.cleaned_data
             # create invitation record
