@@ -47,7 +47,7 @@ class AdminInvitesUserForm(_BaseForm, forms.Form):
     def clean_email(self):
         email = self.cleaned_data['email'].strip()
         if email in self.excluded_emails:
-            raise forms.ValidationError("A user with this email address is already in this domain.")
+            raise forms.ValidationError("A user with this email address is already on this project.")
         return email
 
     
