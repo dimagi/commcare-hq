@@ -1,9 +1,11 @@
+from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from couchforms.util import post_xform_to_couch
 from django.http import HttpResponse, HttpResponseServerError
 import logging
 from couchforms.models import XFormInstance
+from tastypie.http import HttpBadRequest
 
 @require_POST
 @csrf_exempt
@@ -22,7 +24,13 @@ def post(request, callback=None, magic_property='xml_submission_file'):
         #it's an standard form submission (eg ODK)
         #this does an assumption that ODK submissions submit using the form parameter xml_submission_file
         #todo: this should be made more flexibly to handle differeing params for xform submission
-        instance = request.FILES[magic_property].read()
+        try:
+            instance = request.FILES[magic_property].read()
+        except MultiValueDictKeyError:
+            return HttpBadRequest(
+                'If you use multipart/form-data, please name your file xml_submission_file.\n'
+                'You may also do a normal (non-multipart) post with the xml submission as the request body instead.'
+            )
         for key, item in request.FILES.items():
             if key != magic_property:
                 attachments[magic_property] = item
