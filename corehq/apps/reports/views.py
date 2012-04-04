@@ -301,8 +301,14 @@ def download_cases(request, domain):
 @login_and_domain_required
 def form_data(request, domain, instance_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
-    instance = XFormInstance.get(instance_id)
-    assert(domain == instance.domain)
+    try:
+        instance = XFormInstance.get(instance_id)
+    except ResourceNotFound:
+        raise Http404()
+    try:
+        assert(domain == instance.domain)
+    except AssertionError:
+        raise Http404()
     cases = CommCareCase.view("case/by_xform_id", key=instance_id, reduce=False, include_docs=True).all()
     try:
         form_name = instance.get_form["@name"]
