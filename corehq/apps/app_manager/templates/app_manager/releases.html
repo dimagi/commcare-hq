@@ -3,6 +3,7 @@
 {% load url_extras %}
 {% load timezone_tags %}
 {% load hq_shared_tags %}
+{% load timezone_tags %}
 {% load i18n %}
 {% block form-view %}
     <form id="make-new-build" action="{% url corehq.apps.app_manager.views.save_copy domain app.id %}" method="post">
@@ -16,78 +17,68 @@
         <ul id="build-errors">
             {% for error in build_errors %}
             <li>
-                {% if error.type == "invalid xml" %}
+            {% if error.type == "invalid xml" %}
                 {% if error.form.content %}
-                Invalid xml in form
+                    Invalid xml in form
                 {% else %}
-                Blank form
+                    Blank form
                 {% endif %}
                 {% include "app_manager/partials/form_error_message.html" %}
-                {% else %}
-                {% if error.type == "no ref detail" %}
+            {% endif %}
+            {% if error.type == "no ref detail" %}
                 Module
                 <a href="{% url view_module domain app.id error.module.id %}">
                     {{ error.module.name|trans:langs }}</a>
                 uses referrals but doesn't have
                 detail screens configured for referrals.
-                {% else %}
-                {% if error.type == "no case detail" %}
+            {% endif %}
+            {% if error.type == "no case detail" %}
                 Module
                 <a href="{% url view_module domain app.id error.module.id %}">
                     {{ error.module.name|trans:langs }}</a>
                 uses cases but doesn't have
                 detail screens configured for cases.
-                {% else %}
-                {% if error.type == "no modules" %}
+            {% endif %}
+            {% if error.type == "no modules" %}
                 This application has no modules.
-                {% else %}
-                {% if error.type == "no forms" %}
+            {% endif %}
+            {% if error.type == "no forms" %}
                 Module
                 <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                 has no forms.
-                {% else %}
-                {% if error.type == "no case type" %}
+            {% endif %}
+            {% if error.type == "no case type" %}
                 Module
                 <a href="{% url view_module domain app.id error.module.id %}">{{ error.module.name|trans:langs }}</a>
                 uses cases but doesn't have a
                 case type defined.
-                {% else %}
-                {% if error.type == "form error" %}
+            {% endif %}
+            {% if error.type == "form error" %}
                 One or more forms are invalid: check all your forms for error messages.
-                {% else %}
-                {% if error.type == "duplicate xmlns" %}
+            {% endif %}
+            {% if error.type == "duplicate xmlns" %}
                 You have two forms with the xmlns "{{ error.xmlns }}"
-                {% else %}
-                {% if error.type == "update_case uses reserved word" %}
+            {% endif %}
+            {% if error.type == "update_case uses reserved word" %}
                 Case Update uses reserved word "{{ error.word }}"
                 in form
                 {% include "app_manager/partials/form_error_message.html" %}
-                {% else %}
-                {% if error.type == "update_case word illegal" %}
+            {% endif %}
+            {% if error.type == "update_case word illegal" %}
                 Case Update "{{ error.word }}" should start with a letter and only contain letters, numbers, '-', and '_'
                 in form {% include "app_manager/partials/form_error_message.html" %}
-                {% else %}
-                {% if error.type == "path error" %}
+            {% endif %}
+            {% if error.type == "path error" %}
                 The case configuration in form
                 {% include "app_manager/partials/form_error_message.html" %}
                 contains the invalid path "{{ error.path }}".
-                {% else %}
-                {% if error.type == "remote error" %}
+            {% endif %}
+            {% if error.type == "remote error" %}
                 Remote Error: {{ error.message }}
-                {% else %}
-                {{ error.message }}
-                {% endif %}
-                {% endif %}
-                {% endif %}
-                {% endif %}
-                {% endif %}
-                {% endif %}
-                {% endif %}
-                {% endif %}
-                {% endif %}
-                {% endif %}
-                {% endif %}
-                {% endif %}
+            {% endif %}
+            {% if error.type == "empty lang" %}
+                One of your languages is empty. Check your <a href="{% url view_app domain app.id %}">app settings</a>.
+            {% endif %}
             </li>
             {% endfor %}
         </ul>

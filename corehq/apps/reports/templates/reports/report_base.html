@@ -1,11 +1,5 @@
-{% extends base_template %}
+{% extends "hqwebapp/two_column.html" %}
 {% load hq_shared_tags %}
-
-{# stuff to override old styles -- remove when everything is migrated over #}
-{% block oldstyle_tag %}{% endblock %}
-{% block oldstyle_imports %}{% endblock %}
-{% block oldstyle_hack_start %}{% endblock %}
-{% block oldstyle_hack_end %}{% endblock %}
 
 {% block js %}{{ block.super }}
 {% include "imports/datatables.bootstrap.html" %}
@@ -49,55 +43,40 @@
     </ul>
 {% endblock %}
 
-{% block content %}
-    <div class="row-fluid">
-        <div class="sidebar span2">
-            {% include "reports/partials/report_list.html" %}
+{% block sidebar %}{% include "reports/partials/report_list.html" %}{% endblock %}
+{% block main_column %}
+    <div class="hq-accordion-control">
+        <div class="accordion-heading">
+            <a href="#reportFilters" data-toggle="collapse">Advanced Filters</a>
+            <div id="extra-filter-info" class="accordion-extra"></div>
         </div>
-        <div class="{% if slug or is_tabular %}hq-flush-content{% else %}hq-content{% endif %} span10">
-            {% block reportpresentation %}
-            <div class="hq-accordion-control">
-                <div class="accordion-heading">
-                    <a href="#reportFilters" data-toggle="collapse">Advanced Filters</a>
-                    <div id="extra-filter-info" class="accordion-extra"></div>
-                </div>
 
-                <div id="reportFilters" class="accordion-body collapse">
-                    <div class="accordion-inner">
-                        <form method="get" id="paramSelectorForm" class="form-horizontal">
-                            {% if custom_fields %}
-                                <fieldset>
-                                <legend>Report Filters</legend>
-                                {% for field in custom_fields %}
-                                    <div id="{{ field.slug }}" class="control-group">
-                                        {{ field.field|safe }}
-                                    </div>
-                                {% endfor %}
-                                </fieldset>
-                            {% endif %}
-                            {% if show_dates or custom_fields or show_user_filter %}
-                                <div class="form-actions">
-                                    <button type="submit" class="btn btn-large btn-primary">Update Filters</button>
-                                    <a href="#reportFilters" data-toggle="collapse" class="btn btn-large">Cancel</a>
+        <div id="reportFilters" class="accordion-body collapse">
+            <div class="accordion-inner">
+                <form method="get" id="paramSelectorForm" class="form-horizontal">
+                    {% if custom_fields %}
+                        <fieldset>
+                            <legend>Report Filters</legend>
+                            {% for field in custom_fields %}
+                                <div id="{{ field.slug }}" class="control-group">
+                                    {{ field.field|safe }}
                                 </div>
-                            {% endif %}
-                        </form>
-                    </div>
-                </div>
+                            {% endfor %}
+                        </fieldset>
+                    {% endif %}
+                    {% if show_dates or custom_fields or show_user_filter %}
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-large btn-primary">Update Filters</button>
+                            <a href="#reportFilters" data-toggle="collapse" class="btn btn-large">Cancel</a>
+                        </div>
+                    {% endif %}
+                </form>
             </div>
-            {% if show_time_notice %}{% include "hqwebapp/partials/time-notice.html"%}{% endif %}
-            <div id="report-content">
-            {% block reportcontent %}Your report goes here{% endblock %}
-            </div>
-            {% endblock %}
         </div>
     </div>
-    <div id="report-footer">
-    {% if exportable %}
-        Export current view to:
-        {% for f in export_formats %}
-            <a href="{{ export_path|safe }}&format={{ f }}">{{ f }}</a>
-        {% endfor %}
-    {% endif %}
+    {% if show_time_notice %}{% include "hqwebapp/partials/time-notice.html"%}{% endif %}
+    <div id="report-content">
+        {% block reportcontent %}Your report goes here{% endblock %}
     </div>
 {% endblock %}
+

@@ -3,8 +3,8 @@ from corehq.apps.users.views import UploadCommCareUsers
 from django.conf.urls.defaults import *
 from corehq.apps.domain.utils import grandfathered_domain_re
 
-urlpatterns =\
-    patterns('corehq.apps.users.views', (r'^$', 'users'),
+urlpatterns = patterns('corehq.apps.users.views',
+    url(r'^$', 'users', name="users_default"),
     #url(r'my_domains/$', 'my_domains', name='my_domains'),
     url(r'^change_my_password/$', 'change_my_password', name="change_my_password"),
     url(r'^change_password/(?P<login_id>[\w-]+)/$', 'change_password', name="change_password"),
@@ -22,7 +22,6 @@ urlpatterns =\
     url(r'^delete_domain_membership/(?P<couch_user_id>[\w-]+)/(?P<domain_name>%s)/$' % grandfathered_domain_re,
         'delete_domain_membership',
         name='delete_domain_membership'),
-    url(r'^web/create/$', 'create_web_user', name='create_web_user'),
     url(r'^web/remove/(?P<couch_user_id>[\w-]+)/$', 'remove_web_user', name='remove_web_user'),
     url(r'^web/undo_remove/(?P<record_id>[\w-]+)/$', 'undo_remove_web_user', name='undo_remove_web_user'),
     url(r'^web/invite/$', 'invite_web_user', name='invite_web_user'),
@@ -48,7 +47,4 @@ urlpatterns =\
 
     url(r'^test_autocomplete/$', 'test_autocomplete'),
     url(r'^user_domain_transfer/(?P<prescription_id>[\w-]+)/$', 'user_domain_transfer', name='user_domain_transfer')
-    ) + \
-    patterns('corehq.apps.domain.views',
-        url(r'^users/domain_settings/$', 'global_settings', name="domain_global_settings"),
     )

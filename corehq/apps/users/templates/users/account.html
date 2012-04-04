@@ -1,98 +1,185 @@
 {% extends "users/users_base.html" %}
+{% load hq_shared_tags %}
+{% load hq_bootstrap_tags %}
 
-{% block head %}
-    {{ block.super }}
-    <script>
-	    $(function() {
-            $( "#user_settings_tabs" ).tabs({
-                cookie: {
-                    // store cookie for a day
-                    expires: 1
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(function () {
+            $('#id_add_phone_number').keydown(function (event) {
+                // Allow: backspace, delete, tab and escape
+                if ( event.keyCode == 46 || event.keyCode == 8 || event.keyCode == 9 || event.keyCode == 27 ||
+                    // Allow: Ctrl+A
+                        (event.keyCode == 65 && event.ctrlKey === true) ||
+                    // Allow: home, end, left, right
+                        (event.keyCode >= 35 && event.keyCode <= 39)) {
+                    // let it happen, don't do anything
+                    return true;
                 }
-            }).removeClass('ui-corner-all ui-widget-content').css({padding: "0px"})
-              .find('.ui-tabs-nav').removeClass('ui-corner-all');
-
-            $('#id_role [value=""]').each(function () {
-                if (!$(this).is(':selected')) {
-                    $(this).detach();
+                else {
+                    // Ensure that it is a number and stop the keypress
+                    if ((event.keyCode < 48 || event.keyCode > 57) && (event.keyCode < 96 || event.keyCode > 105 )) {
+                        return false;
+                    }
                 }
             });
         });
-	</script>
-    <style>
-        .next-to-sidebar {
-            padding: 0;
-        }
-    </style>
+    </script>
 {% endblock %}
 
 {% block web_users_indicator %}
     {% if couch_user.user_id != request.couch_user.user_id and not couch_user.is_commcare_user %}
-        <ul>
-            <li class="selected">{{ couch_user.html_username|safe }}</li>
+        <ul class="nav nav-list">
+            <li class="active"><a href="#">{{ couch_user.html_username|safe }}</a></li>
         </ul>
     {% endif %}
 {% endblock %}
+
 {% block commcare_users_indicator %}
     {% if couch_user.user_id != request.couch_user.user_id and couch_user.is_commcare_user %}
-        <ul>
-            <li class="selected">{{ couch_user.html_username|safe }}</li>
+        <ul class="nav nav-list">
+            <li class="active"><a href="#">{{ couch_user.username_in_report|safe }}</a></li>
         </ul>
     {% endif %}
 {% endblock %}
 
+{% block subsection-title %}
+    {% if couch_user.user_id != request.couch_user.user_id %}
+        <li>
+            {% if not couch_user.is_commcare_user %}
+                <a href="{% url web_users domain %}">{% hq_web_user %}s</a>
+            {% else %}
+                <a href="{% url commcare_users domain %}">{% commcare_user %}s</a>
+            {% endif %}
+            <span class="divider">&gt;</span>
+        </li>
+        <li class="active">
+            <a href="#">User Settings <small>{{ couch_user.username }}</small></a>
+        </li>
+    {% else %}
+        <li class="active">
+            <a href="#">My Account Settings</a>
+        </li>
+    {% endif %}
+{% endblock %}
 
 {% block user-view %}
-    <h1>Account Settings</h1>
-    <div id="user_settings_tabs">
-        <ul>
-            <li><a href="#basic-info">Basic</a></li>
-            {% if couch_user.is_commcare_user and couch_user.user_data %}
-            <li><a href="#user-data">Custom Registration Data</a></li>
-            {% endif %}
-            {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
-            <li><a href="#scheduled-reports">My Scheduled Reports</a></li>
-            {% if proj_settings_form %}<li><a href="#project-settings">Project "{{ domain }}" Settings</a></li>{% endif %}
-            <li><a href="#domains">My Projects</a></li>
-            {% endif %}
-        </ul>
-        <div id="basic-info">
-            <h2>User Information</h2>
-            <form name="user_details" method="post">
+    <ul class="nav nav-tabs" id="project-settings-tabs">
+        <li><a href="#basic-info" data-toggle="tab">Basic</a></li>
+    {% if couch_user.is_commcare_user and couch_user.user_data %}
+        <li><a href="#user-data" data-toggle="tab">Custom Registration Data</a></li>
+    {% endif %}
+    {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
+        <li><a href="#scheduled-reports" data-toggle="tab">My Scheduled Reports</a></li>
+        {% if proj_settings_form %}
+        <li><a href="#project-settings" data-toggle="tab">Project "{{ domain }}" Settings</a></li>
+        {% endif %}
+        <li><a href="#domains" data-toggle="tab">My Projects</a></li>
+    {% endif %}
+    </ul>
+    <div class="tab-content" id="settings">
+        <div class="tab-pane" id="basic-info">
+            <form class="form form-horizontal" name="user_details" method="post">
                 <input type="hidden" name="form_type" value="basic-info" />
-                <table class="edit_single_user">
-                    <tr>
-                        <th>Username:</th>
-                        <td>{{ couch_user.html_username|safe }}</td>
-                    </tr>
-                    {{ form.as_table }}
-                    <tr>
-                        <th></th>
-                        <td><br/><input type="submit" class="small" value="Update Information"/></td>
-                    </tr>
-                </table>
+                {% bootstrap_form_errors form %}
+                <fieldset>
+                    <legend>User Information</legend>
+                    <div class="control-group">
+                        <label class="control-label">Username:</label>
+                        <div class="controls">
+                            <span class="input-xlarge uneditable-input">{{ couch_user.html_username|safe }}</span>
+                        </div>
+                    </div>
+                    {% for field in form.visible_fields %}
+                        <div class="control-group{% if field.errors %} error{% endif %}">
+                            <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
+                            <div class="controls">
+                                {{ field }}
+                                {% for error in field.errors %}
+                                    <span class="help-inline">{{ error }}</span>
+                                {% endfor %}
+                                {% if field.help_text %}
+                                    <p class="help-block">
+                                        {{ field.help_text }}
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </fieldset>
+                <div class="form-actions"><button type="submit" class="btn btn-primary">Update Information</button></div>
             </form>
-            <h2>Phone Numbers</h2>
-            {% include "users/partial/phone_numbers.html" %}
+
+            <div class="form form-horizontal">
+                <fieldset>
+                    {% for phone_number in phone_numbers %}
+                        {% if forloop.first %}<legend>Registered Phone Numbers</legend>{% endif %}
+                        <div class="control-group">
+                            <label class="control-label">+{{ phone_number }}</label>
+                            <div class="controls">
+                                <a class="btn btn-danger" data-toggle="modal" href="#delete_{{phone_number|urlencode}}"><i class="icon icon-remove icon-white"></i> Delete</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </fieldset>
+            </div>
+            <form class="form form-horizontal" name="add_phone_number" method="post">
+                <input type="hidden" name="form_type" value="phone-numbers" />
+                <fieldset>
+                    <legend>Add a New Number</legend>
+                    <div class="control-group">
+                        <label class="control-label" for="id_add_phone_number">Phone Number:</label>
+                        <div class="controls">
+                            <div class="input-prepend">
+                                <span class="add-on">+</span>
+                                <input id="id_add_phone_number" type="text" name="phone_number" value="" maxlength="50" />
+                            </div>
+                            <p class="help-block">
+                                Please enter number, including international code, in digits only.
+                            </p>
+                        </div>
+                    </div>
+                </fieldset>
+                <div class="form-actions"><button type="submit" class="btn btn-primary">Add Number</button></div>
+            </form>
         </div>
         {% if couch_user.is_commcare_user and couch_user.user_data %}
-        <div id="user-data">
+        <div class="tab-pane" id="user-data">
             {% include "users/partial/user_data.html" %}
         </div>
         {% endif %}
         {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
-        <div id="scheduled-reports">
+        <div class="tab-pane" id="scheduled-reports">
             {% include "users/partial/scheduled_reports.html" %}
         </div>
         {% if proj_settings_form %}
-        <div id="project-settings">
+        <div class="tab-pane" id="project-settings">
             {% include "users/partial/project_settings.html" %}
         </div>
         {% endif %}
-        <div id="domains">
+        <div class="tab-pane" id="domains">
             {% include "users/partial/domain_accounts.html" %}
         </div>
         {% endif %}
     </div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    {% for phone_number in phone_numbers %}
+        <div id="delete_{{phone_number|urlencode}}" class="modal hide fade">
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal">&times;</a>
+                <h3>Delete +{{ phone_number }}?</h3>
+            </div>
+            <form class="form form-horizontal hq-form" name="delete_phone_number" action="{% url delete_phone_number domain couch_user.couch_id %}?phone_number={{phone_number|urlencode}}" method="post">
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the phone number: "+{{ phone_number }}"?</p>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                    <button type="submit" class="btn btn-danger"><i class="icon icon-remove icon-white"></i> Delete</button>
+                </div>
+            </form>
+        </div>
+    {% endfor %}
 {% endblock %}
 

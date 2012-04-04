@@ -1,19 +1,28 @@
 {% extends "users/users_base.html" %}
 {% load i18n %}
+{% load hq_shared_tags %}
+{% load hq_bootstrap_tags %}
+
 {% block commcare_users_indicator %}
-    <ul>
-        <li class="selected">New CommCare User</li>
+    <ul class="nav nav-list">
+        <li class="active"><a href="#">New {% commcare_user %}</a></li>
     </ul>
 {% endblock %}
 
+{% block subsection-title %}
+    <li>
+        <a href="{% url commcare_users domain %}">{% commcare_user %}s</a> <span class="divider">&gt;</span>
+    </li>
+    <li class="active">
+        <a href="#">New {% commcare_user %}</a>
+    </li>
+{% endblock %}
+
 {% block user-view %}
-<h1>Create a new CommCare Account</h1>
-	<form method="POST">
-	<form>
-		<table>
-			{{ form.as_table }}
-		</table>
-	<input id="id_domain" name="domain" type="hidden" value="{{ domain }}" />
-	<input type="submit" value="Ok" />
+	<form class="form form-horizontal" method="post">
+        {% bootstrap_form_errors form %}
+        <input id="id_domain" name="domain" type="hidden" value="{{ domain }}" />
+        {% bootstrap_fieldset form "Create new Mobile Worker account" %}
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Create {% commcare_user %}</button></div>
 	</form>
 {% endblock %}

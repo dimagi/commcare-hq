@@ -23,6 +23,7 @@ class UsersMiddleware(object):
             request.couch_user = CouchUser.from_django_user(request.user)
             if 'domain' in view_kwargs:
                 domain = view_kwargs['domain']
+                request.domain = domain
                 if not request.couch_user:
                     couch_domain = Domain.view("domain/domains", key=domain,
                                                     reduce=False, include_docs=True).one()
@@ -31,7 +32,7 @@ class UsersMiddleware(object):
                     else:
                         request.couch_user = InvalidUser()
                 if request.couch_user:
-                    request.couch_user.current_domain = view_kwargs['domain']
+                    request.couch_user.current_domain = domain
         return None
     
 ############################################################################################################

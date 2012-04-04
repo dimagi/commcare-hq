@@ -59,7 +59,8 @@ urlpatterns =\
 
 
 domain_specific = patterns('corehq.apps.domain.views',
-    url(r'^$', 'manage_domain', name='manage_domain'),
+    url(r'^$', 'global_settings', name="domain_global_settings"),
+    url(r'^forwarding/$', 'domain_forwarding', name='domain_forwarding'),
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', 'add_repeater', name='add_repeater'),
     url(r'^forwarding/test/$', 'test_repeater', name='test_repeater'),
     url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', 'drop_repeater', name='drop_repeater')
