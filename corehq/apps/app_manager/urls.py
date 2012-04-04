@@ -1,5 +1,5 @@
 from django.conf.urls.defaults import patterns, url, include
-from django.views.generic.simple import direct_to_template
+from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 
 download_urls = patterns('corehq.apps.app_manager.views',
     url(r'^$', 'download_index', {}, 'download_index'),
@@ -68,6 +68,7 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
         'multimedia_upload', name='multimedia_upload'),
     url(r'^multimedia_map/(?P<app_id>[\w-]+)/$',
         'multimedia_map', name='multimedia_map'),
+    (r'^(?P<app_id>[\w-]+)/multimedia/', include(hqmedia_urls)),
 
  url(r'^edit_module_detail_screens/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',    'edit_module_detail_screens',
                                                                        name='edit_module_detail_screens'),

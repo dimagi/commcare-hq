@@ -1,5 +1,4 @@
 from datetime import datetime
-import logging
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -7,6 +6,7 @@ from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib.auth.views import login as django_login
 from django.contrib.auth.views import logout as django_logout
+from django.contrib.sites.models import Site
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound
 from django.shortcuts import redirect
@@ -74,6 +74,16 @@ def landing_page(req, template_name="home.html"):
         return HttpResponseRedirect(reverse('homepage'))
     req.base_template = settings.BASE_TEMPLATE
     return django_login(req, template_name=template_name, authentication_form=EmailAuthenticationForm)
+
+def yui_crossdomain(req):
+    x_domain = """<?xml version="1.0"?>
+<!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">
+<cross-domain-policy>
+    <allow-access-from domain="yui.yahooapis.com"/>
+    <allow-access-from domain="%s"/>
+    <site-control permitted-cross-domain-policies="master-only"/>
+</cross-domain-policy>""" % Site.objects.get(id = settings.SITE_ID).domain
+    return HttpResponse(x_domain, mimetype="application/xml")
     
 @login_required()
 def password_change(req):

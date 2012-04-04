@@ -1,8 +1,15 @@
+import uuid
+from django.conf import settings
 from couchdbkit.exceptions import ResourceNotFound
-from django.http import HttpResponse, HttpResponseServerError
+from django.contrib.sites.models import Site
+from django.http import HttpResponse, HttpResponseServerError, Http404
 from django.utils import simplejson
 from corehq.apps.hqmedia import upload
+from corehq.apps.hqmedia.forms import HQMediaZipUploadForm, HQMediaFileUploadForm
 from corehq.apps.hqmedia.models import *
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.app_manager.models import Application, get_app
+from dimagi.utils.web import render_to_response
 
 X_PROGRESS_ERROR = 'Server Error: You must provide X-Progress-ID header or query param.'
 
@@ -46,3 +53,18 @@ def check_upload_success(request, domain):
         return HttpResponse(simplejson.dumps(cached_data))
     else:
         return HttpResponseServerError(X_PROGRESS_ERROR)
+
+
+@require_permission('edit-apps')
+def upload(request, domain, app_id):
+    kind='zip'
+    app = get_app(domain, app_id)
+    DNS_name = "http://"+Site.objects.get(id = settings.SITE_ID).domain
+    return render_to_response(request, "hqmedia/upload_zip.html",
+            {"domain": domain,
+             "app": app,
+             "DNS_name": DNS_name})
+
+def uploaded(request, domain, app_id):
+    print "uploaded files"
+    return HttpResponse(simplejson.dumps({}))
