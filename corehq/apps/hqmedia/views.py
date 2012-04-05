@@ -1,10 +1,14 @@
 import uuid
+import magic
 from django.conf import settings
 from couchdbkit.exceptions import ResourceNotFound
 from django.contrib.sites.models import Site
 from django.http import HttpResponse, HttpResponseServerError, Http404
 from django.utils import simplejson
-from corehq.apps.hqmedia import upload
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+import zipfile
+from corehq.apps.hqmedia import upload, utils
 from corehq.apps.hqmedia.forms import HQMediaZipUploadForm, HQMediaFileUploadForm
 from corehq.apps.hqmedia.models import *
 from corehq.apps.users.decorators import require_permission
@@ -13,7 +17,7 @@ from dimagi.utils.web import render_to_response
 
 X_PROGRESS_ERROR = 'Server Error: You must provide X-Progress-ID header or query param.'
 
-def download_media(request, domain, media_type, doc_id):
+def download_media(request, media_type, doc_id):
     # TODO limit access to relevant domains
     try:
         media = eval(media_type)
@@ -29,42 +33,49 @@ def download_media(request, domain, media_type, doc_id):
         pass
     return HttpResponseServerError("No Media Found")
 
-def check_upload_progress(request, domain):
-    """
-    Return JSON object with information about the progress of an upload.
-    """
-    cache_handler = upload.HQMediaUploadCacheHandler.handler_from_request(request, domain)
-    if cache_handler:
-        cache_handler.sync()
-        return HttpResponse(simplejson.dumps(cache_handler.data))
-    else:
-        return HttpResponseServerError(X_PROGRESS_ERROR)
-
-def check_upload_success(request, domain):
-    """
-    Return JSON object with information about files that failed to sync with couch after
-    a zip upload---can only by accessed once, and later returns an empty JSON object.
-    """
-    cache_handler = upload.HQMediaUploadSuccessCacheHandler.handler_from_request(request, domain)
-    if cache_handler:
-        cache_handler.sync()
-        cached_data = cache_handler.data
-        cache_handler.delete()
-        return HttpResponse(simplejson.dumps(cached_data))
-    else:
-        return HttpResponseServerError(X_PROGRESS_ERROR)
-
 
 @require_permission('edit-apps')
 def upload(request, domain, app_id):
-    kind='zip'
     app = get_app(domain, app_id)
     DNS_name = "http://"+Site.objects.get(id = settings.SITE_ID).domain
-    return render_to_response(request, "hqmedia/upload_zip.html",
+    return render_to_response(request, "hqmedia/bulk_upload.html",
             {"domain": domain,
              "app": app,
              "DNS_name": DNS_name})
 
+@require_POST
 def uploaded(request, domain, app_id):
-    print "uploaded files"
-    return HttpResponse(simplejson.dumps({}))
+    app = get_app(domain, app_id)
+    try:
+        uploaded_file = request.FILES.get('Filedata')
+        data = uploaded_file.file.read()
+        mime = magic.Magic(mime=True)
+        content_type = mime.from_buffer(data)
+        uploaded_file.file.seek(0)
+        matcher = utils.HQMediaMatcher(app, domain, request.user.username)
+
+        if content_type in utils.ZIP_MIMETYPES:
+            zip = zipfile.ZipFile(uploaded_file)
+            bad_file = zip.testzip()
+            # TODO: hadnle bad zipfile
+
+            matched_images, matched_audio, unknown_files = matcher.match_zipped(zip)
+            return HttpResponse(simplejson.dumps({"unknown": unknown_files,
+                                                  "images": matched_images,
+                                                  "audio": matched_audio,
+                                                  "zip": True}))
+        if content_type in utils.IMAGE_MIMETYPES:
+            file_type = "image"
+        elif content_type in utils.AUDIO_MIMETYPES:
+            file_type = "audio"
+        else:
+            raise Exception("Unsupported content type.")
+
+        match_found, match_map = matcher.match_file(uploaded_file)
+        return HttpResponse(simplejson.dumps({"match_found": match_found,
+                                                  file_type: match_map,
+                                                  "file": True}))
+
+    except Exception as e:
+        print e
+        return HttpResponse(simplejson.dumps({"error": e}))
