@@ -16,12 +16,14 @@ class Command(LabelCommand):
     def handle(self, *args, **options):
         if len(args) != 0: raise CommandError("This command doesn't expect arguments!")
             
+        count = 0
         for case in CommCareCase.view("case/by_user", include_docs=True, reduce=False):
-            print "migrating %s" % case
             if hasattr(case, 'domain') and hasattr(case, 'type'):
-                case['#export_tag'] = ["domain", case.type]
-            if not options["dryrun"]:
-                case.save()
-                print "migrated"
-            else:
-                print "nothing to do"
+                if not "#export_tag" in case or case['#export_tag'] != [case.domain, case.type]:
+                    print "migrating case %s in domain %s" % (case.get_id, case.domain)
+                    case['#export_tag'] = [case.domain, case.type]
+                    count += 1
+                    if not options["dryrun"]:
+                        case.save()
+        prefix = "would have " if options["dryrun"] else ""
+        print "%smigrated %s cases" % (prefix, count)
