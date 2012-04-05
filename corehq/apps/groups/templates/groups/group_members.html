@@ -71,9 +71,8 @@
                             <input type="text" value="{{ group.name }}" name="name" id="group-name-input" />
                         </div>
                     </div>
-                {% if user.is_superuser %}
                     <div class="control-group">
-                        <label class="control-label" for="group-case-sharing-input">Case Sharing</label>
+                        <label class="control-label" for="group-case-sharing-input">Case Sharing (Advanced)</label>
                         <div class="controls">
                             <select class="input-small" name="case_sharing" id="group-case-sharing-input"{% if group.case_sharing %} data-value="true"{% endif %}>
                                 <option value="false">Off</option>
@@ -81,7 +80,6 @@
                             </select>
                         </div>
                     </div>
-                {% endif %}
                 </div>
                 <div class="modal-footer">
                     <a href="#" class="btn" data-dismiss="modal">Cancel</a>

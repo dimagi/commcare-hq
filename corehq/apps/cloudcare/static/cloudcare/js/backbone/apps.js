@@ -164,7 +164,6 @@ cloudCare.Module = Backbone.Model.extend({
             var index = 0;
             this.forms = _(this.get("forms")).map(function (form) {
                 var ret = new cloudCare.Form(form);
-                console.log(ret);
                 ret.set("app_id", self.get("app_id"));
                 ret.set("module_index", self.get("index"));
                 ret.set("index", index);
@@ -311,7 +310,8 @@ cloudCare.FormListView = Backbone.View.extend({
 cloudCare.AppView = Backbone.View.extend({
     
     initialize: function(){
-        _.bindAll(this, 'render', 'setModel', 'showModule');
+        _.bindAll(this, 'render', 'setModel', 'showModule', "_clearCaseView", 
+                  "_clearFormPlayer", "_clearMainPane");
         var self = this;
         this.moduleListView = new cloudCare.ModuleListView({
             language: this.options.language
@@ -342,25 +342,58 @@ cloudCare.AppView = Backbone.View.extend({
         this.model = app;
     },
     showModule: function (module) {
+        this._clearMainPane();
         this.formListView.model = module;
         this.formListView.render();
     },
     selectForm: function (form) {
         var self = this;
         var formListView = this.formListView;
+        var selectedModule = this.formListView.model;
+        
+        self._clearFormPlayer();
+        var playForm = function (url) {
+            // go play the form. this is a little sketchy
+            
+            // clear current case information
+            self._clearCaseView();
+            
+            var submitUrl = getSubmitUrl(self.options.submitUrlRoot, form.get("app_id"));
+            // get context
+            resp = $.ajax({ url: url,
+                            async: false, 
+                            dataType: "json" });
+            resp.done(function (data) {
+                data["onsubmit"] = function (xml) {
+                    // post to receiver
+                    $.ajax({
+		                type: 'POST',
+		                url: submitUrl,
+		                data: xml,
+		                success: function () {
+		                    self._clearFormPlayer();
+		                    self.showModule(selectedModule);
+		                    showSuccess("Form successfully saved.", $("#cloudcare-main"), 5000);
+		                }
+		            });
+		        };
+                var sess = new WebFormSession(data);
+                // TODO: probably shouldn't hard code this div
+                sess.load($('#webforms'), $('#loading'), null);
+            });
+        };
+        
         if (form) {
             if (form.get("requires") === "none") {
-	            // go play the form. this is a little sketchy
+	            // no requirements, go ahead and play it
 	            var url = getFormUrl(self.options.urlRoot, form.get("app_id"), 
-	                                 form.get("module_index"), form.get("index"));
-	            window.location.href = url;
+                                     form.get("module_index"), form.get("index"));
+                playForm(url);
             } else if (form.get("requires") === "case") {
 	            var listDetails = formListView.model.getDetail("case_short");
 	            var summaryDetails = formListView.model.getDetail("case_long");
 	            // clear anything existing
-	            if (formListView.caseView) {
-	                $(formListView.caseView.el).html("");
-	            }
+	            self._clearCaseView();
 	            formListView.caseView = new cloudCare.CaseMainView({                    
 	                el: $("#cases"),
 	                listDetails: listDetails,
@@ -376,9 +409,11 @@ cloudCare.AppView = Backbone.View.extend({
 	                formListView.enterForm = $("<a />").text("Enter " + form.getLocalized("name", self.options.language)).addClass("btn btn-primary").appendTo(
 	                        $(formListView.caseView.detailsView.el));
 	                formListView.enterForm.click(function () {
+	                    
 	                    var url = getFormUrl(self.options.urlRoot, form.get("app_id"), 
 	                                         form.get("module_index"), form.get("index"));
-	                    window.location.href = url + "?case_id=" + caseModel.id;
+	                    url = url + "?case_id=" + caseModel.id;
+	                    playForm(url);
 	                });
 	            });
 	            cloudCare.dispatch.on("case:deselected", function (caseModel) {
@@ -407,6 +442,19 @@ cloudCare.AppView = Backbone.View.extend({
             this.moduleListView.moduleList.reset(this.model.modules);
         }
         return this;
+    },
+    _clearMainPane: function () {
+        this._clearCaseView();
+        this._clearFormPlayer();
+    },
+    _clearCaseView: function () {
+        if (this.formListView.caseView) {
+            $(this.formListView.caseView.el).html("");
+        }
+    },
+    _clearFormPlayer: function () {
+        // TODO: clean hack/hard coded id
+        $('#webforms').html("");
     }
 });
 
@@ -440,7 +488,8 @@ cloudCare.AppMainView = Backbone.View.extend({
             model: this.options.model, 
             language: this.options.language,
             caseUrlRoot: this.options.caseUrlRoot,
-            urlRoot: this.options.urlRoot
+            urlRoot: this.options.urlRoot,
+            submitUrlRoot: this.options.submitUrlRoot
         });
         
         // utilities
@@ -543,7 +592,6 @@ cloudCare.AppMainView = Backbone.View.extend({
 
         
         // setting routes
-        
         cloudCare.dispatch.on("module:selected", function (module) {
             self.navigate("view/" + module.get("app_id") + 
                                  "/" + module.get("index"));
