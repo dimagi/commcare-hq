@@ -215,6 +215,9 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
 
     def get_language_code(self):
         return self.get_case_property("language_code")
+    
+    class Meta:
+        app_label = "sms" # This is necessary otherwise syncdb will confuse the sms app with casexml
 
 
 def case_changed_receiver(sender, case, **kwargs):
