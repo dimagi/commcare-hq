@@ -102,9 +102,8 @@ Please make sure you're still in the root directory of commcare-hq and that you 
     ./manage.py migrate
     # this will do some basic setup, create a superuser, and create a project
     ./manage.py bootstrap <project-name> <user> <password>
+    ./manage.py make_bootstrap # (if it fails add the 'direct-lessc' directive)
     ./manage.py collectstatic
-    make -C submodules/hq-bootstrap/
-
 
 ### Don't forget to start up helper processes
 
