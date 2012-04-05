@@ -19,9 +19,9 @@ class Command(LabelCommand):
         count = 0
         for case in CommCareCase.view("case/by_user", include_docs=True, reduce=False):
             if hasattr(case, 'domain') and hasattr(case, 'type'):
-                if not "#export_tag" in case or case['#export_tag'] != [case.domain, case.type]:
+                if not "#export_tag" in case or case['#export_tag'] != ["domain", "type"]:
                     print "migrating case %s in domain %s" % (case.get_id, case.domain)
-                    case['#export_tag'] = [case.domain, case.type]
+                    case['#export_tag'] = ["domain", "type"]
                     count += 1
                     if not options["dryrun"]:
                         case.save()
