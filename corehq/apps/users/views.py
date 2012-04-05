@@ -6,6 +6,7 @@ import urllib
 from datetime import datetime
 import csv
 import io
+import logging
 from corehq.apps.registration.forms import NewWebUserRegistrationForm
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.users.util import format_username, normalize_username, raw_username
@@ -82,11 +83,14 @@ def _users_context(request, domain):
 def users(request, domain):
     response = reverse("user_account", args=[domain, request.couch_user._id])
     if request.couch_user:
-        user = WebUser.get_by_user_id(request.couch_user._id, domain)
-        if user and user.has_permission(domain, Permissions.EDIT_WEB_USERS):
-            response = reverse("web_users", args=[domain])
-        elif user and user.has_permission(domain, Permissions.EDIT_COMMCARE_USERS):
-            response = reverse("commcare_users", args=[domain])
+        try:
+            user = WebUser.get_by_user_id(request.couch_user._id, domain)
+            if user and user.has_permission(domain, Permissions.EDIT_WEB_USERS):
+                response = reverse("web_users", args=[domain])
+            elif user and user.has_permission(domain, Permissions.EDIT_COMMCARE_USERS):
+                response = reverse("commcare_users", args=[domain])
+        except Exception as e:
+            logging.exception("Failed to grab user object: %s", e)
     return HttpResponseRedirect(response)
 
 @require_can_edit_web_users
