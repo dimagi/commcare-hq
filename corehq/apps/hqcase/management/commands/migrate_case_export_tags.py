@@ -2,6 +2,7 @@ from django.core.management.base import LabelCommand, CommandError
 from casexml.apps.case.models import CommCareCase
 from optparse import make_option
 from couchexport.models import SavedExportSchema
+from dimagi.utils.couch.database import get_db
 
 
 class Command(LabelCommand):
@@ -17,7 +18,8 @@ class Command(LabelCommand):
         if len(args) != 0: raise CommandError("This command doesn't expect arguments!")
             
         count = 0
-        for case in CommCareCase.view("case/by_user", include_docs=True, reduce=False):
+        for line in get_db().view("case/by_user", reduce=False):
+            case = CommCareCase.get(line["id"])
             if hasattr(case, 'domain') and hasattr(case, 'type'):
                 if not "#export_tag" in case or case['#export_tag'] != ["domain", "type"]:
                     print "migrating case %s in domain %s" % (case.get_id, case.domain)
