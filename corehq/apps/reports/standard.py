@@ -846,8 +846,13 @@ class CaseExportReport(StandardHQReport):
             include_docs=True).all()
         exports = filter(lambda x: x.type == "case", exports)
         self.context['saved_exports'] = exports
-        cases = get_db().view("case/by_domain", startkey=[self.domain], endkey=[self.domain, {}], include_docs=True).all()
-        self.context['case_types'] = set([case['doc']['type'] for case in cases])
+        cases = get_db().view("hqcase/types_by_domain", 
+                              startkey=[self.domain], 
+                              endkey=[self.domain, {}], 
+                              reduce=True,
+                              group=True,
+                              group_level=2).all()
+        self.context['case_types'] = [case['key'][1] for case in cases]
         self.context.update({
             "get_filter_params": self.request.GET.copy()
         })
