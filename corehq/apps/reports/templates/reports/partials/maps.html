@@ -1,0 +1,22 @@
+<div class="hq-graphic-report">
+
+<div class="hq-graph">
+    <h2>Maps up in this bitch</h2>
+
+    <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key={{ maps_api_key }}&sensor=false"></script>
+    <script type="text/javascript">
+      $(document).ready(function() {
+          var myOptions = {
+            center: new google.maps.LatLng(42.4, -71.1),
+            zoom: 11,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+          };
+          var map = new google.maps.Map($('#map')[0], myOptions);
+        });
+    </script>
+    <!-- TODO: dynamic sizing of map canvas to fill available space -->
+    <div id="map" style="width: 1200px; height: 500px;"></div>
+
+</div>
+
+</div>

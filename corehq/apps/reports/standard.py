@@ -701,6 +701,17 @@ class SubmitDistributionReport(StandardHQReport):
             "graph_height": 500
         })
 
+class MapsTestReport(StandardHQReport):
+    name = "Maps Test"
+    slug = "maps_test"
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.SelectCHWField']
+    template_name = "reports/basic_report.html"
+    report_partial = "reports/partials/maps.html"
+
+    def calc(self):
+        self.context['maps_api_key'] = settings.GMAPS_API_KEY
+
 class SubmitTrendsReport(StandardDateHQReport):
     #nuked until further notice
     name = "Submit Trends"
