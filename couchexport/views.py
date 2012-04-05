@@ -37,10 +37,10 @@ def export_data(request, **kwargs):
     """
     export_tag = _export_tag_or_bust(request)
     resp = export_data_shared(export_tag, 
-                              request.GET.get("format", Format.XLS_2007), 
-                              request.GET.get("filename", None), 
-                              request.GET.get("previous_export", None),
-                              request.GET.get("separator", "|")) 
+                              format=request.GET.get("format", Format.XLS_2007), 
+                              filename=request.GET.get("filename", None), 
+                              previous_export_id=request.GET.get("previous_export", None),
+                              separator=request.GET.get("separator", "|")) 
     if resp:
         return resp
     else:
