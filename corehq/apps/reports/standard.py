@@ -848,6 +848,9 @@ class CaseExportReport(StandardHQReport):
         self.context['saved_exports'] = exports
         cases = get_db().view("case/by_domain", startkey=[self.domain], endkey=[self.domain, {}], include_docs=True).all()
         self.context['case_types'] = set([case['doc']['type'] for case in cases])
+        self.context.update({
+            "get_filter_params": self.request.GET.copy()
+        })
 
 class ApplicationStatusReport(StandardTabularHQReport):
     name = "Application Status"
