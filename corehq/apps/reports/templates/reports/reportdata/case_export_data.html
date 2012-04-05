@@ -61,7 +61,7 @@
                 <tr class="{% cycle "odd" "even" %}">
                     <td>{{ export.name|default:"[blank]" }}</td>
                     <td class="cell-vertical-centered">
-                        <a class="btn" href='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?type=case&format=html'>
+                        <a class="btn" href='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?type=case&format=html&{{ get_filter_params.urlencode|safe }}'>
                             HTML Preview
                         </a>
                     </td>
@@ -71,7 +71,7 @@
                         </a>
                     </td>
                     <td class="cell-vertical-centered">
-                        <a class="btn btn-primary" href="{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?type=case&group={{ group.get_id }}{% if show_user_filter %}{% for f in toggle_users %}{% if f.show %}&ufilter={{ f.type }}{% endif %}{% endfor %}{% endif %}">
+                        <a class="btn btn-primary" href="{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?type=case&{{ get_filter_params.urlencode|safe }}">
                             <i class="icon-download-alt icon-white"></i> Download Data
                         </a>
                     </td>
