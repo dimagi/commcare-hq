@@ -1,0 +1,101 @@
+{% extends "hqwebapp/centered.html" %}
+{% load hq_shared_tags %}
+{% load multimedia_tags %}
+
+{% block title %}Multimedia Map{% endblock title %}
+
+{% block js %} {{ block.super }}
+    <script type="text/javascript" src="http://yui.yahooapis.com/combo?3.4.1/build/yui-base/yui-base-min.js&3.4.1/build/oop/oop-min.js&3.4.1/build/event-custom-base/event-custom-base-min.js&3.4.1/build/event-custom-complex/event-custom-complex-min.js&3.4.1/build/features/features-min.js&3.4.1/build/dom-core/dom-core-min.js&3.4.1/build/dom-base/dom-base-min.js&3.4.1/build/selector-native/selector-native-min.js&3.4.1/build/selector/selector-min.js&3.4.1/build/node-core/node-core-min.js&3.4.1/build/node-base/node-base-min.js&3.4.1/build/event-base/event-base-min.js&3.4.1/build/event-delegate/event-delegate-min.js&3.4.1/build/node-event-delegate/node-event-delegate-min.js&3.4.1/build/pluginhost-base/pluginhost-base-min.js&3.4.1/build/pluginhost-config/pluginhost-config-min.js&3.4.1/build/node-pluginhost/node-pluginhost-min.js&3.4.1/build/dom-style/dom-style-min.js&3.4.1/build/dom-screen/dom-screen-min.js&3.4.1/build/node-screen/node-screen-min.js&3.4.1/build/node-style/node-style-min.js&3.4.1/build/attribute-base/attribute-base-min.js&3.4.1/build/base-base/base-base-min.js&3.4.1/build/base-pluginhost/base-pluginhost-min.js&3.4.1/build/base-build/base-build-min.js&3.4.1/build/swfdetect/swfdetect-min.js&3.4.1/build/escape/escape-min.js&3.4.1/build/swf/swf-min.js&3.4.1/build/uploader/uploader-min.js"></script>
+    <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia_uploader.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(function () {
+           // Format all the preview & play buttons properly
+
+            $('#imageRefs tbody .hqmedia-preview').each(function () {
+                var $actionButton = $(this).find('.btn');
+                if ($actionButton)
+                    formatPreview($actionButton);
+            });
+
+            function formatPreview (actionButton) {
+                actionButton.popover({
+                    title: 'Click to open in new window',
+                    content: '<img src="'+actionButton.attr('href')+'" alt="preview image" />',
+                    placement: 'bottom'
+                });
+            }
+        });
+    </script>
+{% endblock %}
+
+{% block centered-content %}
+<div class="page-header">
+    <h1>Multimedia Reference Checker</h1>
+</div>
+    <div class="accordion" id="references-list">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <h3><a class="accordion-toggle" data-toggle="collapse" href="#imageRefs">
+                    Image Reference List
+                </a></h3>
+            </div>
+            <div id="imageRefs" class="accordion-body collapse">
+                <div class="accordion-inner">
+                    {% if multimedia.images.items %}
+                        <table class="table table-striped table-bordered table-condensed">
+                            <thead>
+                                <tr>
+                                    <th class="span1">Status</th>
+                                    <th class="span2">Action</th>
+                                    <th class="span2">Preview</th>
+                                    <th class="span7">Path in Form</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for form_path, image in multimedia.images.items %}
+                                    {% render_multimedia_map form_path "image" image %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        The CommCare application "{{ app.name }}" does not contain any image references.
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <h3><a class="accordion-toggle" data-toggle="collapse" href="#audioRefs">
+                    Audio Reference List
+                </a></h3>
+            </div>
+            <div id="audioRefs" class="accordion-body collapse">
+                <div class="accordion-inner">
+                    {% if multimedia.audio.items %}
+                        <table class="table table-striped table-bordered table-condensed">
+                            <thead>
+                            <tr>
+                                <th class="span1">Status</th>
+                                <th class="span2">Action</th>
+                                <th class="span2">Preview</th>
+                                <th class="span7">Path in Form</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for form_path, sound in multimedia.audio.items %}
+                                {% render_multimedia_map form_path "audio" sound %}
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        The CommCare application "{{ app.name }}" does not contain any audio references.
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock centered-content %}

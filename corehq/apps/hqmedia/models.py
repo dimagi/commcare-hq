@@ -150,17 +150,17 @@ class HQMediaMixin(Document):
             media = eval(map_item.media_type)
             media = media.get(map_item.multimedia_id)
 
-    def get_template_map(self, sorted_files, domain):
+    def get_template_map(self, sorted_files):
         product = {}
         missing_refs = 0
         multimedia_map = self.multimedia_map
         for f in sorted_files:
             try:
                 f = f.strip()
-                product[f] = {"url": reverse("hqmedia_download", args=[domain,
-                                                           multimedia_map[f].media_type,
-                                                           multimedia_map[f].multimedia_id]),
-                                "m_id": multimedia_map[f].multimedia_id}
+                product[f] = { "url": reverse("hqmedia_download",
+                        args=[multimedia_map[f].media_type, multimedia_map[f].multimedia_id]),
+                    "m_id": multimedia_map[f].multimedia_id
+                }
             except KeyError:
                 product[f] = None
                 missing_refs += 1

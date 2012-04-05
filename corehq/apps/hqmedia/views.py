@@ -33,6 +33,25 @@ def download_media(request, media_type, doc_id):
         pass
     return HttpResponseServerError("No Media Found")
 
+@require_permission('edit-apps')
+def media_map(request, domain, app_id):
+    app = get_app(domain, app_id)
+    sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
+
+    images, missing_image_refs = app.get_template_map(sorted_images)
+    audio, missing_audio_refs = app.get_template_map(sorted_audio)
+
+    return render_to_response(request, "hqmedia/map.html", {
+        "domain": domain,
+        "app": app,
+        "multimedia": {
+         "images": images,
+         "audio": audio,
+         "has_error": has_error
+        },
+        "missing_image_refs": missing_image_refs,
+        "missing_audio_refs": missing_audio_refs
+    })
 
 @require_permission('edit-apps')
 def upload(request, domain, app_id):
@@ -79,3 +98,5 @@ def uploaded(request, domain, app_id):
     except Exception as e:
         print e
         return HttpResponse(simplejson.dumps({"error": e}))
+
+
