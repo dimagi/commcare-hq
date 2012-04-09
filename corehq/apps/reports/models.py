@@ -94,13 +94,17 @@ class WeeklyReportNotification(ReportNotification):
 class FormExportSchema(SavedExportSchema):
     doc_type = 'SavedExportSchema'
     app_id = StringProperty()
-    include_errors = BooleanProperty()
+    include_errors = BooleanProperty(default=True)
 
     @property
     def filter(self):
         f = FilterFunction()
+        if self.filter_function == 'couchforms.filters.instances':
+            # grandfather in old custom exports
+            self.include_errors = False
+
         if self.app_id is not None:
             f.add(reports.util.app_export_filter, app_id=self.app_id)
-        if self.include_errors:
+        if not self.include_errors:
             f.add(couchforms.filters.instances)
         return f
