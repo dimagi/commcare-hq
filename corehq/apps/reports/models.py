@@ -96,12 +96,17 @@ class FormExportSchema(SavedExportSchema):
     app_id = StringProperty()
     include_errors = BooleanProperty(default=True)
 
-    @property
-    def filter(self):
-        f = FilterFunction()
+    @classmethod
+    def wrap(cls, data):
+        self = super(FormExportSchema, cls).wrap(data)
         if self.filter_function == 'couchforms.filters.instances':
             # grandfather in old custom exports
             self.include_errors = False
+        return self
+
+    @property
+    def filter(self):
+        f = FilterFunction()
 
         if self.app_id is not None:
             f.add(reports.util.app_export_filter, app_id=self.app_id)
