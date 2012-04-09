@@ -7,5 +7,5 @@ urlpatterns = patterns('corehq.apps.hqmedia.views',
 application_urls = patterns('corehq.apps.hqmedia.views',
     url(r'^upload/$', "upload", name="hqmedia_bulk_upload"),
     url(r'^uploaded/$', "uploaded", name="hqmedia_handle_uploaded"),
-    url(r'^map/$', "media_map")
+    url(r'^map/$', "media_map", name="hqmedia_references")
 )

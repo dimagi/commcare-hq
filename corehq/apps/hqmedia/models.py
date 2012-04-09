@@ -127,6 +127,16 @@ class HQMediaMapItem(DocumentSchema):
     media_type = StringProperty()
     output_size = DictProperty()
 
+    @staticmethod
+    def format_match_map(path, media_type=None, media_id=None, upload_path=""):
+        return {
+            "path": path,
+            "uid": path.replace('jr://','').replace('/', '_').replace('.', '_'),
+            "m_id": media_id if media_id else "",
+            "url": reverse("hqmedia_download", args=[media_type, media_id]) if media_id else "",
+            "upload_path": upload_path
+        }
+
 class HQMediaMixin(Document):
 
     # keys are the paths to each file in the final application media zip
@@ -151,18 +161,17 @@ class HQMediaMixin(Document):
             media = media.get(map_item.multimedia_id)
 
     def get_template_map(self, sorted_files):
-        product = {}
+        product = []
         missing_refs = 0
         multimedia_map = self.multimedia_map
         for f in sorted_files:
             try:
                 f = f.strip()
-                product[f] = { "url": reverse("hqmedia_download",
-                        args=[multimedia_map[f].media_type, multimedia_map[f].multimedia_id]),
-                    "m_id": multimedia_map[f].multimedia_id
-                }
+                product.append(HQMediaMapItem.format_match_map(f,
+                                                            multimedia_map[f].media_type,
+                                                            multimedia_map[f].multimedia_id))
             except KeyError:
-                product[f] = None
+                product.append(HQMediaMapItem.format_match_map(f))
                 missing_refs += 1
             except AttributeError:
                 pass

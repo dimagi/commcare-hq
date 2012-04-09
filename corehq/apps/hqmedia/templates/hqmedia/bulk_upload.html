@@ -5,24 +5,25 @@
 
 {% block js %} {{ block.super }}
     <script type="text/javascript" src="http://yui.yahooapis.com/combo?3.4.1/build/yui-base/yui-base-min.js&3.4.1/build/oop/oop-min.js&3.4.1/build/event-custom-base/event-custom-base-min.js&3.4.1/build/event-custom-complex/event-custom-complex-min.js&3.4.1/build/features/features-min.js&3.4.1/build/dom-core/dom-core-min.js&3.4.1/build/dom-base/dom-base-min.js&3.4.1/build/selector-native/selector-native-min.js&3.4.1/build/selector/selector-min.js&3.4.1/build/node-core/node-core-min.js&3.4.1/build/node-base/node-base-min.js&3.4.1/build/event-base/event-base-min.js&3.4.1/build/event-delegate/event-delegate-min.js&3.4.1/build/node-event-delegate/node-event-delegate-min.js&3.4.1/build/pluginhost-base/pluginhost-base-min.js&3.4.1/build/pluginhost-config/pluginhost-config-min.js&3.4.1/build/node-pluginhost/node-pluginhost-min.js&3.4.1/build/dom-style/dom-style-min.js&3.4.1/build/dom-screen/dom-screen-min.js&3.4.1/build/node-screen/node-screen-min.js&3.4.1/build/node-style/node-style-min.js&3.4.1/build/attribute-base/attribute-base-min.js&3.4.1/build/base-base/base-base-min.js&3.4.1/build/base-pluginhost/base-pluginhost-min.js&3.4.1/build/base-build/base-build-min.js&3.4.1/build/swfdetect/swfdetect-min.js&3.4.1/build/escape/escape-min.js&3.4.1/build/swf/swf-min.js&3.4.1/build/uploader/uploader-min.js"></script>
-    <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia_uploader.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.uploader.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
         $(function() {
-
+            // use these filters when we figure out what to do with duplicate filenames in different folders
+//            new Array({description:"Zip", extensions:"*.zip"},
+//                    {description:"Images", extensions:"*.jpg;*.png;*.gif"},
+//                    {description:"Audio", extensions:"*.mp3"}),
             var uploader = new HQMediaUploader({
-                fileFilters: new Array({description:"Zip", extensions:"*.zip"},
-                        {description:"Images", extensions:"*.jpg;*.png;*.gif"},
-                        {description:"Audio", extensions:"*.mp3"}),
+                uploadElem: '#hqmedia-upload',
+                fileFilters: new Array({description:"Zip", extensions:"*.zip"}),
                 uploadURL: '{{ DNS_name }}{% url hqmedia_handle_uploaded domain app.get_id %}',
                 onSuccess: showUploadStats
             });
             uploader.render();
 
             function showUploadStats (event, resp) {
-                console.log(resp);
                 var $currentMedia = $('#hqmedia_'+event.id);
                 if (resp.zip) {
                     // Handle Zip File Response
@@ -61,19 +62,19 @@
                     var $name = $('<dt />'),
                          $val = $('<dd />'),
                         $view = $('<a style="margin-bottom:6px;" target="_blank" class="btn btn-info btn-mini" />');
-                    $view.text('preview');
+                    $view.text('Preview');
                     if (is_audio) {
                         $view.popover({title: 'Click to open in new tab',
                             content: 'Audio not currently available for on-the-fly preview.',
                             placement: 'bottom'});
                     } else {
                         $view.popover({title: 'Click to open in new tab',
-                                       content: '<img src="'+matches[i].url+'" alt="'+matches[i].app_path+'" />',
+                                       content: '<img src="'+matches[i].url+'" alt="'+matches[i].path+'" />',
                                        placement: 'bottom'});
                     }
                     $view.attr('href', matches[i].url);
                     $name.text(matches[i].upload_path);
-                    $val.text(matches[i].app_path);
+                    $val.text(matches[i].path);
                     $val.append($('<br />'));
                     $val.append($view);
                     $list.append($name);
@@ -87,25 +88,47 @@
 {% endblock %}
 
 {% block centered-content %}
+    <ul class="breadcrumb">
+        <li><a href="{% url view_app domain app.get_id %}">Application "{{ app.name }}"</a> <span class="divider">&gt;</span></li>
+        <li><a href="{% url hqmedia_references domain app.get_id %}">Multimedia Reference Checker</a> <span class="divider">&gt;</span></li>
+        <li class="active"><a href="{% url hqmedia_bulk_upload domain app.get_id %}">Bulk Upload</a></li>
+    </ul>
     <div class="page-header">
         <h1>Multimedia Bulk Upload</h1>
     </div>
-    <div class="btn-toolbar">
-        <div id="hqmedia-uploader-overlay" style="position:absolute; z-index:2"></div>
-        <a id="hqmedia-select-button" class="btn btn-primary" href="#" style="z-index:1;">Select Files</a>
-        <a id="hqmedia-upload-button" href="#" class="btn btn-success">Upload Files</a>
+    <p>Use this tool to upload ZIP files of your multimedia, so you don't have to upload each file one-by-one.</p>
+    <p>The bulk uploader will compare the file paths in your form with the file paths in your zip to find a matching file.</p>
+    <p>For example, <strong>jr://file/commcare/images/hin/image.jpg</strong> and your zip's <strong>commcare/images/hin/image.jpg</strong> file would match, but it would not match <strong>commcare/images/image.jpg</strong>.</p>
+    
+    <div id="hqmedia-upload">
+        <div class="btn-toolbar">
+            <div class="hqm-overlay" style="position:absolute; z-index:2"></div>
+            <a class="hqm-select btn btn-primary" href="#" style="z-index:1;">Select Files</a>
+            <a class="hqm-upload-button btn disabled" href="#" onclick="return false;">Upload Files</a>
+        </div>
+        <h3>Bulk Upload File Queue</h3>
+        <table class="table table-striped table-bordered hqm-upload-list">
+            <thead>
+                <tr>
+                    <th class="span2">Filename</th>
+                    <th class="span1">Size</th>
+                    <th class="span2">Upload Progress</th>
+                    <th class="span2">Match Status</th>
+                    <th class="span5">Details</th>
+                </tr>
+            </thead>
+            <tbody class="queue">
+                <tr class="hqm-empty_queue-notice">
+                    <td colspan="5">Select files above to add to the queue.</td>
+                </tr>
+            </tbody>
+            <thead>
+                <tr class="hqm-uploaded-notice hide">
+                    <th colspan="5" >Uploaded Files</th>
+                </tr>
+            </thead>
+            <tbody class="done">
+            </tbody>
+        </table>
     </div>
-    <table id="hqmedia-queue" class="table table-striped table-bordered">
-        <thead>
-            <tr>
-                <th class="span2">Filename</th>
-                <th class="span2">File Size</th>
-                <th class="span2">Upload Progress</th>
-                <th class="span2">Match Status</th>
-                <th class="span4">Details</th>
-            </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
 {% endblock centered-content %}

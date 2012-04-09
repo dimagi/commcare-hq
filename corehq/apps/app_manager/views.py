@@ -464,8 +464,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
     if app and app.get_doc_type() == 'Application':
         images, audio, has_error = utils.get_multimedia_filenames(app)
-        multimedia_images, missing_image_refs = app.get_template_map(images, domain)
-        multimedia_audio, missing_audio_refs = app.get_template_map(audio, domain)
+        multimedia_images, missing_image_refs = app.get_template_map(images)
+        multimedia_audio, missing_audio_refs = app.get_template_map(audio)
         context.update({
             'missing_image_refs': missing_image_refs,
             'missing_audio_refs': missing_audio_refs,

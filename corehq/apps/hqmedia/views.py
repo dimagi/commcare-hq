@@ -41,9 +41,12 @@ def media_map(request, domain, app_id):
     images, missing_image_refs = app.get_template_map(sorted_images)
     audio, missing_audio_refs = app.get_template_map(sorted_audio)
 
+    DNS_name = "http://"+Site.objects.get(id = settings.SITE_ID).domain
+
     return render_to_response(request, "hqmedia/map.html", {
         "domain": domain,
         "app": app,
+        "DNS_name": DNS_name,
         "multimedia": {
          "images": images,
          "audio": audio,
@@ -65,13 +68,17 @@ def upload(request, domain, app_id):
 @require_POST
 def uploaded(request, domain, app_id):
     app = get_app(domain, app_id)
+    if request.POST.get('media_type', ''):
+        specific_params = dict(request.POST)
+    else:
+        specific_params = {}
     try:
         uploaded_file = request.FILES.get('Filedata')
         data = uploaded_file.file.read()
         mime = magic.Magic(mime=True)
         content_type = mime.from_buffer(data)
         uploaded_file.file.seek(0)
-        matcher = utils.HQMediaMatcher(app, domain, request.user.username)
+        matcher = utils.HQMediaMatcher(app, domain, request.user.username, specific_params)
 
         if content_type in utils.ZIP_MIMETYPES:
             zip = zipfile.ZipFile(uploaded_file)
