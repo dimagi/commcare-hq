@@ -69,8 +69,8 @@
         <input type="hidden" name="schema" value="{{ saved_export.schema_id }}" />
         <input type="hidden" name="table" value="{{ table_config.index }}" />
         <input type="hidden" name="order" id="order_input" value="" />
-        {% if saved_export.type == 'form' %}
-            <input type="hidden" name="app_id" value="{{ saved_export.app_id }}" />
+        {% if saved_export.type == 'form' and saved_export.app_id %}
+            <input type="hidden" name="app_id" value="{{ saved_export.app_id|default:'' }}" />
         {% endif %}
         <fieldset>
             <legend>Export Settings</legend>
@@ -90,6 +90,7 @@
                     </select>
                 </div>
             </div>
+            {% if saved_export.type == 'form' %}
             <div class="control-group">
                 <label for="include-errors-checkbox" class="control-label"></label>
                 <div class="controls">
@@ -99,6 +100,7 @@
                     </label>
                 </div>
             </div>
+            {% endif %}
         </fieldset>
         <fieldset>
             <legend>Export Fields</legend>
