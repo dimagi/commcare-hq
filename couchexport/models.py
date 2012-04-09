@@ -300,8 +300,10 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         
         from couchexport.export import ExportConfiguration
         database = get_db()
-        print self.__class__.__name__
-        config = ExportConfiguration(database, self.index, 
+
+        print (self.filter & filter).dumps()
+
+        config = ExportConfiguration(database, self.index,
                                      previous_export, 
                                      self.filter & filter)
         
