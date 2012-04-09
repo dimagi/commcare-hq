@@ -179,6 +179,8 @@ def get_all_users_by_domain(domain, group='', individual='', filter_users=None):
                 temp_user = TempCommCareUser(domain, username, user_id)
                 if filter_users[temp_user.filter_flag].show:
                     users.append(temp_user)
+        if filter_users[HQUserType.UNKNOWN].show:
+            users.append(TempCommCareUser(domain, '', None))
 
         if filter_users[HQUserType.REGISTERED].show:
             # now add all the registered users who never submitted anything
@@ -286,9 +288,10 @@ def case_group_filter(doc, group):
 
 def users_filter(doc, users):
     try:
-        return doc['form']['meta']['userID'] in users
+        user_id = doc['form']['meta']['userID']
     except KeyError:
-        return False
+        user_id = None
+    return user_id in users
 
 def group_filter(doc, group):
     if group:
