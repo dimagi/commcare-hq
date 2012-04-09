@@ -330,6 +330,21 @@
                         {% endif %}
                     </td>
                 </tr>
+                {% if show_secret_settings %}
+                <tr>
+                    <th>App Version</th>
+                    <td>
+                        {% if edit %}
+                            <select name="application_version" data-value="{{ app.application_version }}">
+                                <option value="1.0">1.x</option>
+                                <option value="2.0">2.x</option>
+                            </select>
+                        {% else %}
+                            {{ app.application_version }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
                 <tr>
                     <th>CommCare Version</th>
                     <td>

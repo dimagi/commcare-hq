@@ -109,14 +109,15 @@ def export_data_async(req, domain):
 
     try:
         export_tag = json.loads(req.GET.get("export_tag", "null") or "null")
+        export_type = req.GET.get("type", "form")
     except ValueError:
         return HttpResponseBadRequest()
 
     assert(export_tag[0] == domain)
 
-    filter = util.create_export_filter(req, domain)
+    filter = util.create_export_filter(req, domain, export_type=export_type)
 
-    return couchexport_views.export_data_async(req, filter=filter)
+    return couchexport_views.export_data_async(req, filter=filter, type=export_type)
     
 @login_and_domain_required
 def custom_export(req, domain):
@@ -126,6 +127,7 @@ def custom_export(req, domain):
     try:
         export_tag = [domain, 
                       json.loads(req.GET.get("export_tag", "null") or "null")]
+        export_type = req.GET.get("type", "form")
     except ValueError:
         return HttpResponseBadRequest()
     
@@ -141,23 +143,26 @@ def custom_export(req, domain):
         include_errors = req.POST.get("include-errors", "")
         filter_function = "couchforms.filters.instances" if not include_errors else ""
 
-        export_def = SavedExportSchema(index=export_tag, 
+        export_def = SavedExportSchema(index=export_tag,
                                        schema_id=req.POST["schema"],
                                        name=req.POST["name"],
                                        default_format=req.POST["format"] or Format.XLS_2007,
                                        tables=[export_table],
-                                       filter_function=filter_function)
+                                       filter_function=filter_function,
+                                       type=export_type)
         export_def.save()
         messages.success(req, "Custom export created! You can continue editing here.")
-        return HttpResponseRedirect(reverse("edit_custom_export", 
-                                            args=[domain,export_def.get_id]))
+        return HttpResponseRedirect("%s?type=%s" % (reverse("edit_custom_export",
+                                            args=[domain,export_def.get_id]), export_type))
         
     schema = build_latest_schema(export_tag)
     
     if schema:
+        print "export_tag is %s" % export_tag
         saved_export = SavedExportSchema.default(schema, name="%s: %s" %\
-                                                 (xmlns_to_name(domain, export_tag[1]),
+                                                 (xmlns_to_name(domain, export_tag[1]) if export_type == "form" else export_tag[1],
                                                   datetime.utcnow().strftime("%d-%m-%Y")))
+        print "Table is %s" % saved_export.tables[0].index
         return render_to_response(req, "reports/reportdata/customize_export.html",
                                   {"saved_export": saved_export,
                                    "table_config": saved_export.table_configuration[0],
@@ -218,9 +223,13 @@ def delete_custom_export(req, domain, export_id):
     Delete a custom export
     """
     saved_export = SavedExportSchema.get(export_id)
+    type = saved_export.type
     saved_export.delete()
     messages.success(req, "Custom export was deleted.")
-    return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug]))
+    if type == "form":
+        return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug]))
+    else:
+        return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.CaseExportReport.slug]))
 
 
 @login_or_digest
@@ -233,11 +242,12 @@ def export_custom_data(req, domain, export_id):
     saved_export = SavedExportSchema.get(export_id)
     next = req.GET.get("next", "")
     format = req.GET.get("format", "")
+    export_type = req.GET.get("type", "")
 
     if not next:
         next = reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug])
 
-    filter = util.create_export_filter(req, domain)
+    filter = util.create_export_filter(req, domain, export_type=export_type)
 
     resp = saved_export.download_data(format, filter=filter)
     if resp:
@@ -301,8 +311,14 @@ def download_cases(request, domain):
 @login_and_domain_required
 def form_data(request, domain, instance_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
-    instance = XFormInstance.get(instance_id)
-    assert(domain == instance.domain)
+    try:
+        instance = XFormInstance.get(instance_id)
+    except ResourceNotFound:
+        raise Http404()
+    try:
+        assert(domain == instance.domain)
+    except AssertionError:
+        raise Http404()
     cases = CommCareCase.view("case/by_xform_id", key=instance_id, reduce=False, include_docs=True).all()
     try:
         form_name = instance.get_form["@name"]

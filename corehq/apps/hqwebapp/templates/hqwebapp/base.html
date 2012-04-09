@@ -101,6 +101,12 @@
             </header>
 
             <div class="hq-page-header-container">
+                <div id="unsupported-browser" class="alert alert-error alert-block alert-full" style="display: none">
+                    <p><i class="icon icon-warning-sign"></i><strong>CommCare HQ does not work well with Internet Explorer.</strong></p>
+                    <p>We recommend
+                        <a href="https://www.google.com/chrome">Chrome</a> or <a href="http://www.mozilla.org/">Firefox</a>.
+                    </p>
+                </div>
                 {% block messages %}
                 {% if messages %}
                     {% for message in messages %}
@@ -211,6 +217,14 @@
 
         {% block js-inline %}
         {% endblock %}
+
+        <script>
+            $(function () {
+                if ($.browser.msie) {
+                    $('#unsupported-browser').show();
+                }
+            });
+        </script>
 
         {% if GOOGLE_ANALYTICS_ID %}
             <script type="text/javascript">

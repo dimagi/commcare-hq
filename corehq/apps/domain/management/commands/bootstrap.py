@@ -2,6 +2,7 @@ from django.core.management.base import LabelCommand, CommandError
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from django.contrib.sites.models import Site
+from django.core.exceptions import ObjectDoesNotExist
 
 class Command(LabelCommand):
     help = "Bootstrap a domain and user who owns it."
@@ -20,8 +21,12 @@ class Command(LabelCommand):
         couch_user.save()
         
         print "user %s created and added to domain %s" % (couch_user.username, domain)
-        
-        site = Site.objects.get(pk=1)
+
+        try:
+            site = Site.objects.get(pk=1)
+        except ObjectDoesNotExist:
+            site = Site()
+            site.save()
         site.name = 'localhost:8000'
         site.domain = 'localhost:8000'
         site.save()

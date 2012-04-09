@@ -6,6 +6,7 @@ import urllib
 from datetime import datetime
 import csv
 import io
+import logging
 from corehq.apps.registration.forms import NewWebUserRegistrationForm
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.users.util import format_username, normalize_username, raw_username
@@ -82,11 +83,14 @@ def _users_context(request, domain):
 def users(request, domain):
     response = reverse("user_account", args=[domain, request.couch_user._id])
     if request.couch_user:
-        user = WebUser.get_by_user_id(request.couch_user._id, domain)
-        if user and user.has_permission(domain, Permissions.EDIT_WEB_USERS):
-            response = reverse("web_users", args=[domain])
-        elif user and user.has_permission(domain, Permissions.EDIT_COMMCARE_USERS):
-            response = reverse("commcare_users", args=[domain])
+        try:
+            user = WebUser.get_by_user_id(request.couch_user._id, domain)
+            if user and user.has_permission(domain, Permissions.EDIT_WEB_USERS):
+                response = reverse("web_users", args=[domain])
+            elif user and user.has_permission(domain, Permissions.EDIT_COMMCARE_USERS):
+                response = reverse("commcare_users", args=[domain])
+        except Exception as e:
+            logging.exception("Failed to grab user object: %s", e)
     return HttpResponseRedirect(response)
 
 @require_can_edit_web_users
@@ -169,7 +173,7 @@ def accept_invitation(request, domain, invitation_id):
 @require_can_edit_web_users
 def invite_web_user(request, domain, template="users/invite_web_user.html"):
     if request.method == "POST":
-        form = AdminInvitesUserForm(request.POST)
+        form = AdminInvitesUserForm(request.POST, excluded_emails=[user.username for user in WebUser.by_domain(domain)])
         if form.is_valid():
             data = form.cleaned_data
             # create invitation record
@@ -256,10 +260,14 @@ def account(request, domain, couch_user_id, template="users/account.html"):
             messages.error(request, "Please enter digits only")
 
     # domain-accounts tab
-    if request.user.is_superuser and not couch_user.is_commcare_user():
-        my_domains = couch_user.get_domains()
+    if not couch_user.is_commcare_user():
+        all_domains = couch_user.get_domains()
+        admin_domains = []
+        for d in all_domains:
+            if couch_user.has_permission(d, Permissions.EDIT_WEB_USERS) and couch_user.has_permission(d, Permissions.EDIT_COMMCARE_USERS):
+                admin_domains.append(d)
         context.update({"user": request.user,
-                        "domains": my_domains
+                        "domains": admin_domains
                         })
     # scheduled reports tab
     context.update({

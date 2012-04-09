@@ -335,6 +335,8 @@ class FormBase(DocumentSchema):
                     paths.add(action.condition.question)
                 if hasattr(action, 'name_path'):
                     paths.add(action.name_path)
+                if hasattr(action, 'external_id') and action.external_id:
+                    paths.add(action.external_id)
 
             if self.actions.update_case.is_active():
                 for _, path in self.actions.update_case.update.items():
@@ -1122,6 +1124,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return render_to_string(template, {
             'is_odk': is_odk,
             'app': self,
+            'profile_url': self.profile_url if not is_odk else (self.odk_profile_url + '?latest=true'),
             'app_profile': app_profile,
             'suite_url': self.suite_url,
             'suite_loc': self.suite_loc,
@@ -1326,6 +1329,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def validate_app(self):
         xmlns_count = defaultdict(int)
         errors = []
+
+        for lang in self.langs:
+            if not lang:
+                errors.append({'type': 'empty lang'})
+
         if not self.modules:
             errors.append({"type": "no modules"})
         for module in self.get_modules():
