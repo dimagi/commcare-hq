@@ -9,6 +9,7 @@ function HQMediaUploader(options) {
     self.uploadParams = (options.uploadParams) ? options.uploadParams : {};
     self.modalClass = (options.modalClass) ? options.modalClass : "";
     self.mediaType = (options.mediaType) ? options.mediaType : "hqmedia_";
+    self.swfLocation = options.swfLocation;
 
     self.render = function() {
         YUI().use("uploader", function(Y) {
@@ -25,12 +26,14 @@ function HQMediaUploader(options) {
                 if (self.buttonImage) {
                     params = {
                         buttonSkin: self.buttonImage,
-                        boundingBox: overlaySelector};
+                        boundingBox: overlaySelector,
+                        swfURL: self.swfLocation};
                 }else {
                     var overlayRegion = Y.one(self.uploadElem+" .hqm-select").get('region');
                     Y.one(overlaySelector).set("offsetWidth", overlayRegion.width);
                     Y.one(overlaySelector).set("offsetHeight", overlayRegion.height);
-                    params = {boundingBox: overlaySelector};
+                    params = {boundingBox: overlaySelector,
+                                swfURL: self.swfLocation};
                 }
 
                 uploader = new Y.Uploader(params);

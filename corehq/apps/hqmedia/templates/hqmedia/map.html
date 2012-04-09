@@ -5,7 +5,7 @@
 {% block title %}Multimedia Map{% endblock title %}
 
 {% block js %} {{ block.super }}
-    <script type="text/javascript" src="http://yui.yahooapis.com/combo?3.4.1/build/yui-base/yui-base-min.js&3.4.1/build/oop/oop-min.js&3.4.1/build/event-custom-base/event-custom-base-min.js&3.4.1/build/event-custom-complex/event-custom-complex-min.js&3.4.1/build/features/features-min.js&3.4.1/build/dom-core/dom-core-min.js&3.4.1/build/dom-base/dom-base-min.js&3.4.1/build/selector-native/selector-native-min.js&3.4.1/build/selector/selector-min.js&3.4.1/build/node-core/node-core-min.js&3.4.1/build/node-base/node-base-min.js&3.4.1/build/event-base/event-base-min.js&3.4.1/build/event-delegate/event-delegate-min.js&3.4.1/build/node-event-delegate/node-event-delegate-min.js&3.4.1/build/pluginhost-base/pluginhost-base-min.js&3.4.1/build/pluginhost-config/pluginhost-config-min.js&3.4.1/build/node-pluginhost/node-pluginhost-min.js&3.4.1/build/dom-style/dom-style-min.js&3.4.1/build/dom-screen/dom-screen-min.js&3.4.1/build/node-screen/node-screen-min.js&3.4.1/build/node-style/node-style-min.js&3.4.1/build/attribute-base/attribute-base-min.js&3.4.1/build/base-base/base-base-min.js&3.4.1/build/base-pluginhost/base-pluginhost-min.js&3.4.1/build/base-build/base-build-min.js&3.4.1/build/swfdetect/swfdetect-min.js&3.4.1/build/escape/escape-min.js&3.4.1/build/swf/swf-min.js&3.4.1/build/uploader/uploader-min.js"></script>
+    {% include 'hqmedia/includes/yui_upload.html' %}
     <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.uploader.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqwebapp/javascripts/underscore-1.3.1.js' %}"></script>
@@ -29,7 +29,8 @@
             singleFileUpload: true,
             uploadParams: {},
             modalClass: '.hqm-modal-image',
-            mediaType: 'hquimage_'
+            mediaType: 'hquimage_',
+            swfLocation: '{% static 'hqmedia/yui/uploader/uploader.swf' %}'
         });
         hqimage_uploader.render();
 
@@ -44,7 +45,8 @@
             singleFileUpload: true,
             uploadParams: {},
             modalClass: '.hqm-modal-audio',
-            mediaType: 'hquaudio_'
+            mediaType: 'hquaudio_',
+            swfLocation: '{% static 'hqmedia/yui/uploader/uploader.swf' %}'
         });
         hqaudio_uploader.render();
     </script>
