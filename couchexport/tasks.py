@@ -1,6 +1,5 @@
 from unidecode import unidecode
 from celery.decorators import task
-from couchexport.shortcuts import get_export_files
 from django.core.cache import cache
 import uuid
 from soil import CachedDownload, FileDownload
@@ -10,16 +9,19 @@ import os
 import stat
 
 @task
-def export_async(download_id, export_tag, format=None, filename=None,
-                 previous_export_id=None, filter=None, 
-                 expiry=10*60*60):
-    
+def export_async(custom_export, download_id, format=None, filename=None, previous_export_id=None, filter=None):
+    tmp, checkpoint = custom_export.get_export_files(format, previous_export_id, filter)
+    try:
+        format = tmp.format
+    except AttributeError:
+        pass
     if not filename:
-        filename = export_tag
-    
-    (tmp, checkpoint) = get_export_files(export_tag, format, previous_export_id, filter)
+        filename = custom_export.name
+    return cache_file_to_be_served(tmp, checkpoint, download_id, format, filename)
+
+def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=None, expiry=10*60*60):
+
     if checkpoint:
-        temp_id = uuid.uuid4().hex
         fd, path = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as file:
             file.write(tmp.getvalue())

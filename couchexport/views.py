@@ -5,7 +5,7 @@ from couchexport.shortcuts import export_data_shared
 import uuid
 from couchexport.tasks import export_async
 from django.core.urlresolvers import reverse
-from couchexport.models import GroupExportConfiguration, SavedBasicExport
+from couchexport.models import GroupExportConfiguration, SavedBasicExport, FakeSavedExportSchema
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 
@@ -21,16 +21,15 @@ def _export_tag_or_bust(request):
     return export_tag
 
 def export_data_async(request, filter=None, **kwargs):
+    format = request.GET.get("format", Format.XLS_2007)
+    filename = request.GET.get("filename", None)
+    previous_export_id = request.GET.get("previous_export", None)
+
     export_tag = _export_tag_or_bust(request)
-    download_id = uuid.uuid4().hex
-    export_async.delay(download_id, export_tag, 
-                       request.GET.get("format", Format.XLS_2007), 
-                       request.GET.get("filename", None), 
-                       request.GET.get("previous_export", None),
-                       filter=filter)
-    return HttpResponse(json.dumps(dict(download_url=reverse('retrieve_download', kwargs={'download_id': download_id}))))
-    #return HttpResponseRedirect(reverse('retrieve_download', kwargs={'download_id': download_id}))
-    
+    export_object = FakeSavedExportSchema(index=export_tag)
+
+    return export_object.export_data_async(filter, filename, previous_export_id, format=format)
+
 def export_data(request, **kwargs):
     """
     Download all data for a couchdbkit model

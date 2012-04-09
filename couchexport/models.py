@@ -1,12 +1,17 @@
+import uuid
 from couchdbkit.ext.django.schema import Document, IntegerProperty, DictProperty,\
     Property, DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
     StringListProperty, DateTimeProperty, SchemaProperty
 import json
 from StringIO import StringIO
 from couchexport import util
+import couchexport
+from couchexport.util import FilterFunctionProperty
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.modules import try_import, to_function
 from dimagi.utils.couch.database import get_db
+from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 
 class Format(object):
     """
@@ -162,8 +167,70 @@ class ExportTable(DocumentSchema):
                                               for col in self._cols if col != "id"], 
                                     id, id_index=self._cols.index("id") if id else 0))
         return ret
-    
-class SavedExportSchema(Document, UnicodeMixIn):
+
+class BaseSavedExportSchema(Document):
+    def export_data_async(self, filter, filename, previous_export_id, format):
+        download_id = uuid.uuid4().hex
+        format = format or Format.XLS_2007
+        couchexport.tasks.export_async.delay(
+            self,
+            download_id,
+            format=format,
+            filename=filename,
+            previous_export_id=previous_export_id,
+            filter=filter,
+        )
+        return HttpResponse(json.dumps(dict(download_url=reverse('retrieve_download', kwargs={'download_id': download_id}))))
+
+class FakeSavedExportSchema(BaseSavedExportSchema):
+
+    index = JsonProperty()
+
+    @property
+    def name(self):
+        return self.index
+
+    def get_export_files(self, format=None, previous_export_id=None, filter=None,
+                         use_cache=True, max_column_size=2000, separator='|'):
+        # the APIs of how these methods are broken down suck, but at least
+        # it's DRY
+
+        from couchexport.export import export
+        from django.core.cache import cache
+        import hashlib
+
+        export_tag = self.index
+
+        CACHE_TIME = 1 * 60 * 60 # cache for 1 hour, in seconds
+        def _build_cache_key(tag, prev_export_id, format, max_column_size):
+            def _human_readable_key(tag, prev_export_id, format, max_column_size):
+                return "couchexport_:%s:%s:%s:%s" % (tag, prev_export_id, format, max_column_size)
+            return hashlib.md5(_human_readable_key(tag, prev_export_id,
+                format, max_column_size)).hexdigest()
+
+        # check cache, only supported for filterless queries, currently
+        cache_key = _build_cache_key(export_tag, previous_export_id,
+            format, max_column_size)
+        if use_cache and filter is None:
+            cached_data = cache.get(cache_key)
+            if cached_data:
+                (tmp, checkpoint) = cached_data
+                return tmp, checkpoint
+
+        tmp = StringIO()
+        checkpoint = export(export_tag, tmp, format=format,
+            previous_export_id=previous_export_id,
+            filter=filter, max_column_size=max_column_size,
+            separator=separator)
+
+        if checkpoint:
+            if use_cache:
+                cache.set(cache_key, (tmp, checkpoint), CACHE_TIME)
+            return tmp, checkpoint
+
+        return None, None # hacky empty case
+
+class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     """
     Lets you save an export format with a schema and list of columns
     and display names.
@@ -174,7 +241,10 @@ class SavedExportSchema(Document, UnicodeMixIn):
     schema_id = StringProperty()
     tables = SchemaListProperty(ExportTable)
     filter_function = StringProperty()
-    
+    type = StringProperty()
+
+    filter = FilterFunctionProperty('filter_function')
+
     def __unicode__(self):
         return "%s (%s)" % (self.name, self.index)
     
@@ -186,17 +256,10 @@ class SavedExportSchema(Document, UnicodeMixIn):
     
         return self._schema
     
-    @property
-    def filter(self):
-        if self.filter_function:
-            func = to_function(self.filter_function)
-            #print "got filter function %s for %s" % (func, self.filter_function)
-            return func
-    
     @classmethod
-    def default(cls, schema, name=""):
+    def default(cls, schema, name="", type='form'):
         return cls(name=name, index=schema.index, schema_id=schema.get_id,
-                   tables=[ExportTable.default(schema.tables[0][0])])
+                   tables=[ExportTable.default(schema.tables[0][0])], type=type)
         
     def get_table_configuration(self, index):
         table_dict = dict([t.index, t] for t in self.tables)
@@ -228,12 +291,7 @@ class SavedExportSchema(Document, UnicodeMixIn):
                                        self._table_dict[table_index].trim(data)))
         return trimmed_tables
     
-    def download_data(self, format="", previous_export=None, filter=None):
-        """
-        If there is data, return an HTTPResponse with the appropriate data. 
-        If there is not data returns None.
-        """
-        from couchexport.shortcuts import export_response
+    def get_export_files(self, format="", previous_export=None, filter=None):
         from couchexport.export import get_writer, get_schema_new, \
             format_tables, create_intermediate_tables
         
@@ -242,9 +300,10 @@ class SavedExportSchema(Document, UnicodeMixIn):
         
         from couchexport.export import ExportConfiguration
         database = get_db()
+        print self.__class__.__name__
         config = ExportConfiguration(database, self.index, 
                                      previous_export, 
-                                     util.intersect_filters(self.filter, filter))
+                                     self.filter & filter)
         
         
         # get and checkpoint the latest schema
@@ -266,8 +325,18 @@ class SavedExportSchema(Document, UnicodeMixIn):
                              (create_intermediate_tables(doc, updated_schema), 
                               separator=".")))
         writer.close()
+        # hacky way of passing back the new format
+        tmp.format = format
+        return tmp, export_schema_checkpoint
 
-        return export_response(tmp, format, self.name)
+    def download_data(self, format="", previous_export=None, filter=None):
+        """
+        If there is data, return an HTTPResponse with the appropriate data.
+        If there is not data returns None.
+        """
+        from couchexport.shortcuts import export_response
+        tmp, _ = self.get_export_files(format, previous_export, filter)
+        return export_response(tmp, tmp.format, self.name)
 
 class ExportConfiguration(DocumentSchema):
     """
