@@ -21,7 +21,7 @@
         var hqimage_uploader = new HQMediaUploader({
             uploadElem: '#hqmedia-upload-Image',
             fileFilters: new Array({description:"Images", extensions:"*.jpg;*.png;*.gif"}),
-            uploadURL: '{{ DNS_name }}{% url hqmedia_handle_uploaded domain app.get_id %}',
+            uploadURL: '{% url hqmedia_handle_uploaded domain app.get_id %}',
             buttonImage: '{% static 'hqmedia/img/select_image_button.png' %}',
             onSuccess: function (event, data) {
                 console.log(data);
@@ -37,7 +37,7 @@
         var hqaudio_uploader = new HQMediaUploader({
             uploadElem: '#hqmedia-upload-Audio',
             fileFilters: new Array({description:"Audio", extensions:"*.mp3"}),
-            uploadURL: '{{ DNS_name }}{% url hqmedia_handle_uploaded domain app.get_id %}',
+            uploadURL: '{% url hqmedia_handle_uploaded domain app.get_id %}',
             buttonImage: '{% static 'hqmedia/img/select_audio_button.png' %}',
             onSuccess: function (event, data) {
                 console.log(data);

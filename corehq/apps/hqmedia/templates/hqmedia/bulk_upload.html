@@ -18,7 +18,7 @@
             var uploader = new HQMediaUploader({
                 uploadElem: '#hqmedia-upload',
                 fileFilters: new Array({description:"Zip", extensions:"*.zip"}),
-                uploadURL: '{{ DNS_name }}{% url hqmedia_handle_uploaded domain app.get_id %}',
+                uploadURL: '{% url hqmedia_handle_uploaded domain app.get_id %}',
                 onSuccess: showUploadStats,
                 swfLocation: '{% static 'hqmedia/yui/uploader/uploader.swf' %}'
             });

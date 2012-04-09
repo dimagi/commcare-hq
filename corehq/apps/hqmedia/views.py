@@ -41,12 +41,9 @@ def media_map(request, domain, app_id):
     images, missing_image_refs = app.get_template_map(sorted_images)
     audio, missing_audio_refs = app.get_template_map(sorted_audio)
 
-    DNS_name = "http://"+Site.objects.get(id = settings.SITE_ID).domain
-
     return render_to_response(request, "hqmedia/map.html", {
         "domain": domain,
         "app": app,
-        "DNS_name": DNS_name,
         "multimedia": {
          "images": images,
          "audio": audio,
