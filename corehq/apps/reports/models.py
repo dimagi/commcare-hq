@@ -102,6 +102,7 @@ class FormExportSchema(SavedExportSchema):
         if self.filter_function == 'couchforms.filters.instances':
             # grandfather in old custom exports
             self.include_errors = False
+            self.filter_function = None
         return self
 
     @property
