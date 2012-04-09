@@ -77,6 +77,15 @@ class DateSpan(object):
         self.is_default = False
         self.timezone = timezone
 
+    def to_dict(self):
+        return {
+            'startdate': self.startdate,
+            'enddate': self.enddate
+        }
+    @classmethod
+    def from_dict(cls, data):
+        return cls(string_to_datetime(data['startdate'], data['enddate']))
+
     @property
     def startdate_param(self):
         if self.startdate:
