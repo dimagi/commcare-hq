@@ -99,7 +99,8 @@ class FormExportSchema(SavedExportSchema):
     @property
     def filter(self):
         f = FilterFunction()
-        f.add(reports.util.app_export_filter, app_id=self.app_id)
+        if self.app_id is not None:
+            f.add(reports.util.app_export_filter, app_id=self.app_id)
         if self.include_errors:
             f.add(couchforms.filters.instances)
         return f
