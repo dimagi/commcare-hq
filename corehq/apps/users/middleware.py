@@ -19,11 +19,12 @@ class UsersMiddleware(object):
     
     #def process_request(self, request):
     def process_view(self, request, view_func, view_args, view_kwargs):
+        if 'domain' in view_kwargs:
+            request.domain = view_kwargs['domain']
         if request.user and hasattr(request.user, 'get_profile'):
             request.couch_user = CouchUser.from_django_user(request.user)
             if 'domain' in view_kwargs:
-                domain = view_kwargs['domain']
-                request.domain = domain
+                domain = request.domain
                 if not request.couch_user:
                     couch_domain = Domain.view("domain/domains", key=domain,
                                                     reduce=False, include_docs=True).one()
