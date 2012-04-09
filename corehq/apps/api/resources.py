@@ -1,8 +1,7 @@
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.domain.decorators import login_or_digest
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
-from dimagi.utils.couch.tastykit import CouchdbkitResource
-from django.http import Http404
 from tastypie import fields
 from tastypie.authentication import Authentication
 from tastypie.authorization import ReadOnlyAuthorization
@@ -21,10 +20,23 @@ class CustomXMLSerializer(Serializer):
 
 class LoginAndDomainAuthentication(Authentication):
     def is_authenticated(self, request, **kwargs):
-        if request.user.is_authenticated():
-            if request.couch_user.is_member_of(request.domain):
-                return True
-        return False
+
+        PASSED_AUTH = 'is_authenticated'
+
+        @login_or_digest
+        def dummy(request, domain, **kwargs):
+            return PASSED_AUTH
+
+        if not kwargs.has_key('domain'):
+            kwargs['domain'] = request.domain
+
+        response = dummy(request, **kwargs)
+
+        if response == PASSED_AUTH:
+            return True
+        else:
+            return response
+
 
     def get_identifier(self, request):
         return request.couch_user.username
