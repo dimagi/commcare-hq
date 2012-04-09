@@ -7,6 +7,7 @@ from corehq.apps.users.util import user_id_to_username
 from couchexport.util import FilterFunction
 from couchforms.filters import instances
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.dates import DateSpan
 import pytz
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -253,6 +254,8 @@ def get_timezone(couch_user_id, domain):
     return timezone
 
 def datespan_export_filter(doc, datespan):
+    if isinstance(datespan, dict):
+        datespan = DateSpan(**datespan)
     try:
         received_on = doc['received_on']
     except Exception:
@@ -304,7 +307,7 @@ def create_export_filter(request, domain, export_type='form'):
     group, users = get_group_params(domain, **json_request(request.GET))
 
     user_filters, use_user_filters = FilterUsersField.get_user_filter(request)
-    print "Type is %s" % export_type
+
     if export_type == 'case':
         if user_filters and use_user_filters:
             users_matching_filter = map(lambda x: x._id, get_all_users_by_domain(domain, filter_users=user_filters))

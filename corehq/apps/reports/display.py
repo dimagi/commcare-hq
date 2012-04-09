@@ -26,7 +26,6 @@ class FormType(object):
         return self.domain, self.xmlns, self.app_id or None
 
     def get_label(self, html=False, lang=None):
-#        print self.get_id_tuple()
         try:
             form = FormType.forms_by_xmlns(self.domain, self.xmlns, self.app_id)
         except Exception:
