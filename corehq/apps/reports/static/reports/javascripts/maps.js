@@ -23,31 +23,26 @@ function render_marker(draw, w, h, anchor) {
     anchor = anchor || [0, 0];
     return new google.maps.MarkerImage(
         render_icon(draw, w, h),
-	new google.maps.Size(w, h),
-	new google.maps.Point(0, 0),
-	new google.maps.Point(w * .5 * (anchor[0] + 1.), h * .5 * (1. - anchor[1]))
+        new google.maps.Size(w, h),
+        new google.maps.Point(0, 0),
+        new google.maps.Point(w * .5 * (anchor[0] + 1.), h * .5 * (1. - anchor[1]))
     );
 }
 
 // a custom gmaps marker where a canvas _is_ the marker itself
 CanvasMarker = function(opts) {
     this.setValues(opts);
+
+    this.$div = $('<div />');
+    this.div_ = this.$div[0];
 };
 CanvasMarker.prototype = new google.maps.OverlayView();
 CanvasMarker.prototype.onAdd = function() {
-    this.$div = $('<div />');
     this.$canvas = make_canvas(this.width, this.height);
     this.$div.append(this.$canvas);
 
     this.renderer = this.render_factory(this.$canvas[0].getContext('2d'), this.width, this.height);
     this.renderer.oncreate();
-
-    /*
-      var _ = this;
-      google.maps.event.addDomListener(this.div[0], 'click', function() {
-        _.infowindow.open(_.map, _);
-    } );
-    */
 
     var pane = this.getPanes().overlayImage;
     $(pane).append(this.$div);
@@ -72,20 +67,20 @@ CanvasMarker.prototype.draw = function() {
 // initialize the google map pane
 function init_map($div, default_pos, default_zoom, default_map_type) {
     var map = new google.maps.Map($div[0], {
-	    center: new google.maps.LatLng(default_pos[0], default_pos[1]),
+            center: new google.maps.LatLng(default_pos[0], default_pos[1]),
             zoom: default_zoom,
             mapTypeId: {
-		terrain: google.maps.MapTypeId.TERRAIN
-	    }[default_map_type]
-	});
+                terrain: google.maps.MapTypeId.TERRAIN
+            }[default_map_type]
+        });
     return map;
 }
 
 function fit_all(map, markers) {
     var bounds = new google.maps.LatLngBounds();
     $.each(markers, function(i, marker) {
-	    bounds.extend(marker.position);
-	});
+            bounds.extend(marker.position);
+        });
     map.fitBounds(bounds);
 }
 
@@ -95,19 +90,17 @@ function geo_case(case_, map, make_marker, make_info) {
     var marker = make_marker(pos, map);
  
     if (make_info) {
-	var infocontent = make_info(case_);
-	marker.infowindow = new google.maps.InfoWindow({content: infocontent[0]});
+        var infocontent = make_info(case_);
+        marker.infowindow = new google.maps.InfoWindow({content: infocontent[0]});
     }
 
-    /*
-              google.maps.event.addListener(marker, 'click', function(event) {
-                  if (LAST_MARKER != null) {
-                    LAST_MARKER.infowindow.close();
-                  }
-                  marker.infowindow.open(map, marker);
-                  LAST_MARKER = marker;
-		  });
-    */
+    google.maps.event.addDomListener(marker.div_ || marker, 'click', function(event) {
+            //if (LAST_MARKER != null) {
+            //    LAST_MARKER.infowindow.close();
+            //}
+            marker.infowindow.open(map, marker);
+            //LAST_MARKER = marker;
+        });
 
     return marker;
 }
@@ -126,37 +119,37 @@ function static_marker(pos, map, icon) {
 function maps_init() {
     var map = init_map($('#map'), [30., 0.], 2, 'terrain');
 
-    var MARKER_MODE = 3;
+    var MARKER_MODE = 2;
 
     var markers = [];
     $.each(DATA, function(i, case_) {
-	    switch (MARKER_MODE) {
-	    case 1: var marker_factory = static_marker; break;
-	    case 2: var marker_factory = function(p, m) {
-		    return static_marker(p, m, render_marker(drawpie, 24, 24));
-		};
-		break;
-	    case 3: var marker_factory = function(p, m) {
-		    return new CanvasMarker({
-			    position: p,
-			    map: m,
-			    width: 33, height: 33,
-			    render_factory: function(c, w, h) { return new AnimMarker(c, w, h); }
-			});
-		}
-		break;
-	    }
-
-	    var marker = geo_case(case_, map,
-		marker_factory,
-                function(c) {
-		    var info = $('<p>this is <span id="name"></span></p>');
-		    info.find('#name').text(c.name);
-		    return info;
+            switch (MARKER_MODE) {
+            case 1: var marker_factory = static_marker; break;
+            case 2: var marker_factory = function(p, m) {
+                    return static_marker(p, m, render_marker(drawpie, 24, 24));
+                };
+                break;
+            case 3: var marker_factory = function(p, m) {
+                    return new CanvasMarker({
+                            position: p,
+                            map: m,
+                            width: 33, height: 33,
+                            render_factory: function(c, w, h) { return new AnimMarker(c, w, h); }
+                        });
                 }
-	    );
-	    markers.push(marker);
-	});
+                break;
+            }
+
+            var marker = geo_case(case_, map,
+                marker_factory,
+                function(c) {
+                    var info = $('<p>this is <span id="name"></span></p>');
+                    info.find('#name').text(c.name);
+                    return info;
+                }
+            );
+            markers.push(marker);
+        });
           
     fit_all(map, markers);
 }
@@ -177,20 +170,20 @@ function AnimMarker(ctx, w, h) {
         var c1 = randcolor();
         var c2 = randcolor();
         var c3 = randcolor();
-	var period = 4 * Math.random() + 2.;
+        var period = 4 * Math.random() + 2.;
 
-	var mkr = this;
-	var draw = function() {
-	    var clock = ((new Date().getTime()) - t0) / 1000.;
-	    drawpie(mkr.ctx, mkr.w, mkr.h, (clock % period) / period, c1, c2, c3);
+        var mkr = this;
+        var draw = function() {
+            var clock = ((new Date().getTime()) - t0) / 1000.;
+            drawpie(mkr.ctx, mkr.w, mkr.h, (clock % period) / period, c1, c2, c3);
         }
 
-	draw();
+        draw();
         this.anim = setInterval(draw, 30);
     }
 
     this.ondestroy = function() {
-	clearInterval(this.anim);
+        clearInterval(this.anim);
     }
 }
       
@@ -205,7 +198,7 @@ function randcolor(min, max) {
     max = max || 1.;
 
     var k = function() {
-	return Math.round(255 * ((max - min) * Math.random() + min));
+        return Math.round(255 * ((max - min) * Math.random() + min));
     }
     return 'rgb(' + k() + ',' + k() + ',' + k() + ')';
 };
@@ -217,9 +210,9 @@ function drawpie(ctx, width, height, phase, c1, c2, c3) {
     c3 = c3 || randcolor();
 
     if (phase < .5) {
-	var _ = c1;
-	c1 = c2;
-	c2 = _;
+        var _ = c1;
+        c1 = c2;
+        c2 = _;
     }
     phase = (phase * 2) % 1.;
 
