@@ -457,15 +457,17 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
         'new_module_form': NewModuleForm(),
         'new_xform_form': NewXFormForm(),
-        }
+
+        'show_secret_settings': req.GET.get('secret', False)
+    }
     context.update(base_context)
     if app and not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(context['lang'], {})})
 
     if app and app.get_doc_type() == 'Application':
         images, audio, has_error = utils.get_multimedia_filenames(app)
-        multimedia_images, missing_image_refs = app.get_template_map(images, domain)
-        multimedia_audio, missing_audio_refs = app.get_template_map(audio, domain)
+        multimedia_images, missing_image_refs = app.get_template_map(images)
+        multimedia_audio, missing_audio_refs = app.get_template_map(audio)
         context.update({
             'missing_image_refs': missing_image_refs,
             'missing_audio_refs': missing_audio_refs,
@@ -1169,6 +1171,7 @@ def edit_app_attr(req, domain, app_id, attr):
         'admin_password',
         # Application only
         'cloudcare_enabled',
+        'application_version',
         # RemoteApp only
         'profile_url',
         ]
@@ -1213,6 +1216,9 @@ def edit_app_attr(req, domain, app_id, attr):
         if app.get_doc_type() not in ("Application",):
             raise Exception("App type %s does not support cloudcare" % app.get_doc_type())
         app.cloudcare_enabled = bool(json.loads(req.POST['cloudcare_enabled']))
+
+    if should_edit("application_version"):
+        app.application_version = req.POST['application_version']
 
     # For RemoteApps
     if should_edit("profile_url"):

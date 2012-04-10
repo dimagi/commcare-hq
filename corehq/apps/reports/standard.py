@@ -815,6 +815,8 @@ class ExcelExportReport(StandardDateHQReport):
         for export in exports.all():
             export.formname = xmlns_to_name(self.domain, export.index[1])
 
+        exports = filter(lambda x: x.type == "form", exports)
+
         self.context.update({
             "forms": forms,
             "saved_exports": exports,
@@ -834,11 +836,26 @@ class CaseExportReport(StandardHQReport):
     slug = "case_export"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField']
-    template_name = "reports/basic_report.html"
-    report_partial = "reports/partials/case_export.html"
+    template_name = "reports/reportdata/case_export_data.html"
 
     def calc(self):
-        pass
+        startkey = json.dumps([self.domain, ""])[:-3]
+        endkey = "%s{" % startkey
+        exports = SavedExportSchema.view("couchexport/saved_export_schemas",
+            startkey=startkey, endkey=endkey,
+            include_docs=True).all()
+        exports = filter(lambda x: x.type == "case", exports)
+        self.context['saved_exports'] = exports
+        cases = get_db().view("hqcase/types_by_domain", 
+                              startkey=[self.domain], 
+                              endkey=[self.domain, {}], 
+                              reduce=True,
+                              group=True,
+                              group_level=2).all()
+        self.context['case_types'] = [case['key'][1] for case in cases]
+        self.context.update({
+            "get_filter_params": self.request.GET.copy()
+        })
 
 class ApplicationStatusReport(StandardTabularHQReport):
     name = "Application Status"
