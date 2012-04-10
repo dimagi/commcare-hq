@@ -150,7 +150,10 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                ,"default_lang"          : h.default_lang
                ,"method"                : h.method
                ,"recipient"             : h.recipient
-               ,"start"                 : h.start
+               ,"start_property"        : h.start_property
+               ,"start_value"           : h.start_value
+               ,"start_date"            : h.start_date
+               ,"start_match_type"      : h.start_match_type
                ,"start_offset"          : h.start_offset
                ,"schedule_length"       : h.schedule_length
                ,"event_interpretation"  : h.event_interpretation

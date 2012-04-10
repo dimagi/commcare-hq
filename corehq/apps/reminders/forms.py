@@ -192,6 +192,14 @@ class ComplexCaseReminderForm(Form):
             self.initial["iteration_type"] = "INDEFINITE"
             self.initial["max_iteration_count_input"] = ""
         
+        # Populate start_choice
+        if initial.get("start_choice", None) is None:
+            if initial.get("start_date", None) is None:
+                self.initial["start_choice"] = START_IMMEDIATELY
+            else:
+                self.initial["start_choice"] = START_ON_DATE
+        
+        
         # Populate events
         events = []
         if "events" in initial:
