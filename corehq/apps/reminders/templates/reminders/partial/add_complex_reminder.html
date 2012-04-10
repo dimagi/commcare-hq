@@ -292,7 +292,7 @@
     <br />
     {{ form.case_type.errors }}<br />
     For cases of type {{ form.case_type }}, start the below {{ form.method }} schedule, sending to {{ form.recipient }}.<br /><br />
-    {{ form.start_property.errors }}{{ form.start_value.errors }}<br />
+    {{ form.start_property.errors }}{{ form.start_value.errors }}
     Start when case property {{ form.start_property }} {{ form.start_match_type }} <input type="text" name="start_value" id="id_start_value" value="{{ form.start_value.value|default:"" }}" {%if form.start_match_type.value == "ANY_VALUE" %}style="display: none;"{% endif %}/>.<br /><br />
     {{ form.start_date.errors }}{{ form.start_offset.errors }}
     Once this happens, start sending {{ form.start_choice }} <input type="text" name="start_date" id="id_start_date" value="{{ form.start_date.value|default:"" }}" {%if form.start_choice.value == "IMMEDIATELY" %}style="display: none;"{% endif %}/> plus {{ form.start_offset }} day(s).<br /><br />
