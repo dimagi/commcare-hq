@@ -157,7 +157,7 @@ function HQMediaUploader(options) {
                         showCancelButton(false);
                     } else {
                         var next_el = $(pb_parentSel).next();
-                        if (next_el && next_el.hasClass('hqm-cancel'))
+                        if (next_el && next_el.hasClass('hqm-cancel') || next_el.hasClass('label'))
                             next_el.remove();
                     }
                     var $processing = $('<div class="label label-info pull-right" />');
