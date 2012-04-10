@@ -6,6 +6,7 @@
 {% block js %} {{ block.super }}
     {% include 'hqmedia/includes/yui_upload.html' %}
     <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.uploader.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqwebapp/javascripts/underscore-1.3.1.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -20,7 +21,8 @@
                 fileFilters: new Array({description:"Zip", extensions:"*.zip"}),
                 uploadURL: '{% url hqmedia_handle_uploaded domain app.get_id %}',
                 onSuccess: showUploadStats,
-                swfLocation: '{% static 'hqmedia/yui/uploader/uploader.swf' %}'
+                swfLocation: '{% static 'hqmedia/yui/uploader/uploader.swf' %}',
+                uploadParams: {replace_existing: false}
             });
             uploader.render();
 
@@ -33,28 +35,43 @@
                     } else {
                         $currentMedia.find('.match_status').html($('<span class="label label-success" />').text("Matches Found"));
                         var $imageList = createMatchList(resp.images),
-                            $audioList = createMatchList(resp.audio),
-                           $detailList = $currentMedia.find('.details');
-                        if (!$.isEmptyObject(resp.images)) {
-                            $detailList.append($('<h4 />').text("Matched Images"));
-                            $detailList.append($imageList);
-                        }
-                        if (!$.isEmptyObject(resp.audio)) {
-                            $detailList.append($('<h4 />').text("Matched Audio"));
-                            $detailList.append($audioList);
-                        }
+                            $audioList = createMatchList(resp.audio, true),
+                            $detailList = $currentMedia.find('.details');
+                        var accordion_id;
+                        if (!_.isEmpty(resp.images))
+                            $detailList.append(createAccordionItem('imageRef_',
+                                                                    "Matched Images ("+resp.images.length+")",
+                                                                    $imageList));
+
+                        if (!_.isEmpty(resp.audio))
+                            $detailList.append(createAccordionItem('audioRef_',
+                                    "Matched Audio ("+resp.audio.length+")",
+                                    $audioList));
                     }
                 } else if (resp.file) {
-                    if (!$.isEmptyObject(resp.image)) {
-                        $currentMedia.find('.match_status').html($('<span class="label label-success" />').text("Image Match Found"));
+                    if (!_.isEmpty(resp.image)) {
+                        $currentMedia.find('.match_status').html($('<div class="label label-success" />').text("Image Match Found"));
                         $currentMedia.find('.details').append(createMatchList(new Array(resp.image)));
                     } else if (!$.isEmptyObject(resp.audio)) {
-                        $currentMedia.find('.match_status').html($('<span class="label label-success" />').text("Audio Match Found"));
+                        $currentMedia.find('.match_status').html($('<div class="label label-success" />').text("Audio Match Found"));
                         $currentMedia.find('.details').append(createMatchList(new Array(resp.audio), true));
                     } else {
-                        $currentMedia.find('.match_status').html($('<span class="label label-important" />').text("No Match Found"));
+                        $currentMedia.find('.match_status').html($('<div class="label label-inverse" />').text("No Match Found"));
                     }
                 }
+            }
+
+            function createAccordionItem(id_prefix, header_text, content) {
+                var accordion_id = _.uniqueId(id_prefix),
+                    $accordionToggle = $('<a class="accordion-toggle" data-toggle="collapse" />'),
+                    $accordionBody = $('<div class="accordion-body collapse" />');
+                $accordionToggle.text(header_text);
+                $accordionToggle.attr('href', '#'+accordion_id);
+                $accordionBody.attr('id',accordion_id);
+                $accordionBody.append($('<div class="accordion-inner" />').append(content));
+//                $accordionBody.collapse();
+                return $('<div class="accordion-group" />').append($('<div class="accordion-heading" />').html($accordionToggle),
+                                                                   $accordionBody);
             }
 
             function createMatchList (matches, is_audio) {

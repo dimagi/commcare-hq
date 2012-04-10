@@ -79,7 +79,7 @@ class CommCareMultimedia(Document):
 
     @classmethod
     def get_by_hash(cls, file_hash):
-        result = cls.view('hqmedia/by_hash', key=file_hash, include_docs=True).one()
+        result = cls.view('hqmedia/by_hash', key=file_hash, include_docs=True).first()
         if not result:
             result = cls()
             result.file_hash = file_hash
