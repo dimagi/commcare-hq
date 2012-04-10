@@ -28,6 +28,10 @@ def send_sms(domain, id, phone_number, text):
     """
     Sends an outbound SMS. Returns false if it fails.
     """
+    if phone_number is None:
+        return False
+    if isintance(phone_number, int) or isinstance(phone_number, long):
+        phone_number = str(phone_number)
     logging.debug('Sending message: %s' % text)
     phone_number = clean_phone_number(phone_number)
     msg = SMSLog(domain=domain,

@@ -36,12 +36,6 @@
         <tr>
             <th>Edit</th>
             <th>Nickname</th>
-{#            <th>Method</th>#}
-{#            <th>Lang.</th>#}
-            <th>Message</th>
-            <th>Start</th>
-            <th>Every</th>
-            <th>Until</th>
             <th>Delete</th>
         </tr>
         {% for handler in reminder_handlers %}
@@ -51,30 +45,8 @@
                 </tr>
             {% endifchanged %}
         <tr>
-            {% if handler.ui_type == "COMPLEX" %}
-                <td><a href="{% url edit_complex domain handler.get_id %}">edit</a></td>
-            {% else %}
-                <td><a href="{% url edit_reminder domain handler.get_id %}">edit</a></td>
-            {% endif %}
+            <td><a href="{% url edit_complex domain handler.get_id %}">edit</a></td>
             <td>{{ handler.nickname }}</td>
-{#            <td>{{ handler.method }}</td>#}
-{#            <td>{{ handler.default_lang }}</td>#}
-            <td>
-                <div class="message-popup hidden">
-                    <table>
-                        {% for lang, msg in handler.events.0.message.items %}
-                        <tr>
-                            <th>{% if lang == handler.default_lang %}<strong>{{ lang }}</strong>{% else %}{{ lang }}{% endif %}</th>
-                            <td>{{ msg }}</td>
-                        </tr>
-                        {% endfor %}
-                    </table>
-                </div>
-                <a class="message-popup-link" href="#">view</a>
-            </td>
-            <td>{{ handler.start }}<span class="light"> +</span> {{ handler.start_offset }}<span class="light"> days</span></td>
-            <td>{{ handler.schedule_length }}<span class="light"> days</span></td>
-            <td>{{ handler.until }}</td>
             <td>
                 <form action="{% url delete_reminder domain handler.get_id %}" method="post"
                       style="display: inline;"
@@ -87,8 +59,7 @@
         {% endfor %}
         <tr class="separator">
             <td colspan="7">
-                <a href="{% url add_reminder domain %}"><div class="ui-icon ui-icon-plusthick"></div>Add Reminder: Simple Fixed Schedule</a><br /><br />
-                <a href="{% url add_complex_reminder_schedule domain %}"><div class="ui-icon ui-icon-plusthick"></div>Add Reminder: Complex Schedule</a>
+                <a href="{% url add_complex_reminder_schedule domain %}"><div class="ui-icon ui-icon-plusthick"></div>Add Reminder</a>
             </td>
         </tr>
     </table>
