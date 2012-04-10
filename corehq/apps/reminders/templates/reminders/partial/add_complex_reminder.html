@@ -2,26 +2,8 @@
 
 {% block head %}{{ block.super }}
 <style type="text/css">
-    input.day_input {
-        width: 50px;
-    }
-    input.time_input {
-        width: 50px;
-    }
-    input.timeouts_input {
-        width: 100px;
-    }
-    input.language_input {
-        width: 50px;
-    }
-    input.message_input {
-        width: 300px;
-    }
     h2 {
         border-bottom: 1px solid #555;
-    }
-    #id_max_iteration_count_input {
-        width: 50px;
     }
     #id_schedule_length {
         width: 50px;
@@ -43,6 +25,10 @@
         cursor: pointer;
         font-family: "Courier New";
     }
+    
+    .hq-oldstyle input.tiny {
+      width: 20px;
+    }
 </style>
 {% endblock %}
 
@@ -53,36 +39,56 @@
         node.setAttribute("type", "text");
         node.setAttribute("class", class_name);
         return node;
-    }    
+    }
     
     function create_new_row() {
         var tr = document.createElement("TR");
         
         var td1 = document.createElement("TD");
-        td1.appendChild(create_text_input("day_input"));
+        var span1 = document.createElement("SPAN");
+        span1.setAttribute("name", "event_label1");
+        td1.appendChild(span1);
         
         var td2 = document.createElement("TD");
-        td2.appendChild(create_text_input("time_input"));
+        td2.appendChild(create_text_input("short"));
         
         var td3 = document.createElement("TD");
-        td3.appendChild(create_message());
+        var span2 = document.createElement("SPAN");
+        span2.setAttribute("name", "event_label2");
+        td3.appendChild(span2);
         
         var td4 = document.createElement("TD");
-        td4.appendChild(create_text_input("timeouts_input"));
+        td4.appendChild(create_text_input("short"));
         
         var td5 = document.createElement("TD");
+        var span3 = document.createElement("SPAN");
+        span3.setAttribute("name", "event_label3");
+        td5.appendChild(span3);
+        
+        var td6 = document.createElement("TD");
+        td6.appendChild(create_message());
+        
+        var td7 = document.createElement("TD");
+        var span4 = document.createElement("SPAN");
+        span4.setAttribute("name", "event_label4");
+        td7.appendChild(span4);
+        
+        var td8 = document.createElement("TD");
+        td8.appendChild(create_text_input("short"));
+        
+        var td9 = document.createElement("TD");
         var div2 = document.createElement("DIV");
         div2.setAttribute("class","clickable");
         div2.innerHTML = "[-]";
-        td5.appendChild(div2);
-        td5.onclick = function() { delete_row(this); };
+        td9.appendChild(div2);
+        td9.onclick = function() { delete_row(this); };
         
-        var td6 = document.createElement("TD");
+        var td10 = document.createElement("TD");
         var div3 = document.createElement("DIV");
         div3.setAttribute("class","clickable");
         div3.innerHTML = "[+]";
-        td6.appendChild(div3);
-        td6.onclick = function() { add_row(this); };
+        td10.appendChild(div3);
+        td10.onclick = function() { add_row(this); };
         
         tr.appendChild(td1);
         tr.appendChild(td2);
@@ -90,8 +96,12 @@
         tr.appendChild(td4);
         tr.appendChild(td5);
         tr.appendChild(td6);
+        tr.appendChild(td7);
+        tr.appendChild(td8);
+        tr.appendChild(td9);
+        tr.appendChild(td10);
         return tr;
-    }    
+    }
     
     function add_row(cell_ref) {
         new_row = create_new_row();
@@ -105,6 +115,7 @@
             table_ref.appendChild(new_row);
         }
         order_rows(table_ref);
+        event_interpretation_changed();
     }
     
     function delete_row(cell_ref) {
@@ -136,23 +147,23 @@
             if(typeof(element_tag_name) == "string" && element_tag_name.toUpperCase() == "TD") {
                 col_num++;
                 inputs = element.getElementsByTagName("INPUT");
-                if(col_num == 1) {
+                if(col_num == 2) {
                     inputs[0].setAttribute("name","reminder_events." + row_num + ".day");
-                } else if(col_num == 2) {
+                } else if(col_num == 4) {
                     inputs[0].setAttribute("name","reminder_events." + row_num + ".time");
-                } else if(col_num == 3) {
+                } else if(col_num == 6) {
                     divs = element.getElementsByTagName("DIV");
                     for(k = 0; k < divs.length; k++) {
                         inputs = divs[k].getElementsByTagName("INPUT");
                         for(l = 0; l < inputs.length; l++) {
-                            if(inputs[l].getAttribute("class") == "language_input") {
+                            if(inputs[l].getAttribute("name").match(/^.*language.*$/) != null) {
                                 inputs[l].setAttribute("name","reminder_events." + row_num + ".messages." + (k + 1) + ".language");
                             } else {
                                 inputs[l].setAttribute("name","reminder_events." + row_num + ".messages." + (k + 1) + ".text");
                             }
                         }
                     }
-                } else if(col_num == 4) {
+                } else if(col_num == 8) {
                     inputs[0].setAttribute("name","reminder_events." + row_num + ".timeouts");
                 }
             }
@@ -161,8 +172,10 @@
     
     function create_message() {
         div = document.createElement("DIV");
-        input1 = create_text_input("language_input");
-        input2 = create_text_input("message_input");
+        input1 = create_text_input("tiny");
+        input1.setAttribute("name","language")
+        input2 = create_text_input(null);
+        input2.setAttribute("name","message")
         span1 = document.createElement("SPAN");
         span1.setAttribute("class", "clickable");
         span1.onclick = function() { delete_message(this); }
@@ -195,82 +208,150 @@
             order_rows(td_ref.parentNode.parentNode);
         }
     }
+    
+    function start_match_type_changed() {
+        e = document.getElementById("id_start_match_type");
+        sv = document.getElementById("id_start_value");
+        if(e.value == "EXACT") {
+            sv.style.display = "inline";
+        } else {
+            sv.style.display = "none";
+        }
+    }
+    
+    function start_choice_changed() {
+        e = document.getElementById("id_start_choice");
+        sd = document.getElementById("id_start_date");
+        if(e.value == "DATE") {
+            sd.style.display = "inline";
+        } else {
+            sd.style.display = "none";
+        }
+    }
+    
+    function iteration_type_changed() {
+        e = document.getElementById("id_iteration_type");
+        e1 = document.getElementById("id_until");
+        e2 = document.getElementById("id_max_iteration_count_input");
+        if(e.value == "INDEFINITE") {
+            e1.style.display = "inline";
+            e2.style.display = "none";
+        } else {
+            e1.style.display = "none";
+            e2.style.display = "inline";
+        }
+    }
+    
+    function event_interpretation_changed() {
+        if(document.getElementById("id_event_interpretation").value == "SCHEDULE") {
+            elements = document.getElementsByName("event_label1");
+            for(i = 0; i < elements.length; i++) {
+                elements[i].innerHTML = "On day";
+            }
+            elements = document.getElementsByName("event_label2");
+            for(i = 0; i < elements.length; i++) {
+                elements[i].innerHTML = ", at";
+            }
+            document.getElementById("schedule_length_label1").innerHTML = "A single schedule cycle lasts";
+            document.getElementById("schedule_length_label2").innerHTML = "day(s).";
+        } else {
+            elements = document.getElementsByName("event_label1");
+            for(i = 0; i < elements.length; i++) {
+                elements[i].innerHTML = "After";
+            }
+            elements = document.getElementsByName("event_label2");
+            for(i = 0; i < elements.length; i++) {
+                elements[i].innerHTML = "day(s) and";
+            }
+            document.getElementById("schedule_length_label1").innerHTML = "After the last event, wait";
+            document.getElementById("schedule_length_label2").innerHTML = "day(s) before restarting the cycle.";
+        }
+        elements = document.getElementsByName("event_label3");
+        for(i = 0; i < elements.length; i++) {
+            elements[i].innerHTML = "(hh:ss), send message";
+        }
+        elements = document.getElementsByName("event_label4");
+        for(i = 0; i < elements.length; i++) {
+            elements[i].innerHTML = "with callback intervals";
+        }
+    }
 </script>
 {% endblock %}
 
 {% block reminders_content %}
 <form action="" method="post">
     <br />
-    <h2>Rule</h2>
+    <h2>Reminder Definition</h2>
     <table>
         <tr><th></th><td>{{ form.nickname.errors }}</td></tr>
-        <tr><th>{{ form.nickname.label_tag }}    </th><td>{{ form.nickname }}</td></tr>
-        <tr><th></th><td>{{ form.case_type.errors }}</td></tr>
-        <tr><th>{{ form.case_type.label_tag }}   </th><td>{{ form.case_type }}</td></tr>
-        <tr><th></th><td>{{ form.method.errors }}</td></tr>
-        <tr><th>{{ form.method.label_tag }}      </th><td>{{ form.method }}</td></tr>
-        <tr><th></th><td>{{ form.recipient.errors }}</td></tr>
-        <tr><th>{{ form.recipient.label_tag }}      </th><td>{{ form.recipient }}</td></tr>
-        <tr><th></th><td>{{ form.start.errors }}</td></tr>
-        <tr><th>{{ form.start.label_tag }}       </th><td>{{ form.start }}</td></tr>
-        <tr><th></th><td>{{ form.start_offset.errors }}</td></tr>
-        <tr><th>{{ form.start_offset.label_tag }}</th><td>{{ form.start_offset }}</td></tr>
-        <tr><th></th><td>{{ form.until.errors }}</td></tr>
-        <tr><th>{{ form.until.label_tag }}       </th><td>{{ form.until }}</td></tr>
+        <tr><th>Name</th><td>{{ form.nickname }}</td></tr>
         <tr><th></th><td>{{ form.default_lang.errors }}</td></tr>
-        <tr><th>{{ form.default_lang.label_tag }}</th><td>{{ form.default_lang }}</td></tr>
+        <tr><th>Default Language</th><td>{{ form.default_lang }}</td></tr>
     </table>
+    <h2>Rule</h2>
     <br />
+    {{ form.case_type.errors }}<br />
+    For cases of type {{ form.case_type }}, start the below {{ form.method }} schedule, sending to {{ form.recipient }}.<br /><br />
+    {{ form.start_property.errors }}{{ form.start_value.errors }}<br />
+    Start when case property {{ form.start_property }} {{ form.start_match_type }} <input type="text" name="start_value" id="id_start_value" value="{{ form.start_value.value|default:"" }}" {%if form.start_match_type.value == "ANY_VALUE" %}style="display: none;"{% endif %}/>.<br /><br />
+    {{ form.start_date.errors }}{{ form.start_offset.errors }}
+    Once this happens, start sending {{ form.start_choice }} <input type="text" name="start_date" id="id_start_date" value="{{ form.start_date.value|default:"" }}" {%if form.start_choice.value == "IMMEDIATELY" %}style="display: none;"{% endif %}/> plus {{ form.start_offset }} days.<br /><br />
+    {{ form.until.errors }}{{ form.max_iteration_count.errors }}
+    Stop sending {{ form.iteration_type }} :
+    <input type="text" name="until" id="id_until" value="{{ form.until.value|default:"" }}" {%if form.iteration_type.value == "FIXED" %}style="display: none;"{% endif %}/>
+    <input type="text" name="max_iteration_count_input" id="id_max_iteration_count_input" value="{{ form.max_iteration_count_input.value|default:"" }}" {%if form.iteration_type.value != "FIXED" %}style="display: none;"{% endif %}/>.
+    <br /><br />
     <h2>Schedule</h2>
     <br />
-    <div>
-        The following reminder schedule should be repeated: <br /><br />
-        <input type="radio" name="iteration_type" value="INDEFINITE" {%if form.iteration_type.value != "FIXED" %}checked{% endif %} />Until the above "Until" condition is met.<br />
-        {{ form.max_iteration_count.errors }}
-        <input type="radio" name="iteration_type" value="FIXED" {%if form.iteration_type.value == "FIXED" %}checked{% endif %} />{{ form.max_iteration_count_input }} times, or until the above "Until" condition is met, whichever comes first.<br />
-    </div>
-    <br />
-    <div>
-        The day and time for each event in the reminder schedule below are: <br /><br />
-        <input type="radio" name="event_interpretation" value="OFFSET" onClick="document.getElementById('schedule_length_description').innerHTML = 'The number of days between the end of a schedule cycle and the start of a new schedule cycle is:';" {%if form.event_interpretation.value != "SCHEDULE" %}checked{% endif %} />The number of days to wait and the time to wait before sending the given message.<br />
-        <input type="radio" name="event_interpretation" value="SCHEDULE" onClick="document.getElementById('schedule_length_description').innerHTML = 'The total number of days for a single schedule cycle is:';" {%if form.event_interpretation.value == "SCHEDULE" %}checked{% endif %} />The day number in the schedule cycle and the exact time of day to send the given message.
-    </div>
+    The event day(s) and time(s) below {{ form.event_interpretation }}
     <br />
     {{ form.events.errors }}
     <table>
         <tr>
-            <th>Day</th>
-            <th>Time</th>
-            <th>Language : Message</th>
-            <th>Callback Timeouts</th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
             <th></th>
             <th onClick="add_row(this);"><div class="clickable">[+]</div></th>
         </tr>
         {% for e in form.events.value %}
         <tr>
-            <td><input type="text" class="day_input" name="reminder_events.{{ forloop.counter }}.day" value="{{ e.day }}" /></td>
-            <td><input type="text" class="time_input" name="reminder_events.{{ forloop.counter }}.time" value="{{ e.time }}" /></td>
+            <td><span name="event_label1">{% if form.event_interpretation.value == "SCHEDULE" %}On day{% else %}After{% endif %}</span></td>
+            <td><input type="text" class="short" name="reminder_events.{{ forloop.counter }}.day" value="{{ e.day }}" /></td>
+            <td><span name="event_label2">{% if form.event_interpretation.value == "SCHEDULE" %}, at{% else %}day(s) and{% endif %}</span></td>
+            <td><input type="text" class="short" name="reminder_events.{{ forloop.counter }}.time" value="{{ e.time }}" /></td>
+            <td><span name="event_label3">(hh:ss), send message</span></td>
             <td>
                 {% for message_num, message in e.messages.items %}
                 <div>
-                    <input type="text" class="language_input" name="reminder_events.{{ forloop.parentloop.counter }}.messages.{{ forloop.counter }}.language" value="{{ message.language }}" /><input type="text" class="message_input" name="reminder_events.{{ forloop.parentloop.counter }}.messages.{{ forloop.counter }}.text" value="{{ message.text }}" /><span class="clickable" onClick="delete_message(this);">[-]</span><span class="clickable" onClick="add_message(this);">[+]</span>
+                    <input type="text" class="tiny" name="reminder_events.{{ forloop.parentloop.counter }}.messages.{{ forloop.counter }}.language" value="{{ message.language }}" /><input type="text" name="reminder_events.{{ forloop.parentloop.counter }}.messages.{{ forloop.counter }}.text" value="{{ message.text }}" /><span class="clickable" onClick="delete_message(this);">[-]</span><span class="clickable" onClick="add_message(this);">[+]</span>
                 </div>
                 {% endfor %}
             </td>
-            <td><input type="text" class="timeouts_input" name="reminder_events.{{ forloop.counter }}.timeouts" value="{{ e.timeouts }}" /></td>
+            <td><span name="event_label4">with callback intervals</span></td>
+            <td><input type="text" class="short" name="reminder_events.{{ forloop.counter }}.timeouts" value="{{ e.timeouts }}" /></td>
             <td onClick="delete_row(this);"><div class="clickable">[-]</div></td>
             <td onClick="add_row(this);"><div class="clickable">[+]</div></td>
         </tr>
         {% empty %}
         <tr>
-            <td><input type="text" class="day_input" name="reminder_events.1.day" /></td>
-            <td><input type="text" class="time_input" name="reminder_events.1.time" /></td>
+            <td><span name="event_label1">{% if form.event_interpretation.value == "SCHEDULE" %}On day{% else %}After{% endif %}</span></td>
+            <td><input type="text" class="short" name="reminder_events.1.day" /></td>
+            <td><span name="event_label2">{% if form.event_interpretation.value == "SCHEDULE" %}, at{% else %}day(s) and{% endif %}</span></td>
+            <td><input type="text" class="short" name="reminder_events.1.time" /></td>
+            <td><span name="event_label3">(hh:ss), send message</span></td>
             <td>
                 <div>
-                    <input type="text" class="language_input" name="reminder_events.1.messages.1.language" /><input type="text" class="message_input" name="reminder_events.1.messages.1.text" /><span class="clickable" onClick="delete_message(this);">[-]</span><span class="clickable" onClick="add_message(this);">[+]</span>
+                    <input type="text" class="tiny" name="reminder_events.1.messages.1.language" /><input type="text" name="reminder_events.1.messages.1.text" /><span class="clickable" onClick="delete_message(this);">[-]</span><span class="clickable" onClick="add_message(this);">[+]</span>
                 </div>
             </td>
-            <td><input type="text" class="timeouts_input" name="reminder_events.1.timeouts" /></td>
+            <td><span name="event_label4">with callback intervals</span></td>
+            <td><input type="text" class="short" name="reminder_events.1.timeouts" /></td>
             <td onClick="delete_row(this);"><div class="clickable">[-]</div></td>
             <td onClick="add_row(this);"><div class="clickable">[+]</div></td>
         </tr>
@@ -278,14 +359,21 @@
     </table>
     <div>
         {{ form.schedule_length.errors }}
-        <label id="schedule_length_description">
+        <label id="schedule_length_label1">
         {%if form.event_interpretation.value != "SCHEDULE" %}
-        The number of days between the end of a schedule cycle and the start of a new schedule cycle is:
+        After the last event, wait
         {% else %}
-        The total number of days for a single schedule cycle is:
+        A single schedule cycle lasts
         {% endif %}
         </label>
         {{ form.schedule_length }}
+        <label id="schedule_length_label2">
+        {%if form.event_interpretation.value != "SCHEDULE" %}
+        day(s) before restarting the cycle.
+        {% else %}
+        day(s).
+        {% endif %}
+        </label>
     </div>
     <br />
     <input type="Submit" value="Save" />

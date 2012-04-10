@@ -3,21 +3,47 @@ import re
 from django.core.exceptions import ValidationError
 from django.forms.fields import *
 from django.forms.forms import Form
-from django.forms import Field, Widget
+from django.forms import Field, Widget, Select, TextInput
 from django.utils.datastructures import DotExpandedDict
-from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_USER, RECIPIENT_CASE
+from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_USER, RECIPIENT_CASE, MATCH_EXACT, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET
 from dimagi.utils.parsing import string_to_datetime
 
 METHOD_CHOICES = (
     ('sms', 'SMS'),
     #('email', 'Email'),
     #('test', 'Test'),
-    ('callback', 'Callback')
+    ('callback', 'SMS/Callback')
 )
 
 RECIPIENT_CHOICES = (
-    (RECIPIENT_USER, "User"),
-    (RECIPIENT_CASE, "Case")
+    (RECIPIENT_USER, "the user whose case matches the rule"),
+    (RECIPIENT_CASE, "the case that matches the rule")
+)
+
+MATCH_TYPE_DISPLAY_CHOICES = (
+    (MATCH_EXACT, "exactly matches"),
+    (MATCH_ANY_VALUE, "takes any value")
+)
+
+START_IMMEDIATELY = "IMMEDIATELY"
+START_ON_DATE = "DATE"
+
+START_CHOICES = (
+    (START_ON_DATE, "on the date referenced by case property"),
+    (START_IMMEDIATELY, "immediately")
+)
+
+ITERATE_INDEFINITELY = "INDEFINITE"
+ITERATE_FIXED_NUMBER = "FIXED"
+
+ITERATION_CHOICES = (
+    (ITERATE_INDEFINITELY, "using the following case property"),
+    (ITERATE_FIXED_NUMBER, "after repeating the schedule the following number of times")
+)
+
+EVENT_CHOICES = (
+    (EVENT_AS_OFFSET, "are offsets from each other"),
+    (EVENT_AS_SCHEDULE, "represent the exact day and time in the schedule")
 )
 
 class CaseReminderForm(Form):
@@ -128,18 +154,22 @@ class ComplexCaseReminderForm(Form):
     """
     A form used to create/edit CaseReminderHandlers with any type of schedule.
     """
-    nickname = CharField()
-    case_type = CharField()
+    nickname = CharField(error_messages={"required":"Please enter the name of this reminder definition."})
+    case_type = CharField(error_messages={"required":"Please enter the case type."})
     method = ChoiceField(choices=METHOD_CHOICES)
     recipient = ChoiceField(choices=RECIPIENT_CHOICES)
-    start = CharField()
-    start_offset = IntegerField()
-    until = CharField()
-    default_lang = CharField()
-    iteration_type = CharField()
+    start_match_type = ChoiceField(choices=MATCH_TYPE_DISPLAY_CHOICES, widget=Select(attrs={"onchange":"start_match_type_changed();"}))
+    start_choice = ChoiceField(choices=START_CHOICES, widget=Select(attrs={"onchange":"start_choice_changed();"}))
+    iteration_type = ChoiceField(choices=ITERATION_CHOICES, widget=Select(attrs={"onchange":"iteration_type_changed();"}))
+    start_property = CharField(error_messages={"required":"Please enter the name of the case property."})
+    start_value = CharField(required=False)
+    start_date = CharField(required=False)
+    start_offset = IntegerField(error_messages={"required":"Please enter an integer for the day offset.","invalid":"Please enter an integer for the day offset."})
+    until = CharField(required=False)
+    default_lang = CharField(error_messages={"required":"Please enter the default language to use for the messages."})
     max_iteration_count_input = CharField(required=False)
     max_iteration_count = IntegerField(required=False)
-    event_interpretation = CharField()
+    event_interpretation = ChoiceField(choices=EVENT_CHOICES, widget=Select(attrs={"onchange":"event_interpretation_changed();"}))
     schedule_length = IntegerField()
     events = EventListField()
     
@@ -188,7 +218,7 @@ class ComplexCaseReminderForm(Form):
         self.initial["events"] = events
     
     def clean_max_iteration_count(self):
-        if self.cleaned_data.get("iteration_type",None) == "FIXED":
+        if self.cleaned_data.get("iteration_type",None) == ITERATE_FIXED_NUMBER:
             max_iteration_count = self.cleaned_data.get("max_iteration_count_input",None)
         else:
             max_iteration_count = REPEAT_SCHEDULE_INDEFINITELY
@@ -203,6 +233,31 @@ class ComplexCaseReminderForm(Form):
         
         return max_iteration_count
 
+    def clean_start_value(self):
+        if self.cleaned_data.get("start_match_type", None) == MATCH_ANY_VALUE:
+            return None
+        else:
+            value = self.cleaned_data.get("start_value")
+            if value is None or value == "":
+                raise ValidationError("Please enter the value to match.")
+            return value
 
+    def clean_start_date(self):
+        if self.cleaned_data.get("start_choice", None) == START_IMMEDIATELY:
+            return None
+        else:
+            value = self.cleaned_data.get("start_date")
+            if value is None or value == "":
+                raise ValidationError("Please enter the name of the case property.")
+            return value
+
+    def clean_until(self):
+        if self.cleaned_data.get("iteration_type", None) == ITERATE_FIXED_NUMBER:
+            return None
+        else:
+            value = self.cleaned_data.get("until")
+            if value is None or value == "":
+                raise ValidationError("Please enter the name of the case property.")
+            return value
 
 

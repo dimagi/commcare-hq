@@ -20,8 +20,11 @@ class ReminderTestCase(TestCase):
             domain=cls.domain,
             case_type=cls.case_type,
             method="test",
-            start='start_sending',
+            start_property='start_sending',
+            start_value="ok",
+            start_date=None,
             start_offset=1,
+            start_match_type=MATCH_EXACT,
             until='stop_sending',
             default_lang='en',
             max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY,
@@ -139,8 +142,11 @@ class ReminderIrregularScheduleTestCase(TestCase):
             domain=cls.domain,
             case_type=cls.case_type,
             method="test",
-            start='start_sending',
+            start_property='start_sending',
+            start_value=None,
+            start_date=None,
             start_offset=1,
+            start_match_type=MATCH_ANY_VALUE,
             until='stop_sending',
             default_lang='en',
             max_iteration_count=2,
@@ -292,8 +298,11 @@ class ReminderCallbackTestCase(TestCase):
             domain=cls.domain,
             case_type=cls.case_type,
             method="callback_test",
-            start='start_sending',
+            start_property='start_sending',
+            start_value=None,
+            start_date=None,
             start_offset=0,
+            start_match_type=MATCH_ANY_VALUE,
             until='stop_sending',
             default_lang='en',
             max_iteration_count=3,
@@ -499,8 +508,11 @@ class CaseTypeReminderTestCase(TestCase):
             domain=cls.domain,
             case_type="case_type_a",
             method="test",
-            start='start_sending1',
+            start_property='start_sending1',
+            start_value=None,
+            start_date=None,
             start_offset=1,
+            start_match_type=MATCH_ANY_VALUE,
             until='stop_sending1',
             default_lang='en',
             max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY,
@@ -521,8 +533,11 @@ class CaseTypeReminderTestCase(TestCase):
             domain=cls.domain,
             case_type="case_type_a",
             method="test",
-            start='start_sending2',
+            start_property='start_sending2',
+            start_value=None,
+            start_date=None,
             start_offset=2,
+            start_match_type=MATCH_ANY_VALUE,
             until='stop_sending2',
             default_lang='en',
             max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY,
@@ -543,8 +558,11 @@ class CaseTypeReminderTestCase(TestCase):
             domain=cls.domain,
             case_type="case_type_a",
             method="test",
-            start='start_sending3',
+            start_property='start_sending3',
+            start_value=None,
+            start_date=None,
             start_offset=3,
+            start_match_type=MATCH_ANY_VALUE,
             until='stop_sending3',
             default_lang='en',
             max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY,
@@ -698,8 +716,11 @@ class StartConditionReminderTestCase(TestCase):
             domain=cls.domain,
             case_type="case_type_a",
             method="test",
-            start='start_sending1',
+            start_property='start_sending1',
+            start_value=None,
+            start_date='start_sending1_date',
             start_offset=1,
+            start_match_type=MATCH_ANY_VALUE,
             until='stop_sending1',
             default_lang='en',
             max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY,
@@ -763,7 +784,8 @@ class StartConditionReminderTestCase(TestCase):
         #
         # Spawn the reminder with datetime start condition value
         start = datetime(2012,2,20,9,0,0)
-        self.case1.set_case_property("start_sending1", start)
+        self.case1.set_case_property("start_sending1", "ok")
+        self.case1.set_case_property("start_sending1_date", start)
         self.case1.save()
         
         reminder = self.handler1.get_reminder(self.case1)
@@ -777,7 +799,7 @@ class StartConditionReminderTestCase(TestCase):
         # Reset the datetime start condition
         old_reminder_id = reminder._id
         start = datetime(2012,2,22,10,15,0)
-        self.case1.set_case_property("start_sending1", start)
+        self.case1.set_case_property("start_sending1_date", start)
         self.case1.save()
         
         reminder = self.handler1.get_reminder(self.case1)
@@ -811,7 +833,8 @@ class StartConditionReminderTestCase(TestCase):
         #
         # Spawn the reminder with date start condition value
         start = date(2012,2,20)
-        self.case1.set_case_property("start_sending1", start)
+        self.case1.set_case_property("start_sending1", "ok")
+        self.case1.set_case_property("start_sending1_date", start)
         self.case1.save()
         
         reminder = self.handler1.get_reminder(self.case1)
@@ -819,13 +842,13 @@ class StartConditionReminderTestCase(TestCase):
         
         self.assertEqual(
             reminder.next_fire
-           ,datetime.combine(start, CaseReminderHandler.now.time()) + timedelta(days=self.handler1.start_offset)
+           ,datetime(start.year, start.month, start.day) + timedelta(days=self.handler1.start_offset)
         )
         
         # Reset the date start condition
         old_reminder_id = reminder._id
         start = date(2012,2,22)
-        self.case1.set_case_property("start_sending1", start)
+        self.case1.set_case_property("start_sending1_date", start)
         self.case1.save()
         
         reminder = self.handler1.get_reminder(self.case1)
@@ -833,7 +856,7 @@ class StartConditionReminderTestCase(TestCase):
         
         self.assertEqual(
             reminder.next_fire
-           ,datetime.combine(start, CaseReminderHandler.now.time()) + timedelta(days=self.handler1.start_offset)
+           ,datetime(start.year, start.month, start.day) + timedelta(days=self.handler1.start_offset)
         )
         self.assertEqual(CaseReminder.get(old_reminder_id).doc_type, "CaseReminder-Deleted")
         
@@ -858,7 +881,8 @@ class StartConditionReminderTestCase(TestCase):
         # Test changing a start condition which is a string representation of a datetime value
         #
         # Spawn the reminder with datetime start condition value
-        self.case1.set_case_property("start_sending1", "2012-02-25 11:15")
+        self.case1.set_case_property("start_sending1", "ok")
+        self.case1.set_case_property("start_sending1_date", "2012-02-25 11:15")
         self.case1.save()
         
         reminder = self.handler1.get_reminder(self.case1)
@@ -871,7 +895,7 @@ class StartConditionReminderTestCase(TestCase):
         
         # Reset the datetime start condition
         old_reminder_id = reminder._id
-        self.case1.set_case_property("start_sending1", "2012-02-26 11:20")
+        self.case1.set_case_property("start_sending1_date", "2012-02-26 11:20")
         self.case1.save()
         
         reminder = self.handler1.get_reminder(self.case1)

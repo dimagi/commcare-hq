@@ -26,6 +26,10 @@ RECIPIENT_USER = "USER"
 RECIPIENT_CASE = "CASE"
 RECIPIENT_CHOICES = [RECIPIENT_USER, RECIPIENT_CASE]
 
+MATCH_EXACT = "EXACT"
+MATCH_ANY_VALUE = "ANY_VALUE"
+MATCH_TYPE_CHOICES = [MATCH_EXACT, MATCH_ANY_VALUE]
+
 def is_true_value(val):
     return val == 'ok' or val == 'OK'
 
@@ -216,8 +220,11 @@ class CaseReminderHandler(Document):
     recipient = StringProperty(choices=RECIPIENT_CHOICES, default=RECIPIENT_USER)
     
     # Attributes which define the reminder schedule
-    start = StringProperty()
+    start_property = StringProperty()
+    start_value = StringProperty()
+    start_date = StringProperty()
     start_offset = IntegerProperty()
+    start_match_type = StringProperty(choices=MATCH_TYPE_CHOICES)
     events = SchemaListProperty(CaseReminderEvent)
     schedule_length = IntegerProperty()
     event_interpretation = StringProperty(choices=EVENT_INTERPRETATIONS, default=EVENT_AS_OFFSET)
@@ -499,59 +506,53 @@ class CaseReminderHandler(Document):
                 reminder.retire()
         else:
             # Retrieve the value of the start property
-            start_value = case.get_case_property(self.start)
-            if isinstance(start_value, date) or isinstance(start_value, datetime):
-                start = start_value
+            actual_start_value = case.get_case_property(self.start_property)
+            if self.start_match_type == MATCH_EXACT:
+                start_condition_reached = (actual_start_value == self.start_value) and (self.start_value is not None)
+            elif self.start_match_type == MATCH_ANY_VALUE:
+                start_condition_reached = actual_start_value is not None
             else:
+                start_condition_reached = False
+            start_date = case.get_case_property(self.start_date)
+            if (not isinstance(start_date, date)) and not (isinstance(start_date, datetime)):
                 try:
-                    start = parse(start_value)
+                    start_date = parse(start_date)
                 except Exception:
-                    start = start_value
+                    start_date = None
+            
+            if isinstance(start_date, datetime):
+                start_condition_datetime = start_date
+                start = start_date
+            elif isinstance(start_date, date):
+                start_condition_datetime = datetime(start_date.year, start_date.month, start_date.day, 0, 0, 0)
+                start = start_condition_datetime
+            else:
+                start_condition_datetime = None
+                start = now
             
             # Retire the reminder if the start condition is no longer valid
-            if reminder:
-                if isinstance(start, date) or isinstance(start, datetime):
-                    if isinstance(start, datetime):
-                        expected_start_condition_datetime = start
-                    else:
-                        expected_start_condition_datetime = datetime(start.year, start.month, start.day, 0, 0, 0)
-                    
-                    if reminder.start_condition_datetime != expected_start_condition_datetime:
-                        # The start date/time has changed, so retire the reminder; it will be spawned again in the next block
-                        reminder.retire()
-                        reminder = None
-                elif not is_true_value(start):
+            if reminder is not None:
+                if not start_condition_reached:
                     # The start condition is no longer valid, so retire the reminder
                     reminder.retire()
                     reminder = None
+                elif reminder.start_condition_datetime != start_condition_datetime:
+                    # The start date has changed, so retire the reminder and it will be spawned again in the next block
+                    reminder.retire()
+                    reminder = None
             
-            if not reminder:
-                if isinstance(start, date) or isinstance(start, datetime):
-                    start_condition_datetime = start
-                    if isinstance(start, date) and not isinstance(start, datetime): #datetime is an instance of both date and datetime
-                        start = datetime(start.year, start.month, start.day, now.hour, now.minute, now.second, now.microsecond)
-                        start_condition_datetime = datetime(start.year, start.month, start.day, 0, 0, 0)
-                    try:
-                        reminder = self.spawn_reminder(case, start)
-                        reminder.start_condition_datetime = start_condition_datetime
-                    except Exception:
-                        if settings.DEBUG:
-                            raise
-                        logging.error(
-                            "Case ({case._id}) submitted against "
-                            "CaseReminderHandler {self.nickname} ({self._id}) "
-                            "but failed to resolve case.{self.start} to a date"
-                        )
-                else:
-                    if self.condition_reached(case, self.start, now):
-                        reminder = self.spawn_reminder(case, now)
-                        reminder.start_condition_datetime = now
+            if reminder is None:
+                if start_condition_reached:
+                    reminder = self.spawn_reminder(case, start)
+                    reminder.start_condition_datetime = start_condition_datetime
+                    self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
             else:
                 active = (not self.condition_reached(case, self.until, now)) and not (reminder.handler.max_iteration_count != REPEAT_SCHEDULE_INDEFINITELY and reminder.schedule_iteration_num > reminder.handler.max_iteration_count)
                 if active and not reminder.active:
-                    # if a reminder is reactivated, sending starts over from right now
-                    reminder.next_fire = now
-                reminder.active = active
+                    reminder.active = True
+                    self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
+                else:
+                    reminder.active = active
             if reminder:
                 reminder.save()
 
