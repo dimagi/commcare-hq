@@ -18,7 +18,6 @@ from dimagi.utils.web import render_to_response
 X_PROGRESS_ERROR = 'Server Error: You must provide X-Progress-ID header or query param.'
 
 def download_media(request, media_type, doc_id):
-    # TODO limit access to relevant domains
     try:
         media = eval(media_type)
         try:
@@ -65,10 +64,14 @@ def upload(request, domain, app_id):
 @require_POST
 def uploaded(request, domain, app_id):
     app = get_app(domain, app_id)
+    response = {}
+    errors = []
     if request.POST.get('media_type', ''):
         specific_params = dict(request.POST)
     else:
         specific_params = {}
+
+    replace_existing = request.POST.get('replace_existing', True);
     try:
         uploaded_file = request.FILES.get('Filedata')
         data = uploaded_file.file.read()
@@ -80,27 +83,28 @@ def uploaded(request, domain, app_id):
         if content_type in utils.ZIP_MIMETYPES:
             zip = zipfile.ZipFile(uploaded_file)
             bad_file = zip.testzip()
-            # TODO: hadnle bad zipfile
-
-            matched_images, matched_audio, unknown_files = matcher.match_zipped(zip)
-            return HttpResponse(simplejson.dumps({"unknown": unknown_files,
-                                                  "images": matched_images,
-                                                  "audio": matched_audio,
-                                                  "zip": True}))
-        if content_type in utils.IMAGE_MIMETYPES:
-            file_type = "image"
-        elif content_type in utils.AUDIO_MIMETYPES:
-            file_type = "audio"
+            if bad_file:
+                raise Exception("Bad ZIP file.")
+            matched_images, matched_audio, unknown_files, errors = matcher.match_zipped(zip, replace_existing_media=replace_existing)
+            response = {"unknown": unknown_files,
+                        "images": matched_images,
+                        "audio": matched_audio,
+                        "zip": True}
         else:
-            raise Exception("Unsupported content type.")
-
-        match_found, match_map = matcher.match_file(uploaded_file)
-        return HttpResponse(simplejson.dumps({"match_found": match_found,
-                                                  file_type: match_map,
-                                                  "file": True}))
-
+            if content_type in utils.IMAGE_MIMETYPES:
+                file_type = "image"
+            elif content_type in utils.AUDIO_MIMETYPES:
+                file_type = "audio"
+            else:
+                raise Exception("Unsupported content type.")
+            match_found, match_map, errors = matcher.match_file(uploaded_file, replace_existing_media=replace_existing)
+            response = {"match_found": match_found,
+                        file_type: match_map,
+                        "file": True}
     except Exception as e:
-        print e
-        return HttpResponse(simplejson.dumps({"error": e}))
+        errors.append(e.message)
+
+    response['errors'] = errors
+    return HttpResponse(simplejson.dumps(response))
 
 

@@ -68,9 +68,11 @@ class HQMediaMatcher():
     audio_paths = {}
     images = []
     audio = []
+    specific_params = {}
 
-    def __init__(self, app, domain, username, specific_params={}, match_filename=False):
-        self.specific_params = specific_params
+    def __init__(self, app, domain, username, specific_params, match_filename=False):
+        if specific_params:
+            self.specific_params = specific_params
         self.match_filename = match_filename
         if not self.specific_params:
             self.image_paths, self.audio_paths, _ = get_multimedia_filenames(app)
@@ -95,49 +97,62 @@ class HQMediaMatcher():
         unknown_files = []
         matched_audio = []
         matched_images = []
+        errors = []
+        try:
+            for index, path in enumerate(zip.namelist()):
+                path = path.strip()
+                filename = path.lower()
+                basename = os.path.basename(path.lower())
+                is_image = False
 
-        for index, path in enumerate(zip.namelist()):
-            path = path.strip()
-            filename = path.lower()
-            if self.match_filename:
-                filename = os.path.basename(path.lower())
+                if not basename:
+                    continue
 
-            if not filename:
-                continue
+                if self.match_filename:
+                    filename = basename
 
-            media = None
-            form_path = None
-            data = None
+                media = None
+                form_path = None
+                data = None
 
-            if filename in self.images:
-                form_path = self.image_paths[self.images.index(filename)]
-                data = zip.read(path)
-                media = CommCareImage.get_by_data(data)
-                matched_images.append(HQMediaMapItem.format_match_map(form_path, media.doc_type, media._id, path))
-            elif filename in self.audio:
-                form_path = self.audio_paths[self.audio.index(filename)]
-                data = zip.read(path)
-                media = CommCareAudio.get_by_data(data)
-                matched_audio.append(HQMediaMapItem.format_match_map(form_path, media.doc_type, media._id, path))
-            else:
-                unknown_files.append(path)
+                if filename in self.images:
+                    form_path = self.image_paths[self.images.index(filename)]
+                    data = zip.read(path)
+                    media = CommCareImage.get_by_data(data)
+                    is_image = True
+                elif filename in self.audio:
+                    form_path = self.audio_paths[self.audio.index(filename)]
+                    data = zip.read(path)
+                    media = CommCareAudio.get_by_data(data)
+                else:
+                    unknown_files.append(path)
 
-            if media:
-                media.attach_data(data,
-                    upload_path=path,
-                    username=self.username,
-                    replace_attachment=replace_existing_media)
-                media.add_domain(self.domain)
-                self.app.create_mapping(media, form_path)
+                if media:
+                    try:
+                        media.attach_data(data,
+                            upload_path=path,
+                            username=self.username,
+                            replace_attachment=replace_existing_media)
+                        media.add_domain(self.domain)
+                        self.app.create_mapping(media, form_path)
+                        match_map = HQMediaMapItem.format_match_map(form_path, media.doc_type, media._id, path)
+                        if is_image:
+                            matched_images.append(match_map)
+                        else:
+                            matched_audio.append(match_map)
+                    except Exception as e:
+                        errors.append("%s (%s)" % (e, filename))
+            zip.close()
+        except Exception as e:
+            logging.error(e)
+            errors.append(e.message)
 
-        zip.close()
-        return matched_images, matched_audio, unknown_files
+        return matched_images, matched_audio, unknown_files, errors
 
     def match_file(self, uploaded_file, replace_existing_media=True):
-
+        errors = []
         try:
             if self.specific_params:
-                print "SPECIFIC", self.specific_params
                 media_class = eval(self.specific_params['media_type'][0])
                 form_path = self.specific_params['path'][0]
                 replace_existing_media = self.specific_params['replace_attachment'][0]
@@ -158,7 +173,7 @@ class HQMediaMatcher():
                     media = CommCareAudio.get_by_data(data)
                 else:
                     uploaded_file.close()
-                    return False, {}
+                    return False, {}, errors
 
             if media:
                 media.attach_data(data,
@@ -167,13 +182,13 @@ class HQMediaMatcher():
                     replace_attachment=replace_existing_media)
                 media.add_domain(self.domain)
                 self.app.create_mapping(media, form_path)
-                return True, HQMediaMapItem.format_match_map(form_path, media.doc_type, media._id, filename)
+                return True, HQMediaMapItem.format_match_map(form_path, media.doc_type, media._id, filename), errors
 
         except Exception as e:
             logging.error(e)
-            return False, {"error": e.message}
+            errors.append(e.message)
 
-        return False, {}
+        return False, {}, errors
 
 
 

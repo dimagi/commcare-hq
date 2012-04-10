@@ -60,7 +60,6 @@ function HQMediaUploader(options) {
 
                 if (self.modalClass) {
                     $(self.modalClass).on('hidden', function () {
-                        console.log("booboo");
                         resetUploader();
                     });
                 }
@@ -81,7 +80,6 @@ function HQMediaUploader(options) {
                 var fileData = event.fileList;
                 for (var key in fileData) {
                     var output;
-                    console.log(fileData[key]);
                     if (self.singleFileUpload) {
                         output = '<div id="'+self.mediaType+fileData[key].id+'">\
                             <span class="help-inline" style="line-height:28px;">'+fileData[key].name+' ['+(fileData[key].size/1048576).toFixed(3)+' MB]</span>\
@@ -95,7 +93,7 @@ function HQMediaUploader(options) {
                         $(self.uploadElem+' .hqm-upload-list').html(output);
 
                         $(self.uploadElem+' .hqm-file_selected_only').removeClass('hide');
-                        $(self.uploadElem+" .control-group").removeClass('success');
+                        $(self.uploadElem+" .control-group").removeClass('success').removeClass('error');
                         $(self.uploadElem+' .hqm-change').click(function () {
                             uploader.cancel();
                             uploader.clearFileList();
@@ -106,7 +104,6 @@ function HQMediaUploader(options) {
                             $(self.uploadElem+' .hqm-file_selected_only').addClass('hide');
                             return false;
                         });
-                        console.log("Show select container?");
                         showSelectContainer(false);
 
                     } else if(!selectedFiles[fileData[key].id]) {
@@ -151,7 +148,22 @@ function HQMediaUploader(options) {
             }
 
             function updateProgress(event) {
-                $('#'+self.mediaType+event.id+' .progress .bar').attr('style', 'width: '+Math.round(100 * event.bytesLoaded / event.bytesTotal)+'%;');
+                var progress_total = Math.round(100 * event.bytesLoaded / event.bytesTotal),
+                    pb_parentSel = '#'+self.mediaType+event.id+' .progress';
+                $(pb_parentSel+' .bar').attr('style', 'width: '+progress_total+'%;');
+
+                if (progress_total >= 100) {
+                    if (self.singleFileUpload) {
+                        showCancelButton(false);
+                    } else {
+                        var next_el = $(pb_parentSel).next();
+                        if (next_el && next_el.hasClass('hqm-cancel'))
+                            next_el.remove();
+                    }
+                    var $processing = $('<div class="label label-info pull-right" />');
+                    $processing.text('Processing, please wait.');
+                    $(pb_parentSel).addClass('progress-warning').after($processing);
+                }
             }
 
             function uploadComplete(event) {
@@ -161,8 +173,11 @@ function HQMediaUploader(options) {
 
                 var pb_parentSel = '#'+self.mediaType+event.id+' .progress';
                 $(pb_parentSel+' .bar').attr('style', 'width: 100%;');
-                $(pb_parentSel).removeClass('active');
-                $(pb_parentSel).addClass('progress-success');
+                $(pb_parentSel).removeClass('active progress-warning').addClass('progress-success');
+
+                var next_el = $(pb_parentSel).next();
+                if (next_el && (next_el.hasClass('hqm-cancel') || next_el.hasClass('label')))
+                    next_el.remove();
 
                 if (self.singleFileUpload) {
                     $(self.uploadElem+" .control-group").addClass('success');
@@ -173,11 +188,6 @@ function HQMediaUploader(options) {
                     currentNumFiles -= 1;
                     if(currentNumFiles < 1)
                         $(self.uploadElem+" .hqm-empty_queue-notice").removeClass('hide');
-
-                    var next_el = $(pb_parentSel).next();
-                    if (next_el && next_el.hasClass('hqm-cancel'))
-                        next_el.remove();
-
 
                     var $uploadFileElem = $('#'+self.mediaType+event.id);
                     $uploadFileElem.remove();
@@ -207,8 +217,23 @@ function HQMediaUploader(options) {
             }
 
             function uploadCompleteData(event) {
-                if(self.onSuccess) {
-                    self.onSuccess(event, $.parseJSON(event.data))
+                var resp = $.parseJSON(event.data);
+                if(self.onSuccess)
+                    self.onSuccess(event, resp);
+
+                var $currentMedia = $('#hqmedia_'+event.id);
+                if (!_.isEmpty(resp.errors)) {
+                    $currentMedia.find('.progress').removeClass('progress-success').addClass('progress-danger');
+                    if (self.singleFileUpload) {
+                        $(self.uploadElem+" .control-group").addClass('error').removeClass('success');
+                        $(self.uploadElem+" .control-group .controls .help-block").text('Error uploading.');
+                        for (var e in resp.errors) {
+                            $(self.uploadElem+" .control-group .controls").append($('<p class="label label-important" style="margin-top:5px;" />').text("ERROR: "+resp.errors[e]));
+                        }
+                    } else
+                        for (var e in resp.errors) {
+                            $currentMedia.find('.match_status').append($('<div class="label label-important" style="margin-top:5px;" />').text("ERROR: "+resp.errors[e]));
+                        }
                 }
             }
 
