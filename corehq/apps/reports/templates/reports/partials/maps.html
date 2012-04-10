@@ -5,14 +5,149 @@
 
     <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key={{ maps_api_key }}&sensor=false"></script>
     <script type="text/javascript">
+
+      CUSTOM_MARKER = true;
+
+      DATA = {{ points|safe }};
+      LAST_MARKER = null;
+
+      CanvasMarker = function(opts) { this.setValues(opts); };
+      CanvasMarker.prototype = new google.maps.OverlayView();
+
+    CanvasMarker.prototype.onAdd = function() {
+        this.div = $('<div />');
+        this.$canvas = $('<canvas />');
+        this.$canvas.attr('width', this.width);
+        this.$canvas.attr('height', this.height);
+        this.div.append(this.$canvas);
+
+      var _ = this;
+      google.maps.event.addDomListener(this.div[0], 'click', function() {
+        _.infowindow.open(_.map, _);
+    } );
+
+        var m = this;
+        var t0 = new Date().getTime();
+        var cola = randcolor();
+        var colb = randcolor();
+        var colc = randcolor();
+        this.anim = function(ctx, period) {
+          var clock = ((new Date().getTime()) - t0) / 1000.;
+          m.render(ctx, m.width, m.height, (clock % period) / period, cola, colb, colc);
+        }
+
+        var period = 3*Math.random() + 1.;
+        var ctx = this.$canvas[0].getContext('2d');
+        this.anim(ctx, period);
+        setInterval(function() { m.anim(ctx, period); }, 30);
+
+        var pane = this.getPanes().overlayImage;
+        $(pane).append(this.div);
+    };
+
+    CanvasMarker.prototype.onRemove = function() {
+    };
+
+    CanvasMarker.prototype.draw = function() {
+      this.div.css('display', 'block');
+        var position = this.getProjection().fromLatLngToDivPixel(this.position);
+        this.div.css('position', 'absolute');
+        this.div.css('left', (position.x - this.width/2) + "px");
+        this.div.css('top', (position.y - this.height/2) + "px");
+    };
+
+
+    function randcolor() {
+      var k = function() { return Math.round(Math.random()*200+50); };
+      return 'rgb(' + k() + ',' + k() + ',' + k() + ')';
+    };
+
+      function drawcirc(ctx, width, height, pct, a, b, c) {
+        pct = pct || 1.;
+        a = a || randcolor();
+        b = b || randcolor();
+        c = c || randcolor();
+
+
+
+        ctx.beginPath();
+        ctx.arc(.5 * width, .5 * height, .5 * .8*Math.min(width, height), 0, Math.PI*2, true); 
+        ctx.closePath();
+        ctx.fillStyle = a;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(.5 * width, .5 * height);
+        ctx.arc(.5 * width, .5 * height, .5 * .8*Math.min(width, height), -Math.PI*.5, Math.PI*2*(pct-.25), true); 
+        ctx.lineTo(.5 * width, .5 * height);
+        ctx.closePath();
+        ctx.fillStyle = b;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(.5 * width, .5 * height, .5 * .8*Math.min(width, height), 0, Math.PI*2, true); 
+        ctx.closePath();
+        ctx.strokeStyle = c;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      function make_marker(width, height, draw) {
+        var $canvas = $('<canvas />');
+        $canvas.attr('width', width);
+        $canvas.attr('height', height);
+        var ctx = $canvas[0].getContext('2d');
+        draw(ctx, width, height);
+        return $canvas[0].toDataURL('image/png');
+      }
+
       $(document).ready(function() {
           var myOptions = {
-            center: new google.maps.LatLng(42.4, -71.1),
-            zoom: 11,
-            mapTypeId: google.maps.MapTypeId.ROADMAP
+            center: new google.maps.LatLng(30., 0.),
+            zoom: 4,
+            mapTypeId: google.maps.MapTypeId.TERRAIN
           };
           var map = new google.maps.Map($('#map')[0], myOptions);
-        });
+          var bounds = new google.maps.LatLngBounds();
+ 
+          $.each(DATA, function(i, e) {
+              var pos = new google.maps.LatLng(e[0], e[1]);
+
+
+if (!CUSTOM_MARKER) {
+              var marker = new google.maps.Marker({
+                position: pos,
+                icon: new google.maps.MarkerImage(
+                  make_marker(20, 20, drawcirc),
+                  new google.maps.Size(20, 20),
+                  new google.maps.Point(0, 0),
+                  new google.maps.Point(10, 10)
+                ),
+                map: map
+              });
+} else {
+              var marker = new CanvasMarker({
+                position: pos,
+                map: map,
+                width: 30, height: 30, render: drawcirc
+              });
+}
+
+              bounds.extend(pos);
+
+              var info = $('<p>fill in some info here!</p>');
+              marker.infowindow = new google.maps.InfoWindow({content: info.get(0)});
+              google.maps.event.addListener(marker, 'click', function(event) {
+                  if (LAST_MARKER != null) {
+                    LAST_MARKER.infowindow.close();
+                  }
+                  marker.infowindow.open(map, marker);
+                  LAST_MARKER = marker;
+                });
+            });
+          map.fitBounds(bounds);
+
+         });
     </script>
     <!-- TODO: dynamic sizing of map canvas to fill available space -->
     <div id="map" style="width: 1200px; height: 500px;"></div>
@@ -20,3 +155,7 @@
 </div>
 
 </div>
+
+{% comment %}
+
+{% endcomment %}        
