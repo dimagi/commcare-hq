@@ -27,8 +27,9 @@ RECIPIENT_CASE = "CASE"
 RECIPIENT_CHOICES = [RECIPIENT_USER, RECIPIENT_CASE]
 
 MATCH_EXACT = "EXACT"
+MATCH_REGEX = "REGEX"
 MATCH_ANY_VALUE = "ANY_VALUE"
-MATCH_TYPE_CHOICES = [MATCH_EXACT, MATCH_ANY_VALUE]
+MATCH_TYPE_CHOICES = [MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE]
 
 def is_true_value(val):
     return val == 'ok' or val == 'OK'
@@ -511,6 +512,12 @@ class CaseReminderHandler(Document):
                 start_condition_reached = (actual_start_value == self.start_value) and (self.start_value is not None)
             elif self.start_match_type == MATCH_ANY_VALUE:
                 start_condition_reached = actual_start_value is not None
+            elif self.start_match_type == MATCH_REGEX:
+                try:
+                    regex = re.compile(self.start_value)
+                    start_condition_reached = regex.match(str(actual_start_value)) is not None
+                except Exception:
+                    start_condition_reached = False
             else:
                 start_condition_reached = False
             start_date = case.get_case_property(self.start_date)

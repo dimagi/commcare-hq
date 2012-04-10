@@ -212,10 +212,10 @@
     function start_match_type_changed() {
         e = document.getElementById("id_start_match_type");
         sv = document.getElementById("id_start_value");
-        if(e.value == "EXACT") {
-            sv.style.display = "inline";
-        } else {
+        if(e.value == "ANY_VALUE") {
             sv.style.display = "none";
+        } else {
+            sv.style.display = "inline";
         }
     }
     
@@ -295,7 +295,7 @@
     {{ form.start_property.errors }}{{ form.start_value.errors }}<br />
     Start when case property {{ form.start_property }} {{ form.start_match_type }} <input type="text" name="start_value" id="id_start_value" value="{{ form.start_value.value|default:"" }}" {%if form.start_match_type.value == "ANY_VALUE" %}style="display: none;"{% endif %}/>.<br /><br />
     {{ form.start_date.errors }}{{ form.start_offset.errors }}
-    Once this happens, start sending {{ form.start_choice }} <input type="text" name="start_date" id="id_start_date" value="{{ form.start_date.value|default:"" }}" {%if form.start_choice.value == "IMMEDIATELY" %}style="display: none;"{% endif %}/> plus {{ form.start_offset }} days.<br /><br />
+    Once this happens, start sending {{ form.start_choice }} <input type="text" name="start_date" id="id_start_date" value="{{ form.start_date.value|default:"" }}" {%if form.start_choice.value == "IMMEDIATELY" %}style="display: none;"{% endif %}/> plus {{ form.start_offset }} day(s).<br /><br />
     {{ form.until.errors }}{{ form.max_iteration_count.errors }}
     Stop sending {{ form.iteration_type }} :
     <input type="text" name="until" id="id_until" value="{{ form.until.value|default:"" }}" {%if form.iteration_type.value == "FIXED" %}style="display: none;"{% endif %}/>

@@ -5,7 +5,7 @@ from django.forms.fields import *
 from django.forms.forms import Form
 from django.forms import Field, Widget, Select, TextInput
 from django.utils.datastructures import DotExpandedDict
-from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_USER, RECIPIENT_CASE, MATCH_EXACT, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET
+from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_USER, RECIPIENT_CASE, MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET
 from dimagi.utils.parsing import string_to_datetime
 
 METHOD_CHOICES = (
@@ -22,7 +22,8 @@ RECIPIENT_CHOICES = (
 
 MATCH_TYPE_DISPLAY_CHOICES = (
     (MATCH_EXACT, "exactly matches"),
-    (MATCH_ANY_VALUE, "takes any value")
+    (MATCH_ANY_VALUE, "takes any value"),
+    (MATCH_REGEX, "matches the regular expression")
 )
 
 START_IMMEDIATELY = "IMMEDIATELY"
