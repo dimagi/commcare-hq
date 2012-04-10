@@ -37,8 +37,9 @@ The following are necessary for the basic function of CommCare HQ.
 + `pip`
 + `memcached`
 + **postgres** - [Download postgres here](http://www.enterprisedb.com/products-services-training/pgdownload)
-+ **couchdb** - [Download couchdb here](http://www.couchbase.com/couchbase-server/overview)
++ **couchdb** - Version 1.0 or greater required - [View installation instructions here](http://wiki.apache.org/couchdb/Installation)
 
+Note on couchdb installation: Using aptitude or apt-get may not install the latest version. See other installation options if version < 1.0 is installed by using this method.
 
 #### Configurations for postgres
 
