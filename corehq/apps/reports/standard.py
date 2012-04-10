@@ -719,7 +719,12 @@ class MapsTestReport(StandardHQReport):
                              )
 
         self.context['maps_api_key'] = settings.GMAPS_API_KEY
-        self.context['points'] = json.dumps([[float(k) for k in e['doc']['geo'].split()] for e in view])
+        def getinfo(case):
+            loc = [float(k) for k in case['geo'].split()]
+            name = case['name']
+            return {'loc': loc, 'name': name}
+
+        self.context['points'] = json.dumps([getinfo(e['doc']) for e in view])
 
 class SubmitTrendsReport(StandardDateHQReport):
     #nuked until further notice
