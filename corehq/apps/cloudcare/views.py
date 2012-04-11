@@ -33,6 +33,8 @@ def app_list(request, domain, urlPath):
         # replace the apps with the last build of each app
         apps = [_app_latest_build_json(app["_id"])for app in apps]
 
+    # trim out empty apps
+    apps = filter(lambda app: app, apps)
     return render_to_response(request, "cloudcare/cloudcare_home.html", 
                               {"domain": domain,
                                "language": language,
