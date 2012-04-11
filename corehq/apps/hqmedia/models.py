@@ -57,7 +57,7 @@ class CommCareMultimedia(Document):
         all_ids = self.current_attachments
         if all_ids:
             first_id = all_ids[0]
-            data = self.fetch_attachment(first_id)
+            data = self.fetch_attachment(first_id, True).read()
             if return_type:
                 content_type =  self._attachments[first_id]['content_type']
                 return data, content_type

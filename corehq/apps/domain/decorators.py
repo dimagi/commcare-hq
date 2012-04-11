@@ -58,7 +58,7 @@ def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME, login_
             user = req.user
             domain_name = normalize_domain_name(domain)
             domain = Domain.get_by_name(domain_name)
-            if user.is_authenticated() and user.is_active:
+            if domain and user.is_authenticated() and user.is_active:
                 if not domain.is_active:
                     return HttpResponseRedirect(reverse("domain_select"))
                 if hasattr(req, "couch_user"):
