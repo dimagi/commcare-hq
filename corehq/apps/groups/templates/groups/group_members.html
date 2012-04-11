@@ -71,15 +71,18 @@
                             <input type="text" value="{{ group.name }}" name="name" id="group-name-input" />
                         </div>
                     </div>
+                    {% if request.couch_user.is_previewer %}
                     <div class="control-group">
-                        <label class="control-label" for="group-case-sharing-input">Case Sharing (Advanced)</label>
+                        <label class="control-label" for="group-case-sharing-input">Case Sharing</label>
                         <div class="controls">
                             <select class="input-small" name="case_sharing" id="group-case-sharing-input"{% if group.case_sharing %} data-value="true"{% endif %}>
                                 <option value="false">Off</option>
                                 <option value="true">On</option>
                             </select>
+                            <p class="help-block">This is a preview feature that is only available internally.</p>
                         </div>
                     </div>
+                    {% endif %}
                 </div>
                 <div class="modal-footer">
                     <a href="#" class="btn" data-dismiss="modal">Cancel</a>
