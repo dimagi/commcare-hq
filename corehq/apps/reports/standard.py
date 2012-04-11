@@ -924,3 +924,19 @@ class ApplicationStatusReport(StandardTabularHQReport):
             row = [user.username_in_report, last_seen, version, app_name]
             rows.append(row)
         return rows
+
+class FormErrorReport(StandardTabularHQReport, StandardDateHQReport):
+    name = "Form Errors Per User"
+    slug = "form_errors"
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.GroupField',
+              'corehq.apps.reports.fields.DatespanField']
+
+    def get_headers(self):
+        return ['Users', 'Number of Forms', 'Number of Errors']
+
+    def get_rows(self):
+        rows = []
+        for user in self.users:
+            rows.append([user.username_in_report, "", ""])
+        return rows
