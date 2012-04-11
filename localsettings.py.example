@@ -49,3 +49,5 @@ XFORMPLAYER_URL = 'http://localhost:8888/play_remote/'
 INSECURE_URL_BASE = "http://submit.mysite.com"
 
 BUG_REPORT_RECIPIENTS = ['me@example.com']
+
+PREVIEWER_RE = r'^.*@dimagi\.com$'
