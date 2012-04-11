@@ -3,7 +3,7 @@ import json
 from corehq.apps.reports import util, standard
 from corehq.apps.users.export import export_users
 import couchexport
-from couchexport.export import UnsupportedExportFormat
+from couchexport.export import UnsupportedExportFormat, export_raw
 from couchexport.util import FilterFunction
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
@@ -27,12 +27,15 @@ from couchexport.schema import build_latest_schema
 from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
     ExportTable, Format
 from couchexport import views as couchexport_views
-from couchexport.shortcuts import export_data_shared, export_raw_data
+from couchexport.shortcuts import export_data_shared, export_raw_data,\
+    export_response
 from django.views.decorators.http import require_POST
 from couchforms.filters import instances
 from couchdbkit.exceptions import ResourceNotFound
 from fields import FilterUsersField
 from util import get_all_users_by_domain
+from corehq.apps.hqsofabed.models import HQFormData
+from StringIO import StringIO
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -172,7 +175,7 @@ def custom_export(req, domain):
                       "(%s).</strong> Submit some data before creating an export!" % \
                       xmlns_to_name(domain, export_tag[1]), extra_tags="html")
         return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug]))
-        
+
 @login_and_domain_required
 def edit_custom_export(req, domain, export_id):
     """
@@ -215,6 +218,28 @@ def edit_custom_export(req, domain, export_id):
                               {"saved_export": saved_export,
                                "table_config": table_config,
                                "domain": domain})
+
+@login_and_domain_required
+def export_all_form_metadata(req, domain):
+    """
+    Export metadata for _all_ forms in a domain.
+    """
+    format = req.GET.get("format", Format.XLS_2007)
+    
+    headers = ("domain", "instanceID", "received_on", "type", 
+               "timeStart", "timeEnd", "deviceID", "username", 
+               "userID", "xmlns", "version")
+    def _form_data_to_row(formdata):
+        def _key_to_val(formdata, key):
+            if key == "type":  return xmlns_to_name(domain, formdata.xmlns)
+            else:              return getattr(formdata, key)
+        return [_key_to_val(formdata, key) for key in headers]
+    
+    temp = StringIO()
+    data = (_form_data_to_row(f) for f in HQFormData.objects.filter(domain=domain))
+    export_raw((("forms", headers),), (("forms", data),), temp)
+    return export_response(temp, format, "%s_forms" % domain)
+    
 
 @login_and_domain_required
 @require_POST
