@@ -5,6 +5,44 @@
 {% load hq_shared_tags %}
 {% load timezone_tags %}
 {% load i18n %}
+{% block js-inline %}{{ block.super }}
+<script>
+    $(function () {
+        $('.release-build-link').popover({
+            placement: 'left',
+            title: 'Release Build',
+            content: (
+                "Once you've fully tested an application, you can star it to mark it as released. " +
+                "When a CommCare application searches for updates, only starred builds will be considered."
+            )
+        });
+        $('.unrelease-build-link').popover({
+            placement: 'left',
+            title: 'Retract Build',
+            content: (
+                "We recommend caution when retracting a build. Although " +
+                "this build will no longer be considered when a CommCare application searches for updates, " +
+                "it will not be purged from phones onto which it has already been downloaded."
+            )
+        });
+    });
+</script>
+{% endblock %}
+{% block head %}{{ block.super }}
+<style>
+    .build:hover {
+        color: black !important;
+    }
+    .build.build-unreleased {
+        color: #888;
+    }
+    .build.build-released {
+    }
+    .build.build-latest-release {
+        background-color: #EFEFFF;
+    }
+</style>
+{% endblock %}
 {% block form-view %}
     <form id="make-new-build" action="{% url corehq.apps.app_manager.views.save_copy domain app.id %}" method="post">
         <input type="hidden" name="next" value="{{ request.get_full_path }}" />
@@ -84,12 +122,9 @@
         </ul>
     </div>
     {% endif %}
-    <table class="config">
+    <table class="table">
         <tr>
-            {% if edit %}
-            <th></th>
-            {% endif %}
-            <th>Version</th>
+            <th colspan="2">Version</th>
             <th colspan="2">Build Date &amp; Time</th>
             <th>CommCare Binary</th>
 
@@ -98,12 +133,13 @@
             <th></th>
             {% endif %}
             <th>Comment</th>
+            <th>Released</th>
 
         </tr>
         {% for saved_app in saved_apps %}
-        <tr>
-            {% if edit %}
+        <tr class="build build-{% if saved_app.is_released %}released{% else %}unreleased{% endif %} {% if saved_app.id == latest_release.id %}build-latest-release{% endif %}">
             <td>
+                {% if edit %}
                 <form action="{% url corehq.apps.app_manager.views.delete_copy domain app.id %}"
                       data-title="Delete Build"
                       data-message="Are you sure you want to delete this build (version {{ saved_app.version }})?"
@@ -112,8 +148,8 @@
                     <input type="hidden" name="next" value="{{ request.get_full_path }}" />
                     <a class="delete_link confirm-submit" href="#"></a>
                 </form>
+                {% endif %}
             </td>
-            {% endif %}
             <td>{{ saved_app.version }}</td>
             <td>{% utc_to_timezone saved_app.built_on timezone "%b %d, %Y" %}</td>
             <td>{% utc_to_timezone saved_app.built_on timezone "%H:%M %Z" %}</td>
@@ -176,6 +212,19 @@
             </td>
             {% endif %}
             <td>{% if saved_app.build_comment %}{{ saved_app.build_comment }}{% else %}<h6>(No Comment)</h6>{% endif %}</td>
+            <td>
+                {% if saved_app.is_released %}
+                    <a href="{% url unrelease_build domain app.id saved_app.id %}" class="unrelease-build-link">
+                        <img src="{% static 'app_manager/img/star-filled.svg' %}"/><!--
+                        no whitespace
+                    --></a>
+                    {% if saved_app.id == latest_release.id %}Latest{% endif %}
+                {% else %}
+                    <a href="{% url release_build domain app.id saved_app.id %}" class="release-build-link">
+                        <img src="{% static 'app_manager/img/star-empty.svg' %}"/>
+                    </a>
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </table>

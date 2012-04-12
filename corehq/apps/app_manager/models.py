@@ -738,6 +738,8 @@ class ApplicationBase(VersionedDoc):
     built_on = DateTimeProperty(required=False)
     build_comment = StringProperty()
 
+    is_released = BooleanProperty(default=False)
+
     # django-style salted hash of the admin password
     admin_password = StringProperty()
     # a=Alphanumeric, n=Numeric, x=Neither (not allowed)
@@ -1492,22 +1494,28 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
 
     if latest:
         try:
-            app = get_db().get(app_id)
+            original_app = get_db().get(app_id)
         except ResourceNotFound:
             raise Http404
         if not domain:
             try:
-                domain = app['domain']
+                domain = original_app['domain']
             except Exception:
                 raise Http404
 
-        app_id = app.get('copy_of') or app['_id']
-        app = get_db().view('app_manager/applications',
-            startkey=[domain, app_id, {}],
+        parent_app_id = original_app.get('copy_of') or original_app['_id']
+        latest_app = get_db().view('app_manager/applications',
+            startkey=['^ReleasedApplications', domain, parent_app_id, {}],
+            endkey=['^ReleasedApplications', domain, parent_app_id],
             limit=1,
             descending=True,
             include_docs=True
-        ).one()['doc']
+        ).one()
+        try:
+            app = latest_app['doc']
+        except TypeError:
+            # If no starred builds, return act as if latest=False
+            app = original_app
     else:
         try:
             app = get_db().get(app_id)

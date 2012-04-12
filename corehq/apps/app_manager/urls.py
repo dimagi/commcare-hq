@@ -32,6 +32,8 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
 
  url(r'^view/(?P<app_id>[\w-]+)/$',                                             'view_app', name='view_app'),
  url(r'^view/(?P<app_id>[\w-]+)/releases/$', 'release_manager', name='release_manager'),
+ url(r'^view/(?P<app_id>[\w-]+)/releases/release/(?P<saved_app_id>[\w-]+)/$', 'release_build', name='release_build'),
+ url(r'^view/(?P<app_id>[\w-]+)/releases/unrelease/(?P<saved_app_id>[\w-]+)/$', 'release_build', name='unrelease_build', kwargs={'is_released': False}),
  url(r'^view/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/$',                  'view_module', name='view_module'),
  url(r'^view/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/$',
                                                                             'view_form', name='view_form'),
