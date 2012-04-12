@@ -182,7 +182,7 @@ function maps_init() {
 			});
 		    */
 		    $.each(DATA, function(i, c) {
-			    c.marker.renderer.setTo(c[e]);
+			    c.marker.renderer.transitionTo(c[e], 0.75);
 			});
 		});
 	});
@@ -220,47 +220,67 @@ function AnimMarker(ctx, w, h) {
         this.anim = setInterval(draw, 30);
 	*/
 
-	this.setK(0.);
+	var m = this;
+	this.redraw = function(k) { drawpie(m.ctx, m.w, m.h, .005*k, 'rgb(50,50,50)', 'rgb(0,255,0)', 'rgb(0,0,0)'); };
+
+	this.setTo(0.);
     }
 
     this.ondestroy = function() {
         //clearInterval(this.anim);
     }
 
-    this.setK = function(k) {
+    this.setTo = function(k) {
 	this.k = k;
 	this.ctx.clear();
-	drawpie(this.ctx, this.w, this.h, .005*k, 'rgb(50,50,50)', 'rgb(0,255,0)', 'rgb(0,0,0)');
+	this.redraw(k);
     }
 
-    this.setTo = function(k) {
+    this.transitionTo = function(k, period, tag, easing) {
+	var FRAME_LENGTH = 30;
+
+	tag = tag || k;
+	easing = easing || trig_easing;
+
 	if (this.anim != null) {
-	    clearInterval(this.anim);
+	    if (this.anim.tag == tag) {
+		return;
+	    }
+	    clearInterval(this.anim.timer);
 	}
 
-	var period = 0.75;
         var t0 = new Date().getTime();
 	var k0 = this.k;
 
 	var m = this;
-	var doit = function() {
+	var animate = function() {
             var clock = ((new Date().getTime()) - t0) / 1000.;
 	    if (clock > period || k == m.k) {
-		m.setK(k);
-		clearInterval(m.anim);
+		m.setTo(k);
+		clearInterval(m.anim.timer);
 		m.anim = null;
 		return;
 	    }
 
-	    m.setK(k0 + (k - k0) * 0.5 * (Math.sin((clock / period - .5) * Math.PI) + 1));
+	    m.setTo(k0 + (k - k0) * easing(clock / period));
 	}
 
-	this.anim = setInterval(doit, 30);
+	var timer = setInterval(animate, FRAME_LENGTH);
+	this.anim = {tag: tag, timer: timer};
     }
 }
       
+function trig_easing(x) {
+    return 0.5 * (Math.sin((x - .5) * Math.PI) + 1);
+}
 
+function linear_easing(x) {
+    return x;
+}
 
+function biyeun_progress_bar_easing(x) {
+    return x + .66 * Math.sin(x * Math.PI) / Math.PI * Math.sin(3 * 2 * Math.PI * x);
+}
 
 
 
