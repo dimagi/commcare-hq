@@ -194,7 +194,7 @@ class UploadItemLists(TemplateView):
             return HttpResponseBadRequest("Error processing your Excel (.xlsx) file")
 
         try:
-            data_types = workbook.worksheets['types']
+            data_types = workbook.get_worksheet(title='types')
         except KeyError:
             return HttpResponseBadRequest("Workbook does not have a sheet called 'types'")
 
@@ -202,7 +202,7 @@ class UploadItemLists(TemplateView):
             print "DataType"
             print dt
 
-            for di in workbook.worksheets[dt['tag']]:
+            for di in workbook.get_worksheet(title=dt['tag']):
                 print "DataItem"
                 print di
 
@@ -214,19 +214,20 @@ class UploadItemLists(TemplateView):
                 fields=dt['field'],
             )
             data_type.save()
-            data_items = workbook.worksheets[data_type.tag]
+            data_items = workbook.get_worksheet(data_type.tag)
             for di in data_items:
+                print di
                 data_item = FixtureDataItem(
                     domain=self.domain,
                     data_type_id=data_type.get_id,
                     fields=di['field']
                 )
                 data_item.save()
-                for group_name in di['group']:
+                for group_name in di.get('group', []):
                     group = Group.by_name(self.domain, group_name)
                     if group:
                         data_item.add_group(group)
-                for raw_username in di['user']:
+                for raw_username in di.get('user', []):
                     username = normalize_username(raw_username, self.domain)
                     user = CommCareUser.get_by_username(username)
                     if user:

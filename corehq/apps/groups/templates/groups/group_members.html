@@ -50,7 +50,7 @@
 {% block group-info %}
 <div class="row-fluid">
     <div class="span12">
-        <h2>Group "{{ group.name }}"</h2>
+        <h2>Group "{{ group.name }}" {% if group.case_sharing %} (Case Sharing){% endif %}</h2>
         <div class="btn-toolbar">
             <a href="#editGroupSettings" class="btn" data-toggle="modal"><i class="icon icon-pencil"></i> Edit Settings</a>
             <form name="delete_group" style="margin-right: 45px;" class="pull-right" action="{% url delete_group domain group.get_id %}" method="post">
@@ -71,7 +71,7 @@
                             <input type="text" value="{{ group.name }}" name="name" id="group-name-input" />
                         </div>
                     </div>
-                    {% if request.couch_user.is_previewer %}
+                    {% if request.couch_user.is_previewer or group.case_sharing %}
                     <div class="control-group">
                         <label class="control-label" for="group-case-sharing-input">Case Sharing</label>
                         <div class="controls">
