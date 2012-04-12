@@ -10,10 +10,21 @@ function make_canvas(w, h) {
     return $canvas;
 }
 
+function canvas_context(canvas) {
+    var ctx = canvas.getContext('2d');
+    ctx.clear = function() {
+	ctx.save();
+	ctx.setTransform(1, 0, 0, 1, 0, 0);
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	ctx.restore();
+    };
+    return ctx;
+}
+
 // draw to a canvas and export the result as an image (data url)
 function render_icon(draw, width, height) {
     var canvas = make_canvas(width, height)[0];
-    var ctx = canvas.getContext('2d');
+    var ctx = canvas_context(canvas);
     draw(ctx, width, height);
     return canvas.toDataURL('image/png');
 }
@@ -41,7 +52,7 @@ CanvasMarker.prototype.onAdd = function() {
     this.$canvas = make_canvas(this.width, this.height);
     this.$div.append(this.$canvas);
 
-    this.renderer = this.render_factory(this.$canvas[0].getContext('2d'), this.width, this.height);
+    this.renderer = this.render_factory(canvas_context(this.$canvas[0]), this.width, this.height);
     this.renderer.oncreate();
 
     var pane = this.getPanes().overlayImage;
@@ -117,16 +128,21 @@ function static_marker(pos, map, icon) {
 
 
 function maps_init() {
+
     var map = init_map($('#map'), [30., 0.], 2, 'terrain');
 
-    var MARKER_MODE = 2;
+    var MARKER_MODE = 3;
+
+    var gauge = function(k) {
+	return function(c,w,h) { drawpie(c,w,h, .005*k, 'rgb(50,50,50)', 'rgb(0,255,0)', 'rgb(0,0,0)'); };
+    }
 
     var markers = [];
     $.each(DATA, function(i, case_) {
             switch (MARKER_MODE) {
             case 1: var marker_factory = static_marker; break;
             case 2: var marker_factory = function(p, m) {
-                    return static_marker(p, m, render_marker(drawpie, 24, 24));
+                    return static_marker(p, m, render_marker(gauge(0.), 24, 24));
                 };
                 break;
             case 3: var marker_factory = function(p, m) {
@@ -148,10 +164,29 @@ function maps_init() {
                     return info;
                 }
             );
+	    case_.marker = marker;
             markers.push(marker);
         });
           
     fit_all(map, markers);
+
+    var $panel = $('#panel');
+    $.each(['A', 'B', 'C'], function(i, e) {
+	    $x = $('<div></div>');
+	    $x.text('factor ' + e);
+	    $panel.append($x);
+	    $x.click(function() {
+		    /*
+		    $.each(markers, function(i, m) {
+			    m.setIcon(render_marker(gauge(DATA[i][e]), 24, 24));
+			});
+		    */
+		    $.each(DATA, function(i, c) {
+			    c.marker.renderer.setTo(c[e]);
+			});
+		});
+	});
+
 }
 
 
@@ -164,8 +199,10 @@ function AnimMarker(ctx, w, h) {
     this.ctx = ctx;
     this.w = w;
     this.h = h;
+    this.anim = null;
 
     this.oncreate = function() {
+	/*
         var t0 = new Date().getTime();
         var c1 = randcolor();
         var c2 = randcolor();
@@ -175,15 +212,50 @@ function AnimMarker(ctx, w, h) {
         var mkr = this;
         var draw = function() {
             var clock = ((new Date().getTime()) - t0) / 1000.;
+	    this.ctx.clear();
             drawpie(mkr.ctx, mkr.w, mkr.h, (clock % period) / period, c1, c2, c3);
         }
 
         draw();
         this.anim = setInterval(draw, 30);
+	*/
+
+	this.setK(0.);
     }
 
     this.ondestroy = function() {
-        clearInterval(this.anim);
+        //clearInterval(this.anim);
+    }
+
+    this.setK = function(k) {
+	this.k = k;
+	this.ctx.clear();
+	drawpie(this.ctx, this.w, this.h, .005*k, 'rgb(50,50,50)', 'rgb(0,255,0)', 'rgb(0,0,0)');
+    }
+
+    this.setTo = function(k) {
+	if (this.anim != null) {
+	    clearInterval(this.anim);
+	}
+
+	var period = 0.75;
+        var t0 = new Date().getTime();
+	var k0 = this.k;
+
+	var m = this;
+	var doit = function() {
+            var clock = ((new Date().getTime()) - t0) / 1000.;
+	    if (clock > period || k == m.k) {
+		m.setK(k);
+		clearInterval(m.anim);
+		m.anim = null;
+		return;
+	    }
+
+	    m.setK(k0 + (k - k0) * 0.5 * (Math.sin((clock / period - .5) * Math.PI) + 1));
+	}
+
+	this.anim = setInterval(doit, 30);
     }
 }
       

@@ -8,12 +8,13 @@
     <script type="text/javascript" src="{{STATIC_URL}}reports/javascripts/maps.js"></script>
     <script type="text/javascript">
 
-      DATA = {{ points|safe }};
+      DATA = {{ cases|safe }};
       //LAST_MARKER = null;
 
       $(document).ready(maps_init);
 
     </script>
+    <div id="panel" style="float: right; border: 2px solid black; margin-right: 15px; padding: 10px; background: #ffc;"></div>
     <!-- TODO: dynamic sizing of map canvas to fill available space -->
     <div id="map" style="width: 1200px; height: 500px;"></div>
 
