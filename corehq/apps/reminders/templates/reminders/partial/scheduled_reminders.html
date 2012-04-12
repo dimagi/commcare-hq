@@ -13,6 +13,7 @@
                         username: "{{ reminder.user.raw_username }}",
                         case_name: "{{ reminder.case.name }}",
                         case_url: "{% url case_details domain reminder.case.get_id %}",
+                        recipient: "{{ reminder.handler.recipient }}"
                     },
                 {% endfor %}
                     null
@@ -27,9 +28,11 @@
                             $('<p/>').text(reminder.time).addClass('time-header')
                         ).append(
                             $('<p/>').html(
-                                "send <u>" + reminder.nickname + "</u><br/>" +
-                                "to <u>" + (reminder.username || "(?)") + "</u><br/>" +
-                                'about <a href="' + reminder.case_url + '">' + (reminder.case_name || "(?)") + "</a>"
+                                "send <u>" + reminder.nickname + "</u><br/>" + (
+                                    (reminder.recipient == "USER") ?
+                                    ("to <u>" + (reminder.username || "(?)") + '</u><br/> about <a href="' + reminder.case_url + '">' + (reminder.case_name || "(?)") + "</a>") :
+                                    ('to <a href="' + reminder.case_url + '">' + (reminder.case_name || "(?)") + "</a>")
+                                )
                             )
                         )
                     );

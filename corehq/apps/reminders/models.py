@@ -269,9 +269,8 @@ class CaseReminderHandler(Document):
         
         return  The CaseReminder
         """
-        user = CommCareUser.get_by_user_id(case.user_id)
         if self.recipient == RECIPIENT_USER:
-            recipient = user
+            recipient = CommCareUser.get_by_user_id(case.user_id)
         else:
             recipient = CommConnectCase.get(case._id)
         local_now = CaseReminderHandler.utc_to_local(recipient, now)
@@ -282,7 +281,7 @@ class CaseReminderHandler(Document):
             user_id=case.user_id,
             method=self.method,
             active=True,
-            start_date=date(local_now.year,local_now.month,local_now.day),
+            start_date=date(now.year, now.month, now.day) if (now.hour == 0 and now.minute == 0 and now.second == 0 and now.microsecond == 0) else date(local_now.year,local_now.month,local_now.day),
             schedule_iteration_num=1,
             current_event_sequence_num=0,
             callback_try_count=0,
@@ -502,7 +501,7 @@ class CaseReminderHandler(Document):
         now = now or self.get_now()
         reminder = self.get_reminder(case)
         
-        if case.closed or case.type != self.case_type or (self.recipient == RECIPIENT_USER and not CommCareUser.get_by_user_id(case.user_id)):
+        if case.closed or case.type != self.case_type or (self.recipient == RECIPIENT_USER and case.user_id is None) or (self.recipient == RECIPIENT_USER and not CommCareUser.get_by_user_id(case.user_id)):
             if reminder:
                 reminder.retire()
         else:
@@ -566,12 +565,12 @@ class CaseReminderHandler(Document):
     def save(self, **params):
         super(CaseReminderHandler, self).save(**params)
         if not self.deleted():
-            cases = CommCareCase.view('hqcase/open_cases',
+            cases = CommCareCase.view('hqcase/types_by_domain',
                 reduce=False,
-                startkey=[self.domain, {}, {}],
-                endkey=[self.domain, {}, {}],
+                startkey=[self.domain],
+                endkey=[self.domain, {}],
                 include_docs=True,
-            )
+            ).all()
             for case in cases:
                 self.case_changed(case)
     @classmethod
@@ -656,10 +655,13 @@ class CaseReminder(Document):
 
     @property
     def user(self):
-        try:
-            return CommCareUser.get_by_user_id(self.user_id)
-        except Exception:
-            self.retire()
+        if self.handler.recipient == RECIPIENT_USER:
+            try:
+                return CommCareUser.get_by_user_id(self.user_id)
+            except Exception:
+                self.retire()
+                return None
+        else:
             return None
 
     @property
