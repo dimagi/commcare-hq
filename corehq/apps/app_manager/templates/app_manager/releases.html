@@ -214,15 +214,23 @@
             <td>{% if saved_app.build_comment %}{{ saved_app.build_comment }}{% else %}<h6>(No Comment)</h6>{% endif %}</td>
             <td>
                 {% if saved_app.is_released %}
+                    {% if edit %}
                     <a href="{% url unrelease_build domain app.id saved_app.id %}" class="unrelease-build-link">
                         <img src="{% static 'app_manager/img/star-filled.svg' %}"/><!--
                         no whitespace
                     --></a>
+                    {% else %}
+                        <img src="{% static 'app_manager/img/star-filled.svg' %}"/>
+                    {% endif %}
                     {% if saved_app.id == latest_release.id %}Latest{% endif %}
                 {% else %}
+                    {% if edit %}
                     <a href="{% url release_build domain app.id saved_app.id %}" class="release-build-link">
                         <img src="{% static 'app_manager/img/star-empty.svg' %}"/>
                     </a>
+                    {% else %}
+                        <img src="{% static 'app_manager/img/star-empty.svg' %}"/>
+                    {% endif %}
                 {% endif %}
             </td>
         </tr>
