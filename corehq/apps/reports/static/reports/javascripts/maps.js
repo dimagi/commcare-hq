@@ -97,7 +97,8 @@ function fit_all(map, markers) {
 
 // create a marker corresponding to a (geo-enabled) case
 function geo_case(case_, map, make_marker, make_info) {
-    var pos = new google.maps.LatLng(case_.loc[0], case_.loc[1]);
+    var loc = case_.properties.geo.split(' ');
+    var pos = new google.maps.LatLng(loc[0], loc[1]);
     var marker = make_marker(pos, map);
  
     if (make_info) {
@@ -125,20 +126,24 @@ function static_marker(pos, map, icon) {
 
 
 
-
-
-function maps_init() {
-
+function maps_init(case_api_url) {
     var map = init_map($('#map'), [30., 0.], 2, 'terrain');
 
+    $.get(case_api_url, null, function(data) {
+	    init_callback(map, data);
+		}, 'json');
+}
+
+function init_callback(map, cases) {
     var MARKER_MODE = 3;
 
-    var gauge = function(k) {
-	return function(c,w,h) { drawpie(c,w,h, .005*k, 'rgb(50,50,50)', 'rgb(0,255,0)', 'rgb(0,0,0)'); };
-    }
-
     var markers = [];
-    $.each(DATA, function(i, case_) {
+    $.each(cases, function(i, case_) {
+	    // add debug metrics
+	    $.each(['A', 'B', 'C'], function(i, e) {
+		    case_.properties[e] = Math.random() * 100.;
+		});
+
             switch (MARKER_MODE) {
             case 1: var marker_factory = static_marker; break;
             case 2: var marker_factory = function(p, m) {
@@ -160,7 +165,7 @@ function maps_init() {
                 marker_factory,
                 function(c) {
                     var info = $('<p>this is <span id="name"></span></p>');
-                    info.find('#name').text(c.name);
+                    info.find('#name').text(c.properties.case_name);
                     return info;
                 }
             );
@@ -176,14 +181,16 @@ function maps_init() {
 	    $x.text('factor ' + e);
 	    $panel.append($x);
 	    $x.click(function() {
-		    /*
-		    $.each(markers, function(i, m) {
-			    m.setIcon(render_marker(gauge(DATA[i][e]), 24, 24));
-			});
-		    */
-		    $.each(DATA, function(i, c) {
-			    c.marker.renderer.transitionTo(c[e], 0.75);
-			});
+		    if (MARKER_MODE == 2) {
+			$.each(markers, function(i, m) {
+				m.setIcon(render_marker(gauge(cases[i].properties[e]), 24, 24));
+			    });
+		    }
+		    if (MARKER_MODE == 3) {
+			$.each(cases, function(i, c) {
+				c.marker.renderer.transitionTo(c.properties[e], 0.75);
+			    });
+		    }
 		});
 	});
 
@@ -221,7 +228,7 @@ function AnimMarker(ctx, w, h) {
 	*/
 
 	var m = this;
-	this.redraw = function(k) { drawpie(m.ctx, m.w, m.h, .005*k, 'rgb(50,50,50)', 'rgb(0,255,0)', 'rgb(0,0,0)'); };
+	this.redraw = function(k) { drawpie(m.ctx, m.w, m.h * (.2 + .008*k), .005*k, 'rgb(50,50,50)', 'rgb(0,255,0)', 'rgb(0,0,0)'); };
 
 	this.setTo(0.);
     }
@@ -333,4 +340,9 @@ function drawpie(ctx, width, height, phase, c1, c2, c3) {
     ctx.lineWidth = 2;
     ctx.stroke();
 }
+
+function gauge(k) {
+    return function(c,w,h) { drawpie(c,w,h, .005*k, 'rgb(50,50,50)', 'rgb(0,255,0)', 'rgb(0,0,0)'); };
+}
+
 

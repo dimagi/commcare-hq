@@ -710,25 +710,8 @@ class MapsTestReport(StandardHQReport):
     report_partial = "reports/partials/maps.html"
 
     def calc(self):
-        startkey = [self.domain, "reg"]
-        endkey = [self.domain, "reg", {}]
-        view = get_db().view("case/by_domain",
-                             startkey=startkey,
-                             endkey=endkey,
-                             include_docs=True
-                             )
-
         self.context['maps_api_key'] = settings.GMAPS_API_KEY
-        def getinfo(case):
-            import random
-            return {
-                'loc': [float(k) for k in case['geo'].split()],
-                'name': case['name'],
-                'A': random.uniform(0., 100.),
-                'B': random.uniform(0., 100.),
-                'C': random.uniform(0., 100.),
-            }
-        self.context['cases'] = json.dumps([getinfo(e['doc']) for e in view])
+        self.context['case_api_url'] = reverse('cloudcare_get_cases', kwargs={'domain': self.domain})
 
 class SubmitTrendsReport(StandardDateHQReport):
     #nuked until further notice

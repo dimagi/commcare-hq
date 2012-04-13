@@ -8,10 +8,9 @@
     <script type="text/javascript" src="{{STATIC_URL}}reports/javascripts/maps.js"></script>
     <script type="text/javascript">
 
-      DATA = {{ cases|safe }};
-      //LAST_MARKER = null;
+      CASE_API_URL = '{{ case_api_url }}';
 
-      $(document).ready(maps_init);
+      $(document).ready(function() { maps_init(CASE_API_URL); });
 
     </script>
     <div id="panel" style="float: right; border: 2px solid black; margin-right: 15px; padding: 10px; background: #ffc;"></div>
