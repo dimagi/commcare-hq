@@ -6,11 +6,13 @@ import urllib
 from datetime import datetime
 import csv
 import io
+import logging
 from corehq.apps.registration.forms import NewWebUserRegistrationForm
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.users.util import format_username, normalize_username, raw_username
+from couchdbkit.exceptions import MultipleResultsFound
 from dimagi.utils.decorators.view import get_file
-from dimagi.utils.excel import Excel2007DictReader
+from dimagi.utils.excel import Excel2007DictReader, WorkbookJSONReader
 from django.contrib.auth import logout
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.models import User
@@ -80,35 +82,21 @@ def _users_context(request, domain):
 
 @login_and_domain_required
 def users(request, domain):
-    return HttpResponseRedirect(reverse(
-        "user_account",
-        args=[domain, request.couch_user._id],
-    ))
+    response = reverse("user_account", args=[domain, request.couch_user._id])
+    if request.couch_user:
+        try:
+            user = WebUser.get_by_user_id(request.couch_user._id, domain)
+            if user and user.has_permission(domain, Permissions.EDIT_WEB_USERS):
+                response = reverse("web_users", args=[domain])
+            elif user and user.has_permission(domain, Permissions.EDIT_COMMCARE_USERS):
+                response = reverse("commcare_users", args=[domain])
+        except Exception as e:
+            logging.exception("Failed to grab user object: %s", e)
+    return HttpResponseRedirect(response)
 
 @require_can_edit_web_users
 def web_users(request, domain, template="users/web_users.html"):
     context = _users_context(request, domain)
-    return render_to_response(request, template, context)
-
-@require_can_edit_web_users
-@transaction.commit_on_success
-def create_web_user(request, domain, template="users/create_web_user.html"):
-    if request.method == "POST":
-        form = AdminRegistersUserForm(request.POST)
-        if form.is_valid():
-            data = form.cleaned_data
-            assert(data['password_1'] == data['password_2'])
-            data['password'] = data['password_1']
-            del data['password_1']
-            del data['password_2']
-            new_user = register_user(domain, send_email=True, **data)
-            return HttpResponseRedirect(reverse("web_users", args=[domain]))
-    else:
-        form = AdminRegistersUserForm()
-    context = _users_context(request, domain)
-    context.update(
-        registration_form=form
-    )
     return render_to_response(request, template, context)
 
 @require_can_edit_web_users
@@ -186,7 +174,7 @@ def accept_invitation(request, domain, invitation_id):
 @require_can_edit_web_users
 def invite_web_user(request, domain, template="users/invite_web_user.html"):
     if request.method == "POST":
-        form = AdminInvitesUserForm(request.POST)
+        form = AdminInvitesUserForm(request.POST, excluded_emails=[user.username for user in WebUser.by_domain(domain)])
         if form.is_valid():
             data = form.cleaned_data
             # create invitation record
@@ -216,7 +204,8 @@ def commcare_users(request, domain, template="users/commcare_users.html"):
         users.extend(CommCareUser.by_domain(domain, is_active=False))
     context.update({
         'commcare_users': users,
-        'show_inactive': show_inactive
+        'show_inactive': show_inactive,
+        'reset_password_form': SetPasswordForm(user="")
     })
     return render_to_response(request, template, context)
 
@@ -272,10 +261,14 @@ def account(request, domain, couch_user_id, template="users/account.html"):
             messages.error(request, "Please enter digits only")
 
     # domain-accounts tab
-    if request.user.is_superuser and not couch_user.is_commcare_user():
-        my_domains = couch_user.get_domains()
+    if not couch_user.is_commcare_user():
+        all_domains = couch_user.get_domains()
+        admin_domains = []
+        for d in all_domains:
+            if couch_user.has_permission(d, Permissions.EDIT_WEB_USERS) and couch_user.has_permission(d, Permissions.EDIT_COMMCARE_USERS):
+                admin_domains.append(d)
         context.update({"user": request.user,
-                        "domains": my_domains
+                        "domains": admin_domains
                         })
     # scheduled reports tab
     context.update({
@@ -392,6 +385,7 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
     # copied from auth's password_change
 
     commcare_user = CommCareUser.get_by_user_id(login_id, domain)
+    json_dump = {}
     if not commcare_user:
         raise Http404
     django_user = commcare_user.get_django_user()
@@ -399,14 +393,16 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
         form = SetPasswordForm(user=django_user, data=request.POST)
         if form.is_valid():
             form.save()
-            return HttpResponse(json.dumps({'status': 'ok'}))
+            json_dump['status'] = 'OK'
+            form = SetPasswordForm(user=django_user)
     else:
         form = SetPasswordForm(user=django_user)
     context = _users_context(request, domain)
     context.update({
-        'form': form,
+        'reset_password_form': form,
     })
-    return HttpResponse(json.dumps({'formHTML': render_to_string(template, context)}))
+    json_dump['formHTML'] = render_to_string(template, context)
+    return HttpResponse(json.dumps(json_dump))
 
 
 # this view can only change the current user's password
@@ -417,6 +413,7 @@ def change_my_password(request, domain, template="users/change_my_password.html"
         form = PasswordChangeForm(user=request.user, data=request.POST)
         if form.is_valid():
             form.save()
+            messages.success(request, "Your password was successfully changed!")
             return HttpResponseRedirect(reverse('user_account', args=[domain, request.couch_user._id]))
     else:
         form = PasswordChangeForm(user=request.user)
@@ -627,7 +624,7 @@ class UploadCommCareUsers(TemplateView):
     template_name = 'users/upload_commcare_users.html'
 
     required_headers = set(['username', 'password'])
-    allowed_headers = set(['phone-number', 'user_id', 'name', 'group-name *']) | required_headers
+    allowed_headers = set(['phone-number', 'user_id', 'name', 'group', 'data']) | required_headers
 
     def get_context_data(self, **kwargs):
         """TemplateView automatically calls this to render the view (on a get)"""
@@ -638,12 +635,29 @@ class UploadCommCareUsers(TemplateView):
         """View's dispatch method automatically calls this"""
 
         try:
-            self.user_specs = Excel2007DictReader(request.file)
+            self.workbook = WorkbookJSONReader(request.file)
         except Exception:
             try:
-                self.user_specs = csv.DictReader(io.StringIO(request.file.read().decode('ascii'), newline=None))
+                csv.DictReader(io.StringIO(request.file.read().decode('ascii'), newline=None))
+                return HttpResponseBadRequest(
+                    "CommCare HQ no longer supports CSV upload. "
+                    "Please convert to Excel 2007 or higher (.xlsx) and try again."
+                )
             except UnicodeDecodeError:
-                return HttpResponseBadRequest("Your CSV contains illegal characters")
+                return HttpResponseBadRequest("Unrecognized format")
+
+        try:
+            self.user_specs = self.workbook.get_worksheet(title='users')
+        except KeyError:
+            try:
+                self.user_specs = self.workbook.get_worksheet()
+            except IndexError:
+                return HttpResponseBadRequest("Workbook has no worksheets")
+
+        try:
+            self.group_specs = self.workbook.get_worksheet(title='groups')
+        except KeyError:
+            self.group_specs = []
 
         try:
             self.check_headers()
@@ -653,6 +667,37 @@ class UploadCommCareUsers(TemplateView):
         response = HttpResponse()
         response_writer = csv.DictWriter(response, ['username', 'flag'])
         response_rows = []
+
+        class GroupMemoizer(object):
+            def __init__(self, domain):
+                self.groups = {}
+                self.domain = domain
+
+            def get_or_create_group(self, group_name):
+                return self.get_group(group_name, load_if_not_loaded=True)
+
+            def get_group(self, group_name, load_if_not_loaded=False):
+                if load_if_not_loaded and not self.groups.has_key(group_name):
+                    group = Group.by_name(self.domain, group_name)
+                    if group:
+                        self.groups[group_name] = group
+                    else:
+                        self.groups[group_name] = Group(domain=self.domain, name=group_name)
+                return self.groups[group_name]
+
+            def save_all(self):
+                for group in self.groups.values():
+                    group.save()
+
+        self.group_memoizer = GroupMemoizer(self.domain)
+        for row in self.group_specs:
+            group_name, case_sharing = row['name'], row['case-sharing']
+            try:
+                group = self.group_memoizer.get_or_create_group(group_name)
+            except MultipleResultsFound:
+                messages.error(request, "Multiple groups named: %s" % group_name)
+            else:
+                group.case_sharing = case_sharing
 
         for row in self.create_or_update_users():
             response_writer.writerow(row)
@@ -677,37 +722,11 @@ class UploadCommCareUsers(TemplateView):
         usernames = set()
         user_ids = set()
 
-        class GroupMemoizer(object):
-            groups = {}
-            @classmethod
-            def get_group(cls, group_name):
-                Group.by_name(self.domain, group_name)
-                if not cls.groups.has_key(group_name):
-                    cls.groups[group_name] = Group(domain=self.domain, name=group_name, case_sharing=True)
-                return cls.groups[group_name]
-            @classmethod
-            def save_all(cls):
-                for group in cls.groups.values():
-                    group.save()
-
-
         for row in self.user_specs:
-            data = {}
-            # collect all group-name * in a list; preserve everything else
-            for header, value in row.iteritems():
-                if ' ' in header:
-                    header = header.split(' ')[0] + ' *'
-                    if not data.has_key(header):
-                        data[header] = []
-                    if value:
-                        data[header].append(value)
-                else:
-                    data[header] = value
-
-            group_names, name, password, phone_number, user_id, username = (
-                data.get(k, [] if k[-1] == '*' else None) for k in sorted(self.allowed_headers)
+            data, group_names, name, password, phone_number, user_id, username = (
+                row.get(k) for k in sorted(self.allowed_headers)
             )
-
+            group_names = group_names or []
             username = normalize_username(username, self.domain)
             status_row = {'username': raw_username(username)}
 
@@ -718,7 +737,7 @@ class UploadCommCareUsers(TemplateView):
             else:
                 try:
                     usernames.add(username)
-                    if user_ids:
+                    if user_id:
                         user_ids.add(user_id)
                     if user_id:
                         user = CommCareUser.get_by_user_id(user_id, self.domain)
@@ -739,16 +758,22 @@ class UploadCommCareUsers(TemplateView):
                         user.add_phone_number(phone_number.lstrip('+'), default=True)
                     if name:
                         user.set_full_name(name)
+                    if data:
+                        user.user_data.update(data)
                     user.save()
                     for group_name in group_names:
-                        GroupMemoizer.get_group(group_name).add_user(user)
-                    GroupMemoizer.save_all()
+                        try:
+                            self.group_memoizer.get_group(group_name).add_user(user)
+                        except Exception:
+                            raise Exception("Can't add to group '%s'" % (user.raw_username, group_name))
+                    self.group_memoizer.save_all()
                 except Exception, e:
                     status_row['flag'] = 'error: %s' % e
             yield status_row
 
     def check_headers(self):
-        headers = set([re.sub(r' .*', ' *', fieldname) for fieldname in self.user_specs.fieldnames])
+
+        headers = set(self.user_specs.fieldnames)
 
         illegal_headers = headers - self.allowed_headers
         missing_headers = self.required_headers - headers

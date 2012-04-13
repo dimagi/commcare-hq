@@ -16,6 +16,5 @@ def utc_to_timezone(date, timezone, dest_fmt="%b %d, %Y %H:%M %Z"):
         try:
             date = datetime.datetime.replace(dateutil.parser.parse(date), tzinfo=pytz.utc)
         except Exception as e:
-            print "exception with timezone parsing %s" % e
             return date
     return tz_utils.adjust_datetime_to_timezone(date, pytz.utc, timezone.zone).strftime(dest_fmt)

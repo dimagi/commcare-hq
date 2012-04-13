@@ -1,0 +1,217 @@
+{% extends "hqwebapp/centered.html" %}
+{% load hq_shared_tags %}
+{% load multimedia_tags %}
+
+{% block title %}Multimedia Map{% endblock title %}
+
+{% block js %} {{ block.super }}
+    {% include 'hqmedia/includes/yui_upload.html' %}
+    <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.uploader.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqwebapp/javascripts/underscore-1.3.1.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.0.0.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.multimedia_map.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        var loadedData = {{ multimedia|JSON }};
+        ko.applyBindings(new MultimediaMap(loadedData, "{{ STATIC_URL }}hqmedia/js"));
+
+        var hqimage_uploader = new HQMediaUploader({
+            uploadElem: '#hqmedia-upload-Image',
+            fileFilters: new Array({description:"Images", extensions:"*.jpg;*.png;*.gif"}),
+            uploadURL: '{% url hqmedia_handle_uploaded domain app.get_id %}',
+            buttonImage: '{% static 'hqmedia/img/select_image_button.png' %}',
+            onSuccess: function (event, data) {
+                console.log(data);
+            },
+            singleFileUpload: true,
+            uploadParams: {},
+            modalClass: '.hqm-modal-image',
+            mediaType: 'hquimage_',
+            swfLocation: '{% static 'hqmedia/yui/uploader/uploader.swf' %}'
+        });
+        hqimage_uploader.render();
+
+        var hqaudio_uploader = new HQMediaUploader({
+            uploadElem: '#hqmedia-upload-Audio',
+            fileFilters: new Array({description:"Audio", extensions:"*.mp3"}),
+            uploadURL: '{% url hqmedia_handle_uploaded domain app.get_id %}',
+            buttonImage: '{% static 'hqmedia/img/select_audio_button.png' %}',
+            onSuccess: function (event, data) {
+                console.log(data);
+            },
+            singleFileUpload: true,
+            uploadParams: {},
+            modalClass: '.hqm-modal-audio',
+            mediaType: 'hquaudio_',
+            swfLocation: '{% static 'hqmedia/yui/uploader/uploader.swf' %}'
+        });
+        hqaudio_uploader.render();
+    </script>
+{% endblock %}
+
+{% block centered-content %}
+<ul class="breadcrumb">
+    <li><a href="{% url view_app domain app.get_id %}">Application "{{ app.name }}"</a> <span class="divider">&gt;</span></li>
+    <li class="active"><a href="{% url hqmedia_references domain app.get_id %}">Multimedia Reference Checker</a></li>
+</ul>
+<div class="page-header">
+    <h1>Multimedia Reference Checker</h1>
+</div>
+<div class="row">
+    <div class="span8">
+        <h2>Download a ZIP of all multimedia files</h2>
+        {% include "hqmedia/partials/multimedia_zip_notice.html" %}
+
+    </div>
+    <div class="span4">
+        <div class="well">
+            <h3>Bulk Upload Multimedia</h3>
+            <p>You can upload audio and image files individually for each form reference below.</p>
+            <p>
+                Alternatively, you may use the multimedia bulk uploader and upload ZIP files of all your multimedia.
+                This option will compare the paths in form references with the paths of files in the ZIP.
+            </p>
+            <a href="{% url hqmedia_bulk_upload domain app.get_id %}" class="btn btn-inverse">Go to Bulk Upload</a>
+        </div>
+
+    </div>
+</div>
+
+    <div class="accordion" id="references-list">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <h3><a class="accordion-toggle" data-toggle="collapse" href="#imageRefs">
+                    Image References
+                </a></h3>
+            </div>
+            <div id="imageRefs" class="accordion-body collapse">
+                <div class="accordion-inner">
+                    <table class="table table-striped table-bordered table-condensed hqtable-vcentered">
+                        <thead>
+                            <tr>
+                                <th class="span1">Status</th>
+                                <th class="span2">Action</th>
+                                <th class="span2">Preview</th>
+                                <th class="span7">Path in Form</th>
+                            </tr>
+                        </thead>
+                        <tbody data-bind="foreach: image_refs">
+                            <tr>
+                                <td><span data-bind="mediaStatus: has_ref"></span></td>
+                                <td>
+                                    <a data-bind="click: uploadNewImage, uploadMediaButton: has_ref, uploadMediaButtonParams: {type: type, uid: uid}">Update</a>
+                                    <div class="modal hide fade hqm-modal-image" data-bind="uploadMediaModal: has_ref, uploadMediaModalParams: {type: type, uid: uid}">
+                                        <div class="modal-header">
+                                            <a class="close" data-dismiss="modal">&times;</a>
+                                            <h3><span class="upload-state">Upload</span> Image <small data-bind="text: path"></small></h3>
+                                        </div>
+                                        <div class="modal-body form form-horizontal">
+                                            <div class="control-group" data-bind="previewHQImage: url" >
+                                                <label class="control-label">Current Image</label>
+                                                <div class="controls"></div>
+                                            </div>
+                                            <div class="upload-form-placeholder"></div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <a href="#" data-dismiss="modal" class="btn">Close</a>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><div data-bind="previewHQImageButton: url"></div></td>
+                                <td data-bind="text: path"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <h3><a class="accordion-toggle" data-toggle="collapse" href="#audioRefs">
+                    Audio References
+                </a></h3>
+            </div>
+            <div id="audioRefs" class="accordion-body collapse">
+                <div class="accordion-inner">
+                    <table class="table table-striped table-bordered table-condensed hqtable-vcentered">
+                        <thead>
+                        <tr>
+                            <th class="span1">Status</th>
+                            <th class="span2">Action</th>
+                            <th class="span2">Preview</th>
+                            <th class="span7">Path in Form</th>
+                        </tr>
+                        </thead>
+                        <tbody data-bind="foreach: audio_refs">
+                        <tr>
+                            <td><span data-bind="mediaStatus: has_ref"></span></td>
+                            <td>
+                                <a data-bind="click: uploadNewAudio, uploadMediaButton: has_ref, uploadMediaButtonParams: {type: type, uid: uid}">Update</a>
+                                <div class="modal hide fade hqm-modal-audio" data-bind="uploadMediaModal: has_ref, uploadMediaModalParams: {type: type, uid: uid}">
+                                    <div class="modal-header">
+                                        <a class="close" data-dismiss="modal">&times;</a>
+                                        <h3><span class="upload-state">Upload</span> Audio <small data-bind="text: path"></small></h3>
+                                    </div>
+                                    <div class="modal-body form form-horizontal">
+{#                                        <div class="control-group" data-bind="previewHQImage: url" >#}
+{#                                            <label class="control-label">Current Audio</label>#}
+{#                                            <div class="controls"></div>#}
+{#                                        </div>#}
+                                        <div class="upload-form-placeholder"></div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <a href="#" data-dismiss="modal" class="btn">Close</a>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><div data-bind="previewHQAudioButton: url, HQAudioIsPlaying: $root.is_audio_playing, previewHQAudioParams: {uid: uid}"></div></td>
+                            <td data-bind="text: path"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+
+    <div id="hqmedia-upload-Image" class="hide">
+        <div class="control-group" style="margin-bottom: 0;">
+            <div class="control-label">
+                <div class="hqm-file_selected_only hide" style="margin-bottom: 1em;">Selected Image</div>
+                <div class="hqm-select-container">
+                    <div class="hqm-overlay" style="margin-left:40px; width: 103px; height: 35px;"></div>
+                </div>
+            </div>
+            <div class="controls hqm-upload-list"></div>
+        </div>
+        <div class="controls" style="margin-top: 0;">
+            <a class="hqm-upload-button btn btn-primary hide" onclick="return false;">Upload Image</a>
+            <a class="hqm-cancel btn btn-warning hide" href="#"><i class="icon icon-white icon-remove"></i> Cancel Upload</a>
+        </div>
+    </div>
+
+    <div id="hqmedia-upload-Audio" class="hqm-modal-audio hide">
+        <div class="control-group" style="margin-bottom: 0;">
+            <div class="control-label">
+                <div class="hqm-file_selected_only hide" style="margin-bottom: 1em;">Selected Audio</div>
+                <div class="hqm-select-container">
+                    <div class="hqm-overlay" style="margin-left:40px; width: 103px; height: 35px;"></div>
+                </div>
+            </div>
+            <div class="controls hqm-upload-list"></div>
+        </div>
+        <div class="controls" style="margin-top: 0;">
+            <a class="hqm-upload-button btn btn-primary hide" onclick="return false;">Upload Audio</a>
+            <a class="hqm-cancel btn btn-warning hide" href="#"><i class="icon icon-white icon-remove"></i> Cancel Upload</a>
+        </div>
+    </div>
+
+    <div id="jquery_jplayer"></div>
+{% endblock centered-content %}

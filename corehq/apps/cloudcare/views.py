@@ -9,7 +9,8 @@ from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseBadRequest
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
-from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_cloudcare_apps
+from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_cloudcare_apps,\
+    get_all_cases
 from touchforms.formplayer.models import PlaySession
 from dimagi.utils.couch import safe_index
 from corehq.apps.app_manager.const import APP_V2
@@ -33,13 +34,16 @@ def app_list(request, domain, urlPath):
         # replace the apps with the last build of each app
         apps = [_app_latest_build_json(app["_id"])for app in apps]
 
+    # trim out empty apps
+    apps = filter(lambda app: app, apps)
     return render_to_response(request, "cloudcare/cloudcare_home.html", 
                               {"domain": domain,
                                "language": language,
                                "apps": json.dumps(apps)})
 
+
 @login_and_domain_required
-def enter_form(request, domain, app_id, module_id, form_id):
+def form_context(request, domain, app_id, module_id, form_id):
     app = Application.get(app_id)
     module = app.get_module(module_id)
     form = module.get_form(form_id)
@@ -48,32 +52,28 @@ def enter_form(request, domain, app_id, module_id, form_id):
     case_id = request.REQUEST.get("case_id")
     
     if app.application_version == APP_V2:
-        commcare_context = { 'device_id': device_id,
-                             'app_version': '2.0',
-                             'username': request.user.username,
-                             'user_id': request.couch_user.get_id,
-                             "domain": domain
-                            }
+        session_data = { 'device_id': device_id,
+                         'app_version': '2.0',
+                         'username': request.user.username,
+                         'user_id': request.couch_user.get_id,
+                         "domain": domain
+                        }
         if case_id:
-            commcare_context["case_id"] = case_id
+            session_data["case_id"] = case_id
     else:
         # assume V1 / preloader structure
-        commcare_context = {"meta": {"UserID":   request.couch_user.get_id,
-                                     "UserName":  request.user.username},
-                            "property": {"deviceID": device_id}}
+        session_data = {"meta": {"UserID":   request.couch_user.get_id,
+                                 "UserName":  request.user.username},
+                        "property": {"deviceID": device_id}}
         # check for a case id and update preloader appropriately
         if case_id:
             case = CommCareCase.get(case_id)
-            commcare_context["case"] = case.get_preloader_dict()
-
-    return render_to_response(request, "cloudcare/play_form.html",
-                              {"domain": domain, 
-                               "form": form, 
-                               "commcare_context": json.dumps(commcare_context),
-                               "app_id": app_id, 
-                               "module_id": module_id,
-                               "form_id": form_id})
-
+            session_data["case"] = case.get_preloader_dict()
+    
+    return json_response({"form_content": form.render_xform(),
+                          "session_data": session_data, 
+                          "xform_url": reverse("xform_player_proxy")})
+    
 @login_and_domain_required
 def form_complete(request, domain, app_id, module_id, form_id):
     app = Application.get(app_id)
@@ -155,10 +155,15 @@ def get_cases(request, domain):
     user_id = request.couch_user.get_id if request.couch_user.is_commcare_user() \
               else request.REQUEST.get("user_id", "")
     
-    if not user_id:
-        return HttpResponseBadRequest("Must specify user_id!")
+    if user_id:
+        cases = get_owned_cases(domain, user_id)
+    else:
+        if request.couch_user.is_web_user():
+            # allow web users to query the entire case db
+            cases = get_all_cases(domain)
+        else:
+            return HttpResponseBadRequest("Must specify user_id!")
     
-    cases = get_owned_cases(domain, user_id)
     if request.REQUEST:
         def _filter(case):
             for path, val in request.REQUEST.items():
@@ -171,7 +176,7 @@ def get_cases(request, domain):
 
 @cloudcare_api
 def get_apps_api(request, domain):
-    return json_response(get_apps(domain))
+    return json_response(get_cloudcare_apps(domain))
 
 @cloudcare_api
 def get_app_api(request, domain, app_id):

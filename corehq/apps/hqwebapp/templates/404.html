@@ -1,6 +1,10 @@
 {% extends "error_base.html" %}
 {% block title %}404 Error {% endblock %}
-{% block content %}
-<div id="bigfail"><p>404</p></div>
-<p class="error">Sorry, we couldn't find that for you. If you think there should be something here, please <a href="mailto:commcarehq-support@dimagi.com">let us know</a>!</p>
+{% block centered-content %}
+    <div class="page-header">
+        <h1>404
+            <small>Sorry, we couldn't find that for you.</small>
+        </h1>
+    </div>
+    <p>If you think there should be something here, please <a href="mailto:commcarehq-support@dimagi.com">let us know</a>!</p>
 {% endblock %}

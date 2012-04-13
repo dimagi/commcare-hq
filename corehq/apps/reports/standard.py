@@ -59,6 +59,7 @@ class StandardHQReport(HQReport):
 
     def get_report_context(self):
         self.context['standard_report'] = True
+        self.context['layout_flush_content'] = True
         self.build_selector_form()
         self.context.update(util.report_context(self.domain,
                                         report_partial = self.report_partial,
@@ -278,11 +279,7 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
 
     def get_rows(self):
         utc_dates = [tz_utils.adjust_datetime_to_timezone(date, self.timezone.zone, pytz.utc.zone) for date in self.dates]
-        print utc_dates
         date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(utc_dates)])
-        print date_map
-        date_map_ther = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
-        print date_map_ther
 
         results = get_db().view(
             self.couch_view,
@@ -531,7 +528,7 @@ class CaseListReport(PaginatedHistoryHQReport):
     def paginate_rows(self, skip, limit):
         rows = []
         self.count = 0
-        
+
         if settings.LUCENE_ENABLED:
             search_key = self.request_params.get("sSearch", "")
             query = "domain:(%s)" % self.domain
@@ -587,7 +584,7 @@ class CaseListReport(PaginatedHistoryHQReport):
                     (reverse('case_details', args=[self.domain, case_id]),
                      case_name)
 
-    
+
 class SubmissionTimesReport(StandardHQReport):
     name = "Submission Times"
     slug = "submit_time_punchcard"
@@ -696,7 +693,7 @@ class SubmitDistributionReport(StandardHQReport):
                                                             (row["value"], form_name)}
         for value in predata.values():
             data.append(value)
-        
+
         self.context.update({
             "chart_data": data,
             "user_id": self.individual,
@@ -739,7 +736,6 @@ class ExcelExportReport(StandardDateHQReport):
         return datespan
 
     def calc(self):
-        print self.datespan
         # This map for this view emits twice, once with app_id and once with {}, letting you join across all app_ids.
         # However, we want to separate out by (app_id, xmlns) pair not just xmlns so we use [domain] to [domain, {}]
         forms = []
@@ -789,6 +785,9 @@ class ExcelExportReport(StandardDateHQReport):
                         app = app_cache[form['app']['id']]
                     except Exception:
                         form['app_does_not_exist'] = True
+                        form['possibilities'] = possibilities[form['xmlns']]
+                        if form['possibilities']:
+                            form['duplicate'] = True
                     else:
                         if app.domain != self.domain:
                             logging.error("submission tagged with app from wrong domain: %s" % app.get_id)
@@ -816,6 +815,8 @@ class ExcelExportReport(StandardDateHQReport):
         for export in exports.all():
             export.formname = xmlns_to_name(self.domain, export.index[1])
 
+        exports = filter(lambda x: x.type == "form", exports)
+
         self.context.update({
             "forms": forms,
             "saved_exports": exports,
@@ -835,11 +836,26 @@ class CaseExportReport(StandardHQReport):
     slug = "case_export"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField']
-    template_name = "reports/basic_report.html"
-    report_partial = "reports/partials/case_export.html"
+    template_name = "reports/reportdata/case_export_data.html"
 
     def calc(self):
-        pass
+        startkey = json.dumps([self.domain, ""])[:-3]
+        endkey = "%s{" % startkey
+        exports = SavedExportSchema.view("couchexport/saved_export_schemas",
+            startkey=startkey, endkey=endkey,
+            include_docs=True).all()
+        exports = filter(lambda x: x.type == "case", exports)
+        self.context['saved_exports'] = exports
+        cases = get_db().view("hqcase/types_by_domain", 
+                              startkey=[self.domain], 
+                              endkey=[self.domain, {}], 
+                              reduce=True,
+                              group=True,
+                              group_level=2).all()
+        self.context['case_types'] = [case['key'][1] for case in cases]
+        self.context.update({
+            "get_filter_params": self.request.GET.copy()
+        })
 
 class ApplicationStatusReport(StandardTabularHQReport):
     name = "Application Status"

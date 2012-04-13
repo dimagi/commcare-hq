@@ -253,6 +253,14 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         except Exception:
             return domain_qs in self.get_domains() or self.is_superuser
 
+    def is_previewer(self):
+        try:
+            from django.conf.settings import PREVIEWER_RE
+        except ImportError:
+            return self.is_superuser
+        else:
+            return self.is_superuser or re.compile(PREVIEWER_RE).match(self.username)
+
     # for synching
     def sync_from_django_user(self, django_user):
         if not django_user:
@@ -696,6 +704,10 @@ class CommCareUser(CouchUser):
     def get_group_fixture(self):
         from corehq.apps.groups.models import Group
         return group_fixture([group for group in Group.by_user(self) if group.case_sharing], self)
+
+    def get_group_ids(self):
+        from corehq.apps.groups.models import Group
+        return Group.by_user(self, wrap=False)
     
 class WebUser(CouchUser):
     domains = StringListProperty()
@@ -744,13 +756,19 @@ class WebUser(CouchUser):
                 if domain not in self.domains:
                     raise self.Inconsistent("Domain '%s' is in domain_memberships but not domains" % domain)
                 return
+
         domain_obj = Domain.get_by_name(domain)
         if not domain_obj:
             domain_obj = Domain(is_active=True, name=domain, date_created=datetime.utcnow())
             domain_obj.save()
-        self.domain_memberships.append(DomainMembership(domain=domain,
-                                                        timezone=domain_obj.default_timezone,
-                                                        **kwargs))
+
+        if kwargs.get('timezone'):
+            domain_membership = DomainMembership(domain=domain, **kwargs)
+        else:
+            domain_membership = DomainMembership(domain=domain,
+                                            timezone=domain_obj.default_timezone,
+                                            **kwargs)
+        self.domain_memberships.append(domain_membership)
         self.domains.append(domain)
 
     def delete_domain_membership(self, domain, create_record=False):

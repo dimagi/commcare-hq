@@ -7,7 +7,22 @@ var getLocalizedString = function (property, language) {
 
 var getFormUrl = function(urlRoot, appId, moduleId, formId) {
     // TODO: make this cleaner
-    return urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/enter/";
+    return urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/context/";
+};
+
+var getSubmitUrl = function (urlRoot, appId) {
+    // TODO: make this cleaner
+    return urlRoot + "/" + appId + "/";
+};
+
+var showSuccess = function (message, location, autoHideTime) {
+    console.log("show success");
+    var alert = $("<div />").addClass("alert alert-success").text(message);
+    alert.append($("<a />").addClass("close").attr("data-dismiss", "alert").html("&times;"));
+    location.append(alert);
+    if (autoHideTime) {
+        alert.delay(autoHideTime).fadeOut(500);
+    }
 };
 
 /*

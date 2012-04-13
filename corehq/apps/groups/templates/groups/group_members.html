@@ -2,55 +2,16 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% block head %} {{ block.super }}
+    <style type="text/css">
+        .group-bubble {
+            margin: .3em 0 .8em;
+        }
+    </style>
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
-    <script>
-        $(function () {
-            var groupName = {{ group.name|JSON }},
-                groupCaseSharing = {{ group.case_sharing|JSON }},
-                selectedGroupTab = $('#group-list > .selected'),
-                pencil = $('<span/>').addClass('ui-icon ui-icon-pencil').css({'float': 'right'}),
-                editLink = $('<a href="#"/>').append(pencil).click(function (e) {
-                        e.preventDefault();
-                        var offset = pencil.offset();
-                        offset.top -= editorPopup.outerHeight();
-                        offset.left += pencil.outerWidth();
-                        Shield.open(editorPopup.css(offset));
-                        $("#group-name-input").focus().select();
-                    }).prependTo(selectedGroupTab),
-                editorPopup = $('<div/>').addClass('edit-group-name-popup ui-widget shadow ui-corner-top ui-corner-br');
-            $('<form/>').attr({method: "POST", action: "{% url edit_group domain group.get_id %}"}).append(
-                $('<table/>').append(
-                    $('<tr/>').append(
-                        $('<td/>').append(
-                            $('<label for="group-name-input"/>').text('Group Name: ')
-                        ),
-                        $('<td/>').append(
-                            $('<input type="text" id="group-name-input"/>').attr({name: 'name'}).val(groupName)
-                        )
-                    ),
-                    $('<tr/>').append(
-                        $('<td/>').append(
-                            $('<label for="group-case-sharing-input"/>').text('Case Sharing: ')
-                        ),
-                        $('<td/>').append(
-                            $('<select id="group-case-sharing-input"/>').attr({name: 'case_sharing'}).append(
-                                $('<option/>').attr({value: 'false'}).text('Off'),
-                                $('<option/>').attr({value: 'true'}).text('On')
-                            ).val(JSON.stringify(groupCaseSharing))
-                        )
-                    )
-                ),
-                $('<div/>').append(
-                    $('<a href="#"/>').addClass('submit button').text("Save").css({'float': 'right', marginLeft: '.5em'}),
-                    $('<a href="#"/>').addClass('button').text('Cancel').css('float', 'right').click(function (e) {
-                        e.preventDefault();
-                        Shield.close();
-                    })
-                )
-            ).appendTo(editorPopup);
-            editorPopup.appendTo($('body')).hide();
-            COMMCAREHQ.initBlock(editorPopup);
-        });
+    <script type="text/javascript">
         $(function () {
             var i, j, index,
                 wrapper = $('#non-members'),
@@ -70,87 +31,96 @@
         });
     </script>
 {% endblock %}
-{% block head %}{{ block.super }}
-    <style>
-        h2 {
-            font-weight: normal;
-            font-size: 1.5em;
-        }
-        .user-columns {
-            vertical-align: top;
-        }
-        .user-bubbles {
-            margin: 1.5em;
-            float: left;
-        }
-        #members form {
-            display: inline-block;
-        }
-        .user-bubble {
-            padding: .5em;
-            margin:  .25em;
-            cursor: pointer;
-        }
-        .non-member:hover, .member {
-            background-color: #eee;
-            border: 1px solid #888;
-            color: black;
-        }
-        .non-member, .member:hover {
-            background-color: white;
-            border: 1px solid #eee;
-            color: #666;
-        }
-        .delete_this_group {
-            float: right;
-        }
 
-        #group-layout > tbody > tr > td:first-child {
-            border-right: 1px solid #CCC;
-        }
-        .edit-group-name-popup {
-            border: 1px solid #ccc;
-            position: absolute;
-            background-color: white;
-            padding: 10px;
-        }
-        .edit-group-name-popup div {
-            padding-top: 10px;
-        }
-    </style>
+{% block subsection-title %}
+    <li>
+        <a href="{% url all_groups domain %}">Groups</a> <span class="divider">&gt;</span>
+    </li>
+    <li class="active">
+        <a href="#">Editing Group "{{ group.name }}"</a>
+    </li>
+{% endblock %}
+
+{% block groups_indicator %}
+    <ul class="nav nav-list">
+        <li class="active"><a href="#">Editing "{{ group.name }}"</a></li>
+    </ul>
+{% endblock %}
+
+{% block group-info %}
+<div class="row-fluid">
+    <div class="span12">
+        <h2>Group "{{ group.name }}" {% if group.case_sharing %} (Case Sharing){% endif %}</h2>
+        <div class="btn-toolbar">
+            <a href="#editGroupSettings" class="btn" data-toggle="modal"><i class="icon icon-pencil"></i> Edit Settings</a>
+            <form name="delete_group" style="margin-right: 45px;" class="pull-right" action="{% url delete_group domain group.get_id %}" method="post">
+                <button class="btn btn-danger" type="submit"><i class="icon icon-white icon-remove"></i> Delete Group "{{ group.name }}"</button>
+            </form>
+        </div>
+
+        <div class="modal hide fade" id="editGroupSettings">
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal">×</a>
+                <h3>Edit Settings for Group "{{ group.name }}"</h3>
+            </div>
+            <form class="form form-horizontal" method="post" action="{% url edit_group domain group.get_id %}">
+                <div class="modal-body">
+                    <div class="control-group">
+                        <label class="control-label" for="group-name-input">Group Name</label>
+                        <div class="controls">
+                            <input type="text" value="{{ group.name }}" name="name" id="group-name-input" />
+                        </div>
+                    </div>
+                    {% if request.couch_user.is_previewer or group.case_sharing %}
+                    <div class="control-group">
+                        <label class="control-label" for="group-case-sharing-input">Case Sharing</label>
+                        <div class="controls">
+                            <select class="input-small" name="case_sharing" id="group-case-sharing-input"{% if group.case_sharing %} data-value="true"{% endif %}>
+                                <option value="false">Off</option>
+                                <option value="true">On</option>
+                            </select>
+                            <p class="help-block">This is a preview feature that is only available internally.</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <a href="#" class="btn" data-dismiss="modal">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
 {% endblock %}
 
 {% block group-view %}
-<div>
-    <div class="delete_this_group">
-          <form  name="delete_group" action="{% url delete_group domain group.get_id %}" method="POST">
-              <a href="#" class="submit"><span class="ui-icon ui-icon-trash" href="#"></span>Delete this group</a>
-          </form>
+    <div class="row-fluid">
+        <div class="span6" id="members">
+            <h3>{% commcare_user %}s in Group</h3>
+            <div class="well">
+                {% for member in members %}
+                    <form class="group-bubble" name="leave_group" action="{% url leave_group domain group.get_id member.user_id %}" method="post">
+                        <input type="hidden" name="redirect_url" value="group_members" />
+                        <button type="submit" class="btn btn-primary"><i class="icon icon-white icon-minus"></i> {{ member.raw_username }}</button>
+                    </form>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="span6" id="non-members">
+            <h3>Available {% commcare_user %}s</h3>
+            <div class="well">
+                {% for nonmember in nonmembers %}
+                    <form class="group-bubble" name="join_group" action="{% url join_group domain group.get_id nonmember.get_id %}" method="post">
+                        <input type="hidden" name="redirect_url" value="group_members" />
+                        <button type="submit" class="btn btn-success"><i class="icon icon-white icon-plus"></i> {{ nonmember.raw_username }}</button>
+                    </form>
+                {% endfor %}
+            </div>
+        </div>
     </div>
-    <br style="clear: both;"/>
-    <div class="user-bubbles" id="members">
-        {% for member in members %}
-            <form name="leave_group" action="{% url leave_group domain group.get_id member.user_id %}" method="POST">
-                <div class="user-bubble member ui-corner-all submit">
-                    <input type="hidden" name="redirect_url" value="group_members" />
-                    <a class="delete_link submit" href="#"></a>
-                    <span>{{ member.raw_username }}</span>
-                </div>
-            </form>
-        {% endfor %}
-    </div>
-    <br style="clear: both;">
-    <div class="user-columns" id="non-members">
-        {% for nonmember in nonmembers %}
-            <form name="join_group" action="{% url join_group domain group.get_id nonmember.get_id %}" method="POST">
-                <div class="user-bubble non-member ui-corner-all submit">
-                    <input type="hidden" name="redirect_url" value="group_members" />
-                    <a class="new_link" href="#"></a>
-                    <span>{{ nonmember.raw_username }}</span>
-                </div>
-            </form>
-        {% endfor %}
-    </div>
-</div>
+
+
 {% endblock %}
 

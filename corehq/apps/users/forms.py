@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.forms import SetPasswordForm
 from django.core.validators import EmailValidator, email_re
 from django.forms.widgets import PasswordInput, HiddenInput
 from django.utils.encoding import smart_str
@@ -27,7 +28,6 @@ class ProjectSettingsForm(forms.Form):
             web_user.save()
             return True
         except Exception as e:
-            print e
             return False
 
 class UserForm(forms.Form):

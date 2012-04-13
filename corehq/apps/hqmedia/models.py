@@ -57,7 +57,7 @@ class CommCareMultimedia(Document):
         all_ids = self.current_attachments
         if all_ids:
             first_id = all_ids[0]
-            data = self.fetch_attachment(first_id)
+            data = self.fetch_attachment(first_id, True).read()
             if return_type:
                 content_type =  self._attachments[first_id]['content_type']
                 return data, content_type
@@ -79,7 +79,7 @@ class CommCareMultimedia(Document):
 
     @classmethod
     def get_by_hash(cls, file_hash):
-        result = cls.view('hqmedia/by_hash', key=file_hash, include_docs=True).one()
+        result = cls.view('hqmedia/by_hash', key=file_hash, include_docs=True).first()
         if not result:
             result = cls()
             result.file_hash = file_hash
@@ -127,6 +127,16 @@ class HQMediaMapItem(DocumentSchema):
     media_type = StringProperty()
     output_size = DictProperty()
 
+    @staticmethod
+    def format_match_map(path, media_type=None, media_id=None, upload_path=""):
+        return {
+            "path": path,
+            "uid": path.replace('jr://','').replace('/', '_').replace('.', '_'),
+            "m_id": media_id if media_id else "",
+            "url": reverse("hqmedia_download", args=[media_type, media_id]) if media_id else "",
+            "upload_path": upload_path
+        }
+
 class HQMediaMixin(Document):
 
     # keys are the paths to each file in the final application media zip
@@ -150,19 +160,18 @@ class HQMediaMixin(Document):
             media = eval(map_item.media_type)
             media = media.get(map_item.multimedia_id)
 
-    def get_template_map(self, sorted_files, domain):
-        product = {}
+    def get_template_map(self, sorted_files):
+        product = []
         missing_refs = 0
         multimedia_map = self.multimedia_map
         for f in sorted_files:
             try:
                 f = f.strip()
-                product[f] = {"url": reverse("hqmedia_download", args=[domain,
-                                                           multimedia_map[f].media_type,
-                                                           multimedia_map[f].multimedia_id]),
-                                "m_id": multimedia_map[f].multimedia_id}
+                product.append(HQMediaMapItem.format_match_map(f,
+                                                            multimedia_map[f].media_type,
+                                                            multimedia_map[f].multimedia_id))
             except KeyError:
-                product[f] = None
+                product.append(HQMediaMapItem.format_match_map(f))
                 missing_refs += 1
             except AttributeError:
                 pass

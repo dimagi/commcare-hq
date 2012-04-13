@@ -11,6 +11,7 @@ from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.web import json_response, render_to_response
 from dimagi.utils.decorators.view import get_file
 from django.contrib import messages
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView
@@ -194,7 +195,7 @@ class UploadItemLists(TemplateView):
             return HttpResponseBadRequest("Error processing your Excel (.xlsx) file")
 
         try:
-            data_types = workbook.worksheets['types']
+            data_types = workbook.get_worksheet(title='types')
         except KeyError:
             return HttpResponseBadRequest("Workbook does not have a sheet called 'types'")
 
@@ -202,7 +203,7 @@ class UploadItemLists(TemplateView):
             print "DataType"
             print dt
 
-            for di in workbook.worksheets[dt['tag']]:
+            for di in workbook.get_worksheet(title=dt['tag']):
                 print "DataItem"
                 print di
 
@@ -214,25 +215,30 @@ class UploadItemLists(TemplateView):
                 fields=dt['field'],
             )
             data_type.save()
-            data_items = workbook.worksheets[data_type.tag]
+            data_items = workbook.get_worksheet(data_type.tag)
             for di in data_items:
+                print di
                 data_item = FixtureDataItem(
                     domain=self.domain,
                     data_type_id=data_type.get_id,
                     fields=di['field']
                 )
                 data_item.save()
-                for group_name in di['group']:
+                for group_name in di.get('group', []):
                     group = Group.by_name(self.domain, group_name)
                     if group:
                         data_item.add_group(group)
-                for raw_username in di['user']:
+                    else:
+                        messages.error(request, "Unknown group: %s" % group_name)
+                for raw_username in di.get('user', []):
                     username = normalize_username(raw_username, self.domain)
                     user = CommCareUser.get_by_username(username)
                     if user:
                         data_item.add_user(user)
+                    else:
+                        messages.error(request, "Unknown user: %s" % raw_username)
 
-        return HttpResponse()
+        return HttpResponseRedirect(reverse('fixture_view', args=[self.domain]))
 
     @method_decorator(require_can_edit_fixtures)
     def dispatch(self, request, domain, *args, **kwargs):

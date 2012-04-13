@@ -264,6 +264,23 @@ def datespan_export_filter(doc, datespan):
         return True
     return False
 
+def case_users_filter(doc, users):
+    pass
+    try:
+        return doc['user_id'] in users
+    except KeyError:
+        return False
+
+def case_group_filter(doc, group):
+    if group:
+        user_ids = set(group.get_user_ids())
+        try:
+            return doc['user_id'] in user_ids
+        except KeyError:
+            return False
+    else:
+        return True
+
 def users_filter(doc, users):
     try:
         return doc['form']['meta']['userID'] in users
@@ -280,20 +297,29 @@ def group_filter(doc, group):
     else:
         return True
 
-def create_export_filter(request, domain):
+def create_export_filter(request, domain, export_type='form'):
     from corehq.apps.reports.fields import FilterUsersField
     app_id = request.GET.get('app_id', None)
-
-    filter = FilterFunction(instances) & FilterFunction(app_export_filter, app_id=app_id)
-    filter &= FilterFunction(datespan_export_filter, datespan=request.datespan)
 
     group, users = get_group_params(domain, **json_request(request.GET))
 
     user_filters, use_user_filters = FilterUsersField.get_user_filter(request)
-
-    if user_filters and use_user_filters:
-        users_matching_filter = map(lambda x: x._id, get_all_users_by_domain(domain, filter_users=user_filters))
-        filter &= FilterFunction(users_filter, users=users_matching_filter)
+    print "Type is %s" % export_type
+    if export_type == 'case':
+        if user_filters and use_user_filters:
+            users_matching_filter = map(lambda x: x._id, get_all_users_by_domain(domain, filter_users=user_filters))
+            filter = FilterFunction(case_users_filter, users=users_matching_filter)
+        else:
+            filter = FilterFunction(case_group_filter, group=group)
     else:
-        filter &= FilterFunction(group_filter, group=group)
+        filter = FilterFunction(instances) & FilterFunction(app_export_filter, app_id=app_id)
+        filter &= FilterFunction(datespan_export_filter, datespan=request.datespan)
+        if user_filters and use_user_filters:
+            users_matching_filter = map(lambda x: x._id, get_all_users_by_domain(domain, filter_users=user_filters))
+            filter &= FilterFunction(users_filter, users=users_matching_filter)
+        else:
+            filter &= FilterFunction(group_filter, group=group)
+
+
+
     return filter

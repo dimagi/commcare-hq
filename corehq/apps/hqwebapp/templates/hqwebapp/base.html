@@ -8,7 +8,7 @@
 
         <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
 
-        <link rel="stylesheet" media="screen" href="{% static 'hq-bootstrap/css/hq-bootstrap.css' %}"/>
+        <link rel="stylesheet" media="screen" href="{% static 'hq-bootstrap/css/hq-bootstrap.css' %}?v=2"/>
 
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hq-bootstrap/js/jquery-1.7.1.min.js' %}"></script>
@@ -28,7 +28,7 @@
 
     </head>
     <body>
-        <div class="hq-container-fluid {% block layout_style %}hq-double-col{% endblock %}{% block oldstyle_tag %} old-style{% endblock %}">
+        <div class="hq-container-fluid {% block layout_style %}{% endblock %}{% block oldstyle_tag %} old-style{% endblock %}">
             <header class="hq-navbar">
                 <hgroup>
                     <h1><a href="{% url homepage %}"><img src="{% static 'hq-bootstrap/img/commcare-logo.png' %}" alt="CommCare HQ" /></a></h1>
@@ -70,7 +70,11 @@
                             <div class="btn-group">
                                 <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
                                     <i class="icon-hq-white icon-hq-person"></i>
-                                    {{ user.first_name }} {{ user.last_name }}
+                                    {% if user.first_name %}
+                                        {{ user.first_name }} {{ user.last_name }}
+                                    {% else %}
+                                        {{ user.username }}
+                                    {% endif %}
                                     {% with request.couch_user.role_label as role %}
                                         {% if role %}
                                             ({{ role }})
@@ -97,6 +101,12 @@
             </header>
 
             <div class="hq-page-header-container">
+                <div id="unsupported-browser" class="alert alert-error alert-block alert-full" style="display: none">
+                    <p><i class="icon icon-warning-sign"></i><strong>CommCare HQ does not work well with Internet Explorer.</strong></p>
+                    <p>We recommend
+                        <a href="https://www.google.com/chrome">Chrome</a> or <a href="http://www.mozilla.org/">Firefox</a>.
+                    </p>
+                </div>
                 {% block messages %}
                 {% if messages %}
                     {% for message in messages %}
@@ -127,7 +137,13 @@
             </div>
             {% endif %}
 
-            <div class="footer-text footer-left">Copyright &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a></div>
+            <div class="footer-text footer-left">
+                Copyright &copy; {% now "Y" %} <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
+                {% if user.is_authenticated %}
+                    &nbsp;|&nbsp;
+                    <a href="http://www.commcarehq.org/home">Learn more about CommCare HQ</a>.
+                {% endif %}
+            </div>
 
             {% if user.is_authenticated %}
             <div class="footer-right">
@@ -190,7 +206,7 @@
         {% endblock %}
         </div>
         <!--Begin javascript -->
-        <script src="{% static 'hq-bootstrap/js/bootstrap.min.js' %}"></script>
+        <script src="{% static 'hq-bootstrap/js/bootstrap.min.js' %}?v=2"></script>
         <script src="{% static 'hq-bootstrap/js/jquery.form.js' %}"></script>
 
         {% block js %}
@@ -201,6 +217,14 @@
 
         {% block js-inline %}
         {% endblock %}
+
+        <script>
+            $(function () {
+                if ($.browser.msie) {
+                    $('#unsupported-browser').show();
+                }
+            });
+        </script>
 
         {% if GOOGLE_ANALYTICS_ID %}
             <script type="text/javascript">

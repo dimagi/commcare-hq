@@ -2,15 +2,20 @@
 <tr>
     <td>{{ repeater.url }}</td>
     <td>
-        <a class="delete_link" href="#">{% trans "Stop" %}</a>
-        <div class="dialog delete_dialog" title="Cancel Forwarding?">
-            <form name="drop_repeater" action="{% url drop_repeater domain repeater.get_id %}" method="POST">
-                <table>
-                    <tr><td>
-                        Are you sure you want to stop forwarding to: {{ repeater.url }}?
-                    </td></tr>
-                </table>
-                <input type="submit" value="Stop" />
+        <a class="btn btn-danger" href="#stop_forwarding_{{repeater.get_id}}" data-toggle="modal"><i class="icon icon-white icon-remove"></i> {% trans "Stop Forwarding" %}</a>
+        <div id="stop_forwarding_{{ repeater.get_id }}" class="modal hide fade">
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal">&times;</a>
+                <h3>Stop forwarding to {{ repeater.url }}?</h3>
+            </div>
+            <form name="drop_repeater" action="{% url drop_repeater domain repeater.get_id %}" method="post">
+                <div class="modal-body">
+                    <p>Are you sure you want to stop forwarding to: {{ repeater.url }}?</p>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                    <button type="submit" class="btn btn-danger"><i class="icon icon-remove icon-white"></i> Stop Forwarding</button>
+                </div>
             </form>
         </div>
     </td>
