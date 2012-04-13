@@ -100,32 +100,10 @@ Please make sure you're still in the root directory of commcare-hq and that you 
 
     ./manage.py syncdb
     ./manage.py migrate
+    # this will do some basic setup, create a superuser, and create a project
+    ./manage.py bootstrap <project-name> <user> <password>
+    ./manage.py make_bootstrap # (if it fails add the 'direct-lessc' directive)
     ./manage.py collectstatic
-    ./manage.py createsuperuser
-    make -C submodules/hq-bootstrap/
-
-
-### Test your install of CommCare HQ
-
-+ Run `./manage.py runserver`
-+ Go to [localhost:8000](http://localhost:8000/)
-
-If everything is okay, you should see something at that address.
-
-
-### Configure your Django site
-
-+ go to [localhost:8000/admin](http://localhost:8000/admin)
-+ login as the superuser from `./manage.py createsuperuser`
-+ click on Sites > Add Site
-+ add a site with the domain name **localhost:8000**
-+ logout
-+ to test go to [localhost:8000](http://localhost:8000/) or [localhost:8000/login](http://localhost:8000/login)
-
-Note: To create a domain and user without going through the signup, use
-
-./manage.py bootstrap <domain> <user> <password>
-
 
 ### Don't forget to start up helper processes
 
@@ -133,9 +111,14 @@ Note: To create a domain and user without going through the signup, use
 
     memcached -d
 
+#### Couch-lucene
+
+    Enable  Lucene settings in  settings.py (to view  case list in the  Report section)
+
 #### Celery (asynchronous task scheduler)
 
-    ./manage.py celery -B
+   ./manage.py celeryd -v 2 -B -s celery -E
+
 
 ### Get CommCare Binaries
 
