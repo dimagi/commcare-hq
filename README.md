@@ -112,9 +112,14 @@ Please make sure you're still in the root directory of commcare-hq and that you 
 
     memcached -d
 
+#### Couch-lucene
+
+    Enable  Lucene settings in  settings.py (to view  case list in the  Report section)
+
 #### Celery (asynchronous task scheduler)
 
-    ./manage.py celery -B
+   ./manage.py celeryd -v 2 -B -s celery -E
+
 
 ### Get CommCare Binaries
 
