@@ -247,7 +247,6 @@
 {% endblock %}
 
 {% block head %}{{ block.super }}
-    <link rel="stylesheet" href="{% static 'hqmedia/css/media_upload.css' %}"/>
     <style>
         #custom-keys-help {
             width: 400px;
@@ -585,7 +584,8 @@
         {% if multimedia %}
         <div class="scary-settings multimedia">
             <h2>View, manage, upload, and download files using the Multimedia Map.</h2>
-            <p><a target="_blank" href="{% url multimedia_map domain app.get_id %}">Multimedia Map</a> (opens in a new window)</p>
+            <p><a target="_blank" class="btn btn-primary" style="color: #ffffff; text-decoration: none;" href="{% url hqmedia_references domain app.get_id %}">Multimedia Reference Checker</a> (opens in a new window)</p>
+            <h2>Download a ZIP file of all your multimedia</h2>
             {% include "hqmedia/partials/multimedia_zip_notice.html" %}
         </div>
         {% endif %}

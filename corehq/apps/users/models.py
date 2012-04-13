@@ -27,6 +27,7 @@ from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.reports.models import ReportNotification, HQUserType
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username, cc_user_domain
 from corehq.apps.users.xml import group_fixture
+from corehq.apps.sms.mixin import CommCareMobileContactMixin
 from couchforms.models import XFormInstance
 
 from dimagi.utils.couch.database import get_db
@@ -253,6 +254,14 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         except Exception:
             return domain_qs in self.get_domains() or self.is_superuser
 
+    def is_previewer(self):
+        try:
+            from django.conf.settings import PREVIEWER_RE
+        except ImportError:
+            return self.is_superuser
+        else:
+            return self.is_superuser or re.compile(PREVIEWER_RE).match(self.username)
+
     # for synching
     def sync_from_django_user(self, django_user):
         if not django_user:
@@ -431,7 +440,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         return super(CouchUser, self).__getattr__(item)
 
 
-class CommCareUser(CouchUser):
+class CommCareUser(CouchUser, CommCareMobileContactMixin):
 
     domain = StringProperty()
     registering_device_id = StringProperty()
@@ -700,6 +709,22 @@ class CommCareUser(CouchUser):
     def get_group_ids(self):
         from corehq.apps.groups.models import Group
         return Group.by_user(self, wrap=False)
+    
+    def get_time_zone(self):
+        try:
+            time_zone = self.user_data["time_zone"]
+        except Exception as e:
+            # Gracefully handle when user_data is None, or does not have a "time_zone" entry
+            time_zone = None
+        return time_zone
+    
+    def get_language_code(self):
+        try:
+            lang = self.user_data["language_code"]
+        except Exception as e:
+            # Gracefully handle when user_data is None, or does not have a "language_code" entry
+            lang = None
+        return lang
     
 class WebUser(CouchUser):
     domains = StringListProperty()

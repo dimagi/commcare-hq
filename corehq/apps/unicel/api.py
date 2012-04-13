@@ -1,5 +1,5 @@
 from datetime import datetime, date, timedelta
-from corehq.apps.sms.models import MessageLog, INCOMING
+from corehq.apps.sms.models import SMSLog, INCOMING
 from corehq.apps.sms.util import domains_for_phone, users_for_phone,\
     clean_phone_number, clean_outgoing_sms_text
 from django.conf import settings
@@ -69,7 +69,8 @@ def create_from_request(request):
     recipients = users_for_phone(sender)
     recipient = recipients[0].get_id if len(recipients) == 1 else "" 
     
-    log = MessageLog(couch_recipient=recipient,
+    log = SMSLog(couch_recipient=recipient,
+                        couch_recipient_doc_type="CouchUser",
                         phone_number=sender,
                         direction=INCOMING,
                         date=actual_timestamp,

@@ -10,36 +10,70 @@ register = template.Library()
 def render_multimedia_map(filename, type, content):
 
     type = type[0].capitalize() + type[1:].lower()
-    template = """<li class="%(type)sfile" data-form-path="%(filename)s" data-media-type="CommCare%(type)s"%(id)s>
-<img src="%(indicator_image)s" alt="%(indicator_status)s" class="indicator" />
-<a href="#" class="upload_media button"%(action_data)s>%(action)s</a>
-%(view_action)s
-%(filename)s
-</li>"""
+    template = """<tr id="%(item_id)s">
+    <td class="hqmedia-status" style="vertical-align:middle; text-align:center;">%(status)s</td>
+    <td class="hqmedia-action" style="vertical-align:middle; text-align:center;">%(action)s</td>
+    <td class="hqmedia-preview" style="vertical-align:middle; text-align:center;">%(preview)s</td>
+    <td class="hqmedia-path" style="vertical-align:middle;">%(path)s</td>
+</tr>"""
     action_word = "Open"
     if type == "Image":
-        action_word = "View"
+        action_word = "Preview"
     elif type == "Audio":
         action_word = "Play"
 
     if content:
-        action_data = ' data-replace-file="true"'
-        action = "Replace %s" % type
-        indicator_image = static("hqmedia/img/checkmark.png")
-        indicator_status = "included"
-        view_action = '<a href="%s" class="view_media button">%s</a>' % (content['url'], action_word)
-        item_id = ' id="media_item_%s"' % content['m_id']
+        status = '<span class="label label-success"><i class="icon icon-white icon-ok"></i> Found</span>'
+        action = '<a href="#" class="btn btn-primary">Replace %s</a>' % type
+        preview = '<a href="%s" target="_blank" class="btn btn-info">%s %s</a>' % (content['url'], action_word, type)
+        item_id = "hqmedia_%s_%s" % (type, content['m_id'])
     else:
-        action_data = ''
-        action = "Upload %s" % type
-        indicator_image = static("hqmedia/img/no_sign.png")
-        indicator_status = "not included"
-        view_action = '<a href="#" class="view_media button inactive">%s</a>' % action_word
-        item_id = ' id="media_item_%s"' % uuid.uuid4()
+        status = '<span class="label label-important"><i class="icon icon-white icon-remove"></i> Missing</span>'
+        action = '<a href="#" class="btn btn-success">Upload %s</a>' % type
+        preview = '<a href="#" target="_blank" class="btn btn-info hide">%s %s</a>' % (action_word, type)
+        item_id = "hqmedia_%s_%s" % (type, uuid.uuid4())
 
-    return template % {"type": type, "indicator_image": indicator_image, "indicator_status": indicator_status,
-                       "action_data": action_data, "action": action, "filename": filename,
-                       "view_action": view_action, "id": item_id}
+    return template % {
+        "item_id": item_id,
+        "status": status,
+        "action": action,
+        "preview": preview,
+        "path": filename
+    }
+
+@register.simple_tag
+def render_ko_multimedia_map(filename, type, content):
+    type = type[0].capitalize() + type[1:].lower()
+    template = """<tr id="%(item_id)s">
+        <td class="hqmedia-status" style="vertical-align:middle; text-align:center;">%(status)s</td>
+        <td class="hqmedia-action" style="vertical-align:middle; text-align:center;">%(action)s</td>
+        <td class="hqmedia-preview" style="vertical-align:middle; text-align:center;">%(preview)s</td>
+        <td class="hqmedia-path" style="vertical-align:middle;">%(path)s</td>
+    </tr>"""
+    action_word = "Open"
+    if type == "Image":
+        action_word = "Preview"
+    elif type == "Audio":
+        action_word = "Play"
+
+    if content:
+        status = '<span class="label label-success"><i class="icon icon-white icon-ok"></i> Found</span>'
+        action = '<a href="#" class="btn btn-primary">Replace %s</a>' % type
+        preview = '<a href="%s" target="_blank" class="btn btn-info">%s %s</a>' % (content['url'], action_word, type)
+        item_id = "hqmedia_%s_%s" % (type, content['m_id'])
+    else:
+        status = '<span class="label label-important"><i class="icon icon-white icon-remove"></i> Missing</span>'
+        action = '<a href="#" class="btn btn-success">Upload %s</a>' % type
+        preview = '<a href="#" target="_blank" class="btn btn-info hide">%s %s</a>' % (action_word, type)
+        item_id = "hqmedia_%s_%s" % (type, uuid.uuid4())
+
+    return template % {
+        "item_id": item_id,
+        "status": status,
+        "action": action,
+        "preview": preview,
+        "path": filename
+    }
 
 @register.simple_tag
 def missing_refs(number, type):

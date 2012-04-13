@@ -1,6 +1,7 @@
 import logging
 from corehq.apps.sms.util import clean_phone_number
-from corehq.apps.sms.models import MessageLog, OUTGOING
+from corehq.apps.sms.models import SMSLog, OUTGOING
+from corehq.apps.sms.mixin import MobileBackend
 from datetime import datetime
 from corehq.apps.unicel import api as unicel_api
 from corehq.apps.sms import mach_api
@@ -27,10 +28,15 @@ def send_sms(domain, id, phone_number, text):
     """
     Sends an outbound SMS. Returns false if it fails.
     """
+    if phone_number is None:
+        return False
+    if isintance(phone_number, int) or isinstance(phone_number, long):
+        phone_number = str(phone_number)
     logging.debug('Sending message: %s' % text)
     phone_number = clean_phone_number(phone_number)
-    msg = MessageLog(domain=domain,
+    msg = SMSLog(domain=domain,
                      couch_recipient=id, 
+                     couch_recipient_doc_type="CouchUser",
                      phone_number=phone_number,
                      direction=OUTGOING,
                      date = datetime.utcnow(),
@@ -42,4 +48,35 @@ def send_sms(domain, id, phone_number, text):
     except Exception:
         logging.exception("Problem sending SMS to %s" % phone_number)
         return False
+
+def send_sms_to_verified_number(verified_number, text):
+    """
+    Sends an sms using the given verified phone number entry.
+    
+    verified_number The VerifiedNumber entry to use when sending.
+    text            The text of the message to send.
+    
+    return  True on success, False on failure
+    """
+    try:
+        backend = verified_number.backend
+        module = __import__(backend.outbound_module, fromlist=["send"])
+        kwargs = backend.outbound_params
+        msg = SMSLog(
+            couch_recipient_doc_type    = verified_number.owner_doc_type,
+            couch_recipient             = verified_number.owner_id,
+            phone_number                = verified_number.phone_number,
+            direction                   = OUTGOING,
+            date                        = datetime.utcnow(),
+            domain                      = verified_number.domain,
+            text                        = text
+        )
+        module.send(msg, **kwargs)
+        msg.save()
+        return True
+    except Exception as e:
+        logging.exception("Exception while sending SMS to VerifiedNumber id " + verified_number._id)
+        logging.exception(e)
+        return False
+
 

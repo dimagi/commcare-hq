@@ -110,7 +110,7 @@
                         </a>
                     </td>
                     <td class="cell-vertical-centered">
-                        <a class="btn btn-info" href='{% url corehq.apps.reports.views.edit_custom_export domain export.get_id %}'>
+                        <a class="btn btn-info" href='{% url corehq.apps.reports.views.edit_custom_export domain export.get_id %}?type=form'>
                             <i class="icon-pencil icon-white"></i> Edit
                         </a>
                     </td>
@@ -227,7 +227,7 @@
                     </td>
                     <td class="cell-vertical-centered">
                         {% if form.xmlns != None %}
-                            <a class="btn" href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ form.xmlns }}"'><i class="icon-star-empty"></i> Create Custom Export</a>
+                            <a class="btn" href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ form.xmlns }}"&type=form'><i class="icon-star-empty"></i> Create Custom Export</a>
                         {% endif %}
                     </td>
                     <td class="cell-vertical-centered">
@@ -248,6 +248,13 @@
             </tbody>
         </table>
     {% endif %}
+        <h2>Export all Forms' Metadata</h2>
+        <p>Export basic data for all forms in this domain. Note that this export does not support the filters above.
+        <a class="btn btn-primary" href='{% url corehq.apps.reports.views.export_all_form_metadata domain %}'>
+        <i class="icon-download-alt icon-white"></i> Download
+        </a>
+        </p>
+        
     </div>
 {% endblock %}
 

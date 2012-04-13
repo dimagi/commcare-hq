@@ -10,7 +10,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from corehq.apps.sms.api import send_sms
 from corehq.apps.users.models import CouchUser
-from corehq.apps.sms.models import MessageLog, INCOMING
+from corehq.apps.sms.models import SMSLog, INCOMING
 from corehq.apps.groups.models import Group
 from dimagi.utils.web import render_to_response
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -22,7 +22,7 @@ from corehq.apps.reports import util as report_utils
 def messaging(request, domain, template="sms/default.html"):
     context = get_sms_autocomplete_context(request, domain)
     context['domain'] = domain
-    context['messagelog'] = MessageLog.by_domain_dsc(domain)
+    context['messagelog'] = SMSLog.by_domain_dsc(domain)
     context['now'] = datetime.utcnow()
     tz = report_utils.get_timezone(request.couch_user.user_id, domain)
     context['timezone'] = tz
@@ -48,7 +48,7 @@ def post(request, domain):
     user = authenticate(username=username, password=password)
     if user is None or not user.is_active:
         return HttpResponseBadRequest("Authentication fail")
-    msg = MessageLog(domain=domain,
+    msg = SMSLog(domain=domain,
                      # TODO: how to map phone numbers to recipients, when phone numbers are shared?
                      #couch_recipient=id, 
                      phone_number=to,
@@ -148,3 +148,6 @@ def send_to_recipients(request, domain):
         request.META.get('HTTP_REFERER') or
         reverse(messaging, args=[domain])
     )
+
+
+

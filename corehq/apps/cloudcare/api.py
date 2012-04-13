@@ -2,9 +2,24 @@ from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.models import ApplicationBase, Application
 
+def get_all_cases(domain, include_closed=False):
+    """
+    Get all cases in a domain.
+    """
+    cases = CommCareCase.view('hqcase/types_by_domain', 
+                              startkey=[domain],
+                              endkey=[domain, {}],
+                              reduce=False,
+                              include_docs=True)
+    if not include_closed:
+        cases = filter(lambda case: not case.closed, cases)
+    return [case.get_json() for case in cases]
 
 
 def get_owned_cases(domain, user_id):
+    """
+    Get all cases in a domain owned by a particular user.
+    """
     user = CouchUser.get_by_user_id(user_id, domain)
     try:
         owner_ids = user.get_owner_ids()

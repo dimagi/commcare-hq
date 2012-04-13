@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import permission_required
 from django.template.context import RequestContext
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
-from corehq.apps.sms.models import MessageLog
+from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import CouchUser, CommCareUser
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
@@ -220,9 +220,9 @@ def message_log_report(request):
     datespan = request.datespan
     domains = Domain.get_all()
     for dom in domains:
-        dom.sms_incoming = MessageLog.count_incoming_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
-        dom.sms_outgoing = MessageLog.count_outgoing_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
-        dom.sms_total = MessageLog.count_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
+        dom.sms_incoming = SMSLog.count_incoming_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
+        dom.sms_outgoing = SMSLog.count_outgoing_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
+        dom.sms_total = SMSLog.count_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
 
     context = get_hqadmin_base_context(request)
     context.update({
