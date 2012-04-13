@@ -9,7 +9,8 @@ from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseBadRequest
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
-from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_cloudcare_apps
+from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_cloudcare_apps,\
+    get_all_cases
 from touchforms.formplayer.models import PlaySession
 from dimagi.utils.couch import safe_index
 from corehq.apps.app_manager.const import APP_V2
@@ -33,6 +34,8 @@ def app_list(request, domain, urlPath):
         # replace the apps with the last build of each app
         apps = [_app_latest_build_json(app["_id"])for app in apps]
 
+    # trim out empty apps
+    apps = filter(lambda app: app, apps)
     return render_to_response(request, "cloudcare/cloudcare_home.html", 
                               {"domain": domain,
                                "language": language,
@@ -152,10 +155,15 @@ def get_cases(request, domain):
     user_id = request.couch_user.get_id if request.couch_user.is_commcare_user() \
               else request.REQUEST.get("user_id", "")
     
-    if not user_id:
-        return HttpResponseBadRequest("Must specify user_id!")
+    if user_id:
+        cases = get_owned_cases(domain, user_id)
+    else:
+        if request.couch_user.is_web_user():
+            # allow web users to query the entire case db
+            cases = get_all_cases(domain)
+        else:
+            return HttpResponseBadRequest("Must specify user_id!")
     
-    cases = get_owned_cases(domain, user_id)
     if request.REQUEST:
         def _filter(case):
             for path, val in request.REQUEST.items():
@@ -168,7 +176,7 @@ def get_cases(request, domain):
 
 @cloudcare_api
 def get_apps_api(request, domain):
-    return json_response(get_apps(domain))
+    return json_response(get_cloudcare_apps(domain))
 
 @cloudcare_api
 def get_app_api(request, domain, app_id):

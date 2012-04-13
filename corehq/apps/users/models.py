@@ -254,6 +254,14 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         except Exception:
             return domain_qs in self.get_domains() or self.is_superuser
 
+    def is_previewer(self):
+        try:
+            from django.conf.settings import PREVIEWER_RE
+        except ImportError:
+            return self.is_superuser
+        else:
+            return self.is_superuser or re.compile(PREVIEWER_RE).match(self.username)
+
     # for synching
     def sync_from_django_user(self, django_user):
         if not django_user:

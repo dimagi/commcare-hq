@@ -1058,9 +1058,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @property
     def suite_url(self):
-        return "%s%s?latest=true" % (
+        return "%s%s" % (
             self.url_base,
-            reverse('download_suite', args=[self.domain, self.copy_of or self.get_id])
+            reverse('download_suite', args=[self.domain, self.get_id])
         )
     @property
     def suite_loc(self):
@@ -1491,11 +1491,17 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
     """
 
     if latest:
+        try:
+            app = get_db().get(app_id)
+        except ResourceNotFound:
+            raise Http404
         if not domain:
             try:
-                domain = get_db().get(app_id)['domain']
+                domain = app['domain']
             except Exception:
                 raise Http404
+
+        app_id = app.get('copy_of') or app['_id']
         app = get_db().view('app_manager/applications',
             startkey=[domain, app_id, {}],
             limit=1,
