@@ -373,7 +373,7 @@ cloudCare.AppView = Backbone.View.extend({
 		                success: function () {
 		                    self._clearFormPlayer();
 		                    self.showModule(selectedModule);
-		                    showSuccess("Form successfully saved.", $("#cloudcare-main"), 5000);
+		                    showSuccess("Form successfully saved.", $("#cloudcare-main"), 2500);
 		                }
 		            });
 		        };
@@ -402,8 +402,8 @@ cloudCare.AppView = Backbone.View.extend({
 	                            "module_index": form.get("module_index"),
 	                            "form_index": form.get("index")},
 	                language: formListView.options.language,
-	                // TODO: clean up how filtering works
-	                caseUrl: self.options.caseUrlRoot + "?properties/case_type=" + formListView.model.get("case_type")
+	                caseUrl: getCaseFilterUrl(self.options.caseUrlRoot, form.get("app_id"), 
+	                                          form.get("module_index"))
 	            });
 	            cloudCare.dispatch.on("case:selected", function (caseModel) {
 	                formListView.enterForm = $("<a />").text("Enter " + form.getLocalized("name", self.options.language)).addClass("btn btn-primary").appendTo(
