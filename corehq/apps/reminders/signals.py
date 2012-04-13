@@ -8,3 +8,4 @@ def case_changed_receiver(sender, case, **kwargs):
         handler.case_changed(case)
     
 case_post_save.connect(case_changed_receiver, CommCareCase)
+

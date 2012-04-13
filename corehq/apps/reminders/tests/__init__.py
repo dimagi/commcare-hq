@@ -3,6 +3,9 @@ from django.test.testcases import TestCase
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reminders.models import *
 from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.sms.models import CallLog, EventLog, MISSED_EXPECTED_CALLBACK
+from corehq.apps.sms.mixin import VerifiedNumber
+from dimagi.utils.parsing import json_format_datetime
 
 class ReminderTestCase(TestCase):
     """
@@ -17,8 +20,11 @@ class ReminderTestCase(TestCase):
             domain=cls.domain,
             case_type=cls.case_type,
             method="test",
-            start='start_sending',
+            start_property='start_sending',
+            start_value="ok",
+            start_date=None,
             start_offset=1,
+            start_match_type=MATCH_EXACT,
             until='stop_sending',
             default_lang='en',
             max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY,
@@ -136,8 +142,11 @@ class ReminderIrregularScheduleTestCase(TestCase):
             domain=cls.domain,
             case_type=cls.case_type,
             method="test",
-            start='start_sending',
+            start_property='start_sending',
+            start_value=None,
+            start_date=None,
             start_offset=1,
+            start_match_type=MATCH_ANY_VALUE,
             until='stop_sending',
             default_lang='en',
             max_iteration_count=2,
@@ -289,8 +298,11 @@ class ReminderCallbackTestCase(TestCase):
             domain=cls.domain,
             case_type=cls.case_type,
             method="callback_test",
-            start='start_sending',
+            start_property='start_sending',
+            start_value=None,
+            start_date=None,
             start_offset=0,
+            start_match_type=MATCH_ANY_VALUE,
             until='stop_sending',
             default_lang='en',
             max_iteration_count=3,
@@ -314,7 +326,6 @@ class ReminderCallbackTestCase(TestCase):
         cls.handler.save()
         cls.user_id = "USER-ID-109349"
         cls.user = CommCareUser.create(cls.domain, 'chw.bob3', '****', uuid=cls.user_id)
-        cls.user.phone_numbers = ["+15551234"]
         cls.user.user_data["time_zone"]="Africa/Nairobi"
         cls.user.save()
         cls.case = CommCareCase(
@@ -323,6 +334,7 @@ class ReminderCallbackTestCase(TestCase):
             user_id=cls.user_id
         )
         cls.case.save()
+        cls.user.save_verified_number("test", "15551234", True, None)
 
     def test_ok(self):
         self.assertEqual(self.handler.get_reminder(self.case), None)
@@ -361,10 +373,12 @@ class ReminderCallbackTestCase(TestCase):
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
         
         # Create a callback
-        c = CaseReminderCallback(
-            phone_number="+15551234"
-           ,timestamp = datetime(year=2012, month=1, day=1, hour=8, minute=5)
-           ,user_id=self.user_id
+        c = CallLog(
+            couch_recipient_doc_type    = "CommCareUser",
+            couch_recipient             = self.user_id,
+            phone_number                = "15551234",
+            direction                   = "I",
+            date                        = datetime(year=2012, month=1, day=1, hour=8, minute=5)
         )
         c.save()
         
@@ -417,7 +431,15 @@ class ReminderCallbackTestCase(TestCase):
         self.assertEqual(reminder.next_fire, datetime(year=2012, month=1, day=3, hour=7, minute=0))
         self.assertEqual(reminder.schedule_iteration_num, 3)
         self.assertEqual(reminder.current_event_sequence_num, 0)
-        self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
+        self.assertEqual(reminder.last_fired, datetime(year=2012, month=1, day=2, hour=8, minute=15))
+        
+        # Ensure that a missed call was logged
+        missed_call_datetime = json_format_datetime(CaseReminderHandler.now)
+        missed_call = EventLog.view("sms/event_by_domain_date_recipient",
+                        key=["test", missed_call_datetime, "CommCareUser", self.user_id],
+                        include_docs=True).one()
+        self.assertNotEqual(missed_call, None)
+        self.assertEqual(missed_call.event_type, MISSED_EXPECTED_CALLBACK)
         
         ######################
         # Day3, 10:00 reminder
@@ -451,10 +473,12 @@ class ReminderCallbackTestCase(TestCase):
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
         
         # Create a callback
-        c = CaseReminderCallback(
-            phone_number="+15551234"
-           ,timestamp = datetime(year=2012, month=1, day=3, hour=8, minute=22)
-           ,user_id=self.user_id
+        c = CallLog(
+            couch_recipient_doc_type    = "CommCareUser",
+            couch_recipient             = self.user_id,
+            phone_number                = "15551234",
+            direction                   = "I",
+            date                        = datetime(year=2012, month=1, day=3, hour=8, minute=22)
         )
         c.save()
         
@@ -484,8 +508,11 @@ class CaseTypeReminderTestCase(TestCase):
             domain=cls.domain,
             case_type="case_type_a",
             method="test",
-            start='start_sending1',
+            start_property='start_sending1',
+            start_value=None,
+            start_date=None,
             start_offset=1,
+            start_match_type=MATCH_ANY_VALUE,
             until='stop_sending1',
             default_lang='en',
             max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY,
@@ -506,8 +533,11 @@ class CaseTypeReminderTestCase(TestCase):
             domain=cls.domain,
             case_type="case_type_a",
             method="test",
-            start='start_sending2',
+            start_property='start_sending2',
+            start_value=None,
+            start_date=None,
             start_offset=2,
+            start_match_type=MATCH_ANY_VALUE,
             until='stop_sending2',
             default_lang='en',
             max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY,
@@ -528,8 +558,11 @@ class CaseTypeReminderTestCase(TestCase):
             domain=cls.domain,
             case_type="case_type_a",
             method="test",
-            start='start_sending3',
+            start_property='start_sending3',
+            start_value=None,
+            start_date=None,
             start_offset=3,
+            start_match_type=MATCH_ANY_VALUE,
             until='stop_sending3',
             default_lang='en',
             max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY,
@@ -683,8 +716,11 @@ class StartConditionReminderTestCase(TestCase):
             domain=cls.domain,
             case_type="case_type_a",
             method="test",
-            start='start_sending1',
+            start_property='start_sending1',
+            start_value="^(ok|OK|\d\d\d\d-\d\d-\d\d)",
+            start_date='start_sending1',
             start_offset=1,
+            start_match_type=MATCH_REGEX,
             until='stop_sending1',
             default_lang='en',
             max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY,
@@ -804,7 +840,7 @@ class StartConditionReminderTestCase(TestCase):
         
         self.assertEqual(
             reminder.next_fire
-           ,datetime.combine(start, CaseReminderHandler.now.time()) + timedelta(days=self.handler1.start_offset)
+           ,datetime(start.year, start.month, start.day) + timedelta(days=self.handler1.start_offset)
         )
         
         # Reset the date start condition
@@ -818,7 +854,7 @@ class StartConditionReminderTestCase(TestCase):
         
         self.assertEqual(
             reminder.next_fire
-           ,datetime.combine(start, CaseReminderHandler.now.time()) + timedelta(days=self.handler1.start_offset)
+           ,datetime(start.year, start.month, start.day) + timedelta(days=self.handler1.start_offset)
         )
         self.assertEqual(CaseReminder.get(old_reminder_id).doc_type, "CaseReminder-Deleted")
         
