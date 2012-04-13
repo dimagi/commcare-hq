@@ -15,6 +15,8 @@ from touchforms.formplayer.models import PlaySession
 from dimagi.utils.couch import safe_index
 from corehq.apps.app_manager.const import APP_V2
 from dimagi.utils.parsing import string_to_boolean
+from corehq.apps.cloudcare import touchforms_api, CLOUDCARE_DEVICE_ID
+from corehq.apps.cloudcare.touchforms_api import get_session_data
 
 @login_and_domain_required
 def app_list(request, domain, urlPath):
@@ -48,23 +50,17 @@ def form_context(request, domain, app_id, module_id, form_id):
     module = app.get_module(module_id)
     form = module.get_form(form_id)
     
-    device_id = "cloudcare"
     case_id = request.REQUEST.get("case_id")
     
     if app.application_version == APP_V2:
-        session_data = { 'device_id': device_id,
-                         'app_version': '2.0',
-                         'username': request.user.username,
-                         'user_id': request.couch_user.get_id,
-                         "domain": domain
-                        }
+        session_data = get_session_data(domain, request.couch_user)
         if case_id:
             session_data["case_id"] = case_id
     else:
         # assume V1 / preloader structure
         session_data = {"meta": {"UserID":   request.couch_user.get_id,
                                  "UserName":  request.user.username},
-                        "property": {"deviceID": device_id}}
+                        "property": {"deviceID": CLOUDCARE_DEVICE_ID}}
         # check for a case id and update preloader appropriately
         if case_id:
             case = CommCareCase.get(case_id)
@@ -174,6 +170,25 @@ def get_cases(request, domain):
         
     return json_response(cases)
 
+def filter_cases(request, domain, app_id, module_id):
+    app = Application.get(app_id)
+    module = app.get_module(module_id)
+    auth_cookie = request.COOKIES.get('sessionid')
+    details = module.details
+    xpath_parts = []
+    for detail in details:
+        if detail.filter_xpath_2():
+            xpath_parts.append(detail.filter_xpath_2())
+    xpath = "".join(xpath_parts)
+    additional_filters = {"properties/case_type": module.case_type }
+    result = touchforms_api.filter_cases(domain, request.couch_user, 
+                                         xpath, additional_filters, 
+                                         auth=auth_cookie)
+    case_ids = result.get("cases", [])
+    cases = [CommCareCase.get(id) for id in case_ids]
+    cases = [c.get_json() for c in cases if c]
+    return json_response(cases)
+    
 @cloudcare_api
 def get_apps_api(request, domain):
     return json_response(get_cloudcare_apps(domain))
