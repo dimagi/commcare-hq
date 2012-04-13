@@ -466,8 +466,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
 
     if app and app.get_doc_type() == 'Application':
         images, audio, has_error = utils.get_multimedia_filenames(app)
-        multimedia_images, missing_image_refs = app.get_template_map(images, domain)
-        multimedia_audio, missing_audio_refs = app.get_template_map(audio, domain)
+        multimedia_images, missing_image_refs = app.get_template_map(images)
+        multimedia_audio, missing_audio_refs = app.get_template_map(audio)
         context.update({
             'missing_image_refs': missing_image_refs,
             'missing_audio_refs': missing_audio_refs,
@@ -1426,17 +1426,23 @@ def download_multimedia_zip(req, domain, app_id):
     app = get_app(domain, app_id)
     temp = StringIO()
     hqZip = zipfile.ZipFile(temp, "a")
+    errors = []
     for form_path, media_item in app.multimedia_map.items():
         try:
             media = eval(media_item.media_type)
             media = media.get(media_item.multimedia_id)
             data, content_type = media.get_display_file()
             path = form_path.replace(utils.MULTIMEDIA_PREFIX, "")
-            hqZip.writestr(path, data)
+            if not isinstance(data, unicode):
+                hqZip.writestr(os.path.join(path), data)
         except (NameError, ResourceNotFound) as e:
+            errors.append("[%s] ERROR: %s" % (form_path, e))
             logging.warning("%s on %s %s" % (e, form_path, media_item))
-            return HttpResponseServerError("There was an error gathering some of the multimedia for this application.")
     hqZip.close()
+
+    if errors:
+        return HttpResponseServerError("Errors were encountered while retrieving media for this application.<br /> %s" % "<br />".join(errors))
+
     response = HttpResponse(mimetype="application/zip")
     response["Content-Disposition"] = "attachment; filename=commcare.zip"
     temp.seek(0)

@@ -247,6 +247,13 @@
             </tbody>
         </table>
     {% endif %}
+        <h2>Export all Forms' Metadata</h2>
+        <p>Export basic data for all forms in this domain. Note that this export does not support the filters above.
+        <a class="btn btn-primary" href='{% url corehq.apps.reports.views.export_all_form_metadata domain %}'>
+        <i class="icon-download-alt icon-white"></i> Download
+        </a>
+        </p>
+        
     </div>
 {% endblock %}
 

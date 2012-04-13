@@ -10,8 +10,9 @@ import logging
 from corehq.apps.registration.forms import NewWebUserRegistrationForm
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.users.util import format_username, normalize_username, raw_username
+from couchdbkit.exceptions import MultipleResultsFound
 from dimagi.utils.decorators.view import get_file
-from dimagi.utils.excel import Excel2007DictReader
+from dimagi.utils.excel import Excel2007DictReader, WorkbookJSONReader
 from django.contrib.auth import logout
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.models import User
@@ -623,7 +624,7 @@ class UploadCommCareUsers(TemplateView):
     template_name = 'users/upload_commcare_users.html'
 
     required_headers = set(['username', 'password'])
-    allowed_headers = set(['phone-number', 'user_id', 'name', 'group-name *']) | required_headers
+    allowed_headers = set(['phone-number', 'user_id', 'name', 'group', 'data']) | required_headers
 
     def get_context_data(self, **kwargs):
         """TemplateView automatically calls this to render the view (on a get)"""
@@ -634,12 +635,29 @@ class UploadCommCareUsers(TemplateView):
         """View's dispatch method automatically calls this"""
 
         try:
-            self.user_specs = Excel2007DictReader(request.file)
+            self.workbook = WorkbookJSONReader(request.file)
         except Exception:
             try:
-                self.user_specs = csv.DictReader(io.StringIO(request.file.read().decode('ascii'), newline=None))
+                csv.DictReader(io.StringIO(request.file.read().decode('ascii'), newline=None))
+                return HttpResponseBadRequest(
+                    "CommCare HQ no longer supports CSV upload. "
+                    "Please convert to Excel 2007 or higher (.xlsx) and try again."
+                )
             except UnicodeDecodeError:
-                return HttpResponseBadRequest("Your CSV contains illegal characters")
+                return HttpResponseBadRequest("Unrecognized format")
+
+        try:
+            self.user_specs = self.workbook.get_worksheet(title='users')
+        except KeyError:
+            try:
+                self.user_specs = self.workbook.get_worksheet()
+            except IndexError:
+                return HttpResponseBadRequest("Workbook has no worksheets")
+
+        try:
+            self.group_specs = self.workbook.get_worksheet(title='groups')
+        except KeyError:
+            self.group_specs = []
 
         try:
             self.check_headers()
@@ -649,6 +667,37 @@ class UploadCommCareUsers(TemplateView):
         response = HttpResponse()
         response_writer = csv.DictWriter(response, ['username', 'flag'])
         response_rows = []
+
+        class GroupMemoizer(object):
+            def __init__(self, domain):
+                self.groups = {}
+                self.domain = domain
+
+            def get_or_create_group(self, group_name):
+                return self.get_group(group_name, load_if_not_loaded=True)
+
+            def get_group(self, group_name, load_if_not_loaded=False):
+                if load_if_not_loaded and not self.groups.has_key(group_name):
+                    group = Group.by_name(self.domain, group_name)
+                    if group:
+                        self.groups[group_name] = group
+                    else:
+                        self.groups[group_name] = Group(domain=self.domain, name=group_name)
+                return self.groups[group_name]
+
+            def save_all(self):
+                for group in self.groups.values():
+                    group.save()
+
+        self.group_memoizer = GroupMemoizer(self.domain)
+        for row in self.group_specs:
+            group_name, case_sharing = row['name'], row['case-sharing']
+            try:
+                group = self.group_memoizer.get_or_create_group(group_name)
+            except MultipleResultsFound:
+                messages.error(request, "Multiple groups named: %s" % group_name)
+            else:
+                group.case_sharing = case_sharing
 
         for row in self.create_or_update_users():
             response_writer.writerow(row)
@@ -673,37 +722,11 @@ class UploadCommCareUsers(TemplateView):
         usernames = set()
         user_ids = set()
 
-        class GroupMemoizer(object):
-            groups = {}
-            @classmethod
-            def get_group(cls, group_name):
-                Group.by_name(self.domain, group_name)
-                if not cls.groups.has_key(group_name):
-                    cls.groups[group_name] = Group(domain=self.domain, name=group_name, case_sharing=True)
-                return cls.groups[group_name]
-            @classmethod
-            def save_all(cls):
-                for group in cls.groups.values():
-                    group.save()
-
-
         for row in self.user_specs:
-            data = {}
-            # collect all group-name * in a list; preserve everything else
-            for header, value in row.iteritems():
-                if ' ' in header:
-                    header = header.split(' ')[0] + ' *'
-                    if not data.has_key(header):
-                        data[header] = []
-                    if value:
-                        data[header].append(value)
-                else:
-                    data[header] = value
-
-            group_names, name, password, phone_number, user_id, username = (
-                data.get(k, [] if k[-1] == '*' else None) for k in sorted(self.allowed_headers)
+            data, group_names, name, password, phone_number, user_id, username = (
+                row.get(k) for k in sorted(self.allowed_headers)
             )
-
+            group_names = group_names or []
             username = normalize_username(username, self.domain)
             status_row = {'username': raw_username(username)}
 
@@ -714,7 +737,7 @@ class UploadCommCareUsers(TemplateView):
             else:
                 try:
                     usernames.add(username)
-                    if user_ids:
+                    if user_id:
                         user_ids.add(user_id)
                     if user_id:
                         user = CommCareUser.get_by_user_id(user_id, self.domain)
@@ -735,16 +758,22 @@ class UploadCommCareUsers(TemplateView):
                         user.add_phone_number(phone_number.lstrip('+'), default=True)
                     if name:
                         user.set_full_name(name)
+                    if data:
+                        user.user_data.update(data)
                     user.save()
                     for group_name in group_names:
-                        GroupMemoizer.get_group(group_name).add_user(user)
-                    GroupMemoizer.save_all()
+                        try:
+                            self.group_memoizer.get_group(group_name).add_user(user)
+                        except Exception:
+                            raise Exception("Can't add to group '%s'" % (user.raw_username, group_name))
+                    self.group_memoizer.save_all()
                 except Exception, e:
                     status_row['flag'] = 'error: %s' % e
             yield status_row
 
     def check_headers(self):
-        headers = set([re.sub(r' .*', ' *', fieldname) for fieldname in self.user_specs.fieldnames])
+
+        headers = set(self.user_specs.fieldnames)
 
         illegal_headers = headers - self.allowed_headers
         missing_headers = self.required_headers - headers

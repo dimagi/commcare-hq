@@ -53,6 +53,8 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r"^export/custom/(?P<export_id>[\w\-]+)/delete/$", 'delete_custom_export', name="delete_custom_export"),
     url(r"^export/custom/(?P<export_id>[\w\-]+)/download/$", 'export_default_or_custom_data', name="export_custom_data"),
     url(r"^export/default/download/$", "export_default_or_custom_data", name="export_default_data"),
+
+    url(r"^export/forms/all/$", 'export_all_form_metadata', name="export_all_form_metadata"),
     
     # url(r'^case_export/$', 'case_export', name='case_export'),
     url(r'^download/cases/$', 'download_cases', name='download_cases'),

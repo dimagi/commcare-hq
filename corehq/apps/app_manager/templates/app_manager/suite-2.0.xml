@@ -37,6 +37,7 @@
     <detail id="m{{ module.id }}_{{ detail.type }}">
         <title><text><locale id="m{{ module.id }}.{{ detail.type }}.title"/></text></title>
      {% for d in detail.columns %}
+        {% if d.format != 'filter' %}
         <field{% if forloop.first %} sort="default"{% endif %}>
             <header{% if d.format == "late-flag" or d.format == "invisible" %}{% if detail.display == "short" %} width="0"{% endif %}{% endif %}>
                 <text><locale id="m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.counter }}.header"/></text>
@@ -79,6 +80,7 @@
          {% endif %}{% endifequal %}{% endifequal %}{% endifequal %}{% endifequal %}{% endif %}{% endifequal %}{% endifequal %}{% endif %}
 
         </field>
+        {% endif %}
      {% endfor %}
     </detail>
    {% endif %}
