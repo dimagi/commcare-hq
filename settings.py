@@ -39,7 +39,7 @@ STATIC_ROOT = ''
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = '/media/'
+MEDIA_URL = '/static/hqmedia/'
 STATIC_URL = '/static/'
 
 filepath = os.path.abspath(os.path.dirname(__file__))
@@ -58,7 +58,7 @@ DJANGO_LOG_FILE = "%s/%s" % (filepath, "commcarehq.django.log")
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
-ADMIN_MEDIA_PREFIX = '/media/'
+ADMIN_MEDIA_PREFIX = '/static/admin/'
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = '2rgmwtyq$thj49+-6u7x9t39r7jflu&1ljj3x2c0n0fl$)04_0'
@@ -142,6 +142,7 @@ HQ_APPS = (
     'corehq.apps.hqwebapp',
     'corehq.apps.docs',
     'corehq.apps.hqmedia',
+    'corehq.apps.importer',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -453,6 +454,7 @@ STANDARD_REPORT_MAP = {
                       ],
     "Raw Data" : ['corehq.apps.reports.standard.ExcelExportReport',
                   'corehq.apps.reports.standard.CaseExportReport',
+                  'corehq.apps.importer.base.ExcelImporter',
                       ],
     "Manage Deployments" : ['corehq.apps.reports.standard.ApplicationStatusReport',
                   ]
