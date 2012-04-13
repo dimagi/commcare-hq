@@ -1,0 +1,18 @@
+{% extends "reports/report_base.html" %}
+{% load report_tags %}
+
+{% block head %}
+    {{ block.super }}
+{% endblock %}
+
+{% block reportcontent %}
+    <form class="form-horizontal form-report" action="#" method="post">
+
+    <fieldset>
+        <legend>Success!</legend>
+        <br />
+        Import complete. {{match_count}} rows were matched and updated, {{no_match_count}} rows did not match any cases.        
+    </fieldset>    
+    
+    </form>
+{% endblock %}
