@@ -1,5 +1,6 @@
 from datetime import datetime
 from corehq.apps import reports
+from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
 from couchexport.models import SavedExportSchema
 from couchexport.util import FilterFunction
@@ -114,3 +115,15 @@ class FormExportSchema(SavedExportSchema):
         if not self.include_errors:
             f.add(couchforms.filters.instances)
         return f
+
+    @property
+    def domain(self):
+        return self.index[0]
+
+    @property
+    def xmlns(self):
+        return self.index[1]
+
+    @property
+    def formname(self):
+        return xmlns_to_name(self.domain, self.xmlns, app_id=self.app_id)

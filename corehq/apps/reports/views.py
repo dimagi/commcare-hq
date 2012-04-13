@@ -248,7 +248,7 @@ def custom_export(req, domain):
             schema=schema,
             name="%s: %s" % (
                 xmlns_to_name(domain, export_tag[1], app_id=app_id) if export_type == "form" else export_tag[1],
-                datetime.utcnow().strftime("%d-%m-%Y")
+                datetime.utcnow().strftime("%Y-%m-%d")
             ),
             type=export_type
         )
