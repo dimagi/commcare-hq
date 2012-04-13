@@ -1,6 +1,7 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.cloudcare.models import CaseSpec
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required,\
+    login_or_digest
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.web import render_to_response, json_response, json_handler
@@ -118,7 +119,7 @@ def case_list(request, domain):
                                "cases": json.dumps(get_owned_cases(domain, user_id),
                                                    default=json_handler)})
 
-cloudcare_api = login_and_domain_required
+cloudcare_api = login_or_digest
 
 @login_and_domain_required
 def view_case(request, domain, case_id=None):
@@ -170,6 +171,7 @@ def get_cases(request, domain):
         
     return json_response(cases)
 
+@cloudcare_api
 def filter_cases(request, domain, app_id, module_id):
     app = Application.get(app_id)
     module = app.get_module(module_id)
