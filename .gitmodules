@@ -1,6 +1,6 @@
 [submodule "submodules/core-hq-src"]
 	path = submodules/core-hq-src
-	url = git://github.com/dimagi/core-hq.git
+	url = git@github.com:mchampanis/core-hq.git
 [submodule "submodules/couchforms-src"]
 	path = submodules/couchforms-src
 	url = git://github.com/dimagi/couchforms.git
