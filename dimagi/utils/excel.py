@@ -38,47 +38,89 @@ class Excel2007DictReader(object):
 
 class WorksheetJSONReader(object):
     def __init__(self, worksheet):
-        self.fieldnames = []
+        self.headers = []
         self.worksheet = worksheet
-        self.fieldnames = [cell.internal_value for cell in self.worksheet.iter_rows().next()]
+        for cell in self.worksheet.iter_rows().next():
+            if cell.internal_value is None:
+                break
+            else:
+                self.headers.append(cell.internal_value)
+        self.fieldnames = self.get_fieldnames()
+
+    def get_fieldnames(self):
+        obj = {}
+        for field, value in zip(self.headers, [''] * len(self.headers)):
+            self.set_field_value(obj, field, value)
+        return obj.keys()
+
+    @classmethod
+    def set_field_value(cls, obj, field, value):
+        if isinstance(value, basestring):
+            value = value.strip()
+        # try dict
+        try:
+            field, subfield = field.split(':')
+        except Exception:
+            pass
+        else:
+            field = field.strip()
+
+            if not obj.has_key(field):
+                obj[field] = {}
+
+            cls.set_field_value(obj[field], subfield, value)
+            return
+
+        # try list
+        try:
+            field, _ = field.split()
+        except Exception:
+            pass
+        else:
+            dud = {}
+            cls.set_field_value(dud, field, value)
+            (field, value), = dud.items()
+
+            if not obj.has_key(field):
+                obj[field] = []
+            if value is not None:
+                obj[field].append(value)
+            return
+
+        # else flat
+
+        # try boolean
+        try:
+            field, nothing = field.split('?')
+            assert(nothing.strip() == '')
+        except Exception:
+            pass
+        else:
+            try:
+                value = {
+                    'yes': True,
+                    'true': True,
+                    'no': False,
+                    'false': False,
+                    '': False,
+                    None: False,
+                    }[value]
+            except AttributeError:
+                raise Exception('Values for %s must be: "yes" or "no" (or empty = "no")')
+
+        # set for any flat type
+        field = field.strip()
+        if obj.has_key(field):
+            raise Exception('You have a repeat field: %s' % field)
+
+        obj[field] = value
 
     def row_to_json(self, row):
         obj = {}
-        for cell, fieldname in zip(row, self.fieldnames):
-            data = cell.internal_value
-            # try dict
-            try:
-                field, subfield = fieldname.split(':')
-            except Exception:
-                pass
-            else:
-                field = field.strip()
-                subfield = subfield.strip()
-                if not obj.has_key(field):
-                    obj[field] = {}
-                if obj[field].has_key(subfield):
-                    raise Exception('You have a repeat field: %s' % fieldname)
-                obj[field][subfield] = data
-                continue
 
-            # try list
-            try:
-                field, _ = fieldname.split()
-            except Exception:
-                pass
-            else:
-                field = field.strip()
-                if not obj.has_key(field):
-                    obj[field] = []
-                if data is not None:
-                    obj[field].append(data)
-                continue
-
-            # else flat
-            if obj.has_key(fieldname):
-                raise Exception('You have a repeat field: %s' % fieldname)
-            field = fieldname.strip()
-            obj[field] = data
+        for cell, header in zip(row, self.headers):
+            cell_value = cell.internal_value
+            self.set_field_value(obj, header, cell_value)
         return obj
 
     def __iter__(self):
@@ -86,6 +128,8 @@ class WorksheetJSONReader(object):
         # skip header row
         rows.next()
         for row in rows:
+            if not filter(lambda cell: cell.internal_value, row):
+                break
             yield self.row_to_json(row)
 
 class WorkbookJSONReader(object):
@@ -101,6 +145,19 @@ class WorkbookJSONReader(object):
             filename = f
 
         self.wb = openpyxl.reader.excel.load_workbook(filename, use_iterators=True)
-        self.worksheets = {}
+        self.worksheets_by_title = {}
+        self.worksheets = []
         for worksheet in self.wb.worksheets:
-            self.worksheets[worksheet.title] = WorksheetJSONReader(worksheet)
+            ws = WorksheetJSONReader(worksheet)
+            self.worksheets_by_title[worksheet.title] = ws
+            self.worksheets.append(ws)
+
+    def get_worksheet(self, title=None, index=None):
+        if title is not None and index is not None:
+            raise TypeError("Can only get worksheet by title *or* index")
+        if title:
+            return self.worksheets_by_title[title]
+        elif index:
+            return self.worksheets[index]
+        else:
+            return self.worksheets[0]
