@@ -7,6 +7,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.importer import base
 from corehq.apps.importer.util import ExcelFile
+from tempfile import mkstemp
 
 @login_and_domain_required
 def excel_config(request, domain):
@@ -17,20 +18,24 @@ def excel_config(request, domain):
         extension = os.path.splitext(file_handle.name)[1][1:].strip().lower()
         
         if extension in ExcelFile.ALLOWED_EXTENSIONS and file_handle.content_type == 'application/vnd.ms-excel':
-            filename = "%s.%s" % (uuid.uuid4(), extension)        
-            destination = open(os.path.join(ExcelFile.TEMP_DIR, filename), 'wb+')
+            # get a temp file
+            fd, filename = mkstemp(suffix='.'+extension)
+            destination = open(filename, 'wb')
+            # write the uploaded file to the temp file
             for chunk in file_handle.chunks():
                 destination.write(chunk)
             destination.close()
+            file_handle.close()            
             
             # open spreadsheet and get columns
-            spreadsheet = ExcelFile(os.path.join(ExcelFile.TEMP_DIR, filename), (named_columns == 'yes'))
+            spreadsheet = ExcelFile(filename, (named_columns == 'yes'))
             columns = spreadsheet.get_header_columns()
                 
             # get case types in this domain
             case_types = []
-            for row in CommCareCase.view('case/unique_types',reduce=True,group=True,startkey=domain,endkey=domain).all():
-                case_types.append(str(row['value'][0]))
+            for row in CommCareCase.view('hqcase/types_by_domain',reduce=True,group=True,startkey=[domain],endkey=[domain,{}]).all():
+                if not row['key'][1] in case_types:
+                    case_types.append(row['key'][1])
                                             
             return render_to_response(request, "excel_config.html", {
                                         'named_columns': named_columns, 
@@ -57,7 +62,7 @@ def excel_fields(request, domain):
     key_column = ''
     value_column = ''
     
-    spreadsheet = ExcelFile(os.path.join(ExcelFile.TEMP_DIR, filename), named_columns)
+    spreadsheet = ExcelFile(filename, named_columns)
     columns = spreadsheet.get_header_columns()
     
     if key_value_columns == 'yes':
@@ -81,11 +86,11 @@ def excel_fields(request, domain):
               
     # get all unique existing case properties, known and unknown
     case_fields = []
-    row = CommCareCase.view('case/unique_known_properties',reduce=True,group=True,startkey=domain,endkey=domain).one()
+    row = CommCareCase.view('hqcase/unique_known_properties',reduce=True,group=True,startkey=domain,endkey=domain).one()
     for value in row['value']:
         case_fields.append(value)
         
-    row = CommCareCase.view('case/unique_unknown_properties',reduce=True,group=True,startkey=domain,endkey=domain).one()
+    row = CommCareCase.view('hqcase/unique_unknown_properties',reduce=True,group=True,startkey=domain,endkey=domain).one()
     for value in row['value']:
         case_fields.append(value)               
     
@@ -128,7 +133,7 @@ def excel_commit(request, domain):
         if field and (case_fields[i] or custom_fields[i]):
             field_map[field] = {'case': case_fields[i], 'custom': custom_fields[i]}
         
-    spreadsheet = ExcelFile(os.path.join(ExcelFile.TEMP_DIR, filename), named_columns)
+    spreadsheet = ExcelFile(filename, named_columns)
     columns = spreadsheet.get_header_columns()        
     
     # find indexes of user selected columns

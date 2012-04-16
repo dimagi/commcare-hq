@@ -1,10 +1,9 @@
 import xlrd
 
 # class to deal with Excel files
-class ExcelFile:
+class ExcelFile(object):
     # xlrd support for .xlsx isn't complete
     ALLOWED_EXTENSIONS = ['xls']
-    TEMP_DIR = '/tmp'
     
     file_path = ''
     workbook = None
@@ -54,7 +53,7 @@ class ExcelFile:
             return []
         
     def get_unique_column_values(self, column_index):
-        return ExcelFile.uniq(self.get_column_values(column_index))
+        return list(set(self.get_column_values(column_index)))
     
     def get_num_rows(self):
         sheet = self.get_first_sheet()
@@ -67,11 +66,5 @@ class ExcelFile:
         
         if sheet:
             return sheet.row_values(index)
-        
-    @staticmethod
-    # returns unique elements in a set
-    def uniq(seq):    
-        seen = set()
-        seen_add = seen.add
-        return [ x for x in seq if x not in seen and not seen_add(x)]
+
     
