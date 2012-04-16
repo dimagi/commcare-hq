@@ -161,6 +161,8 @@ HQ_APPS = (
     'corehq.apps.ota',
     'corehq.apps.groups',
     'corehq.apps.sms',
+    'corehq.apps.ivr',
+    'corehq.apps.tropo',
     'corehq.apps.registration',
     'corehq.apps.unicel',
     'corehq.apps.reports',
