@@ -1,11 +1,7 @@
 {% load report_tags %}
 <nav>
     <ul class="nav nav-list" id="report-list">
-        {% if slug %}
-            {% standard_report_list domain slug %}
-        {% else %}
-            {% standard_report_list domain %}
-        {% endif %}
-        {% custom_report_list domain %}
+        {% standard_report_list request.couch_user domain slug %}
+        {% custom_report_list request.couch_user domain slug %}
     </ul>
 </nav>

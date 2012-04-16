@@ -8,6 +8,7 @@ from couchexport.util import FilterFunction
 from couchforms.filters import instances
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.modules import to_function
 import pytz
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -329,3 +330,13 @@ def create_export_filter(request, domain, export_type='form'):
 
 
     return filter
+
+def get_possible_reports(domain):
+    reports = []
+    for heading, models in settings.STANDARD_REPORT_MAP.items():
+        for model in models:
+            reports.append((model, to_function(model).name))
+
+    for model in settings.CUSTOM_REPORT_MAP.get(domain, []):
+        reports.append((model, to_function(model).name))
+    return reports

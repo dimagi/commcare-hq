@@ -245,23 +245,29 @@ def attribute_lookup(obj, attr):
         return getattr(obj, attr)
 
 @register.simple_tag
-def standard_report_list(domain, current_slug=""):
+def standard_report_list(user, domain, current_slug=""):
     mapping = getattr(settings, 'STANDARD_REPORT_MAP', None)
     if not mapping: return ""
     lst = []
     for key, models in mapping.iteritems():
-        lst.append('<li class="nav-header">%s</li>' % key)
+        sublist = []
+        nav_header = '<li class="nav-header">%s</li>' % key
         for model in models:
+            if not user.can_view_report(model):
+                continue
             klass = to_function(model)
-            lst.append('<li%s><a href="%s" title="%s">' %\
+            sublist.append('<li%s><a href="%s" title="%s">' %\
                        ((' class="active"' if klass.slug == current_slug else ""),
                         reverse('report_dispatcher', args=(domain, klass.slug)),
                         klass.description))
             if klass.slug == ExcelExportReport.slug:
-                lst.append('<i class="icon-list-alt"></i> ')
+                sublist.append('<i class="icon-list-alt"></i> ')
             elif klass.slug == CaseExportReport.slug:
-                lst.append('<i class="icon-share"></i> ')
-            lst.append('%s</a></li>' % klass.name)
+                sublist.append('<i class="icon-share"></i> ')
+            sublist.append('%s</a></li>' % klass.name)
+        if sublist:
+            lst.append(nav_header)
+            lst.extend(sublist)
     return "\n".join(lst)
 
 @register.simple_tag
@@ -272,17 +278,23 @@ def custom_reports_exist(domain):
     return True
 
 @register.simple_tag
-def custom_report_list(domain, current_slug=""):
+def custom_report_list(user, domain, current_slug=""):
     mapping = getattr(settings, 'CUSTOM_REPORT_MAP', None)
     if not mapping: return ""
     if not domain in mapping: return ""
     lst = []
-    lst.append('<li class="nav-header" >Custom Reports</li>')
+    sublist = []
+    nav_header = '<li class="nav-header" >Custom Reports</li>'
     for model in mapping[domain]:
+        if not user.can_view_report(model):
+            continue
         klass = to_function(model)
-        lst.append('<li%s><a href="%s" title="%s">%s</a></li>' % \
+        sublist.append('<li%s><a href="%s" title="%s">%s</a></li>' % \
                    ((' class="active"' if klass.slug == current_slug else ""),
                     reverse('custom_report_dispatcher', args=(domain, klass.slug)),
                     klass.description,
                     klass.name))
+    if sublist:
+        lst.append(nav_header)
+        lst.extend(sublist)
     return "\n".join(lst)

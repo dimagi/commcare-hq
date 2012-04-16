@@ -426,16 +426,17 @@ def change_my_password(request, domain, template="users/change_my_password.html"
 
 
 def _handle_user_form(request, domain, couch_user=None):
+    from corehq.apps.reports.util import get_possible_reports
     context = {}
     if couch_user:
         create_user = False
     else:
         create_user = True
     can_change_admin_status = \
-        (request.user.is_superuser or request.couch_user.can_edit_web_users(domain))\
+        (request.user.is_superuser or request.couch_user.can_edit_web_users(domain=domain))\
         and request.couch_user.user_id != couch_user.user_id and not couch_user.is_commcare_user()
     if request.method == "POST" and request.POST['form_type'] == "basic-info":
-        form = UserForm(request.POST)
+        form = UserForm(request.POST, viewable_reports_choices=get_possible_reports(domain))
         if form.is_valid():
             if create_user:
                 django_user = User()
@@ -447,21 +448,40 @@ def _handle_user_form(request, domain, couch_user=None):
             couch_user.email = form.cleaned_data['email']
             if can_change_admin_status:
                 role = form.cleaned_data['role']
+                can_view_reports = form.cleaned_data['can_view_reports']
+                viewable_reports = form.cleaned_data['viewable_reports']
                 if role:
                     couch_user.set_role(domain, role)
+                    if can_view_reports == 'yes':
+                        couch_user.set_permission(domain,'view-reports', True)
+                    else:
+                        couch_user.set_permission(domain, 'view-reports', False)
+                        if can_view_reports == 'no':
+                            couch_user.set_permissions_data(domain, 'view-report', data=[])
+                        else:
+                            couch_user.set_permissions_data(domain, 'view-report', data=viewable_reports)
             couch_user.save()
             messages.success(request, 'Changes saved for user "%s"' % couch_user.username)
     else:
-        form = UserForm()
+        form = UserForm(viewable_reports_choices=get_possible_reports(domain))
         if not create_user:
             form.initial['first_name'] = couch_user.first_name
             form.initial['last_name'] = couch_user.last_name
             form.initial['email'] = couch_user.email
             if can_change_admin_status:
                 form.initial['role'] = couch_user.get_role(domain) or ''
+                form.initial['viewable_reports'] = couch_user.get_viewable_reports(domain=domain, name=False)
+                if couch_user.can_view_reports(domain=domain):
+                    form.initial['can_view_reports'] = 'yes'
+                elif form.initial['viewable_reports']:
+                    form.initial['can_view_reports'] = 'some'
+                else:
+                    form.initial['can_view_reports'] = 'no'
 
     if not can_change_admin_status:
         del form.fields['role']
+        del form.fields['can_view_reports']
+        del form.fields['viewable_reports']
 
     context.update({"form": form})
     return context

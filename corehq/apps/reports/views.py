@@ -49,7 +49,13 @@ datespan_default = datespan_in_request(
 )
 
 @login_and_domain_required
-def default(request, domain):
+def default(request, domain, template="reports/report_base.html"):
+    context = {
+        'domain': domain,
+        'slug': None,
+        'report': {'name': "Select a Report to View"}
+    }
+    return render_to_response(request, template, context)
     return HttpResponseRedirect(reverse("report_dispatcher", args=[domain, standard.SubmissionsByFormReport.slug]))
 
 @login_or_digest
@@ -464,11 +470,14 @@ def report_dispatcher(request, domain, report_slug, return_json=False, map='STAN
             klass = to_function(model)
             if klass.slug == report_slug:
                 k = klass(domain, request)
-                if return_json:
+                if not request.couch_user.can_view_report(model):
+                     raise Http404
+                elif return_json:
                     return k.as_json()
                 elif export:
                     return k.as_export()
-                return k.as_view()
+                else:
+                    return k.as_view()
     raise Http404
 
 @login_and_domain_required
@@ -481,7 +490,10 @@ def custom_report_dispatcher(request, domain, report_slug, export=False):
         klass = to_function(model)
         if klass.slug == report_slug:
             k = klass(domain, request)
-            if export:
+            if not request.couch_user.can_view_report(model):
+                raise Http404
+            elif export:
                 return k.as_export()
-            return k.as_view()
+            else:
+                return k.as_view()
     raise Http404
