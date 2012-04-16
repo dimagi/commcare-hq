@@ -844,7 +844,7 @@ class ApplicationBase(VersionedDoc):
     def profile_url(self):
         return "%s%s?latest=true" % (
             get_url_base(),
-            reverse('download_profile', args=[self.domain, self.copy_of or self._id])
+            reverse('download_profile', args=[self.domain, self._id])
         )
     @property
     def profile_loc(self):
