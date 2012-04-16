@@ -162,19 +162,23 @@ def excel_commit(request, domain):
                 
         if search_field == 'case_id':
             # look for the relevant case using domain and id
-            search_result = CommCareCase.view('case/by_domain_id', 
+            search_result = CommCareCase.view('hqcase/by_domain_id', 
                                               startkey=[domain, row[search_column_index]], 
                                               endkey=[domain, row[search_column_index]]
                                               ).one()
         elif search_field == 'external_id':
-            search_result = CommCareCase.view('case/by_domain_external_id', 
+            search_result = CommCareCase.view('hqcase/by_domain_external_id', 
                                               startkey=[domain, row[search_column_index]], 
                                               endkey=[domain, row[search_column_index]]
                                               ).one()
+        try:
+            case_id = search_result['id']
+        except:
+            case_id = None
                                                           
-        if search_result:
+        if case_id:
             # get the case to update
-            case = CommCareCase.get(search_result['id'])
+            case = CommCareCase.get(case_id)
             match_count += 1
         else:
             no_match_count += 1
