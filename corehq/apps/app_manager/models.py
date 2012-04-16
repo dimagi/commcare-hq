@@ -440,7 +440,6 @@ class DetailColumn(IndexedSchema):
         """
         Convert special names like date-opened to their casedb xpath equivalent (e.g. @date_opened).
         Only ever called by 2.0 apps.
-
         """
         return {
             'external-id': 'external_id',

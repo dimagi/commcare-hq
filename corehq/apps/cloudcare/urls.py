@@ -19,6 +19,8 @@ cases_urls = patterns('corehq.apps.cloudcare.views',
 api_urls = patterns('corehq.apps.cloudcare.views',
     url(r'^groups/(?P<user_id>[\w-]*)/$', 'get_groups', name='cloudcare_get_groups'),
     url(r'^cases/$', 'get_cases', name='cloudcare_get_cases'),
+    url(r'^cases/module/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/$', 
+        'filter_cases', name='cloudcare_filter_cases'),
     url(r'^apps/$', 'get_apps_api', name='cloudcare_get_apps'),
     url(r'^apps/(?P<app_id>[\w-]*)/$', 'get_app_api', name='cloudcare_get_app'),
 )

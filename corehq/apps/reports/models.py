@@ -1,5 +1,10 @@
 from datetime import datetime
+from corehq.apps import reports
+from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
+from couchexport.models import SavedExportSchema
+from couchexport.util import FilterFunction
+import couchforms
 from dimagi.utils.mixins import UnicodeMixIn
 import settings
 
@@ -86,3 +91,39 @@ class DailyReportNotification(ReportNotification):
 class WeeklyReportNotification(ReportNotification):
     hours = IntegerProperty()
     day_of_week = IntegerProperty()
+
+class FormExportSchema(SavedExportSchema):
+    doc_type = 'SavedExportSchema'
+    app_id = StringProperty()
+    include_errors = BooleanProperty(default=True)
+
+    @classmethod
+    def wrap(cls, data):
+        self = super(FormExportSchema, cls).wrap(data)
+        if self.filter_function == 'couchforms.filters.instances':
+            # grandfather in old custom exports
+            self.include_errors = False
+            self.filter_function = None
+        return self
+
+    @property
+    def filter(self):
+        f = FilterFunction()
+
+        if self.app_id is not None:
+            f.add(reports.util.app_export_filter, app_id=self.app_id)
+        if not self.include_errors:
+            f.add(couchforms.filters.instances)
+        return f
+
+    @property
+    def domain(self):
+        return self.index[0]
+
+    @property
+    def xmlns(self):
+        return self.index[1]
+
+    @property
+    def formname(self):
+        return xmlns_to_name(self.domain, self.xmlns, app_id=self.app_id)
