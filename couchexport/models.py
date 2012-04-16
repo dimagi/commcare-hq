@@ -242,7 +242,6 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     tables = SchemaListProperty(ExportTable)
     filter_function = StringProperty()
     type = StringProperty()
-
     filter = FilterFunctionProperty('filter_function')
 
     def __unicode__(self):
