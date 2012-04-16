@@ -30,7 +30,7 @@ def send_sms(domain, id, phone_number, text):
     """
     if phone_number is None:
         return False
-    if isintance(phone_number, int) or isinstance(phone_number, long):
+    if isinstance(phone_number, int) or isinstance(phone_number, long):
         phone_number = str(phone_number)
     logging.debug('Sending message: %s' % text)
     phone_number = clean_phone_number(phone_number)

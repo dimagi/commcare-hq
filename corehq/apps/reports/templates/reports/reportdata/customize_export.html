@@ -69,6 +69,9 @@
         <input type="hidden" name="schema" value="{{ saved_export.schema_id }}" />
         <input type="hidden" name="table" value="{{ table_config.index }}" />
         <input type="hidden" name="order" id="order_input" value="" />
+        {% if saved_export.type == 'form' and saved_export.app_id %}
+            <input type="hidden" name="app_id" value="{{ saved_export.app_id|default:'' }}" />
+        {% endif %}
         <fieldset>
             <legend>Export Settings</legend>
             <div class="control-group">
@@ -87,15 +90,17 @@
                     </select>
                 </div>
             </div>
+            {% if saved_export.type == 'form' %}
             <div class="control-group">
                 <label for="include-errors-checkbox" class="control-label"></label>
                 <div class="controls">
                     <label class="checkbox">
-                        <input type="checkbox" name="include-errors" id="include-errors-checkbox" value="include-errors" {% if saved_export.filter_function %}{% else %}checked="yes"{% endif %}/>
+                        <input type="checkbox" name="include-errors" id="include-errors-checkbox" value="include-errors" {% if saved_export.include_errors %}checked="yes"{% endif %}/>
                         Include duplicates and other unprocessed forms
                     </label>
                 </div>
             </div>
+            {% endif %}
         </fieldset>
         <fieldset>
             <legend>Export Fields</legend>

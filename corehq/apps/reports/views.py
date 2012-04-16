@@ -1,10 +1,13 @@
 from datetime import datetime, timedelta
 import json
 from corehq.apps.reports import util, standard
+from corehq.apps.reports.models import FormExportSchema
 from corehq.apps.users.export import export_users
 import couchexport
 from couchexport.export import UnsupportedExportFormat, export_raw
 from couchexport.util import FilterFunction
+from couchexport.views import _export_tag_or_bust
+import couchforms
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.export import WorkBook
@@ -25,7 +28,7 @@ from casexml.apps.case.export import export_cases_and_referrals
 from corehq.apps.reports.display import xmlns_to_name
 from couchexport.schema import build_latest_schema
 from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
-    ExportTable, Format
+    ExportTable, Format, FakeSavedExportSchema
 from couchexport import views as couchexport_views
 from couchexport.shortcuts import export_data_shared, export_raw_data,\
     export_response
@@ -105,67 +108,154 @@ def export_data(req, domain):
 
 @login_and_domain_required
 @datespan_default
-def export_data_async(req, domain):
+def export_data_async(request, domain):
     """
     Download all data for a couchdbkit model
     """
 
     try:
-        export_tag = json.loads(req.GET.get("export_tag", "null") or "null")
-        export_type = req.GET.get("type", "form")
+        export_tag = json.loads(request.GET.get("export_tag", "null") or "null")
+        export_type = request.GET.get("type", "form")
     except ValueError:
         return HttpResponseBadRequest()
 
     assert(export_tag[0] == domain)
 
-    filter = util.create_export_filter(req, domain, export_type=export_type)
+    filter = util.create_export_filter(request, domain, export_type=export_type)
 
-    return couchexport_views.export_data_async(req, filter=filter, type=export_type)
-    
+    return couchexport_views.export_data_async(request, filter=filter, type=export_type)
+
+
+class CustomExportHelper(object):
+
+    def __init__(self, request, domain, export_id=None):
+        self.request = request
+        self.domain = domain
+        self.export_type = request.GET.get('type', 'form')
+        if self.export_type == 'form':
+            self.ExportSchemaClass = FormExportSchema
+        else:
+            self.ExportSchemaClass = SavedExportSchema
+
+        if export_id:
+            self.custom_export = self.ExportSchemaClass.get(export_id)
+            assert(self.custom_export.doc_type == 'SavedExportSchema')
+            assert(self.custom_export.type == self.export_type)
+            assert(self.custom_export.index[0] == domain)
+        else:
+            self.custom_export = self.ExportSchemaClass(type=self.export_type)
+            if self.export_type == 'form':
+                self.custom_export.app_id = request.GET.get('app_id')
+
+    def update_custom_export(self):
+        schema = ExportSchema.get(self.request.POST["schema"])
+        self.custom_export.index = schema.index
+        self.custom_export.schema_id = self.request.POST["schema"]
+        self.custom_export.name = self.request.POST["name"]
+        self.custom_export.default_format = self.request.POST["format"] or Format.XLS_2007
+
+        table = self.request.POST["table"]
+        cols = self.request.POST['order'].strip().split()
+        export_cols = [ExportColumn(index=col, display=self.request.POST["%s_display" % col]) for col in cols]
+        export_table = ExportTable(index=table, display=self.request.POST["name"], columns=export_cols)
+        self.custom_export.tables = [export_table]
+        self.custom_export.order = cols
+
+        table_dict = dict([t.index, t] for t in self.custom_export.tables)
+        if table in table_dict:
+            table_dict[table].columns = export_cols
+        else:
+            self.custom_export.tables.append(ExportTable(index=table,
+                display=self.custom_export.name,
+                columns=export_cols))
+
+        if self.export_type == 'form':
+            self.custom_export.include_errors = bool(self.request.POST.get("include-errors"))
+            self.custom_export.app_id = self.request.POST.get('app_id')
+
+@login_or_digest
+@datespan_default
+def export_default_or_custom_data(request, domain, export_id=None):
+    """
+    Export data from a saved export schema
+    """
+
+    async = request.GET.get('async') == 'true'
+    next = request.GET.get("next", "")
+    format = request.GET.get("format", "")
+    export_type = request.GET.get("type", "form")
+    previous_export_id = request.GET.get("previous_export", None)
+    filename = request.GET.get("filename", None)
+
+    filter = util.create_export_filter(request, domain, export_type=export_type)
+
+    if export_id:
+        export_object = CustomExportHelper(request, domain, export_id).custom_export
+    else:
+        if not async:
+            # this function doesn't support synchronous export without a custom export object
+            # if we ever want that (i.e. for HTML Preview) then we just need to give
+            # FakeSavedExportSchema a download_data function (called below)
+            return HttpResponseBadRequest()
+        try:
+            export_tag = json.loads(request.GET.get("export_tag", "null") or "null")
+        except ValueError:
+            return HttpResponseBadRequest()
+        assert(export_tag[0] == domain)
+
+        export_object = FakeSavedExportSchema(index=export_tag)
+
+
+    if async:
+        return export_object.export_data_async(filter, filename, previous_export_id, format=format)
+    else:
+        if not next:
+            next = reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug])
+        resp = export_object.download_data(format, filter=filter)
+        if resp:
+            return resp
+        else:
+            messages.error(request, "Sorry, there was no data found for the tag '%s'." % export_object.name)
+            return HttpResponseRedirect(next)
+
+
 @login_and_domain_required
 def custom_export(req, domain):
     """
     Customize an export
     """
     try:
-        export_tag = [domain, 
-                      json.loads(req.GET.get("export_tag", "null") or "null")]
-        export_type = req.GET.get("type", "form")
+        export_tag = [domain, json.loads(req.GET.get("export_tag", "null") or "null")]
     except ValueError:
         return HttpResponseBadRequest()
-    
-    if req.method == "POST":
-        
-        table = req.POST["table"]
-        cols = req.POST['order'].strip().split()
-        export_cols = [ExportColumn(index=col,
-                                    display=req.POST["%s_display" % col]) \
-                       for col in cols]
-        export_table = ExportTable(index=table, display=req.POST["name"],
-                                   columns=export_cols)
-        include_errors = req.POST.get("include-errors", "")
-        filter_function = "couchforms.filters.instances" if not include_errors else ""
+    export_type = req.GET.get("type", "form")
 
-        export_def = SavedExportSchema(index=export_tag,
-                                       schema_id=req.POST["schema"],
-                                       name=req.POST["name"],
-                                       default_format=req.POST["format"] or Format.XLS_2007,
-                                       tables=[export_table],
-                                       filter_function=filter_function,
-                                       type=export_type)
-        export_def.save()
+    helper = CustomExportHelper(req, domain)
+
+    if req.method == "POST":
+        helper.update_custom_export()
+        helper.custom_export.save()
         messages.success(req, "Custom export created! You can continue editing here.")
         return HttpResponseRedirect("%s?type=%s" % (reverse("edit_custom_export",
-                                            args=[domain,export_def.get_id]), export_type))
-        
+                                            args=[domain, helper.custom_export.get_id]), export_type))
+
     schema = build_latest_schema(export_tag)
     
     if schema:
+        app_id = req.GET.get('app_id')
         print "export_tag is %s" % export_tag
-        saved_export = SavedExportSchema.default(schema, name="%s: %s" %\
-                                                 (xmlns_to_name(domain, export_tag[1]) if export_type == "form" else export_tag[1],
-                                                  datetime.utcnow().strftime("%d-%m-%Y")))
+        saved_export = helper.ExportSchemaClass.default(
+            schema=schema,
+            name="%s: %s" % (
+                xmlns_to_name(domain, export_tag[1], app_id=app_id) if export_type == "form" else export_tag[1],
+                datetime.utcnow().strftime("%Y-%m-%d")
+            ),
+            type=export_type
+        )
         print "Table is %s" % saved_export.tables[0].index
+
+        if export_type == 'form':
+            saved_export.app_id = app_id
         return render_to_response(req, "reports/reportdata/customize_export.html",
                                   {"saved_export": saved_export,
                                    "table_config": saved_export.table_configuration[0],
@@ -181,41 +271,20 @@ def edit_custom_export(req, domain, export_id):
     """
     Customize an export
     """
-    saved_export = SavedExportSchema.get(export_id)
-    table_dict = dict([t.index, t] for t in saved_export.tables)
+    helper = CustomExportHelper(req, domain, export_id)
     if req.method == "POST":
-        table = req.POST["table"]
-        
-        cols = req.POST['order'].strip().split()#[col[:-4] for col in req.POST if col.endswith("_val")]
-        export_cols = [ExportColumn(index=col, 
-                                    display=req.POST["%s_display" % col]) \
-                       for col in cols]
-        schema = ExportSchema.get(req.POST["schema"])
-        saved_export.index = schema.index 
-        saved_export.schema_id = req.POST["schema"]
-        saved_export.name = req.POST["name"]
-        saved_export.order = cols
-        saved_export.default_format = req.POST["format"] or Format.XLS_2007
-        saved_export.filter_function = "couchforms.filters.instances" \
-                if not req.POST.get("include-errors", "") else "" 
-        
-        if table in table_dict:
-            table_dict[table].columns = export_cols
-        else:
-            saved_export.tables.append(ExportTable(index=table,
-                                                   display=saved_export.name,
-                                                   coluns=export_cols))
-        saved_export.save()
+        helper.update_custom_export()
     
     # not yet used, but will be when we support child table export
 #    table_index = req.GET.get("table_id", None)
 #    if table_index:
 #        table_config = saved_export.get_table_configuration(table_index)
 #    else:
-    table_config = saved_export.table_configuration[0]
-        
+        helper.custom_export.save()
+    table_config = helper.custom_export.table_configuration[0]
+
     return render_to_response(req, "reports/reportdata/customize_export.html",
-                              {"saved_export": saved_export,
+                              {"saved_export": helper.custom_export,
                                "table_config": table_config,
                                "domain": domain})
 
@@ -255,31 +324,6 @@ def delete_custom_export(req, domain, export_id):
         return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug]))
     else:
         return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.CaseExportReport.slug]))
-
-
-@login_or_digest
-@datespan_default
-def export_custom_data(req, domain, export_id):
-    """
-    Export data from a saved export schema
-    """
-
-    saved_export = SavedExportSchema.get(export_id)
-    next = req.GET.get("next", "")
-    format = req.GET.get("format", "")
-    export_type = req.GET.get("type", "")
-
-    if not next:
-        next = reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug])
-
-    filter = util.create_export_filter(req, domain, export_type=export_type)
-
-    resp = saved_export.download_data(format, filter=filter)
-    if resp:
-        return resp
-    else:
-        messages.error(req, "Sorry, there was no data found for the tag '%s'." % saved_export.name)
-        return HttpResponseRedirect(next)
 
 @login_and_domain_required
 def case_details(request, domain, case_id):
