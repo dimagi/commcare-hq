@@ -455,7 +455,8 @@ STANDARD_REPORT_MAP = {
                   'corehq.apps.reports.standard.CaseExportReport',
                       ],
     "Manage Deployments" : ['corehq.apps.reports.standard.ApplicationStatusReport',
-                            'corehq.apps.reports.standard.FormErrorReport'
+                            'phonelog.reports.FormErrorReport',
+                            'phonelog.reports.DeviceLogDetailsReport'
                   ]
 }
 
