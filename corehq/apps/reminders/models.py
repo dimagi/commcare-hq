@@ -5,7 +5,8 @@ import re
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.sms.api import send_sms
+from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
+from corehq.apps.sms.models import CallLog, EventLog, MISSED_EXPECTED_CALLBACK, CommConnectCase
 from corehq.apps.users.models import CommCareUser
 import logging
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
@@ -20,6 +21,15 @@ EVENT_INTERPRETATIONS = [EVENT_AS_SCHEDULE, EVENT_AS_OFFSET]
 UI_SIMPLE_FIXED = "SIMPLE_FIXED"
 UI_COMPLEX = "COMPLEX"
 UI_CHOICES = [UI_SIMPLE_FIXED, UI_COMPLEX]
+
+RECIPIENT_USER = "USER"
+RECIPIENT_CASE = "CASE"
+RECIPIENT_CHOICES = [RECIPIENT_USER, RECIPIENT_CASE]
+
+MATCH_EXACT = "EXACT"
+MATCH_REGEX = "REGEX"
+MATCH_ANY_VALUE = "ANY_VALUE"
+MATCH_TYPE_CHOICES = [MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE]
 
 def is_true_value(val):
     return val == 'ok' or val == 'OK'
@@ -94,34 +104,6 @@ class CaseReminderEvent(DocumentSchema):
     message = DictProperty()
     callback_timeout_intervals = ListProperty(IntegerProperty)
 
-class CaseReminderCallback(Document):
-    """
-    A CaseReminderCallback object logs the callback response for a CaseReminder 
-    with method "callback".
-    """
-    phone_number = StringProperty()
-    timestamp = DateTimeProperty()
-    user_id = StringProperty()
-    
-    @classmethod
-    def callback_exists(cls, user_id, after_timestamp):
-        """
-        Checks to see if a callback exists for the given user after the given timestamp.
-        
-        user_id         The user for whom to check the existence of a callback.
-        after_timestamp The datetime after which to check for the existence of a callback.
-        
-        return          True if a callback exists, False if not.
-        """
-        start_timestamp = json_format_datetime(after_timestamp)
-        end_timestamp = json_format_datetime(datetime.utcnow())
-        c = CaseReminderCallback.view("reminders/callbacks_by_user_timestamp"
-           ,startkey = [user_id, start_timestamp]
-           ,endkey = [user_id, end_timestamp]
-           ,include_docs = True
-        ).one()
-        return (c is not None)
-
 class CaseReminderHandler(Document):
     """
     A CaseReminderHandler defines the rules and schedule which govern how messages 
@@ -139,10 +121,7 @@ class CaseReminderHandler(Document):
 
     until   This defines when the reminders should stop being sent. Once this condition 
             is reached, the CaseReminder is deactivated.
-            Examples:   until="edd"
-                            - The reminders will stop being sent for a CommCareCase on 
-                              the date defined by the CommCareCase's "edd" property.
-                        until="followup_1_complete"
+            Examples:   until="followup_1_complete"
                             - The reminders will stop being sent for a CommCareCase when 
                               the CommCareCase's "followup_1_complete" property equals "ok".
 
@@ -178,7 +157,7 @@ class CaseReminderHandler(Document):
     This CaseReminderHandler can be used to send an hourly message starting one day (start_offset=1)
     after "form1_completed", and will keep sending the message every hour until "form2_completed". So,
     if "form1_completed" is reached on January 1, 2012, at 9:46am, the reminders will begin being sent
-    at January 2, 2012, at 9:46am and every hour subsequently until "form2_completed". Specifically,
+    at January 2, 2012, at 10:46am and every hour subsequently until "form2_completed". Specifically,
     when "event_interpretation" is EVENT_AS_OFFSET:
         day_num         is interpreted to be a number of days after the last fire
         fire_time       is interpreted to be a number of hours, minutes, and seconds after the last fire
@@ -226,11 +205,7 @@ class CaseReminderHandler(Document):
 
     nickname        A simple name used to describe this CaseReminderHandler.
 
-    lang_property   If given, will be used to select the appropriate translation of a message before it is sent
-                    out. For example, if this attribute is "lang", the system will check the CaseReminder's 
-                    user.user_data.lang for the correct language.
-
-    default_lang    Default language to use in case the language specified by "lang_property" is not found.
+    default_lang    Default language to use in case no translation is found for the recipient's language.
 
     method          Set to "sms" to send simple sms reminders at the proper intervals.
                     Set to "callback" to send sms reminders and to enable the checked of "callback_timeout_intervals" on each event.
@@ -240,14 +215,17 @@ class CaseReminderHandler(Document):
     domain = StringProperty()
     case_type = StringProperty()
     nickname = StringProperty()
-    lang_property = StringProperty()
     default_lang = StringProperty()
     method = StringProperty(choices=METHOD_CHOICES, default="sms")
     ui_type = StringProperty(choices=UI_CHOICES, default=UI_SIMPLE_FIXED)
+    recipient = StringProperty(choices=RECIPIENT_CHOICES, default=RECIPIENT_USER)
     
     # Attributes which define the reminder schedule
-    start = StringProperty()
+    start_property = StringProperty()
+    start_value = StringProperty()
+    start_date = StringProperty()
     start_offset = IntegerProperty()
+    start_match_type = StringProperty(choices=MATCH_TYPE_CHOICES)
     events = SchemaListProperty(CaseReminderEvent)
     schedule_length = IntegerProperty()
     event_interpretation = StringProperty(choices=EVENT_INTERPRETATIONS, default=EVENT_AS_OFFSET)
@@ -291,8 +269,11 @@ class CaseReminderHandler(Document):
         
         return  The CaseReminder
         """
-        user = CommCareUser.get_by_user_id(case.user_id)
-        local_now = CaseReminderHandler.utc_to_local(user, now)
+        if self.recipient == RECIPIENT_USER:
+            recipient = CommCareUser.get_by_user_id(case.user_id)
+        else:
+            recipient = CommConnectCase.get(case._id)
+        local_now = CaseReminderHandler.utc_to_local(recipient, now)
         reminder = CaseReminder(
             domain=self.domain,
             case_id=case._id,
@@ -300,8 +281,7 @@ class CaseReminderHandler(Document):
             user_id=case.user_id,
             method=self.method,
             active=True,
-            lang=self.default_lang,
-            start_date=date(local_now.year,local_now.month,local_now.day),
+            start_date=date(now.year, now.month, now.day) if (now.hour == 0 and now.minute == 0 and now.second == 0 and now.microsecond == 0) else date(local_now.year,local_now.month,local_now.day),
             schedule_iteration_num=1,
             current_event_sequence_num=0,
             callback_try_count=0,
@@ -316,21 +296,21 @@ class CaseReminderHandler(Document):
         else:
             # EVENT_AS_SCHEDULE
             local_tmsp = datetime.combine(reminder.start_date, self.events[0].fire_time) + timedelta(days = (self.start_offset + self.events[0].day_num))
-            reminder.next_fire = CaseReminderHandler.timestamp_to_utc(reminder.user, local_tmsp)
+            reminder.next_fire = CaseReminderHandler.timestamp_to_utc(recipient, local_tmsp)
         return reminder
 
     @classmethod
-    def utc_to_local(cls, user, timestamp):
+    def utc_to_local(cls, contact, timestamp):
         """
-        Converts the given naive datetime from UTC to the user's time zone.
+        Converts the given naive datetime from UTC to the contact's time zone.
         
-        user        The user whose time zone to use.
+        contact     The contact whose time zone to use (must be an instance of CommCareMobileContactMixin).
         timestamp   The naive datetime.
         
         return      The converted timestamp, as a naive datetime.
         """
         try:
-            time_zone = timezone(str(user.user_data.get("time_zone")))
+            time_zone = timezone(str(contact.get_time_zone()))
             utc_datetime = pytz.utc.localize(timestamp)
             local_datetime = utc_datetime.astimezone(time_zone)
             naive_local_datetime = local_datetime.replace(tzinfo=None)
@@ -339,17 +319,17 @@ class CaseReminderHandler(Document):
             return timestamp
 
     @classmethod
-    def timestamp_to_utc(cls, user, timestamp):
+    def timestamp_to_utc(cls, contact, timestamp):
         """
-        Converts the given naive datetime from the user's time zone to UTC.
+        Converts the given naive datetime from the contact's time zone to UTC.
         
-        user        The user whose time zone to use.
+        contact     The contact whose time zone to use (must be an instance of CommCareMobileContactMixin).
         timestamp   The naive datetime.
         
         return      The converted timestamp, as a naive datetime.
         """
         try:
-            time_zone = timezone(str(user.user_data.get("time_zone")))
+            time_zone = timezone(str(contact.get_time_zone()))
             local_datetime = time_zone.localize(timestamp)
             utc_datetime = local_datetime.astimezone(pytz.utc)
             naive_utc_datetime = utc_datetime.replace(tzinfo=None)
@@ -417,7 +397,7 @@ class CaseReminderHandler(Document):
                     next_event = reminder.current_event
                     day_offset = self.start_offset + (self.schedule_length * (reminder.schedule_iteration_num - 1)) + next_event.day_num
                     reminder_datetime = datetime.combine(reminder.start_date, next_event.fire_time) + timedelta(days = day_offset)
-                    reminder.next_fire = CaseReminderHandler.timestamp_to_utc(reminder.user, reminder_datetime)
+                    reminder.next_fire = CaseReminderHandler.timestamp_to_utc(reminder.recipient, reminder_datetime)
 
     def should_fire(self, reminder, now):
         return now > reminder.next_fire
@@ -430,21 +410,54 @@ class CaseReminderHandler(Document):
         
         return      True on success, False on failure
         """
+        # Get the proper recipient
+        recipient = reminder.recipient
+        
+        # Retrieve the VerifiedNumber entry for the recipient
+        try:
+            verified_number = recipient.get_verified_number()
+        except Exception:
+            verified_number = None
+            
+        # Get the language of the recipient
+        try:
+            lang = recipient.get_language_code()
+        except Exception:
+            lang = None
+        
         # If it is a callback reminder and the callback has been received, skip sending the next timeout message
         if (reminder.method == "callback" or reminder.method == "callback_test") and len(reminder.current_event.callback_timeout_intervals) > 0:
-            if CaseReminderCallback.callback_exists(reminder.user_id, reminder.last_fired):
+            if CallLog.inbound_call_exists(verified_number, reminder.last_fired):
                 reminder.callback_received = True
                 return True
+            elif len(reminder.current_event.callback_timeout_intervals) == reminder.callback_try_count:
+                # On the last callback timeout, instead of sending the SMS again, log the missed callback
+                event = EventLog(
+                    domain          = reminder.domain,
+                    date            = self.get_now(),
+                    event_type      = MISSED_EXPECTED_CALLBACK
+                )
+                if verified_number is not None:
+                    event.couch_recipient_doc_type = verified_number.owner_doc_type
+                    event.couch_recipient = verified_number.owner_id
+                event.save()
+                return True
         reminder.last_fired = self.get_now()
-        message = reminder.current_event.message.get(reminder.lang, reminder.current_event.message[self.default_lang])
+        message = reminder.current_event.message.get(lang, reminder.current_event.message[self.default_lang])
         message = Message.render(message, case=reminder.case.case_properties())
         if reminder.method == "sms" or reminder.method == "callback":
-            try:
-                phone_number = reminder.user.phone_number
-            except Exception:
-                phone_number = ''
-
-            return send_sms(reminder.domain, reminder.user_id, phone_number, message)
+            if verified_number is not None:
+                return send_sms_to_verified_number(verified_number, message)
+            elif self.recipient == RECIPIENT_USER:
+                # If there is no verified number, but the recipient is a CommCareUser, still try to send it
+                try:
+                    phone_number = reminder.user.phone_number
+                except Exception:
+                    # If the user has no phone number, we cannot send any SMS
+                    return False
+                return send_sms(reminder.domain, reminder.user_id, phone_number, message)
+            else:
+                return False
         elif reminder.method == "test" or reminder.method == "callback_test":
             print(message)
             return True
@@ -488,80 +501,76 @@ class CaseReminderHandler(Document):
         now = now or self.get_now()
         reminder = self.get_reminder(case)
         
-        if case.closed or case.type != self.case_type or not CommCareUser.get_by_user_id(case.user_id):
+        if case.closed or case.type != self.case_type or (self.recipient == RECIPIENT_USER and case.user_id is None) or (self.recipient == RECIPIENT_USER and not CommCareUser.get_by_user_id(case.user_id)):
             if reminder:
                 reminder.retire()
         else:
             # Retrieve the value of the start property
-            start_value = case.get_case_property(self.start)
-            if isinstance(start_value, date) or isinstance(start_value, datetime):
-                start = start_value
-            else:
+            actual_start_value = case.get_case_property(self.start_property)
+            if self.start_match_type == MATCH_EXACT:
+                start_condition_reached = (actual_start_value == self.start_value) and (self.start_value is not None)
+            elif self.start_match_type == MATCH_ANY_VALUE:
+                start_condition_reached = actual_start_value is not None
+            elif self.start_match_type == MATCH_REGEX:
                 try:
-                    start = parse(start_value)
+                    regex = re.compile(self.start_value)
+                    start_condition_reached = regex.match(str(actual_start_value)) is not None
                 except Exception:
-                    start = start_value
+                    start_condition_reached = False
+            else:
+                start_condition_reached = False
+            start_date = case.get_case_property(self.start_date)
+            if (not isinstance(start_date, date)) and not (isinstance(start_date, datetime)):
+                try:
+                    start_date = parse(start_date)
+                except Exception:
+                    start_date = None
+            
+            if isinstance(start_date, datetime):
+                start_condition_datetime = start_date
+                start = start_date
+            elif isinstance(start_date, date):
+                start_condition_datetime = datetime(start_date.year, start_date.month, start_date.day, 0, 0, 0)
+                start = start_condition_datetime
+            else:
+                start_condition_datetime = None
+                start = now
             
             # Retire the reminder if the start condition is no longer valid
-            if reminder:
-                if isinstance(start, date) or isinstance(start, datetime):
-                    if isinstance(start, datetime):
-                        expected_start_condition_datetime = start
-                    else:
-                        expected_start_condition_datetime = datetime(start.year, start.month, start.day, 0, 0, 0)
-                    
-                    if reminder.start_condition_datetime != expected_start_condition_datetime:
-                        # The start date/time has changed, so retire the reminder; it will be spawned again in the next block
-                        reminder.retire()
-                        reminder = None
-                elif not is_true_value(start):
+            if reminder is not None:
+                if not start_condition_reached:
                     # The start condition is no longer valid, so retire the reminder
                     reminder.retire()
                     reminder = None
+                elif reminder.start_condition_datetime != start_condition_datetime:
+                    # The start date has changed, so retire the reminder and it will be spawned again in the next block
+                    reminder.retire()
+                    reminder = None
             
-            if not reminder:
-                if isinstance(start, date) or isinstance(start, datetime):
-                    start_condition_datetime = start
-                    if isinstance(start, date) and not isinstance(start, datetime): #datetime is an instance of both date and datetime
-                        start = datetime(start.year, start.month, start.day, now.hour, now.minute, now.second, now.microsecond)
-                        start_condition_datetime = datetime(start.year, start.month, start.day, 0, 0, 0)
-                    try:
-                        reminder = self.spawn_reminder(case, start)
-                        reminder.start_condition_datetime = start_condition_datetime
-                    except Exception:
-                        if settings.DEBUG:
-                            raise
-                        logging.error(
-                            "Case ({case._id}) submitted against "
-                            "CaseReminderHandler {self.nickname} ({self._id}) "
-                            "but failed to resolve case.{self.start} to a date"
-                        )
-                else:
-                    if self.condition_reached(case, self.start, now):
-                        reminder = self.spawn_reminder(case, now)
-                        reminder.start_condition_datetime = now
+            if reminder is None:
+                if start_condition_reached:
+                    reminder = self.spawn_reminder(case, start)
+                    reminder.start_condition_datetime = start_condition_datetime
+                    self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
             else:
                 active = (not self.condition_reached(case, self.until, now)) and not (reminder.handler.max_iteration_count != REPEAT_SCHEDULE_INDEFINITELY and reminder.schedule_iteration_num > reminder.handler.max_iteration_count)
                 if active and not reminder.active:
-                    # if a reminder is reactivated, sending starts over from right now
-                    reminder.next_fire = now
-                reminder.active = active
+                    reminder.active = True
+                    self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
+                else:
+                    reminder.active = active
             if reminder:
-                try:
-                    reminder.lang = reminder.user.user_data.get(self.lang_property) or self.default_lang
-                except Exception:
-                    reminder.lang = self.default_lang
                 reminder.save()
 
     def save(self, **params):
         super(CaseReminderHandler, self).save(**params)
         if not self.deleted():
-            cases = CommCareCase.view('hqcase/open_cases',
+            cases = CommCareCase.view('hqcase/types_by_domain',
                 reduce=False,
-                startkey=[self.domain, {}, {}],
-                endkey=[self.domain, {}, {}],
+                startkey=[self.domain],
+                endkey=[self.domain, {}],
                 include_docs=True,
-            )
+            ).all()
             for case in cases:
                 self.case_changed(case)
     @classmethod
@@ -625,7 +634,6 @@ class CaseReminder(Document):
     next_fire = DateTimeProperty()                  # The date and time that the next message should go out
     last_fired = DateTimeProperty()                 # The date and time that the last message went out
     active = BooleanProperty(default=False)         # True if active, False if deactivated
-    lang = StringProperty()                         # Language the reminder should be sent in
     start_date = DateProperty()                     # For CaseReminderHandlers with event_interpretation=SCHEDULE, this is the date (in the recipient's time zone) from which all event times are calculated
     schedule_iteration_num = IntegerProperty()      # The current iteration through the cycle of self.handler.events
     current_event_sequence_num = IntegerProperty()  # The current event number (index to self.handler.events)
@@ -647,11 +655,21 @@ class CaseReminder(Document):
 
     @property
     def user(self):
-        try:
-            return CommCareUser.get_by_user_id(self.user_id)
-        except Exception:
-            self.retire()
+        if self.handler.recipient == RECIPIENT_USER:
+            try:
+                return CommCareUser.get_by_user_id(self.user_id)
+            except Exception:
+                self.retire()
+                return None
+        else:
             return None
+
+    @property
+    def recipient(self):
+        if self.handler.recipient == RECIPIENT_USER:
+            return self.user
+        else:
+            return CommConnectCase.get(self.case_id)
 
     def retire(self):
         self.doc_type += "-Deleted"

@@ -18,7 +18,7 @@ from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.custom import HQReport
 from corehq.apps.reports.display import xmlns_to_name, FormType
 from corehq.apps.reports.fields import FilterUsersField, CaseTypeField, SelectCHWField
-from corehq.apps.reports.models import HQUserType
+from corehq.apps.reports.models import HQUserType, FormExportSchema
 from couchexport.models import SavedExportSchema
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
@@ -823,12 +823,9 @@ class ExcelExportReport(StandardDateHQReport):
         # (serialized json) this is a little bit hacky, but works.
         startkey = json.dumps([self.domain, ""])[:-3]
         endkey = "%s{" % startkey
-        exports = SavedExportSchema.view("couchexport/saved_export_schemas",
+        exports = FormExportSchema.view("couchexport/saved_export_schemas",
             startkey=startkey, endkey=endkey,
             include_docs=True)
-
-        for export in exports.all():
-            export.formname = xmlns_to_name(self.domain, export.index[1])
 
         exports = filter(lambda x: x.type == "form", exports)
 

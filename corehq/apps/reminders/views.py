@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm
-from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, CaseReminderCallback, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET
+from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.web import render_to_response
 from dimagi.utils.parsing import string_to_datetime
@@ -129,8 +129,12 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             h.nickname = form.cleaned_data["nickname"]
             h.default_lang = form.cleaned_data["default_lang"]
             h.method = form.cleaned_data["method"]
-            h.start = form.cleaned_data["start"]
+            h.recipient = form.cleaned_data["recipient"]
+            h.start_property = form.cleaned_data["start_property"]
+            h.start_value = form.cleaned_data["start_value"]
+            h.start_date = form.cleaned_data["start_date"]
             h.start_offset = form.cleaned_data["start_offset"]
+            h.start_match_type = form.cleaned_data["start_match_type"]
             h.schedule_length = form.cleaned_data["schedule_length"]
             h.event_interpretation = form.cleaned_data["event_interpretation"]
             h.max_iteration_count = form.cleaned_data["max_iteration_count"]
@@ -145,7 +149,11 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                ,"nickname"              : h.nickname
                ,"default_lang"          : h.default_lang
                ,"method"                : h.method
-               ,"start"                 : h.start
+               ,"recipient"             : h.recipient
+               ,"start_property"        : h.start_property
+               ,"start_value"           : h.start_value
+               ,"start_date"            : h.start_date
+               ,"start_match_type"      : h.start_match_type
                ,"start_offset"          : h.start_offset
                ,"schedule_length"       : h.schedule_length
                ,"event_interpretation"  : h.event_interpretation
@@ -163,23 +171,5 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
        ,"form":     form
     })
 
-@csrf_exempt
-def callback(request, domain):
-    if request.method == "POST":
-        data = json.loads(request.raw_post_data)
-        caller_id = data["session"]["from"]["id"]
-        user = CouchUser.get_by_default_phone(caller_id)
-        #
-        c = CaseReminderCallback()
-        c.phone_number = caller_id
-        c.timestamp = datetime.utcnow()
-        if user is not None:
-            c.user_id = user._id
-        c.save()
-        #
-        t = Tropo()
-        t.reject()
-        return HttpResponse(t.RenderJson())
-    else:
-        return HttpResponseBadRequest("Bad Request")
+
 

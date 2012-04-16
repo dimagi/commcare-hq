@@ -1,6 +1,7 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.cloudcare.models import CaseSpec
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required,\
+    login_or_digest
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.web import render_to_response, json_response, json_handler
@@ -9,11 +10,14 @@ from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseBadRequest
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
-from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_cloudcare_apps
+from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_cloudcare_apps,\
+    get_all_cases
 from touchforms.formplayer.models import PlaySession
 from dimagi.utils.couch import safe_index
 from corehq.apps.app_manager.const import APP_V2
 from dimagi.utils.parsing import string_to_boolean
+from corehq.apps.cloudcare import touchforms_api, CLOUDCARE_DEVICE_ID
+from corehq.apps.cloudcare.touchforms_api import get_session_data
 
 @login_and_domain_required
 def app_list(request, domain, urlPath):
@@ -33,6 +37,8 @@ def app_list(request, domain, urlPath):
         # replace the apps with the last build of each app
         apps = [_app_latest_build_json(app["_id"])for app in apps]
 
+    # trim out empty apps
+    apps = filter(lambda app: app, apps)
     return render_to_response(request, "cloudcare/cloudcare_home.html", 
                               {"domain": domain,
                                "language": language,
@@ -45,23 +51,17 @@ def form_context(request, domain, app_id, module_id, form_id):
     module = app.get_module(module_id)
     form = module.get_form(form_id)
     
-    device_id = "cloudcare"
     case_id = request.REQUEST.get("case_id")
     
     if app.application_version == APP_V2:
-        session_data = { 'device_id': device_id,
-                         'app_version': '2.0',
-                         'username': request.user.username,
-                         'user_id': request.couch_user.get_id,
-                         "domain": domain
-                        }
+        session_data = get_session_data(domain, request.couch_user)
         if case_id:
             session_data["case_id"] = case_id
     else:
         # assume V1 / preloader structure
         session_data = {"meta": {"UserID":   request.couch_user.get_id,
                                  "UserName":  request.user.username},
-                        "property": {"deviceID": device_id}}
+                        "property": {"deviceID": CLOUDCARE_DEVICE_ID}}
         # check for a case id and update preloader appropriately
         if case_id:
             case = CommCareCase.get(case_id)
@@ -119,7 +119,7 @@ def case_list(request, domain):
                                "cases": json.dumps(get_owned_cases(domain, user_id),
                                                    default=json_handler)})
 
-cloudcare_api = login_and_domain_required
+cloudcare_api = login_or_digest
 
 @login_and_domain_required
 def view_case(request, domain, case_id=None):
@@ -152,10 +152,15 @@ def get_cases(request, domain):
     user_id = request.couch_user.get_id if request.couch_user.is_commcare_user() \
               else request.REQUEST.get("user_id", "")
     
-    if not user_id:
-        return HttpResponseBadRequest("Must specify user_id!")
+    if user_id:
+        cases = get_owned_cases(domain, user_id)
+    else:
+        if request.couch_user.is_web_user():
+            # allow web users to query the entire case db
+            cases = get_all_cases(domain)
+        else:
+            return HttpResponseBadRequest("Must specify user_id!")
     
-    cases = get_owned_cases(domain, user_id)
     if request.REQUEST:
         def _filter(case):
             for path, val in request.REQUEST.items():
@@ -167,8 +172,28 @@ def get_cases(request, domain):
     return json_response(cases)
 
 @cloudcare_api
+def filter_cases(request, domain, app_id, module_id):
+    app = Application.get(app_id)
+    module = app.get_module(module_id)
+    auth_cookie = request.COOKIES.get('sessionid')
+    details = module.details
+    xpath_parts = []
+    for detail in details:
+        if detail.filter_xpath_2():
+            xpath_parts.append(detail.filter_xpath_2())
+    xpath = "".join(xpath_parts)
+    additional_filters = {"properties/case_type": module.case_type }
+    result = touchforms_api.filter_cases(domain, request.couch_user, 
+                                         xpath, additional_filters, 
+                                         auth=auth_cookie)
+    case_ids = result.get("cases", [])
+    cases = [CommCareCase.get(id) for id in case_ids]
+    cases = [c.get_json() for c in cases if c]
+    return json_response(cases)
+    
+@cloudcare_api
 def get_apps_api(request, domain):
-    return json_response(get_apps(domain))
+    return json_response(get_cloudcare_apps(domain))
 
 @cloudcare_api
 def get_app_api(request, domain, app_id):

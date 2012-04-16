@@ -11,7 +11,8 @@ function(doc){
             domain: doc.domain,
             built_on: doc.built_on,
             built_with: doc.built_with,
-            build_comment: doc.build_comment
+            build_comment: doc.build_comment,
+            is_released: doc.is_released
         });
     }
 }

@@ -15,6 +15,11 @@ var getSubmitUrl = function (urlRoot, appId) {
     return urlRoot + "/" + appId + "/";
 };
 
+var getCaseFilterUrl = function(urlRoot, appId, moduleId) {
+    // TODO: make this cleaner
+    return urlRoot + "module/" + appId + "/modules-" + moduleId + "/";
+};
+
 var showSuccess = function (message, location, autoHideTime) {
     console.log("show success");
     var alert = $("<div />").addClass("alert alert-success").text(message);
