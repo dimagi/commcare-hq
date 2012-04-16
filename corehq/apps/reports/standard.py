@@ -7,6 +7,7 @@ import dateutil
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import yesno
+from django.utils import html
 import pytz
 from restkit.errors import RequestFailed
 from casexml.apps.case.models import CommCareCase
@@ -34,6 +35,8 @@ class StandardHQReport(HQReport):
     fields = ['corehq.apps.reports.fields.FilterUsersField']
     history = None
     use_json = False
+    hide_filters = False
+    custom_breadcrumbs = None
 
     def get_global_params(self):
         self.request_params = json_request(self.request.GET)
@@ -51,6 +54,8 @@ class StandardHQReport(HQReport):
         if self.individual:
             self.name = "%s for %s" % (self.name, self.users[0].raw_username)
         self.get_parameters()
+        self.context['report_hide_filters'] = self.hide_filters
+        self.context['report_breadcrumbs'] = self.custom_breadcrumbs
 
     def get_parameters(self):
         # here's where you can define any extra parameters you want to process before
@@ -80,6 +85,8 @@ class StandardHQReport(HQReport):
 
 class StandardTabularHQReport(StandardHQReport):
     total_row = None
+    default_rows = 10
+    start_at_row = 0
 
 #    exportable = True
     def get_headers(self):
@@ -89,6 +96,10 @@ class StandardTabularHQReport(StandardHQReport):
         return self.rows
 
     def get_report_context(self):
+        self.context['report_datatables'] = {
+            "defaultNumRows": self.default_rows,
+            "startAtRowNum": self.start_at_row
+        }
         if self.use_json:
             self.context['ajax_source'] = reverse('json_report_dispatcher',
                                                   args=[self.domain, self.slug])
@@ -176,7 +187,9 @@ class CaseActivityReport(StandardTabularHQReport):
             self.now = self.history
 
     def get_headers(self):
-        return ["User"] + [util.define_sort_type("Last %s Days" % l.days if l else "Ever") for l in self.landmarks]
+        return ["User"] + \
+               [util.format_datatables_header("Last %s Days" % l.days if l
+                            else "Ever", sort_type=util.SORT_TYPE_NUMERIC) for l in self.landmarks]
 
     def get_rows(self):
         self.display_data = self.request_params.get('display', ['percent'])
@@ -243,7 +256,7 @@ class CaseActivityReport(StandardTabularHQReport):
             formatted = int(formatted)
         except ValueError:
             pass
-        row.append(util.create_sort_key(formatted, unformatted))
+        row.append(util.format_datatables_data(formatted, unformatted))
         return row
 
 
@@ -275,7 +288,9 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
         self.dates = [self.datespan.startdate]
         while self.dates[-1] < self.datespan.enddate:
             self.dates.append(self.dates[-1] + datetime.timedelta(days=1))
-        return ["Username"] + [util.define_sort_type(d.strftime(DATE_FORMAT)) for d in self.dates] + [util.define_sort_type("Total")]
+        return ["Username"] + \
+               [util.format_datatables_header(d.strftime(DATE_FORMAT), sort_type=util.SORT_TYPE_NUMERIC) for d in self.dates] + \
+               [util.format_datatables_header("Total", sort_type=util.SORT_TYPE_NUMERIC)]
 
     def get_rows(self):
         utc_dates = [tz_utils.adjust_datetime_to_timezone(date, self.timezone.zone, pytz.utc.zone) for date in self.dates]
@@ -311,7 +326,7 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
         self.total_row = total_row
 
         for row in rows:
-            row[1:] = [util.create_sort_key(val, val) for val in row[1:]]
+            row[1:] = [util.format_datatables_data(val, val) for val in row[1:]]
 
         return rows
 
@@ -343,8 +358,8 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
             # this fails if form_names, form_types is [], []
             form_names, self.form_types = zip(*sorted(zip(form_names, self.form_types)))
 
-        return ['User'] + [util.define_sort_type(name) for name in list(form_names)] + \
-               [util.define_sort_type("All Forms")]
+        return ['User'] + [util.format_datatables_header(name, sort_type=util.SORT_TYPE_NUMERIC) for name in list(form_names)] + \
+               [util.format_datatables_header("All Forms", sort_type=util.SORT_TYPE_NUMERIC)]
 
     def get_rows(self):
         counts = self.get_submissions_by_form_json()
@@ -362,7 +377,7 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
                 except Exception:
                     row.append(0)
             row_sum = sum(row)
-            rows.append([user.username_in_report] + [util.create_sort_key(row_data, row_data) for row_data in row] + [util.create_sort_key("* %s" % row_sum, row_sum)])
+            rows.append([user.username_in_report] + [util.format_datatables_data(row_data, row_data) for row_data in row] + [util.format_datatables_data("* %s" % row_sum, row_sum)])
 
         totals_by_form = [totals_by_form[form_type] for form_type in self.form_types]
         self.total_row = ["All Users"] + ["%s" % t for t in totals_by_form] + ["* %s" % sum(totals_by_form)]
@@ -865,7 +880,9 @@ class ApplicationStatusReport(StandardTabularHQReport):
               'corehq.apps.reports.fields.SelectApplicationField']
 
     def get_headers(self):
-        return ["Username", util.define_sort_type("Last Seen"), "CommCare Version", "Application [Deployed Build]"]
+        return ["Username",
+                util.format_datatables_header("Last Seen", sort_type=util.SORT_TYPE_NUMERIC),
+                "CommCare Version", "Application [Deployed Build]"]
 
     def get_parameters(self):
         self.selected_app = self.request_params.get('app', '')
@@ -873,7 +890,7 @@ class ApplicationStatusReport(StandardTabularHQReport):
     def get_rows(self):
         rows = []
         for user in self.users:
-            last_seen = util.create_sort_key("Never", -1)
+            last_seen = util.format_datatables_data("Never", -1)
             version = "---"
             app_name = "---"
             is_unknown = True
@@ -897,7 +914,7 @@ class ApplicationStatusReport(StandardTabularHQReport):
                     dtext = "Yesterday"
                 else:
                     dtext = "%s days ago" % dtime.days
-                last_seen = util.create_sort_key(dtext, dtime.days)
+                last_seen = util.format_datatables_data(dtext, dtime.days)
 
                 if data.version != '1':
                     build_id = data.version
@@ -923,20 +940,4 @@ class ApplicationStatusReport(StandardTabularHQReport):
                 continue
             row = [user.username_in_report, last_seen, version, app_name]
             rows.append(row)
-        return rows
-
-class FormErrorReport(StandardTabularHQReport, StandardDateHQReport):
-    name = "Form Errors Per User"
-    slug = "form_errors"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField',
-              'corehq.apps.reports.fields.DatespanField']
-
-    def get_headers(self):
-        return ['Users', 'Number of Forms', 'Number of Errors']
-
-    def get_rows(self):
-        rows = []
-        for user in self.users:
-            rows.append([user.username_in_report, "", ""])
         return rows

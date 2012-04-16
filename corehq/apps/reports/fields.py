@@ -162,3 +162,57 @@ class DatespanField(ReportField):
         self.context['timezone'] = self.timezone.zone
         self.context['datespan'] = self.datespan
 
+class DeviceLogTagField(ReportField):
+    slug = "logtag"
+    errors_only_slug = "errors_only"
+    template = "reports/fields/devicelog_tags.html"
+
+    def update_context(self):
+        errors_only = bool(self.request.GET.get(self.errors_only_slug, False))
+        self.context['errors_only_slug'] = self.errors_only_slug
+        self.context[self.errors_only_slug] = errors_only
+
+        selected_tags = self.request.GET.getlist(self.slug)
+        show_all = bool(not selected_tags)
+        self.context['default_on'] = show_all
+        data = get_db().view('phonelog/device_log_tags', group=True)
+        tags = [dict(name=item['key'],
+                    show=bool(show_all or item['key'] in selected_tags))
+                    for item in data]
+        self.context['logtags'] = tags
+        self.context['slug'] = self.slug
+
+class DeviceLogFilterField(ReportField):
+    slug = "logfilter"
+    template = "reports/fields/devicelog_filter.html"
+    view = "phonelog/devicelog_data"
+    filter_desc = "Filter Logs By"
+
+    def update_context(self):
+        selected = self.request.GET.getlist(self.slug)
+        show_all = bool(not selected)
+        print show_all, selected
+        self.context['default_on'] = show_all
+
+        data = get_db().view(self.view,
+            startkey = [self.domain],
+            endkey = [self.domain, {}],
+            group=True)
+        filters = [dict(name=item['key'][-1],
+                    show=bool(show_all or item['key'][-1] in selected))
+                        for item in data]
+        self.context['filters'] = filters
+        self.context['slug'] = self.slug
+        self.context['filter_desc'] = self.filter_desc
+
+class DeviceLogUsersField(DeviceLogFilterField):
+    slug = "loguser"
+    view = "phonelog/devicelog_data_users"
+    filter_desc = "Filter Logs by Username"
+
+class DeviceLogDevicesField(DeviceLogFilterField):
+    slug = "logdevice"
+    view = "phonelog/devicelog_data_devices"
+    filter_desc = "Filter Logs by Device"
+
+

@@ -216,14 +216,21 @@ def get_username_from_forms(domain, user_id):
             username = possible_username
     return username
 
-def create_sort_key(text, key):
-    return {"html": text,
-            "sort_key": key}
+def format_datatables_data(text, sort_key):
+    data = {"html": text,
+            "sort_key": sort_key}
+    return data
 
 SORT_TYPE_NUMERIC = "title-numeric"
-def define_sort_type(text, type=SORT_TYPE_NUMERIC):
-    return {"html": text,
-            "sort_type": type}
+def format_datatables_header(text, sort_type=None, sort_direction=None, css_class=None):
+    header = {"html": text}
+    if sort_type:
+        header["sort_type"] = sort_type
+    if sort_direction:
+        header["sort_direction"] = sort_direction
+    if css_class:
+        header["css_class"] = css_class
+    return header
 
 def app_export_filter(doc, app_id):
     if app_id:
@@ -319,7 +326,4 @@ def create_export_filter(request, domain, export_type='form'):
             filter &= FilterFunction(users_filter, users=users_matching_filter)
         else:
             filter &= FilterFunction(group_filter, group=group)
-
-
-
     return filter

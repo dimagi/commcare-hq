@@ -2,7 +2,19 @@
 {% load report_tags %}
 {% load i18n %}
 
-{% block head %}{{ block.super }}
+{% block js-inline %} {{ block.super }}
+<script type="text/javascript">
+    $(function() {
+        {% if report_datatables %}
+            var defaultNumRows = {{ report_datatables.defaultNumRows|default:10 }};
+            var reportTables = new HQReportDataTables({
+                defaultRows: defaultNumRows,
+                startAtRowNum: {{ report_datatables.startAtRowNum|default:0 }}
+            });
+            reportTables.render();
+        {% endif %}
+    });
+</script>
 {% endblock %}
 
 {% block reportcontent %}
@@ -10,7 +22,7 @@
     <thead>
         <tr>
             {% for header in report.headers %}
-                <th {% if not ajax_source %}data-sort="{{ header.sort_type }}"{% endif %}>
+                <th {% if not ajax_source %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
                     <i class="icon-hq-white icon-hq-doublechevron"></i> {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
                 </th>
             {% endfor %}
@@ -20,7 +32,6 @@
         {% for row in report.rows %}
             <tr>
                 {% for thing in row %}
-
                     <td class="{% if not thing or thing.html != None and not thing.html %}null-entry{% endif %}">
                         {% if thing.html != None %}{{ thing.html|safe }}{% else %}{{ thing|safe }}{% endif %}
                         <span title="{% if thing.sort_key != "" %}{{ thing.sort_key }}{% else %}{{ thing }}{% endif %}"></span>
