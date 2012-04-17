@@ -337,7 +337,7 @@ def get_apps_base_context(request, domain, app):
         langs = [lang] + app.langs
 
     edit = (request.GET.get('edit', 'true') == 'true') and\
-           (request.couch_user.can_edit_apps(domain) or request.user.is_superuser)
+           (request.couch_user.can_edit_apps(domain=domain) or request.user.is_superuser)
 
     if app:
         latest_app_version = ApplicationBase.view('app_manager/saved_app',

@@ -3,6 +3,7 @@
 
 {% block js %}{{ block.super }}
 {% include "imports/datatables.bootstrap.html" %}
+<script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
 {% include "imports/flot.html" %}
 <script type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
@@ -10,26 +11,27 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    {% if slug %}
+{% if not report_hide_filters %}
     <script type="text/javascript">
         $(function() {
-            var reportFilterCookieName = '{{ slug }}_reportFiltersHidden',
-                    savedPath = '/a/{{ domain }}/reports/{{ slug }}';
+            var reportFilterCookieName = '{{ slug }}reportFiltersHidden',
+                    savedPath = '/a/{{ domain }}/reports/';
             $("#reportFilters").addClass($.cookie(reportFilterCookieName));
             $("#reportFilters").on('hidden', function () {
-                $.cookie(reportFilterCookieName, '', {path: savedPath});
+                $.cookie(reportFilterCookieName, '', {path: savedPath, expires: 1});
             });
             $("#reportFilters").on('shown', function () {
-                $.cookie(reportFilterCookieName, 'in', {path: savedPath});
+                $.cookie(reportFilterCookieName, 'in', {path: savedPath, expires: 1});
             });
         });
     </script>
-    {% endif %}
+{% endif %}
 {% endblock %}
 
 {% block head %}
     {{ block.super }}
     <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+
 {% endblock %}
 
 {% block page-title %}
@@ -37,20 +39,26 @@
         <li>
             <a href="{% url default_report domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
         </li>
+        {% if not report_breadcrumbs %}
         <li class="active">
-            <div id="report-title"><a href="#">{{ report.name|default:"Unknown Report"|safe }}</a></div>
+            <div id="report-title"><a href="">{{ report.name|default:"Unknown Report"|safe }}</a></div>
         </li>
+        {% else %}
+        {{ report_breadcrumbs|safe }}
+        {% endif %}
     </ul>
 {% endblock %}
 
 {% block sidebar %}{% include "reports/partials/report_list.html" %}{% endblock %}
 {% block main_column %}
-    <div class="hq-accordion-control">
+    <div class="hq-accordion-control" id="reportFiltersAccordion">
         <div class="accordion-heading">
-            <a href="#reportFilters" data-toggle="collapse">Advanced Filters</a>
+            {% if not report_hide_filters %}<a href="#reportFilters" data-toggle="collapse">Advanced Filters</a>{% else %}
+                <div class="no-filters">&nbsp;</div>
+            {% endif %}
             <div id="extra-filter-info" class="accordion-extra"></div>
         </div>
-
+        {% if not report_hide_filters %}
         <div id="reportFilters" class="accordion-body collapse">
             <div class="accordion-inner">
                 <form method="get" id="paramSelectorForm" class="form-horizontal">
@@ -73,10 +81,40 @@
                 </form>
             </div>
         </div>
+        {% endif %}
     </div>
     {% if show_time_notice %}{% include "hqwebapp/partials/time-notice.html"%}{% endif %}
     <div id="report-content">
-        {% block reportcontent %}Your report goes here{% endblock %}
+        {% block reportcontent %}
+        {% if request.couch_user.can_view_reports or request.couch_user.get_viewable_reports %}
+            <h6 style="text-align: center; margin-top: 200px;">Select a Report to View</h6>
+        {% else %}
+            <h6 style="text-align: center; margin-top: 100px;">
+                <i class="icon-info-sign" id="no-viewable-reports"></i>
+                You are not registered to see reports
+            </h6>
+            <script>
+                $(function () {
+                    $('.sidebar').hide();
+                    $('.hq-double-col').css({background: 'white'});
+                    $('.hq-content').removeClass('span10').addClass('span12').css({margin: 0});
+                    $('#no-viewable-reports').popover({
+                        placement: 'top',
+                        title: "We're serious about security",
+                        content: "Your project may contain sensitive personal and medical information, " +
+                                "so we don't show this data to " +
+                                "just anyone. If you think you should have access to your project's reports " +
+                                "please contact your project lead."
+                    });
+                });
+            </script>
+        {% endif %}
+            <script>
+                $(function () {
+                    $('#reportFiltersAccordion').hide();
+                });
+            </script>
+        {% endblock %}
     </div>
 {% endblock %}
 

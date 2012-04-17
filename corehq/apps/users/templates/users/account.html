@@ -22,6 +22,24 @@
                     }
                 }
             });
+            var slide = false;
+            $('#id_can_view_reports').change(function () {
+                var show = slide ? 'slideDown' : 'show';
+                var hide = slide ? 'slideUp' : 'hide';
+                if ($(this).val() == 'some') {
+                    $('#id_viewable_reports').parent().parent()[show]();
+                } else {
+                    $('#id_viewable_reports').parent().parent()[hide]();
+                }
+                slide = true;
+            }).trigger('change');
+            $('#id_role').change(function () {
+                if ($(this).val() == 'admin') {
+                    $('#id_can_view_reports').val('yes').attr({disabled: true}).trigger('change');
+                } else {
+                    $('#id_can_view_reports').attr({disabled: false});
+                }
+            }).trigger('change');
         });
     </script>
 {% endblock %}

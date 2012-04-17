@@ -8,6 +8,7 @@ from couchexport.util import FilterFunction
 from couchforms.filters import instances
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.modules import to_function
 import pytz
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -58,7 +59,7 @@ def report_context(domain,
         context.update(
             show_groups=True,
             group=group,
-            groups=Group.by_domain(domain),
+            groups=Group.get_reporting_groups(domain),
         )
     if case_type is not None:
         if individual:
@@ -219,14 +220,21 @@ def get_username_from_forms(domain, user_id):
             username = possible_username
     return username
 
-def create_sort_key(text, key):
-    return {"html": text,
-            "sort_key": key}
+def format_datatables_data(text, sort_key):
+    data = {"html": text,
+            "sort_key": sort_key}
+    return data
 
 SORT_TYPE_NUMERIC = "title-numeric"
-def define_sort_type(text, type=SORT_TYPE_NUMERIC):
-    return {"html": text,
-            "sort_type": type}
+def format_datatables_header(text, sort_type=None, sort_direction=None, css_class=None):
+    header = {"html": text}
+    if sort_type:
+        header["sort_type"] = sort_type
+    if sort_direction:
+        header["sort_direction"] = sort_direction
+    if css_class:
+        header["css_class"] = css_class
+    return header
 
 def app_export_filter(doc, app_id):
     if app_id:
@@ -325,7 +333,14 @@ def create_export_filter(request, domain, export_type='form'):
             filter &= FilterFunction(users_filter, users=users_matching_filter)
         else:
             filter &= FilterFunction(group_filter, group=group)
-
-
-
     return filter
+
+def get_possible_reports(domain):
+    reports = []
+    for heading, models in settings.STANDARD_REPORT_MAP.items():
+        for model in models:
+            reports.append((model, to_function(model).name))
+
+    for model in settings.CUSTOM_REPORT_MAP.get(domain, []):
+        reports.append((model, to_function(model).name))
+    return reports

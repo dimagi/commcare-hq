@@ -46,10 +46,13 @@ def edit_group(request, domain, group_id):
     if group.domain == domain:
         name = request.POST.get('name')
         case_sharing = request.POST.get('case_sharing')
+        reporting = request.POST.get('reporting')
         if name is not None:
             group.name = name
         if case_sharing in ('true', 'false'):
             group.case_sharing = json.loads(case_sharing)
+        if reporting in ('true', 'false'):
+            group.reporting = json.loads(reporting)
         group.save()
         return HttpResponseRedirect(reverse("group_members", args=[domain, group_id]))
     else:

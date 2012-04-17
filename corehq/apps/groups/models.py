@@ -22,6 +22,7 @@ class Group(UndoableDocument):
     users = ListProperty()
     path = ListProperty()
     case_sharing = BooleanProperty()
+    reporting = BooleanProperty(default=True)
 
     def add_user(self, couch_user_id):
         if not isinstance(couch_user_id, basestring):
@@ -113,6 +114,12 @@ class Group(UndoableDocument):
             return results
         else:
             return [r['id'] for r in results]
+
+    @classmethod
+    def get_reporting_groups(cls, domain):
+        key = ['^Reporting', domain]
+        return cls.view('groups/by_name', startkey=key, endkey=key + [{}], include_docs=True)
+
 
     def create_delete_record(self, *args, **kwargs):
         return DeleteGroupRecord(*args, **kwargs)

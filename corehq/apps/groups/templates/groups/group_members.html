@@ -75,14 +75,24 @@
                     <div class="control-group">
                         <label class="control-label" for="group-case-sharing-input">Case Sharing</label>
                         <div class="controls">
-                            <select class="input-small" name="case_sharing" id="group-case-sharing-input"{% if group.case_sharing %} data-value="true"{% endif %}>
-                                <option value="false">Off</option>
+                            <select class="input-small" name="case_sharing" id="group-case-sharing-input" data-value="{{ group.case_sharing|BOOL }}">
                                 <option value="true">On</option>
+                                <option value="false">Off</option>
                             </select>
                             <p class="help-block">This is a preview feature that is only available internally.</p>
                         </div>
                     </div>
                     {% endif %}
+                    <div class="control-group">
+                        <label class="control-label" for="group-reporting-input">Reporting</label>
+                        <div class="controls">
+                            <select class="input-small" name="reporting" id="group-reporting-input" data-value="{{ group.reporting|BOOL }}">
+                                <option value="true">On</option>
+                                <option value="false">Off</option>
+                            </select>
+                            <p class="help-block">Whether to use this group in group filtering in reports.</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <a href="#" class="btn" data-dismiss="modal">Cancel</a>
@@ -120,7 +130,5 @@
             </div>
         </div>
     </div>
-
-
 {% endblock %}
 

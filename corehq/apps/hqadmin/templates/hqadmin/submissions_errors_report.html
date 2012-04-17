@@ -1,0 +1,28 @@
+{% extends "hqadmin/hqadmin_base_report.html" %}
+
+{% block report-title %}Submissions &amp; Error Statistics Per Domain{% endblock %}
+
+{% block reportcontent %}
+    <table class="datatable table table-striped">
+        <thead>
+            <tr>
+                <th>Domain</th>
+                <th>Active Users</th>
+                <th>Forms Submitted</th>
+                <th>Errors</th>
+                <th>Warnings</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for row in rows %}
+            <tr>
+                <td><a href="{% url report_dispatcher row.domain 'form_errors' %}?startdate={{ request.datespan.startdate_param }}&enddate={{ request.datespan.enddate_param }}">{{ row.domain }}</a></td>
+                <td>{{ row.active_users }}</td>
+                <td>{{ row.submissions }}</td>
+                <td>{{ row.errors }}</td>
+                <td>{{ row.warnings }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

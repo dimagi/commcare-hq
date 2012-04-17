@@ -8,6 +8,7 @@ import logging
 import re
 from corehq.apps.domain.models import Domain
 from dimagi.utils.make_uuid import random_hex
+from dimagi.utils.modules import to_function
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -61,7 +62,10 @@ class Permissions(object):
     EDIT_DATA = 'edit-data'
     EDIT_APPS = 'edit-apps'
 
-    AVAILABLE_PERMISSIONS = [EDIT_DATA, EDIT_WEB_USERS, EDIT_COMMCARE_USERS, EDIT_APPS]
+    VIEW_REPORTS = 'view-reports'
+    VIEW_REPORT = 'view-report'
+
+    AVAILABLE_PERMISSIONS = [EDIT_DATA, EDIT_WEB_USERS, EDIT_COMMCARE_USERS, EDIT_APPS, VIEW_REPORTS, VIEW_REPORT]
 
 class Roles(object):
     ROLES = (
@@ -87,10 +91,50 @@ class DomainMembership(DocumentSchema):
     domain = StringProperty()
     is_admin = BooleanProperty(default=False)
     permissions = StringListProperty()
+    permissions_data = DictProperty()
     last_login = DateTimeProperty()
     date_joined = DateTimeProperty()
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
 
+    def has_permission(self, permission, data=None):
+        if permission == Permissions.VIEW_REPORT:
+            if self.has_permission(Permissions.VIEW_REPORTS):
+                return True
+            else:
+                try:
+                    return data in self.permissions_data[permission]
+                except (KeyError, AttributeError):
+                    return False
+        else:
+            return permission in self.permissions
+
+    def set_permission(self, permission, value, data=None):
+        if self.has_permission(permission, data) == value:
+            return
+
+        if value:
+            if permission not in self.permissions:
+                self.permissions.append(permission)
+            if data:
+                if not self.permissions_data.has_key(permission):
+                    self.permissions_data[permission] = []
+                if data not in self.permissions_data[permission]:
+                    self.permissions_data[permission].append(data)
+        else:
+            if data:
+                self.permissions_data[permission] = [d for d in self.permissions_data[permission] if d != data]
+            else:
+                self.permissions = [p for p in self.permissions if p != permission]
+
+
+    def set_permissions_data(self, permission, data):
+        self.permissions_data[permission] = data
+
+    def viewable_reports(self):
+        try:
+            return self.permissions_data[Permissions.VIEW_REPORT]
+        except (KeyError, AttributeError):
+            return []
     class Meta:
         app_label = 'users'
 
@@ -424,7 +468,18 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     def is_deleted(self):
         return self.base_doc.endswith(DELETED_SUFFIX)
 
-    def has_permission(self, domain, permission):
+    def get_viewable_reports(self, domain=None, name=True):
+        domain = domain or self.current_domain
+        try:
+            models = self.get_domain_membership(domain).viewable_reports()
+            if name:
+                return [to_function(m).name for m in models]
+            else:
+                return models
+        except AttributeError:
+            return []
+
+    def has_permission(self, domain, permission, data=None):
         """To be overridden by subclasses"""
         return False
 
@@ -432,9 +487,12 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         if item.startswith('can_'):
             perm = getattr(Permissions, item[len('can_'):].upper(), None)
             if perm:
-                def fn(domain=None):
+                def fn(data=None, domain=None):
+                    # temporary check to make sure I'm not by mistake passing in the domain as the `data`
+                    if perm.endswith('s') and data:
+                        raise TypeError
                     domain = domain or self.current_domain
-                    return self.has_permission(domain, perm)
+                    return self.has_permission(domain, perm, data)
                 fn.__name__ = item
                 return fn
         return super(CouchUser, self).__getattr__(item)
@@ -830,35 +888,39 @@ class WebUser(CouchUser):
         else:
             raise self.Inconsistent("domains and domain_memberships out of sync")
 
-    def set_permission(self, domain, permission, value, save=True):
+    def set_permission(self, domain, permission, value, data=None, save=True):
         assert(permission in Permissions.AVAILABLE_PERMISSIONS)
         if self.has_permission(domain, permission) == value:
             return
         dm = self.get_domain_membership(domain)
-        if value:
-            dm.permissions.append(permission)
-        else:
-            dm.permissions = [p for p in dm.permissions if p != permission]
+        dm.set_permission(permission, value, data=data)
         if save:
             self.save()
 
-    def reset_permissions(self, domain, permissions, save=True):
+    def set_permissions_data(self, domain, permission, data):
+        dm = self.get_domain_membership(domain)
+        dm.set_permissions_data(permission, data)
+
+    def reset_permissions(self, domain, permissions, permissions_data=None, save=True):
         dm = self.get_domain_membership(domain)
         dm.permissions = permissions
+        dm.permissions_data = permissions_data or {}
         if save:
             self.save()
 
-    def has_permission(self, domain, permission):
+    def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
         if self.is_superuser:
             return True
-        dm = self.get_domain_membership(domain)
-        if not dm:
-            return False
-        if self.is_domain_admin(domain):
+        elif self.is_domain_admin(domain):
             return True
+
+        dm = self.get_domain_membership(domain)
+        if dm:
+            return dm.has_permission(permission, data)
         else:
-            return permission in dm.permissions
+            return False
+
 
     def get_role(self, domain=None):
         """

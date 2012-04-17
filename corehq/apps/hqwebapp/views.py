@@ -58,7 +58,11 @@ def redirect_to_default(req, domain=None):
             return no_permissions(req)
         elif 1 == len(domains):
             if domains[0]:
-                url = reverse('corehq.apps.reports.views.default', args=[domains[0].name])
+                domain = domains[0].name
+                if req.couch_user.can_view_reports(domain=domain) or req.couch_user.get_viewable_reports(domain):
+                    url = reverse('corehq.apps.reports.views.default', args=[domain])
+                else:
+                    url = reverse('corehq.apps.app_manager.views.default', args=[domain])
             else:
                 raise Http404
         else:
