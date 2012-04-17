@@ -18,7 +18,7 @@ class GroupField(ReportField):
 
     def update_context(self):
         group = self.request.GET.get('group', '')
-        groups = Group.by_domain(self.domain)
+        groups = Group.get_reporting_groups(self.domain)
         if group:
             group = Group.get(group)
         self.context['group'] = group

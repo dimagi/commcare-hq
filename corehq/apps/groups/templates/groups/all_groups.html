@@ -61,6 +61,11 @@
                 {% for group in all_groups %}
                     <li {% if this_group.get_id == group.get_id %}class="active"{% endif %}>
                         <a href="{% url group_members domain group.get_id %}">{{ group.name }}
+                            {% if group.reporting %}
+                                <i class="icon-list-alt reporting-group-icon"></i>
+                            {% else %}
+                               <i class="icon-white"></i>
+                            {% endif %}
                             {% if group.case_sharing %}<i class="icon-star"></i>{% endif %}
                         </a>
                     </li>
@@ -76,5 +81,17 @@
         <input type="text" placeholder="Group Name" id="id_group_name" name="group_name" />
         <button class="btn btn-success" type="submit">Create Group</button>
     </form>
+{% endblock %}
+{% block js-inline %}
+<script>
+    $(function () {
+        $('.reporting-group-icon').popover({
+            placement: 'right',
+            title: 'This is a Reporting Group',
+            content: "Reporting groups are used in reports to filter and view data. You can remove this group from " +
+                    "reports by editing this group's settings."
+        });
+    })
+</script>
 {% endblock %}
 
