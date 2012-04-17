@@ -2,6 +2,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.encoding import smart_str
 import pytz
+import datetime
+import dateutil
 
 def localtime_for_timezone(value, timezone):
     """
@@ -34,3 +36,11 @@ def validate_timezone_max_length(max_length, zones):
         return x and (len(y) <= max_length)
     if not reduce(reducer, zones, True):
         raise Exception("corehq.apps.timezones.fields.TimeZoneField MAX_TIMEZONE_LENGTH is too small")
+
+def string_to_prertty_time(date_string, to_tz, from_tz=pytz.utc, fmt="%b %d, %Y %H:%M"):
+    try:
+        date = datetime.datetime.replace(dateutil.parser.parse(date_string), tzinfo=from_tz)
+        date = adjust_datetime_to_timezone(date, from_tz.zone, to_tz.zone)
+        return date.strftime(fmt)
+    except Exception:
+        return date_string
