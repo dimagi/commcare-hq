@@ -56,7 +56,6 @@ def default(request, domain, template="reports/report_base.html"):
         'report': {'name': "Select a Report to View"}
     }
     return render_to_response(request, template, context)
-    return HttpResponseRedirect(reverse("report_dispatcher", args=[domain, standard.SubmissionsByFormReport.slug]))
 
 @login_or_digest
 @datespan_default
