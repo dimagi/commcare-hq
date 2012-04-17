@@ -13,19 +13,23 @@ from tempfile import mkstemp
 def excel_config(request, domain):
     if request.method == 'POST' and request.FILES:
         named_columns = request.POST['named_columns']    
-        file_handle = request.FILES['file']
+        uploaded_file_handle = request.FILES['file']
         
-        extension = os.path.splitext(file_handle.name)[1][1:].strip().lower()
+        extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
         
-        if extension in ExcelFile.ALLOWED_EXTENSIONS and file_handle.content_type == 'application/vnd.ms-excel':
+        if extension in ExcelFile.ALLOWED_EXTENSIONS and uploaded_file_handle.content_type == 'application/vnd.ms-excel':
             # get a temp file
             fd, filename = mkstemp(suffix='.'+extension)
-            destination = open(filename, 'wb')
-            # write the uploaded file to the temp file
-            for chunk in file_handle.chunks():
-                destination.write(chunk)
-            destination.close()
-            file_handle.close()            
+            
+            with os.fdopen(fd, "wb") as destination:
+                # write the uploaded file to the temp file
+                for chunk in uploaded_file_handle.chunks():
+                    destination.write(chunk)
+
+            uploaded_file_handle.close() 
+            
+            # stash filename for subsequent views      
+            request.session['excel_path'] = filename  
             
             # open spreadsheet and get columns
             spreadsheet = ExcelFile(filename, (named_columns == 'yes'))
@@ -41,7 +45,6 @@ def excel_config(request, domain):
                                         'named_columns': named_columns, 
                                         'columns': columns,
                                         'case_types': case_types,
-                                        'filename': filename,
                                         'domain': domain,
                                         'report': {
                                             'name': 'Import: Configuration'
@@ -54,7 +57,7 @@ def excel_config(request, domain):
 @login_and_domain_required
 def excel_fields(request, domain):
     named_columns = request.POST['named_columns']
-    filename = request.POST['filename']
+    filename = request.session.get('excel_path')
     case_type = request.POST['case_type']
     search_column = request.POST['search_column']
     search_field = request.POST['search_field']
@@ -96,7 +99,6 @@ def excel_fields(request, domain):
     
     return render_to_response(request, "excel_fields.html", {
                                 'named_columns': named_columns,
-                                'filename': filename,
                                 'case_type': case_type,                                                               
                                 'search_column': search_column, 
                                 'search_field': search_field,                                                        
@@ -115,12 +117,18 @@ def excel_fields(request, domain):
 @login_and_domain_required
 def excel_commit(request, domain):  
     named_columns = request.POST['named_columns'] 
-    filename = request.POST['filename']
+    filename = request.session.get('excel_path')
     case_type = request.POST['case_type']
     search_column = request.POST['search_column']
     search_field = request.POST['search_field']
     key_column = request.POST['key_column']
     value_column = request.POST['value_column']    
+    
+    # unset filename session var
+    try:
+        del request.session['excel_path']
+    except KeyError:
+        pass
     
     # TODO musn't be able to select an excel_field twice (in html)
     excel_fields = request.POST.getlist('excel_field[]')
@@ -159,26 +167,27 @@ def excel_commit(request, domain):
             continue
         
         row = spreadsheet.get_row(i)
+        found = False
                 
         if search_field == 'case_id':
-            # look for the relevant case using domain and id
-            search_result = CommCareCase.view('hqcase/by_domain_id', 
-                                              startkey=[domain, row[search_column_index]], 
-                                              endkey=[domain, row[search_column_index]]
-                                              ).one()
+            try:
+                case = CommCareCase.get(row[search_column_index])
+                if case.domain == domain:
+                    found = True
+            except:
+                pass
         elif search_field == 'external_id':
             search_result = CommCareCase.view('hqcase/by_domain_external_id', 
                                               startkey=[domain, row[search_column_index]], 
                                               endkey=[domain, row[search_column_index]]
                                               ).one()
-        try:
-            case_id = search_result['id']
-        except:
-            case_id = None
-                                                          
-        if case_id:
-            # get the case to update
-            case = CommCareCase.get(case_id)
+            try:
+                case = CommCareCase.get(search_result['id'])
+                found = True       
+            except:
+                pass
+
+        if found:
             match_count += 1
         else:
             no_match_count += 1

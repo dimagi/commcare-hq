@@ -34,7 +34,6 @@
 {% block reportcontent %}
     <form class="form-horizontal form-report" action="{% url corehq.apps.importer.views.excel_commit domain %}" method="post" id="field_form">
     <input type="hidden" name="named_columns" value="{{named_columns}}" />
-    <input type="hidden" name="filename" value="{{filename}}" />
     <input type="hidden" name="case_type" value="{{case_type}}" />
     <input type="hidden" name="search_column" value="{{search_column}}" />
     <input type="hidden" name="search_field" value="{{search_field}}" />
