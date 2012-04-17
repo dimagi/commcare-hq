@@ -80,6 +80,12 @@
                 content: "This number includes submissions that may not match your filter.",
                 placement: 'left'
             });
+            $('.suggestions').popover({
+                title: "Uncategorized Submissions",
+                content: "It looks like this data should be categorized with one of your forms but is showing up " +
+                        "separately. We strongly recommend that you Report an Issue with the button below.",
+                placement: 'right'
+            });
         }());
     </script>
 {% endblock %}
@@ -172,8 +178,8 @@
                     </td>
                     <td>
                     {% include "reports/partials/form_name.html" %}
-                    {% if not form.has_app %}
-                        <h5>Suggestions:</h5>
+                    {% if not form.has_app and not form.no_suggestions %}
+                        <p><span class="label label-important suggestions">Suggestions:</span></p>
                         <ul>
                         {% if form.app_copy %}
                             <li>

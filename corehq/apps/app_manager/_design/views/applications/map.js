@@ -3,5 +3,9 @@ function(doc){
         emit([doc.domain, doc.copy_of, doc.version], null);
         // to search accross all domains
         emit([null, doc.copy_of, doc.version], null);
+
+        if (doc.is_released) {
+            emit(['^ReleasedApplications', doc.domain,  doc.copy_of, doc.version], null);
+        }
     }
 }
