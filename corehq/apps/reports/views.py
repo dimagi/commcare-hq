@@ -248,7 +248,6 @@ def custom_export(req, domain):
     
     if schema:
         app_id = req.GET.get('app_id')
-        print "export_tag is %s" % export_tag
         saved_export = helper.ExportSchemaClass.default(
             schema=schema,
             name="%s: %s" % (
@@ -257,12 +256,12 @@ def custom_export(req, domain):
             ),
             type=export_type
         )
-        print "Table is %s" % saved_export.tables[0].index
-
+        
         if export_type == 'form':
             saved_export.app_id = app_id
         return render_to_response(req, "reports/reportdata/customize_export.html",
                                   {"saved_export": saved_export,
+                                   "slug": standard.ExcelExportReport.slug, 
                                    "table_config": saved_export.table_configuration[0],
                                    "domain": domain})
     else:
@@ -287,10 +286,13 @@ def edit_custom_export(req, domain, export_id):
 #    else:
         helper.custom_export.save()
     table_config = helper.custom_export.table_configuration[0]
-
+    
+    slug = standard.ExcelExportReport.slug if helper.export_type == "form" \
+            else standard.CaseExportReport.slug
     return render_to_response(req, "reports/reportdata/customize_export.html",
                               {"saved_export": helper.custom_export,
                                "table_config": table_config,
+                               "slug": slug,
                                "domain": domain})
 
 @login_and_domain_required
@@ -349,6 +351,7 @@ def case_details(request, domain, case_id):
     return render_to_response(request, "reports/reportdata/case_details.html", {
         "domain": domain,
         "case_id": case_id,
+        "slug": standard.CaseListReport.slug,
         "form_lookups": form_lookups,
         "report": {
             "name": report_name
@@ -403,6 +406,7 @@ def form_data(request, domain, instance_id):
                                    instance=instance,
                                    cases=cases,
                                    timezone=timezone,
+                                   slug=standard.SubmitHistory.slug,
                                    form_data=dict(name=form_name,
                                                   modified=instance.received_on)))
 

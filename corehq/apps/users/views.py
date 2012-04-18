@@ -711,13 +711,14 @@ class UploadCommCareUsers(TemplateView):
 
         self.group_memoizer = GroupMemoizer(self.domain)
         for row in self.group_specs:
-            group_name, case_sharing = row['name'], row['case-sharing']
+            group_name, case_sharing, reporting = row['name'], row['case-sharing'], row['reporting']
             try:
                 group = self.group_memoizer.get_or_create_group(group_name)
             except MultipleResultsFound:
                 messages.error(request, "Multiple groups named: %s" % group_name)
             else:
                 group.case_sharing = case_sharing
+                group.reporting = reporting
 
         for row in self.create_or_update_users():
             response_writer.writerow(row)

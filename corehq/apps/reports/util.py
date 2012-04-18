@@ -59,7 +59,7 @@ def report_context(domain,
         context.update(
             show_groups=True,
             group=group,
-            groups=Group.by_domain(domain),
+            groups=Group.get_reporting_groups(domain),
         )
     if case_type is not None:
         if individual:
