@@ -8,6 +8,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.importer import base
 from corehq.apps.importer.util import ExcelFile
 from tempfile import mkstemp
+from django.views.decorators.http import require_POST
 
 @login_and_domain_required
 def excel_config(request, domain):
@@ -114,6 +115,7 @@ def excel_fields(request, domain):
                                  },
                                 'slug': base.ExcelImporter.slug})     
 
+@require_POST
 @login_and_domain_required
 def excel_commit(request, domain):  
     named_columns = request.POST['named_columns'] 
