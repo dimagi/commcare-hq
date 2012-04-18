@@ -72,21 +72,6 @@ def form_context(request, domain, app_id, module_id, form_id):
                           "xform_url": reverse("xform_player_proxy")})
     
 @login_and_domain_required
-def form_complete(request, domain, app_id, module_id, form_id):
-    app = Application.get(app_id)
-    module = app.get_module(module_id)
-    form = module.get_form(form_id)
-    session_id = request.REQUEST.get("session_id")
-    session = PlaySession.get(session_id) if session_id else None
-    return render_to_response(request, "cloudcare/form_complete.html",
-                              {"domain": domain, 
-                               "session": session, 
-                               "app_id": app_id, 
-                               "module_id": module_id,
-                               "form_id": form_id})
-
-
-@login_and_domain_required
 def case_list(request, domain):
     
     apps = filter(lambda app: app.doc_type == "Application",
