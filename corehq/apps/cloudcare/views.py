@@ -12,7 +12,6 @@ from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
 from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_cloudcare_apps,\
     get_all_cases
-from touchforms.formplayer.models import PlaySession
 from dimagi.utils.couch import safe_index
 from corehq.apps.app_manager.const import APP_V2
 from dimagi.utils.parsing import string_to_boolean
