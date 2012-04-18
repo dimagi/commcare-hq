@@ -80,6 +80,12 @@
                 content: "This number includes submissions that may not match your filter.",
                 placement: 'left'
             });
+            $('.suggestions').popover({
+                title: "Uncategorized Submissions",
+                content: "It looks like this data should be categorized with one of your forms but is showing up " +
+                        "separately. We strongly recommend that you Report an Issue with the button below.",
+                placement: 'right'
+            });
         }());
     </script>
 {% endblock %}
@@ -105,7 +111,7 @@
                     <td>{{ export.name|default:"[blank]" }}</td>
                     <td>{{ export.formname }}</td>
                     <td class="cell-vertical-centered">
-                        <a class="btn" href='{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?format=html&{{ get_filter_params.urlencode|safe }}'>
+                        <a class="btn" href='{% url export_custom_data domain export.get_id %}?format=html&{{ get_filter_params.urlencode|safe }}'>
                             HTML Preview
                         </a>
                     </td>
@@ -115,9 +121,8 @@
                         </a>
                     </td>
                     <td class="cell-vertical-centered">
-                        <a class="btn btn-primary" href="{% url corehq.apps.reports.views.export_custom_data domain export.get_id %}?{{ get_filter_params.urlencode|safe }}">
-                            <i class="icon-download-alt icon-white"></i> Download Data
-                        </a>
+                        <a data-toggle="modal" href="#export-download-status" data-formname="{{ export.name }}" data-dlocation='{% url export_custom_data domain export.get_id %}?{{ get_filter_params.urlencode|safe }}&async=true'
+                           class="btn btn-primary export-action-download" ><i class="icon-download-alt icon-white"></i> Download</a>
                     </td>
                     <td class="cell-vertical-centered">
                         <a class="btn btn-danger" data-toggle="modal" class="delete_link" href="#delete-export-modal-{{ export.get_id }}"><i class="icon-remove icon-white"></i> Delete</a>
@@ -173,8 +178,8 @@
                     </td>
                     <td>
                     {% include "reports/partials/form_name.html" %}
-                    {% if not form.has_app %}
-                        <h5>Suggestions:</h5>
+                    {% if not form.has_app and not form.no_suggestions %}
+                        <p><span class="label label-important suggestions">Suggestions:</span></p>
                         <ul>
                         {% if form.app_copy %}
                             <li>
@@ -227,12 +232,12 @@
                     </td>
                     <td class="cell-vertical-centered">
                         {% if form.xmlns != None %}
-                            <a class="btn" href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ form.xmlns }}"&type=form'><i class="icon-star-empty"></i> Create Custom Export</a>
+                            <a class="btn" href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ form.xmlns }}"{% if form.app.id %}&app_id={{ form.app.id }}{% endif %}&type=form'><i class="icon-star-empty"></i> Create Custom Export</a>
                         {% endif %}
                     </td>
                     <td class="cell-vertical-centered">
                         {% if form.submissions %}
-                            <a data-toggle="modal" href="#export-download-status" data-formname="{% include 'reports/partials/form_name.html' %}" data-dlocation='{% url corehq.apps.reports.views.export_data_async domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&app_id={{ form.app.id }}&{{ get_filter_params.urlencode|safe }}'
+                            <a data-toggle="modal" href="#export-download-status" data-formname="{% include 'reports/partials/form_name.html' %}" data-dlocation='{% url export_default_data domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&app_id={{ form.app.id }}&{{ get_filter_params.urlencode|safe }}&async=true'
                                 class="btn btn-primary export-action-download" ><i class="icon-download-alt icon-white"></i> Download</a>
                         {% else %}
                             No Forms

@@ -4,10 +4,7 @@ from django.views.generic.simple import direct_to_template
 app_urls = patterns('corehq.apps.cloudcare.views',
     url(r'^view/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/context/$',
         'form_context', name='cloudcare_form_context'),
-    url(r'^view/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/complete/$',
-        'form_complete', name='cloudcare_form_complete'),
     url(r'^(?P<urlPath>.*)$', 'app_list', name='cloudcare_app_list'),
-    
 )
 
 cases_urls = patterns('corehq.apps.cloudcare.views',
@@ -19,6 +16,8 @@ cases_urls = patterns('corehq.apps.cloudcare.views',
 api_urls = patterns('corehq.apps.cloudcare.views',
     url(r'^groups/(?P<user_id>[\w-]*)/$', 'get_groups', name='cloudcare_get_groups'),
     url(r'^cases/$', 'get_cases', name='cloudcare_get_cases'),
+    url(r'^cases/module/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/$', 
+        'filter_cases', name='cloudcare_filter_cases'),
     url(r'^apps/$', 'get_apps_api', name='cloudcare_get_apps'),
     url(r'^apps/(?P<app_id>[\w-]*)/$', 'get_app_api', name='cloudcare_get_app'),
 )

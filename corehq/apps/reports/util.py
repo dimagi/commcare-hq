@@ -7,6 +7,8 @@ from corehq.apps.users.util import user_id_to_username
 from couchexport.util import FilterFunction
 from couchforms.filters import instances
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.dates import DateSpan
+from dimagi.utils.modules import to_function
 import pytz
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -57,7 +59,7 @@ def report_context(domain,
         context.update(
             show_groups=True,
             group=group,
-            groups=Group.by_domain(domain),
+            groups=Group.get_reporting_groups(domain),
         )
     if case_type is not None:
         if individual:
@@ -178,6 +180,8 @@ def get_all_users_by_domain(domain, group='', individual='', filter_users=None):
                 temp_user = TempCommCareUser(domain, username, user_id)
                 if filter_users[temp_user.filter_flag].show:
                     users.append(temp_user)
+        if filter_users[HQUserType.UNKNOWN].show:
+            users.append(TempCommCareUser(domain, '', None))
 
         if filter_users[HQUserType.REGISTERED].show:
             # now add all the registered users who never submitted anything
@@ -216,14 +220,21 @@ def get_username_from_forms(domain, user_id):
             username = possible_username
     return username
 
-def create_sort_key(text, key):
-    return {"html": text,
-            "sort_key": key}
+def format_datatables_data(text, sort_key):
+    data = {"html": text,
+            "sort_key": sort_key}
+    return data
 
 SORT_TYPE_NUMERIC = "title-numeric"
-def define_sort_type(text, type=SORT_TYPE_NUMERIC):
-    return {"html": text,
-            "sort_type": type}
+def format_datatables_header(text, sort_type=None, sort_direction=None, css_class=None):
+    header = {"html": text}
+    if sort_type:
+        header["sort_type"] = sort_type
+    if sort_direction:
+        header["sort_direction"] = sort_direction
+    if css_class:
+        header["css_class"] = css_class
+    return header
 
 def app_export_filter(doc, app_id):
     if app_id:
@@ -253,6 +264,8 @@ def get_timezone(couch_user_id, domain):
     return timezone
 
 def datespan_export_filter(doc, datespan):
+    if isinstance(datespan, dict):
+        datespan = DateSpan(**datespan)
     try:
         received_on = doc['received_on']
     except Exception:
@@ -283,9 +296,10 @@ def case_group_filter(doc, group):
 
 def users_filter(doc, users):
     try:
-        return doc['form']['meta']['userID'] in users
+        user_id = doc['form']['meta']['userID']
     except KeyError:
-        return False
+        user_id = None
+    return user_id in users
 
 def group_filter(doc, group):
     if group:
@@ -304,7 +318,7 @@ def create_export_filter(request, domain, export_type='form'):
     group, users = get_group_params(domain, **json_request(request.GET))
 
     user_filters, use_user_filters = FilterUsersField.get_user_filter(request)
-    print "Type is %s" % export_type
+
     if export_type == 'case':
         if user_filters and use_user_filters:
             users_matching_filter = map(lambda x: x._id, get_all_users_by_domain(domain, filter_users=user_filters))
@@ -319,7 +333,14 @@ def create_export_filter(request, domain, export_type='form'):
             filter &= FilterFunction(users_filter, users=users_matching_filter)
         else:
             filter &= FilterFunction(group_filter, group=group)
-
-
-
     return filter
+
+def get_possible_reports(domain):
+    reports = []
+    for heading, models in settings.STANDARD_REPORT_MAP.items():
+        for model in models:
+            reports.append((model, to_function(model).name))
+
+    for model in settings.CUSTOM_REPORT_MAP.get(domain, []):
+        reports.append((model, to_function(model).name))
+    return reports

@@ -337,7 +337,7 @@ def get_apps_base_context(request, domain, app):
         langs = [lang] + app.langs
 
     edit = (request.GET.get('edit', 'true') == 'true') and\
-           (request.couch_user.can_edit_apps(domain) or request.user.is_superuser)
+           (request.couch_user.can_edit_apps(domain=domain) or request.user.is_superuser)
 
     if app:
         latest_app_version = ApplicationBase.view('app_manager/saved_app',
@@ -375,6 +375,7 @@ def get_apps_base_context(request, domain, app):
 @login_and_domain_required
 def release_manager(request, domain, app_id, template='app_manager/releases.html'):
     app = get_app(domain, app_id)
+    latest_release = get_app(domain, app_id, latest=True)
     context = get_apps_base_context(request, domain, app)
     saved_apps = ApplicationBase.view('app_manager/saved_app',
         startkey=[domain, app.id, {}],
@@ -383,11 +384,20 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     ).all()
     context.update({
         'release_manager': True,
-        'saved_apps': saved_apps
+        'saved_apps': saved_apps,
+        'latest_release': latest_release,
     })
     response = render_to_response(request, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
+
+def release_build(request, domain, app_id, saved_app_id, is_released=True):
+    saved_app = get_app(domain, saved_app_id)
+    if saved_app.copy_of != app_id:
+        raise Http404
+    saved_app.is_released = is_released
+    saved_app.save(increment_version=False)
+    return HttpResponseRedirect(reverse('release_manager', args=[domain, app_id]))
 
 @retry_resource(3)
 def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False):

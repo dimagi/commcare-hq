@@ -53,7 +53,7 @@
              <template{% if d.format == "enum-image" %} form="image"{% endif %}><text>
                  <xpath function="
                   {% for key, val in d.enum.items %}
-                     if(/data/{{ d.model }}_{{ d.field }}_{{ forloop.parentloop.counter }} = '{{ key }}', ${{ key }},
+                     if({{ d.xpath }} = '{{ key }}', ${{ key }},
                   {% endfor %}
                      '?'
                   {% for _ in d.enum %}

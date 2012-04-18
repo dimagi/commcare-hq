@@ -17,6 +17,7 @@ from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response, render_to_response
 from django.views.decorators.cache import cache_page
+from phonelog.reports import FormErrorReport
 
 @require_superuser
 def default(request):
@@ -64,6 +65,7 @@ def domain_list(request):
 
     context = get_hqadmin_base_context(request)
     context.update({"domains": domains})
+    context['layout_flush_content'] = True
     return render_to_response(request, "hqadmin/domain_list.html", context)
 
 @require_superuser
@@ -144,6 +146,7 @@ def global_report(request, template="hqadmin/global.html"):
     _active_metric("active_domain")
     _active_metric("active_user")
 
+    context['hide_filters'] = True
     return render_to_response(request, template, context)
 
 @require_superuser
@@ -171,6 +174,7 @@ def commcare_version_report(request, template="hqadmin/commcare_version.html"):
         tables.append(by_build[build])
     context = get_hqadmin_base_context(request)
     context.update({'tables': tables})
+    context['hide_filters'] = True
     return render_to_response(request, template, context)
 
 
@@ -210,6 +214,8 @@ def _cacheable_domain_activity_report(request):
 def domain_activity_report(request, template="hqadmin/domain_activity_report.html"):
     context = get_hqadmin_base_context(request)
     context.update(json.loads(_cacheable_domain_activity_report(request).content))
+
+    context['layout_flush_content'] = True
     return render_to_response(request, template, context)
 
 @datespan_default
@@ -230,6 +236,8 @@ def message_log_report(request):
         "show_dates": show_dates,
         "datespan": datespan
     })
+
+    context['layout_flush_content'] = True
     return render_to_response(request, "hqadmin/message_log_report.html", context)
 
 def _get_emails():
@@ -239,3 +247,66 @@ def _get_emails():
 def emails(request):
     email_list = _get_emails()
     return HttpResponse('"' + '", "'.join(email_list) + '"')
+
+@datespan_default
+@require_superuser
+def submissions_errors(request, template="hqadmin/submissions_errors_report.html"):
+    show_dates = "true"
+    datespan = request.datespan
+    domains = Domain.get_all()
+    error_tags = FormErrorReport.error_tags
+    warning_tags = FormErrorReport.warning_tags
+
+    rows = []
+    for domain in domains:
+        key = ["active", domain.name]
+        data = get_db().view('users/by_domain',
+            startkey=key,
+            endkey=key+[{}],
+            reduce=True
+        ).all()
+        num_active_users = data[0].get('value', 0) if data else 0
+
+        key = [domain.name]
+        data = get_db().view('reports/all_submissions',
+            startkey=key+[datespan.startdate_param_utc],
+            endkey=key+[datespan.enddate_param_utc, {}],
+            reduce=True
+        ).all()
+        num_forms_submitted = data[0].get('value', 0) if data else 0
+
+        num_errors = 0
+        for error in error_tags:
+            key = [domain.name, "tag", error]
+            data = get_db().view('phonelog/devicelog_data',
+                startkey=key+[datespan.startdate_param_utc],
+                endkey=key+[datespan.enddate_param_utc, {}],
+                reduce=True
+            ).all()
+            num_errors += data[0].get('value', 0) if data else 0
+
+        num_warnings = 0
+        for warning in warning_tags:
+            key = [domain.name, "tag", warning]
+            data = get_db().view('phonelog/devicelog_data',
+                startkey=key+[datespan.startdate_param_utc],
+                endkey=key+[datespan.enddate_param_utc, {}],
+                reduce=True
+            ).all()
+            num_warnings += data[0].get('value', 0) if data else 0
+
+        rows.append(dict(domain=domain.name,
+                        active_users=num_active_users,
+                        submissions=num_forms_submitted,
+                        errors=num_errors,
+                        warnings=num_warnings))
+
+    context = get_hqadmin_base_context(request)
+    context.update({
+        "show_dates": show_dates,
+        "datespan": datespan,
+        "layout_flush_content": True,
+        "rows": rows
+    })
+
+    return render_to_response(request, template, context)
