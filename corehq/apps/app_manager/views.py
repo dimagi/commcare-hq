@@ -858,7 +858,7 @@ def _handle_media_edits(request, item, should_edit, resp):
 
 @require_POST
 @login_or_digest
-@require_permission('edit-apps', None)
+@require_permission('edit-apps', login_decorator=None)
 def edit_form_attr(req, domain, app_id, unique_form_id, attr):
     """
     Called to edit any (supported) form attribute, given by attr

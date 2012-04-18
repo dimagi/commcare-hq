@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import json
 from corehq.apps.reports import util, standard
 from corehq.apps.reports.models import FormExportSchema
+from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 import couchexport
 from couchexport.export import UnsupportedExportFormat, export_raw
@@ -48,6 +49,8 @@ datespan_default = datespan_in_request(
     default_days=7,
 )
 
+require_form_export_permission = require_permission('view-report', 'corehq.apps.reports.standard.ExcelExportReport', login_decorator=None)
+require_case_export_permission = require_permission('view-report', 'corehq.apps.reports.standard.CaseExportReport', login_decorator=None)
 @login_and_domain_required
 def default(request, domain, template="reports/report_base.html"):
     context = {
@@ -57,6 +60,7 @@ def default(request, domain, template="reports/report_base.html"):
     }
     return render_to_response(request, template, context)
 
+@require_form_export_permission
 @login_or_digest
 @datespan_default
 def export_data(req, domain):
@@ -111,6 +115,7 @@ def export_data(req, domain):
             next = reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug])
         return HttpResponseRedirect(next)
 
+@require_form_export_permission
 @login_and_domain_required
 @datespan_default
 def export_data_async(request, domain):
@@ -178,6 +183,7 @@ class CustomExportHelper(object):
             self.custom_export.include_errors = bool(self.request.POST.get("include-errors"))
             self.custom_export.app_id = self.request.POST.get('app_id')
 
+@require_form_export_permission
 @login_or_digest
 @datespan_default
 def export_default_or_custom_data(request, domain, export_id=None):
@@ -223,7 +229,7 @@ def export_default_or_custom_data(request, domain, export_id=None):
             messages.error(request, "Sorry, there was no data found for the tag '%s'." % export_object.name)
             return HttpResponseRedirect(next)
 
-
+@require_form_export_permission
 @login_and_domain_required
 def custom_export(req, domain):
     """
@@ -270,6 +276,7 @@ def custom_export(req, domain):
                       xmlns_to_name(domain, export_tag[1]), extra_tags="html")
         return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug]))
 
+@require_form_export_permission
 @login_and_domain_required
 def edit_custom_export(req, domain, export_id):
     """
@@ -294,7 +301,7 @@ def edit_custom_export(req, domain, export_id):
                                "table_config": table_config,
                                "slug": slug,
                                "domain": domain})
-
+@require_form_export_permission
 @login_and_domain_required
 def export_all_form_metadata(req, domain):
     """
@@ -316,7 +323,7 @@ def export_all_form_metadata(req, domain):
     export_raw((("forms", headers),), (("forms", data),), temp)
     return export_response(temp, format, "%s_forms" % domain)
     
-
+@require_form_export_permission
 @login_and_domain_required
 @require_POST
 def delete_custom_export(req, domain, export_id):
@@ -332,6 +339,7 @@ def delete_custom_export(req, domain, export_id):
     else:
         return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.CaseExportReport.slug]))
 
+@require_permission('view-reports')
 @login_and_domain_required
 def case_details(request, domain, case_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
@@ -360,6 +368,7 @@ def case_details(request, domain, case_id):
         "timezone": timezone
     })
 
+@require_case_export_permission
 @login_or_digest
 @login_and_domain_required
 def download_cases(request, domain):
@@ -385,6 +394,7 @@ def download_cases(request, domain):
     response['Content-Disposition'] = "attachment; filename={domain}_data.{ext}".format(domain=domain, ext=format.extension)
     return response
 
+@require_permission('view-reports')
 @login_and_domain_required
 def form_data(request, domain, instance_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
@@ -409,13 +419,14 @@ def form_data(request, domain, instance_id):
                                    slug=standard.SubmitHistory.slug,
                                    form_data=dict(name=form_name,
                                                   modified=instance.received_on)))
-
+@require_form_export_permission
 @login_and_domain_required
 def download_form(request, domain, instance_id):
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)
     return couchforms_views.download_form(request, instance_id)
 
+@require_form_export_permission
 @login_and_domain_required
 def download_attachment(request, domain, instance_id, attachment):
     instance = XFormInstance.get(instance_id)
