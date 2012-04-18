@@ -76,3 +76,6 @@
 [submodule "submodules/cchq-load-testing"]
 	path = submodules/cchq-load-testing
 	url = git://github.com/dimagi/cchq-load-testing.git
+[submodule "submodules/hsph-reports"]
+	path = submodules/hsph-reports
+	url = git://github.com/dimagi/hsph-reports.git
