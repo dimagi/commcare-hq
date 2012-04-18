@@ -137,6 +137,22 @@ function maps_init(case_api_url) {
 function init_callback(map, cases) {
     var MARKER_MODE = 3;
 
+    //pad up
+    var mult = 50;
+    var init_num = cases.length;
+    var dispersion = 5.;
+    for (var i = 0; i < init_num; i++) {
+	for (var j = 0; j < mult; j++) {
+	    var c = $.extend(true, {}, cases[i]);
+	    var loc = c.properties.geo.split(' ');
+	    loc[0] = +loc[0] + dispersion * (2. * Math.random() - 1.);
+	    loc[1] = +loc[1] + dispersion * (2. * Math.random() - 1.);
+	    c.properties.geo = loc[0] + ' ' + loc[1];
+	    cases.push(c);
+	}
+    }
+
+
     var markers = [];
     $.each(cases, function(i, case_) {
 	    // add debug metrics
