@@ -183,6 +183,7 @@ class CustomExportHelper(object):
             self.custom_export.include_errors = bool(self.request.POST.get("include-errors"))
             self.custom_export.app_id = self.request.POST.get('app_id')
 
+@require_form_export_permission
 @login_or_digest
 @datespan_default
 def export_default_or_custom_data(request, domain, export_id=None):
