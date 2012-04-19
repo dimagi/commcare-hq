@@ -6,7 +6,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 import couchexport
 from couchexport.export import UnsupportedExportFormat, export_raw
-from couchexport.util import FilterFunction
+from couchexport.util import SerializableFunction
 from couchexport.views import _export_tag_or_bust
 import couchforms
 from couchforms.models import XFormInstance
@@ -93,11 +93,11 @@ def export_data(req, domain):
                 return False
         filter = _ufilter
     else:
-        filter = FilterFunction(util.group_filter, group=group)
+        filter = SerializableFunction(util.group_filter, group=group)
 
     errors_filter = instances if not include_errors else None
 
-    kwargs['filter'] = couchexport.util.intersect_filters(filter, errors_filter)
+    kwargs['filter'] = couchexport.util.intersect_functions(filter, errors_filter)
 
     if kwargs['format'] == 'raw':
         resp = export_raw_data([domain, export_tag], filename=export_tag)
@@ -183,7 +183,6 @@ class CustomExportHelper(object):
             self.custom_export.include_errors = bool(self.request.POST.get("include-errors"))
             self.custom_export.app_id = self.request.POST.get('app_id')
 
-@require_form_export_permission
 @login_or_digest
 @datespan_default
 def export_default_or_custom_data(request, domain, export_id=None):
@@ -191,6 +190,21 @@ def export_default_or_custom_data(request, domain, export_id=None):
     Export data from a saved export schema
     """
 
+    deid = request.GET.get('deid') == 'true'
+    if deid:
+        return _export_deid(request, domain, export_id, util.deid_map)
+    else:
+        return _export_no_deid(request, domain, export_id)
+
+@require_permission('view-report', 'corehq.apps.reports.deid.FormDeidExport', login_decorator=None)
+def _export_deid(request, domain, export_id=None, deid_function=None):
+    return _export_default_or_custom_data(request, domain, export_id, deid_function)
+
+@require_form_export_permission
+def _export_no_deid(request, domain, export_id=None):
+    return _export_default_or_custom_data(request, domain, export_id)
+
+def _export_default_or_custom_data(request, domain, export_id=None, deid_function=None):
     async = request.GET.get('async') == 'true'
     next = request.GET.get("next", "")
     format = request.GET.get("format", "")
@@ -216,6 +230,8 @@ def export_default_or_custom_data(request, domain, export_id=None):
 
         export_object = FakeSavedExportSchema(index=export_tag)
 
+    if deid_function:
+        export_object.map_function = deid_function
 
     if async:
         return export_object.export_data_async(filter, filename, previous_export_id, format=format)

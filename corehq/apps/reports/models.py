@@ -3,7 +3,7 @@ from corehq.apps import reports
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
 from couchexport.models import SavedExportSchema
-from couchexport.util import FilterFunction
+from couchexport.util import SerializableFunction
 import couchforms
 from dimagi.utils.mixins import UnicodeMixIn
 import settings
@@ -108,7 +108,7 @@ class FormExportSchema(SavedExportSchema):
 
     @property
     def filter(self):
-        f = FilterFunction()
+        f = SerializableFunction()
 
         if self.app_id is not None:
             f.add(reports.util.app_export_filter, app_id=self.app_id)

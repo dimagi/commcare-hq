@@ -94,44 +94,7 @@
     <div class="hq-generic-report">
         <h2>Saved Custom Exports</h2>
         {% if saved_exports %}
-        <table class="export_data table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Form</th>
-                    <th>Preview</th>
-                    <th>Edit</th>
-                    <th>Download</th>
-                    <th>Delete</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for export in saved_exports %}
-                <tr class="{% cycle "odd" "even" %}">
-                    <td>{{ export.name|default:"[blank]" }}</td>
-                    <td>{{ export.formname }}</td>
-                    <td class="cell-vertical-centered">
-                        <a class="btn" href='{% url export_custom_data domain export.get_id %}?format=html&{{ get_filter_params.urlencode|safe }}'>
-                            HTML Preview
-                        </a>
-                    </td>
-                    <td class="cell-vertical-centered">
-                        <a class="btn btn-info" href='{% url corehq.apps.reports.views.edit_custom_export domain export.get_id %}?type=form'>
-                            <i class="icon-pencil icon-white"></i> Edit
-                        </a>
-                    </td>
-                    <td class="cell-vertical-centered">
-                        <a data-toggle="modal" href="#export-download-status" data-formname="{{ export.name }}" data-dlocation='{% url export_custom_data domain export.get_id %}?{{ get_filter_params.urlencode|safe }}&async=true'
-                           class="btn btn-primary export-action-download" ><i class="icon-download-alt icon-white"></i> Download</a>
-                    </td>
-                    <td class="cell-vertical-centered">
-                        <a class="btn btn-danger" data-toggle="modal" class="delete_link" href="#delete-export-modal-{{ export.get_id }}"><i class="icon-remove icon-white"></i> Delete</a>
-                        {% include "reports/dialogs/delete_custom_export_dialog.html" %}
-                     </td>
-                 </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+            {% include "reports/partials/saved_custom_exports.html" with allow_edit="yes" %}
         {% else %}
         <div class="alert alert-info">
             <strong>No Custom Exports yet!</strong> Click "Create Custom Export" on a form below to make one.

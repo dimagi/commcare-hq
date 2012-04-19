@@ -731,6 +731,9 @@ class SubmitTrendsReport(StandardDateHQReport):
         })
 
 class ExcelExportReport(StandardDateHQReport):
+    """
+    Note: .deid.FormDeidExport subclasses me, so be mindful if you want to change me
+    """
     name = "Export Submissions to Excel"
     slug = "excel_export_data"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
@@ -749,6 +752,22 @@ class ExcelExportReport(StandardDateHQReport):
             wrapper=lambda x: string_to_datetime(x['key'][1]).replace(tzinfo=None)
         ).one()
         return datespan
+
+    def get_saved_exports(self):
+        """
+        add saved exports. because of the way in which the key is stored
+        (serialized json) this is a little bit hacky, but works.
+
+        """
+        startkey = json.dumps([self.domain, ""])[:-3]
+        endkey = "%s{" % startkey
+        exports = FormExportSchema.view("couchexport/saved_export_schemas",
+            startkey=startkey, endkey=endkey,
+            include_docs=True)
+
+        exports = filter(lambda x: x.type == "form", exports)
+        return exports
+
 
     def calc(self):
         # This map for this view emits twice, once with app_id and once with {}, letting you join across all app_ids.
@@ -819,19 +838,9 @@ class ExcelExportReport(StandardDateHQReport):
                     else:
                         form['no_suggestions'] = True
 
-        # add saved exports. because of the way in which the key is stored
-        # (serialized json) this is a little bit hacky, but works.
-        startkey = json.dumps([self.domain, ""])[:-3]
-        endkey = "%s{" % startkey
-        exports = FormExportSchema.view("couchexport/saved_export_schemas",
-            startkey=startkey, endkey=endkey,
-            include_docs=True)
-
-        exports = filter(lambda x: x.type == "form", exports)
-
         self.context.update({
             "forms": forms,
-            "saved_exports": exports,
+            "saved_exports": self.get_saved_exports(),
             "edit": self.request.GET.get('edit') == 'true',
             "get_filter_params": self.get_filter_params(),
         })

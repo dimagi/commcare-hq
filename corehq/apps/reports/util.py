@@ -4,7 +4,7 @@ from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import user_id_to_username
-from couchexport.util import FilterFunction
+from couchexport.util import SerializableFunction
 from couchforms.filters import instances
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
@@ -322,17 +322,17 @@ def create_export_filter(request, domain, export_type='form'):
     if export_type == 'case':
         if user_filters and use_user_filters:
             users_matching_filter = map(lambda x: x._id, get_all_users_by_domain(domain, filter_users=user_filters))
-            filter = FilterFunction(case_users_filter, users=users_matching_filter)
+            filter = SerializableFunction(case_users_filter, users=users_matching_filter)
         else:
-            filter = FilterFunction(case_group_filter, group=group)
+            filter = SerializableFunction(case_group_filter, group=group)
     else:
-        filter = FilterFunction(instances) & FilterFunction(app_export_filter, app_id=app_id)
-        filter &= FilterFunction(datespan_export_filter, datespan=request.datespan)
+        filter = SerializableFunction(instances) & SerializableFunction(app_export_filter, app_id=app_id)
+        filter &= SerializableFunction(datespan_export_filter, datespan=request.datespan)
         if user_filters and use_user_filters:
             users_matching_filter = map(lambda x: x._id, get_all_users_by_domain(domain, filter_users=user_filters))
-            filter &= FilterFunction(users_filter, users=users_matching_filter)
+            filter &= SerializableFunction(users_filter, users=users_matching_filter)
         else:
-            filter &= FilterFunction(group_filter, group=group)
+            filter &= SerializableFunction(group_filter, group=group)
     return filter
 
 def get_possible_reports(domain):
@@ -344,3 +344,10 @@ def get_possible_reports(domain):
     for model in settings.CUSTOM_REPORT_MAP.get(domain, []):
         reports.append((model, to_function(model).name))
     return reports
+
+
+def deid_map(column_name, value):
+    if column_name == ('_id',):
+        return "This value has been removed"
+    else:
+        return value

@@ -1,0 +1,7 @@
+{% extends "reports/reportdata/excel_export_data.html" %}
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+
+{% block reportcontent %}
+    {% include "reports/partials/saved_custom_exports.html" with deid="true" %}
+{% endblock %}
