@@ -135,22 +135,21 @@ class CallLog(MessageLog):
         return "Call %s %s" % (to_from, self.phone_number)
 
     @classmethod
-    def inbound_call_exists(cls, verified_number, after_timestamp):
+    def inbound_call_exists(cls, caller_doc_type, caller_id, after_timestamp):
         """
-        Checks to see if an inbound call exists for the given number after the given timestamp.
+        Checks to see if an inbound call exists for the given caller.
         
-        verified_number The VerifiedNumber entry for which to check the existence of a call.
+        caller_doc_type The doc_type of the caller (e.g., "CommCareCase").
+        caller_id       The _id of the caller's document.
         after_timestamp The datetime after which to check for the existence of a call.
         
         return          True if a call exists in the CallLog, False if not.
         """
-        if verified_number is None or after_timestamp is None:
-            return False
         start_timestamp = json_format_datetime(after_timestamp)
         end_timestamp = json_format_datetime(datetime.utcnow())
-        reduced = cls.view("sms/by_phone_number_direction_date",
-                    startkey=["CallLog", verified_number.phone_number, INCOMING] + [start_timestamp],
-                    endkey=["CallLog", verified_number.phone_number, INCOMING] + [end_timestamp],
+        reduced = cls.view("sms/by_recipient",
+                    startkey=[caller_doc_type, caller_id, "CallLog", INCOMING] + [start_timestamp],
+                    endkey=[caller_doc_type, caller_id, "CallLog", INCOMING] + [end_timestamp],
                     reduce=True).all()
         if reduced:
             return (reduced[0]['value'] > 0)

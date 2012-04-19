@@ -427,7 +427,7 @@ class CaseReminderHandler(Document):
         
         # If it is a callback reminder and the callback has been received, skip sending the next timeout message
         if (reminder.method == "callback" or reminder.method == "callback_test") and len(reminder.current_event.callback_timeout_intervals) > 0:
-            if CallLog.inbound_call_exists(verified_number, reminder.last_fired):
+            if CallLog.inbound_call_exists(recipient.doc_type, recipient._id, reminder.last_fired):
                 reminder.callback_received = True
                 return True
             elif len(reminder.current_event.callback_timeout_intervals) == reminder.callback_try_count:

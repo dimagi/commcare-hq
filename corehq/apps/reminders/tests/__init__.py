@@ -334,7 +334,7 @@ class ReminderCallbackTestCase(TestCase):
             user_id=cls.user_id
         )
         cls.case.save()
-        cls.user.save_verified_number("test", "15551234", True, None)
+        cls.user.save_verified_number("test", "14445551234", True, None)
 
     def test_ok(self):
         self.assertEqual(self.handler.get_reminder(self.case), None)
@@ -376,7 +376,7 @@ class ReminderCallbackTestCase(TestCase):
         c = CallLog(
             couch_recipient_doc_type    = "CommCareUser",
             couch_recipient             = self.user_id,
-            phone_number                = "15551234",
+            phone_number                = "14445551234",
             direction                   = "I",
             date                        = datetime(year=2012, month=1, day=1, hour=8, minute=5)
         )
@@ -472,11 +472,11 @@ class ReminderCallbackTestCase(TestCase):
         self.assertEqual(reminder.current_event_sequence_num, 1)
         self.assertEqual(reminder.last_fired, CaseReminderHandler.now)
         
-        # Create a callback
+        # Create a callback (with phone_number missing country code)
         c = CallLog(
             couch_recipient_doc_type    = "CommCareUser",
             couch_recipient             = self.user_id,
-            phone_number                = "15551234",
+            phone_number                = "4445551234",
             direction                   = "I",
             date                        = datetime(year=2012, month=1, day=3, hour=8, minute=22)
         )

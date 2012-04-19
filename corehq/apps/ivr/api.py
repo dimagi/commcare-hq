@@ -6,11 +6,23 @@ def incoming(phone_number):
     cleaned_number = phone_number
     if len(cleaned_number) > 0 and cleaned_number[0] == "+":
         cleaned_number = cleaned_number[1:]
+    
+    # Try to look up the verified number entry
     v = VerifiedNumber.view("sms/verified_number_by_number",
         startkey=[cleaned_number],
         endkey=[cleaned_number],
         include_docs=True
     ).one()
+    
+    # If none was found, try to match only the last digits of numbers in the database
+    if v is None:
+        v = VerifiedNumber.view("sms/verified_number_by_suffix",
+            startkey=[cleaned_number],
+            endkey=[cleaned_number],
+            include_docs=True
+        ).one()
+    
+    # Save the call entry
     msg = CallLog(
         phone_number    = cleaned_number,
         direction       = INCOMING,
