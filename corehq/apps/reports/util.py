@@ -1,4 +1,5 @@
 from datetime import datetime
+import hashlib
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
@@ -345,9 +346,23 @@ def get_possible_reports(domain):
         reports.append((model, to_function(model).name))
     return reports
 
+def deid_remove(doc, val):
+    return Ellipsis
 
-def deid_map(column_name, value):
-    if column_name == ('_id',):
-        return "This value has been removed"
-    else:
-        return value
+CONFIG = {
+    '_id': deid_remove,
+    'domain': deid_remove,
+}
+
+def deid_map(doc, config=CONFIG):
+    doc = doc.copy()
+    for key in config:
+        parts = key.split('/')
+        final_part = parts.pop()
+        ctx = doc
+        for part in parts:
+            ctx = ctx[part]
+        ctx[final_part] = config[key](doc, ctx[final_part])
+        if ctx[final_part] == Ellipsis:
+            del ctx[final_part]
+    return doc
