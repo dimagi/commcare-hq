@@ -1,23 +1,25 @@
 import functools
 from inspect import isfunction
 import json
-from couchdbkit.ext.django.schema import StringProperty
+from couchdbkit.ext.django.schema import StringProperty, Property
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import json_handler
 
-def intersect_filters(*args):
-    filters = [fn for fn in args if fn]
-    if filters:
-        def filter(doc):
-            for fn in filters:
-                if not fn(doc):
-                    return False
-            return True
+def intersect_functions(*functions):
+    functions = [fn for fn in functions if fn]
+    if functions:
+        def function(*args):
+            val = True
+            for fn in functions:
+                val = fn(*args)
+                if not val:
+                    return val
+            return val
     else:
-        filter = None
-    return filter
+        function = None
+    return function
 
-class FilterFunction(object):
+class SerializableFunction(object):
     def __init__(self, function=None, **kwargs):
         self.functions = []
         if function:
@@ -32,17 +34,17 @@ class FilterFunction(object):
 
     def __and__(self, other):
         if other is None:
-            other = FilterFunction()
+            other = SerializableFunction()
         if isfunction(other):
-            other = FilterFunction(other)
-        f = FilterFunction()
+            other = SerializableFunction(other)
+        f = SerializableFunction()
         f &= self
         f &= other
         return f
 
-    def __call__(self, doc):
+    def __call__(self, *args):
         if self.functions:
-            return intersect_filters(*[functools.partial(f, **kwargs) for (f, kwargs) in self.functions])(doc)
+            return intersect_functions(*[functools.partial(f, **kwargs) for (f, kwargs) in self.functions])(*args)
         else:
             return True
 
@@ -70,21 +72,21 @@ class FilterFunction(object):
             self.add(f, **kwargs)
         return self
 
-class FilterFunctionProperty(object):
+class SerializableFunctionProperty(Property):
 
-    def __init__(self, target):
-        self.target = target
-
-    def __get__(self, parent, parent_cls):
-        data = getattr(parent, self.target)
-        if not data:
-            return FilterFunction()
+    def to_python(self, value):
+        if not value:
+            return SerializableFunction()
         try:
-            return FilterFunction.loads(data)
+            return SerializableFunction.loads(value)
         except ValueError:
-            return FilterFunction(to_function(data))
+            return SerializableFunction(to_function(value))
 
-    def __set__(self, parent, function):
-        if isfunction(function):
-            function = FilterFunction(function)
-        setattr(parent, self.target, function.dumps())
+    def to_json(self, value):
+        if isfunction(value):
+            function = SerializableFunction(value)
+        elif not value:
+            function = SerializableFunction()
+        else:
+            function = value
+        return function.dumps()

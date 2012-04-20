@@ -149,7 +149,7 @@ def export_raw(headers, data, file, format=Format.XLS_2007,
     
 def export(schema_index, file, format=Format.XLS_2007, 
            previous_export_id=None, filter=None, 
-           max_column_size=2000, separator='|'):
+           max_column_size=2000, separator='|', export_object=None):
     """
     Exports data from couch documents matching a given tag to a file. 
     Returns true if it finds data, otherwise nothing
@@ -180,7 +180,9 @@ def export(schema_index, file, format=Format.XLS_2007,
     writer.open(formatted_headers, file)
     
     for doc in config.get_docs():
-        writer.write(format_tables(create_intermediate_tables(doc, updated_schema), 
+        if export_object and export_object.transform:
+            doc = export_object.transform(doc)
+        writer.write(format_tables(create_intermediate_tables(doc, updated_schema),
                                    include_headers=False, separator=separator))
     writer.close()
     return export_schema_checkpoint

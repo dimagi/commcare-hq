@@ -6,7 +6,7 @@ import json
 from StringIO import StringIO
 from couchexport import util
 import couchexport
-from couchexport.util import FilterFunctionProperty
+from couchexport.util import SerializableFunctionProperty
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.modules import try_import, to_function
 from dimagi.utils.couch.database import get_db
@@ -169,6 +169,16 @@ class ExportTable(DocumentSchema):
         return ret
 
 class BaseSavedExportSchema(Document):
+
+    # signature: filter(doc)
+    filter_function = SerializableFunctionProperty()
+    # signature: transform(doc)
+    transform = SerializableFunctionProperty()
+
+    @property
+    def filter(self):
+        return self.filter_function
+
     def export_data_async(self, filter, filename, previous_export_id, format):
         download_id = uuid.uuid4().hex
         format = format or Format.XLS_2007
@@ -221,7 +231,7 @@ class FakeSavedExportSchema(BaseSavedExportSchema):
         checkpoint = export(export_tag, tmp, format=format,
             previous_export_id=previous_export_id,
             filter=filter, max_column_size=max_column_size,
-            separator=separator)
+            separator=separator, export_object=self)
 
         if checkpoint:
             if use_cache:
@@ -240,13 +250,11 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     index = JsonProperty() # this is stored duplicately in the schema, but is convenient
     schema_id = StringProperty()
     tables = SchemaListProperty(ExportTable)
-    filter_function = StringProperty()
     type = StringProperty()
-    filter = FilterFunctionProperty('filter_function')
 
     def __unicode__(self):
         return "%s (%s)" % (self.name, self.index)
-    
+
     _schema = None
     @property
     def schema(self):
@@ -320,6 +328,8 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         writer.open(formatted_headers, tmp)
         
         for doc in config.get_docs():
+            if self.transform:
+                doc = self.transform(doc)
             writer.write(self.trim(format_tables\
                              (create_intermediate_tables(doc, updated_schema), 
                               separator=".")))
