@@ -43,12 +43,22 @@ class FormErrorReport(StandardTabularHQReport, StandardDateHQReport):
         query_string = self.request.META['QUERY_STRING']
         child_report_url = reverse("report_dispatcher", args=[self.domain, DeviceLogDetailsReport.slug])
         for user in self.users:
+            key = [self.domain, "errors_only", user.raw_username]
+            data = get_db().view("phonelog/devicelog_data",
+                    reduce=True,
+                    startkey=key+[self.datespan.startdate_param_utc],
+                    endkey=key+[self.datespan.enddate_param_utc]
+                ).first()
+            print data
+            warning_count = 0
+            error_count = 0
+            if data:
+                data = data.get('value', {})
+                error_count = data.get('errors', 0)
+                warning_count = data.get('warnings', 0)
 
-            warning_count = self.generate_tag_count(user.raw_username, self.warning_tags)
             formatted_warning_count = '<span class="label label-warning">%d</span>' % warning_count if warning_count > 0\
                                         else '<span class="label">%d</span>' % warning_count
-
-            error_count = self.generate_tag_count(user.raw_username, self.error_tags)
             formatted_error_count = '<span class="label label-important">%d</span>' % error_count if error_count > 0\
                                         else '<span class="label">%d</span>' % error_count
 
@@ -71,21 +81,7 @@ class FormErrorReport(StandardTabularHQReport, StandardDateHQReport):
                          util.format_datatables_data(form_count,form_count),
                          util.format_datatables_data(formatted_warning_count, warning_count),
                          util.format_datatables_data(formatted_error_count, error_count)])
-
         return rows
-
-    def generate_tag_count(self, username, tag_list):
-        count = 0
-        for tag in tag_list:
-            key = [self.domain, "tag_username", tag, username]
-            data = get_db().view("phonelog/devicelog_data",
-                startkey=key + [self.datespan.startdate_param_utc],
-                endkey=key + [self.datespan.enddate_param_utc, {}],
-                reduce=True
-            ).all()
-            if data:
-                count += data[0]['value']
-        return count
 
 class DeviceLogDetailsReport(StandardTabularHQReport, StandardDateHQReport):
     name = "Device Log Details"
@@ -94,8 +90,6 @@ class DeviceLogDetailsReport(StandardTabularHQReport, StandardDateHQReport):
               'corehq.apps.reports.fields.DeviceLogTagField',
               'corehq.apps.reports.fields.DeviceLogUsersField',
               'corehq.apps.reports.fields.DeviceLogDevicesField']
-    error_tags = FormErrorReport.error_tags
-    warning_tags = FormErrorReport.warning_tags
     tag_labels = {
         "exception": "label-important",
         "rms-repair": "label-important",
@@ -118,7 +112,7 @@ class DeviceLogDetailsReport(StandardTabularHQReport, StandardDateHQReport):
 
     def get_parameters(self):
         self.errors_only = self.request.GET.get(DeviceLogTagField.errors_only_slug, False)
-        self.selected_tags = self.error_tags+self.warning_tags if self.errors_only else self.request.GET.getlist(DeviceLogTagField.slug)
+        self.selected_tags = self.request.GET.getlist(DeviceLogTagField.slug)
         self.usernames = self.request.GET.getlist(DeviceLogUsersField.slug)
         self.devices = self.request.GET.getlist(DeviceLogDevicesField.slug)
         self.goto_key = self.request_params.get('goto', None)
@@ -159,7 +153,11 @@ class DeviceLogDetailsReport(StandardTabularHQReport, StandardDateHQReport):
             ).all()
             rows.extend(self.create_rows(data, self.goto_key))
         else:
-            if self.selected_tags and self.usernames and self.devices:
+            if self.errors_only and self.usernames:
+                key_set = [[self.domain, "errors_only", username] for username in self.usernames]
+            elif self.errors_only:
+                key_set = [[self.domain, "all_errors_only"]]
+            elif self.selected_tags and self.usernames and self.devices:
                 key_set = [[self.domain, "tag_username_device", tag, username, device] for tag in self.selected_tags
                                                                         for username in self.usernames
                                                                         for device in self.devices]
