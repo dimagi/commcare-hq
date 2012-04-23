@@ -60,8 +60,8 @@ def default(request, domain, template="reports/report_base.html"):
     }
     return render_to_response(request, template, context)
 
-@require_form_export_permission
 @login_or_digest
+@require_form_export_permission
 @datespan_default
 def export_data(req, domain):
     """
@@ -184,6 +184,7 @@ class CustomExportHelper(object):
             self.custom_export.app_id = self.request.POST.get('app_id')
 
 @login_or_digest
+@require_form_export_permission
 @datespan_default
 def export_default_or_custom_data(request, domain, export_id=None):
     """
@@ -384,8 +385,8 @@ def case_details(request, domain, case_id):
         "timezone": timezone
     })
 
-@require_case_export_permission
 @login_or_digest
+@require_case_export_permission
 @login_and_domain_required
 def download_cases(request, domain):
     include_closed = json.loads(request.GET.get('include_closed', 'false'))
