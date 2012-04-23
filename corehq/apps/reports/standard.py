@@ -740,9 +740,11 @@ class ExcelExportReport(StandardDateHQReport):
 
     def get_default_datespan(self):
         datespan = super(ExcelExportReport, self).get_default_datespan()
-        def wrapper(x):
+        def extract_date(x):
             try:
-                return string_to_datetime(x['key'][1]).replace(tzinfo=None)
+                def clip_timezone(datestring):
+                    return datestring[:len('yyyy-mm-ddThh:mm:ss')]
+                return string_to_datetime(clip_timezone(x['key'][1]))
             except Exception:
                 logging.error("Tried to get a date from this, but it didn't work: %r" % x)
                 return None
@@ -752,8 +754,7 @@ class ExcelExportReport(StandardDateHQReport):
             limit=1,
             descending=False,
             reduce=False,
-            # The final 'Z' makes the datetime parse with tzinfo=tzlocal()
-            wrapper=wrapper
+            wrapper=extract_date
         ).one()
         if startdate:
             datespan.startdate = startdate
