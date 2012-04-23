@@ -137,7 +137,8 @@ class SelectCHWField(ReportField):
     def update_context(self):
         user_filter, _ = FilterUsersField.get_user_filter(self.request)
         individual = self.request.GET.get('individual', '')
-        
+
+        self.context['field_name'] = 'Select CHW'
         self.context['default_option'] = self.get_default_text(user_filter)
         self.context['users'] = util.user_list(self.domain)
         self.context['individual'] = individual
