@@ -114,8 +114,8 @@ class XForm(WrappedNode):
             xmlns = self.data_node.tag_xmlns
             self.namespaces.update(x="{%s}" % xmlns)
 
-    def validate(self):
-        r = formtranslate.api.validate(ET.tostring(self.xml))
+    def validate(self, version):
+        r = formtranslate.api.validate(ET.tostring(self.xml), version=version)
         if not r['success']:
             raise XFormValidationError(r["errstring"])
         return self

@@ -242,7 +242,7 @@ class FormBase(DocumentSchema):
     def validate_form(self):
         if self.validation_cache is None:
             try:
-                XForm(self.source).validate()
+                XForm(self.source).validate(version=self.get_app().application_version)
             except XFormValidationError as e:
                 self.validation_cache = unicode(e)
             else:
