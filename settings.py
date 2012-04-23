@@ -479,6 +479,9 @@ CUSTOM_REPORT_MAP = {
                     'hsph.reports.DCOActivityReport',
                     'hsph.reports.DCOFieldDataCollectionActivityReport'
     ]
+#    "test": [
+#        'corehq.apps.reports.deid.FormDeidExport',
+#    ]
 }
 
 MESSAGE_TAGS = {
