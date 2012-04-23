@@ -179,6 +179,7 @@ HQ_APPS = (
     'hutch',
     'dca',
     'loadtest',
+    'hsph',
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
@@ -376,7 +377,8 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'pathfinder',
         'registration',
         'hutch',
-        'dca'
+        'dca',
+        'hsph',
     ]
 ]
 
@@ -472,7 +474,11 @@ CUSTOM_REPORT_MAP = {
                    'dca.reports.ProjectOfficerReport',
                    'dca.reports.PortfolioComparisonReport',
                    'dca.reports.PerformanceReport',
-                   'dca.reports.PerformanceRatiosReport']
+                   'dca.reports.PerformanceRatiosReport'],
+    "hsph": [
+                    'hsph.reports.DCOActivityReport',
+                    'hsph.reports.DCOFieldDataCollectionActivityReport'
+    ]
 }
 
 MESSAGE_TAGS = {
