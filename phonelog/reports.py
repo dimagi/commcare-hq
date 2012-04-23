@@ -20,8 +20,6 @@ class FormErrorReport(StandardTabularHQReport, StandardDateHQReport):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
-    error_tags = ['exception', 'rms-repair', 'rms-spill']
-    warning_tags = ['case-recreate', 'permissions_notify', 'time message']
 
     def get_headers(self):
         return [util.format_datatables_header('Username', css_class="span4"),
@@ -49,7 +47,6 @@ class FormErrorReport(StandardTabularHQReport, StandardDateHQReport):
                     startkey=key+[self.datespan.startdate_param_utc],
                     endkey=key+[self.datespan.enddate_param_utc]
                 ).first()
-            print data
             warning_count = 0
             error_count = 0
             if data:
