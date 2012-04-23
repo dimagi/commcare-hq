@@ -740,14 +740,23 @@ class ExcelExportReport(StandardDateHQReport):
 
     def get_default_datespan(self):
         datespan = super(ExcelExportReport, self).get_default_datespan()
-        datespan.startdate = get_db().view('reports/all_submissions',
+        def wrapper(x):
+            try:
+                return string_to_datetime(x['key'][1]).replace(tzinfo=None)
+            except Exception:
+                logging.error("Tried to get a date from this, but it didn't work: %r" % x)
+                return None
+        startdate = get_db().view('reports/all_submissions',
             startkey=[self.domain],
+            endkey=[self.domain,{}],
             limit=1,
             descending=False,
             reduce=False,
             # The final 'Z' makes the datetime parse with tzinfo=tzlocal()
-            wrapper=lambda x: string_to_datetime(x['key'][1]).replace(tzinfo=None)
+            wrapper=wrapper
         ).one()
+        if startdate:
+            datespan.startdate = startdate
         return datespan
 
     def calc(self):
