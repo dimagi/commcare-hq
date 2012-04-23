@@ -10,18 +10,9 @@ function(doc) {
         && (doc.form.site_id || (doc.form.region_id && doc.form.district_id && doc.form.site_number))){
         var info = doc.form.meta;
         var entry = {
-            siteVisit: true,
             siteId: (doc.form.site_id) ? doc.form.site_id : doc.form.region_id+doc.form.district_id+doc.form.site_number
         };
         entry.siteId = entry.siteId.replace(/ /g,'').toLowerCase();
-        if (doc.xmlns === birth_reg) {
-            entry.birthReg = true;
-            entry.numBirths = (doc.form.multiple_birth === 'yes') ? parseInt(doc.form.multiple_birth_number) : 1,
-                entry.contactProvided = !!(doc.form.phone_mother === 'yes' ||
-                    doc.form.phone_husband === 'yes' ||
-                    doc.form.phone_house === 'yes' ||
-                    doc.form.phone_asha === 'yes');
-        }
-        emit([entry.siteId, info.userID, info.timeEnd], entry);
+        emit([entry.siteId], entry);
     }
 }

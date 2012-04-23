@@ -24,6 +24,7 @@ function(doc) {
             entry.siteVisit = true;
             entry.siteId = (doc.form.site_id) ? doc.form.site_id : doc.form.region_id+doc.form.district_id+doc.form.site_number;
             entry.visitDate = info.timeEnd;
+            entry.siteId = entry.siteId.replace(/ /g,'').toLowerCase();
         }
         emit([info.userID, info.timeEnd], entry);
     }
