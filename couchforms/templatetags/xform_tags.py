@@ -33,7 +33,7 @@ def render_form_data(form):
 
         def render_base_type(key, value):
             if not value: return ""
-            return '<dt><i class="icon-info-sign"></i> %s</dt><dd>%s</dd>' % (format_name(key), format_name(value))
+            return '<dt>%s</dt><dd>%s</dd>' % (format_name(key), format_name(value))
 
 
         def is_base_type(value):
