@@ -605,10 +605,17 @@ class XForm(WrappedNode):
                 update_block.extend(extra_updates)
 
             if 'update_case' in actions:
-                for key in actions['update_case'].update.keys():
+
+                update_mapping = {}
+                for key, value in actions['update_case'].update.items():
+                    if key == 'name':
+                        key = 'case_name'
+                    update_mapping[key] = value
+
+                for key in update_mapping.keys():
                     update_block.append(make_case_elem(key))
 
-                for key, path in actions['update_case'].update.items():
+                for key, path in update_mapping.items():
                     self.add_bind(
                         nodeset="case/update/%s" % key,
                         calculate=self.resolve_path(path),
@@ -626,6 +633,8 @@ class XForm(WrappedNode):
             if 'case_preload' in actions:
                 needs_casedb_instance = True
                 for nodeset, property in actions['case_preload'].preload.items():
+                    if property == 'name':
+                        property = 'case_name'
                     self.add_setvalue(
                         ref=nodeset,
                         value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/%s" % property,
@@ -736,12 +745,19 @@ class XForm(WrappedNode):
                 add_bind({"nodeset":"case/case_id", "{jr}preload":"case", "{jr}preloadParams":"case-id"})
             if 'update_case' in actions:
                 # no condition
+
+                update_mapping = {}
+                for key, value in actions['update_case'].update.items():
+                    if key == 'name':
+                        key = 'case_name'
+                    update_mapping[key] = value
+
                 casexml[
                 __('update')[
-                (__(key) for key in actions['update_case'].update.keys())
+                (__(key) for key in update_mapping.keys())
                 ]
                 ]
-                for key, path in actions['update_case'].update.items():
+                for key, path in update_mapping.items():
                     add_bind({"nodeset":"case/update/%s" % key, "calculate": self.resolve_path(path), "relevant": "count(%s) > 0" % path})
             if 'close_case' in actions:
                 casexml[
