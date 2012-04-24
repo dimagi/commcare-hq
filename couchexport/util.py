@@ -60,17 +60,34 @@ class SerializableFunction(object):
                 'function': '%s.%s' % (f.__module__, f.__name__),
                 'kwargs': kwargs
             })
-        return json.dumps(functions, default=json_handler)
+        def handler(obj):
+            try:
+                json_handler(obj)
+            except Exception:
+                if isinstance(obj, SerializableFunction):
+                    return {'type': 'SerializedFunction', 'dump': obj.dumps()}
+                elif isfunction(obj):
+                    return {'type': 'SerializedFunction', 'dump': SerializableFunction(obj).dumps()}
+        return json.dumps(functions, default=handler)
 
     @classmethod
     def loads(cls, data):
-        functions = json.loads(data)
+        def object_hook(d):
+            if d.get('type') == 'SerializedFunction':
+                return cls.loads(d['dump'])
+            else:
+                return d
+        functions = json.loads(data, object_hook=object_hook)
         self = cls()
         for o in functions:
             f, kwargs = o['function'], o['kwargs']
             f = to_function(f)
             self.add(f, **kwargs)
         return self
+
+# deprecated name
+FilterFunction = SerializableFunction
+
 
 class SerializableFunctionProperty(Property):
 
