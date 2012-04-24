@@ -474,7 +474,10 @@ CUSTOM_REPORT_MAP = {
                    'dca.reports.ProjectOfficerReport',
                    'dca.reports.PortfolioComparisonReport',
                    'dca.reports.PerformanceReport',
-                   'dca.reports.PerformanceRatiosReport']
+                   'dca.reports.PerformanceRatiosReport'],
+#    "test": [
+#        'corehq.apps.reports.deid.FormDeidExport',
+#    ]
 }
 
 MESSAGE_TAGS = {
