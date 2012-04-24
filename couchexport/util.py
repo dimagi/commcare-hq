@@ -91,6 +91,15 @@ FilterFunction = SerializableFunction
 
 class SerializableFunctionProperty(Property):
 
+    def __init__(self, verbose_name=None, name=None,
+                 default='', required=False, validators=None,
+                 choices=None):
+        super(SerializableFunctionProperty, self).__init__(
+            verbose_name=verbose_name, name=name,
+            default=default, required=required, validators=validators,
+            choices=choices
+        )
+
     def to_python(self, value):
         if not value:
             return SerializableFunction()

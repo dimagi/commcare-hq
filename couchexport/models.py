@@ -173,7 +173,7 @@ class BaseSavedExportSchema(Document):
     # signature: filter(doc)
     filter_function = SerializableFunctionProperty()
     # signature: transform(doc)
-    transform = SerializableFunctionProperty()
+    transform = SerializableFunctionProperty(default=None)
 
     @property
     def filter(self):
