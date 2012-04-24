@@ -1,15 +1,17 @@
-from datetime import datetime
-import hashlib
+from datetime import datetime, timedelta
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import user_id_to_username
+from couchdbkit.schema.properties import DictProperty
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.data.deid_generator import DeidGenerator
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
+from dimagi.utils.parsing import string_to_datetime
 import pytz
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -349,20 +351,23 @@ def get_possible_reports(domain):
 def deid_remove(doc, val):
     return Ellipsis
 
-CONFIG = {
-    '_id': deid_remove,
-    'domain': deid_remove,
-}
+def deid_ID(doc, val):
+    return "%s-%s" % (doc.get('domain', 'DANNY'), DeidGenerator(val, 'id').random_hash())
 
-def deid_map(doc, config=CONFIG):
-    doc = doc.copy()
+def deid_date(doc, val):
+    offset = DeidGenerator(doc['_id'], 'date').random_number(-31, 32)
+    return (string_to_datetime(val) + timedelta(days=offset)).date()
+
+def deid_map(doc, config):
+    doc_copy = doc.copy()
     for key in config:
         parts = key.split('/')
         final_part = parts.pop()
-        ctx = doc
+        ctx = doc_copy
         for part in parts:
             ctx = ctx[part]
-        ctx[final_part] = config[key](doc, ctx[final_part])
+        if config[key]:
+            ctx[final_part] = config[key](doc, ctx[final_part])
         if ctx[final_part] == Ellipsis:
             del ctx[final_part]
-    return doc
+    return doc_copy

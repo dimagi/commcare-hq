@@ -193,7 +193,11 @@ def export_default_or_custom_data(request, domain, export_id=None):
 
     deid = request.GET.get('deid') == 'true'
     if deid:
-        return _export_deid(request, domain, export_id, util.deid_map)
+        return _export_deid(request, domain, export_id, SerializableFunction(util.deid_map, config={
+            '_id': util.deid_ID,
+            'domain': util.deid_remove,
+            'form/case/@case_id': util.deid_ID,
+            }))
     else:
         return _export_no_deid(request, domain, export_id)
 
