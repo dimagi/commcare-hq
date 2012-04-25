@@ -97,7 +97,7 @@ def export_data(req, domain):
 
     errors_filter = instances if not include_errors else None
 
-    kwargs['filter'] = couchexport.util.intersect_functions(filter, errors_filter)
+    kwargs['filter'] = couchexport.util.intersect_filters(filter, errors_filter)
 
     if kwargs['format'] == 'raw':
         resp = export_raw_data([domain, export_tag], filename=export_tag)
