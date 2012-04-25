@@ -494,3 +494,6 @@ MESSAGE_TAGS = {
 
 COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
+
+# for touchforms maps
+GMAPS_API_KEY = "changeme"
