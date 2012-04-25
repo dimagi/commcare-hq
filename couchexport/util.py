@@ -19,6 +19,10 @@ def intersect_functions(*functions):
         function = None
     return function
 
+# deprecated
+intersect_filters = intersect_functions
+
+
 class SerializableFunction(object):
     def __init__(self, function=None, **kwargs):
         self.functions = []
