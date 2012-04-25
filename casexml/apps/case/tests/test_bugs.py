@@ -72,3 +72,31 @@ class CaseBugTest(TestCase):
         case = CommCareCase.get(form.xpath("form/case/case_id"))
         self.assertEqual("2011-11-16", case.name)
         
+    
+    def testDuplicateCasePropertiesBug(self):
+        """
+        How do we do when submitting multiple values for the same property
+        lin an update block
+        """
+        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
+        file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", 
+                                 "duplicate_case_properties.xml")
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
+        form = post_xform_to_couch(xml_data)
+        # before the bug was fixed this call failed
+        process_cases(sender="testharness", xform=form)
+        case = CommCareCase.get(form.xpath("form/case/@case_id"))
+        # make sure the property is there, but empty
+        self.assertEqual("", case.foo)
+        
+        file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", 
+                                 "duplicate_case_properties_2.xml")
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
+        form = post_xform_to_couch(xml_data)
+        process_cases(sender="testharness", xform=form)
+        case = CommCareCase.get(form.xpath("form/case/@case_id"))
+        # make sure the property takes the last defined value
+        self.assertEqual("2", case.bar)
+        

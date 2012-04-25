@@ -56,6 +56,13 @@ class CaseActionBase(object):
     
     @classmethod
     def _from_block_and_mapping(cls, block, mapping):
+        def _normalize(val):
+            if isinstance(val, list):
+                # if we get multiple updates, they look like a list. 
+                # normalize these by taking the last item
+                return val[-1]
+            return val
+        
         kwargs = {}
         dynamic_properties = {}
         # if not a dict, it's probably an empty close block
@@ -64,7 +71,7 @@ class CaseActionBase(object):
                 if k in mapping:
                     kwargs[mapping[k]] = v
                 else:
-                    dynamic_properties[k] = v 
+                    dynamic_properties[k] = _normalize(v)
         
         return cls(block, dynamic_properties=dynamic_properties,
                    **kwargs)
