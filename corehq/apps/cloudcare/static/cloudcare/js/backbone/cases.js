@@ -71,7 +71,8 @@ cloudCare.CaseListView = Backbone.View.extend({
             this.caseList.reset(this.options.cases);
         } else if (this.options.caseUrl) {
             this.caseList.setUrl(this.options.caseUrl);
-            this.caseList.fetch();
+            showLoading();
+            this.caseList.fetch({success: hideLoadingCallback});
         }
     },
     
@@ -193,7 +194,8 @@ cloudCare.CaseMainView = Backbone.View.extend({
     },
     
     fetchCaseList: function () {
-        this.listView.caseList.fetch();
+        showLoading();
+        this.listView.caseList.fetch({success: hideLoadingCallback});
     },
     
     render: function () {

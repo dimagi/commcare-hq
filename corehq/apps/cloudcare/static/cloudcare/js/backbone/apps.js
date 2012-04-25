@@ -378,7 +378,7 @@ cloudCare.AppView = Backbone.View.extend({
 		            });
 		        };
                 var sess = new WebFormSession(data);
-                // TODO: probably shouldn't hard code this div
+                // TODO: probably shouldn't hard code these divs
                 sess.load($('#webforms'), $('#loading'), null);
             });
         };
@@ -655,10 +655,12 @@ cloudCare.AppMainView = Backbone.View.extend({
 	            _id: appId,
 	        });
 	        this.app.set("urlRoot", this.options.appUrlRoot);
+	        showLoading();
 	        this.app.fetch({
 	            success: function (model, response) {
 	                self.appView.setModel(model);
-	                self.appView.render();           
+	                self.appView.render();
+	                hideLoading();           
 	            }
 	        });
 	    }

@@ -192,7 +192,6 @@ class DeviceLogFilterField(ReportField):
     def update_context(self):
         selected = self.request.GET.getlist(self.slug)
         show_all = bool(not selected)
-        print show_all, selected
         self.context['default_on'] = show_all
 
         data = get_db().view(self.view,

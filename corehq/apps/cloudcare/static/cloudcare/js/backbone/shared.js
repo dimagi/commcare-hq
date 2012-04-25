@@ -21,13 +21,26 @@ var getCaseFilterUrl = function(urlRoot, appId, moduleId) {
 };
 
 var showSuccess = function (message, location, autoHideTime) {
-    console.log("show success");
     var alert = $("<div />").addClass("alert alert-success").text(message);
     alert.append($("<a />").addClass("close").attr("data-dismiss", "alert").html("&times;"));
     location.append(alert);
     if (autoHideTime) {
         alert.delay(autoHideTime).fadeOut(500);
     }
+};
+
+var showLoading = function (selector) {
+    selector = selector || "#loading";
+    $(selector).show();
+};
+
+var hideLoading = function (selector) {
+    selector = selector || "#loading";
+    $(selector).hide();
+};
+
+var hideLoadingCallback = function () {
+    hideLoading();
 };
 
 /*
