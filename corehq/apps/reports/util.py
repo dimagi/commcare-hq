@@ -9,6 +9,7 @@ from couchforms.filters import instances
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
+from django.http import Http404
 import pytz
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -162,6 +163,8 @@ def get_all_users_by_domain(domain, group='', individual='', filter_users=None):
         users =  group.get_users(only_commcare=True)
     elif individual:
         users = [CommCareUser.get_by_user_id(individual)]
+        if users[0] is None:
+            raise Http404()
     else:
         if not filter_users:
             filter_users = HQUserType.use_defaults()
