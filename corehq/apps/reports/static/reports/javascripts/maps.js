@@ -131,12 +131,23 @@ function maps_init(case_api_url) {
 
     $.get(case_api_url, null, function(data) {
 	    init_callback(map, data);
-		}, 'json');
+	}, 'json');
 }
+
+
+CONFIG = {
+    geo_cases: {
+	case_type: property_name,
+    },
+    fields: {
+	case_type: [property_name, name2, name3],
+    }
+};
 
 function init_callback(map, cases) {
     var MARKER_MODE = 3;
 
+    /*
     //pad up
     var mult = 50;
     var init_num = cases.length;
@@ -151,7 +162,7 @@ function init_callback(map, cases) {
 	    cases.push(c);
 	}
     }
-
+    */
 
     var markers = [];
     $.each(cases, function(i, case_) {
