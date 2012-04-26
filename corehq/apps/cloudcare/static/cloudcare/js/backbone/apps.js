@@ -377,7 +377,11 @@ cloudCare.AppView = Backbone.View.extend({
 		                }
 		            });
 		        };
-                var sess = new WebFormSession(data);
+		        data["onerror"] = function (resp) {
+		            console.log("onerror");
+		            showError(resp.message, $("#cloudcare-main"), 10000);
+		        };
+		        var sess = new WebFormSession(data);
                 // TODO: probably shouldn't hard code these divs
                 sess.load($('#webforms'), $('#loading'), null);
             });
