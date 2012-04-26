@@ -17,6 +17,7 @@ from corehq.apps.app_manager.const import APP_V2
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.cloudcare import touchforms_api, CLOUDCARE_DEVICE_ID
 from corehq.apps.cloudcare.touchforms_api import get_session_data
+from django.conf import settings
 
 @login_and_domain_required
 def app_list(request, domain, urlPath):
@@ -41,7 +42,8 @@ def app_list(request, domain, urlPath):
     return render_to_response(request, "cloudcare/cloudcare_home.html", 
                               {"domain": domain,
                                "language": language,
-                               "apps": json.dumps(apps)})
+                               "apps": json.dumps(apps),
+                               "maps_api_key": settings.GMAPS_API_KEY })
 
 
 @login_and_domain_required
