@@ -1220,7 +1220,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def new_app(cls, domain, name, application_version, lang="en"):
-        app = cls(domain=domain, modules=[], name=name, langs=[lang], application_version=application_version)
+        app = cls(domain=domain, modules=[], name=name, langs=[lang], build_langs=[lang], application_version=application_version)
         return app
 
     def new_module(self, name, lang):
