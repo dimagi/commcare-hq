@@ -1,3 +1,16 @@
+ko.bindingHandlers.clickable = (function () {
+    function Clickable() {
+        var self = this;
+        self.init = function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+            $(element).css({cursor: 'pointer'});
+            return Clickable.prototype.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+        }
+    }
+    Clickable.prototype = ko.bindingHandlers.click;
+    return new Clickable();
+}());
+
+
 $(function () {
     function log (x) {
         console.log(x);
