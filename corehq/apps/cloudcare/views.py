@@ -5,7 +5,6 @@ from corehq.apps.domain.decorators import login_and_domain_required,\
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.web import render_to_response, json_response, json_handler
-from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseBadRequest
 from corehq.apps.app_manager.models import Application, ApplicationBase
@@ -13,11 +12,9 @@ import json
 from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_cloudcare_apps,\
     get_all_cases
 from dimagi.utils.couch import safe_index
-from corehq.apps.app_manager.const import APP_V2
 from dimagi.utils.parsing import string_to_boolean
-from corehq.apps.cloudcare import touchforms_api, CLOUDCARE_DEVICE_ID
-from corehq.apps.cloudcare.touchforms_api import get_session_data
 from django.conf import settings
+from corehq.apps.cloudcare import touchforms_api 
 
 @login_and_domain_required
 def app_list(request, domain, urlPath):
@@ -51,27 +48,11 @@ def form_context(request, domain, app_id, module_id, form_id):
     app = Application.get(app_id)
     module = app.get_module(module_id)
     form = module.get_form(form_id)
-    
     case_id = request.REQUEST.get("case_id")
-    
-    if app.application_version == APP_V2:
-        session_data = get_session_data(domain, request.couch_user)
-        if case_id:
-            session_data["case_id"] = case_id
-    else:
-        # assume V1 / preloader structure
-        session_data = {"meta": {"UserID":   request.couch_user.get_id,
-                                 "UserName":  request.user.username},
-                        "property": {"deviceID": CLOUDCARE_DEVICE_ID}}
-        # check for a case id and update preloader appropriately
-        if case_id:
-            case = CommCareCase.get(case_id)
-            session_data["case"] = case.get_preloader_dict()
-    
-    return json_response({"form_content": form.render_xform(),
-                          "session_data": session_data, 
-                          "xform_url": reverse("xform_player_proxy")})
-    
+    return json_response(
+        touchforms_api.get_full_context(domain, request.couch_user, 
+                                        app, module, form, case_id))
+        
 @login_and_domain_required
 def case_list(request, domain):
     
