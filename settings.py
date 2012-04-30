@@ -459,7 +459,7 @@ STANDARD_REPORT_MAP = {
                       ],
     "Raw Data" : ['corehq.apps.reports.standard.ExcelExportReport',
                   'corehq.apps.reports.standard.CaseExportReport',
-                  'corehq.apps.importer.base.ExcelImporter',
+#                  'corehq.apps.importer.base.ExcelImporter',
                       ],
     "Manage Deployments" : ['corehq.apps.reports.standard.ApplicationStatusReport',
                             'phonelog.reports.FormErrorReport',
