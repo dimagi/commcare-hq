@@ -142,7 +142,7 @@ HQ_APPS = (
     'corehq.apps.hqwebapp',
     'corehq.apps.docs',
     'corehq.apps.hqmedia',
-    'corehq.apps.importer',
+    # 'corehq.apps.importer',
     'couchforms',
     'couchexport',
     'couchlog',
