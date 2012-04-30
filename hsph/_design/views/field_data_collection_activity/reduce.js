@@ -19,14 +19,10 @@ function(keys, values, rereduce) {
                 calc.totalBirths += curEntry.numBirths;
                 if (!curEntry.contactProvided)
                     calc.totalBirthsWithoutContact += curEntry.numBirths;
-            }
-            calc.numFacilityVisits += 1;
+            } else if (curEntry.siteVisit)
+                calc.numFacilityVisits += 1;
         }
     }
 
-    return {
-        totalBirths: calc.totalBirths,
-        totalBirthsWithoutContact: calc.totalBirthsWithoutContact,
-        numFacilityVisits: calc.numFacilityVisits
-    }
+    return calc;
 }

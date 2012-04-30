@@ -1,12 +1,15 @@
 function(keys, values, rereduce) {
     var calc = {
+        numFacilitiesVisited: 0,
+        numFacilityVisits: 0,
+        lessThanTwoWeeklyFacilityVisits: 0,
         totalBirths: 0,
         totalBirthsWithoutContact: 0,
         totalRegistrationTime: 0,
         totalRegistrations: 0,
-        numFacilitiesVisited: 0,
-        numFacilityVisits: 0,
-        lessThanTwoWeeklyFacilityVisits: 0,
+        numHomeVisits: 0,
+        numHomeVisitsCompleted: 0,
+        numHomeVisitsOpenAt21: 0,
         siteVisitStats: {}
     };
 
@@ -19,6 +22,9 @@ function(keys, values, rereduce) {
                 calc.totalRegistrationTime += agEntry.averageRegistrationLength;
                 calc.totalRegistrations += 1;
             }
+            calc.numHomeVisits += agEntry.numHomeVisits;
+            calc.numHomeVisitsCompleted += agEntry.numHomeVisitsCompleted;
+            calc.numHomeVisitsOpenAt21 += agEntry.numHomeVisitsOpenAt21;
 
             for (var site in agEntry.siteVisitStats) {
                 if (calc.siteVisitStats[site]) {
@@ -51,11 +57,14 @@ function(keys, values, rereduce) {
                     calc.siteVisitStats[siteID].dates = new Array();
                 }
                 calc.siteVisitStats[siteID].dates.push(curEntry.visitDate);
+            } else if (curEntry.homeVisit) {
+                calc.numHomeVisits += 1;
+                calc.numHomeVisitsCompleted += (curEntry.completed) ? 1 : 0;
+                calc.numHomeVisitsOpenAt21 += (curEntry.openedAt21) ? 1 : 0;
             }
         }
     }
 
-    log(calc.siteVisitStats);
     if (calc.siteVisitStats) {
         for (var s in calc.siteVisitStats) {
             var visitDates = calc.siteVisitStats[s].dates,
@@ -81,15 +90,7 @@ function(keys, values, rereduce) {
             calc.numFacilitiesVisited += 1;
         }
     }
-    log(calc.numFacilitiesVisited);
 
-    return {
-        totalBirths: calc.totalBirths,
-        totalBirthsWithoutContact: calc.totalBirthsWithoutContact,
-        averageRegistrationLength: (calc.totalRegistrationTime > 0) ? Math.round(calc.totalRegistrationTime/calc.totalRegistrations) : null,
-        numFacilitiesVisited: calc.numFacilitiesVisited,
-        numFacilityVisits: calc.numFacilityVisits,
-        lessThanTwoWeeklyFacilityVisits: calc.lessThanTwoWeeklyFacilityVisits,
-        siteVisitStats: calc.siteVisitStats
-    }
+    calc.averageRegistrationLength = (calc.totalRegistrationTime > 0) ? Math.round(calc.totalRegistrationTime/calc.totalRegistrations) : null;
+    return calc;
 }

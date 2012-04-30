@@ -1,0 +1,25 @@
+{% load hq_shared_tags %}
+<label for="hsph_region_select" class="control-label">Region</label>
+<div class="controls">
+    <select id="hsph_region_select" name="{{ slug.region }}" data-bind="options: hsph_regions, optionsCaption: 'Select Region', value: hsph_selected_region, event: {change: updateRegion}"></select>
+</div>
+</div>
+<div class="control-group" data-bind="visible: enable_district">
+    <label for="hsph_district_select" class="control-label">District</label>
+    <div class="controls">
+        <select id="hsph_district_select" name="{{ slug.district }}" data-bind="options: hsph_districts, optionsCaption: 'Select Disctrict', value: hsph_selected_district, enable: enable_district, event: {change: updateDistrict}"></select>
+    </div>
+</div>
+<div class="control-group" data-bind="visible: enable_site">
+    <label for="hsph_site_select" class="control-label">Site</label>
+    <div class="controls">
+        <select id="hsph_site_select" name="{{ slug.site }}" data-bind="options: hsph_sites, optionsCaption: 'Select Site', value: hsph_selected_site, enable: enable_site"></select>
+    </div>
+
+<script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.0.0.js' %}"></script>
+<script type="text/javascript" src="{% static 'hsph/js/hsph.sites_form.js' %}"></script>
+    <script type="text/javascript">
+        var siteMap = {{ sites|JSON }},
+            currentSelection = {{ selected|JSON }};
+        ko.applyBindings(new HSPHSitePicker(siteMap, currentSelection));
+    </script>
