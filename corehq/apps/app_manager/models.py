@@ -1368,7 +1368,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             errors.extend(errors_)
 
             try:
-                xform = XForm(form.source)
+                _parse_xml(form.source)
             except XFormError as e:
                 errors.append(dict(
                     type="invalid xml",
@@ -1379,6 +1379,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 logging.error("Failed: _parse_xml(string=%r)" % form.source)
                 raise
             else:
+                xform = XForm(form.source)
                 missing_languages = set(self.build_langs).difference(xform.get_languages())
                 if missing_languages:
                     errors.append(dict(
@@ -1412,6 +1413,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         if not errors:
             errors = super(Application, self).validate_app()
+        print errors
         return errors
 
     @classmethod
