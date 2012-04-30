@@ -314,6 +314,9 @@ AUDIT_VIEWS = [
 # Don't use google analytics unless overridden in localsettings
 GOOGLE_ANALYTICS_ID = ''
 
+# for touchforms maps
+GMAPS_API_KEY = "changeme"
+
 # import local settings if we find them
 LOCAL_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
@@ -490,3 +493,4 @@ MESSAGE_TAGS = {
 
 COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
+
