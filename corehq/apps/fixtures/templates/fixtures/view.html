@@ -167,16 +167,16 @@
                                             <div class="row-fluid">
                                                 <div class="span6">
                                                     <h4>Groups</h4>
-                                                    <ul data-bind="foreach: groups">
+                                                    <ul class="unstyled" data-bind="foreach: groups">
                                                         <li data-bind="css: {waiting: $data._waiting}">
+                                                            <i class="icon-remove" data-bind="clickable: $parent.removeGroup, visible: !$data._waiting || !$data._waiting()"></i>
                                                             <span data-bind="text: name"></span>
-                                                            <i class="icon-arrow-right" data-bind="click: $parent.removeGroup, visible: !$data._waiting || !$data._waiting()"></i>
                                                         </li>
                                                     </ul>
                                                 </div>
-                                                <ul class="span6" data-bind="foreach: remainingGroups">
+                                                <ul class="unstyled span6" data-bind="foreach: remainingGroups">
                                                     <li>
-                                                        <i class="icon-arrow-left" data-bind="click: $parent.addGroup"></i>
+                                                        <i class="icon-plus" data-bind="clickable: $parent.addGroup"></i>
                                                         <span data-bind="text: name"></span>
                                                     </li>
                                                 </ul>
@@ -184,16 +184,16 @@
                                             <div class="row-fluid">
                                                 <div class="span6">
                                                     <h4>Users</h4>
-                                                    <ul data-bind="foreach: users">
+                                                    <ul class="unstyled" data-bind="foreach: users">
                                                         <li data-bind="css: {waiting: $data._waiting}">
+                                                            <i class="icon-remove" data-bind="clickable: $parent.removeUser, visible: !$data._waiting || !$data._waiting()"></i>
                                                             <span data-bind="text: username"></span>
-                                                            <i class="icon-arrow-right" data-bind="click: $parent.removeUser, visible: !$data._waiting || !$data._waiting()"></i>
                                                         </li>
                                                     </ul>
                                                 </div>
-                                                <ul class="span6" data-bind="foreach: $root.users">
+                                                <ul class="unstyled span6" data-bind="foreach: $root.users">
                                                     <li>
-                                                        <i class="icon-arrow-left" data-bind="click: $parent.addUser"></i>
+                                                        <i class="icon-plus" data-bind="clickable: $parent.addUser"></i>
                                                         <span data-bind="text: username"></span>
                                                     </li>
                                                 </ul>

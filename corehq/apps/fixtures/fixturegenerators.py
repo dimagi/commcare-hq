@@ -21,7 +21,7 @@ def item_lists(user, version=V2, last_sync=None):
         if not data_types.has_key(item.data_type_id):
             try:
                 data_types[item.data_type_id] = FixtureDataType.get(item.data_type_id)
-            except ResourceNotFound:
+            except (ResourceNotFound, AttributeError):
                 continue
         items_by_type[item.data_type_id].append(item)
         item._data_type = data_types[item.data_type_id]
