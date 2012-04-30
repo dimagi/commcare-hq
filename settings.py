@@ -477,7 +477,8 @@ CUSTOM_REPORT_MAP = {
                    'dca.reports.PerformanceRatiosReport'],
     "hsph": [
                     'hsph.reports.DCOActivityReport',
-                    'hsph.reports.DCOFieldDataCollectionActivityReport'
+                    'hsph.reports.FieldDataCollectionActivityReport',
+                    'hsph.reports.HVFollowUpStatusSummary'
     ]
 #    "test": [
 #        'corehq.apps.reports.deid.FormDeidExport',
@@ -496,4 +497,4 @@ COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
 
 # for touchforms maps
-GMAPS_API_KEY = "changeme"
+#GMAPS_API_KEY = "changeme"
