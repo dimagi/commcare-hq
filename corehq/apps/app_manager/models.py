@@ -750,6 +750,10 @@ class ApplicationBase(VersionedDoc):
     # This is here instead of in Application because it needs to be available in stub representation
     application_version = StringProperty(default=APP_V1, choices=[APP_V1, APP_V2], required=False)
 
+    langs = StringListProperty()
+    # only the languages that go in the build
+    build_langs = StringListProperty()
+
     @classmethod
     def wrap(cls, data):
         # scrape for old conventions and get rid of them
@@ -773,6 +777,9 @@ class ApplicationBase(VersionedDoc):
         if not self.build_spec or self.build_spec.is_null():
             self.build_spec = CommCareBuildConfig.fetch().get_default(self.application_version)
         return self
+
+    def rename_lang(self, old_lang, new_lang):
+        validate_lang(new_lang)
 
     def is_remote_app(self):
         return False
@@ -997,9 +1004,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     show_user_registration = BooleanProperty(default=False, required=True)
     modules = SchemaListProperty(Module)
     name = StringProperty()
-    langs = StringListProperty()
-    # only the languages that go in the build
-    build_langs = StringListProperty()
     profile = DictProperty() #SchemaProperty(Profile)
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
@@ -1487,9 +1491,15 @@ class RemoteApp(ApplicationBase):
                 loc = resource.findtext('location[@authority="local"]')
             except Exception:
                 loc = resource.findtext('location[@authority="remote"]')
-            locations.append(loc)
-        for location in locations:
-            files.update((self.fetch_file(location),))
+            locations.append((resource.getparent().tag, loc))
+
+        for tag, location in locations:
+            location, data = self.fetch_file(location)
+            if tag == 'xform' and self.build_langs:
+                xform = XForm(data)
+                xform.exclude_languages(whitelist=self.build_langs)
+                data = xform.render()
+            files.update({location: data})
         return files
     def scrub_source(self, source):
         pass

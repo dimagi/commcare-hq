@@ -327,13 +327,13 @@ def get_apps_base_context(request, domain, app):
     )
 
     if app and hasattr(app, 'langs'):
-        if not app.langs:
+        if not app.langs and not app.is_remote_app:
             # lots of things fail if the app doesn't have any languages.
             # the best we can do is add 'en' if there's nothing else.
             app.langs.append('en')
             app.save()
         if not lang or lang not in app.langs:
-            lang = app.langs[0]
+            lang = (app.langs or ['en'])[0]
         langs = [lang] + app.langs
 
     edit = (request.GET.get('edit', 'true') == 'true') and\
@@ -1221,7 +1221,7 @@ def edit_app_attr(req, domain, app_id, attr):
 
     """
     app = get_app(domain, app_id)
-    lang = req.COOKIES.get('lang', app.langs[0])
+    lang = req.COOKIES.get('lang', (app.langs or ['en'])[0])
 
     attributes = [
         'all',
