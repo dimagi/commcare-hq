@@ -270,7 +270,9 @@ class FormBase(DocumentSchema):
 
 
     def add_stuff_to_xform(self, xform):
-        xform.set_default_language(self.get_app().langs[0])
+        app = self.get_app()
+        xform.exclude_languages(app.build_langs)
+        xform.set_default_language(app.build_langs[0])
         xform.set_version(self.get_app().version)
 
     def render_xform(self):
@@ -396,6 +398,7 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
     def add_stuff_to_xform(self, xform):
         super(Form, self).add_stuff_to_xform(xform)
         xform.add_case_and_meta(self)
+
     def get_app(self):
         return self._parent._parent
     def get_module(self):
@@ -905,6 +908,7 @@ class ApplicationBase(VersionedDoc):
         except (AppError, XFormValidationError) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
         except Exception as e:
+            raise
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
@@ -994,6 +998,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     modules = SchemaListProperty(Module)
     name = StringProperty()
     langs = StringListProperty()
+    # only the languages that go in the build
+    build_langs = StringListProperty()
     profile = DictProperty() #SchemaProperty(Profile)
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
@@ -1010,6 +1016,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     module['case_label'][lang] = commcare_translations.load_translations(lang).get('cchq.case', 'Cases')
                 if not module['referral_label'].get(lang):
                     module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
+        if not data.get('build_langs'):
+            data['build_langs'] = data['langs']
         return super(Application, cls).wrap(data)
 
     def register_pre_save(self, fn):
@@ -1150,7 +1158,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         return render_to_string(template, {
             'app': self,
-            'langs': ["default"] + self.langs
+            'langs': ["default"] + self.build_langs
         })
 
     def create_all_files(self):
@@ -1160,7 +1168,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         }
         if self.show_user_registration:
             files["user_registration.xml"] = self.get_user_registration().validate_form().render_xform()
-        for lang in ['default'] + self.langs:
+        for lang in ['default'] + self.build_langs:
             files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)
         for module in self.get_modules():
             for form in module.get_forms():
@@ -1360,7 +1368,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             errors.extend(errors_)
 
             try:
-                _parse_xml(form.source)
+                xform = XForm(form.source)
             except XFormError as e:
                 errors.append(dict(
                     type="invalid xml",
@@ -1370,6 +1378,16 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             except ValueError:
                 logging.error("Failed: _parse_xml(string=%r)" % form.source)
                 raise
+            else:
+                missing_languages = set(self.build_langs).difference(xform.get_languages())
+                if missing_languages:
+                    errors.append(dict(
+                        type='missing languages',
+                        missing_languages=missing_languages,
+                        **meta
+                    ))
+
+
             xmlns_count[form.xmlns] += 1
             if form.requires_case():
                 needs_case_detail = True
