@@ -12,6 +12,7 @@
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
+    {% if app %}
     <script>
         $(function () {
             var langs = {{ app.langs|JSON }};
@@ -28,6 +29,7 @@
             }), $("#supported-languages").get(0));
         });
     </script>
+    {% endif %}
     <script>
         $.fn.password_setter = function (options) {
             var that = this,
