@@ -168,6 +168,12 @@ class DjangoUserMixin(DocumentSchema):
         dummy.set_password(raw_password)
         self.password = dummy.password
 
+    def check_password(self, password):
+        """ Currently just for debugging"""
+        dummy = User()
+        dummy.password = self.password
+        return dummy.check_password(password)
+
 class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     """
     A user (for web and commcare)
