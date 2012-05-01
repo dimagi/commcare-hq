@@ -21,10 +21,21 @@ class XFormsSession(Document):
     app_id = StringProperty()
     submission_id = StringProperty()
     
+    # might be a bad idea to store this in the DB long term
+    auth = StringProperty() 
+    
     def __unicode__(self):
         return 'Form %(form)s in domain %(domain)s. Last modified: %(mod)s' % \
             {"form": self.form_xmlns, 
              "domain": self.domain, 
              "mod": self.modified_time}
-
     
+    def end(self, completed):
+        """
+        Marks this as ended (by setting end time).
+        """
+        self.completed = completed
+        self.modified_time = self.end_time = datetime.utcnow()
+        
+        
+from . import signals

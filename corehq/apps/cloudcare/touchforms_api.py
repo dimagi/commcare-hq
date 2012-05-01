@@ -7,12 +7,14 @@ from casexml.apps.case.models import CommCareCase
 from django.core.urlresolvers import reverse
 
 
-def get_session_data(domain, couch_user, case_id=None, version=APP_V2):
+def get_session_data(domain, couch_user, case_id=None, version=APP_V2, 
+                     device_id=CLOUDCARE_DEVICE_ID):
     """
     Get session data used by touchforms.
     """
+    # expected properties: .raw_username, .get_id
     if version == APP_V2:
-        session_data = {'device_id': CLOUDCARE_DEVICE_ID,
+        session_data = {'device_id': device_id,
                         'app_version': '2.0',
                         'username': couch_user.raw_username,
                         'user_id': couch_user.get_id,
