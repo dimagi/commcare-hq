@@ -1,4 +1,6 @@
 from datetime import datetime
+from tastypie import fields
+import simplejson
 from tastypie.bundle import Bundle
 from tastypie.paginator import Paginator
 from tastypie.resources import Resource
@@ -63,9 +65,20 @@ class CouchdbkitResource(Resource):
     Note: This assumes you want to use a CouchdbKit backed Document class, if you need to just use pure json from couch,
     or call reduced views, then you'll need to adjust how the deserialization works.
 
-
     In order for this to work with datatables, you must override the sAjaxDataProp from aaData to objects
+
+    meta properties:
+    doc_class/object_class
+
+    couchdb (if none, it's doc_class.get_db())
+
+    include_all_props = True (just use all properties and dynamic properties from document) vs. or just the explicit fields set in the resource declaration (default True)
+
     """
+    _id = fields.CharField(attribute='get_id')
+    _rev = fields.CharField(attribute="_rev")
+
+
     def _db(self):
         """
         Using the doc_class, get the underlying db.
@@ -131,22 +144,12 @@ class CouchdbkitResource(Resource):
             skip_option = 0
         return limit_option, skip_option
 
-
-    def ms_from_timedelta(self, td):
-        """
-        Given a timedelta object, returns a float representing milliseconds
-        """
-        return (td.seconds * 1000) + (td.microseconds / 1000.0)
-
     def compute_totals(self, request, **kwargs):
         """
         For computing the "x out of y entries" section, the view needs to be called again
 
         This ought to be overriden too
         """
-
-        print self.generate_cache_key(**kwargs)
-
         if hasattr(self, '_totals'):
             return self._totals
         else:
@@ -167,6 +170,19 @@ class CouchdbkitResource(Resource):
         return list(results)
 
 
+    def full_dehydrate(self, bundle):
+        """
+        Override of full_dehydrate so as to allow for getting ALL properties from the document, and/or tastykit derived ones.
+        """
+
+        bundle = super(CouchdbkitResource, self).full_dehydrate(bundle)
+        for prop_key in bundle.obj.properties().keys():
+            bundle.data[prop_key] = bundle.obj[prop_key]
+
+        for dyn_key, dyn_val in bundle.obj.dynamic_properties().items():
+            bundle.data[dyn_key] = dyn_val
+        bundle = self.dehydrate(bundle)
+        return bundle
 
     def get_list(self, request, **kwargs):
         """
@@ -188,11 +204,9 @@ class CouchdbkitResource(Resource):
         # Dehydrate the bundles in preparation for serialization.
         bundles = [self.build_bundle(obj=obj, request=request) for obj in to_be_serialized['objects']]
         to_be_serialized['objects'] = [self.full_dehydrate(bundle) for bundle in bundles]
-        total = len(to_be_serialized['objects'])
+        #total = len(to_be_serialized['objects'])
         to_be_serialized = self.alter_list_data_to_serialize(request, to_be_serialized)
-        display = len(to_be_serialized['objects'])
-        #print to_be_serialized.keys()
-
+        #display = len(to_be_serialized['objects'])
 
         #These are properties traditionally set by the paginator.page() call
         to_be_serialized['iTotalRecords'] = self.compute_totals(request, **kwargs)
@@ -211,10 +225,25 @@ class CouchdbkitResource(Resource):
 
     #not implemented yet are the create/update/delete
     def obj_create(self, bundle, request=None, **kwargs):
-        pass
+        try:
+            j = simplejson.loads(request.raw_post_data)
+        except:
+            pass
+        bundle.obj = self._meta.doc_class.wrap(j)
+        bundle.obj.save()
+        #bundle = self.full_hydrate(bundle)
+        #bundle.pk = bundle.obj._id
+        #bundle.obj.pk = bundle.obj._id
+        return bundle
 
     def obj_update(self, bundle, request=None, **kwargs):
-        pass
+        """
+        Initial version works ok, though more verification is needed here
+        """
+        j = simplejson.loads(request.raw_post_data)
+        res  = self._meta.doc_class.get_db().save_doc(j)
+        bundle.obj = self._meta.doc_class.get(j['_id'])
+        return bundle
 
     def obj_delete_list(self, request=None, **kwargs):
         pass
@@ -224,3 +253,4 @@ class CouchdbkitResource(Resource):
 
     def rollback(self, bundles):
         pass
+
