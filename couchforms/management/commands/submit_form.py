@@ -17,15 +17,15 @@ class Command(BaseCommand):
                 help='Simulate ODK submission (default=False)'),
     )
     help = "Submits a single form to a url with options."
-    args = '[<filename> <url>]'#"[--file <filename> --url <url> [optional --method {curl | python} --chunked --odk]]"
+    args = '<filename> <url> [file1 file2 ...]'#"[--file <filename> --url <url> [optional --method {curl | python} --chunked --odk]]"
     label = "Submit a single form with various options"
 
     def handle(self, *args, **options):
-        print os.path.abspath(os.path.curdir)
-        if len(args) != 2:
+        if len(args) < 2:
             raise CommandError('Usage is submit_form %s' % self.args)
         file = args[0]
         url = args[1]
+        rest = args[2:]
         method = options.get('method', 'curl')
         use_chunked = options.get('use_chunked', False)
         is_odk = options.get('is_odk', False)
@@ -34,10 +34,17 @@ class Command(BaseCommand):
         if not os.path.exists(file):
             raise CommandError("File does not exist")
 
+        attachments = []
+        for attach_path in rest:
+            if not os.path.exists(attach_path):
+                raise CommandError("Error, additional file path does not exist: %s" % attach_path)
+            else:
+                attachments.append((attach_path.replace('.', '_'), attach_path))
+
         if method == 'curl':
             use_curl = True
         elif method == 'python':
             use_curl = False
         
-        print post_data(None, url, path=file, use_curl=use_curl, use_chunked=use_chunked, is_odk=is_odk)
+        print post_data(None, url, path=file, use_curl=use_curl, use_chunked=use_chunked, is_odk=is_odk, attachments=attachments)
 
