@@ -33,7 +33,7 @@ def post(request, callback=None, magic_property='xml_submission_file'):
             )
         for key, item in request.FILES.items():
             if key != magic_property:
-                attachments[magic_property] = item
+                attachments[key] = item
 
     else:
         #else, this is a raw post via a j2me client of xml (or touchforms)
