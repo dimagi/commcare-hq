@@ -1,0 +1,41 @@
+{% extends base_template %}
+{% load i18n %}
+
+{% block title %}
+    {% trans "Audit Viewer" %}
+{% endblock %}
+
+{% block content %}
+    <h2>Website Usage ({{ audit_views|length }})</h2>
+    <div class="span12">
+        <table class="table table-bordered table-striped">
+            <tr>
+                <thead>
+                <th>Date</th>
+                <th>User</th>
+                <th>Result</th>
+                <th>URL</th>
+                </thead>
+            </tr>
+            <tbody>
+            {% for v in audit_views %}
+                <tr>
+                    <td>
+                        {{ v.key.1 }}/{{ v.key.2 }}/{{ v.key.3 }}
+                    </td>
+                    <td>
+                        {{ v.key.0 }}
+                    </td>
+                    <td>
+                        {{ v.value.status_code}}
+                    </td>
+                    <td>
+                        {{ v.value.request_path}}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+{% endblock %}

@@ -1,6 +1,6 @@
 #modified version of django-axes axes/decorator.py
 #for more information see: http://code.google.com/p/django-axes/
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from auditcare.decorators.login import lockout_response
 from auditcare.decorators.login import log_request
@@ -26,6 +26,7 @@ LOCKOUT_URL = getattr(settings, 'AXES_LOCKOUT_URL', None)
 VERBOSE = getattr(settings, 'AXES_VERBOSE', True)
 
 @login_required
+@user_passes_test(lambda u: u.is_superuser)
 def auditAll(request, template="auditcare/index.html"):
     auditEvents = AccessAudit.view("auditcare/by_date_access_events", descending=True, include_docs=True).all()
     realEvents = [{'user': a.user, 
@@ -58,6 +59,17 @@ def audited_login(request, *args, **kwargs):
     return response
 
 
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def audited_views(request, *args, **kwargs):
+    db = AccessAudit.get_db()
+    views = db.view('auditcare/urlpath_by_user_date', reduce=False).all()
+    template = "auditcare/audit_views.html"
+    print views
+    return render_to_response(template,
+            {"audit_views": views},
+        context_instance=RequestContext(request))
+
 def audited_logout (request, *args, **kwargs):
     # share some useful information
     func = auth_views.logout
@@ -86,6 +98,7 @@ def audited_logout (request, *args, **kwargs):
     return response
 
 @login_required()
+@user_passes_test(lambda u: u.is_superuser)
 def model_instance_history(request, model_name, model_uuid, *args, **kwargs):
     #it's for a particular model
     context=RequestContext(request)
@@ -105,6 +118,7 @@ def model_instance_history(request, model_name, model_uuid, *args, **kwargs):
     return render_to_response('auditcare/model_instance_history.html', context)
 
 @login_required()
+@user_passes_test(lambda u: u.is_superuser)
 def single_model_history(request, model_name, *args, **kwargs):
     #it's for a particular model
     context=RequestContext(request)
@@ -116,6 +130,7 @@ def single_model_history(request, model_name, *args, **kwargs):
     return render_to_response('auditcare/single_model_changes.html', context)
 
 @login_required()
+@user_passes_test(lambda u: u.is_superuser)
 def model_histories(request, *args, **kwargs):
     """
     Looks at all the audit model histories and shows for a given model
