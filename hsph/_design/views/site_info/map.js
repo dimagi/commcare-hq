@@ -4,7 +4,12 @@ function(doc) {
 
     if (isHSPHForm(doc) &&
         isDCOSiteLogReport(doc)){
-        var info = (doc.form) ? doc.form : doc;
-        emit([info.region_id, info.district_id, info.site_number], null);
+        var entry = {};
+
+        if (doc.form.facility_name) {
+            entry.facilityName = doc.form.facility_name;
+            entry.updateDate = doc.form.meta.timeEnd;
+        }
+        emit([doc.form.region_id, doc.form.district_id, doc.form.site_number], entry);
     }
 }

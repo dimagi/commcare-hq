@@ -3,7 +3,8 @@ function(doc) {
     // !code util/hsph.js
 
     if (isHSPHBirthCase(doc)
-        && !doc.closed){
+        && !doc.closed
+        && doc.date_delivery){
         var entry = {
             region: doc.region_id,
             district: doc.district_id,

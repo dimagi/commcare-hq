@@ -22,6 +22,5 @@ function(keys, values, rereduce) {
             calc.totalBirths += curEntry.numBirths;
         }
     }
-
     return calc;
 }

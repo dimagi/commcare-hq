@@ -20,25 +20,32 @@ var HSPHSitePicker = function (refs, currentSelection) {
     self.hsph_selected_site = ko.observable(currentSelection.siteNum || "");
 
     self.updateRegion = function () {
-        console.log(self.hsph_selected_region());
         var districts = [];
         self.enable_district(!!self.hsph_selected_region());
         if (self.enable_district())
             for (var dist in self.siteMap[self.hsph_selected_region()])
                 districts.push(dist);
         self.hsph_districts(districts);
+        self.updateDistrict();
     };
 
     self.updateDistrict = function () {
-        console.log(self.hsph_selected_district());
         var sites = [];
         self.enable_site(!!self.hsph_selected_district());
-        if (self.enable_site())
-            for (var site in self.siteMap[self.hsph_selected_region()][self.hsph_selected_district()])
-                sites.push(site);
+        if (self.enable_site()) {
+            var sitesAvailable = self.siteMap[self.hsph_selected_region()][self.hsph_selected_district()];
+            for (var site in sitesAvailable) {
+                sites.push(new HSPHSite(site, sitesAvailable[site]));
+            }
+        }
         self.hsph_sites(sites);
     };
 
     self.updateRegion();
     self.updateDistrict();
+};
+
+var HSPHSite = function (id, name) {
+    this.siteId = id;
+    this.name = name;
 };

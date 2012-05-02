@@ -13,11 +13,11 @@
 <div class="control-group" data-bind="visible: enable_site">
     <label for="hsph_site_select" class="control-label">Site</label>
     <div class="controls">
-        <select id="hsph_site_select" name="{{ slug.site }}" data-bind="options: hsph_sites, optionsCaption: 'Select Site', value: hsph_selected_site, enable: enable_site"></select>
+        <select id="hsph_site_select" name="{{ slug.site }}" data-bind="options: hsph_sites, optionsValue: 'siteId', optionsText: 'name', optionsCaption: 'Select Site', value: hsph_selected_site, enable: enable_site"></select>
     </div>
 
 <script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.0.0.js' %}"></script>
-<script type="text/javascript" src="{% static 'hsph/js/hsph.sites_form.js' %}"></script>
+<script type="text/javascript" src="{% static 'hsph/js/hsph.field.sites.js' %}"></script>
     <script type="text/javascript">
         var siteMap = {{ sites|JSON }},
             currentSelection = {{ selected|JSON }};

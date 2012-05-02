@@ -13,7 +13,9 @@ function(doc) {
                 visitedDate: doc.closed_on,
                 followupFormId: doc.xform_ids[Math.max(0, doc.xform_ids.length-1)],
                 numBirths: calcNumBirths(doc),
-                dateBirth: doc.date_delivery
+                dateBirth: doc.date_delivery,
+                nameMother: doc.name_mother,
+                address: doc.house_address
             };
         var responseDatespan = calcHSPHBirthDatespan(doc);
         entry.startDate = (responseDatespan) ? responseDatespan.start : doc.opened_on;
@@ -26,9 +28,9 @@ function(doc) {
 
         var status = (entry.isClosed) ? "closed" : "open";
 
-        emit(["all", doc.user_id, entry.startDate], entry);
-        emit(["by_status", doc.user_id, status, entry.startDate], entry);
-        emit(["by_site", doc.user_id, entry.region, entry.district, entry.siteNum, entry.startDate], entry);
-        emit(["by_status_site", doc.user_id, status, entry.region, entry.district, entry.siteNum, entry.startDate], entry);
+        emit(["all", doc.user_id, getDCTL(doc), entry.startDate], entry);
+        emit(["by_status", doc.user_id, getDCTL(doc), status, entry.startDate], entry);
+        emit(["by_site", doc.user_id, getDCTL(doc), entry.region, entry.district, entry.siteNum, entry.startDate], entry);
+        emit(["by_status_site", doc.user_id, getDCTL(doc), status, entry.region, entry.district, entry.siteNum, entry.startDate], entry);
     }
 }

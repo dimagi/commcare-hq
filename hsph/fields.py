@@ -1,4 +1,4 @@
-from corehq.apps.reports.custom import ReportField
+from corehq.apps.reports.custom import ReportField, ReportSelectField
 from corehq.apps.reports.fields import SelectCHWField
 from dimagi.utils.couch.database import get_db
 
@@ -10,7 +10,6 @@ class FacilityField(ReportField):
         facilities = self.getFacilties()
         self.context['facilities'] = facilities
         self.context['selected_facility'] = self.request.GET.get(self.slug, '')
-        self.context['slug'] = self.slug
 
     @classmethod
     def getFacilties(cls):
@@ -46,8 +45,8 @@ class SiteField(ReportField):
             group=True
         ).all()
         if data:
-            for site in data:
-                site = site.get('key', None)
+            for item in data:
+                site = item.get('key', None)
                 if site:
                     region = site[0]
                     district = site[1]
@@ -55,9 +54,9 @@ class SiteField(ReportField):
                     if region not in sites:
                         sites[region] = {}
                     if district not in sites[region]:
-                        sites[region][district] = []
+                        sites[region][district] = {}
                     if site_num not in sites[region][district]:
-                        sites[region][district].append(site_num)
+                        sites[region][district][site_num] = item['value'].get('facilityName', site_num)
         return sites
 
 class NameOfDCOField(SelectCHWField):
@@ -77,5 +76,16 @@ class NameOfDCTLField(ReportField):
 
     def update_context(self):
         self.context["dctls"] = self.dctl_list
-        self.context["slug"] = self.slug
         self.context["selected_dctl"] = self.request.GET.get(self.slug, '')
+
+class SelectCaseStatusField(ReportSelectField):
+    slug = "case_status"
+    name = "Home Visit Status"
+    cssId = "hsph_case_status"
+    cssClasses = "span2"
+    options = [dict(val="closed", text="CLOSED"),
+               dict(val="open", text="OPEN")]
+    default_option = "Select Status..."
+
+    def update_params(self):
+        self.selected = self.request.GET.get(self.slug)
