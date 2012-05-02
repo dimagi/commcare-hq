@@ -13,6 +13,9 @@ import traceback
 
 class AuditMiddleware(object):
     def __init__(self):
+        """
+        Audit middleware needs to be enabled on site after the login/user info is instantiated on the request object.
+        """
         self.active = False
         self.log_admin = True
         
