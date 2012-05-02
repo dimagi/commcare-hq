@@ -146,6 +146,7 @@ class ReportField(object):
 
     def render(self):
         if not self.template: return ""
+        self.context["slug"] = self.slug
         self.update_context()
         return render_to_string(self.template, self.context)
 
@@ -154,6 +155,28 @@ class ReportField(object):
         If your select field needs some context (for example, to set the default) you can set that up here.
         """
         pass
+
+class ReportSelectField(ReportField):
+    slug = "generic_select"
+    template = "reports/fields/select_generic.html"
+    name = "Generic Select"
+    default_option = "Select Something..."
+    options = [dict(val="val", text="text")]
+    cssId = "generic_select_box"
+    cssClasses = "span4"
+    selected = None
+
+    def update_params(self):
+        pass
+
+    def update_context(self):
+        self.update_params()
+        self.context['select'] = dict(options=self.options,
+            default=self.default_option,
+            cssId=self.cssId,
+            cssClasses=self.cssClasses,
+            label=self.name,
+            selected=self.selected)
 
 class MonthField(ReportField):
     slug = "month"

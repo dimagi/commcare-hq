@@ -283,18 +283,19 @@ def custom_report_list(user, domain, current_slug=""):
     if not mapping: return ""
     if not domain in mapping: return ""
     lst = []
-    sublist = []
-    nav_header = '<li class="nav-header" >Custom Reports</li>'
-    for model in mapping[domain]:
-        if not user.can_view_report(model):
-            continue
-        klass = to_function(model)
-        sublist.append('<li%s><a href="%s" title="%s">%s</a></li>' % \
-                   ((' class="active"' if klass.slug == current_slug else ""),
-                    reverse('custom_report_dispatcher', args=(domain, klass.slug)),
-                    klass.description,
-                    klass.name))
-    if sublist:
-        lst.append(nav_header)
-        lst.extend(sublist)
+    for key, models in mapping[domain].items():
+        sublist = []
+        nav_header = '<li class="nav-header">%s</li>' % key
+        for model in models:
+            if not user.can_view_report(model):
+                continue
+            klass = to_function(model)
+            sublist.append('<li%s><a href="%s" title="%s">%s</a></li>' % \
+                       ((' class="active"' if klass.slug == current_slug else ""),
+                        reverse('custom_report_dispatcher', args=(domain, klass.slug)),
+                        klass.description,
+                        klass.name))
+        if sublist:
+            lst.append(nav_header)
+            lst.extend(sublist)
     return "\n".join(lst)
