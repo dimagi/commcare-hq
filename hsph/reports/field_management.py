@@ -7,19 +7,6 @@ from dimagi.utils.couch.database import get_db
 from corehq.apps.reports import util
 from hsph.fields import FacilityField, NameOfDCTLField, SiteField, SelectCaseStatusField
 
-class HSPHFieldManagementReport(StandardTabularHQReport, StandardDateHQReport):
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.DatespanField',
-              'hsph.fields.NameOfDCOField',
-              'hsph.fields.NameOfDCTLField']
-    dctl_list = NameOfDCTLField.dctl_list
-
-    def get_parameters(self):
-        selected_dctl = self.request.GET.get(NameOfDCTLField.slug, '')
-        if selected_dctl:
-            self.dctl_list = [selected_dctl]
-
-
 class HSPHSiteDataMixin:
     request = None
 
@@ -40,6 +27,17 @@ class HSPHSiteDataMixin:
                     self.selected_site_map[region][district] = {}
                     self.selected_site_map[region][district][site] = self.site_map[region][district][site]
 
+class HSPHFieldManagementReport(StandardTabularHQReport, StandardDateHQReport):
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.DatespanField',
+              'hsph.fields.NameOfDCOField',
+              'hsph.fields.NameOfDCTLField']
+    dctl_list = NameOfDCTLField.dctl_list
+
+    def get_parameters(self):
+        selected_dctl = self.request.GET.get(NameOfDCTLField.slug, '')
+        if selected_dctl:
+            self.dctl_list = [selected_dctl]
 
 class DCOActivityReport(HSPHFieldManagementReport):
     name = "DCO Activity Report"
