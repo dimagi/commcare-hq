@@ -173,7 +173,13 @@ class XForm(WrappedNode):
         trans_node.attrib['lang'] = new_code
 
     def exclude_languages(self, whitelist):
-        for trans_node in self.itext_node.findall('{f}translation'):
+        try:
+            translations = self.itext_node.findall('{f}translation')
+        except XFormError:
+            # if there's no itext then they must be using labels
+            return
+
+        for trans_node in translations:
             if trans_node.attrib.get('lang') not in whitelist:
                 self.itext_node.remove(trans_node.xml)
 
