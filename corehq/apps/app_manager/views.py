@@ -327,13 +327,13 @@ def get_apps_base_context(request, domain, app):
     )
 
     if app and hasattr(app, 'langs'):
-        if not app.langs:
+        if not app.langs and not app.is_remote_app:
             # lots of things fail if the app doesn't have any languages.
             # the best we can do is add 'en' if there's nothing else.
             app.langs.append('en')
             app.save()
         if not lang or lang not in app.langs:
-            lang = app.langs[0]
+            lang = (app.langs or ['en'])[0]
         langs = [lang] + app.langs
 
     edit = (request.GET.get('edit', 'true') == 'true') and\
@@ -1106,6 +1106,7 @@ def edit_commcare_profile(req, domain, app_id):
 @require_permission('edit-apps')
 def edit_app_lang(req, domain, app_id):
     """
+    DEPRECATED
     Called when an existing language (such as 'zh') is changed (e.g. to 'zh-cn')
     or when a language is to be added.
 
@@ -1136,6 +1137,54 @@ def edit_app_lang(req, domain, app_id):
 
     return back_to_main(**locals())
 
+@require_POST
+@require_permission('edit-apps')
+def edit_app_langs(request, domain, app_id):
+    """
+    Called with post body:
+    {
+        langs: ["en", "es", "hin"],
+        rename: {
+            "hi": "hin",
+            "en": "en",
+            "es": "es"
+        },
+        build: ["es", "hin"]
+    }
+    """
+    o = json.loads(request.raw_post_data)
+    app = get_app(domain, app_id)
+    langs = o['langs']
+    rename = o['rename']
+    build = o['build']
+
+    # assert that every lang that isn't new and wasn't deleted shows up in rename
+    assert(set(rename.keys()) == set(app.langs).intersection(langs), "%r, %r, %s" % (rename.keys(), app.langs, langs))
+    # assert that there are no repeats in the values of rename
+    assert(len(set(rename.values())) == len(rename.values()))
+    # assert that no lang is renamed to an already existing lang
+    for old, new in rename.items():
+        if old != new:
+            assert(new not in app.langs)
+    # assert that the build langs are in the correct order
+    assert(sorted(build, key=lambda lang: langs.index(lang)) == build)
+
+    # now do it
+    for old, new in rename.items():
+        if old != new:
+            app.rename_lang(old, new)
+
+    def replace_all(list1, list2):
+        if list1 != list2:
+            while list1:
+                list1.pop()
+            list1.extend(list2)
+    replace_all(app.langs, langs)
+    replace_all(app.build_langs, build)
+
+    app.save()
+    return json_response(langs)
+
 @require_edit_apps
 @require_POST
 def edit_app_translations(request, domain, app_id):
@@ -1154,6 +1203,7 @@ def edit_app_translations(request, domain, app_id):
 @require_permission('edit-apps')
 def delete_app_lang(req, domain, app_id):
     """
+    DEPRECATED
     Called when a language (such as 'zh') is to be deleted from app.langs
 
     """
@@ -1171,7 +1221,7 @@ def edit_app_attr(req, domain, app_id, attr):
 
     """
     app = get_app(domain, app_id)
-    lang = req.COOKIES.get('lang', app.langs[0])
+    lang = req.COOKIES.get('lang', (app.langs or ['en'])[0])
 
     attributes = [
         'all',

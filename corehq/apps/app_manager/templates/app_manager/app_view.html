@@ -7,10 +7,29 @@
         <script src="{% static 'app_manager/js/commcareProperties.js' %}"></script>
         <script src="{% static 'translations/js/translations.js' %}"></script>
     {% endif %}
+    <script src="{% static 'hqwebapp/javascripts/knockout-2.0.0.debug.js' %}"></script>
+    <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
 {% endblock %}
-
 {% block js-inline %}
     {{ block.super }}
+    {% if app %}
+    <script>
+        $(function () {
+            var langs = {{ app.langs|JSON }};
+            var buildLangs = {{ app.build_langs|JSON }};
+            var saveURL = "{% url edit_app_langs domain app.id %}";
+            var edit = {{ edit|JSON }};
+            var validate = !{{ app.is_remote_app|BOOL }};
+            ko.applyBindings(new SupportedLanguages({
+                langs: langs,
+                buildLangs: buildLangs,
+                saveURL: saveURL,
+                edit: edit,
+                validate: validate
+            }), $("#supported-languages").get(0));
+        });
+    </script>
+    {% endif %}
     <script>
         $.fn.password_setter = function (options) {
             var that = this,
@@ -196,7 +215,7 @@
                     $("#app_source").text(data);
                 });
             });
-            $('.langcodes').langcodes();
+//            $('.langcodes').langcodes();
         });
         $(function () {
             var appSettings = $("#app-settings"),
@@ -248,6 +267,9 @@
 
 {% block head %}{{ block.super }}
     <style>
+        .sortable-handle {
+            cursor: move;
+        }
         #custom-keys-help {
             width: 400px;
             font-size: .9em;
@@ -268,11 +290,11 @@
             padding: 2px;
             margin: 1px;
         }
-
-        #supported-languages {
-            position: relative;
-            z-index: 1;
-            vertical-align: middle;
+        #supported-languages .light {
+            color: #BBB;
+        }
+        #supported-languages td {
+            vertical-align: baseline;
         }
         #default-language-help {
             position: absolute;
@@ -505,79 +527,12 @@
             </table>
         </div>
     </form>
-    {% if app.get_doc_type == "Application" %}
         <h4>Supported Languages</h4>
-        <div class="config">
-            {% if edit %}
-                <p align="right"><span class="caution">Caution</span>: Changes you make here are saved immediately as you make them.</p>
-            {% endif %}
-            <aside id="default-language-help"><span class="ui-icon ui-icon-arrowthick-1-w"></span>Default Language</aside>
-            <table id="supported-languages">
-                <tbody {% if edit %}class="sortable"{% endif %}>
-                    <tr class="sort-action">
-                        <td>
-                            <form method="post" action="{% url corehq.apps.app_manager.views.rearrange domain app.id 'langs' %}">
-                                <input name="ajax" value="true" />
-                            </form>
-                        </td>
-                    </tr>
-                    {% if edit %}
-                        {% for lang in app.langs %}
-                            <tr>
-                                <td class="index">{{ forloop.counter0 }}</td>
-                                <td>
-                                    <span class="drag_handle"></span>
-                                </td>
-                                <td>
-                                    <form action="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}"  method="POST">
-                                        <input type="hidden" name="ajax" value="false" />
-                                        <input type="text" class="autosave langcodes code short" name="lang" value="{{ lang }}"/>
-                                        <input type="hidden" name="index" value="{# filled in by js #}" />
-                                    </form>
-                                </td>
-
-                                <td>
-                                    <form action="{% url corehq.apps.app_manager.views.delete_app_lang domain app.id%}"
-                                          data-title="Delete Build"
-                                          data-message="Are you sure you want to delete this language? (You can always add it back later.)"
-                                          method="POST">
-                                        <input type="hidden" name="index" value="{# filled in by js #}" />
-                                        <a class="delete_link confirm-submit" href="#"></a>
-                                    </form>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                        <tr class="form sort-disabled" data-action="{% url corehq.apps.app_manager.views.edit_app_lang domain app.id %}">
-                            <td>
-                            </td>
-                            <td>
-                                <input class="code short langcodes" type="text" name="lang" />
-                            </td>
-                            <td>
-                                <a href="#" class="submit button">
-                                    Add
-                                </a>
-                            </td>
-                        </tr>
-                    {% else %}
-                        {% for lang in app.langs %}
-                            <tr>
-                                <td>
-                                     <code>{{ lang }}</code>
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td>
-                                    <p class="warning">No supported languages</p>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    {% endif %}
-                </tbody>
-                <tbody id="language-properties"></tbody>
-            </table>
+        <div class="config" id="supported-languages">
+            {% include "app_manager/partials/supported-languages.html" %}
         </div>
+    {% if app.get_doc_type == "Application" %}
+
         <div class="scary-settings-toggle">
             <a href="#"><span class="ui-icon"></span>Multimedia</a>
         </div>

@@ -7,7 +7,7 @@
     <xform>
         <resource id="{{ form.unique_id }}" version="{{ app.version }}">
            <location authority="local">./modules-{{ module.id }}/forms-{{ form.id }}.xml</location>
-           <location authority="remote">./modules-{{ module.id }}/forms-{{ form.id }}.xml?latest=true</location>
+           <location authority="remote">./modules-{{ module.id }}/forms-{{ form.id }}.xml</location>
         </resource>
     </xform>
   {% endfor %}
@@ -16,7 +16,7 @@
     <xform>
         <resource id="{{ form.unique_id }}" version="{{ app.version }}">
            <location authority="local">./user_registration.xml</location>
-           <location authority="remote">./user_registration.xml?latest=true</location>
+           <location authority="remote">./user_registration.xml</location>
         </resource>
     </xform>
  {% endif %}
@@ -25,7 +25,7 @@
     <locale language="{{ lang }}">
         <resource id="app_{{ lang }}_strings" version="{{ app.version }}">
            <location authority="local">./{{ lang }}/app_strings.txt</location>
-           <location authority="remote">./{{ lang }}/app_strings.txt?latest=true</location>
+           <location authority="remote">./{{ lang }}/app_strings.txt</location>
         </resource>
     </locale>
  {% endfor %}

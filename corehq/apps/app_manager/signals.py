@@ -28,7 +28,7 @@ def get_custom_response_message(sender, xform, **kwargs):
             except (AttributeError, KeyError):
                 lang = "default"
             if lang == "default":
-                lang = app.langs[0] if app.langs else None
+                lang = app.build_langs[0] if app.build_langs else None
             message = app.success_message.get(lang)
             if message:
                 success_message = SuccessMessage(message, userID, domain=domain, tz=timedelta(hours=0)).render()

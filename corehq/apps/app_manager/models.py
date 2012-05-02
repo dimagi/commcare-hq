@@ -270,7 +270,9 @@ class FormBase(DocumentSchema):
 
 
     def add_stuff_to_xform(self, xform):
-        xform.set_default_language(self.get_app().langs[0])
+        app = self.get_app()
+        xform.exclude_languages(app.build_langs)
+        xform.set_default_language(app.build_langs[0])
         xform.set_version(self.get_app().version)
 
     def render_xform(self):
@@ -396,6 +398,7 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
     def add_stuff_to_xform(self, xform):
         super(Form, self).add_stuff_to_xform(xform)
         xform.add_case_and_meta(self)
+
     def get_app(self):
         return self._parent._parent
     def get_module(self):
@@ -747,6 +750,10 @@ class ApplicationBase(VersionedDoc):
     # This is here instead of in Application because it needs to be available in stub representation
     application_version = StringProperty(default=APP_V1, choices=[APP_V1, APP_V2], required=False)
 
+    langs = StringListProperty()
+    # only the languages that go in the build
+    build_langs = StringListProperty()
+
     @classmethod
     def wrap(cls, data):
         # scrape for old conventions and get rid of them
@@ -770,6 +777,9 @@ class ApplicationBase(VersionedDoc):
         if not self.build_spec or self.build_spec.is_null():
             self.build_spec = CommCareBuildConfig.fetch().get_default(self.application_version)
         return self
+
+    def rename_lang(self, old_lang, new_lang):
+        validate_lang(new_lang)
 
     def is_remote_app(self):
         return False
@@ -905,6 +915,7 @@ class ApplicationBase(VersionedDoc):
         except (AppError, XFormValidationError) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
         except Exception as e:
+            raise
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
@@ -993,7 +1004,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     show_user_registration = BooleanProperty(default=False, required=True)
     modules = SchemaListProperty(Module)
     name = StringProperty()
-    langs = StringListProperty()
     profile = DictProperty() #SchemaProperty(Profile)
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
@@ -1010,6 +1020,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     module['case_label'][lang] = commcare_translations.load_translations(lang).get('cchq.case', 'Cases')
                 if not module['referral_label'].get(lang):
                     module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
+        if not data.get('build_langs'):
+            data['build_langs'] = data['langs']
         return super(Application, cls).wrap(data)
 
     def register_pre_save(self, fn):
@@ -1150,7 +1162,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         return render_to_string(template, {
             'app': self,
-            'langs': ["default"] + self.langs
+            'langs': ["default"] + self.build_langs
         })
 
     def create_all_files(self):
@@ -1160,7 +1172,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         }
         if self.show_user_registration:
             files["user_registration.xml"] = self.get_user_registration().validate_form().render_xform()
-        for lang in ['default'] + self.langs:
+        for lang in ['default'] + self.build_langs:
             files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)
         for module in self.get_modules():
             for form in module.get_forms():
@@ -1212,7 +1224,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def new_app(cls, domain, name, application_version, lang="en"):
-        app = cls(domain=domain, modules=[], name=name, langs=[lang], application_version=application_version)
+        app = cls(domain=domain, modules=[], name=name, langs=[lang], build_langs=[lang], application_version=application_version)
         return app
 
     def new_module(self, name, lang):
@@ -1370,6 +1382,17 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             except ValueError:
                 logging.error("Failed: _parse_xml(string=%r)" % form.source)
                 raise
+            else:
+                xform = XForm(form.source)
+                missing_languages = set(self.build_langs).difference(xform.get_languages())
+                if missing_languages:
+                    errors.append(dict(
+                        type='missing languages',
+                        missing_languages=missing_languages,
+                        **meta
+                    ))
+
+
             xmlns_count[form.xmlns] += 1
             if form.requires_case():
                 needs_case_detail = True
@@ -1394,6 +1417,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         if not errors:
             errors = super(Application, self).validate_app()
+        print errors
         return errors
 
     @classmethod
@@ -1467,9 +1491,15 @@ class RemoteApp(ApplicationBase):
                 loc = resource.findtext('location[@authority="local"]')
             except Exception:
                 loc = resource.findtext('location[@authority="remote"]')
-            locations.append(loc)
-        for location in locations:
-            files.update((self.fetch_file(location),))
+            locations.append((resource.getparent().tag, loc))
+
+        for tag, location in locations:
+            location, data = self.fetch_file(location)
+            if tag == 'xform' and self.build_langs:
+                xform = XForm(data)
+                xform.exclude_languages(whitelist=self.build_langs)
+                data = xform.render()
+            files.update({location: data})
         return files
     def scrub_source(self, source):
         pass

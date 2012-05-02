@@ -172,6 +172,11 @@ class XForm(WrappedNode):
             raise XFormError("There's already a language called '%s'" % new_code)
         trans_node.attrib['lang'] = new_code
 
+    def exclude_languages(self, whitelist):
+        for trans_node in self.itext_node.findall('{f}translation'):
+            if trans_node.attrib.get('lang') not in whitelist:
+                self.itext_node.remove(trans_node.xml)
+
     def localize(self, id, lang=None, form=None):
         pre = 'jr:itext('
         post = ')'
