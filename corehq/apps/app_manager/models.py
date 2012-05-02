@@ -912,10 +912,9 @@ class ApplicationBase(VersionedDoc):
 
         try:
             self.create_all_files()
-        except (AppError, XFormValidationError) as e:
+        except (AppError, XFormValidationError, XFormError) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
         except Exception as e:
-            raise
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
@@ -1496,7 +1495,10 @@ class RemoteApp(ApplicationBase):
         for tag, location in locations:
             location, data = self.fetch_file(location)
             if tag == 'xform' and self.build_langs:
-                xform = XForm(data)
+                try:
+                    xform = XForm(data)
+                except XFormError as e:
+                    raise XFormError('In file %s: %s' % (location, e))
                 xform.exclude_languages(whitelist=self.build_langs)
                 data = xform.render()
             files.update({location: data})
