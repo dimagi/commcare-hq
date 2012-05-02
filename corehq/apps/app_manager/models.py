@@ -1381,15 +1381,15 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             except ValueError:
                 logging.error("Failed: _parse_xml(string=%r)" % form.source)
                 raise
-            else:
-                xform = XForm(form.source)
-                missing_languages = set(self.build_langs).difference(xform.get_languages())
-                if missing_languages:
-                    errors.append(dict(
-                        type='missing languages',
-                        missing_languages=missing_languages,
-                        **meta
-                    ))
+#            else:
+#                xform = XForm(form.source)
+#                missing_languages = set(self.build_langs).difference(xform.get_languages())
+#                if missing_languages:
+#                    errors.append(dict(
+#                        type='missing languages',
+#                        missing_languages=missing_languages,
+#                        **meta
+#                    ))
 
 
             xmlns_count[form.xmlns] += 1
