@@ -173,6 +173,7 @@ var SupportedLanguages = (function () {
         var langs = options.langs;
         var buildLangs = options.buildLangs;
         var saveURL = options.saveURL;
+        var validate = options.validate;
         var self = this;
 
         this.editing = ko.observable(options.edit);
@@ -268,6 +269,9 @@ var SupportedLanguages = (function () {
 
         this.validateGeneral = function () {
             var message = "";
+            if (!validate) {
+                return "";
+            }
             if (!self.languages().length) {
                 message = "You must have at least one language";
             }
@@ -283,6 +287,9 @@ var SupportedLanguages = (function () {
             return message;
         };
         this.validateLanguage = function (language) {
+            if (!validate) {
+                return "";
+            }
             var message = "";
             if (!language.langcode()) {
                 message = "Please enter language";

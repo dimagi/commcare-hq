@@ -750,6 +750,10 @@ class ApplicationBase(VersionedDoc):
     # This is here instead of in Application because it needs to be available in stub representation
     application_version = StringProperty(default=APP_V1, choices=[APP_V1, APP_V2], required=False)
 
+    langs = StringListProperty()
+    # only the languages that go in the build
+    build_langs = StringListProperty()
+
     @classmethod
     def wrap(cls, data):
         # scrape for old conventions and get rid of them
@@ -773,6 +777,9 @@ class ApplicationBase(VersionedDoc):
         if not self.build_spec or self.build_spec.is_null():
             self.build_spec = CommCareBuildConfig.fetch().get_default(self.application_version)
         return self
+
+    def rename_lang(self, old_lang, new_lang):
+        validate_lang(new_lang)
 
     def is_remote_app(self):
         return False
@@ -905,10 +912,9 @@ class ApplicationBase(VersionedDoc):
 
         try:
             self.create_all_files()
-        except (AppError, XFormValidationError) as e:
+        except (AppError, XFormValidationError, XFormError) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
         except Exception as e:
-            raise
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
@@ -997,9 +1003,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     show_user_registration = BooleanProperty(default=False, required=True)
     modules = SchemaListProperty(Module)
     name = StringProperty()
-    langs = StringListProperty()
-    # only the languages that go in the build
-    build_langs = StringListProperty()
     profile = DictProperty() #SchemaProperty(Profile)
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
@@ -1368,7 +1371,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             errors.extend(errors_)
 
             try:
-                xform = XForm(form.source)
+                _parse_xml(form.source)
             except XFormError as e:
                 errors.append(dict(
                     type="invalid xml",
@@ -1378,14 +1381,15 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             except ValueError:
                 logging.error("Failed: _parse_xml(string=%r)" % form.source)
                 raise
-            else:
-                missing_languages = set(self.build_langs).difference(xform.get_languages())
-                if missing_languages:
-                    errors.append(dict(
-                        type='missing languages',
-                        missing_languages=missing_languages,
-                        **meta
-                    ))
+#            else:
+#                xform = XForm(form.source)
+#                missing_languages = set(self.build_langs).difference(xform.get_languages())
+#                if missing_languages:
+#                    errors.append(dict(
+#                        type='missing languages',
+#                        missing_languages=missing_languages,
+#                        **meta
+#                    ))
 
 
             xmlns_count[form.xmlns] += 1
@@ -1412,6 +1416,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         if not errors:
             errors = super(Application, self).validate_app()
+        print errors
         return errors
 
     @classmethod
@@ -1485,9 +1490,18 @@ class RemoteApp(ApplicationBase):
                 loc = resource.findtext('location[@authority="local"]')
             except Exception:
                 loc = resource.findtext('location[@authority="remote"]')
-            locations.append(loc)
-        for location in locations:
-            files.update((self.fetch_file(location),))
+            locations.append((resource.getparent().tag, loc))
+
+        for tag, location in locations:
+            location, data = self.fetch_file(location)
+            if tag == 'xform' and self.build_langs:
+                try:
+                    xform = XForm(data)
+                except XFormError as e:
+                    raise XFormError('In file %s: %s' % (location, e))
+                xform.exclude_languages(whitelist=self.build_langs)
+                data = xform.render()
+            files.update({location: data})
         return files
     def scrub_source(self, source):
         pass

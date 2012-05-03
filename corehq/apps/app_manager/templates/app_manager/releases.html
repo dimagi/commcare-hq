@@ -28,8 +28,8 @@
         $('#build-errors').each(function () {
             var specialMessage = $('span', this)[0];
             var defaultMessage = $('span', this)[1];
-            if (specialMessage.text()) {
-                defaultMessage.hide();
+            if ($.trim($(specialMessage).text())) {
+                $(defaultMessage).hide();
             }
         });
     });

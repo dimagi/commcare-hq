@@ -782,6 +782,11 @@ class UploadCommCareUsers(TemplateView):
                     if data:
                         user.user_data.update(data)
                     user.save()
+                    if password:
+                        # Without this line, digest auth doesn't work.
+                        # With this line, digest auth works.
+                        # Other than that, I'm not sure what's going on
+                        user.get_django_user().check_password(password)
                     for group_name in group_names:
                         try:
                             self.group_memoizer.get_group(group_name).add_user(user)
