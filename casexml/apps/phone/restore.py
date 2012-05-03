@@ -95,7 +95,7 @@ def generate_restore_response(user, restore_id="", version="1.0", state_hash="")
         response = generate_restore_payload(user, restore_id, version, state_hash)
         return HttpResponse(response, mimetype="text/xml")
     except BadStateException, e:
-        logging.exception("Bad case state hash submitted by %s" % user.username)
+        logging.exception("Bad case state hash submitted by %s: %s" % (user.username, str(e)))
         response = get_simple_response_xml(
             "Phone case list is inconsistant with server's records.",
             ResponseNature.OTA_RESTORE_ERROR)
