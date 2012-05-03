@@ -19,8 +19,8 @@ class BadStateException(Exception):
         self.case_ids = case_ids
         
     def __str__(self):
-        return "Phone state has mismatch. Expected %s but was %s." % \
-                (self.expected, self.actual)
+        return "Phone state has mismatch. Expected %s but was %s. Cases: [%s]" % \
+                (self.expected, self.actual, ", ".join(self.case_ids))
         
         
 def generate_restore_payload(user, restore_id="", version="1.0", state_hash=""):
@@ -94,7 +94,8 @@ def generate_restore_response(user, restore_id="", version="1.0", state_hash="")
     try:
         response = generate_restore_payload(user, restore_id, version, state_hash)
         return HttpResponse(response, mimetype="text/xml")
-    except BadStateException:
+    except BadStateException, e:
+        logging.exception("Bad case state hash submitted by %s" % user.username)
         response = get_simple_response_xml(
             "Phone case list is inconsistant with server's records.",
             ResponseNature.OTA_RESTORE_ERROR)
