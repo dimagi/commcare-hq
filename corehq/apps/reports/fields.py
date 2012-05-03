@@ -1,5 +1,5 @@
 from corehq.apps.reports import util
-from corehq.apps.reports.custom import ReportField
+from corehq.apps.reports.custom import ReportField, ReportSelectField
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from dimagi.utils.couch.database import get_db
@@ -104,18 +104,21 @@ class CaseTypeField(ReportField):
                         yield 0
             yield sum(individual_counts())
 
-class SelectFormField(ReportField):
-    slug = "select_form"
-    template = "reports/fields/select_form.html"
-    select_all = False
+class SelectFormField(ReportSelectField):
+    slug = "form"
+    name = "Form Type"
+    cssId = "form_select"
+    cssClasses = "span6"
+    default_option = "Select a Form"
 
-    def update_context(self):
-        self.context['select_all'] = self.select_all
-        self.context['selected_form'] = self.request.GET.get('form','')
-        self.context['available_forms'] = util.form_list(self.domain)
+    def update_params(self):
+        self.options = util.form_list(self.domain)
+        print self.options
+        self.selected = self.request.GET.get('form', None)
+
 
 class SelectAllFormField(SelectFormField):
-    select_all = True
+    default_option = "All Forms"
 
 class SelectApplicationField(ReportField):
     slug = "select_app"
@@ -133,15 +136,23 @@ class SelectApplicationField(ReportField):
 class SelectCHWField(ReportField):
     slug = "select_chw"
     template = "reports/fields/select_chw.html"
+    name = "Select CHW"
+    default_option = "Select CHW"
+
+    def update_params(self):
+        self.default_option = self.get_default_text(self.user_filter)
+        self.users = util.user_list(self.domain)
 
     def update_context(self):
-        user_filter, _ = FilterUsersField.get_user_filter(self.request)
-        individual = self.request.GET.get('individual', '')
+        self.user_filter, _ = FilterUsersField.get_user_filter(self.request)
+        self.individual = self.request.GET.get('individual', '')
 
-        self.context['field_name'] = 'Select CHW'
-        self.context['default_option'] = self.get_default_text(user_filter)
-        self.context['users'] = util.user_list(self.domain)
-        self.context['individual'] = individual
+        self.update_params()
+
+        self.context['field_name'] = self.name
+        self.context['default_option'] = self.default_option
+        self.context['users'] = self.users
+        self.context['individual'] = self.individual
 
     @classmethod
     def get_default_text(cls, user_filter):

@@ -171,7 +171,8 @@ class ReportSelectField(ReportField):
 
     def update_context(self):
         self.update_params()
-        self.context['select'] = dict(options=self.options,
+        self.context['select'] = dict(
+            options=self.options,
             default=self.default_option,
             cssId=self.cssId,
             cssClasses=self.cssClasses,
