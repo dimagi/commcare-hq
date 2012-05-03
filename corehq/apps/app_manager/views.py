@@ -5,6 +5,9 @@ import uuid
 from wsgiref.util import FileWrapper
 import zipfile
 from corehq.apps.app_manager.const import APP_V1
+from couchexport.export import FormattedRow
+from couchexport.models import Format
+from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.resource_conflict import repeat, retry_resource
 from django.utils import simplejson
 import os
@@ -1159,15 +1162,15 @@ def edit_app_langs(request, domain, app_id):
     build = o['build']
 
     # assert that every lang that isn't new and wasn't deleted shows up in rename
-    assert(set(rename.keys()) == set(app.langs).intersection(langs), "%r, %r, %s" % (rename.keys(), app.langs, langs))
+    assert set(rename.keys()) == set(app.langs).intersection(langs), "%r, %r, %s" % (rename.keys(), app.langs, langs)
     # assert that there are no repeats in the values of rename
-    assert(len(set(rename.values())) == len(rename.values()))
+    assert len(set(rename.values())) == len(rename.values())
     # assert that no lang is renamed to an already existing lang
     for old, new in rename.items():
         if old != new:
             assert(new not in app.langs)
     # assert that the build langs are in the correct order
-    assert(sorted(build, key=lambda lang: langs.index(lang)) == build)
+    assert sorted(build, key=lambda lang: langs.index(lang)) == build
 
     # now do it
     for old, new in rename.items():
@@ -1597,3 +1600,45 @@ def emulator_commcare_jar(req, domain, app_id):
     )
     response['Content-Type'] = "application/java-archive"
     return response
+
+@login_and_domain_required
+def formdefs(request, domain, app_id):
+    langs = [json.loads(request.GET.get('lang', '"en"'))]
+    format = request.GET.get('format', 'json')
+    app = get_app(domain, app_id)
+
+    def get_questions(form):
+        xform = XForm(form.source)
+        prefix = '/%s/' % xform.data_node.tag_name
+        def remove_prefix(string):
+            if string.startswith(prefix):
+                return string[len(prefix):]
+            else:
+                raise Exception()
+        def transform_question(q):
+            return {
+                'id': remove_prefix(q['value']),
+                'type': q['tag'],
+                'text': q['label'] if q['tag'] != 'hidden' else ''
+            }
+        return [transform_question(q) for q in xform.get_questions(langs)]
+    formdefs = [{
+        'name': "%s, %s" % (f['form'].get_module().name['en'], f['form'].name['en']) if f['type'] == 'module_form' else 'User Registration',
+        'columns': ['id', 'type', 'text'],
+        'rows': get_questions(f['form'])
+    } for f in app.get_forms(bare=False)]
+
+    if format == 'xlsx':
+        f = StringIO()
+        writer = Excel2007ExportWriter()
+        writer.open([(sheet['name'], [FormattedRow(sheet['columns'])]) for sheet in formdefs], f)
+        writer.write([(
+            sheet['name'],
+            [FormattedRow([cell for (_, cell) in sorted(row.items(), key=lambda item: sheet['columns'].index(item[0]))]) for row in sheet['rows']]
+        ) for sheet in formdefs])
+        writer.close()
+        response = HttpResponse(f.getvalue(), mimetype=Format.from_format('xlsx').mimetype)
+        response["Content-Disposition"] = "attachment; filename=%s" % 'formdefs.xlsx'
+        return response
+    else:
+        return json_response(formdefs)

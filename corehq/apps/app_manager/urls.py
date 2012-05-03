@@ -99,4 +99,5 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^emulator/(?P<app_id>[\w-]+)/$', 'emulator', name="emulator"),
     (r'^emulator/(?P<app_id>[\w-]+)/CommCare\.jar$',                            'emulator_commcare_jar'),
     url(r'^download/(?P<app_id>[\w-]+)/', include(download_urls)),
+    url(r'^formdefs/(?P<app_id>[\w-]+)/', 'formdefs', name='formdefs'),
 )
