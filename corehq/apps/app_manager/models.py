@@ -1007,6 +1007,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
+    case_sharing = BooleanProperty(default=False)
     
     @classmethod
     def wrap(cls, data):
