@@ -180,6 +180,7 @@ HQ_APPS = (
     'hutch',
     'dca',
     'loadtest',
+    'hsph',
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
@@ -380,7 +381,8 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'pathfinder',
         'registration',
         'hutch',
-        'dca'
+        'dca',
+        'hsph',
     ]
 ]
 
@@ -468,16 +470,39 @@ STANDARD_REPORT_MAP = {
 }
 
 CUSTOM_REPORT_MAP = {
-    "pathfinder": [
+    "pathfinder": {
+        'Custom Reports': [
                    'pathfinder.models.PathfinderHBCReport',
                    'pathfinder.models.PathfinderProviderReport',
-                   'pathfinder.models.PathfinderWardSummaryReport'
-                   ],
-    "dca-malawi": [
+                   'pathfinder.models.PathfinderWardSummaryReport']
+                },
+    "dca-malawi": {
+        'Custom Reports': [
                    'dca.reports.ProjectOfficerReport',
                    'dca.reports.PortfolioComparisonReport',
                    'dca.reports.PerformanceReport',
                    'dca.reports.PerformanceRatiosReport'],
+                },
+    "hsph": {
+        'Field Management Reports': [
+                    'hsph.reports.field_management.DCOActivityReport',
+                    'hsph.reports.field_management.FieldDataCollectionActivityReport',
+                    'hsph.reports.field_management.HVFollowUpStatusReport',
+                    'hsph.reports.field_management.HVFollowUpStatusSummaryReport',
+                    'hsph.reports.field_management.DCOProcessDataReport'
+                    ],
+        'Project Management Reports': [
+                    'hsph.reports.project_management.ProjectStatusDashboardReport',
+                    'hsph.reports.project_management.ImplementationStatusDashboardReport'
+                    ],
+        'Call Center Reports': [
+                    'hsph.reports.call_center.DCCActivityReport',
+                    'hsph.reports.call_center.CallCenterFollowUpSummaryReport'
+                    ],
+        'Data Summary Reports': [
+                    'hsph.reports.data_summary.ProgramDataSummaryReport',
+                    'hsph.reports.data_summary.ComparativeDataSummaryReport']
+    },
 #    "test": [
 #        'corehq.apps.reports.deid.FormDeidExport',
 #    ]
@@ -494,3 +519,5 @@ MESSAGE_TAGS = {
 COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
 
+# for touchforms maps
+#GMAPS_API_KEY = "changeme"
