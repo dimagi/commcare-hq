@@ -17,7 +17,7 @@ from corehq.apps.reports import util
 from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.custom import HQReport
 from corehq.apps.reports.display import xmlns_to_name, FormType
-from corehq.apps.reports.fields import FilterUsersField, CaseTypeField, SelectCHWField
+from corehq.apps.reports.fields import FilterUsersField, CaseTypeField, SelectMobileWorkerField
 from corehq.apps.reports.models import HQUserType, FormExportSchema
 from couchexport.models import SavedExportSchema
 from couchforms.models import XFormInstance
@@ -125,7 +125,7 @@ class StandardTabularHQReport(StandardHQReport):
 class PaginatedHistoryHQReport(StandardTabularHQReport):
     use_json = True
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectCHWField']
+              'corehq.apps.reports.fields.SelectMobileWorkerField']
 
     def get_parameters(self):
         self.userIDs = [user.user_id for user in self.users]
@@ -520,7 +520,7 @@ class CaseListReport(PaginatedHistoryHQReport):
     name = 'Case List'
     slug = 'case_list'
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectCHWField',
+              'corehq.apps.reports.fields.SelectMobileWorkerField',
               'corehq.apps.reports.fields.CaseTypeField']
 
     def get_report_context(self):
@@ -530,7 +530,7 @@ class CaseListReport(PaginatedHistoryHQReport):
     def get_headers(self):
         final_headers = ["Name", "User", "Created Date", "Modified Date", "Status"]
         if not self.individual:
-            self.name = "%s for %s" % (self.name, SelectCHWField.get_default_text(self.user_filter))
+            self.name = "%s for %s" % (self.name, SelectMobileWorkerField.get_default_text(self.user_filter))
         if not self.case_type:
             final_headers = ["Case Type"] + final_headers
         open, all = CaseTypeField.get_case_counts(self.domain, self.case_type, self.userIDs)
@@ -604,7 +604,7 @@ class SubmissionTimesReport(StandardHQReport):
     name = "Submission Times"
     slug = "submit_time_punchcard"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectCHWField']
+              'corehq.apps.reports.fields.SelectMobileWorkerField']
     template_name = "reports/basic_report.html"
     report_partial = "reports/partials/punchcard.html"
     show_time_notice = True
@@ -621,13 +621,16 @@ class SubmissionTimesReport(StandardHQReport):
             for row in view:
                 domain, _user, day, hour = row["key"]
 
-                #adjust to timezone
-                now = datetime.datetime.utcnow()
-                report_time = datetime.datetime(now.year, now.month, now.day, hour, tzinfo=pytz.utc)
-                report_time = tz_utils.adjust_datetime_to_timezone(report_time, pytz.utc.zone, self.timezone.zone)
-                hour = report_time.hour
+                if hour and day:
+                    #adjust to timezone
+                    now = datetime.datetime.utcnow()
+                    hour = int(hour)
+                    day = int(day)
+                    report_time = datetime.datetime(now.year, now.month, now.day, hour, tzinfo=pytz.utc)
+                    report_time = tz_utils.adjust_datetime_to_timezone(report_time, pytz.utc.zone, self.timezone.zone)
+                    hour = report_time.hour
 
-                data["%d %02d" % (day, hour)] = data["%d %02d" % (day, hour)] + row["value"]
+                    data["%d %02d" % (day, hour)] = data["%d %02d" % (day, hour)] + row["value"]
         self.context["chart_url"] = self.generate_chart(data)
         self.context["timezone_now"] = datetime.datetime.now(tz=self.timezone)
         self.context["timezone"] = self.timezone.zone
@@ -679,7 +682,7 @@ class SubmitDistributionReport(StandardHQReport):
     name = "Submit Distribution"
     slug = "submit_distribution"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectCHWField']
+              'corehq.apps.reports.fields.SelectMobileWorkerField']
     template_name = "reports/basic_report.html"
     report_partial = "reports/partials/generic_piechart.html"
 
@@ -720,7 +723,7 @@ class SubmitTrendsReport(StandardDateHQReport):
     #nuked until further notice
     name = "Submit Trends"
     slug = "submit_trends"
-    fields = ['corehq.apps.reports.fields.SelectCHWField',
+    fields = ['corehq.apps.reports.fields.SelectMobileWorkerField',
               'corehq.apps.reports.fields.DatespanField']
     template_name = "reports/basic_report.html"
     report_partial = "reports/partials/formtrends.html"
