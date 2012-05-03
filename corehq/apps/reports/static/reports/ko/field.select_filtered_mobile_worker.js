@@ -1,10 +1,8 @@
 var SelectFilteredMWGroup = function (users, selected_user, group_options) {
     var self = this,
         options = new Array();
-    console.log(group_options);
     for (var i in group_options) {
         var group = group_options[i];
-        console.log(group.name);
         options.push(new MobileWorker("group_"+group.group_id, group.name, true));
     }
     options = options.concat(users);

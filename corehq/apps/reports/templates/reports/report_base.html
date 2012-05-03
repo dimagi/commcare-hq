@@ -23,6 +23,13 @@
             $("#reportFilters").on('shown', function () {
                 $.cookie(reportFilterCookieName, 'in', {path: savedPath, expires: 1});
             });
+
+            $('#paramSelectorForm button[type="submit"]').addClass('disabled');
+            $('#paramSelectorForm').change(enableFilterSubmit);
+            $('#paramSelectorForm fieldset button').click(enableFilterSubmit);
+            function enableFilterSubmit () {
+                $('#paramSelectorForm button[type="submit"]').removeClass('disabled').addClass('btn-primary');
+            }
         });
     </script>
 {% endif %}
@@ -74,8 +81,8 @@
                     {% endif %}
                     {% if show_dates or custom_fields or show_user_filter %}
                         <div class="form-actions">
-                            <button type="submit" class="btn btn-large btn-primary">Update Filters</button>
-                            <a href="#reportFilters" data-toggle="collapse" class="btn btn-large">Cancel</a>
+                            <button type="submit" class="btn btn-large">Update Filters</button>
+                            <a href="#reportFilters" data-toggle="collapse" class="btn btn-large">Close</a>
                         </div>
                     {% endif %}
                 </form>
