@@ -587,7 +587,7 @@ class XForm(WrappedNode):
                 )
                 self.add_bind(
                     nodeset="case/create/owner_id",
-                    calculate=self.resolve_path("case/@user_id"),
+                    calculate=self.resolve_path("meta/userID"),
                 )
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     extra_updates.append(make_case_elem('external_id'))
