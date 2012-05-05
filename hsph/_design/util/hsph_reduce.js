@@ -1,0 +1,232 @@
+var HSPHLengthStats = function () {
+    var self = this;
+    self.calc = {
+        totalRegistrations: 0,
+        totalRegistrationTime: 0,
+        averageRegistrationLength: 0
+    };
+
+    self.rereduce = function (agEntry) {
+        if (agEntry.averageRegistrationLength) {
+            self.calc.totalRegistrationTime += agEntry.totalRegistrationTime;
+            self.calc.totalRegistrations += 1;
+        }
+    };
+
+    self.reduce = function (curEntry) {
+        self.calc.totalRegistrationTime += curEntry.registrationLength;
+        self.calc.totalRegistrations ++;
+    };
+
+    self.getResult = function () {
+        self.calc.averageRegistrationLength = (self.calc.totalRegistrationTime > 0) ? Math.round(self.calc.totalRegistrationTime/self.calc.totalRegistrations) : null;
+        return self.calc;
+    };
+};
+
+var HSPHBirthCounter = function () {
+    var self = this;
+    self.calc = {
+        totalBirths: 0,
+        totalBirthsWithoutContact: 0,
+        totalBirthsWithContact: 0
+    };
+
+    self.rereduce = function (agEntry) {
+        self.calc.totalBirths += agEntry.totalBirths;
+        self.calc.totalBirthsWithoutContact += agEntry.totalBirthsWithoutContact;
+        self.calc.totalBirthsWithContact += agEntry.totalBirthsWithContact;
+    };
+
+    self.reduce = function (curEntry) {
+        self.calc.totalBirths += curEntry.numBirths;
+        if (curEntry.contactProvided)
+            self.calc.totalBirthsWithContact += curEntry.numBirths;
+        else
+            self.calc.totalBirthsWithoutContact += curEntry.numBirths;
+    };
+
+    self.getResult = function () {
+        return self.calc;
+    }
+};
+
+var HSPHSiteVisitStats = function (onlyTotals) {
+    var self = this;
+    self.calc = {
+        numFacilityVisits: 0
+    };
+
+    self.onlyTotals = (onlyTotals === true);
+    if (!self.onlyTotals) {
+        self.calc.siteVisitStats = {};
+        self.calc.numFacilitiesVisited = 0;
+        self.calc.lessThanTwoWeeklyFacilityVisits = 0;
+    }
+
+    self.rereduce = function (agEntry) {
+        if(self.onlyTotals) {
+            self.calc.numFacilityVisits += agEntry.numFacilityVisits;
+        } else
+            for (var site in agEntry.siteVisitStats) {
+                if (self.calc.siteVisitStats[site]) {
+                    self.calc.siteVisitStats[site].visits += agEntry.siteVisitStats[site].visits;
+                } else {
+                    self.calc.siteVisitStats[site] = {};
+                    self.calc.siteVisitStats[site].visits = agEntry.siteVisitStats[site].visits;
+                    self.calc.siteVisitStats[site].dates = new Array();
+                }
+                self.calc.siteVisitStats[site].dates = self.calc.siteVisitStats[site].dates.concat(agEntry.siteVisitStats[site].dates);
+            }
+    };
+
+    self.reduce = function (curEntry) {
+        if(self.onlyTotals && curEntry.siteVisit) {
+            self.calc.numFacilityVisits += 1;
+        } else if (self.calc.siteVisitStats) {
+            var siteID = curEntry.siteId;
+            if (self.calc.siteVisitStats[siteID]) {
+                self.calc.siteVisitStats[siteID].visits += 1;
+            } else {
+                self.calc.siteVisitStats[siteID] = {};
+                self.calc.siteVisitStats[siteID].visits = 1;
+                self.calc.siteVisitStats[siteID].dates = new Array();
+            }
+            self.calc.siteVisitStats[siteID].dates.push(curEntry.visitDate);
+        }
+    };
+
+    self.getResult = function () {
+        if (!self.onlyTotals) {
+            for (var s in self.calc.siteVisitStats) {
+                var visitDates = self.calc.siteVisitStats[s].dates,
+                    twoVisitsInAWeek = false;
+                for (var a in visitDates) {
+                    for (var b in visitDates) {
+                        if (a != b) {
+                            var firstVisit = new Date(a),
+                                secondVisit = new Date(b),
+                                millisecondsInWeek = 7*24*60*60*1000,
+                                millisecondsInDay = 24*60*60*1000;
+                            if ((firstVisit.getTime() - secondVisit.getTime() <= millisecondsInWeek)
+                                && (firstVisit.getTime() - secondVisit.getTime() > millisecondsInDay) ) {
+                                twoVisitsInAWeek = true;
+                            }
+                        }
+                    }
+                }
+                if (!twoVisitsInAWeek)
+                    self.calc.lessThanTwoWeeklyFacilityVisits += 1;
+
+                self.calc.numFacilityVisits += self.calc.siteVisitStats[s].visits;
+                self.calc.numFacilitiesVisited += 1;
+            }
+        }
+        return self.calc;
+    };
+};
+
+var HSPHHomeVisitStats = function () {
+    var self = this;
+    self.calc = {
+        numHomeVisits: 0,
+        numHomeVisitsCompleted: 0,
+        numHomeVisitsOpenAt21: 0
+    };
+
+    self.rereduce = function (agEntry) {
+        if (agEntry && agEntry.numHomeVisits) {
+            self.calc.numHomeVisits += agEntry.numHomeVisits;
+            self.calc.numHomeVisitsCompleted += agEntry.numHomeVisitsCompleted;
+            self.calc.numHomeVisitsOpenAt21 += agEntry.numHomeVisitsOpenAt21;
+        }
+    };
+
+    self.reduce = function (curEntry) {
+        if (curEntry && curEntry.homeVisit) {
+            self.calc.numHomeVisits += 1;
+            self.calc.numHomeVisitsCompleted += (curEntry.followupComplete) ? 1 : 0;
+            self.calc.numHomeVisitsOpenAt21 += (curEntry.openedAt21) ? 1 : 0;
+        }
+    };
+
+    self.getResult = function () {
+        return self.calc;
+    };
+};
+
+var HSPHDCCFollowupStats = function () {
+    var self = this;
+    self.calc = {
+        numCallsComplete: 0,
+        numBirthsFollowedUp: 0,
+        numCallsWaitlisted: 0,
+        numCallsTransferred: 0,
+        numBirthsTransferred: 0,
+        numOtherEvents: 0
+    };
+
+    self.rereduce = function (agEntry) {
+        self.calc.numCallsComplete += agEntry.numCallsComplete;
+        self.calc.numBirthsFollowedUp += agEntry.numBirthsFollowedUp;
+        self.calc.numCallsTransferred += agEntry.numCallsTransferred;
+        self.calc.numBirthsTransferred += agEntry.numBirthsTransferred;
+        self.calc.numCallsWaitlisted += agEntry.numCallsWaitlisted;
+        self.calc.numOtherEvents += agEntry.numOtherEvents;
+    };
+
+    self.reduce = function (curEntry) {
+        if (curEntry.followupComplete) {
+            self.calc.numCallsComplete += 1;
+            self.calc.numBirthsFollowedUp += (curEntry.numBirths) ? curEntry.numBirths : 0;
+        } else if (curEntry.followupTransferred) {
+            self.calc.numCallsTransferred += 1;
+            self.calc.numBirthsTransferred += (curEntry.numBirths) ? curEntry.numBirths : 0;
+        } else if (curEntry.followupWaitlisted)
+            self.calc.numCallsWaitlisted += 1;
+        else
+            self.calc.numOtherEvents += 1;
+    };
+
+    self.getResult = function () {
+        return self.calc;
+    };
+};
+
+// Underscore.js snippets
+// -----------------------------------
+ArrayProto = Array.prototype;
+var slice  = ArrayProto.slice,
+    nativeForEach = ArrayProto.forEach,
+    breaker = {};
+
+// The cornerstone, an `each` implementation, aka `forEach`.
+// Handles objects with the built-in `forEach`, arrays, and raw objects.
+// Delegates to **ECMAScript 5**'s native `forEach` if available.
+var each = function(obj, iterator, context) {
+    if (obj == null) return;
+    if (nativeForEach && obj.forEach === nativeForEach) {
+        obj.forEach(iterator, context);
+    } else if (obj.length === +obj.length) {
+        for (var i = 0, l = obj.length; i < l; i++) {
+            if (i in obj && iterator.call(context, obj[i], i, obj) === breaker) return;
+        }
+    } else {
+        for (var key in obj) {
+            if (_.has(obj, key)) {
+                if (iterator.call(context, obj[key], key, obj) === breaker) return;
+            }
+        }
+    }
+};
+
+
+// Extend a given object with all the properties in passed-in object(s).
+var extend = function(obj) {
+    each(slice.call(arguments, 1), function(source) {
+        for (var prop in source) {
+            obj[prop] = source[prop];
+        }
+    });
+    return obj;
+};

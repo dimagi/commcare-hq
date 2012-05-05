@@ -1,5 +1,6 @@
+from corehq.apps.groups.models import Group
 from corehq.apps.reports.custom import ReportField, ReportSelectField
-from corehq.apps.reports.fields import SelectCHWField
+from corehq.apps.reports.fields import SelectMobileWorkerField, SelectFilteredMobileWorkerField
 from dimagi.utils.couch.database import get_db
 
 class FacilityField(ReportField):
@@ -59,15 +60,15 @@ class SiteField(ReportField):
                         sites[region][district][site_num] = item['value'].get('facilityName', site_num)
         return sites
 
-class NameOfDCOField(SelectCHWField):
+class NameOfDCOField(SelectFilteredMobileWorkerField):
     slug = "dco_name"
-    template = "reports/fields/select_chw.html"
+    name = "Name of DCO"
+    group_names = ["DCO"]
 
-    def update_context(self):
-        super(NameOfDCOField, self).update_context()
-        self.context['field_name'] = "Name of DCO"
-        self.context['default_option'] = "All DCOs"
-
+class NameOfDCCField(SelectFilteredMobileWorkerField):
+    slug = "dcc_name"
+    name = "Name of DCC"
+    group_names = ["DCC"]
 
 class NameOfDCTLField(ReportField):
     slug = "dctl_name"

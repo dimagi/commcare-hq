@@ -4,6 +4,8 @@ function(doc) {
 
     if (isHSPHForm(doc) &&
         isDCOSiteLogReport(doc)){
-        emit(formatDCOSiteID(doc), null);
+        var entry = new HSPHEntry(doc);
+        entry.getSiteInfo();
+        emit(entry.data.siteId, null);
     }
 }

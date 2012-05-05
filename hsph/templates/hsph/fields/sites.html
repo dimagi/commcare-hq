@@ -16,10 +16,9 @@
         <select id="hsph_site_select" name="{{ slug.site }}" data-bind="options: hsph_sites, optionsValue: 'siteId', optionsText: 'name', optionsCaption: 'Select Site', value: hsph_selected_site, enable: enable_site"></select>
     </div>
 
-<script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.0.0.js' %}"></script>
-<script type="text/javascript" src="{% static 'hsph/js/hsph.field.sites.js' %}"></script>
-    <script type="text/javascript">
-        var siteMap = {{ sites|JSON }},
-            currentSelection = {{ selected|JSON }};
-        ko.applyBindings(new HSPHSitePicker(siteMap, currentSelection));
-    </script>
+<script type="text/javascript" src="{% static 'hsph/ko/hsph.field.sites.js' %}"></script>
+<script type="text/javascript">
+    var siteMap = {{ sites|JSON }},
+        currentSelection = {{ selected|JSON }};
+    ko.applyBindings(new HSPHSitePicker(siteMap, currentSelection));
+</script>

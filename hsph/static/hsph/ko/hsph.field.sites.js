@@ -1,7 +1,3 @@
-//ko.bindingHandlers.hsphRegionSelector = {
-//    init: function(element, valueAccessor, allBindingsAccessora)
-//}
-
 var HSPHSitePicker = function (refs, currentSelection) {
     var self = this;
     self.siteMap = refs;

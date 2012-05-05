@@ -27,6 +27,7 @@ class HSPHSiteDataMixin:
                     self.selected_site_map[region][district] = {}
                     self.selected_site_map[region][district][site] = self.site_map[region][district][site]
 
+
 class HSPHFieldManagementReport(StandardTabularHQReport, StandardDateHQReport):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.DatespanField',

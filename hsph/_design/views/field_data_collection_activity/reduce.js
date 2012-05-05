@@ -1,28 +1,27 @@
 function(keys, values, rereduce) {
-    var calc = {
-        totalBirths: 0,
-        totalBirthsWithoutContact: 0,
-        numFacilityVisits: 0
-    };
+    // !code util/hsph_reduce.js
+
+    var calc = {},
+        births = new HSPHBirthCounter(),
+        siteVisits = new HSPHSiteVisitStats();
 
     if (rereduce) {
         for (var i in values) {
             var agEntry = values[i];
-            calc.totalBirths += agEntry.totalBirths;
-            calc.totalBirthsWithoutContact += agEntry.totalBirthsWithoutContact;
-            calc.numFacilityVisits += agEntry.numFacilityVisits;
+            if (agEntry) {
+                births.rereduce(agEntry);
+                siteVisits.rereduce(agEntry);
+            }
         }
     } else {
         for (var j in values) {
             var curEntry = values[j];
-            if (curEntry.birthReg) {
-                calc.totalBirths += curEntry.numBirths;
-                if (!curEntry.contactProvided)
-                    calc.totalBirthsWithoutContact += curEntry.numBirths;
-            } else if (curEntry.siteVisit)
-                calc.numFacilityVisits += 1;
+            if (curEntry.birthReg)
+                births.reduce(curEntry);
+            siteVisits.reduce(curEntry);
         }
     }
 
+    extend(calc, births.getResult(), siteVisits.getResult());
     return calc;
 }

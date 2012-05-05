@@ -4,13 +4,13 @@ from hsph.reports.field_management import HSPHSiteDataMixin
 class HSPHCallCenterReport(StandardTabularHQReport, StandardDateHQReport):
     fields = ['corehq.apps.reports.fields.DatespanField']
 
-    def get_parameters(self):
-        pass
-
 
 class DCCActivityReport(HSPHCallCenterReport):
     name = "DCC Activity Report"
     slug = "hsph_dcc_activity"
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.DatespanField',
+              'hsph.fields.NameOfDCCField']
 
     def get_headers(self):
         return ["Name of DCC",
@@ -25,6 +25,12 @@ class DCCActivityReport(HSPHCallCenterReport):
 class CallCenterFollowUpSummaryReport(HSPHCallCenterReport, HSPHSiteDataMixin):
     name = "Call Center Follow Up Summary"
     slug = "hsph_dcc_followup_summary"
+
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'hsph.fields.SiteField']
+
+    def get_parameters(self):
+        self.generate_sitemap()
 
     def get_headers(self):
         return ["Region",

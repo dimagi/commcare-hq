@@ -5,18 +5,14 @@ function(doc) {
     if (isHSPHForm(doc) &&
         (isDCOSiteLogReport(doc) || isDCOBirthRegReport(doc))){
         var info = doc.form.meta,
-            entry = {};
-        entry.siteId = formatDCOSiteID(doc);
+            entry = new HSPHEntry(doc);
+        entry.getSiteInfo();
 
-        if (isDCOSiteLogReport(doc)) {
-            entry.siteVisit = true;
-        } else if (isDCOBirthRegReport(doc)) {
-            entry.birthReg = true;
-            entry.numBirths = calcNumBirths(doc);
-            log(entry.numBirths);
-            entry.contactProvided = isContactProvided(doc);
+        if (isDCOBirthRegReport(doc)) {
+            entry.data.birthReg = true;
+            entry.getBirthStats();
         }
 
-        emit([entry.siteId, getDCO(doc), getDCTL(doc), info.timeEnd], entry);
+        emit([entry.data.siteId, getDCO(doc), getDCTL(doc), info.timeEnd], entry.data);
     }
 }
