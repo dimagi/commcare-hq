@@ -14,4 +14,5 @@ urlpatterns = patterns('corehq.apps.cleanup.views',
     (r'^close_cases/$', 'close_cases'),
 
     url(r'^change_submissions_app_id/$', 'change_submissions_app_id', name="change_submissions_app_id"),
+    url(r'^delete_all_data/$', 'delete_all_data', name="cleanup_delete_all_data"),
 )

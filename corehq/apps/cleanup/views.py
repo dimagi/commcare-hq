@@ -242,10 +242,14 @@ def delete_all_data(request, domain):
         startkey=[domain],
         endkey=[domain, {}]
     )
-    cases = CommCareCase.view()
+    cases = CommCareCase.view('case/by_date_modified',
+        startkey=[domain, {}, {}],
+        endkey=[domain, {}, {}, {}],
+    )
     suffix = DELETED_SUFFIX
     deletion_id = random_hex()
-    for xform in xforms:
-        xform.doc_type += suffix
-        xform['-deletion_id'] = deletion_id
-        xform.save()
+    for thing_list in (xforms, cases):
+        for thing in thing_list:
+            thing.doc_type += suffix
+            thing['-deletion_id'] = deletion_id
+            thing.save()
