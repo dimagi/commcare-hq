@@ -148,6 +148,17 @@ class Role(Document):
     name = StringProperty()
     permissions = SchemaProperty(Permissions)
 
+    @classmethod
+    def get(cls, docid, rev=None, db=None, dynamic_properties=True):
+        if docid == 'edit-apps':
+            return Permissions(edit_apps=True)
+        elif docid == 'field-implementor':
+            return Permissions(edit_commcare_users=True)
+        elif docid == 'read-only':
+            return Permissions()
+        else:
+            return super(Role, cls).get(docid, rev, db, dynamic_properties)
+
 class DomainMembership(DocumentSchema):
     """
     Each user can have multiple accounts on the
