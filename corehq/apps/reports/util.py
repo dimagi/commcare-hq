@@ -229,7 +229,10 @@ def format_datatables_data(text, sort_key):
     return data
 
 SORT_TYPE_NUMERIC = "title-numeric"
-def format_datatables_header(text, sort_type=None, sort_direction=None, css_class=None):
+def format_datatables_header(text,
+                             sort_type=None,
+                             sort_direction=None,
+                             css_class=None):
     header = {"html": text}
     if sort_type:
         header["sort_type"] = sort_type

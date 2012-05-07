@@ -167,7 +167,7 @@ class ReportSelectField(ReportField):
     selected = None
 
     def update_params(self):
-        pass
+        self.selected = self.request.GET.get(self.slug)
 
     def update_context(self):
         self.update_params()

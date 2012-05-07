@@ -16,6 +16,7 @@ from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports import util
 from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.custom import HQReport
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.display import xmlns_to_name, FormType
 from corehq.apps.reports.fields import FilterUsersField, CaseTypeField, SelectMobileWorkerField
 from corehq.apps.reports.models import HQUserType, FormExportSchema
@@ -90,7 +91,7 @@ class StandardTabularHQReport(StandardHQReport):
 
 #    exportable = True
     def get_headers(self):
-        return self.headers
+        return DataTablesHeader()
 
     def get_rows(self):
         return self.rows
@@ -187,9 +188,11 @@ class CaseActivityReport(StandardTabularHQReport):
             self.now = self.history
 
     def get_headers(self):
-        return ["User"] + \
-               [util.format_datatables_header("Last %s Days" % l.days if l
-                            else "Ever", sort_type=util.SORT_TYPE_NUMERIC) for l in self.landmarks]
+        headers = DataTablesHeader(DataTablesColumn("User"))
+        for l in self.landmarks:
+            headers.add_column(DataTablesColumn("Last %s Days" % l.days if l else "Ever",
+                                                sort_type=DTSortType.NUMERIC))
+        return headers
 
     def get_rows(self):
         self.display_data = self.request_params.get('display', ['percent'])
@@ -288,9 +291,12 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
         self.dates = [self.datespan.startdate]
         while self.dates[-1] < self.datespan.enddate:
             self.dates.append(self.dates[-1] + datetime.timedelta(days=1))
-        return ["Username"] + \
-               [util.format_datatables_header(d.strftime(DATE_FORMAT), sort_type=util.SORT_TYPE_NUMERIC) for d in self.dates] + \
-               [util.format_datatables_header("Total", sort_type=util.SORT_TYPE_NUMERIC)]
+
+        headers = DataTablesHeader(DataTablesColumn("Username"))
+        for d in self.dates:
+            headers.add_column(DataTablesColumn(d.strftime(DATE_FORMAT), sort_type=DTSortType.NUMERIC))
+        headers.add_column(DataTablesColumn("Total", sort_type=DTSortType.NUMERIC))
+        return headers
 
     def get_rows(self):
         utc_dates = [tz_utils.adjust_datetime_to_timezone(date, self.timezone.zone, pytz.utc.zone) for date in self.dates]
@@ -358,8 +364,12 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
             # this fails if form_names, form_types is [], []
             form_names, self.form_types = zip(*sorted(zip(form_names, self.form_types)))
 
-        return ['User'] + [util.format_datatables_header(name, sort_type=util.SORT_TYPE_NUMERIC) for name in list(form_names)] + \
-               [util.format_datatables_header("All Forms", sort_type=util.SORT_TYPE_NUMERIC)]
+        headers = DataTablesHeader(DataTablesColumn("User"))
+        for name in list(form_names):
+            headers.add_column(DataTablesColumn(name, sort_type=DTSortType.NUMERIC))
+        headers.add_column(DataTablesColumn("All Forms", sort_type=DTSortType.NUMERIC))
+
+        return headers
 
     def get_rows(self):
         counts = self.get_submissions_by_form_json()
@@ -451,7 +461,11 @@ class FormCompletionTrendsReport(StandardTabularHQReport, StandardDateHQReport):
               'corehq.apps.reports.fields.DatespanField']
 
     def get_headers(self):
-        return ["User", "Average duration", "Shortest", "Longest", "# Forms"]
+        return DataTablesHeader(DataTablesColumn("User"),
+                                DataTablesColumn("Average duration"),
+                                DataTablesColumn("Shortest"),
+                                DataTablesColumn("Longest"),
+                                DataTablesColumn("No. of Forms"))
 
     def get_rows(self):
         form = self.request_params.get('form', '')
@@ -496,7 +510,12 @@ class SubmitHistory(PaginatedHistoryHQReport):
     slug = 'submit_history'
 
     def get_headers(self):
-        return ["View Form", "Username", "Submit Time", "Form"]
+        headers = DataTablesHeader(DataTablesColumn("View Form"),
+            DataTablesColumn("Username"),
+            DataTablesColumn("Submit Time"),
+            DataTablesColumn("Form"))
+        headers.no_sort = True
+        return headers
 
     def paginate_rows(self, skip, limit):
         rows = []
@@ -528,17 +547,22 @@ class CaseListReport(PaginatedHistoryHQReport):
         super(PaginatedHistoryHQReport, self).get_report_context()
 
     def get_headers(self):
-        final_headers = ["Name", "User", "Created Date", "Modified Date", "Status"]
+        headers = DataTablesHeader(DataTablesColumn("Name"),
+                                    DataTablesColumn("User"),
+                                    DataTablesColumn("Created Date"),
+                                    DataTablesColumn("Modified Date"),
+                                    DataTablesColumn("Status"))
+        headers.no_sort = True
         if not self.individual:
             self.name = "%s for %s" % (self.name, SelectMobileWorkerField.get_default_text(self.user_filter))
         if not self.case_type:
-            final_headers = ["Case Type"] + final_headers
+            headers.prepend_column(DataTablesColumn("Case Type"))
         open, all = CaseTypeField.get_case_counts(self.domain, self.case_type, self.userIDs)
         if all > 0:
             self.name = "%s (%s/%s open)" % (self.name, open, all)
         else:
             self.name = "%s (empty)" % self.name
-        return final_headers
+        return headers
 
     def paginate_rows(self, skip, limit):
         rows = []

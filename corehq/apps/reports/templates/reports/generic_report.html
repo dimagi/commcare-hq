@@ -1,4 +1,5 @@
 {% extends "reports/report_base.html" %}
+{% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
 
@@ -9,7 +10,9 @@
             var defaultNumRows = {{ report_datatables.defaultNumRows|default:10 }};
             var reportTables = new HQReportDataTables({
                 defaultRows: defaultNumRows,
-                startAtRowNum: {{ report_datatables.startAtRowNum|default:0 }}
+                startAtRowNum: {{ report_datatables.startAtRowNum|default:0 }},
+                aoColumns: {{ report.headers.render_aoColumns|JSON }},
+                autoWidth: {{ report.headers.auto_width|JSON }}
             });
             reportTables.render();
         {% endif %}
@@ -18,15 +21,22 @@
 {% endblock %}
 
 {% block reportcontent %}
+
+
 <table class="table table-striped datatable" {% if ajax_source %}data-source="{{ ajax_source }}"{% endif %}{% if ajax_params and ajax_source %}{% for param in ajax_params %} data-{{ param.name }}="{{ param.value }}"{% endfor %}{% if filter %} data-filter="true"{% endif %}{% endif %}>
     <thead>
+
+        {%  if report.headers.complex %}
+            {{ report.headers.render_html|safe }}
+        {% else %}
         <tr>
             {% for header in report.headers %}
-                <th {% if not ajax_source %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
+                <th {% if not ajax_source %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.header_group %}data-headergroup="{{ header.header_group }}" {% endif %}{% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
                     <i class="icon-hq-white icon-hq-doublechevron"></i> {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
                 </th>
             {% endfor %}
         </tr>
+        {% endif %}
     </thead>
     <tbody>
         {% for row in report.rows %}
