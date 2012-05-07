@@ -131,7 +131,7 @@ class PaginatedHistoryHQReport(StandardTabularHQReport):
               'corehq.apps.reports.fields.SelectCHWField']
 
     def get_parameters(self):
-        self.userIDs = [user.user_id for user in self.users]
+        self.userIDs = [user.user_id for user in self.users if user.user_id]
         self.usernames = dict([(user.user_id, user.username_in_report) for user in self.users])
 
     def json_data(self):

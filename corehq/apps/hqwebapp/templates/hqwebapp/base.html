@@ -37,7 +37,8 @@
                     <nav>
                         {% block tabs %}
                         <ul class="nav">
-                            {% if domain %}
+                            {# hide tabs from commcare users #}
+                            {% if domain and request.couch_user and request.couch_user.is_web_user %}
                                 {% get_tabs as tabs %}
                                 {% for tab in tabs %}
                                     {% if tab.visible %}
@@ -54,6 +55,7 @@
                         </ul>
                         {% endblock %}
                         <div class="btn-toolbar secondary-nav">
+                            {% if request.couch_user and request.couch_user.is_web_user %}
                             <div class="btn-group">
 
                                 <a class="btn btn-project dropdown-toggle" data-toggle="dropdown" href="#">
@@ -67,6 +69,7 @@
                                     {% domains_for_user request %}
                                 {% endif %}
                             </div>
+                            {% endif %}
                             <div class="btn-group">
                                 <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
                                     <i class="icon-hq-white icon-hq-person"></i>
@@ -86,7 +89,7 @@
                                     <li class="nav-header">Signed in as:</li>
                                     <li>{{ user.username }}</li>
                                     <li class="divider"></li>
-                                    <li><a href="/accounts/logout">Sign Out</a></li>
+                                    <li><a href="{% url logout %}">Sign Out</a></li>
                                 </ul>
                             </div>
                         </div>
