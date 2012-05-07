@@ -228,20 +228,6 @@ def format_datatables_data(text, sort_key):
             "sort_key": sort_key}
     return data
 
-SORT_TYPE_NUMERIC = "title-numeric"
-def format_datatables_header(text,
-                             sort_type=None,
-                             sort_direction=None,
-                             css_class=None):
-    header = {"html": text}
-    if sort_type:
-        header["sort_type"] = sort_type
-    if sort_direction:
-        header["sort_direction"] = sort_direction
-    if css_class:
-        header["css_class"] = css_class
-    return header
-
 def app_export_filter(doc, app_id):
     if app_id:
         return (doc['app_id'] == app_id) if doc.has_key('app_id') else False

@@ -7,15 +7,14 @@ class DTSortDirection:
     DSC = "desc"
 
 class DataTablesColumn(object):
-    sort_type = None
-    sort_direction = DTSortDirection.ASC
     sortable = True
     rowspan = 1
 
-    def __init__(self, name, span=0, sort_type=None):
+    def __init__(self, name, span=0, sort_type=None, sort_direction=None):
         self.html = name
         self.css_span = span
-        self.sort_type=sort_type
+        self.sort_type = sort_type
+        self.sort_direction = sort_direction if sort_direction else DTSortDirection.ASC
 
     @property
     def render_html(self):
