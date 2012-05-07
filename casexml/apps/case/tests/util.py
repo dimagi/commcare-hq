@@ -351,7 +351,7 @@ def check_user_has_case(testcase, user, case_block, should_have=True,
         if get_case_id(block) == case_id:
             if should_have:
                 if line_by_line:
-                    check_xml_line_by_line(testcase, ElementTree.tostring(block), ElementTree.tostring(case_block))
+                    check_xml_line_by_line(testcase, ElementTree.tostring(case_block), ElementTree.tostring(block))
                 match = block
                 n += 1
                 if n == 2:
