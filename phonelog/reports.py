@@ -7,6 +7,7 @@ from django.core.urlresolvers import reverse
 from django.utils import html
 import pytz
 from corehq.apps.reports import util
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DTSortDirection
 from corehq.apps.reports.fields import DeviceLogTagField, DeviceLogUsersField, DeviceLogDevicesField
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.reports.standard import StandardTabularHQReport, StandardDateHQReport
@@ -22,10 +23,10 @@ class FormErrorReport(StandardTabularHQReport, StandardDateHQReport):
               'corehq.apps.reports.fields.DatespanField']
 
     def get_headers(self):
-        return [util.format_datatables_header('Username', css_class="span4"),
-                util.format_datatables_header('Number of Forms', sort_type=util.SORT_TYPE_NUMERIC, css_class="span2"),
-                util.format_datatables_header('Number of Warnings', sort_type=util.SORT_TYPE_NUMERIC, css_class="span2"),
-                util.format_datatables_header('Number of Errors', sort_type=util.SORT_TYPE_NUMERIC, css_class="span2")]
+        return DataTablesHeader(DataTablesColumn("Username", span=4),
+                                DataTablesColumn("Number of Forms", span=2, sort_type=DTSortType.NUMERIC),
+                                DataTablesColumn("Number of Warnings", span=2, sort_type=DTSortType.NUMERIC),
+                                DataTablesColumn("Number of Errors", span=2, sort_type=DTSortType.NUMERIC))
 
     def get_parameters(self):
         usernames = [user.raw_username for user in self.users]
@@ -100,12 +101,12 @@ class DeviceLogDetailsReport(StandardTabularHQReport, StandardDateHQReport):
 
 
     def get_headers(self):
-        return [util.format_datatables_header('Date', sort_direction='desc', css_class="span1"),
-                util.format_datatables_header('Log Type', css_class="span1"),
-                util.format_datatables_header('Logged in Username', css_class="span2"),
-                util.format_datatables_header('Device ID', css_class="span2"),
-                util.format_datatables_header('Message', css_class="span5"),
-                util.format_datatables_header('App Version', css_class="span1")]
+        return DataTablesHeader(DataTablesColumn("Date", span=1, sort_direction=DTSortDirection.DSC),
+                                DataTablesColumn("Log Type", span=1),
+                                DataTablesColumn("Logged in Username", span=2),
+                                DataTablesColumn("Device ID", span=2),
+                                DataTablesColumn("Message", span=5),
+                                DataTablesColumn("App Version", span=1))
 
     def get_parameters(self):
         self.errors_only = self.request.GET.get(DeviceLogTagField.errors_only_slug, False)
