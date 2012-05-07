@@ -236,15 +236,22 @@ def change_submissions_app_id(request, domain):
     return HttpResponseRedirect(next)
 
 @require_superuser
-@require_POST
-def delete_all_data(request, domain):
+def delete_all_data(request, domain, template="cleanup/delete_all_data.html"):
+    if request.method == 'GET':
+        return render_to_response(request, template, {
+            'domain': domain
+        })
     xforms = XFormInstance.view('reports/all_submissions',
         startkey=[domain],
-        endkey=[domain, {}]
+        endkey=[domain, {}],
+        include_docs=True,
+        reduce=False
     )
     cases = CommCareCase.view('case/by_date_modified',
         startkey=[domain, {}, {}],
         endkey=[domain, {}, {}, {}],
+        include_docs=True,
+        reduce=False
     )
     suffix = DELETED_SUFFIX
     deletion_id = random_hex()
@@ -253,3 +260,4 @@ def delete_all_data(request, domain):
             thing.doc_type += suffix
             thing['-deletion_id'] = deletion_id
             thing.save()
+    return HttpResponseRedirect(reverse('homepage'))
