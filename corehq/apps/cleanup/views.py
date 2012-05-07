@@ -1,4 +1,7 @@
 from collections import defaultdict
+from corehq.apps.domain.decorators import require_superuser
+from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.make_uuid import random_hex
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
@@ -231,3 +234,18 @@ def change_submissions_app_id(request, domain):
         sub.save()
     messages.success(request, 'Your fix was successful and affected %s submissions' % len(submissions))
     return HttpResponseRedirect(next)
+
+@require_superuser
+@require_POST
+def delete_all_data(request, domain):
+    xforms = XFormInstance.view('reports/all_submissions',
+        startkey=[domain],
+        endkey=[domain, {}]
+    )
+    cases = CommCareCase.view()
+    suffix = DELETED_SUFFIX
+    deletion_id = random_hex()
+    for xform in xforms:
+        xform.doc_type += suffix
+        xform['-deletion_id'] = deletion_id
+        xform.save()
