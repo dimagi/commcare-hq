@@ -914,9 +914,10 @@ class ApplicationStatusReport(StandardTabularHQReport):
               'corehq.apps.reports.fields.SelectApplicationField']
 
     def get_headers(self):
-        return ["Username",
-                util.format_datatables_header("Last Seen", sort_type=util.SORT_TYPE_NUMERIC),
-                "CommCare Version", "Application [Deployed Build]"]
+        return DataTablesHeader(DataTablesColumn("Username"),
+                                DataTablesColumn("Last Seen",sort_type=DTSortType.NUMERIC),
+                                DataTablesColumn("CommCare Version"),
+                                DataTablesColumn("Application [Deployed Build]"))
 
     def get_parameters(self):
         self.selected_app = self.request_params.get('app', '')
