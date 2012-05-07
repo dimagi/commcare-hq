@@ -25,6 +25,7 @@ class IndexTest(TestCase):
             create=True,
             case_id=CASE_ID,
             user_id=USER_ID,
+            owner_id=USER_ID,
             index={'mom': ('mother-case', MOTHER_CASE_ID)},
             version=V2
         ).as_xml()
@@ -44,6 +45,7 @@ class IndexTest(TestCase):
         update_index_expected = CaseBlock(
             case_id=CASE_ID,
             user_id=USER_ID,
+            owner_id=USER_ID,
             create=True,
             index={'dad': ('father-case', FATHER_CASE_ID)},
             version=V2
@@ -65,6 +67,7 @@ class IndexTest(TestCase):
         update_index_expected = CaseBlock(
             case_id=CASE_ID,
             user_id=USER_ID,
+            owner_id=USER_ID,
             create=True,
             index={'mom': ('mother-case', MOTHER_CASE_ID), 'dad': ('father-case', FATHER_CASE_ID)},
             version=V2

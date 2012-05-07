@@ -121,7 +121,7 @@ class Version2CaseParsingTest(TestCase):
     <create>
         <case_type>v2_case_type</case_type>
         <case_name>test case name</case_name>
-        <owner_id/>
+        <owner_id>bar-user-id</owner_id>
     </create>
     <index>
         <baz_ref case_type="bop">some_other_referenced_id</baz_ref>

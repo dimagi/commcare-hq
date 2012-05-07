@@ -414,7 +414,16 @@ class MultiUserSyncTest(SyncBaseTest):
 
         # original user syncs again
         # make sure index updates take and indexed case also syncs
-        check_user_has_case(self, self.user, parent_case, 
+        expected_parent_case = CaseBlock(
+            create=True,
+            case_id=mother_id,
+            user_id=OTHER_USER_ID,
+            case_type=PARENT_TYPE,
+            owner_id=OTHER_USER_ID,
+            version=V2,
+        ).as_xml()
+        
+        check_user_has_case(self, self.user, expected_parent_case, 
                             restore_id=self.sync_log.get_id, version=V2)
         orig = check_user_has_case(self, self.user, CaseBlock(case_id=case_id, version=V2).as_xml(),
                                    line_by_line=False, restore_id=self.sync_log.get_id, 

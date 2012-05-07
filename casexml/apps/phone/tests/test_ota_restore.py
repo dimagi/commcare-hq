@@ -80,7 +80,7 @@ class OtaRestoreTest(TestCase):
             <create>
                 <case_type>test_case_type</case_type> 
                 <case_name>test case name</case_name>
-                <owner_id/>
+                <owner_id>foo</owner_id>
             </create>
             <update>
                 <external_id>someexternal</external_id>
@@ -199,7 +199,7 @@ class OtaRestoreTest(TestCase):
     <create>
         <case_type>cc_mobilize_client</case_type> 
         <case_name>SIEGEL-ROBERT-5412366523984</case_name>
-        <owner_id/>
+        <owner_id>ae179a62-38af-11e0-b6a3-005056aa7fb5</owner_id>
     </create>
     <update>
        <external_id>5412366523984</external_id>
