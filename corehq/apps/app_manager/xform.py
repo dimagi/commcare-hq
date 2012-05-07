@@ -585,6 +585,7 @@ class XForm(WrappedNode):
                     nodeset="case/create/case_name",
                     calculate=self.resolve_path(actions['open_case'].name_path),
                 )
+
                 if form.get_app().case_sharing:
                     self.add_instance('groups', src='jr://fixture/user-groups')
                     self.add_setvalue(
@@ -594,8 +595,9 @@ class XForm(WrappedNode):
                 else:
                     self.add_bind(
                         nodeset="case/create/owner_id",
-                        calculate=self.resolve_path("case/@user_id"),
+                        calculate=self.resolve_path("meta/userID"),
                     )
+                    
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     extra_updates.append(make_case_elem('external_id'))
                     self.add_bind(

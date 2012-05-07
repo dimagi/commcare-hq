@@ -47,7 +47,7 @@ def not_found(request, template_name='404.html'):
 def redirect_to_default(req, domain=None):
     if not req.user.is_authenticated():
         #when we want to go live, replace this
-        url = reverse('corehq.apps.hqwebapp.views.landing_page')
+        url = reverse('login')
     else:
         if domain:
             domain = normalize_domain_name(domain)
@@ -59,7 +59,9 @@ def redirect_to_default(req, domain=None):
         elif 1 == len(domains):
             if domains[0]:
                 domain = domains[0].name
-                if req.couch_user.can_view_reports(domain=domain) or req.couch_user.get_viewable_reports(domain):
+                if req.couch_user.is_commcare_user():
+                    url = reverse("cloudcare_app_list", args=[domain, ""])
+                elif req.couch_user.can_view_reports(domain=domain) or req.couch_user.get_viewable_reports(domain):
                     url = reverse('corehq.apps.reports.views.default', args=[domain])
                 else:
                     url = reverse('corehq.apps.app_manager.views.default', args=[domain])
