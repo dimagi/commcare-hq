@@ -272,16 +272,16 @@ class CaseActivityReport(StandardTabularHQReport):
 
     def get_headers(self):
         headers = ["Users"]
-        def add_numeric_header(text):
+        def add_numeric_header(text, help_text=None):
             headers.append(util.format_datatables_header(
                 text=text,
                 sort_type=util.SORT_TYPE_NUMERIC,
+                help_text=help_text,
             ))
         for landmark in self.landmarks:
-            add_numeric_header("Touched in Last %s Days" % landmark.days)
-        add_numeric_header("Active Cases <br/>Open and Modified in Last %s Days)" % self.inactive.days)
-        add_numeric_header("Inactive Cases")
-        add_numeric_header("Closed Cases")
+            add_numeric_header("Last %s Days" % landmark.days, help_text='Number of cases modified (or closed) in the last %s days' % landmark.days)
+        add_numeric_header("Active Cases", help_text='Number of cases modified in the last %s days that are still open' % self.inactive.days)
+        add_numeric_header("Inactive Cases", help_text="Number of cases that are open but haven't been touched in the last %s days" % self.inactive.days)
         return headers
 
     def get_rows(self):
@@ -305,7 +305,6 @@ class CaseActivityReport(StandardTabularHQReport):
                 add_numeric_cell(display, value)
             add_numeric_cell(row.active_count())
             add_numeric_cell(row.inactive_count())
-            add_numeric_cell(row.closed_count())
             return cells
         self.total_row = format_row(total_row)
         return map(format_row, rows)
