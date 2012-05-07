@@ -40,10 +40,6 @@ class CaseSyncUpdate(object):
         pairing. Should be a list of actions like [create, update, close]
         """
         if self.case.closed:
-            # if the case is closed, this means we must be trying 
-            # to purge it from a phone which means there must
-            # be a sync log
-            assert(self.sync_token is not None)
             return [const.CASE_ACTION_CLOSE] \
                 if self.sync_token.phone_has_case(self.case.get_id) \
                 else []    
