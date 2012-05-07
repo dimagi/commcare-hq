@@ -32,13 +32,13 @@ class UserEmailOnlyRegistrationRequestForm(_BaseForm, forms.Form):
 ########################################################################################################
         
 class AdminInvitesUserForm(_BaseForm, forms.Form):
-    from corehq.apps.users.models import Roles
+    from corehq.apps.users.models import OldRoles
     # As above. Need email now; still don't need domain. Don't need TOS. Do need the is_active flag,
     # and do need to relabel some things.
     email       =  forms.EmailField(label="Email Address",
                                     max_length=User._meta.get_field('email').max_length)
 #    is_domain_admin = forms.BooleanField(label='User is a domain administrator', initial=False, required=False)
-    role = forms.ChoiceField(choices=Roles.get_role_labels(), label="Project Role")
+    role = forms.ChoiceField(choices=OldRoles.get_role_labels(), label="Project Role")
 
     def __init__(self, data=None, excluded_emails=None, *args, **kwargs):
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)

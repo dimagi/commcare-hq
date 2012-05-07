@@ -1,5 +1,5 @@
 import json
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import OldPermissions
 from couchdbkit.exceptions import ResourceConflict
 from django.contrib import messages
 from django.core.urlresolvers import reverse
@@ -9,7 +9,7 @@ from corehq.apps.groups.models import Group, DeleteGroupRecord
 from corehq.apps.users.decorators import require_permission
 from dimagi.utils.couch.resource_conflict import repeat
 
-require_can_edit_groups = require_permission(Permissions.EDIT_COMMCARE_USERS)
+require_can_edit_groups = require_permission(OldPermissions.EDIT_COMMCARE_USERS)
 
 @require_can_edit_groups
 def add_group(request, domain):

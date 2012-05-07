@@ -32,7 +32,7 @@ from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.forms import UserForm, CommCareAccountForm, ProjectSettingsForm
-from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord, Permissions
+from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord, OldPermissions
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
 from dimagi.utils.web import render_to_response, json_response
@@ -65,8 +65,8 @@ def require_permission_to_edit_user(view_func):
             raise Http404()
     return _inner
 
-require_can_edit_web_users = require_permission(Permissions.EDIT_WEB_USERS)
-require_can_edit_commcare_users = require_permission(Permissions.EDIT_COMMCARE_USERS)
+require_can_edit_web_users = require_permission('edit_web_users')
+require_can_edit_commcare_users = require_permission('edit_commcare_users')
 
 def _users_context(request, domain):
     couch_user = request.couch_user
@@ -87,9 +87,9 @@ def users(request, domain):
     if request.couch_user:
         try:
             user = WebUser.get_by_user_id(request.couch_user._id, domain)
-            if user and user.has_permission(domain, Permissions.EDIT_WEB_USERS):
+            if user and user.has_permission(domain, 'edit_web_users'):
                 response = reverse("web_users", args=[domain])
-            elif user and user.has_permission(domain, Permissions.EDIT_COMMCARE_USERS):
+            elif user and user.has_permission(domain, 'edit_commcare_users'):
                 response = reverse("commcare_users", args=[domain])
         except Exception as e:
             logging.exception("Failed to grab user object: %s", e)
@@ -266,7 +266,7 @@ def account(request, domain, couch_user_id, template="users/account.html"):
         all_domains = couch_user.get_domains()
         admin_domains = []
         for d in all_domains:
-            if couch_user.has_permission(d, Permissions.EDIT_WEB_USERS) and couch_user.has_permission(d, Permissions.EDIT_COMMCARE_USERS):
+            if couch_user.is_domain_admin(d):
                 admin_domains.append(d)
         context.update({"user": request.user,
                         "domains": admin_domains
@@ -457,10 +457,10 @@ def _handle_user_form(request, domain, couch_user=None):
                         couch_user.set_permission(domain,'view-reports', True)
                     else:
                         couch_user.set_permission(domain, 'view-reports', False)
-                        if can_view_reports == 'no':
-                            couch_user.set_permissions_data(domain, 'view-report', data=[])
-                        else:
-                            couch_user.set_permissions_data(domain, 'view-report', data=viewable_reports)
+#                        if can_view_reports == 'no':
+#                            couch_user.set_permissions_data(domain, 'view-report', data=[])
+#                        else:
+#                            couch_user.set_permissions_data(domain, 'view-report', data=viewable_reports)
             couch_user.save()
             messages.success(request, 'Changes saved for user "%s"' % couch_user.username)
     else:

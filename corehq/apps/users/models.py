@@ -7,6 +7,7 @@ from datetime import datetime
 import logging
 import re
 from corehq.apps.domain.models import Domain
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
 
@@ -56,7 +57,7 @@ def _add_to_list(list, obj, default):
 def _get_default(list):
     return list[0] if list else None
 
-class Permissions(object):
+class OldPermissions(object):
     EDIT_WEB_USERS = 'edit-users'
     EDIT_COMMCARE_USERS = 'edit-commcare-users'
     EDIT_DATA = 'edit-data'
@@ -66,11 +67,19 @@ class Permissions(object):
     VIEW_REPORT = 'view-report'
 
     AVAILABLE_PERMISSIONS = [EDIT_DATA, EDIT_WEB_USERS, EDIT_COMMCARE_USERS, EDIT_APPS, VIEW_REPORTS, VIEW_REPORT]
+    perms = 'EDIT_DATA, EDIT_WEB_USERS, EDIT_COMMCARE_USERS, EDIT_APPS, VIEW_REPORTS, VIEW_REPORT'.split(', ')
+    old_to_new = dict([(locals()[attr], attr.lower()) for attr in perms])
 
-class Roles(object):
+    @classmethod
+    def to_new(cls, old_permission):
+        return cls.old_to_new[old_permission]
+
+
+
+class OldRoles(object):
     ROLES = (
-        ('edit-apps', 'App Editor', set([Permissions.EDIT_APPS])),
-        ('field-implementer', 'Field Implementer', set([Permissions.EDIT_COMMCARE_USERS])),
+        ('edit-apps', 'App Editor', set([OldPermissions.EDIT_APPS])),
+        ('field-implementer', 'Field Implementer', set([OldPermissions.EDIT_COMMCARE_USERS])),
         ('read-only', 'Read Only', set([]))
     )
 
@@ -82,6 +91,63 @@ class Roles(object):
     def get_role_mapping(cls):
         return dict([(key, perms) for (key, _, perms) in cls.ROLES])
 
+class Permissions(DocumentSchema):
+    edit_web_users = BooleanProperty(default=False)
+    edit_commcare_users = BooleanProperty(default=False)
+    edit_data = BooleanProperty(default=False)
+    edit_apps = BooleanProperty(default=False)
+
+    view_reports = BooleanProperty(default=False)
+    view_report_list = StringListProperty(default=[])
+
+    def view_report(self, report, value=None):
+        """Both a getter (when value=None) and setter (when value=True|False)"""
+
+        if value is None:
+            return self.view_reports or report in self.view_report_list
+        else:
+            if value:
+                if report not in self.view_report_list:
+                    self.view_report_list.append(report)
+            else:
+                try:
+                    self.view_report_list.remove(report)
+                except ValueError:
+                    pass
+
+    def has(self, permission, data=None):
+        if data:
+            return getattr(self, permission)(data)
+        else:
+            return getattr(self, permission)
+
+    def set(self, permission, value, data=None):
+        if self.has(permission, data) == value:
+            return
+        if data:
+            setattr(self, permission, value)
+        else:
+            getattr(self, permission)(data, value)
+
+    def __or__(self, other):
+        permissions = Permissions()
+        def getattr_(object, name):
+            a = getattr(object, name)
+            if isinstance(a, list):
+                a = set(a)
+            return a
+        def setattr_(p_object, name, value):
+            if isinstance(value, set):
+                value = list(value)
+            setattr(p_object, name, value)
+
+        for name in permissions.properties:
+            setattr(permissions, name, getattr_(self, name) | getattr_(other, name))
+
+class Role(Document):
+    name = StringProperty()
+    permissions = SchemaProperty(Permissions)
+
 class DomainMembership(DocumentSchema):
     """
     Each user can have multiple accounts on the
@@ -90,51 +156,61 @@ class DomainMembership(DocumentSchema):
 
     domain = StringProperty()
     is_admin = BooleanProperty(default=False)
-    permissions = StringListProperty()
-    permissions_data = DictProperty()
+    # old permissions
+    # permissions = StringListProperty()
+    # permissions_data = DictProperty()
     last_login = DateTimeProperty()
     date_joined = DateTimeProperty()
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
 
+    custom_permissions = SchemaProperty(Permissions)
+    role_id = StringProperty()
+
+    @property
+    def permissions(self):
+        if not self.role_id:
+            return self.custom_permissions
+        else:
+            return self.custom_permissions | self.role.permissions
+
+    @classmethod
+    def wrap(cls, data):
+        # Do a just-in-time conversion of old permissions
+        old_permissions = data.get('permissions')
+        if old_permissions is not None:
+            view_report_list = data.get('permissions_data', {}).get('view-report', [])
+            custom_permissions = {}
+            for old_permission in old_permissions:
+                if old_permission == 'view-report':
+                    continue
+                new_permission = OldPermissions.to_new(old_permission)
+                custom_permissions[new_permission] = True
+
+            custom_permissions['view_report_list'] = view_report_list
+            data['custom_permissions'] = custom_permissions
+            del data['permissions']
+            if data.has_key('permissions_data'):
+                del data['permissions_data']
+        return super(DomainMembership, cls).wrap(data)
+
+
+    @property
+    @memoized
+    def role(self):
+        if self.role_id:
+            return Role.get(self.role_id)
+        else:
+            return None
+
     def has_permission(self, permission, data=None):
-        if permission == Permissions.VIEW_REPORT:
-            if self.has_permission(Permissions.VIEW_REPORTS):
-                return True
-            else:
-                try:
-                    return data in self.permissions_data[permission]
-                except (KeyError, AttributeError):
-                    return False
-        else:
-            return permission in self.permissions
+        return self.is_admin or self.permissions.has(permission, data)
 
-    def set_permission(self, permission, value, data=None):
-        if self.has_permission(permission, data) == value:
-            return
-
-        if value:
-            if permission not in self.permissions:
-                self.permissions.append(permission)
-            if data:
-                if not self.permissions_data.has_key(permission):
-                    self.permissions_data[permission] = []
-                if data not in self.permissions_data[permission]:
-                    self.permissions_data[permission].append(data)
-        else:
-            if data:
-                self.permissions_data[permission] = [d for d in self.permissions_data[permission] if d != data]
-            else:
-                self.permissions = [p for p in self.permissions if p != permission]
-
-
-    def set_permissions_data(self, permission, data):
-        self.permissions_data[permission] = data
+    def set_permission(self, permission, value, data):
+        self.custom_permissions.set(permission, value, data)
 
     def viewable_reports(self):
-        try:
-            return self.permissions_data[Permissions.VIEW_REPORT]
-        except (KeyError, AttributeError):
-            return []
+        return self.role.view_report_list
+
     class Meta:
         app_label = 'users'
 
@@ -491,7 +567,8 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     def __getattr__(self, item):
         if item.startswith('can_'):
-            perm = getattr(Permissions, item[len('can_'):].upper(), None)
+#            perm = getattr(OldPermissions, item[len('can_'):].upper(), None)
+            perm = item[len('can_'):]
             if perm:
                 def fn(data=None, domain=None):
                     # temporary check to make sure I'm not by mistake passing in the domain as the `data`
@@ -895,17 +972,13 @@ class WebUser(CouchUser):
             raise self.Inconsistent("domains and domain_memberships out of sync")
 
     def set_permission(self, domain, permission, value, data=None, save=True):
-        assert(permission in Permissions.AVAILABLE_PERMISSIONS)
+        assert(permission in OldPermissions.AVAILABLE_PERMISSIONS)
         if self.has_permission(domain, permission) == value:
             return
         dm = self.get_domain_membership(domain)
         dm.set_permission(permission, value, data=data)
         if save:
             self.save()
-
-    def set_permissions_data(self, domain, permission, data):
-        dm = self.get_domain_membership(domain)
-        dm.set_permissions_data(permission, data)
 
     def reset_permissions(self, domain, permissions, permissions_data=None, save=True):
         dm = self.get_domain_membership(domain)
@@ -943,7 +1016,7 @@ class WebUser(CouchUser):
                 role = 'admin'
             else:
                 permissions = set(self.get_domain_membership(domain).permissions)
-                role_mapping = Roles.get_role_mapping()
+                role_mapping = OldRoles.get_role_mapping()
                 for role in role_mapping:
                     if permissions == role_mapping[role]:
                         break
@@ -964,7 +1037,7 @@ class WebUser(CouchUser):
         if role == "admin":
             dm.is_admin = True
         else:
-            dm.permissions = list(Roles.get_role_mapping()[role])
+            dm.permissions = list(OldRoles.get_role_mapping()[role])
 
 
     def role_label(self, domain=None):
@@ -974,7 +1047,7 @@ class WebUser(CouchUser):
             except (AttributeError, KeyError):
                 return None
 
-        return dict(Roles.get_role_labels()).get(self.get_role(domain), "Unknown Role")
+        return dict(OldRoles.get_role_labels()).get(self.get_role(domain), "Unknown Role")
 
 class FakeUser(WebUser):
     """

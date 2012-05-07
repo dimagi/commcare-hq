@@ -25,7 +25,7 @@ from corehq.apps.hqmedia import upload
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import DomainMembership, Permissions, CouchUser
+from corehq.apps.users.models import DomainMembership, OldPermissions, CouchUser
 
 from dimagi.utils.web import render_to_response, json_response, json_request
 
@@ -67,7 +67,7 @@ except ImportError:
     logging.error("lxml not installed! apps won't work properly!!")
 from django.contrib import messages
 
-require_edit_apps = require_permission(Permissions.EDIT_APPS)
+require_edit_apps = require_permission(OldPermissions.EDIT_APPS)
 
 def _encode_if_unicode(s):
     return s.encode('utf-8') if isinstance(s, unicode) else s
@@ -183,7 +183,7 @@ def import_app(req, domain, template="app_manager/import_app.html"):
         except Exception:
             app_id = req.POST.get('app_id')
             def validate_source_domain(src_dom):
-                if src_dom != EXAMPLE_DOMAIN and not req.couch_user.has_permission(src_dom, Permissions.EDIT_APPS):
+                if src_dom != EXAMPLE_DOMAIN and not req.couch_user.has_permission(src_dom, OldPermissions.EDIT_APPS):
                     return HttpResponseForbidden()
             app = import_app_util(app_id, domain, name=name, validate_source_domain=validate_source_domain)
 

@@ -5,7 +5,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.groups.models import Group
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions, CommCareUser
+from corehq.apps.users.models import OldPermissions, CommCareUser
 from corehq.apps.users.util import normalize_username
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.web import json_response, render_to_response
@@ -17,7 +17,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView
 
 
-require_can_edit_fixtures = require_permission(Permissions.EDIT_DATA)
+require_can_edit_fixtures = require_permission(OldPermissions.EDIT_DATA)
 
 def strip_json(obj, disallow_basic=None, disallow=None):
     disallow = disallow or []
