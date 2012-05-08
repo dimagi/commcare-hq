@@ -652,7 +652,7 @@ class CaseListReport(PaginatedHistoryHQReport):
                         (reverse('case_details', args=[self.domain, case_id]),
                          case_name)
         except NoReverseMatch:
-            return "%s (bad ID format)"
+            return "%s (bad ID format)" % case_name
 
 
 class SubmissionTimesReport(StandardHQReport):
