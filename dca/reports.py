@@ -152,7 +152,7 @@ def _group_age(x):
 def _member_delta(x):
     try:
         return int(x.active_members_at_time_of_visit) - int(x.members_at_start_of_cycle)
-    except ValueError:
+    except (ValueError, TypeError):
         return 0.0
 
 class LendingGroupAggregate(object):
