@@ -143,11 +143,17 @@ class LendingGroup(object):
                         # raise AttributeError("Couldn't find %s in either the collection or the case." % item)
 
 
-def _foo(x):
+def _group_age(x):
     y = parse(x.opened_on)
     z = parse(x.date_savings_started_this_cycle)
     a = y - z.replace(tzinfo=tz.tzutc())
     return a.days
+
+def _member_delta(x):
+    try:
+        return int(x.active_members_at_time_of_visit) - int(x.members_at_start_of_cycle)
+    except ValueError:
+        return 0.0
 
 class LendingGroupAggregate(object):
     """
@@ -321,11 +327,11 @@ class LendingGroupAggregate(object):
 
     @property
     def change_in_members(self):
-        return self.sum_all_groups(lambda x: int(x.active_members_at_time_of_visit) - int(x.members_at_start_of_cycle) if x.active_members_at_time_of_visit is not None else 0.0)
+        return self.sum_all_groups(_member_delta)
 
     @property
     def avg_change_in_members(self):
-        return self.avg_all_groups(lambda x: int(x.active_members_at_time_of_visit) - int(x.members_at_start_of_cycle) if x.active_members_at_time_of_visit is not None else 0.0)
+        return self.avg_all_groups(_member_delta)
 
     def pct_change_in_members(self):
         return self.pct(self.change_in_members, self.members_at_start_of_cycle)
@@ -364,7 +370,7 @@ class LendingGroupAggregate(object):
 
     @property
     def avg_age_of_group(self):
-        return round(self.sum_all_groups(_foo) / 7.0, 2)
+        return round(self.sum_all_groups(_group_age) / 7.0, 2)
 
     @property
     def average_age(self):
