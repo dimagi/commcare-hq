@@ -39,6 +39,8 @@ from fields import FilterUsersField
 from util import get_all_users_by_domain
 from corehq.apps.hqsofabed.models import HQFormData
 from StringIO import StringIO
+from corehq.apps.sms.models import MessageLog, SMSLog, CallLog, EventLog, INCOMING, OUTGOING, MISSED_EXPECTED_CALLBACK
+from corehq.apps.reminders.models import CaseReminderHandler
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -500,3 +502,52 @@ def custom_report_dispatcher(request, domain, report_slug, export=False):
             else:
                 return k.as_view()
     raise Http404
+
+# site_list should be None for all sites, or a list of sites to filter on
+def get_missed_callback_report_context(domain, site_list=None, end_date=None):
+    date_list = []
+    if end_date is None:
+        end_date = datetime.utcnow().date()
+    for day_num in range(-13, 1):
+        date_list.append(str(end_date + timedelta(days = day_num)))
+    data = {}
+    for case in CommCareCase.view("hqcase/types_by_domain", startkey=[domain, "patient"], endkey=[domain, "patient"], reduce=False, include_docs=True).all():
+        site = case.get_case_property("site")
+        if((site_list is None) or (site in site_list)):
+            entry = {"dates" : []}
+            for date in date_list:
+                entry["dates"].append({"sms_count" : 0, "call_count" : 0, "missed_callback_count" : 0})
+            entry["recipient"] = case
+            data[case._id] = entry
+    for sms in SMSLog.by_domain_date(domain).all():
+        if sms.direction == OUTGOING and sms.couch_recipient_doc_type == "CommCareCase" and sms.couch_recipient in data:
+            entry = data[sms.couch_recipient]
+            date = str(CaseReminderHandler.utc_to_local(entry["recipient"], sms.date).date())
+            if date in date_list:
+                entry["dates"][date_list.index(date)]["sms_count"] += 1
+    for call in CallLog.by_domain_date(domain).all():
+        if call.direction == INCOMING and call.couch_recipient_doc_type == "CommCareCase" and call.couch_recipient in data:
+            entry = data[call.couch_recipient]
+            date = str(CaseReminderHandler.utc_to_local(entry["recipient"], call.date).date())
+            if date in date_list:
+                entry["dates"][date_list.index(date)]["call_count"] += 1
+    for event in EventLog.view("sms/event_by_domain_date_recipient", startkey=[domain], endkey=[domain, {}], include_docs=True).all():
+        if event.event_type == MISSED_EXPECTED_CALLBACK and event.couch_recipient_doc_type == "CommCareCase" and event.couch_recipient in data:
+            entry = data[event.couch_recipient]
+            date = str(CaseReminderHandler.utc_to_local(entry["recipient"], event.date).date())
+            if date in date_list:
+                entry["dates"][date_list.index(date)]["missed_callback_count"] += 1
+    context = {
+        "date_list" : date_list,
+        "data" : data
+    }
+    return context
+
+from django.shortcuts import render
+def a5288_temp(request, domain):
+    context = get_missed_callback_report_context(domain)
+    return render(request, "reports/partials/missed_callbacks.html", context)
+
+
+
+

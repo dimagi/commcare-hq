@@ -115,6 +115,16 @@ class MessageLog(Document, UnicodeMixIn):
         if reduced:
             return reduced[0]['value']
         return 0
+    
+    @classmethod
+    def by_domain_date(cls, domain, start_date = None, end_date = {}):
+        if cls.__name__ == "MessageLog":
+            raise NotImplementedError("Log queries not yet implemented for base class")
+        return cls.view("sms/by_domain",
+                    reduce=False,
+                    startkey=[domain, cls.__name__] + [start_date],
+                    endkey=[domain, cls.__name__] + [end_date],
+                    include_docs=True)
 
 class SMSLog(MessageLog):
     text = StringProperty()
