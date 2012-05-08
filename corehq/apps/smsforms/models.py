@@ -21,9 +21,6 @@ class XFormsSession(Document):
     app_id = StringProperty()
     submission_id = StringProperty()
     
-    # might be a bad idea to store this in the DB long term
-    auth = StringProperty() 
-    
     def __unicode__(self):
         return 'Form %(form)s in domain %(domain)s. Last modified: %(mod)s' % \
             {"form": self.form_xmlns, 

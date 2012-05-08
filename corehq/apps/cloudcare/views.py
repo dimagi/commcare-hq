@@ -1,7 +1,7 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.cloudcare.models import CaseSpec
 from corehq.apps.domain.decorators import login_and_domain_required,\
-    login_or_digest
+    login_or_digest_ex
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.web import render_to_response, json_response, json_handler
@@ -15,6 +15,7 @@ from dimagi.utils.couch import safe_index
 from dimagi.utils.parsing import string_to_boolean
 from django.conf import settings
 from corehq.apps.cloudcare import touchforms_api 
+from touchforms.formplayer.api import DjangoAuth
 
 @login_and_domain_required
 def app_list(request, domain, urlPath):
@@ -86,7 +87,8 @@ def case_list(request, domain):
                                "cases": json.dumps(get_owned_cases(domain, user_id),
                                                    default=json_handler)})
 
-cloudcare_api = login_or_digest
+
+cloudcare_api = login_or_digest_ex(allow_cc_users=True)
 
 @login_and_domain_required
 def view_case(request, domain, case_id=None):
@@ -152,7 +154,7 @@ def filter_cases(request, domain, app_id, module_id):
     additional_filters = {"properties/case_type": module.case_type }
     result = touchforms_api.filter_cases(domain, request.couch_user, 
                                          xpath, additional_filters, 
-                                         auth=auth_cookie)
+                                         auth=DjangoAuth(auth_cookie))
     case_ids = result.get("cases", [])
     cases = [CommCareCase.get(id) for id in case_ids]
     cases = [c.get_json() for c in cases if c]

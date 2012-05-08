@@ -1,6 +1,5 @@
 from .models import XFormsSession
 from datetime import datetime
-from touchforms.formplayer import api
 from corehq.apps.cloudcare.touchforms_api import get_session_data
 from touchforms.formplayer.api import XFormsConfig
 from touchforms.formplayer import sms as tfsms
@@ -35,8 +34,7 @@ def start_session(domain, contact, app, module, form, case_id=None, auth=None):
                             start_time=now, modified_time=now, 
                             form_xmlns=form.xmlns,
                             completed=False, domain=domain,
-                            app_id=app.get_id, user_id=contact.get_id,
-                            auth=auth)
+                            app_id=app.get_id, user_id=contact.get_id)
     session.save()
     return (session, _responses_to_text(responses))
 
@@ -54,8 +52,9 @@ def get_responses(msg):
     if session:
         session.modified_time = datetime.utcnow()
         session.save()
+        # TODO auth
         return _responses_to_text(tfsms.next_responses(session.session_id, msg.text,
-                                                       auth=session.auth))
+                                                       auth=None))
                 
 def _responses_to_text(responses):
     return [r.text_prompt for r in responses if r.text_prompt]
