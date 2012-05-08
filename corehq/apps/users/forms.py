@@ -36,20 +36,20 @@ class UserForm(forms.Form):
     """
 
     def __init__(self, *args, **kwargs):
-        if kwargs.has_key('viewable_reports_choices'):
-            viewable_reports_choices = kwargs.pop('viewable_reports_choices')
+        if kwargs.has_key('role_choices'):
+            role_choices = kwargs.pop('role_choices')
         else:
-            viewable_reports_choices = ()
+            role_choices = ()
         super(UserForm, self).__init__(*args, **kwargs)
-        self.fields['viewable_reports'].choices = viewable_reports_choices
+        self.fields['role'].choices = role_choices
 
     #username = forms.CharField(max_length=15)
     first_name = forms.CharField(max_length=50, required=False)
     last_name = forms.CharField(max_length=50, required=False)
     email = forms.EmailField(label=_("E-mail"), max_length=75, required=False)
-    role = forms.ChoiceField(choices=(('', 'Custom Role'),) + OldRoles.get_role_labels(), required=False)
-    can_view_reports = forms.ChoiceField(choices=(('yes', 'Yes'), ('no', 'No'), ('some', 'Only Some')), required=False)
-    viewable_reports = forms.MultipleChoiceField(choices=(), label="", required=False)
+    role = forms.ChoiceField(choices=(), required=False)
+#    can_view_reports = forms.ChoiceField(choices=(('yes', 'Yes'), ('no', 'No'), ('some', 'Only Some')), required=False)
+#    viewable_reports = forms.MultipleChoiceField(choices=(), label="", required=False)
 
     class Meta:
         app_label = 'users'

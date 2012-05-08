@@ -32,7 +32,7 @@ from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.forms import UserForm, CommCareAccountForm, ProjectSettingsForm
-from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord, OldPermissions
+from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord, OldPermissions, UserRole, AdminUserRole
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
 from dimagi.utils.web import render_to_response, json_response
@@ -98,6 +98,11 @@ def users(request, domain):
 @require_can_edit_web_users
 def web_users(request, domain, template="users/web_users.html"):
     context = _users_context(request, domain)
+    user_roles = [AdminUserRole(domain=domain)]
+    user_roles.extend(UserRole.by_domain(domain))
+    context.update({
+        'user_roles': user_roles
+    })
     return render_to_response(request, template, context)
 
 @require_can_edit_web_users
@@ -436,8 +441,10 @@ def _handle_user_form(request, domain, couch_user=None):
     can_change_admin_status = \
         (request.user.is_superuser or request.couch_user.can_edit_web_users(domain=domain))\
         and request.couch_user.user_id != couch_user.user_id and not couch_user.is_commcare_user()
+    role_choices = [(role.get_qualified_id(), role.name) for role in [AdminUserRole(domain=domain)] + list(UserRole.by_domain(domain))]
     if request.method == "POST" and request.POST['form_type'] == "basic-info":
-        form = UserForm(request.POST, viewable_reports_choices=get_possible_reports(domain))
+#        form = UserForm(request.POST, viewable_reports_choices=get_possible_reports(domain))
+        form = UserForm(request.POST, role_choices=role_choices)
         if form.is_valid():
             if create_user:
                 django_user = User()
@@ -449,40 +456,21 @@ def _handle_user_form(request, domain, couch_user=None):
             couch_user.email = form.cleaned_data['email']
             if can_change_admin_status:
                 role = form.cleaned_data['role']
-                can_view_reports = form.cleaned_data['can_view_reports']
-                viewable_reports = form.cleaned_data['viewable_reports']
                 if role:
                     couch_user.set_role(domain, role)
-                    if can_view_reports == 'yes':
-                        couch_user.set_permission(domain,'view-reports', True)
-                    else:
-                        couch_user.set_permission(domain, 'view-reports', False)
-#                        if can_view_reports == 'no':
-#                            couch_user.set_permissions_data(domain, 'view-report', data=[])
-#                        else:
-#                            couch_user.set_permissions_data(domain, 'view-report', data=viewable_reports)
             couch_user.save()
             messages.success(request, 'Changes saved for user "%s"' % couch_user.username)
     else:
-        form = UserForm(viewable_reports_choices=get_possible_reports(domain))
+        form = UserForm(role_choices=role_choices)
         if not create_user:
             form.initial['first_name'] = couch_user.first_name
             form.initial['last_name'] = couch_user.last_name
             form.initial['email'] = couch_user.email
             if can_change_admin_status:
-                form.initial['role'] = couch_user.get_role(domain) or ''
-                form.initial['viewable_reports'] = couch_user.get_viewable_reports(domain=domain, name=False)
-                if couch_user.can_view_reports(domain=domain):
-                    form.initial['can_view_reports'] = 'yes'
-                elif form.initial['viewable_reports']:
-                    form.initial['can_view_reports'] = 'some'
-                else:
-                    form.initial['can_view_reports'] = 'no'
+                form.initial['role'] = couch_user.get_role(domain).get_qualified_id() or ''
 
     if not can_change_admin_status:
         del form.fields['role']
-        del form.fields['can_view_reports']
-        del form.fields['viewable_reports']
 
     context.update({"form": form})
     return context

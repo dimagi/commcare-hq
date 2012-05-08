@@ -151,21 +151,34 @@ class Permissions(DocumentSchema):
                 return False
         return True
 
+    @classmethod
+    def max(cls):
+        return Permissions(
+            edit_web_users=True,
+            edit_commcare_users=True,
+            edit_data=True,
+            edit_apps=True,
+            view_reports=True,
+        )
+
 class UserRole(Document):
     domain = StringProperty()
     name = StringProperty()
     permissions = SchemaProperty(Permissions)
 
-    @classmethod
-    def get(cls, docid, rev=None, db=None, dynamic_properties=True):
-        if docid == 'edit-apps':
-            return Permissions(edit_apps=True)
-        elif docid == 'field-implementor':
-            return Permissions(edit_commcare_users=True)
-        elif docid == 'read-only':
-            return Permissions()
-        else:
-            return super(UserRole, cls).get(docid, rev, db, dynamic_properties)
+    def get_qualified_id(self):
+        return 'user-role:%s' % self.get_id
+
+#    @classmethod
+#    def get(cls, docid, rev=None, db=None, dynamic_properties=True):
+#        if docid == 'edit-apps':
+#            return Permissions(edit_apps=True)
+#        elif docid == 'field-implementor':
+#            return Permissions(edit_commcare_users=True)
+#        elif docid == 'read-only':
+#            return Permissions()
+#        else:
+#            return super(UserRole, cls).get(docid, rev, db, dynamic_properties)
 
     @classmethod
     def by_domain(cls, domain):
@@ -188,18 +201,25 @@ class UserRole(Document):
         def get_name():
             if name:
                 return name
-            elif permissions == Permissions(edit_app=True):
-                return "App Editor"
             elif permissions == Permissions():
                 return "Read Only"
+            elif permissions == Permissions(edit_apps=True):
+                return "App Editor"
+            elif permissions == Permissions(view_reports=True):
+                return "Report Viewer"
             elif permissions == Permissions(edit_commcare_users=True):
+                return "Field Implementor (No Reports)"
+            elif permissions == Permissions(edit_commcare_users=True, view_reports=True):
                 return "Field Implementor"
-        role = cls(permissions=permissions, name=get_name())
+        role = cls(domain=domain, permissions=permissions, name=get_name())
         role.save()
         return role
 
-def AdminUserRole():
-    return UserRole(name='Admin')
+class AdminUserRole(UserRole):
+    def __init__(self, domain):
+        return super(AdminUserRole, self).__init__(domain=domain, name='Admin', permissions=Permissions.max())
+    def get_qualified_id(self):
+        return 'admin'
 
 class DomainMembership(DocumentSchema):
     """
@@ -1072,7 +1092,7 @@ class WebUser(CouchUser):
         if self.is_member_of(domain):
             dm = self.get_domain_membership(domain)
             if self.is_domain_admin(domain):
-                role = AdminUserRole()
+                role = AdminUserRole(domain=domain)
             elif dm.role:
                 role = dm.role
             else:
@@ -1082,18 +1102,18 @@ class WebUser(CouchUser):
 
         return role
 
-    def set_role(self, domain, role):
+    def set_role(self, domain, role_qualified_id):
         """
-        A simplified role-based way to set permissions
-
+        Takes a
         """
         dm = self.get_domain_membership(domain)
         dm.is_admin = False
-        if role == "admin":
+        if role_qualified_id == "admin":
             dm.is_admin = True
+        elif role_qualified_id.startswith('user-role:'):
+            dm.role_id = role_qualified_id[len('user-role:'):]
         else:
-            dm.permissions = list(OldRoles.get_role_mapping()[role])
-
+            raise Exception
 
     def role_label(self, domain=None):
         if not domain:

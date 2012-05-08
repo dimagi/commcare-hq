@@ -33,7 +33,24 @@
             });
         });
     </script>
+    <script>
+        $('.check-x').each(function () {
+            if($(this).data('bool') == 'True') {
+                $(this).addClass('icon-ok');
+            } else if($(this).data('bool') == 'False') {
+                $(this).addClass('icon-remove');
+            } else {
+                $(this).text('?');
+            }
+        })
+    </script>
 {% endblock %}
+{% block head %}
+    {{ block.super }}
+    <style>
+    </style>
+{% endblock %}
+
 
 {% block subsection-title %}
     <li class="active">
@@ -49,12 +66,12 @@
     <div class="btn-toolbar">
         <a class="btn btn-success" href="{% url invite_web_user domain %}"><i class="icon icon-white icon-plus"></i> Invite {% hq_web_user %}</a>
     </div>
+
     <table class="table table-striped table-bordered">
         <thead>
             <tr>
                 <th>{% trans "E-mail" %}</th>
                 <th>{% trans "Role" %}</th>
-                <th>{% trans "Can View Reports" %}</th>
                 <th>{% trans "Name" %}</th>
                 <th>{% trans "Phone Numbers" %}</th>
                 <th>{% trans "Remove" %}</th>
@@ -69,17 +86,6 @@
                     </a>
                 </td>
                 <td>{{ user.role_label }}</td>
-                <td>
-                    {% if user.can_view_reports %}Yes{% else %}
-                    {% for report in user.get_viewable_reports %}
-                        {% if forloop.first %}Only<ul>{% endif %}
-                        <li>{{ report }}</li>
-                        {% if forloop.last %}</ul>{% endif %}
-                    {% empty %}
-                        No
-                    {% endfor %}
-                    {% endif %}
-                </td>
                 <td>{{ user.first_name }} {{ user.last_name }}</td>
                 <td>
                     {% if user.phone_numbers %}
@@ -97,6 +103,46 @@
                     {% endifnotequal %}
                 </td>
             </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <h2>Roles</h2>
+    <table class="table table-striped table-bordered">
+        <thead>
+        <tr>
+            <th></th>
+            <th>Edit Web Users</th>
+            <th>Edit CommCare Users</th>
+            <th>Edit Data</th>
+            <th>Edit Apps</th>
+            <th>View Reports</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for role in user_roles %}
+        <tr>
+            <th>{% if role.name %}{{ role.name }}{% else %}{{ role.get_id }}<h6>(No Name)</h6>{% endif %}</th>
+            <td><i class="check-x" data-bool="{{ role.permissions.edit_web_users }}"></i></td>
+            <td><i class="check-x" data-bool="{{ role.permissions.edit_commcare_users }}"></i></td>
+            <td><i class="check-x" data-bool="{{ role.permissions.edit_data }}"></i></td>
+            <td><i class="check-x" data-bool="{{ role.permissions.edit_apps }}"></i></td>
+            <td>
+                {% if role.permissions.view_reports %}
+                    <i class="check-x" data-bool="True"></i>
+                {% else %}
+                {% if role.permissions.view_report_list %}
+                <ul>
+                    {% for report in role.permissions.view_report_list %}
+                    <li>{{ report }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                    <i class="check-x" data-bool="False"></i>
+                {% endif %}
+                {% endif %}
+
+            </td>
+        </tr>
         {% endfor %}
         </tbody>
     </table>
