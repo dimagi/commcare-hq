@@ -10,8 +10,28 @@ ko.bindingHandlers.clickable = (function () {
     return new Clickable();
 }());
 
+ko.bindingHandlers.modal = {
+    init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        $(element).addClass('modal fade').modal({
+            show: false,
+            backdrop: false
+        });
+        ko.bindingHandlers['if'].init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+    },
+    update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+//        ko.bindingHandlers.visible.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+        var value = ko.utils.unwrapObservable(valueAccessor());
+        ko.bindingHandlers['if'].update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+        if (value) {
+            $(element).modal('show');
+        } else {
+            $(element).modal('hide');
+        }
+    }
+};
 
 $(function () {
+    var el = $('#fixtures-ui');
     function log (x) {
         console.log(x);
         return x;
@@ -295,35 +315,39 @@ $(function () {
             self.data_types.destroy(dataType);
             dataType.save();
         };
-
-        $.ajax({
-            url: 'data-types/',
-            type: 'get',
-            dataType: 'json',
-            success: function (data) {
-                var dataType;
-                for (var i = 0; i < data.length; i += 1) {
-                    self.data_types.push(makeDataType(data[i], self));
-                    dataType = self.data_types()[i];
+        self.loadData = function () {
+            $.ajax({
+                url: 'data-types/',
+                type: 'get',
+                dataType: 'json',
+                success: function (data) {
+                    var dataType;
+                    for (var i = 0; i < data.length; i += 1) {
+                        self.data_types.push(makeDataType(data[i], self));
+                        dataType = self.data_types()[i];
+                    }
                 }
-            }
-        });
-        $.ajax({
-            url: 'groups/',
-            type: 'get',
-            dataType: 'json',
-            success: function (data) {
-                self.groups = data;
-            }
-        });
-        $.ajax({
-            url: 'users/',
-            type: 'get',
-            dataType: 'json',
-            success: function (data) {
-                self.users = data;
-            }
-        });
+            });
+            $.ajax({
+                url: 'groups/',
+                type: 'get',
+                dataType: 'json',
+                success: function (data) {
+                    self.groups = data;
+                }
+            });
+            $.ajax({
+                url: 'users/',
+                type: 'get',
+                dataType: 'json',
+                success: function (data) {
+                    self.users = data;
+                }
+            });
+        };
     }
-    ko.applyBindings(new App());
+    var app = new App();
+    ko.applyBindings(app, el.get(0));
+    el.show();
+    app.loadData();
 });
