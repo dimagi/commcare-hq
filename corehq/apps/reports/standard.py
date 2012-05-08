@@ -6,7 +6,7 @@ import sys
 import dateutil
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, NoReverseMatch
 from django.http import HttpResponseBadRequest, Http404
 from django.template.defaultfilters import yesno
 from django.utils import html
@@ -647,9 +647,12 @@ class CaseListReport(PaginatedHistoryHQReport):
             ('%Y-%m-%d %H:%M:%S') if date else ""
 
     def case_data_link(self, case_id, case_name):
-        return "<a class='ajax_dialog' href='%s'>%s</a>" % \
-                    (reverse('case_details', args=[self.domain, case_id]),
-                     case_name)
+        try: 
+            return "<a class='ajax_dialog' href='%s'>%s</a>" % \
+                        (reverse('case_details', args=[self.domain, case_id]),
+                         case_name)
+        except NoReverseMatch:
+            return "%s (bad ID format)"
 
 
 class SubmissionTimesReport(StandardHQReport):
