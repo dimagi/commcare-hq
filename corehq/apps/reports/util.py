@@ -229,7 +229,7 @@ def format_datatables_data(text, sort_key):
     return data
 
 SORT_TYPE_NUMERIC = "title-numeric"
-def format_datatables_header(text, sort_type=None, sort_direction=None, css_class=None):
+def format_datatables_header(text, sort_type=None, sort_direction=None, css_class=None, help_text=None):
     header = {"html": text}
     if sort_type:
         header["sort_type"] = sort_type
@@ -237,6 +237,8 @@ def format_datatables_header(text, sort_type=None, sort_direction=None, css_clas
         header["sort_direction"] = sort_direction
     if css_class:
         header["css_class"] = css_class
+    if help_text:
+        header['help_text'] = help_text
     return header
 
 def app_export_filter(doc, app_id):

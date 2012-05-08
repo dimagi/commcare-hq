@@ -220,9 +220,12 @@
             {% if edit %}
             <td>
                 {% if saved_app.version != app.version %}
-                <form action="{% url corehq.apps.app_manager.views.revert_to_copy domain app.id %}" method="post">
+                <button class="btn dialog_opener">Revert</button>
+                <form class="dialog" action="{% url corehq.apps.app_manager.views.revert_to_copy domain app.id %}" method="post"
+                        title="Revert to Build">
+                    <p>Are you sure you want to revert to build {{ saved_app.version }}?</p>
                     <input type="hidden" name="saved_app" value="{{ saved_app.id }}" />
-                    <input type="submit" value="Revert" />
+                    <button class="btn btn-primary" data-dismiss="modal" type="submit">Revert</button>
                 </form>
                 {% endif %}
             </td>

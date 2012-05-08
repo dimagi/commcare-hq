@@ -428,6 +428,21 @@
                         {% endif %}
                     </td>
                 </tr>
+                {% if app.application_version == '2.0' %}
+                <tr>
+                    <th><label for="case-sharing-select">Case Sharing</label></th>
+                    <td>
+                        {% if edit %}
+                            <select id="case-sharing-select" name="case_sharing" data-value="{{ app.case_sharing|JSON }}">
+                                <option value="false">* Off</option>
+                                <option value="true">On</option>
+                            </select>
+                        {% else %}
+                            {% if app.case_sharing %}On{% else %}Off{% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
                 {% if user.is_superuser %}
                 <tbody class="superuser-only">
                     <tr>
