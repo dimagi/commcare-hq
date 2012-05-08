@@ -1161,8 +1161,8 @@ def edit_app_langs(request, domain, app_id):
     rename = o['rename']
     build = o['build']
 
-    # assert that every lang that isn't new and wasn't deleted shows up in rename
-    assert set(rename.keys()) == set(app.langs).intersection(langs), "%r, %r, %s" % (rename.keys(), app.langs, langs)
+    assert set(rename.keys()).issubset(app.langs)
+    assert set(rename.values()).issubset(langs)
     # assert that there are no repeats in the values of rename
     assert len(set(rename.values())) == len(rename.values())
     # assert that no lang is renamed to an already existing lang

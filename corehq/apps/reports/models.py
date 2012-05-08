@@ -54,6 +54,10 @@ class TempCommCareUser:
             self.filter_flag = HQUserType.ADMIN
 
     @property
+    def get_id(self):
+        return self._id
+    
+    @property
     def user_id(self):
         return self._id
 
