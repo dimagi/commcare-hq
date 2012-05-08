@@ -1235,6 +1235,7 @@ def edit_app_attr(req, domain, app_id, attr):
         # Application only
         'cloudcare_enabled',
         'application_version',
+        'case_sharing',
         # RemoteApp only
         'profile_url',
         ]
@@ -1282,6 +1283,9 @@ def edit_app_attr(req, domain, app_id, attr):
 
     if should_edit("application_version"):
         app.application_version = req.POST['application_version']
+
+    if should_edit('case_sharing'):
+        app.case_sharing = bool(json.loads(req.POST['case_sharing']))
 
     # For RemoteApps
     if should_edit("profile_url"):

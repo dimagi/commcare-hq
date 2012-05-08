@@ -922,9 +922,11 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
         self.save()
 
     def get_group_fixture(self):
-        from corehq.apps.groups.models import Group
-        return group_fixture([group for group in Group.by_user(self) if group.case_sharing], self)
+        return group_fixture(self.get_case_sharing_groups(), self)
 
+    def get_case_sharing_groups(self):
+        from corehq.apps.groups.models import Group
+        return [group for group in Group.by_user(self) if group.case_sharing]
     def get_group_ids(self):
         from corehq.apps.groups.models import Group
         return Group.by_user(self, wrap=False)

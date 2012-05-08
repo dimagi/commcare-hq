@@ -210,6 +210,7 @@ def commcare_users(request, domain, template="users/commcare_users.html"):
         users.extend(CommCareUser.by_domain(domain, is_active=False))
     context.update({
         'commcare_users': users,
+        'show_case_sharing': Domain.get_by_name(domain).case_sharing,
         'show_inactive': show_inactive,
         'reset_password_form': SetPasswordForm(user="")
     })
