@@ -697,13 +697,14 @@ function PieMarkerStyle(params) {
 function ExplodedPieMarkerStyle(params) {
     this.ref_radius = params.radius;
     this.colors = params.colors || {};
+    this.offset = (params.offset != null ? params.offset : 5);
 
     this.radius = function(data, context) {
 	return this.ref_radius * Math.sqrt(data / context.maxval);
     }
 
     this.get_dim = function(data, context) {
-	return 2 * this.radius(context.maxval, context) + 5;
+	return 2 * (this.radius(context.maxval, context) + this.offset) + 5;
     }
 
     this.color_for = function(k) {
@@ -715,14 +716,21 @@ function ExplodedPieMarkerStyle(params) {
 
     this.draw = function(data, context, ctx, w, h) {
 	var mst = this;
-	var arc = function(a, b, r) {
-	    ctx.arc(.5 * w, .5 * h, r, a * Math.PI*2, b * Math.PI*2); 
+	var arc = function(a, b, x, y, r) {
+	    ctx.arc(x, y, r, a * Math.PI*2, b * Math.PI*2); 
 	}
-	var slice = function(i, j, r) { 
+	var slice = function(i, j, r) {
+	    var a = i - .25;
+	    var b =  Math.min(j, 0.9999) - .25;
+ 
+	    var theta = 2. * Math.PI * (a + b) * .5;
+	    var x = .5 * w + mst.offset * Math.cos(theta);
+	    var y = .5 * h + mst.offset * Math.sin(theta);
+
 	    ctx.beginPath();
-	    ctx.moveTo(.5 * w, .5 * h);
-	    arc(i - .25, Math.min(j, 0.9999) - .25, r);
-	    ctx.lineTo(.5 * w, .5 * h);
+	    ctx.moveTo(x, y);
+	    arc(a, b, x, y, r);
+	    ctx.lineTo(x, y);
 	    ctx.closePath();
 	}
 
@@ -961,7 +969,7 @@ function randcolor(min, max) {
     max = max || 1.;
 
     var k = function() {
-        return Math.round(255 * ((max - min) * Math.random() + min));
+        return Math.round(255 * Math.pow((max - min) * Math.random() + min, 1/2.2));
     }
     return 'rgb(' + k() + ',' + k() + ',' + k() + ')';
 };
