@@ -38,7 +38,7 @@
     <div class="row-fluid hidden" style="margin-top: 25px;" id="fixtures-ui">
         <div class="span2">&nbsp;</div>
         <div class="span9" data-bind="">
-            <div class="well" data-bind="visible: !data_types().length" style="text-align: center;">Loading...</div>
+            <div class="well" data-bind="visible: !data_types().length && loading" style="text-align: center;">Loading...</div>
             <!-- ko foreach: data_types -->
             <section class="well" data-bind="css: {selected: editing() || aboutToDelete()}">
                 <hgroup>
@@ -117,7 +117,7 @@
                                 <th></th>
                             </tr>
                         </thead>
-                        <tbody data-bind="visible: !data_items().length">
+                        <tbody data-bind="visible: !data_items().length && $root.loading">
                             <tr>
                                 <td style="text-align: center;" data-bind="attr: {colspan: 5 + fields().length}">Loading...</td>
                             </tr>

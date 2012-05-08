@@ -301,6 +301,7 @@ $(function () {
     function App() {
         var self = this;
         self.data_types = ko.observableArray([]);
+        self.loading = ko.observable(0);
 
         self.addDataType = function () {
             var dataType = makeDataType({
@@ -316,6 +317,7 @@ $(function () {
             dataType.save();
         };
         self.loadData = function () {
+            self.loading(self.loading() + 3);
             $.ajax({
                 url: 'data-types/',
                 type: 'get',
@@ -326,6 +328,7 @@ $(function () {
                         self.data_types.push(makeDataType(data[i], self));
                         dataType = self.data_types()[i];
                     }
+                    self.loading(self.loading() - 1)
                 }
             });
             $.ajax({
@@ -334,6 +337,7 @@ $(function () {
                 dataType: 'json',
                 success: function (data) {
                     self.groups = data;
+                    self.loading(self.loading() - 1)
                 }
             });
             $.ajax({
@@ -342,6 +346,7 @@ $(function () {
                 dataType: 'json',
                 success: function (data) {
                     self.users = data;
+                    self.loading(self.loading() - 1)
                 }
             });
         };
