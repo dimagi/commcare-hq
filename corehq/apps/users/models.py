@@ -129,22 +129,30 @@ class Permissions(DocumentSchema):
         else:
             getattr(self, permission)(data, value)
 
+    def _getattr(self, name):
+        a = getattr(self, name)
+        if isinstance(a, list):
+            a = set(a)
+        return a
+
+    def _setattr(self, name, value):
+        if isinstance(value, set):
+            value = list(value)
+        setattr(self, name, value)
+
     def __or__(self, other):
         permissions = Permissions()
-        def getattr_(object, name):
-            a = getattr(object, name)
-            if isinstance(a, list):
-                a = set(a)
-            return a
-        def setattr_(p_object, name, value):
-            if isinstance(value, set):
-                value = list(value)
-            setattr(p_object, name, value)
+        for name in permissions.properties():
+            permissions._setattr(name, self._getattr(name) | other._getattr(name))
 
-        for name in permissions.properties:
-            setattr(permissions, name, getattr_(self, name) | getattr_(other, name))
+    def __eq__(self, other):
+        for name in self.properties():
+            if self._getattr(name) != other._getattr(name):
+                return False
+        return True
 
-class Role(Document):
+class UserRole(Document):
+    domain = StringProperty()
     name = StringProperty()
     permissions = SchemaProperty(Permissions)
 
@@ -157,7 +165,41 @@ class Role(Document):
         elif docid == 'read-only':
             return Permissions()
         else:
-            return super(Role, cls).get(docid, rev, db, dynamic_properties)
+            return super(UserRole, cls).get(docid, rev, db, dynamic_properties)
+
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.view('users/roles_by_domain',
+            key=domain,
+            include_docs=True,
+            reduce=False,
+        )
+
+    @classmethod
+    def get_or_create_with_permissions(cls, domain, permissions, name=None):
+        if isinstance(permissions, dict):
+            permissions = Permissions.wrap(permissions)
+        roles = cls.by_domain(domain)
+        # try to get a matching role from the db
+        for role in roles:
+            if role.permissions == permissions:
+                return role
+        # otherwise create it
+        def get_name():
+            if name:
+                return name
+            elif permissions == Permissions(edit_app=True):
+                return "App Editor"
+            elif permissions == Permissions():
+                return "Read Only"
+            elif permissions == Permissions(edit_commcare_users=True):
+                return "Field Implementor"
+        role = cls(permissions=permissions, name=get_name())
+        role.save()
+        return role
+
+def AdminUserRole():
+    return UserRole(name='Admin')
 
 class DomainMembership(DocumentSchema):
     """
@@ -174,42 +216,47 @@ class DomainMembership(DocumentSchema):
     date_joined = DateTimeProperty()
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
 
-    custom_permissions = SchemaProperty(Permissions)
+#    custom_permissions = SchemaProperty(Permissions)
     role_id = StringProperty()
 
     @property
     def permissions(self):
-        if not self.role_id:
-            return self.custom_permissions
+        if self.role_id:
+            return self.role.permissions
         else:
-            return self.custom_permissions | self.role.permissions
+            return Permissions()
 
     @classmethod
     def wrap(cls, data):
         # Do a just-in-time conversion of old permissions
         old_permissions = data.get('permissions')
         if old_permissions is not None:
-            view_report_list = data.get('permissions_data', {}).get('view-report', [])
-            custom_permissions = {}
-            for old_permission in old_permissions:
-                if old_permission == 'view-report':
-                    continue
-                new_permission = OldPermissions.to_new(old_permission)
-                custom_permissions[new_permission] = True
-
-            custom_permissions['view_report_list'] = view_report_list
-            data['custom_permissions'] = custom_permissions
             del data['permissions']
             if data.has_key('permissions_data'):
+                permissions_data = data['permissions_data']
                 del data['permissions_data']
+            else:
+                permissions_data = {}
+            if not data['is_admin']:
+                view_report_list = permissions_data.get('view-report', [])
+                custom_permissions = {}
+                for old_permission in old_permissions:
+                    if old_permission == 'view-report':
+                        continue
+                    new_permission = OldPermissions.to_new(old_permission)
+                    custom_permissions[new_permission] = True
+
+                custom_permissions['view_report_list'] = view_report_list
+
+                self = super(DomainMembership, cls).wrap(data)
+                self.role_id = UserRole.get_or_create_with_permissions(self.domain, custom_permissions).get_id
+                return self
         return super(DomainMembership, cls).wrap(data)
 
-
     @property
-    @memoized
     def role(self):
         if self.role_id:
-            return Role.get(self.role_id)
+            return UserRole.get(self.role_id)
         else:
             return None
 
@@ -1023,18 +1070,15 @@ class WebUser(CouchUser):
             domain = self.current_domain
 
         if self.is_member_of(domain):
+            dm = self.get_domain_membership(domain)
             if self.is_domain_admin(domain):
-                role = 'admin'
+                role = AdminUserRole()
+            elif dm.role:
+                role = dm.role
             else:
-                permissions = set(self.get_domain_membership(domain).permissions)
-                role_mapping = OldRoles.get_role_mapping()
-                for role in role_mapping:
-                    if permissions == role_mapping[role]:
-                        break
-                else:
-                    role = None
+                role = None
         else:
-            role = None
+            raise Exception
 
         return role
 
@@ -1057,8 +1101,10 @@ class WebUser(CouchUser):
                 domain = self.current_domain
             except (AttributeError, KeyError):
                 return None
-
-        return dict(OldRoles.get_role_labels()).get(self.get_role(domain), "Unknown Role")
+        try:
+            return self.get_role(domain).name
+        except TypeError:
+            return "Unknown User"
 
 class FakeUser(WebUser):
     """
