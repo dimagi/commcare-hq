@@ -32,7 +32,7 @@ from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.forms import UserForm, CommCareAccountForm, ProjectSettingsForm
-from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord, OldPermissions, UserRole, AdminUserRole
+from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord, UserRole, AdminUserRole
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
 from dimagi.utils.web import render_to_response, json_response
@@ -444,7 +444,6 @@ def _handle_user_form(request, domain, couch_user=None):
         and request.couch_user.user_id != couch_user.user_id and not couch_user.is_commcare_user()
     role_choices = [(role.get_qualified_id(), role.name) for role in [AdminUserRole(domain=domain)] + list(UserRole.by_domain(domain))]
     if request.method == "POST" and request.POST['form_type'] == "basic-info":
-#        form = UserForm(request.POST, viewable_reports_choices=get_possible_reports(domain))
         form = UserForm(request.POST, role_choices=role_choices)
         if form.is_valid():
             if create_user:
@@ -551,7 +550,7 @@ def _get_groups(domain):
     return groups
 
 
-@require_can_edit_web_users
+@require_can_edit_commcare_users
 def all_groups(request, domain, template="groups/all_groups.html"):
     context = _users_context(request, domain)
     all_groups = _get_groups(domain)
@@ -561,7 +560,7 @@ def all_groups(request, domain, template="groups/all_groups.html"):
     })
     return render_to_response(request, template, context)
 
-@require_can_edit_web_users
+@require_can_edit_commcare_users
 def group_members(request, domain, group_id, template="groups/group_members.html"):
     context = _users_context(request, domain)
     all_groups = _get_groups(domain)
@@ -587,7 +586,7 @@ def group_members(request, domain, group_id, template="groups/group_members.html
 #def my_groups(request, domain, template="groups/groups.html"):
 #    return group_membership(request, domain, request.couch_user._id, template)
 
-@require_can_edit_web_users
+@require_can_edit_commcare_users
 def group_membership(request, domain, couch_user_id, template="groups/groups.html"):
     context = _users_context(request, domain)
     couch_user = CouchUser.get_by_user_id(couch_user_id, domain)

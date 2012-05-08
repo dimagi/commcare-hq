@@ -645,13 +645,9 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     def __getattr__(self, item):
         if item.startswith('can_'):
-#            perm = getattr(OldPermissions, item[len('can_'):].upper(), None)
             perm = item[len('can_'):]
             if perm:
-                def fn(data=None, domain=None):
-                    # temporary check to make sure I'm not by mistake passing in the domain as the `data`
-                    if perm.endswith('s') and data:
-                        raise TypeError
+                def fn(domain=None, data=None):
                     domain = domain or self.current_domain
                     return self.has_permission(domain, perm, data)
                 fn.__name__ = item

@@ -253,7 +253,7 @@ def standard_report_list(user, domain, current_slug=""):
         sublist = []
         nav_header = '<li class="nav-header">%s</li>' % key
         for model in models:
-            if not user.can_view_report(model):
+            if not user.can_view_report(domain, model):
                 continue
             klass = to_function(model)
             sublist.append('<li%s><a href="%s" title="%s">' %\
@@ -287,7 +287,7 @@ def custom_report_list(user, domain, current_slug=""):
         sublist = []
         nav_header = '<li class="nav-header">%s</li>' % key
         for model in models:
-            if not user.can_view_report(model):
+            if not user.can_view_report(domain, model):
                 continue
             klass = to_function(model)
             sublist.append('<li%s><a href="%s" title="%s">%s</a></li>' % \

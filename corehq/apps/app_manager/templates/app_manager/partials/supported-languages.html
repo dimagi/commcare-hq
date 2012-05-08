@@ -42,7 +42,7 @@
         </tr>
     </tbody>
 </table>
-<button class="btn" data-bind="click: addLanguage">Add Language</button>
+<button class="btn" data-bind="click: addLanguage, visible: editing">Add Language</button>
 <div data-bind="if: removedLanguages().length">
     <h6>Deleting Languages:</h6>
     <table class="table">
