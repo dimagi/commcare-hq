@@ -33,23 +33,21 @@ class ReportSchedule(object):
     @property
     def title(self):
         return self._title
-    
+
+    def view(self, request, domain):
+        return self._view_func(request, **self._view_args)
+
     def get_response(self, user, domain):
         request = SpoofRequest(user, domain)
-        response = self._view_func(request, **self._view_args)
+        response = self.view(request, domain)
         parser = ReportParser(response.content)
         DNS_name = "http://"+Site.objects.get(id = settings.SITE_ID).domain
         return render_to_string("reports/report_email.html", { "report_body": parser.get_html(),
                                                                "domain": domain,
                                                                "couch_user": user.userID,
                                                                "DNS_name": DNS_name })
-class DomainedReportSchedule(ReportSchedule):
-    
-    def get_response(self, user, domain):
-        self._view_args["domain"] = domain
-        return super(DomainedReportSchedule, self).get_response(user, domain)
-        
-class BasicReportSchedule(object):
+
+class BasicReportSchedule(ReportSchedule):
     """
     These are compatibile with the daily_submission views
     """
@@ -61,14 +59,6 @@ class BasicReportSchedule(object):
     @property
     def title(self):
         return self._report.name
-    
-    def get_response(self, user, domain):
-        request = SpoofRequest(user, domain)
-        response = report_dispatcher(request, domain, self._report.slug)
-        parser = ReportParser(response.content)
-        DNS_name = "http://"+Site.objects.get(id = settings.SITE_ID).domain
-        return render_to_string("reports/report_email.html", { "report_body": parser.get_html(),
-                                                               "domain": domain,
-                                                               "couch_user": user.userID,
-                                                               "DNS_name": DNS_name})
-        
+
+    def view(self, request, domain):
+        return report_dispatcher(request, domain, self._report.slug)
