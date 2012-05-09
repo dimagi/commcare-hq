@@ -32,9 +32,9 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^$', "default", name="default_report"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/$', 'case_details', name="case_details"),
 
-    url(r'^form_data/(?P<instance_id>[\w\-]+)/$', 'form_data', name='render_form_data'),
-    url(r'^form_data/(?P<instance_id>[\w\-]+)/download/$', 'download_form', name='download_form'),
-    url(r'^form_data/(?P<instance_id>[\w\-]+)/download/(?P<attachment>[\w.-_]+)?$',
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/$', 'form_data', name='render_form_data'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/$', 'download_form', name='download_form'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/(?P<attachment>[\w.-_]+)?$',
         'download_attachment', name='download_attachment'),
 
     url(r'^dodoma/', include(dodoma_reports)),

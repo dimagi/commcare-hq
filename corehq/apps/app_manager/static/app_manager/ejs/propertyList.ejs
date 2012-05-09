@@ -33,6 +33,8 @@
                     <span class="invalid">Must start with letter and contain only letters, numbers, '-', and '_': "[%= propertyName %]"</span>
                 [% } else if (reservedWords.indexOf(propertyName) !== -1) { %]
                     <span class="invalid">Can't name a case property "[%= propertyName %]"</span>
+                [% } else if (propertyName === 'name') { %]
+                    <span class="label">The Case's Name</span>
                 [% } else if (propertyName !== value && showSuggestion) { %]
                     <span class="">[%= value %]?</span>
                 [% } %]

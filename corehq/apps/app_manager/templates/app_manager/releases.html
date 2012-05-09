@@ -25,6 +25,13 @@
                 "it will not be purged from phones onto which it has already been downloaded."
             )
         });
+        $('#build-errors').each(function () {
+            var specialMessage = $('span', this)[0];
+            var defaultMessage = $('span', this)[1];
+            if ($.trim($(specialMessage).text())) {
+                $(defaultMessage).hide();
+            }
+        });
     });
 </script>
 {% endblock %}
@@ -55,6 +62,7 @@
         <ul id="build-errors">
             {% for error in build_errors %}
             <li>
+                <span>
             {% if error.type == "invalid xml" %}
                 {% if error.form.content %}
                     Invalid xml in form
@@ -94,6 +102,12 @@
             {% if error.type == "form error" %}
                 One or more forms are invalid: check all your forms for error messages.
             {% endif %}
+            {% if error.type == "missing languages" %}
+                {% include "app_manager/partials/form_error_message.html" %} missing languages:
+                {% for lang in error.missing_languages %}
+                    {{ lang }}
+                {% endfor %}
+            {% endif %}
             {% if error.type == "duplicate xmlns" %}
                 You have two forms with the xmlns "{{ error.xmlns }}"
             {% endif %}
@@ -117,6 +131,8 @@
             {% if error.type == "empty lang" %}
                 One of your languages is empty. Check your <a href="{% url view_app domain app.id %}">app settings</a>.
             {% endif %}
+                </span>
+                <span>{{ error.message }}</span>
             </li>
             {% endfor %}
         </ul>
@@ -204,9 +220,12 @@
             {% if edit %}
             <td>
                 {% if saved_app.version != app.version %}
-                <form action="{% url corehq.apps.app_manager.views.revert_to_copy domain app.id %}" method="post">
+                <button class="btn dialog_opener">Revert</button>
+                <form class="dialog" action="{% url corehq.apps.app_manager.views.revert_to_copy domain app.id %}" method="post"
+                        title="Revert to Build">
+                    <p>Are you sure you want to revert to build {{ saved_app.version }}?</p>
                     <input type="hidden" name="saved_app" value="{{ saved_app.id }}" />
-                    <input type="submit" value="Revert" />
+                    <button class="btn btn-primary" data-dismiss="modal" type="submit">Revert</button>
                 </form>
                 {% endif %}
             </td>

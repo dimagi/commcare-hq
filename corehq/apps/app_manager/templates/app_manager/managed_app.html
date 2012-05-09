@@ -16,6 +16,7 @@
 {% endblock %}
 {% block app-content %}
     <div id="langs" class="container">
+        {% if not app.is_remote_app %}
         Language:
         <select class="code" name="lang">
             {% for lang in app.langs %}
@@ -25,6 +26,9 @@
                 </option>
             {% endfor %}
         </select>
+        {% else %}
+            <select style="visibility: hidden;"></select>
+        {% endif %}
         {% include 'app_manager/partials/release-manager-nav.html' %}
     </div>
     <div id="modules-form-view-wrapper" class="sidebar-wrapper">
