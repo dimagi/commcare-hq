@@ -4,6 +4,7 @@
             table, tr, td, th {
                 border: 1px solid black;
                 border-spacing: 0;
+                white-space: nowrap;
             }
             td, th {
                 padding: 5px;
@@ -29,18 +30,22 @@
                 {% for date in date_list %}
                     <th>{{ date }}</th>
                 {% endfor %}
+                <th>Total OK</th>
+                <th>Total No Response</th>
+                <th>Total Pending</th>
+                <th>Total Not Sent</th>
             </tr>
             {% for id, info in data.items %}
             <tr>
                 <td>{{ info.recipient.name }}</td>
                 {% for date in info.dates %}
-                    {% if date.sms_count == 0 %}
+                    {% if date.not_sent %}
                         <td>(not sent)</td>
                     {% else %}
-                        {% if date.call_count > 0 and date.missed_callback_count == 0 %}
+                        {% if date.ok %}
                             <td class="ok">OK</td>
                         {% else %}
-                            {% if date.missed_callback_count > 0 %}
+                            {% if date.no_response %}
                                 <td class="no_response">No Response</td>
                             {% else %}
                                 <td>(pending)</td>
@@ -48,6 +53,10 @@
                         {% endif %}
                     {% endif %}
                 {% endfor %}
+                <td>{{ info.total_ok }}</td>
+                <td>{{ info.total_no_response }}</td>
+                <td>{{ info.total_pending }}</td>
+                <td>{{ info.total_not_sent }}</td>
             </tr>
             {% endfor %}
         </table>

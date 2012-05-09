@@ -537,6 +537,39 @@ def get_missed_callback_report_context(domain, site_list=None, end_date=None):
             date = str(CaseReminderHandler.utc_to_local(entry["recipient"], event.date).date())
             if date in date_list:
                 entry["dates"][date_list.index(date)]["missed_callback_count"] += 1
+    
+    # Calculate final outcome for each person, for each day
+    for case_id, entry in data.items():
+        total_ok = 0
+        total_no_response = 0
+        total_not_sent = 0
+        total_pending = 0
+        for date in entry["dates"]:
+            ok = False
+            no_response = False
+            not_sent = False
+            pending = False
+            if date["sms_count"] == 0:
+                not_sent = True
+                total_not_sent += 1
+            elif date["call_count"] > 0 and date["missed_callback_count"] == 0:
+                ok = True
+                total_ok += 1
+            elif date["missed_callback_count"] > 0:
+                no_response = True
+                total_no_response += 1
+            else:
+                pending = True
+                total_pending += 1
+            date["ok"] = ok
+            date["no_response"] = no_response
+            date["not_sent"] = not_sent
+            date["pending"] = pending
+        entry["total_ok"] = total_ok
+        entry["total_no_response"] = total_no_response
+        entry["total_not_sent"] = total_not_sent
+        entry["total_pending"] = total_pending
+    
     context = {
         "date_list" : date_list,
         "data" : data
