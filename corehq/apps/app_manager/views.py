@@ -5,6 +5,9 @@ import uuid
 from wsgiref.util import FileWrapper
 import zipfile
 from corehq.apps.app_manager.const import APP_V1
+from couchexport.export import FormattedRow
+from couchexport.models import Format
+from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.resource_conflict import repeat, retry_resource
 from django.utils import simplejson
 import os
@@ -327,13 +330,13 @@ def get_apps_base_context(request, domain, app):
     )
 
     if app and hasattr(app, 'langs'):
-        if not app.langs:
+        if not app.langs and not app.is_remote_app:
             # lots of things fail if the app doesn't have any languages.
             # the best we can do is add 'en' if there's nothing else.
             app.langs.append('en')
             app.save()
         if not lang or lang not in app.langs:
-            lang = app.langs[0]
+            lang = (app.langs or ['en'])[0]
         langs = [lang] + app.langs
 
     edit = (request.GET.get('edit', 'true') == 'true') and\
@@ -1106,6 +1109,7 @@ def edit_commcare_profile(req, domain, app_id):
 @require_permission('edit-apps')
 def edit_app_lang(req, domain, app_id):
     """
+    DEPRECATED
     Called when an existing language (such as 'zh') is changed (e.g. to 'zh-cn')
     or when a language is to be added.
 
@@ -1136,6 +1140,54 @@ def edit_app_lang(req, domain, app_id):
 
     return back_to_main(**locals())
 
+@require_POST
+@require_permission('edit-apps')
+def edit_app_langs(request, domain, app_id):
+    """
+    Called with post body:
+    {
+        langs: ["en", "es", "hin"],
+        rename: {
+            "hi": "hin",
+            "en": "en",
+            "es": "es"
+        },
+        build: ["es", "hin"]
+    }
+    """
+    o = json.loads(request.raw_post_data)
+    app = get_app(domain, app_id)
+    langs = o['langs']
+    rename = o['rename']
+    build = o['build']
+
+    assert set(rename.keys()).issubset(app.langs)
+    assert set(rename.values()).issubset(langs)
+    # assert that there are no repeats in the values of rename
+    assert len(set(rename.values())) == len(rename.values())
+    # assert that no lang is renamed to an already existing lang
+    for old, new in rename.items():
+        if old != new:
+            assert(new not in app.langs)
+    # assert that the build langs are in the correct order
+    assert sorted(build, key=lambda lang: langs.index(lang)) == build
+
+    # now do it
+    for old, new in rename.items():
+        if old != new:
+            app.rename_lang(old, new)
+
+    def replace_all(list1, list2):
+        if list1 != list2:
+            while list1:
+                list1.pop()
+            list1.extend(list2)
+    replace_all(app.langs, langs)
+    replace_all(app.build_langs, build)
+
+    app.save()
+    return json_response(langs)
+
 @require_edit_apps
 @require_POST
 def edit_app_translations(request, domain, app_id):
@@ -1154,6 +1206,7 @@ def edit_app_translations(request, domain, app_id):
 @require_permission('edit-apps')
 def delete_app_lang(req, domain, app_id):
     """
+    DEPRECATED
     Called when a language (such as 'zh') is to be deleted from app.langs
 
     """
@@ -1171,7 +1224,7 @@ def edit_app_attr(req, domain, app_id, attr):
 
     """
     app = get_app(domain, app_id)
-    lang = req.COOKIES.get('lang', app.langs[0])
+    lang = req.COOKIES.get('lang', (app.langs or ['en'])[0])
 
     attributes = [
         'all',
@@ -1182,6 +1235,7 @@ def edit_app_attr(req, domain, app_id, attr):
         # Application only
         'cloudcare_enabled',
         'application_version',
+        'case_sharing',
         # RemoteApp only
         'profile_url',
         ]
@@ -1229,6 +1283,9 @@ def edit_app_attr(req, domain, app_id, attr):
 
     if should_edit("application_version"):
         app.application_version = req.POST['application_version']
+
+    if should_edit('case_sharing'):
+        app.case_sharing = bool(json.loads(req.POST['case_sharing']))
 
     # For RemoteApps
     if should_edit("profile_url"):
@@ -1547,3 +1604,45 @@ def emulator_commcare_jar(req, domain, app_id):
     )
     response['Content-Type'] = "application/java-archive"
     return response
+
+@login_and_domain_required
+def formdefs(request, domain, app_id):
+    langs = [json.loads(request.GET.get('lang', '"en"'))]
+    format = request.GET.get('format', 'json')
+    app = get_app(domain, app_id)
+
+    def get_questions(form):
+        xform = XForm(form.source)
+        prefix = '/%s/' % xform.data_node.tag_name
+        def remove_prefix(string):
+            if string.startswith(prefix):
+                return string[len(prefix):]
+            else:
+                raise Exception()
+        def transform_question(q):
+            return {
+                'id': remove_prefix(q['value']),
+                'type': q['tag'],
+                'text': q['label'] if q['tag'] != 'hidden' else ''
+            }
+        return [transform_question(q) for q in xform.get_questions(langs)]
+    formdefs = [{
+        'name': "%s, %s" % (f['form'].get_module().name['en'], f['form'].name['en']) if f['type'] == 'module_form' else 'User Registration',
+        'columns': ['id', 'type', 'text'],
+        'rows': get_questions(f['form'])
+    } for f in app.get_forms(bare=False)]
+
+    if format == 'xlsx':
+        f = StringIO()
+        writer = Excel2007ExportWriter()
+        writer.open([(sheet['name'], [FormattedRow(sheet['columns'])]) for sheet in formdefs], f)
+        writer.write([(
+            sheet['name'],
+            [FormattedRow([cell for (_, cell) in sorted(row.items(), key=lambda item: sheet['columns'].index(item[0]))]) for row in sheet['rows']]
+        ) for sheet in formdefs])
+        writer.close()
+        response = HttpResponse(f.getvalue(), mimetype=Format.from_format('xlsx').mimetype)
+        response["Content-Disposition"] = "attachment; filename=%s" % 'formdefs.xlsx'
+        return response
+    else:
+        return json_response(formdefs)

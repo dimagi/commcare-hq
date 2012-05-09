@@ -172,6 +172,17 @@ class XForm(WrappedNode):
             raise XFormError("There's already a language called '%s'" % new_code)
         trans_node.attrib['lang'] = new_code
 
+    def exclude_languages(self, whitelist):
+        try:
+            translations = self.itext_node.findall('{f}translation')
+        except XFormError:
+            # if there's no itext then they must be using labels
+            return
+
+        for trans_node in translations:
+            if trans_node.attrib.get('lang') not in whitelist:
+                self.itext_node.remove(trans_node.xml)
+
     def localize(self, id, lang=None, form=None):
         pre = 'jr:itext('
         post = ')'
@@ -574,10 +585,19 @@ class XForm(WrappedNode):
                     nodeset="case/create/case_name",
                     calculate=self.resolve_path(actions['open_case'].name_path),
                 )
-                self.add_bind(
-                    nodeset="case/create/owner_id",
-                    calculate=self.resolve_path("case/@user_id"),
-                )
+
+                if form.get_app().case_sharing:
+                    self.add_instance('groups', src='jr://fixture/user-groups')
+                    self.add_setvalue(
+                        ref="case/create/owner_id",
+                        value="instance('groups')/groups/group/@id"
+                    )
+                else:
+                    self.add_bind(
+                        nodeset="case/create/owner_id",
+                        calculate=self.resolve_path("meta/userID"),
+                    )
+                    
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     extra_updates.append(make_case_elem('external_id'))
                     self.add_bind(
@@ -605,10 +625,17 @@ class XForm(WrappedNode):
                 update_block.extend(extra_updates)
 
             if 'update_case' in actions:
-                for key in actions['update_case'].update.keys():
+
+                update_mapping = {}
+                for key, value in actions['update_case'].update.items():
+                    if key == 'name':
+                        key = 'case_name'
+                    update_mapping[key] = value
+
+                for key in update_mapping.keys():
                     update_block.append(make_case_elem(key))
 
-                for key, path in actions['update_case'].update.items():
+                for key, path in update_mapping.items():
                     self.add_bind(
                         nodeset="case/update/%s" % key,
                         calculate=self.resolve_path(path),
@@ -626,6 +653,8 @@ class XForm(WrappedNode):
             if 'case_preload' in actions:
                 needs_casedb_instance = True
                 for nodeset, property in actions['case_preload'].preload.items():
+                    if property == 'name':
+                        property = 'case_name'
                     self.add_setvalue(
                         ref=nodeset,
                         value="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/%s" % property,
@@ -736,12 +765,19 @@ class XForm(WrappedNode):
                 add_bind({"nodeset":"case/case_id", "{jr}preload":"case", "{jr}preloadParams":"case-id"})
             if 'update_case' in actions:
                 # no condition
+
+                update_mapping = {}
+                for key, value in actions['update_case'].update.items():
+                    if key == 'name':
+                        key = 'case_name'
+                    update_mapping[key] = value
+
                 casexml[
                 __('update')[
-                (__(key) for key in actions['update_case'].update.keys())
+                (__(key) for key in update_mapping.keys())
                 ]
                 ]
-                for key, path in actions['update_case'].update.items():
+                for key, path in update_mapping.items():
                     add_bind({"nodeset":"case/update/%s" % key, "calculate": self.resolve_path(path), "relevant": "count(%s) > 0" % path})
             if 'close_case' in actions:
                 casexml[

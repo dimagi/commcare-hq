@@ -12,6 +12,7 @@ from dimagi.utils.data.deid_generator import DeidGenerator
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import string_to_datetime
+from django.http import Http404
 import pytz
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -165,6 +166,8 @@ def get_all_users_by_domain(domain, group='', individual='', filter_users=None):
         users =  group.get_users(only_commcare=True)
     elif individual:
         users = [CommCareUser.get_by_user_id(individual)]
+        if users[0] is None:
+            raise Http404()
     else:
         if not filter_users:
             filter_users = HQUserType.use_defaults()
@@ -229,7 +232,7 @@ def format_datatables_data(text, sort_key):
     return data
 
 SORT_TYPE_NUMERIC = "title-numeric"
-def format_datatables_header(text, sort_type=None, sort_direction=None, css_class=None):
+def format_datatables_header(text, sort_type=None, sort_direction=None, css_class=None, help_text=None):
     header = {"html": text}
     if sort_type:
         header["sort_type"] = sort_type
@@ -237,6 +240,8 @@ def format_datatables_header(text, sort_type=None, sort_direction=None, css_clas
         header["sort_direction"] = sort_direction
     if css_class:
         header["css_class"] = css_class
+    if help_text:
+        header['help_text'] = help_text
     return header
 
 def app_export_filter(doc, app_id):
@@ -340,12 +345,12 @@ def create_export_filter(request, domain, export_type='form'):
 
 def get_possible_reports(domain):
     reports = []
-    for heading, models in settings.STANDARD_REPORT_MAP.items():
+    report_map = []
+    report_map.extend(settings.STANDARD_REPORT_MAP.items())
+    report_map.extend(settings.CUSTOM_REPORT_MAP.get(domain, {}).items())
+    for heading, models in report_map:
         for model in models:
             reports.append((model, to_function(model).name))
-
-    for model in settings.CUSTOM_REPORT_MAP.get(domain, []):
-        reports.append((model, to_function(model).name))
     return reports
 
 def deid_remove(doc, val):

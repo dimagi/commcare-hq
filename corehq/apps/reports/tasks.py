@@ -34,7 +34,7 @@ def send_report(scheduled_report, user):
         send_HTML_email("%s [%s]" % (report.title, scheduled_report.domain), email,
                     html2text(body), body)
     else:
-        raise SMTPRecipientsRefused()
+        raise SMTPRecipientsRefused(None)
 
 def _run_reports(reps):
     for rep in reps:

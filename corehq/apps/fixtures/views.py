@@ -174,7 +174,9 @@ def users(request, domain):
 
 @require_can_edit_fixtures
 def view(request, domain, template='fixtures/view.html'):
-    return render_to_response(request, template, {})
+    return render_to_response(request, template, {
+        'domain': domain
+    })
 
 
 class UploadItemLists(TemplateView):
@@ -183,7 +185,9 @@ class UploadItemLists(TemplateView):
 
     def get_context_data(self, **kwargs):
         """TemplateView automatically calls this to render the view (on a get)"""
-        return {}
+        return {
+            'domain': self.domain
+        }
 
     @method_decorator(get_file)
     def post(self, request):

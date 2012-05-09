@@ -494,18 +494,23 @@ def emailtest(request, domain, report_slug):
     report.get_response(request.user, domain)
     return HttpResponse(report.get_response(request.user, domain))
 
+
+CUSTOM_REPORT_MAP = 'CUSTOM_REPORT_MAP'
+
 @login_and_domain_required
 @datespan_default
-def report_dispatcher(request, domain, report_slug, return_json=False, map='STANDARD_REPORT_MAP', export=False):
+def report_dispatcher(request, domain, report_slug, return_json=False, map='STANDARD_REPORT_MAP', export=False, custom=False):
     mapping = getattr(settings, map, None)
-    if not mapping:
-        return HttpResponseNotFound("Sorry, no standard reports have been configured yet.")
+    if not mapping or (custom and not domain in mapping):
+        return HttpResponseNotFound("Sorry, no reports have been configured yet.")
+    if custom:
+        mapping = mapping[domain]
     for key, models in mapping.items():
         for model in models:
             klass = to_function(model)
             if klass.slug == report_slug:
                 k = klass(domain, request)
-                if not request.couch_user.can_view_report(model):
+                if not request.couch_user.can_view_report(data=model, domain=domain):
                      raise Http404
                 elif return_json:
                     return k.as_json()
@@ -518,17 +523,4 @@ def report_dispatcher(request, domain, report_slug, return_json=False, map='STAN
 @login_and_domain_required
 @datespan_default
 def custom_report_dispatcher(request, domain, report_slug, export=False):
-    mapping = getattr(settings, 'CUSTOM_REPORT_MAP', None)
-    if not mapping or not domain in mapping:
-        return HttpResponseNotFound("Sorry, no custom reports have been configured yet.")
-    for model in mapping[domain]:
-        klass = to_function(model)
-        if klass.slug == report_slug:
-            k = klass(domain, request)
-            if not request.couch_user.can_view_report(model):
-                raise Http404
-            elif export:
-                return k.as_export()
-            else:
-                return k.as_view()
-    raise Http404
+    return report_dispatcher(request, domain, report_slug, export=export, map='CUSTOM_REPORT_MAP', custom=True)
