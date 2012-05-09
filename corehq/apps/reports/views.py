@@ -576,10 +576,11 @@ def get_missed_callback_report_context(domain, site_list=None, end_date=None):
     }
     return context
 
-from django.shortcuts import render
+@login_and_domain_required
+@permission_required("is_superuser")
 def a5288_temp(request, domain):
     context = get_missed_callback_report_context(domain)
-    return render(request, "reports/partials/missed_callbacks.html", context)
+    return render_to_response(request, "reports/partials/missed_callbacks.html", context)
 
 
 
