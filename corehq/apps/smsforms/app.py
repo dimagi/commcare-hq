@@ -1,12 +1,16 @@
 from .models import XFormsSession
 from datetime import datetime
 from corehq.apps.cloudcare.touchforms_api import get_session_data
-from touchforms.formplayer.api import XFormsConfig
+from touchforms.formplayer.api import XFormsConfig, DigestAuth
 from touchforms.formplayer import sms as tfsms
+from django.conf import settings
 
 COMMCONNECT_DEVICE_ID = "commconnect"
-    
-def start_session(domain, contact, app, module, form, case_id=None, auth=None):
+
+AUTH = DigestAuth(settings.TOUCHFORMS_API_USER, 
+                  settings.TOUCHFORMS_API_PASSWORD)
+
+def start_session(domain, contact, app, module, form, case_id=None):
     """
     Starts a session in touchforms and saves the record in the database.
     
@@ -22,7 +26,7 @@ def start_session(domain, contact, app, module, form, case_id=None, auth=None):
     config = XFormsConfig(form_content=form.render_xform(),
                           language=language,
                           session_data=session_data,
-                          auth=auth)
+                          auth=AUTH)
     
     
     now = datetime.utcnow()
