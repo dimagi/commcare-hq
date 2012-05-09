@@ -33,6 +33,15 @@ class XFormsSession(Document):
         """
         self.completed = completed
         self.modified_time = self.end_time = datetime.utcnow()
-        
+    
+    @classmethod
+    def latest_by_session_id(cls, id):
+        return XFormsSession.view("smsforms/sessions_by_touchforms_id", 
+                                  descending=True,
+                                  endkey=[id,],
+                                  startkey=[id, {}],
+                                  limit=1,
+                                  include_docs=True).one()
+    
         
 from . import signals
