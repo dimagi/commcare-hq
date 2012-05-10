@@ -40,6 +40,18 @@ def staging():
     env.environment = 'staging'
     env.user = prompt("Username: ", default='dimagivm')
 
+def india():
+    """Our production server in India."""
+    env.root = root = '/home/commcarehq'
+    env.virtualenv_root = _join(root, '.virtualenvs/commcarehq')
+    env.code_root       = _join(root, 'src/commcare-hq')
+    env.pre_code_root   = _join(root, 'src/_commcare-hq')
+    env.code_branch = 'master'
+    env.sudo_user = 'commcarehq'
+    env.hosts = ['220.226.209.82']
+    env.environment = 'india'
+    env.user = prompt("Username: ", default=env.user)
+
 def enter_virtualenv():
     """
     modify path to use virtualenv's python
@@ -67,10 +79,10 @@ def _update_code():
 
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
-    require('root', provided_by=('staging', 'production'))
-    if env.environment == 'production':
-        if not console.confirm('Are you sure you want to deploy production?', default=False):
-            utils.abort('Production deployment aborted.')
+    require('root', provided_by=('staging', 'production', 'india'))
+    if env.environment in ('production', 'india'):
+        if not console.confirm('Are you sure you want to deploy to %s?' % env.environment, default=False):
+            utils.abort('Deployment aborted.')
 
     with cd(env.code_root):
         _update_code()
