@@ -1,53 +1,124 @@
 import os
+import sys
 
-# Postgres config
-DATABASE_ENGINE = 'postgresql_psycopg2'
-DATABASE_NAME = 'commcarehq'
-DATABASE_USER = 'postgres'
-DATABASE_PASSWORD = '*****'
-DATABASE_HOST = ''
-DATABASE_PORT = '5432'
+####### Database config. This assumes Postgres ####### 
 
-DJANGO_LOG_FILE = "/var/log/datahq/datahq.django.log"
-LOG_SIZE = 1000000
-LOG_LEVEL   = "DEBUG"
-LOG_FILE    = "/var/log/datahq/datahq.log"
-LOG_FORMAT  = "[%(name)s]: %(message)s"
-LOG_BACKUPS = 256 # number of logs to keep
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'commcarehq',
+        'USER': 'postgres',
+        'PASSWORD': '******'
+    }
+}
 
-filepath = os.path.abspath(os.path.dirname(__file__))
-STATIC_ROOT = os.path.join(filepath, 'staticmedia') #if you so wish to have your staticroot be defined here - this is necessary for staticfiles to merge all the static media from the management command.
-
-####### Couch Forms ######
-COUCH_SERVER_ROOT = 'localhost:5984'
-COUCH_USERNAME = ''
-COUCH_PASSWORD = ''
+####### Couch Config ######
+COUCH_SERVER_ROOT = '127.0.0.1:5984'
+COUCH_USERNAME = 'admin'
+COUCH_PASSWORD = '********'
 COUCH_DATABASE_NAME = 'commcarehq'
 
-BITLY_LOGIN = 'dimagi'
-BITLY_APIKEY = '*****'
-
-EMAIL_LOGIN="user@gmail.com"
+####### # Email setup ########
+# email settings: these ones are the custom hq ones
+EMAIL_LOGIN = "notifications@dimagi.com"
 EMAIL_PASSWORD="******"
 EMAIL_SMTP_HOST="smtp.gmail.com"
 EMAIL_SMTP_PORT=587
 
+ADMINS = (('HQ Dev Team', 'commcarehq-dev+www-notifications@dimagi.com'),)
+BUG_REPORT_RECIPIENTS = ['commcarehq-support@dimagi.com']
+NEW_DOMAIN_RECIPIENTS = ['commcarehq-dev+newdomain@dimagi.com']
+
+####### Log/debug setup ########
+
+DEBUG = False
+TEMPLATE_DEBUG = DEBUG
+
+# The django logs will end up here
+DJANGO_LOG_FILE = os.path.join('/opt/www.commcarehq.org_project/log',"www.commcarehq.org.django.log")
+
+SEND_BROKEN_LINK_EMAILS = True
+CELERY_SEND_TASK_ERROR_EMAILS = True
+
+####### Static files ########
+
+filepath = os.path.abspath(os.path.dirname(__file__))
+# media for user uploaded media.  in general this won't be used at all.
+MEDIA_ROOT = os.path.join(filepath,'mediafiles') 
+STATIC_ROOT = os.path.join(filepath,'staticfiles')
+
+
+####### Bitly ########
+
+BITLY_LOGIN = 'dimagi'
+BITLY_APIKEY = '*******'
+
+####### Jar signing config ########
+
+_ROOT_DIR  = os.path.dirname(os.path.abspath(__file__))
 JAR_SIGN = dict(
-    key_store = "/PATH/TO/KEY_STORE",
-    key_alias = "KEY",
-    store_pass = "*****",
-    key_pass = "*****",
+    jad_tool = os.path.join(_ROOT_DIR, "submodules", "core-hq-src", "corehq", "apps", "app_manager", "JadTool.jar"),
+    key_store = os.path.join(os.path.dirname(os.path.dirname(_ROOT_DIR)), "DimagiKeyStore"),
+    key_alias = "javarosakey",
+    store_pass = "*******",
+    key_pass = "*******",
 )
 
+####### XEP stuff - TODO: remove this section when we retire XEP ########
 
-# Link to XForm Editor
-# in the future we will possible allow multiple
-EDITOR_URL = 'http://localhost:8011/xep/initiate/'
-XFORMPLAYER_URL = 'http://localhost:8888/play_remote/'
+REFLEXIVE_URL_BASE = "https://localhost:8001"
+def get_url_base():
+    return REFLEXIVE_URL_BASE
+GET_URL_BASE  = 'settings.get_url_base'
 
-# A back door for phones that can't do SSL to access HQ through http
-INSECURE_URL_BASE = "http://submit.mysite.com"
 
-BUG_REPORT_RECIPIENTS = ['me@example.com']
+####### SMS Config ########
+
+# Mach
+
+SMS_GATEWAY_URL = "http://gw1.promessaging.com/sms.php"
+SMS_GATEWAY_PARAMS = "id=******&pw=******&dnr=%(phone_number)s&msg=%(message)s&snr=DIMAGI"
+
+# Unicel
+UNICEL_CONFIG = {"username": "Dimagi",
+                 "password": "******",
+                 "sender": "Promo" }
+
+####### Custom reports ########
+
+CUSTOM_REPORT_MAP = {
+    "domain_name": [
+        'path.to.CustomReport',
+    ]
+}
+
+####### Domain sync / de-id ########
+
+DOMAIN_SYNCS = { 
+    "domain_name": { 
+        "target": "target_db_name",
+        "transform": "corehq.apps.domainsync.transforms.deidentify_domain" 
+    }
+}
+DOMAIN_SYNC_APP_NAME_MAP = { "app_name": "new_app_name" }
+
+
+####### Misc / HQ-specific Config ########
+
+DEFAULT_PROTOCOL = "https" # or http
+OVERRIDE_LOCATION="https://www.commcarehq.org"
+
+
+GOOGLE_ANALYTICS_ID = '*******'
+
+AXES_LOCK_OUT_AT_FAILURE = False
+LUCENE_ENABLED = True
+
+INSECURE_URL_BASE = "http://submit.commcarehq.org"
+
+
 
 PREVIEWER_RE = r'^.*@dimagi\.com$'
+GMAPS_API_KEY = '******'
+FORMTRANSLATE_TIMEOUT = 5
+LOCAL_APPS = ('django_cpserver','dimagi.utils', 'gunicorn', 'django_extensions')
