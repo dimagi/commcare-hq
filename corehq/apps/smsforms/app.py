@@ -22,6 +22,11 @@ def start_session(domain, contact, app, module, form, case_id=None):
     session_data = get_session_data(domain, contact, case_id, 
                                     version=app.application_version, 
                                     device_id=COMMCONNECT_DEVICE_ID)
+    
+    # since the API user is a superuser, force touchforms to query only
+    # the contact's cases by specifying it as an additional filterp
+    session_data["additional_filters"] = { "user_id": contact.get_id }
+    
     language = contact.get_language_code()
     config = XFormsConfig(form_content=form.render_xform(),
                           language=language,
