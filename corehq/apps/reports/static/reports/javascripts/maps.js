@@ -310,21 +310,6 @@ function search_for_geo(c, cases) {
 
 
 
-CONFIG = {
-    geo_cases: {
-	household: 'geo',
-    },
-    fields: {
-	household: ['salary'],
-	preg: ['#', 'mother_age', 'gestational_age'],
-	child: ['#', 'gender', 'happiness'],
-    },
-    links_to: {
-	preg: 'household',
-	child: 'household',
-    },
-};
-
 function maps_init(case_api_url) {
     var map = init_map($('#map'), [30., 0.], 2, 'terrain');
 

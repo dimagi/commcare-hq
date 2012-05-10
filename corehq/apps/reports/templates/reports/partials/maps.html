@@ -1,20 +1,47 @@
 <div class="hq-graphic-report">
 
-<div class="hq-graph">
-    <h2>maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaps</h2>
+<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key={{ maps_api_key }}&sensor=false"></script>
+<script type="text/javascript" src="{{STATIC_URL}}reports/javascripts/maps.js"></script>
+<script type="text/javascript">
 
-    
-    <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key={{ maps_api_key }}&sensor=false"></script>
-    <script type="text/javascript" src="{{STATIC_URL}}reports/javascripts/maps.js"></script>
-    <script type="text/javascript">
+CASE_API_URL = '{{ case_api_url }}';
+CONFIG = {{ config|safe }};
 
-      CASE_API_URL = '{{ case_api_url }}';
+function setMapHeight() {
+    $('#map').height($(window).height() - 200);
+}
 
-      $(document).ready(function() { maps_init(CASE_API_URL); });
+$(document).ready(function() { 
+    setMapHeight();
+    $(window).resize(setMapHeight);
 
-    </script>
-    <div id="panel" style="float: right; border: 2px solid black; margin-right: 15px; padding: 10px; background: #ffc;"></div>
-    <div id="agg" style="float: right; clear: both; border: 2px solid black; margin-right: 15px; padding: 10px; background: #fcf;">
+    maps_init(CASE_API_URL);
+});
+
+</script>
+
+<style>
+
+#sidebar {
+  position: absolute;
+  bottom: 30px;
+  right: 12px;
+  background: rgba(255, 255, 255, .7);
+  border: 5px #aaa solid;
+  border-radius: 20px;
+  -moz-border-radius: 20px;
+  -webkit-border-radius: 20px;
+}
+
+</style>
+
+<div style="position: relative;">
+  <div id="map" style="width: 100%;"></div>
+  
+  <div id="sidebar">
+
+    <div id="panel" style="float: right; padding: 10px;"></div>
+    <div id="agg" style="float: right; clear: both; padding: 10px;">
       <h3>aggregation</h3>
       <div type="count">count</div>
       <div type="sum">sum</div>
@@ -23,7 +50,7 @@
       <div type="avg">average</div>
       <div type="tally">tally</div>
     </div>
-    <div id="style" style="float: right; clear: both; border: 2px solid black; margin-right: 15px; padding: 10px; background: #cff;">
+    <div id="style" style="float: right; clear: both; padding: 10px;">
       <h3>style</h3>
       <div type="gauge">gauge</div>
       <div type="intens">intensity</div>
@@ -32,11 +59,8 @@
       <div type="varpie">varpie</div>
       <div type="explodepie">exploded pie</div>
     </div>
-
-    <!-- TODO: dynamic sizing of map canvas to fill available space -->
-    <div id="map" style="width: 1200px; height: 500px;"></div>
-
-
+    
+  </div>
+  
 </div>
-
 </div>
