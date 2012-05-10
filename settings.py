@@ -438,8 +438,7 @@ LOGGING = {
 }
 
 # these are the official django settings
-# which really we should be using over the
-# above
+# which really we should be using over the custom ones
 EMAIL_HOST = EMAIL_SMTP_HOST
 EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
@@ -517,5 +516,3 @@ MESSAGE_TAGS = {
 COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
 
-# for touchforms maps
-#GMAPS_API_KEY = "changeme"
