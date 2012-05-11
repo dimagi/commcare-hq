@@ -175,7 +175,7 @@ class StandardDateHQReport(StandardHQReport):
 
 class CaseActivityReport(StandardTabularHQReport):
     """
-    User    Last 30 Days    Last 60 Days    Last 120 Days   Active Clients              Inactive Clients
+    User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
     danny   5 (25%)         10 (50%)        20 (100%)       17                          6
     (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
     """
@@ -253,7 +253,7 @@ class CaseActivityReport(StandardTabularHQReport):
             return self._header
 
     def get_parameters(self):
-        landmarks_param = self.request_params.get('landmarks', [30,60,120])
+        landmarks_param = self.request_params.get('landmarks', [30,60,90])
         inactive_param = self.request_params.get('inactive', 120)
         self.display_data = self.request_params.get('display', ['percent'])
         if landmarks_param + [inactive_param] != sorted(landmarks_param + [inactive_param]):
