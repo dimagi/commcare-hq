@@ -1,6 +1,7 @@
 from fabric.api import *
-from fabric.contrib import console
+from fabric.contrib import console, files
 from fabric import utils
+import os
 
 env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
 
@@ -16,6 +17,7 @@ def production():
     env.virtualenv_root = _join(root, 'env/cchq_www')
     env.code_root       = _join(root, 'src/commcare-hq')
     env.pre_code_root   = _join(root, 'src/_commcare-hq')
+    env.log_root   = _join(root, 'log')
     env.code_branch = 'master'
     env.sudo_user = 'cchqwww'
     env.hosts = ['10.84.168.241']
@@ -34,6 +36,7 @@ def staging():
     env.root = root = '/home/dimagivm/'
     env.virtualenv_root = _join(root, 'cchq')
     env.code_root       = _join(root, 'commcare-hq')
+    env.log_root   = _join(root, 'log')
     env.code_branch = 'staging'
     env.sudo_user = 'root'
     env.hosts = ['192.168.7.223']
@@ -46,6 +49,7 @@ def india():
     env.virtualenv_root = _join(root, '.virtualenvs/commcarehq')
     env.code_root       = _join(root, 'src/commcare-hq')
     env.pre_code_root   = _join(root, 'src/_commcare-hq')
+    env.log_root   = _join(root, 'log')
     env.code_branch = 'master'
     env.sudo_user = 'commcarehq'
     env.hosts = ['220.226.209.82']
@@ -77,6 +81,23 @@ def _update_code():
     sudo('git submodule sync', user=env.sudo_user)
     sudo('git submodule update --init --recursive', user=env.sudo_user)
 
+def upload_upstart_conf():
+    """
+    Upload and link upstart configuration from the templates.
+    """
+    require('root', provided_by=('staging', 'production', 'india'))
+    template_dir = os.path.join(os.path.dirname(__file__), 'utilities', 'deployment', 'upstart_templates')
+    for file in os.listdir(template_dir):
+        destination = _join(env.code_root, 'utilities', 'deployment', file)
+        #destination = _join(env.code_root, file)
+        template = os.path.join(template_dir, file)
+        tmp_destination = "/tmp/%s.tmp" % file
+        files.upload_template(template, tmp_destination, context=env)
+        sudo('chown -R %(user)s:%(user)s %(file)s' % {"user": env.sudo_user,
+                                                      "file": tmp_destination})
+        sudo('chmod -R g+w %s' % tmp_destination)
+        sudo('mv -f %s %s' % (tmp_destination, destination), user=env.sudo_user)
+    
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
     require('root', provided_by=('staging', 'production', 'india'))
