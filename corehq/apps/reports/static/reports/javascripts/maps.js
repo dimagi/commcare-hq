@@ -199,7 +199,8 @@ function init_map($div, default_pos, default_zoom, default_map_type) {
             zoom: default_zoom,
             mapTypeId: {
                 terrain: google.maps.MapTypeId.TERRAIN
-            }[default_map_type]
+            }[default_map_type],
+	    scaleControl: true,
         });
     return map;
 }
@@ -215,6 +216,8 @@ function fit_all(map, cases) {
         });
     if (any) {
 	map.fitBounds(bounds);
+    } else {
+	alert("This domain has no geo-referenced cases!");
     }
 }
 
@@ -315,7 +318,7 @@ function search_for_geo(c, link_type, cases) {
 function lookup_by(list, field, val) {
     var match = null;
     $.each(list, function(i, e) {
-	    if (e.field == val) {
+	    if (e[field] == val) {
 		match = e;
 		return false;
 	    }
