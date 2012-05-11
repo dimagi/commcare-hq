@@ -1,3 +1,45 @@
+// Underscore.js snippets
+// -----------------------------------
+ArrayProto = Array.prototype;
+var slice  = ArrayProto.slice,
+    nativeForEach = ArrayProto.forEach,
+    breaker = {};
+
+// The cornerstone, an `each` implementation, aka `forEach`.
+// Handles objects with the built-in `forEach`, arrays, and raw objects.
+// Delegates to **ECMAScript 5**'s native `forEach` if available.
+var each = function(obj, iterator, context) {
+    if (obj == null) return;
+    if (nativeForEach && obj.forEach === nativeForEach) {
+        obj.forEach(iterator, context);
+    } else if (obj.length === +obj.length) {
+        for (var i = 0, l = obj.length; i < l; i++) {
+            if (i in obj && iterator.call(context, obj[i], i, obj) === breaker) return;
+        }
+    } else {
+        for (var key in obj) {
+            if (_.has(obj, key)) {
+                if (iterator.call(context, obj[key], key, obj) === breaker) return;
+            }
+        }
+    }
+};
+
+
+// Extend a given object with all the properties in passed-in object(s).
+var extend = function(obj) {
+    each(slice.call(arguments, 1), function(source) {
+        for (var prop in source) {
+            obj[prop] = source[prop];
+        }
+    });
+    return obj;
+};
+
+
+// HSPH Reduce Helpers
+// ---------------------------------------
+
 var HSPHLengthStats = function () {
     var self = this;
     self.calc = {
@@ -29,17 +71,20 @@ var HSPHBirthCounter = function () {
     self.calc = {
         totalBirths: 0,
         totalBirthsWithoutContact: 0,
-        totalBirthsWithContact: 0
+        totalBirthsWithContact: 0,
+        totalBirthEvents: 0
     };
 
     self.rereduce = function (agEntry) {
         self.calc.totalBirths += agEntry.totalBirths;
+        self.calc.totalBirthEvents += agEntry.totalBirthEvents;
         self.calc.totalBirthsWithoutContact += agEntry.totalBirthsWithoutContact;
         self.calc.totalBirthsWithContact += agEntry.totalBirthsWithContact;
     };
 
     self.reduce = function (curEntry) {
         self.calc.totalBirths += curEntry.numBirths;
+        self.calc.totalBirthEvents += (curEntry.numBirths > 0) ? 1 : 0;
         if (curEntry.contactProvided)
             self.calc.totalBirthsWithContact += curEntry.numBirths;
         else
@@ -193,40 +238,111 @@ var HSPHDCCFollowupStats = function () {
     };
 };
 
-// Underscore.js snippets
-// -----------------------------------
-ArrayProto = Array.prototype;
-var slice  = ArrayProto.slice,
-    nativeForEach = ArrayProto.forEach,
-    breaker = {};
+var HSPHOutcomesCounter = function () {
+    var self = this;
+    var stats = {
+        maternalDeaths: 0,
+        maternalNearMisses: 0,
+        stillBirthEvents: 0,
+        neonatalMortalityEvents: 0
+    };
 
-// The cornerstone, an `each` implementation, aka `forEach`.
-// Handles objects with the built-in `forEach`, arrays, and raw objects.
-// Delegates to **ECMAScript 5**'s native `forEach` if available.
-var each = function(obj, iterator, context) {
-    if (obj == null) return;
-    if (nativeForEach && obj.forEach === nativeForEach) {
-        obj.forEach(iterator, context);
-    } else if (obj.length === +obj.length) {
-        for (var i = 0, l = obj.length; i < l; i++) {
-            if (i in obj && iterator.call(context, obj[i], i, obj) === breaker) return;
+    self.calc = extend({}, stats);
+    self.calc.atDischarge = extend({}, stats);
+    self.calc.on7Days = extend({}, stats);
+    self.calc.lostToFollowUp = 0;
+    self.calc.totalNegativeOutcomes = 0;
+    self.calc.totalOutcomes = 0;
+    self.calc.totalPositiveOutcomeEvents = 0;
+
+    self.rereduce = function (agEntry) {
+        for (var key in stats)  {
+            self.calc[key] += agEntry[key];
+            self.calc.atDischarge[key] += agEntry.atDischarge[key];
+            self.calc.on7Days[key] += agEntry.on7Days[key];
         }
-    } else {
-        for (var key in obj) {
-            if (_.has(obj, key)) {
-                if (iterator.call(context, obj[key], key, obj) === breaker) return;
+        self.calc.totalOutcomes += agEntry.totalOutcomes;
+        self.calc.lostToFollowUp += agEntry.lostToFollowUp;
+        self.calc.totalNegativeOutcomes += agEntry.totalNegativeOutcomes;
+        self.calc.totalPositiveOutcomeEvents += agEntry.totalPositiveOutcomeEvents;
+    };
+
+    self.reduce = function (curEntry) {
+        stats.maternalDeaths = (curEntry.maternalDeath) ? 1 : 0;
+        stats.maternalNearMisses = (curEntry.maternalNearMiss) ? 1 : 0;
+        stats.stillBirthEvents = (curEntry.numStillBirths > 0) ? 1 : 0;
+        stats.neonatalMortalityEvents = (curEntry.numNeonatalMortality > 0) ? 1 : 0;
+
+        for (var key in stats) {
+            if (curEntry.outcomeOnDischarge)
+                self.calc.atDischarge[key] += stats[key];
+            else if (curEntry.outcomeOn7Days)
+                self.calc.on7Days[key] += stats[key];
+            self.calc[key] += stats[key];
+            self.calc.totalOutcomes += stats[key];
+        }
+
+        var noOutcomes = !!(self.calc.totalOutcomes < 1);
+        if (noOutcomes && curEntry.followupWaitlisted) {
+            self.calc.lostToFollowUp += 1;
+        } else if (noOutcomes && curEntry.followupComplete) {
+            self.calc.totalNegativeOutcomes += 1;
+        } else if (!noOutcomes) {
+            self.calc.totalPositiveOutcomeEvents += 1;
+        }
+
+    };
+
+    self.getResult = function () {
+        return self.calc;
+    };
+};
+
+var HSPHFacilityStatusStats = function () {
+    var self = this;
+    self.calc = {
+        facilityStatuses: new Array([],[],[],[])
+    };
+
+    function addSite(siteList, siteID) {
+        if (siteList.indexOf(siteID) < 0)
+            siteList.push(siteID);
+    }
+
+    function removeSite(siteList, siteID) {
+        var ind = siteList.indexOf(siteID);
+        if (ind >= 0)
+            delete siteList.splice(ind,1);
+    }
+
+    self.rereduce = function (agEntry) {
+        for (var ag in agEntry.facilityStatuses) {
+            for (var s in agEntry.facilityStatuses[ag]) {
+                addSite(self.calc.facilityStatuses[ag], agEntry.facilityStatuses[ag][s]);
             }
         }
-    }
-};
+    };
 
-
-// Extend a given object with all the properties in passed-in object(s).
-var extend = function(obj) {
-    each(slice.call(arguments, 1), function(source) {
-        for (var prop in source) {
-            obj[prop] = source[prop];
+    self.reduce = function (curEntry) {
+        if ( (-1 <= curEntry.facilityStatus <= 2) && curEntry.siteId) {
+            addSite(self.calc.facilityStatuses[curEntry.facilityStatus+1], curEntry.siteId);
         }
-    });
-    return obj;
+    };
+
+    self.getResult = function () {
+        for (var a=3; a >=0; a--) {
+            for (var site in self.calc.facilityStatuses[a])
+                for (var b=a-1; b >= 0; b--)
+                    removeSite(self.calc.facilityStatuses[b], self.calc.facilityStatuses[a][site]);
+        }
+
+        self.calc.numAtZero = self.calc.facilityStatuses[0].length;
+        self.calc.numSBR = self.calc.facilityStatuses[1].length;
+        self.calc.numBaseline = self.calc.facilityStatuses[2].length;
+        self.calc.numTrial = self.calc.facilityStatuses[3].length;
+
+        return self.calc;
+
+    };
 };
+

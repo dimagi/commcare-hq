@@ -1,3 +1,4 @@
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.standard import StandardTabularHQReport, StandardDateHQReport
 from hsph.reports.field_management import HSPHSiteDataMixin
 
@@ -20,11 +21,11 @@ class ImplementationStatusDashboardReport(StandardTabularHQReport, StandardDateH
         self.generate_sitemap()
 
     def get_headers(self):
-        return ["Status",
-                "Region",
-                "District",
-                "IHF/CHF",
-                "CITL Name",
-                "Site",
-                "Facility Status",
-                "Status last updated on"]
+        return DataTablesHeader(DataTablesColumn("Status"),
+            DataTablesColumn("Region"),
+            DataTablesColumn("District"),
+            DataTablesColumn("IHF/CHF"),
+            DataTablesColumn("CITL Name"),
+            DataTablesColumn("Site"),
+            DataTablesColumn("Facility Status"),
+            DataTablesColumn("Status last updated on"))

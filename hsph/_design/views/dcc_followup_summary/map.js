@@ -1,5 +1,4 @@
 function(doc) {
-    // !code util/xforms.js
     // !code util/hsph.js
 
     if (isHSPHForm(doc) &&
@@ -7,8 +6,10 @@ function(doc) {
         var info = doc.form.meta,
             entry = new HSPHEntry(doc);
         entry.getBirthStats();
+        entry.getSiteInfo();
         entry.getFormLengthInfo();
         entry.getFollowUpStatus();
+
 
         if (entry.data.dateBirth) {
             var msInDay = 24*60*60*1000,
@@ -20,7 +21,7 @@ function(doc) {
             else if (followupLag >= 9*msInDay && followupLag < 14*msInDay)
                 entry.data.between9and13 = true;
         }
-
-        emit([entry.data.region, entry.data.district, entry.data.siteNum, info.timeEnd], entry.data);
+        if (entry.data.region)
+            emit([entry.data.region, entry.data.district, entry.data.siteNum, info.timeEnd], entry.data);
     }
 }

@@ -1,6 +1,7 @@
 import datetime
 import dateutil
 import pytz
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.standard import StandardTabularHQReport, StandardDateHQReport
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
@@ -45,16 +46,16 @@ class DCOActivityReport(HSPHFieldManagementReport):
     slug = "hsph_dco_activity"
 
     def get_headers(self):
-        return ["Name of DCO",
-                "Name of DCTL",
-                "No. Facilities Covered",
-                "No. of Facility Visits",
-                "No. of Facility Visits with less than 2 visits/week",
-                "No. of Births Recorded",
-                "Average time per Birth Record (min)",
-                "No. of Home Visits assigned",
-                "No. of Home Visits completed",
-                "No. of Home Visits open at 21 days"]
+        return DataTablesHeader(DataTablesColumn("Name of DCO"),
+            DataTablesColumn("Name of DCTL"),
+            DataTablesColumn("No. Facilities Covered"),
+            DataTablesColumn("No. of Facility Visits"),
+            DataTablesColumn("No. of Facility Visits with less than 2 visits/week"),
+            DataTablesColumn("No. of Births Recorded"),
+            DataTablesColumn("Average time per Birth Record (min)"),
+            DataTablesColumn("No. of Home Visits assigned"),
+            DataTablesColumn("No. of Home Visits completed"),
+            DataTablesColumn("No. of Home Visits open at 21 days"))
 
     def get_rows(self):
         rows = []
@@ -114,12 +115,12 @@ class FieldDataCollectionActivityReport(HSPHFieldManagementReport):
               'hsph.fields.FacilityField']
 
     def get_headers(self):
-        return ["Facility Name",
-                "Name of DCO",
-                "Name of DCTL",
-                "No. of visits by DCO",
-                "No. of births recorded",
-                "No. of births without contact details"]
+        return DataTablesHeader(DataTablesColumn("Facility Name"),
+            DataTablesColumn("Name of DCO"),
+            DataTablesColumn("Name of DCTL"),
+            DataTablesColumn("No. of visits by DCO"),
+            DataTablesColumn("No. of births recorded"),
+            DataTablesColumn("No. of births without contact details"))
 
     def get_parameters(self):
         super(FieldDataCollectionActivityReport, self).get_parameters()
@@ -190,7 +191,7 @@ class HVFollowUpStatusReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
         else:
             start = now-datetime.timedelta(days=dates[1])
             start = start.strftime("%Y-%m-%d")
-        data = get_db().view("hsph/home_visits_by_birth",
+        data = get_db().view("hsph/cases_by_birth_date",
                                 reduce=True,
                                 startkey=key+[start],
                                 endkey=key+[stop]
@@ -198,16 +199,16 @@ class HVFollowUpStatusReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
         return data.get('value', 0) if data else 0
 
     def get_headers(self):
-        return ["Region",
-                "District",
-                "Site",
-                "DCO Name",
-                "No. Births Recorded",
-                "No. patients followed up by call center",
-                "No. patients followed up by DCO center",
-                "No. patients not yet open for follow up (<8 days)",
-                "No. patients open for DCC follow up (<14 days)",
-                "No. patients open for DCO follow up (>21 days)"]
+        return DataTablesHeader(DataTablesColumn("Region"),
+            DataTablesColumn("District"),
+            DataTablesColumn("Site"),
+            DataTablesColumn("DCO Name"),
+            DataTablesColumn("No. Births Recorded"),
+            DataTablesColumn("No. patients followed up by call center"),
+            DataTablesColumn("No. patients followed up by DCO center"),
+            DataTablesColumn("No. patients not yet open for follow up (<8 days)"),
+            DataTablesColumn("No. patients open for DCC follow up (<14 days)"),
+            DataTablesColumn("No. patients open for DCO follow up (>21 days)"))
 
     def get_rows(self):
         rows = []
@@ -260,22 +261,22 @@ class HVFollowUpStatusSummaryReport(HVFollowUpStatusReport):
               'hsph.fields.SiteField']
 
     def get_headers(self):
-        return ["Region",
-                "District",
-                "Site",
-                "Unique Patient ID",
-                "Home Visit Status",
-                "Name of mother",
-                "Address where mother can be reachable in next 10 days",
-                "Assigned By",
-                "Allocated Data Collector",
-                "Allocated Start Date",
-                "Allocated End Date",
-                "Visited Date",
-                "Start Time",
-                "End Time",
-                "Duration (min)",
-                "Within Allocated Period"]
+        return DataTablesHeader(DataTablesColumn("Region"),
+            DataTablesColumn("District"),
+            DataTablesColumn("Site"),
+            DataTablesColumn("Unique Patient ID"),
+            DataTablesColumn("Home Visit Status"),
+            DataTablesColumn("Name of mother"),
+            DataTablesColumn("Address where mother can be reachable in next 10 days"),
+            DataTablesColumn("Assigned By"),
+            DataTablesColumn("Allocated Data Collector"),
+            DataTablesColumn("Allocated Start Date"),
+            DataTablesColumn("Allocated End Date"),
+            DataTablesColumn("Visited Date"),
+            DataTablesColumn("Start Time"),
+            DataTablesColumn("End Time"),
+            DataTablesColumn("Duration (min)"),
+            DataTablesColumn("Within Allocated Period"))
 
     def get_parameters(self):
         super(HVFollowUpStatusSummaryReport, self).get_parameters()
@@ -366,12 +367,12 @@ class DCOProcessDataReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
               'hsph.fields.SiteField']
 
     def get_headers(self):
-        return ["Region",
-                "District",
-                "Site",
-                "IHF/CHF",
-                "Number of Births Observed",
-                "Average Time Per Birth Record"]
+        return DataTablesHeader(DataTablesColumn("Region"),
+            DataTablesColumn("District"),
+            DataTablesColumn("Site"),
+            DataTablesColumn("IHF/CHF"),
+            DataTablesColumn("Number of Births Observed"),
+            DataTablesColumn("Average Time Per Birth Record"))
 
     def get_parameters(self):
         self.generate_sitemap()
@@ -392,7 +393,6 @@ class DCOProcessDataReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
                 ).all()
             for item in data:
                 item = item.get('value')
-
                 if item:
                     region = key[0]
                     district = key[1]

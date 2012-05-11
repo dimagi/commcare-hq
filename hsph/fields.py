@@ -70,6 +70,12 @@ class NameOfDCCField(SelectFilteredMobileWorkerField):
     name = "Name of DCC"
     group_names = ["DCC"]
 
+class NameOfCITLField(SelectFilteredMobileWorkerField):
+    slug = "citl_name"
+    name = "Name of CITL"
+    group_names = ["CITL"]
+
+
 class NameOfDCTLField(ReportField):
     slug = "dctl_name"
     template = "hsph/fields/dctl_name.html"
@@ -88,5 +94,23 @@ class SelectCaseStatusField(ReportSelectField):
                dict(val="open", text="OPEN")]
     default_option = "Select Status..."
 
-    def update_params(self):
-        self.selected = self.request.GET.get(self.slug)
+class IHForCHFField(ReportSelectField):
+    slug = "ihf_or_chf"
+    name = "IHF/CHF"
+    cssId = "hsph_ihf_or_chf"
+    cssClasses = "span2"
+    options = [dict(val="IHF", text="IHF"),
+               dict(val="CHF", text="CHF")]
+    default_option = "Select IHF/CHF..."
+
+
+class FacilityStatusField(ReportSelectField):
+    slug = "facility_status"
+    name = "Facility Status"
+    cssId = "hsph_facility_status"
+    cssClasses = "span4"
+    options = [dict(val="-1", text="On Board"),
+               dict(val="0", text="S.B.R. Deployed"),
+               dict(val="1", text="Baseline"),
+               dict(val="2", text="Trial Data")]
+    default_option = "Select Status..."

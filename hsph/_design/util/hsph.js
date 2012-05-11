@@ -1,3 +1,14 @@
+/* handle xforms */
+function get_form_filled_duration(xform_doc) {
+    // in milliseconds
+    var meta = xform_doc.form.meta;
+    if (meta && meta.timeEnd && meta.timeStart)
+        return new Date(meta.timeEnd).getTime() - new Date(meta.timeStart).getTime();
+    return null;
+}
+
+/* HSPH related */
+
 function isHSPHForm(doc) {
     return (doc.doc_type === 'XFormInstance'
             && doc.domain === 'hsph');
@@ -11,6 +22,10 @@ function isHSPHBirthCase(doc) {
 
 function isDCOFollowUpReport(doc) {
     return (doc.xmlns === "http://openrosa.org/formdesigner/E5E03D8D-937D-46C6-AF8F-C1FD176E2E1B");
+}
+
+function isCITLReport(doc) {
+    return (doc.xmlns === "http://openrosa.org/formdesigner/0D9CB681-2C07-46AB-8720-66E4FBD94211");
 }
 
 function isDCOBirthRegReport(doc) {
@@ -33,6 +48,10 @@ function getDCTL(doc) {
     return "DCTL Unknown";
 }
 
+function isIHForCHF(doc) {
+    return "IHF";
+}
+
 function calcHSPHBirthDatespan(doc) {
     if (doc.date_delivery || doc.date_admission) {
         var date_del = (doc.date_delivery) ? new Date(doc.date_delivery) : new Date(doc.date_admission);
@@ -52,7 +71,7 @@ function HSPHEntry(doc) {
 
     self.getBirthStats = function () {
         self.data.numBirths = 0;
-        if (self.form.mother_delivered_or_referred === "delivered") {
+        if (self.form.mother_delivered_or_referred === "delivered" && self.form.date_delivery) {
             self.data.numBirths = (self.form.multiple_birth === 'yes') ?
                                     parseInt(self.form.multiple_birth_number) : 1;
             self.data.dateBirth = self.form.date_delivery;
@@ -65,7 +84,10 @@ function HSPHEntry(doc) {
 
         self.data.contactProvided = !!(self.form.phone_mother === 'yes' ||
                                         self.form.phone_husband === 'yes' ||
-                                        self.form.phone_house === 'yes' );
+                                        self.form.phone_house === 'yes' ) ||
+                                    !!(self.form.phone_mother_number ||
+                                        self.form.phone_husband_number ||
+                                        self.form.phone_house_number );
     };
 
     self.getSiteInfo = function () {
@@ -99,11 +121,6 @@ function HSPHEntry(doc) {
         }
     };
 
-    self.getDCCFollowUpStats = function () {
-        var followUpDate = new Date(self.form.meta.timeEnd),
-            birthDate = new Date(self.form)
-    };
-
     self.getCaseInfo = function () {
         self.data.isClosed = self.form.closed;
         self.data.patientId = self.form.patient_id;
@@ -112,12 +129,46 @@ function HSPHEntry(doc) {
         self.data.nameMother = self.form.name_mother;
         self.data.address = self.form.house_address;
         var responseDatespan = calcHSPHBirthDatespan(self.doc);
-        self.data.startDate = (responseDatespan) ? responseDatespan.start : self.form.doc.opened_on;
-        self.data.endDate = (responseDatespan) ? responseDatespan.end : self.form.doc.opened_on;
+        self.data.startDate = (responseDatespan) ? responseDatespan.start : self.form.opened_on;
+        self.data.endDate = (responseDatespan) ? responseDatespan.end : self.form.opened_on;
 
         if (self.form.follow_up_type === 'dcc')
             self.data.dccFollowUp = true;
         else if (self.form.follow_up_type === 'dco')
             self.data.dcoFollowUp = true;
+    };
+
+    self.getCITLInfo = function () {
+        self.data.facilityStatus = (isDCOSiteLogReport(self.doc)) ? -1 : parseInt(self.form.current_implementation_stage);
+        self.data.IHFCHF = isIHForCHF(self.doc);
+
+        if (isCITLReport(self.doc)) {
+            self.data.isCITLData = true;
+        }
+    };
+
+    self.getOutcomeStats = function () {
+        var follow_up = (self.form.follow_up) ? self.form.follow_up : self.form;
+        self.data.maternalDeath = follow_up.maternal_death === 'dead';
+        if (! self.data.maternalDeath) {
+            self.data.maternalNearMiss = (follow_up.icu === 'yes' ||
+                                            follow_up.fever === 'yes' ||
+                                            follow_up.hysterectomy === 'yes' ||
+                                            follow_up.transfusion === 'yes' ||
+                                            follow_up.fits === 'yes' ||
+                                            follow_up.loss_consciousness === 'yes');
+        }
+
+        self.data.numStillBirths = 0;
+        for (var s=1; s<= 5; s++) {
+            self.data.numStillBirths += (follow_up['baby_'+s+'_birth_or_stillbirth'] === 'fresh_stillbirth' ||
+                                        follow_up['baby_'+s+'_birth_or_stillbirth'] === 'macerated_stillbirth') ? 1 : 0;
+        }
+
+        self.data.numNeonatalMortality = 0;
+        for (var b=1; b <= 5; b++) {
+            self.data.numNeonatalMortality += (follow_up['baby_'+b+'_death'] === 'death') ? 1 : 0;
+        }
+
     }
 }
