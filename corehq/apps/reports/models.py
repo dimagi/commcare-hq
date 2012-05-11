@@ -131,3 +131,13 @@ class FormExportSchema(SavedExportSchema):
     @property
     def formname(self):
         return xmlns_to_name(self.domain, self.xmlns, app_id=self.app_id)
+
+class FormDeidExportSchema(FormExportSchema):
+
+    @property
+    def transform(self):
+        return SerializableFunction()
+
+    @classmethod
+    def get_case(cls, doc, case_id):
+        pass
