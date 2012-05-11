@@ -145,7 +145,10 @@ class SyncLog(Document, UnicodeMixIn):
     def archive_case(self, case_id):
         state = self.get_case_state(case_id)
         self.cases_on_phone.remove(state)
-        self.dependent_cases_on_phone.append(state)
+        # I'm not quite clear on when this can happen, but we've seen it 
+        # in wild, so safeguard against it.
+        if not self.phone_has_dependent_case(case_id):
+            self.dependent_cases_on_phone.append(state)
     
     def _phone_owns(self, action):
         # whether the phone thinks it owns an action block.
