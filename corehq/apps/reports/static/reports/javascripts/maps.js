@@ -606,21 +606,21 @@ function display_metric(context) {
     console.log(context);
     console.log(data);
 
-    render_data(data, context.style);
+    render_data(data, context.style, context.field);
     hide_nonrelevant(data, context.cases);
 }
 
-function make_style(type) {
+function make_style(type, config) {
     var factory = {
-	gauge:      function() { return new GaugeMarkerStyle({radius: 10}); },
-	intens:     function() { return new IntensityMarkerStyle({radius: 10}); },
-	blob:       function() { return new BlobMarkerStyle({ref_radius: 15}); },
-        dot:        function() { return new PieMarkerStyle({radius: 8}); },
-	pie:        function() { return new PieMarkerStyle({radius: 13}); },
-	varpie:     function() { return new PieMarkerStyle({radius: 18, varsize: true}); },
-	explodepie: function() { return new ExplodedPieMarkerStyle({radius: 24}); },
+	gauge:      function(cfg) { return new GaugeMarkerStyle({radius: 10}, cfg); },
+	intens:     function(cfg) { return new IntensityMarkerStyle({radius: 10}, cfg); },
+	blob:       function(cfg) { return new BlobMarkerStyle({ref_radius: 15}, cfg); },
+        dot:        function(cfg) { return new PieMarkerStyle({radius: 8}, cfg); },
+	pie:        function(cfg) { return new PieMarkerStyle({radius: 13}, cfg); },
+	varpie:     function(cfg) { return new PieMarkerStyle({radius: 18, varsize: true}, cfg); },
+	explodepie: function(cfg) { return new ExplodedPieMarkerStyle({radius: 24}, cfg); },
     }[type];
-    return factory();
+    return factory(config);
 }
 
 function Marker(style) {
@@ -637,9 +637,9 @@ function Marker(style) {
     }
 }
 
-function GaugeMarkerStyle(params) {
+function GaugeMarkerStyle(params, config) {
     this.radius = params.radius;
-    this.color = params.color || 'rgb(0,255,0)';
+    this.color = config.color || 'rgb(0,255,0)';
     this.bgcolor = params.bgcolor || 'rgb(50,50,50)';
 
     this.get_dim = function(data, context) {
@@ -681,9 +681,9 @@ function GaugeMarkerStyle(params) {
     }
 }
 
-function IntensityMarkerStyle(params) {
+function IntensityMarkerStyle(params, config) {
     this.radius = params.radius;
-    this.color = params.color || 'rgb(0,255,0)';
+    this.color = config.color || 'rgb(0,255,0)';
     this.bgcolor = params.bgcolor || 'rgb(50,50,50)';
 
     this.get_dim = function(data, context) {
@@ -720,10 +720,10 @@ function IntensityMarkerStyle(params) {
     }
 }
 
-function BlobMarkerStyle(params) {
+function BlobMarkerStyle(params, config) {
     this.ref_radius = params.ref_radius;
     this.min_radius = params.min_radius || 3;
-    this.color = params.color || 'rgb(0,255,0)';
+    this.color = config.color || 'rgb(0,255,0)';
 
     this.radius = function(data, context) {
 	return Math.max(this.ref_radius * Math.sqrt(data / (context || 1.)), this.min_radius);
@@ -755,9 +755,29 @@ function BlobMarkerStyle(params) {
     }
 }
 
-function PieMarkerStyle(params) {
+function color_for(cfg, k) {
+    if (cfg.values == null) {
+	cfg.values = [];
+    }
+
+    var item = lookup_by(cfg.values, 'value', k);
+    if (item == null) {
+	item = {value: k};
+	cfg.values.push(item);
+    }
+
+    var color = item.color;
+    if (color == null) {
+	color = randcolor();
+	item.color = color;
+    }
+
+    return color;
+}
+
+function PieMarkerStyle(params, config) {
     this.ref_radius = params.radius;
-    this.colors = params.colors || {};
+    this.config = config;
     this.varsize = params.varsize;
 
     this.sum = function(data) {
@@ -777,10 +797,7 @@ function PieMarkerStyle(params) {
     }
 
     this.color_for = function(k) {
-	if (!this.colors[k]) {
-	    this.colors[k] = randcolor();
-	}
-	return this.colors[k];
+	return color_for(this.config, k);
     }
 
     this.draw = function(data, context, ctx, w, h) {
@@ -818,9 +835,9 @@ function PieMarkerStyle(params) {
     }
 }
 
-function ExplodedPieMarkerStyle(params) {
+function ExplodedPieMarkerStyle(params, config) {
     this.ref_radius = params.radius;
-    this.colors = params.colors || {};
+    this.config = config;
     this.offset = (params.offset != null ? params.offset : 5);
 
     this.radius = function(data, context) {
@@ -832,10 +849,7 @@ function ExplodedPieMarkerStyle(params) {
     }
 
     this.color_for = function(k) {
-	if (!this.colors[k]) {
-	    this.colors[k] = randcolor();
-	}
-	return this.colors[k];
+	return color_for(this.config, k);
     }
 
     this.draw = function(data, context, ctx, w, h) {
@@ -878,11 +892,11 @@ function ExplodedPieMarkerStyle(params) {
     }
 }
 
-function render_data(data, style_type) {
+function render_data(data, style_type, field_config) {
     var renderer = (function() {
 	    var style = null;
 	    if (style_type) {
-		style = new Marker(make_style(style_type));
+		style = new Marker(make_style(style_type, field_config));
 	    }
 	    return function(v, context) {
 		return (v != null && style != null ? style.render(v, context) : case_no_data());
