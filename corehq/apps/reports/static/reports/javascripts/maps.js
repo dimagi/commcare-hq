@@ -775,6 +775,26 @@ function color_for(cfg, k) {
     return color;
 }
 
+function for_each_choice(config, data, func, reverse) {
+    var vals = [];
+    $.each(config.values || [], function(i, e) {
+	    vals.push(e.value);
+	});
+    $.each(data, function(k, v) {
+	    if (vals.indexOf(k) == -1) {
+		vals.push(k);
+	    }
+	});
+
+    if (reverse) {
+	vals.reverse();
+    }
+
+    $.each(vals, function(i, k) {
+	    func(k, data[k]);
+	});
+}
+
 function PieMarkerStyle(params, config) {
     this.ref_radius = params.radius;
     this.config = config;
@@ -803,7 +823,7 @@ function PieMarkerStyle(params, config) {
     this.draw = function(data, context, ctx, w, h) {
 	var mst = this;
 	var arc = function(a, b) {
-	    ctx.arc(.5 * w, .5 * h, mst.radius(data, context), a * Math.PI*2, b * Math.PI*2); 
+	    ctx.arc(.5 * w, .5 * h, mst.radius(data, context), a * Math.PI*2, b * Math.PI*2);
 	}
 	var circle = function() {
 	    ctx.beginPath();
@@ -821,12 +841,12 @@ function PieMarkerStyle(params, config) {
 	var sum = this.sum(data);
 
 	var j = 1.;
-	$.each(data, function(k, v) {
+	for_each_choice(this.config, data, function(k, v) {
 		slice(0., j);
 		ctx.fillStyle = mst.color_for(k);
 		ctx.fill();
 		j -= v / sum;
-	    });
+	    }, true);
 
 	circle();
 	ctx.strokeStyle = 'rgb(0, 0, 0)';
@@ -875,18 +895,20 @@ function ExplodedPieMarkerStyle(params, config) {
 	var i = 0;
 	var theta = function(i) { return i / context.vals.length; };
 
-	$.each(context.vals, function(i, e) {
-		slice(theta(i), theta(i + 1), mst.radius(data[e], context));
+	for_each_choice(this.config, data, function(k, v) {
+		var _slice = function() {
+		    slice(theta(i), theta(i + 1), mst.radius(v, context));
+		};
+
+		_slice();
 		ctx.strokeStyle = 'rgb(0, 0, 0)';
 		ctx.lineWidth = 3;
 		ctx.stroke();
-		i += 1;
-	    });
 
-	$.each(context.vals, function(i, e) {
-		slice(theta(i), theta(i + 1), mst.radius(data[e], context));
-		ctx.fillStyle = mst.color_for(e);
-		ctx.fill();		
+		_slice();
+		ctx.fillStyle = mst.color_for(k); console.log(k, mst.color_for(k));
+		ctx.fill();
+		
 		i += 1;
 	    });
     }
