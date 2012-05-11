@@ -639,11 +639,16 @@ function Marker(style) {
 
 function GaugeMarkerStyle(params, config) {
     this.radius = params.radius;
+    this.scale = config.scale;
     this.color = config.color || 'rgb(0,255,0)';
     this.bgcolor = params.bgcolor || 'rgb(50,50,50)';
 
     this.get_dim = function(data, context) {
 	return 2 * this.radius + 5;
+    }
+
+    this.get_max = function(context) {
+	return this.scale || context || 1.;
     }
 
     this.draw = function(data, context, ctx, w, h) {
@@ -664,7 +669,7 @@ function GaugeMarkerStyle(params, config) {
 	    ctx.closePath();
 	}
 
-	var pct = data / (context || 1.);
+	var pct = data / this.get_max(context);
 
 	circle();
 	ctx.fillStyle = this.bgcolor;
@@ -683,11 +688,16 @@ function GaugeMarkerStyle(params, config) {
 
 function IntensityMarkerStyle(params, config) {
     this.radius = params.radius;
+    this.scale = config.scale;
     this.color = config.color || 'rgb(0,255,0)';
     this.bgcolor = params.bgcolor || 'rgb(50,50,50)';
 
     this.get_dim = function(data, context) {
 	return 2 * this.radius + 5;
+    }
+
+    this.get_max = function(context) {
+	return this.scale || context || 1.;
     }
 
     this.draw = function(data, context, ctx, w, h) {
@@ -700,7 +710,7 @@ function IntensityMarkerStyle(params, config) {
 	    arc(0., 1.);
 	    ctx.closePath();
 	}
-	var pct = data / (context || 1.);
+	var pct = data / this.get_max(context);
 
 	circle();
 	ctx.fillStyle = this.bgcolor;
@@ -723,14 +733,19 @@ function IntensityMarkerStyle(params, config) {
 function BlobMarkerStyle(params, config) {
     this.ref_radius = params.ref_radius;
     this.min_radius = params.min_radius || 3;
+    this.scale = config.scale;
     this.color = config.color || 'rgb(0,255,0)';
 
     this.radius = function(data, context) {
-	return Math.max(this.ref_radius * Math.sqrt(data / (context || 1.)), this.min_radius);
+	return Math.max(this.ref_radius * Math.sqrt(data / this.get_max(context)), this.min_radius);
     }
 
     this.get_dim = function(data, context) {
 	return 2 * this.radius(data, context) + 5;
+    }
+
+    this.get_max = function(context) {
+	return this.scale || context || 1.;
     }
 
     this.draw = function(data, context, ctx, w, h) {
@@ -809,11 +824,15 @@ function PieMarkerStyle(params, config) {
     }
 
     this.radius = function(data, context) {
-	return this.ref_radius * (this.varsize ? Math.sqrt(this.sum(data) / context.maxsum) : 1.);
+	return this.ref_radius * (this.varsize ? Math.sqrt(this.sum(data) / this.get_max(context)) : 1.);
     }
 
     this.get_dim = function(data, context) {
 	return 2 * this.radius(data, context) + 5;
+    }
+
+    this.get_max = function(context) {
+	return this.config.scale || context.maxsum;
     }
 
     this.color_for = function(k) {
@@ -860,6 +879,7 @@ function ExplodedPieMarkerStyle(params, config) {
     this.config = config;
     this.offset = (params.offset != null ? params.offset : 5);
 
+    // todo: support 'scale' directive
     this.radius = function(data, context) {
 	return this.ref_radius * Math.sqrt(data / context.maxval);
     }
