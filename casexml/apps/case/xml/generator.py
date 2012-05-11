@@ -139,7 +139,8 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
     def add_indices(self, element):
         # intentionally a no-op
         if self.case.indices:
-            logging.warning("Tried to add indices to version 1 CaseXML. This is not supported")
+            logging.warning("Tried to add indices to version 1 CaseXML restore. This is not supported. "
+                            "The case id is %s, domain %s." % (self.case.get_id, self.case.domain))
         
         
 class V2CaseXMLGenerator(CaseXMLGeneratorBase):
@@ -172,7 +173,8 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
     def add_referrals(self, element):
         # intentionally a no-op
         if self.case.referrals:
-            logging.warning("Tried to add referrals to version 2 CaseXML. This is not supported")
+            logging.warning("Tried to add referrals to version 2 CaseXML restore. This is not supported. "
+                            "The case id is %s, domain %s." % (self.case.get_id, self.case.domain))
     
     def add_indices(self, element):
         if self.case.indices:
