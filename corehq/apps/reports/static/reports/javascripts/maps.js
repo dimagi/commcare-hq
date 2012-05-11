@@ -74,11 +74,15 @@ function gen_test_data() {
 	k: {gender: 'm', happiness: 5, household: 'archibald'},
     };
 
+
+
+
     var household_cases = {};
     $.each(households, function(k, v) {
 	    var props = {
 		geo: v,
 		salary: 1e5 * Math.random(),
+		dwelling: ['hut', 'apt', 'mansion'][Math.floor(Math.random() * 3)],
 	    };
 
 	    var c = make_test_case('household', k, props);
@@ -334,7 +338,13 @@ function field_config(case_type, field) {
     return lookup_by(case_type_config(case_type).fields, 'field', field);
 }
 
-
+function field_type(fc) {
+    if (fc.field == '_count') {
+	return 'count';
+    } else {
+	return fc.type;
+    }
+}
 
 
 function maps_init(config, case_api_url) {
@@ -378,7 +388,7 @@ function init_callback(map, case_list) {
 
     var report_context = {
 	cases: cases,
-	type: null,
+	case_type: null,
 	field: null,
 	metric: null,
 	style: null,
@@ -394,87 +404,146 @@ function init_callback(map, case_list) {
 		    $f.text(f.display_name || f.field);
 		    $panel.append($f);
 		    $f.click(function() {
-			    highlight($f, '#panel div');
-			    select_field(c.case_type, f, report_context);
+			    select_field(c.case_type, f, report_context, $f);
 			    display_metric(report_context);
 			});
 		});
 	});
+    $('#sidebar').show();
 
-    /*
-    $.each($('#agg div'), function(i, e) {
+    $.each($('#agg span'), function(i, e) {
 	    var $e = $(e);
 	    $e.click(function() {
-		    var metric_factory = {
-			'count': CountMetric,
-			'sum': SumMetric,
-			'min': MinMetric,
-			'max': MaxMetric,
-			'avg': AvgMetric,
-			'tally': TallyMetric,
-		    }[$e.attr('type')];
+		    if ($e.hasClass('disabled')) {
+			return;
+		    }
 
-		    report_context.metric = new metric_factory();
-
-		    highlight($e, '#agg div');
-
-		    display_metric(report_context, cases);
+		    select_metric($e.attr('type'), report_context, $e);
+		    display_metric(report_context);
 		});
 	});
 
-    $.each($('#style div'), function(i, e) {
+    $.each($('#style span'), function(i, e) {
 	    var $e = $(e);
 	    $e.click(function() {
-		    var style = {
-			'gauge': new GaugeMarkerStyle({radius: 10}),
-			'intens': new IntensityMarkerStyle({radius: 10}),
-			'blob': new BlobMarkerStyle({ref_radius: 15}),
-			'pie': new PieMarkerStyle({radius: 13}),
-			'varpie': new PieMarkerStyle({radius: 18, varsize: true}),
-			'explodepie': new ExplodedPieMarkerStyle({radius: 24}),
-		    }[$e.attr('type')];
+		    if ($e.hasClass('disabled')) {
+			return;
+		    }
 
-		    report_context.style = style;
-
-		    highlight($e, '#style div');
-
-		    display_metric(report_context, cases);
+		    select_style($e.attr('type'), report_context, $e);
+		    display_metric(report_context);
 		});
 	});
-    */
 
 }
 
-function select_field(case_type, field, report_context) {
-    report_context.type = case_type;
+function select_field(case_type, field, report_context, $field) {
+    report_context.case_type = case_type;
     report_context.field = field;
-    
-    $('#agg').show();
-    set_metrics_for_field(case_type, field, report_context);
-    //enable/disable metrics based on field
-    //null metric if not enabled
 
-    //if only one metric avail, select it and cascade
+    highlight($field, '#panel div');
+
+    $('#agg').show();
+    set_metrics_for_field(report_context);
 }
 
-function set_metrics_for_field(case_type, field, report_context) {
-    //get field datatype
-    //get case multiplicity
+function set_metrics_for_field(report_context) {
+    var ftype = field_type(report_context.field);
+    var cmult = case_type_config(report_context.case_type).geo_linked_to != null;
 
-    //count: any field if casemult > 1
-    //sum min max avg: num/numdisc, casemult > 1
-    //value: num/numdisc, casemult == 1
-    //tally: enum/numdisc
+    var allowed_metrics = [];
+    if (cmult) {
+	allowed_metrics.push('count');
+    }
+    if (ftype == 'numeric' || ftype == 'num_discrete') {
+	if (cmult) {
+	    allowed_metrics.push('sum');
+	    allowed_metrics.push('min');
+	    allowed_metrics.push('max');
+	    allowed_metrics.push('avg');
+	} else {
+	    allowed_metrics.push('val');
+	}
+    }
+    if (ftype == 'num_discrete' || ftype == 'enum') {
+	allowed_metrics.push('tally');
+    }
+
+    $('#agg span').addClass('disabled');
+    $.each(allowed_metrics, function(i, e) {
+	    $('#agg span[type="' + e + '"]').removeClass('disabled');
+	});
+
+    var metric = report_context.metric;
+    if (allowed_metrics.length == 1 && allowed_metrics[0] != report_context.metric) {
+	metric = allowed_metrics[0];
+    } else if (report_context.metric != null && allowed_metrics.indexOf(report_context.metric) == -1) {
+	metric = null;
+    }
+    select_metric(metric, report_context);
+}
+
+function select_metric(metric, report_context, $metric) {
+    $metric = $metric || $('#agg span[type="' + metric + '"]');
+
+    report_context.metric = metric;
+
+    highlight($metric, '#agg span');
+
+    if (metric) {
+	$('#style').show();
+	set_styles_for_metric(report_context);
+    } else {
+	$('#style').hide();
+    }
+}
+
+function set_styles_for_metric(report_context) {
+    var cmult = case_type_config(report_context.case_type).geo_linked_to != null;
+
+    var allowed_styles = [];
+    if (report_context.metric != 'tally') {
+	allowed_styles.push('gauge');
+	allowed_styles.push('intens');
+	allowed_styles.push('blob');
+    } else {
+	if (cmult) {
+	    allowed_styles.push('pie');
+	    allowed_styles.push('varpie');
+	    allowed_styles.push('explodepie');
+	} else {
+	    allowed_styles.push('dot');
+	}
+    }
+
+    $('#style span').addClass('disabled');
+    $.each(allowed_styles, function(i, e) {
+	    $('#style span[type="' + e + '"]').removeClass('disabled');
+	});
+
+    if (allowed_styles.length == 1 && allowed_styles[0] != report_context.style) {
+	select_style(allowed_styles[0], report_context);
+    } else if (report_context.style != null && allowed_styles.indexOf(report_context.style) == -1) {
+	select_style(null, report_context);
+    }
+}
+
+function select_style(style, report_context, $style) {
+    $style = $style || $('#style span[type="' + style + '"]');
+
+    report_context.style = style;
+
+    highlight($style, '#style span');
 }
 
 function highlight($current, all) {
-    $(all).css('font-weight', 'normal');
-    $(all).css('color', 'black');
-    $current.css('font-weight', 'bold');
-    $current.css('color', '#a00');
+    $(all).removeClass('selected');
+    if ($current) {
+	$current.addClass('selected');
+    }
 }
 
-function DataAggregation(cases, case_type, field, metric) {
+function DataAggregation(cases, case_type, field, metric_type) {
     this.geocases = {};
     this.values = {};
     this.results = {};
@@ -500,31 +569,39 @@ function DataAggregation(cases, case_type, field, metric) {
 	    agg.values[geo_id].push(val);
 	});
 
-    $.each(this.values, function(k, v) {
-	    var result = metric.summarize(v);
-	    agg.results[k] = result;
-	    agg._results.push(result);
-	});
-    this.context = metric.overview(this._results);
-
-    // we want something analagous to a 'left join', so we can display some kind
-    // of 'null' marker for geocases without data
-    // but, we can't reliably determine what case type that should be!
-    var default_geo_type = CONFIG.links_to[case_type];
+    // fill in empty entries of the geocases that have no linked data cases
+    var default_geo_type = case_type_config(case_type).geo_linked_to;
     if (default_geo_type) {
 	$.each(cases, function(id, c) {
 		if (c.type() == default_geo_type) {
-		    if (!agg.results[c.id()]) {
+		    if (!agg.values[c.id()]) {
 			agg.geocases[c.id()] = c;
-			agg.results[c.id()] = null;
+			agg.values[c.id()] = [];
 		    }
 		}
 	    });
     }
+
+    if (metric_type != null) {
+	var metric = make_metric(metric_type);
+	$.each(this.values, function(k, v) {
+		if (metric == null) {
+		    return;
+		}
+
+		var result = metric.summarize(v);
+		agg.results[k] = result;
+		if (result != null) {
+		    agg._results.push(result);
+		}
+	    });
+	this.context = metric.overview(this._results);
+    }
+
 }
 
 function display_metric(context) {
-    var data = new DataAggregation(context.cases, context.type, context.field, context.metric);
+    var data = new DataAggregation(context.cases, context.case_type, context.field.field, context.metric);
 
     console.log(context);
     console.log(data);
@@ -534,6 +611,19 @@ function display_metric(context) {
 
     // need to assign colors and such
     // each summation method needs a class - includes legends and such
+}
+
+function make_style(type) {
+    var factory = {
+	gauge:      function() { return new GaugeMarkerStyle({radius: 10}); },
+	intens:     function() { return new IntensityMarkerStyle({radius: 10}); },
+	blob:       function() { return new BlobMarkerStyle({ref_radius: 15}); },
+        dot:        function() { return new PieMarkerStyle({radius: 8}); },
+	pie:        function() { return new PieMarkerStyle({radius: 13}); },
+	varpie:     function() { return new PieMarkerStyle({radius: 18, varsize: true}); },
+	explodepie: function() { return new ExplodedPieMarkerStyle({radius: 24}); },
+    }[type];
+    return factory();
 }
 
 function Marker(style) {
@@ -635,10 +725,11 @@ function IntensityMarkerStyle(params) {
 
 function BlobMarkerStyle(params) {
     this.ref_radius = params.ref_radius;
+    this.min_radius = params.min_radius || 3;
     this.color = params.color || 'rgb(0,255,0)';
 
     this.radius = function(data, context) {
-	return this.ref_radius * Math.sqrt(data / context);
+	return Math.max(this.ref_radius * Math.sqrt(data / context), this.min_radius);
     }
 
     this.get_dim = function(data, context) {
@@ -648,7 +739,7 @@ function BlobMarkerStyle(params) {
     this.draw = function(data, context, ctx, w, h) {
 	var mst = this;
 	var arc = function(a, b) {
-	    ctx.arc(.5 * w, .5 * h, mst.radius(data, context), a * Math.PI*2, b * Math.PI*2); 
+	    ctx.arc(.5 * w, .5 * h, Math.max(mst.radius(data, context), mst.min_radius), a * Math.PI*2, b * Math.PI*2); 
 	}
 	var circle = function() {
 	    ctx.beginPath();
@@ -657,7 +748,7 @@ function BlobMarkerStyle(params) {
 	}
 
 	circle();
-	ctx.fillStyle = this.color;
+	ctx.fillStyle = (data > 0 ? this.color : 'black');
 	ctx.fill();
 
 	circle();
@@ -790,10 +881,20 @@ function ExplodedPieMarkerStyle(params) {
     }
 }
 
-function render_data(data, style) {
+function render_data(data, style_type) {
+    var renderer = (function() {
+	    var style = null;
+	    if (style_type) {
+		style = new Marker(make_style(style_type));
+	    }
+	    return function(v, context) {
+		return (v != null && style != null ? style.render(v, context) : case_no_data());
+	    };
+	})();
+
     $.each(data.results, function(k, v) {
 	    var c = data.geocases[k];
-	    c.marker.setIcon(v != null ? new Marker(style).render(v, data.context) : case_no_data());
+	    c.marker.setIcon(renderer(v, data.context));
 	    c.display(true);
 	});
 }
@@ -804,6 +905,19 @@ function hide_nonrelevant(data, cases) {
 		(c.display || function(x){})(false);
 	    }
 	});
+}
+
+function make_metric(type) {
+    var metric_factory = {
+	count: CountMetric,
+	val: MaxMetric, // guaranteed to have only 1 item in dataset
+	sum: SumMetric,
+	min: MinMetric,
+	max: MaxMetric,
+	avg: AvgMetric,
+	tally: TallyMetric,
+    }[type];
+    return new metric_factory();
 }
 
 function CountMetric() {
@@ -860,7 +974,8 @@ function MaxMetric() {
 
 function AvgMetric() {
     this.summarize = function(v) {
-	return (new SumMetric().summarize(v)) / (new CountMetric().summarize(v));
+	var count = new CountMetric().summarize(v);
+	return (count == 0 ? null : (new SumMetric().summarize(v)) / count);
     }
 
     this.overview = function(v) {

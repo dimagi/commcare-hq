@@ -37,25 +37,41 @@ $(document).ready(function() {
   -webkit-border-radius: 20px;
 }
 
+.choice {
+  color: black;
+  font-weight: normal;
+}
+
+.selected {
+  color: #a00;
+  font-weight: bold;
+}
+
+.disabled {
+  color: #888;
+}
+
 </style>
 
 <div style="position: relative;">
   <div id="map" style="width: 100%;"></div>
   
-  <div id="sidebar">
+  <div id="sidebar" style="display: none;">
     <div id="style" style="display: none; margin-bottom: 30px;">
       <h3>Style</h3>
 	<span type="intens">intensity</span> &middot;
 	<span type="blob">size</span> &middot;
         <span type="gauge">gauge</span> &middot;
-	<span type="pie">pie(A)</span> &middot;
-	<span type="varpie">pie(B)</span> &middot;
-	<span type="explodepie">pie(C)</span>
+	<span type="dot">dot</span> &middot;
+	<span type="pie">pie<sub>A</sub></span> &middot;
+	<span type="varpie">pie<sub>B</sub></span> &middot;
+	<span type="explodepie">pie<sub>C</sub></span>
     </div>
 
     <div id="agg" style="display: none; margin-bottom: 30px;">
       <h3>Metric</h3>
       <span type="count">count</span> &middot;
+      <span type="val">value</span> &middot;
       <span type="sum">sum</span> &middot;
       <span type="min">min</span> &middot;
       <span type="max">max</span> &middot;
