@@ -144,7 +144,8 @@ class LowercaseStringProperty(StringProperty):
     Make sure that the string is always lowercase'd
     """
     def _adjust_value(self, value):
-        return value.lower() if value else None
+        if value is not None:
+            return value.lower()
 
 #    def __set__(self, instance, value):
 #        return super(LowercaseStringProperty, self).__set__(instance, self._adjust_value(value))
@@ -161,7 +162,7 @@ class DjangoUserMixin(DocumentSchema):
     username = LowercaseStringProperty()
     first_name = StringProperty()
     last_name = StringProperty()
-    email = StringProperty()
+    email = LowercaseStringProperty()
     password = StringProperty()
     is_staff = BooleanProperty()
     is_active = BooleanProperty()
