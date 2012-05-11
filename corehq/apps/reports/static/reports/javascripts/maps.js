@@ -664,7 +664,7 @@ function GaugeMarkerStyle(params) {
 	    ctx.closePath();
 	}
 
-	var pct = data / context;
+	var pct = data / (context || 1.);
 
 	circle();
 	ctx.fillStyle = this.bgcolor;
@@ -700,7 +700,7 @@ function IntensityMarkerStyle(params) {
 	    arc(0., 1.);
 	    ctx.closePath();
 	}
-	var pct = data / context;
+	var pct = data / (context || 1.);
 
 	circle();
 	ctx.fillStyle = this.bgcolor;
@@ -726,7 +726,7 @@ function BlobMarkerStyle(params) {
     this.color = params.color || 'rgb(0,255,0)';
 
     this.radius = function(data, context) {
-	return Math.max(this.ref_radius * Math.sqrt(data / context), this.min_radius);
+	return Math.max(this.ref_radius * Math.sqrt(data / (context || 1.)), this.min_radius);
     }
 
     this.get_dim = function(data, context) {
