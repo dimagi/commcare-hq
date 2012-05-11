@@ -608,9 +608,6 @@ function display_metric(context) {
 
     render_data(data, context.style);
     hide_nonrelevant(data, context.cases);
-
-    // need to assign colors and such
-    // each summation method needs a class - includes legends and such
 }
 
 function make_style(type) {
@@ -985,6 +982,10 @@ function AvgMetric() {
 
 function TallyMetric() {
     this.summarize = function(v) {
+	if (v.length == 0) {
+	    return null;
+	}
+
 	var k = {};
 	$.each(v, function(i, e) {
 		if (k[e] == null) {
