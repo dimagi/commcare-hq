@@ -46,7 +46,7 @@ function make_test_case(type, name, properties, links) {
 
 // build our corpus of testing data
 function gen_test_data() {
-    TEST_CASES = [];
+    test_cases = [];
 
     var households = {
 	drew: '41.63 -72.59',
@@ -83,7 +83,7 @@ function gen_test_data() {
 
 	    var c = make_test_case('household', k, props);
 	    household_cases[k] = c;
-	    TEST_CASES.push(c);
+	    test_cases.push(c);
 	});
 
     var preg_cases = {};
@@ -92,7 +92,7 @@ function gen_test_data() {
 	    delete v.household;
 	    var c = make_test_case('preg', k, v, link);
 	    preg_cases[k] = c;
-	    TEST_CASES.push(c);
+	    test_cases.push(c);
 	});
 
     var child_cases = {};
@@ -101,9 +101,10 @@ function gen_test_data() {
 	    delete v.household;
 	    var c = make_test_case('child', k, v, link);
 	    child_cases[k] = c;
-	    TEST_CASES.push(c);
+	    test_cases.push(c);
 	});
 
+    return test_cases;
 }
 
 
@@ -205,12 +206,16 @@ function init_map($div, default_pos, default_zoom, default_map_type) {
 
 function fit_all(map, cases) {
     var bounds = new google.maps.LatLngBounds();
+    var any = false;
     $.each(cases, function(id, c) {
 	    if (c.marker) {
 		bounds.extend(c.marker.position);
+		any = true;
 	    }
         });
-    map.fitBounds(bounds);
+    if (any) {
+	map.fitBounds(bounds);
+    }
 }
 
 function annotate(c) {
@@ -238,7 +243,9 @@ function annotate(c) {
 
 // take a raw case object and annotate with various methods
 function init_case(c, cases, map) {
-    var geo_field = CONFIG.geo_cases[c.type()];
+    var config = case_type_config(c.type()) || {};
+
+    var geo_field = config.geo_field;
     if (geo_field) {
 	// create map marker associated with case
 
@@ -247,7 +254,7 @@ function init_case(c, cases, map) {
 	    return static_marker(p, m, case_no_data());
 	};
 	var info_factory = function(c) {
-	    var info = $('<p>this is <span id="name"></span></p>');
+	    var info = $('<p>This is case "<span id="name"></span>"</p>');
 	    info.find('#name').text(c.prop('case_name'));
 	    return info;
 	};
@@ -258,7 +265,7 @@ function init_case(c, cases, map) {
 		    );
     } else {
 	// link this case to a geo-enabled case
-	c.geo_link = search_for_geo(c, cases);
+	c.geo_link = search_for_geo(c, config.geo_linked_to, cases);
     }
 }
     
@@ -287,15 +294,15 @@ function geoify_case(c, geo_field, map, make_marker, make_info) {
     }
 }
 
-function search_for_geo(c, cases) {
+function search_for_geo(c, link_type, cases) {
     var geo_case = null;
     $.each(c.indices, function(k, v) {
 	    var linked_id = v.case_id;
 	    var linked_case = cases[linked_id];
-	    if (linked_case.geo()) {
+	    if (linked_case.geo() && linked_case.type() == link_type) {
 		found = linked_case.geo();
 	    } else {
-		found = search_for_geo(linked_case, cases);
+		found = search_for_geo(linked_case, link_type, cases);
 	    }
 	    if (found) {
 		geo_case = found;
@@ -305,29 +312,50 @@ function search_for_geo(c, cases) {
     return geo_case;
 }
 
+function lookup_by(list, field, val) {
+    var match = null;
+    $.each(list, function(i, e) {
+	    if (e.field == val) {
+		match = e;
+		return false;
+	    }
+	});
+    return match;
+}
+
+function case_type_config(case_type) {
+    return lookup_by(CONFIG, 'case_type', case_type);
+}
+
+function field_config(case_type, field) {
+    return lookup_by(case_type_config(case_type).fields, 'field', field);
+}
 
 
 
 
+function maps_init(config, case_api_url) {
+    if (config == null) {
+	alert('This domain is not configured for maps reports');
+    }
+    // set to global var for now
+    CONFIG = config.case_types;
 
-function maps_init(case_api_url) {
     var map = init_map($('#map'), [30., 0.], 2, 'terrain');
 
-    /*
-    $.get(case_api_url, null, function(data) {
-	    init_callback(map, data);
-	}, 'json');
-    */
-
-    // load testing data
-    gen_test_data();
-    console.log(TEST_CASES);
-    init_callback(map, TEST_CASES);
+    var debug_mode = (window.location.href.indexOf('?debug=true') != -1);
+    if (!debug_mode) {
+	$.get(case_api_url, null, function(data) {
+		init_callback(map, data);
+	    }, 'json');
+    } else {
+	var test_cases = gen_test_data();
+	console.log('test data', test_cases);
+	init_callback(map, test_cases);
+    }
 }
 
 function init_callback(map, case_list) {
-    debugBulkUp(case_list, 0, 5);
-
     cases = {};
     $.each(case_list, function(i, c) {
 	    cases[c.case_id] = annotate(c);
@@ -340,15 +368,13 @@ function init_callback(map, case_list) {
 
     // num visits is a meta-field?
 
-    // pick an aggregation mode
-    // pick a marker style
-
     // todo: subfilter (e.g., just male, just female)
     // what about: date ranges, filter by chw, etc.
 
     // marker style renders marker, and legend
 
     var report_context = {
+	cases: cases,
 	type: null,
 	field: null,
 	metric: null,
@@ -356,26 +382,23 @@ function init_callback(map, case_list) {
     };
 
     var $panel = $('#panel');
-    $panel.css('text-align', 'left');
-    $.each(CONFIG.fields, function(k, v) {
+    $.each(CONFIG, function(i, c) {
 	    var $hdr = $('<h3 />');
-	    $hdr.text(k);
+	    $hdr.text(c.display_name || c.case_type);
 	    $panel.append($hdr);
-	    $.each(v, function(i, e) {
+	    $.each(c.fields, function(i, f) {
 		    var $f = $('<div />');
-		    $f.text(e);
+		    $f.text(f.display_name || f.field);
 		    $panel.append($f);
 		    $f.click(function() {
-			    report_context.type = k;
-			    report_context.field = e;
-
 			    highlight($f, '#panel div');
-
-			    display_metric(report_context, cases);
+			    select_field(c.case_type, f, report_context);
+			    display_metric(report_context);
 			});
 		});
 	});
 
+    /*
     $.each($('#agg div'), function(i, e) {
 	    var $e = $(e);
 	    $e.click(function() {
@@ -415,12 +438,37 @@ function init_callback(map, case_list) {
 		    display_metric(report_context, cases);
 		});
 	});
+    */
 
+}
+
+function select_field(case_type, field, report_context) {
+    report_context.type = case_type;
+    report_context.field = field;
+    
+    $('#agg').show();
+    set_metrics_for_field(case_type, field, report_context);
+    //enable/disable metrics based on field
+    //null metric if not enabled
+
+    //if only one metric avail, select it and cascade
+}
+
+function set_metrics_for_field(case_type, field, report_context) {
+    //get field datatype
+    //get case multiplicity
+
+    //count: any field if casemult > 1
+    //sum min max avg: num/numdisc, casemult > 1
+    //value: num/numdisc, casemult == 1
+    //tally: enum/numdisc
 }
 
 function highlight($current, all) {
     $(all).css('font-weight', 'normal');
+    $(all).css('color', 'black');
     $current.css('font-weight', 'bold');
+    $current.css('color', '#a00');
 }
 
 function DataAggregation(cases, case_type, field, metric) {
@@ -472,14 +520,14 @@ function DataAggregation(cases, case_type, field, metric) {
     }
 }
 
-function display_metric(context, cases) {
-    var data = new DataAggregation(cases, context.type, context.field, context.metric);
+function display_metric(context) {
+    var data = new DataAggregation(context.cases, context.type, context.field, context.metric);
 
     console.log(context);
     console.log(data);
 
     render_data(data, context.style);
-    hide_nonrelevant(data, cases);
+    hide_nonrelevant(data, context.cases);
 
     // need to assign colors and such
     // each summation method needs a class - includes legends and such
@@ -855,7 +903,14 @@ function TallyMetric() {
 
 
 function case_no_data() {
-    return render_marker(gauge(0.), 18, 18);
+    return render_marker(function(ctx, w, h) {
+	    ctx.beginPath();
+	    ctx.arc(.5*w, .5*h, .3*Math.min(w, h), 0, 2*Math.PI);
+	    ctx.closePath();
+	    ctx.strokeStyle = 'rgba(255, 0, 0, .8)';
+	    ctx.lineWidth = 5;
+	    ctx.stroke();
+	}, 18, 18);
 }
 
 
@@ -1005,18 +1060,3 @@ function gauge(k) {
 
 
 
-
-function debugBulkUp(cases, mult, dispersion) {
-    var init_num = cases.length;
-    var dispersion = 5.;
-    for (var i = 0; i < init_num; i++) {
-	for (var j = 0; j < mult; j++) {
-	    var c = $.extend(true, {}, cases[i]);
-	    var loc = c.properties.geo.split(' ');
-	    loc[0] = +loc[0] + dispersion * (2. * Math.random() - 1.);
-	    loc[1] = +loc[1] + dispersion * (2. * Math.random() - 1.);
-	    c.properties.geo = loc[0] + ' ' + loc[1];
-	    cases.push(c);
-	}
-    }
-}

@@ -15,7 +15,9 @@ $(document).ready(function() {
     setMapHeight();
     $(window).resize(setMapHeight);
 
-    maps_init(CASE_API_URL);
+
+
+    maps_init(CONFIG, CASE_API_URL);
 });
 
 </script>
@@ -26,6 +28,8 @@ $(document).ready(function() {
   position: absolute;
   bottom: 30px;
   right: 12px;
+  padding: 10px;
+  max-width: 12em;
   background: rgba(255, 255, 255, .7);
   border: 5px #aaa solid;
   border-radius: 20px;
@@ -39,27 +43,27 @@ $(document).ready(function() {
   <div id="map" style="width: 100%;"></div>
   
   <div id="sidebar">
+    <div id="style" style="display: none; margin-bottom: 30px;">
+      <h3>Style</h3>
+	<span type="intens">intensity</span> &middot;
+	<span type="blob">size</span> &middot;
+        <span type="gauge">gauge</span> &middot;
+	<span type="pie">pie(A)</span> &middot;
+	<span type="varpie">pie(B)</span> &middot;
+	<span type="explodepie">pie(C)</span>
+    </div>
 
-    <div id="panel" style="float: right; padding: 10px;"></div>
-    <div id="agg" style="float: right; clear: both; padding: 10px;">
-      <h3>aggregation</h3>
-      <div type="count">count</div>
-      <div type="sum">sum</div>
-      <div type="min">min</div>
-      <div type="max">max</div>
-      <div type="avg">average</div>
-      <div type="tally">tally</div>
+    <div id="agg" style="display: none; margin-bottom: 30px;">
+      <h3>Metric</h3>
+      <span type="count">count</span> &middot;
+      <span type="sum">sum</span> &middot;
+      <span type="min">min</span> &middot;
+      <span type="max">max</span> &middot;
+      <span type="avg">average</span> &middot;
+      <span type="tally">tally</span>
     </div>
-    <div id="style" style="float: right; clear: both; padding: 10px;">
-      <h3>style</h3>
-      <div type="gauge">gauge</div>
-      <div type="intens">intensity</div>
-      <div type="blob">blob</div>
-      <div type="pie">pie</div>
-      <div type="varpie">varpie</div>
-      <div type="explodepie">exploded pie</div>
-    </div>
-    
+
+    <div id="panel"></div>
   </div>
   
 </div>
