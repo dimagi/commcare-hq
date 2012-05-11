@@ -70,9 +70,6 @@ def get_case_element(case, updates, version="1.0"):
         generator.add_indices(root)
     
     if do_purge:
-        # likewise, for now we assume that you can't both create/update and close/purge  
-        assert(const.CASE_ACTION_UPDATE not in updates)
-        assert(const.CASE_ACTION_CREATE not in updates)
         purge_block = generator.get_close_element()
         root.append(purge_block)
         

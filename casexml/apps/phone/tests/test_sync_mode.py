@@ -272,6 +272,49 @@ class SyncTokenUpdateTest(SyncBaseTest):
         self._testUpdate(self.sync_log.get_id, {parent_id: [], updated_id: [], new_parent_id: [],
                                                 child_id: [new_index_ref]})
         
+    def testClosedParentIndex(self):
+        """
+        Tests that things work properly when you have a reference to the parent
+        case in a child, even if it's closed.
+        """
+        # first create the parent case
+        parent_id = "mommy"
+        self._createCaseStubs([parent_id])
+        self._testUpdate(self.sync_log.get_id, {parent_id: []})
+        
+        # create the child        
+        child_id = "baby"
+        index_id = 'my_mom_is'
+        child = CaseBlock(
+            create=True,
+            case_id=child_id,
+            user_id=USER_ID,
+            version=V2,
+            index={index_id: (PARENT_TYPE, parent_id)},
+        ).as_xml()
+        self._postFakeWithSyncToken(child, self.sync_log.get_id)
+        index_ref = CommCareCaseIndex(identifier=index_id,
+                                      referenced_type=PARENT_TYPE,
+                                      referenced_id=parent_id)
+    
+        self._testUpdate(self.sync_log.get_id, {parent_id: [], 
+                                                child_id: [index_ref]})
+        
+        # close the mother case
+        close = CaseBlock(create=False, case_id=parent_id, user_id=USER_ID, 
+                          version=V2, close=True
+        ).as_xml()
+        self._postFakeWithSyncToken(close, self.sync_log.get_id)
+        self._testUpdate(self.sync_log.get_id, {child_id: [index_ref]},
+                         {parent_id: []})
+        
+        # try a clean restore again
+        check_user_has_case(self, self.user, close, should_have=True, 
+                            version=V2, line_by_line=False)
+        check_user_has_case(self, self.user, child, should_have=True, 
+                            version=V2, line_by_line=False)
+        
+        
     def testAssignToNewOwner(self):
         # first create the parent case
         parent_id = "mommy"
@@ -507,7 +550,7 @@ class MultiUserSyncTest(SyncBaseTest):
         
         # original user syncs again
         # make sure close block appears
-        check_user_has_case(self, self.user, close_block, 
+        check_user_has_case(self, self.user, close_block, line_by_line=False,
                             restore_id=self.sync_log.get_id, version=V2)
     
     def testOtherUserUpdatesUnowned(self):

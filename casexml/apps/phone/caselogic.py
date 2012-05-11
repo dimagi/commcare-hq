@@ -39,19 +39,14 @@ class CaseSyncUpdate(object):
         Returns a list of the required updates for this case/token
         pairing. Should be a list of actions like [create, update, close]
         """
+        ret = []
+        if not self.sync_token or not self.sync_token.phone_has_case(self.case.get_id):
+            ret.append(const.CASE_ACTION_CREATE)
+        # always include an update 
+        ret.append(const.CASE_ACTION_UPDATE)
         if self.case.closed:
-            return [const.CASE_ACTION_CLOSE] \
-                if self.sync_token.phone_has_case(self.case.get_id) \
-                else []    
-        
-        else:
-            ret = []
-            if not self.sync_token or not self.sync_token.phone_has_case(self.case.get_id):
-                ret.append(const.CASE_ACTION_CREATE)
-                    
-            # always include an update 
-            ret.append(const.CASE_ACTION_UPDATE)
-            return ret
+            ret.append(const.CASE_ACTION_CLOSE)
+        return ret
 
 class CaseSyncOperation(object):
     """
