@@ -46,7 +46,11 @@ def post(request, callback=None, magic_property='xml_submission_file'):
             return callback(doc)
         return HttpResponse("Thanks! Your new xform id is: %s" % doc["_id"], status=201)
     except Exception, e:
-        logging.exception(e)
+        logging.exception("Problem receiving submission to %s. %s" % \
+                          (request.path, str(e)))
+        # TODO: do we want to be emailed every time a phone fails to submit?
+        # Quite possibly, though this will be a short term disaster.
+        # If so, change this to simply raise an exception
         return HttpResponseServerError("FAIL")
 
 def download_form(request, instance_id):
