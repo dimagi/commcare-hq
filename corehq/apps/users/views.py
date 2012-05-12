@@ -101,7 +101,8 @@ def web_users(request, domain, template="users/web_users.html"):
     user_roles = [AdminUserRole(domain=domain)]
     user_roles.extend(UserRole.by_domain(domain))
     context.update({
-        'user_roles': user_roles
+        'user_roles': user_roles,
+        'default_role': UserRole.get_default()
     })
     return render_to_response(request, template, context)
 

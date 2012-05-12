@@ -215,6 +215,10 @@ class UserRole(Document):
         role.save()
         return role
 
+    @classmethod
+    def get_default(cls, domain=None):
+        return cls(permissions=Permissions(), domain=domain, name=None)
+
 class AdminUserRole(UserRole):
     def __init__(self, domain):
         return super(AdminUserRole, self).__init__(domain=domain, name='Admin', permissions=Permissions.max())

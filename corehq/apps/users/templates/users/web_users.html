@@ -1,6 +1,12 @@
 {% extends "users/users_base.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/javascripts/knockout-2.0.0.debug.js' %}"></script>
+    <script src="{% static 'hqwebapp/javascripts/knockout.mapping.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'users/js/roles.js' %}"></script>
+{% endblock %}
 {% block js-inline %}{{ block.super }}
     <script>
         $(function () {
@@ -34,15 +40,19 @@
         });
     </script>
     <script>
-        $('.check-x').each(function () {
-            if($(this).data('bool') == 'True') {
-                $(this).addClass('icon-ok');
-            } else if($(this).data('bool') == 'False') {
-                $(this).addClass('icon-remove');
-            } else {
-                $(this).text('?');
-            }
-        })
+//        $('.check-x').each(function () {
+//            if($(this).data('bool') == 'True') {
+//                $(this).addClass('icon-ok');
+//            } else if($(this).data('bool') == 'False') {
+//                $(this).addClass('icon-remove');
+//            } else {
+//                $(this).text('?');
+//            }
+//        });
+        $('#user-roles-table').userRoles({
+            userRoles: {{ user_roles|JSON }},
+            defaultRole: {{ default_role|JSON }}
+        });
     </script>
 {% endblock %}
 {% block head %}
@@ -107,7 +117,7 @@
         </tbody>
     </table>
     <h2>Roles</h2>
-    <table class="table table-striped table-bordered">
+    <table class="table table-striped table-bordered" id="user-roles-table">
         <thead>
         <tr>
             <th></th>
@@ -118,34 +128,36 @@
             <th>View Reports</th>
         </tr>
         </thead>
-        <tbody>
-        {% for role in user_roles %}
+        <tbody data-bind="foreach: userRoles">
         <tr>
-            <th>{% if role.name %}{{ role.name }}{% else %}{{ role.get_id }}<h6>(No Name)</h6>{% endif %}</th>
-            <td><i class="check-x" data-bool="{{ role.permissions.edit_web_users }}"></i></td>
-            <td><i class="check-x" data-bool="{{ role.permissions.edit_commcare_users }}"></i></td>
-            <td><i class="check-x" data-bool="{{ role.permissions.edit_data }}"></i></td>
-            <td><i class="check-x" data-bool="{{ role.permissions.edit_apps }}"></i></td>
+            <th>
+                <span data-bind="visible: name, text: name"></span>
+                <h6 data-bind="visible: !name()">(No Name)</h6>
+            </th>
+            <td><i data-bind="staticChecked: permissions.edit_web_users, iconFalse: 'icon-remove'"></i></td>
+            <td><i data-bind="staticChecked: permissions.edit_commcare_users, iconFalse: 'icon-remove'"></i></td>
+            <td><i data-bind="staticChecked: permissions.edit_data, iconFalse: 'icon-remove'"></i></td>
+            <td><i data-bind="staticChecked: permissions.edit_apps, iconFalse: 'icon-remove'"></i></td>
             <td>
-                {% if role.permissions.view_reports %}
-                    <i class="check-x" data-bool="True"></i>
-                {% else %}
-                {% if role.permissions.view_report_list %}
-                <ul>
-                    {% for report in role.permissions.view_report_list %}
-                    <li>{{ report }}</li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                    <i class="check-x" data-bool="False"></i>
-                {% endif %}
-                {% endif %}
-
+                <span data-bind="visible: permissions.view_reports(), staticChecked: true, iconFalse: 'icon-remove'"></span>
+                <div data-bind="visible: !permissions.view_reports() && permissions.view_report_list().length">
+                    <ul data-bind="foreach: permissions.view_report_list">
+                        <li data-bind="text: $data"></li>
+                    </ul>
+                </div>
+                <span data-bind="visible: !permissions.view_reports() && !permissions.view_report_list().length, staticChecked: false, iconFalse: 'icon-remove'"></span>
             </td>
         </tr>
-        {% endfor %}
         </tbody>
     </table>
+    <div data-bind="modal: roleBeingEdited">
+        <div class="modal-header"></div>
+        <div class="modal-body">
+            <label for="role-edit-name">Name</label>
+            <input id="role-edit-name" data-bind="name"/>
+        </div>
+        <div class="modal-footer"></div>
+    </div>
     </div>
 </div>
 <div class="row-fluid">
