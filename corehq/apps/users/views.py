@@ -781,7 +781,7 @@ class UploadCommCareUsers(TemplateView):
                         try:
                             self.group_memoizer.get_group(group_name).add_user(user)
                         except Exception:
-                            raise Exception("Can't add to group '%s'" % (user.raw_username, group_name))
+                            raise Exception("Can't add to group '%s' (try adding it to your spreadsheet)" % group_name)
                     self.group_memoizer.save_all()
                 except Exception, e:
                     status_row['flag'] = 'error: %s' % e
