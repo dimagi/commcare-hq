@@ -84,11 +84,16 @@ class DomainSyncConfig():
         return transforms
     
     def save(self, transform):
-        # this is a fancy save method because we do some special casing
-        # with the attachments
-        self.database.save_doc(transform.doc, force_update=True)
-        for k, attach in transform.attachments.items():
-            self.database.put_attachment(transform.doc, attach, name=k, 
-                                         content_type=transform._attachments[k]["content_type"])
+        return save(transform, self.database)
         
+
+def save(transform, database):
+    # this is a fancy save method because we do some special casing
+    # with the attachments
+    database.save_doc(transform.doc, force_update=True)
+    for k, attach in transform.attachments.items():
+        database.put_attachment(transform.doc, attach, name=k, 
+                                content_type=transform._attachments[k]["content_type"])
+    
+
 global_config = DomainSyncConfig()

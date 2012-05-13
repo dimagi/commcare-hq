@@ -86,20 +86,24 @@ def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME, login_
 
 login_and_domain_required = login_and_domain_required_ex()
 
-def login_or_digest(fn):
-    def safe_fn(request, domain, *args, **kwargs):
-        if not request.user.is_authenticated():
-            def _inner(request, domain, *args, **kwargs):
-                request.couch_user = couch_user = CouchUser.from_django_user(request.user)
-                if couch_user.is_web_user() and couch_user.is_member_of(domain):
-                    return fn(request, domain, *args, **kwargs)
-                else:
-                    return HttpResponseForbidden()
+def login_or_digest_ex(allow_cc_users=False):
+    def _outer(fn):
+        def safe_fn(request, domain, *args, **kwargs):
+            if not request.user.is_authenticated():
+                def _inner(request, domain, *args, **kwargs):
+                    request.couch_user = couch_user = CouchUser.from_django_user(request.user)
+                    if (allow_cc_users or couch_user.is_web_user()) and couch_user.is_member_of(domain):
+                        return fn(request, domain, *args, **kwargs)
+                    else:
+                        return HttpResponseForbidden()
+        
+                return httpdigest(_inner)(request, domain, *args, **kwargs)
+            else:
+                return login_and_domain_required(fn)(request, domain, *args, **kwargs)
+        return safe_fn
+    return _outer
 
-            return httpdigest(_inner)(request, domain, *args, **kwargs)
-        else:
-            return login_and_domain_required(fn)(request, domain, *args, **kwargs)
-    return safe_fn
+login_or_digest = login_or_digest_ex()
 
 # For views that are inside a class
 def cls_login_and_domain_required(func):

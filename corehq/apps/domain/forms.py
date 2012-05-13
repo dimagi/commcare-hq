@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 
 import django_tables as tables
 from django.core.validators import validate_email
+from django.forms.fields import ChoiceField
 from django.utils.encoding import smart_str
 
 from corehq.apps.domain.middleware import _SESSION_KEY_SELECTED_DOMAIN
@@ -79,6 +80,7 @@ class DomainSelectionForm(forms.Form):
 
 class DomainGlobalSettingsForm(forms.Form):
     default_timezone = TimeZoneChoiceField(label="Default Timezone", initial="UTC")
+    case_sharing = ChoiceField(label='Case Sharing', choices=(('false', 'Off'), ('true', 'On')))
 
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
@@ -89,6 +91,7 @@ class DomainGlobalSettingsForm(forms.Form):
     def save(self, request, domain):
         try:
             domain.default_timezone = self.cleaned_data['default_timezone']
+            domain.case_sharing = self.cleaned_data['case_sharing'] == 'true'
             domain.save()
             return True
         except Exception:

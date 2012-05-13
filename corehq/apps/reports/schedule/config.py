@@ -1,5 +1,4 @@
-from corehq.apps.reports.schedule import BasicReportSchedule, ReportSchedule,\
-    DomainedReportSchedule
+from corehq.apps.reports.schedule import BasicReportSchedule, ReportSchedule
 from corehq.apps.hqadmin.views import domain_list
 from corehq.apps.reports.standard import DailySubmissionsReport, DailyFormCompletionsReport, SubmissionsByFormReport, CaseActivityReport
 

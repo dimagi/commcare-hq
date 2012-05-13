@@ -254,8 +254,6 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
     show_dates = "true"
     datespan = request.datespan
     domains = Domain.get_all()
-    error_tags = FormErrorReport.error_tags
-    warning_tags = FormErrorReport.warning_tags
 
     rows = []
     for domain in domains:
@@ -275,25 +273,18 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
         ).all()
         num_forms_submitted = data[0].get('value', 0) if data else 0
 
+        key = [domain.name, "all_errors_only"]
+        data = get_db().view("phonelog/devicelog_data",
+            reduce=True,
+            startkey=key+[datespan.startdate_param_utc],
+            endkey=key+[datespan.enddate_param_utc]
+        ).first()
         num_errors = 0
-        for error in error_tags:
-            key = [domain.name, "tag", error]
-            data = get_db().view('phonelog/devicelog_data',
-                startkey=key+[datespan.startdate_param_utc],
-                endkey=key+[datespan.enddate_param_utc, {}],
-                reduce=True
-            ).all()
-            num_errors += data[0].get('value', 0) if data else 0
-
         num_warnings = 0
-        for warning in warning_tags:
-            key = [domain.name, "tag", warning]
-            data = get_db().view('phonelog/devicelog_data',
-                startkey=key+[datespan.startdate_param_utc],
-                endkey=key+[datespan.enddate_param_utc, {}],
-                reduce=True
-            ).all()
-            num_warnings += data[0].get('value', 0) if data else 0
+        if data:
+            data = data.get('value', {})
+            num_errors = data.get('errors', 0)
+            num_warnings = data.get('warnings', 0)
 
         rows.append(dict(domain=domain.name,
                         active_users=num_active_users,
