@@ -442,24 +442,29 @@ EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
 
 STANDARD_REPORT_MAP = {
-    "Monitor Workers" : ['corehq.apps.reports.standard.CaseActivityReport',
-                           'corehq.apps.reports.standard.SubmissionsByFormReport',
-                           'corehq.apps.reports.standard.DailySubmissionsReport',
-                           'corehq.apps.reports.standard.DailyFormCompletionsReport',
-                           'corehq.apps.reports.standard.FormCompletionTrendsReport',
-                           'corehq.apps.reports.standard.SubmissionTimesReport',
-                           'corehq.apps.reports.standard.SubmitDistributionReport',
-                           ],
-    "Inspect Data" : ['corehq.apps.reports.standard.SubmitHistory',
-                      'corehq.apps.reports.standard.CaseListReport',
-                      ],
-    "Raw Data" : ['corehq.apps.reports.standard.ExcelExportReport',
-                  'corehq.apps.reports.standard.CaseExportReport',
-                      ],
-    "Manage Deployments" : ['corehq.apps.reports.standard.ApplicationStatusReport',
-                            'phonelog.reports.FormErrorReport',
-                            'phonelog.reports.DeviceLogDetailsReport'
-                  ]
+    "Monitor Workers" : [
+        'corehq.apps.reports.standard.CaseActivityReport',
+        'corehq.apps.reports.standard.SubmissionsByFormReport',
+        'corehq.apps.reports.standard.DailySubmissionsReport',
+        'corehq.apps.reports.standard.DailyFormCompletionsReport',
+        'corehq.apps.reports.standard.FormCompletionTrendsReport',
+        'corehq.apps.reports.standard.SubmissionTimesReport',
+        'corehq.apps.reports.standard.SubmitDistributionReport',
+    ],
+    "Inspect Data" : [
+        'corehq.apps.reports.standard.SubmitHistory',
+        'corehq.apps.reports.standard.CaseListReport',
+        'corehq.apps.reports.standard.MapReport',
+    ],
+    "Raw Data" : [
+        'corehq.apps.reports.standard.ExcelExportReport',
+        'corehq.apps.reports.standard.CaseExportReport',
+    ],
+    "Manage Deployments" : [
+        'corehq.apps.reports.standard.ApplicationStatusReport',
+        'phonelog.reports.FormErrorReport',
+        'phonelog.reports.DeviceLogDetailsReport'
+    ]
 }
 
 CUSTOM_REPORT_MAP = {

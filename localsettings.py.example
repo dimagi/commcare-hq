@@ -51,3 +51,5 @@ INSECURE_URL_BASE = "http://submit.mysite.com"
 BUG_REPORT_RECIPIENTS = ['me@example.com']
 
 PREVIEWER_RE = r'^.*@dimagi\.com$'
+
+GMAPS_API_KEY = 'changeme'
