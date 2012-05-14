@@ -86,7 +86,6 @@
                     <th>{% trans "Phone" %}</th>
                     {% if couch_user.can_edit_commcare_users %}
                     <th class="help_popover" data-help-key="Archive User"><div >{% trans "Archive" %} <i class="icon icon-question-sign"></i></div></th>
-                    <th class="help_popover" data-help-key="Delete User"><div >{% trans "Delete" %} <i class="icon icon-question-sign"></i></div></th>
                     {% endif %}
                 </tr>
             </thead>
@@ -161,30 +160,6 @@
                                 <button type="submit" class="btn">Unarchive</button>
                             </form>
                         {% endif %}
-                    </td>
-                    <td>
-                        <a href="#delete_user_{{ user.user_id }}" data-toggle="modal" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Delete</a>
-                        <div id="delete_user_{{ user.user_id }}" class="modal hide fade">
-                            <div class="modal-header">
-                                <a class="close" data-dismiss="modal">&times;</a>
-                                <h3>Delete {% commcare_user %} {{ user.raw_username }}? <small>Permanent Action</small></h3>
-                            </div>
-                            <form class="form form-horizontal" action="{% url delete_commcare_user domain user.user_id %}" method="post">
-                                <div class="modal-body">
-                                    <p>Are you sure you want to permanently delete <strong>{{ user.raw_username }}</strong>?</p>
-                                    <p>This action:</p>
-                                    <ul>
-                                        <li>Will delete <strong>all</strong> of {{ user.raw_username }}'s form submissions.</li>
-                                        <li>Is permanent.</li>
-                                    </ul>
-                                    <p>If you ever want to use {{ user.raw_username }}'s data in the future, we suggest that you use the <strong>Archive User</strong> option.</p>
-                                </div>
-                                <div class="modal-footer">
-                                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                                    <button type="submit" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Delete {% commcare_user %}</button>
-                                </div>
-                            </form>
-                        </div>
                     </td>
                     {% endif %}
                 </tr>
