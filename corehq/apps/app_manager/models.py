@@ -12,7 +12,7 @@ from django.http import Http404
 from restkit.errors import ResourceError
 import commcare_translations
 from corehq.apps.app_manager import fixtures
-from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError
+from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError, WrappedNode
 from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
@@ -838,31 +838,40 @@ class ApplicationBase(VersionedDoc):
                 return item['label']
         return self.build_spec.get_label()
 
+
+    @property
+    def url_base(self):
+        return get_url_base()
+
     @property
     def post_url(self):
         return "%s%s" % (
-            get_url_base(),
-            reverse('corehq.apps.receiverwrapper.views.post', args=[self.domain])
+            self.url_base,
+            reverse('receiver_post_with_app_id', args=[self.domain, self.copy_of or self.get_id])
         )
+
     @property
     def ota_restore_url(self):
         return "%s%s" % (
-            get_url_base(),
+            self.url_base,
             reverse('corehq.apps.ota.views.restore', args=[self.domain])
         )
+
     @property
     def profile_url(self):
         return "%s%s?latest=true" % (
-            get_url_base(),
+            self.url_base,
             reverse('download_profile', args=[self.domain, self._id])
         )
+
     @property
     def profile_loc(self):
         return "jr://resource/profile.xml"
+
     @property
     def jar_url(self):
         return "%s%s" % (
-            get_url_base(),
+            self.url_base,
             reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id]),
         )
     
@@ -1055,19 +1064,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return settings.INSECURE_URL_BASE
         else:
             return get_url_base()
-
-    @property
-    def post_url(self):
-        return "%s%s" % (
-            self.url_base,
-            reverse('receiver_post_with_app_id', args=[self.domain, self.copy_of or self.get_id])
-        )
-    @property
-    def ota_restore_url(self):
-        return "%s%s" % (
-            self.url_base,
-            reverse('corehq.apps.ota.views.restore', args=[self.domain])
-        )
 
     @property
     def suite_url(self):
@@ -1436,6 +1432,7 @@ class RemoteApp(ApplicationBase):
     """
     profile_url = StringProperty(default="http://")
     name = StringProperty()
+    manage_urls = BooleanProperty(default=False)
 
     # @property
     #     def suite_loc(self):
@@ -1457,9 +1454,16 @@ class RemoteApp(ApplicationBase):
     def create_profile(self, is_odk=False):
         # we don't do odk for now anyway
         try:
-            return urlopen(self.profile_url).read()
+            profile = urlopen(self.profile_url).read()
         except Exception:
             raise AppError('Unable to access profile url: "%s"' % self.profile_url)
+
+        if self.manage_urls:
+            profile_xml = WrappedNode(profile)
+            profile_xml.find('property[@key="ota-restore-url"]').attrib['value'] = self.ota_restore_url
+            profile_xml.find('property[@key="PostURL"]').attrib['value'] = self.post_url
+            profile = profile_xml.render()
+        return profile
 
     def fetch_file(self, location):
         base = '/'.join(self.profile_url.split('/')[:-1]) + '/'
