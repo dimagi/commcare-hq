@@ -163,3 +163,23 @@ ko.bindingHandlers.saveButton = {
         getSaveButton().ui.appendTo(element);
     }
 };
+
+ko.bindingHandlers.modal = {
+    init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        $(element).addClass('modal fade').modal({
+            show: false,
+            backdrop: false
+        });
+        ko.bindingHandlers['if'].init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+    },
+    update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+//        ko.bindingHandlers.visible.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+        var value = ko.utils.unwrapObservable(valueAccessor());
+        ko.bindingHandlers['if'].update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+        if (value) {
+            $(element).modal('show');
+        } else {
+            $(element).modal('hide');
+        }
+    }
+};

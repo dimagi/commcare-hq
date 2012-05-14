@@ -34,7 +34,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.forms import UserForm, CommCareAccountForm, ProjectSettingsForm
 from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord, UserRole, AdminUserRole
 from corehq.apps.groups.models import Group
-from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
+from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
 from dimagi.utils.web import render_to_response, json_response
 import calendar
 from corehq.apps.reports.schedule.config import ScheduledReportFactory
@@ -99,7 +99,7 @@ def users(request, domain):
 def web_users(request, domain, template="users/web_users.html"):
     context = _users_context(request, domain)
     user_roles = [AdminUserRole(domain=domain)]
-    user_roles.extend(UserRole.by_domain(domain))
+    user_roles.extend(sorted(UserRole.by_domain(domain), key=lambda role: role.name if role.name else u'\uFFFF'))
     context.update({
         'user_roles': user_roles,
         'default_role': UserRole.get_default()
@@ -126,6 +126,23 @@ def undo_remove_web_user(request, domain, record_id):
         username=WebUser.get_by_user_id(record.user_id).username
     ))
     return HttpResponseRedirect(reverse('web_users', args=[domain]))
+
+# If any permission less than domain admin were allowed here, having that permission would give you the permission
+# to change the permissions of your own role such that you could do anything, and would thus be equivalent to having
+# domain admin permissions.
+@domain_admin_required
+@require_POST
+def post_user_role(request, domain):
+    role_data = json.loads(request.raw_post_data)
+    print set(UserRole.properties()).union('_id', '_rev')
+    role_data = dict([(p, role_data[p]) for p in set(UserRole.properties().keys() + ['_id', '_rev']) if p in role_data])
+    role = UserRole.wrap(role_data)
+    role.domain = domain
+    if role.get_id:
+        old_role = UserRole.get(role.get_id)
+        assert(old_role.doc_type == UserRole.__name__)
+    role.save()
+    return json_response(role)
 
 @transaction.commit_on_success
 def accept_invitation(request, domain, invitation_id):

@@ -51,7 +51,8 @@
 //        });
         $('#user-roles-table').userRoles({
             userRoles: {{ user_roles|JSON }},
-            defaultRole: {{ default_role|JSON }}
+            defaultRole: {{ default_role|JSON }},
+            saveUrl: '{% url post_user_role domain %}'
         });
     </script>
 {% endblock %}
@@ -117,46 +118,107 @@
         </tbody>
     </table>
     <h2>Roles</h2>
-    <table class="table table-striped table-bordered" id="user-roles-table">
-        <thead>
-        <tr>
-            <th></th>
-            <th>Edit Web Users</th>
-            <th>Edit CommCare Users</th>
-            <th>Edit Data</th>
-            <th>Edit Apps</th>
-            <th>View Reports</th>
-        </tr>
-        </thead>
-        <tbody data-bind="foreach: userRoles">
-        <tr>
-            <th>
-                <span data-bind="visible: name, text: name"></span>
-                <h6 data-bind="visible: !name()">(No Name)</h6>
-            </th>
-            <td><i data-bind="staticChecked: permissions.edit_web_users, iconFalse: 'icon-remove'"></i></td>
-            <td><i data-bind="staticChecked: permissions.edit_commcare_users, iconFalse: 'icon-remove'"></i></td>
-            <td><i data-bind="staticChecked: permissions.edit_data, iconFalse: 'icon-remove'"></i></td>
-            <td><i data-bind="staticChecked: permissions.edit_apps, iconFalse: 'icon-remove'"></i></td>
-            <td>
-                <span data-bind="visible: permissions.view_reports(), staticChecked: true, iconFalse: 'icon-remove'"></span>
-                <div data-bind="visible: !permissions.view_reports() && permissions.view_report_list().length">
-                    <ul data-bind="foreach: permissions.view_report_list">
-                        <li data-bind="text: $data"></li>
-                    </ul>
+    <div id="user-roles-table">
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th></th>
+                    <th>Edit Web Users</th>
+                    <th>Edit CommCare Users</th>
+                    <th>Edit Data</th>
+                    <th>Edit Apps</th>
+                    <th>View Reports</th>
+                </tr>
+            </thead>
+            <tbody data-bind="foreach: userRoles">
+                <tr>
+                    <td>
+                        <button class="btn" data-bind="visible: $data._id, click: $root.setRoleBeingEdited">
+                            <i class="icon-edit"></i>
+                            Edit Role
+                        </button>
+                    </td>
+                    <th>
+                        <span data-bind="visible: name, text: name"></span>
+                        <h6 data-bind="visible: !name()">(No Name)</h6>
+                    </th>
+                    <td><i data-bind="staticChecked: permissions.edit_web_users"></i></td>
+                    <td><i data-bind="staticChecked: permissions.edit_commcare_users"></i></td>
+                    <td><i data-bind="staticChecked: permissions.edit_data"></i></td>
+                    <td><i data-bind="staticChecked: permissions.edit_apps"></i></td>
+                    <td>
+                        <span data-bind="visible: permissions.view_reports(), staticChecked: true"></span>
+                        <div data-bind="visible: !permissions.view_reports() && permissions.view_report_list().length">
+                            <ul data-bind="foreach: permissions.view_report_list">
+                                <li data-bind="text: $data"></li>
+                            </ul>
+                        </div>
+                        <span data-bind="visible: !permissions.view_reports() && !permissions.view_report_list().length, staticChecked: false"></span>
+                    </td>
+                    <!--<td>-->
+                        <!--<button class="btn btn-danger" data-bind="visible: $data._id, click: $root.setRoleBeingEdited">-->
+                            <!--<i class="icon-white icon-trash"></i>-->
+                            <!--Delete Role-->
+                        <!--</button>-->
+                    <!--</td>-->
+                </tr>
+            </tbody>
+        </table>
+        <button class="btn btn-primary" data-bind="click: function () {$root.setRoleBeingEdited($root.defaultRole)}">Add Role</button>
+        <div data-bind="modal: roleBeingEdited">
+            <div data-bind="with: roleBeingEdited">
+                <div class="modal-header">
+                    <a class="close" data-bind="click: $root.unsetRoleBeingEdited">×</a>
+                    <h3 data-bind="text: modalTitle"></h3>
                 </div>
-                <span data-bind="visible: !permissions.view_reports() && !permissions.view_report_list().length, staticChecked: false, iconFalse: 'icon-remove'"></span>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-    <div data-bind="modal: roleBeingEdited">
-        <div class="modal-header"></div>
-        <div class="modal-body">
-            <label for="role-edit-name">Name</label>
-            <input id="role-edit-name" data-bind="name"/>
+                <div class="modal-body">
+                    <input data-bind="value: name" placeholder="Role Name"/>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Edit Web Users</th>
+                            <td>
+                                <input type="checkbox" data-bind="checked: permissions.edit_web_users"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Edit CommCare Users</th>
+                            <td>
+                                <input type="checkbox" data-bind="checked: permissions.edit_commcare_users"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Edit Data</th>
+                            <td>
+                                <input type="checkbox" data-bind="checked: permissions.edit_data"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Edit Apps</th>
+                            <td>
+                                <input type="checkbox" data-bind="checked: permissions.edit_apps"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>View Reports</th>
+                            <td>
+                                <input type="checkbox" data-bind="checked: permissions.view_reports"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>View Report List</th>
+                            <td>
+                                <select data-bind="selectedOptions: permissions.view_report_list, options: ['a', 'b']" multiple="true"></select>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn" data-bind="click: $root.unsetRoleBeingEdited">Cancel</button>
+                    <span data-bind="saveButton: $root.modalSaveButton"></span>
+                </div>
+            </div>
         </div>
-        <div class="modal-footer"></div>
     </div>
     </div>
 </div>
