@@ -797,6 +797,57 @@ class SubmitDistributionReport(StandardHQReport):
         })
 
 class MapReport(StandardHQReport):
+
+    """
+HOW TO CONFIGURE THIS REPORT
+
+create a couch doc as such:
+
+{
+  "doc_type": "MapsReportConfig",
+  "domain": <domain>,
+  "config": {
+    "case_types": [
+      // for each case type
+
+      {
+        "case_type": <commcare case type>,
+        "display_name": <display name of case type>,
+
+        // either of the following two fields
+        "geo_field": <case property for a geopoint question>,
+        "geo_linked_to": <geo-enabled case type that this case links to>,
+
+        "fields": [
+          // for each reportable field
+
+          "field": <case property>, // or one of the following magic values:
+                 // "_count" -- report on the number of cases of this type
+          "display_name": <display name for field>,
+          "type": <datatype for field>, // can be "numeric", "enum", or "num_discrete" (enum with numeric values)
+
+          // if type is "numeric" or "num_discrete"
+          // these control the rendering of numeric data points (all are optional)
+          "scale": <N>, // if absent, scale is calculated dynamically based on the max value in the field
+          "color": <css color>,
+
+          // if type is "enum" or "num_discrete" (optional, but recommended)
+          "values": [
+            // for each multiple-choice value
+
+            {
+              "value": <data value>,
+              "label": <display name>, //optional
+              "color": <css color>, //optional
+            },
+          ]
+        ]
+      },
+    ]
+  }
+}
+"""
+
     name = "Maps"
     slug = "maps"
     fields = [] # todo: support some of these filters -- right now this report
