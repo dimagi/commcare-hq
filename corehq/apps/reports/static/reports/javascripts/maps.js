@@ -635,6 +635,15 @@ function Marker(style) {
 	var m = this;
 	return render_marker(function(ctx, w, h) { m.style.draw(data, context, ctx, w, h); }, dim.w, dim.h);
     }
+
+    this.legend = function(context, $div) {
+	if (style.legend) {
+	    style.legend(context, $div);
+	    return true;
+	} else {
+	    return false;
+	}
+    }
 }
 
 function GaugeMarkerStyle(params, config) {
@@ -872,6 +881,10 @@ function PieMarkerStyle(params, config) {
 	ctx.lineWidth = 2;
 	ctx.stroke();
     }
+
+    this.legend = function(context, $div) {
+	enum_legend(context, this.config, $div);
+    }
 }
 
 function ExplodedPieMarkerStyle(params, config) {
@@ -950,24 +963,39 @@ function ExplodedPieMarkerStyle(params, config) {
 		i += 1;
 	    });
     }
+
+    this.legend = function(context, $div) {
+	enum_legend(context, this.config, $div);
+    }
 }
 
 function render_data(data, style_type, field_config) {
-    var renderer = (function() {
-	    var style = null;
-	    if (style_type) {
-		style = new Marker(make_style(style_type, field_config));
-	    }
-	    return function(v, context) {
-		return (v != null && style != null ? style.render(v, context) : case_no_data());
-	    };
-	})();
+    var style = null;
+    if (style_type) {
+	style = new Marker(make_style(style_type, field_config));
+    }
+
+    var renderer = function(v, context) {
+	return (v != null && style != null ? style.render(v, context) : case_no_data());
+    };
 
     $.each(data.results, function(k, v) {
 	    var c = data.geocases[k];
 	    c.marker.setIcon(renderer(v, data.context));
 	    c.display(true);
 	});
+    
+    render_legend(style, data.context);
+}
+
+function render_legend(style, context) {
+    $('#legend-inner').empty();
+    var has_legend = (style != null ? style.legend(context, $('#legend-inner')) : false);
+    $('#legend')[has_legend ? 'show' : 'hide']();
+
+    if (has_legend) {
+	console.log('legendary!');
+    }
 }
 
 function hide_nonrelevant(data, cases) {
@@ -976,6 +1004,30 @@ function hide_nonrelevant(data, cases) {
 		(c.display || function(x){})(false);
 	    }
 	});
+}
+
+function enum_legend(context, config, $div) {
+    var _data = {};
+    $.each(context.vals, function(i, e) {
+	    _data[e] = null;
+	});
+    var $t = $('<table />');
+    for_each_choice(config, _data, function(k, v) {
+	    var name = (lookup_by(config.values || [], 'value', k) || {}).label || k;
+	    var color = color_for(config, k);
+
+	    var $r = $('<tr>');
+	    var $color = $('<td>');
+	    $color.css('background', color);
+	    $color.addClass('enumlegendcolor');
+	    $r.append($color);
+	    var $label = $('<td>');
+	    $label.addClass('enumlegendlabel');
+	    $label.text(name);
+	    $r.append($label);
+	    $t.append($r);
+	});
+    $div.append($t);
 }
 
 function make_metric(type) {

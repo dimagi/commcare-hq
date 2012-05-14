@@ -15,8 +15,6 @@ $(document).ready(function() {
     setMapHeight();
     $(window).resize(setMapHeight);
 
-
-
     maps_init(CONFIG, CASE_API_URL);
 });
 
@@ -51,12 +49,25 @@ $(document).ready(function() {
   color: #888;
 }
 
+.enumlegendcolor {
+  width: 1.4em;
+}
+
+.enumlegendlabel {
+  padding-left: 0.5em;
+}
+
 </style>
 
 <div style="position: relative;">
   <div id="map" style="width: 100%;"></div>
   
   <div id="sidebar" style="display: none;">
+    <div id="legend" style="display: none; margin-bottom: 30px;">
+      <h3>Legend</h3>
+      <div id="legend-inner"></div>
+    </div>
+
     <div id="style" style="display: none; margin-bottom: 30px;">
       <h3>Style</h3>
 	<span type="intens">intensity</span> &middot;
