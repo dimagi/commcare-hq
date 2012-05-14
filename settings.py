@@ -139,6 +139,7 @@ HQ_APPS = (
     'corehq.apps.domainsync',
     'corehq.apps.hqadmin',
     'corehq.apps.hqcase',
+    'corehq.apps.hqcouchlog',
     'corehq.apps.hqwebapp',
     'corehq.apps.docs',
     'corehq.apps.hqmedia',
@@ -160,6 +161,7 @@ HQ_APPS = (
     'corehq.apps.ota',
     'corehq.apps.groups',
     'corehq.apps.sms',
+    'corehq.apps.smsforms',
     'corehq.apps.ivr',
     'corehq.apps.tropo',
     'corehq.apps.registration',
@@ -179,6 +181,7 @@ HQ_APPS = (
     'hutch',
     'dca',
     'loadtest',
+    'hsph',
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
@@ -274,10 +277,23 @@ HQ_ACCOUNT_ROOT = "commcarehq.org" # this is what gets appended to @domain after
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 
-# couchlog
+####### Couchlog config ###### 
+
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
 COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables-1.8.2/js/jquery.dataTables.min.js")
+
+# These allow HQ to override what shows up in couchlog (add a domain column)
+COUCHLOG_TABLE_CONFIG = {"id_column":       0,
+                         "archived_column": 1,
+                         "date_column":     2,
+                         "message_column":  4,
+                         "actions_column":  8,
+                         "email_column":    9,
+                         "no_cols":         10}
+COUCHLOG_DISPLAY_COLS = ["id", "archived?", "date", "exception type", 
+                         "message", "domain", "user", "url", "actions", "report"]
+COUCHLOG_RECORD_WRAPPER = "corehq.apps.hqcouchlog.wrapper"
 
 # couchlog/case search
 LUCENE_ENABLED = False
@@ -312,6 +328,13 @@ AUDIT_VIEWS = [
 
 # Don't use google analytics unless overridden in localsettings
 GOOGLE_ANALYTICS_ID = ''
+
+# for touchforms maps
+GMAPS_API_KEY = "changeme"
+
+# for touchforms authentication 
+TOUCHFORMS_API_USER = "changeme"
+TOUCHFORMS_API_PASSWORD = "changeme"
 
 # import local settings if we find them
 LOCAL_APPS = ()
@@ -368,6 +391,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'prescriptions',
         'reports',
         'sms',
+        'smsforms',
         'translations',
         'users',
         'formplayer',
@@ -376,7 +400,8 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'pathfinder',
         'registration',
         'hutch',
-        'dca'
+        'dca',
+        'hsph',
     ]
 ]
 
@@ -433,8 +458,7 @@ LOGGING = {
 }
 
 # these are the official django settings
-# which really we should be using over the
-# above
+# which really we should be using over the custom ones
 EMAIL_HOST = EMAIL_SMTP_HOST
 EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
@@ -468,16 +492,42 @@ STANDARD_REPORT_MAP = {
 }
 
 CUSTOM_REPORT_MAP = {
-    "pathfinder": [
+    "pathfinder": {
+        'Custom Reports': [
                    'pathfinder.models.PathfinderHBCReport',
                    'pathfinder.models.PathfinderProviderReport',
-                   'pathfinder.models.PathfinderWardSummaryReport'
-                   ],
-    "dca-malawi": [
+                   'pathfinder.models.PathfinderWardSummaryReport']
+                },
+    "dca-malawi": {
+        'Custom Reports': [
                    'dca.reports.ProjectOfficerReport',
                    'dca.reports.PortfolioComparisonReport',
                    'dca.reports.PerformanceReport',
-                   'dca.reports.PerformanceRatiosReport']
+                   'dca.reports.PerformanceRatiosReport'],
+                },
+    "hsph": {
+        'Field Management Reports': [
+                    'hsph.reports.field_management.DCOActivityReport',
+                    'hsph.reports.field_management.FieldDataCollectionActivityReport',
+                    'hsph.reports.field_management.HVFollowUpStatusReport',
+                    'hsph.reports.field_management.HVFollowUpStatusSummaryReport',
+                    'hsph.reports.field_management.DCOProcessDataReport'
+                    ],
+        'Project Management Reports': [
+                    'hsph.reports.project_management.ProjectStatusDashboardReport',
+                    'hsph.reports.project_management.ImplementationStatusDashboardReport'
+                    ],
+        'Call Center Reports': [
+                    'hsph.reports.call_center.DCCActivityReport',
+                    'hsph.reports.call_center.CallCenterFollowUpSummaryReport'
+                    ],
+        'Data Summary Reports': [
+                    'hsph.reports.data_summary.ProgramDataSummaryReport',
+                    'hsph.reports.data_summary.ComparativeDataSummaryReport']
+    },
+#    "test": [
+#        'corehq.apps.reports.deid.FormDeidExport',
+#    ]
 }
 
 MESSAGE_TAGS = {
@@ -490,3 +540,4 @@ MESSAGE_TAGS = {
 
 COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
+
