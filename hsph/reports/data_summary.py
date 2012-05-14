@@ -67,7 +67,6 @@ class ProgramDataSummaryReport(StandardTabularHQReport, StandardDateHQReport, HS
     def get_rows(self):
         rows = []
         keys = self.generate_keys(["site"])
-        print keys
         for key in keys:
             data = get_db().view('hsph/data_summary',
                 reduce=True,

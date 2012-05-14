@@ -33,7 +33,6 @@ class DCCActivityReport(HSPHCallCenterReport):
                     startkey=key+[self.datespan.startdate_param_utc],
                     endkey=key+[self.datespan.enddate_param_utc]
                 ).all()
-            print data
             for item in data:
                 item = item.get('value', {})
                 total_time = avg_time = "--"
