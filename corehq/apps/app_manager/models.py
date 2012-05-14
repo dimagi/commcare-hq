@@ -859,11 +859,14 @@ class ApplicationBase(VersionedDoc):
 
     @property
     def profile_url(self):
+        return self.hq_profile_url
+
+    @property
+    def hq_profile_url(self):
         return "%s%s?latest=true" % (
             self.url_base,
             reverse('download_profile', args=[self.domain, self._id])
         )
-
     @property
     def profile_loc(self):
         return "jr://resource/profile.xml"
@@ -1462,6 +1465,7 @@ class RemoteApp(ApplicationBase):
             profile_xml = WrappedNode(profile)
             profile_xml.find('property[@key="ota-restore-url"]').attrib['value'] = self.ota_restore_url
             profile_xml.find('property[@key="PostURL"]').attrib['value'] = self.post_url
+            profile_xml.attrib['update'] = self.hq_profile_url
             profile = profile_xml.render()
         return profile
 
