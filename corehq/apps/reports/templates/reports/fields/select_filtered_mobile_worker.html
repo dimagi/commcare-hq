@@ -9,7 +9,10 @@
 
 <script type="text/javascript" src="{% static 'reports/ko/field.select_filtered_mobile_worker.js' %}"></script>
 <script type="text/javascript">
-    var groups = {{ group_options|JSON }},
-            users = {{ users|JSON }};
-    ko.applyBindings(new SelectFilteredMWGroup(users, '{{ individual }}', groups));
+    $(function() {
+        var groups = {{ group_options|JSON }},
+                users = {{ users|JSON }};
+        ko.applyBindings(new SelectFilteredMWGroup(users, '{{ individual }}', groups), $('#fieldset_{{ slug }}')[0]);
+    });
+
 </script>

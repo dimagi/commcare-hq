@@ -38,7 +38,6 @@
 {% block head %}
     {{ block.super }}
     <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
-    <script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.0.0.js' %}"></script>
 {% endblock %}
 
 {% block page-title %}
@@ -73,9 +72,11 @@
                         <fieldset>
                             <legend>Report Filters</legend>
                             {% for field in custom_fields %}
-                                <div id="{{ field.slug }}" class="control-group">
+                            <fieldset id="fieldset_{{ field.slug }}">
+                                <div id="group_{{ field.slug }}" class="control-group">
                                     {{ field.field|safe }}
                                 </div>
+                            </fieldset>
                             {% endfor %}
                         </fieldset>
                     {% endif %}
