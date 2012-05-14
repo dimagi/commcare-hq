@@ -618,7 +618,7 @@ function make_style(type, config) {
         dot:        function(cfg) { return new PieMarkerStyle({radius: 8}, cfg); },
 	pie:        function(cfg) { return new PieMarkerStyle({radius: 13}, cfg); },
 	varpie:     function(cfg) { return new PieMarkerStyle({radius: 18, varsize: true}, cfg); },
-	explodepie: function(cfg) { return new ExplodedPieMarkerStyle({radius: 24}, cfg); },
+	explodepie: function(cfg) { return new ExplodedPieMarkerStyle({radius: 18}, cfg); },
     }[type];
     return factory(config);
 }
@@ -879,13 +879,30 @@ function ExplodedPieMarkerStyle(params, config) {
     this.config = config;
     this.offset = (params.offset != null ? params.offset : 5);
 
-    // todo: support 'scale' directive
-    this.radius = function(data, context) {
-	return this.ref_radius * Math.sqrt(data / context.maxval);
+    this.get_max = function(context) {
+	return this.config.scale || context.maxsum;
+    }
+
+    // how many square pixels per 1.0 of data
+    this.area_per = function(context) {
+	return Math.PI * Math.pow(this.ref_radius, 2.) / this.get_max(context);
+    }
+
+    // radius for N of data, factoring in size of pie slice (more choices == narrower slice)
+    this.radius = function(data, context, total_uniques) {
+	return Math.sqrt(this.area_per(context) * data * total_uniques / Math.PI);
+    }
+
+    this.num_choices = function(data) {
+	var num = 0;
+	for_each_choice(this.config, data, function(k, v) {
+		num++;
+	    });
+	return num;
     }
 
     this.get_dim = function(data, context) {
-	return 2 * (this.radius(context.maxval, context) + this.offset) + 5;
+	return 2 * (this.radius(context.maxval, context, this.num_choices(data)) + this.offset) + 5;
     }
 
     this.color_for = function(k) {
@@ -915,9 +932,10 @@ function ExplodedPieMarkerStyle(params, config) {
 	var i = 0;
 	var theta = function(i) { return i / context.vals.length; };
 
+	var num = this.num_choices(data);
 	for_each_choice(this.config, data, function(k, v) {
 		var _slice = function() {
-		    slice(theta(i), theta(i + 1), mst.radius(v, context));
+		    slice(theta(i), theta(i + 1), mst.radius(v, context, num));
 		};
 
 		_slice();
