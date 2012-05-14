@@ -771,6 +771,24 @@ class SubmitDistributionReport(StandardHQReport):
             "graph_height": 500
         })
 
+class MapReport(StandardHQReport):
+    name = "Maps"
+    slug = "maps"
+    fields = [] # todo: support some of these filters -- right now this report
+                # is more of a playground, so all the filtering is done in its
+                # own ajax sidebar
+    template_name = "reports/basic_report.html"
+    report_partial = "reports/partials/maps.html"
+
+    def calc(self):
+        self.context['maps_api_key'] = settings.GMAPS_API_KEY
+        self.context['case_api_url'] = reverse('cloudcare_get_cases', kwargs={'domain': self.domain})
+
+        config = get_db().view('reports/maps_config', key=[self.domain], include_docs=True).one()
+        if config:
+            config = config['doc']['config']
+        self.context['config'] = json.dumps(config)
+
 class SubmitTrendsReport(StandardDateHQReport):
     #nuked until further notice
     name = "Submit Trends"
