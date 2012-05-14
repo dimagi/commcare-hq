@@ -139,6 +139,7 @@ HQ_APPS = (
     'corehq.apps.domainsync',
     'corehq.apps.hqadmin',
     'corehq.apps.hqcase',
+    'corehq.apps.hqcouchlog',
     'corehq.apps.hqwebapp',
     'corehq.apps.docs',
     'corehq.apps.hqmedia',
@@ -160,6 +161,7 @@ HQ_APPS = (
     'corehq.apps.ota',
     'corehq.apps.groups',
     'corehq.apps.sms',
+    'corehq.apps.smsforms',
     'corehq.apps.ivr',
     'corehq.apps.tropo',
     'corehq.apps.registration',
@@ -275,10 +277,23 @@ HQ_ACCOUNT_ROOT = "commcarehq.org" # this is what gets appended to @domain after
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 
-# couchlog
+####### Couchlog config ###### 
+
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
 COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables-1.8.2/js/jquery.dataTables.min.js")
+
+# These allow HQ to override what shows up in couchlog (add a domain column)
+COUCHLOG_TABLE_CONFIG = {"id_column":       0,
+                         "archived_column": 1,
+                         "date_column":     2,
+                         "message_column":  4,
+                         "actions_column":  8,
+                         "email_column":    9,
+                         "no_cols":         10}
+COUCHLOG_DISPLAY_COLS = ["id", "archived?", "date", "exception type", 
+                         "message", "domain", "user", "url", "actions", "report"]
+COUCHLOG_RECORD_WRAPPER = "corehq.apps.hqcouchlog.wrapper"
 
 # couchlog/case search
 LUCENE_ENABLED = False
@@ -316,6 +331,10 @@ GOOGLE_ANALYTICS_ID = ''
 
 # for touchforms maps
 GMAPS_API_KEY = "changeme"
+
+# for touchforms authentication 
+TOUCHFORMS_API_USER = "changeme"
+TOUCHFORMS_API_PASSWORD = "changeme"
 
 # import local settings if we find them
 LOCAL_APPS = ()
@@ -372,6 +391,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'prescriptions',
         'reports',
         'sms',
+        'smsforms',
         'translations',
         'users',
         'formplayer',
@@ -438,8 +458,7 @@ LOGGING = {
 }
 
 # these are the official django settings
-# which really we should be using over the
-# above
+# which really we should be using over the custom ones
 EMAIL_HOST = EMAIL_SMTP_HOST
 EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
@@ -447,24 +466,29 @@ EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
 
 STANDARD_REPORT_MAP = {
-    "Monitor Workers" : ['corehq.apps.reports.standard.CaseActivityReport',
-                           'corehq.apps.reports.standard.SubmissionsByFormReport',
-                           'corehq.apps.reports.standard.DailySubmissionsReport',
-                           'corehq.apps.reports.standard.DailyFormCompletionsReport',
-                           'corehq.apps.reports.standard.FormCompletionTrendsReport',
-                           'corehq.apps.reports.standard.SubmissionTimesReport',
-                           'corehq.apps.reports.standard.SubmitDistributionReport',
-                           ],
-    "Inspect Data" : ['corehq.apps.reports.standard.SubmitHistory',
-                      'corehq.apps.reports.standard.CaseListReport',
-                      ],
-    "Raw Data" : ['corehq.apps.reports.standard.ExcelExportReport',
-                  'corehq.apps.reports.standard.CaseExportReport',
-                      ],
-    "Manage Deployments" : ['corehq.apps.reports.standard.ApplicationStatusReport',
-                            'phonelog.reports.FormErrorReport',
-                            'phonelog.reports.DeviceLogDetailsReport'
-                  ]
+    "Monitor Workers" : [
+        'corehq.apps.reports.standard.CaseActivityReport',
+        'corehq.apps.reports.standard.SubmissionsByFormReport',
+        'corehq.apps.reports.standard.DailySubmissionsReport',
+        'corehq.apps.reports.standard.DailyFormCompletionsReport',
+        'corehq.apps.reports.standard.FormCompletionTrendsReport',
+        'corehq.apps.reports.standard.SubmissionTimesReport',
+        'corehq.apps.reports.standard.SubmitDistributionReport',
+    ],
+    "Inspect Data" : [
+        'corehq.apps.reports.standard.SubmitHistory',
+        'corehq.apps.reports.standard.CaseListReport',
+        'corehq.apps.reports.standard.MapReport',
+    ],
+    "Raw Data" : [
+        'corehq.apps.reports.standard.ExcelExportReport',
+        'corehq.apps.reports.standard.CaseExportReport',
+    ],
+    "Manage Deployments" : [
+        'corehq.apps.reports.standard.ApplicationStatusReport',
+        'phonelog.reports.FormErrorReport',
+        'phonelog.reports.DeviceLogDetailsReport'
+    ]
 }
 
 CUSTOM_REPORT_MAP = {
@@ -517,5 +541,3 @@ MESSAGE_TAGS = {
 COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
 
-# for touchforms maps
-#GMAPS_API_KEY = "changeme"
