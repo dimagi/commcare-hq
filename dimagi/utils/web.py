@@ -175,6 +175,10 @@ def json_handler(obj):
     elif isinstance(obj, Decimal):
         return float(obj) # warning, potential loss of precision
     else:
+        try:
+            return obj.to_json()
+        except Exception:
+            pass
         return json.JSONEncoder().default(obj)
 
 def json_response(obj, **kwargs):
