@@ -251,9 +251,8 @@ var HSPHOutcomesCounter = function () {
     self.calc.atDischarge = extend({}, stats);
     self.calc.on7Days = extend({}, stats);
     self.calc.lostToFollowUp = 0;
-    self.calc.totalNegativeOutcomes = 0;
     self.calc.totalOutcomes = 0;
-    self.calc.totalPositiveOutcomeEvents = 0;
+    self.calc.totalPositiveOutcomes = 0;
 
     self.rereduce = function (agEntry) {
         for (var key in stats)  {
@@ -263,8 +262,7 @@ var HSPHOutcomesCounter = function () {
         }
         self.calc.totalOutcomes += agEntry.totalOutcomes;
         self.calc.lostToFollowUp += agEntry.lostToFollowUp;
-        self.calc.totalNegativeOutcomes += agEntry.totalNegativeOutcomes;
-        self.calc.totalPositiveOutcomeEvents += agEntry.totalPositiveOutcomeEvents;
+        self.calc.totalPositiveOutcomes += agEntry.totalPositiveOutcomes;
     };
 
     self.reduce = function (curEntry) {
@@ -279,17 +277,13 @@ var HSPHOutcomesCounter = function () {
             else if (curEntry.outcomeOn7Days)
                 self.calc.on7Days[key] += stats[key];
             self.calc[key] += stats[key];
-            self.calc.totalOutcomes += stats[key];
+            self.calc.totalPositiveOutcomes += stats[key];
         }
 
-        var noOutcomes = !!(self.calc.totalOutcomes < 1);
-        if (noOutcomes && curEntry.followupWaitlisted) {
+        if (curEntry.followupWaitlisted)
             self.calc.lostToFollowUp += 1;
-        } else if (noOutcomes && curEntry.followupComplete) {
-            self.calc.totalNegativeOutcomes += 1;
-        } else if (!noOutcomes) {
-            self.calc.totalPositiveOutcomeEvents += 1;
-        }
+        else if (curEntry.followupComplete)
+            self.calc.totalOutcomes += 1;
 
     };
 

@@ -36,7 +36,7 @@ class SiteField(ReportField):
         self.context['selected'] = dict(region=self.request.GET.get(self.slugs['region'], ''),
                                         district=self.request.GET.get(self.slugs['district'], ''),
                                         siteNum=self.request.GET.get(self.slugs['site'], ''))
-        self.context['slug'] = self.slugs
+        self.context['slugs'] = self.slugs
 
     @classmethod
     def getSites(cls):

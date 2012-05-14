@@ -144,6 +144,7 @@ function HSPHEntry(doc) {
 
         if (isCITLReport(self.doc)) {
             self.data.isCITLData = true;
+            self.data.visitDate = self.form.meta.timeEnd;
         }
     };
 

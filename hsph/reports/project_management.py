@@ -1,27 +1,103 @@
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.groups.models import Group
+from corehq.apps.reports import util
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.standard import StandardTabularHQReport, StandardDateHQReport
-from hsph.reports.field_management import HSPHSiteDataMixin
+from dimagi.utils.couch.database import get_db
+from hsph.fields import FacilityStatusField, IHForCHFField, SiteField
+from hsph.reports.common import HSPHSiteDataMixin
+from dimagi.utils.timezones import utils as tz_utils
 
-class ProjectStatusDashboardReport(StandardDateHQReport, HSPHSiteDataMixin):
+class ProjectStatusDashboardReport(StandardDateHQReport):
     name = "Project Status Dashboard"
     slug = "hsph_project_status"
     fields = ['corehq.apps.reports.fields.DatespanField',
               'hsph.fields.SiteField']
+    template_name = "hsph/reports/project_status.html"
 
     def get_parameters(self):
-        self.generate_sitemap()
+        self.region = self.request.GET.get(SiteField.slugs['region'], None)
+        self.district = self.request.GET.get(SiteField.slugs['district'], None)
+        self.site = self.request.GET.get(SiteField.slugs['site'], None)
+
+    def calc(self):
+        key_prefix = ["all"]
+        key_suffix = []
+        if self.region and self.district and self.site:
+            key_prefix = ["full"]
+            key_suffix = [self.region, self.district, self.site]
+        elif self.region and self.district:
+            key_prefix = ["district"]
+            key_suffix = [self.region, self.district]
+        elif self.region:
+            key_prefix = ["region"]
+            key_suffix = [self.region]
+
+        ihf_data, ihf_collectors, ihf_dctls = self.gen_facility_data(key_prefix, key_suffix)
+        chf_data, chf_collectors, chf_dctls = self.gen_facility_data(key_prefix, key_suffix, "CHF")
+
+        staff_stats = [dict(title="Total", value=len(ihf_collectors)+len(ihf_dctls)+len(chf_collectors)+len(chf_dctls)),
+                       dict(title="DCTL", value=len(ihf_dctls)+len(chf_dctls))]
+
+        for group in ["DCO", "DCP", "DCC"]:
+            match = Group.by_name(self.domain, group)
+            match = match.get_user_ids() if match else []
+            ihf_matches = [uID if uID in match else None for uID in ihf_collectors]
+            chf_matches = [uID if uID in match else None for uID in chf_collectors]
+            staff_stats.append(dict(title=group, val=len(ihf_matches)+len(chf_matches)))
+
+        citl_stat = lambda x: (x/120)*100
+        summary = [
+            dict(title="Facilities with no status", stat=citl_stat),
+            dict(title="No of facilities where S.B.R has been deployed", stat=citl_stat),
+            dict(title="No. of Facilities where Baseline data collection has begun", stat=citl_stat),
+            dict(title="No of Facilities where Data collection for Trial has begun", stat=citl_stat),
+            dict(title="No of Birth events observed for Processes", stat=lambda x: (x/2400)*100),
+            dict(title="No of Outcome Data Collection Completed", stat=lambda x: (x//172000)*100),
+            dict(title="No of Process Data Collection Completed", stat=lambda x: (x//2400)*100)]
+
+        data = []
+        for ind in range(len(summary)):
+            data.append(dict(
+                    title=summary[ind].get("title", ""),
+                    ihf=ihf_data[ind],
+                    chf=chf_data[ind],
+                    total=ihf_data[ind]+chf_data[ind],
+                    summary=summary[ind].get("stat", lambda x: x)(ihf_data[ind]+chf_data[ind])
+                ))
+
+        self.context["staff"] = staff_stats
+        self.context["status_data"] = data
+
+    def gen_facility_data(self, key_prefix, key_suffix, type="IHF"):
+        key = key_prefix+[type]+key_suffix
+        data = get_db().view("hsph/pm_project_status",
+                startkey=key+[self.datespan.startdate_param_utc],
+                endkey=key+[self.datespan.enddate_param_utc],
+                reduce=True
+            ).first()
+        if not data:
+            data = {}
+        values = ["numAtZero", "numSBR", "numBaseline", "numTrial", "totalBirthEvents", "numOutcomeData", "numProcessData"]
+        return [data.get(val, 0) for val in values], data.get("activeCollectors", []), data.get("activeTLs", [])
 
 class ImplementationStatusDashboardReport(StandardTabularHQReport, StandardDateHQReport, HSPHSiteDataMixin):
     name = "Implementation Status Dashboard"
     slug = "hsph_implementation_status"
     fields = ['corehq.apps.reports.fields.DatespanField',
+              'hsph.fields.IHForCHFField',
+              'hsph.fields.FacilityStatusField',
+              'hsph.fields.NameOfCITLField',
               'hsph.fields.SiteField']
 
     def get_parameters(self):
         self.generate_sitemap()
+        if not self.selected_site_map:
+            self.selected_site_map = self.site_map
+        self.facility_status = self.request.GET.get(FacilityStatusField.slug)
+        self.facility_type = self.request.GET.get(IHForCHFField.slug)
 
     def get_headers(self):
-        return DataTablesHeader(DataTablesColumn("Status"),
+        return DataTablesHeader(DataTablesColumn("Status", sort_type=DTSortType.NUMERIC),
             DataTablesColumn("Region"),
             DataTablesColumn("District"),
             DataTablesColumn("IHF/CHF"),
@@ -29,3 +105,51 @@ class ImplementationStatusDashboardReport(StandardTabularHQReport, StandardDateH
             DataTablesColumn("Site"),
             DataTablesColumn("Facility Status"),
             DataTablesColumn("Status last updated on"))
+
+    def get_rows(self):
+        rows = []
+        site_keys = self.generate_keys()
+
+        key_prefix = ["all"]
+        key_suffix = []
+        if self.facility_status and self.facility_type:
+            key_prefix = ["status_type"]
+            key_suffix = [self.facility_status, self.facility_type]
+        elif self.facility_status and not self.facility_type:
+            key_prefix = ["status"]
+            key_suffix = [self.facility_status]
+        elif self.facility_type and not self.facility_status:
+            key_prefix = ["type"]
+            key_suffix = [self.facility_type]
+
+        for user in self.users:
+            for site in site_keys:
+                key = key_prefix + site + [user.user_id] + key_suffix
+                data = get_db().view('hsph/pm_implementation_status',
+                        reduce=True,
+                        startkey=key+[self.datespan.startdate_param_utc],
+                        endkey=key+[self.datespan.enddate_param_utc]
+                    ).all()
+                region, district, site_num, site_name = self.get_site_table_values(site)
+
+                pb_temp = '<div class="progress"><div class="bar" style="width: %(percent)d%%;"></div></div>'
+
+                if data:
+                    for item in data:
+                        item = item.get('value', {})
+                        fac_stat = item.get('facilityStatus', -1)
+                        rows.append([
+                            util.format_datatables_data(pb_temp % dict(percent=(fac_stat+2)*25), fac_stat),
+                            region,
+                            district,
+                            item.get("facilityType", "--"),
+                            user.username_in_report,
+                            site_name if site_name else site_num,
+                            FacilityStatusField.options[fac_stat+1]['text'],
+                            tz_utils.string_to_prertty_time(item.get('lastUpdated', "--"), to_tz=self.timezone)
+                        ])
+
+
+
+
+        return rows

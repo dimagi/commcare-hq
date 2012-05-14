@@ -2,7 +2,7 @@ import datetime
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import StandardTabularHQReport, StandardDateHQReport
 from dimagi.utils.couch.database import get_db
-from hsph.reports.field_management import HSPHSiteDataMixin
+from hsph.reports.common import HSPHSiteDataMixin
 
 class HSPHCallCenterReport(StandardTabularHQReport, StandardDateHQReport):
     fields = ['corehq.apps.reports.fields.DatespanField']
@@ -26,7 +26,6 @@ class DCCActivityReport(HSPHCallCenterReport):
 
     def get_rows(self):
         rows = []
-
         for user in self.users:
             key = [user.userID]
             data = get_db().view("hsph/dcc_activity_report",
@@ -84,10 +83,7 @@ class CallCenterFollowUpSummaryReport(HSPHCallCenterReport, HSPHSiteDataMixin):
 
     def get_rows(self):
         rows = []
-        keys = [[region, district, site]
-                    for region, districts in self.selected_site_map.items()
-                        for district, sites in districts.items()
-                            for site in sites]
+        keys = self.generate_keys()
         for key in keys:
             data = get_db().view("hsph/dcc_followup_summary",
                 reduce=True,
@@ -97,10 +93,7 @@ class CallCenterFollowUpSummaryReport(HSPHCallCenterReport, HSPHSiteDataMixin):
             for item in data:
                 item = item.get('value')
                 if item:
-                    region = key[0]
-                    district = key[1]
-                    site_num = key[2]
-                    site_name = self.site_map.get(region, {}).get(district, {}).get(site_num)
+                    region, district, site_num, site_name = self.get_site_table_values(key)
 
                     now = self.datespan.enddate
                     day14 = now-datetime.timedelta(days=14)

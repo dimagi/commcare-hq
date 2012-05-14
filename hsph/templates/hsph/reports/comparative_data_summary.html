@@ -1,0 +1,70 @@
+{% extends "reports/report_base.html" %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% block reportcontent %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <td></td>
+                <th>IHF</th>
+                <th>CHF</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th>Number of Births Recorded</th>
+                <td>{{ ihf_data.numBirths }}</td>
+                <td>{{ chf_data.numBirths }}</td>
+            </tr>
+            <tr>
+                <th>Number of Birth Events</th>
+                <td>{{ ihf_data.numBirthEvents }}</td>
+                <td>{{ chf_data.numBirthEvents }}</td>
+            </tr>
+            <tr>
+                <td colspan="3"></td>
+            </tr>
+            <tr>
+                <th>Maternal Deaths</th>
+                <td>{{ ihf_data.maternalDeaths }}</td>
+                <td>{{ chf_data.maternalDeaths }}</td>
+            </tr>
+            <tr>
+                <th>Maternal Near Miss</th>
+                <td>{{ ihf_data.maternalNearMiss }}</td>
+                <td>{{ chf_data.maternalNearMiss }}</td>
+            </tr>
+            <tr>
+                <th>Still Births</th>
+                <td>{{ ihf_data.stillBirths }}</td>
+                <td>{{ chf_data.stillBirths }}</td>
+            </tr>
+            <tr>
+                <th>Neonatal Mortality</th>
+                <td>{{ ihf_data.neonatalMortality }}</td>
+                <td>{{ chf_data.neonatalMortality }}</td>
+            </tr>
+            <tr>
+                <td colspan="3"></td>
+            </tr>
+            <tr>
+                <th>Total Child birth events with Positve Primary Outcome</th>
+                <td>{{ ihf_data.positive }}</td>
+                <td>{{ chf_data.positive }}</td>
+            </tr>
+            <tr>
+                <th>Total Child birth events with Negative Primary Outcome</th>
+                <td>{{ ihf_data.negative }}</td>
+                <td>{{ chf_data.negative }}</td>
+            </tr>
+            <tr>
+                <th>Total Lost to Followup</th>
+                <td>{{ ihf_data.lost }}</td>
+                <td>{{ chf_data.lost }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+{% endblock %}

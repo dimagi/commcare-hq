@@ -7,27 +7,7 @@ from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from corehq.apps.reports import util
 from hsph.fields import FacilityField, NameOfDCTLField, SiteField, SelectCaseStatusField
-
-class HSPHSiteDataMixin:
-    request = None
-
-    def generate_sitemap(self):
-        self.site_map = SiteField.getSites()
-        self.selected_site_map = {}
-
-        region = self.request.GET.get(SiteField.slugs['region'], None)
-        district = self.request.GET.get(SiteField.slugs['district'], None)
-        site = self.request.GET.get(SiteField.slugs['site'], None)
-
-        if region:
-            self.selected_site_map[region] = self.site_map[region]
-            if district:
-                self.selected_site_map[region] = {}
-                self.selected_site_map[region][district] = self.site_map[region][district]
-                if site:
-                    self.selected_site_map[region][district] = {}
-                    self.selected_site_map[region][district][site] = self.site_map[region][district][site]
-
+from hsph.reports.common import HSPHSiteDataMixin
 
 class HSPHFieldManagementReport(StandardTabularHQReport, StandardDateHQReport):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
@@ -224,7 +204,6 @@ class HVFollowUpStatusReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
                                 for district, sites in districts.items()
                                     for site in sites]
 
-
         for key in keys:
             data = self.get_data(key)
             for item in data:
@@ -381,10 +360,8 @@ class DCOProcessDataReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
 
     def get_rows(self):
         rows = []
-        keys = [[region, district, site]
-                        for region, districts in self.selected_site_map.items()
-                            for district, sites in districts.items()
-                                for site in sites]
+        keys = self.generate_keys()
+
         for key in keys:
             data = get_db().view("hsph/field_process_data",
                     reduce=True,
@@ -394,10 +371,8 @@ class DCOProcessDataReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
             for item in data:
                 item = item.get('value')
                 if item:
-                    region = key[0]
-                    district = key[1]
-                    site_num = key[2]
-                    site_name = self.site_map.get(region, {}).get(district, {}).get(site_num)
+                    region, district, site_num, site_name = self.get_site_table_values(key)
+
                     reg_length = item.get('averageRegistrationLength', None)
                     avg_time = '--'
                     if reg_length:
