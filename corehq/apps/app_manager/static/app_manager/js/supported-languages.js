@@ -222,12 +222,16 @@ var SupportedLanguages = (function () {
                         build: buildLangs
                     }),
                     success: function (data) {
-                        self.removedLanguages.removeAll();
-                        for (var i = 0; i < langs.length; i++) {
+                        var i;
+                        for (i = 0; i < langs.length; i++) {
                             if (langs[i] != data[i]) {
                                 throw "There was an error saving.";
                             }
                         }
+                        self.removedLanguages.removeAll();
+                        ko.utils.arrayForEach(self.languages(), function (language) {
+                            language.originalLangcode(language.langcode());
+                        });
                     }
                 });
             }

@@ -18,7 +18,8 @@ class Domain(Document):
     is_public = BooleanProperty(default=False)
     date_created = DateTimeProperty()
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
-    
+    case_sharing = BooleanProperty(default=False)
+
 #    def save(self, **kwargs):
 #        # eventually we'll change the name of this object to just "Domain"
 #        # so correctly set the doc type for future migration

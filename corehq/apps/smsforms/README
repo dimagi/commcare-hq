@@ -1,0 +1,18 @@
+A simple app to play through forms in sms-style using the touchforms backend.
+
+In order to load case data touchforms must authenticate with HQ. To allow this
+you must specify the following two items in your settings:
+
+TOUCHFORMS_API_USER = "changeme"
+TOUCHFORMS_API_PASSWORD = "changeme"
+
+The touchforms user needs to be created on HQ, as they must have both a django
+account and a couch account. Additionally the user should be a superuser in 
+order to access cases from any domain.
+
+The basic structure of the code is:
+
+models.py   Session object model
+app.py      API for starting and interacting with touchforms sms sessions
+signals.py  Catches signal from touchforms indicating form completion and posts
+            the form to HQ.

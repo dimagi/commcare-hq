@@ -1161,8 +1161,8 @@ def edit_app_langs(request, domain, app_id):
     rename = o['rename']
     build = o['build']
 
-    # assert that every lang that isn't new and wasn't deleted shows up in rename
-    assert set(rename.keys()) == set(app.langs).intersection(langs), "%r, %r, %s" % (rename.keys(), app.langs, langs)
+    assert set(rename.keys()).issubset(app.langs)
+    assert set(rename.values()).issubset(langs)
     # assert that there are no repeats in the values of rename
     assert len(set(rename.values())) == len(rename.values())
     # assert that no lang is renamed to an already existing lang
@@ -1235,8 +1235,10 @@ def edit_app_attr(req, domain, app_id, attr):
         # Application only
         'cloudcare_enabled',
         'application_version',
+        'case_sharing',
         # RemoteApp only
         'profile_url',
+        'manage_urls'
         ]
     if attr not in attributes:
         return HttpResponseBadRequest()
@@ -1283,11 +1285,20 @@ def edit_app_attr(req, domain, app_id, attr):
     if should_edit("application_version"):
         app.application_version = req.POST['application_version']
 
-    # For RemoteApps
-    if should_edit("profile_url"):
+    if should_edit('case_sharing'):
+        app.case_sharing = bool(json.loads(req.POST['case_sharing']))
+
+    def require_remote_app():
         if app.get_doc_type() not in ("RemoteApp",):
             raise Exception("App type %s does not support profile url" % app.get_doc_type())
+
+    # For RemoteApps
+    if should_edit("profile_url"):
+        require_remote_app()
         app['profile_url'] = req.POST['profile_url']
+    if should_edit("manage_urls"):
+        require_remote_app()
+        app.manage_urls = bool(json.loads(req.POST['manage_urls']))
 
     app.save(resp)
     # this is a put_attachment, so it has to go after everything is saved

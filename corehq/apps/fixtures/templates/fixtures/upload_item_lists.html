@@ -5,12 +5,25 @@
 {% block oldstyle_imports %}{% endblock %}
 {% block oldstyle_hack_start %}{% endblock %}
 {% block oldstyle_hack_end %}{% endblock %}
+{% block js %}
+    <script src="{% static 'hqwebapp/javascripts/knockout-2.0.0.debug.js' %}"></script>
+{% endblock %}
+{% block js-inline %}
+    <script>
+        $(function () {
+            function FileUpload() {
+                this.file = ko.observable();
+            }
+            ko.applyBindings(new FileUpload(), $('#upload-item-lists').get(0));
+        });
+    </script>
+{% endblock %}
 
 {% block content %}
     <div>
-        <form action="" method="post" enctype="multipart/form-data">
-            <input type="file" name="file"/>
-            <button class="btn btn-primary" type="submit">Upload</button>
+        <form action="" method="post" enctype="multipart/form-data" id="upload-item-lists">
+            <input type="file" name="file" data-bind="value: file"/>
+            <button class="btn btn-primary" type="submit" data-bind="visible: file">Upload</button>
         </form>
     </div>
 {% endblock %}

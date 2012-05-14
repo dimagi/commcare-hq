@@ -4,8 +4,10 @@ import json
 import logging
 import sys
 import dateutil
+from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, NoReverseMatch
+from django.http import HttpResponseBadRequest, Http404
 from django.template.defaultfilters import yesno
 from django.utils import html
 import pytz
@@ -41,6 +43,7 @@ class StandardHQReport(HQReport):
 
     def get_global_params(self):
         self.request_params = json_request(self.request.GET)
+        # the history param lets you run a report as if it were a given time in the past
         hist_param = self.request_params.get('history', None)
         if hist_param:
             self.history = datetime.datetime.strptime(hist_param, DATE_FORMAT)
@@ -129,7 +132,7 @@ class PaginatedHistoryHQReport(StandardTabularHQReport):
               'corehq.apps.reports.fields.SelectMobileWorkerField']
 
     def get_parameters(self):
-        self.userIDs = [user.user_id for user in self.users]
+        self.userIDs = [user.user_id for user in self.users if user.user_id]
         self.usernames = dict([(user.user_id, user.username_in_report) for user in self.users])
 
     def json_data(self):
@@ -172,6 +175,11 @@ class StandardDateHQReport(StandardHQReport):
         super(StandardDateHQReport, self).get_report_context()
 
 class CaseActivityReport(StandardTabularHQReport):
+    """
+    User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
+    danny   5 (25%)         10 (50%)        20 (100%)       17                          6
+    (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
+    """
     name = 'Case Activity'
     slug = 'case_activity'
     fields = ['corehq.apps.reports.fields.FilterUsersField',
@@ -180,106 +188,148 @@ class CaseActivityReport(StandardTabularHQReport):
     all_users = None
     display_data = ['percent']
 
+    class Row(object):
+        def __init__(self, report, user):
+            self.report = report
+            self.user = user
+
+        def active_count(self):
+            """Open clients seen in the last 120 days"""
+            return self.report.get_number_cases(
+                user_id=self.user.get_id,
+                modified_after=self.report.utc_now - self.report.inactive,
+                modified_before=self.report.utc_now,
+                closed=False,
+            )
+
+        def inactive_count(self):
+            """Open clients not seen in the last 120 days"""
+            return self.report.get_number_cases(
+                user_id=self.user.get_id,
+                modified_before=self.report.utc_now - self.report.inactive,
+                closed=False,
+            )
+
+        def modified_count(self, startdate=None, enddate=None):
+            enddate = enddate or self.report.utc_now
+            return self.report.get_number_cases(
+                user_id=self.user.get_id,
+                modified_after=startdate,
+                modified_before=enddate,
+            )
+
+        def closed_count(self, startdate=None, enddate=None):
+            enddate = enddate or self.report.utc_now
+            return self.report.get_number_cases(
+                user_id=self.user.get_id,
+                modified_after=startdate,
+                modified_before=enddate,
+                closed=True
+            )
+
+        def header(self):
+            template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
+            return template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[self.report.domain, CaseListReport.slug])),
+                               "user_id": self.user.user_id,
+                               "username": self.user.username_in_report}
+
+    class TotalRow(object):
+        def __init__(self, rows, header):
+            self.rows = rows
+            self._header = header
+
+        def active_count(self):
+            return sum([row.active_count() for row in self.rows])
+
+        def inactive_count(self):
+            return sum([row.inactive_count() for row in self.rows])
+
+        def modified_count(self, startdate=None, enddate=None):
+            return sum([row.modified_count(startdate, enddate) for row in self.rows])
+
+        def closed_count(self, startdate=None, enddate=None):
+            return sum([row.closed_count(startdate, enddate) for row in self.rows])
+
+        def header(self):
+            return self._header
+
     def get_parameters(self):
-        landmarks_param = self.request_params.get('landmarks', [30,60,120])
-        self.landmarks = [datetime.timedelta(days=l) for l in landmarks_param]+[None]
-        self.now = datetime.datetime.now(tz=self.timezone)
+        landmarks_param = self.request_params.get('landmarks', [30,60,90])
+        inactive_param = self.request_params.get('inactive', 120)
+        self.display_data = self.request_params.get('display', ['percent'])
+        if landmarks_param + [inactive_param] != sorted(landmarks_param + [inactive_param]):
+            raise Http404()
+        self.landmarks = [datetime.timedelta(days=l) for l in landmarks_param]
+        self.inactive = datetime.timedelta(days=inactive_param)
         if self.history:
             self.now = self.history
+        else:
+            self.now = datetime.datetime.now(tz=self.timezone)
+
+    @property
+    @memoized
+    def utc_now(self):
+        return tz_utils.adjust_datetime_to_timezone(self.now, self.timezone.zone, pytz.utc.zone)
 
     def get_headers(self):
-        headers = DataTablesHeader(DataTablesColumn("User"))
-        for l in self.landmarks:
-            headers.add_column(DataTablesColumn("Last %s Days" % l.days if l else "Ever",
-                                                sort_type=DTSortType.NUMERIC))
+        headers = DataTablesHeader(DataTablesColumn("Users"))
+        for landmark in self.landmarks:
+            headers.add_column(DataTablesColumn("Last %s Days" % landmark.days if landmark else "Ever",
+                        sort_type=DTSortType.NUMERIC,
+                        help_text='Number of cases modified (or closed) in the last %s days' % landmark.days))
+        headers.add_column(DataTablesColumn("Active Cases",
+            sort_type=DTSortType.NUMERIC,
+            help_text='Number of cases modified in the last %s days that are still open' % self.inactive.days))
+        headers.add_column(DataTablesColumn("Inactive Cases",
+            sort_type=DTSortType.NUMERIC,
+            help_text="Number of cases that are open but haven't been touched in the last %s days" % self.inactive.days))
         return headers
 
     def get_rows(self):
-        self.display_data = self.request_params.get('display', ['percent'])
+        rows = [self.Row(self, user) for user in self.users]
+        total_row = self.TotalRow(rows, "All Users")
 
-        data = defaultdict(list)
-        for user in self.users:
+        def format_row(row):
+            cells = [row.header()]
+            def add_numeric_cell(text, value=None):
+                if value is None:
+                    value = int(text)
+                cells.append(util.format_datatables_data(text=text, sort_key=value))
             for landmark in self.landmarks:
-                data[user].append(self.get_number_cases_updated(user.user_id, landmark))
+                value = row.modified_count(self.utc_now - landmark)
+                total = row.active_count() + row.closed_count(self.utc_now - landmark)
 
-        extra = {}
-        num_landmarks = len(self.landmarks)
-        all_users = [dict(total=0, diff=0, next=None, last=0, percent=None) for _ in range(num_landmarks)]
-        
-        for user in data:
-            extra[user] = []
-            for i in range(num_landmarks):
-                next = data[user][i+1] if i+1 < num_landmarks else None
-                last = data[user][i-1] if i else 0
-                current = data[user][i]
-                all_users[i]["total"] += current
-                extra[user].append({
-                    "total": current,
-                    "diff": current - last,
-                    "next": next,
-                    "last": last,
-                    "percent": 1.0*current/next if next else None
-                })
+                try:
+                    display = '%d (%d%%)' % (value, value * 100. / total)
+                except ZeroDivisionError:
+                    display = '%d' % value
+                add_numeric_cell(display, value)
+            add_numeric_cell(row.active_count())
+            add_numeric_cell(row.inactive_count())
+            return cells
+        self.total_row = format_row(total_row)
+        return map(format_row, rows)
 
-        for i in range(num_landmarks):
-            if i > 0:
-                all_users[i]["last"] = all_users[i-1]["total"]
-            if i+1 < num_landmarks:
-                all_users[i]["next"] = all_users[i+1]["total"]
-            all_users[i]["diff"] = all_users[i]["total"] - all_users[i]["last"]
-            all_users[i]["percent"] = 1.0*all_users[i]["total"]/all_users[i]["next"] if all_users[i]["next"] else None
+    def get_number_cases(self, user_id, modified_after=None, modified_before=None, closed=None):
+        key = [self.domain, {} if closed is None else closed, self.case_type or {}, user_id]
 
-        self.all_users = all_users
-
-        rows = []
-        for user in extra:
-            row = [self.user_cases_link(user)]
-            for entry in extra[user]:
-                row = self.format_row(row, entry)
-            rows.append(row)
-
-        total_row = ["All Users"]
-        for cumulative in self.all_users:
-            total_row = self.format_row(total_row, cumulative)
-        self.total_row = total_row
-
-        return rows
-
-    def format_row(self, row, entry):
-        unformatted = entry['total']
-        if entry['total'] == entry['diff'] or 'diff' not in self.display_data:
-            fmt = "{total}"
+        if modified_after is None:
+            start = ""
         else:
-            fmt = "+ {diff} = {total}"
+            start = json_format_datetime(modified_after)
 
-        if entry['percent'] and 'percent' in self.display_data:
-            fmt += " ({percent:.0%} of {next})"
-        formatted = fmt.format(**entry)
-        try:
-            formatted = int(formatted)
-        except ValueError:
-            pass
-        row.append(util.format_datatables_data(formatted, unformatted))
-        return row
+        if modified_before is None:
+            end = {}
+        else:
+            end = json_format_datetime(modified_before)
 
-
-    def get_number_cases_updated(self, user_id, landmark=None):
-        utc_now = tz_utils.adjust_datetime_to_timezone(self.now, self.timezone.zone, pytz.utc.zone)
-        start_time_json = json_format_datetime(utc_now - landmark) if landmark else ""
-        key = [self.domain, self.case_type or {}, user_id]
-        r = get_db().view('case/by_last_date',
-            startkey=key + [start_time_json],
-            endkey=key + [json_format_datetime(utc_now)],
+        return get_db().view('case/by_date_modified',
+            startkey=key + [start],
+            endkey=key + [end],
             group=True,
-            group_level=0
-        ).one()
-        return r['value']['count'] if r else 0
-
-    def user_cases_link(self, user):
-        template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
-        return template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[self.domain, CaseListReport.slug])),
-                           "user_id": user.user_id,
-                           "username": user.username_in_report}
+            group_level=0,
+            wrapper=lambda row: row['value']
+        ).one() or 0
 
 class DailyReport(StandardDateHQReport, StandardTabularHQReport):
     couch_view = ''
@@ -619,9 +669,12 @@ class CaseListReport(PaginatedHistoryHQReport):
             ('%Y-%m-%d %H:%M:%S') if date else ""
 
     def case_data_link(self, case_id, case_name):
-        return "<a class='ajax_dialog' href='%s'>%s</a>" % \
-                    (reverse('case_details', args=[self.domain, case_id]),
-                     case_name)
+        try: 
+            return "<a class='ajax_dialog' href='%s'>%s</a>" % \
+                        (reverse('case_details', args=[self.domain, case_id]),
+                         case_name)
+        except NoReverseMatch:
+            return "%s (bad ID format)" % case_name
 
 
 class SubmissionTimesReport(StandardHQReport):

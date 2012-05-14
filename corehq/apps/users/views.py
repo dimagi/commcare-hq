@@ -11,6 +11,7 @@ from corehq.apps.registration.forms import NewWebUserRegistrationForm
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.users.util import format_username, normalize_username, raw_username
 from couchdbkit.exceptions import MultipleResultsFound
+from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.excel import Excel2007DictReader, WorkbookJSONReader
 from django.contrib.auth import logout
@@ -204,6 +205,7 @@ def commcare_users(request, domain, template="users/commcare_users.html"):
         users.extend(CommCareUser.by_domain(domain, is_active=False))
     context.update({
         'commcare_users': users,
+        'show_case_sharing': Domain.get_by_name(domain).case_sharing,
         'show_inactive': show_inactive,
         'reset_password_form': SetPasswordForm(user="")
     })
@@ -791,7 +793,7 @@ class UploadCommCareUsers(TemplateView):
                         try:
                             self.group_memoizer.get_group(group_name).add_user(user)
                         except Exception:
-                            raise Exception("Can't add to group '%s'" % (user.raw_username, group_name))
+                            raise Exception("Can't add to group '%s' (try adding it to your spreadsheet)" % group_name)
                     self.group_memoizer.save_all()
                 except Exception, e:
                     status_row['flag'] = 'error: %s' % e
@@ -870,3 +872,24 @@ def user_domain_transfer(request, domain, prescription, template="users/domain_t
             'target_domain': target_domain
         })
         return render_to_response(request, template, context)
+
+@require_superuser
+def audit_logs(request, domain):
+    from auditcare.models import NavigationEventAudit
+    usernames = [user.username for user in WebUser.by_domain(domain)]
+    data = {}
+    for username in usernames:
+        data[username] = []
+        for doc in get_db().view('auditcare/urlpath_by_user_date',
+            startkey=[username],
+            endkey=[username, {}],
+            include_docs=True,
+            wrapper=lambda r: r['doc']
+        ).all():
+            try:
+                (d,) = re.search(r'^/a/([\w\-_\.]+)/', doc['request_path']).groups()
+                if d == domain:
+                    data[username].append(doc)
+            except Exception:
+                pass
+    return json_response(data)
