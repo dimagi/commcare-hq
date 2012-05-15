@@ -262,7 +262,7 @@ class DomainMembership(DocumentSchema):
             else:
                 permissions_data = {}
             if not data['is_admin']:
-                view_report_list = permissions_data.get('view-report', [])
+                view_report_list = permissions_data.get('view-report')
                 custom_permissions = {}
                 for old_permission in old_permissions:
                     if old_permission == 'view-report':
@@ -270,7 +270,13 @@ class DomainMembership(DocumentSchema):
                     new_permission = OldPermissions.to_new(old_permission)
                     custom_permissions[new_permission] = True
 
-                custom_permissions['view_report_list'] = view_report_list
+                if view_report_list is None:
+                    # Anyone whose report permissions haven't been explicitly taken away/reduced
+                    # should be able to see reports by default
+                    custom_permissions['view_reports'] = True
+                else:
+                    custom_permissions['view_report_list'] = view_report_list
+
 
                 self = super(DomainMembership, cls).wrap(data)
                 self.role_id = UserRole.get_or_create_with_permissions(self.domain, custom_permissions).get_id
