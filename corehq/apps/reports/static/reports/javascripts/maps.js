@@ -933,7 +933,7 @@ function for_each_choice(config, data, func, reverse) {
     }
 
     $.each(vals, function(i, k) {
-	    func(k, data[k]);
+	    func(k, data[k] || 0.);
 	});
 }
 
