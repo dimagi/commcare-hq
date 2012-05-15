@@ -408,7 +408,7 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
 
     def get_headers(self):
         form_names = [xmlns_to_name(*id_tuple) for id_tuple in self.form_types]
-        form_names = [name.replace("/", " / ") for name in form_names]
+        form_names = [name.replace("/", " / ") if name is not None else '(No name)' for name in form_names]
 
         if self.form_types:
             # this fails if form_names, form_types is [], []
