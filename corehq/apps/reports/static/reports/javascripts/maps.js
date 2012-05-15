@@ -703,10 +703,6 @@ function DataAggregation(cases, case_type, field, metric_type) {
     if (metric_type != null) {
 	var metric = make_metric(metric_type);
 	$.each(this.values, function(k, v) {
-		if (metric == null) {
-		    return;
-		}
-
 		var result = metric.summarize(v);
 		agg.results[k] = result;
 		if (result != null) {
@@ -714,6 +710,10 @@ function DataAggregation(cases, case_type, field, metric_type) {
 		}
 	    });
 	this.context = metric.overview(this._results);
+    } else {
+	$.each(this.values, function(k, v) {
+		agg.results[k] = null;
+	    });
     }
 
 }
@@ -755,7 +755,7 @@ function Marker(style) {
     }
 
     this.legend = function(context, $div) {
-	if (style.legend) {
+	if (style.legend && context) {
 	    style.legend(context, $div);
 	    return true;
 	} else {
@@ -1267,12 +1267,23 @@ function TallyMetric() {
 
 function case_no_data() {
     return render_marker(function(ctx, w, h) {
-	    ctx.beginPath();
-	    ctx.arc(.5*w, .5*h, .3*Math.min(w, h), 0, 2*Math.PI);
-	    ctx.closePath();
-	    ctx.strokeStyle = 'rgba(255, 0, 0, .8)';
-	    ctx.lineWidth = 5;
+	    var arc = function(a, b) {
+		ctx.beginPath();
+		ctx.arc(.5*w, .5*h, .3*Math.min(w, h), a * 2*Math.PI, b * 2*Math.PI);
+		//ctx.closePath();
+	    }
+
+	    arc(0., 1.);
+	    ctx.strokeStyle = 'rgba(128, 0, 0, .3)';
+	    ctx.lineWidth = 6;
 	    ctx.stroke();
+
+	    for (var i = 0; i < 3; i++) {
+		arc(.3333 * i, .3333 * (i + .75));
+		ctx.strokeStyle = 'rgba(255, 0, 0, .8)';
+		ctx.lineWidth = 3;
+		ctx.stroke();
+	    }
 	}, 18, 18);
 }
 
