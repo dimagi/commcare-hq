@@ -63,13 +63,14 @@
     <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/formnav-all.js' %}?version={{app_version}}"></script>
     <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/entrycontrols_full.js' %}?version={{app_version}}"></script>
     <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/fullform-ui.js' %}?version={{app_version}}"></script>
-    <script language="javascript" type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key={{ maps_api_key }}&sensor=false"></script>
 
     <link rel="stylesheet" href="{{STATIC_URL}}formplayer/style/webforms.css">
 
 {% endblock %}
 {% block js-inline %}{{ block.super }}
 <script>
+
+    GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
 
     $(function () {
         var urlRoot = "{% url cloudcare_app_list domain '' %}";
