@@ -414,6 +414,19 @@
                         {% endif %}
                     </td>
                 </tr>
+                <tr>
+                    <th>Auto-manage URLs</th>
+                    <td>
+                        {% if edit %}
+                        <select name="manage_urls" data-value="{{ app.manage_urls|JSON }}">
+                            <option value="false">* Off</option>
+                            <option value="true">On</option>
+                        </select>
+                        {% else %}
+                        {% if app.manage_urls %}On{% else %}Off{% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
             {% endif %}
             {% if app.get_doc_type == "Application" %}
                 <tr>

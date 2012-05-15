@@ -334,7 +334,10 @@ def delete_custom_export(req, domain, export_id):
     """
     Delete a custom export
     """
-    saved_export = SavedExportSchema.get(export_id)
+    try:
+        saved_export = SavedExportSchema.get(export_id)
+    except ResourceNotFound:
+        return HttpResponseRedirect(req.META['HTTP_REFERER'])
     type = saved_export.type
     saved_export.delete()
     messages.success(req, "Custom export was deleted.")

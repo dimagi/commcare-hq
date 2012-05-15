@@ -12,6 +12,7 @@
 
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hq-bootstrap/js/jquery-1.7.1.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.0.0.js' %}"></script>
 
         {% block oldstyle_imports %}
             <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
@@ -57,7 +58,6 @@
                         <div class="btn-toolbar secondary-nav">
                             {% if request.couch_user and request.couch_user.is_web_user %}
                             <div class="btn-group">
-
                                 <a class="btn btn-project dropdown-toggle" data-toggle="dropdown" href="#">
                                     <i class="icon-hq-white icon-hq-logo"></i>
                                     {% if domain %}{% ifequal domain 'public' %}CommCare HQ Demo Project{% else %}{{ domain }}{% endifequal %}{% else %}No Domain Selected{% endif %}

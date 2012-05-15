@@ -1238,6 +1238,7 @@ def edit_app_attr(req, domain, app_id, attr):
         'case_sharing',
         # RemoteApp only
         'profile_url',
+        'manage_urls'
         ]
     if attr not in attributes:
         return HttpResponseBadRequest()
@@ -1287,11 +1288,17 @@ def edit_app_attr(req, domain, app_id, attr):
     if should_edit('case_sharing'):
         app.case_sharing = bool(json.loads(req.POST['case_sharing']))
 
-    # For RemoteApps
-    if should_edit("profile_url"):
+    def require_remote_app():
         if app.get_doc_type() not in ("RemoteApp",):
             raise Exception("App type %s does not support profile url" % app.get_doc_type())
+
+    # For RemoteApps
+    if should_edit("profile_url"):
+        require_remote_app()
         app['profile_url'] = req.POST['profile_url']
+    if should_edit("manage_urls"):
+        require_remote_app()
+        app.manage_urls = bool(json.loads(req.POST['manage_urls']))
 
     app.save(resp)
     # this is a put_attachment, so it has to go after everything is saved

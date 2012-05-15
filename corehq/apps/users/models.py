@@ -1165,7 +1165,9 @@ class PublicUser(FakeUser):
         super(PublicUser, self).__init__(**kwargs)
         self.domain = domain
         self.domains = [domain]
-        self.domain_memberships = [DomainMembership(domain=domain, is_admin=False)]
+        dm = DomainMembership(domain=domain, is_admin=False)
+        dm.set_permission('view-reports', True)
+        self.domain_memberships = [dm]
     
     def get_role(self, domain=None):
         assert(domain == self.domain)
