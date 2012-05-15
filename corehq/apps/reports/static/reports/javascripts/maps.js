@@ -516,6 +516,7 @@ function init_callback(map, case_list) {
 	    $panel.append($hdr);
 	    $.each(c.fields, function(i, f) {
 		    var $f = $('<div />');
+		    $f.addClass('choice');
 		    $f.text(f.display_name || f.field);
 		    $panel.append($f);
 		    $f.click(function() {
@@ -528,6 +529,7 @@ function init_callback(map, case_list) {
 
     $.each($('#agg span'), function(i, e) {
 	    var $e = $(e);
+	    $e.addClass('choice');
 	    $e.click(function() {
 		    if ($e.hasClass('disabled')) {
 			return;
@@ -540,6 +542,7 @@ function init_callback(map, case_list) {
 
     $.each($('#style span'), function(i, e) {
 	    var $e = $(e);
+	    $e.addClass('choice');
 	    $e.click(function() {
 		    if ($e.hasClass('disabled')) {
 			return;
