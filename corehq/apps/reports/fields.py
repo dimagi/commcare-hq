@@ -182,9 +182,10 @@ class SelectFilteredMobileWorkerField(SelectMobileWorkerField):
         self.group_options = []
         for group in self.group_names:
             filtered_group = Group.by_name(self.domain, group)
-            self.group_options.append(dict(group_id=filtered_group._id,
-                name="Only %s Mobile Workers" % group))
-            self.users.extend(filtered_group.get_users(is_active=True, only_commcare=True))
+            if not filtered_group:
+                self.group_options.append(dict(group_id=filtered_group._id,
+                    name="Only %s Mobile Workers" % group))
+                self.users.extend(filtered_group.get_users(is_active=True, only_commcare=True))
 
     def update_context(self):
         super(SelectFilteredMobileWorkerField, self).update_context()
