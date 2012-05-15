@@ -111,7 +111,118 @@ function gen_test_data() {
     return test_cases;
 }
 
-
+function gen_test_config() {
+    return {
+       "case_types": [
+           {
+               "case_type": "household",
+               "display_name": "Household",
+               "geo_field": "geo",
+               "fields": [
+                   {
+                       "field": "salary",
+                       "display_name": "Annual Salary",
+                       "type": "numeric"
+                   },
+                   {
+                       "field": "dwelling",
+                       "display_name": "Dwelling Type",
+                       "type": "enum",
+                       "values": [
+                           {
+                               "value": "hut"
+                           },
+                           {
+                               "value": "apt",
+                               "label": "apartment"
+                           },
+                           {
+                               "value": "mansion"
+                           }
+                       ]
+                   }
+               ]
+           },
+           {
+               "case_type": "preg",
+               "display_name": "Pregnancy",
+               "geo_linked_to": "household",
+               "fields": [
+                   {
+                       "field": "_count",
+                       "display_name": "Pregnancies per household",
+                       "scale": 3,
+                       "color": "#fff"
+                   },
+                   {
+                       "field": "mother_age",
+                       "display_name": "Mother's Age",
+                       "type": "numeric",
+                       "scale": 40
+                   },
+                   {
+                       "field": "gestational_age",
+                       "display_name": "Gestational Age (days)",
+                       "type": "numeric",
+                       "scale": 280,
+                       "color": "#ff5"
+                   }
+               ]
+           },
+           {
+               "case_type": "child",
+               "display_name": "Under 5",
+               "geo_linked_to": "household",
+               "fields": [
+                   {
+                       "field": "_count",
+                       "display_name": "# U5 children"
+                   },
+                   {
+                       "field": "gender",
+                       "display_name": "Gender",
+                       "type": "enum",
+                       "values": [
+                           {
+                               "value": "m",
+                               "label": "male",
+                               "color": "#aaf"
+                           },
+                           {
+                               "value": "f",
+                               "label": "female",
+                               "color": "#faa"
+                           }
+                       ]
+                   },
+                   {
+                       "field": "happiness",
+                       "display_name": "Developmental Index",
+                       "type": "num_discrete",
+                       "scale": 5,
+                       "values": [
+                           {
+                               "value": "1"
+                           },
+                           {
+                               "value": "2"
+                           },
+                           {
+                               "value": "3"
+                           },
+                           {
+                               "value": "4"
+                           },
+                           {
+                               "value": "5"
+                           }
+                       ]
+                   }
+               ]
+           }
+       ]
+   };
+}
 
 
 
@@ -348,6 +459,11 @@ function field_type(fc) {
 
 
 function maps_init(config, case_api_url) {
+    var debug_mode = (window.location.href.indexOf('?debug=true') != -1);
+    if (debug_mode) {
+	config = gen_test_config();
+    }
+
     if (config == null) {
 	alert('This domain is not configured for maps reports');
     }
@@ -356,7 +472,6 @@ function maps_init(config, case_api_url) {
 
     var map = init_map($('#map'), [30., 0.], 2, 'terrain');
 
-    var debug_mode = (window.location.href.indexOf('?debug=true') != -1);
     if (!debug_mode) {
 	$.get(case_api_url, null, function(data) {
 		init_callback(map, data);
