@@ -1465,6 +1465,7 @@ class RemoteApp(ApplicationBase):
             profile_xml = WrappedNode(profile)
             profile_xml.find('property[@key="ota-restore-url"]').attrib['value'] = self.ota_restore_url
             profile_xml.find('property[@key="PostURL"]').attrib['value'] = self.post_url
+            profile_xml.find('property[@key="cc_user_domain"]').attrib['value'] = cc_user_domain(self.domain)
             profile_xml.attrib['update'] = self.hq_profile_url
             profile = profile_xml.render()
         return profile
