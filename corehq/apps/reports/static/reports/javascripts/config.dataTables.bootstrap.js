@@ -6,7 +6,7 @@ function HQReportDataTables(options) {
     self.paginationType = (options.paginationType) ? options.paginationType : 'bootstrap';
     self.defaultRows = (options.defaultRows) ? options.defaultRows : 10;
     self.startAtRowNum = (options.startAtRowNum) ? options.startAtRowNum : 0;
-    self.aoColumns = (options.aoColumns) ? options.aoColumns : [];
+    self.aoColumns = (options.aoColumns) ? options.aoColumns : null;
     self.autoWidth = (options.autoWidth != undefined) ? options.autoWidth : true;
 
     this.render = function () {
@@ -49,12 +49,14 @@ function HQReportDataTables(options) {
 
                     };
             }
-
-            params.aoColumns = self.aoColumns;
+            if(self.aoColumns)
+                params.aoColumns = self.aoColumns;
             $(this).dataTable(params);
 
             var $dataTablesFilter = $(".dataTables_filter");
-            if($dataTablesFilter) {
+            console.log($dataTablesFilter);
+            console.log($('#datatables_filter_container'));
+            if($dataTablesFilter && $("#extra-filter-info")) {
                 $("#extra-filter-info").append($dataTablesFilter);
                 $dataTablesFilter.addClass("form-search");
                 var $inputField = $dataTablesFilter.find("input"),
@@ -67,6 +69,10 @@ function HQReportDataTables(options) {
 
                 $inputLabel.attr("for", "dataTables-filter-box");
                 $inputLabel.html($('<i />').addClass("icon-search"));
+            } else if ($dataTablesFilter && $('#datatables_filter_container')) {
+                console.log('boo');
+                $dataTablesFilter.remove();
+                $('#datatables_filter_box').append($dataTablesFilter);
             }
 
             var $dataTablesLength = $(".dataTables_length"),
