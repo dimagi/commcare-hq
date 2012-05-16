@@ -6,10 +6,12 @@
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
         $(function () {
+            var path = '{{ request.path }}';
             COMMCAREHQ.initBlock($('.hq-content'));
             $('#users-main-nav li a').each(function(e) {
-                if ($(this).attr('href') == '{{ request.path }}')
+                if ($(this).attr('href') == path) {
                     $(this).parent().addClass('active');
+                }
             });
             var activeTabCookie = 'active_tab',
                 last_active_tab = $.cookie(activeTabCookie);

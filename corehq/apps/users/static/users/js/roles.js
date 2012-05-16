@@ -5,10 +5,9 @@ $(function () {
         function wrapRole(role) {
             role.permissions.viewReportList = ko.computed({
                 read: function () {
-                    var reports = ko.utils.arrayMap(role.permissions.view_report_list(), function (reportPath) {
+                    return ko.utils.arrayMap(role.permissions.view_report_list(), function (reportPath) {
                         return self.getReportObject(reportPath);
                     });
-                    return reports;
                 },
                 write: function (reports) {
                     var reportPaths = ko.utils.arrayMap(reports, function (report) {
@@ -41,7 +40,6 @@ $(function () {
 
         self.addOrReplaceRole = function (role) {
             var newRole = ko.mapping.fromJS(role);
-            console.log(newRole.permissions);
             wrapRole(newRole);
             var i;
             for (i = 0; i < self.userRoles().length; i++) {

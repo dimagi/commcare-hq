@@ -221,7 +221,7 @@ class UserRole(Document):
 
 class AdminUserRole(UserRole):
     def __init__(self, domain):
-        return super(AdminUserRole, self).__init__(domain=domain, name='Admin', permissions=Permissions.max())
+        super(AdminUserRole, self).__init__(domain=domain, name='Admin', permissions=Permissions.max())
     def get_qualified_id(self):
         return 'admin'
 
@@ -240,13 +240,13 @@ class DomainMembership(DocumentSchema):
     date_joined = DateTimeProperty()
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
 
-#    custom_permissions = SchemaProperty(Permissions)
+    custom_permissions = SchemaProperty(Permissions)
     role_id = StringProperty()
 
     @property
     def permissions(self):
         if self.role_id:
-            return self.role.permissions
+            return self.role.permissions # | self.custom_permissions ??
         else:
             return Permissions()
 
@@ -293,11 +293,11 @@ class DomainMembership(DocumentSchema):
     def has_permission(self, permission, data=None):
         return self.is_admin or self.permissions.has(permission, data)
 
-    def set_permission(self, permission, value, data):
+    def set_permission(self, permission, value, data=None):
         self.custom_permissions.set(permission, value, data)
 
     def viewable_reports(self):
-        return self.role.view_report_list
+        return self.role.permissions.view_report_list
 
     class Meta:
         app_label = 'users'
@@ -1172,7 +1172,7 @@ class PublicUser(FakeUser):
         self.domain = domain
         self.domains = [domain]
         dm = DomainMembership(domain=domain, is_admin=False)
-        dm.set_permission('view-reports', True)
+        dm.set_permission('view_reports', True)
         self.domain_memberships = [dm]
     
     def get_role(self, domain=None):

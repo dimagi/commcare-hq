@@ -202,13 +202,13 @@
                             </td>
                         </tr>
                         <tr>
-                            <th>View Reports</th>
+                            <th>View All Reports</th>
                             <td>
                                 <input type="checkbox" data-bind="checked: permissions.view_reports"/>
                             </td>
                         </tr>
-                        <tr>
-                            <th>View Report List</th>
+                        <tr data-bind="visible: !permissions.view_reports()">
+                            <th>View Specific Reports</th>
                             <td>
                                 <select data-bind="selectedOptions: permissions.view_report_list, options: $root.reportOptions, optionsText: 'name', optionsValue: 'path'" multiple="multiple" size="10"></select>
                             </td>
