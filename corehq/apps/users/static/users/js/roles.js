@@ -1,13 +1,47 @@
 $(function () {
     function RolesViewModel(o) {
         var self = this;
-        console.log(o.userRoles);
+
+        function wrapRole(role) {
+            role.permissions.viewReportList = ko.computed({
+                read: function () {
+                    var reports = ko.utils.arrayMap(role.permissions.view_report_list(), function (reportPath) {
+                        return self.getReportObject(reportPath);
+                    });
+                    console.log(reports);
+                    return reports;
+                },
+                write: function (reports) {
+                    var reportPaths = ko.utils.arrayMap(reports, function (report) {
+                        return report.path;
+                    });
+                    role.permissions.view_report_list.removeAll();
+                    role.permissions.view_report_list.extend(reportPaths);
+                }
+            });
+        }
+        self.reportOptions = o.reportOptions;
+        self.getReportObject = function (path) {
+            var i;
+            for (i = 0; i < self.reportOptions.length; i++) {
+                if (self.reportOptions[i].path === path) {
+                    return self.reportOptions[i];
+                }
+            }
+            return path;
+        };
+
         self.userRoles = ko.mapping.fromJS(o.userRoles);
+        ko.utils.arrayForEach(self.userRoles(), function (role) {
+            wrapRole(role);
+        });
+        console.log(self.userRoles());
         self.roleBeingEdited = ko.observable();
         self.defaultRole = ko.mapping.fromJS(o.defaultRole);
 
         self.addOrReplaceRole = function (role) {
             var newRole = ko.mapping.fromJS(role);
+            wrapRole(role);
             var i;
             for (i = 0; i < self.userRoles().length; i++) {
                 if (ko.utils.unwrapObservable(self.userRoles()[i]._id) === newRole._id()) {
@@ -44,6 +78,7 @@ $(function () {
                 });
             }
         });
+
     }
     $.fn.userRoles = function (o) {
         this.each(function () {

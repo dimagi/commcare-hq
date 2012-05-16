@@ -1,5 +1,6 @@
 from functools import wraps
 import json
+from corehq.apps.reports.util import get_possible_reports
 import re
 from smtplib import SMTPRecipientsRefused
 import urllib
@@ -102,7 +103,8 @@ def web_users(request, domain, template="users/web_users.html"):
     user_roles.extend(sorted(UserRole.by_domain(domain), key=lambda role: role.name if role.name else u'\uFFFF'))
     context.update({
         'user_roles': user_roles,
-        'default_role': UserRole.get_default()
+        'default_role': UserRole.get_default(),
+        'report_list': get_possible_reports(domain),
     })
     return render_to_response(request, template, context)
 

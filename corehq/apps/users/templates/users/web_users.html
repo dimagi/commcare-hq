@@ -52,7 +52,8 @@
         $('#user-roles-table').userRoles({
             userRoles: {{ user_roles|JSON }},
             defaultRole: {{ default_role|JSON }},
-            saveUrl: '{% url post_user_role domain %}'
+            saveUrl: '{% url post_user_role domain %}',
+            reportOptions: {{ report_list|JSON }}
         });
     </script>
 {% endblock %}
@@ -150,8 +151,9 @@
                     <td>
                         <span data-bind="visible: permissions.view_reports(), staticChecked: true"></span>
                         <div data-bind="visible: !permissions.view_reports() && permissions.view_report_list().length">
-                            <ul data-bind="foreach: permissions.view_report_list">
-                                <li data-bind="text: $data"></li>
+                            Only
+                            <ul data-bind="foreach: permissions.viewReportList">
+                                <li data-bind="text: name"></li>
                             </ul>
                         </div>
                         <span data-bind="visible: !permissions.view_reports() && !permissions.view_report_list().length, staticChecked: false"></span>
@@ -208,7 +210,7 @@
                         <tr>
                             <th>View Report List</th>
                             <td>
-                                <select data-bind="selectedOptions: permissions.view_report_list, options: ['a', 'b']" multiple="true"></select>
+                                <select data-bind="selectedOptions: permissions.viewReportList, options: $root.reportOptions, optionsText: 'name', optionsValue: 'path'" multiple="multiple" size="10"></select>
                             </td>
                         </tr>
                     </table>
