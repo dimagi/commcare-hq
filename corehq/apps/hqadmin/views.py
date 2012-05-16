@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import permission_required
 from django.template.context import RequestContext
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import CouchUser, CommCareUser
 from couchforms.models import XFormInstance
@@ -17,7 +18,6 @@ from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response, render_to_response
 from django.views.decorators.cache import cache_page
-from phonelog.reports import FormErrorReport
 
 @require_superuser
 def default(request):
@@ -299,5 +299,15 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
         "layout_flush_content": True,
         "rows": rows
     })
+
+    headers = DataTablesHeader(
+        DataTablesColumn("Domain"),
+        DataTablesColumn("Active Users", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("Forms Submitted", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("Errors", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("Warnings", sort_type=DTSortType.NUMERIC)
+    )
+    context["headers"] = headers
+    context["aoColumns"] = headers.render_aoColumns
 
     return render_to_response(request, template, context)
