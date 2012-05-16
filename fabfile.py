@@ -4,6 +4,7 @@ from fabric import utils
 import os
 
 env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
+env.jython_home = "/usr/bin/jython"
 
 def _join(*args):
     """
@@ -98,6 +99,25 @@ def upload_upstart_conf():
         sudo('chmod -R g+w %s' % tmp_destination)
         sudo('mv -f %s %s' % (tmp_destination, destination), user=env.sudo_user)
     
+def _supervisor_command(command):
+    require('root', provided_by=('staging', 'production', 'india'))
+    sudo('supervisorctl %s' % command)
+    
+def upload_supervisor_conf():
+    """
+    Upload and link supervisor configuration from the templates.
+    """
+    require('root', provided_by=('staging', 'production', 'india'))
+    file = os.path.join(os.path.dirname(__file__), 'utilities', 'deployment', 'supervisor_templates', "supervisor.conf")
+    destination = _join(env.code_root, 'utilities', 'deployment', "supervisor.conf")
+    #destination = _join(env.code_root, file)
+    tmp_destination = "/tmp/%s.tmp" % file
+    files.upload_template(file, tmp_destination, context=env)
+    sudo('chown -R %(user)s:%(user)s %(file)s' % {"user": env.sudo_user,
+                                                  "file": tmp_destination})
+    sudo('chmod -R g+w %s' % tmp_destination)
+    sudo('mv -f %s %s' % (tmp_destination, destination), user=env.sudo_user)
+
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
     require('root', provided_by=('staging', 'production', 'india'))
