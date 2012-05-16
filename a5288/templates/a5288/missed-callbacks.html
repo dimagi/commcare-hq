@@ -1,0 +1,66 @@
+{% extends "reports/report_base.html" %}
+{% load i18n %}
+
+{% block head %}
+    <style type="text/css">
+        table, tr, td, th {
+            border: 1px solid black;
+            border-spacing: 0;
+            white-space: nowrap;
+        }
+        td, th {
+            padding: 5px;
+        }
+        td.ok {
+            color: #0A0;
+            font-weight: bold;
+        }
+        td.no_response {
+            background-color: #F11;
+            font-weight: bold;
+        }
+        th {
+            font-weight: bold;
+            background-color: #CCC;
+        }
+    </style>
+{% endblock %}
+
+{% block reportcontent %}
+    <table>
+        <tr>
+            <th>Patient ID</th>
+            {% for date in report_data.date_list %}
+                <th>{{ date }}</th>
+            {% endfor %}
+            <th>Total OK</th>
+            <th>Total No Response</th>
+            <th>Total Pending</th>
+            <th>Total Not Sent</th>
+        </tr>
+        {% for id, info in report_data.data.items %}
+        <tr>
+            <td>{{ info.recipient.name }}</td>
+            {% for date in info.dates %}
+                {% if date.not_sent %}
+                    <td>(not sent)</td>
+                {% else %}
+                    {% if date.ok %}
+                        <td class="ok">OK</td>
+                    {% else %}
+                        {% if date.no_response %}
+                            <td class="no_response">No Response</td>
+                        {% else %}
+                            <td>(pending)</td>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+            <td>{{ info.total_ok }}</td>
+            <td>{{ info.total_no_response }}</td>
+            <td>{{ info.total_pending }}</td>
+            <td>{{ info.total_not_sent }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}
