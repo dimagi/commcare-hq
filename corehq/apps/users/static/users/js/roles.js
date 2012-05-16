@@ -8,7 +8,6 @@ $(function () {
                     var reports = ko.utils.arrayMap(role.permissions.view_report_list(), function (reportPath) {
                         return self.getReportObject(reportPath);
                     });
-                    console.log(reports);
                     return reports;
                 },
                 write: function (reports) {
@@ -16,7 +15,9 @@ $(function () {
                         return report.path;
                     });
                     role.permissions.view_report_list.removeAll();
-                    role.permissions.view_report_list.extend(reportPaths);
+                    ko.utils.arrayForEach(reportPaths, function (path) {
+                        role.permissions.view_report_list.push(path);
+                    });
                 }
             });
         }
@@ -35,13 +36,13 @@ $(function () {
         ko.utils.arrayForEach(self.userRoles(), function (role) {
             wrapRole(role);
         });
-        console.log(self.userRoles());
         self.roleBeingEdited = ko.observable();
         self.defaultRole = ko.mapping.fromJS(o.defaultRole);
 
         self.addOrReplaceRole = function (role) {
             var newRole = ko.mapping.fromJS(role);
-            wrapRole(role);
+            console.log(newRole.permissions);
+            wrapRole(newRole);
             var i;
             for (i = 0; i < self.userRoles().length; i++) {
                 if (ko.utils.unwrapObservable(self.userRoles()[i]._id) === newRole._id()) {
@@ -55,6 +56,7 @@ $(function () {
         self.setRoleBeingEdited = function (role) {
             var title = role === self.defaultRole ? "New Role" : "Edit Role: " + role.name();
             var roleCopy = ko.mapping.fromJS(ko.mapping.toJS(role));
+            wrapRole(roleCopy);
             roleCopy.modalTitle = title;
             self.roleBeingEdited(roleCopy);
             self.modalSaveButton.fire('change');
