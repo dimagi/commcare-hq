@@ -1,47 +1,47 @@
-{% extends "cloudcare/base.html" %}
+{% extends "hqwebapp/two_column.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block head %}{{ block.super }}
-    <style>
-        #main_container {
-            padding: 10px;
-        }
-        #main_container {
-            min-width: 500px;
-            position: relative;
-        }
-        .clear {
-            clear: both;
-        }
-        #case-list {
-            float: left;
-            width: 30%;
-        }
-        #case-list table {
-            float: left;
-            width: 100%;
-        }
-        #case-details table {
-            width: 60%;
-        }
-        .clear {
-            clear: both;
-        }
-        tr.active {
-            background-color: #f5f5ff;
-        }
-        #loading {
-            float: right;
-            display: none;
-            margin-top: 15px; 
-            margin-right: 15px; 
-        }
-        
-    </style>
+{% block head %} {{ block.super }}
+{#    <style>#}
+{#        #main_container {#}
+{#            padding: 10px;#}
+{#        }#}
+{#        #main_container {#}
+{#            min-width: 500px;#}
+{#            position: relative;#}
+{#        }#}
+{#        .clear {#}
+{#            clear: both;#}
+{#        }#}
+{#        #case-list {#}
+{#            float: left;#}
+{#            width: 30%;#}
+{#        }#}
+{#        #case-list table {#}
+{#            float: left;#}
+{#            width: 100%;#}
+{#        }#}
+{#        #case-details table {#}
+{#            width: 60%;#}
+{#        }#}
+{#        .clear {#}
+{#            clear: both;#}
+{#        }#}
+{#        tr.active {#}
+{#            background-color: #f5f5ff;#}
+{#        }#}
+{#        #loading {#}
+{#            float: right;#}
+{#            display: none;#}
+{#            margin-top: 15px; #}
+{#            margin-right: 15px; #}
+{#        }#}
+{#        #}
+{#    </style>#}
 {% endblock %}
 
-{% block js %}{{ block.super }}
+{% block js %} {{ block.super }}
     <script src="{% static 'hqwebapp/javascripts/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'hqwebapp/javascripts/underscore-1.3.1.js' %}"></script>
     <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
@@ -55,7 +55,7 @@
     
     {# touchforms includes #}
     <script src="{% static 'cloudcare/js/post.js' %}"></script>
-    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/jquery-ui.min.js"></script>
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/jquery-ui.min.js' %}"></script>
     <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/themes/ui-lightness/jquery-ui.css">
     
     <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/shortcut.js' %}"></script>
@@ -64,10 +64,19 @@
     <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/entrycontrols_full.js' %}?version={{app_version}}"></script>
     <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/fullform-ui.js' %}?version={{app_version}}"></script>
 
-    <link rel="stylesheet" href="{{STATIC_URL}}formplayer/style/webforms.css">
+    <link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
 
 {% endblock %}
-{% block js-inline %}{{ block.super }}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url cloudcare_get_apps domain %}"><strong>Cloudcare</strong></a>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
 <script>
 
     GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
@@ -96,25 +105,23 @@
 </script>
 {% endblock %}
 
-{% block content %}
-<div class="row-fluid">
-    <div class="sidebar span2">
-        <section id="app-main" >
-         <nav id="app-list" ></nav>
-         <nav id="module-list" ></nav>
-         <nav id="form-list" ></nav>
-        </section>
-    </div>
-    <div class="hq-content span10" id="cloudcare-main" style="position: relative;">
-        <div id="loading" style="position: absolute; right: 0; padding-right: 40px; top: 40px;">
+{% block sidebar %}
+    <section id="app-main" >
+        <nav id="app-list" ></nav>
+        <nav id="module-list" ></nav>
+        <nav id="form-list" ></nav>
+    </section>
+{% endblock %}
+
+{% block main_column %}
+    <div id="cloudcare-main">
+        <div id="loading" class="well" style="position: absolute; right: 0; margin-right: 40px; top: 40px;">
             <img src="{% static 'formplayer/img/loading_small.gif' %}" />
-            loading...
+            Loading...
         </div>
         <div class="row-fluid">     
             <section id="cases"></section>
             <section id="webforms" style="min-width: 800px;"></section>
         </div>
     </div>
-</div>
-    
 {% endblock %}
