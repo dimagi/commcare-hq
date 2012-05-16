@@ -111,7 +111,118 @@ function gen_test_data() {
     return test_cases;
 }
 
-
+function gen_test_config() {
+    return {
+       "case_types": [
+           {
+               "case_type": "household",
+               "display_name": "Household",
+               "geo_field": "geo",
+               "fields": [
+                   {
+                       "field": "salary",
+                       "display_name": "Annual Salary",
+                       "type": "numeric"
+                   },
+                   {
+                       "field": "dwelling",
+                       "display_name": "Dwelling Type",
+                       "type": "enum",
+                       "values": [
+                           {
+                               "value": "hut"
+                           },
+                           {
+                               "value": "apt",
+                               "label": "apartment"
+                           },
+                           {
+                               "value": "mansion"
+                           }
+                       ]
+                   }
+               ]
+           },
+           {
+               "case_type": "preg",
+               "display_name": "Pregnancy",
+               "geo_linked_to": "household",
+               "fields": [
+                   {
+                       "field": "_count",
+                       "display_name": "Pregnancies per household",
+                       "scale": 3,
+                       "color": "#fff"
+                   },
+                   {
+                       "field": "mother_age",
+                       "display_name": "Mother's Age",
+                       "type": "numeric",
+                       "scale": 40
+                   },
+                   {
+                       "field": "gestational_age",
+                       "display_name": "Gestational Age (days)",
+                       "type": "numeric",
+                       "scale": 280,
+                       "color": "#ff5"
+                   }
+               ]
+           },
+           {
+               "case_type": "child",
+               "display_name": "Under 5",
+               "geo_linked_to": "household",
+               "fields": [
+                   {
+                       "field": "_count",
+                       "display_name": "# U5 children"
+                   },
+                   {
+                       "field": "gender",
+                       "display_name": "Gender",
+                       "type": "enum",
+                       "values": [
+                           {
+                               "value": "m",
+                               "label": "male",
+                               "color": "#aaf"
+                           },
+                           {
+                               "value": "f",
+                               "label": "female",
+                               "color": "#faa"
+                           }
+                       ]
+                   },
+                   {
+                       "field": "happiness",
+                       "display_name": "Developmental Index",
+                       "type": "num_discrete",
+                       "scale": 5,
+                       "values": [
+                           {
+                               "value": "1"
+                           },
+                           {
+                               "value": "2"
+                           },
+                           {
+                               "value": "3"
+                           },
+                           {
+                               "value": "4"
+                           },
+                           {
+                               "value": "5"
+                           }
+                       ]
+                   }
+               ]
+           }
+       ]
+   };
+}
 
 
 
@@ -348,6 +459,11 @@ function field_type(fc) {
 
 
 function maps_init(config, case_api_url) {
+    var debug_mode = (window.location.href.indexOf('?debug=true') != -1);
+    if (debug_mode) {
+	config = gen_test_config();
+    }
+
     if (config == null) {
 	alert('This domain is not configured for maps reports');
     }
@@ -356,7 +472,6 @@ function maps_init(config, case_api_url) {
 
     var map = init_map($('#map'), [30., 0.], 2, 'terrain');
 
-    var debug_mode = (window.location.href.indexOf('?debug=true') != -1);
     if (!debug_mode) {
 	$.get(case_api_url, null, function(data) {
 		init_callback(map, data);
@@ -401,6 +516,7 @@ function init_callback(map, case_list) {
 	    $panel.append($hdr);
 	    $.each(c.fields, function(i, f) {
 		    var $f = $('<div />');
+		    $f.addClass('choice');
 		    $f.text(f.display_name || f.field);
 		    $panel.append($f);
 		    $f.click(function() {
@@ -413,6 +529,7 @@ function init_callback(map, case_list) {
 
     $.each($('#agg span'), function(i, e) {
 	    var $e = $(e);
+	    $e.addClass('choice');
 	    $e.click(function() {
 		    if ($e.hasClass('disabled')) {
 			return;
@@ -425,6 +542,7 @@ function init_callback(map, case_list) {
 
     $.each($('#style span'), function(i, e) {
 	    var $e = $(e);
+	    $e.addClass('choice');
 	    $e.click(function() {
 		    if ($e.hasClass('disabled')) {
 			return;
@@ -585,10 +703,6 @@ function DataAggregation(cases, case_type, field, metric_type) {
     if (metric_type != null) {
 	var metric = make_metric(metric_type);
 	$.each(this.values, function(k, v) {
-		if (metric == null) {
-		    return;
-		}
-
 		var result = metric.summarize(v);
 		agg.results[k] = result;
 		if (result != null) {
@@ -596,6 +710,10 @@ function DataAggregation(cases, case_type, field, metric_type) {
 		}
 	    });
 	this.context = metric.overview(this._results);
+    } else {
+	$.each(this.values, function(k, v) {
+		agg.results[k] = null;
+	    });
     }
 
 }
@@ -637,7 +755,7 @@ function Marker(style) {
     }
 
     this.legend = function(context, $div) {
-	if (style.legend) {
+	if (style.legend && context) {
 	    style.legend(context, $div);
 	    return true;
 	} else {
@@ -815,7 +933,7 @@ function for_each_choice(config, data, func, reverse) {
     }
 
     $.each(vals, function(i, k) {
-	    func(k, data[k]);
+	    func(k, data[k] || 0.);
 	});
 }
 
@@ -1149,12 +1267,23 @@ function TallyMetric() {
 
 function case_no_data() {
     return render_marker(function(ctx, w, h) {
-	    ctx.beginPath();
-	    ctx.arc(.5*w, .5*h, .3*Math.min(w, h), 0, 2*Math.PI);
-	    ctx.closePath();
-	    ctx.strokeStyle = 'rgba(255, 0, 0, .8)';
-	    ctx.lineWidth = 5;
+	    var arc = function(a, b) {
+		ctx.beginPath();
+		ctx.arc(.5*w, .5*h, .3*Math.min(w, h), a * 2*Math.PI, b * 2*Math.PI);
+		//ctx.closePath();
+	    }
+
+	    arc(0., 1.);
+	    ctx.strokeStyle = 'rgba(128, 0, 0, .3)';
+	    ctx.lineWidth = 6;
 	    ctx.stroke();
+
+	    for (var i = 0; i < 3; i++) {
+		arc(.3333 * i, .3333 * (i + .75));
+		ctx.strokeStyle = 'rgba(255, 0, 0, .8)';
+		ctx.lineWidth = 3;
+		ctx.stroke();
+	    }
 	}, 18, 18);
 }
 
