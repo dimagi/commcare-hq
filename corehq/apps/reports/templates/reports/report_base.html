@@ -47,7 +47,7 @@
         </li>
         {% if not report_breadcrumbs %}
         <li class="active">
-            <div id="report-title"><a href="">{{ report.name|default:"Unknown Report"|safe }}</a></div>
+            <div id="report-title"><a href="#">{{ report.name|default:"Unknown Report"|safe }}</a></div>
         </li>
         {% else %}
         {{ report_breadcrumbs|safe }}
