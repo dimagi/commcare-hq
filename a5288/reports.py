@@ -81,6 +81,7 @@ class MissedCallbackReport(HQReport):
             entry["total_no_response"] = total_no_response
             entry["total_not_sent"] = total_not_sent
             entry["total_pending"] = total_pending
+            entry["total_indicated"] = 14 - total_not_sent
         
         context = {
             "date_list" : date_list,
