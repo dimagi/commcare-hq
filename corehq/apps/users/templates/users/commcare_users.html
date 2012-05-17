@@ -10,7 +10,9 @@
                         "Archiving is completely reversible, so you can always reactivate them later.",
                 "Delete User": "Deleting a user removes any record of them, including all of the forms they ever submitted and their " +
                         "associated cases. We recommend only deleting users that never corresponded to real people to begin with, " +
-                        "such as users created while testing an application.<br /><br />If you are unsure, it is safer to <strong>archive</strong> a user."
+                        "such as users created while testing an application.<br /><br />If you are unsure, it is safer to <strong>archive</strong> a user.",
+                "Case Sharing": "You have selected to use case sharing in your apps. To use basic case sharing, " +
+                        "a user must belong to exactly one case sharing group."
             };
             $('.reset-password-form').submit(function(){
                 $(this).ajaxSubmit({
@@ -35,7 +37,7 @@
                 return false;
             });
             $('.help_popover').popover({
-                placement: 'left',
+                placement: $(this).data('placement') || 'left',
                 title: function () {
                     return $(this).attr('data-help-key');
                 },
@@ -71,6 +73,11 @@
         {% if commcare_users %}
             <thead>
                 <tr>
+                    {% if show_case_sharing %}
+                    <th class="help_popover" data-help-key="Case Sharing" data-placement="right">
+                        <div>{% trans "Case Sharing" %} <i class="icon icon-question-sign"></i></div>
+                    </th>
+                    {% endif %}
                     <th>{% trans "Username" %}</th>
                     <th>{% trans "Password" %}</th>
                     <th>{% trans "Date Registered" %}</th>
@@ -79,7 +86,6 @@
                     <th>{% trans "Phone" %}</th>
                     {% if couch_user.can_edit_commcare_users %}
                     <th class="help_popover" data-help-key="Archive User"><div >{% trans "Archive" %} <i class="icon icon-question-sign"></i></div></th>
-                    <th class="help_popover" data-help-key="Delete User"><div >{% trans "Delete" %} <i class="icon icon-question-sign"></i></div></th>
                     {% endif %}
                 </tr>
             </thead>
@@ -93,6 +99,25 @@
                     {% endif %}
                 {% endifchanged %}
                 <tr class="{% cycle "odd" "even" %}">
+                    {% if show_case_sharing %}
+                    <td>
+                        {% if user.get_case_sharing_groups|length == 1 %}
+                            <i class="icon-ok"></i> {{ user.get_case_sharing_groups.0.name }}
+                        {% else %}
+                            <i class="icon-warning-sign"></i>
+                            {% if user.get_case_sharing_groups %}
+                                <span class="label label-warning">Multiple Groups</span>
+                                <ul>
+                                    {% for group in user.get_case_sharing_groups %}
+                                        <li>{{ group.name }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <span class="label label-warning">No Groups</span>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    {% endif %}
                     <td><a href="{% url user_account domain user.user_id %}">{{ user.raw_username }}</a></td>
                     <td>
                         <a href="#reset_password_{{ user.user_id }}" class="btn btn-info" data-toggle="modal">Reset Password</a>
@@ -127,38 +152,14 @@
                     {% if couch_user.can_edit_commcare_users %}
                     <td>
                         {% if user.is_active %}
-                        <form action="{% url archive_commcare_user domain user.user_id %}">
+                        <form action="{% url archive_commcare_user domain user.user_id %}" style="display: inline;">
                             <button type="submit" class="btn">Archive</button>
                         </form>
                         {% else %}
-                            <form action="{% url unarchive_commcare_user domain user.user_id %}" method="post">
+                            <form action="{% url unarchive_commcare_user domain user.user_id %}" method="post" style="display: inline;">
                                 <button type="submit" class="btn">Unarchive</button>
                             </form>
                         {% endif %}
-                    </td>
-                    <td>
-                        <a href="#delete_user_{{ user.user_id }}" data-toggle="modal" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Delete</a>
-                        <div id="delete_user_{{ user.user_id }}" class="modal hide fade">
-                            <div class="modal-header">
-                                <a class="close" data-dismiss="modal">&times;</a>
-                                <h3>Delete {% commcare_user %} {{ user.raw_username }}? <small>Permanent Action</small></h3>
-                            </div>
-                            <form class="form form-horizontal" action="{% url delete_commcare_user domain user.user_id %}" method="post">
-                                <div class="modal-body">
-                                    <p>Are you sure you want to permanently delete <strong>{{ user.raw_username }}</strong>?</p>
-                                    <p>This action:</p>
-                                    <ul>
-                                        <li>Will delete <strong>all</strong> of {{ user.raw_username }}'s form submissions.</li>
-                                        <li>Is permanent.</li>
-                                    </ul>
-                                    <p>If you ever want to use {{ user.raw_username }}'s data in the future, we suggest that you use the <strong>Archive User</strong> option.</p>
-                                </div>
-                                <div class="modal-footer">
-                                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                                    <button type="submit" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Delete {% commcare_user %}</button>
-                                </div>
-                            </form>
-                        </div>
                     </td>
                     {% endif %}
                 </tr>

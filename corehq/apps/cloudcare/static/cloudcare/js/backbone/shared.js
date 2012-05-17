@@ -20,14 +20,35 @@ var getCaseFilterUrl = function(urlRoot, appId, moduleId) {
     return urlRoot + "module/" + appId + "/modules-" + moduleId + "/";
 };
 
+var showError = function (message, location, autoHideTime) {
+    _show(message, location, autoHideTime, "alert alert-error");
+};
+
 var showSuccess = function (message, location, autoHideTime) {
-    console.log("show success");
-    var alert = $("<div />").addClass("alert alert-success").text(message);
+    _show(message, location, autoHideTime, "alert alert-success");
+};
+
+var _show = function (message, location, autoHideTime, classes) {
+    var alert = $("<div />").addClass(classes).text(message);
     alert.append($("<a />").addClass("close").attr("data-dismiss", "alert").html("&times;"));
     location.append(alert);
     if (autoHideTime) {
         alert.delay(autoHideTime).fadeOut(500);
     }
+};
+
+var showLoading = function (selector) {
+    selector = selector || "#loading";
+    $(selector).show();
+};
+
+var hideLoading = function (selector) {
+    selector = selector || "#loading";
+    $(selector).hide();
+};
+
+var hideLoadingCallback = function () {
+    hideLoading();
 };
 
 /*

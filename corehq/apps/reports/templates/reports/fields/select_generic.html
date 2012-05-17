@@ -1,0 +1,9 @@
+<label for="{{ select.cssId }}" class="control-label">{{ select.label }}</label>
+<div class="controls">
+    <select id="{{ select.cssId }}" class="{{ select.cssClasses }}" name="{{ slug }}"{% if select.selected %} data-value="{{ select.selected }}"{% endif %}>
+        <option value="">{{ select.default }}</option>
+        {% for opt in select.options %}
+            <option value="{{ opt.val }}">{{ opt.text }}</option>
+        {% endfor %}
+    </select>
+</div>

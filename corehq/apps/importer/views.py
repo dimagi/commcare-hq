@@ -1,17 +1,19 @@
-import uuid
 import os.path
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, HttpResponseNotFound
+from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from dimagi.utils.web import render_to_response
-from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.models import CommCareCase, CommCareCaseAction, const
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.importer import base
 from corehq.apps.importer.util import ExcelFile
 from tempfile import mkstemp
 from django.views.decorators.http import require_POST
+from datetime import datetime
 
 @login_and_domain_required
 def excel_config(request, domain):
+    error_type = "nofile"
+    
     if request.method == 'POST' and request.FILES:
         named_columns = request.POST['named_columns']    
         uploaded_file_handle = request.FILES['file']
@@ -41,19 +43,24 @@ def excel_config(request, domain):
             for row in CommCareCase.view('hqcase/types_by_domain',reduce=True,group=True,startkey=[domain],endkey=[domain,{}]).all():
                 if not row['key'][1] in case_types:
                     case_types.append(row['key'][1])
-                                            
-            return render_to_response(request, "excel_config.html", {
-                                        'named_columns': named_columns, 
-                                        'columns': columns,
-                                        'case_types': case_types,
-                                        'domain': domain,
-                                        'report': {
-                                            'name': 'Import: Configuration'
-                                         },
-                                        'slug': base.ExcelImporter.slug})
+                    
+            if len(case_types) > 0:                                                
+                return render_to_response(request, "excel_config.html", {
+                                            'named_columns': named_columns, 
+                                            'columns': columns,
+                                            'case_types': case_types,
+                                            'domain': domain,
+                                            'report': {
+                                                'name': 'Import: Configuration'
+                                             },
+                                            'slug': base.ExcelImporter.slug})
+            else:
+                error_type = "cases"
+        else:
+            error_type = "file"
     
     #TODO show bad/invalid file error on this page
-    return HttpResponseRedirect(reverse("report_dispatcher", args=[domain, base.ExcelImporter.slug]))
+    return HttpResponseRedirect(reverse("report_dispatcher", args=[domain, base.ExcelImporter.slug]) + "?error=" + error_type)
       
 @login_and_domain_required
 def excel_fields(request, domain):
@@ -89,6 +96,7 @@ def excel_fields(request, domain):
         excel_fields = columns
               
     # get all unique existing case properties, known and unknown
+    # TODO limit to case type
     case_fields = []
     row = CommCareCase.view('hqcase/unique_known_properties',reduce=True,group=True,startkey=domain,endkey=domain).one()
     for value in row['value']:
@@ -96,7 +104,18 @@ def excel_fields(request, domain):
         
     row = CommCareCase.view('hqcase/unique_unknown_properties',reduce=True,group=True,startkey=domain,endkey=domain).one()
     for value in row['value']:
-        case_fields.append(value)               
+        case_fields.append(value)       
+    
+    # hide search column and matching case fields from the update list
+    try:    
+        excel_fields.remove(search_column)
+    except:
+        pass
+    
+    try:    
+        case_fields.remove(search_field)
+    except:
+        pass                    
     
     return render_to_response(request, "excel_fields.html", {
                                 'named_columns': named_columns,
@@ -126,11 +145,16 @@ def excel_commit(request, domain):
     key_column = request.POST['key_column']
     value_column = request.POST['value_column']    
     
-    # unset filename session var
-    try:
-        del request.session['excel_path']
-    except KeyError:
-        pass
+    # get all unique existing case properties, known and unknown
+    known_properties = []
+    row = CommCareCase.view('hqcase/unique_known_properties',reduce=True,group=True,startkey=domain,endkey=domain).one()
+    for value in row['value']:
+        known_properties.append(value)
+        
+    unknown_properties = []
+    row = CommCareCase.view('hqcase/unique_unknown_properties',reduce=True,group=True,startkey=domain,endkey=domain).one()
+    for value in row['value']:
+        unknown_properties.append(value)     
     
     # TODO musn't be able to select an excel_field twice (in html)
     excel_fields = request.POST.getlist('excel_field[]')
@@ -161,6 +185,8 @@ def excel_commit(request, domain):
 
     no_match_count = 0
     match_count = 0
+    
+    cases = {}
    
     # start looping through all the rows
     for i in range(spreadsheet.get_num_rows()):
@@ -221,12 +247,36 @@ def excel_commit(request, domain):
                 
                 fields_to_update[update_field_name] = update_value
     
-        if case.type == case_type:  
-            for name in fields_to_update:          
-                case.set_case_property(name, fields_to_update[name])
-                                
-            # TODO add new action for history
-            case.save()
+        if case.type == case_type:      
+            if cases.has_key(row[search_column_index]):
+                cases[row[search_column_index]]['fields'].update(fields_to_update)
+            else:
+                cases[row[search_column_index]] = {'obj': case, 'fields': fields_to_update}
+            
+    # run db updates
+    for id, case in cases.iteritems():
+        update_action = CommCareCaseAction()
+        update_action.action_type = const.CASE_ACTION_UPDATE
+        update_action.date = datetime.utcnow() # date field in spreadsheet if exists?
+        update_action.server_date = datetime.utcnow()
+                    
+        for name, value in case['fields'].iteritems():
+            case['obj'].set_case_property(name, value)
+            
+            if name in known_properties:
+                update_action.updated_known_properties[name] = value
+            else:
+                update_action.updated_unknown_properties[name] = value
+                                               
+        case['obj'].actions.append(update_action)
+        case['obj'].modified_on = datetime.utcnow()
+        case['obj'].save()        
+            
+    # unset filename session var
+    try:
+        del request.session['excel_path']
+    except KeyError:
+        pass            
     
     return render_to_response(request, "excel_commit.html", {
                                 'match_count': match_count,

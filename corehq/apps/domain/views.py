@@ -205,7 +205,10 @@ def global_settings(request, domain, template="domain/admin/global_settings.html
             else:
                 messages.error(request, "There seems to have been an error saving your settings. Please try again!")
     else:
-        form = DomainGlobalSettingsForm(initial={'default_timezone': domain.default_timezone})
+        form = DomainGlobalSettingsForm(initial={
+            'default_timezone': domain.default_timezone,
+            'case_sharing': json.dumps(domain.case_sharing),
+        })
 
     return render_to_response(request, template, {
         "domain": domain.name,

@@ -27,11 +27,16 @@
             	});
                 return true;
             });
+
+            $('#back_button').click(function() {
+                history.back();
+                return false;
+            });            
         });
     </script>
 {% endblock %}
 
-{% block reportcontent %}
+{% block main_column %}
     <form class="form-horizontal form-report" action="{% url corehq.apps.importer.views.excel_commit domain %}" method="post" id="field_form">
     <input type="hidden" name="named_columns" value="{{named_columns}}" />
     <input type="hidden" name="case_type" value="{{case_type}}" />
@@ -85,6 +90,7 @@
     </fieldset>
    
     <div class="form-actions">
+        <button type="button" class="btn btn-primary btn-large" id="back_button"><i class="icon-backward icon-white"></i> Back</button>
         <button type="submit" class="btn btn-primary btn-large"><i class="icon-forward icon-white"></i> Confirm import</button>
     </div>
     </form>

@@ -38,4 +38,5 @@ def get_app(domain, app_id):
     app = Application.get(app_id)
     assert(app.domain == domain)
     return app._doc
-    
+
+

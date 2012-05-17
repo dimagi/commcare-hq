@@ -14,7 +14,7 @@ def cc_user_domain(domain):
     return ("%s.%s" % (domain, sitewide_domain)).lower()
 
 def format_username(username, domain):
-    return "%s@%s" % (username, cc_user_domain(domain))
+    return "%s@%s" % (username.lower(), cc_user_domain(domain))
 
 def normalize_username(username, domain=None):
     from django.core.validators import validate_email

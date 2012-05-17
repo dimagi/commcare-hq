@@ -1,8 +1,10 @@
+import logging
 from celery.schedules import crontab
 from celery.decorators import periodic_task
 from celery.task import task
 from datetime import datetime, timedelta
 from corehq.apps.receiverwrapper.models import RepeatRecord, FormRepeater
+from couchdbkit.exceptions import ResourceConflict
 from couchforms.models import XFormInstance
 from couchdbkit.resource import ResourceNotFound
 from dimagi.utils.parsing import json_format_datetime, ISO_MIN
@@ -15,7 +17,11 @@ def check_repeaters():
 
     for repeat_record in repeat_records:
         repeat_record.fire()
-        repeat_record.save()
+        try:
+            repeat_record.save()
+        except ResourceConflict:
+            logging.error("ResourceConflict with repeat_record %s: %s" % (repeat_record.get_id, repeat_record.to_json()))
+            raise
 
 @periodic_task(run_every=timedelta(minutes=1))
 def check_inline_form_repeaters(post_fn=None):

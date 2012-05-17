@@ -49,12 +49,12 @@ def post(request, domain):
     if user is None or not user.is_active:
         return HttpResponseBadRequest("Authentication fail")
     msg = SMSLog(domain=domain,
-                     # TODO: how to map phone numbers to recipients, when phone numbers are shared?
-                     #couch_recipient=id, 
-                     phone_number=to,
-                     direction=INCOMING,
-                     date = datetime.now(),
-                     text = text)
+                 # TODO: how to map phone numbers to recipients, when phone numbers are shared?
+                 #couch_recipient=id, 
+                 phone_number=to,
+                 direction=INCOMING,
+                 date = datetime.now(),
+                 text = text)
     msg.save()
     return HttpResponse('OK')     
 

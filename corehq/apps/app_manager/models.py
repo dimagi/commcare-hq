@@ -12,7 +12,7 @@ from django.http import Http404
 from restkit.errors import ResourceError
 import commcare_translations
 from corehq.apps.app_manager import fixtures
-from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError
+from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError, WrappedNode
 from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
@@ -242,7 +242,7 @@ class FormBase(DocumentSchema):
     def validate_form(self):
         if self.validation_cache is None:
             try:
-                XForm(self.source).validate()
+                XForm(self.source).validate(version=self.get_app().application_version)
             except XFormValidationError as e:
                 self.validation_cache = unicode(e)
             else:
@@ -270,7 +270,9 @@ class FormBase(DocumentSchema):
 
 
     def add_stuff_to_xform(self, xform):
-        xform.set_default_language(self.get_app().langs[0])
+        app = self.get_app()
+        xform.exclude_languages(app.build_langs)
+        xform.set_default_language(app.build_langs[0])
         xform.set_version(self.get_app().version)
 
     def render_xform(self):
@@ -396,6 +398,7 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
     def add_stuff_to_xform(self, xform):
         super(Form, self).add_stuff_to_xform(xform)
         xform.add_case_and_meta(self)
+
     def get_app(self):
         return self._parent._parent
     def get_module(self):
@@ -747,6 +750,10 @@ class ApplicationBase(VersionedDoc):
     # This is here instead of in Application because it needs to be available in stub representation
     application_version = StringProperty(default=APP_V1, choices=[APP_V1, APP_V2], required=False)
 
+    langs = StringListProperty()
+    # only the languages that go in the build
+    build_langs = StringListProperty()
+
     @classmethod
     def wrap(cls, data):
         # scrape for old conventions and get rid of them
@@ -770,6 +777,9 @@ class ApplicationBase(VersionedDoc):
         if not self.build_spec or self.build_spec.is_null():
             self.build_spec = CommCareBuildConfig.fetch().get_default(self.application_version)
         return self
+
+    def rename_lang(self, old_lang, new_lang):
+        validate_lang(new_lang)
 
     def is_remote_app(self):
         return False
@@ -828,31 +838,43 @@ class ApplicationBase(VersionedDoc):
                 return item['label']
         return self.build_spec.get_label()
 
+
+    @property
+    def url_base(self):
+        return get_url_base()
+
     @property
     def post_url(self):
         return "%s%s" % (
-            get_url_base(),
-            reverse('corehq.apps.receiverwrapper.views.post', args=[self.domain])
+            self.url_base,
+            reverse('receiver_post_with_app_id', args=[self.domain, self.copy_of or self.get_id])
         )
+
     @property
     def ota_restore_url(self):
         return "%s%s" % (
-            get_url_base(),
+            self.url_base,
             reverse('corehq.apps.ota.views.restore', args=[self.domain])
         )
+
     @property
     def profile_url(self):
+        return self.hq_profile_url
+
+    @property
+    def hq_profile_url(self):
         return "%s%s?latest=true" % (
-            get_url_base(),
+            self.url_base,
             reverse('download_profile', args=[self.domain, self._id])
         )
     @property
     def profile_loc(self):
         return "jr://resource/profile.xml"
+
     @property
     def jar_url(self):
         return "%s%s" % (
-            get_url_base(),
+            self.url_base,
             reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id]),
         )
     
@@ -902,7 +924,7 @@ class ApplicationBase(VersionedDoc):
 
         try:
             self.create_all_files()
-        except (AppError, XFormValidationError) as e:
+        except (AppError, XFormValidationError, XFormError) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
         except Exception as e:
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
@@ -993,11 +1015,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     show_user_registration = BooleanProperty(default=False, required=True)
     modules = SchemaListProperty(Module)
     name = StringProperty()
-    langs = StringListProperty()
     profile = DictProperty() #SchemaProperty(Profile)
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
+    case_sharing = BooleanProperty(default=False)
     
     @classmethod
     def wrap(cls, data):
@@ -1010,6 +1032,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     module['case_label'][lang] = commcare_translations.load_translations(lang).get('cchq.case', 'Cases')
                 if not module['referral_label'].get(lang):
                     module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
+        if not data.get('build_langs'):
+            data['build_langs'] = data['langs']
         return super(Application, cls).wrap(data)
 
     def register_pre_save(self, fn):
@@ -1043,19 +1067,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return settings.INSECURE_URL_BASE
         else:
             return get_url_base()
-
-    @property
-    def post_url(self):
-        return "%s%s" % (
-            self.url_base,
-            reverse('receiver_post_with_app_id', args=[self.domain, self.copy_of or self.get_id])
-        )
-    @property
-    def ota_restore_url(self):
-        return "%s%s" % (
-            self.url_base,
-            reverse('corehq.apps.ota.views.restore', args=[self.domain])
-        )
 
     @property
     def suite_url(self):
@@ -1150,7 +1161,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         return render_to_string(template, {
             'app': self,
-            'langs': ["default"] + self.langs
+            'langs': ["default"] + self.build_langs
         })
 
     def create_all_files(self):
@@ -1160,7 +1171,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         }
         if self.show_user_registration:
             files["user_registration.xml"] = self.get_user_registration().validate_form().render_xform()
-        for lang in ['default'] + self.langs:
+        for lang in ['default'] + self.build_langs:
             files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)
         for module in self.get_modules():
             for form in module.get_forms():
@@ -1212,7 +1223,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def new_app(cls, domain, name, application_version, lang="en"):
-        app = cls(domain=domain, modules=[], name=name, langs=[lang], application_version=application_version)
+        app = cls(domain=domain, modules=[], name=name, langs=[lang], build_langs=[lang], application_version=application_version)
         return app
 
     def new_module(self, name, lang):
@@ -1370,6 +1381,17 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             except ValueError:
                 logging.error("Failed: _parse_xml(string=%r)" % form.source)
                 raise
+#            else:
+#                xform = XForm(form.source)
+#                missing_languages = set(self.build_langs).difference(xform.get_languages())
+#                if missing_languages:
+#                    errors.append(dict(
+#                        type='missing languages',
+#                        missing_languages=missing_languages,
+#                        **meta
+#                    ))
+
+
             xmlns_count[form.xmlns] += 1
             if form.requires_case():
                 needs_case_detail = True
@@ -1394,6 +1416,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         if not errors:
             errors = super(Application, self).validate_app()
+        print errors
         return errors
 
     @classmethod
@@ -1412,6 +1435,7 @@ class RemoteApp(ApplicationBase):
     """
     profile_url = StringProperty(default="http://")
     name = StringProperty()
+    manage_urls = BooleanProperty(default=False)
 
     # @property
     #     def suite_loc(self):
@@ -1433,9 +1457,17 @@ class RemoteApp(ApplicationBase):
     def create_profile(self, is_odk=False):
         # we don't do odk for now anyway
         try:
-            return urlopen(self.profile_url).read()
+            profile = urlopen(self.profile_url).read()
         except Exception:
             raise AppError('Unable to access profile url: "%s"' % self.profile_url)
+
+        if self.manage_urls:
+            profile_xml = WrappedNode(profile)
+            profile_xml.find('property[@key="ota-restore-url"]').attrib['value'] = self.ota_restore_url
+            profile_xml.find('property[@key="PostURL"]').attrib['value'] = self.post_url
+            profile_xml.attrib['update'] = self.hq_profile_url
+            profile = profile_xml.render()
+        return profile
 
     def fetch_file(self, location):
         base = '/'.join(self.profile_url.split('/')[:-1]) + '/'
@@ -1467,9 +1499,18 @@ class RemoteApp(ApplicationBase):
                 loc = resource.findtext('location[@authority="local"]')
             except Exception:
                 loc = resource.findtext('location[@authority="remote"]')
-            locations.append(loc)
-        for location in locations:
-            files.update((self.fetch_file(location),))
+            locations.append((resource.getparent().tag, loc))
+
+        for tag, location in locations:
+            location, data = self.fetch_file(location)
+            if tag == 'xform' and self.build_langs:
+                try:
+                    xform = XForm(data)
+                except XFormError as e:
+                    raise XFormError('In file %s: %s' % (location, e))
+                xform.exclude_languages(whitelist=self.build_langs)
+                data = xform.render()
+            files.update({location: data})
         return files
     def scrub_source(self, source):
         pass

@@ -138,11 +138,31 @@ class DomainMembership(DocumentSchema):
     class Meta:
         app_label = 'users'
 
+
+class LowercaseStringProperty(StringProperty):
+    """
+    Make sure that the string is always lowercase'd
+    """
+    def _adjust_value(self, value):
+        if value is not None:
+            return value.lower()
+
+#    def __set__(self, instance, value):
+#        return super(LowercaseStringProperty, self).__set__(instance, self._adjust_value(value))
+
+#    def __property_init__(self, instance, value):
+#        return super(LowercaseStringProperty, self).__property_init__(instance, self._adjust_value(value))
+
+    def to_json(self, value):
+        return super(LowercaseStringProperty, self).to_json(self._adjust_value(value))
+
+
+
 class DjangoUserMixin(DocumentSchema):
-    username = StringProperty()
+    username = LowercaseStringProperty()
     first_name = StringProperty()
     last_name = StringProperty()
-    email = StringProperty()
+    email = LowercaseStringProperty()
     password = StringProperty()
     is_staff = BooleanProperty()
     is_active = BooleanProperty()
@@ -167,6 +187,12 @@ class DjangoUserMixin(DocumentSchema):
         dummy = User()
         dummy.set_password(raw_password)
         self.password = dummy.password
+
+    def check_password(self, password):
+        """ Currently just for debugging"""
+        dummy = User()
+        dummy.password = self.password
+        return dummy.check_password(password)
 
 class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     """
@@ -761,9 +787,11 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
         self.save()
 
     def get_group_fixture(self):
-        from corehq.apps.groups.models import Group
-        return group_fixture([group for group in Group.by_user(self) if group.case_sharing], self)
+        return group_fixture(self.get_case_sharing_groups(), self)
 
+    def get_case_sharing_groups(self):
+        from corehq.apps.groups.models import Group
+        return [group for group in Group.by_user(self) if group.case_sharing]
     def get_group_ids(self):
         from corehq.apps.groups.models import Group
         return Group.by_user(self, wrap=False)
@@ -987,7 +1015,9 @@ class PublicUser(FakeUser):
         super(PublicUser, self).__init__(**kwargs)
         self.domain = domain
         self.domains = [domain]
-        self.domain_memberships = [DomainMembership(domain=domain, is_admin=False)]
+        dm = DomainMembership(domain=domain, is_admin=False)
+        dm.set_permission('view-reports', True)
+        self.domain_memberships = [dm]
     
     def get_role(self, domain=None):
         assert(domain == self.domain)
