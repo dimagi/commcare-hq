@@ -202,28 +202,39 @@ class UserRole(Document):
             if name:
                 return name
             elif permissions == Permissions():
-                return "Read Only"
-            elif permissions == Permissions(edit_apps=True):
+                return "Read Only (No Reports)"
+            elif permissions == Permissions(edit_apps=True, view_reports=True):
                 return "App Editor"
             elif permissions == Permissions(view_reports=True):
-                return "Report Viewer"
-            elif permissions == Permissions(edit_commcare_users=True):
-                return "Field Implementor (No Reports)"
+                return "Read Only"
             elif permissions == Permissions(edit_commcare_users=True, view_reports=True):
-                return "Field Implementor"
+                return "Field Implementer"
         role = cls(domain=domain, permissions=permissions, name=get_name())
         role.save()
         return role
 
     @classmethod
+    def init_domain_with_presets(cls, domain):
+        cls.get_or_create_with_permissions(domain, Permissions(edit_apps=True, view_reports=True), 'App Editor')
+        cls.get_or_create_with_permissions(domain, Permissions(edit_commcare_users=True, view_reports=True), 'Field Implementer')
+        cls.get_or_create_with_permissions(domain, Permissions(view_reports=True), 'Read Only')
+
+    @classmethod
     def get_default(cls, domain=None):
         return cls(permissions=Permissions(), domain=domain, name=None)
+
+    @classmethod
+    def role_choices(cls, domain):
+        return [(role.get_qualified_id(), role.name) for role in [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
 
 class AdminUserRole(UserRole):
     def __init__(self, domain):
         super(AdminUserRole, self).__init__(domain=domain, name='Admin', permissions=Permissions.max())
     def get_qualified_id(self):
         return 'admin'
+
+class DomainMembershipError(Exception):
+    pass
 
 class DomainMembership(DocumentSchema):
     """
@@ -240,13 +251,12 @@ class DomainMembership(DocumentSchema):
     date_joined = DateTimeProperty()
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
 
-    custom_permissions = SchemaProperty(Permissions)
     role_id = StringProperty()
 
     @property
     def permissions(self):
-        if self.role_id:
-            return self.role.permissions # | self.custom_permissions ??
+        if self.role:
+            return self.role.permissions
         else:
             return Permissions()
 
@@ -270,7 +280,7 @@ class DomainMembership(DocumentSchema):
                     new_permission = OldPermissions.to_new(old_permission)
                     custom_permissions[new_permission] = True
 
-                if view_report_list is None:
+                if not view_report_list:
                     # Anyone whose report permissions haven't been explicitly taken away/reduced
                     # should be able to see reports by default
                     custom_permissions['view_reports'] = True
@@ -285,7 +295,9 @@ class DomainMembership(DocumentSchema):
 
     @property
     def role(self):
-        if self.role_id:
+        if self.is_admin:
+            return AdminUserRole(self.domain)
+        elif self.role_id:
             return UserRole.get(self.role_id)
         else:
             return None
@@ -293,14 +305,24 @@ class DomainMembership(DocumentSchema):
     def has_permission(self, permission, data=None):
         return self.is_admin or self.permissions.has(permission, data)
 
-    def set_permission(self, permission, value, data=None):
-        self.custom_permissions.set(permission, value, data)
-
     def viewable_reports(self):
-        return self.role.permissions.view_report_list
+        return self.permissions.view_report_list
 
     class Meta:
         app_label = 'users'
+
+class CustomDomainMembership(DomainMembership):
+    custom_role = SchemaProperty(UserRole)
+
+    @property
+    def role(self):
+        if self.is_admin:
+            return AdminUserRole(self.domain)
+        else:
+            return self.custom_role
+
+    def set_permission(self, permission, value, data=None):
+        self.custom_role.permission.set(permission, value, data)
 
 
 class LowercaseStringProperty(StringProperty):
@@ -598,6 +620,10 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     @classmethod
     def from_django_user(cls, django_user):
         couch_user = cls.get_by_username(django_user.username)
+        if not couch_user and django_user.is_superuser:
+            couch_user = FakeUser()
+            couch_user.sync_from_django_user(django_user)
+
         return couch_user
 
     @classmethod
@@ -1077,22 +1103,6 @@ class WebUser(CouchUser):
         else:
             raise self.Inconsistent("domains and domain_memberships out of sync")
 
-    def set_permission(self, domain, permission, value, data=None, save=True):
-        assert(permission in OldPermissions.AVAILABLE_PERMISSIONS)
-        if self.has_permission(domain, permission) == value:
-            return
-        dm = self.get_domain_membership(domain)
-        dm.set_permission(permission, value, data=data)
-        if save:
-            self.save()
-
-    def reset_permissions(self, domain, permissions, permissions_data=None, save=True):
-        dm = self.get_domain_membership(domain)
-        dm.permissions = permissions
-        dm.permissions_data = permissions_data or {}
-        if save:
-            self.save()
-
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
         if self.is_superuser:
@@ -1109,30 +1119,23 @@ class WebUser(CouchUser):
 
     def get_role(self, domain=None):
         """
-        Expose a simplified role-based understanding of permissions
-        which maps to actual underlying permissions
+        Get the role object for this user
 
         """
         if domain is None:
             # default to current_domain for django templates
             domain = self.current_domain
 
+        if self.is_superuser:
+            return AdminUserRole(domain=domain)
         if self.is_member_of(domain):
-            dm = self.get_domain_membership(domain)
-            if self.is_domain_admin(domain):
-                role = AdminUserRole(domain=domain)
-            elif dm.role:
-                role = dm.role
-            else:
-                role = None
+            return self.get_domain_membership(domain).role
         else:
-            raise Exception
-
-        return role
+            raise DomainMembershipError()
 
     def set_role(self, domain, role_qualified_id):
         """
-        Takes a
+        role_qualified_id is either 'admin' 'user-role:[id]'
         """
         dm = self.get_domain_membership(domain)
         dm.is_admin = False
@@ -1153,6 +1156,8 @@ class WebUser(CouchUser):
             return self.get_role(domain).name
         except TypeError:
             return "Unknown User"
+        except DomainMembershipError:
+            return "Unauthorized User"
 
 class FakeUser(WebUser):
     """
@@ -1171,13 +1176,13 @@ class PublicUser(FakeUser):
         super(PublicUser, self).__init__(**kwargs)
         self.domain = domain
         self.domains = [domain]
-        dm = DomainMembership(domain=domain, is_admin=False)
+        dm = CustomDomainMembership(domain=domain, is_admin=False)
         dm.set_permission('view_reports', True)
         self.domain_memberships = [dm]
     
     def get_role(self, domain=None):
         assert(domain == self.domain)
-        return "read-only"
+        return super(PublicUser, self).get_role(domain)
 
 class InvalidUser(FakeUser):
     """

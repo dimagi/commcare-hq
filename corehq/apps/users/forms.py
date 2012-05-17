@@ -30,28 +30,29 @@ class ProjectSettingsForm(forms.Form):
         except Exception as e:
             return False
 
-class UserForm(forms.Form):
-    """
-    Form for Users
-    """
+class RoleForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
+        print kwargs['role_choices']
         if kwargs.has_key('role_choices'):
             role_choices = kwargs.pop('role_choices')
         else:
             role_choices = ()
-        super(UserForm, self).__init__(*args, **kwargs)
+        super(RoleForm, self).__init__(*args, **kwargs)
         self.fields['role'].choices = role_choices
+
+class UserForm(RoleForm):
+    """
+    Form for Users
+    """
 
     #username = forms.CharField(max_length=15)
     first_name = forms.CharField(max_length=50, required=False)
     last_name = forms.CharField(max_length=50, required=False)
     email = forms.EmailField(label=_("E-mail"), max_length=75, required=False)
     role = forms.ChoiceField(choices=(), required=False)
-#    can_view_reports = forms.ChoiceField(choices=(('yes', 'Yes'), ('no', 'No'), ('some', 'Only Some')), required=False)
-#    viewable_reports = forms.MultipleChoiceField(choices=(), label="", required=False)
 
-    class Meta:
+class Meta:
         app_label = 'users'
 
 class CommCareAccountForm(forms.Form):

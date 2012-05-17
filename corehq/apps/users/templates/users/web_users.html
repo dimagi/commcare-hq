@@ -53,7 +53,8 @@
             userRoles: {{ user_roles|JSON }},
             defaultRole: {{ default_role|JSON }},
             saveUrl: '{% url post_user_role domain %}',
-            reportOptions: {{ report_list|JSON }}
+            reportOptions: {{ report_list|JSON }},
+            allowEdit: {{ request.couch_user.is_domain_admin|BOOL }}
         });
     </script>
 {% endblock %}
@@ -124,22 +125,16 @@
             <thead>
                 <tr>
                     <th></th>
-                    <th></th>
                     <th>Edit Web Users</th>
                     <th>Edit CommCare Users</th>
                     <th>Edit Data</th>
                     <th>Edit Apps</th>
                     <th>View Reports</th>
+                    <th data-bind="visible: allowEdit"></th>
                 </tr>
             </thead>
             <tbody data-bind="foreach: userRoles">
                 <tr>
-                    <td>
-                        <button class="btn" data-bind="visible: $data._id, click: $root.setRoleBeingEdited">
-                            <i class="icon-edit"></i>
-                            Edit Role
-                        </button>
-                    </td>
                     <th>
                         <span data-bind="visible: name, text: name"></span>
                         <h6 data-bind="visible: !name()">(No Name)</h6>
@@ -157,6 +152,16 @@
                             </ul>
                         </div>
                         <span data-bind="visible: !permissions.view_reports() && !permissions.view_report_list().length, staticChecked: false"></span>
+                    </td>
+                    <td data-bind="visible: $root.allowEdit">
+                        <button class="btn" data-bind="visible: $data._id, click: $root.setRoleBeingEdited">
+                            <i class="icon-edit"></i>
+                            Edit Role
+                        </button>
+                        <button class="btn disabled" disabled="disabled" data-bind="visible: !$data._id">
+                            <i class="icon-edit"></i>
+                            Built-in
+                        </button>
                     </td>
                     <!--<td>-->
                         <!--<button class="btn btn-danger" data-bind="visible: $data._id, click: $root.setRoleBeingEdited">-->

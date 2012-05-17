@@ -20,6 +20,7 @@ $(function () {
                 }
             });
         }
+        self.allowEdit = o.allowEdit;
         self.reportOptions = o.reportOptions;
         self.getReportObject = function (path) {
             var i;

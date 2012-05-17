@@ -199,8 +199,12 @@ def accept_invitation(request, domain, invitation_id):
 
 @require_can_edit_web_users
 def invite_web_user(request, domain, template="users/invite_web_user.html"):
+    role_choices = UserRole.role_choices(domain)
     if request.method == "POST":
-        form = AdminInvitesUserForm(request.POST, excluded_emails=[user.username for user in WebUser.by_domain(domain)])
+        form = AdminInvitesUserForm(request.POST,
+            excluded_emails=[user.username for user in WebUser.by_domain(domain)],
+            role_choices=role_choices
+        )
         if form.is_valid():
             data = form.cleaned_data
             # create invitation record
@@ -213,7 +217,7 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
             messages.success(request, "Invitation sent to %s" % invite.email)
             return HttpResponseRedirect(reverse("web_users", args=[domain]))
     else:
-        form = AdminInvitesUserForm()
+        form = AdminInvitesUserForm(role_choices=role_choices)
     context = _users_context(request, domain)
     context.update(
         registration_form=form
@@ -462,7 +466,7 @@ def _handle_user_form(request, domain, couch_user=None):
     can_change_admin_status = \
         (request.user.is_superuser or request.couch_user.can_edit_web_users(domain=domain))\
         and request.couch_user.user_id != couch_user.user_id and not couch_user.is_commcare_user()
-    role_choices = [(role.get_qualified_id(), role.name) for role in [AdminUserRole(domain=domain)] + list(UserRole.by_domain(domain))]
+    role_choices = UserRole.role_choices(domain)
     if request.method == "POST" and request.POST['form_type'] == "basic-info":
         form = UserForm(request.POST, role_choices=role_choices)
         if form.is_valid():

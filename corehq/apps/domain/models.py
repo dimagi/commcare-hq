@@ -101,6 +101,12 @@ class Domain(Document):
                             include_docs=True).all()
 
 
+    def save(self, **params):
+        from corehq.apps.users.models import UserRole
+        UserRole.init_domain_with_presets(self.name)
+        super(Domain, self).save(**params)
+
+
 
 
 ##############################################################################################################
