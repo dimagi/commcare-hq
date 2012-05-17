@@ -101,7 +101,7 @@ class DeviceLogDetailsReport(StandardTabularHQReport, StandardDateHQReport):
 
 
     def get_headers(self):
-        return DataTablesHeader(DataTablesColumn("Date", span=1, sort_direction=DTSortDirection.DSC),
+        return DataTablesHeader(DataTablesColumn("Date", span=1, sort_direction=[DTSortDirection.DSC,DTSortDirection.ASC]),
                                 DataTablesColumn("Log Type", span=1),
                                 DataTablesColumn("Logged in Username", span=2),
                                 DataTablesColumn("Device ID", span=2),
