@@ -167,11 +167,12 @@ class ReportSelectField(ReportField):
     selected = None
 
     def update_params(self):
-        pass
+        self.selected = self.request.GET.get(self.slug)
 
     def update_context(self):
         self.update_params()
-        self.context['select'] = dict(options=self.options,
+        self.context['select'] = dict(
+            options=self.options,
             default=self.default_option,
             cssId=self.cssId,
             cssClasses=self.cssClasses,

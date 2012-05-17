@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import permission_required
 from django.template.context import RequestContext
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.sms.models import SMSLog
 from corehq.apps.users.models import CouchUser, CommCareUser
 from couchforms.models import XFormInstance
@@ -17,7 +18,6 @@ from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response, render_to_response
 from django.views.decorators.cache import cache_page
-from phonelog.reports import FormErrorReport
 
 @require_superuser
 def default(request):
@@ -58,14 +58,24 @@ def domain_list(request):
 
     form_counts.update(dict([(row["key"][0], row["value"]) for row in get_db().view("reports/all_submissions", group=True,group_level=1).all()]))
     for dom in domains:
-        dom.web_users = webuser_counts[dom.name]
-        dom.commcare_users = commcare_counts[dom.name]
-        dom.forms = form_counts[dom.name]
+        dom.web_users = int(webuser_counts[dom.name])
+        dom.commcare_users = int(commcare_counts[dom.name])
+        dom.forms = int(form_counts[dom.name])
         dom.admins = [row["doc"]["email"] for row in get_db().view("users/admins_by_domain", key=dom.name, reduce=False, include_docs=True).all()]
 
     context = get_hqadmin_base_context(request)
     context.update({"domains": domains})
     context['layout_flush_content'] = True
+
+    headers = DataTablesHeader(
+        DataTablesColumn("Domain"),
+        DataTablesColumn("# Web Users", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("# Mobile Workers", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("# Submitted Forms", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("Domain Admins")
+    )
+    context["headers"] = headers
+    context["aoColumns"] = headers.render_aoColumns
     return render_to_response(request, "hqadmin/domain_list.html", context)
 
 @require_superuser
@@ -216,6 +226,14 @@ def domain_activity_report(request, template="hqadmin/domain_activity_report.htm
     context.update(json.loads(_cacheable_domain_activity_report(request).content))
 
     context['layout_flush_content'] = True
+    headers = DataTablesHeader(
+        DataTablesColumn("Domain")
+    )
+    for landmark in context['landmarks']:
+        headers.add_column(DataTablesColumn("Last %s Days" % landmark))
+    headers.add_column(DataTablesColumn("All Users"))
+    context["headers"] = headers
+    context["aoColumns"] = headers.render_aoColumns
     return render_to_response(request, template, context)
 
 @datespan_default
@@ -231,6 +249,16 @@ def message_log_report(request):
         dom.sms_total = SMSLog.count_by_domain(dom.name, datespan.startdate_param, datespan.enddate_param)
 
     context = get_hqadmin_base_context(request)
+
+    headers = DataTablesHeader(
+        DataTablesColumn("Domain"),
+        DataTablesColumn("Incoming Messages", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("Outgoing Messages", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("Total Messages", sort_type=DTSortType.NUMERIC)
+    )
+    context["headers"] = headers
+    context["aoColumns"] = headers.render_aoColumns
+
     context.update({
         "domains": domains,
         "show_dates": show_dates,
@@ -299,5 +327,15 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
         "layout_flush_content": True,
         "rows": rows
     })
+
+    headers = DataTablesHeader(
+        DataTablesColumn("Domain"),
+        DataTablesColumn("Active Users", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("Forms Submitted", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("Errors", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("Warnings", sort_type=DTSortType.NUMERIC)
+    )
+    context["headers"] = headers
+    context["aoColumns"] = headers.render_aoColumns
 
     return render_to_response(request, template, context)

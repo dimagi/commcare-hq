@@ -27,6 +27,17 @@ def messaging(request, domain, template="sms/default.html"):
     tz = report_utils.get_timezone(request.couch_user.user_id, domain)
     context['timezone'] = tz
     context['timezone_now'] = datetime.now(tz=tz)
+    context['layout_flush_content'] = True
+    return render_to_response(request, template, context)
+
+@login_and_domain_required
+def compose_message(request, domain, template="sms/compose.html"):
+    context = get_sms_autocomplete_context(request, domain)
+    context['domain'] = domain
+    context['now'] = datetime.utcnow()
+    tz = report_utils.get_timezone(request.couch_user.user_id, domain)
+    context['timezone'] = tz
+    context['timezone_now'] = datetime.now(tz=tz)
     return render_to_response(request, template, context)
 
 def post(request, domain):
@@ -67,14 +78,14 @@ def get_sms_autocomplete_context(request, domain):
     groups = Group.view("groups/by_domain", key=domain, include_docs=True)
 
     contacts = []
-    contacts.extend(['%s (group)' % group.name for group in groups])
+    contacts.extend(['%s [group]' % group.name for group in groups])
     user_id = None
     for user in phone_users:
         if user._id == user_id:
             continue
         contacts.append(user.username)
         user_id = user._id
-    return {"sms_contacts": json.dumps(contacts)}
+    return {"sms_contacts": contacts}
 
 @login_and_domain_required
 def send_to_recipients(request, domain):
@@ -93,9 +104,9 @@ def send_to_recipients(request, domain):
         phone_numbers = []
 
         unknown_usernames = []
-        GROUP = "(group)"
+        GROUP = "[group]"
         for recipient in recipients:
-            if recipient.endswith(GROUP):
+            if not '@' in recipient:
                 name = recipient[:-len(GROUP)].strip()
                 group_names.append(name)
             elif re.match(r'[\w\.]+', recipient):
@@ -146,7 +157,7 @@ def send_to_recipients(request, domain):
 
     return HttpResponseRedirect(
         request.META.get('HTTP_REFERER') or
-        reverse(messaging, args=[domain])
+        reverse(compose_message, args=[domain])
     )
 
 

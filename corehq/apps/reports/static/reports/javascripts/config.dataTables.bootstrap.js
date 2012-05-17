@@ -6,6 +6,8 @@ function HQReportDataTables(options) {
     self.paginationType = (options.paginationType) ? options.paginationType : 'bootstrap';
     self.defaultRows = (options.defaultRows) ? options.defaultRows : 10;
     self.startAtRowNum = (options.startAtRowNum) ? options.startAtRowNum : 0;
+    self.aoColumns = (options.aoColumns) ? options.aoColumns : null;
+    self.autoWidth = (options.autoWidth != undefined) ? options.autoWidth : true;
 
     this.render = function () {
 
@@ -22,26 +24,19 @@ function HQReportDataTables(options) {
         var dataTablesDom = "frt<'row-fluid dataTables_control'<'span5'il><'span7'p>>";
         $(self.dataTableElem).each(function(){
             var params = {
-                "sDom": dataTablesDom,
-                "sPaginationType": self.paginationType,
-                "iDisplayLength": self.defaultRows
+                sDom: dataTablesDom,
+                sPaginationType: self.paginationType,
+                iDisplayLength: self.defaultRows,
+                bAutoWidth: self.autoWidth
             },
-                sAjaxSource = $(this).data('source'),
-                filter = $(this).data('filter') || false,
-                aoColumns = [],
-                $columns = $(this).find('tr').first().find('th'),
-                i;
+                sAjaxSource = $(this).data('source');
 
             if(sAjaxSource) {
-                params = {
-                    "sDom": dataTablesDom,
-                    "sPaginationType": self.paginationType,
-                    "iDisplayLength": self.defaultRows,
-                    "bServerSide": true,
-                    "sAjaxSource": sAjaxSource,
-                    "bSort": false,
-                    "bFilter": filter,
-                    "fnServerParams": function ( aoData ) {
+                params.bServerSide = true;
+                params.sAjaxSource = sAjaxSource;
+                params.bSort = false;
+                params.bFilter = $(this).data('filter') || false;
+                params.fnServerParams = function ( aoData ) {
                         aoData.push({ "name" : 'individual', "value": $(this).data('individual')});
                         aoData.push({ "name" : 'group', "value": $(this).data('group')});
                         aoData.push({ "name" : 'case_type', "value": $(this).data('casetype')});
@@ -52,28 +47,14 @@ function HQReportDataTables(options) {
                             }
                         }
 
-                    }
-                };
+                    };
             }
-            for (i = 0; i < $columns.length; i++) {
-                var sortType = $($columns[i]).data('sort'),
-                    sortDir = $($columns[i]).data('sortdir'),
-                    column_params = {};
-                if (sortType || sortDir) {
-                    if (sortType)
-                        column_params["sType"] = sortType;
-                    if (sortDir)
-                        column_params["asSorting"] = [sortDir];
-                    aoColumns.push(column_params);
-                } else {
-                    aoColumns.push(null);
-                }
-            }
-            params.aoColumns = aoColumns;
+            if(self.aoColumns)
+                params.aoColumns = self.aoColumns;
             $(this).dataTable(params);
 
             var $dataTablesFilter = $(".dataTables_filter");
-            if($dataTablesFilter) {
+            if($dataTablesFilter && $("#extra-filter-info")) {
                 $("#extra-filter-info").append($dataTablesFilter);
                 $dataTablesFilter.addClass("form-search");
                 var $inputField = $dataTablesFilter.find("input"),
@@ -87,6 +68,10 @@ function HQReportDataTables(options) {
                 $inputLabel.attr("for", "dataTables-filter-box");
                 $inputLabel.html($('<i />').addClass("icon-search"));
             }
+//            else if ($dataTablesFilter && $('#datatables_filter_container')) {
+//                $dataTablesFilter.remove();
+//                $('#datatables_filter_box').append($dataTablesFilter);
+//            }
 
             var $dataTablesLength = $(".dataTables_length"),
                 $dataTablesInfo = $(".dataTables_info");
