@@ -188,6 +188,8 @@ class DeviceLogDetailsReport(StandardTabularHQReport, StandardDateHQReport):
 
     def create_rows(self, data, matching_key=None):
         row_set = []
+        user_query = self.filter_query_by_slug(DeviceLogUsersField.slug)
+        device_query = self.filter_query_by_slug(DeviceLogDevicesField.slug)
         for item in data:
             entry = item['value']
             date = entry['@date']
@@ -198,7 +200,7 @@ class DeviceLogDetailsReport(StandardTabularHQReport, StandardDateHQReport):
                 "url": "%s?%s=%s&%s" % (self.this_report_url,
                                         DeviceLogUsersField.slug,
                                         username,
-                                        self.request.META['QUERY_STRING']),
+                                        user_query),
                 "username": username
             }
 
@@ -223,7 +225,7 @@ class DeviceLogDetailsReport(StandardTabularHQReport, StandardDateHQReport):
                 "url": "%s?%s=%s&%s" % (self.this_report_url,
                                         DeviceLogDevicesField.slug,
                                         device,
-                                        self.request.META['QUERY_STRING']),
+                                        device_query),
                 "device": device
             }
 
@@ -238,3 +240,7 @@ class DeviceLogDetailsReport(StandardTabularHQReport, StandardDateHQReport):
                             entry.get('msg', ''),
                             util.format_datatables_data(ver_format, version)])
         return row_set
+
+    def filter_query_by_slug(self, slug):
+        current_query = self.request.META['QUERY_STRING'].split('&')
+        return "&".join([query_item for query_item in current_query if not query_item.startswith(slug)])
