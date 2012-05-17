@@ -1,0 +1,28 @@
+{% extends base_template %}
+{% block js-inline %} {{ block.super }}
+    <script>
+        $(function () {
+            ko.applyBindings({
+                factor: ko.observable(''),
+                user_id: ko.observable('')
+            }, $('#explode').get(0));
+        }());
+    </script>
+{% endblock %}
+{% block content %}
+    <div class="span8 offset4" id="explode">
+        <form class="form" action="" method="POST">
+            <label for="explode-user_id">User</label>
+            <select id="explode-user_id" name="user_id" data-bind="value: user_id">
+                <option>Select a CHW...</option>
+                {% for user in users %}
+                    <option value="{{ user.user_id }}">{{ user.raw_username }}</option>
+                {% endfor %}
+            </select>
+            <label for="explode-factor">Factor</label>
+            <input id="explode-factor" data-bind="value: factor" name="factor" />
+            <button type="submit" class="btn btn-danger" data-bind="attr: {disabled: !user_id() || !(parseInt(factor(), 10) >= 2)}">Explode Cases</button>
+        </form>
+
+    </div>
+{% endblock %}
