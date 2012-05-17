@@ -54,8 +54,6 @@ function HQReportDataTables(options) {
             $(this).dataTable(params);
 
             var $dataTablesFilter = $(".dataTables_filter");
-            console.log($dataTablesFilter);
-            console.log($('#datatables_filter_container'));
             if($dataTablesFilter && $("#extra-filter-info")) {
                 $("#extra-filter-info").append($dataTablesFilter);
                 $dataTablesFilter.addClass("form-search");
@@ -69,11 +67,11 @@ function HQReportDataTables(options) {
 
                 $inputLabel.attr("for", "dataTables-filter-box");
                 $inputLabel.html($('<i />').addClass("icon-search"));
-            } else if ($dataTablesFilter && $('#datatables_filter_container')) {
-                console.log('boo');
-                $dataTablesFilter.remove();
-                $('#datatables_filter_box').append($dataTablesFilter);
             }
+//            else if ($dataTablesFilter && $('#datatables_filter_container')) {
+//                $dataTablesFilter.remove();
+//                $('#datatables_filter_box').append($dataTablesFilter);
+//            }
 
             var $dataTablesLength = $(".dataTables_length"),
                 $dataTablesInfo = $(".dataTables_info");
