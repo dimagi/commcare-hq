@@ -1461,12 +1461,24 @@ class RemoteApp(ApplicationBase):
         except Exception:
             raise AppError('Unable to access profile url: "%s"' % self.profile_url)
 
-        if self.manage_urls:
+        if self.manage_urls or self.build_langs:
             profile_xml = WrappedNode(profile)
-            profile_xml.find('property[@key="ota-restore-url"]').attrib['value'] = self.ota_restore_url
-            profile_xml.find('property[@key="PostURL"]').attrib['value'] = self.post_url
-            profile_xml.find('property[@key="cc_user_domain"]').attrib['value'] = cc_user_domain(self.domain)
-            profile_xml.attrib['update'] = self.hq_profile_url
+
+            def set_property(key, value):
+                profile_xml.find('property[@key="%s"]' % key).attrib['value'] = value
+
+            def set_attribute(key, value):
+                profile_xml.attrib[key] = value
+
+            if self.manage_urls:
+                set_attribute('update', self.hq_profile_url)
+                set_property("ota-restore-url", self.ota_restore_url)
+                set_property("PostURL", self.post_url)
+                set_property("cc_user_domain", cc_user_domain(self.domain))
+
+            if self.build_langs:
+                set_property("cur_locale", self.build_langs[0])
+
             profile = profile_xml.render()
         return profile
 
