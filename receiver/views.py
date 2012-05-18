@@ -1,8 +1,8 @@
 from datetime import datetime
 import logging
 from dimagi.utils.web import get_ip
-from django.http import HttpResponse
-from couchforms.models import XFormInstance
+from django.http import HttpResponse, HttpResponseServerError
+from couchforms.models import XFormInstance, SubmissionErrorLog
 from couchforms.views import post as couchforms_post
 from receiver.signals import successful_form_received, ReceiverResult, form_received
 from django.views.decorators.http import require_POST
@@ -15,6 +15,7 @@ from django.template.context import RequestContext
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.parsing import string_to_datetime
 from receiver.xml import ResponseNature
+from couchforms.signals import submission_error_received
 
 def home(request):
     forms = get_db().view('couchforms/by_xmlns', group=True, group_level=1)
@@ -42,44 +43,51 @@ def form_list(request):
 @csrf_exempt
 @require_POST
 def post(request):
+    def _attach_shared_props(doc):
+        # attaches shared properties of the request to the document.
+        # used on forms and errors
+        doc['submit_ip'] = get_ip(request)
+        doc['path'] = request.path
+        
+        # if you have OpenRosaMiddleware running the headers appear here
+        if hasattr(request, 'openrosa_headers'):
+            doc['openrosa_headers'] = request.openrosa_headers 
+        
+        # if you have SyncTokenMiddleware running the headers appear here
+        if hasattr(request, 'last_sync_token'):
+            doc['last_sync_token'] = request.last_sync_token 
+        
+        # a hack allowing you to specify the submit time to use
+        # instead of the actual time receiver
+        # useful for migrating data
+        received_on = request.META.get('HTTP_X_SUBMIT_TIME')
+        date_header = request.META.get('HTTP_DATE')
+        if received_on:
+            doc.received_on = string_to_datetime(received_on)
+        if date_header:
+            # comes in as:
+            # Mon, 11 Apr 2011 18:24:43 GMT
+            # goes out as:
+            # 2011-04-11T18:24:43Z
+            try:
+                date = datetime.strptime(date_header, "%a, %d %b %Y %H:%M:%S GMT")
+                date = datetime.strftime(date, "%Y-%m-%dT%H:%M:%SZ")
+            except:
+                logging.error("Receiver app: incoming submission has a date header that we can't parse: '%s'"
+                    % date_header
+                )
+                date = date_header
+            doc['date_header'] = date
+        
+        return doc
+    
     def callback(doc):
         def default_actions(doc):
             """These are always done"""
-            doc['submit_ip'] = get_ip(request)
-            doc['path'] = request.path
-            
-            # if you have OpenRosaMiddleware running the headers appear here
-            if hasattr(request, 'openrosa_headers'):
-                doc['openrosa_headers'] = request.openrosa_headers 
-            
-            # if you have SyncTokenMiddleware running the headers appear here
-            if hasattr(request, 'last_sync_token'):
-                doc['last_sync_token'] = request.last_sync_token 
-            
-            # a hack allowing you to specify the submit time to use
-            # instead of the actual time receiver
-            # useful for migrating data
-            received_on = request.META.get('HTTP_X_SUBMIT_TIME')
-            date_header = request.META.get('HTTP_DATE')
-            if received_on:
-                doc.received_on = string_to_datetime(received_on)
-            if date_header:
-                # comes in as:
-                # Mon, 11 Apr 2011 18:24:43 GMT
-                # goes out as:
-                # 2011-04-11T18:24:43Z
-                try:
-                    date = datetime.strptime(date_header, "%a, %d %b %Y %H:%M:%S GMT")
-                    date = datetime.strftime(date, "%Y-%m-%dT%H:%M:%SZ")
-                except:
-                    logging.error("Receiver app: incoming submission has a date header that we can't parse: '%s'"
-                        % date_header
-                    )
-                    date = date_header
-                doc['date_header'] = date
             # fire signals
             # We don't trap any exceptions here. This is by design, since
             # nothing is supposed to be able to raise an exception here
+            _attach_shared_props(doc)
             form_received.send(sender="receiver", xform=doc)
             doc.save()
         
@@ -146,7 +154,17 @@ def post(request):
         response['X-CommCareHQ-FormID'] = doc.get_id
         return response
 
-    return couchforms_post(request, callback)
+    def error_callback(error_log):
+        error_doc = SubmissionErrorLog.get(error_log.get_id)
+        _attach_shared_props(error_doc)
+        submission_error_received.send(sender="receiver", xform=error_doc)
+        error_doc.save()
+        return HttpResponseServerError(
+            xml.get_simple_response_xml(
+                message=error_log.message,
+                nature=ResponseNature.SUBMIT_ERROR)) 
+
+    return couchforms_post(request, callback, error_callback)
 
 def get_location(request):
     # this is necessary, because www.commcarehq.org always uses https,
