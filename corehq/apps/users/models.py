@@ -391,6 +391,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             return {
                 'WebUser': WebUser,
                 'CommCareUser': CommCareUser,
+                'FakeUser': FakeUser,
             }[source['doc_type']].wrap(source)
 
     @classmethod
