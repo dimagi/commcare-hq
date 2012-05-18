@@ -42,7 +42,7 @@ class Metadata(DocumentSchema):
     deprecatedID = StringProperty()
     username = StringProperty()
     
-class XFormInstance(Document):
+class XFormInstance(Document, UnicodeMixIn):
     """An XForms instance."""
     xmlns = StringProperty()
     received_on = DateTimeProperty()
@@ -189,22 +189,25 @@ class XFormDeprecated(XFormError):
         XFormInstance.save(self, *args, **kwargs)
         # should raise a signal saying that this thing got deprecated
 
-class SubmissionErrorLog(Document, UnicodeMixIn):
+class SubmissionErrorLog(XFormError, UnicodeMixIn):
     """
     When a hard submission error (typically bad XML) is received we save it 
     here. 
     """
     ATTACHMENT_NAME = "form.xml"
-    
-    received_on = DateTimeProperty()
     md5 = StringProperty()
-    message = StringProperty()
     
     def __unicode__(self):
-        return "Doc id: %s, Error %s" % (self.get_id, self.message) 
+        return "Doc id: %s, Error %s" % (self.get_id, self.problem) 
 
     def get_xml(self):
         return self.fetch_attachment(SubmissionErrorLog.ATTACHMENT_NAME)
+        
+    def save(self, *args, **kwargs):
+        # we have to override this because XFormError does too 
+        self["doc_type"] = "SubmissionErrorLog" 
+        # and we can't use super for the same reasons XFormError 
+        XFormInstance.save(self, *args, **kwargs)
         
     @classmethod
     def from_instance(cls, instance, message):
@@ -213,7 +216,7 @@ class SubmissionErrorLog(Document, UnicodeMixIn):
         """
         error = SubmissionErrorLog(received_on=datetime.datetime.utcnow(),
                                    md5=hashlib.md5(instance).hexdigest(),
-                                   message=message)
+                                   problem=message)
         error.save()
         error.put_attachment(instance, SubmissionErrorLog.ATTACHMENT_NAME)
         error.save()
