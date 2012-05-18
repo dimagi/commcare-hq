@@ -6,6 +6,7 @@ from receiver.signals import form_received, successful_form_received
 import logging
 import re
 import types
+from couchforms.signals import submission_error_received
 
 DOMAIN_RE = re.compile(r'^/a/(\S+)/receiver(/(.*))?/?$')
 APP_ID_RE = re.compile(r'^/a/\S+/receiver/(.*)/$')
@@ -17,6 +18,9 @@ def scrub_meta(sender, xform, **kwargs):
                     "DeviceID": "deviceID",
                     "uid": "instanceID"}
 
+    if not hasattr(xform, "form"):
+        return
+    
     # hack to make sure uppercase meta still ends up in the right place
     found_old = False
     if "Meta" in xform.form:
@@ -87,5 +91,9 @@ def create_repeat_records(repeater_cls, payload):
 form_received.connect(scrub_meta)
 form_received.connect(add_domain)
 form_received.connect(add_app_id)
+
+submission_error_received.connect(add_domain)
+submission_error_received.connect(add_app_id)
+
 successful_form_received.connect(create_form_repeat_records)
 case_post_save.connect(create_case_repeat_records)
