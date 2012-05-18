@@ -24,7 +24,6 @@
 {% block reportcontent %}
 <table class="table table-striped datatable" {% if ajax_source %}data-source="{{ ajax_source }}"{% endif %}{% if ajax_params and ajax_source %}{% for param in ajax_params %} data-{{ param.name }}="{{ param.value }}"{% endfor %}{% if filter %} data-filter="true"{% endif %}{% endif %}>
     <thead>
-
         {%  if report.headers.complex %}
             {{ report.headers.render_html|safe }}
         {% else %}

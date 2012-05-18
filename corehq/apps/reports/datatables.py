@@ -14,7 +14,7 @@ class DataTablesColumn(object):
         self.html = name
         self.css_span = span
         self.sort_type = sort_type
-        self.sort_direction = sort_direction if sort_direction else DTSortDirection.ASC
+        self.sort_direction = sort_direction if sort_direction else [DTSortDirection.ASC, DTSortDirection.DSC]
         self.help_text = help_text
 
     @property
@@ -30,10 +30,10 @@ class DataTablesColumn(object):
 
     @property
     def render_aoColumns(self):
-        aoColumns = dict(asSorting=[self.sort_direction])
+        aoColumns = dict(asSorting=self.sort_direction)
         if self.sort_type:
             aoColumns["sType"] = self.sort_type
-        return None
+        return aoColumns
 
 
 class DataTablesColumnGroup(object):

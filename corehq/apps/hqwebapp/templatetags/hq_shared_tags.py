@@ -134,8 +134,6 @@ def hq_web_user():
 
 @register.simple_tag
 def is_url_active(request, matching_string=""):
-    print request.path_info
-    print matching_string
     if request.path_info.startswith(matching_string):
         return ' class="active"'
     return ""

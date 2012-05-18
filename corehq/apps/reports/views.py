@@ -480,9 +480,6 @@ def emailtest(request, domain, report_slug):
     report.get_response(request.user, domain)
     return HttpResponse(report.get_response(request.user, domain))
 
-
-CUSTOM_REPORT_MAP = 'CUSTOM_REPORT_MAP'
-
 @login_and_domain_required
 @datespan_default
 def report_dispatcher(request, domain, report_slug, return_json=False, map='STANDARD_REPORT_MAP', export=False, custom=False):
