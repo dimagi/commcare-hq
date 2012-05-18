@@ -161,7 +161,7 @@ def post(request):
         error_doc.save()
         return HttpResponseServerError(
             xml.get_simple_response_xml(
-                message=error_log.message,
+                message="The sever got itself into big trouble! Details: %s" % error_log.problem,
                 nature=ResponseNature.SUBMIT_ERROR)) 
 
     return couchforms_post(request, callback, error_callback)
