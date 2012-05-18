@@ -19,8 +19,8 @@ def deidentify_case_action(action):
     if hasattr(action, "case_name"):
         action.case_name = random_fullname()
     # v2
-    if "case_name" in action.updated_properties:
-        action.updated_properties["case_name"] = random_fullname()
+    if "case_name" in action.updated_known_properties:
+        action.updated_known_properties["case_name"] = random_fullname()
     
 def deidentify_case(doc):
     assert(doc.doc["doc_type"] == "CommCareCase")

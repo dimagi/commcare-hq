@@ -333,7 +333,10 @@ def delete_custom_export(req, domain, export_id):
     """
     Delete a custom export
     """
-    saved_export = SavedExportSchema.get(export_id)
+    try:
+        saved_export = SavedExportSchema.get(export_id)
+    except ResourceNotFound:
+        return HttpResponseRedirect(req.META['HTTP_REFERER'])
     type = saved_export.type
     saved_export.delete()
     messages.success(req, "Custom export was deleted.")
@@ -475,9 +478,6 @@ def emailtest(request, domain, report_slug):
     report = ScheduledReportFactory.get_report(report_slug)
     report.get_response(request.user, domain)
     return HttpResponse(report.get_response(request.user, domain))
-
-
-CUSTOM_REPORT_MAP = 'CUSTOM_REPORT_MAP'
 
 @login_and_domain_required
 @datespan_default

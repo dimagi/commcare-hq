@@ -1,0 +1,18 @@
+{% load hq_shared_tags %}
+
+<label for="individual_select" class="control-label">{{ field_name }}</label>
+<div class="controls">
+    <select id="individual_select" name="individual" data-bind="selectorMW: selected_mobile_worker, options: mobile_workers, optionsValue: 'val', optionsText: function(item) { return (item.is_active) ? item.text : item.text+' (Inactive)'; }, optionsCaption: '{{ default_option }}', value: selected_mobile_worker">
+    </select>
+    <input type="hidden" data-bind="hiddenGroupFieldMW: selected_mobile_worker" />
+</div>
+
+<script type="text/javascript" src="{% static 'reports/ko/field.select_filtered_mobile_worker.js' %}"></script>
+<script type="text/javascript">
+    $(function() {
+        var groups = {{ group_options|JSON }},
+                users = {{ users|JSON }};
+        ko.applyBindings(new SelectFilteredMWGroup(users, '{{ individual }}', groups), $('#fieldset_{{ slug }}')[0]);
+    });
+
+</script>

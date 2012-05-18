@@ -18,8 +18,9 @@ from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports import util
 from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.custom import HQReport
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.display import xmlns_to_name, FormType
-from corehq.apps.reports.fields import FilterUsersField, CaseTypeField, SelectCHWField
+from corehq.apps.reports.fields import FilterUsersField, CaseTypeField, SelectMobileWorkerField
 from corehq.apps.reports.models import HQUserType, FormExportSchema
 from couchexport.models import SavedExportSchema
 from couchforms.models import XFormInstance
@@ -93,7 +94,7 @@ class StandardTabularHQReport(StandardHQReport):
 
 #    exportable = True
     def get_headers(self):
-        return self.headers
+        return DataTablesHeader()
 
     def get_rows(self):
         return self.rows
@@ -128,7 +129,7 @@ class StandardTabularHQReport(StandardHQReport):
 class PaginatedHistoryHQReport(StandardTabularHQReport):
     use_json = True
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectCHWField']
+              'corehq.apps.reports.fields.SelectMobileWorkerField']
 
     def get_parameters(self):
         self.userIDs = [user.user_id for user in self.users if user.user_id]
@@ -175,7 +176,7 @@ class StandardDateHQReport(StandardHQReport):
 
 class CaseActivityReport(StandardTabularHQReport):
     """
-    User    Last 30 Days    Last 60 Days    Last 120 Days   Active Clients              Inactive Clients
+    User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
     danny   5 (25%)         10 (50%)        20 (100%)       17                          6
     (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
     """
@@ -253,7 +254,7 @@ class CaseActivityReport(StandardTabularHQReport):
             return self._header
 
     def get_parameters(self):
-        landmarks_param = self.request_params.get('landmarks', [30,60,120])
+        landmarks_param = self.request_params.get('landmarks', [30,60,90])
         inactive_param = self.request_params.get('inactive', 120)
         self.display_data = self.request_params.get('display', ['percent'])
         if landmarks_param + [inactive_param] != sorted(landmarks_param + [inactive_param]):
@@ -271,17 +272,17 @@ class CaseActivityReport(StandardTabularHQReport):
         return tz_utils.adjust_datetime_to_timezone(self.now, self.timezone.zone, pytz.utc.zone)
 
     def get_headers(self):
-        headers = ["Users"]
-        def add_numeric_header(text, help_text=None):
-            headers.append(util.format_datatables_header(
-                text=text,
-                sort_type=util.SORT_TYPE_NUMERIC,
-                help_text=help_text,
-            ))
+        headers = DataTablesHeader(DataTablesColumn("Users"))
         for landmark in self.landmarks:
-            add_numeric_header("Last %s Days" % landmark.days, help_text='Number of cases modified (or closed) in the last %s days' % landmark.days)
-        add_numeric_header("Active Cases", help_text='Number of cases modified in the last %s days that are still open' % self.inactive.days)
-        add_numeric_header("Inactive Cases", help_text="Number of cases that are open but haven't been touched in the last %s days" % self.inactive.days)
+            headers.add_column(DataTablesColumn("Last %s Days" % landmark.days if landmark else "Ever",
+                        sort_type=DTSortType.NUMERIC,
+                        help_text='Number of cases modified (or closed) in the last %s days' % landmark.days))
+        headers.add_column(DataTablesColumn("Active Cases",
+            sort_type=DTSortType.NUMERIC,
+            help_text='Number of cases modified in the last %s days that are still open' % self.inactive.days))
+        headers.add_column(DataTablesColumn("Inactive Cases",
+            sort_type=DTSortType.NUMERIC,
+            help_text="Number of cases that are open but haven't been touched in the last %s days" % self.inactive.days))
         return headers
 
     def get_rows(self):
@@ -340,9 +341,12 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
         self.dates = [self.datespan.startdate]
         while self.dates[-1] < self.datespan.enddate:
             self.dates.append(self.dates[-1] + datetime.timedelta(days=1))
-        return ["Username"] + \
-               [util.format_datatables_header(d.strftime(DATE_FORMAT), sort_type=util.SORT_TYPE_NUMERIC) for d in self.dates] + \
-               [util.format_datatables_header("Total", sort_type=util.SORT_TYPE_NUMERIC)]
+
+        headers = DataTablesHeader(DataTablesColumn("Username"))
+        for d in self.dates:
+            headers.add_column(DataTablesColumn(d.strftime(DATE_FORMAT), sort_type=DTSortType.NUMERIC))
+        headers.add_column(DataTablesColumn("Total", sort_type=DTSortType.NUMERIC))
+        return headers
 
     def get_rows(self):
         utc_dates = [tz_utils.adjust_datetime_to_timezone(date, self.timezone.zone, pytz.utc.zone) for date in self.dates]
@@ -404,14 +408,18 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
 
     def get_headers(self):
         form_names = [xmlns_to_name(*id_tuple) for id_tuple in self.form_types]
-        form_names = [name.replace("/", " / ") for name in form_names]
+        form_names = [name.replace("/", " / ") if name is not None else '(No name)' for name in form_names]
 
         if self.form_types:
             # this fails if form_names, form_types is [], []
             form_names, self.form_types = zip(*sorted(zip(form_names, self.form_types)))
 
-        return ['User'] + [util.format_datatables_header(name, sort_type=util.SORT_TYPE_NUMERIC) for name in list(form_names)] + \
-               [util.format_datatables_header("All Forms", sort_type=util.SORT_TYPE_NUMERIC)]
+        headers = DataTablesHeader(DataTablesColumn("User"))
+        for name in list(form_names):
+            headers.add_column(DataTablesColumn(name, sort_type=DTSortType.NUMERIC))
+        headers.add_column(DataTablesColumn("All Forms", sort_type=DTSortType.NUMERIC))
+
+        return headers
 
     def get_rows(self):
         counts = self.get_submissions_by_form_json()
@@ -503,7 +511,11 @@ class FormCompletionTrendsReport(StandardTabularHQReport, StandardDateHQReport):
               'corehq.apps.reports.fields.DatespanField']
 
     def get_headers(self):
-        return ["User", "Average duration", "Shortest", "Longest", "# Forms"]
+        return DataTablesHeader(DataTablesColumn("User"),
+                                DataTablesColumn("Average duration"),
+                                DataTablesColumn("Shortest"),
+                                DataTablesColumn("Longest"),
+                                DataTablesColumn("No. of Forms"))
 
     def get_rows(self):
         form = self.request_params.get('form', '')
@@ -548,7 +560,12 @@ class SubmitHistory(PaginatedHistoryHQReport):
     slug = 'submit_history'
 
     def get_headers(self):
-        return ["View Form", "Username", "Submit Time", "Form"]
+        headers = DataTablesHeader(DataTablesColumn("View Form"),
+            DataTablesColumn("Username"),
+            DataTablesColumn("Submit Time"),
+            DataTablesColumn("Form"))
+        headers.no_sort = True
+        return headers
 
     def paginate_rows(self, skip, limit):
         rows = []
@@ -572,7 +589,7 @@ class CaseListReport(PaginatedHistoryHQReport):
     name = 'Case List'
     slug = 'case_list'
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectCHWField',
+              'corehq.apps.reports.fields.SelectMobileWorkerField',
               'corehq.apps.reports.fields.CaseTypeField']
 
     def get_report_context(self):
@@ -580,17 +597,22 @@ class CaseListReport(PaginatedHistoryHQReport):
         super(PaginatedHistoryHQReport, self).get_report_context()
 
     def get_headers(self):
-        final_headers = ["Name", "User", "Created Date", "Modified Date", "Status"]
+        headers = DataTablesHeader(DataTablesColumn("Name"),
+                                    DataTablesColumn("User"),
+                                    DataTablesColumn("Created Date"),
+                                    DataTablesColumn("Modified Date"),
+                                    DataTablesColumn("Status"))
+        headers.no_sort = True
         if not self.individual:
-            self.name = "%s for %s" % (self.name, SelectCHWField.get_default_text(self.user_filter))
+            self.name = "%s for %s" % (self.name, SelectMobileWorkerField.get_default_text(self.user_filter))
         if not self.case_type:
-            final_headers = ["Case Type"] + final_headers
+            headers.prepend_column(DataTablesColumn("Case Type"))
         open, all = CaseTypeField.get_case_counts(self.domain, self.case_type, self.userIDs)
         if all > 0:
             self.name = "%s (%s/%s open)" % (self.name, open, all)
         else:
             self.name = "%s (empty)" % self.name
-        return final_headers
+        return headers
 
     def paginate_rows(self, skip, limit):
         rows = []
@@ -659,7 +681,7 @@ class SubmissionTimesReport(StandardHQReport):
     name = "Submission Times"
     slug = "submit_time_punchcard"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectCHWField']
+              'corehq.apps.reports.fields.SelectMobileWorkerField']
     template_name = "reports/basic_report.html"
     report_partial = "reports/partials/punchcard.html"
     show_time_notice = True
@@ -676,13 +698,16 @@ class SubmissionTimesReport(StandardHQReport):
             for row in view:
                 domain, _user, day, hour = row["key"]
 
-                #adjust to timezone
-                now = datetime.datetime.utcnow()
-                report_time = datetime.datetime(now.year, now.month, now.day, hour, tzinfo=pytz.utc)
-                report_time = tz_utils.adjust_datetime_to_timezone(report_time, pytz.utc.zone, self.timezone.zone)
-                hour = report_time.hour
+                if hour and day:
+                    #adjust to timezone
+                    now = datetime.datetime.utcnow()
+                    hour = int(hour)
+                    day = int(day)
+                    report_time = datetime.datetime(now.year, now.month, now.day, hour, tzinfo=pytz.utc)
+                    report_time = tz_utils.adjust_datetime_to_timezone(report_time, pytz.utc.zone, self.timezone.zone)
+                    hour = report_time.hour
 
-                data["%d %02d" % (day, hour)] = data["%d %02d" % (day, hour)] + row["value"]
+                    data["%d %02d" % (day, hour)] = data["%d %02d" % (day, hour)] + row["value"]
         self.context["chart_url"] = self.generate_chart(data)
         self.context["timezone_now"] = datetime.datetime.now(tz=self.timezone)
         self.context["timezone"] = self.timezone.zone
@@ -734,7 +759,7 @@ class SubmitDistributionReport(StandardHQReport):
     name = "Submit Distribution"
     slug = "submit_distribution"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectCHWField']
+              'corehq.apps.reports.fields.SelectMobileWorkerField']
     template_name = "reports/basic_report.html"
     report_partial = "reports/partials/generic_piechart.html"
 
@@ -771,11 +796,80 @@ class SubmitDistributionReport(StandardHQReport):
             "graph_height": 500
         })
 
+class MapReport(StandardHQReport):
+
+    """
+HOW TO CONFIGURE THIS REPORT
+
+create a couch doc as such:
+
+{
+  "doc_type": "MapsReportConfig",
+  "domain": <domain>,
+  "config": {
+    "case_types": [
+      // for each case type
+
+      {
+        "case_type": <commcare case type>,
+        "display_name": <display name of case type>,
+
+        // either of the following two fields
+        "geo_field": <case property for a geopoint question>,
+        "geo_linked_to": <geo-enabled case type that this case links to>,
+
+        "fields": [
+          // for each reportable field
+
+          "field": <case property>, // or one of the following magic values:
+                 // "_count" -- report on the number of cases of this type
+          "display_name": <display name for field>,
+          "type": <datatype for field>, // can be "numeric", "enum", or "num_discrete" (enum with numeric values)
+
+          // if type is "numeric" or "num_discrete"
+          // these control the rendering of numeric data points (all are optional)
+          "scale": <N>, // if absent, scale is calculated dynamically based on the max value in the field
+          "color": <css color>,
+
+          // if type is "enum" or "num_discrete" (optional, but recommended)
+          "values": [
+            // for each multiple-choice value
+
+            {
+              "value": <data value>,
+              "label": <display name>, //optional
+              "color": <css color>, //optional
+            },
+          ]
+        ]
+      },
+    ]
+  }
+}
+"""
+
+    name = "Maps"
+    slug = "maps"
+    fields = [] # todo: support some of these filters -- right now this report
+                # is more of a playground, so all the filtering is done in its
+                # own ajax sidebar
+    template_name = "reports/basic_report.html"
+    report_partial = "reports/partials/maps.html"
+
+    def calc(self):
+        self.context['maps_api_key'] = settings.GMAPS_API_KEY
+        self.context['case_api_url'] = reverse('cloudcare_get_cases', kwargs={'domain': self.domain})
+
+        config = get_db().view('reports/maps_config', key=[self.domain], include_docs=True).one()
+        if config:
+            config = config['doc']['config']
+        self.context['config'] = json.dumps(config)
+
 class SubmitTrendsReport(StandardDateHQReport):
     #nuked until further notice
     name = "Submit Trends"
     slug = "submit_trends"
-    fields = ['corehq.apps.reports.fields.SelectCHWField',
+    fields = ['corehq.apps.reports.fields.SelectMobileWorkerField',
               'corehq.apps.reports.fields.DatespanField']
     template_name = "reports/basic_report.html"
     report_partial = "reports/partials/formtrends.html"
@@ -942,9 +1036,10 @@ class ApplicationStatusReport(StandardTabularHQReport):
               'corehq.apps.reports.fields.SelectApplicationField']
 
     def get_headers(self):
-        return ["Username",
-                util.format_datatables_header("Last Seen", sort_type=util.SORT_TYPE_NUMERIC),
-                "CommCare Version", "Application [Deployed Build]"]
+        return DataTablesHeader(DataTablesColumn("Username"),
+                                DataTablesColumn("Last Seen",sort_type=DTSortType.NUMERIC),
+                                DataTablesColumn("CommCare Version"),
+                                DataTablesColumn("Application [Deployed Build]"))
 
     def get_parameters(self):
         self.selected_app = self.request_params.get('app', '')

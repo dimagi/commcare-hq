@@ -736,7 +736,10 @@ class UploadCommCareUsers(TemplateView):
             if problem_rows:
                 messages.error(request, 'However, we ran into problems with the following users:')
                 for row in problem_rows:
-                    messages.error(request, '{username}: {flag}'.format(**row))
+                    if row['flag'] == 'missing-data':
+                        messages.error(request, 'A row with no username was skipped')
+                    else:
+                        messages.error(request, '{username}: {flag}'.format(**row))
             return HttpResponseRedirect(redirect)
         else:
             return response
@@ -750,8 +753,11 @@ class UploadCommCareUsers(TemplateView):
                 row.get(k) for k in sorted(self.allowed_headers)
             )
             group_names = group_names or []
-            username = normalize_username(username, self.domain)
-            status_row = {'username': raw_username(username)}
+            try:
+                username = normalize_username(username, self.domain)
+            except TypeError:
+                username = None
+            status_row = {'username': raw_username(username) if username else None}
 
             if username in usernames or user_id in user_ids:
                 status_row['flag'] = 'repeat'
@@ -759,7 +765,8 @@ class UploadCommCareUsers(TemplateView):
                 status_row['flag'] = 'missing-data'
             else:
                 try:
-                    usernames.add(username)
+                    if username:
+                        usernames.add(username)
                     if user_id:
                         user_ids.add(user_id)
                     if user_id:
@@ -769,7 +776,7 @@ class UploadCommCareUsers(TemplateView):
                     if user:
                         if user.domain != self.domain:
                             raise Exception('User with username %r is somehow in domain %r' % (user.username, user.domain))
-                        if user.username != username:
+                        if username and user.username != username:
                             user.change_username(username)
                         if password:
                             user.set_password(password)
@@ -793,7 +800,7 @@ class UploadCommCareUsers(TemplateView):
                         try:
                             self.group_memoizer.get_group(group_name).add_user(user)
                         except Exception:
-                            raise Exception("Can't add to group '%s'" % (user.raw_username, group_name))
+                            raise Exception("Can't add to group '%s' (try adding it to your spreadsheet)" % group_name)
                     self.group_memoizer.save_all()
                 except Exception, e:
                     status_row['flag'] = 'error: %s' % e

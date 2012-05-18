@@ -52,6 +52,12 @@ def request_new_domain(request, form, new_user=True):
 
     if request.user.is_authenticated():
         current_user = CouchUser.from_django_user(request.user)
+        if current_user is None:
+            # Save the django user to sync it to couch
+            # I'm going to see if this helps get rid of the 500s
+            request.user.save()
+            current_user = CouchUser.from_django_user(request.user)
+
         current_user.add_domain_membership(new_domain.name, is_admin=True)
         current_user.save()
         dom_req.requesting_user_username = request.user.username

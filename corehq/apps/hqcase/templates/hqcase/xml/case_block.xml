@@ -1,0 +1,12 @@
+<?xml version='1.0' ?>
+<system version="1" uiVersion="1" xmlns="http://commcarehq.org/case">
+    <meta xmlns="http://openrosa.org/jr/xforms">
+        <deviceID />
+        <timeStart>{{ time }}</timeStart>
+        <timeEnd>{{ time }}</timeEnd>
+        <username>system</username>
+        <userID />
+        <uid>{{ uid }}</uid>
+    </meta>
+    {{ case_block|safe }}
+</system>

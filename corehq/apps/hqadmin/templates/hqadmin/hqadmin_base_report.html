@@ -16,7 +16,9 @@
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
         $(function() {
-                var reportTables = new HQReportDataTables({});
+                var reportTables = new HQReportDataTables({
+                    {% if aoColumns %}aoColumns: {{ aoColumns|JSON }}{% endif %}
+                });
                 reportTables.render();
         });
     </script>

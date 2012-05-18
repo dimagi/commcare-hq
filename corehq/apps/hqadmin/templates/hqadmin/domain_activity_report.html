@@ -5,13 +5,7 @@
 {% block reportcontent %}
 <table class="datatable table table-striped">
     <thead>
-        <tr>
-            <th>Domain</th>
-            {% for landmark in landmarks %}
-                <th>Last {{ landmark }} Days</th>
-            {% endfor %}
-            <th>All Users</th>
-        </tr>
+        {{ headers.render_html|safe }}
     </thead>
     <tbody>
     {% for domain in domains %}
