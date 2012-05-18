@@ -13,6 +13,8 @@ from couchdbkit.resource import ResourceNotFound
 import logging
 import hashlib
 from copy import copy
+from couchforms.signals import submission_error_received
+from dimagi.utils.mixins import UnicodeMixIn
 
 class Metadata(DocumentSchema):
     """
@@ -47,7 +49,8 @@ class XFormInstance(Document):
     
     @property
     def get_form(self):
-        """public getter for the xform's form instance, it's redundant with _form but wrapping that access gives future audit capabilities"""
+        """public getter for the xform's form instance, it's redundant with 
+        _form but wrapping that access gives future audit capabilities"""
         return self._form
     
     @property
@@ -186,3 +189,33 @@ class XFormDeprecated(XFormError):
         XFormInstance.save(self, *args, **kwargs)
         # should raise a signal saying that this thing got deprecated
 
+class SubmissionErrorLog(Document, UnicodeMixIn):
+    """
+    When a hard submission error (typically bad XML) is received we save it 
+    here. 
+    """
+    ATTACHMENT_NAME = "form.xml"
+    
+    received_on = DateTimeProperty()
+    md5 = StringProperty()
+    message = StringProperty()
+    
+    def __unicode__(self):
+        return "Doc id: %s, Error %s" % (self.get_id, self.message) 
+
+    def get_xml(self):
+        return self.fetch_attachment(SubmissionErrorLog.ATTACHMENT_NAME)
+        
+    @classmethod
+    def from_instance(cls, instance, message):
+        """
+        Create an instance of this record from a submission body
+        """
+        error = SubmissionErrorLog(received_on=datetime.datetime.utcnow(),
+                                   md5=hashlib.md5(instance).hexdigest(),
+                                   message=message)
+        error.save()
+        error.put_attachment(instance, SubmissionErrorLog.ATTACHMENT_NAME)
+        error.save()
+        return error
+    

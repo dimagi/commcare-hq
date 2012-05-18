@@ -1,15 +1,16 @@
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from couchforms.util import post_xform_to_couch
-from django.http import HttpResponse, HttpResponseServerError
+from couchforms.util import post_xform_to_couch, SubmissionError
+from django.http import HttpResponse, HttpResponseServerError,\
+    HttpResponseBadRequest
 import logging
 from couchforms.models import XFormInstance
-from tastypie.http import HttpBadRequest
 
 @require_POST
 @csrf_exempt
-def post(request, callback=None, magic_property='xml_submission_file'):
+def post(request, callback=None, error_callback=None, 
+         magic_property='xml_submission_file'):
     """
     XForms can get posted here.  They will be forwarded to couch.
     
@@ -27,8 +28,8 @@ def post(request, callback=None, magic_property='xml_submission_file'):
         try:
             instance = request.FILES[magic_property].read()
         except MultiValueDictKeyError:
-            return HttpBadRequest(
-                'If you use multipart/form-data, please name your file xml_submission_file.\n'
+            return HttpResponseBadRequest(
+                'If you use multipart/form-data, please name your file %s.\n' % magic_property + \
                 'You may also do a normal (non-multipart) post with the xml submission as the request body instead.'
             )
         for key, item in request.FILES.items():
@@ -45,14 +46,16 @@ def post(request, callback=None, magic_property='xml_submission_file'):
         if callback:
             return callback(doc)
         return HttpResponse("Thanks! Your new xform id is: %s" % doc["_id"], status=201)
-    except Exception, e:
+    except SubmissionError, e:
         logging.exception("Problem receiving submission to %s. %s" % \
                           (request.path, str(e)))
-        # TODO: do we want to be emailed every time a phone fails to submit?
-        # Quite possibly, though this will be a short term disaster.
-        # If so, change this to simply raise an exception
+        if error_callback:
+            return error_callback(e.error_log)
         return HttpResponseServerError("FAIL")
-
+    except Exception, e:
+        raise Exception("Problem receiving submission to %s. %s" % \
+                        (request.path, str(e)))
+        
 def download_form(request, instance_id):
     instance = XFormInstance.get(instance_id) 
     response = HttpResponse(mimetype='application/xml')
