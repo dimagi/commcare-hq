@@ -86,7 +86,7 @@ def post_xform_to_couch(instance, attachments={}):
     except RequestFailed, e:
         if e.status_int == 409:
             # this is an update conflict, i.e. the uid in the form was the same.
-            _handle_id_conflict(instance, attachments)
+            return _handle_id_conflict(instance, attachments)
         else:
             doc = _log_hard_failure(instance, attachments, e)
             raise SubmissionError(doc)
