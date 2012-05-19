@@ -7,9 +7,15 @@ import os
 from StringIO import StringIO
 from dimagi.utils.post import tmpfile
 from couchforms.models import SubmissionErrorLog, XFormInstance
+from couchforms.signals import xform_saved
 
-def _clear_all_forms():
-    for item in XFormInstance.view("couchforms/by_xmlns", include_docs=True, reduce=False).all():
+def _clear_all_forms(domain):
+    for item in SubmissionErrorLog.view("receiverwrapper/all_submissions_by_domain",
+                                  reduce=False,
+                                  include_docs=True,
+                                  startkey=[domain, "by_type"],
+                                  endkey=[domain, "by_type", {}]).all():
+
         item.delete()
 
 class SubmissionErrorTest(TestCase):
@@ -22,12 +28,13 @@ class SubmissionErrorTest(TestCase):
         self.client = Client()
         self.client.login(**{'username': 'test', 'password': 'foobar'})
         self.url = reverse("receiver_post", args=[self.domain])
-        _clear_all_forms()
+        _clear_all_forms(self.domain.name)
         
     def tearDown(self):
         self.couch_user.delete()
         self.domain.delete()
-        _clear_all_forms()
+        _clear_all_forms(self.domain.name)
+    
     def _submit(self, formname):
         file_path = os.path.join(os.path.dirname(__file__), "data", formname)
         with open(file_path, "rb") as f:
@@ -58,6 +65,50 @@ class SubmissionErrorTest(TestCase):
             self.assertEqual(201, res.status_code)
             self.assertTrue("Form is a duplicate" in res.content)
         
+        # make sure we logged it
+        log = SubmissionErrorLog.view("receiverwrapper/all_submissions_by_domain",
+                                      reduce=False,
+                                      include_docs=True,
+                                      startkey=[self.domain.name, "by_type", "XFormDuplicate"],
+                                      endkey=[self.domain.name, "by_type", "XFormDuplicate", {}]).one()
+        
+        self.assertTrue(log is not None)
+        self.assertTrue("Form is a duplicate" in log.problem)
+        with open(file) as f:
+            self.assertEqual(f.read(), log.get_xml())
+        
+            
+    def testSubmissionError(self):
+        evil_laugh = "mwa ha ha!"
+        
+        def fail(sender, xform, **kwargs):
+            raise Exception(evil_laugh)
+        
+        xform_saved.connect(fail)
+        
+        try:    
+            file = os.path.join(os.path.dirname(__file__), "data", "simple_form.xml")
+            with open(file) as f:
+                res = self.client.post(self.url, {
+                        "xml_submission_file": f
+                })
+                self.assertEqual(201, res.status_code)
+                self.assertTrue(evil_laugh in res.content)
+            
+            # make sure we logged it
+            log = SubmissionErrorLog.view("receiverwrapper/all_submissions_by_domain",
+                                          reduce=False,
+                                          include_docs=True,
+                                          startkey=[self.domain.name, "by_type", "XFormError"],
+                                          endkey=[self.domain.name, "by_type", "XFormError", {}]).one()
+            
+            self.assertTrue(log is not None)
+            self.assertTrue(evil_laugh in log.problem)
+            with open(file) as f:
+                self.assertEqual(f.read(), log.get_xml())
+        
+        finally:
+            xform_saved.disconnect(fail)
             
     def testSubmitBadXML(self):
         f, path = tmpfile()
