@@ -6,9 +6,14 @@ from django.core.urlresolvers import reverse
 import os
 from StringIO import StringIO
 from dimagi.utils.post import tmpfile
-from couchforms.models import SubmissionErrorLog
+from couchforms.models import SubmissionErrorLog, XFormInstance
+
+def _clear_all_forms():
+    for item in XFormInstance.view("couchforms/by_xmlns", include_docs=True, reduce=False).all():
+        item.delete()
 
 class SubmissionErrorTest(TestCase):
+    
     def setUp(self):
         self.domain = create_domain("submit-errors")
         self.couch_user = WebUser.create(None, "test", "foobar")
@@ -17,11 +22,12 @@ class SubmissionErrorTest(TestCase):
         self.client = Client()
         self.client.login(**{'username': 'test', 'password': 'foobar'})
         self.url = reverse("receiver_post", args=[self.domain])
+        _clear_all_forms()
         
     def tearDown(self):
         self.couch_user.delete()
         self.domain.delete()
-        
+        _clear_all_forms()
     def _submit(self, formname):
         file_path = os.path.join(os.path.dirname(__file__), "data", formname)
         with open(file_path, "rb") as f:
@@ -35,6 +41,23 @@ class SubmissionErrorTest(TestCase):
         })
         self.assertEqual(400, res.status_code)
         self.assertTrue("xml_submission_file" in res.content)
+            
+    def testSubmitDuplicate(self):
+        file = os.path.join(os.path.dirname(__file__), "data", "simple_form.xml")
+        with open(file) as f:
+            res = self.client.post(self.url, {
+                    "xml_submission_file": f
+            })
+            self.assertEqual(201, res.status_code)
+            self.assertTrue("Thanks for submitting" in res.content)
+        
+        with open(file) as f:
+            res = self.client.post(self.url, {
+                    "xml_submission_file": f
+            })
+            self.assertEqual(201, res.status_code)
+            self.assertTrue("Form is a duplicate" in res.content)
+        
             
     def testSubmitBadXML(self):
         f, path = tmpfile()
@@ -51,10 +74,10 @@ class SubmissionErrorTest(TestCase):
         log = SubmissionErrorLog.view("receiverwrapper/all_submissions_by_domain",
                                       reduce=False,
                                       include_docs=True,
-                                      startkey=[self.domain.name, "error", "SubmissionErrorLog"],
-                                      endkey=[self.domain.name, "error", "SubmissionErrorLog", {}]).one()
+                                      startkey=[self.domain.name, "by_type", "SubmissionErrorLog"],
+                                      endkey=[self.domain.name, "by_type", "SubmissionErrorLog", {}]).one()
         
         self.assertTrue(log is not None)
-        self.assertTrue("render_error" in log.message)
+        self.assertTrue("render_error" in log.problem)
         self.assertEqual("this isn't even close to xml", log.get_xml())
         
