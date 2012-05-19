@@ -8,3 +8,6 @@ TAG_NAMESPACE = "@xmlns"
 TAG_META = "meta"
 
 TAG_FORM = 'form'
+
+ATTACHMENT_NAME = "form.xml"
+    

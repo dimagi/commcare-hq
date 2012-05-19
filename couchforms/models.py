@@ -15,6 +15,7 @@ import hashlib
 from copy import copy
 from couchforms.signals import submission_error_received
 from dimagi.utils.mixins import UnicodeMixIn
+from couchforms.const import ATTACHMENT_NAME
 
 class Metadata(DocumentSchema):
     """
@@ -74,7 +75,7 @@ class XFormInstance(Document, UnicodeMixIn):
         if (const.TAG_META) in self._form:
             def _clean(meta_block):
                 # couchdbkit chokes on dates that aren't actually dates
-                # so check their validity before passing htem up
+                # so check their validity before passing them up
                 ret = copy(dict(meta_block))
                 if meta_block:
                     for key in ("timeStart", "timeEnd"):
@@ -82,6 +83,7 @@ class XFormInstance(Document, UnicodeMixIn):
                             if meta_block[key]:
                                 try:
                                     parsed = string_to_datetime(meta_block[key])
+                                    ret[key] = parsed
                                 except ValueError:
                                     # we couldn't parse it
                                     del ret[key]
@@ -120,7 +122,7 @@ class XFormInstance(Document, UnicodeMixIn):
     
     def get_xml(self):
         try:
-            return self.fetch_attachment("form.xml")
+            return self.fetch_attachment(ATTACHMENT_NAME)
         except ResourceNotFound:
             logging.warn("no xml found for %s, trying old attachment scheme." % self.get_id)
             return self[const.TAG_XML]
@@ -131,7 +133,7 @@ class XFormInstance(Document, UnicodeMixIn):
         Get the extra attachments for this form. This will not include
         the form itself
         """
-        return dict((item, val) for item, val in self._attachments.items() if item != "form.xml")
+        return dict((item, val) for item, val in self._attachments.items() if item != ATTACHMENT_NAME)
     
     def xml_md5(self):
         return hashlib.md5(self.get_xml()).hexdigest()
@@ -162,7 +164,7 @@ class XFormError(XFormInstance):
         # XFormInstance we'll force the doc_type to change. 
         self["doc_type"] = "XFormError" 
         super(XFormError, self).save(*args, **kwargs)
-
+        
 class XFormDuplicate(XFormError):
     """
     Duplicates of instances go here.
@@ -189,19 +191,22 @@ class XFormDeprecated(XFormError):
         XFormInstance.save(self, *args, **kwargs)
         # should raise a signal saying that this thing got deprecated
 
-class SubmissionErrorLog(XFormError, UnicodeMixIn):
+class SubmissionErrorLog(XFormError):
     """
     When a hard submission error (typically bad XML) is received we save it 
     here. 
     """
-    ATTACHMENT_NAME = "form.xml"
     md5 = StringProperty()
     
+    # this is here as a bit of an annoying hack so that __unicode__ works
+    # when called from the base class
+    form = DictProperty()
+        
     def __unicode__(self):
         return "Doc id: %s, Error %s" % (self.get_id, self.problem) 
 
     def get_xml(self):
-        return self.fetch_attachment(SubmissionErrorLog.ATTACHMENT_NAME)
+        return self.fetch_attachment(ATTACHMENT_NAME)
         
     def save(self, *args, **kwargs):
         # we have to override this because XFormError does too 
@@ -218,7 +223,7 @@ class SubmissionErrorLog(XFormError, UnicodeMixIn):
                                    md5=hashlib.md5(instance).hexdigest(),
                                    problem=message)
         error.save()
-        error.put_attachment(instance, SubmissionErrorLog.ATTACHMENT_NAME)
+        error.put_attachment(instance, ATTACHMENT_NAME)
         error.save()
         return error
     
