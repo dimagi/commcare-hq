@@ -3,9 +3,21 @@ from django.conf import settings
 from django.db import models
 from django.conf import settings
 from couchdbkit.ext.django.schema import Document, StringProperty,\
-    BooleanProperty, DateTimeProperty, IntegerProperty
+    BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty
 from dimagi.utils.timezones import fields as tz_fields
 
+class DomainMigrations(DocumentSchema):
+    has_migrated_permissions = BooleanProperty(default=False)
+
+    def apply(self, domain):
+        if not self.has_migrated_permissions:
+            print "Applying permissions migration to domain %s" % self.name
+            from corehq.apps.users.models import UserRole, WebUser
+            UserRole.init_domain_with_presets(self.name)
+            for web_user in WebUser.by_domain(self.name):
+                web_user.save()
+            self.has_migrated_permissions = True
+            self.save()
 
 class Domain(Document):
     """Domain is the highest level collection of people/stuff
@@ -20,11 +32,7 @@ class Domain(Document):
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)
 
-#    def save(self, **kwargs):
-#        # eventually we'll change the name of this object to just "Domain"
-#        # so correctly set the doc type for future migration
-#        self.doc_type = "Domain"
-#        super(CouchDomain, self).save(**kwargs)
+    migrations = SchemaProperty(DomainMigrations)
 
     @staticmethod
     def active_for_user(user, is_active=True):
@@ -41,6 +49,9 @@ class Domain(Document):
                                     include_docs=True).all()
         else:
             return []
+
+    def apply_migrations(self):
+        self.migrations.apply(self)
 
     @staticmethod
     def all_for_user(user):
@@ -99,15 +110,6 @@ class Domain(Document):
         return Domain.view("domain/domains",
                             reduce=False,
                             include_docs=True).all()
-
-
-    def save(self, **params):
-        from corehq.apps.users.models import UserRole
-        UserRole.init_domain_with_presets(self.name)
-        super(Domain, self).save(**params)
-
-
-
 
 ##############################################################################################################
 #

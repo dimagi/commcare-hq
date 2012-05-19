@@ -136,7 +136,6 @@ def undo_remove_web_user(request, domain, record_id):
 @require_POST
 def post_user_role(request, domain):
     role_data = json.loads(request.raw_post_data)
-    print set(UserRole.properties()).union('_id', '_rev')
     role_data = dict([(p, role_data[p]) for p in set(UserRole.properties().keys() + ['_id', '_rev']) if p in role_data])
     role = UserRole.wrap(role_data)
     role.domain = domain

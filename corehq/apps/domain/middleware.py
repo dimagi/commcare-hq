@@ -38,7 +38,7 @@ class DomainMiddleware(object):
         # Lookup is done via the ContentTypes framework, stored in the domain_membership table
         # id(user) == id(request.user), so we can save a lookup into request by using 'user' alone    
         active_domains = Domain.active_for_user(user)
-        user.active_domains = active_domains            
+        user.active_domains = active_domains
         user.selected_domain = None # default case
         domain_from_session = request.session.get(_SESSION_KEY_SELECTED_DOMAIN, None)
         
@@ -48,7 +48,10 @@ class DomainMiddleware(object):
         if not domain_from_session and len(active_domains) == 1:
             request.session[_SESSION_KEY_SELECTED_DOMAIN] = active_domains[0]
             user.selected_domain = active_domains[0]           
-        
+
+        if user.selected_domain:
+            user.selected_domain.apply_migrations()
+
         return None
     
 ############################################################################################################

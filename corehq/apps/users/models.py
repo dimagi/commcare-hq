@@ -169,17 +169,6 @@ class UserRole(Document):
     def get_qualified_id(self):
         return 'user-role:%s' % self.get_id
 
-#    @classmethod
-#    def get(cls, docid, rev=None, db=None, dynamic_properties=True):
-#        if docid == 'edit-apps':
-#            return Permissions(edit_apps=True)
-#        elif docid == 'field-implementor':
-#            return Permissions(edit_commcare_users=True)
-#        elif docid == 'read-only':
-#            return Permissions()
-#        else:
-#            return super(UserRole, cls).get(docid, rev, db, dynamic_properties)
-
     @classmethod
     def by_domain(cls, domain):
         return cls.view('users/roles_by_domain',
