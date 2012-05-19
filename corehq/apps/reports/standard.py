@@ -131,6 +131,15 @@ class PaginatedHistoryHQReport(StandardTabularHQReport):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.SelectMobileWorkerField']
 
+    count = 0
+    _total_count = None
+    
+    @property
+    def total_count(self):
+        if self._total_count is not None:
+            return self._total_count
+        return self.count
+    
     def get_parameters(self):
         self.userIDs = [user.user_id for user in self.users if user.user_id]
         self.usernames = dict([(user.user_id, user.username_in_report) for user in self.users])
@@ -141,7 +150,7 @@ class PaginatedHistoryHQReport(StandardTabularHQReport):
         return {
             "sEcho": params.echo,
             "iTotalDisplayRecords": self.count,
-            "iTotalRecords": self.count,
+            "iTotalRecords": self.total_count,
             "aaData": rows
         }
 
