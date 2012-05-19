@@ -98,7 +98,7 @@
                         {{ user.html_username|safe }}
                     </a>
                 </td>
-                <td>{{ user.role_label }}</td>
+                <td>{% if user.role_label %}{{ user.role_label }}{% else %}<h6>(No Name)</h6>{% endif %}</td>
                 <td>{{ user.first_name }} {{ user.last_name }}</td>
                 <td>
                     {% if user.phone_numbers %}

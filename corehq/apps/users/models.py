@@ -214,7 +214,7 @@ class UserRole(Document):
 
     @classmethod
     def role_choices(cls, domain):
-        return [(role.get_qualified_id(), role.name) for role in [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
+        return [(role.get_qualified_id(), role.name or '(No Name)') for role in [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
 
 class AdminUserRole(UserRole):
     def __init__(self, domain):

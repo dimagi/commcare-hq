@@ -15,6 +15,7 @@ class DomainMigrations(DocumentSchema):
             UserRole.init_domain_with_presets(domain.name)
             for web_user in WebUser.by_domain(domain.name):
                 web_user.save()
+
             self.has_migrated_permissions = True
             domain.save()
 
