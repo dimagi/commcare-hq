@@ -2,11 +2,64 @@ from dimagi.utils.couch.database import get_db
 from django.http import HttpResponse
 import json
 from restkit.errors import RequestFailed
+import itertools
 
 DEFAULT_DISPLAY_LENGTH = "10"
 DEFAULT_START = "0"
 DEFAULT_ECHO = "0"
 
+class CouchFilter(object):
+    """
+    An 'interface' that you should override if you want to use the 
+    FilteredPaginator.
+    """
+    def get_total(self):
+        """
+        Should return the total number of objects matching this filter
+        """ 
+        raise NotImplementedError("Override this!")
+    
+    def get(self, count): 
+        """
+        Should return the first [count] objects matching this filter.
+        """ 
+        raise NotImplementedError("Override this!")
+    
+
+class FilteredPaginator(object):
+    """
+    A class to do filtered pagination in couch. Takes in a list of filters, 
+    each of which is responsible for providing access to its underlying 
+    objects, and then paginates across all of them in memory (sorting
+    by a passed in comparator).
+    """
+    
+    def __init__(self, filters, comparator):
+        self.filters = filters
+        self.comparator = comparator
+        self.total = sum(f.get_total() for f in self.filters)
+    
+    def get(self, skip, limit):
+        # this is a total disaster in couch.
+        # what we'll do is fetch up to the maximum amount of data for each of the
+        # selected types. then iterate through those sorted in memory by date.
+        
+        # as users start to scroll through this will get sloooooow....
+        
+        # first collect the maximum amount of objects
+        all_objs = list(itertools.chain(*[f.get(skip + limit) for f in self.filters]))
+        
+        # nothing more 
+        if len(all_objs) < skip: 
+            return []
+        
+        # sort 
+        all_objs = sorted(all_objs, self.comparator)
+        
+        # filter
+        max = min([skip + limit, len(all_objs)])
+        return all_objs[skip:max]
+        
 
 class DatatablesParams(object):
     
