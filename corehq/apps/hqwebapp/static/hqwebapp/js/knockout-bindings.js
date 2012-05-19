@@ -183,3 +183,14 @@ ko.bindingHandlers.modal = {
         }
     }
 };
+
+ko.bindingHandlers.visibleFade = {
+    'update': function (element, valueAccessor) {
+        var value = ko.utils.unwrapObservable(valueAccessor());
+        if (value) {
+            $(element).hide().slideDown();
+        } else if (!value) {
+            $(element).slideUp();
+        }
+    }
+};

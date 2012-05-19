@@ -1,7 +1,6 @@
 from datetime import datetime
 from django.conf import settings
 from django.db import models
-from django.conf import settings
 from couchdbkit.ext.django.schema import Document, StringProperty,\
     BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty
 from dimagi.utils.timezones import fields as tz_fields
@@ -11,13 +10,13 @@ class DomainMigrations(DocumentSchema):
 
     def apply(self, domain):
         if not self.has_migrated_permissions:
-            print "Applying permissions migration to domain %s" % self.name
+            print "Applying permissions migration to domain %s" % domain.name
             from corehq.apps.users.models import UserRole, WebUser
-            UserRole.init_domain_with_presets(self.name)
-            for web_user in WebUser.by_domain(self.name):
+            UserRole.init_domain_with_presets(domain.name)
+            for web_user in WebUser.by_domain(domain.name):
                 web_user.save()
             self.has_migrated_permissions = True
-            self.save()
+            domain.save()
 
 class Domain(Document):
     """Domain is the highest level collection of people/stuff
@@ -34,6 +33,13 @@ class Domain(Document):
 
     migrations = SchemaProperty(DomainMigrations)
 
+    @classmethod
+    def wrap(cls, data):
+        self = super(Domain, cls).wrap(data)
+        if self.get_id:
+            self.apply_migrations()
+        return self
+
     @staticmethod
     def active_for_user(user, is_active=True):
         if not hasattr(user,'get_profile'):
@@ -43,9 +49,14 @@ class Domain(Document):
         couch_user = CouchUser.from_django_user(user)
         if couch_user:
             domain_names = couch_user.get_domains()
+            def log(json):
+                doc = json['doc']
+                print doc['name'], doc['_id']
+                return Domain.wrap(doc)
             return Domain.view("domain/by_status",
                                     keys=[[is_active, d] for d in domain_names],
                                     reduce=False,
+                                    wrapper=log,
                                     include_docs=True).all()
         else:
             return []

@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/javascripts/knockout-2.0.0.debug.js' %}"></script>
+    <script src="{% static 'hqwebapp/javascripts/knockout-2.1.0.debug.js' %}"></script>
     <script src="{% static 'hqwebapp/javascripts/knockout.mapping.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
     <script src="{% static 'users/js/roles.js' %}"></script>
@@ -126,7 +126,7 @@
                 <tr>
                     <th></th>
                     <th>Edit Web Users</th>
-                    <th>Edit CommCare Users</th>
+                    <th>Edit Mobile Workers</th>
                     <th>Edit Data</th>
                     <th>Edit Apps</th>
                     <th>View Reports</th>
@@ -144,23 +144,18 @@
                     <td><i data-bind="staticChecked: permissions.edit_data"></i></td>
                     <td><i data-bind="staticChecked: permissions.edit_apps"></i></td>
                     <td>
-                        <span data-bind="visible: permissions.view_reports(), staticChecked: true"></span>
-                        <div data-bind="visible: !permissions.view_reports() && permissions.view_report_list().length">
+                        <span data-bind="visible: reportPermissions.all(), staticChecked: true"></span>
+                        <div data-bind="visible: !reportPermissions.all() && reportPermissions.filteredSpecific().length">
                             Only
-                            <ul data-bind="foreach: permissions.viewReportList">
-                                <li data-bind="text: name"></li>
+                            <ul data-bind="foreach: reportPermissions.specific">
+                                <li data-bind="html: name, visible: value"></li>
                             </ul>
                         </div>
-                        <span data-bind="visible: !permissions.view_reports() && !permissions.view_report_list().length, staticChecked: false"></span>
+                        <span data-bind="visible: !reportPermissions.all() && !reportPermissions.specific().length, staticChecked: false"></span>
                     </td>
                     <td data-bind="visible: $root.allowEdit">
-                        <button class="btn" data-bind="visible: $data._id, click: $root.setRoleBeingEdited">
-                            <i class="icon-edit"></i>
-                            Edit Role
-                        </button>
-                        <button class="btn disabled" disabled="disabled" data-bind="visible: !$data._id">
-                            <i class="icon-edit"></i>
-                            Built-in
+                        <button class="btn" data-bind="css: {disabled: !$data._id}, click: $data._id ? $root.setRoleBeingEdited : null">
+                            <i class="icon-edit"></i>Edit Role
                         </button>
                     </td>
                     <!--<td>-->
@@ -183,7 +178,7 @@
                     <input data-bind="value: name" placeholder="Role Name"/>
                     <table class="table table-bordered">
                         <tr>
-                            <th>Edit Web Users</th>
+                            <th width="33%">Edit Web Users</th>
                             <td>
                                 <input type="checkbox" data-bind="checked: permissions.edit_web_users"/>
                             </td>
@@ -209,13 +204,18 @@
                         <tr>
                             <th>View All Reports</th>
                             <td>
-                                <input type="checkbox" data-bind="checked: permissions.view_reports"/>
+                                <input type="checkbox" data-bind="checked: reportPermissions.all"/>
                             </td>
                         </tr>
-                        <tr data-bind="visible: !permissions.view_reports()">
+                        <tr data-bind="visible: !reportPermissions.all()">
                             <th>View Specific Reports</th>
                             <td>
-                                <select data-bind="selectedOptions: permissions.view_report_list, options: $root.reportOptions, optionsText: 'name', optionsValue: 'path'" multiple="multiple" size="10"></select>
+                                <div data-bind="foreach: reportPermissions.specific, visibleFade: !reportPermissions.all()">
+                                    <div>
+                                        <input type="checkbox" data-bind="checked: value"/>
+                                        <span data-bind="html: name"></span>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     </table>
