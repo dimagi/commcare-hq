@@ -239,10 +239,12 @@ def fit_to_schema(doc, schema):
     if isinstance(schema, dict):
         if not doc:
             doc = {}
+        if not isinstance(doc, dict):
+            doc = {'': doc}
         doc_keys = set(doc.keys())
         schema_keys = set(schema.keys())
         if doc_keys - schema_keys:
-            log("doc has keys not in schema: %s" % (', '.join(doc_keys - schema_keys)))
+            log("doc has keys not in schema: '%s'" % ("', '".join(doc_keys - schema_keys)))
         answ = {}
         for key in schema:
             #if schema[key] == unknown_type: continue
