@@ -59,9 +59,10 @@ def _get_app_id(xform):
         return matches.groups()[0]
 
 def add_domain(sender, xform, **kwargs):
-    domain = _get_domain(xform)
-    if domain: 
-        xform['domain'] = domain
+    xform['domain'] = _get_domain(xform) or ""
+
+def add_export_tag(sender, xform, **kwargs):
+    if _get_domain(xform):
         xform['#export_tag'] = ["domain", "xmlns"]
         xform.save()
 
@@ -90,6 +91,7 @@ def create_repeat_records(repeater_cls, payload):
 
 form_received.connect(scrub_meta)
 form_received.connect(add_domain)
+form_received.connect(add_export_tag)
 form_received.connect(add_app_id)
 
 submission_error_received.connect(add_domain)
