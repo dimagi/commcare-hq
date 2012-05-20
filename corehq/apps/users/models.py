@@ -1130,7 +1130,7 @@ class WebUser(CouchUser):
         elif role_qualified_id.startswith('user-role:'):
             dm.role_id = role_qualified_id[len('user-role:'):]
         else:
-            raise Exception
+            raise Exception("role_qualified_id is %r" % role_qualified_id)
 
     def role_label(self, domain=None):
         if not domain:
