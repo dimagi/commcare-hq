@@ -125,9 +125,9 @@ class Permissions(DocumentSchema):
         if self.has(permission, data) == value:
             return
         if data:
-            setattr(self, permission, value)
-        else:
             getattr(self, permission)(data, value)
+        else:
+            setattr(self, permission, value)
 
     def _getattr(self, name):
         a = getattr(self, name)
@@ -610,7 +610,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     @classmethod
     def from_django_user(cls, django_user):
         return cls.get_by_username(django_user.username)
-    
+
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
         django_user = create_user(username, password=password, email=email)
