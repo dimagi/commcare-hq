@@ -5,6 +5,7 @@ import os
 import logging
 from django.contrib import messages
 
+
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 
 DEBUG = True
@@ -355,7 +356,7 @@ except ImportError:
 #SOUTH_TESTS_MIGRATE=False
 
 ####### Couch Forms & Couch DB Kit Settings #######
-from settingshelper import get_dynamic_db_settings
+from settingshelper import get_dynamic_db_settings, make_couchdb_tuple
 _dynamic_db_settings = get_dynamic_db_settings(COUCH_SERVER_ROOT, COUCH_USERNAME, COUCH_PASSWORD, COUCH_DATABASE_NAME, INSTALLED_APPS)
 
 # create local server and database configs
@@ -365,7 +366,7 @@ COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 # other urls that depend on the server 
 XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
 
-COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
+COUCHDB_APPS = [
         'api',
         'app_manager',
         'auditcare',
@@ -403,9 +404,8 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'dca',
         'hsph',
     ]
-]
 
-
+COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS ]
 
 INSTALLED_APPS += LOCAL_APPS
 

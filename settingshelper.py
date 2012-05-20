@@ -28,3 +28,18 @@ def get_commit_id():
         return os.popen("git log --format=%H -1").readlines()[0].strip()
     except Exception:
         return None
+
+def make_couchdb_tuple(app_label, couch_database_url):
+    """
+    Helper function to generate couchdb tuples for mapping app name to couch database URL.
+
+    In this case, the helper will magically alter the URL for special core libraries.
+
+    Namely, auditcare, and couchlog
+    """
+
+    if app_label == 'auditcare' or app_label == 'couchlog':
+        return app_label, "%s__%s" % (couch_database_url, app_label)
+    else:
+        return app_label, couch_database_url
+
