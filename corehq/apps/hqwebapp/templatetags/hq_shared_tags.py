@@ -12,10 +12,6 @@ register = template.Library()
 
 @register.filter
 def JSON(obj):
-    try:
-        obj = obj.to_json()
-    except AttributeError:
-        pass
 
     return mark_safe(json.dumps(obj, default=json_handler))
 

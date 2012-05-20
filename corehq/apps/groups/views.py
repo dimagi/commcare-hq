@@ -9,7 +9,7 @@ from corehq.apps.groups.models import Group, DeleteGroupRecord
 from corehq.apps.users.decorators import require_permission
 from dimagi.utils.couch.resource_conflict import repeat
 
-require_can_edit_groups = require_permission(Permissions.EDIT_COMMCARE_USERS)
+require_can_edit_groups = require_permission(Permissions.edit_commcare_users)
 
 @require_can_edit_groups
 def add_group(request, domain):
