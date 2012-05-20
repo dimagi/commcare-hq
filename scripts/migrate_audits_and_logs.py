@@ -40,8 +40,7 @@ def run():
     start = 0
     seen_logs = 0
     while True:
-        log_iter = old_db.view('couchlog/all_by_date')#, skip=start,
-limit=chunk)
+        log_iter = old_db.view('couchlog/all_by_date')#, skip=start, limit=chunk)
         if log_iter.count() == 0:
             break
         for x in log_iter.iterator():
