@@ -12,7 +12,11 @@
 
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hq-bootstrap/js/jquery-1.7.1.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.0.0.js' %}"></script>
+        {% if DEBUG %}
+            <script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.0.0.js' %}"></script>
+        {% else %}
+            <script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.0.0.debug.js' %}"></script>
+        {% endif %}
 
         {% block oldstyle_imports %}
             <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
