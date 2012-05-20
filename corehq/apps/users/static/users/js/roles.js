@@ -25,7 +25,6 @@ $(function () {
                         return report.value();
                     });
                 });
-                console.log(self.reportPermissions.filteredSpecific().length);
                 self.unwrap = function () {
                     return cls.unwrap(self);
                 };

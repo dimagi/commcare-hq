@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 from django.conf import settings
 from django.db import models
 from couchdbkit.ext.django.schema import Document, StringProperty,\
@@ -10,7 +11,7 @@ class DomainMigrations(DocumentSchema):
 
     def apply(self, domain):
         if not self.has_migrated_permissions:
-            print "Applying permissions migration to domain %s" % domain.name
+            logging.info("Applying permissions migration to domain %s" % domain.name)
             from corehq.apps.users.models import UserRole, WebUser
             UserRole.init_domain_with_presets(domain.name)
             for web_user in WebUser.by_domain(domain.name):
@@ -52,7 +53,6 @@ class Domain(Document):
             domain_names = couch_user.get_domains()
             def log(json):
                 doc = json['doc']
-                print doc['name'], doc['_id']
                 return Domain.wrap(doc)
             return Domain.view("domain/by_status",
                                     keys=[[is_active, d] for d in domain_names],

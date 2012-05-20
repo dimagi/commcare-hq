@@ -33,7 +33,6 @@ class ProjectSettingsForm(forms.Form):
 class RoleForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
-        print kwargs['role_choices']
         if kwargs.has_key('role_choices'):
             role_choices = kwargs.pop('role_choices')
         else:
