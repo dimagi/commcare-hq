@@ -311,7 +311,7 @@ class CustomDomainMembership(DomainMembership):
             return self.custom_role
 
     def set_permission(self, permission, value, data=None):
-        self.custom_role.permission.set(permission, value, data)
+        self.custom_role.permissions.set(permission, value, data)
 
 
 class LowercaseStringProperty(StringProperty):
@@ -609,13 +609,8 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @classmethod
     def from_django_user(cls, django_user):
-        couch_user = cls.get_by_username(django_user.username)
-        if not couch_user and django_user.is_superuser:
-            couch_user = FakeUser()
-            couch_user.sync_from_django_user(django_user)
-
-        return couch_user
-
+        return cls.get_by_username(django_user.username)
+    
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
         django_user = create_user(username, password=password, email=email)
