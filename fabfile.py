@@ -52,6 +52,18 @@ def india():
     env.environment = 'india'
     env.user = prompt("Username: ", default=env.user)
 
+def rackspace():
+    """Our production server on Rackspace.  This is to be come the new production() method"""
+    env.root = root = '/home/commcarehq'
+    env.virtualenv_root = _join(root, '.virtualenvs/commcarehq')
+    env.code_root       = _join(root, 'src/commcare-hq')
+    env.pre_code_root   = _join(root, 'src/_commcare-hq')
+    env.code_branch = 'master'
+    env.sudo_user = 'commcarehq'
+    env.hosts = ['192.168.100.62']
+    env.environment = 'rackspace'
+    env.user = prompt("Username: ", default=env.user)
+
 def enter_virtualenv():
     """
     modify path to use virtualenv's python
@@ -79,8 +91,8 @@ def _update_code():
 
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
-    require('root', provided_by=('staging', 'production', 'india'))
-    if env.environment in ('production', 'india'):
+    require('root', provided_by=('staging', 'production', 'india', 'rackspace'))
+    if env.environment in ('production', 'india', 'rackspace'):
         if not console.confirm('Are you sure you want to deploy to %s?' % env.environment, default=False):
             utils.abort('Deployment aborted.')
 
