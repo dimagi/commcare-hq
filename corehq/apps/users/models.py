@@ -311,6 +311,7 @@ class CustomDomainMembership(DomainMembership):
             return self.custom_role
 
     def set_permission(self, permission, value, data=None):
+        self.custom_role.domain = self.domain
         self.custom_role.permissions.set(permission, value, data)
 
 
@@ -1143,6 +1144,8 @@ class WebUser(CouchUser):
             return "Unknown User"
         except DomainMembershipError:
             return "Unauthorized User"
+        except Exception:
+            return None
 
 class FakeUser(WebUser):
     """
@@ -1156,7 +1159,9 @@ class PublicUser(FakeUser):
     """
     Public users have read-only access to certain domains
     """
-    
+
+    domain_memberships = None
+
     def __init__(self, domain, **kwargs):
         super(PublicUser, self).__init__(**kwargs)
         self.domain = domain
@@ -1164,6 +1169,7 @@ class PublicUser(FakeUser):
         dm = CustomDomainMembership(domain=domain, is_admin=False)
         dm.set_permission('view_reports', True)
         self.domain_memberships = [dm]
+        print self.has_permission(domain, 'view_reports')
     
     def get_role(self, domain=None):
         assert(domain == self.domain)
