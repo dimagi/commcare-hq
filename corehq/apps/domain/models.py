@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.db import models
 from couchdbkit.ext.django.schema import Document, StringProperty,\
@@ -15,7 +16,11 @@ class DomainMigrations(DocumentSchema):
             from corehq.apps.users.models import UserRole, WebUser
             UserRole.init_domain_with_presets(domain.name)
             for web_user in WebUser.by_domain(domain.name):
-                web_user.save()
+                try:
+                    web_user.save()
+                except ResourceConflict:
+                    # web_user has already been saved by another thread in the last few seconds
+                    pass
 
             self.has_migrated_permissions = True
             domain.save()
