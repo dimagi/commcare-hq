@@ -12,7 +12,11 @@
 
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hq-bootstrap/js/jquery-1.7.1.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.0.0.js' %}"></script>
+        {% if DEBUG %}
+            <script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.0.0.js' %}"></script>
+        {% else %}
+            <script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.0.0.debug.js' %}"></script>
+        {% endif %}
         <script type="text/javascript" src="{% static 'hqwebapp/javascripts/underscore-1.3.1.js' %}"></script>
 
         {% block oldstyle_imports %}
@@ -47,7 +51,7 @@
                                         {# hack for domain admins only seeing domain tab #}
                                         {% if tab.caption != "Project Forwarding" or request.couch_user and request.couch_user.is_domain_admin %}
                                             {# and hack for hiding the users tab from public domains #}
-                                            {% if tab.caption != "Settings & Users" or request.couch_user and request.couch_user.get_id  %}
+                                            {% if tab.caption != "Settings & Users" or request.couch_user and request.couch_user.can_edit_commcare_users or request.couch_user.can_edit_web_users%}
                                                 <li class="{% if tab.is_active %}active{% endif %}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
                                             {% endif %}
                                         {% endif %}

@@ -62,7 +62,6 @@ def explode_cases(request, domain, template="hqcase/explode_cases.html"):
         keys = [[owner_id, False] for owner_id in user.get_owner_ids()]
         for case in CommCareCase.view('case/by_owner',
             keys=keys,
-            reduce=False,
             include_docs=True
         ):
             # we'll be screwing with this guy, so make him unsaveable

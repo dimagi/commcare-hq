@@ -1,4 +1,5 @@
 import uuid
+from corehq.apps.app_manager.views import require_can_edit_apps
 import magic
 from django.conf import settings
 from couchdbkit.exceptions import ResourceNotFound
@@ -32,7 +33,7 @@ def download_media(request, media_type, doc_id):
         pass
     return HttpResponseServerError("No Media Found")
 
-@require_permission('edit-apps')
+@require_can_edit_apps
 def media_map(request, domain, app_id):
     app = get_app(domain, app_id)
     sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
@@ -52,7 +53,7 @@ def media_map(request, domain, app_id):
         "missing_audio_refs": missing_audio_refs
     })
 
-@require_permission('edit-apps')
+@require_can_edit_apps
 def upload(request, domain, app_id):
     app = get_app(domain, app_id)
     DNS_name = "http://"+Site.objects.get(id = settings.SITE_ID).domain

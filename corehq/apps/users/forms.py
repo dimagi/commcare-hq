@@ -6,8 +6,30 @@ from django.utils.encoding import smart_str
 from django.utils.translation import ugettext_lazy as _
 from dimagi.utils.timezones.fields import TimeZoneField
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
-from corehq.apps.users.models import CouchUser, WebUser, Roles, DomainMembership
+from corehq.apps.users.models import CouchUser, WebUser, OldRoles, DomainMembership
 from corehq.apps.users.util import format_username
+from corehq.apps.app_manager.models import validate_lang
+
+def wrapped_language_validation(value):
+    try:
+        validate_lang(value)
+    except ValueError:
+        raise forms.ValidationError("%s is not a valid language code! Please "
+                                    "enter a valid two or three digit code." % value)
+
+class LanguageField(forms.CharField):
+    """
+    Adds language code validation to a field
+    """
+    def __init__(self, *args, **kwargs):
+        super(LanguageField, self).__init__(*args, **kwargs)
+        self.min_length = 2
+        self.max_length = 3
+    
+    default_error_messages = {
+        'invalid': _(u'Please enter a valid two or three digit language code.'),
+    }
+    default_validators = [wrapped_language_validation]
 
 class ProjectSettingsForm(forms.Form):
     """
@@ -30,28 +52,30 @@ class ProjectSettingsForm(forms.Form):
         except Exception as e:
             return False
 
-class UserForm(forms.Form):
+class RoleForm(forms.Form):
+
+    def __init__(self, *args, **kwargs):
+        if kwargs.has_key('role_choices'):
+            role_choices = kwargs.pop('role_choices')
+        else:
+            role_choices = ()
+        super(RoleForm, self).__init__(*args, **kwargs)
+        self.fields['role'].choices = role_choices
+
+class UserForm(RoleForm):
     """
     Form for Users
     """
-
-    def __init__(self, *args, **kwargs):
-        if kwargs.has_key('viewable_reports_choices'):
-            viewable_reports_choices = kwargs.pop('viewable_reports_choices')
-        else:
-            viewable_reports_choices = ()
-        super(UserForm, self).__init__(*args, **kwargs)
-        self.fields['viewable_reports'].choices = viewable_reports_choices
 
     #username = forms.CharField(max_length=15)
     first_name = forms.CharField(max_length=50, required=False)
     last_name = forms.CharField(max_length=50, required=False)
     email = forms.EmailField(label=_("E-mail"), max_length=75, required=False)
-    role = forms.ChoiceField(choices=(('', 'Custom Role'),) + Roles.get_role_labels(), required=False)
-    can_view_reports = forms.ChoiceField(choices=(('yes', 'Yes'), ('no', 'No'), ('some', 'Only Some')), required=False)
-    viewable_reports = forms.MultipleChoiceField(choices=(), label="", required=False)
-
-    class Meta:
+    language = LanguageField(required=False)
+    role = forms.ChoiceField(choices=(), required=False)
+    
+    
+class Meta:
         app_label = 'users'
 
 class CommCareAccountForm(forms.Form):

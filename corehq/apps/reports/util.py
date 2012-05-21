@@ -334,7 +334,7 @@ def get_possible_reports(domain):
     report_map.extend(settings.CUSTOM_REPORT_MAP.get(domain, {}).items())
     for heading, models in report_map:
         for model in models:
-            reports.append((model, to_function(model).name))
+            reports.append({'path': model, 'name': to_function(model).name})
     return reports
 
 def format_relative_date(date, tz=pytz.utc):

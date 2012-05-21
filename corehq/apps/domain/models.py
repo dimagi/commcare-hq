@@ -1,11 +1,29 @@
 from datetime import datetime
+import logging
+from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.db import models
-from django.conf import settings
 from couchdbkit.ext.django.schema import Document, StringProperty,\
-    BooleanProperty, DateTimeProperty, IntegerProperty
+    BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty
 from dimagi.utils.timezones import fields as tz_fields
 
+class DomainMigrations(DocumentSchema):
+    has_migrated_permissions = BooleanProperty(default=False)
+
+    def apply(self, domain):
+        if not self.has_migrated_permissions:
+            logging.info("Applying permissions migration to domain %s" % domain.name)
+            from corehq.apps.users.models import UserRole, WebUser
+            UserRole.init_domain_with_presets(domain.name)
+            for web_user in WebUser.by_domain(domain.name):
+                try:
+                    web_user.save()
+                except ResourceConflict:
+                    # web_user has already been saved by another thread in the last few seconds
+                    pass
+
+            self.has_migrated_permissions = True
+            domain.save()
 
 class Domain(Document):
     """Domain is the highest level collection of people/stuff
@@ -20,11 +38,14 @@ class Domain(Document):
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)
 
-#    def save(self, **kwargs):
-#        # eventually we'll change the name of this object to just "Domain"
-#        # so correctly set the doc type for future migration
-#        self.doc_type = "Domain"
-#        super(CouchDomain, self).save(**kwargs)
+    migrations = SchemaProperty(DomainMigrations)
+
+    @classmethod
+    def wrap(cls, data):
+        self = super(Domain, cls).wrap(data)
+        if self.get_id:
+            self.apply_migrations()
+        return self
 
     @staticmethod
     def active_for_user(user, is_active=True):
@@ -35,12 +56,19 @@ class Domain(Document):
         couch_user = CouchUser.from_django_user(user)
         if couch_user:
             domain_names = couch_user.get_domains()
+            def log(json):
+                doc = json['doc']
+                return Domain.wrap(doc)
             return Domain.view("domain/by_status",
                                     keys=[[is_active, d] for d in domain_names],
                                     reduce=False,
+                                    wrapper=log,
                                     include_docs=True).all()
         else:
             return []
+
+    def apply_migrations(self):
+        self.migrations.apply(self)
 
     @staticmethod
     def all_for_user(user):
@@ -99,9 +127,6 @@ class Domain(Document):
         return Domain.view("domain/domains",
                             reduce=False,
                             include_docs=True).all()
-
-
-
 
 ##############################################################################################################
 #

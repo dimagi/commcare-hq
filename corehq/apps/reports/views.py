@@ -4,6 +4,7 @@ from corehq.apps.reports import util, standard
 from corehq.apps.reports.models import FormExportSchema
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
+from corehq.apps.users.models import Permissions
 import couchexport
 from couchexport.export import UnsupportedExportFormat, export_raw
 from couchexport.util import FilterFunction
@@ -49,8 +50,10 @@ datespan_default = datespan_in_request(
     default_days=7,
 )
 
-require_form_export_permission = require_permission('view-report', 'corehq.apps.reports.standard.ExcelExportReport', login_decorator=None)
-require_case_export_permission = require_permission('view-report', 'corehq.apps.reports.standard.CaseExportReport', login_decorator=None)
+require_form_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.ExcelExportReport', login_decorator=None)
+require_case_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.CaseExportReport', login_decorator=None)
+require_can_view_all_reports = require_permission(Permissions.view_reports)
+
 @login_and_domain_required
 def default(request, domain, template="reports/report_base.html"):
     context = {
@@ -343,7 +346,7 @@ def delete_custom_export(req, domain, export_id):
     else:
         return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.CaseExportReport.slug]))
 
-@require_permission('view-reports')
+@require_can_view_all_reports
 @login_and_domain_required
 def case_details(request, domain, case_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
@@ -398,7 +401,7 @@ def download_cases(request, domain):
     response['Content-Disposition'] = "attachment; filename={domain}_data.{ext}".format(domain=domain, ext=format.extension)
     return response
 
-@require_permission('view-reports')
+@require_can_view_all_reports
 @login_and_domain_required
 def form_data(request, domain, instance_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
@@ -490,7 +493,7 @@ def report_dispatcher(request, domain, report_slug, return_json=False, map='STAN
             klass = to_function(model)
             if klass.slug == report_slug:
                 k = klass(domain, request)
-                if not request.couch_user.can_view_report(data=model, domain=domain):
+                if not request.couch_user.can_view_report(domain, model):
                      raise Http404
                 elif return_json:
                     return k.as_json()

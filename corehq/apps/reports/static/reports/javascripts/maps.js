@@ -52,6 +52,7 @@ function gen_test_data() {
 	drew: '41.63 -72.59',
 	archibald: '42.4 -71.1',
 	mortimer: '41.17 -71.59',
+	noloc: null,
     };
 
     var pregnancies = {
@@ -372,8 +373,9 @@ function init_case(c, cases, map) {
 	    return static_marker(p, m, case_no_data());
 	};
 	var info_factory = function(c) {
-	    var info = $('<p>This is case "<span id="name"></span>"</p>');
+	    var info = $('<p>This is <span id="type"></span> case "<span id="name"></span>"</p>');
 	    info.find('#name').text(c.prop('case_name'));
+	    info.find('#type').text(c.type());
 	    return info;
 	};
 
@@ -386,11 +388,23 @@ function init_case(c, cases, map) {
 	c.geo_link = search_for_geo(c, config.geo_linked_to, cases);
     }
 }
-    
+
+function parse_pos(raw) {
+    var loc = ('' + raw).split(' ');
+    var lat = +loc[0];
+    var lon = +loc[1];
+    if (isNaN(lat) || isNaN(lon)) {
+	return null;
+    }
+    return new google.maps.LatLng(lat, lon);
+}
+
 // create a marker corresponding to a (geo-enabled) case
 function geoify_case(c, geo_field, map, make_marker, make_info) {
-    var loc = c.prop(geo_field).split(' ');
-    var pos = new google.maps.LatLng(loc[0], loc[1]);
+    var pos = parse_pos(c.prop(geo_field));
+    if (pos == null) {
+	return;
+    }
     var marker = make_marker(pos, map);
  
     if (make_info) {
@@ -691,7 +705,7 @@ function DataAggregation(cases, case_type, field, metric_type) {
     var default_geo_type = case_type_config(case_type).geo_linked_to;
     if (default_geo_type) {
 	$.each(cases, function(id, c) {
-		if (c.type() == default_geo_type) {
+		if (c.type() == default_geo_type && c.geo()) {
 		    if (!agg.values[c.id()]) {
 			agg.geocases[c.id()] = c;
 			agg.values[c.id()] = [];
@@ -1075,7 +1089,7 @@ function ExplodedPieMarkerStyle(params, config) {
 		ctx.stroke();
 
 		_slice();
-		ctx.fillStyle = mst.color_for(k); console.log(k, mst.color_for(k));
+		ctx.fillStyle = mst.color_for(k);
 		ctx.fill();
 		
 		i += 1;

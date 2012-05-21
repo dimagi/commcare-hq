@@ -1,5 +1,6 @@
 from functools import wraps
 import json
+from corehq.apps.reports.util import get_possible_reports
 import re
 from smtplib import SMTPRecipientsRefused
 import urllib
@@ -32,9 +33,9 @@ from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.forms import UserForm, CommCareAccountForm, ProjectSettingsForm
-from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord, Permissions
+from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord, UserRole, AdminUserRole
 from corehq.apps.groups.models import Group
-from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
+from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
 from dimagi.utils.web import render_to_response, json_response
 import calendar
 from corehq.apps.reports.schedule.config import ScheduledReportFactory
@@ -65,8 +66,8 @@ def require_permission_to_edit_user(view_func):
             raise Http404()
     return _inner
 
-require_can_edit_web_users = require_permission(Permissions.EDIT_WEB_USERS)
-require_can_edit_commcare_users = require_permission(Permissions.EDIT_COMMCARE_USERS)
+require_can_edit_web_users = require_permission('edit_web_users')
+require_can_edit_commcare_users = require_permission('edit_commcare_users')
 
 def _users_context(request, domain):
     couch_user = request.couch_user
@@ -87,9 +88,9 @@ def users(request, domain):
     if request.couch_user:
         try:
             user = WebUser.get_by_user_id(request.couch_user._id, domain)
-            if user and user.has_permission(domain, Permissions.EDIT_WEB_USERS):
+            if user and user.has_permission(domain, 'edit_web_users'):
                 response = reverse("web_users", args=[domain])
-            elif user and user.has_permission(domain, Permissions.EDIT_COMMCARE_USERS):
+            elif user and user.has_permission(domain, 'edit_commcare_users'):
                 response = reverse("commcare_users", args=[domain])
         except Exception as e:
             logging.exception("Failed to grab user object: %s", e)
@@ -98,6 +99,13 @@ def users(request, domain):
 @require_can_edit_web_users
 def web_users(request, domain, template="users/web_users.html"):
     context = _users_context(request, domain)
+    user_roles = [AdminUserRole(domain=domain)]
+    user_roles.extend(sorted(UserRole.by_domain(domain), key=lambda role: role.name if role.name else u'\uFFFF'))
+    context.update({
+        'user_roles': user_roles,
+        'default_role': UserRole.get_default(),
+        'report_list': get_possible_reports(domain),
+    })
     return render_to_response(request, template, context)
 
 @require_can_edit_web_users
@@ -120,6 +128,22 @@ def undo_remove_web_user(request, domain, record_id):
         username=WebUser.get_by_user_id(record.user_id).username
     ))
     return HttpResponseRedirect(reverse('web_users', args=[domain]))
+
+# If any permission less than domain admin were allowed here, having that permission would give you the permission
+# to change the permissions of your own role such that you could do anything, and would thus be equivalent to having
+# domain admin permissions.
+@domain_admin_required
+@require_POST
+def post_user_role(request, domain):
+    role_data = json.loads(request.raw_post_data)
+    role_data = dict([(p, role_data[p]) for p in set(UserRole.properties().keys() + ['_id', '_rev']) if p in role_data])
+    role = UserRole.wrap(role_data)
+    role.domain = domain
+    if role.get_id:
+        old_role = UserRole.get(role.get_id)
+        assert(old_role.doc_type == UserRole.__name__)
+    role.save()
+    return json_response(role)
 
 @transaction.commit_on_success
 def accept_invitation(request, domain, invitation_id):
@@ -174,8 +198,12 @@ def accept_invitation(request, domain, invitation_id):
 
 @require_can_edit_web_users
 def invite_web_user(request, domain, template="users/invite_web_user.html"):
+    role_choices = UserRole.role_choices(domain)
     if request.method == "POST":
-        form = AdminInvitesUserForm(request.POST, excluded_emails=[user.username for user in WebUser.by_domain(domain)])
+        form = AdminInvitesUserForm(request.POST,
+            excluded_emails=[user.username for user in WebUser.by_domain(domain)],
+            role_choices=role_choices
+        )
         if form.is_valid():
             data = form.cleaned_data
             # create invitation record
@@ -188,7 +216,7 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
             messages.success(request, "Invitation sent to %s" % invite.email)
             return HttpResponseRedirect(reverse("web_users", args=[domain]))
     else:
-        form = AdminInvitesUserForm()
+        form = AdminInvitesUserForm(role_choices=role_choices)
     context = _users_context(request, domain)
     context.update(
         registration_form=form
@@ -267,7 +295,7 @@ def account(request, domain, couch_user_id, template="users/account.html"):
         all_domains = couch_user.get_domains()
         admin_domains = []
         for d in all_domains:
-            if couch_user.has_permission(d, Permissions.EDIT_WEB_USERS) and couch_user.has_permission(d, Permissions.EDIT_COMMCARE_USERS):
+            if couch_user.is_domain_admin(d):
                 admin_domains.append(d)
         context.update({"user": request.user,
                         "domains": admin_domains
@@ -437,8 +465,9 @@ def _handle_user_form(request, domain, couch_user=None):
     can_change_admin_status = \
         (request.user.is_superuser or request.couch_user.can_edit_web_users(domain=domain))\
         and request.couch_user.user_id != couch_user.user_id and not couch_user.is_commcare_user()
+    role_choices = UserRole.role_choices(domain)
     if request.method == "POST" and request.POST['form_type'] == "basic-info":
-        form = UserForm(request.POST, viewable_reports_choices=get_possible_reports(domain))
+        form = UserForm(request.POST, role_choices=role_choices)
         if form.is_valid():
             if create_user:
                 django_user = User()
@@ -448,42 +477,25 @@ def _handle_user_form(request, domain, couch_user=None):
             couch_user.first_name = form.cleaned_data['first_name']
             couch_user.last_name = form.cleaned_data['last_name']
             couch_user.email = form.cleaned_data['email']
+            couch_user.language = form.cleaned_data['language']
             if can_change_admin_status:
                 role = form.cleaned_data['role']
-                can_view_reports = form.cleaned_data['can_view_reports']
-                viewable_reports = form.cleaned_data['viewable_reports']
                 if role:
                     couch_user.set_role(domain, role)
-                    if can_view_reports == 'yes':
-                        couch_user.set_permission(domain,'view-reports', True)
-                    else:
-                        couch_user.set_permission(domain, 'view-reports', False)
-                        if can_view_reports == 'no':
-                            couch_user.set_permissions_data(domain, 'view-report', data=[])
-                        else:
-                            couch_user.set_permissions_data(domain, 'view-report', data=viewable_reports)
             couch_user.save()
             messages.success(request, 'Changes saved for user "%s"' % couch_user.username)
     else:
-        form = UserForm(viewable_reports_choices=get_possible_reports(domain))
+        form = UserForm(role_choices=role_choices)
         if not create_user:
             form.initial['first_name'] = couch_user.first_name
             form.initial['last_name'] = couch_user.last_name
             form.initial['email'] = couch_user.email
+            form.initial['language'] = couch_user.language
             if can_change_admin_status:
-                form.initial['role'] = couch_user.get_role(domain) or ''
-                form.initial['viewable_reports'] = couch_user.get_viewable_reports(domain=domain, name=False)
-                if couch_user.can_view_reports(domain=domain):
-                    form.initial['can_view_reports'] = 'yes'
-                elif form.initial['viewable_reports']:
-                    form.initial['can_view_reports'] = 'some'
-                else:
-                    form.initial['can_view_reports'] = 'no'
+                form.initial['role'] = couch_user.get_role(domain).get_qualified_id() or ''
 
     if not can_change_admin_status:
         del form.fields['role']
-        del form.fields['can_view_reports']
-        del form.fields['viewable_reports']
 
     context.update({"form": form})
     return context
@@ -563,7 +575,7 @@ def _get_groups(domain):
     return groups
 
 
-@require_can_edit_web_users
+@require_can_edit_commcare_users
 def all_groups(request, domain, template="groups/all_groups.html"):
     context = _users_context(request, domain)
     all_groups = _get_groups(domain)
@@ -573,7 +585,7 @@ def all_groups(request, domain, template="groups/all_groups.html"):
     })
     return render_to_response(request, template, context)
 
-@require_can_edit_web_users
+@require_can_edit_commcare_users
 def group_members(request, domain, group_id, template="groups/group_members.html"):
     context = _users_context(request, domain)
     all_groups = _get_groups(domain)
@@ -599,7 +611,7 @@ def group_members(request, domain, group_id, template="groups/group_members.html
 #def my_groups(request, domain, template="groups/groups.html"):
 #    return group_membership(request, domain, request.couch_user._id, template)
 
-@require_can_edit_web_users
+@require_can_edit_commcare_users
 def group_membership(request, domain, couch_user_id, template="groups/groups.html"):
     context = _users_context(request, domain)
     couch_user = CouchUser.get_by_user_id(couch_user_id, domain)
@@ -736,7 +748,10 @@ class UploadCommCareUsers(TemplateView):
             if problem_rows:
                 messages.error(request, 'However, we ran into problems with the following users:')
                 for row in problem_rows:
-                    messages.error(request, '{username}: {flag}'.format(**row))
+                    if row['flag'] == 'missing-data':
+                        messages.error(request, 'A row with no username was skipped')
+                    else:
+                        messages.error(request, '{username}: {flag}'.format(**row))
             return HttpResponseRedirect(redirect)
         else:
             return response
@@ -750,8 +765,11 @@ class UploadCommCareUsers(TemplateView):
                 row.get(k) for k in sorted(self.allowed_headers)
             )
             group_names = group_names or []
-            username = normalize_username(username, self.domain)
-            status_row = {'username': raw_username(username)}
+            try:
+                username = normalize_username(username, self.domain)
+            except TypeError:
+                username = None
+            status_row = {'username': raw_username(username) if username else None}
 
             if username in usernames or user_id in user_ids:
                 status_row['flag'] = 'repeat'
@@ -759,7 +777,8 @@ class UploadCommCareUsers(TemplateView):
                 status_row['flag'] = 'missing-data'
             else:
                 try:
-                    usernames.add(username)
+                    if username:
+                        usernames.add(username)
                     if user_id:
                         user_ids.add(user_id)
                     if user_id:
@@ -769,7 +788,7 @@ class UploadCommCareUsers(TemplateView):
                     if user:
                         if user.domain != self.domain:
                             raise Exception('User with username %r is somehow in domain %r' % (user.username, user.domain))
-                        if user.username != username:
+                        if username and user.username != username:
                             user.change_username(username)
                         if password:
                             user.set_password(password)

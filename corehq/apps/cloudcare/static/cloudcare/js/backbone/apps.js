@@ -96,10 +96,11 @@ cloudCare.AppListView = Backbone.View.extend({
     }
 });
 
-cloudCare.App = Backbone.Model.extend({
+cloudCare.App = LocalizableModel.extend({
     idAttribute: "_id",
     initialize: function () {
-        _.bindAll(this, "updateModules");
+        this.constructor.__super__.initialize.apply(this, [this.options]);
+        _.bindAll(this, "updateModules", "urlRoot");
         var self = this;
         this.updateModules();
         this.on("change", function () {
@@ -124,11 +125,7 @@ cloudCare.App = Backbone.Model.extend({
     }
 });
 
-cloudCare.Form = Backbone.Model.extend({
-    initialize: function () {
-        _.bindAll(this, 'getLocalized');
-    },
-    getLocalized: getLocalizedString
+cloudCare.Form = LocalizableModel.extend({
 });
 
 cloudCare.FormView = Selectable.extend({
@@ -142,15 +139,15 @@ cloudCare.FormView = Selectable.extend({
     }
 });
 
-cloudCare.Module = Backbone.Model.extend({
+cloudCare.Module = LocalizableModel.extend({
     initialize: function () {
-        _.bindAll(this, 'getLocalized', 'updateForms', 'getDetail');
+        this.constructor.__super__.initialize.apply(this, [this.options]);
+        _.bindAll(this, 'updateForms', 'getDetail');
         this.updateForms();
         this.on("change", function () {
             this.updateForms();
         });
     },
-    getLocalized: getLocalizedString,
     
     getDetail: function (type) {
         return _(this.get("details")).find(function (elem) {
@@ -378,12 +375,11 @@ cloudCare.AppView = Backbone.View.extend({
 		            });
 		        };
 		        data["onerror"] = function (resp) {
-		            console.log("onerror");
 		            showError(resp.message, $("#cloudcare-main"), 10000);
 		        };
 		        var sess = new WebFormSession(data);
                 // TODO: probably shouldn't hard code these divs
-                sess.load($('#webforms'), $('#loading'), null);
+                sess.load($('#webforms'), $('#loading'), self.options.language);
             });
         };
         

@@ -102,7 +102,8 @@ var SaveButton = {
             button.on('save', options.save);
         }
         $(window).bind('beforeunload', function () {
-            if (button.state !== 'saved') {
+            var stillAttached = button.ui.parents()[button.ui.parents().length - 1].tagName.toLowerCase() == 'html';
+            if (button.state !== 'saved' && stillAttached) {
                 return options.unsavedMessage || "";
             }
         });
