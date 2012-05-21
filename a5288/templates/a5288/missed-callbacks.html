@@ -47,7 +47,7 @@
             <td>{{ info.total_pending }}</td>
             {% for date in info.dates %}
                 {% if date.not_sent %}
-                    <td>(not sent)</td>
+                    <td>(not indicated)</td>
                 {% else %}
                     {% if date.ok %}
                         <td class="ok">OK</td>
