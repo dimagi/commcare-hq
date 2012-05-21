@@ -8,6 +8,7 @@ function HQReportDataTables(options) {
     self.startAtRowNum = (options.startAtRowNum) ? options.startAtRowNum : 0;
     self.aoColumns = (options.aoColumns) ? options.aoColumns : null;
     self.autoWidth = (options.autoWidth != undefined) ? options.autoWidth : true;
+    self.customSort = options.customSort;
 
     this.render = function () {
 
@@ -51,7 +52,11 @@ function HQReportDataTables(options) {
             }
             if(self.aoColumns)
                 params.aoColumns = self.aoColumns;
-            $(this).dataTable(params);
+
+            var datatable = $(this).dataTable(params);
+            if(self.customSort)
+                datatable.fnSort( self.customSort );
+
 
             var $dataTablesFilter = $(".dataTables_filter");
             if($dataTablesFilter && $("#extra-filter-info")) {

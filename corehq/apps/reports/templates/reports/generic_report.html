@@ -12,7 +12,8 @@
                 defaultRows: defaultNumRows,
                 startAtRowNum: {{ report_datatables.startAtRowNum|default:0 }},
                 aoColumns: {{ report.headers.render_aoColumns|JSON }},
-                autoWidth: {{ report.headers.auto_width|JSON }}
+                autoWidth: {{ report.headers.auto_width|JSON }},
+                {% if report.headers.custom_sort %}customSort: {{ report.headers.custom_sort|JSON }}{% endif %}
             });
             reportTables.render();
         {% endif %}

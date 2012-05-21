@@ -1062,16 +1062,7 @@ class ApplicationStatusReport(StandardTabularHQReport):
                 reduce=False).first()
 
             if data:
-                now = datetime.datetime.now(tz=pytz.utc)
-                time = datetime.datetime.replace(data.received_on, tzinfo=pytz.utc)
-                dtime = now - time
-                if dtime.days < 1:
-                    dtext = "Today"
-                elif dtime.days < 2:
-                    dtext = "Yesterday"
-                else:
-                    dtext = "%s days ago" % dtime.days
-                last_seen = util.format_datatables_data(dtext, dtime.days)
+                last_seen = util.format_relative_date(data.received_on)
 
                 if data.version != '1':
                     build_id = data.version
