@@ -21,7 +21,7 @@ from touchforms.formplayer.api import DjangoAuth
 def app_list(request, domain, urlPath):
     apps = get_cloudcare_apps(domain)
     debug = string_to_boolean(request.REQUEST.get("debug", "false"))
-    language = request.REQUEST.get("language", "en")
+    language = request.couch_user.language or "en"
     
     def _app_latest_build_json(app_id):
         build = ApplicationBase.view('app_manager/saved_app',
