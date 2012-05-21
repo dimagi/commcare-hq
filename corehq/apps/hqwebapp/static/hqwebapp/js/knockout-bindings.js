@@ -164,6 +164,23 @@ ko.bindingHandlers.saveButton = {
     }
 };
 
+ko.bindingHandlers.saveButton2 = {
+    init: function (element, valueAccessor, allBindingsAccessor) {
+        var saveOptions = allBindingsAccessor().saveOptions,
+            saveButton = SaveButton.init({
+                save: function () {
+                    saveButton.ajax(saveOptions());
+                }
+            });
+        saveButton.ui.appendTo(element);
+        element.saveButton = saveButton;
+    },
+    update: function (element, valueAccessor) {
+        var state = ko.utils.unwrapObservable(valueAccessor());
+        element.saveButton.setStateWhenReady(state);
+    }
+};
+
 ko.bindingHandlers.modal = {
     init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         $(element).addClass('modal fade').modal({
