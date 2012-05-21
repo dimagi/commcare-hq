@@ -216,6 +216,13 @@ class UserRole(Document):
     def role_choices(cls, domain):
         return [(role.get_qualified_id(), role.name or '(No Name)') for role in [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
 
+PERMISSIONS_PRESETS = {
+    'edit-apps': {'name': 'App Editor', 'permissions': Permissions(edit_apps=True, view_reports=True)},
+    'field-implementer': {'name': 'Field Implementer', 'permissions': Permissions(edit_commcare_users=True, view_reports=True)},
+    'read-only': {'name': 'Read Only', 'permissions': Permissions(view_reports=True)},
+    'no-permissions': {'name': 'Read Only', 'permissions': Permissions(view_reports=True)},
+}
+
 class AdminUserRole(UserRole):
     def __init__(self, domain):
         super(AdminUserRole, self).__init__(domain=domain, name='Admin', permissions=Permissions.max())
@@ -1129,6 +1136,9 @@ class WebUser(CouchUser):
             dm.is_admin = True
         elif role_qualified_id.startswith('user-role:'):
             dm.role_id = role_qualified_id[len('user-role:'):]
+        elif role_qualified_id in PERMISSIONS_PRESETS:
+            preset = PERMISSIONS_PRESETS[role_qualified_id]
+            dm.role_id = UserRole.get_or_create_with_permissions(domain, preset['permissions'], preset['name']).get_id
         else:
             raise Exception("role_qualified_id is %r" % role_qualified_id)
 
