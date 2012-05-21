@@ -52,6 +52,17 @@ var hideLoadingCallback = function () {
 };
 
 /*
+ * A localizable model, with a method "getLocalized"
+ */
+
+var LocalizableModel = Backbone.Model.extend({
+    initialize: function () {
+        _.bindAll(this, 'getLocalized');
+    },
+    getLocalized: getLocalizedString
+});
+
+/*
  * A selectable UI element with default events and css classes.
  */
 var Selectable = Backbone.View.extend({
