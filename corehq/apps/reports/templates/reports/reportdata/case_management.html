@@ -33,13 +33,11 @@
 {% block reportcontent %}
 <div id="case-management">
     <div class="row-fluid">
-        <div class="well" style="margin: 1em; display: none;" data-bind="caseReassignmentForm: selected_cases">
-            <form class="form-inline" data-bind="submit: updateCaseOwners">
-                <label for="reassign_user_select">Reassign selected cases to:</label>
-                <select name="reassign_user" id="reassign_user_select" data-bind="caseReassignmentOwners: selected_owners, options: available_owners, optionsText: 'username', optionsValue: 'userid', optionsCaption: 'Select New Owner...'"></select>
-                <button type="submit" class="btn btn-primary">Reassign</button>
-            </form>
-        </div>
+        <form class="well form-inline" style="margin: 1em;" data-bind="submit: updateCaseOwners, caseReassignmentForm: selected_cases">
+            <label for="reassign_user_select">Reassign selected cases to:</label>
+            <select name="reassign_user" id="reassign_user_select" data-bind="caseReassignmentOwners: selected_owners, options: available_owners, optionsText: 'username', optionsValue: 'userid', optionsCaption: 'Select New Owner...'"></select>
+            <button type="submit" class="btn btn-primary">Reassign</button>
+        </form>
     </div>
     {{ block.super }}
 </div>
