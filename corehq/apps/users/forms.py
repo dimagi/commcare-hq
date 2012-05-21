@@ -8,6 +8,28 @@ from dimagi.utils.timezones.fields import TimeZoneField
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from corehq.apps.users.models import CouchUser, WebUser, OldRoles, DomainMembership
 from corehq.apps.users.util import format_username
+from corehq.apps.app_manager.models import validate_lang
+
+def wrapped_language_validation(value):
+    try:
+        validate_lang(value)
+    except ValueError:
+        raise forms.ValidationError("%s is not a valid language code! Please "
+                                    "enter a valid two or three digit code." % value)
+
+class LanguageField(forms.CharField):
+    """
+    Adds language code validation to a field
+    """
+    def __init__(self, *args, **kwargs):
+        super(LanguageField, self).__init__(*args, **kwargs)
+        self.min_length = 2
+        self.max_length = 3
+    
+    default_error_messages = {
+        'invalid': _(u'Please enter a valid two or three digit language code.'),
+    }
+    default_validators = [wrapped_language_validation]
 
 class ProjectSettingsForm(forms.Form):
     """
@@ -49,8 +71,10 @@ class UserForm(RoleForm):
     first_name = forms.CharField(max_length=50, required=False)
     last_name = forms.CharField(max_length=50, required=False)
     email = forms.EmailField(label=_("E-mail"), max_length=75, required=False)
+    language = LanguageField(required=False)
     role = forms.ChoiceField(choices=(), required=False)
-
+    
+    
 class Meta:
         app_label = 'users'
 

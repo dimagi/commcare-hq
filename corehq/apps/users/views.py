@@ -477,6 +477,7 @@ def _handle_user_form(request, domain, couch_user=None):
             couch_user.first_name = form.cleaned_data['first_name']
             couch_user.last_name = form.cleaned_data['last_name']
             couch_user.email = form.cleaned_data['email']
+            couch_user.language = form.cleaned_data['language']
             if can_change_admin_status:
                 role = form.cleaned_data['role']
                 if role:
@@ -489,6 +490,7 @@ def _handle_user_form(request, domain, couch_user=None):
             form.initial['first_name'] = couch_user.first_name
             form.initial['last_name'] = couch_user.last_name
             form.initial['email'] = couch_user.email
+            form.initial['language'] = couch_user.language
             if can_change_admin_status:
                 form.initial['role'] = couch_user.get_role(domain).get_qualified_id() or ''
 

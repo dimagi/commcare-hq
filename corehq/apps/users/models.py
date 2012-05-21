@@ -390,7 +390,8 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 #        ('phone_registered', 'Registered from phone'),
 #        ('site_edited',     'Manually added or edited from the HQ website.'),
     status = StringProperty()
-
+    language = StringProperty()
+    
     _user = None
     _user_checked = False
 
