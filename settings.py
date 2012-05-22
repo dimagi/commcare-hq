@@ -488,8 +488,7 @@ STANDARD_REPORT_MAP = {
         'corehq.apps.reports.standard.ApplicationStatusReport',
         'corehq.apps.receiverwrapper.reports.SubmissionErrorReport',
         'phonelog.reports.FormErrorReport',
-        'phonelog.reports.DeviceLogDetailsReport',
-        'corehq.apps.reports.type.deployments.CaseManagementReport'
+        'phonelog.reports.DeviceLogDetailsReport'
     ]
 }
 
