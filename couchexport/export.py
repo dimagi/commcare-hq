@@ -56,7 +56,6 @@ class ExportConfiguration(object):
                 except TypeError, e:
                     if "string indices must be integers" in str(e):
                         # this is our expected error use case. 
-                        logging.error("Got the string integer thing again during export.")
                         raise Exception("Got the string integer thing again during export")
             else:
                 # sometimes this comes back empty. I think it might be a bug
