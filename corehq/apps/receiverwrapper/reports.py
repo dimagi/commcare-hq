@@ -27,11 +27,18 @@ class SubmitFilter(CouchFilter):
         return XFormError.view("receiverwrapper/all_submissions_by_domain", 
                                **self._kwargs).count()
 
-    def get(self, count): 
-        return XFormError.view("receiverwrapper/all_submissions_by_domain",
-                               include_docs=True,
-                               limit=count,
-                               **self._kwargs)
+    def get(self, count):
+        # this is a hack, but override the doc type because there is an
+        # equivalent doc type in the view
+        def _update_doc_type(form):
+            form.doc_type = self.doc_type
+            return form 
+        return [_update_doc_type(form) for form in \
+                 XFormError.view("receiverwrapper/all_submissions_by_domain",
+                                 include_docs=True,
+                                 limit=count,
+                                 **self._kwargs)]
+
 
 class SubmissionErrorReport(PaginatedHistoryHQReport, StandardDateHQReport):
     name = "Raw Forms, Errors &amp; Duplicates"
