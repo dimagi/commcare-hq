@@ -167,6 +167,7 @@ HQ_APPS = (
     'corehq.apps.registration',
     'corehq.apps.unicel',
     'corehq.apps.reports',
+    'corehq.apps.data_interfaces',
     'corehq.apps.hq-bootstrap',
     'corehq.apps.builds',
     'corehq.apps.api',
@@ -190,9 +191,10 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 TABS = [
     ("corehq.apps.reports.views.default", "Reports"),
+    ("corehq.apps.data_interfaces.views.default", "Manage Data", lambda request: request.couch_user.can_edit_data()),
     ("corehq.apps.app_manager.views.default", "Applications"),
     ("corehq.apps.sms.views.messaging", "Messages"),
-    ("corehq.apps.settings.views.default", "Settings & Users"),
+    ("corehq.apps.settings.views.default", "Settings & Users", lambda request: request.couch_user.can_edit_commcare_users() or request.couch_user.can_edit_web_users()),
     ("corehq.apps.hqadmin.views.default", "Admin Reports", "is_superuser"),
 ]
 
@@ -464,6 +466,12 @@ EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
+
+DATA_INTERFACE_MAP = {
+    'Case Management' : [
+        'corehq.apps.data_interfaces.interfaces.CaseReassignmentInterface'
+    ]
+}
 
 STANDARD_REPORT_MAP = {
     "Monitor Workers" : [
