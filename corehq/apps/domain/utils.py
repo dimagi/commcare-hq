@@ -17,3 +17,10 @@ def normalize_domain_name(domain):
 
 def get_domained_url(domain, path):
     return '/a/%s/%s' % (domain, path)
+
+def get_domain_from_url(path):
+    try:
+        domain, = re.compile(r'^/a/(?P<domain>%s)/' % legacy_domain_re).search(path).groups()
+    except Exception:
+        domain = None
+    return domain

@@ -18,6 +18,10 @@ from corehq.apps.cloudcare import touchforms_api
 from touchforms.formplayer.api import DjangoAuth
 
 @login_and_domain_required
+def default(request, domain):
+    return HttpResponseRedirect(reverse('cloudcare_app_list', args=[domain, '']))
+
+@login_and_domain_required
 def app_list(request, domain, urlPath):
     apps = get_cloudcare_apps(domain)
     debug = string_to_boolean(request.REQUEST.get("debug", "false"))
