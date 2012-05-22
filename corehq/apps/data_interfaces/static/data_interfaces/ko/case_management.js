@@ -1,15 +1,15 @@
-var CaseManagement = function (owners, cases, receiverUrl, enddate) {
+var CaseManagement = function (o) {
     'use strict';
     var self = this;
     self.selected_cases = ko.observableArray();
     self.selected_owners = ko.observableArray();
-    self.available_owners = owners;
-    self.cases = cases;
-    self.receiverUrl = receiverUrl;
+    self.available_owners = o.owners;
+    self.receiverUrl = o.receiverUrl;
     self.updatedCase = null;
+    self.webUserID = o.webUserID;
 
-    enddate = new Date(enddate);
-    var now = new Date();
+    var enddate = new Date(o.enddate),
+        now = new Date();
     self.on_today = (enddate.toDateString() === now.toDateString());
 
     function getUsername(userid) {
@@ -64,19 +64,20 @@ var CaseManagement = function (owners, cases, receiverUrl, enddate) {
         }
 
         for (var i = 0; i < self.selected_cases().length; i++) {
-            var case_id = self.selected_cases()[i];
-            var selected_case = self.cases[case_id],
+            var case_id = self.selected_cases()[i],
                 xform;
-            selected_case.case_id = case_id;
-            xform = casexml.CaseDelta.wrap(selected_case).asXFormInstance({
-                user_id: new_owner
-            }).serialize();
+            xform = casexml.CaseDelta.wrap({
+                    case_id: case_id,
+                    properties: {owner_id: new_owner}
+                }).asXFormInstance({
+                        user_id: self.webUserID
+                    }).serialize();
 
             $.ajax({
                 url: self.receiverUrl,
                 type: 'post',
                 data: xform,
-                success: updateCaseRow(selected_case.case_id, new_owner)
+                success: updateCaseRow(case_id, new_owner)
             });
 
         }

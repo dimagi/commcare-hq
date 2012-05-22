@@ -5,6 +5,7 @@ from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import StandardTabularHQReport, StandardDateHQReport
+from corehq.apps.users.models import WebUser
 from dimagi.utils.couch.database import get_db
 
 class DataInterface(HQReport):
@@ -35,10 +36,9 @@ class CaseReassignmentInterface(DataInterface, StandardTabularHQReport, Standard
 
     def get_rows(self):
         rows = list()
-        cases = dict()
         for user in self.users:
             key = [self.domain, False, {}, user.userID ]
-            data = get_db().view('case/by_date_modified',
+            data = get_db().view('case/by_date_modified_owner',
                 startkey=key+[self.datespan.startdate_param_utc],
                 endkey=key+[self.datespan.enddate_param_utc],
                 reduce=False,
@@ -51,13 +51,11 @@ class CaseReassignmentInterface(DataInterface, StandardTabularHQReport, Standard
                 elif "id" in item:
                     case = CommCareCase.get(item["id"])
                 if case:
-                    cases[case._id] = case
                     fmt_case = '<a href="%s">%s</a>' % \
                                (reverse('case_details', args=[self.domain, case._id]), case.name)
                     rows.append(['<input type="checkbox" class="selected-commcare-case" data-bind="event: {change: updateCaseSelection}" data-caseid="%s" data-owner="%s" />' %\
                         (case._id, user.userID)
                         , fmt_case, case.type, user.username_in_report, util.format_relative_date(case.modified_on)])
-        self.context['cases'] = cases
         return rows
 
     def get_report_context(self):

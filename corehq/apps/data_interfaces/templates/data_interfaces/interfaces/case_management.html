@@ -11,7 +11,12 @@
 
 {% block js-inline %} {{ block.super }}
 <script type="text/javascript">
-    ko.applyBindings(new CaseManagement({{ available_owners|JSON }}, {{ cases|JSON }}, '{% url receiver_post domain %}', '{{ request.datespan.enddate_param }}'), $('#case-management')[0]);
+    ko.applyBindings(new CaseManagement( {
+        owners: {{ available_owners|JSON }},
+        receiverUrl: '{% url receiver_post domain %}',
+        enddate: '{{ request.datespan.enddate_param }}',
+        webUserID: '{{ request.couch_user.userID }}'
+    } ), $('#case-management')[0]);
 
     $(function () {
         $('#case-management a.select-all').click(function () {
@@ -31,6 +36,7 @@
 {% endblock %}
 
 {% block reportcontent %}
+    {{ request.user.userID }}
 <div id="case-management">
     <div class="row-fluid">
         <form class="well form-inline" style="margin: 1em; display: none;" data-bind="submit: updateCaseOwners, caseReassignmentForm: selected_cases">
