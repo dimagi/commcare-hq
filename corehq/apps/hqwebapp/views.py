@@ -10,27 +10,35 @@ from django.contrib.sites.models import Site
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound
 from django.shortcuts import redirect
-from corehq.apps.app_manager.models import get_app, BUG_REPORTS_DOMAIN
+from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
 from corehq.apps.app_manager.models import import_app
-from corehq.apps.domain.utils import normalize_domain_name
+from corehq.apps.domain.utils import normalize_domain_name, legacy_domain_re
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm
 
 from dimagi.utils.web import render_to_response, get_url_base
 from django.core.urlresolvers import reverse
-from corehq.apps.domain.models import Domain, OldDomain
+from corehq.apps.domain.models import Domain
 from django.template import loader
 from django.template.context import RequestContext
-
+import re
 
 def server_error(request, template_name='500.html'):
     """
     500 error handler.
     """
+
+    try:
+        domain, = re.compile(r'^/a/(?P<domain>%s)/' % legacy_domain_re).search(request.path).groups()
+    except Exception:
+        domain = ''
+
+
     # hat tip: http://www.arthurkoziel.com/2009/01/15/passing-mediaurl-djangos-500-error-view/
     t = loader.get_template(template_name) 
     return HttpResponseServerError(t.render(RequestContext(request, 
                                                            {'MEDIA_URL': settings.MEDIA_URL,
-                                                            'STATIC_URL': settings.STATIC_URL
+                                                            'STATIC_URL': settings.STATIC_URL,
+                                                            'domain': domain
                                                             })))
     
 def not_found(request, template_name='404.html'):
