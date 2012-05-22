@@ -2,6 +2,7 @@ from django.core.urlresolvers import reverse
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
+from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import StandardTabularHQReport, StandardDateHQReport
 from dimagi.utils.couch.database import get_db
 
@@ -54,4 +55,5 @@ class CaseManagementReport(StandardTabularHQReport, StandardDateHQReport):
 
     def get_report_context(self):
         super(CaseManagementReport, self).get_report_context()
-        self.context['available_owners'] = [dict(userid=user.userID, username=user.raw_username) for user in self.users]
+        active_users = util.get_all_users_by_domain(self.domain, filter_users=HQUserType.use_defaults())
+        self.context['available_owners'] = [dict(userid=user.userID, username=user.raw_username) for user in active_users]
