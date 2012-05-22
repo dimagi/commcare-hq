@@ -75,7 +75,7 @@ class AuditMiddleware(object):
 
             audit_doc = None
             if (fqview.startswith('django.contrib.admin') or fqview.startswith('reversion.admin')) and getattr(settings, "AUDIT_ADMIN_VIEWS", True):
-                audit_doc = AuditEvent.audit_view(request, request.user, view_func)
+                audit_doc = AuditEvent.audit_view(request, request.user, view_func, view_kwargs)
             else:
                 user = request.user
                 if settings.AUDIT_VIEWS.__contains__(fqview) or getattr(settings, 'AUDIT_ALL_VIEWS', False):
