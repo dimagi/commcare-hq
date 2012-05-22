@@ -6,7 +6,7 @@ from StringIO import StringIO
 from dimagi.utils.web import json_handler
 from django.conf import settings
 from couchexport.models import ExportSchema, Format
-from couchdbkit.client import Database
+import logging
 import re
 from dimagi.utils.mixins import UnicodeMixIn
 from django.template.loader import render_to_string
@@ -53,10 +53,11 @@ class ExportConfiguration(object):
                     include_ids = set([res["id"] for res in view_results["results"]])
                     possible_ids = set(self._all_ids())
                     return list(include_ids.intersection(possible_ids))
-                except Exception:
-                    import logging
-                    logging.exception("export failed! results: %s" % view_results) 
-                    raise
+                except TypeError, e:
+                    if "string indices must be integers" in str(e):
+                        # this is our expected error use case. 
+                        logging.error("Got the string integer thing again during export.")
+                        raise Exception("Got the string integer thing again during export")
             else:
                 # sometimes this comes back empty. I think it might be a bug
                 # in couchdbkit, but it's impossible to consistently reproduce.
