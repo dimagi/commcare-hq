@@ -206,7 +206,11 @@
                                 <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
                                     <label>Send to: </label>
                                     <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
-                                    <textarea name="message">Update to CommCare "{{ app.name }}" version {{ saved_app.version }}: {{ saved_app.short_url }}</textarea>
+                                    {% if app.name|length <= 12 %}
+                                        <textarea name="message">Update to CommCare: {{ saved_app.short_url }} ("{{ app.name }}" v.{{ saved_app.version }})</textarea>
+                                    {% else %}
+                                        <textarea name="message">Update to CommCare: {{ saved_app.short_url }} ("{{ app.name|slice:":10" }}.." v.{{ saved_app.version }})</textarea>
+                                    {% endif %}
                                     <input type="submit" value="Send"/>
                                 </form>
                             </div>
