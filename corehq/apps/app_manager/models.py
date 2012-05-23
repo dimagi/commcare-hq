@@ -319,7 +319,7 @@ class FormBase(DocumentSchema):
     def check_actions(self):
         errors = []
         # reserved_words are hard-coded in three different places! Very lame of me
-        # Here, casexml.js, and module_view.html
+        # Here, case-config-ui-*.js, and module_view.html
         reserved_words = load_case_reserved_words()
         for key in self.actions['update_case'].update:
             if key in reserved_words:
