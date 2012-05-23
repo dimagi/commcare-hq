@@ -105,8 +105,7 @@ class DomainMetadataForm(forms.Form):
     project_type = CharField(label="Project Category", required=False,
                              help_text="e.g. MCH, HIV, etc.") 
     customer_type = ChoiceField(label='Customer Type', 
-                                choices=(('free', 'Free'), ('basic', 'Basic'),
-                                         ('plus', 'Plus'), ('full', 'Full')))
+                                choices=(('basic', 'Basic'), ('plus', 'Plus'), ('full', 'Full')))
     is_test = ChoiceField(label='Test Project', choices=(('false', 'Real'), ('true', 'Test')))
 
     def save(self, request, domain):
