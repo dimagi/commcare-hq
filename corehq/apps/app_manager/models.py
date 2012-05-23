@@ -160,6 +160,10 @@ class OpenCaseAction(FormAction):
     name_path   = StringProperty()
     external_id = StringProperty()
 
+class OpenSubCaseAction(FormAction):
+    case_type = StringProperty()
+    case_name = StringProperty()
+    case_properties = StringProperty()
 
 class FormActions(DocumentSchema):
     open_case       = SchemaProperty(OpenCaseAction)
@@ -172,6 +176,7 @@ class FormActions(DocumentSchema):
     case_preload    = SchemaProperty(PreloadAction)
     referral_preload= SchemaProperty(PreloadAction)
 
+    subcase         = SchemaProperty(OpenSubCaseAction)
 
 class FormSource(object):
     def __get__(self, form, form_cls):

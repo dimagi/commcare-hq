@@ -1,19 +1,70 @@
 /*globals $, EJS, COMMCAREHQ */
 var CaseXML = (function () {
     "use strict";
-    var action_names = ["open_case", "update_case", "close_case", "open_referral", "update_referral", "close_referral", "case_preload", "referral_preload"],
+    function SubCasesViewModel(o, utils) {
+        var self = this, root = this;
+        self.utils = utils;
+        var SubCase = {
+            wrap: function (o) {
+                var self = ko.mapping.fromJS(o);
+                self.case_type = self.case_type || ko.observable();
+                self.case_name = self.case_name || ko.observable();
+                self.case_properties = self.case_properties || ko.observableArray();
+
+
+                self.addProperty = function () {
+                    self.case_properties.push({
+                        path: ko.observable(),
+                        key: ko.observable()
+                    })
+                };
+                self.unwrap = function () {
+                    SubCase.unwrap(self);
+                };
+                return self;
+            },
+            unwrap: function (self) {
+                return ko.mapping.toJS(self);
+            }
+        };
+        self.moduleCaseTypes = o.moduleCaseTypes;
+        self.caseTypes = ko.utils.arrayMap(self.moduleCaseTypes, function (o) {return o.case_type;});
+        self.getCaseTypeLabel = function (caseType) {
+            var module_names = [];
+            for (var i = 0; i < self.moduleCaseTypes.length; i++) {
+                if (self.moduleCaseTypes[i].case_type === caseType) {
+                    module_names.push(self.moduleCaseTypes[i].module_name);
+                }
+            }
+            return module_names.join(', ');
+        };
+        self.subcases = ko.observableArray(ko.utils.arrayMap(o.subcases, SubCase.wrap));
+        self.addSubCase = function () {
+            self.subcases.push(SubCase.wrap({}));
+        };
+        self.removeSubCase = function (subcase) {
+            self.subcases.remove(subcase);
+        };
+    }
+    var action_names = ["open_case", "update_case", "close_case", "case_preload"],
         CaseXML = function (params) {
             var i, $form;
 
             this.home = params.home;
-            this.actions = params.actions;
+            this.actions = (function (a) {
+                var actions = {}, i;
+                for (i = 0; i < action_names.length; i += 1) {
+                    actions[action_names[i]] = a[action_names[i]];
+                }
+                return actions;
+            }(params.actions));
             this.questions = params.questions;
             this.edit = params.edit;
             this.save_url = params.save_url;
             this.requires = params.requires;
             this.save_requires_url = params.save_requires_url;
             this.template = new EJS({
-                url: "/static/app_manager/ejs/casexml.ejs",
+                url: "/static/app_manager/ejs/case-config-ui-2.ejs",
                 type: "["
             });
             this.condition_ejs = new EJS({
@@ -46,16 +97,18 @@ var CaseXML = (function () {
             );
 
             this.saveButton = COMMCAREHQ.SaveButton.initForm($form, {
-                unsavedMessage: "You have unchanged case and referral settings",
+                unsavedMessage: "You have unchanged case settings",
                 success: function (data) {
                     COMMCAREHQ.app_manager.updateDOM(data.update);
                 }
             });
+            $form.prependTo(this.home);
+            this.subhome = $('<div/>').prependTo($form);
             if (this.edit) {
-                this.saveButton.ui.appendTo(this.home);
+                this.saveButton.ui.prependTo(this.home);
             }
-            $form.appendTo(this.home);
-            this.subhome = $('<div/>').appendTo($form);
+
+            ko.applyBindings(new SubCasesViewModel(params, this), $('#case-config-ko').get(0));
         };
     CaseXML.prototype = {
         truncateLabel: function (label, suffix) {
@@ -229,7 +282,7 @@ var CaseXML = (function () {
                         action.update[key] = val;
                     }
                 });
-            } else if (id === "case_preload" || id === "referral_preload") {
+            } else if (id === "case_preload") {
                 action.preload = {};
                 $('.action-update', this).each(function () {
                     var propertyName = lookup(this, "action-update-key"),
@@ -238,11 +291,6 @@ var CaseXML = (function () {
                         action.preload[nodeset] = propertyName;
                     }
                 });
-            } else if (id === "open_referral") {
-                action.name_path = lookup(this, 'name_path');
-                action.followup_date = lookup(this, 'followup_date');
-            } else if (id === "update_referral") {
-                action.followup_date = lookup(this, 'followup_date');
             }
             action.condition = {
                 'type': 'always'

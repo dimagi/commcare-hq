@@ -3,6 +3,8 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/javascripts/knockout.mapping.js' %}"></script>
+
     <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
     {% if app.application_version == '2.0' %}
         <script src="{% static 'app_manager/js/case-config-ui-2.js' %}"></script>
@@ -155,7 +157,8 @@
                     save_url: "{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id nav_form.id %}",
                     requires: "{{ form.requires }}",
 {#                    save_requires_url: "{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'requires' %}",#}
-                    reserved_words: {{ case_reserved_words_json|JSON }}
+                    reserved_words: {{ case_reserved_words_json|JSON }},
+                    moduleCaseTypes: {{ module_case_types|JSON }}
                 });
                 casexml.init();
             }
@@ -324,10 +327,45 @@
             <h4>User Registration Properties</h4>
             <div id="user_reg_home" class="config"></div>
         {% else %}
-            <h4>Cases and Referrals <span class="help-link" data-help-key="app_manager/casexml_overview"></span></h4>
-            <div class="help-text" data-help-key="app_manager/casexml_overview"></div>
-            <div class="casexml config" id="casexml_home">
-            </div>
+            {% if app.application_verison == '1.0' %}
+                <h4>Cases and Referrals <span class="help-link" data-help-key="app_manager/casexml_overview"></span></h4>
+                <div class="help-text" data-help-key="app_manager/casexml_overview"></div>
+                <div class="casexml config" id="casexml_home">
+                </div>
+            {% else %}
+                <h4>Case Configuration <span class="help-link" data-help-key="app_manager/casexml_overview"></span></h4>
+                <div class="help-text" data-help-key="app_manager/casexml_overview"></div>
+                <div class="casexml config" id="casexml_home">
+                    <div id="case-config-ko">
+                        <div data-bind="foreach: subcases">
+                            <div class="well">
+                                <a href="#" data-bind="click: $root.removeSubCase">[delete]</a>
+                                Opens a case for a different case list:
+                                <select data-bind="options: $root.caseTypes, optionsText: $root.getCaseTypeLabel, optionsValue: 'value', value: case_type"></select>
+                                <table>
+                                    <tbody data-bind="foreach: case_properties">
+                                        <tr>
+                                            <td>
+                                                <select data-bind="options: $root.utils.getQuestions('all'), optionsText: 'label', value: path"></select>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <a href="#" data-bind="click: addProperty">Add property</a>
+                            </div>
+                            <div>
+                                <table>
+                                    <tbody>
+                                        <tr>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <a href="#" data-bind="click: addSubCase">Add a sub-case</a>
+                    </div>
+                </div>
+            {% endif %}
         {% endif %}
     {% endif %}
 
