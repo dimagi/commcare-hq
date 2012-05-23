@@ -4,9 +4,10 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard import StandardDateHQReport, PaginatedHistoryHQReport
 from dimagi.utils.timezones import utils as tz_utils
 from couchforms.models import XFormError
-from corehq.apps.receiverwrapper.fields import SubmissionErrorType,\
+from corehq.apps.receiverwrapper.fields import SubmissionErrorType, \
     SubmissionTypeField
 from dimagi.utils.couch.pagination import FilteredPaginator, CouchFilter
+from corehq.apps.reports.display import xmlns_to_name
 
 def compare_submissions(x, y):
     # these are backwards because we want most recent to come first
@@ -24,7 +25,7 @@ class SubmitFilter(CouchFilter):
         
     
     def get_total(self):
-        return XFormError.view("receiverwrapper/all_submissions_by_domain", 
+        return XFormError.view("receiverwrapper/all_submissions_by_domain",
                                **self._kwargs).count()
 
     def get(self, count):
@@ -52,6 +53,7 @@ class SubmissionErrorReport(PaginatedHistoryHQReport, StandardDateHQReport):
         headers = DataTablesHeader(DataTablesColumn("View Form"),
                                    DataTablesColumn("Username"),
                                    DataTablesColumn("Submit Time"),
+                                   DataTablesColumn("Form Type"),
                                    DataTablesColumn("Error Type"),
                                    DataTablesColumn("Error Message"))
         headers.no_sort = True
@@ -67,12 +69,13 @@ class SubmissionErrorReport(PaginatedHistoryHQReport, StandardDateHQReport):
     def paginate_rows(self, skip, limit):
         EMPTY_ERROR = "No Error"
         EMPTY_USER = "No User"
+        EMPTY_FORM = "Unknown Form"
         
         filters = [SubmitFilter(self.domain, toggle.doc_type) for toggle in self.submitfilter if toggle.show]
         paginator = FilteredPaginator(filters, compare_submissions)
         items = paginator.get(skip, limit)
         
-        self._total_count = XFormError.view("receiverwrapper/all_submissions_by_domain", 
+        self._total_count = XFormError.view("receiverwrapper/all_submissions_by_domain",
                                             startkey=[self.domain, "by_type"],
                                             endkey=[self.domain, "by_type", {}],
                                             reduce=False).count()
@@ -86,9 +89,10 @@ class SubmissionErrorReport(PaginatedHistoryHQReport, StandardDateHQReport):
                 time = tz_utils.adjust_datetime_to_timezone(somedate, pytz.utc.zone, self.timezone.zone)
                 return time.strftime("%Y-%m-%d %H:%M:%S")
             
-            return [_fmt_url(error_doc.get_id), 
+            return [_fmt_url(error_doc.get_id),
                     error_doc.metadata.username if error_doc.metadata else EMPTY_USER,
                     _fmt_date(error_doc.received_on),
+                    xmlns_to_name(self.domain, error_doc.xmlns) if error_doc.metadata else EMPTY_FORM,
                     SubmissionErrorType.display_name_by_doc_type(error_doc.doc_type),
                     error_doc.problem or EMPTY_ERROR]
         
