@@ -407,7 +407,7 @@ def form_data(request, domain, instance_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
     try:
         instance = XFormInstance.get(instance_id)
-    except ResourceNotFound:
+    except Exception:
         raise Http404()
     try:
         assert(domain == instance.domain)
