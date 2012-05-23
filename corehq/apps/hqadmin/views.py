@@ -18,6 +18,14 @@ from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response, render_to_response
 from django.views.decorators.cache import cache_page
+from couchexport.export import export_raw
+from couchexport.shortcuts import export_response
+from couchexport.models import Format
+from StringIO import StringIO
+from django.template.defaultfilters import yesno
+from dimagi.utils.excel import WorkbookJSONReader
+from dimagi.utils.decorators.view import get_file
+from django.contrib import messages
 
 @require_superuser
 def default(request):
@@ -339,3 +347,74 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
     context["aoColumns"] = headers.render_aoColumns
 
     return render_to_response(request, template, context)
+
+@require_superuser
+@get_file("file")
+def update_domains(request):
+    if request.method == "POST":
+        try:
+            workbook = WorkbookJSONReader(request.file)
+            domains = workbook.get_worksheet(title='domains')
+            success_count = 0
+            fail_count = 0
+            for row in domains:
+                try:
+                    name = row["name"]
+                    domain = Domain.get_by_name(name)
+                    if domain:
+                        for k, v in row.items():
+                            setattr(domain, k, v)
+                        domain.save()
+                        success_count += 1
+                    else:
+                        messages.warning(request, "No domain with name %s found" % name)
+                        fail_count += 1
+                except Exception, e:
+                    messages.warning("Update for %s failed: %s" % e)
+                    fail_count += 1
+            if success_count:
+                messages.success(request, "%s domains successfully updated" % success_count)
+            if fail_count:
+                messages.error(request, "%s domains had errors. details above." % fail_count)
+            
+        except Exception, e:
+            messages.error(request, "Something went wrong! Update failed. Here's your error: %s" % e)
+            
+    # one wonders if this will eventually have to paginate
+    domains = Domain.get_all()
+    
+    context = get_hqadmin_base_context(request)
+    context.update({"domains": domains})
+    
+    headers = DataTablesHeader(
+        DataTablesColumn("Domain"),
+        DataTablesColumn("City"),
+        DataTablesColumn("Country"),
+        DataTablesColumn("Region"),
+        DataTablesColumn("Project Type"),
+        DataTablesColumn("Customer Type"),
+        DataTablesColumn("Is Test"),
+        DataTablesColumn("Edit")
+    )
+    context["headers"] = headers
+    context["aoColumns"] = headers.render_aoColumns
+    return render_to_response(request, "hqadmin/domain_update_properties.html", context)
+
+@require_superuser
+def domain_list_download(request):
+    domains = Domain.get_all()
+    properties = ("name", "city", "country", "region", "project_type", 
+                  "customer_type", "is_test?")
+    
+    def _row(domain):
+        def _prop(domain, prop):
+            if prop.endswith("?"):
+                return yesno(getattr(domain, prop[:-1]))
+            return getattr(domain, prop) or ""
+        return (_prop(domain, prop) for prop in properties)
+    
+    temp = StringIO()
+    headers = (("domains", properties),)   
+    data = (("domains", (_row(domain) for domain in domains)),)
+    export_raw(headers, data, temp)
+    return export_response(temp, Format.XLS_2007, "domains")
