@@ -176,7 +176,7 @@ class FormActions(DocumentSchema):
     case_preload    = SchemaProperty(PreloadAction)
     referral_preload= SchemaProperty(PreloadAction)
 
-    subcase         = SchemaProperty(OpenSubCaseAction)
+    subcases        = SchemaListProperty(OpenSubCaseAction)
 
 class FormSource(object):
     def __get__(self, form, form_cls):

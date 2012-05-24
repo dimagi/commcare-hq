@@ -1,6 +1,66 @@
 /*globals $, EJS, COMMCAREHQ */
+
+ko.bindingHandlers.optstr = {
+    update: function (element, valueAccessor, allBindingsAccessor) {
+        var optionObjects = ko.utils.unwrapObservable(valueAccessor());
+        var allBindings = allBindingsAccessor();
+        var optstrValue = allBindings.optstrValue || 'value';
+        var optstrText = allBindings.optstrText || 'label';
+        var optionStrings = ko.utils.arrayMap(optionObjects, function (o) {
+            return o[optstrValue];
+        });
+        allBindings.optionsText = function (optionString) {
+            for (var i = 0; i < optionObjects.length; i++) {
+                if (optionObjects[i][optstrValue] === optionString) {
+                    if (typeof optstrText === 'string') {
+                        return optionObjects[i][optstrText];
+                    } else {
+                        return optstrText(optionObjects[i]);
+                    }
+                }
+            }
+        };
+
+        return ko.bindingHandlers.options.update(element, function () {
+            return optionStrings;
+        }, function () {
+            return allBindings;
+        });
+    }
+};
+
+ko.bindingHandlers.valueDefault = {
+    init: ko.bindingHandlers.value.init,
+    update: function (element, valueAccessor, allBindingsAccessor) {
+        var value = ko.utils.unwrapObservable(valueAccessor());
+        if (value) {
+            return ko.bindingHandlers.value.update(element, valueAccessor);
+        } else {
+            $(element).val(ko.utils.unwrapObservable(allBindingsAccessor()['default']));
+        }
+
+    }
+};
+
 var CaseXML = (function () {
     "use strict";
+    ko.bindingHandlers.questionsOptions = {
+        update: function (element, valueAccessor, allBindingsAccessor) {
+            var value = valueAccessor();
+            var options = value.options;
+            var allowNull = value.allowNull === undefined ? true : value.allowNull;
+            var allBindings = allBindingsAccessor();
+            if (allowNull) {
+                allBindings.optionsCaption = ' ';
+            }
+            allBindings.optstrText = function (question) {
+                return SubCasesViewModel.prototype.getLabel(question);
+            };
+            return ko.bindingHandlers.optstr.update(element, function () {
+                return options;
+            });
+        }
+    };
     function SubCasesViewModel(o, utils) {
         var self = this, root = this;
         self.utils = utils;
@@ -10,6 +70,11 @@ var CaseXML = (function () {
                 self.case_type = self.case_type || ko.observable();
                 self.case_name = self.case_name || ko.observable();
                 self.case_properties = self.case_properties || ko.observableArray();
+                self.condition = self.condition || {
+                    type: ko.observable('always'),
+                    question: ko.observable(),
+                    answer: ko.observable()
+                };
 
 
                 self.addProperty = function () {
@@ -18,9 +83,15 @@ var CaseXML = (function () {
                         key: ko.observable()
                     })
                 };
+
                 self.unwrap = function () {
                     SubCase.unwrap(self);
                 };
+
+//                setInterval(function () {
+//                    console.log(ko.mapping.toJS(self.case_properties()));
+//                }, 3000);
+
                 return self;
             },
             unwrap: function (self) {
@@ -46,6 +117,9 @@ var CaseXML = (function () {
             self.subcases.remove(subcase);
         };
     }
+    SubCasesViewModel.prototype.getLabel = function (question) {
+        return CaseXML.prototype.truncateLabel(question.label, question.tag == 'hidden' ? ' (Hidden)' : '');
+    };
     var action_names = ["open_case", "update_case", "close_case", "case_preload"],
         CaseXML = function (params) {
             var i, $form;

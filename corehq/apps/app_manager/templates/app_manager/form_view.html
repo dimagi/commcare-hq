@@ -337,29 +337,56 @@
                 <div class="help-text" data-help-key="app_manager/casexml_overview"></div>
                 <div class="casexml config" id="casexml_home">
                     <div id="case-config-ko">
-                        <div data-bind="foreach: subcases">
-                            <div class="well">
-                                <a href="#" data-bind="click: $root.removeSubCase">[delete]</a>
+                        <div data-bind="foreach: subcases" style="margin-left: 15px">
+                            <div>
+                                <i class="icon-ok"></i>
                                 Opens a case for a different case list:
-                                <select data-bind="options: $root.caseTypes, optionsText: $root.getCaseTypeLabel, optionsValue: 'value', value: case_type"></select>
-                                <table>
+                                <select data-bind="options: $root.caseTypes, optionsText: $root.getCaseTypeLabel, value: case_type"></select>
+                                <a href="#" data-bind="click: $root.removeSubCase" style="float: right"><i class="icon-trash"></i>Remove subcase</a>
+                            </div>
+                            <div class="well" style="margin: 10px">
+                                <div data-bind="visible: condition.type() === 'always'">
+                                    <a href="#" data-bind="click: function () {condition.type('if')}">Use condition...</a>
+                                </div>
+                                <div data-bind="visible: condition.type() === 'if'">
+                                    <a href="#" data-bind="click: function () {condition.type('always')}"><i class="icon-remove"></i></a>
+                                    If the answer to
+                                    <select data-bind="optstr: $root.utils.getQuestions('select1'), value: condition.question, optionsCaption: ' '"></select>
+                                    is
+                                    <select data-bind="optstr: $root.utils.getAnswers({question: condition.question()}), value: condition.answer"></select>
+                                </div>
+                                <div>
+                                    Name according to question
+                                    <select data-bind="optstr: $root.utils.getQuestions('all'), value: case_name, optionsCaption: ' '"></select>
+                                </div>
+                                <h6 data-bind="visible: !case_properties().length">No properties</h6>
+                                <table data-bind="visible: case_properties().length">
+                                    <thead>
+                                    <tr>
+                                        <th>Question</th>
+                                        <th>Case Property</th>
+                                    </tr>
+                                    </thead>
                                     <tbody data-bind="foreach: case_properties">
-                                        <tr>
-                                            <td>
-                                                <select data-bind="options: $root.utils.getQuestions('all'), optionsText: 'label', value: path"></select>
-                                            </td>
-                                        </tr>
+                                    <tr>
+                                        <td>
+                                            <select data-bind="
+                                                optstr: $root.utils.getQuestions('all'),
+                                                optstrText: function (question) { return $root.getLabel(question)},
+                                                value: path,
+                                                optionsCaption: ' '"></select>
+                                        </td>
+                                        <td>
+                                            <input data-bind="valueDefault: key, default: (function (path) {
+                                                var value = path.split('/');
+                                                value = value[value.length-1];
+                                                return value;
+                                            }(path()||''))"/>
+                                        </td>
+                                    </tr>
                                     </tbody>
                                 </table>
                                 <a href="#" data-bind="click: addProperty">Add property</a>
-                            </div>
-                            <div>
-                                <table>
-                                    <tbody>
-                                        <tr>
-                                        </tr>
-                                    </tbody>
-                                </table>
                             </div>
                         </div>
                         <a href="#" data-bind="click: addSubCase">Add a sub-case</a>
