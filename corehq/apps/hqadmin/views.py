@@ -407,16 +407,23 @@ def update_domains(request):
         dom.cases = int(all_stats["cases"][dom.name])
         dom.forms = int(all_stats["forms"][dom.name])
         if dom.forms:
-            dom.first_submission = string_to_datetime(XFormInstance.get_db().view\
-                ("receiverwrapper/all_submissions_by_domain", 
-                 reduce=False, limit=1, 
-                 startkey=[dom.name, "by_date"],
-                 endkey=[dom.name, "by_date", {}]).all()[0]["key"][2]).strftime("%Y-%m-%d")
-            dom.last_submission = string_to_datetime(XFormInstance.get_db().view\
-                ("receiverwrapper/all_submissions_by_domain", 
-                 reduce=False, limit=1, descending=True,
-                 startkey=[dom.name, "by_date", {}],
-                 endkey=[dom.name, "by_date"]).all()[0]["key"][2]).strftime("%Y-%m-%d")
+            try:
+                dom.first_submission = string_to_datetime(XFormInstance.get_db().view\
+                    ("receiverwrapper/all_submissions_by_domain", 
+                     reduce=False, limit=1, 
+                     startkey=[dom.name, "by_date"],
+                     endkey=[dom.name, "by_date", {}]).all()[0]["key"][2]).strftime("%Y-%m-%d")
+            except ValueError:
+                dom.first_submission = ""
+            
+            try:
+                dom.last_submission = string_to_datetime(XFormInstance.get_db().view\
+                    ("receiverwrapper/all_submissions_by_domain", 
+                     reduce=False, limit=1, descending=True,
+                     startkey=[dom.name, "by_date", {}],
+                     endkey=[dom.name, "by_date"]).all()[0]["key"][2]).strftime("%Y-%m-%d")
+            except ValueError:
+                dom.last_submission = ""
         else:
             dom.first_submission = ""
             dom.last_submission = ""
