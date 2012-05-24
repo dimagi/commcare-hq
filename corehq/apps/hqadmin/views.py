@@ -48,11 +48,7 @@ def get_hqadmin_base_context(request):
         "domain": domain,
     }
 
-
-@require_superuser
-def domain_list(request):
-    # one wonders if this will eventually have to paginate
-    domains = Domain.get_all()
+def _all_domain_stats():
     webuser_counts = defaultdict(lambda: 0)
     commcare_counts = defaultdict(lambda: 0)
     form_counts = defaultdict(lambda: 0)
@@ -65,10 +61,19 @@ def domain_list(request):
         }[doc_type][domain] = value
 
     form_counts.update(dict([(row["key"][0], row["value"]) for row in get_db().view("reports/all_submissions", group=True,group_level=1).all()]))
+    return {"web_users": webuser_counts, 
+            "commcare_users": commcare_counts,
+            "forms": form_counts}
+
+@require_superuser
+def domain_list(request):
+    # one wonders if this will eventually have to paginate
+    domains = Domain.get_all()
+    all_stats = _all_domain_stats()
     for dom in domains:
-        dom.web_users = int(webuser_counts[dom.name])
-        dom.commcare_users = int(commcare_counts[dom.name])
-        dom.forms = int(form_counts[dom.name])
+        dom.web_users = int(all_stats["web_users"][dom.name])
+        dom.commcare_users = int(all_stats["commcare_users"][dom.name])
+        dom.forms = int(all_stats["forms"][dom.name])
         dom.admins = [row["doc"]["email"] for row in get_db().view("users/admins_by_domain", key=dom.name, reduce=False, include_docs=True).all()]
 
     context = get_hqadmin_base_context(request)
@@ -382,7 +387,27 @@ def update_domains(request):
             
     # one wonders if this will eventually have to paginate
     domains = Domain.get_all()
-    
+    all_stats = _all_domain_stats()
+    for dom in domains:
+        dom.web_users = int(all_stats["web_users"][dom.name])
+        dom.commcare_users = int(all_stats["commcare_users"][dom.name])
+        dom.forms = int(all_stats["forms"][dom.name])
+        if dom.forms:
+            dom.first_submission = string_to_datetime(XFormInstance.get_db().view\
+                ("receiverwrapper/all_submissions_by_domain", 
+                 reduce=False, limit=1, 
+                 startkey=[dom.name, "by_date"],
+                 endkey=[dom.name, "by_date", {}]).all()[0]["key"][2]).strftime("%Y-%m-%d")
+            dom.last_submission = string_to_datetime(XFormInstance.get_db().view\
+                ("receiverwrapper/all_submissions_by_domain", 
+                 reduce=False, limit=1, descending=True,
+                 startkey=[dom.name, "by_date", {}],
+                 endkey=[dom.name, "by_date"]).all()[0]["key"][2]).strftime("%Y-%m-%d")
+        else:
+            dom.first_submission = ""
+            dom.last_submission = ""
+            
+        
     context = get_hqadmin_base_context(request)
     context.update({"domains": domains})
     
@@ -394,6 +419,11 @@ def update_domains(request):
         DataTablesColumn("Project Type"),
         DataTablesColumn("Customer Type"),
         DataTablesColumn("Is Test"),
+        DataTablesColumn("# Web Users", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("# Mobile Workers", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("# Submitted Forms", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("First Submission"),
+        DataTablesColumn("Most Recent Submission"),
         DataTablesColumn("Edit")
     )
     context["headers"] = headers

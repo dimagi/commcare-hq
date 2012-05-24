@@ -21,7 +21,12 @@
 		<td>{{ domain.project_type|default:"" }}</td>
 		<td>{{ domain.customer_type|default:"" }}</td>
 		<td>{{ domain.is_test|yesno }}</td>
-		<td><a href="{% url domain_global_settings domain.name %}">edit</a></td>
+		<td>{{ domain.web_users }}<span title="{{ domain.web_users }}"></span></td>
+        <td>{{ domain.commcare_users }}<span title="{{ domain.commcare_users }}"></span></td>
+        <td>{{ domain.forms }}<span title="{{ domain.forms }}"></span></td>
+		<td>{{ domain.first_submission }}</td>
+		<td>{{ domain.last_submission }}</td>
+        <td><a href="{% url domain_global_settings domain.name %}">edit</a></td>
     </tr>
 {% endfor %}
 </tbody>
