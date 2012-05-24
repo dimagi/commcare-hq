@@ -52,7 +52,10 @@ def _all_domain_stats():
     webuser_counts = defaultdict(lambda: 0)
     commcare_counts = defaultdict(lambda: 0)
     form_counts = defaultdict(lambda: 0)
-    for row in get_db().view('users/by_domain', startkey=["active"], endkey=["active", {}], group_level=3).all():
+    case_counts = defaultdict(lambda: 0)
+    
+    for row in get_db().view('users/by_domain', startkey=["active"], 
+                             endkey=["active", {}], group_level=3).all():
         _, domain, doc_type = row['key']
         value = row['value']
         {
@@ -60,10 +63,18 @@ def _all_domain_stats():
             'CommCareUser': commcare_counts
         }[doc_type][domain] = value
 
-    form_counts.update(dict([(row["key"][0], row["value"]) for row in get_db().view("reports/all_submissions", group=True,group_level=1).all()]))
+    form_counts.update(dict([(row["key"][0], row["value"]) for row in \
+                             get_db().view("reports/all_submissions", 
+                                           group=True,group_level=1).all()]))
+    
+    case_counts.update(dict([(row["key"][0], row["value"]) for row in \
+                             get_db().view("hqcase/types_by_domain", 
+                                           group=True,group_level=1).all()]))
+    
     return {"web_users": webuser_counts, 
             "commcare_users": commcare_counts,
-            "forms": form_counts}
+            "forms": form_counts,
+            "cases": case_counts}
 
 @require_superuser
 def domain_list(request):
@@ -73,6 +84,7 @@ def domain_list(request):
     for dom in domains:
         dom.web_users = int(all_stats["web_users"][dom.name])
         dom.commcare_users = int(all_stats["commcare_users"][dom.name])
+        dom.cases = int(all_stats["cases"][dom.name])
         dom.forms = int(all_stats["forms"][dom.name])
         dom.admins = [row["doc"]["email"] for row in get_db().view("users/admins_by_domain", key=dom.name, reduce=False, include_docs=True).all()]
 
@@ -84,6 +96,7 @@ def domain_list(request):
         DataTablesColumn("Domain"),
         DataTablesColumn("# Web Users", sort_type=DTSortType.NUMERIC),
         DataTablesColumn("# Mobile Workers", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("# Cases", sort_type=DTSortType.NUMERIC),
         DataTablesColumn("# Submitted Forms", sort_type=DTSortType.NUMERIC),
         DataTablesColumn("Domain Admins")
     )
@@ -391,6 +404,7 @@ def update_domains(request):
     for dom in domains:
         dom.web_users = int(all_stats["web_users"][dom.name])
         dom.commcare_users = int(all_stats["commcare_users"][dom.name])
+        dom.cases = int(all_stats["cases"][dom.name])
         dom.forms = int(all_stats["forms"][dom.name])
         if dom.forms:
             dom.first_submission = string_to_datetime(XFormInstance.get_db().view\
@@ -421,6 +435,7 @@ def update_domains(request):
         DataTablesColumn("Is Test"),
         DataTablesColumn("# Web Users", sort_type=DTSortType.NUMERIC),
         DataTablesColumn("# Mobile Workers", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("# Cases", sort_type=DTSortType.NUMERIC),
         DataTablesColumn("# Submitted Forms", sort_type=DTSortType.NUMERIC),
         DataTablesColumn("First Submission"),
         DataTablesColumn("Most Recent Submission"),
