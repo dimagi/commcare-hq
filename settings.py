@@ -311,6 +311,7 @@ UNICEL_CONFIG = {"username": "Dimagi",
 
 
 #auditcare parameters
+AUDIT_MODEL_SAVE = []
 AUDIT_VIEWS = [
     'corehq.apps.domain.views.registration_request',
     'corehq.apps.domain.views.registration_confirm',
