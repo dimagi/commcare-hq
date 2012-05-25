@@ -36,7 +36,7 @@ from corehq.apps.users.forms import UserForm, CommCareAccountForm, ProjectSettin
 from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord, UserRole, AdminUserRole
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
-from dimagi.utils.web import render_to_response, json_response
+from dimagi.utils.web import render_to_response, json_response, get_url_base
 import calendar
 from corehq.apps.reports.schedule.config import ScheduledReportFactory
 from corehq.apps.reports.models import WeeklyReportNotification, DailyReportNotification, ReportNotification
@@ -706,15 +706,13 @@ class UploadCommCareUsers(TemplateView):
         async = request.REQUEST.get("async", False)
         if async:
             download_id = uuid.uuid4().hex
-            bulk_upload_async.delay(
-                download_id,
-                self.domain,
-                list(self.user_specs),
-                list(self.group_specs)
-            )
-            messages.success(request, "Your upload is in progress. You can check the progress "
-                             '<a href="%s">here.</a>' %  reverse('retrieve_download', kwargs={'download_id': download_id}),
-                             extra_tags="html")
+            bulk_upload_async.delay(download_id, self.domain,
+                                    list(self.user_specs),
+                                    list(self.group_specs))
+            messages.success(request, 
+                'Your upload is in progress. You can check the progress at "%s%s".' %  \
+                (get_url_base(), reverse('retrieve_download', kwargs={'download_id': download_id})),
+                extra_tags="html")
         else:
             ret = create_or_update_users_and_groups(self.domain, self.user_specs, self.group_specs)
             for error in ret["errors"]:
