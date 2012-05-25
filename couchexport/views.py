@@ -1,10 +1,7 @@
 from couchexport.export import Format
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
 import json
 from couchexport.shortcuts import export_data_shared
-import uuid
-from couchexport.tasks import export_async
-from django.core.urlresolvers import reverse
 from couchexport.models import GroupExportConfiguration, SavedBasicExport, FakeSavedExportSchema
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
