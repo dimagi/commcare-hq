@@ -50,7 +50,6 @@ from dimagi.utils.web import get_url_base
 
 import json
 from dimagi.utils.make_uuid import random_hex
-from utilities.profile import profile
 import urllib
 import urlparse
 import re

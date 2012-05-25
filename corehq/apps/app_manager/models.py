@@ -634,7 +634,7 @@ class VersionedDoc(Document):
             copy = cls.wrap(copy)
             copy['copy_of'] = self._id
             copy.save(increment_version=False)
-            copy.copy_attachments(self, r'.*\.xml')
+            copy.copy_attachments(self, r'[^/]*\.xml')
         return copy
 
     def copy_attachments(self, other, regexp=None):
@@ -662,9 +662,7 @@ class VersionedDoc(Document):
         cls = self.__class__
         app = cls.wrap(app)
         app.save()
-        app.copy_attachments(copy)
-        app.delete_attachment('CommCare.jar')
-        app.delete_attachment('CommCare.jad')
+        app.copy_attachments(copy, r'[^/]*\.xml')
         return app
 
     def delete_copy(self, copy):
@@ -890,7 +888,7 @@ class ApplicationBase(VersionedDoc):
         }[(self.text_input,)]
         return self.get_build().get_jadjar(spec)
 
-    def create_jadjar(self):
+    def create_jadjar(self, save=False):
         try:
             return self.fetch_attachment('CommCare.jad'), self.fetch_attachment('CommCare.jar')
         except ResourceError:
@@ -906,18 +904,21 @@ class ApplicationBase(VersionedDoc):
                 'CommCare-Release': "true",
                 'Build-Number': self.version,
             })
-            self.put_attachment(jadjar.jad, 'CommCare.jad')
-            self.put_attachment(jadjar.jar, 'CommCare.jar')
-            for filepath in all_files:
-                self.put_attachment(all_files[filepath], 'files/%s' % filepath)
-            self.built_on = built_on
-            self.built_with = BuildRecord(
-                version=jadjar.version,
-                build_number=jadjar.build_number,
-                signed=jadjar.signed,
-                datetime=built_on,
-            )
-            self.save(increment_version=False)
+            if save:
+                self.built_on = built_on
+                self.built_with = BuildRecord(
+                    version=jadjar.version,
+                    build_number=jadjar.build_number,
+                    signed=jadjar.signed,
+                    datetime=built_on,
+                )
+                self.save(increment_version=False)
+
+                self.put_attachment(jadjar.jad, 'CommCare.jad')
+                self.put_attachment(jadjar.jar, 'CommCare.jar')
+                for filepath in all_files:
+                    self.put_attachment(all_files[filepath], 'files/%s' % filepath)
+
             return jadjar.jad, jadjar.jar
 
     def validate_app(self):
@@ -976,7 +977,7 @@ class ApplicationBase(VersionedDoc):
     def save_copy(self, comment=None):
         copy = super(ApplicationBase, self).save_copy()
 
-        copy.create_jadjar()
+        copy.create_jadjar(save=True)
 
         try:
             copy.short_url = bitly.shorten(
@@ -1419,7 +1420,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         if not errors:
             errors = super(Application, self).validate_app()
-        print errors
         return errors
 
     @classmethod
@@ -1473,11 +1473,18 @@ class RemoteApp(ApplicationBase):
             def set_attribute(key, value):
                 profile_xml.attrib[key] = value
 
+            def reset_suite_remote_url():
+                suite_local_text = profile_xml.findtext('suite/resource/location[@authority="local"]')
+                suite_remote = profile_xml.find('suite/resource/location[@authority="remote"]')
+                suite_name = self.strip_location(suite_local_text)
+                suite_remote.xml.text = self.url_base + urljoin(reverse('download_index', args=[self.domain, self.get_id]), suite_name)
+
             if self.manage_urls:
                 set_attribute('update', self.hq_profile_url)
                 set_property("ota-restore-url", self.ota_restore_url)
                 set_property("PostURL", self.post_url)
                 set_property("cc_user_domain", cc_user_domain(self.domain))
+                reset_suite_remote_url()
 
             if self.build_langs:
                 set_property("cur_locale", self.build_langs[0])
@@ -1485,14 +1492,18 @@ class RemoteApp(ApplicationBase):
             profile = profile_xml.render()
         return profile
 
-    def fetch_file(self, location):
+    def strip_location(self, location):
         base = '/'.join(self.profile_url.split('/')[:-1]) + '/'
-        if location.startswith('./'):
-            location = location.lstrip('./')
-        elif location.startswith(base):
-            location = location.lstrip(base)
-        elif location.startswith('jr://resource/'):
-            location = location.lstrip('jr://resource/')
+
+        def strip_left(prefix):
+            string = location
+            if string.startswith(prefix):
+                return string[len(prefix):]
+
+        return strip_left('./') or strip_left(base) or strip_left('jr://resource/') or location
+
+    def fetch_file(self, location):
+        location = self.strip_location(location)
         url = urljoin(self.profile_url, location)
         try:
             return location, urlopen(url).read().decode('utf-8')
