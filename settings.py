@@ -294,6 +294,7 @@ COUCHLOG_TABLE_CONFIG = {"id_column":       0,
 COUCHLOG_DISPLAY_COLS = ["id", "archived?", "date", "exception type", 
                          "message", "domain", "user", "url", "actions", "report"]
 COUCHLOG_RECORD_WRAPPER = "corehq.apps.hqcouchlog.wrapper"
+COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
 
 # couchlog/case search
 LUCENE_ENABLED = False
@@ -310,6 +311,7 @@ UNICEL_CONFIG = {"username": "Dimagi",
 
 
 #auditcare parameters
+AUDIT_MODEL_SAVE = []
 AUDIT_VIEWS = [
     'corehq.apps.domain.views.registration_request',
     'corehq.apps.domain.views.registration_confirm',
@@ -376,7 +378,6 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'couch', # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
         'couchforms',
         'couchexport',
-        'couchlog',
         'hqadmin',
         'domain',
         'forms',
@@ -403,8 +404,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'dca',
         'hsph',
     ]
-]
-
+] + [("couchlog", "%s/%s" %(COUCH_SERVER, COUCHLOG_DATABASE_NAME))]
 
 
 INSTALLED_APPS += LOCAL_APPS
@@ -486,6 +486,7 @@ STANDARD_REPORT_MAP = {
     ],
     "Manage Deployments" : [
         'corehq.apps.reports.standard.ApplicationStatusReport',
+        'corehq.apps.receiverwrapper.reports.SubmissionErrorReport',
         'phonelog.reports.FormErrorReport',
         'phonelog.reports.DeviceLogDetailsReport'
     ]
