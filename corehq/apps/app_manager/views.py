@@ -37,7 +37,7 @@ from corehq.apps.hqmedia.models import CommCareMultimedia, CommCareImage, CommCa
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse, resolve
+from django.core.urlresolvers import reverse, resolve, get_resolver
 from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form, FormAction, FormActionCondition, FormActions,\
     BuildErrors, AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang
 
@@ -1427,7 +1427,29 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
     return render_to_response(req, template, {
         'app': req.app,
         'files': sorted(req.app.create_all_files().items()),
-        })
+    })
+
+@safe_download
+def download_file(req, domain, app_id, path):
+    mimetype_map = {
+        'ccpr': 'commcare/profile',
+        'jad': 'text/vnd.sun.j2me.app-descriptor',
+        'jar': 'application/java-archive',
+    }
+    try:
+        response = HttpResponse(mimetype=mimetype_map[path.split('.')[-1]])
+    except KeyError:
+        response = HttpResponse()
+    try:
+        response.write(req.app.fetch_attachment('files/%s' % path))
+        return response
+    except ResourceNotFound:
+        print path
+        callback, callback_args, callback_kwargs = get_resolver('corehq.apps.app_manager.download_urls').resolve(path)
+        print callback
+        return callback(req, domain, app_id, *callback_args, **callback_kwargs)
+
+
 
 @safe_download
 def download_profile(req, domain, app_id):
