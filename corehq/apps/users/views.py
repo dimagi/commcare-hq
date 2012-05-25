@@ -703,8 +703,8 @@ class UploadCommCareUsers(TemplateView):
         response = HttpResponse()
         response_writer = csv.DictWriter(response, ['username', 'flag'])
         response_rows = []
-        
-        if request.REQUEST.get("async"):
+        async = request.REQUEST.get("async", False)
+        if async:
             download_id = uuid.uuid4().hex
             bulk_upload_async.delay(
                 download_id,
@@ -726,7 +726,8 @@ class UploadCommCareUsers(TemplateView):
 
         redirect = request.POST.get('redirect')
         if redirect:
-            messages.success(request, 'Your bulk user upload is complete!')
+            if not async:
+                messages.success(request, 'Your bulk user upload is complete!')
             problem_rows = []
             for row in response_rows:
                 if row['flag'] not in ('updated', 'created'):
