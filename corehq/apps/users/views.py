@@ -705,16 +705,16 @@ class UploadCommCareUsers(TemplateView):
         response_rows = []
         
         if request.REQUEST.get("async"):
-            print 'async'
             download_id = uuid.uuid4().hex
             bulk_upload_async.delay(
                 download_id,
                 self.domain,
-                self.user_specs,
-                self.group_specs
+                list(self.user_specs),
+                list(self.group_specs)
             )
-            messages.success("Your upload is in progress. You can check the progress "
-                             '<a href="%s">here.</a>' %  reverse('retrieve_download', kwargs={'download_id': download_id}))
+            messages.success(request, "Your upload is in progress. You can check the progress "
+                             '<a href="%s">here.</a>' %  reverse('retrieve_download', kwargs={'download_id': download_id}),
+                             extra_tags="html")
         else:
             ret = create_or_update_users_and_groups(self.domain, self.user_specs, self.group_specs)
             for error in ret["errors"]:
