@@ -37,7 +37,7 @@ from corehq.apps.hqmedia.models import CommCareMultimedia, CommCareImage, CommCa
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse, resolve, get_resolver
+from django.core.urlresolvers import reverse, resolve, get_resolver, RegexURLResolver
 from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form, FormAction, FormActionCondition, FormActions,\
     BuildErrors, AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang
 
@@ -1444,12 +1444,8 @@ def download_file(req, domain, app_id, path):
         response.write(req.app.fetch_attachment('files/%s' % path))
         return response
     except ResourceNotFound:
-        print path
-        callback, callback_args, callback_kwargs = get_resolver('corehq.apps.app_manager.download_urls').resolve(path)
-        print callback
+        callback, callback_args, callback_kwargs = RegexURLResolver(r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
         return callback(req, domain, app_id, *callback_args, **callback_kwargs)
-
-
 
 @safe_download
 def download_profile(req, domain, app_id):
