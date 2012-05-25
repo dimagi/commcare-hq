@@ -190,6 +190,10 @@
                                         <p><a href="{% url corehq.apps.app_manager.views.download_jar domain saved_app.id %}">Download CommCare.jar</a></p>
                                     </li>
                                     <li>
+                                        Download the multimedia files for your application. Unzip this file and place the folder in the root directory of your SD card:
+                                        <p><a href="{% url corehq.apps.app_manager.views.download_multimedia_zip domain saved_app.id %}">Download Multimedia ZIP</a></p>
+                                    </li>
+                                    <li>
                                         For help on how to install, see our <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Set+Up+Mobile+Phone">Set Up Mobile Phone</a>.
                                     </li>
                                     <li>
