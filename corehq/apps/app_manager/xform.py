@@ -884,7 +884,7 @@ class XForm(WrappedNode):
     def add_user_registration(self, username_path='username', password_path='password', data_paths=None):
         data_paths = data_paths or {}
 
-        if self.model_node.find("{reg}registration").exists():
+        if self.data_node.find("{reg}registration").exists():
             return
 
         # registration

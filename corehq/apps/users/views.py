@@ -36,7 +36,7 @@ from corehq.apps.users.forms import UserForm, CommCareAccountForm, ProjectSettin
 from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord, UserRole, AdminUserRole
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
-from dimagi.utils.web import render_to_response, json_response
+from dimagi.utils.web import render_to_response, json_response, get_url_base
 import calendar
 from corehq.apps.reports.schedule.config import ScheduledReportFactory
 from corehq.apps.reports.models import WeeklyReportNotification, DailyReportNotification, ReportNotification
@@ -44,6 +44,9 @@ from django.contrib import messages
 from corehq.apps.reports.tasks import send_report
 from django.views.generic.base import TemplateView
 from django_digest.decorators import httpdigest
+from corehq.apps.users.bulkupload import create_or_update_users_and_groups, check_headers
+import uuid
+from corehq.apps.users.tasks import bulk_upload_async
 
 
 def require_permission_to_edit_user(view_func):
@@ -657,12 +660,11 @@ class UploadCommCareUsers(TemplateView):
 
     template_name = 'users/upload_commcare_users.html'
 
-    required_headers = set(['username', 'password'])
-    allowed_headers = set(['phone-number', 'user_id', 'name', 'group', 'data']) | required_headers
-
     def get_context_data(self, **kwargs):
         """TemplateView automatically calls this to render the view (on a get)"""
-        return _users_context(self.request, self.domain)
+        context = _users_context(self.request, self.domain)
+        context["show_secret_settings"] = self.request.REQUEST.get("secret", False)
+        return context
 
     @method_decorator(get_file)
     def post(self, request):
@@ -694,53 +696,36 @@ class UploadCommCareUsers(TemplateView):
             self.group_specs = []
 
         try:
-            self.check_headers()
+            check_headers(self.user_specs)
         except Exception, e:
             return HttpResponseBadRequest(e)
 
         response = HttpResponse()
         response_writer = csv.DictWriter(response, ['username', 'flag'])
         response_rows = []
-
-        class GroupMemoizer(object):
-            def __init__(self, domain):
-                self.groups = {}
-                self.domain = domain
-
-            def get_or_create_group(self, group_name):
-                return self.get_group(group_name, load_if_not_loaded=True)
-
-            def get_group(self, group_name, load_if_not_loaded=False):
-                if load_if_not_loaded and not self.groups.has_key(group_name):
-                    group = Group.by_name(self.domain, group_name)
-                    if group:
-                        self.groups[group_name] = group
-                    else:
-                        self.groups[group_name] = Group(domain=self.domain, name=group_name)
-                return self.groups[group_name]
-
-            def save_all(self):
-                for group in self.groups.values():
-                    group.save()
-
-        self.group_memoizer = GroupMemoizer(self.domain)
-        for row in self.group_specs:
-            group_name, case_sharing, reporting = row['name'], row['case-sharing'], row['reporting']
-            try:
-                group = self.group_memoizer.get_or_create_group(group_name)
-            except MultipleResultsFound:
-                messages.error(request, "Multiple groups named: %s" % group_name)
-            else:
-                group.case_sharing = case_sharing
-                group.reporting = reporting
-
-        for row in self.create_or_update_users():
-            response_writer.writerow(row)
-            response_rows.append(row)
+        async = request.REQUEST.get("async", False)
+        if async:
+            download_id = uuid.uuid4().hex
+            bulk_upload_async.delay(download_id, self.domain,
+                                    list(self.user_specs),
+                                    list(self.group_specs))
+            messages.success(request, 
+                'Your upload is in progress. You can check the progress at "%s%s".' %  \
+                (get_url_base(), reverse('retrieve_download', kwargs={'download_id': download_id})),
+                extra_tags="html")
+        else:
+            ret = create_or_update_users_and_groups(self.domain, self.user_specs, self.group_specs)
+            for error in ret["errors"]:
+                messages.error(request, error)
+            
+            for row in ret["rows"]:
+                response_writer.writerow(row)
+                response_rows.append(row)
 
         redirect = request.POST.get('redirect')
         if redirect:
-            messages.success(request, 'Your bulk user upload is complete!')
+            if not async:
+                messages.success(request, 'Your bulk user upload is complete!')
             problem_rows = []
             for row in response_rows:
                 if row['flag'] not in ('updated', 'created'):
@@ -756,82 +741,7 @@ class UploadCommCareUsers(TemplateView):
         else:
             return response
 
-    def create_or_update_users(self):
-        usernames = set()
-        user_ids = set()
-
-        for row in self.user_specs:
-            data, group_names, name, password, phone_number, user_id, username = (
-                row.get(k) for k in sorted(self.allowed_headers)
-            )
-            group_names = group_names or []
-            try:
-                username = normalize_username(username, self.domain)
-            except TypeError:
-                username = None
-            status_row = {'username': raw_username(username) if username else None}
-
-            if username in usernames or user_id in user_ids:
-                status_row['flag'] = 'repeat'
-            elif not username and not user_id:
-                status_row['flag'] = 'missing-data'
-            else:
-                try:
-                    if username:
-                        usernames.add(username)
-                    if user_id:
-                        user_ids.add(user_id)
-                    if user_id:
-                        user = CommCareUser.get_by_user_id(user_id, self.domain)
-                    else:
-                        user = CommCareUser.get_by_username(username)
-                    if user:
-                        if user.domain != self.domain:
-                            raise Exception('User with username %r is somehow in domain %r' % (user.username, user.domain))
-                        if username and user.username != username:
-                            user.change_username(username)
-                        if password:
-                            user.set_password(password)
-                        status_row['flag'] = 'updated'
-                    else:
-                        user = CommCareUser.create(self.domain, username, password, uuid=user_id or '')
-                        status_row['flag'] = 'created'
-                    if phone_number:
-                        user.add_phone_number(phone_number.lstrip('+'), default=True)
-                    if name:
-                        user.set_full_name(name)
-                    if data:
-                        user.user_data.update(data)
-                    user.save()
-                    if password:
-                        # Without this line, digest auth doesn't work.
-                        # With this line, digest auth works.
-                        # Other than that, I'm not sure what's going on
-                        user.get_django_user().check_password(password)
-                    for group_name in group_names:
-                        try:
-                            self.group_memoizer.get_group(group_name).add_user(user)
-                        except Exception:
-                            raise Exception("Can't add to group '%s' (try adding it to your spreadsheet)" % group_name)
-                    self.group_memoizer.save_all()
-                except Exception, e:
-                    status_row['flag'] = 'error: %s' % e
-            yield status_row
-
-    def check_headers(self):
-
-        headers = set(self.user_specs.fieldnames)
-
-        illegal_headers = headers - self.allowed_headers
-        missing_headers = self.required_headers - headers
-
-        messages = []
-        for header_set, label in (missing_headers, 'required'), (illegal_headers, 'illegal'):
-            if header_set:
-                messages.append('The following are %s column headers: %s.' % (label, ', '.join(header_set)))
-        if messages:
-            raise Exception('\n'.join(messages))
-
+    
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, domain, *args, **kwargs):
         self.domain = domain
