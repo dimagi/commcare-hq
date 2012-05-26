@@ -56,62 +56,65 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
     usernames = set()
     user_ids = set()
 
-    for row in user_specs:
-        data, group_names, name, password, phone_number, user_id, username = (
-            row.get(k) for k in sorted(allowed_headers)
-        )
-        group_names = group_names or []
-        try:
-            username = normalize_username(username, domain)
-        except TypeError:
-            username = None
-        status_row = {'username': raw_username(username) if username else None}
-
-        if username in usernames or user_id in user_ids:
-            status_row['flag'] = 'repeat'
-        elif not username and not user_id:
-            status_row['flag'] = 'missing-data'
-        else:
+    try:
+        for row in user_specs:
+            data, group_names, name, password, phone_number, user_id, username = (
+                row.get(k) for k in sorted(allowed_headers)
+            )
+            group_names = group_names or []
             try:
-                if username:
-                    usernames.add(username)
-                if user_id:
-                    user_ids.add(user_id)
-                if user_id:
-                    user = CommCareUser.get_by_user_id(user_id, domain)
-                else:
-                    user = CommCareUser.get_by_username(username)
-                if user:
-                    if user.domain != domain:
-                        raise Exception('User with username %r is somehow in domain %r' % (user.username, user.domain))
-                    if username and user.username != username:
-                        user.change_username(username)
+                username = normalize_username(username, domain)
+            except TypeError:
+                username = None
+            status_row = {'username': raw_username(username) if username else None}
+
+            if username in usernames or user_id in user_ids:
+                status_row['flag'] = 'repeat'
+            elif not username and not user_id:
+                status_row['flag'] = 'missing-data'
+            else:
+                try:
+                    if username:
+                        usernames.add(username)
+                    if user_id:
+                        user_ids.add(user_id)
+                    if user_id:
+                        user = CommCareUser.get_by_user_id(user_id, domain)
+                    else:
+                        user = CommCareUser.get_by_username(username)
+                    if user:
+                        if user.domain != domain:
+                            raise Exception('User with username %r is somehow in domain %r' % (user.username, user.domain))
+                        if username and user.username != username:
+                            user.change_username(username)
+                        if password:
+                            user.set_password(password)
+                        status_row['flag'] = 'updated'
+                    else:
+                        user = CommCareUser.create(domain, username, password, uuid=user_id or '')
+                        status_row['flag'] = 'created'
+                    if phone_number:
+                        user.add_phone_number(phone_number.lstrip('+'), default=True)
+                    if name:
+                        user.set_full_name(name)
+                    if data:
+                        user.user_data.update(data)
+                    user.save()
                     if password:
-                        user.set_password(password)
-                    status_row['flag'] = 'updated'
-                else:
-                    user = CommCareUser.create(domain, username, password, uuid=user_id or '')
-                    status_row['flag'] = 'created'
-                if phone_number:
-                    user.add_phone_number(phone_number.lstrip('+'), default=True)
-                if name:
-                    user.set_full_name(name)
-                if data:
-                    user.user_data.update(data)
-                user.save()
-                if password:
-                    # Without this line, digest auth doesn't work.
-                    # With this line, digest auth works.
-                    # Other than that, I'm not sure what's going on
-                    user.get_django_user().check_password(password)
-                for group_name in group_names:
-#                        try:
-                    group_memoizer.get_group(group_name).add_user(user)
-#                        except Exception:
-#                            raise Exception("Can't add to group '%s' (try adding it to your spreadsheet)" % group_name)
-                group_memoizer.save_all()
-            except Exception, e:
-                status_row['flag'] = 'error: %s' % e
-        ret["rows"].append(status_row)
+                        # Without this line, digest auth doesn't work.
+                        # With this line, digest auth works.
+                        # Other than that, I'm not sure what's going on
+                        user.get_django_user().check_password(password)
+                    for group_name in group_names:
+                        try:
+                            group_memoizer.get_group(group_name).add_user(user)
+                        except Exception:
+                            raise Exception("Can't add to group '%s' (try adding it to your spreadsheet)" % group_name)
+                except Exception, e:
+                    status_row['flag'] = 'error: %s' % e
+            ret["rows"].append(status_row)
+    finally:
+        group_memoizer.save_all()
+
     return ret
     
