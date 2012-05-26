@@ -36,7 +36,7 @@ from corehq.apps.users.forms import UserForm, CommCareAccountForm, ProjectSettin
 from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord, UserRole, AdminUserRole
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
-from dimagi.utils.web import render_to_response, json_response
+from dimagi.utils.web import render_to_response, json_response, get_url_base
 import calendar
 from corehq.apps.reports.schedule.config import ScheduledReportFactory
 from corehq.apps.reports.models import WeeklyReportNotification, DailyReportNotification, ReportNotification
@@ -703,18 +703,16 @@ class UploadCommCareUsers(TemplateView):
         response = HttpResponse()
         response_writer = csv.DictWriter(response, ['username', 'flag'])
         response_rows = []
-        
-        if request.REQUEST.get("async"):
-            print 'async'
+        async = request.REQUEST.get("async", False)
+        if async:
             download_id = uuid.uuid4().hex
-            bulk_upload_async.delay(
-                download_id,
-                self.domain,
-                self.user_specs,
-                self.group_specs
-            )
-            messages.success("Your upload is in progress. You can check the progress "
-                             '<a href="%s">here.</a>' %  reverse('retrieve_download', kwargs={'download_id': download_id}))
+            bulk_upload_async.delay(download_id, self.domain,
+                                    list(self.user_specs),
+                                    list(self.group_specs))
+            messages.success(request, 
+                'Your upload is in progress. You can check the progress at "%s%s".' %  \
+                (get_url_base(), reverse('retrieve_download', kwargs={'download_id': download_id})),
+                extra_tags="html")
         else:
             ret = create_or_update_users_and_groups(self.domain, self.user_specs, self.group_specs)
             for error in ret["errors"]:
@@ -726,7 +724,8 @@ class UploadCommCareUsers(TemplateView):
 
         redirect = request.POST.get('redirect')
         if redirect:
-            messages.success(request, 'Your bulk user upload is complete!')
+            if not async:
+                messages.success(request, 'Your bulk user upload is complete!')
             problem_rows = []
             for row in response_rows:
                 if row['flag'] not in ('updated', 'created'):

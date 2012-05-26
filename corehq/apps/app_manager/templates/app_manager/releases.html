@@ -174,9 +174,17 @@
                 {% if not saved_app.built_with.signed %}<h6>Unsigned Jar</h6>{% endif %}
             </td>
             <td>
-                <div class="download-dropdown">
-                    <span>Deploy</span>
-                    <ul>
+                <div class="btn-group">
+                    <span class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                        Deploy
+                        <span class="caret"></span>
+                    </span>
+                    <ul class="dropdown-menu">
+                        {% if request.user.is_superuser %}
+                            <li>
+                                <a href="{% url download_index domain saved_app.id %}">View Source Files</a>
+                            </li>
+                        {% endif %}
                         <li>
                             <a href="{% url emulator domain saved_app.id %}">Preview</a>
                         </li>
