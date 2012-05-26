@@ -4,7 +4,7 @@ class HSPHSiteDataMixin:
     request = None
 
     def generate_sitemap(self):
-        self.site_map = SiteField.getSites()
+        self.site_map = SiteField.getFacilities()
         self.selected_site_map = {}
 
         region = self.request.GET.get(SiteField.slugs['region'], None)

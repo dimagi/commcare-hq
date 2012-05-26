@@ -1,19 +1,19 @@
 {% load hq_shared_tags %}
 <label for="hsph_region_select" class="control-label">Region</label>
 <div class="controls">
-    <select id="hsph_region_select" name="{{ slugs.region }}" data-bind="options: hsph_regions, optionsCaption: 'Select Region', value: hsph_selected_region, event: {change: updateRegion}"></select>
+    <select id="hsph_region_select" name="{{ slugs.region }}" data-bind="options: hsph_regions, optionsValue: 'item_id', optionsText: 'name', optionsCaption: 'Select Region', value: hsph_selected_region, event: {change: updateRegion}"></select>
 </div>
 </div>
 <div class="control-group" data-bind="visible: enable_district">
     <label for="hsph_district_select" class="control-label">District</label>
     <div class="controls">
-        <select id="hsph_district_select" name="{{ slugs.district }}" data-bind="options: hsph_districts, optionsCaption: 'Select Disctrict', value: hsph_selected_district, enable: enable_district, event: {change: updateDistrict}"></select>
+        <select id="hsph_district_select" name="{{ slugs.district }}" data-bind="options: hsph_districts, optionsValue: 'item_id', optionsText: 'name', optionsCaption: 'Select Disctrict', value: hsph_selected_district, enable: enable_district, event: {change: updateDistrict}"></select>
     </div>
 </div>
 <div class="control-group" data-bind="visible: enable_site">
     <label for="hsph_site_select" class="control-label">Site</label>
     <div class="controls">
-        <select id="hsph_site_select" name="{{ slugs.site }}" data-bind="options: hsph_sites, optionsValue: 'siteId', optionsText: 'name', optionsCaption: 'Select Site', value: hsph_selected_site, enable: enable_site"></select>
+        <select id="hsph_site_select" name="{{ slugs.site }}" data-bind="options: hsph_sites, optionsValue: 'item_id', optionsText: 'name', optionsCaption: 'Select Site', value: hsph_selected_site, enable: enable_site"></select>
     </div>
 
 <script type="text/javascript" src="{% static 'hsph/ko/hsph.field.sites.js' %}"></script>

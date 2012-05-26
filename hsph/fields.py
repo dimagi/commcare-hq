@@ -1,6 +1,7 @@
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.custom import ReportField, ReportSelectField
 from corehq.apps.reports.fields import SelectMobileWorkerField, SelectFilteredMobileWorkerField
+from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from dimagi.utils.couch.database import get_db
 
 class FacilityField(ReportField):
@@ -25,13 +26,14 @@ class FacilityField(ReportField):
 
 class SiteField(ReportField):
     slug = "hsph_site"
+    domain = 'hsph'
     slugs = dict(site="hsph_site",
             district="hsph_district",
             region="hsph_region")
     template = "hsph/fields/sites.html"
 
     def update_context(self):
-        sites = self.getSites()
+        sites = self.getFacilities()
         self.context['sites'] = sites
         self.context['selected'] = dict(region=self.request.GET.get(self.slugs['region'], ''),
                                         district=self.request.GET.get(self.slugs['district'], ''),
@@ -39,26 +41,30 @@ class SiteField(ReportField):
         self.context['slugs'] = self.slugs
 
     @classmethod
-    def getSites(cls):
-        sites = {}
-        data = get_db().view('hsph/site_info',
-            reduce=True,
-            group=True
+    def getFacilities(cls):
+        facs = dict()
+        data_type = FixtureDataType.by_domain_tag(cls.domain, 'site').first()
+        key = [cls.domain, data_type._id]
+        fixtures = get_db().view('fixtures/data_items_by_domain_type',
+            startkey=key,
+            endkey=key+[{}],
+            reduce=False,
+            include_docs=True
         ).all()
-        if data:
-            for item in data:
-                site = item.get('key', None)
-                if site:
-                    region = site[0]
-                    district = site[1]
-                    site_num = site[2]
-                    if region not in sites:
-                        sites[region] = {}
-                    if district not in sites[region]:
-                        sites[region][district] = {}
-                    if site_num not in sites[region][district]:
-                        sites[region][district][site_num] = item['value'].get('facilityName', site_num)
-        return sites
+        for fix in fixtures:
+            fix = FixtureDataItem.wrap(fix["doc"])
+            print fix
+            print fix.fields
+            region = fix.fields.get("region_id")
+            district = fix.fields.get("district_id")
+            site = fix.fields.get("site_number")
+            if region not in facs:
+                facs[region] = dict(name=fix.fields.get("region_name"), districts=dict())
+            if district not in facs[region]["districts"]:
+                facs[region]["districts"][district] = dict(name=fix.fields.get("district_name"), sites=dict())
+            if site not in facs[region]["districts"][district]["sites"]:
+                facs[region]["districts"][district]["sites"][site] = dict(name=fix.fields.get("site_name"))
+        return facs
 
 class NameOfDCOField(SelectFilteredMobileWorkerField):
     slug = "dco_name"

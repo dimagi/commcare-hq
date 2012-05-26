@@ -3,7 +3,8 @@ var HSPHSitePicker = function (refs, currentSelection) {
     self.siteMap = refs;
     var regions = [];
     for (var reg in self.siteMap)
-        regions.push(reg);
+        regions.push(new HSPHSiteItem(reg, self.siteMap[reg].name));
+
     self.hsph_regions = ko.observableArray(regions);
     self.hsph_selected_region = ko.observable(currentSelection.region || "");
 
@@ -20,7 +21,7 @@ var HSPHSitePicker = function (refs, currentSelection) {
         self.enable_district(!!self.hsph_selected_region());
         if (self.enable_district())
             for (var dist in self.siteMap[self.hsph_selected_region()])
-                districts.push(dist);
+                districts.push();
         self.hsph_districts(districts);
         self.updateDistrict();
     };
@@ -31,7 +32,7 @@ var HSPHSitePicker = function (refs, currentSelection) {
         if (self.enable_site()) {
             var sitesAvailable = self.siteMap[self.hsph_selected_region()][self.hsph_selected_district()];
             for (var site in sitesAvailable) {
-                sites.push(new HSPHSite(site, sitesAvailable[site]));
+                sites.push(new HSPHSiteItem(site, sitesAvailable[site]));
             }
         }
         self.hsph_sites(sites);
@@ -41,7 +42,7 @@ var HSPHSitePicker = function (refs, currentSelection) {
     self.updateDistrict();
 };
 
-var HSPHSite = function (id, name) {
-    this.siteId = id;
+var HSPHSiteItem = function (id, name) {
+    this.item_id = id;
     this.name = name;
 };
