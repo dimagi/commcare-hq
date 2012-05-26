@@ -5,6 +5,7 @@ from corehq.apps.reports.models import HQUserType
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.datespan import datespan_in_request
+import settings
 
 datespan_default = datespan_in_request(
             from_param="startdate",
@@ -39,6 +40,7 @@ class FilterUsersField(ReportField):
         try:
             if request.GET.get('ufilter', ''):
                 ufilter = request.GET.getlist('ufilter')
+                print ufilter
             group = request.GET.get('group', '')
             individual = request.GET.get('individual', '')
         except KeyError:
@@ -58,7 +60,11 @@ class CaseTypeField(ReportField):
     def update_context(self):
         individual = self.request.GET.get('individual', '')
         group = self.request.GET.get('group', '')
-        user_filter, _ = FilterUsersField.get_user_filter(self.request)
+        if not individual and not settings.LUCENE_ENABLED:
+            user_filter = HQUserType.use_filter(['0','1','2','3'])
+        else:
+            user_filter, _ = FilterUsersField.get_user_filter(self.request)
+
         users = util.get_all_users_by_domain(self.domain, group, individual, user_filter)
         user_ids = [user.user_id for user in users]
         
@@ -114,6 +120,15 @@ class SelectFormField(ReportSelectField):
     def update_params(self):
         self.options = util.form_list(self.domain)
         self.selected = self.request.GET.get('form', None)
+
+class SelectOpenCloseField(ReportSelectField):
+    slug = "is_open"
+    name = "Opened / Closed"
+    cssId = "opened_closed"
+    cssClasses = "span3"
+    default_option = "Show All"
+    options = [dict(val="open", text="Only Open"),
+               dict(val="closed", text="Only Closed")]
 
 
 class SelectAllFormField(SelectFormField):

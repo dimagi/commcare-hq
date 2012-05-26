@@ -2,13 +2,15 @@
 
 function HQReportDataTables(options) {
     var self = this;
-    self.dataTableElem = (options.dataTableElem) ? options.dataTableElem : '.datatable';
-    self.paginationType = (options.paginationType) ? options.paginationType : 'bootstrap';
-    self.defaultRows = (options.defaultRows) ? options.defaultRows : 10;
-    self.startAtRowNum = (options.startAtRowNum) ? options.startAtRowNum : 0;
-    self.aoColumns = (options.aoColumns) ? options.aoColumns : null;
+    self.dataTableElem = options.dataTableElem || '.datatable';
+    self.paginationType = options.paginationType || 'bootstrap';
+    self.defaultRows = options.defaultRows || 10;
+    self.startAtRowNum = options.startAtRowNum || 0;
+    self.aoColumns = options.aoColumns;
     self.autoWidth = (options.autoWidth != undefined) ? options.autoWidth : true;
     self.customSort = options.customSort;
+    self.ajaxParams = options.ajaxParams || new Object();
+    self.ajaxSource = options.ajaxSource;
 
     this.render = function () {
 
@@ -30,30 +32,29 @@ function HQReportDataTables(options) {
                 iDisplayLength: self.defaultRows,
                 bAutoWidth: self.autoWidth
             },
-                sAjaxSource = $(this).data('source');
+                sAjaxSource = self.ajaxSource;
 
-            if(sAjaxSource) {
+            if(self.ajaxSource) {
                 params.bServerSide = true;
-                params.sAjaxSource = sAjaxSource;
+                params.sAjaxSource = self.ajaxSource;
                 params.bSort = false;
                 params.bFilter = $(this).data('filter') || false;
                 params.fnServerParams = function ( aoData ) {
-                        aoData.push({ "name" : 'individual', "value": $(this).data('individual')});
-                        aoData.push({ "name" : 'group', "value": $(this).data('group')});
-                        aoData.push({ "name" : 'case_type', "value": $(this).data('casetype')});
-                        var filterNames = ["ufilter", "submitfilter"];
-                        var name, f, i, j;
-                        for (i = 0; i < filterNames.length; i++) {
-                            name = filterNames[i];
-                            f = $(this).data(name);
-                            if (f) {
-                                for (j = 0; j < f.length; j++) {
-                                    aoData.push({ "name" : name, "value": f[j]});
-                                }
+                    for (var p in self.ajaxParams)
+                        aoData.push(self.ajaxParams[p]);
+                    var filterNames = ["ufilter", "submitfilter"];
+                    var name, f, i, j;
+                    for (i = 0; i < filterNames.length; i++) {
+                        name = filterNames[i];
+                        f = $(this).data(name);
+                        if (f) {
+                            for (j = 0; j < f.length; j++) {
+                                aoData.push({ "name" : name, "value": f[j]});
                             }
                         }
+                    }
 
-                    };
+                };
             }
             if(self.aoColumns)
                 params.aoColumns = self.aoColumns;
