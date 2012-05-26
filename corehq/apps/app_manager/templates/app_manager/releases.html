@@ -48,6 +48,9 @@
     .build.build-latest-release {
         background-color: #EFEFFF;
     }
+    .nowrap {
+        white-space: nowrap;
+    }
 </style>
 {% endblock %}
 {% block form-view %}
@@ -166,14 +169,14 @@
                 </form>
                 {% endif %}
             </td>
-            <td>{{ saved_app.version }}</td>
-            <td>{% utc_to_timezone saved_app.built_on timezone "%b %d, %Y" %}</td>
-            <td>{% utc_to_timezone saved_app.built_on timezone "%H:%M %Z" %}</td>
-            <td>
+            <td class="nowrap">{{ saved_app.version }}</td>
+            <td class="nowrap">{% utc_to_timezone saved_app.built_on timezone "%b %d, %Y" %}</td>
+            <td class="nowrap">{% utc_to_timezone saved_app.built_on timezone "%H:%M %Z" %}</td>
+            <td class="nowrap">
                 {% if saved_app.built_with.get_label %}{{ saved_app.built_with.get_label }}{% endif %}
                 {% if not saved_app.built_with.signed %}<h6>Unsigned Jar</h6>{% endif %}
             </td>
-            <td>
+            <td class="nowrap">
                 <div class="btn-group">
                     <span class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
                         Deploy
