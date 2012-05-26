@@ -782,6 +782,9 @@ class ApplicationBase(VersionedDoc):
     def is_remote_app(self):
         return False
 
+    def get_latest_app(self):
+        return get_app(self.domain, self.get_id, latest=True)
+
     def set_admin_password(self, raw_password):
         import random
         algo = 'sha1'
@@ -1573,7 +1576,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
         parent_app_id = original_app.get('copy_of') or original_app['_id']
         latest_app = get_db().view('app_manager/applications',
             startkey=['^ReleasedApplications', domain, parent_app_id, {}],
-            endkey=['^ReleasedApplications', domain, parent_app_id],
+            endkey=['^ReleasedApplications', domain, parent_app_id, original_app['version']],
             limit=1,
             descending=True,
             include_docs=True
