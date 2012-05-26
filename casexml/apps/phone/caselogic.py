@@ -14,12 +14,12 @@ def get_footprint(initial_case_list):
         return [CommCareCase.get(index.referenced_id) \
                 for index in case.indices]
     
-    relevant_cases = set()
+    relevant_cases = {}
     queue = list(case for case in initial_case_list)
     while queue:
         case = queue.pop()
         if case.case_id not in relevant_cases:
-            relevant_cases.add(case)
+            relevant_cases[case.case_id] = case
             queue.extend(children(case))
     return relevant_cases
 
@@ -84,15 +84,38 @@ class CaseSyncOperation(object):
         #       cases the server thinks are the phone's, footprint of those) 
         # intersected with:
         # (cases modified by someone else since the last sync)
+        
+        # TODO: clean this up. Basically everything is a set of cases,
+        # but in order to do proper comparisons we use IDs so all of these
+        # operations look much more complicated than they should be.
+        
         self.actual_owned_cases = set(CommCareCase.view("case/by_owner", keys=keys,
                                                         include_docs=True).all())
-        self.actual_relevant_cases = get_footprint(self.actual_owned_cases)
-        self.actual_extended_cases = self.actual_relevant_cases - self.actual_owned_cases
-        self.phone_relevant_cases = set([CommCareCase.get(case_id) for case_id \
+        self._all_relevant_cases = get_footprint(self.actual_owned_cases)
+        
+        def _to_case_id_set(cases):
+            return set([c.case_id for c in cases])
+        
+        def _get_case(case_id):
+            return self._all_relevant_cases[case_id] \
+                if case_id in self._all_relevant_cases else CommCareCase.get(case_id)
+            
+        
+        self.actual_relevant_cases = set(self._all_relevant_cases.values())
+        
+        
+        self.actual_extended_cases = set([_get_case(case_id) for case_id in \
+                                          _to_case_id_set(self.actual_relevant_cases) - \
+                                          _to_case_id_set(self.actual_owned_cases)])
+        
+        self.phone_relevant_cases = set([_get_case(case_id) for case_id \
                                          in last_sync.get_footprint_of_cases_on_phone()]) \
                                     if last_sync else set()
         
-        self.all_potential_cases = self.actual_relevant_cases | self.phone_relevant_cases
+        self.all_potential_cases = set([_get_case(case_id) for case_id in \
+                                        _to_case_id_set(self.actual_relevant_cases) | \
+                                        _to_case_id_set(self.phone_relevant_cases)])
+        
         self.all_potential_to_sync = filter(case_modified_elsewhere_since_sync, 
                                             list(self.all_potential_cases))
         
