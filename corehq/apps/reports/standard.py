@@ -670,9 +670,6 @@ class CaseListReport(PaginatedHistoryHQReport):
             startkey = key+[self.individual] if self.individual else key
             endkey = key+[self.individual] if self.individual else key+[{}]
 
-            print startkey
-            print endkey
-
             results = get_db().view(view,
                 startkey=startkey,
                 endkey=endkey,
