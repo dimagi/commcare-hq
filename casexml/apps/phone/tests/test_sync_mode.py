@@ -61,7 +61,8 @@ class SyncBaseTest(TestCase):
         # set last sync token on the form before saving
         form.last_sync_token = token_id
         process_cases(sender="testharness", xform=form)
-        
+        return form
+    
     def _postFakeWithSyncToken(self, caseblock, token_id):
         post_case_blocks([caseblock], form_extras={"last_sync_token": token_id})
         
@@ -830,4 +831,19 @@ class MultiUserSyncTest(SyncBaseTest):
                                            version=V2)
         self.assertTrue("something different" in payload)
         self.assertTrue("hi changed!" in payload)
+    
+    def testComplicatedGatesBug(self):
+        # found this bug in the wild, used the real (test) forms to fix it
+        # just running through this test used to fail hard, even though there
+        # are no asserts
+        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
+        folder_path = os.path.join("bugs", "dependent_case_conflicts")
+        files = ["reg1.xml", "reg2.xml", "cf.xml", "close.xml"]
+        for f in files:
+            form = self._postWithSyncToken(os.path.join(folder_path, f), self.sync_log.get_id)
+            form = XFormInstance.get(form.get_id)
+            self.assertFalse(hasattr(form, "problem"))
+            generate_restore_payload(self.user, version="2.0")
+            self.sync_log = SyncLog.last_for_user(self.user.user_id)
+        
         

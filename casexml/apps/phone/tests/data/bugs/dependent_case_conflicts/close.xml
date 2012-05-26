@@ -1,0 +1,58 @@
+<?xml version='1.0' ?>
+<data uiVersion="1" version="1" name="Close" xmlns:cc="http://commcarehq.org/xforms"
+	xmlns="http://bihar.commcarehq.org/pregnancy/close">
+	<n0:meta xmlns:n0="http://openrosa.org/jr/xforms">
+		<n0:deviceID>1NQ55Z5O00IBWQ8DO0R7TG0UT</n0:deviceID>
+		<n0:timeStart>2012-05-26T08:40:52.451+05:30</n0:timeStart>
+		<n0:timeEnd>2012-05-26T08:41:37.259+05:30</n0:timeEnd>
+		<n0:username>sheel.test</n0:username>
+		<n0:userID>67bffa913b38e7901851d863ededa475</n0:userID>
+		<n0:instanceID>b45aeae8-ba55-4541-ae2e-0ead6b5e1f31</n0:instanceID>
+		<cc:appVersion>v2.0.0dev
+			(7d4efc-95aede-unvers-2.1.0-Nokia/S40-native-input) #20 b:2012-May-25
+			r:2012-May-26</cc:appVersion>
+	</n0:meta>
+	<n1:case case_id="9dbce942-0163-438b-b3e5-67b473d2f719"
+		date_modified="2012-05-26T08:41:37.259+05:30" user_id="67bffa913b38e7901851d863ededa475"
+		xmlns:n1="http://commcarehq.org/case/transaction/v2">
+		<n1:update />
+		<n1:close />
+	</n1:case>
+	<close_mother>yes</close_mother>
+	<finished_continuum>yes</finished_continuum>
+	<died_village />
+	<confirm_close>yes</confirm_close>
+	<yes_closed_message>OK</yes_closed_message>
+	<children>17e36de1-b9de-423c-a6a6-605d291ec976
+		7b58fd8f-1bb8-4978-99a6-7b5d9826c1f9</children>
+	<num_children>2</num_children>
+	<child_info>
+		<cid>17e36de1-b9de-423c-a6a6-605d291ec976</cid>
+		<index>0</index>
+		<close_child>yes</close_child>
+		<finished_continuum>yes</finished_continuum>
+		<confirm_close>yes</confirm_close>
+		<yes_closed_message>OK</yes_closed_message>
+		<n2:case case_id="17e36de1-b9de-423c-a6a6-605d291ec976"
+			date_modified="2012-05-26T08:41:37.259+05:30" user_id="67bffa913b38e7901851d863ededa475"
+			xmlns:n2="http://commcarehq.org/case/transaction/v2">
+			<n2:update />
+			<n2:close />
+		</n2:case>
+	</child_info>
+	<child_info>
+		<cid>7b58fd8f-1bb8-4978-99a6-7b5d9826c1f9</cid>
+		<index>1</index>
+		<close_child>yes</close_child>
+		<finished_continuum>yes</finished_continuum>
+		<confirm_close>yes</confirm_close>
+		<yes_closed_message>OK</yes_closed_message>
+		<n3:case case_id="7b58fd8f-1bb8-4978-99a6-7b5d9826c1f9"
+			date_modified="2012-05-26T08:41:37.259+05:30" user_id="67bffa913b38e7901851d863ededa475"
+			xmlns:n3="http://commcarehq.org/case/transaction/v2">
+			<n3:update />
+			<n3:close />
+		</n3:case>
+	</child_info>
+	<success>OK</success>
+</data>
