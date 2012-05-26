@@ -837,7 +837,7 @@ class MultiUserSyncTest(SyncBaseTest):
         # just running through this test used to fail hard, even though there
         # are no asserts
         self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
-        folder_path = os.path.join(os.path.dirname(__file__), "data", "bugs", "dependent_case_conflicts")
+        folder_path = os.path.join("bugs", "dependent_case_conflicts")
         files = ["reg1.xml", "reg2.xml", "cf.xml", "close.xml"]
         for f in files:
             form = self._postWithSyncToken(os.path.join(folder_path, f), self.sync_log.get_id)
