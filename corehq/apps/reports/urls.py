@@ -75,3 +75,6 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
 )
 
+data_urls = patterns('corehq.apps.reports.views',
+    url(r'^(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="data_report_dispatcher"),
+)
