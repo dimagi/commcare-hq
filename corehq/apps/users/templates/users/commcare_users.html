@@ -78,7 +78,9 @@
                         <div>{% trans "Case Sharing" %} <i class="icon icon-question-sign"></i></div>
                     </th>
                     {% endif %}
+                    <th></th>
                     <th>{% trans "Username" %}</th>
+                    <th>{% trans "Full Name" %}</th>
                     <th>{% trans "Password" %}</th>
                     <th>{% trans "Date Registered" %}</th>
                     <th>{% trans "Forms" %}</th>
@@ -118,7 +120,9 @@
                         {% endif %}
                     </td>
                     {% endif %}
+                    <td>{{ forloop.counter }}</td>
                     <td><a href="{% url user_account domain user.user_id %}">{{ user.raw_username }}</a></td>
+                    <td>{{ user.full_name }}</td>
                     <td>
                         <a href="#reset_password_{{ user.user_id }}" class="btn btn-info" data-toggle="modal">Reset Password</a>
 
