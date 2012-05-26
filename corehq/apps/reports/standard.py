@@ -110,8 +110,7 @@ class StandardTabularHQReport(StandardHQReport):
             self.context['ajax_params'] = [dict(name='individual', value=self.individual),
                            dict(name='group', value=self.group),
                            dict(name='case_type', value=self.case_type),
-                           dict(name='ufilter', value=[f.type for f in self.user_filter if f.show]),
-                           dict(name=SelectOpenCloseField.slug, value=self.request.GET.get(SelectOpenCloseField.slug, ''))]
+                           dict(name='ufilter', value=[f.type for f in self.user_filter if f.show])]
 
         self.headers = self.get_headers()
         self.rows = self.get_rows()
@@ -609,6 +608,7 @@ class CaseListReport(PaginatedHistoryHQReport):
     def get_report_context(self):
         self.context.update({"filter": settings.LUCENE_ENABLED })
         super(PaginatedHistoryHQReport, self).get_report_context()
+        self.context['ajax_params'].append(dict(name=SelectOpenCloseField.slug, value=self.request.GET.get(SelectOpenCloseField.slug, '')))
 
     def get_headers(self):
         headers = DataTablesHeader(DataTablesColumn("Name"),

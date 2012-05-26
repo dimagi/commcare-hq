@@ -40,20 +40,19 @@ function HQReportDataTables(options) {
                 params.bSort = false;
                 params.bFilter = $(this).data('filter') || false;
                 params.fnServerParams = function ( aoData ) {
-                    for (var p in self.ajaxParams)
-                        aoData.push(self.ajaxParams[p]);
-                    var filterNames = ["ufilter", "submitfilter"];
-                    var name, f, i, j;
-                    for (i = 0; i < filterNames.length; i++) {
-                        name = filterNames[i];
-                        f = $(this).data(name);
-                        if (f) {
-                            for (j = 0; j < f.length; j++) {
-                                aoData.push({ "name" : name, "value": f[j]});
+                    for (var p in self.ajaxParams) {
+                        var currentParam = self.ajaxParams[p];
+                        if(_.isObject(currentParam.value)) {
+                            for (var j=0; j < currentParam.value.length; j++) {
+                                aoData.push({
+                                    name: currentParam.name,
+                                    value: currentParam.value[j]
+                                });
                             }
+                        } else {
+                            aoData.push(currentParam);
                         }
                     }
-
                 };
             }
             if(self.aoColumns)
