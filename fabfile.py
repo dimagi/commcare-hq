@@ -96,7 +96,6 @@ def upload_upstart_conf():
     template_dir = os.path.join(os.path.dirname(__file__), 'utilities', 'deployment', 'upstart_templates')
     for file in os.listdir(template_dir):
         destination = _join(env.code_root, 'utilities', 'deployment', file)
-        #destination = _join(env.code_root, file)
         template = os.path.join(template_dir, file)
         tmp_destination = "/tmp/%s.tmp" % file
         files.upload_template(template, tmp_destination, context=env)
@@ -159,6 +158,7 @@ def service_restart():
     assert env.service_manager in ("upstart", "supervisor")
     
     if env.service_manager == "upstart":
+        upload_upstart_conf()
         with settings(sudo_user="root"):
             sudo('stop cchq_www', user=env.sudo_user)
             sudo('initctl reload-configuration', user=env.sudo_user)
