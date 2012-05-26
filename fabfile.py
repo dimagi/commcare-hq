@@ -117,7 +117,7 @@ def upload_supervisor_conf():
     file = os.path.join(os.path.dirname(__file__), 'utilities', 'deployment', 'supervisor_templates', "supervisor.conf")
     destination = _join(env.code_root, 'utilities', 'deployment', "supervisor.conf")
     #destination = _join(env.code_root, file)
-    tmp_destination = "/tmp/%s.tmp" % file
+    tmp_destination = "/tmp/supervisor.conf.tmp"
     files.upload_template(file, tmp_destination, context=env)
     sudo('chown -R %(user)s:%(user)s %(file)s' % {"user": env.sudo_user,
                                                   "file": tmp_destination})
