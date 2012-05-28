@@ -3,10 +3,10 @@ from corehq.apps.cloudcare.models import CaseSpec
 from corehq.apps.domain.decorators import login_and_domain_required,\
     login_or_digest_ex
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.web import render_to_response, json_response, json_handler
 from django.http import HttpResponseRedirect, HttpResponse,\
-    HttpResponseBadRequest
+    HttpResponseBadRequest, Http404
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
 from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_cloudcare_apps,\
@@ -17,6 +17,9 @@ from django.conf import settings
 from corehq.apps.cloudcare import touchforms_api 
 from touchforms.formplayer.api import DjangoAuth
 from django.core.urlresolvers import reverse
+from casexml.apps.phone.fixtures import generator
+from casexml.apps.case.xml import V2
+from xml.etree import ElementTree
 
 @login_and_domain_required
 def default(request, domain):
@@ -177,3 +180,16 @@ def get_apps_api(request, domain):
 @cloudcare_api
 def get_app_api(request, domain, app_id):
     return json_response(get_app(domain, app_id))
+
+@cloudcare_api
+def get_fixtures(request, domain, user_id):
+    user = CommCareUser.get(user_id)
+    if not user:
+        raise Http404
+    assert user.domain == domain
+    casexml_user = user.to_casexml_user()
+    ret = ElementTree.Element("fixtures")
+    for fixture in generator.get_fixtures(casexml_user, version=V2):
+        ret.append(fixture)
+    return HttpResponse(ElementTree.tostring(ret), content_type="text/xml")
+        
