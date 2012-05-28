@@ -546,29 +546,34 @@ cloudCare.AppMainView = Backbone.View.extend({
             self.clearAll();
         }));
         
-        
+        var _stripParams = function (val) {
+            if (val.indexOf("?") !== -1) {
+                return val.substring(0, val.indexOf("?"));
+            }            
+            return val;
+        }
         this.router.on("route:app", pauseNav(function (appId) {
             self.clearModules();
-            selectApp(appId);
+            selectApp(_stripParams(appId));
         }));
         
         this.router.on("route:app:module", pauseNav(function (appId, moduleIndex) {
             self.clearForms();
             selectApp(appId);
-            selectModule(moduleIndex);
+            selectModule(_stripParams(moduleIndex));
         }));
         this.router.on("route:app:module:form", pauseNav(function (appId, moduleIndex, formIndex) {
             self.clearForms();
             selectApp(appId);
             selectModule(moduleIndex);
-            selectForm(formIndex);
+            selectForm(_stripParams(formIndex));
         }));
         this.router.on("route:app:module:form:case", pauseNav(function (appId, moduleIndex, formIndex, caseId) {
             self.clearCases();
             selectApp(appId);
             selectModule(moduleIndex);
             selectForm(formIndex);
-            selectCase(caseId);
+            selectCase(_stripParams(caseId));
         }));
         
         // these are also incoming routes, that look funny because of how the event

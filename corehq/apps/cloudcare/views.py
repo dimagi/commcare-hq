@@ -25,7 +25,7 @@ def default(request, domain):
 @login_and_domain_required
 def app_list(request, domain, urlPath):
     apps = get_cloudcare_apps(domain)
-    debug = string_to_boolean(request.REQUEST.get("debug", "false"))
+    preview = string_to_boolean(request.REQUEST.get("preview", "false"))
     language = request.couch_user.language or "en"
     
     def _app_latest_build_json(app_id):
@@ -36,7 +36,7 @@ def app_list(request, domain, urlPath):
                                      limit=1).one()
         return build._doc if build else None
                                      
-    if not debug:
+    if not preview:
         # replace the apps with the last build of each app
         apps = [_app_latest_build_json(app["_id"])for app in apps]
 
@@ -46,6 +46,7 @@ def app_list(request, domain, urlPath):
                               {"domain": domain,
                                "language": language,
                                "apps": json.dumps(apps),
+                               "preview": preview,
                                "maps_api_key": settings.GMAPS_API_KEY })
 
 

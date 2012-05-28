@@ -13,6 +13,7 @@
     <script src="{% static 'case/js/casexml.js' %}"></script>
     <script src="{% static 'cloudcare/js/case-edit-form.js' %}"></script>
     <script src="{% static 'hqwebapp/javascripts/backbone.js' %}"></script>
+    <script src="{% static 'cloudcare/js/util.js' %}"></script>
     <script src="{% static 'cloudcare/js/backbone/shared.js' %}"></script>
     <script src="{% static 'cloudcare/js/backbone/apps.js' %}"></script>
     <script src="{% static 'cloudcare/js/backbone/cases.js' %}"></script>
@@ -35,7 +36,7 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url cloudcare_default domain %}"><strong>Cloudcare</strong></a>
+            <a href="{% url cloudcare_default domain %}"><strong>CloudCare</strong></a><sup>beta</sup>
         </li>
     </ul>
 {% endblock %}
@@ -78,10 +79,23 @@
 {% endblock %}
 
 {% block main_column %}
+	{% if preview %}
+        <div class="alert fade in alert-block alert-full alert-info">
+            <a class="close" data-dismiss="alert" href="#">&times;</a>
+            CloudCare submits REAL DATA that will create cases and show up in reports!
+        </div>
+    {% endif %}
+    {% if request.couch_user.is_web_user %}
+	    <div class="alert fade in alert-block alert-full alert-info">
+	        <a class="close" data-dismiss="alert" href="#">&times;</a>
+	        You are using CloudCare as a {% hq_web_user %}! Any data you submit might confuse your reports, and not everything
+	        may work properly. For the best experience please logout and login as a {% commcare_user %}.
+	    </div>
+	{% endif %}
     <div id="cloudcare-main" style="position:relative;">
         <div id="loading" class="well" style="display: none; position: absolute; right: 0; margin-right: 40px; top: 40px;">
             <img width="32" height="32" alt="Loading" src="{% static 'formplayer/img/loading_transparent.gif' %}" />
-            Loading...
+            {% trans "Loading" %}...
         </div>
         <div class="row-fluid">     
             <section id="cases"></section>
