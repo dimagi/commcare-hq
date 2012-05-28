@@ -16,6 +16,7 @@ from dimagi.utils.parsing import string_to_boolean
 from django.conf import settings
 from corehq.apps.cloudcare import touchforms_api 
 from touchforms.formplayer.api import DjangoAuth
+from django.core.urlresolvers import reverse
 
 @login_and_domain_required
 def default(request, domain):
