@@ -24,7 +24,6 @@ def default(request, domain):
 
 @login_and_domain_required
 def app_list(request, domain, urlPath):
-    apps = get_cloudcare_apps(domain)
     preview = string_to_boolean(request.REQUEST.get("preview", "false"))
     language = request.couch_user.language or "en"
     
@@ -37,9 +36,14 @@ def app_list(request, domain, urlPath):
         return build._doc if build else None
                                      
     if not preview:
+        apps = get_cloudcare_apps(domain)
         # replace the apps with the last build of each app
         apps = [_app_latest_build_json(app["_id"])for app in apps]
-
+    
+    else:
+        apps = ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}])
+        apps = [app._doc for app in apps if app and app.application_version == "2.0"]
+    
     # trim out empty apps
     apps = filter(lambda app: app, apps)
     return render_to_response(request, "cloudcare/cloudcare_home.html", 

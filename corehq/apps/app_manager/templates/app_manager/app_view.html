@@ -455,6 +455,21 @@
                         {% endif %}
                     </td>
                 </tr>
+                {% if request.couch_user.is_previewer %}
+                <tr>
+                     <th><label for="cloudcare-enabled-select">CloudCare Enabled?</label></th>
+                     <td>
+                         {% if edit %}
+                             <select id="cloudcare-enabled-select" name="cloudcare_enabled" data-value="{{ app.cloudcare_enabled|JSON }}">
+                                 <option value="false">No</option>
+                                 <option value="true">Yes</option>
+                             </select>
+                         {% else %}
+                             {% if app.cloudcare_enabled %}Yes{% else %}No{% endif %}
+                         {% endif %}
+                     </td>
+                 </tr>
+                {% endif %}
                 {% endif %}
                 {% if user.is_superuser %}
                 <tbody class="superuser-only">
@@ -483,19 +498,7 @@
                         </td>
                     </tr>
                     {% endif %}
-                    <tr>
-                        <th><label for="cloudcare-enabled-select">CloudCare Enabled?</label></th>
-                        <td>
-                            {% if edit %}
-                                <select id="cloudcare-enabled-select" name="cloudcare_enabled" data-value="{{ app.cloudcare_enabled|JSON }}">
-                                    <option value="false">No</option>
-                                    <option value="true">Yes</option>
-                                </select>
-                            {% else %}
-                                {% if app.cloudcare_enabled %}Yes{% else %}No{% endif %}
-                            {% endif %}
-                        </td>
-                    </tr>
+                    
                 </tbody>
                 {% endif %}
             {% endif %}
