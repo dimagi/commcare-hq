@@ -70,7 +70,6 @@ urlpatterns = patterns('corehq.apps.reports.views',
         'export': True
     }),
     url(r'^custom/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="custom_report_dispatcher"),
-    url(r"a5288/", "a5288_temp", name="a5288_temp"),
     url(r'^(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="report_dispatcher"),
 
 
