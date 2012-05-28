@@ -191,7 +191,7 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 TABS = [
     ("corehq.apps.reports.views.default", "Reports"),
-    ("corehq.apps.data_interfaces.views.default", "Manage Data", lambda request: request.couch_user.is_superuser and request.couch_user.can_edit_data()),
+    ("corehq.apps.data_interfaces.views.default", "Manage Data", lambda request: request.couch_user.can_edit_data()),
     ("corehq.apps.app_manager.views.default", "Applications"),
     ("corehq.apps.sms.views.messaging", "Messages"),
     ("corehq.apps.settings.views.default", "Settings & Users", lambda request: request.couch_user.can_edit_commcare_users() or request.couch_user.can_edit_web_users()),
