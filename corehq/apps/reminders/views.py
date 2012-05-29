@@ -11,6 +11,7 @@ from dimagi.utils.web import render_to_response
 from dimagi.utils.parsing import string_to_datetime
 from tropo import Tropo
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
+from corehq.apps.app_manager.models import get_app, ApplicationBase
 
 @login_and_domain_required
 def default(request, domain):
@@ -119,6 +120,14 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
     else:
         h = None
     
+    form_list = []
+    for app in ApplicationBase.view("app_manager/applications_brief", startkey=[domain], endkey=[domain, {}]):
+        latest_app = get_app(domain, app._id, latest=True)
+        lang = latest_app.langs[0]
+        for m in latest_app.get_modules():
+            for f in m.get_forms():
+                form_list.append({"code" :  app._id + "|" + str(m.id) + "|" + str(f.id), "name" : app.name + "/" + m.name[lang] + "/" + f.name[lang]})
+    
     if request.method == "POST":
         form = ComplexCaseReminderForm(request.POST)
         if form.is_valid():
@@ -167,8 +176,9 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
         form = ComplexCaseReminderForm(initial=initial)
     
     return render_to_response(request, "reminders/partial/add_complex_reminder.html", {
-        "domain":   domain
-       ,"form":     form
+        "domain":       domain
+       ,"form":         form
+       ,"form_list":    form_list
     })
 
 

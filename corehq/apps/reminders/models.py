@@ -80,7 +80,7 @@ class Message(object):
             template = unicode(template, encoding='utf-8')
         return unicode(cls(template, **params))
     
-METHOD_CHOICES = ["sms", "email", "test", "callback", "callback_test"]
+METHOD_CHOICES = ["sms", "email", "test", "callback", "callback_test", "survey"]
 
 class CaseReminderEvent(DocumentSchema):
     """
@@ -98,11 +98,20 @@ class CaseReminderEvent(DocumentSchema):
                                 timeout intervals (in minutes). The message is resent based on 
                                 the number of entries in this list until the callback is received, 
                                 or the number of timeouts is exhausted.
+
+    survey                      For CaseReminderHandlers whose method is "survey", this is a dictionary
+                                representing the application, module, and form to play as the survey:
+                                {
+                                    "app_id"    : the application id,
+                                    "module_id" : the module number (0-based index),
+                                    "form_id"   : the form number (0-based index)
+                                }
     """
     day_num = IntegerProperty()
     fire_time = TimeProperty()
     message = DictProperty()
     callback_timeout_intervals = ListProperty(IntegerProperty)
+    survey = DictProperty()
 
 class CaseReminderHandler(Document):
     """

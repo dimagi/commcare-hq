@@ -12,7 +12,8 @@ METHOD_CHOICES = (
     ('sms', 'SMS'),
     #('email', 'Email'),
     #('test', 'Test'),
-    ('callback', 'SMS/Callback')
+    ('survey', 'SMS Survey'),
+    ('callback', 'SMS/Callback'),
 )
 
 RECIPIENT_CHOICES = (
@@ -71,6 +72,8 @@ class CaseReminderForm(Form):
         return message
 
 class EventWidget(Widget):
+    method = None
+    
     def value_from_datadict(self, data, files, name, *args, **kwargs):
         reminder_events_raw = {}
         for key in data:
@@ -82,6 +85,8 @@ class EventWidget(Widget):
         if len(event_dict) > 0:
             for key in sorted(event_dict["reminder_events"].iterkeys()):
                 events.append(event_dict["reminder_events"][key])
+        
+        self.method = data["method"]
         
         return events
 
@@ -117,18 +122,19 @@ class EventListField(Field):
                 raise ValidationError("Time must be in the format HH:MM.")
             
             message = {}
-            for key in e["messages"]:
-                language = e["messages"][key]["language"]
-                text = e["messages"][key]["text"]
-                if len(language.strip()) == 0:
-                    raise ValidationError("Please enter a language code.")
-                if len(text.strip()) == 0:
-                    raise ValidationError("Please enter a message.")
-                if language in message:
-                    raise ValidationError("You have entered the same language twice for the same reminder event.");
-                message[language] = text
+            if self.widget.method == "sms" or self.widget.method == "callback":
+                for key in e["messages"]:
+                    language = e["messages"][key]["language"]
+                    text = e["messages"][key]["text"]
+                    if len(language.strip()) == 0:
+                        raise ValidationError("Please enter a language code.")
+                    if len(text.strip()) == 0:
+                        raise ValidationError("Please enter a message.")
+                    if language in message:
+                        raise ValidationError("You have entered the same language twice for the same reminder event.");
+                    message[language] = text
             
-            if len(e["timeouts"].strip()) == 0:
+            if len(e["timeouts"].strip()) == 0 or self.widget.method != "callback":
                 timeouts_int = []
             else:
                 timeouts_str = e["timeouts"].split(",")
@@ -139,11 +145,25 @@ class EventListField(Field):
                     except Exception:
                         raise ValidationError("Callback timeout intervals must be a list of comma-separated numbers.")
             
+            survey = {
+                "app_id" : None,
+                "module_id" : None,
+                "form_id" : None
+            }
+            if self.widget.method == "survey":
+                survey_info = e.get("survey","").split("|")
+                if(len(survey_info) < 3):
+                    raise ValidationError("Please create a form for the survey first, and then create the reminder definition.")
+                survey["app_id"] = survey_info[0]
+                survey["module_id"] = int(survey_info[1])
+                survey["form_id"] = int(survey_info[2])
+            
             events.append(CaseReminderEvent(
                 day_num = day
                ,fire_time = time
                ,message = message
                ,callback_timeout_intervals = timeouts_int
+               ,survey = survey
             ))
         
         if len(events) == 0:
@@ -157,7 +177,7 @@ class ComplexCaseReminderForm(Form):
     """
     nickname = CharField(error_messages={"required":"Please enter the name of this reminder definition."})
     case_type = CharField(error_messages={"required":"Please enter the case type."})
-    method = ChoiceField(choices=METHOD_CHOICES)
+    method = ChoiceField(choices=METHOD_CHOICES, widget=Select(attrs={"onchange":"method_changed();"}))
     recipient = ChoiceField(choices=RECIPIENT_CHOICES)
     start_match_type = ChoiceField(choices=MATCH_TYPE_DISPLAY_CHOICES, widget=Select(attrs={"onchange":"start_match_type_changed();"}))
     start_choice = ChoiceField(choices=START_CHOICES, widget=Select(attrs={"onchange":"start_choice_changed();"}))
@@ -221,6 +241,11 @@ class ComplexCaseReminderForm(Form):
                 for t in e.callback_timeout_intervals:
                     timeouts_str.append(str(t))
                 ui_event["timeouts"] = ",".join(timeouts_str)
+                
+                if e.survey is not None:
+                    ui_event["survey"] = str(e.survey.get("app_id")) + "|" + str(e.survey.get("module_id")) + "|" + str(e.survey.get("form_id"))
+                else:
+                    ui_event["survey"] = ""
                 
                 events.append(ui_event)
         
