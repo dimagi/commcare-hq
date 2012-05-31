@@ -14,7 +14,7 @@
     <script type="text/javascript">
         $(function() {
             var reportFilterCookieName = '{{ slug }}reportFiltersHidden',
-                    savedPath = '/a/{{ domain }}/reports/';
+                    savedPath = '/a/{{ domain }}/';
             $("#reportFilters").addClass($.cookie(reportFilterCookieName));
             $("#reportFilters").on('hidden', function () {
                 $.cookie(reportFilterCookieName, '', {path: savedPath, expires: 1});

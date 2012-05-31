@@ -2,6 +2,8 @@ from couchdbkit.exceptions import MultipleResultsFound
 from corehq.apps.groups.models import Group
 from corehq.apps.users.util import normalize_username, raw_username
 from corehq.apps.users.models import CommCareUser
+from django.db.utils import DatabaseError
+from django.db import transaction
 
 required_headers = set(['username', 'password'])
 allowed_headers = set(['phone-number', 'user_id', 'name', 'group', 'data']) | required_headers
@@ -41,6 +43,11 @@ class GroupMemoizer(object):
         for group in self.groups.values():
             group.save()
 
+def _fmt_phone(phone_number):
+    if phone_number and not isinstance(phone_number, basestring):
+        phone_number = str(int(phone_number))
+    return phone_number.lstrip("+")
+
 def create_or_update_users_and_groups(domain, user_specs, group_specs):
     group_memoizer = GroupMemoizer(domain)
     ret = {"errors": [], "rows": []}
@@ -67,7 +74,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
             except TypeError:
                 username = None
             status_row = {'username': raw_username(username) if username else None}
-
+            status_row['row'] = row
             if username in usernames or user_id in user_ids:
                 status_row['flag'] = 'repeat'
             elif not username and not user_id:
@@ -94,7 +101,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                         user = CommCareUser.create(domain, username, password, uuid=user_id or '')
                         status_row['flag'] = 'created'
                     if phone_number:
-                        user.add_phone_number(phone_number.lstrip('+'), default=True)
+                        user.add_phone_number(_fmt_phone(phone_number), default=True)
                     if name:
                         user.set_full_name(name)
                     if data:
@@ -111,10 +118,13 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                         except Exception:
                             raise Exception("Can't add to group '%s' (try adding it to your spreadsheet)" % group_name)
                 except Exception, e:
+                    if isinstance(e, DatabaseError):
+                        transaction.rollback()
                     status_row['flag'] = 'error: %s' % e
+                    
             ret["rows"].append(status_row)
     finally:
         group_memoizer.save_all()
-
+    
     return ret
     

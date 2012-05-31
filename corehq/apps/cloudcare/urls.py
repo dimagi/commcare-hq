@@ -5,7 +5,6 @@ app_urls = patterns('corehq.apps.cloudcare.views',
     url(r'^view/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/context/$',
         'form_context', name='cloudcare_form_context'),
     url(r'^(?P<urlPath>.*)$', 'app_list', name='cloudcare_app_list'),
-    url(r'^$', 'default', name='cloudcare_default'),
 )
 
 cases_urls = patterns('corehq.apps.cloudcare.views',
@@ -21,9 +20,12 @@ api_urls = patterns('corehq.apps.cloudcare.views',
         'filter_cases', name='cloudcare_filter_cases'),
     url(r'^apps/$', 'get_apps_api', name='cloudcare_get_apps'),
     url(r'^apps/(?P<app_id>[\w-]*)/$', 'get_app_api', name='cloudcare_get_app'),
+    url(r'^fixtures/(?P<user_id>[\w-]*)/$', 'get_fixtures', name='cloudcare_get_fixtures'),
+    
 )
 
 urlpatterns = patterns('corehq.apps.cloudcare.views',
+    url(r'^$', 'default', name='cloudcare_default'),
     url(r'^apps/', include(app_urls)),
     url(r'^cases/', include(cases_urls)),
     url(r'^test/$', direct_to_template, {'template': 'cloudcare/test.html'}),

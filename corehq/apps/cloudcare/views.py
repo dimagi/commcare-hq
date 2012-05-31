@@ -3,10 +3,10 @@ from corehq.apps.cloudcare.models import CaseSpec
 from corehq.apps.domain.decorators import login_and_domain_required,\
     login_or_digest_ex
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.web import render_to_response, json_response, json_handler
 from django.http import HttpResponseRedirect, HttpResponse,\
-    HttpResponseBadRequest
+    HttpResponseBadRequest, Http404
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
 from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_cloudcare_apps,\
@@ -16,6 +16,10 @@ from dimagi.utils.parsing import string_to_boolean
 from django.conf import settings
 from corehq.apps.cloudcare import touchforms_api 
 from touchforms.formplayer.api import DjangoAuth
+from django.core.urlresolvers import reverse
+from casexml.apps.phone.fixtures import generator
+from casexml.apps.case.xml import V2
+from xml.etree import ElementTree
 
 @login_and_domain_required
 def default(request, domain):
@@ -23,8 +27,7 @@ def default(request, domain):
 
 @login_and_domain_required
 def app_list(request, domain, urlPath):
-    apps = get_cloudcare_apps(domain)
-    debug = string_to_boolean(request.REQUEST.get("debug", "false"))
+    preview = string_to_boolean(request.REQUEST.get("preview", "false"))
     language = request.couch_user.language or "en"
     
     def _app_latest_build_json(app_id):
@@ -35,16 +38,22 @@ def app_list(request, domain, urlPath):
                                      limit=1).one()
         return build._doc if build else None
                                      
-    if not debug:
+    if not preview:
+        apps = get_cloudcare_apps(domain)
         # replace the apps with the last build of each app
         apps = [_app_latest_build_json(app["_id"])for app in apps]
-
+    
+    else:
+        apps = ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}])
+        apps = [app._doc for app in apps if app and app.application_version == "2.0"]
+    
     # trim out empty apps
     apps = filter(lambda app: app, apps)
     return render_to_response(request, "cloudcare/cloudcare_home.html", 
                               {"domain": domain,
                                "language": language,
                                "apps": json.dumps(apps),
+                               "preview": preview,
                                "maps_api_key": settings.GMAPS_API_KEY })
 
 
@@ -171,3 +180,16 @@ def get_apps_api(request, domain):
 @cloudcare_api
 def get_app_api(request, domain, app_id):
     return json_response(get_app(domain, app_id))
+
+@cloudcare_api
+def get_fixtures(request, domain, user_id):
+    user = CommCareUser.get(user_id)
+    if not user:
+        raise Http404
+    assert user.domain == domain
+    casexml_user = user.to_casexml_user()
+    ret = ElementTree.Element("fixtures")
+    for fixture in generator.get_fixtures(casexml_user, version=V2):
+        ret.append(fixture)
+    return HttpResponse(ElementTree.tostring(ret), content_type="text/xml")
+        
