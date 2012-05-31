@@ -5,7 +5,7 @@ from couchforms.util import post_xform_to_couch
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.case.signals import process_cases
-from datetime import datetime
+from datetime import datetime, date
 from casexml.apps.phone.models import User, SyncLog
 from casexml.apps.phone import xml, views
 from django.contrib.auth.models import User as DjangoUser
@@ -317,4 +317,23 @@ class OtaRestoreTest(TestCase):
                                sync_restore_payload)
         
         
+    def testRestoreAttributes(self):
+        file_path = os.path.join(os.path.dirname(__file__), "data", "attributes.xml")
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
+        form = post_xform_to_couch(xml_data)
+        process_cases(sender="testharness", xform=form)
+        
+        [newcase] = CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()
+        self.assertEqual(date(2012,02,01), newcase.adate)
+        self.assertTrue(isinstance(newcase.dateattr, dict))
+        self.assertEqual("this shouldn't break", newcase.dateattr["#text"])
+        self.assertEqual(date(2012,01,01), newcase.dateattr["@somedate"])
+        self.assertTrue(isinstance(newcase.stringattr, dict))
+        self.assertEqual("neither should this", newcase.stringattr["#text"])
+        self.assertEqual("i am a string", newcase.stringattr["@somestring"])
+        restore_payload = generate_restore_payload(dummy_user())
+        # ghetto
+        self.assertTrue('<dateattr somedate="2012-01-01">' in restore_payload)
+        self.assertTrue('<stringattr somestring="i am a string">' in restore_payload)
         
