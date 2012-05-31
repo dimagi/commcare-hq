@@ -19,15 +19,16 @@ def get_or_update_cases(xformdoc):
     case_blocks = extract_case_blocks(xformdoc)
     cases_touched = {}
     for case_block in case_blocks:
-        case_doc = get_or_update_model(case_block, xformdoc)
+        case_doc = _get_or_update_model(case_block, xformdoc)
         if case_doc:
+            case_doc.save()
             case_doc.xform_ids.append(xformdoc.get_id)
             cases_touched[case_doc.case_id] = case_doc
         else:
             logging.error("Xform %s had a case block that wasn't able to create a case! This usually means it had a missing ID" % xformdoc.get_id)
     return cases_touched
 
-def get_or_update_model(case_block, xformdoc):
+def _get_or_update_model(case_block, xformdoc):
     """
     Gets or updates an existing case, based on a block of data in a 
     submitted form.  Doesn't save anything.

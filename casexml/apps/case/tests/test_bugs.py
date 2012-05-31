@@ -60,7 +60,7 @@ class CaseBugTest(TestCase):
     
     def testDateInCaseNameBug(self):
         """
-        How do we do when submitting an empty case id?
+        How do we do when submitting a case name that looks like a date?
         """
         self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
         file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", "date_in_case_name.xml")
@@ -76,10 +76,10 @@ class CaseBugTest(TestCase):
     def testDuplicateCasePropertiesBug(self):
         """
         How do we do when submitting multiple values for the same property
-        lin an update block
+        in an update block
         """
         self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
-        file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", 
+        file_path = os.path.join(os.path.dirname(__file__), "data", "bugs",
                                  "duplicate_case_properties.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
@@ -90,7 +90,7 @@ class CaseBugTest(TestCase):
         # make sure the property is there, but empty
         self.assertEqual("", case.foo)
         
-        file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", 
+        file_path = os.path.join(os.path.dirname(__file__), "data", "bugs",
                                  "duplicate_case_properties_2.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
@@ -99,4 +99,22 @@ class CaseBugTest(TestCase):
         case = CommCareCase.get(form.xpath("form/case/@case_id"))
         # make sure the property takes the last defined value
         self.assertEqual("2", case.bar)
+    
+    def testMultipleCaseBlocks(self):
+        """
+        How do we do when submitting a form with multiple blocks for the same case?
+        """
+        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
+        file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", "mutiple_case_blocks.xml")
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
+        form = post_xform_to_couch(xml_data)
+        # before the bug was fixed this call failed
+        process_cases(sender="testharness", xform=form)
+        case = CommCareCase.get(form.xpath("form/comunidad/case/@case_id"))
+        self.assertEqual('1630005', case.community_code)
+        self.assertEqual('SantaMariaCahabon', case.district_name)
+        self.assertEqual('TAMERLO', case.community_name)
         
+        
+    

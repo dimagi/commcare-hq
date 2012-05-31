@@ -1,0 +1,28 @@
+<?xml version='1.0' ?>
+<update_community uiVersion="1" version="109"
+	name="Update community" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+	xmlns="http://openrosa.org/formdesigner/KAWOK2-UPDATE-COMMUNITY">
+	<comunidad>
+		<n0:case case_id="MCLPZ69ON942EKNIBR5WF1G2L" user_id="de7abbf6d898ae2d7dcd2bdc79f2785c"
+			date_modified="2012-05-31T07:06:31.379Z" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+			<n0:update>
+				<n0:community_code>1630005</n0:community_code>
+				<n0:district_name>SantaMariaCahabon</n0:district_name>
+				<n0:community_name>TAMERLO</n0:community_name>
+			</n0:update>
+		</n0:case>
+	</comunidad>
+	<n1:case case_id="MCLPZ69ON942EKNIBR5WF1G2L" user_id="de7abbf6d898ae2d7dcd2bdc79f2785c"
+		date_modified="2012-05-31T07:06:31.379Z" xmlns:n1="http://commcarehq.org/case/transaction/v2" />
+	<n2:meta xmlns:n2="http://openrosa.org/jr/xforms">
+		<n2:deviceID>1P18U4DLZ8FM5Y3XGAS7B4ZRG</n2:deviceID>
+		<n2:timeStart>2012-05-31T07:05:08.114Z</n2:timeStart>
+		<n2:timeEnd>2012-05-31T07:06:31.379Z</n2:timeEnd>
+		<n2:username>ray</n2:username>
+		<n2:userID>de7abbf6d898ae2d7dcd2bdc79f2785c</n2:userID>
+		<n2:instanceID>50cd023e-652c-4e8b-82a9-e0e13a9c0ce8</n2:instanceID>
+		<n3:appVersion xmlns:n3="http://commcarehq.org/xforms">v2.0.0dev
+			(ceb54e-7d748d-unvers-??-Generic/AnyPhone) b:2012-May-31 r:--
+		</n3:appVersion>
+	</n2:meta>
+</update_community>
