@@ -386,12 +386,16 @@
                                 <table data-bind="visible: case_properties().length">
                                     <thead>
                                     <tr>
+                                        <th></th>
                                         <th>Question</th>
                                         <th>Case Property</th>
                                     </tr>
                                     </thead>
                                     <tbody data-bind="foreach: case_properties">
                                     <tr>
+                                        <td>
+                                            <a href="#" data-bind="click: $parent.removeProperty"><i class="icon-remove"></i></a>
+                                        </td>
                                         <td>
                                             <select data-bind="
                                                 optstr: $root.utils.getQuestions('all'),

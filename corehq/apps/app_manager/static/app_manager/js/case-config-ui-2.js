@@ -83,7 +83,9 @@ var CaseXML = (function () {
                         key: ko.observable()
                     })
                 };
-
+                self.removeProperty = function (property) {
+                    self.case_properties.remove(property);
+                };
                 self.unwrap = function () {
                     SubCase.unwrap(self);
                 };
