@@ -88,7 +88,27 @@ def generate_restore_payload(user, restore_id="", version="1.0", state_hash=""):
     for case_elem in case_xml_elements:
         response.append(case_elem)
     
-    return xml.tostring(response)
+    try: 
+        return xml.tostring(response)
+    except TypeError:
+        # extra info for logging
+        try: 
+            xml.tostring(xml.get_registration_element(user))
+        except TypeError:
+            logging.info("problem in registration element")
+        for fixture in generator.get_fixtures(user, version, last_sync):
+            try: 
+                xml.tostring(fixture)
+            except TypeError:
+                logging.info("problem in fixture %s" % fixture)
+        for op in sync_operation.actual_cases_to_sync:
+            try: 
+                xml.tostring(xml.get_case_element(op.case, op.required_updates, version))
+            except TypeError:
+                logging.info("problem in case %s" % op.case.get_id)
+        raise
+            
+        
     
 def generate_restore_response(user, restore_id="", version="1.0", state_hash=""):
     try:
