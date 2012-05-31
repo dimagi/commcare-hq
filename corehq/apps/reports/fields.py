@@ -13,17 +13,26 @@ datespan_default = datespan_in_request(
             default_days=7,
         )
 
-class GroupField(ReportField):
+class GroupField(ReportSelectField):
     slug = "group"
-    template = "reports/fields/select_group.html"
+    name = "Group"
+    default_option = "Everybody"
+    cssId = "group_select"
 
-    def update_context(self):
-        group = self.request.GET.get('group', '')
-        groups = Group.get_reporting_groups(self.domain)
-        if group:
-            group = Group.get(group)
-        self.context['group'] = group
-        self.context['groups'] = groups
+    def update_params(self):
+        super(GroupField, self).update_params()
+        self.groups = Group.get_reporting_groups(self.domain)
+        self.options = [dict(val=group.get_id, text=group.name) for group in self.groups]
+
+class CaseSharingGroupField(GroupField):
+    default_option = "Any Group"
+    cssClasses = "span6"
+
+    def update_params(self):
+        super(CaseSharingGroupField, self).update_params()
+        self.options = [dict(val=group.get_id, text="%s [Case Sharing]"
+                        % group.name if group.case_sharing else group.name)
+                            for group in self.groups]
 
 class FilterUsersField(ReportField):
     slug = "ufilter"

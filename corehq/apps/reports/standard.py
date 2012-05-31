@@ -4,6 +4,7 @@ import json
 import logging
 import sys
 import dateutil
+from corehq.apps.groups.models import Group
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from django.core.urlresolvers import reverse, NoReverseMatch
@@ -54,6 +55,11 @@ class StandardHQReport(HQReport):
         self.case_type = self.request_params.get('case_type', '')
 
         self.users = util.get_all_users_by_domain(self.domain, self.group, self.individual, self.user_filter)
+        try:
+            if self.group:
+                self.group = Group.get(self.group)
+        except Exception:
+            pass
 
         if self.individual:
             self.name = "%s for %s" % (self.name, self.users[0].raw_username)
