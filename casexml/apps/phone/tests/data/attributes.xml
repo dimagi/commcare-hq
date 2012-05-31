@@ -18,7 +18,7 @@
         <external_id>someexternal</external_id>
     </create>
     <update>
-        <adate>2012-02-01</adate>
+        <adate someattr="i am an attribute">2012-02-01</adate>
         <dateattr somedate="2012-01-01">this shouldn't break</dateattr>
         <stringattr somestring="i am a string">neither should this</stringattr>
     </update>

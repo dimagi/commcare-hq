@@ -325,7 +325,9 @@ class OtaRestoreTest(TestCase):
         process_cases(sender="testharness", xform=form)
         
         [newcase] = CommCareCase.view("case/by_user", reduce=False, include_docs=True).all()
-        self.assertEqual(date(2012,02,01), newcase.adate)
+        self.assertTrue(isinstance(newcase.adate, dict))
+        self.assertEqual(date(2012,02,01), newcase.adate["#text"])
+        self.assertEqual("i am an attribute", newcase.adate["@someattr"])
         self.assertTrue(isinstance(newcase.dateattr, dict))
         self.assertEqual("this shouldn't break", newcase.dateattr["#text"])
         self.assertEqual(date(2012,01,01), newcase.dateattr["@somedate"])

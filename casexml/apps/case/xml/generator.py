@@ -24,7 +24,7 @@ def get_dynamic_element(key, val):
     """ 
     element = ElementTree.Element(key)
     if isinstance(val, dict):
-        element.text = val.get('#text', '')
+        element.text = unicode(val.get('#text', ''))
         element.attrib = dict([(x[1:], unicode(val[x])) for x in \
                                filter(lambda x: x and x.startswith("@"), val.keys())])
     else:
