@@ -73,17 +73,19 @@
         {% if commcare_users %}
             <thead>
                 <tr>
-                    {% if show_case_sharing %}
-                    <th class="help_popover" data-help-key="Case Sharing" data-placement="right">
-                        <div>{% trans "Case Sharing" %} <i class="icon icon-question-sign"></i></div>
-                    </th>
-                    {% endif %}
+                    <th></th>
                     <th>{% trans "Username" %}</th>
+                    <th>{% trans "Full Name" %}</th>
                     <th>{% trans "Password" %}</th>
                     <th>{% trans "Date Registered" %}</th>
                     <th>{% trans "Forms" %}</th>
                     <th>{% trans "Cases" %}</th>
                     <th>{% trans "Phone" %}</th>
+                    {% if show_case_sharing %}
+                    <th class="help_popover" data-help-key="Case Sharing" data-placement="right">
+                        <div>{% trans "Case Sharing" %} <i class="icon icon-question-sign"></i></div>
+                    </th>
+                    {% endif %}
                     {% if couch_user.can_edit_commcare_users %}
                     <th class="help_popover" data-help-key="Archive User"><div >{% trans "Archive" %} <i class="icon icon-question-sign"></i></div></th>
                     {% endif %}
@@ -99,26 +101,10 @@
                     {% endif %}
                 {% endifchanged %}
                 <tr class="{% cycle "odd" "even" %}">
-                    {% if show_case_sharing %}
-                    <td>
-                        {% if user.get_case_sharing_groups|length == 1 %}
-                            <i class="icon-ok"></i> {{ user.get_case_sharing_groups.0.name }}
-                        {% else %}
-                            <i class="icon-warning-sign"></i>
-                            {% if user.get_case_sharing_groups %}
-                                <span class="label label-warning">Multiple Groups</span>
-                                <ul>
-                                    {% for group in user.get_case_sharing_groups %}
-                                        <li>{{ group.name }}</li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <span class="label label-warning">No Groups</span>
-                            {% endif %}
-                        {% endif %}
-                    </td>
-                    {% endif %}
+
+                    <td>{{ forloop.counter }}</td>
                     <td><a href="{% url user_account domain user.user_id %}">{{ user.raw_username }}</a></td>
+                    <td>{{ user.full_name }}</td>
                     <td>
                         <a href="#reset_password_{{ user.user_id }}" class="btn btn-info" data-toggle="modal">Reset Password</a>
 
@@ -149,6 +135,25 @@
                             {% endif %}
                         {% endif %}
                     </td>
+                    {% if show_case_sharing %}
+                    <td>
+                        {% if user.get_case_sharing_groups|length == 1 %}
+                        <i class="icon-ok"></i> {{ user.get_case_sharing_groups.0.name }}
+                        {% else %}
+                        <i class="icon-warning-sign"></i>
+                        {% if user.get_case_sharing_groups %}
+                        <span class="label label-warning">Multiple Groups</span>
+                        <ul>
+                            {% for group in user.get_case_sharing_groups %}
+                            <li>{{ group.name }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <span class="label label-warning">No Groups</span>
+                        {% endif %}
+                        {% endif %}
+                    </td>
+                    {% endif %}
                     {% if couch_user.can_edit_commcare_users %}
                     <td>
                         {% if user.is_active %}

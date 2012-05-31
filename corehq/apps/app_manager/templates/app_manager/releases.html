@@ -48,6 +48,9 @@
     .build.build-latest-release {
         background-color: #EFEFFF;
     }
+    .nowrap {
+        white-space: nowrap;
+    }
 </style>
 {% endblock %}
 {% block form-view %}
@@ -166,17 +169,25 @@
                 </form>
                 {% endif %}
             </td>
-            <td>{{ saved_app.version }}</td>
-            <td>{% utc_to_timezone saved_app.built_on timezone "%b %d, %Y" %}</td>
-            <td>{% utc_to_timezone saved_app.built_on timezone "%H:%M %Z" %}</td>
-            <td>
+            <td class="nowrap">{{ saved_app.version }}</td>
+            <td class="nowrap">{% utc_to_timezone saved_app.built_on timezone "%b %d, %Y" %}</td>
+            <td class="nowrap">{% utc_to_timezone saved_app.built_on timezone "%H:%M %Z" %}</td>
+            <td class="nowrap">
                 {% if saved_app.built_with.get_label %}{{ saved_app.built_with.get_label }}{% endif %}
                 {% if not saved_app.built_with.signed %}<h6>Unsigned Jar</h6>{% endif %}
             </td>
-            <td>
-                <div class="download-dropdown">
-                    <span>Deploy</span>
-                    <ul>
+            <td class="nowrap">
+                <div class="btn-group">
+                    <span class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                        Deploy
+                        <span class="caret"></span>
+                    </span>
+                    <ul class="dropdown-menu">
+                        {% if request.user.is_superuser %}
+                            <li>
+                                <a href="{% url download_index domain saved_app.id %}">View Source Files</a>
+                            </li>
+                        {% endif %}
                         <li>
                             <a href="{% url emulator domain saved_app.id %}">Preview</a>
                         </li>
@@ -188,6 +199,10 @@
                                         Download <strong>both</strong> of the following files:
                                         <p><a href="{% url corehq.apps.app_manager.views.download_jad domain saved_app.id %}">Download CommCare.jad</a></p>
                                         <p><a href="{% url corehq.apps.app_manager.views.download_jar domain saved_app.id %}">Download CommCare.jar</a></p>
+                                    </li>
+                                    <li>
+                                        Download the multimedia files for your application. Unzip this file and place the folder in the root directory of your SD card:
+                                        <p><a href="{% url corehq.apps.app_manager.views.download_multimedia_zip domain saved_app.id %}">Download Multimedia ZIP</a></p>
                                     </li>
                                     <li>
                                         For help on how to install, see our <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Set+Up+Mobile+Phone">Set Up Mobile Phone</a>.

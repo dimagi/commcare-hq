@@ -37,6 +37,14 @@ class Domain(Document):
     date_created = DateTimeProperty()
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)
+    
+    # domain metadata
+    city = StringProperty()
+    country = StringProperty()
+    region = StringProperty() # e.g. US, LAC, SA, Sub-saharn Africa, East Africa, West Africa, Southeast Asia)
+    project_type = StringProperty() # e.g. MCH, HIV
+    customer_type = StringProperty() # plus, full, etc.
+    is_test = BooleanProperty(default=False)
 
     migrations = SchemaProperty(DomainMigrations)
 

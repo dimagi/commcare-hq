@@ -108,7 +108,7 @@ $(function () {
                 _id: null,
                 fields: {}
             });
-            item.editing(true);
+            item.startEditing();
             self.data_items.push(item);
         };
         self.removeDataItem = function (item, event) {

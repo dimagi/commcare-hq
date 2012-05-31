@@ -1,19 +1,27 @@
+from corehq.apps.reports.custom import HQReport
 from django.core.urlresolvers import reverse
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import StandardTabularHQReport, StandardDateHQReport
+from corehq.apps.users.models import WebUser
 from dimagi.utils.couch.database import get_db
 
-class CaseManagementReport(StandardTabularHQReport, StandardDateHQReport):
+class DataInterface(HQReport):
+
+    def get_report_context(self):
+        super(DataInterface, self).get_report_context()
+        self.context['report_base'] = 'data_interfaces/data_interfaces_base.html'
+
+class CaseReassignmentInterface(DataInterface, StandardTabularHQReport, StandardDateHQReport):
     name = "Reassign Cases"
-    slug = "case_management"
+    slug = "reassign_cases"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.fields.SelectMobileWorkerField',
               'corehq.apps.reports.fields.GroupField']
-    template_name = 'reports/reportdata/case_management.html'
+    template_name = 'data_interfaces/interfaces/case_management.html'
 
     def get_headers(self):
         headers = DataTablesHeader(
@@ -28,10 +36,9 @@ class CaseManagementReport(StandardTabularHQReport, StandardDateHQReport):
 
     def get_rows(self):
         rows = list()
-        cases = dict()
         for user in self.users:
             key = [self.domain, False, {}, user.userID ]
-            data = get_db().view('case/by_date_modified',
+            data = get_db().view('case/by_date_modified_owner',
                 startkey=key+[self.datespan.startdate_param_utc],
                 endkey=key+[self.datespan.enddate_param_utc],
                 reduce=False,
@@ -44,16 +51,14 @@ class CaseManagementReport(StandardTabularHQReport, StandardDateHQReport):
                 elif "id" in item:
                     case = CommCareCase.get(item["id"])
                 if case:
-                    cases[case._id] = case
                     fmt_case = '<a href="%s">%s</a>' % \
                                (reverse('case_details', args=[self.domain, case._id]), case.name)
                     rows.append(['<input type="checkbox" class="selected-commcare-case" data-bind="event: {change: updateCaseSelection}" data-caseid="%s" data-owner="%s" />' %\
                         (case._id, user.userID)
                         , fmt_case, case.type, user.username_in_report, util.format_relative_date(case.modified_on)])
-        self.context['cases'] = cases
         return rows
 
     def get_report_context(self):
-        super(CaseManagementReport, self).get_report_context()
+        super(CaseReassignmentInterface, self).get_report_context()
         active_users = util.get_all_users_by_domain(self.domain, filter_users=HQUserType.use_defaults())
         self.context['available_owners'] = [dict(userid=user.userID, username=user.raw_username) for user in active_users]

@@ -12,7 +12,7 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404,\
 from django.shortcuts import redirect
 from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
 from corehq.apps.app_manager.models import import_app
-from corehq.apps.domain.utils import normalize_domain_name, legacy_domain_re
+from corehq.apps.domain.utils import normalize_domain_name, legacy_domain_re, get_domain_from_url
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm
 
 from dimagi.utils.web import render_to_response, get_url_base
@@ -27,10 +27,7 @@ def server_error(request, template_name='500.html'):
     500 error handler.
     """
 
-    try:
-        domain, = re.compile(r'^/a/(?P<domain>%s)/' % legacy_domain_re).search(request.path).groups()
-    except Exception:
-        domain = ''
+    domain = get_domain_from_url(request.path) or ''
 
 
     # hat tip: http://www.arthurkoziel.com/2009/01/15/passing-mediaurl-djangos-500-error-view/

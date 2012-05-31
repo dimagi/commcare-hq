@@ -1,21 +1,6 @@
 from django.conf.urls.defaults import patterns, url, include
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 
-download_urls = patterns('corehq.apps.app_manager.views',
-    url(r'^$', 'download_index', {}, 'download_index'),
-    url(r'^suite.xml$', 'download_suite', {}, 'download_suite'),
-    url(r'^profile.xml$', 'download_profile', {}, 'download_profile'),
-    url(r'^profile.ccpr$', 'download_odk_profile', {}, 'download_odk_profile'),
-    url(r'^(?P<lang>[\w-]+)/app_strings.txt$', 'download_app_strings', {}, 'download_app_strings'),
-
-    url(r'^user_registration.xml$', 'download_user_registration', {}, 'download_user_registration'),
-    url(r'^multimedia/commcare.zip$', 'download_multimedia_zip', {}, 'download_multimedia_zip'),
-    url(r'^modules-(?P<module_id>\d+)/forms-(?P<form_id>\d+).xml$', 'download_xform', {}, 'download_xform'),
-    url(r'^CommCare.jad$', 'download_jad', {}, 'download_jad'),
-    url(r'^CommCare_raw.jar$', 'download_raw_jar', {}, 'download_raw_jar'),
-    url(r'^CommCare.jar$', 'download_jar', {}, 'download_jar'),
-)
-
 urlpatterns = patterns('corehq.apps.app_manager.views',
     (r'^xform/(?P<form_unique_id>[\w-]+)/$',                                    'xform_display'),
  url(r'^browse/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/source/$',
@@ -91,13 +76,15 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
 
     (r'^odk/(?P<app_id>[\w-]+)/qr_code/$',                                       'odk_qr_code'),
     (r'^odk/(?P<app_id>[\w-]+)/install/$',                                       'odk_install'),
-    
+
     (r'^save/(?P<app_id>[\w-]+)/$',                                             'save_copy'),
     (r'^revert/(?P<app_id>[\w-]+)/$',                                           'revert_to_copy'),
     (r'^delete_copy/(?P<app_id>[\w-]+)/$',                                      'delete_copy'),
 
     url(r'^emulator/(?P<app_id>[\w-]+)/$', 'emulator', name="emulator"),
     (r'^emulator/(?P<app_id>[\w-]+)/CommCare\.jar$',                            'emulator_commcare_jar'),
-    url(r'^download/(?P<app_id>[\w-]+)/', include(download_urls)),
+    url(r'^download/(?P<app_id>[\w-]+)/$', 'download_index', {}, 'download_index'),
+    url(r'^download/(?P<app_id>[\w-]+)/(?P<path>.*)$', 'download_file', name='app_download_file'),
+    url(r'^download/(?P<app_id>[\w-]+)/', include('corehq.apps.app_manager.download_urls')),
     url(r'^formdefs/(?P<app_id>[\w-]+)/', 'formdefs', name='formdefs'),
 )

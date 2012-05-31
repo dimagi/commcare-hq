@@ -12,7 +12,8 @@
         <script src="{% static 'app_manager/js/case-config-ui-1.js' %}"></script>
     {% endif %}
     <script src="{% static 'app_manager/js/langcodeValidator.js' %}"></script>
-
+    <script src="{% static 'cloudcare/js/util.js' %}"></script>
+    
     <script>
         $(function(){
             (function styleSourcePopup() {
@@ -161,6 +162,11 @@
                     moduleCaseTypes: {{ module_case_types|JSON }}
                 });
                 casexml.init();
+                
+                // tag the 'preview in cloudcare' button with the right url
+                // unfortunately, has to be done in javascript
+                var cloudCareUrl = getCloudCareUrl("{% url cloudcare_app_list domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
+                $("#cloudcare-preview-url").attr("href", cloudCareUrl);
             }
         {% endif %}
         });
@@ -219,6 +225,16 @@
             color: #888;
         }
     </style>
+    {% if app.application_version == '2.0' %}
+    <style>
+        #open-referral-action,
+        #update-referral-action,
+        #close-referral-action,
+        #referral-preload-action {
+            display: none;
+        }
+    </style>
+    {% endif %}
 {% endblock %}
 {% block form-view %}
     {% if edit and not is_user_registration %}
@@ -310,6 +326,12 @@
                             href="{% url get_xform_source domain app.id module.id form.id %}?download=true"
                         {% endif %}><span class="ui-icon ui-icon-arrowthick-1-s"></span>Download</a>
                 </li>
+{% if request.couch_user.is_previewer and app.application_version == '2.0' %}                
+                <li><a {% if not form.source or is_user_registration %}class="disabled"{% endif %}
+                            id="cloudcare-preview-url" href="#"
+                        ><span class="ui-icon ui-icon-play"></span>Try in CloudCare</a>
+                </li>
+{% endif %}
             </ul>
         </div>
     {% endif %}
@@ -334,6 +356,7 @@
                 </div>
             {% else %}
                 <h4>Case Configuration <span class="help-link" data-help-key="app_manager/casexml_overview"></span></h4>
+                <span style="margin-left: 15px" class="label label-info">The app builder for 2.0 apps currently doesn't support referrals</span>
                 <div class="help-text" data-help-key="app_manager/casexml_overview"></div>
                 <div class="casexml config" id="casexml_home">
                     <div id="case-config-ko">

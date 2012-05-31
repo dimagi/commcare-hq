@@ -7,7 +7,6 @@
 {% include "imports/flot.html" %}
 <script type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
-<script type="text/javascript" src="{% static 'hqwebapp/js-custom/hq.new-notify.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -95,7 +94,7 @@
     <div id="report-content">
         {% block reportcontent %}
         {% if request.couch_user.can_view_reports or request.couch_user.get_viewable_reports %}
-            <h6 style="text-align: center; margin-top: 200px;">Select a Report to View</h6>
+            <h6 style="text-align: center; margin-top: 200px;">{{ report.name }}</h6>
         {% else %}
             <h6 style="text-align: center; margin-top: 100px;">
                 <i class="icon-info-sign" id="no-viewable-reports"></i>
