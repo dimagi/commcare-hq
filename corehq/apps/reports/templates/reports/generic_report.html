@@ -44,6 +44,11 @@
         {% endif %}
     </thead>
     <tbody>
+        <tr>
+            <td colspan="{{ report.headers.header|length }}" class="dataTables_empty">
+                Loading data, please wait...
+            </td>
+        </tr>
         {% for row in report.rows %}
             <tr>
                 {% for thing in row %}
