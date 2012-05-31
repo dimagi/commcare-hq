@@ -430,7 +430,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         app_label = 'users'
 
     def __unicode__(self):
-        return "couch user %s" % self.get_id
+        return "%s %s" % (self.__class__.__name__, self.get_id)
 
     def get_email(self):
         return self.email
@@ -1018,7 +1018,10 @@ class WebUser(CouchUser):
 
     def is_web_user(self):
         return True
-    
+
+    def get_email(self):
+        return self.email or self.username
+
     def get_domain_membership(self, domain):
         domain_membership = None
         try:
@@ -1180,8 +1183,7 @@ class PublicUser(FakeUser):
         dm = CustomDomainMembership(domain=domain, is_admin=False)
         dm.set_permission('view_reports', True)
         self.domain_memberships = [dm]
-        print self.has_permission(domain, 'view_reports')
-    
+
     def get_role(self, domain=None):
         assert(domain == self.domain)
         return super(PublicUser, self).get_role(domain)
