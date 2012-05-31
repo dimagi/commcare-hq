@@ -40,7 +40,7 @@
                     <h1><a href="{% url homepage %}"><img src="{% static 'hq-bootstrap/img/commcare-logo.png' %}" alt="CommCare HQ" /></a></h1>
                 </hgroup>
                 {% if request.user.is_authenticated %}
-                    <nav>
+                    <nav id="hq-navigation-bar">
                         {% block tabs %}
                         <ul class="nav">
                             {# hide tabs from commcare users #}
