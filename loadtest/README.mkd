@@ -1,0 +1,29 @@
+##CommCare HQ loadtest
+multi-mechanize load tests for CommCare HQ
+
+Work in progress
+
+###Running
+Requires [multi-mechanize](http://testutils.org/multi-mechanize/).  
+
+From the root commcare-hq directory run 
+
+    $ multimech-run loadtest
+    
+Currently has the following user profiles:
+
+* login - logs a user in and grabs an empty report page
+* submit_form - submits a simple form with a single case
+* ota_restore - ota restores a mobile user
+* public_landingpage - hits the public HQ landing page
+
+Can tweak server, domain and user credentials by adding a localsettings.py file and overriding the following:
+
+    BASE_URL = 'https://staging.commcarehq.org'
+    DOMAIN = "demo"
+    USERNAME = "changeme@dimagi.com"
+    PASSWORD = "***"
+    MOBILE_USERNAME = "user@demo.commcarehq.org"
+    MOBILE_PASSWORD = "***"
+
+Edit config.cfg to tweak number of threads per user profile and length of test. See multimechanize docs for more info.
