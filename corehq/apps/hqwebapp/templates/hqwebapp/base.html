@@ -8,20 +8,21 @@
 
         <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
 
-        <link rel="stylesheet" media="screen" href="{% static 'hq-bootstrap/css/hq-bootstrap.css' %}?v=3"/>
+        <link rel="stylesheet" media="screen" href="{% static 'hq_bootstrap/css/hq-bootstrap.css' %}"/>
 
         {# this should eventually be moved to the end of the page #}
-        <script src="{% static 'hq-bootstrap/js/jquery-1.7.1.min.js' %}"></script>
+        <script src="{% static 'hq_bootstrap/js/jquery-1.7.1.min.js' %}"></script>
         {% if DEBUG %}
             <script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.0.0.js' %}"></script>
         {% else %}
             <script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.0.0.debug.js' %}"></script>
         {% endif %}
         <script type="text/javascript" src="{% static 'hqwebapp/javascripts/underscore-1.3.1.js' %}"></script>
+        <script type="text/javascript" src="{% static 'hqwebapp/ko/global.handlers.js' %}"></script>
 
         {% block oldstyle_imports %}
             <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
-            <link rel="stylesheet" href="{% static 'hq-bootstrap/css/old/core.css' %}"/>
+            <link rel="stylesheet" href="{% static 'hq_bootstrap/css/old/core.css' %}"/>
             {% include "imports/hq-oldstyle-js.html" %}
         {% endblock %}
 
@@ -37,7 +38,7 @@
         <div class="hq-container-fluid {% block layout_style %}{% endblock %}{% block oldstyle_tag %} old-style{% endblock %}">
             <header class="hq-navbar">
                 <hgroup>
-                    <h1><a href="{% url homepage %}"><img src="{% static 'hq-bootstrap/img/commcare-logo.png' %}" alt="CommCare HQ" /></a></h1>
+                    <h1><a href="{% url homepage %}"><img src="{% static 'hq_bootstrap/img/commcare-logo.png' %}" alt="CommCare HQ" /></a></h1>
                 </hgroup>
                 {% if request.user.is_authenticated %}
                     <nav id="hq-navigation-bar">
@@ -131,7 +132,7 @@
         </div>
 
         <footer>
-            <a href="http://www.dimagi.com/" class="footer-left"><img src="{% static 'hq-bootstrap/img/powered-by-dimagi.png' %}" class="powered" alt="Powered by Diamgi, Inc." /></a>
+            <a href="http://www.dimagi.com/" class="footer-left"><img src="{% static 'hq_bootstrap/img/powered-by-dimagi.png' %}" class="powered" alt="Powered by Diamgi, Inc." /></a>
 
             {% if user.is_authenticated %}
             <div class="footer-right">
@@ -208,8 +209,8 @@
         {% endblock %}
         </div>
         <!--Begin javascript -->
-        <script src="{% static 'hq-bootstrap/js/bootstrap.min.js?v=2' %}?v=2"></script>
-        <script src="{% static 'hq-bootstrap/js/jquery.form.js' %}"></script>
+        <script src="{% static 'hq_bootstrap/js/bootstrap.min.js' %}"></script>
+        <script src="{% static 'hq_bootstrap/js/jquery.form.js' %}"></script>
 
         {% block js %}
         <script src="{% static 'hqwebapp/js-custom/hqhandler.form.bugReport.js' %}"></script>
