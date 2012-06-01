@@ -47,7 +47,7 @@
                 <label for="reassign_owner_select">named</label>
                 <select name="reassign_owner" id="reassign_owner_select" data-bind="grabUniqueDefault: selected_owners, options: available_owners, optionsText: 'name', optionsValue: 'ownerid', optionsCaption: 'Select New Owner...', event: {change: updateSelectedOwner}"></select>
             </span>
-            <button type="submit" data-bind="readyToReassign: enableSubmit" class="btn disabled">Reassign</button>
+            <button type="submit" data-bind="hqbSubmitReady: enableSubmit" class="btn disabled">Reassign</button>
         </form>
     </div>
     {{ block.super }}

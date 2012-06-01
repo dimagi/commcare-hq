@@ -156,13 +156,3 @@ ko.bindingHandlers.grabUniqueDefault = {
         $(element).change();
     }
 };
-
-ko.bindingHandlers.readyToReassign = {
-    update: function(element, valueAccessor) {
-        var value = valueAccessor()();
-        if (value)
-            $(element).addClass("btn-primary").removeClass("disabled");
-        else
-            $(element).addClass("disabled").removeClass("btn-primary");
-    }
-};
