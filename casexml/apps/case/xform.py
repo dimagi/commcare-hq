@@ -9,7 +9,34 @@ import logging
 from couchdbkit.resource import ResourceNotFound
 from casexml.apps.case.xml.parser import case_update_from_block
 
-
+class CaseDbCache(object):
+    """
+    A temp object we use to keep a cache of in-memory cases around
+    so we can get the latest updates even if they haven't been saved
+    to the database. Also provides some type checking safety.
+    """
+    def __init__(self):
+        self.cache = {}
+        
+    def get(self, case_id):
+        if case_id in self.cache:
+            return self.cache[case_id]
+        try: 
+            case_doc = CommCareCase.get(case_id)
+            # some forms recycle case ids as other ids (like xform ids)
+            # disallow that hard.
+            if case_doc.doc_type != "CommCareCase":
+                raise Exception("Bad case doc type! This usually means you are using a bad value for case_id.")
+            return case_doc
+        except ResourceNotFound:
+            return None
+        
+    def set(self, case_id, case):
+        self.cache[case_id] = case
+        
+    def doc_exist(self, case_id):
+        return case_id in self.cache or CommCareCase.get_db().doc_exist(case_id)
+        
 def get_or_update_cases(xformdoc):
     """
     Given an xform document, update any case blocks found within it,
@@ -17,32 +44,36 @@ def get_or_update_cases(xformdoc):
     couch case document objects
     """
     case_blocks = extract_case_blocks(xformdoc)
-    cases_touched = {}
+    case_db = CaseDbCache()
     for case_block in case_blocks:
-        case_doc = _get_or_update_model(case_block, xformdoc)
+        case_doc = _get_or_update_model(case_block, xformdoc, case_db)
         if case_doc:
-            case_doc.save()
             case_doc.xform_ids.append(xformdoc.get_id)
-            cases_touched[case_doc.case_id] = case_doc
+            case_db.set(case_doc.case_id, case_doc)
         else:
             logging.error("Xform %s had a case block that wasn't able to create a case! This usually means it had a missing ID" % xformdoc.get_id)
-    return cases_touched
+    
+    # once we've gotten through everything, validate all indices
+    def _validate_indices(case):
+        if case.indices:
+            for index in case.indices:
+                if not case_db.doc_exist(index.referenced_id):
+                    raise Exception(
+                        ("Submitted index against an unknown case id: %s. "
+                         "This is not allowed. Most likely your case "
+                         "database is corrupt and you should restore your "
+                         "phone directly from the server.") % index.referenced_id)
+    [_validate_indices(case) for case in case_db.cache.values()]
+    return case_db.cache
 
-def _get_or_update_model(case_block, xformdoc):
+def _get_or_update_model(case_block, xformdoc, case_dbcache):
     """
     Gets or updates an existing case, based on a block of data in a 
     submitted form.  Doesn't save anything.
     """
     
     case_update = case_update_from_block(case_block)
-    try: 
-        case_doc = CommCareCase.get(case_update.id)
-        # some forms recycle case ids as other ids (like xform ids)
-        # disallow that hard.
-        if case_doc.doc_type != "CommCareCase":
-            raise Exception("Bad case doc type! This usually means you are using a bad value for case_id.")
-    except ResourceNotFound:
-        case_doc = None
+    case_doc = case_dbcache.get(case_update.id)
     
     if case_doc == None:
         case_doc = CommCareCase.from_case_update(case_update, xformdoc)

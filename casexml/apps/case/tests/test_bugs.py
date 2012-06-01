@@ -115,6 +115,17 @@ class CaseBugTest(TestCase):
         self.assertEqual('1630005', case.community_code)
         self.assertEqual('SantaMariaCahabon', case.district_name)
         self.assertEqual('TAMERLO', case.community_name)
-        
-        
     
+    def testLotsOfSubcases(self):
+        """
+        How do we do when submitting a form with multiple blocks for the same case?
+        """
+        self.assertEqual(0, len(CommCareCase.view("case/by_user", reduce=False).all()))
+        file_path = os.path.join(os.path.dirname(__file__), "data", "bugs", "lots_of_subcases.xml")
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
+        form = post_xform_to_couch(xml_data)
+        # before the bug was fixed this call failed
+        process_cases(sender="testharness", xform=form)
+        self.assertEqual(11, len(CommCareCase.view("case/by_user", reduce=False).all()))
+        

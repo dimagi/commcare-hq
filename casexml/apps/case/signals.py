@@ -16,6 +16,7 @@ def process_cases(sender, xform, **kwargs):
                 case['#export_tag'] = ["domain", "type"]
             return case
         cases = [attach_domain(case) for case in cases]
+    
     map(lambda case: case.save(), cases)
     
     # handle updating the sync records for apps that use sync mode
