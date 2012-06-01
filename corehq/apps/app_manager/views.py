@@ -389,6 +389,17 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
         'saved_apps': saved_apps,
         'latest_release': latest_release,
     })
+    if not app.is_remote_app():
+        sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
+        multimedia_images, missing_image_refs = app.get_template_map(sorted_images)
+        multimedia_audio, missing_audio_refs = app.get_template_map(sorted_audio)
+        if len(multimedia_images) > 0 or len(multimedia_audio) > 0 or has_error:
+            context.update(dict(multimedia={
+                'missing_image_refs': missing_image_refs,
+                'missing_audio_refs': missing_audio_refs,
+                'errors': has_error,
+                'notice': bool(has_error or missing_image_refs > 0  or missing_audio_refs > 0)
+            }))
     response = render_to_response(request, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
