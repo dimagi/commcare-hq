@@ -44,11 +44,13 @@
         {% endif %}
     </thead>
     <tbody>
+        {% if ajax_source %}
         <tr>
             <td colspan="{{ report.headers.header|length }}" class="dataTables_empty">
                 Loading data, please wait...
             </td>
         </tr>
+        {% endif %}
         {% for row in report.rows %}
             <tr>
                 {% for thing in row %}
