@@ -1,10 +1,13 @@
 import logging
 from corehq.apps.sms.util import clean_phone_number
-from corehq.apps.sms.models import SMSLog, OUTGOING
-from corehq.apps.sms.mixin import MobileBackend
+from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING
+from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
 from datetime import datetime
 from corehq.apps.unicel import api as unicel_api
 from corehq.apps.sms import mach_api
+from corehq.apps.sms.util import format_message_list
+from corehq.apps.smsforms.models import XFormsSession
+from corehq.apps.smsforms.app import get_responses
 
 ALTERNATIVE_BACKENDS = [("+91", unicel_api)] # TODO: move to setting?
 DEFAULT_BACKEND = mach_api
@@ -78,5 +81,42 @@ def send_sms_to_verified_number(verified_number, text):
         logging.exception("Exception while sending SMS to VerifiedNumber id " + verified_number._id)
         logging.exception(e)
         return False
+
+def incoming(phone_number, text):
+    v = VerifiedNumber.view("sms/verified_number_by_number",
+        key=phone_number,
+        include_docs=True
+    ).one()
+    
+    # Log message in message log
+    msg = SMSLog(
+        phone_number    = phone_number,
+        direction       = INCOMING,
+        date            = datetime.utcnow(),
+        text            = text
+    )
+    if v is not None:
+        msg.couch_recipient_doc_type    = v.owner_doc_type
+        msg.couch_recipient             = v.owner_id
+        msg.domain                      = v.domain
+    msg.save()
+    
+    # Pass message to the appropriate form
+    if v is not None:
+        session = XFormsSession.view("smsforms/open_sessions_by_connection",
+                                     key=[v.domain, v.owner_id],
+                                     include_docs=True).one()
+        if session is not None:
+            responses = get_responses(msg)
+            if len(responses) > 0:
+                response_text = format_message_list(responses)
+                send_sms_to_verified_number(v, response_text)
+        else:
+            #TODO: Try to match the text against a keyword to start a survey
+            pass
+    else:
+        #TODO: Registration via SMS
+        pass
+
 
 

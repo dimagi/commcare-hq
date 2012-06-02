@@ -11,6 +11,10 @@ from corehq.apps.users.models import CommCareUser
 import logging
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dateutil.parser import parse
+from corehq.apps.smsforms.models import XFormsSession
+from corehq.apps.smsforms.app import start_session
+from corehq.apps.app_manager.models import get_app
+from corehq.apps.sms.util import format_message_list
 
 REPEAT_SCHEDULE_INDEFINITELY = -1
 
@@ -434,42 +438,71 @@ class CaseReminderHandler(Document):
         except Exception:
             lang = None
         
-        # If it is a callback reminder and the callback has been received, skip sending the next timeout message
-        if (reminder.method == "callback" or reminder.method == "callback_test") and len(reminder.current_event.callback_timeout_intervals) > 0:
-            if CallLog.inbound_call_exists(recipient.doc_type, recipient._id, reminder.last_fired):
-                reminder.callback_received = True
-                return True
-            elif len(reminder.current_event.callback_timeout_intervals) == reminder.callback_try_count:
-                # On the last callback timeout, instead of sending the SMS again, log the missed callback
-                event = EventLog(
-                    domain          = reminder.domain,
-                    date            = self.get_now(),
-                    event_type      = MISSED_EXPECTED_CALLBACK
-                )
-                if verified_number is not None:
-                    event.couch_recipient_doc_type = verified_number.owner_doc_type
-                    event.couch_recipient = verified_number.owner_id
-                event.save()
-                return True
-        reminder.last_fired = self.get_now()
-        message = reminder.current_event.message.get(lang, reminder.current_event.message[self.default_lang])
-        message = Message.render(message, case=reminder.case.case_properties())
-        if reminder.method == "sms" or reminder.method == "callback":
-            if verified_number is not None:
-                return send_sms_to_verified_number(verified_number, message)
-            elif self.recipient == RECIPIENT_USER:
-                # If there is no verified number, but the recipient is a CommCareUser, still try to send it
-                try:
-                    phone_number = reminder.user.phone_number
-                except Exception:
-                    # If the user has no phone number, we cannot send any SMS
-                    return False
-                return send_sms(reminder.domain, reminder.user_id, phone_number, message)
-            else:
+        if reminder.method == "survey":
+            # Close all currently open sessions
+            sessions = XFormsSession.view("smsforms/open_sessions_by_connection",
+                                         key=[reminder.domain, recipient.get_id],
+                                         include_docs=True).all()
+            for session in sessions:
+                session.end(False)
+                session.save()
+            
+            # Start the new session
+            survey_info = reminder.current_event.survey
+            try:
+                app = get_app(reminder.domain, survey_info["app_id"], latest=True)
+                module = app.get_module(survey_info["module_id"])
+                form = module.get_form(survey_info["form_id"])
+            except Exception as e:
+                print e
+                print "ERROR: Could not load survey form for handler " + reminder.handler_id + ", event " + str(reminder.current_event_sequence_num)
                 return False
-        elif reminder.method == "test" or reminder.method == "callback_test":
-            print(message)
-            return True
+            session, responses = start_session(reminder.domain, recipient, app, module, form, reminder.case_id)
+            
+            # Send out first message
+            if len(responses) > 0:
+                message = format_message_list(responses)
+                if verified_number is not None:
+                    return send_sms_to_verified_number(verified_number, message)
+                else:
+                    return True
+        else:
+            # If it is a callback reminder and the callback has been received, skip sending the next timeout message
+            if (reminder.method == "callback" or reminder.method == "callback_test") and len(reminder.current_event.callback_timeout_intervals) > 0:
+                if CallLog.inbound_call_exists(recipient.doc_type, recipient._id, reminder.last_fired):
+                    reminder.callback_received = True
+                    return True
+                elif len(reminder.current_event.callback_timeout_intervals) == reminder.callback_try_count:
+                    # On the last callback timeout, instead of sending the SMS again, log the missed callback
+                    event = EventLog(
+                        domain          = reminder.domain,
+                        date            = self.get_now(),
+                        event_type      = MISSED_EXPECTED_CALLBACK
+                    )
+                    if verified_number is not None:
+                        event.couch_recipient_doc_type = verified_number.owner_doc_type
+                        event.couch_recipient = verified_number.owner_id
+                    event.save()
+                    return True
+            reminder.last_fired = self.get_now()
+            message = reminder.current_event.message.get(lang, reminder.current_event.message[self.default_lang])
+            message = Message.render(message, case=reminder.case.case_properties())
+            if reminder.method == "sms" or reminder.method == "callback":
+                if verified_number is not None:
+                    return send_sms_to_verified_number(verified_number, message)
+                elif self.recipient == RECIPIENT_USER:
+                    # If there is no verified number, but the recipient is a CommCareUser, still try to send it
+                    try:
+                        phone_number = reminder.user.phone_number
+                    except Exception:
+                        # If the user has no phone number, we cannot send any SMS
+                        return False
+                    return send_sms(reminder.domain, reminder.user_id, phone_number, message)
+                else:
+                    return False
+            elif reminder.method == "test" or reminder.method == "callback_test":
+                print(message)
+                return True
         
 
     @classmethod

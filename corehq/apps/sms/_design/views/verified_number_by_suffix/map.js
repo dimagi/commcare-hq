@@ -4,9 +4,9 @@ function(doc) {
             number1 = doc.phone_number.substring(1);
             number2 = doc.phone_number.substring(2);
             number3 = doc.phone_number.substring(3);
-            emit([number1], null);
-            emit([number2], null);
-            emit([number3], null);
+            emit(number1, null);
+            emit(number2, null);
+            emit(number3, null);
         }
     }
 }

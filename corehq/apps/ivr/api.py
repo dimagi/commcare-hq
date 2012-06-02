@@ -9,16 +9,14 @@ def incoming(phone_number):
     
     # Try to look up the verified number entry
     v = VerifiedNumber.view("sms/verified_number_by_number",
-        startkey=[cleaned_number],
-        endkey=[cleaned_number],
+        key=cleaned_number,
         include_docs=True
     ).one()
     
     # If none was found, try to match only the last digits of numbers in the database
     if v is None:
         v = VerifiedNumber.view("sms/verified_number_by_suffix",
-            startkey=[cleaned_number],
-            endkey=[cleaned_number],
+            key=cleaned_number,
             include_docs=True
         ).one()
     

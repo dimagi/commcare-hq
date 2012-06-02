@@ -225,6 +225,10 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
     def get_language_code(self):
         return self.get_case_property("language_code")
     
+    @property
+    def raw_username(self):
+        return self.get_case_property("name")
+    
     class Meta:
         app_label = "sms" # This is necessary otherwise syncdb will confuse the sms app with casexml
 
