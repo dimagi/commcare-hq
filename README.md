@@ -63,6 +63,9 @@ To install:
 
 Run `source ~/.virtualenvs/commcare-hq/bin/activate` to enter your virtualenv.
 
+`libmagic` is required by `python-magic`, which pip will install automatically. Unfortunately, on Mac OS X, pip doesn't install libmagic itself. To add it, just
+
+     brew install libmagic
 
 #### HQ Bootstrap Requirements
 
@@ -102,7 +105,7 @@ Please make sure you're still in the root directory of commcare-hq and that you 
     ./manage.py syncdb
     ./manage.py migrate
     # this will do some basic setup, create a superuser, and create a project
-    ./manage.py bootstrap <project-name> <user> <password>
+    ./manage.py bootstrap <project-name> <email> <password>
     ./manage.py make_bootstrap # (if it fails add the 'direct-lessc' directive)
     ./manage.py collectstatic
 
