@@ -163,7 +163,7 @@ class OpenCaseAction(FormAction):
 class OpenSubCaseAction(FormAction):
     case_type = StringProperty()
     case_name = StringProperty()
-    case_properties = StringProperty()
+    case_properties = DictProperty()
 
 class FormActions(DocumentSchema):
     open_case       = SchemaProperty(OpenCaseAction)

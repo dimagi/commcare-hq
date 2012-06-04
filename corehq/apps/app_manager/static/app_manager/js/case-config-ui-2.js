@@ -1,5 +1,9 @@
 /*globals $, EJS, COMMCAREHQ */
 
+/*
+This file was copied from case-config-ui-1.js, and then edited.
+All additions are done using knockout, and can eventually replace all the old code.
+ */
 ko.bindingHandlers.optstr = {
     update: function (element, valueAccessor, allBindingsAccessor) {
         var optionObjects = ko.utils.unwrapObservable(valueAccessor());
@@ -65,39 +69,115 @@ var CaseXML = (function () {
         var self = this, root = this;
         self.utils = utils;
         var SubCase = {
+            CaseProperty: {
+                wrap: function (o, subcase) {
+                    var property = ko.mapping.fromJS(o);
+                    return SubCase.CaseProperty.make(property, subcase);
+                },
+                make: function (property, subcase) {
+                    property.defaultKey = ko.computed(function () {
+                        var path = property.path() || '';
+                        var value = path.split('/');
+                        value = value[value.length-1];
+                        return value;
+                    });
+                    property.keyVal = ko.computed(function () {
+                        return property.key() || property.defaultKey();
+                    });
+                    property.validate = ko.computed(function () {
+                        if (property.path() || property.keyVal()) {
+                            if (subcase.propertyCounts()[property.keyVal()] > 1) {
+                                return "Repeat property";
+                            }
+                        }
+                    });
+                    return property;
+                }
+            },
+            transforms: [
+                {
+                    read: function (o) {
+                        var case_properties = [];
+                        for (var key in o.case_properties) {
+                            if (o.case_properties.hasOwnProperty(key)) {
+                                case_properties.push({
+                                    path: o.case_properties[key],
+                                    key: key
+                                });
+                            }
+                        }
+                        o.case_properties = case_properties;
+                    },
+                    write: function (o, self) {
+                        var case_properties = {};
+                        for (var i = 0; i < o.case_properties.length; i++) {
+                            if (self.case_properties()[i].keyVal() || o.case_properties[i].path) {
+                                case_properties[self.case_properties()[i].keyVal()] = o.case_properties[i].path;
+                            }
+                        }
+                        o.case_properties = case_properties;
+                    }
+                },
+                function (o) {
+                    o.case_type = o.case_type || null;
+                    o.case_name = o.case_name || null;
+                    o.condition = o.condition || {
+                        type: 'always',
+                        question: null,
+                        answer: null
+                    };
+                }
+            ],
             wrap: function (o) {
-                var self = ko.mapping.fromJS(o);
-                self.case_type = self.case_type || ko.observable();
-                self.case_name = self.case_name || ko.observable();
-                self.case_properties = self.case_properties || ko.observableArray();
-                self.condition = self.condition || {
-                    type: ko.observable('always'),
-                    question: ko.observable(),
-                    answer: ko.observable()
-                };
+                var self, case_properties;
 
+                ko.utils.arrayForEach(SubCase.transforms, function (transform) {
+                    if (transform.hasOwnProperty('read')) {
+                        transform.read(o);
+                    } else {
+                        transform(o);
+                    }
+                });
+                case_properties = o.case_properties;
+                o.case_properties = [];
+                self = ko.mapping.fromJS(o);
 
                 self.addProperty = function () {
-                    self.case_properties.push({
-                        path: ko.observable(),
-                        key: ko.observable()
-                    })
+                    var property = SubCase.CaseProperty.wrap({
+                        path: '',
+                        key: ''
+                    }, self);
+
+                    self.case_properties.push(property);
                 };
                 self.removeProperty = function (property) {
                     self.case_properties.remove(property);
                 };
+                self.propertyCounts = ko.computed(function () {
+                    var count = {};
+                    ko.utils.arrayForEach(self.case_properties(), function (p) {
+                        var key = p.keyVal();
+                        return count[key] = count[key] ? count[key] + 1 : 1;
+                    });
+                    return count;
+                });
+                self.case_properties(ko.utils.arrayMap(case_properties, function (property) {
+                    return SubCase.CaseProperty.wrap(property, self);
+                }));
                 self.unwrap = function () {
                     SubCase.unwrap(self);
                 };
 
-//                setInterval(function () {
-//                    console.log(ko.mapping.toJS(self.case_properties()));
-//                }, 3000);
-
                 return self;
             },
             unwrap: function (self) {
-                return ko.mapping.toJS(self);
+                var o = ko.mapping.toJS(self);
+                ko.utils.arrayForEach(SubCase.transforms, function (transform) {
+                    if (transform.hasOwnProperty('write')) {
+                        transform.write(o, self);
+                    }
+                });
+                return o;
             }
         };
         self.moduleCaseTypes = o.moduleCaseTypes;
@@ -111,13 +191,19 @@ var CaseXML = (function () {
             }
             return module_names.join(', ');
         };
-        self.subcases = ko.observableArray(ko.utils.arrayMap(o.subcases, SubCase.wrap));
+        self.subcases = ko.observableArray(ko.utils.arrayMap(o.actions.subcases, SubCase.wrap));
         self.addSubCase = function () {
             self.subcases.push(SubCase.wrap({}));
         };
         self.removeSubCase = function (subcase) {
             self.subcases.remove(subcase);
         };
+        self.toJS = ko.computed(function () {
+            return ko.utils.arrayMap(self.subcases(), SubCase.unwrap);
+        });
+        self.toJS.subscribe(function (newValue) {
+            self.utils.actions.subcases = newValue;
+        });
     }
     SubCasesViewModel.prototype.getLabel = function (question) {
         return CaseXML.prototype.truncateLabel(question.label, question.tag == 'hidden' ? ' (Hidden)' : '');
@@ -132,6 +218,7 @@ var CaseXML = (function () {
                 for (i = 0; i < action_names.length; i += 1) {
                     actions[action_names[i]] = a[action_names[i]];
                 }
+                actions.subcases = a.subcases;
                 return actions;
             }(params.actions));
             this.questions = params.questions;
@@ -319,7 +406,7 @@ var CaseXML = (function () {
     };
 
     CaseXML.prototype.refreshActions = function () {
-        var actions = {},
+        var actions = this.actions,
             requires;
 
         function lookup(root, key) {
@@ -389,7 +476,6 @@ var CaseXML = (function () {
             actions[id] = action;
 
         });
-        this.actions = actions;
     };
 
     CaseXML.prototype.renderAction = function (action_type, label) {

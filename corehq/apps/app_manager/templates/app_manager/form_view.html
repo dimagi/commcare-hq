@@ -376,7 +376,12 @@
                                     If the answer to
                                     <select data-bind="optstr: $root.utils.getQuestions('select1'), value: condition.question, optionsCaption: ' '"></select>
                                     is
-                                    <select data-bind="optstr: $root.utils.getAnswers({question: condition.question()}), value: condition.answer"></select>
+                                    <span data-bind="if: $root.utils.getAnswers({question: condition.question()}).length">
+                                        <select data-bind="optstr: $root.utils.getAnswers({question: condition.question()}), value: condition.answer"></select>
+                                    </span>
+                                    <span data-bind="if: !$root.utils.getAnswers({question: condition.question()}).length">
+                                        <input data-bind="value: condition.answer"/>
+                                    </span>
                                 </div>
                                 <div>
                                     Name according to question
@@ -389,6 +394,7 @@
                                         <th></th>
                                         <th>Question</th>
                                         <th>Case Property</th>
+                                        <th></th>
                                     </tr>
                                     </thead>
                                     <tbody data-bind="foreach: case_properties">
@@ -404,11 +410,10 @@
                                                 optionsCaption: ' '"></select>
                                         </td>
                                         <td>
-                                            <input data-bind="valueDefault: key, default: (function (path) {
-                                                var value = path.split('/');
-                                                value = value[value.length-1];
-                                                return value;
-                                            }(path()||''))"/>
+                                            <input data-bind="value: key, attr: {placeholder: defaultKey}"/>
+                                        </td>
+                                        <td>
+                                           <span data-bind="text: validate"></span>
                                         </td>
                                     </tr>
                                     </tbody>
