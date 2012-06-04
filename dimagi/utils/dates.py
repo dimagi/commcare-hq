@@ -178,7 +178,7 @@ class DateSpan(object):
         Will always ignore times.
         """
         if enddate is None:
-            enddate = datetime.now(tz=timezone) + timedelta(days=0 if inclusive else 1)
+            enddate = datetime.now(tz=timezone) + timedelta(days=1 if inclusive else 0)
         end = datetime(enddate.year, enddate.month, enddate.day)
         start = end - timedelta(days=days - 1 if inclusive else days)
         return DateSpan(start, end, format)
