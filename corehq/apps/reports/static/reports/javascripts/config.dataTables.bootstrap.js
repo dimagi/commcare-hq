@@ -11,6 +11,8 @@ function HQReportDataTables(options) {
     self.customSort = options.customSort;
     self.ajaxParams = options.ajaxParams || new Object();
     self.ajaxSource = options.ajaxSource;
+    self.loadingText = options.loadingText || "Loading...";
+    self.emptyText = options.emptyText || "No data available to display. Please try changing your filters.";
 
     this.render = function () {
 
@@ -31,8 +33,7 @@ function HQReportDataTables(options) {
                 sPaginationType: self.paginationType,
                 iDisplayLength: self.defaultRows,
                 bAutoWidth: self.autoWidth
-            },
-                sAjaxSource = self.ajaxSource;
+            };
 
             if(self.ajaxSource) {
                 params.bServerSide = true;
@@ -55,10 +56,17 @@ function HQReportDataTables(options) {
                     }
                 };
             }
+            params.oLanguage = {
+                sProcessing: self.loadingText,
+                sLoadingRecords: self.loadingText,
+                sZeroRecords: self.emptyText
+            };
+
             if(self.aoColumns)
                 params.aoColumns = self.aoColumns;
 
             var datatable = $(this).dataTable(params);
+            console.log(params);
             if(self.customSort)
                 datatable.fnSort( self.customSort );
 

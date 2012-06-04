@@ -328,9 +328,11 @@ def account(request, domain, couch_user_id, template="users/account.html"):
                         messages.error(request, "There seems to have been an error saving your project settings. Please try again!")
             else:
                 project_settings_form = ProjectSettingsForm(initial={'global_timezone': domain_obj.default_timezone,
-                                                                    'user_timezone': dm.timezone})
+                                                                    'user_timezone': dm.timezone,
+                                                                    'override_global_tz': dm.override_global_tz})
             context.update({
-                'proj_settings_form': project_settings_form
+                'proj_settings_form': project_settings_form,
+                'override_global_tz': dm.override_global_tz
             })
 
     # for basic tab

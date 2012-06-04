@@ -26,7 +26,7 @@ class Command(BaseCommand):
                     "bootstrap-typeahead"]
 
     bootstrap_source = "submodules/hq-bootstrap"
-    bootstrap_destination = "submodules/core-hq-src/corehq/apps/hq-bootstrap/static/hq-bootstrap"
+    bootstrap_destination = "submodules/core-hq-src/corehq/apps/hq_bootstrap/static/hq_bootstrap"
 
     formdesigner_dest = "submodules/formdesigner"
 
