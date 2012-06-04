@@ -63,6 +63,9 @@ To install:
 
 Run `source ~/.virtualenvs/commcare-hq/bin/activate` to enter your virtualenv.
 
+`libmagic` is required by `python-magic`, which pip will install automatically. Unfortunately, on Mac OS X, pip doesn't install libmagic itself. To add it, just
+
+     brew install libmagic
 
 #### HQ Bootstrap Requirements
 
