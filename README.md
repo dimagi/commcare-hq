@@ -80,7 +80,7 @@ Once all the requirements are in order, please do the following:
     git submodule update --init --recursive
     source ~/.virtualenvs/commcare-hq/bin/activate      # enter your virtualenv if you have one
     pip install -r requirements.txt
-    cp localsettings.py.example localsettings.py
+    cp localsettings.example.py localsettings.py
 
 
 #### Edit localsettings.py
@@ -114,7 +114,7 @@ Please make sure you're still in the root directory of commcare-hq and that you 
 
 #### Couch-lucene
 
-    Enable  Lucene settings in  settings.py (to view  case list in the  Report section)
+    Enable  Lucene settings in  localsettings.py (to view  case list in the  Report section)
 
 #### Celery (asynchronous task scheduler)
 
