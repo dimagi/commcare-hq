@@ -46,7 +46,8 @@
     </script>
     <script>
         $(function () {
-            ko.applyBindings({signOff: ko.observable('')}, $('#delete_user_{{ couch_user.user_id }}').get(0));
+            if ($('#delete_user_{{ couch_user.user_id }}').get(0))
+                ko.applyBindings({signOff: ko.observable('')}, $('#delete_user_{{ couch_user.user_id }}').get(0));
         });
     </script>
 {% endblock %}
