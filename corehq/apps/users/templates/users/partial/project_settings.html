@@ -1,22 +1,17 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load hq_bootstrap_tags %}
-<div id="my-project-settings-form">
-    <form name="update_project_settings" class="form-horizontal" method="post">
-        <input type="hidden" name="form_type" value="project-settings" />
-        {% bootstrap_form_errors proj_settings_form %}
-        {% for field in proj_settings_form.hidden_fields %}
-            {{ field }}
-        {% endfor %}
-        {% bootstrap_fieldset proj_settings_form "User-Specific Project Settings" %}
-        <div class="form-actions"><button type="submit" id="update-proj-settings" data-bind="hqbSubmitReady: form_is_ready" class="btn disabled">Update My Project Settings</button></div>
-    </form>
-</div>
+<form id="my-project-settings-form" name="update_project_settings" class="form-horizontal" method="post">
+    <input type="hidden" name="form_type" value="project-settings" />
+    {% bootstrap_form_errors proj_settings_form %}
+    {% bootstrap_fieldset proj_settings_form "User-Specific Project Settings" %}
+    <div class="form-actions"><button type="submit" id="update-proj-settings" data-bind="hqbSubmitReady: form_is_ready" class="btn disabled">Update My Project Settings</button></div>
+</form>
 <script src="{% static 'users/ko/project_settings.js' %}"></script>
 <script type="text/javascript">
     $(function() {
         ko.applyBindings(new HQTimezoneHandler({
-            override_global_tz: {{ proj_settings_form.initial.override_global_tz|lower }}
+            override: {{ override_global_tz|lower }}
         }), $('#my-project-settings-form').get(0));
 
         var $globalTimezone = $('#id_global_timezone'),

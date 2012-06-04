@@ -1,7 +1,7 @@
 <fieldset>
     {% if legend %}<legend>{{ legend }}</legend>{% endif %}
     {% for field in form.visible_fields %}
-        <div class="control-group{% if field.errors %} error{% endif %}" {% if field.field.widget.attrs.bindparent %}data-bind="{{ field.field.widget.attrs.bindparent }}"{% endif %}>
+        <div class="control-group{% if field.errors %} error{% endif %}"{% if field.field.widget.attrs.bindparent %} data-bind="{{ field.field.widget.attrs.bindparent }}"{% endif %}>
             <label class="control-label" for="id_{{ field.name }}">{{ field.label }}</label>
             <div class="controls">
                 {{ field }}

@@ -21,6 +21,7 @@ from corehq.apps.domain.models import Domain
 #
 # super(_BaseForm, self).clean() in any derived class that overrides clean()
 from corehq.apps.domain.utils import new_domain_re
+from corehq.apps.users.models import WebUser
 from dimagi.utils.timezones.fields import TimeZoneField
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from corehq.apps.users.util import format_username
@@ -90,7 +91,14 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def save(self, request, domain):
         try:
-            domain.default_timezone = self.cleaned_data['default_timezone']
+            global_tz = self.cleaned_data['default_timezone']
+            domain.default_timezone = global_tz
+            users = WebUser.by_domain(domain.name)
+            for user in users.all():
+                dm = user.get_domain_membership(domain.name)
+                if not dm.override_global_tz:
+                    dm.timezone = global_tz
+                    user.save()
             domain.case_sharing = self.cleaned_data['case_sharing'] == 'true'
             domain.save()
             return True

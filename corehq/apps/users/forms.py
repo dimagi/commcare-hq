@@ -37,7 +37,7 @@ class ProjectSettingsForm(forms.Form):
     Form for updating a user's project settings
     """
     global_timezone = forms.CharField(initial="UTC",
-        label="Global Timezone",
+        label="Project Timezone",
         widget=BootstrapDisabledInput(attrs={'class': 'input-xlarge'}))
     override_global_tz = forms.BooleanField(initial=False,
         required=False,
