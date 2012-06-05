@@ -168,7 +168,8 @@ HQ_APPS = (
     'corehq.apps.registration',
     'corehq.apps.unicel',
     'corehq.apps.reports',
-    'corehq.apps.hq-bootstrap',
+    'corehq.apps.data_interfaces',
+    'corehq.apps.hq_bootstrap',
     'corehq.apps.builds',
     'corehq.apps.api',
     'corehq.couchapps',
@@ -191,9 +192,11 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 TABS = [
     ("corehq.apps.reports.views.default", "Reports"),
+    ("corehq.apps.data_interfaces.views.default", "Manage Data", lambda request: request.couch_user.can_edit_data()),
     ("corehq.apps.app_manager.views.default", "Applications"),
+    ("corehq.apps.cloudcare.views.default", "CloudCare", lambda request: request.couch_user.is_previewer()),
     ("corehq.apps.sms.views.messaging", "Messages"),
-    ("corehq.apps.settings.views.default", "Settings & Users"),
+    ("corehq.apps.settings.views.default", "Settings & Users", lambda request: request.couch_user.can_edit_commcare_users() or request.couch_user.can_edit_web_users()),
     ("corehq.apps.hqadmin.views.default", "Admin Reports", "is_superuser"),
 ]
 
@@ -295,6 +298,7 @@ COUCHLOG_TABLE_CONFIG = {"id_column":       0,
 COUCHLOG_DISPLAY_COLS = ["id", "archived?", "date", "exception type", 
                          "message", "domain", "user", "url", "actions", "report"]
 COUCHLOG_RECORD_WRAPPER = "corehq.apps.hqcouchlog.wrapper"
+COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
 
 # couchlog/case search
 LUCENE_ENABLED = False
@@ -311,6 +315,7 @@ UNICEL_CONFIG = {"username": "Dimagi",
 
 
 #auditcare parameters
+AUDIT_MODEL_SAVE = []
 AUDIT_VIEWS = [
     'corehq.apps.domain.views.registration_request',
     'corehq.apps.domain.views.registration_confirm',
@@ -377,7 +382,6 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'couch', # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
         'couchforms',
         'couchexport',
-        'couchlog',
         'hqadmin',
         'domain',
         'forms',
@@ -404,8 +408,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'dca',
         'hsph',
     ]
-]
-
+] + [("couchlog", "%s/%s" %(COUCH_SERVER, COUCHLOG_DATABASE_NAME))]
 
 
 INSTALLED_APPS += LOCAL_APPS
@@ -465,6 +468,12 @@ EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
+
+DATA_INTERFACE_MAP = {
+    'Case Management' : [
+        'corehq.apps.data_interfaces.interfaces.CaseReassignmentInterface'
+    ]
+}
 
 STANDARD_REPORT_MAP = {
     "Monitor Workers" : [
