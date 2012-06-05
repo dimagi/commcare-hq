@@ -745,7 +745,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
     
     @property
     def username_in_report(self):
-        return self.raw_username
+        return self.full_name
 
     @classmethod
     def create_or_update_from_xform(cls, xform):
