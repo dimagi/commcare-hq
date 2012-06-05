@@ -7,7 +7,9 @@ from corehq.apps.unicel import api as unicel_api
 from corehq.apps.sms import mach_api
 from corehq.apps.sms.util import format_message_list
 from corehq.apps.smsforms.models import XFormsSession
-from corehq.apps.smsforms.app import get_responses
+from corehq.apps.smsforms.app import get_responses, start_session
+from corehq.apps.app_manager.models import get_app, Form
+from casexml.apps.case.models import CommCareCase
 
 ALTERNATIVE_BACKENDS = [("+91", unicel_api)] # TODO: move to setting?
 DEFAULT_BACKEND = mach_api
@@ -82,7 +84,33 @@ def send_sms_to_verified_number(verified_number, text):
         logging.exception(e)
         return False
 
+def start_session_from_keyword(survey_keyword, verified_number):
+    try:
+        form_unique_id = survey_keyword.form_unique_id
+        form = Form.get_form(form_unique_id)
+        app = form.get_app()
+        module = form.get_module()
+        
+        if verified_number.owner_doc_type == "CommCareCase":
+            case_id = verified_number.owner_id
+        else:
+            #TODO: Need a way to choose the case when it's a user that's playing the form
+            case_id = None
+        
+        session, responses = start_session(verified_number.domain, verified_number.owner, app, module, form, case_id)
+        
+        if len(responses) > 0:
+            message = format_message_list(responses)
+            send_sms_to_verified_number(verified_number, message)
+        
+    except Exception as e:
+        print e
+        print "ERROR: Exception raised while starting survey for keyword " + survey_keyword.keyword + ", domain " + verified_number.domain
+
 def incoming(phone_number, text):
+    # Circular Import
+    from corehq.apps.reminders.models import SurveyKeyword
+    
     v = VerifiedNumber.view("sms/verified_number_by_number",
         key=phone_number,
         include_docs=True
@@ -101,19 +129,50 @@ def incoming(phone_number, text):
         msg.domain                      = v.domain
     msg.save()
     
-    # Pass message to the appropriate form
+    # Handle incoming sms
     if v is not None:
         session = XFormsSession.view("smsforms/open_sessions_by_connection",
                                      key=[v.domain, v.owner_id],
                                      include_docs=True).one()
-        if session is not None:
+        
+        text_words = text.upper().split()
+        
+        # Respond to "#START <keyword>" command
+        if len(text_words) > 0 and text_words[0] == "#START":
+            if len(text_words) > 1:
+                sk = SurveyKeyword.get_keyword(v.domain, text_words[1])
+                if sk is not None:
+                    if session is not None:
+                        session.end(False)
+                        session.save()
+                    start_session_from_keyword(sk, v)
+                else:
+                    send_sms_to_verified_number(v, "Survey '" + text_words[1] + "' not found.")
+            else:
+                send_sms_to_verified_number(v, "Usage: #START <keyword>")
+        
+        # Respond to "#STOP" keyword
+        elif len(text_words) > 0 and text_words[0] == "#STOP":
+            if session is not None:
+                session.end(False)
+                session.save()
+        
+        # Respond to unknown command
+        elif len(text_words) > 0 and text_words[0][0] == "#":
+            send_sms_to_verified_number(v, "Unknown command '" + text_words[0] + "'")
+        
+        # If there's an open session, treat the inbound text as the answer to the next question
+        elif session is not None:
             responses = get_responses(msg)
             if len(responses) > 0:
                 response_text = format_message_list(responses)
                 send_sms_to_verified_number(v, response_text)
-        else:
-            #TODO: Try to match the text against a keyword to start a survey
-            pass
+        
+        # Try to match the text against a keyword to start a survey
+        elif len(text_words) > 0:
+            sk = SurveyKeyword.get_keyword(v.domain, text_words[0])
+            if sk is not None:
+                start_session_from_keyword(sk, v)
     else:
         #TODO: Registration via SMS
         pass

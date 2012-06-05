@@ -27,6 +27,19 @@ class VerifiedNumber(Document):
     @property
     def backend(self):
         return MobileBackend.get(self.backend_id)
+    
+    @property
+    def owner(self):
+        if self.owner_doc_type == "CommCareCase":
+            # Circular import
+            from corehq.apps.sms.models import CommConnectCase
+            return CommConnectCase.get(self.owner_id)
+        elif self.owner_doc_type == "CommCareUser":
+            # Circular import
+            from corehq.apps.users.models import CommCareUser
+            return CommCareUser.get(self.owner_id)
+        else:
+            return None
 
 class MobileBackend(Document):
     """
