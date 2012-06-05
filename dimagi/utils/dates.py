@@ -87,7 +87,31 @@ class DateSpan(object):
         return cls(string_to_datetime(data['startdate'], data['enddate']))
 
     @property
+    def computed_startdate(self):
+        """
+        This is used for queries that need an actual date (e.g. django)
+        that is computed based on the inclusive flag.
+        """
+        return self.startdate
+        
+    @property
+    def computed_enddate(self):
+        """
+        This is used for queries that need an actual date (e.g. django)
+        that is computed based on the inclusive flag.
+        """
+        if self.enddate:
+            # you need to add a day to enddate if your dates are meant to be inclusive
+            offset = timedelta(days=1 if self.inclusive else 0)
+            return (self.enddate + offset)
+        
+    
+    @property
     def startdate_param(self):
+        """
+        This is used for couch queries to get the adjusted date as a string
+        that can be easily used in a couch view.
+        """
         if self.startdate:
             return self.startdate.strftime(self.format)
 
@@ -99,6 +123,9 @@ class DateSpan(object):
 
     @property
     def startdate_display(self):
+        """
+        This can be used in templates to regenerate this object.
+        """
         if self.startdate:
             return self.startdate.strftime(self.format)
 
@@ -126,6 +153,9 @@ class DateSpan(object):
 
     @property
     def enddate_display(self):
+        """
+        This can be used in templates to regenerate this object.
+        """
         if self.enddate:
             return self.enddate.strftime(self.format)
     
@@ -172,16 +202,16 @@ class DateSpan(object):
     def since(cls, days, enddate=None, format=DEFAULT_DATE_FORMAT, inclusive=True, timezone=pytz.utc):
         """
         Generate a DateSpan ending with a certain date, and going back 
-        N days. The enddate defaults to tomorrow midnight 
-        (so it's inclusive of today).
+        N days. The enddate defaults to today midnight but is inclusive
+        (which means it will look like tomorrow midnight)
         
         Will always ignore times.
         """
         if enddate is None:
-            enddate = datetime.now(tz=timezone) + timedelta(days=1 if inclusive else 0)
+            enddate = datetime.now(tz=timezone) 
         end = datetime(enddate.year, enddate.month, enddate.day)
-        start = end - timedelta(days=days - 1 if inclusive else days)
-        return DateSpan(start, end, format)
+        start = end - timedelta(days=days)
+        return DateSpan(start, end, format, inclusive)
                     
     
     def parse(self, startdate_str, enddate_str, parse_format, display_format=None):
