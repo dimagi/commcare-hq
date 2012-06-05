@@ -745,6 +745,8 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
     
     @property
     def username_in_report(self):
+        if (self.first_name == '' and self.last_name == ''):
+            return self.raw_username
         return self.full_name
 
     @classmethod
