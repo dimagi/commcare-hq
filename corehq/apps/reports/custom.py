@@ -139,11 +139,14 @@ class HQReport(object):
         return export_response(temp, format, self.slug)
 
     def as_async(self):
-        self.fields = []
+        process_filters = bool(self.request.GET.get('hq_filters'))
+        if not process_filters:
+            self.fields = []
         self.get_report_context()
         self.calc()
         report_template = render_to_string(self.get_template(), self.context, context_instance=RequestContext(self.request))
-        return HttpResponse(json.dumps(dict(report=report_template, title=self.name, slug=self.slug)))
+        filter_template = render_to_string('reports/async/filters.html', self.context, context_instance=RequestContext(self.request)) if process_filters else None
+        return HttpResponse(json.dumps(dict(filters=filter_template, report=report_template, title=self.name, slug=self.slug)))
 
     def as_async_filters(self):
         self.build_selector_form()

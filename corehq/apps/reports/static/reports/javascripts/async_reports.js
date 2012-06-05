@@ -5,25 +5,30 @@ $(function () {
         $submitButton.addClass('btn-primary');
     });
 
-    updateFilters();
-    updateReport();
+    updateReport(true, window.location.search.substr(1));
 
-    function updateFilters() {
+    function updateFilters(form_params) {
         $.ajax({
-            url: window.location.pathname.replace('/reports/', '/reports/async/filters/')+window.location.search,
+            url: window.location.pathname.replace('/reports/', '/reports/async/filters/')+"?"+form_params,
             dataType: 'json',
-            success: function(data) {
-                $('#hq-report-filters').html(data.filters);
-                $('#reportFiltersAccordion').removeClass('hide');
-                $submitButton.removeClass('btn-primary');
-            }
+            success: loadFilters
         });
     }
-    function updateReport() {
+
+    function loadFilters (data) {
+        $('#hq-report-filters').html(data.filters);
+        $('#reportFiltersAccordion').removeClass('hide');
+        $submitButton.removeClass('btn-primary');
+    }
+
+    function updateReport(initial_load, params) {
+        var process_filters = (initial_load) ? "hq_filters=true&": "";
         $.ajax({
-            url: window.location.pathname.replace('/reports/', '/reports/async/')+window.location.search,
+            url: window.location.pathname.replace('/reports/', '/reports/async/')+"?"+process_filters+params,
             dataType: 'json',
             success: function(data) {
+                if (data.filters)
+                    loadFilters(data);
                 $('#report-content').html(data.report);
                 $('.hq-report-time-notice').removeClass('hide');
                 $submitButton.button('reset');
@@ -34,12 +39,11 @@ $(function () {
         });
     }
 
-    $('#paramSelectorForm').submit(function (event) {
+    $('#paramSelectorForm').submit(function () {
         var params = $(this).serialize();
-
         History.pushState(null,window.location.title,window.location.pathname+"?"+params);
-        updateFilters();
-        updateReport();
+        updateFilters(params);
+        updateReport(false, params);
         return false;
     });
 
