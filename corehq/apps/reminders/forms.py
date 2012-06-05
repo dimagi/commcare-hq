@@ -145,25 +145,18 @@ class EventListField(Field):
                     except Exception:
                         raise ValidationError("Callback timeout intervals must be a list of comma-separated numbers.")
             
-            survey = {
-                "app_id" : None,
-                "module_id" : None,
-                "form_id" : None
-            }
+            form_unique_id = None
             if self.widget.method == "survey":
-                survey_info = e.get("survey","").split("|")
-                if(len(survey_info) < 3):
+                form_unique_id = e.get("survey", None)
+                if form_unique_id is None:
                     raise ValidationError("Please create a form for the survey first, and then create the reminder definition.")
-                survey["app_id"] = survey_info[0]
-                survey["module_id"] = int(survey_info[1])
-                survey["form_id"] = int(survey_info[2])
             
             events.append(CaseReminderEvent(
                 day_num = day
                ,fire_time = time
                ,message = message
                ,callback_timeout_intervals = timeouts_int
-               ,survey = survey
+               ,form_unique_id = form_unique_id
             ))
         
         if len(events) == 0:
@@ -242,10 +235,7 @@ class ComplexCaseReminderForm(Form):
                     timeouts_str.append(str(t))
                 ui_event["timeouts"] = ",".join(timeouts_str)
                 
-                if e.survey is not None:
-                    ui_event["survey"] = str(e.survey.get("app_id")) + "|" + str(e.survey.get("module_id")) + "|" + str(e.survey.get("form_id"))
-                else:
-                    ui_event["survey"] = ""
+                ui_event["survey"] = e.form_unique_id
                 
                 events.append(ui_event)
         
@@ -293,5 +283,4 @@ class ComplexCaseReminderForm(Form):
             if value is None or value == "":
                 raise ValidationError("Please enter the name of the case property.")
             return value
-
 

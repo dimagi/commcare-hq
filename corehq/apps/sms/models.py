@@ -241,5 +241,3 @@ def case_changed_receiver(sender, case, **kwargs):
 case_post_save.connect(case_changed_receiver, CommCareCase)
 
 
-
-

@@ -13,7 +13,7 @@ from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dateutil.parser import parse
 from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.smsforms.app import start_session
-from corehq.apps.app_manager.models import get_app
+from corehq.apps.app_manager.models import get_app, Form
 from corehq.apps.sms.util import format_message_list
 
 REPEAT_SCHEDULE_INDEFINITELY = -1
@@ -103,19 +103,14 @@ class CaseReminderEvent(DocumentSchema):
                                 the number of entries in this list until the callback is received, 
                                 or the number of timeouts is exhausted.
 
-    survey                      For CaseReminderHandlers whose method is "survey", this is a dictionary
-                                representing the application, module, and form to play as the survey:
-                                {
-                                    "app_id"    : the application id,
-                                    "module_id" : the module number (0-based index),
-                                    "form_id"   : the form number (0-based index)
-                                }
+    form_unique_id              For CaseReminderHandlers whose method is "survey", this the unique id
+                                of the form to play as a survey.
     """
     day_num = IntegerProperty()
     fire_time = TimeProperty()
     message = DictProperty()
     callback_timeout_intervals = ListProperty(IntegerProperty)
-    survey = DictProperty()
+    form_unique_id = StringProperty()
 
 class CaseReminderHandler(Document):
     """
@@ -448,11 +443,11 @@ class CaseReminderHandler(Document):
                 session.save()
             
             # Start the new session
-            survey_info = reminder.current_event.survey
             try:
-                app = get_app(reminder.domain, survey_info["app_id"], latest=True)
-                module = app.get_module(survey_info["module_id"])
-                form = module.get_form(survey_info["form_id"])
+                form_unique_id = reminder.current_event.form_unique_id
+                form = Form.get_form(form_unique_id)
+                app = form.get_app()
+                module = form.get_module()
             except Exception as e:
                 print e
                 print "ERROR: Could not load survey form for handler " + reminder.handler_id + ", event " + str(reminder.current_event_sequence_num)
@@ -716,4 +711,42 @@ class CaseReminder(Document):
     def retire(self):
         self.doc_type += "-Deleted"
         self.save()
+
+
+class SurveyKeyword(Document):
+    domain = StringProperty()
+    keyword = StringProperty()
+    form_unique_id = StringProperty()
+    
+    def retire(self):
+        self.doc_type += "-Deleted"
+        self.save()
+    
+    @property
+    def survey_name(self):
+        form = Form.get_form(self.form_unique_id)
+        app = form.get_app()
+        module = form.get_module()
+        lang = app.langs[0]
+        return app.name + "/" + module.name[lang] + "/" + form.name[lang]
+    
+    @property
+    def get_id(self):
+        return self._id
+    
+    @classmethod
+    def get_all(cls, domain):
+        return cls.view("reminders/survey_keywords",
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=True
+        ).all()
+    
+    @classmethod
+    def get_keyword(cls, domain, keyword):
+        return cls.view("reminders/survey_keywords",
+            key = [domain, keyword.upper()],
+            include_docs=True
+        ).one()
+
 from .signals import *
