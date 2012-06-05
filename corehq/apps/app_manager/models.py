@@ -289,16 +289,26 @@ class FormBase(DocumentSchema):
         actions = {}
         for action_type in types:
             a = getattr(self.actions, action_type)
-            if a.is_active():
+            if isinstance(a, list):
+                if a:
+                    actions[action_type] = a
+            elif a.is_active():
                 actions[action_type] = a
         return actions
 
     def active_actions(self):
-        return self._get_active_actions((
-            'open_case', 'update_case', 'close_case',
-            'open_referral', 'update_referral', 'close_referral',
-            'case_preload', 'referral_preload'
-        ))
+        if self.get_app().application_version == '1.0':
+            action_types = (
+                'open_case', 'update_case', 'close_case',
+                'open_referral', 'update_referral', 'close_referral',
+                'case_preload', 'referral_preload'
+            )
+        else:
+            action_types = (
+                'open_case', 'update_case', 'close_case',
+                'case_preload', 'subcases',
+            )
+        return self._get_active_actions(action_types)
 
     def active_non_preloader_actions(self):
         return self._get_active_actions((

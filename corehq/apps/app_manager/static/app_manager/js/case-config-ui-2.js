@@ -152,6 +152,7 @@ var CaseXML = (function () {
                 };
                 self.removeProperty = function (property) {
                     self.case_properties.remove(property);
+                    root.utils.change();
                 };
                 self.propertyCounts = ko.computed(function () {
                     var count = {};
@@ -197,6 +198,7 @@ var CaseXML = (function () {
         };
         self.removeSubCase = function (subcase) {
             self.subcases.remove(subcase);
+            self.utils.change();
         };
         self.toJS = ko.computed(function () {
             return ko.utils.arrayMap(self.subcases(), SubCase.unwrap);
@@ -309,6 +311,11 @@ var CaseXML = (function () {
             container.css({backgroundColor: '#f0f0ff', border: "1px solid #e0e0ff"});
         });
     };
+    CaseXML.prototype.change = function () {
+        var casexml = this;
+        $("#casexml_json").text(JSON.stringify(casexml.actions));
+        casexml.saveButton.fire('change');
+    };
     CaseXML.prototype.init = function () {
         var casexml = this;
         if (this.questions.length && this.edit) {
@@ -318,8 +325,7 @@ var CaseXML = (function () {
                 casexml.render();
                 casexml.refreshActions();
                 casexml.render();
-                $("#casexml_json").text(JSON.stringify(casexml.actions));
-                casexml.saveButton.fire('change');
+                casexml.change();
             }).delegate('input.action-checkbox', 'change', function () {
                 var container = $(this).next().next('.container');
                 if ($(this).is(':checked')) {
@@ -328,8 +334,7 @@ var CaseXML = (function () {
                     container.slideUp();
                 }
                 casexml.refreshActions();
-                $("#casexml_json").text(JSON.stringify(casexml.actions));
-                casexml.saveButton.fire('change');
+                casexml.change();
             });
         }
         this.render();
