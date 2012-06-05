@@ -143,7 +143,6 @@ HQ_APPS = (
     'corehq.apps.hqwebapp',
     'corehq.apps.docs',
     'corehq.apps.hqmedia',
-    'corehq.apps.importer',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -496,7 +495,6 @@ STANDARD_REPORT_MAP = {
     ],
     "Inspect Data" : ['corehq.apps.reports.standard.SubmitHistory',
                       'corehq.apps.reports.standard.CaseListReport',
-                      'corehq.apps.importer.base.ExcelImporter',
                       ],
     "Manage Deployments" : [
         'corehq.apps.reports.standard.ApplicationStatusReport',
