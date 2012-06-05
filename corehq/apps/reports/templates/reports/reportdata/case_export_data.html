@@ -1,4 +1,4 @@
-{% extends "reports/report_base.html" %}
+{% extends "reports/async/default.html" %}
 {% load xforms_extras %}
 
 {% block js-inline %}{{ block.super }}
@@ -40,7 +40,6 @@
             <button type="submit" class="btn btn-primary btn-large"><i class="icon-download-alt icon-white"></i> Download</button>
         </div>
     </form>
-
 
     <div class="hq-generic-report form-horizontal">
         <h2>Saved Custom Exports</h2>

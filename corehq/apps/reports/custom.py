@@ -19,6 +19,7 @@ class HQReport(object):
     slug = ""
     description = ""
     template_name = None
+    async_template_name = None
     report_partial = None
     title = None
     headers = None
@@ -50,7 +51,7 @@ class HQReport(object):
         self.context.update(name = self.name,
                             slug = self.slug,
                             description = self.description,
-                            template_name = self.template_name,
+                            template_name = self.get_template(),
                             exportable = self.exportable,
                             export_path = self.request.get_full_path().replace('/custom/', '/export/'),
                             export_formats = Format.VALID_FORMATS
@@ -100,12 +101,15 @@ class HQReport(object):
         if self.template_name:
             return "%s" % self.template_name
         else:
-            return "reports/generic_report.html"
+            return "reports/async/tabular.html"
 
     def as_view(self):
-        self.get_report_context()
-        self.calc()
-        return render_to_response(self.get_template(), self.context, context_instance=RequestContext(self.request))
+        from .util import report_context
+        self.context.update(report_context(self.domain,
+            title = self.name,
+            show_time_notice = self.show_time_notice
+        ))
+        return render_to_response("reports/report_base.html", self.context, context_instance=RequestContext(self.request))
 
     def as_json(self):
         self.get_report_context()
@@ -133,6 +137,19 @@ class HQReport(object):
         temp = StringIO()
         export_from_tables(self.context['tables'], temp, format)
         return export_response(temp, format, self.slug)
+
+    def as_async(self):
+        self.fields = []
+        self.get_report_context()
+        self.calc()
+        report_template = render_to_string(self.get_template(), self.context, context_instance=RequestContext(self.request))
+        return HttpResponse(json.dumps(dict(report=report_template, title=self.name, slug=self.slug)))
+
+    def as_async_filters(self):
+        self.build_selector_form()
+        filter_template = render_to_string('reports/async/filters.html', self.context, context_instance=RequestContext(self.request))
+        return HttpResponse(json.dumps(dict(filters=filter_template, title=self.name, slug=self.slug)))
+
 
 class ReportField(object):
     slug = ""

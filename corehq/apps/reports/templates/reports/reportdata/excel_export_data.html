@@ -1,9 +1,6 @@
-{% extends "reports/report_base.html" %}
+{% extends "reports/async/default.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
-{% block js %}{{ block.super }}
-
-{% endblock %}
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function() {

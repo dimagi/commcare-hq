@@ -1,9 +1,0 @@
-<label for="app_select" class="control-label">Application</label>
-<div class="controls">
-    <select id="app_select" class="span6" name="app" data-value="{{ selected_app }}">
-        <option value="">Select Application [Latest Build Version]</option>
-        {% for app in available_apps %}
-            <option value="{{ app.id }}">{{ app.name }}</option>
-        {% endfor %}
-    </select>
-</div>
