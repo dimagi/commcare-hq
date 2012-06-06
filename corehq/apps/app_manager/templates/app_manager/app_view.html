@@ -1,6 +1,7 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
+{% load i18n %}
 
 {% block js %}{{ block.super }}
     {% if app.get_doc_type == "Application" %}
@@ -12,6 +13,25 @@
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
+    <script type="text/javascript">
+        $(function(){
+            var help_text = {
+                "Success Message": "You can optionally specify a template for the message that your CHWs receive upon successful submission of a form."
+                + "  In the template, you have access to the following variables gathered real-time from the server:" +
+                        "  $first_name, $name, $week, $today. Example: " +
+                        " Thanks $first_name! You have submitted $today forms today and $week forms since Monday."
+             };
+            $('.help_popover').popover({
+                placement: $(this).data('placement') || 'left',
+                title: function () {
+                    return $(this).attr('data-help-key');
+                },
+                content: function () {
+                    return help_text[$(this).attr('data-help-key')];
+                }
+            });
+        });
+    </script>
     {% if app %}
     <script>
         $(function () {
@@ -544,8 +564,7 @@
                 <tr>
                     <th>
                         Success Message
-                        <span class="help-link" data-help-key="app_manager/success_message"></span>
-                        <div class="help-text" data-help-key="app_manager/success_message"></div>
+                        <span class="help_popover" data-help-key="Success Message"><span> <i class="icon icon-question-sign"></i></span></span>
                     </th>
                     <td>
                         {% if edit %}

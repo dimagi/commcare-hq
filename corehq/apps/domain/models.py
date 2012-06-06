@@ -75,6 +75,14 @@ class Domain(Document):
         else:
             return []
 
+    @staticmethod
+    def categories(prefix=''):
+        # unichr(0xfff8) is something close to the highest character available
+        return [d['key'] for d in Domain.view("domain/categories_by_prefix",
+                                group=True,
+                                startkey=prefix,
+                                endkey="%s%c" % (prefix, unichr(0xfff8))).all()]
+
     def apply_migrations(self):
         self.migrations.apply(self)
 

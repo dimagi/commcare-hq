@@ -2,6 +2,25 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 
+{% block js-inline %}{{ block.super }}
+<script type="text/javascript">
+    $(function(){
+        var help_text = {
+            "Cases and Referrals":"Cases and referrals are a way of preserving information across multiple interactions with CommCare on the mobile phone."
+
+        };
+        $('.help_popover').popover({
+            placement: $(this).data('placement') || 'left',
+            title: function () {
+                return $(this).attr('data-help-key');
+            },
+            content: function () {
+                return help_text[$(this).attr('data-help-key')];
+            }
+        });
+    });
+</script>
+{% endblock %}
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/javascripts/knockout.mapping.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
@@ -351,12 +370,14 @@
             <div id="user_reg_home" class="config"></div>
         {% else %}
             {% if app.application_verison == '1.0' %}
-                <h4>Cases and Referrals <span class="help-link" data-help-key="app_manager/casexml_overview"></span></h4>
+                <h4>Cases and Referrals
+                    <span class="help_popover" data-help-key="Cases and Referrals"><span> <i class="icon icon-question-sign"></i></span></span></h4>
                 <div class="help-text" data-help-key="app_manager/casexml_overview"></div>
                 <div class="casexml config" id="casexml_home">
                 </div>
             {% else %}
-                <h4>Case Configuration <span class="help-link" data-help-key="app_manager/casexml_overview"></span></h4>
+                <h4>Case Configuration
+                    <span class="help_popover" data-help-key="Cases and Referrals"><span> <i class="icon icon-question-sign"></i></span></span></h4>
                 <span style="margin-left: 15px" class="label label-info">The app builder for 2.0 apps currently doesn't support referrals</span>
                 <div class="help-text" data-help-key="app_manager/casexml_overview"></div>
                 <div class="casexml config" id="casexml_home">
