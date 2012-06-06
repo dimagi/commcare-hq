@@ -232,3 +232,7 @@ def global_settings(request, domain, template="domain/admin/global_settings.html
         "metadata_form": meta_form,
         "user_sees_meta": user_sees_meta
     })
+
+@domain_admin_required
+def autocomplete_categories(request, prefix=''):
+    return HttpResponse(json.dumps(Domain.categories(prefix)))
