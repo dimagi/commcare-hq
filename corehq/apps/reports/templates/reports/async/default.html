@@ -5,7 +5,7 @@
 {% block reportcontent %}
     {% if request.couch_user.can_view_reports or request.couch_user.get_viewable_reports %}
         {% if slug %}
-            <div class="hq-loading">
+            <div class="hq-loading" style="display: none;">
                 <h4>Loading Report</h4>
                 <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
                 <h6>{{ report.name|safe }}</h6>
@@ -37,7 +37,6 @@
     <script type="text/javascript">
         $(function() {
             $('.hq-report-time-notice').addClass('hide');
-            $('.hq-loading').hide();
             $('.hq-loading').fadeIn();
         });
     </script>
@@ -46,7 +45,21 @@
 {% block js-inline %}
 {% endblock %}
 
+<div class="loading-backdrop hide"></div>
+
+<div class="modal hide fade" id="loadingReportIssueModal">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">&times;</a>
+        <h3>Problem Loading Report "{{ name|safe }}"</h3>
+    </div>
+    <div class="modal-body">
+        <p>There seems to be a problem loading data for the <strong>{{ name|safe }}</strong> report.</p>
+        <p>Please check your Internet connection. If this problem persists, we encourage you to <a href="#reportIssueModal" data-target="#reportIssueModal" data-toggle="modal">Report an Issue</a>.</p>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn btn-primary" onclick="$(this).parent().parent().trigger('reloadHQReport')" data-loading-text="Trying Again..." data-fail-text="Loading Failed. Try Again?">Try Again</a>
+        <a href="#" class="btn" data-dismiss="modal">Cancel</a>
+    </div>
+</div>
 {% block modals %}
 {% endblock %}
-
-<div class="loading-backdrop hide"></div>

@@ -23,6 +23,11 @@
             $("#reportFilters").on('shown', function () {
                 $.cookie(reportFilterCookieName, 'in', {path: savedPath, expires: 1});
             });
+
+            {% if slug %}
+            var asyncReport = new HQAsyncReport({});
+            asyncReport.init();
+            {% endif %}
         });
     </script>
 {% endif %}
@@ -32,6 +37,8 @@
     {{ block.super }}
     <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
 {% endblock %}
+
+{% block title-extra %} - Report: {{ report.name|default:"Unknown Report"|safe }}{% endblock %}
 
 {% block page-title %}
     <ul class="breadcrumb">
