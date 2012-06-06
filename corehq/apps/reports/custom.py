@@ -19,6 +19,7 @@ class HQReport(object):
     slug = ""
     description = ""
     template_name = None
+    async_template_name = None
     report_partial = None
     title = None
     headers = None
@@ -31,6 +32,10 @@ class HQReport(object):
     show_time_notice = False
     fields = []
     exportable = False
+    base_slug = None
+    asynchronous = False
+    base_template_name = "reports/report_base.html"
+    async_base_template_name = "reports/async/default.html"
 
     def __init__(self, domain, request, base_context = None):
         base_context = base_context or {}
@@ -46,14 +51,20 @@ class HQReport(object):
 
         if not self.rows:
             self.rows = []
+
+        if not self.asynchronous:
+            self.async_base_template_name = self.base_template_name
+
         self.context = base_context
         self.context.update(name = self.name,
                             slug = self.slug,
                             description = self.description,
-                            template_name = self.template_name,
+                            template_name = self.get_template(),
                             exportable = self.exportable,
                             export_path = self.request.get_full_path().replace('/custom/', '/export/'),
-                            export_formats = Format.VALID_FORMATS
+                            export_formats = Format.VALID_FORMATS,
+                            async_report = self.asynchronous,
+                            report_base = self.async_base_template_name
         )
 
     def build_selector_form(self):
@@ -100,12 +111,21 @@ class HQReport(object):
         if self.template_name:
             return "%s" % self.template_name
         else:
-            return "reports/generic_report.html"
+            return "reports/async/tabular.html"
 
     def as_view(self):
-        self.get_report_context()
-        self.calc()
-        return render_to_response(self.get_template(), self.context, context_instance=RequestContext(self.request))
+        if self.asynchronous:
+            from .util import report_context
+            self.context.update(report_context(self.domain,
+                title = self.name,
+                show_time_notice = self.show_time_notice
+            ))
+        else:
+            self.get_report_context()
+            self.calc()
+            self.base_template_name = self.get_template()
+            print self.base_template_name
+        return render_to_response(self.base_template_name, self.context, context_instance=RequestContext(self.request))
 
     def as_json(self):
         self.get_report_context()
@@ -133,6 +153,22 @@ class HQReport(object):
         temp = StringIO()
         export_from_tables(self.context['tables'], temp, format)
         return export_response(temp, format, self.slug)
+
+    def as_async(self):
+        process_filters = bool(self.request.GET.get('hq_filters'))
+        if not process_filters:
+            self.fields = []
+        self.get_report_context()
+        self.calc()
+        report_template = render_to_string(self.get_template(), self.context, context_instance=RequestContext(self.request))
+        filter_template = render_to_string('reports/async/filters.html', self.context, context_instance=RequestContext(self.request)) if process_filters else None
+        return HttpResponse(json.dumps(dict(filters=filter_template, report=report_template, title=self.name, slug=self.slug)))
+
+    def as_async_filters(self):
+        self.build_selector_form()
+        filter_template = render_to_string('reports/async/filters.html', self.context, context_instance=RequestContext(self.request))
+        return HttpResponse(json.dumps(dict(filters=filter_template, title=self.name, slug=self.slug)))
+
 
 class ReportField(object):
     slug = ""

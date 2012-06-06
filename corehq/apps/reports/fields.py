@@ -61,11 +61,12 @@ class FilterUsersField(ReportField):
             show_filter = False
         return toggle, show_filter
 
-class CaseTypeField(ReportField):
+class CaseTypeField(ReportSelectField):
     slug = "case_type"
-    template = "reports/fields/case_type.html"
+    name = "Case Type"
+    cssId = "case_type_select"
 
-    def update_context(self):
+    def update_params(self):
         individual = self.request.GET.get('individual', '')
         group = self.request.GET.get('group', '')
         if not individual and not settings.LUCENE_ENABLED:
@@ -77,12 +78,14 @@ class CaseTypeField(ReportField):
         user_ids = [user.user_id for user in users]
         
         case_types = self.get_case_types(self.domain, user_ids)
-        case_type = self.request.GET.get('case_type', '')
+        case_type = self.request.GET.get(self.slug, '')
 
         open_count, all_count = self.get_case_counts(self.domain, user_ids=user_ids)
-        self.context['case_types'] = case_types
-        self.context['case_type'] = case_type
-        self.context['all_cases_count'] = {'all': all_count, 'open': open_count}
+        self.selected = case_type
+#        <option value="{{ i_case_type }}">{{ i_case_type }} ({{ n_cases.open }}/{{ n_cases.all }} open)</option>
+        self.options = [dict(val=case, text="%s (%d/%d open)" % (case, data.get("open", 0), data.get("all", 0)))
+                        for case, data in case_types.items()]
+        self.default_option = "All Case Types (%d/%d open)" % (open_count, all_count)
 
     @classmethod
     def get_case_types(cls, domain, user_ids=None):
@@ -127,7 +130,10 @@ class SelectFormField(ReportSelectField):
 
     def update_params(self):
         self.options = util.form_list(self.domain)
-        self.selected = self.request.GET.get('form', None)
+        self.selected = self.request.GET.get(self.slug, None)
+
+class SelectAllFormField(SelectFormField):
+    default_option = "All Forms"
 
 class SelectOpenCloseField(ReportSelectField):
     slug = "is_open"
@@ -138,22 +144,23 @@ class SelectOpenCloseField(ReportSelectField):
     options = [dict(val="open", text="Only Open"),
                dict(val="closed", text="Only Closed")]
 
+class SelectApplicationField(ReportSelectField):
+    slug = "app"
+    name = "Application"
+    cssId = "application_select"
+    cssClasses = "span6"
+    default_option = "Select Application [Latest Build Version]"
 
-class SelectAllFormField(SelectFormField):
-    default_option = "All Forms"
-
-class SelectApplicationField(ReportField):
-    slug = "select_app"
-    template = "reports/fields/select_app.html"
-
-    def update_context(self):
+    def update_params(self):
         apps_for_domain = get_db().view("app_manager/applications_brief",
             startkey=[self.domain],
             endkey=[self.domain, {}],
             include_docs=True).all()
-        available_apps = [dict(name="%s [up to build %s]" % (app['value']['name'], app['value']['version']), id=app['value']['_id']) for app in apps_for_domain]
-        self.context['selected_app'] = self.request.GET.get('app','')
-        self.context['available_apps'] = available_apps
+        available_apps = [dict(val=app['value']['_id'],
+                                text="%s [up to build %s]" % (app['value']['name'], app['value']['version']))
+                          for app in apps_for_domain]
+        self.selected = self.request.GET.get(self.slug,'')
+        self.options = available_apps
 
 class SelectMobileWorkerField(ReportField):
     slug = "select_mw"
