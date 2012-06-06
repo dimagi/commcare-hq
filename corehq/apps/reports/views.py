@@ -41,8 +41,6 @@ from fields import FilterUsersField
 from util import get_all_users_by_domain
 from corehq.apps.hqsofabed.models import HQFormData
 from StringIO import StringIO
-from corehq.apps.sms.models import MessageLog, SMSLog, CallLog, EventLog, INCOMING, OUTGOING, MISSED_EXPECTED_CALLBACK
-from corehq.apps.reminders.models import CaseReminderHandler
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -509,5 +507,3 @@ def report_dispatcher(request, domain, report_slug, return_json=False, map='STAN
 @datespan_default
 def custom_report_dispatcher(request, domain, report_slug, export=False):
     return report_dispatcher(request, domain, report_slug, export=export, map='CUSTOM_REPORT_MAP', custom=True)
-
-
