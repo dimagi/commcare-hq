@@ -299,7 +299,7 @@ def get_form_view_context(request, form, langs, is_user_registration):
         except XFormValidationError as e:
             messages.error(request, "%s" % e)
         except Exception as e:
-            if settings.DEBUG and False:
+            if settings.DEBUG:
                 raise
             logging.exception(e)
             messages.error(request, "Unexpected Error: %s" % e)
@@ -579,7 +579,6 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None, is_user_reg
     context.update(locals())
     context.update({
         'edit': True,
-        'editor_url': settings.EDITOR_URL
     })
     return render_to_response(req, 'app_manager/form_designer.html', context)
 

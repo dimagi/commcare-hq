@@ -45,6 +45,7 @@ urlpatterns =\
         (r'^user_registration/', include('corehq.apps.registration.user_registration_backend.urls')),
         url(r'^domain/tos/$', direct_to_template, {'template': 'tos.html'}, name='tos'),
         url(r'^domain/select/$', 'select', name='domain_select'),
+        url(r'^domain/categories/$', 'autocomplete_categories', name='autocomplete_categories'),
     ) +\
     patterns('django.contrib.auth.views',
         url(r'^accounts/password_change/$', 'password_change', auth_pages_path('password_change_form.html'), name='password_change'),

@@ -2,6 +2,22 @@
 {% load hq_bootstrap_tags %}
 {% load i18n %}
 
+{% block js-inline %}
+{{ block.super }}
+<script type="text/javascript">
+    $(function(){
+        $("#id_project_type").focus(function() {
+            $.getJSON('{% url autocomplete_categories %}', function(results) {
+                $("#id_project_type").typeahead({ source: results,
+                               items: 8
+                           }).
+                attr("autocomplete", "off");
+            });
+        });
+    });
+</script>
+{% endblock %}
+
 {% block subsection-title %}
     <li class="active">
         <a href="#">Global Settings</a>
