@@ -52,6 +52,7 @@ $(function () {
 
                     self.reportContent.html(data.report);
                     self.reportContent.append(self.hqLoading);
+                    self.hqLoading.removeClass('hide');
 
                     $('.hq-report-time-notice').removeClass('hide');
                     self.submitButton.button('reset');
