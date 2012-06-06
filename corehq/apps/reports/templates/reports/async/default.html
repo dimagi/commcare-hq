@@ -8,10 +8,10 @@
             <div class="hq-loading">
                 <h4>Loading Report</h4>
                 <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
-                <h6>{{ report.name }}</h6>
+                <h6>{{ report.name|safe }}</h6>
             </div>
         {% else %}
-            <h6 style="text-align: center; margin-top: 200px;">{{ report.name }}</h6>
+            <h6 style="text-align: center; margin-top: 200px;">{{ report.name|safe }}</h6>
         {% endif %}
     {% else %}
         <h6 style="text-align: center; margin-top: 100px;">
