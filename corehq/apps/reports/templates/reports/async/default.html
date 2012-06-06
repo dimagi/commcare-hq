@@ -37,6 +37,8 @@
     <script type="text/javascript">
         $(function() {
             $('.hq-report-time-notice').addClass('hide');
+            $('.hq-loading').hide();
+            $('.hq-loading').fadeIn();
         });
     </script>
 {% endblock %}
@@ -46,3 +48,5 @@
 
 {% block modals %}
 {% endblock %}
+
+<div class="loading-backdrop"></div>

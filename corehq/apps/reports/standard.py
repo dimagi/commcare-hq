@@ -1071,7 +1071,7 @@ class ExcelExportReport(StandardDateHQReport):
 
 
 class CaseExportReport(StandardHQReport):
-    name = "Export Cases, Referrals, and Users"
+    name = "Export Cases, Referrals, &amp; Users"
     slug = "case_export"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField']
