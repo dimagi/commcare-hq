@@ -11,14 +11,14 @@ var HQAsyncReport = function (o) {
     var loadFilters = function (data) {
         $('#hq-report-filters').html(data.filters);
         $('#reportFiltersAccordion').removeClass('hide');
-        self.submitButton.removeClass('btn-primary');
     };
 
     self.init = function () {
-        self.submitButton.addClass('disabled');
         self.reportContent.attr('style', 'position: relative;');
+
+        self.submitButton.addClass('disabled');
         self.filterForm.change(function () {
-            self.submitButton.addClass('btn-primary');
+            self.submitButton.button('reset').addClass('btn-primary');
         });
 
         self.updateReport(true, window.location.search.substr(1));
@@ -70,10 +70,11 @@ var HQAsyncReport = function (o) {
                 self.hqLoading.removeClass('hide');
 
                 $('.hq-report-time-notice').removeClass('hide');
-                self.submitButton.button('reset');
 
                 $('.loading-backdrop').fadeOut();
                 self.hqLoading.fadeOut();
+
+                self.submitButton.removeClass('btn-primary').button('standard');
             },
             error: function () {
                 if (self.issueAttempts > 0)
