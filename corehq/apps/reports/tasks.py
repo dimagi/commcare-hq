@@ -1,7 +1,7 @@
 from datetime import datetime
 from smtplib import SMTPRecipientsRefused
 from celery.schedules import crontab
-from celery.decorators import periodic_task
+from celery.decorators import periodic_task, task
 from corehq.apps.reports.models import DailyReportNotification
 from corehq.apps.users.models import CouchUser
 from corehq.apps.reports.schedule import config
@@ -25,11 +25,14 @@ def weekly_reports():
                                         key=[now.weekday(), now.hour], 
                                         include_docs=True).all()
     _run_reports(reps)
-    
+
+@task
 def send_report(scheduled_report, user):
+    if isinstance(user, dict):
+        user = CouchUser.wrap_correctly(user)
     report = ScheduledReportFactory.get_report(scheduled_report.report_slug)
     body = report.get_response(user, scheduled_report.domain)
-    email = user.email
+    email = user.get_email()
     if email:
         send_HTML_email("%s [%s]" % (report.title, scheduled_report.domain), email,
                     html2text(body), body)
@@ -40,7 +43,4 @@ def _run_reports(reps):
     for rep in reps:
         for user_id in rep.user_ids:
             user = CouchUser.get(user_id)
-            try:
-                send_report(rep, user)
-            except Exception:
-                pass
+            send_report.delay(rep, user.to_json())

@@ -12,6 +12,10 @@
     <form class="form-horizontal" method="post">
         {% bootstrap_form_errors form %}
         {% bootstrap_fieldset form "Project Settings" %}
+{% if user_sees_meta %}
+        {% bootstrap_form_errors metadata_form %}
+        {% bootstrap_fieldset metadata_form "Project Details" %}
+{% endif %}
         <div class="form-actions"><button type="submit" class="btn btn-primary">Update Project Settings</button></div>
     </form>
 {% endblock %}>

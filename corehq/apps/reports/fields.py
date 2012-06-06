@@ -5,6 +5,7 @@ from corehq.apps.reports.models import HQUserType
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.datespan import datespan_in_request
+import settings
 
 datespan_default = datespan_in_request(
             from_param="startdate",
@@ -12,17 +13,26 @@ datespan_default = datespan_in_request(
             default_days=7,
         )
 
-class GroupField(ReportField):
+class GroupField(ReportSelectField):
     slug = "group"
-    template = "reports/fields/select_group.html"
+    name = "Group"
+    default_option = "Everybody"
+    cssId = "group_select"
 
-    def update_context(self):
-        group = self.request.GET.get('group', '')
-        groups = Group.get_reporting_groups(self.domain)
-        if group:
-            group = Group.get(group)
-        self.context['group'] = group
-        self.context['groups'] = groups
+    def update_params(self):
+        super(GroupField, self).update_params()
+        self.groups = Group.get_reporting_groups(self.domain)
+        self.options = [dict(val=group.get_id, text=group.name) for group in self.groups]
+
+class CaseSharingGroupField(GroupField):
+    default_option = "Any Group"
+    cssClasses = "span6"
+
+    def update_params(self):
+        super(CaseSharingGroupField, self).update_params()
+        self.options = [dict(val=group.get_id, text="%s [Case Sharing]"
+                        % group.name if group.case_sharing else group.name)
+                            for group in self.groups]
 
 class FilterUsersField(ReportField):
     slug = "ufilter"
@@ -58,7 +68,11 @@ class CaseTypeField(ReportField):
     def update_context(self):
         individual = self.request.GET.get('individual', '')
         group = self.request.GET.get('group', '')
-        user_filter, _ = FilterUsersField.get_user_filter(self.request)
+        if not individual and not settings.LUCENE_ENABLED:
+            user_filter = HQUserType.use_filter(['0','1','2','3'])
+        else:
+            user_filter, _ = FilterUsersField.get_user_filter(self.request)
+
         users = util.get_all_users_by_domain(self.domain, group, individual, user_filter)
         user_ids = [user.user_id for user in users]
         
@@ -114,6 +128,15 @@ class SelectFormField(ReportSelectField):
     def update_params(self):
         self.options = util.form_list(self.domain)
         self.selected = self.request.GET.get('form', None)
+
+class SelectOpenCloseField(ReportSelectField):
+    slug = "is_open"
+    name = "Opened / Closed"
+    cssId = "opened_closed"
+    cssClasses = "span3"
+    default_option = "Show All"
+    options = [dict(val="open", text="Only Open"),
+               dict(val="closed", text="Only Closed")]
 
 
 class SelectAllFormField(SelectFormField):

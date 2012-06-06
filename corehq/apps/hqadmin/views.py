@@ -18,6 +18,14 @@ from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response, render_to_response
 from django.views.decorators.cache import cache_page
+from couchexport.export import export_raw
+from couchexport.shortcuts import export_response
+from couchexport.models import Format
+from StringIO import StringIO
+from django.template.defaultfilters import yesno
+from dimagi.utils.excel import WorkbookJSONReader
+from dimagi.utils.decorators.view import get_file
+from django.contrib import messages
 
 @require_superuser
 def default(request):
@@ -40,15 +48,14 @@ def get_hqadmin_base_context(request):
         "domain": domain,
     }
 
-
-@require_superuser
-def domain_list(request):
-    # one wonders if this will eventually have to paginate
-    domains = Domain.get_all()
+def _all_domain_stats():
     webuser_counts = defaultdict(lambda: 0)
     commcare_counts = defaultdict(lambda: 0)
     form_counts = defaultdict(lambda: 0)
-    for row in get_db().view('users/by_domain', startkey=["active"], endkey=["active", {}], group_level=3).all():
+    case_counts = defaultdict(lambda: 0)
+    
+    for row in get_db().view('users/by_domain', startkey=["active"], 
+                             endkey=["active", {}], group_level=3).all():
         _, domain, doc_type = row['key']
         value = row['value']
         {
@@ -56,11 +63,29 @@ def domain_list(request):
             'CommCareUser': commcare_counts
         }[doc_type][domain] = value
 
-    form_counts.update(dict([(row["key"][0], row["value"]) for row in get_db().view("reports/all_submissions", group=True,group_level=1).all()]))
+    form_counts.update(dict([(row["key"][0], row["value"]) for row in \
+                             get_db().view("reports/all_submissions", 
+                                           group=True,group_level=1).all()]))
+    
+    case_counts.update(dict([(row["key"][0], row["value"]) for row in \
+                             get_db().view("hqcase/types_by_domain", 
+                                           group=True,group_level=1).all()]))
+    
+    return {"web_users": webuser_counts, 
+            "commcare_users": commcare_counts,
+            "forms": form_counts,
+            "cases": case_counts}
+
+@require_superuser
+def domain_list(request):
+    # one wonders if this will eventually have to paginate
+    domains = Domain.get_all()
+    all_stats = _all_domain_stats()
     for dom in domains:
-        dom.web_users = int(webuser_counts[dom.name])
-        dom.commcare_users = int(commcare_counts[dom.name])
-        dom.forms = int(form_counts[dom.name])
+        dom.web_users = int(all_stats["web_users"][dom.name])
+        dom.commcare_users = int(all_stats["commcare_users"][dom.name])
+        dom.cases = int(all_stats["cases"][dom.name])
+        dom.forms = int(all_stats["forms"][dom.name])
         dom.admins = [row["doc"]["email"] for row in get_db().view("users/admins_by_domain", key=dom.name, reduce=False, include_docs=True).all()]
 
     context = get_hqadmin_base_context(request)
@@ -71,6 +96,7 @@ def domain_list(request):
         DataTablesColumn("Domain"),
         DataTablesColumn("# Web Users", sort_type=DTSortType.NUMERIC),
         DataTablesColumn("# Mobile Workers", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("# Cases", sort_type=DTSortType.NUMERIC),
         DataTablesColumn("# Submitted Forms", sort_type=DTSortType.NUMERIC),
         DataTablesColumn("Domain Admins")
     )
@@ -339,3 +365,108 @@ def submissions_errors(request, template="hqadmin/submissions_errors_report.html
     context["aoColumns"] = headers.render_aoColumns
 
     return render_to_response(request, template, context)
+
+@require_superuser
+@get_file("file")
+def update_domains(request):
+    if request.method == "POST":
+        try:
+            workbook = WorkbookJSONReader(request.file)
+            domains = workbook.get_worksheet(title='domains')
+            success_count = 0
+            fail_count = 0
+            for row in domains:
+                try:
+                    name = row["name"]
+                    domain = Domain.get_by_name(name)
+                    if domain:
+                        for k, v in row.items():
+                            setattr(domain, k, v)
+                        domain.save()
+                        success_count += 1
+                    else:
+                        messages.warning(request, "No domain with name %s found" % name)
+                        fail_count += 1
+                except Exception, e:
+                    messages.warning("Update for %s failed: %s" % e)
+                    fail_count += 1
+            if success_count:
+                messages.success(request, "%s domains successfully updated" % success_count)
+            if fail_count:
+                messages.error(request, "%s domains had errors. details above." % fail_count)
+            
+        except Exception, e:
+            messages.error(request, "Something went wrong! Update failed. Here's your error: %s" % e)
+            
+    # one wonders if this will eventually have to paginate
+    domains = Domain.get_all()
+    all_stats = _all_domain_stats()
+    for dom in domains:
+        dom.web_users = int(all_stats["web_users"][dom.name])
+        dom.commcare_users = int(all_stats["commcare_users"][dom.name])
+        dom.cases = int(all_stats["cases"][dom.name])
+        dom.forms = int(all_stats["forms"][dom.name])
+        if dom.forms:
+            try:
+                dom.first_submission = string_to_datetime(XFormInstance.get_db().view\
+                    ("receiverwrapper/all_submissions_by_domain", 
+                     reduce=False, limit=1, 
+                     startkey=[dom.name, "by_date"],
+                     endkey=[dom.name, "by_date", {}]).all()[0]["key"][2]).strftime("%Y-%m-%d")
+            except ValueError:
+                dom.first_submission = ""
+            
+            try:
+                dom.last_submission = string_to_datetime(XFormInstance.get_db().view\
+                    ("receiverwrapper/all_submissions_by_domain", 
+                     reduce=False, limit=1, descending=True,
+                     startkey=[dom.name, "by_date", {}],
+                     endkey=[dom.name, "by_date"]).all()[0]["key"][2]).strftime("%Y-%m-%d")
+            except ValueError:
+                dom.last_submission = ""
+        else:
+            dom.first_submission = ""
+            dom.last_submission = ""
+            
+        
+    context = get_hqadmin_base_context(request)
+    context.update({"domains": domains})
+    
+    headers = DataTablesHeader(
+        DataTablesColumn("Domain"),
+        DataTablesColumn("City"),
+        DataTablesColumn("Country"),
+        DataTablesColumn("Region"),
+        DataTablesColumn("Project Type"),
+        DataTablesColumn("Customer Type"),
+        DataTablesColumn("Is Test"),
+        DataTablesColumn("# Web Users", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("# Mobile Workers", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("# Cases", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("# Submitted Forms", sort_type=DTSortType.NUMERIC),
+        DataTablesColumn("First Submission"),
+        DataTablesColumn("Most Recent Submission"),
+        DataTablesColumn("Edit")
+    )
+    context["headers"] = headers
+    context["aoColumns"] = headers.render_aoColumns
+    return render_to_response(request, "hqadmin/domain_update_properties.html", context)
+
+@require_superuser
+def domain_list_download(request):
+    domains = Domain.get_all()
+    properties = ("name", "city", "country", "region", "project_type", 
+                  "customer_type", "is_test?")
+    
+    def _row(domain):
+        def _prop(domain, prop):
+            if prop.endswith("?"):
+                return yesno(getattr(domain, prop[:-1]))
+            return getattr(domain, prop) or ""
+        return (_prop(domain, prop) for prop in properties)
+    
+    temp = StringIO()
+    headers = (("domains", properties),)   
+    data = (("domains", (_row(domain) for domain in domains)),)
+    export_raw(headers, data, temp)
+    return export_response(temp, Format.XLS_2007, "domains")

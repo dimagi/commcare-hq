@@ -10,27 +10,32 @@ from django.contrib.sites.models import Site
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
     HttpResponseServerError, HttpResponseNotFound
 from django.shortcuts import redirect
-from corehq.apps.app_manager.models import get_app, BUG_REPORTS_DOMAIN
+from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
 from corehq.apps.app_manager.models import import_app
-from corehq.apps.domain.utils import normalize_domain_name
+from corehq.apps.domain.utils import normalize_domain_name, legacy_domain_re, get_domain_from_url
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm
 
 from dimagi.utils.web import render_to_response, get_url_base
 from django.core.urlresolvers import reverse
-from corehq.apps.domain.models import Domain, OldDomain
+from corehq.apps.domain.models import Domain
 from django.template import loader
 from django.template.context import RequestContext
-
+import re
 
 def server_error(request, template_name='500.html'):
     """
     500 error handler.
     """
+
+    domain = get_domain_from_url(request.path) or ''
+
+
     # hat tip: http://www.arthurkoziel.com/2009/01/15/passing-mediaurl-djangos-500-error-view/
     t = loader.get_template(template_name) 
     return HttpResponseServerError(t.render(RequestContext(request, 
                                                            {'MEDIA_URL': settings.MEDIA_URL,
-                                                            'STATIC_URL': settings.STATIC_URL
+                                                            'STATIC_URL': settings.STATIC_URL,
+                                                            'domain': domain
                                                             })))
     
 def not_found(request, template_name='404.html'):
@@ -61,7 +66,7 @@ def redirect_to_default(req, domain=None):
                 domain = domains[0].name
                 if req.couch_user.is_commcare_user():
                     url = reverse("cloudcare_app_list", args=[domain, ""])
-                elif req.couch_user.can_view_reports(domain=domain) or req.couch_user.get_viewable_reports(domain):
+                elif req.couch_user.can_view_reports(domain) or req.couch_user.get_viewable_reports(domain):
                     url = reverse('corehq.apps.reports.views.default', args=[domain])
                 else:
                     url = reverse('corehq.apps.app_manager.views.default', args=[domain])

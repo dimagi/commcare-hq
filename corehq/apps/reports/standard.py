@@ -4,6 +4,7 @@ import json
 import logging
 import sys
 import dateutil
+from corehq.apps.groups.models import Group
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from django.core.urlresolvers import reverse, NoReverseMatch
@@ -20,7 +21,7 @@ from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.custom import HQReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.display import xmlns_to_name, FormType
-from corehq.apps.reports.fields import FilterUsersField, CaseTypeField, SelectMobileWorkerField
+from corehq.apps.reports.fields import FilterUsersField, CaseTypeField, SelectMobileWorkerField, SelectOpenCloseField
 from corehq.apps.reports.models import HQUserType, FormExportSchema
 from couchexport.models import SavedExportSchema
 from couchforms.models import XFormInstance
@@ -54,6 +55,11 @@ class StandardHQReport(HQReport):
         self.case_type = self.request_params.get('case_type', '')
 
         self.users = util.get_all_users_by_domain(self.domain, self.group, self.individual, self.user_filter)
+        try:
+            if self.group:
+                self.group = Group.get(self.group)
+        except Exception:
+            pass
 
         if self.individual:
             self.name = "%s for %s" % (self.name, self.users[0].raw_username)
@@ -107,13 +113,10 @@ class StandardTabularHQReport(StandardHQReport):
         if self.use_json:
             self.context['ajax_source'] = reverse('json_report_dispatcher',
                                                   args=[self.domain, self.slug])
-            self.context['ajax_params'] = [{'name': 'individual', 'value': self.individual},
-                                            {'name': 'group', 'value': self.group},
-                                            {'name': 'casetype', 'value': self.case_type},
-                                            {'name': 'ufilter', 'value': [f.type for f in self.user_filter if f.show]}]
-        else:
-            self.context['ajax_source'] = False
-            self.context['ajax_params'] = False
+            self.context['ajax_params'] = [dict(name='individual', value=self.individual),
+                           dict(name='group', value=self.group),
+                           dict(name='case_type', value=self.case_type),
+                           dict(name='ufilter', value=[f.type for f in self.user_filter if f.show])]
 
         self.headers = self.get_headers()
         self.rows = self.get_rows()
@@ -131,6 +134,15 @@ class PaginatedHistoryHQReport(StandardTabularHQReport):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.SelectMobileWorkerField']
 
+    count = 0
+    _total_count = None
+    
+    @property
+    def total_count(self):
+        if self._total_count is not None:
+            return self._total_count
+        return self.count
+    
     def get_parameters(self):
         self.userIDs = [user.user_id for user in self.users if user.user_id]
         self.usernames = dict([(user.user_id, user.username_in_report) for user in self.users])
@@ -141,7 +153,7 @@ class PaginatedHistoryHQReport(StandardTabularHQReport):
         return {
             "sEcho": params.echo,
             "iTotalDisplayRecords": self.count,
-            "iTotalRecords": self.count,
+            "iTotalRecords": self.total_count,
             "aaData": rows
         }
 
@@ -592,9 +604,17 @@ class CaseListReport(PaginatedHistoryHQReport):
               'corehq.apps.reports.fields.SelectMobileWorkerField',
               'corehq.apps.reports.fields.CaseTypeField']
 
+    def __init__(self, domain, request, base_context = None):
+        if not settings.LUCENE_ENABLED:
+            self.fields = ['corehq.apps.reports.fields.SelectMobileWorkerField',
+                           'corehq.apps.reports.fields.CaseTypeField',
+                           'corehq.apps.reports.fields.SelectOpenCloseField']
+        super(CaseListReport,self).__init__(domain, request, base_context)
+
     def get_report_context(self):
         self.context.update({"filter": settings.LUCENE_ENABLED })
         super(PaginatedHistoryHQReport, self).get_report_context()
+        self.context['ajax_params'].append(dict(name=SelectOpenCloseField.slug, value=self.request.GET.get(SelectOpenCloseField.slug, '')))
 
     def get_headers(self):
         headers = DataTablesHeader(DataTablesColumn("Name"),
@@ -638,8 +658,44 @@ class CaseListReport(PaginatedHistoryHQReport):
                 self.count = results.total_rows
             except RequestFailed:
                 pass
-                # just ignore poorly formatted search terms for now
+        else:
+            view = "case/all_cases"
+            prefix = ["all"]
+            key = [self.domain]
+            is_open = self.request.GET.get(SelectOpenCloseField.slug)
+            if self.case_type:
+                prefix = ["type"]
+                key = key+[self.case_type]
+                if is_open:
+                    prefix = ["%s type" % is_open]
+            elif is_open:
+                prefix = [is_open]
 
+            key = prefix+key
+
+            startkey = key+[self.individual] if self.individual else key
+            endkey = key+[self.individual] if self.individual else key+[{}]
+
+            results = get_db().view(view,
+                startkey=startkey,
+                endkey=endkey,
+                reduce=False,
+                limit=limit,
+                skip=skip
+            ).all()
+
+            self.count = get_db().view(view,
+                startkey=startkey,
+                endkey=endkey,
+                reduce=True
+            ).first()
+            self.count = self.count.get('value', 0) if self.count else 0
+
+            for row in results:
+                row = self.format_row(row)
+                if row is not None:
+                    rows.append(row)
+                # just ignore poorly formatted search terms for now
         return rows
 
     def format_row(self, row):
@@ -657,7 +713,7 @@ class CaseListReport(PaginatedHistoryHQReport):
 
         return ([] if self.case_type else [case.type]) + [
             self.case_data_link(row['id'], case.name),
-            self.usernames[case.user_id],
+            self.usernames.get(case.user_id, "Unknown [%s]" % case.user_id),
             self.date_to_json(case.opened_on),
             self.date_to_json(case.modified_on),
             yesno(case.closed, "closed,open")
@@ -1062,16 +1118,7 @@ class ApplicationStatusReport(StandardTabularHQReport):
                 reduce=False).first()
 
             if data:
-                now = datetime.datetime.now(tz=pytz.utc)
-                time = datetime.datetime.replace(data.received_on, tzinfo=pytz.utc)
-                dtime = now - time
-                if dtime.days < 1:
-                    dtext = "Today"
-                elif dtime.days < 2:
-                    dtext = "Yesterday"
-                else:
-                    dtext = "%s days ago" % dtime.days
-                last_seen = util.format_datatables_data(dtext, dtime.days)
+                last_seen = util.format_relative_date(data.received_on)
 
                 if data.version != '1':
                     build_id = data.version

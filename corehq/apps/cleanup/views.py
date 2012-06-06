@@ -9,13 +9,13 @@ import json
 from django.views.decorators.http import require_POST
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions, CommCareUser
+from corehq.apps.users.models import CommCareUser, Permissions
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.web import render_to_response, json_request, json_response
 from corehq.apps.receiverwrapper.util import get_submit_url
 
-require_can_cleanup = require_permission(Permissions.EDIT_DATA)
+require_can_cleanup = require_permission(Permissions.edit_data)
 
 
 # -----------submissions-------------

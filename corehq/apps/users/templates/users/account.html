@@ -3,7 +3,6 @@
 {% load hq_bootstrap_tags %}
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/javascripts/jquery.textchange.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/javascripts/knockout-2.0.0.js' %}"></script>
 {% endblock %}
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
@@ -47,7 +46,8 @@
     </script>
     <script>
         $(function () {
-            ko.applyBindings({signOff: ko.observable('')}, $('#delete_user_{{ couch_user.user_id }}').get(0));
+            if ($('#delete_user_{{ couch_user.user_id }}').get(0))
+                ko.applyBindings({signOff: ko.observable('')}, $('#delete_user_{{ couch_user.user_id }}').get(0));
         });
     </script>
 {% endblock %}

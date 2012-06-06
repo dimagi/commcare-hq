@@ -7,15 +7,15 @@ class DTSortDirection:
     DSC = "desc"
 
 class DataTablesColumn(object):
-    sortable = True
     rowspan = 1
 
-    def __init__(self, name, span=0, sort_type=None, sort_direction=None, help_text=None):
+    def __init__(self, name, span=0, sort_type=None, sort_direction=None, help_text=None, sortable=True):
         self.html = name
         self.css_span = span
         self.sort_type = sort_type
         self.sort_direction = sort_direction if sort_direction else [DTSortDirection.ASC, DTSortDirection.DSC]
         self.help_text = help_text
+        self.sortable = sortable
 
     @property
     def render_html(self):
@@ -33,6 +33,8 @@ class DataTablesColumn(object):
         aoColumns = dict(asSorting=self.sort_direction)
         if self.sort_type:
             aoColumns["sType"] = self.sort_type
+        if not self.sortable:
+            aoColumns["bSortable"] = self.sortable
         return aoColumns
 
 
@@ -80,6 +82,7 @@ class DataTablesHeader(object):
     no_sort = False
     complex = True
     span = 0
+    custom_sort = None
 
     def __init__(self, *args):
         self.header = list()
