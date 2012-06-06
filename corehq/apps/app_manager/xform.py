@@ -522,7 +522,7 @@ class XForm(WrappedNode):
         if form.requires == 'none' and not actions:
             case_block = None
         else:
-            extra_updates = []
+            extra_updates = {}
             needs_casedb_instance = False
             def make_case_elem(tag, attr=None):
                 return _make_elem('{cx2}%s' % tag, attr)
@@ -555,11 +555,11 @@ class XForm(WrappedNode):
                 else:
                     return 'false()'
 
-            def add_create_block(case_block, action, path=''):
+            def add_create_block(case_block, action, case_name, case_type=None, path=''):
                 create_block = make_case_elem('create')
                 case_block.append(create_block)
                 case_type_node = make_case_elem('case_type')
-                case_type_node.text = form.get_case_type()
+                case_type_node.text = case_type or form.get_case_type()
                 create_block.extend([
                     make_case_elem('case_name'),
                     make_case_elem('owner_id'),
@@ -576,7 +576,7 @@ class XForm(WrappedNode):
                 )
                 self.add_bind(
                     nodeset="%scase/create/case_name" % path,
-                    calculate=self.resolve_path(action.name_path),
+                    calculate=self.resolve_path(case_name),
                 )
 
                 if form.get_app().case_sharing:
@@ -591,54 +591,53 @@ class XForm(WrappedNode):
                         calculate=self.resolve_path("meta/userID"),
                     )
 
-                name_path = action.name_path
-                if not name_path:
+                if not case_name:
                     raise CaseError("Please set 'Name according to question'. "
                                     "This will give each case a 'name' attribute")
                 self.add_bind(
-                    nodeset=name_path,
+                    nodeset=case_name,
                     required="true()",
                 )
 
             if 'open_case' in actions:
-                add_create_block(case_block, actions['open_case'])
+                open_case_action = actions['open_case']
+                add_create_block(case_block, open_case_action, case_name=open_case_action.name_path)
                     
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
-                    extra_updates.append(make_case_elem('external_id'))
-                    self.add_bind(
-                        nodeset="case/update/external_id",
-                        calculate=self.resolve_path(actions['open_case'].external_id),
-                    )
+                    extra_updates['external_id'] = actions['open_case'].external_id
             else:
                 self.add_bind(
                     nodeset="case/@case_id",
                     calculate="instance('commcaresession')/session/data/case_id",
                 )
 
-            def add_update_block():
-                pass
-            if 'update_case' in actions or extra_updates:
-                # no condition
+            def add_update_block(case_block, updates, path='', extra_updates=None):
                 update_block = make_case_elem('update')
                 case_block.append(update_block)
-                update_block.extend(extra_updates)
-
-            if 'update_case' in actions:
                 update_mapping = {}
-                for key, value in actions['update_case'].update.items():
-                    if key == 'name':
-                        key = 'case_name'
-                    update_mapping[key] = value
+
+                if updates:
+                    for key, value in updates.items():
+                        if key == 'name':
+                            key = 'case_name'
+                        update_mapping[key] = value
+
+                if extra_updates:
+                    update_mapping.update(extra_updates)
 
                 for key in update_mapping.keys():
                     update_block.append(make_case_elem(key))
 
-                for key, path in update_mapping.items():
+                for key, q_path in update_mapping.items():
                     self.add_bind(
-                        nodeset="case/update/%s" % key,
-                        calculate=self.resolve_path(path),
-                        relevant="count(%s) > 0" % path
+                        nodeset="%scase/update/%s" % (path, key),
+                        calculate=self.resolve_path(q_path),
+                        relevant=("count(%s) > 0" % self.resolve_path(q_path))
                     )
+
+            if 'update_case' in actions or extra_updates:
+                add_update_block(case_block, getattr(actions.get('update_case'), 'update', {}), extra_updates=extra_updates)
+
             if 'close_case' in actions:
                 case_block.append(make_case_elem('close'))
 
@@ -662,9 +661,17 @@ class XForm(WrappedNode):
                 for i, subcase in enumerate(actions['subcases']):
                     name = 'subcase_%s' % i
                     path = '%s/' % name
-                    subcases_node = _make_elem('{x}%s' % name)
+                    subcase_node = _make_elem('{x}%s' % name)
                     subcase_block = make_case_block(path)
-                    add_create_block(subcase_block, subcase, path)
+
+                    add_create_block(subcase_block, subcase,
+                        case_name=subcase.case_name,
+                        case_type=subcase.case_type,
+                        path=path
+                    )
+
+                    add_update_block(subcase_block, subcase.case_properties, path=path)
+
                     self.add_bind(
                         nodeset=name,
                         relevant=relevance(subcase)
@@ -675,12 +682,13 @@ class XForm(WrappedNode):
                         parent_index = make_case_elem('parent', {'case_type': subcase.case_type})
                         self.add_bind(
                             nodeset='%s/case/index/parent' % name,
-                            calculate="case/case_id",
+                            calculate=self.resolve_path("case/case_id"),
                         )
                         index_node.append(parent_index)
                         subcase_block.append(index_node)
 
-                    subcases_node.append(subcase_block)
+                    subcase_node.append(subcase_block)
+                    self.data_node.append(subcase_node)
 
             if needs_casedb_instance:
                 self.add_instance('casedb', src='jr://instance/casedb')
