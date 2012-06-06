@@ -5,6 +5,7 @@ var HQAsyncReport = function (o) {
     self.reportContent = o.reportContent ||  $('#report-content');
     self.filterForm = o.filterForm || $('#paramSelectorForm');
     self.loadingIssueModal = o.loadingIssueModal || $('#loadingReportIssueModal');
+    self.baseSlug = o.baseSlug || 'reports';
     self.issueAttempts = 0;
     self.hqLoading = null;
 
@@ -15,11 +16,7 @@ var HQAsyncReport = function (o) {
 
     self.init = function () {
         self.reportContent.attr('style', 'position: relative;');
-
         self.submitButton.addClass('disabled');
-        self.filterForm.change(function () {
-            self.submitButton.button('reset').addClass('btn-primary');
-        });
 
         self.updateReport(true, window.location.search.substr(1));
 
@@ -34,7 +31,7 @@ var HQAsyncReport = function (o) {
 
     self.updateFilters = function (form_params) {
         $.ajax({
-            url: window.location.pathname.replace('/reports/', '/reports/async/filters/')+"?"+form_params,
+            url: window.location.pathname.replace('/'+self.baseSlug+'/', '/'+self.baseSlug+'/async/filters/')+"?"+form_params,
             dataType: 'json',
             success: loadFilters
         });
@@ -56,7 +53,7 @@ var HQAsyncReport = function (o) {
     self.updateReport = function (initial_load, params) {
         var process_filters = (initial_load) ? "hq_filters=true&": "";
         $.ajax({
-            url: window.location.pathname.replace('/reports/', '/reports/async/')+"?"+process_filters+params,
+            url: window.location.pathname.replace('/'+self.baseSlug+'/', '/'+self.baseSlug+'/async/')+"?"+process_filters+params,
             dataType: 'json',
             success: function(data) {
                 if (data.filters)
@@ -64,7 +61,6 @@ var HQAsyncReport = function (o) {
                 self.issueAttempts = 0;
                 self.loadingIssueModal.modal('hide');
                 self.hqLoading = $('.hq-loading');
-
                 self.reportContent.html(data.report);
                 self.reportContent.append(self.hqLoading);
                 self.hqLoading.removeClass('hide');

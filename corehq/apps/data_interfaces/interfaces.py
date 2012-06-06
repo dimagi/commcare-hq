@@ -10,10 +10,10 @@ from corehq.apps.users.models import WebUser
 from dimagi.utils.couch.database import get_db
 
 class DataInterface(HQReport):
-
-    def get_report_context(self):
-        super(DataInterface, self).get_report_context()
-        self.context['report_base'] = 'data_interfaces/data_interfaces_base.html'
+    base_slug = 'data'
+    template_name = "data_interfaces/data_interfaces_base.html"
+    base_template_name = "data_interfaces/data_interfaces_base.html"
+    asynchronous = True
 
 class CaseReassignmentInterface(DataInterface, StandardTabularHQReport, StandardDateHQReport):
     name = "Reassign Cases"

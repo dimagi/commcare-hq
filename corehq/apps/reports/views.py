@@ -59,7 +59,8 @@ def default(request, domain, template="reports/report_base.html"):
     context = {
         'domain': domain,
         'slug': None,
-        'report': {'name': "Select a Report to View"}
+        'report': {'name': "Select a Report to View"},
+        'async_report': True
     }
     return render_to_response(request, template, context)
 

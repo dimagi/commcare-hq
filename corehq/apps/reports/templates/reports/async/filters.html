@@ -17,5 +17,8 @@
         $('#paramSelectorForm fieldset button').click(function() {
             $('#paramSelectorForm button[type="submit"]').button('reset').addClass('btn-primary');
         });
+        $('#paramSelectorForm fieldset').change(function () {
+            $('#paramSelectorForm button[type="submit"]').button('reset').addClass('btn-primary');
+        });
     });
 </script>

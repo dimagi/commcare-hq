@@ -24,8 +24,10 @@
                 $.cookie(reportFilterCookieName, 'in', {path: savedPath, expires: 1});
             });
 
-            {% if slug %}
-            var asyncReport = new HQAsyncReport({});
+            {% if slug and async_report %}
+            var asyncReport = new HQAsyncReport({
+                baseSlug: '{{ base_slug|default:'reports' }}'
+            });
             asyncReport.init();
             {% endif %}
         });
@@ -57,7 +59,7 @@
 
 {% block sidebar %}{% include "reports/partials/report_list.html" %}{% endblock %}
 {% block main_column %}
-    <div class="hq-accordion-control hide" id="reportFiltersAccordion">
+    <div class="hq-accordion-control{% if async_report%} hide{% endif %}" id="reportFiltersAccordion">
         <div class="accordion-heading">
             {% if not report_hide_filters %}<a href="#reportFilters" data-toggle="collapse">Advanced Filters</a>{% else %}
                 <div class="no-filters">&nbsp;</div>
@@ -68,7 +70,11 @@
         <div id="reportFilters" class="accordion-body collapse">
             <div class="accordion-inner">
                 <form method="get" id="paramSelectorForm" class="form-horizontal">
-                    <div id="hq-report-filters"></div>
+                    <div id="hq-report-filters">
+                        {% if not async_report %}
+                            {% include "reports/async/filters.html" %}
+                        {% endif %}
+                    </div>
                     <div class="form-actions">
                         <button type="submit" data-loading-text="Generating Report..." data-standard-text="Update Filters" class="btn btn-large disabled">Update Filters</button>
                         <a href="#reportFilters" data-toggle="collapse" class="btn btn-large">Close</a>
@@ -79,7 +85,12 @@
         {% endif %}
     </div>
     <div id="report-content">
+        {% if not async_report and slug %}
+        {% block reportcontent %}
+        {% endblock %}
+        {% else %}
         {% include "reports/async/default.html" %}
+        {% endif %}
     </div>
 {% endblock %}
 

@@ -41,6 +41,8 @@ class StandardHQReport(HQReport):
     use_json = False
     hide_filters = False
     custom_breadcrumbs = None
+    base_slug = 'reports'
+    asynchronous = True
 
     def process_basic(self):
         self.request_params = json_request(self.request.GET)
@@ -56,6 +58,14 @@ class StandardHQReport(HQReport):
                 timezone_now = datetime.datetime.now(tz=self.timezone),
                 timezone = self.timezone.zone
             )
+
+        self.context.update(
+            standard_report = True,
+            layout_flush_content = True,
+            report_hide_filters = self.hide_filters,
+            report_breadcrumbs = self.custom_breadcrumbs,
+            base_slug = self.base_slug
+        )
 
     def get_global_params(self):
         self.process_basic()
@@ -89,13 +99,10 @@ class StandardHQReport(HQReport):
                                       ))
     
     def as_view(self):
-        self.process_basic()
-        self.context.update(
-            standard_report = True,
-            layout_flush_content = True,
-            report_hide_filters = self.hide_filters,
-            report_breadcrumbs = self.custom_breadcrumbs
-        )
+        if self.asynchronous:
+            self.process_basic()
+        else:
+            self.get_global_params()
         return super(StandardHQReport, self).as_view()
 
     def as_async(self):
