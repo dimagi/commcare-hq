@@ -306,6 +306,8 @@ def edit_custom_export(req, domain, export_id):
                                "table_config": table_config,
                                "slug": slug,
                                "domain": domain})
+
+@login_or_digest
 @require_form_export_permission
 @login_and_domain_required
 def export_all_form_metadata(req, domain):
