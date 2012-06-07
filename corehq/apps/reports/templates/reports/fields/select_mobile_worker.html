@@ -17,7 +17,7 @@
     $(function() {
         ko.applyBindings({selected_individual: ko.observable('{{ individual|default:'' }}')}, $('#individual_select').parent().get(0));
         $('#individual_select').combobox({
-            placeholder: '{{ default_option }}'
+            placeholder: '{{ default_option|safe }}'
         });
     });
 </script>

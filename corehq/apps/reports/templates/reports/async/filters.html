@@ -14,7 +14,7 @@
 <script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
 <script type="text/javascript">
     $(function () {
-        $('#paramSelectorForm fieldset button').click(function() {
+        $('#paramSelectorForm fieldset button, #paramSelectorForm fieldset span[data-dropdown="dropdown"]').click(function() {
             $('#paramSelectorForm button[type="submit"]').button('reset').addClass('btn-primary');
         });
         $('#paramSelectorForm fieldset').change(function () {
