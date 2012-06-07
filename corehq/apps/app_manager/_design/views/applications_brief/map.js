@@ -7,7 +7,8 @@ function(doc){
             _id: doc._id,
             name: doc.name,
             build_spec: doc.build_spec,
-            domain: doc.domain
+            domain: doc.domain,
+            langs: doc.langs
         });
     }
 }

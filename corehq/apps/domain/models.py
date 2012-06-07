@@ -6,6 +6,16 @@ from django.db import models
 from couchdbkit.ext.django.schema import Document, StringProperty,\
     BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty
 from dimagi.utils.timezones import fields as tz_fields
+from itertools import chain
+from langcodes import langs as all_langs
+from collections import defaultdict
+
+lang_lookup = defaultdict(str)
+
+for lang in all_langs:
+    lang_lookup[lang['three']] = lang['names'][0] # arbitrarily using the first name if there are multiple
+    if lang['two'] != '':
+        lang_lookup[lang['two']] = lang['names'][0]
 
 class DomainMigrations(DocumentSchema):
     has_migrated_permissions = BooleanProperty(default=False)
@@ -45,6 +55,8 @@ class Domain(Document):
     project_type = StringProperty() # e.g. MCH, HIV
     customer_type = StringProperty() # plus, full, etc.
     is_test = BooleanProperty(default=False)
+    description = StringProperty()
+    is_shared = BooleanProperty(default=False)
 
     migrations = SchemaProperty(DomainMigrations)
 
@@ -75,10 +87,10 @@ class Domain(Document):
         else:
             return []
 
-    @staticmethod
-    def categories(prefix=''):
+    @classmethod
+    def categories(cls, prefix=''):
         # unichr(0xfff8) is something close to the highest character available
-        return [d['key'] for d in Domain.view("domain/categories_by_prefix",
+        return [d['key'] for d in cls.view("domain/categories_by_prefix",
                                 group=True,
                                 startkey=prefix,
                                 endkey="%s%c" % (prefix, unichr(0xfff8))).all()]
@@ -112,6 +124,18 @@ class Domain(Document):
         couch_user.add_domain_membership(self.name)
         couch_user.save()
 
+    def applications(self):
+        return ApplicationBase.view('app_manager/applications_brief',
+                                    startkey=[self.name],
+                                    endkey=[self.name, {}]).all()
+
+    def languages(self):
+        apps = self.applications()
+        return set(chain.from_iterable([a.langs for a in apps]))
+
+    def readable_languages(self):
+        return ', '.join(lang_lookup[lang] or lang for lang in self.languages())
+
     def __unicode__(self):
         return self.name
 
@@ -143,6 +167,10 @@ class Domain(Document):
         return Domain.view("domain/domains",
                             reduce=False,
                             include_docs=True).all()
+
+# added after Domain is defined as per http://stackoverflow.com/questions/7199466/how-to-break-import-loop-in-python
+# to prevent import loop errors (since corehq.apps.app_manager.models has to import Domain back)
+from corehq.apps.app_manager.models import ApplicationBase
 
 ##############################################################################################################
 #

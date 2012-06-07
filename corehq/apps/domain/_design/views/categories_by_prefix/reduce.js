@@ -1,3 +1,1 @@
-function(keys, values) {
-    return true;
-}
+_count
