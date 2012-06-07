@@ -21,7 +21,7 @@ from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.custom import HQReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.display import xmlns_to_name, FormType
-from corehq.apps.reports.fields import FilterUsersField, CaseTypeField, SelectMobileWorkerField, SelectOpenCloseField
+from corehq.apps.reports.fields import FilterUsersField, CaseTypeField, SelectMobileWorkerField, SelectOpenCloseField, SelectApplicationField
 from corehq.apps.reports.models import HQUserType, FormExportSchema
 from couchexport.models import SavedExportSchema
 from couchforms.models import XFormInstance
@@ -41,31 +41,47 @@ class StandardHQReport(HQReport):
     use_json = False
     hide_filters = False
     custom_breadcrumbs = None
+    base_slug = 'reports'
+    asynchronous = True
+
+    def process_basic(self):
+        self.request_params = json_request(self.request.GET)
+        self.individual = self.request_params.get('individual', '')
+        self.user_filter, _ = FilterUsersField.get_user_filter(self.request)
+        self.group = self.request_params.get('group','')
+        self.users = util.get_all_users_by_domain(self.domain, self.group, self.individual, self.user_filter)
+
+        if self.individual:
+            self.name = "%s for %s" % (self.name, self.users[0].raw_username)
+        if self.show_time_notice:
+            self.context.update(
+                timezone_now = datetime.datetime.now(tz=self.timezone),
+                timezone = self.timezone.zone
+            )
+
+        self.context.update(
+            standard_report = True,
+            layout_flush_content = True,
+            report_hide_filters = self.hide_filters,
+            report_breadcrumbs = self.custom_breadcrumbs,
+            base_slug = self.base_slug
+        )
 
     def get_global_params(self):
-        self.request_params = json_request(self.request.GET)
+        self.process_basic()
         # the history param lets you run a report as if it were a given time in the past
         hist_param = self.request_params.get('history', None)
         if hist_param:
             self.history = datetime.datetime.strptime(hist_param, DATE_FORMAT)
-        self.user_filter, _ = FilterUsersField.get_user_filter(self.request)
 
-        self.group = self.request_params.get('group','')
-        self.individual = self.request_params.get('individual', '')
         self.case_type = self.request_params.get('case_type', '')
 
-        self.users = util.get_all_users_by_domain(self.domain, self.group, self.individual, self.user_filter)
         try:
-            if self.group:
-                self.group = Group.get(self.group)
+            self.group = Group.get(self.group) if self.group else ''
         except Exception:
             pass
 
-        if self.individual:
-            self.name = "%s for %s" % (self.name, self.users[0].raw_username)
         self.get_parameters()
-        self.context['report_hide_filters'] = self.hide_filters
-        self.context['report_breadcrumbs'] = self.custom_breadcrumbs
 
     def get_parameters(self):
         # here's where you can define any extra parameters you want to process before
@@ -73,8 +89,6 @@ class StandardHQReport(HQReport):
         pass
 
     def get_report_context(self):
-        self.context['standard_report'] = True
-        self.context['layout_flush_content'] = True
         self.build_selector_form()
         self.context.update(util.report_context(self.domain,
                                         report_partial = self.report_partial,
@@ -85,8 +99,15 @@ class StandardHQReport(HQReport):
                                       ))
     
     def as_view(self):
-        self.get_global_params()
+        if self.asynchronous:
+            self.process_basic()
+        else:
+            self.get_global_params()
         return super(StandardHQReport, self).as_view()
+
+    def as_async(self):
+        self.get_global_params()
+        return super(StandardHQReport, self).as_async()
 
     def as_json(self):
         self.get_global_params()
@@ -738,7 +759,7 @@ class SubmissionTimesReport(StandardHQReport):
     slug = "submit_time_punchcard"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.SelectMobileWorkerField']
-    template_name = "reports/basic_report.html"
+    template_name = "reports/async/basic.html"
     report_partial = "reports/partials/punchcard.html"
     show_time_notice = True
 
@@ -765,8 +786,6 @@ class SubmissionTimesReport(StandardHQReport):
 
                     data["%d %02d" % (day, hour)] = data["%d %02d" % (day, hour)] + row["value"]
         self.context["chart_url"] = self.generate_chart(data)
-        self.context["timezone_now"] = datetime.datetime.now(tz=self.timezone)
-        self.context["timezone"] = self.timezone.zone
 
     @classmethod
     def generate_chart(cls, data, width=950, height=300):
@@ -816,7 +835,7 @@ class SubmitDistributionReport(StandardHQReport):
     slug = "submit_distribution"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.SelectMobileWorkerField']
-    template_name = "reports/basic_report.html"
+    template_name = "reports/async/basic.html"
     report_partial = "reports/partials/generic_piechart.html"
 
     def calc(self):
@@ -909,7 +928,7 @@ create a couch doc as such:
     fields = [] # todo: support some of these filters -- right now this report
                 # is more of a playground, so all the filtering is done in its
                 # own ajax sidebar
-    template_name = "reports/basic_report.html"
+    template_name = "reports/async/basic.html"
     report_partial = "reports/partials/maps.html"
 
     def calc(self):
@@ -927,7 +946,7 @@ class SubmitTrendsReport(StandardDateHQReport):
     slug = "submit_trends"
     fields = ['corehq.apps.reports.fields.SelectMobileWorkerField',
               'corehq.apps.reports.fields.DatespanField']
-    template_name = "reports/basic_report.html"
+    template_name = "reports/async/basic.html"
     report_partial = "reports/partials/formtrends.html"
 
     def calc(self):
@@ -1059,7 +1078,7 @@ class ExcelExportReport(StandardDateHQReport):
 
 
 class CaseExportReport(StandardHQReport):
-    name = "Export Cases, Referrals, and Users"
+    name = "Export Cases, Referrals, &amp; Users"
     slug = "case_export"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField']
@@ -1098,7 +1117,7 @@ class ApplicationStatusReport(StandardTabularHQReport):
                                 DataTablesColumn("Application [Deployed Build]"))
 
     def get_parameters(self):
-        self.selected_app = self.request_params.get('app', '')
+        self.selected_app = self.request_params.get(SelectApplicationField.slug, '')
 
     def get_rows(self):
         rows = []

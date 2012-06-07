@@ -1,4 +1,4 @@
-{% extends 'reports/generic_report.html' %}
+{% extends 'reports/async/tabular.html' %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -37,7 +37,6 @@
 {% endblock %}
 
 {% block reportcontent %}
-    {{ request.user.userID }}
 <div id="case-management">
     <div class="row-fluid">
         <form class="well form-inline" style="margin: 1em; display: none;" data-bind="submit: updateCaseOwners, caseReassignmentForm: selected_cases">

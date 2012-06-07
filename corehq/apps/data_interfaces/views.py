@@ -22,7 +22,7 @@ def default(request, domain, template="data_interfaces/data_interfaces_base.html
 
 @require_can_edit_data
 @datespan_default
-def report_dispatcher(request, domain, slug, return_json=False, map='DATA_INTERFACE_MAP', export=False, custom=False):
+def report_dispatcher(request, domain, slug, return_json=False, map='DATA_INTERFACE_MAP', export=False, custom=False, async=False, async_filters=False):
     mapping = getattr(settings, map, None)
     if not mapping or (custom and not domain in mapping):
         return HttpResponseNotFound("Sorry, no reports have been configured yet.")
@@ -39,6 +39,10 @@ def report_dispatcher(request, domain, slug, return_json=False, map='DATA_INTERF
                     return k.as_json()
                 elif export:
                     return k.as_export()
+                elif async:
+                    return k.as_async()
+                elif async_filters:
+                    return k.as_async_filters()
                 else:
                     return k.as_view()
     raise Http404
