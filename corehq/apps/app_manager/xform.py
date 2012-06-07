@@ -582,12 +582,12 @@ class XForm(WrappedNode):
                 if form.get_app().case_sharing:
                     self.add_instance('groups', src='jr://fixture/user-groups')
                     self.add_setvalue(
-                        ref="case/create/owner_id",
+                        ref="%scase/create/owner_id" % path,
                         value="instance('groups')/groups/group/@id"
                     )
                 else:
                     self.add_bind(
-                        nodeset="case/create/owner_id",
+                        nodeset="%scase/create/owner_id" % path,
                         calculate=self.resolve_path("meta/userID"),
                     )
 

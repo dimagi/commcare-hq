@@ -347,21 +347,31 @@ class FormBase(DocumentSchema):
             errors.append({'type': 'invalid xml', 'message': unicode(e)})
         else:
             paths = set()
-            for _, action in self.active_actions().items():
-                if action.condition.type == 'if':
-                    paths.add(action.condition.question)
-                if hasattr(action, 'name_path'):
-                    paths.add(action.name_path)
-                if hasattr(action, 'external_id') and action.external_id:
-                    paths.add(action.external_id)
-
-            if self.actions.update_case.is_active():
-                for _, path in self.actions.update_case.update.items():
-                    paths.add(path)
-            if self.actions.case_preload.is_active():
-                for path, _ in self.actions.case_preload.preload.items():
-                    paths.add(path)
-
+            def generate_paths():
+                for _, action in self.active_actions().items():
+                    if isinstance(action, list):
+                        actions = action
+                    else:
+                        actions = [action]
+                    for action in actions:
+                        if action.condition.type == 'if':
+                            yield action.condition.question
+                        if hasattr(action, 'name_path'):
+                            yield action.name_path
+                        if hasattr(action, 'case_name'):
+                            yield action.case_name
+                        if hasattr(action, 'external_id') and action.external_id:
+                            yield action.external_id
+                        if hasattr(action, 'update'):
+                            for _, path in self.actions.update_case.update.items():
+                                yield path
+                        if hasattr(action, 'case_properties'):
+                            for _, path in self.actions.update_case.update.items():
+                                yield path
+                        if hasattr(action, 'preload'):
+                            for path, _ in self.actions.case_preload.preload.items():
+                                yield path
+            paths.update(generate_paths())
             for path in paths:
                 if path not in valid_paths:
                     errors.append({'type': 'path error', 'path': path})
