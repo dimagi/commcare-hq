@@ -23,7 +23,8 @@ class Command(BaseCommand):
                     "bootstrap-popover",
                     "bootstrap-scrollspy",
                     "bootstrap-tab",
-                    "bootstrap-typeahead"]
+                    "bootstrap-typeahead",
+                    "plugins/bootstrap-combobox"]
 
     bootstrap_source = "submodules/hq-bootstrap"
     bootstrap_destination = "submodules/core-hq-src/corehq/apps/hq_bootstrap/static/hq_bootstrap"
