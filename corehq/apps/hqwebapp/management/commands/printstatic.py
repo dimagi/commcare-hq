@@ -17,7 +17,7 @@ class Command(LabelCommand):
         bootstrap_includes = {"submodules/hq-bootstrap/img": "hq-bootstrap/img/",
                               "submodules/hq-bootstrap/js/includes": "hq-bootstrap/js/",
                               "submodules/hq-bootstrap/js/includes/google-code-prettify": "hq-bootstrap/js/google-code-prettify/"}
-        print prefix
+        
         print r'echo "resource_versions = {"'
         for finder in finders.get_finders():
             for path, storage in finder.list(['.*', '*~', '* *']):
@@ -25,10 +25,7 @@ class Command(LabelCommand):
                     continue
                 url = os.path.join(storage.prefix, path) if storage.prefix else path
                 parts = (storage.location + '/' + path).split('/')
-                filepath = '/'.join(parts[:-1]) + '/'
-                filename = parts[-1]
-                print r'filepath="%s"; filename="%s"; url="%s"' % (filepath, filename, url)
-                print r"""cd $filepath; git log -n 1 --format=format:"    \"$url\": \"%h\"," $filename; echo"""
+                self.generate_output(url, parts)
 
         # Deal with Bootstrap Less files
         for less_file in bootstrap_less:
