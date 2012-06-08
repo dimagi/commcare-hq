@@ -9,6 +9,7 @@ REPORT_FNAME = "%%s-%m-%d-%Y.xlsx"
 import os, sys
 import urllib2
 from datetime import date
+import getpass
 
 def auth_retrieve(username, password, url, destination):
     password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
@@ -30,7 +31,7 @@ def main():
     domain = args.pop(0)
     root = args.pop(0)
     username = args.pop(0)
-    password = args.pop(0)
+    password = getpass.getpass()
     projects = args
 
     for project in projects:
