@@ -138,7 +138,8 @@ def deploy():
     """ deploy code to remote host by checking out the latest via git """
     require('root', provided_by=('staging', 'production', 'india'))
     if env.environment in ('production', 'india'):
-        if not console.confirm('Are you sure you want to deploy to %s?' % env.environment, default=False):
+        if not console.confirm('Are you sure you want to deploy to {env.environment}? '.format(env=env), default=False) or\
+           not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
             utils.abort('Deployment aborted.')
 
     with cd(env.code_root):
