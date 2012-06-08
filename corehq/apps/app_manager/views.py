@@ -5,6 +5,7 @@ import uuid
 from wsgiref.util import FileWrapper
 import zipfile
 from corehq.apps.app_manager.const import APP_V1
+from corehq.apps.domain.models import Domain
 from couchexport.export import FormattedRow
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
@@ -191,11 +192,18 @@ def import_app(req, domain, template="app_manager/import_app.html"):
     else:
         app_id = req.GET.get('app')
         redirect_domain = req.GET.get('domain')
-        if redirect_domain:
-            return HttpResponseRedirect(
-                reverse('import_app', args=[redirect_domain])
-                + "?app={app_id}".format(app_id=app_id)
-            )
+        if redirect_domain is not None:
+            if Domain.get_by_name(redirect_domain):
+                return HttpResponseRedirect(
+                    reverse('import_app', args=[redirect_domain])
+                    + "?app={app_id}".format(app_id=app_id)
+                )
+            else:
+                if redirect_domain:
+                    messages.error(req, "We can't find a project called %s." % redirect_domain)
+                else:
+                    messages.error(req, "You left the project name blank.")
+                return HttpResponseRedirect(req.META['HTTP_REFERER'])
 
         if app_id:
             app = get_app(None, app_id)

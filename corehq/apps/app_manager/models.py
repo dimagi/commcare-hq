@@ -693,7 +693,7 @@ class VersionedDoc(Document):
     def delete_copy(self, copy):
         if copy.copy_of != self._id:
             raise VersioningError("%s is not a copy of %s" % (copy, self))
-        copy.delete()
+        copy.delete_app()
 
     def scrub_source(self, source):
         """
