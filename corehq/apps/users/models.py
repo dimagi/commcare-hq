@@ -6,7 +6,6 @@ from __future__ import absolute_import
 from datetime import datetime
 import logging
 import re
-from corehq.apps.domain.models import Domain
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
@@ -1244,3 +1243,4 @@ class RemoveWebUserRecord(DeleteRecord):
         user.save()
 
 from .signals import *
+from corehq.apps.domain.models import Domain

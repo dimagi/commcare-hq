@@ -616,6 +616,7 @@ class VersionedDoc(Document):
             if 'update' not in response_json:
                 response_json['update'] = {}
             response_json['update']['app-version'] = self.version
+
     def save_copy(self):
         cls = self.__class__
         copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True).all()
@@ -978,20 +979,21 @@ class ApplicationBase(VersionedDoc):
         jadjar = jadjar.pack(self.create_all_files())
         return jadjar.jar
 
-    def save_copy(self, comment=None):
+    def save_copy(self, comment=None, jadjar=True):
         copy = super(ApplicationBase, self).save_copy()
 
-        copy.create_jadjar(save=True)
+        if jadjar:
+            copy.create_jadjar(save=True)
 
-        try:
-            copy.short_url = bitly.shorten(
-                get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
-            )
-        except (URLError, Exception):
-            # for offline only
-            logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
-            copy.short_url = None
-        copy.build_comment = comment
+            try:
+                copy.short_url = bitly.shorten(
+                    get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
+                )
+            except (URLError, Exception):
+                # for offline only
+                logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
+                copy.short_url = None
+            copy.build_comment = comment
         copy.save(increment_version=False)
 
         return copy
