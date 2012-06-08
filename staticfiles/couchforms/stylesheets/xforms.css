@@ -1,0 +1,27 @@
+#formdata ul {
+    list-style-type: none;
+    padding-left: 10px;
+    margin: 0px;
+}
+
+#formdata ul li {
+    margin-left: 0px;
+}
+
+#formdata .value {
+    font-weight: bold;
+}
+
+#formdata .group {
+    font-weight: bold;
+    font-style: italic;
+}
+
+
+pre {
+    padding: 15px;
+    white-space: pre; /* CSS2 */
+    white-space: pre-wrap; /* CSS 2.1 */
+    white-space: pre-line; /* CSS 3 (and 2.1 as well, actually) */
+    word-wrap: break-word; /* IE */
+}

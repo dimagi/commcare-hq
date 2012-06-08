@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+	<h:head>
+		<h:title>New Form</h:title>
+		<model>
+			<instance>
+				<data>
+					<question1 />
+					<question2 />
+					<question3 />
+					<question4 />
+					<question5 />
+				</data>
+			</instance>
+			<bind nodeset="/data/question1" type="xsd:string" />
+			<bind nodeset="/data/question2" type="xsd:string" />
+			<bind nodeset="/data/question3" type="xsd:string" />
+			<bind nodeset="/data/question4" type="xsd:string" />
+			<bind nodeset="/data/question5" type="xsd:string" />
+			<itext>
+				<translation lang="en" default="">
+					<text id="question1">
+						<value>question1</value>
+					</text>
+					<text id="question2">
+						<value>question2</value>
+					</text>
+					<text id="question3">
+						<value>question3</value>
+					</text>
+					<text id="question4">
+						<value>question4</value>
+					</text>
+					<text id="question5">
+						<value>question5</value>
+					</text>
+				</translation>
+			</itext>
+		</model>
+	</h:head>
+	<h:body>
+		<input ref="/data/question1">
+			<label ref="jr:itext('question1')" />
+		</input>
+		<input ref="/data/question2">
+			<label ref="jr:itext('question2')" />
+		</input>
+		<input ref="/data/question3">
+			<label ref="jr:itext('question3')" />
+		</input>
+		<input ref="/data/question4">
+			<label ref="jr:itext('question4')" />
+		</input>
+		<input ref="/data/question5">
+			<label ref="jr:itext('question5')" />
+		</input>
+	</h:body>
+</h:html>

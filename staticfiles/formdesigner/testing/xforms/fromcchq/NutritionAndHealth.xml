@@ -1,0 +1,210 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:jr="http://openrosa.org/javarosa" xmlns="http://www.w3.org/2002/xforms">
+  <h:head>
+    <h:title>Nutrition and Health</h:title>
+    <model>
+      <instance>
+        <data xmlns="http://openrosa.org/formdesigner/A50F1971-FFCB-41C8-94E8-29C27C01DFDA" uiVersion="1" version="1" name="Nutrition and Health">
+          <MUAC/>
+          <SAM_Anganwadi/>
+          <SAM_Hospital/>
+          <SAM_Refer/>
+          <MAM_Anganwadi/>
+          <MAM_Home_food/>
+          <Complications/>
+          <Edema/>
+          <fever/>
+          <fever_days/>
+          <Cough/>
+          <cough_days/>
+          <infection/>
+          <infection_days/>
+          <Serious_Refer/>
+        </data>
+      </instance>
+      <bind nodeset="/data/MUAC" type="xsd:decimal" required="true()"/>
+      <bind nodeset="/data/SAM_Anganwadi" relevant="/data/MUAC &lt; 11.5" action="enable"/>
+      <bind nodeset="/data/SAM_Hospital" relevant="/data/MUAC &lt; 11.5" action="enable"/>
+      <bind nodeset="/data/SAM_Refer"/>
+      <bind nodeset="/data/MAM_Anganwadi" action="enable"/>
+      <bind nodeset="/data/MAM_Home_food" action="enable"/>
+      <bind nodeset="/data/Complications" type="xsd:string" required="true()"/>
+      <bind nodeset="/data/Edema" type="xsd:string" required="true()"/>
+      <bind xmlns="" nodeset="/data/fever" type="xsd:string" required="true()"/>
+      <bind xmlns="" nodeset="/data/fever_days" type="xsd:int" relevant="/data/fever = 'yes'" action="enable"/>
+      <bind xmlns="" nodeset="/data/Cough" type="select" required="true()"/>
+      <bind xmlns="" nodeset="/data/cough_days" type="xsd:int" relevant="/data/Cough = 'yes'" action="enable"/>
+      <bind xmlns="" nodeset="/data/infection" type="select" required="true()"/>
+      <bind xmlns="" nodeset="/data/infection_days" type="xsd:int" relevant="/data/infection = 'yes'" action="enable"/>
+      <bind nodeset="/data/Serious_Refer"/>
+      <itext>
+        <translation lang="en" default="">
+          <text id="question1">
+            <value>Measure the child's Mid-Upper-Arm-Circumference</value>
+          </text>
+          <text id="Serious_Other">
+            <value>Bleeding, body injury etc.?</value>
+          </text>
+          <text id="Fever">
+            <value>Fever?</value>
+          </text>
+          <text id="Skin_Infection">
+            <value>Skin infection?</value>
+          </text>
+          <text id="option588">
+            <value>Yes</value>
+          </text>
+          <text id="option648">
+            <value>No</value>
+          </text>
+          <text id="option786">
+            <value>Yes</value>
+          </text>
+          <text id="option811">
+            <value>No</value>
+          </text>
+          <text id="option963">
+            <value>Yes</value>
+          </text>
+          <text id="option1047">
+            <value>No</value>
+          </text>
+          <text id="question13">
+            <value>How many days?</value>
+          </text>
+          <text id="SAM_Anganwadi">
+            <value>Child is severely malnourished, discuss Anganwadi center services</value>
+          </text>
+          <text id="SAM_Hospital">
+            <value>Discuss NRC</value>
+          </text>
+          <text id="SAM_Refer">
+            <value>Refer child to the AWC and NRC</value>
+          </text>
+          <text id="MAM_Anganwadi">
+            <value>Child is moderately malnourished, discuss Anganwadi center services</value>
+          </text>
+          <text id="MAM_Home_food">
+            <value>Discuss Home-diet</value>
+          </text>
+          <text id="MUAC">
+            <value>Measure the child's Mid-Upper-Arm-Circumference</value>
+          </text>
+          <text id="Complications">
+            <value>Health Complications</value>
+          </text>
+          <text id="Edema">
+            <value>Pitting Edema?</value>
+          </text>
+          <text id="Cough">
+            <value>Is the child coughing?</value>
+          </text>
+          <text id="cough_days">
+            <value>Cough how many days?</value>
+          </text>
+          <text id="infection">
+            <value>Is there a skin infection?</value>
+          </text>
+          <text id="infection_days">
+            <value>how many days?</value>
+          </text>
+          <text id="Serious_Refer">
+            <value>If child is very sick, refer to nearest hospital.</value>
+          </text>
+          <text id="fever">
+            <value>Does the child have a fever?</value>
+          </text>
+          <text id="fever_days">
+            <value>Fever for how many days?</value>
+          </text>
+        </translation>
+      </itext>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/MUAC">
+      <label ref="jr:itext('MUAC')">Measure the child's Mid-Upper-Arm-Circumference</label>
+    </input>
+    <trigger ref="/data/SAM_Anganwadi">
+      <label ref="jr:itext('SAM_Anganwadi')">Child is severely malnourished, discuss Anganwadi center services</label>
+    </trigger>
+    <trigger ref="/data/SAM_Hospital">
+      <label ref="jr:itext('SAM_Hospital')">Discuss NRC</label>
+    </trigger>
+    <trigger ref="/data/SAM_Refer">
+      <label ref="jr:itext('SAM_Refer')">Refer child to the AWC and NRC</label>
+    </trigger>
+    <trigger ref="/data/MAM_Anganwadi">
+      <label ref="jr:itext('MAM_Anganwadi')">Child is moderately malnourished, discuss Anganwadi center services</label>
+    </trigger>
+    <trigger ref="/data/MAM_Home_food">
+      <label ref="jr:itext('MAM_Home_food')">Discuss Home-diet</label>
+    </trigger>
+    <select ref="/data/Complications">
+      <label ref="jr:itext('Complications')">Health Complications</label>
+      <item>
+        <label>Yes</label>
+        <value>Yes</value>
+      </item>
+      <item>
+        <label>No</label>
+        <value>No</value>
+      </item>
+    </select>
+    <select ref="/data/Edema">
+      <label ref="jr:itext('Edema')">Pitting Edema?</label>
+      <item>
+        <label>Yes</label>
+        <value>Yes</value>
+      </item>
+      <item>
+        <label>No</label>
+        <value>No</value>
+      </item>
+    </select>
+    <select ref="/data/fever">
+      <label ref="jr:itext('fever')">Does the child have a fever?</label>
+      <item>
+        <label ref="jr:itext('option588')">yes</label>
+        <value>yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('option648')">no</label>
+        <value>no</value>
+      </item>
+    </select>
+    <input ref="/data/fever_days">
+      <label ref="jr:itext('fever_days')">How many days?</label>
+    </input>
+    <select ref="/data/Cough">
+      <label ref="jr:itext('Cough')">Is the child coughing?</label>
+      <item>
+        <label ref="jr:itext('option786')">yes</label>
+        <value>yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('option811')">no</label>
+        <value>no</value>
+      </item>
+    </select>
+    <input ref="/data/cough_days">
+      <label ref="jr:itext('cough_days')">How many days?</label>
+    </input>
+    <select ref="/data/infection">
+      <label ref="jr:itext('infection')">Is there a skin infection?</label>
+      <item>
+        <label ref="jr:itext('option963')">yes</label>
+        <value>yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('option1047')">no</label>
+        <value>no</value>
+      </item>
+    </select>
+    <input ref="/data/infection_days">
+      <label ref="jr:itext('infection_days')">How many days?</label>
+    </input>
+    <trigger ref="/data/Serious_Refer">
+      <label ref="jr:itext('Serious_Refer')">If child is very sick, refer to nearest hospital.</label>
+    </trigger>
+  </h:body>
+</h:html>

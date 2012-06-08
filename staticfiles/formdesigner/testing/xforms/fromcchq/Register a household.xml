@@ -1,0 +1,196 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+	<h:head>
+		<h:title>												 Register Client Household</h:title>
+		<model>
+			<instance>
+				<data xmlns="http://openrosa.org/formdesigner/C8BCF316-829F-4902-92B0-B469A8BD0141" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" uiVersion="1" version="1" name="Register Client Household">
+					<client_name/>
+					<client_age/>
+					<marital_status/>
+					<client_children/>
+					<household_id/>
+					<dup_reg/>
+					<question8/>
+				</data>
+			</instance>
+			<bind nodeset="/data/client_name" type="xsd:string" required="true()"/>
+			<bind nodeset="/data/client_age" type="xsd:int" required="true()" constraint=". &gt; '14' and . &lt; '110'" jr:constraintMsg="Umri wa mteja hauwezi kuwa chini ya 14 au zaidi ya miaka 110. "/>
+			<bind nodeset="/data/marital_status" type="select" required="true()"/>
+			<bind nodeset="/data/client_children" type="xsd:int" required="true()" constraint=". &lt; 12" jr:constraintMsg="Angalia vizuri idadi ya watoto?"/>
+			<bind nodeset="/data/household_id" type="xsd:int" required="true()" constraint=". &gt; 0 and . &lt;= 300" jr:constraintMsg="Namba ya kaya hiwezi kuwa 0 au zaidi ya 300. "/>
+			<bind nodeset="/data/dup_reg" type="select" constraint="not(. = 'OK')" jr:constraintMsg="Tafadhali bonyeza kitufe juu ya kitufe chekundu kukurudisha nyuma ili uandike namba nyingine" relevant="household-exists(../household_id)" action="enable"/>
+			<itext>
+				<translation lang="en">
+					<text id="option1">
+						<value>Married</value>
+					</text>
+					<text id="single">
+						<value>Single</value>
+					</text>
+					<text id="option2">
+						<value>Divorced</value>
+					</text>
+					<text id="option3">
+						<value>Widow or Widower </value>
+					</text>
+					<text id="option4">
+						<value>Cohabitating </value>
+					</text>
+					<text id="option5">
+						<value>Minor </value>
+					</text>
+					<text id="question1">
+						<value>Enter Client Name</value>
+						<value form="short">Name</value>
+					</text>
+					<text id="question2">
+						<value>Please enter the household ID.</value>
+						<value form="short">Household ID</value>
+					</text>
+					<text id="option766">
+						<value>Press back, not the center button</value>
+					</text>
+					<text id="amt_children">
+						<value>Number of children?</value>
+						<value form="short">Number Children?</value>
+					</text>
+					<text id="client_children">
+						<value>Number of children?</value>
+						<value form="short">Number?</value>
+					</text>
+					<text id="client_age">
+						<value>How old are you?</value>
+						<value form="short">Age?</value>
+					</text>
+					<text id="client_name">
+						<value>Enter Client Name</value>
+						<value form="short">Name</value>
+					</text>
+					<text id="household_id">
+						<value>Please enter the household ID.</value>
+						<value form="short">Household ID</value>
+					</text>
+					<text id="idmessage">
+						<value>The ID For this visit is [<output ref="/data/question8"/>]. Please write this ID down and give it to the person</value>
+					</text>
+					<text id="dup_reg">
+						<value>This household ID is already registered. Please check to make sure you aren't making a duplicate registration!</value>
+					</text>
+					<text id="marital_status">
+						<value>Martial status?</value>
+						<value form="short">Status?</value>
+					</text>
+				</translation>
+				<translation lang="sw">
+					<text id="question1">
+						<value>Jina la Mteja</value>
+						<value form="short">Jina</value>
+					</text>
+					<text id="question2">
+						<value>Ipe namba ya Kaya hii.</value>
+						<value form="short">Ipe namba</value>
+					</text>
+					<text id="option1">
+						<value>Olewa/Oa</value>
+					</text>
+					<text id="single">
+						<value>Hajaoa/Hajaolewa</value>
+					</text>
+					<text id="option2">
+						<value>Achika/Tengana</value>
+					</text>
+					<text id="option3">
+						<value>Mjane/Mgane</value>
+					</text>
+					<text id="option4">
+						<value>Unaishi na mume bila ndoa</value>
+					</text>
+					<text id="option5">
+						<value>Mtoto</value>
+					</text>
+					<text id="option766">
+						<value>Bonyeza kitufe juu ya kitufe chekundu, siyo kitovu cha kati</value>
+					</text>
+					<text id="amt_children">
+						<value>Una watoto wangapi?</value>
+						<value form="short">Watoto wangapi?</value>
+					</text>
+					<text id="client_children">
+						<value>Una watoto wangapi?</value>
+						<value form="short">Wangapi?</value>
+					</text>
+					<text id="client_age">
+						<value>Ana miaka mingapi?</value>
+						<value form="short">Mingapi?</value>
+					</text>
+					<text id="client_name">
+						<value>Jina la Mteja</value>
+						<value form="short">Jina</value>
+					</text>
+					<text id="household_id">
+						<value>Ipe namba ya Kaya hii.</value>
+						<value form="short">Ipe namba</value>
+					</text>
+					<text id="dup_reg">
+						<value>Namba ya kaya hii umeshaandiksha. Tafadali bonyeza "back" na andika namba nyingine.</value>
+					</text>
+					<text id="marital_status">
+						<value>Hali ya Ndoa?</value>
+						<value form="short">Hali ya Ndoa?</value>
+					</text>
+					<text id="idmessage">
+						<value>The ID For this visit is [<output ref="/data/question8"/>]. Please write this ID down and give it to the person</value>
+					</text>
+				</translation>
+			</itext>
+		</model>
+	</h:head>
+	<h:body>
+		<input ref="/data/client_name">
+			<label ref="jr:itext('client_name')">Enter Client Name</label>
+		</input>
+		<input ref="/data/client_age">
+			<label ref="jr:itext('client_age')">How old are you?</label>
+		</input>
+		<select1 ref="/data/marital_status">
+			<label ref="jr:itext('marital_status')">Martial Status?</label>
+			<item id="Married">
+				<label ref="jr:itext('option1')">Married</label>
+				<value>Married</value>
+			</item>
+			<item id="Single">
+				<label ref="jr:itext('single')">Single</label>
+				<value>Single</value>
+			</item>
+			<item id="Divorced">
+				<label ref="jr:itext('option2')">Divorced</label>
+				<value>Divorced</value>
+			</item>
+			<item id="Widow or Widower">
+				<label ref="jr:itext('option3')">Widow or Widower</label>
+				<value>Widow or Widower</value>
+			</item>
+			<item id="Cohabitating">
+				<label ref="jr:itext('option4')">Cohabitating</label>
+				<value>Cohabitating</value>
+			</item>
+			<item id="Minor">
+				<label ref="jr:itext('option5')">Minor</label>
+				<value>Minor</value>
+			</item>
+		</select1>
+		<input ref="/data/client_children">
+			<label ref="jr:itext('client_children')">Number of children?</label>
+		</input>
+		<input ref="/data/household_id">
+			<label ref="jr:itext('household_id')">Please enter the household ID.</label>
+		</input>
+		<select1 ref="/data/dup_reg">
+			<label ref="jr:itext('dup_reg')">This household ID is already registered. Please check to make sure you aren't making a duplicate registration!</label>
+			<item id="OK">
+				<label ref="jr:itext('option766')">Press back, not the center button</label>
+				<value>OK</value>
+			</item>
+		</select1>
+	</h:body>
+</h:html>

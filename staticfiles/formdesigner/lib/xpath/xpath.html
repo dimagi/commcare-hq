@@ -1,0 +1,53 @@
+<html>
+  <head>
+        <title>XPath Test</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <script type="text/javascript" src="lib/biginteger.js"></script>
+        <script type="text/javascript" src="lib/schemeNumber.js"></script>
+        <script type="text/javascript" src="models.js"></script>
+        <script type="text/javascript" src="xpath.js"></script>
+        <script type="text/javascript">
+            var updateUI = function() {
+                try {
+                    var res = xpath.parse(document.getElementById('expression').value);
+                    document.getElementById("parse-tree").innerHTML = res.toString();
+                    document.getElementById("reparsed").innerHTML = res.toXPath();
+                    document.getElementById("errors").innerHTML = "";
+                } catch (err) {
+                    document.getElementById("parse-tree").innerHTML = "N/A";
+                    document.getElementById("reparsed").innerHTML = "N/A";
+                    document.getElementById("errors").innerHTML = err;
+                }
+            };
+        </script>
+        <style>
+            #parse-tree {
+                font-family: monospace;
+                border: 1px solid gray;
+                padding: 1em;
+                color: #333;
+            }
+            #reparsed {
+                font-family: monospace;
+                border: 1px solid gray;
+                padding: 1em;
+                color: #333;
+            }
+            #errors {
+                color: red;
+                font-weight: bold;
+                padding: 1em;
+            }
+        </style>
+  </head>
+<body>
+    <p>Enter an expression below to parse.</p>
+    <form onsubmit="updateUI(); return false;">
+        <input id="expression" type="text" placeholder="asdf('bcd', 1, 'foo/bar')" />
+        <input type="submit" value="Parse" />
+    </form>
+    Parse Tree: <div id="parse-tree"></div>
+    Resulting XPath: <div id="reparsed"></div>
+    Errors: <div id="errors"></div>
+</body>
+</html>

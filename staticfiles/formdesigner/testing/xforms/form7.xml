@@ -1,0 +1,68 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>Barcode Reg</h:title>
+    <model>
+      <instance>
+        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/B095F533-6226-40EE-9045-38EA21D214DB" uiVersion="1" version="1" name="Barcode Demo Item Registration">
+          <name/>
+          <date/>
+          <barcode/>
+          <urgency/>
+          <zone/>
+          <estimate/>
+        </data>
+      </instance>
+      <bind nodeset="/data/name" type="xsd:string" required="true()"/>
+      <bind nodeset="/data/date" type="xsd:date" required="true()"/>
+      <bind nodeset="/data/barcode" type="barcode"/>
+      <bind nodeset="/data/urgency" type="select1" required="true()"/>
+      <bind nodeset="/data/zone" type="select1"/>
+      <bind nodeset="/data/estimate" type="xsd:string" calculate="date(int(/data/date) + (/data/zone div /data/urgency))"/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label>What is the item being tracked?</label>
+    </input>
+    <input ref="/data/date">
+      <label>What is the date of Entry?</label>
+    </input>
+    <input ref="/data/barcode">
+      <label>Please scan the item's barcode</label>
+    </input>
+    <select1 ref="/data/urgency">
+      <label>Rate Urgency</label>
+      <item>
+        <label>High</label>
+        <value>4</value>
+      </item>
+      <item>
+        <label>Standard</label>
+        <value>2</value>
+      </item>
+      <item>
+        <label>Low</label>
+        <value>1</value>
+      </item>
+    </select1>
+    <select1 ref="/data/zone">
+      <label>Which delivery zone is the item in?</label>
+      <item>
+        <label>Zone One</label>
+        <value>8</value>
+      </item>
+      <item>
+        <label>Zone Two</label>
+        <value>12</value>
+      </item>
+      <item>
+        <label>Zone Three</label>
+        <value>4</value>
+      </item>
+      <item>
+        <label>Zone Four</label>
+        <value>8</value>
+      </item>
+    </select1>
+  </h:body>
+</h:html>

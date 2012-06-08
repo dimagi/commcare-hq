@@ -1,0 +1,1398 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>Follow-up at household</h:title>
+    <model>
+      <instance>
+        <data xmlns="http://openrosa.org/formdesigner/9DAACA82-A414-499A-9C40-BC43775CEE79" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" uiVersion="1" version="1" name="Follow-up at household">
+          <client_available/>
+          <client_missing/>
+          <client_stopped/>
+		  <foo/>
+          <household_verification/>
+          <household_follow_id/>
+          <followup_id/>
+          <sick_cough/>
+          <sick_fever/>
+          <sick_diarrhea/>
+          <sick_general/>
+          <sick_amt/>
+          <sick_person jr:template="">
+            <sick_suffering/>
+            <sick_action/>
+          </sick_person>
+          <sick_referral/>
+          <sick_reminder/>
+          <client_pregnant/>
+          <newborm_present/>
+          <newborn_amt/>
+          <newborn jr:template="">
+            <newborn_location/>
+            <newborn_chv/>
+            <newborn_registration/>
+            <newborn_reminder/>
+          </newborn>
+          <child_present/>
+          <child_immunization/>
+          <child_vac_schedule/>
+          <child_reminder/>
+          <client_family_planning/>
+          <family_planning_which/>
+          <family_reminder/>
+          <client_referral/>
+          <mark_referral/>
+          <pregnancy_reminder/>
+          <sick_action/>
+        </data>
+      </instance>
+      <bind nodeset="/data/sick_fever" type="select1" relevant="/data/client_available = 'Yes'" />
+      <bind nodeset="/data/sick_referral" type="select1" relevant="/data/sick_general = 'Yes'" />
+      <bind nodeset="/data/client_pregnant" type="select1" relevant="/data/client_available = 'Yes'" />
+      <bind nodeset="/data/newborm_present" type="select1" relevant="/data/client_available = 'Yes'" />
+      <bind nodeset="/data/newborn_amt" type="xsd:int" relevant="/data/newborm_present = 'Yes'"  constraint=". &gt; 0" jr:constraintMsg=""/>
+      <bind nodeset="/data/newborn/newborn_location" type="select1" relevant="/data/newborm_present = 'Yes'" />
+      <bind nodeset="/data/newborn/newborn_chv" type="select1" relevant="/data/newborm_present = 'Yes'" />
+      <bind nodeset="/data/newborn/newborn_registration" type="select1" relevant="/data/newborm_present = 'Yes'" />
+      <bind nodeset="/data/newborn/newborn_reminder" relevant="/data/newborn/newborn_registration = 'No'"  />
+      <bind nodeset="/data/child_present" type="select1" relevant="/data/client_available = 'Yes'" />
+      <bind nodeset="/data/child_immunization" relevant="/data/child_present = 'Yes'"  />
+      <bind nodeset="/data/child_vac_schedule" type="select1" relevant="/data/child_present = 'Yes'" />
+      <bind nodeset="/data/child_reminder" relevant="/data/child_vac_schedule = 'No'"  />
+      <bind nodeset="/data/client_family_planning" type="select1" relevant="/data/client_available = 'Yes'" />
+      <bind nodeset="/data/family_planning_which" type="select1" relevant="/data/client_family_planning = 'Yes'" />
+      <bind nodeset="/data/family_reminder" relevant="/data/client_family_planning = 'Yes'"  />
+      <bind nodeset="/data/client_referral" type="select1" relevant="/data/client_available = 'Yes'" />
+      <bind nodeset="/data/mark_referral" type="select" relevant="/data/client_referral = 'Yes'" />
+      <bind nodeset="/data/client_available" type="select1" required="true()"/>
+      <bind nodeset="/data/client_missing" type="select1" relevant="/data/client_available = 'No'" />
+      <bind nodeset="/data/client_stopped" type="select1" relevant="/data/client_available = 'No' and not(/data/client_missing = 'not_home')" />
+      <bind nodeset="/data/household_verification" type="xsd:int" relevant="/data/client_available = 'Yes'" constraint=". &gt; 99 and . &lt; 1000"  jr:constraintMsg="Namba ya kaya lazima iwe kati ya 100 na 999."/>
+      <bind nodeset="/data/followup_id"  calculate="int(random() * 899) + 100" type="xsd:string"/>
+      <bind nodeset="/data/sick_cough" type="select1" relevant="/data/client_available = 'Yes'" />
+      <bind nodeset="/data/sick_diarrhea" type="select1" relevant="/data/client_available = 'Yes'" />
+      <bind nodeset="/data/sick_general" type="select1" relevant="/data/client_available = 'Yes'" />
+      <bind nodeset="/data/sick_amt" relevant="/data/sick_general = 'Yes'" type="xsd:int" constraint=". &gt; 0"  jr:constraintMsg="Angalia idadi ya wagonjwa uliyoweka?"/>
+      <bind nodeset="/data/sick_person/sick_suffering" type="select1" relevant="/data/sick_general = 'Yes'" />
+      <bind nodeset="/data/sick_person/sick_action" type="select1" relevant="/data/sick_general = 'Yes'" />
+      <bind nodeset="/data/sick_reminder" relevant="/data/sick_referral = 'Yes'"  />
+      <bind nodeset="/data/household_follow_id" relevant="/data/client_available = 'Yes'"  />
+      <bind nodeset="/data/sick_person"/>
+      <bind nodeset="/data/newborn"/>
+      <bind id="pregnancy_reminder" nodeset="/data/pregnancy_reminder"  relevant="/data/client_pregnant = 'Yes'" />
+      <itext>
+        <translation lang="en">
+          <text id="question 10">
+            <value>What is sick person suffering from?</value>
+            <value form="short">Suffering from:</value>
+          </text>
+          <text id="family_reminder">
+            <value>Reminder: please talk with the client about the family planning method she's interested in.</value>
+          </text>
+          <text id="health_facility">
+            <value>Health Facility</value>
+          </text>
+          <text id="client_available">
+            <value>Is the client available?</value>
+            <value form="short">Available?</value>
+          </text>
+          <text id="sick_fever">
+            <value>Did anyone in the household have a fever yesterday or today?</value>
+            <value form="short">Fever?</value>
+          </text>
+          <text id="sick_cough">
+            <value>Was anyone in the household coughing today or yesterday?</value>
+            <value form="short">Anyone coughing?</value>
+          </text>
+          <text id="newborn_location">
+            <value>Where was the birth of child?</value>
+          </text>
+          <text id="newborn_locationsick_action">
+            <value form="short">Has the sick person:</value>
+          </text>
+          <text id="sick_suffering">
+            <value>What is sick person suffering from?</value>
+            <value form="short">Suffering from?</value>
+          </text>
+          <text id="sick_referral">
+            <value>Should anyone be referred for sickness?</value>
+            <value form="short">Referred for sickness?</value>
+          </text>
+          <text id="mark_referral">
+            <value>Mark any referral you have given in this household:</value>
+            <value form="short">Mark referral</value>
+          </text>
+          <text id="newborn_locationquestion1">
+            <value form="short">Available?</value>
+          </text>
+          <text id="child_immunization">
+            <value>Review the immunization card(s). </value>
+            <value form="short">Immunization Card</value>
+          </text>
+          <text id="newborn_locationquestion2">
+            <value form="short">Missing?</value>
+          </text>
+          <text id="newborn_locationmark_referral">
+            <value form="short">Mark referral</value>
+          </text>
+          <text id="newborn_locationnewborn_registration">
+            <value form="short">Birth Registration?</value>
+          </text>
+          <text id="newborn_locationquestion8">
+            <value form="short">Sick?</value>
+          </text>
+          <text id="newborn_locationquestion9">
+            <value form="short">How many sick?</value>
+          </text>
+          <text id="newborn_chv">
+            <value>Were you visited by a newborn education CHV?</value>
+            <value form="short">Newborn CHV?</value>
+          </text>
+          <text id="newborn_locationsick_general">
+            <value form="short">Sick?</value>
+          </text>
+          <text id="option14">
+            <value>No</value>
+          </text>
+          <text id="pill">
+            <value>Pill</value>
+          </text>
+          <text id="option15">
+            <value>Yes</value>
+          </text>
+          <text id="option16">
+            <value>No</value>
+          </text>
+          <text id="sick_amt">
+            <value>How many people are sick?</value>
+            <value form="short">How many sick?</value>
+          </text>
+          <text id="newborn_registration">
+            <value>Was your child's birth registered? (Please ask to see the registration card)</value>
+            <value form="short">Birth Registration?</value>
+          </text>
+          <text id="option17">
+            <value>Diarrhea</value>
+          </text>
+          <text id="option18">
+            <value>Cough</value>
+          </text>
+          <text id="option19">
+            <value>Fever</value>
+          </text>
+          <text id="newborn_locationquestion 10">
+            <value form="short">Suffering from:</value>
+          </text>
+          <text id="option10">
+            <value>Yes</value>
+          </text>
+          <text id="option11">
+            <value>Yes</value>
+          </text>
+          <text id="option12">
+            <value>Yes</value>
+          </text>
+          <text id="option13">
+            <value>Yes</value>
+          </text>
+          <text id="sick_person_action">
+            <value>Has the sick person:</value>
+            <value form="short">Has the sick person:</value>
+          </text>
+          <text id="other_method">
+            <value>Other method</value>
+          </text>
+          <text id="newborn_locationquestion 9">
+            <value form="short">Number sick?</value>
+          </text>
+          <text id="client_missing">
+            <value>Why is the client missing?</value>
+            <value form="short">Missing?</value>
+          </text>
+          <text id="child_vac_schedule">
+            <value>Is the child currently up-to-date with their vaccination schedule?</value>
+            <value form="short">Up-to-date?</value>
+          </text>
+          <text id="newborn_locationsick_fever">
+            <value form="short">Fever?</value>
+          </text>
+          <text id="question1">
+            <value>Is the client available?</value>
+            <value form="short">Available?</value>
+          </text>
+          <text id="question2">
+            <value>Why is the client missing?</value>
+            <value form="short">Missing?</value>
+          </text>
+          <text id="newborn_locationsick_cough">
+            <value form="short">Anyone coughing?</value>
+          </text>
+          <text id="question3">
+            <value>Has this client stopped participating in this program?</value>
+          </text>
+          <text id="child_present">
+            <value>Are there any children under 2 years of age?</value>
+            <value form="short">Children under 2?</value>
+          </text>
+          <text id="question4">
+            <value>Please enter the household follow-up number from the previous visit.</value>
+          </text>
+          <text id="question5">
+            <value>Was anyone in the household coughing today or yesterday?</value>
+          </text>
+          <text id="question7">
+            <value>Did anyone in the household have diarrhea yesterday or today?</value>
+          </text>
+          <text id="option27">
+            <value>Gone to health facility and didn't receive treatment.</value>
+          </text>
+          <text id="option28">
+            <value>Not gone to a health facility.</value>
+          </text>
+          <text id="newborn_locationnewborn_chv">
+            <value form="short">Newborn CHV?</value>
+          </text>
+          <text id="option25">
+            <value>Other</value>
+          </text>
+          <text id="question9">
+            <value>How many people are sick?</value>
+            <value form="short">How many sick?</value>
+          </text>
+          <text id="newborn_reminder">
+            <value>It's important to make sure you register your newborn after birth.	You can't enrol your child into school without a birth registration card.</value>
+            <value form="short">Birth Registration</value>
+          </text>
+          <text id="option26">
+            <value>Wound Case</value>
+          </text>
+          <text id="question8">
+            <value>Is anyone sick?</value>
+            <value form="short">Sick?</value>
+          </text>
+          <text id="newborn_locationclient_stopped">
+            <value form="short">Client Stopped?</value>
+          </text>
+          <text id="option29">
+            <value>Other</value>
+          </text>
+          <text id="option20">
+            <value>Malaria</value>
+          </text>
+          <text id="newborn_locationnewborm_present">
+            <value form="short">Newborn Baby?</value>
+          </text>
+          <text id="option23">
+            <value>Complications from birth control</value>
+          </text>
+          <text id="newborn_locationclient_missing">
+            <value form="short">Missing?</value>
+          </text>
+          <text id="option24">
+            <value>They don't know</value>
+          </text>
+          <text id="option21">
+            <value>Blood Pressure Problems</value>
+          </text>
+          <text id="client_family_planning">
+            <value>Do you want to know more about family planning?</value>
+            <value form="short">More Family Planning?</value>
+          </text>
+          <text id="option22">
+            <value>Skin Problem</value>
+          </text>
+          <text id="newborn_locationsick_reminder">
+            <value form="short">Sickness reminder</value>
+          </text>
+          <text id="child_reminder">
+            <value>It's important for your child to receive all vaccinations before 9 months of age while your child is at increased risk of diseases such as Tetanus, Polio, and TB.</value>
+            <value form="short">Immunizations</value>
+          </text>
+          <text id="newborn_locationquestion26">
+            <value form="short">Pregnant?</value>
+          </text>
+          <text id="newborn_locationquestion27">
+            <value form="short">Newborn Baby?</value>
+          </text>
+          <text id="sick_reminder">
+            <value>I've started an open sickness referral case.	Please visit the health facility, and I'll be back in three days to check up on you.</value>
+            <value form="short">Sickness reminder</value>
+          </text>
+          <text id="option1">
+            <value>Yes</value>
+          </text>
+          <text id="newborn_locationchild_present">
+            <value form="short">Children under 2?</value>
+          </text>
+          <text id="question32">
+            <value>It's important to make sure you register your newborn after birth.	You can't enrol your child into school without a birth registration card.</value>
+            <value form="short">Birth Registration</value>
+          </text>
+          <text id="question31">
+            <value>Was your child's birth registered? (Please ask to see the registration card)</value>
+            <value form="short">Birth Registration?</value>
+          </text>
+          <text id="option2">
+            <value>No</value>
+          </text>
+          <text id="option3">
+            <value>Client not home</value>
+          </text>
+          <text id="option4">
+            <value>Client moved</value>
+          </text>
+          <text id="question33">
+            <value>Are there any children under 2 years of age?</value>
+            <value form="short">Children under 2?</value>
+          </text>
+          <text id="newborn_locationclient_pregnant">
+            <value form="short">Pregnant?</value>
+          </text>
+          <text id="jr:itext('question13')">
+            <value>I've started an open sickness referral case.	Please visit the health facility, and I'll be back in three days to check up on you.</value>
+          </text>
+          <text id="question30">
+            <value>Were you visited by a newborn education CHV?</value>
+            <value form="short">Newborn CHV?</value>
+          </text>
+          <text id="client_pregnant">
+            <value>Are you pregnant?</value>
+            <value form="short">Pregnant?</value>
+          </text>
+          <text id="option30">
+            <value>Yes</value>
+          </text>
+          <text id="newborn_locationchild_immunization">
+            <value form="short">Immunization Card</value>
+          </text>
+          <text id="newborn_locationsick_amt">
+            <value form="short">How many sick?</value>
+          </text>
+          <text id="newborn_locationclient_available">
+            <value form="short">Available?</value>
+          </text>
+          <text id="sick_general">
+            <value>Is anyone sick?</value>
+            <value form="short">Sick?</value>
+          </text>
+          <text id="question36">
+            <value>Is the child currently up-to-date with their vaccination schedule?</value>
+            <value form="short">Up-to-date?</value>
+          </text>
+          <text id="question35">
+            <value>Review the immunization card(s). </value>
+            <value form="short">Immunization Card</value>
+          </text>
+          <text id="question38">
+            <value>Do you want to know more about family planning?</value>
+            <value form="short">More Family Planning?</value>
+          </text>
+          <text id="question37">
+            <value>It's important for your child to receive all vaccinations before 9 months of age while your child is at increased risk of diseases such as Tetanus, Polio, and TB.</value>
+            <value form="short">Immunizations</value>
+          </text>
+          <text id="newborn_locationnewborn_amt">
+            <value form="short">How many babies?</value>
+          </text>
+          <text id="option9">
+            <value>No</value>
+          </text>
+          <text id="option8">
+            <value>No</value>
+          </text>
+          <text id="option7">
+            <value>Yes</value>
+          </text>
+          <text id="sick_action">
+            <value>Has the sick person:</value>
+            <value form="short">Has the sick person:</value>
+          </text>
+          <text id="option6">
+            <value>Home</value>
+          </text>
+          <text id="option5">
+            <value>Client died</value>
+          </text>
+          <text id="newborn_locationsick_person_action">
+            <value form="short">Has the sick person:</value>
+          </text>
+          <text id="question42">
+            <value>Mark any referral you have given in this household:</value>
+            <value form="short">Mark referral</value>
+          </text>
+          <text id="question41">
+            <value>Did you give any referral in this household?</value>
+          </text>
+          <text id="question40">
+            <value>Reminder: please talk with the client about the family planning method she's interested in.</value>
+          </text>
+          <text id="question 1">
+            <value>Is the client available?</value>
+          </text>
+          <text id="sickness">
+            <value>Sickness</value>
+          </text>
+          <text id="pregnancy_case">
+            <value>Pregnancy case</value>
+          </text>
+          <text id="question 2">
+            <value>Why is the client missing?</value>
+          </text>
+          <text id="question 3">
+            <value>Has this client stopped participating in this program?</value>
+          </text>
+          <text id="question 4">
+            <value>Please enter the household follow-up number from the previous visit.</value>
+          </text>
+          <text id="question 5">
+            <value>Was anyone in the household coughing today or yesterday?</value>
+          </text>
+          <text id="question 7">
+            <value>Did anyone in the household have diarrhea yesterday or today?</value>
+          </text>
+          <text id="question 9">
+            <value>How many people are sick?</value>
+            <value form="short">Number sick?</value>
+          </text>
+          <text id="newborn_locationnewborn_reminder">
+            <value form="short">Birth Registration</value>
+          </text>
+          <text id="newborn_locationchild_reminder">
+            <value form="short">Immunizations</value>
+          </text>
+          <text id="other">
+            <value>Other</value>
+          </text>
+          <text id="newborm_present">
+            <value>Is there a newborn baby in the household?</value>
+            <value form="short">Newborn Baby?</value>
+          </text>
+          <text id="question10">
+            <value>What is sick person suffering from?</value>
+          </text>
+          <text id="question12">
+            <value>Should anyone be referred for sickness?</value>
+          </text>
+          <text id="condom">
+            <value>Condom</value>
+          </text>
+          <text id="newborn_locationquestion42">
+            <value form="short">Mark referral</value>
+          </text>
+          <text id="client_stopped">
+            <value>Has this client stopped participating in this program?</value>
+            <value form="short">Client Stopped?</value>
+          </text>
+          <text id="gone_and_treated">
+            <value>Gone to health facility and received treatment.</value>
+          </text>
+          <text id="newborn_amt">
+            <value>How many newborns in a household?</value>
+            <value form="short">How many babies?</value>
+          </text>
+          <text id="newborn_locationquestion38">
+            <value form="short">More Family Planning?</value>
+          </text>
+          <text id="newborn_locationsick_referral">
+            <value form="short">Referred for sickness?</value>
+          </text>
+          <text id="household_follow_id">
+            <value>This is today's household follow-up number: [<output ref="/data/followup_id"/>].	Please write this down in the client's notebook. </value>
+          </text>
+          <text id="newborn_locationquestion36">
+            <value form="short">Up-to-date?</value>
+          </text>
+          <text id="newborn_locationquestion37">
+            <value form="short">Immunizations</value>
+          </text>
+          <text id="newborn_locationquestion35">
+            <value form="short">Immunization Card</value>
+          </text>
+          <text id="newborn_locationsick_suffering">
+            <value form="short">Suffering from?</value>
+          </text>
+          <text id="newborn_locationquestion32">
+            <value form="short">Birth Registration</value>
+          </text>
+          <text id="newborn_locationquestion33">
+            <value form="short">Children under 2?</value>
+          </text>
+          <text id="injection">
+            <value>Injection</value>
+          </text>
+          <text id="newborn_locationchild_vac_schedule">
+            <value form="short">Up-to-date?</value>
+          </text>
+          <text id="question27">
+            <value>Is there a newborn baby in the household?</value>
+            <value form="short">Newborn Baby?</value>
+          </text>
+          <text id="newborn_locationquestion31">
+            <value form="short">Birth Registration?</value>
+          </text>
+          <text id="newborn_locationquestion30">
+            <value form="short">Newborn CHV?</value>
+          </text>
+          <text id="question26">
+            <value>Are you pregnant?</value>
+            <value form="short">Pregnant?</value>
+          </text>
+          <text id="newborn_locationclient_family_planning">
+            <value form="short">More Family Planning?</value>
+          </text>
+          <text id="question29">
+            <value>Did anyone in the household have a fever yesterday or today?</value>
+          </text>
+          <text id="sick_person">
+            <value>Was your child's birth registered? (Please ask to see the registration card)</value>
+            <value form="short">Birth Registration?</value>
+          </text>
+          <text id="newborn_locationsick_person">
+            <value form="short">Birth Registration?</value>
+          </text>
+          <text id="sick_diarrhea">
+            <value>Did anyone in the household have diarrhea yesterday or today?</value>
+            <value form="short">Diarrhea?</value>
+          </text>
+          <text id="newborn_locationsick_diarrhea">
+            <value form="short">Diarrhea?</value>
+          </text>
+          <text id="client_referral">
+            <value>Did you give any referral in this household?</value>
+          </text>
+          <text id="family_planning_which">
+            <value>Which type of family planning do you want to know more about?</value>
+          </text>
+          <text id="household_verification">
+            <value>Please enter the household follow-up number written in the notebook during the previous household visit.</value>
+          </text>
+          <text id="newborn_locationpregnancy_reminder">
+            <value form="short">How many babies?</value>
+          </text>
+          <text id="pregnancy_reminder">
+            <value>Great! Make sure she is registered on pregnancy module</value>
+            <value form="short">Registered on pregnancy</value>
+          </text>
+        </translation>
+        <translation lang="sw" default="">
+          <text id="option1">
+            <value>Ndio</value>
+          </text>
+          <text id="option2">
+            <value>Hapana</value>
+          </text>
+          <text id="option3">
+            <value>Ametoka</value>
+          </text>
+          <text id="option4">
+            <value>Amehama</value>
+          </text>
+          <text id="option5">
+            <value>Amefariki</value>
+          </text>
+          <text id="option7">
+            <value>Ndio</value>
+          </text>
+          <text id="question 1">
+            <value>Mteja aliyetembelewa yupo?</value>
+          </text>
+          <text id="question 2">
+            <value>Sababu zilizofanya asiwepo?</value>
+          </text>
+          <text id="option8">
+            <value>Hapana</value>
+          </text>
+          <text id="option11">
+            <value>Ndio</value>
+          </text>
+          <text id="option13">
+            <value>Ndio</value>
+          </text>
+          <text id="option14">
+            <value>Hapana</value>
+          </text>
+          <text id="option15">
+            <value>Ndio</value>
+          </text>
+          <text id="option16">
+            <value>Hapana</value>
+          </text>
+          <text id="question 4">
+            <value>Tafadhali ingiza namba ya iliyopo watu katika daftari.</value>
+          </text>
+          <text id="question 5">
+            <value>Kuna mtu kwenye kaya yako ambaye anakohoa leo au tokea jana?</value>
+          </text>
+          <text id="question 3">
+            <value>Mteja huyu ameadia kuwa kwenya kifaa cha commcare?</value>
+          </text>
+          <text id="question 7">
+            <value>Kuna mtu kwenye kaya yako ambaye anahoma leo au tokea jana?</value>
+          </text>
+          <text id="question 9">
+            <value>Watu wangapi wagonjwa?</value>
+            <value form="short">Idadi ya wanaoumwa?</value>
+          </text>
+          <text id="question 10">
+            <value>Mtu anaumwa ana umwa nini?</value>
+            <value form="short">Anaumwa:</value>
+          </text>
+          <text id="option17">
+            <value>Kuharisha</value>
+          </text>
+          <text id="option18">
+            <value>Kifua</value>
+          </text>
+          <text id="option19">
+            <value>Homa</value>
+          </text>
+          <text id="option20">
+            <value>Malaria</value>
+          </text>
+          <text id="option21">
+            <value>Shinikizo la tamu</value>
+          </text>
+          <text id="option23">
+            <value>Matatizo yanayotokana na uzazi wa mpagno.</value>
+          </text>
+          <text id="option22">
+            <value>Ugonjwa wa ngozi</value>
+          </text>
+          <text id="option24">
+            <value>Hawajui ugonjwa gani</value>
+          </text>
+          <text id="option25">
+            <value>Mengineyo</value>
+          </text>
+          <text id="sickness">
+            <value>Ugonjwa</value>
+          </text>
+          <text id="pregnancy_case">
+            <value>Tatizo la ujauzito</value>
+          </text>
+          <text id="option9">
+            <value>Hapana</value>
+          </text>
+          <text id="option10">
+            <value>Ndio</value>
+          </text>
+          <text id="option27">
+            <value>Ameenda kituo cha afya na hakupata tiba.</value>
+          </text>
+          <text id="gone_and_treated">
+            <value>Ameenda kituo cha afya akapata tiba.</value>
+          </text>
+          <text id="option28">
+            <value>Hajaenda kwenye kituo cha afya.</value>
+          </text>
+          <text id="option29">
+            <value>Nyingineo</value>
+          </text>
+          <text id="option30">
+            <value>Ndio</value>
+          </text>
+          <text id="option6">
+            <value>Nyumbani</value>
+          </text>
+          <text id="health_facility">
+            <value>Kituo cha Afya</value>
+          </text>
+          <text id="other">
+            <value>Mengineyo</value>
+          </text>
+          <text id="option12">
+            <value>Ndio</value>
+          </text>
+          <text id="jr:itext('question13')">
+            <value>Nimetoa rufaa ya mgonjwa.	Tafadhali tembelea kituo cha afya, na nitarudi baada ya siku tatu kukuangalia.</value>
+          </text>
+          <text id="option26">
+            <value>Jeraha</value>
+          </text>
+          <text id="condom">
+            <value>Kondom</value>
+          </text>
+          <text id="pill">
+            <value>Vidonge</value>
+          </text>
+          <text id="injection">
+            <value>Sindano</value>
+          </text>
+          <text id="other_method">
+            <value>Njia zingine</value>
+          </text>
+          <text id="question1">
+            <value>Mteja aliyetembelewa yupo?</value>
+            <value form="short">Aliyetembelewa?</value>
+          </text>
+          <text id="question2">
+            <value>Sababu zilizofanya asiwepo?</value>
+            <value form="short">Asiwepo?</value>
+          </text>
+          <text id="question3">
+            <value>Mteja huyu ameadia kuwa kwenya kifaa cha commcare?</value>
+          </text>
+          <text id="question4">
+            <value>Tafadhali ingiza namba ya iliyopo watu katika daftari.</value>
+          </text>
+          <text id="question5">
+            <value>Kuna mtu kwenye kaya yako ambaye anakohoa leo au tokea jana?</value>
+          </text>
+          <text id="question7">
+            <value>Kuna mtu kwenye kaya yako ambaye anaharisha leo au tokea jana?</value>
+          </text>
+          <text id="question8">
+            <value>Kuna mtu anaumwa?</value>
+            <value form="short">Mgonjwa?</value>
+          </text>
+          <text id="question9">
+            <value>Watu wangapi wagonjwa?</value>
+            <value form="short">Idadi ya wanaoumwa?</value>
+          </text>
+          <text id="question10">
+            <value>Mtu anaumwa ana umwa nini?</value>
+          </text>
+          <text id="question12">
+            <value>Je kuna rufaa ya ugonjwa uliyotoa kwenye kaya hii?</value>
+          </text>
+          <text id="sick_person_action">
+            <value>Ikiwa mgonjwa:</value>
+            <value form="short">Ikiwa mgonjwa:</value>
+          </text>
+          <text id="question29">
+            <value>Kuna mtu kwenye kaya yako ambaye anahoma leo au tokea jana?</value>
+          </text>
+          <text id="question27">
+            <value>Kuna mtoto mchanga aliyezaliwa kwenye kaya hii tangu CHP alipotembelea?</value>
+            <value form="short">Mtoto Mchanga?</value>
+          </text>
+          <text id="question26">
+            <value>Je unamimba?</value>
+            <value form="short">Mimba?</value>
+          </text>
+          <text id="question33">
+            <value>Je kuna mtoto mwenye umri chini ya miaka 2?</value>
+            <value form="short">Chini ya 2?</value>
+          </text>
+          <text id="question30">
+            <value>Ulitembelewa na mhudumu wa afya wa kutoa mafunzo (elimu) kwa mtoto mchanga?</value>
+            <value form="short">Mtoto Mchanga?</value>
+          </text>
+          <text id="question35">
+            <value>Angalia kadi ya chanjo.</value>
+            <value form="short">Kadi Ya Chanjo</value>
+          </text>
+          <text id="question37">
+            <value>Ni muhimu mtoto wako kupata chanjo zote kabla ya miezi 9.	Mtoto wako umri huu ni hatari anaweza kupata magonjwa kama: Tetanus, Polio, na TB.</value>
+            <value form="short">Chango</value>
+          </text>
+          <text id="question38">
+            <value>Ungependa kujua zaidi juu ya uzazi wa mpango?</value>
+            <value form="short">Uzazi wa mpango?</value>
+          </text>
+          <text id="question36">
+            <value>Kwa mtoto wako amepata chanjo zote inavyostahili?</value>
+            <value form="short">Inavyostahili?</value>
+          </text>
+          <text id="question40">
+            <value>Kuhusu uzazi wa mpango anaopendelea.</value>
+          </text>
+          <text id="question41">
+            <value>Je kuna rufaa uliyotoa kwenye kaya hii?</value>
+          </text>
+          <text id="newborn_location">
+            <value>Mtoto alizaliwa wapi?</value>
+          </text>
+          <text id="newborn_chv">
+            <value>Ulitembelewa na mhudumu wa afya wa kutoa mafunzo (elimu) kwa mtoto mchanga?</value>
+            <value form="short">Mtoto Mchanga?</value>
+          </text>
+          <text id="newborn_registration">
+            <value>Mtoto wako alipozaliwa alisajliwa? (Tafadhali uliza na uone kadi/cheti)</value>
+            <value form="short">Alipozaliwa Alisajliwa?</value>
+          </text>
+          <text id="newborn_reminder">
+            <value>Ni muhumu sana kuhakikisha kama mtoto alozaliwa umemwa ndikisha (kasajiliwa) baada ya kujifungua.	Hutaweza kumwandikisha mtoto wako shule bila kuwa na cheti za kuzaliwa.</value>
+            <value form="short">Alipozaliwa Alisajliwa?</value>
+          </text>
+          <text id="question32">
+            <value>Ni muhumu sana kuhakikisha kama mtoto alozaliwa umemwa ndikisha (kasajiliwa) baada ya kujifungua.	Hutaweza kumwandikisha mtoto wako shule bila kuwa na cheti za kuzaliwa.</value>
+            <value form="short">Alipozaliwa Alisajliwa?</value>
+          </text>
+          <text id="question31">
+            <value>Mtoto wako alipozaliwa alisajliwa? (Tafadhali uliza na uone kadi/cheti)</value>
+            <value form="short">Alipozaliwa Alisajliwa?</value>
+          </text>
+          <text id="question42">
+            <value>Chagua rufaa ulizotoa kwenye kaya hii?</value>
+            <value form="short">Chagua rufaa</value>
+          </text>
+          <text id="client_stopped">
+            <value>Mteja huyu ameadia kuwa kwenya kifaa cha Commcare?</value>
+            <value form="short">Kifaa Cha Commcare?</value>
+          </text>
+          <text id="household_follow_id">
+            <value>Namba yetu ya leo ya ufuatiliaji wa kaya ni <output ref="/data/followup_id"/>. Tafadhali andika namba hii kwenye kitabu cha mteja wako.</value>
+          </text>
+          <text id="sick_cough">
+            <value>Kuna mtu kwenye kaya yako ambaye anakohoa leo au tokea jana?</value>
+            <value form="short">Anakohoa?</value>
+          </text>
+          <text id="sick_fever">
+            <value>Kuna mtu kwenye kaya yako ambaye anahoma leo au tokea jana?</value>
+            <value form="short">Anahoma?</value>
+          </text>
+          <text id="sick_general">
+            <value>Kuna mtu anaumwa?</value>
+            <value form="short">Mgonjwa?</value>
+          </text>
+          <text id="sick_amt">
+            <value>Watu wangapi wagonjwa?</value>
+            <value form="short">Idadi ya wanaoumwa?</value>
+          </text>
+          <text id="client_pregnant">
+            <value>Je unamimba?</value>
+            <value form="short">Mimba?</value>
+          </text>
+          <text id="newborm_present">
+            <value>Kuna mtoto mchanga aliyezaliwa kwenye kaya hii tangu CHP alipotembelea?</value>
+            <value form="short">Mtoto Mchanga?</value>
+          </text>
+          <text id="newborn_amt">
+            <value>Idadi ya watoto waliozaliwa kwenye kaya hii?</value>
+            <value form="short">Idadi ya watoto?</value>
+          </text>
+          <text id="newborn_locationquestion 9">
+            <value form="short">Idadi ya wanaoumwa?</value>
+          </text>
+          <text id="newborn_locationquestion 10">
+            <value form="short">Anaumwa:</value>
+          </text>
+          <text id="newborn_locationquestion1">
+            <value form="short">Aliyetembelewa?</value>
+          </text>
+          <text id="newborn_locationquestion2">
+            <value form="short">Asiwepo?</value>
+          </text>
+          <text id="newborn_locationquestion8">
+            <value form="short">Mgonjwa?</value>
+          </text>
+          <text id="newborn_locationquestion9">
+            <value form="short">Idadi ya wanaoumwa?</value>
+          </text>
+          <text id="newborn_locationsick_person_action">
+            <value form="short">Ikiwa mgonjwa:</value>
+          </text>
+          <text id="newborn_locationquestion27">
+            <value form="short">Mtoto Mchanga?</value>
+          </text>
+          <text id="newborn_locationquestion26">
+            <value form="short">Mimba?</value>
+          </text>
+          <text id="newborn_locationquestion33">
+            <value form="short">Chini ya 2?</value>
+          </text>
+          <text id="newborn_locationquestion30">
+            <value form="short">Mtoto Mchanga?</value>
+          </text>
+          <text id="newborn_locationquestion35">
+            <value form="short">Kadi Ya Chanjo</value>
+          </text>
+          <text id="newborn_locationquestion37">
+            <value form="short">Chango</value>
+          </text>
+          <text id="newborn_locationquestion38">
+            <value form="short">Uzazi wa mpango?</value>
+          </text>
+          <text id="newborn_locationquestion36">
+            <value form="short">Inavyostahili?</value>
+          </text>
+          <text id="newborn_locationquestion42">
+            <value form="short">Chagua rufaa</value>
+          </text>
+          <text id="newborn_locationnewborn_chv">
+            <value form="short">Mtoto Mchanga?</value>
+          </text>
+          <text id="newborn_locationnewborn_registration">
+            <value form="short">Alipozaliwa Alisajliwa?</value>
+          </text>
+          <text id="newborn_locationnewborn_reminder">
+            <value form="short">Alipozaliwa Alisajliwa?</value>
+          </text>
+          <text id="newborn_locationquestion32">
+            <value form="short">Alipozaliwa Alisajliwa?</value>
+          </text>
+          <text id="newborn_locationquestion31">
+            <value form="short">Alipozaliwa Alisajliwa?</value>
+          </text>
+          <text id="newborn_locationclient_stopped">
+            <value form="short">Kifaa Cha Commcare?</value>
+          </text>
+          <text id="newborn_locationsick_cough">
+            <value form="short">Anakohoa?</value>
+          </text>
+          <text id="newborn_locationsick_fever">
+            <value form="short">Anahoma?</value>
+          </text>
+          <text id="newborn_locationsick_general">
+            <value form="short">Mgonjwa?</value>
+          </text>
+          <text id="newborn_locationsick_amt">
+            <value form="short">Idadi ya wanaoumwa?</value>
+          </text>
+          <text id="newborn_locationclient_pregnant">
+            <value form="short">Mimba?</value>
+          </text>
+          <text id="newborn_locationnewborm_present">
+            <value form="short">Mtoto Mchanga?</value>
+          </text>
+          <text id="newborn_locationnewborn_amt">
+            <value form="short">Idadi ya watoto?</value>
+          </text>
+          <text id="child_present">
+            <value>Je kuna mtoto mwenye umri chini ya miaka 2?</value>
+            <value form="short">Chini ya 2?</value>
+          </text>
+          <text id="newborn_locationchild_present">
+            <value form="short">Chini ya 2?</value>
+          </text>
+          <text id="child_immunization">
+            <value>Angalia kadi ya chanjo.</value>
+            <value form="short">Kadi Ya Chanjo</value>
+          </text>
+          <text id="newborn_locationchild_immunization">
+            <value form="short">Kadi Ya Chanjo</value>
+          </text>
+          <text id="child_vac_schedule">
+            <value>Kwa mtoto wako amepata chanjo zote inavyostahili?</value>
+            <value form="short">Inavyostahili?</value>
+          </text>
+          <text id="newborn_locationchild_vac_schedule">
+            <value form="short">Inavyostahili?</value>
+          </text>
+          <text id="child_reminder">
+            <value>Ni muhimu mtoto wako kupata chanjo zote kabla ya miezi 9.	Mtoto wako umri huu ni hatari anaweza kupata magonjwa kama: Tetanus, Polio, na TB.</value>
+            <value form="short">Chango</value>
+          </text>
+          <text id="newborn_locationchild_reminder">
+            <value form="short">Chango</value>
+          </text>
+          <text id="client_family_planning">
+            <value>Ungependa kujua zaidi juu ya uzazi wa mpango?</value>
+            <value form="short">Uzazi wa mpango?</value>
+          </text>
+          <text id="newborn_locationclient_family_planning">
+            <value form="short">Uzazi wa mpango?</value>
+          </text>
+          <text id="family_reminder">
+            <value>Kuhusu uzazi wa mpango anaopendelea.</value>
+          </text>
+          <text id="mark_referral">
+            <value>Chagua rufaa ulizotoa kwenye kaya hii?</value>
+            <value form="short">Chagua rufaa</value>
+          </text>
+          <text id="newborn_locationmark_referral">
+            <value form="short">Chagua rufaa</value>
+          </text>
+          <text id="sick_action">
+            <value>Ikiwa mgonjwa:</value>
+            <value form="short">Ikiwa mgonjwa:</value>
+          </text>
+          <text id="newborn_locationsick_action">
+            <value form="short">Ikiwa mgonjwa:</value>
+          </text>
+          <text id="sick_suffering">
+            <value>Mtu anaumwa ana umwa nini?</value>
+            <value form="short">Umwa nini?</value>
+          </text>
+          <text id="newborn_locationsick_suffering">
+            <value form="short">Umwa nini?</value>
+          </text>
+          <text id="sick_referral">
+            <value>Je kuna rufaa ya ugonjwa uliyotoa kwenye kaya hii?</value>
+            <value form="short">Rufaa ya ugonjwa?</value>
+          </text>
+          <text id="newborn_locationsick_referral">
+            <value form="short">Rufaa ya ugonjwa?</value>
+          </text>
+          <text id="sick_reminder">
+            <value>Nimetoa rufaa ya mgonjwa.	Tafadhali tembelea kituo cha afya, na nitarudi baada ya siku tatu kukuangalia.</value>
+            <value form="short">Rufaa ya mgonjwa</value>
+          </text>
+          <text id="newborn_locationsick_reminder">
+            <value form="short">Rufaa ya mgonjwa</value>
+          </text>
+          <text id="client_missing">
+            <value>Sababu zilizofanya asiwepo?</value>
+            <value form="short">Asiwepo?</value>
+          </text>
+          <text id="newborn_locationclient_missing">
+            <value form="short">Asiwepo?</value>
+          </text>
+          <text id="client_available">
+            <value>Mteja aliyetembelewa yupo?</value>
+            <value form="short">Aliyetembelewa?</value>
+          </text>
+          <text id="newborn_locationclient_available">
+            <value form="short">Aliyetembelewa?</value>
+          </text>
+          <text id="sick_person">
+            <value>Mtoto wako alipozaliwa alisajliwa? (Tafadhali uliza na uone kadi/cheti)</value>
+            <value form="short">Alipozaliwa Alisajliwa?</value>
+          </text>
+          <text id="newborn_locationsick_person">
+            <value form="short">Alipozaliwa Alisajliwa?</value>
+          </text>
+          <text id="sick_diarrhea">
+            <value>Kuna mtu kwenye kaya yako ambaye anaharisha leo au tokea jana?</value>
+            <value form="short">Anaharisha?</value>
+          </text>
+          <text id="newborn_locationsick_diarrhea">
+            <value form="short">Anaharisha?</value>
+          </text>
+          <text id="client_referral">
+            <value>Je kuna rufaa uliyotoa kwenye kaya hii?</value>
+          </text>
+          <text id="family_planning_which">
+            <value>Ni aina ipi ya uzazi wa mpango unqependa kujua zaidi?</value>
+          </text>
+          <text id="household_verification">
+            <value>Tafadhali ingiza namba ya ufuatiliaji wa kaya iliyoandikwa kwenye kitabu cha nyumbani mara ya mwisho ulipotembelea kaya hii.</value>
+          </text>
+          <text id="pregnancy_reminder">
+            <value>Tafadhali sana kumbuka kumuandikisha mama huyu kwenye orodha ya wajawazito</value>
+            <value form="short">Aandikishwe kwa wajawazito</value>
+          </text>
+          <text id="newborn_locationpregnancy_reminder">
+            <value form="short">Idadi ya watoto?</value>
+          </text>
+        </translation>
+      </itext>
+    </model>
+  </h:head>
+  <h:body>
+    <select1 ref="/data/client_available">
+      <label ref="jr:itext('client_available')">Is the client available?</label>
+      <item>
+        <label ref="jr:itext('option1')">Yes</label>
+        <value>Yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('option2')">No</label>
+        <value>No</value>
+      </item>
+    </select1>
+    <select1 ref="/data/client_missing">
+      <label ref="jr:itext('client_missing')">Why is the client missing?</label>
+      <item>
+        <label ref="jr:itext('option3')">Client not home</label>
+        <value>not_home</value>
+      </item>
+      <item>
+        <label ref="jr:itext('option4')">Client moved</label>
+        <value>moved</value>
+      </item>
+      <item>
+        <label ref="jr:itext('option5')">Client died</label>
+        <value>died</value>
+      </item>
+    </select1>
+    <select1 ref="/data/client_stopped">
+      <label ref="jr:itext('client_stopped')">Has this client stopped participating in this program?</label>
+      <item>
+        <label ref="jr:itext('option1')">Yes</label>
+        <value>Yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('option2')">No</label>
+        <value>No</value>
+      </item>
+    </select1>
+    <input ref="/data/household_verification">
+      <label ref="jr:itext('household_verification')">Please enter the household follow-up number from the previous visit.</label>
+    </input>
+    <trigger ref="/data/household_follow_id">
+      <label ref="jr:itext('household_follow_id')">This is today's household follow-up number.	Please write this down in the client's notebook.</label>
+    </trigger>
+    <select1 ref="/data/sick_cough">
+      <label ref="jr:itext('sick_cough')">Was anyone in the household coughing today or yesterday?</label>
+      <item>
+        <label ref="jr:itext('option10')">Yes</label>
+        <value>Yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('option9')">No</label>
+        <value>No</value>
+      </item>
+    </select1>
+    <select1 ref="/data/sick_fever">
+      <label ref="jr:itext('sick_fever')">Did anyone in the household have a fever yesterday or today?</label>
+      <item>
+        <label ref="jr:itext('option1')">Yes</label>
+        <value>Yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('option2')">No</label>
+        <value>No</value>
+      </item>
+    </select1>
+    <select1 ref="/data/sick_diarrhea">
+      <label ref="jr:itext('sick_diarrhea')">Did anyone in the household have diarrhea yesterday or today?</label>
+      <item>
+        <label ref="jr:itext('option13')">Yes</label>
+        <value>Yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('option14')">No</label>
+        <value>No</value>
+      </item>
+    </select1>
+    <select1 ref="/data/sick_general">
+      <label ref="jr:itext('sick_general')">Is anyone sick?</label>
+      <item>
+        <label ref="jr:itext('option15')">Yes</label>
+        <value>Yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('option16')">No</label>
+        <value>No</value>
+      </item>
+    </select1>
+    <input ref="/data/sick_amt">
+      <label ref="jr:itext('sick_amt')">How many people are sick?</label>
+    </input>
+    <group>
+      <repeat nodeset="/data/sick_person" jr:count="/data/sick_amt" jr:noAddRemove="true()">
+        <select1 ref="/data/sick_person/sick_suffering" >
+          <label ref="jr:itext('sick_suffering')">What is sick person suffering from?</label>
+          <item>
+            <label ref="jr:itext('option17')">Diarrhea</label>
+            <value>Diarrhea</value>
+          </item>
+          <item>
+            <label ref="jr:itext('option18')">Cough</label>
+            <value>Cough</value>
+          </item>
+          <item>
+            <label ref="jr:itext('option19')">Fever</label>
+            <value>Fever</value>
+          </item>
+          <item>
+            <label ref="jr:itext('option20')">Malaria</label>
+            <value>Malaria</value>
+          </item>
+          <item>
+            <label ref="jr:itext('option21')">Blood Pressure Problems</label>
+            <value>Blood_Pressure_Problems</value>
+          </item>
+          <item>
+            <label ref="jr:itext('option23')">Complications from Birth Control</label>
+            <value>Birth_Control</value>
+          </item>
+          <item>
+            <label ref="jr:itext('option22')">Skin Problem</label>
+            <value>Skin</value>
+          </item>
+          <item>
+            <label ref="jr:itext('option24')">They don't know</label>
+            <value>Don't_know</value>
+          </item>
+          <item>
+            <label ref="jr:itext('option25')">Other</label>
+            <value>Other</value>
+          </item>
+        </select1>
+        <select1 ref="/data/sick_person/sick_action" >
+          <label ref="jr:itext('sick_action')">Has the sick person:</label>
+          <item>
+            <label ref="jr:itext('gone_and_treated')">Gone to health facility and received treatment.</label>
+            <value>received_treatment</value>
+          </item>
+          <item>
+            <label ref="jr:itext('option27')">Gone to health facility and didn't receive treatment.</label>
+            <value>no_treatment</value>
+          </item>
+          <item>
+            <label ref="jr:itext('option28')">Not gone to a health facility.</label>
+            <value>Not gone to a health facility.</value>
+          </item>
+          <item>
+            <label ref="jr:itext('option29')">Other</label>
+            <value>Other</value>
+          </item>
+        </select1>
+      </repeat>
+    </group>
+    <select1 ref="/data/sick_referral">
+      <label ref="jr:itext('sick_referral')">Should anyone be referred for sickness?</label>
+      <item>
+        <label ref="jr:itext('option30')">Yes</label>
+        <value>Yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('option2')">No</label>
+        <value>No</value>
+      </item>
+    </select1>
+    <trigger ref="/data/sick_reminder">
+      <label ref="jr:itext('sick_reminder')">I've started an open sickness referral case.	Please visit the health facility, and I'll be back in three days to check up on you.</label>
+    </trigger>
+    <select1 ref="/data/client_pregnant">
+      <label ref="jr:itext('client_pregnant')">Are you pregnant?</label>
+      <item>
+        <label ref="jr:itext('option1')">Yes</label>
+        <value>Yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('option2')">No</label>
+        <value>No</value>
+      </item>
+    </select1>
+    <select1 ref="/data/newborm_present">
+      <label ref="jr:itext('newborm_present')">Is there a newborn baby in the household?</label>
+      <item>
+        <label ref="jr:itext('option1')">Yes</label>
+        <value>Yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('option2')">No</label>
+        <value>No</value>
+      </item>
+    </select1>
+    <input ref="/data/newborn_amt">
+      <label ref="jr:itext('newborn_amt')">How many newborns in a household?</label>
+    </input>
+    <group>
+      <repeat nodeset="/data/newborn" jr:count="/data/newborn_amt" jr:noAddRemove="true()">
+        <select1 ref="/data/newborn/newborn_location" >
+          <label ref="jr:itext('newborn_location')">Where was the birth of child?</label>
+          <item>
+            <label ref="jr:itext('health_facility')">Health Facility</label>
+            <value>Health_Facility</value>
+          </item>
+          <item>
+            <label ref="jr:itext('option6')">Home</label>
+            <value>Home</value>
+          </item>
+          <item>
+            <label ref="jr:itext('other')">Other</label>
+            <value>Other</value>
+          </item>
+        </select1>
+        <select1 ref="/data/newborn/newborn_chv" >
+          <label ref="jr:itext('newborn_chv')">Were you visited by a newborn education CHV?</label>
+          <item>
+            <label ref="jr:itext('option1')">Yes</label>
+            <value>Yes</value>
+          </item>
+          <item>
+            <label ref="jr:itext('option2')">No</label>
+            <value>No</value>
+          </item>
+        </select1>
+        <select1 ref="/data/newborn/newborn_registration" >
+          <label ref="jr:itext('newborn_registration')">Was your child's birth registered?</label>
+          <item>
+            <label ref="jr:itext('option1')">Yes</label>
+            <value>Yes</value>
+          </item>
+          <item>
+            <label ref="jr:itext('option2')">No</label>
+            <value>No</value>
+          </item>
+        </select1>
+        <trigger ref="/data/newborn/newborn_reminder" >
+          <label ref="jr:itext('newborn_reminder')">It's important to make sure you register your newborn after birth.	You can't enrol your child into school without a birth registration card.</label>
+        </trigger>
+      </repeat>
+    </group>
+    <select1 ref="/data/child_present">
+      <label ref="jr:itext('child_present')">Are there any children under 2 years of age?</label>
+      <item>
+        <label ref="jr:itext('option1')">Yes</label>
+        <value>Yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('option2')">No</label>
+        <value>No</value>
+      </item>
+    </select1>
+    <trigger ref="/data/child_immunization">
+      <label ref="jr:itext('child_immunization')">Review the immunization card(s).</label>
+    </trigger>
+    <select1 ref="/data/child_vac_schedule">
+      <label ref="jr:itext('child_vac_schedule')">Is the child currently up-to-date with their vaccination schedule?</label>
+      <item>
+        <label ref="jr:itext('option1')">Yes</label>
+        <value>Yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('option2')">No</label>
+        <value>No</value>
+      </item>
+    </select1>
+    <trigger ref="/data/child_reminder">
+      <label ref="jr:itext('child_reminder')">It's important for your child to receive all vaccinations before 9 months of age while your child is at increased risk of diseases such as Tetanus, Polio, and TB.</label>
+    </trigger>
+    <select1 ref="/data/client_family_planning">
+      <label ref="jr:itext('client_family_planning')">Do you want to know more about family planning?</label>
+      <item>
+        <label ref="jr:itext('option1')">Yes</label>
+        <value>Yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('option2')">No</label>
+        <value>No</value>
+      </item>
+    </select1>
+    <select1 ref="/data/family_planning_which">
+      <label ref="jr:itext('family_planning_which')">Which type of family planning do you want to know more about?</label>
+      <item>
+        <label ref="jr:itext('condom')">Condom</label>
+        <value>Condom</value>
+      </item>
+      <item>
+        <label ref="jr:itext('pill')">Pill</label>
+        <value>Pill</value>
+      </item>
+      <item>
+        <label ref="jr:itext('injection')">Injection</label>
+        <value>Injection</value>
+      </item>
+      <item>
+        <label ref="jr:itext('other_method')">Other Method</label>
+        <value>Other_Method</value>
+      </item>
+    </select1>
+    <trigger ref="/data/family_reminder">
+      <label ref="jr:itext('family_reminder')">Reminder: please talk with the client about the family planning method she's interested in.</label>
+    </trigger>
+    <select1 ref="/data/client_referral">
+      <label ref="jr:itext('client_referral')">Did you give any referral in this household?</label>
+      <item>
+        <label ref="jr:itext('option1')">Yes</label>
+        <value>Yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('option2')">No</label>
+        <value>No</value>
+      </item>
+    </select1>
+    <select ref="/data/mark_referral">
+      <label ref="jr:itext('mark_referral')">Mark any referral you have given in this household:</label>
+      <item>
+        <label ref="jr:itext('sickness')">Sickness</label>
+        <value>Sickness</value>
+      </item>
+      <item>
+        <label ref="jr:itext('pregnancy_case')">Pregnancy Case</label>
+        <value>Pregnancy_Case</value>
+      </item>
+      <item>
+        <label ref="jr:itext('option26')">Wound Case</label>
+        <value>Wound_Case</value>
+      </item>
+    </select>
+    <trigger ref="/data/pregnancy_reminder">
+      <label ref="jr:itext('pregnancy_reminder')">Great! Make sure she is registered on pregnancy module</label>
+    </trigger>
+  </h:body>
+</h:html>

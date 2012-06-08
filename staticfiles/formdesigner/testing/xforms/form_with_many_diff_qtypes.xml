@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+	<h:head>
+		<h:title>New Form</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/4C2FACE1-EC3C-4E33-80AF-B842BB4C465D" uiVersion="1" version="1" name="New Form">
+					<question1 />
+					<question2 />
+					<m_select_question />
+					<my_group>
+						<q_in_group />
+						<repeat jr:template="">
+							<first_label_in_repeat />
+							<date_and_time />
+							<integer_question />
+							<decimal_question />
+						</repeat>
+					</my_group>
+				</data>
+			</instance>
+			<bind nodeset="/data/question1" type="xsd:string" />
+			<bind nodeset="/data/question2" type="xsd:string" />
+			<bind nodeset="/data/m_select_question" />
+			<bind nodeset="/data/my_group" />
+			<bind nodeset="/data/my_group/q_in_group" type="xsd:string" />
+			<bind nodeset="/data/my_group/repeat" />
+			<bind nodeset="/data/my_group/repeat/first_label_in_repeat" />
+			<bind nodeset="/data/my_group/repeat/date_and_time" type="xsd:dateTime" />
+			<bind nodeset="/data/my_group/repeat/integer_question" type="xsd:int" />
+			<bind nodeset="/data/my_group/repeat/decimal_question" type="xsd:double" />
+			<itext>
+				<translation lang="en" default="">
+					<text id="question1">
+						<value>foo (text)|||</value>
+					</text>
+					<text id="question2">
+						<value>bar (text)|||</value>
+					</text>
+					<text id="question3">
+						<value>Multi Select question</value>
+					</text>
+					<text id="item4">
+						<value>i1</value>
+					</text>
+					<text id="item5">
+						<value>i2</value>
+					</text>
+					<text id="item6">
+						<value>swi3</value>
+					</text>
+					<text id="question10">
+						<value>My group</value>
+					</text>
+					<text id="question11">
+						<value>Question in group</value>
+					</text>
+					<text id="question12">
+						<value>repeat in group</value>
+					</text>
+					<text id="question13">
+						<value>Some label in repeat1</value>
+					</text>
+					<text id="question14">
+						<value>Date and time</value>
+					</text>
+					<text id="question15">
+						<value>Integer Question</value>
+						<value form="long">long form</value>
+					</text>
+					<text id="question16">
+						<value>Double Q</value>
+					</text>
+				</translation>
+				<translation lang="sw">
+					<text id="question1">
+						<value>swfoo (text)|||</value>
+					</text>
+					<text id="question2">
+						<value>swBar (text)|||</value>
+					</text>
+					<text id="question3">
+						<value>Multi Select question</value>
+					</text>
+					<text id="item4">
+						<value>swi1</value>
+					</text>
+					<text id="item5">
+						<value>swi2</value>
+					</text>
+					<text id="item6">
+						<value>swi3</value>
+					</text>
+					<text id="question10">
+						<value>My group</value>
+					</text>
+					<text id="question11">
+						<value>sw Question in group</value>
+					</text>
+					<text id="question12">
+						<value>sw repeat in group</value>
+					</text>
+					<text id="question13">
+						<value>sw 1 label in repeat</value>
+					</text>
+					<text id="question14">
+						<value>sw date and time</value>
+					</text>
+					<text id="question15">
+						<value>sw Integer Question</value>
+						<value form="long">sw long form for integer</value>
+					</text>
+					<text id="question16">
+						<value>sw Double Q</value>
+					</text>
+				</translation>
+			</itext>
+		</model>
+	</h:head>
+	<h:body>
+		<input ref="/data/question1">
+			<label ref="jr:itext('question1')" />
+		</input>
+		<input ref="/data/question2">
+			<label ref="jr:itext('question2')" />
+		</input>
+		<select ref="/data/m_select_question">
+			<label ref="jr:itext('question3')" />
+			<item>
+				<label ref="jr:itext('item4')" />
+				<value>i1</value>
+			</item>
+			<item>
+				<label ref="jr:itext('item5')" />
+				<value>i2</value>
+			</item>
+			<item>
+				<label ref="jr:itext('item6')" />
+				<value>i3</value>
+			</item>
+		</select>
+		<group ref="/data/my_group">
+			<label ref="jr:itext('question10')" />
+			<input ref="/data/my_group/q_in_group">
+				<label ref="jr:itext('question11')" />
+			</input>
+			<group>
+				<label ref="jr:itext('question12')" />
+				<repeat nodeset="/data/my_group/repeat">
+					<label ref="jr:itext('question12')" />
+					<trigger ref="/data/my_group/repeat/first_label_in_repeat">
+						<label ref="jr:itext('question13')" />
+					</trigger>
+					<input ref="/data/my_group/repeat/date_and_time">
+						<label ref="jr:itext('question14')" />
+					</input>
+					<input ref="/data/my_group/repeat/integer_question">
+						<label ref="jr:itext('question15')" />
+					</input>
+					<input ref="/data/my_group/repeat/decimal_question">
+						<label ref="jr:itext('question16')" />
+					</input>
+				</repeat>
+			</group>
+		</group>
+	</h:body>
+</h:html>

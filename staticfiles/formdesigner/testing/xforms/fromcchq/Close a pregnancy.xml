@@ -1,0 +1,1263 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/2002/xforms" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>safe pregnancy close</h:title>
+    <meta jr:name="safe_pregnancy_close_0.0.1"/>
+    <model>
+      <instance>
+        <safe_pregnancy xmlns="http://dev.commcarehq.org/BRAC/CHP/Preg/Close" xmlns:jrm="http://dev.commcarehq.org/jr/xforms" version="9" uiVersion="9" name="safe pregnancy close">
+          <what_happened/>
+          <other_what_happened/>
+          <mother_survived/>
+          <infants_delivered/>
+          <infants_survived/>
+          <infants_registered/>
+          <infants_registered_prompt/>
+          <birth_type/>
+          <other_birth_type/>
+          <why_home_delivery/>
+          <birth_location/>
+          <other_location/>
+          <birth_attendant/>
+          <other_attendant/>
+          <termination_time/>
+          <termination_type/>
+          <termination_location/>
+          <other_termination_location/>
+          <termination_attendant/>
+          <other_termination_attendant/>
+          <home_other/>
+          <why_transport/>
+          <why_transport_other/>
+          <preference_explain/>
+          <heavy_bleeding/>
+          <fits/>
+          <fever/>
+          <abdominal_pain_discharge/>
+          <pain_bleeding_urination/>
+          <leg_swelling/>
+          <breast_problems/>
+          <uncontrolled_urination/>
+          <vaginal_stool_leaking/>
+          <anemia/>
+          <other_illness/>
+          <which_illness/>
+          <seek_care/>
+          <why_not/>
+          <other_why_not/>
+          <referral/>
+          <treatment/>
+          <treatment_type/>
+          <treatment_why_not/>
+          <treatment_why_not_other/>
+          <treatment_why_not_prompt/>
+          <family_planning/>
+          <death_case_mother/>
+          <death_case_infant/>
+          <newborn_case/>
+          <thank_you/>
+        </safe_pregnancy>
+      </instance>
+      
+      <bind nodeset="/safe_pregnancy/what_happened" type="xsd:string" required="true()"/>
+      <bind nodeset="/safe_pregnancy/other_what_happened" type="xsd:string" relevant="/safe_pregnancy/what_happened='other'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/mother_survived" type="xsd:string" relevant="/safe_pregnancy/what_happened='birth'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/infants_delivered" type="xsd:int" relevant="/safe_pregnancy/what_happened='birth'" constraint=". &lt;= 8" jr:constraintMsg="Answer too high" action="enable"/>
+      <bind nodeset="/safe_pregnancy/infants_survived" type="xsd:int" relevant="/safe_pregnancy/what_happened='birth' and /safe_pregnancy/infants_delivered &gt; 0" constraint=". &lt;= ../infants_delivered" jr:constraintMsg="Can't be more than # delivered" action="enable"/>
+      <bind nodeset="/safe_pregnancy/infants_registered" type="xsd:string" relevant="/safe_pregnancy/infants_delivered &gt; 0 and /safe_pregnancy/infants_survived &gt; 0" action="enable"/>
+      <bind nodeset="/safe_pregnancy/infants_registered_prompt" relevant="/safe_pregnancy/infants_registered='no'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/birth_type" type="xsd:string" relevant="/safe_pregnancy/what_happened='birth'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/other_birth_type" type="xsd:string" relevant="/safe_pregnancy/birth_type='other'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/birth_location" type="xsd:string" relevant="/safe_pregnancy/what_happened='birth'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/other_location" type="xsd:string" relevant="/safe_pregnancy/birth_location='other'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/birth_attendant" type="xsd:string" relevant="/safe_pregnancy/what_happened='birth'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/other_attendant" type="xsd:string" relevant="/safe_pregnancy/birth_attendant='other'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/why_home_delivery" type="xsd:string" relevant="/safe_pregnancy/what_happened='birth' and /safe_pregnancy/birth_location='home'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/termination_time" type="xsd:int" relevant="/safe_pregnancy/what_happened='preg_terminated'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/termination_type" type="xsd:string" relevant="/safe_pregnancy/what_happened='preg_terminated'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/termination_location" type="xsd:string" relevant="/safe_pregnancy/what_happened='preg_terminated'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/other_termination_location" type="xsd:string" relevant="/safe_pregnancy/termination_location='other'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/termination_attendant" type="xsd:string" relevant="/safe_pregnancy/what_happened='preg_terminated' and /safe_pregnancy/termination_type='induced'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/other_termination_attendant" type="xsd:string" relevant="/safe_pregnancy/what_happened='preg_terminated' and /safe_pregnancy/termination_attendant='other'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/home_other" type="xsd:string" relevant="/safe_pregnancy/why_home_delivery='other' " action="enable"/>
+      <bind nodeset="/safe_pregnancy/why_transport" type="xsd:string" relevant="/safe_pregnancy/why_home_delivery='transport'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/why_transport_other" type="xsd:string" relevant="/safe_pregnancy/why_transport='other'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/preference_explain" type="xsd:string" relevant="/safe_pregnancy/why_home_delivery='preference'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/heavy_bleeding" type="xsd:string" relevant="/safe_pregnancy/mother_survived='yes'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/fits" type="xsd:string" relevant="/safe_pregnancy/mother_survived='yes'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/fever" type="xsd:string" relevant="/safe_pregnancy/mother_survived='yes'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/abdominal_pain_discharge" type="xsd:string" relevant="/safe_pregnancy/mother_survived='yes'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/pain_bleeding_urination" type="xsd:string" relevant="/safe_pregnancy/mother_survived='yes'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/leg_swelling" type="xsd:string" relevant="/safe_pregnancy/mother_survived='yes'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/breast_problems" type="xsd:string" relevant="/safe_pregnancy/mother_survived='yes'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/uncontrolled_urination" type="xsd:string" relevant="/safe_pregnancy/mother_survived='yes'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/vaginal_stool_leaking" type="xsd:string" relevant="/safe_pregnancy/mother_survived='yes'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/anemia" type="xsd:string" relevant="/safe_pregnancy/mother_survived='yes'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/other_illness" type="xsd:string" relevant="/safe_pregnancy/mother_survived='yes'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/which_illness" type="xsd:string" relevant="/safe_pregnancy/other_illness='yes'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/seek_care" type="xsd:string" relevant="/safe_pregnancy/mother_survived='no' or (../heavy_bleeding='yes' or ../fits='yes' or ../fever='yes' or ../abdominal_pain_discharge='yes' or ../pain_bleeding_urination='yes' or ../leg_swelling='yes' or ../breast_problems='yes' or ../uncontrolled_urination='yes' or ../vaginal_stool_leaking='yes' or ../anemia='yes' or ../other_illness='yes')" action="enable"/>
+      <bind nodeset="/safe_pregnancy/why_not" type="xsd:string" relevant="/safe_pregnancy/seek_care='no'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/other_why_not" type="xsd:string" relevant="/safe_pregnancy/why_not='other'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/treatment" type="xsd:string" relevant="/safe_pregnancy/seek_care='yes'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/treatment_type" type="xsd:string" relevant="/safe_pregnancy/treatment='yes'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/treatment_why_not" type="xsd:string" relevant="/safe_pregnancy/treatment='no'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/treatment_why_not_other" type="xsd:string" relevant="/safe_pregnancy/treatment_why_not='other'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/treatment_why_not_prompt" relevant="/safe_pregnancy/mother_survived='yes' and (/safe_pregnancy/treatment_why_not='no_medicine' or /safe_pregnancy/treatment_why_not='too_many_patients' or /safe_pregnancy/treatment_why_not='no_doctor' or /safe_pregnancy/treatment_why_not='no_health_workers' or /safe_pregnancy/treatment_why_not='other')" action="enable"/>
+      <bind nodeset="/safe_pregnancy/family_planning" type="xsd:string" relevant="/safe_pregnancy/mother_survived='yes'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/death_case_mother" relevant="/safe_pregnancy/mother_survived='no'" action="enable"/>
+      <bind nodeset="/safe_pregnancy/death_case_infant" relevant="/safe_pregnancy/infants_delivered - /safe_pregnancy/infants_survived &gt; 0"/>
+      <bind nodeset="/safe_pregnancy/newborn_case" relevant="/safe_pregnancy/infants_survived &gt;= 0" action="enable"/>
+      <bind nodeset="/safe_pregnancy/thank_you"/>
+      <itext>
+        <translation lang="sw" default="">
+          <text id="yes">
+            <value>Ndiyo</value>
+          </text>
+          <text id="no">
+            <value>Hapana</value>
+          </text>
+          <text id="other">
+            <value>Nyingineyo</value>
+          </text>
+          <text id="what_happened">
+            <value>Nini kilichotokea?</value>
+          </text>
+          <text id="birth">
+            <value>Alijifungua</value>
+          </text>
+          <text id="preg_terminated">
+            <value>Mimba iliharibika</value>
+          </text>
+          <text id="woman_moved">
+            <value>Mama amehama</value>
+          </text>
+          <text id="not_pregnant">
+            <value>Mama hakuwa na mimba</value>
+          </text>
+          <text id="other_what_happened">
+            <value>Mengineyo</value>
+          </text>
+          <text id="mother_survived">
+            <value form="long">Je, mama alijifungua salama?</value>
+            <value form="short">Mama alijifungua</value>
+          </text>
+          <text id="infants_delivered">
+            <value form="long">Je, amejifungua mtoto (watoto) wangapi?</value>
+            <value form="short">Amejifungua watoto wangapi</value>
+          </text>
+          <text id="infants_survived">
+            <value form="long">Ni mtoto (watoto) wangapi walinusurika siku mbili za kwanza?</value>
+            <value form="short">Watoto walinusurika</value>
+          </text>
+          <text id="infants_registered">
+            <value form="long">Mtoto (watoto) wameandikishwa kliniki?</value>
+            <value form="short">Wameandikishwa kliniki</value>
+          </text>
+          <text id="infants_registered_prompt">
+            <value form="long">Mshauri mama awapeleke mtoto (watoto) kliniki.</value>
+            <value form="short">Awapeleke kliniki</value>
+          </text>
+          <text id="birth_type">
+            <value form="long">Je, alijifungua kwa njia gani?</value>
+            <value form="short">Njia gani</value>
+          </text>
+          <text id="vaginal">
+            <value>Kwa njia ya kawaida</value>
+          </text>
+          <text id="csection">
+            <value>Njia ya upasuaji</value>
+          </text>
+          <text id="forceps_or_vacuum">
+            <value>Kuvutwa na chombo maalum</value>
+          </text>
+          <text id="other_birth_type">
+            <value>Njia nyingine</value>
+          </text>
+          <text id="termination_location">
+            <value form="long">Wakati mimba inaharibika, alikuwa wapi?</value>
+            <value form="short">Alikuwa wapi</value>
+          </text>
+          <text id="hospital">
+            <value>Hospitali</value>
+          </text>
+          <text id="clinic">
+            <value>Zahanati</value>
+          </text>
+          <text id="travel_facility">
+            <value>Njiani kuelekea kituo cha afya</value>
+          </text>
+          <text id="home">
+            <value>Nyumbani</value>
+          </text>
+          <text id="other_termination_location">
+            <value>Mahali pengine</value>
+          </text>
+          <text id="dont_know">
+            <value>Hajui</value>
+          </text>
+          <text id="birth_location">
+            <value form="long">Alijifungulia wapi?</value>
+            <value form="short">Alijifungulia wapi</value>
+          </text>
+          <text id="other_location">
+            <value>Mahali pengine</value>
+          </text>
+          <text id="termination_attendant">
+            <value form="long">Nani alimsaidia baada ya mimba kuharibika?</value>
+            <value form="short">Nani alimsaidia</value>
+          </text>
+          <text id="clinical_officer">
+            <value>Mganga</value>
+          </text>
+          <text id="nurse">
+            <value>Nesi</value>
+          </text>
+          <text id="chw">
+            <value>Mhudumu wa afya vijijini</value>
+          </text>
+          <text id="tba">
+            <value>Mkunga</value>
+          </text>
+          <text id="family">
+            <value>Mwanafamilia</value>
+          </text>
+          <text id="no_one">
+            <value>Peke yake</value>
+          </text>
+          <text id="other_termination_attendant">
+            <value>Mtu mwingine</value>
+          </text>
+          <text id="birth_attendant">
+            <value form="long">Nani alimzalisha?</value>
+            <value form="short">Nani alimzalisha</value>
+          </text>
+          <text id="other_attendant">
+            <value>Mtu mwingine</value>
+          </text>
+          <text id="termination_time">
+            <value form="long">Je, ujauzito ulioharibika, ulikuwa wa miezi mingapi?</value>
+            <value form="short">Miezi mingapi</value>
+          </text>
+          <text id="why_home_delivery">
+            <value form="long">Je, kwa nini alijifungulia nyumbani?</value>
+            <value form="short">Kwa nini nyumbani</value>
+          </text>
+          <text id="preference">
+            <value>Alipendelea kujifungulia nyumbani</value>
+          </text>
+          <text id="home_other">
+            <value>Nyinginezo</value>
+          </text>
+          <text id="preference_explain">
+            <value>Tafadhali fafanua.</value>
+          </text>
+          <text id="why_transport">
+            <value>Tafadhali fafanua.</value>
+          </text>
+          <text id="why_transport_distance">
+            <value>Anakaa mbali na zahanati</value>
+          </text>
+          <text id="why_transport_cost">
+            <value>Usafiri ni ghali</value>
+          </text>
+          <text id="why_transport_access">
+            <value>Hakuweza kupata usafiri kwa muda</value>
+          </text>
+          <text id="why_transport_other">
+            <value>Nyinginezo</value>
+          </text>
+          <text id="termination_type">
+            <value form="long">Je, mimba ilitoka yenyewe au ilitolewa na mtaalam wa afya?</value>
+            <value form="short">Ilitoka yenyewe au ilitolewa na taalam wa afya</value>
+          </text>
+          <text id="spontaneous">
+            <value>Ilitoka yenyewe</value>
+          </text>
+          <text id="induced">
+            <value>Ilitolewa wa mtaalam wa afya</value>
+          </text>
+          <text id="heavy_bleeding">
+            <value form="long">Je, umetokwa na damu nyingi zaidi ya wiki mbili?</value>
+            <value form="short">Damu nyingi</value>
+          </text>
+          <text id="fits">
+            <value form="long">Je, ulikuwa na kifafa cha uzazi?</value>
+            <value form="short">Kifafa cha uzazi</value>
+          </text>
+          <text id="fever">
+            <value form="long">Je, una homa?</value>
+            <value form="short">Homa</value>
+          </text>
+          <text id="abdominal_pain_discharge">
+            <value form="long">Je, una maumivu makali ya tumbo au unatokwa na uchafu ukeni?</value>
+            <value form="short">Maumivu makali ya tumbo au uchafu ukeni</value>
+          </text>
+          <text id="pain_bleeding_urination">
+            <value form="long">Je, unapata maumivu makali wakati wa kujisaidia na kutokwa damu?</value>
+            <value form="short">Maumivu wakati wa kujisaidia au kutokwa damu</value>
+          </text>
+          <text id="leg_swelling">
+            <value form="long">Je, miguu yako imevimba?</value>
+            <value form="short">Miguu yako imevimba</value>
+          </text>
+          <text id="breast_problems">
+            <value form="long">Je, kuna uvimbe kwenye matiti au chuchu zimechanika?</value>
+            <value form="short">Uvimbe kweni matiti au chuchu zimechanika</value>
+          </text>
+          <text id="uncontrolled_urination">
+            <value form="long">Je, unashindwa kuzuia mkojo wako kutoka?</value>
+            <value form="short">Unashindwa kuzuia mkojo</value>
+          </text>
+          <text id="vaginal_stool_leaking">
+            <value form="long">Je, kuna mkojo au kinyesi kinatokea ukeni?</value>
+            <value form="short">Kuna mkojo au kinyesi kinatokea ukeni</value>
+          </text>
+          <text id="anemia">
+            <value form="long">Je, unajisikia kuchoka sana, midomo myeupe, au kucha zako zimekuwa za rangi ya bluu (upungufu wa damu)?</value>
+            <value form="short">Umepungukiwa damu</value>
+          </text>
+          <text id="other_illness">
+            <value form="long">Je, umepata matatizo mengine makubwa?</value>
+            <value form="short">Matatizo mengine</value>
+          </text>
+          <text id="which_illness">
+            <value>Matatizo gani?</value>
+          </text>
+          <text id="seek_care">
+            <value form="long">Je, mama alitafuta ushauri zahanati?</value>
+            <value form="short">Alitafuta ushauri zahanati?</value>
+          </text>
+          <text id="why_not">
+            <value form="long">Kwa nini hakutafuta ushauri?</value>
+            <value form="short">Kwa nini</value>
+          </text>
+          <text id="felt_better">
+            <value>Kapata nafuu</value>
+          </text>
+          <text id="skeptical_clinic">
+            <value>Hadhani huduma ya zahanati itamsaidia</value>
+          </text>
+          <text id="busy">
+            <value>Hana muda</value>
+          </text>
+          <text id="transport">
+            <value>Ameshindwa kupata usafiri</value>
+          </text>
+          <text id="other_why_not">
+            <value>Shida nyingineyo</value>
+          </text>
+          <text id="treatment">
+            <value form="long">Je, alipata matibabu?</value>
+            <value form="short">Matibabu</value>
+          </text>
+          <text id="treatment_type">
+            <value>Matibabu gani?</value>
+          </text>
+          <text id="treatment_why_not">
+            <value>Je, ni kwa nini hakupata matibabu?</value>
+          </text>
+          <text id="no_medicine">
+            <value>Hapakuwa na dawa</value>
+          </text>
+          <text id="too_many_patients">
+            <value>Wagonjwa walikuwa wengi</value>
+          </text>
+          <text id="no_doctor">
+            <value>Mganga hakuwepo</value>
+          </text>
+          <text id="no_health_workers">
+            <value>Hapakuwana mhudumu mwingine</value>
+          </text>
+          <text id="too_late">
+            <value>Alifariki kabla ya kufika zahanati</value>
+          </text>
+          <text id="treatment_why_not_other">
+            <value>Nyingineyo</value>
+          </text>
+          <text id="treatment_why_not_prompt">
+            <value form="long">Mshauri mgonjwa aende zahanati tena, na fuatilia maendeleo yake.</value>
+            <value form="short">Mshauri aende zahanati tena</value>
+          </text>
+          <text id="family_planning">
+            <value form="long">Je, ni aina ipi ya uzazi wa mpango mama amechagua?</value>
+            <value form="short">Aina ya uzazi wa mpango</value>
+          </text>
+          <text id="condoms">
+            <value>Kondomu</value>
+          </text>
+          <text id="vasectomy">
+            <value>Kufunga uzazi kwa baba</value>
+          </text>
+          <text id="ligation">
+            <value>Kufunga uzazi kwa mama</value>
+          </text>
+          <text id="iud">
+            <value>Kitanzi</value>
+          </text>
+          <text id="dp_injections">
+            <value>Sindano</value>
+          </text>
+          <text id="oral">
+            <value>Vidonge</value>
+          </text>
+          <text id="norplant">
+            <value>Vijiti</value>
+          </text>
+          <text id="death_case_mother">
+            <value>Jaza taarifa yake kwenye fomu ya vifo.</value>
+          </text>
+          <text id="death_case_infant">
+            <value>Jaza taarifa ya mtoto (watoto) kwenye fomu ya vifo.</value>
+          </text>
+          <text id="newborn_case">
+            <value>Jaza taarifa ya mtoto (watoto) kwenye fomu ya vizazi.</value>
+          </text>
+          <text id="thank_you">
+            <value>Asante sana.</value>
+          </text>
+          <text id="referral">
+            <value>Tafadhali mwambie mama aende zahanati na mwambie utamfatilia.</value>
+          </text>
+        </translation>
+        <translation lang="en">
+          <text id="yes">
+            <value>Yes</value>
+          </text>
+          <text id="no">
+            <value>No</value>
+          </text>
+          <text id="other">
+            <value>Other</value>
+          </text>
+          <text id="what_happened">
+            <value>What happened?</value>
+          </text>
+          <text id="birth">
+            <value>Birth</value>
+          </text>
+          <text id="preg_terminated">
+            <value>Pregnancy Terminated</value>
+          </text>
+          <text id="woman_moved">
+            <value>Woman Moved</value>
+          </text>
+          <text id="not_pregnant">
+            <value>Woman was never pregnant</value>
+          </text>
+          <text id="other_what_happened">
+            <value>Other</value>
+          </text>
+          <text id="mother_survived">
+            <value form="long">Did the mother survive the pregnancy?</value>
+            <value form="short">Survived</value>
+          </text>
+          <text id="infants_delivered">
+            <value form="long">How many infants were delivered?</value>
+            <value form="short">Infants delivered</value>
+          </text>
+          <text id="infants_survived">
+            <value form="long">How many infants survived the first 2 days?</value>
+            <value form="short">Infants survived</value>
+          </text>
+          <text id="infants_registered">
+            <value form="long">Have the infant(s) been registered at the clinic?</value>
+            <value form="short">Registered</value>
+          </text>
+          <text id="infants_registered_prompt">
+            <value form="long">Please send the mother to the clinic to register the newborn(s).</value>
+            <value form="short">Register newborns</value>
+          </text>
+          <text id="birth_type">
+            <value form="long">How did she deliver?</value>
+            <value form="short">Delivery type</value>
+          </text>
+          <text id="vaginal">
+            <value>Vaginal delivery</value>
+          </text>
+          <text id="csection">
+            <value>Cesarean section</value>
+          </text>
+          <text id="forceps_or_vacuum">
+            <value>Forceps or vacuum assisted</value>
+          </text>
+          <text id="other_birth_type">
+            <value>Other</value>
+          </text>
+          <text id="termination_location">
+            <value form="long">Where did the termination take place?</value>
+            <value form="short">Termination location</value>
+          </text>
+          <text id="hospital">
+            <value>Hospital</value>
+          </text>
+          <text id="clinic">
+            <value>Clinic</value>
+          </text>
+          <text id="travel_facility">
+            <value>Traveling to facility</value>
+          </text>
+          <text id="home">
+            <value>Home</value>
+          </text>
+          <text id="other_termination_location">
+            <value>Other</value>
+          </text>
+          <text id="dont_know">
+            <value>Dont know</value>
+          </text>
+          <text id="birth_location">
+            <value form="long">Where did the delivery take place?</value>
+            <value form="short">Birth location</value>
+          </text>
+          <text id="other_location">
+            <value>Other</value>
+          </text>
+          <text id="termination_attendant">
+            <value form="long">Who attended the termination?</value>
+            <value form="short">Termination attendant</value>
+          </text>
+          <text id="clinical_officer">
+            <value>Clinical Officer</value>
+          </text>
+          <text id="nurse">
+            <value>Nurse</value>
+          </text>
+          <text id="chw">
+            <value>Community Health Worker</value>
+          </text>
+          <text id="tba">
+            <value>Traditional birth attendant</value>
+          </text>
+          <text id="family">
+            <value>Family member</value>
+          </text>
+          <text id="no_one">
+            <value>No one</value>
+          </text>
+          <text id="other_termination_attendant">
+            <value>Other</value>
+          </text>
+          <text id="birth_attendant">
+            <value form="long">Who attended the delivery?</value>
+            <value form="short">Birth attendant</value>
+          </text>
+          <text id="other_attendant">
+            <value>Other</value>
+          </text>
+          <text id="termination_time">
+            <value form="long">How many months old was the pregnancy at termination?</value>
+            <value form="short">How many months</value>
+          </text>
+          <text id="why_home_delivery">
+            <value form="long">Why did she choose to deliver at home?</value>
+            <value form="short">Why home</value>
+          </text>
+          <text id="preference">
+            <value>Preferred to deliver at home</value>
+          </text>
+          <text id="home_other">
+            <value>Other</value>
+          </text>
+          <text id="preference_explain">
+            <value>Please explain.</value>
+          </text>
+          <text id="why_transport">
+            <value>Please explain</value>
+          </text>
+          <text id="why_transport_distance">
+            <value>Lives too far from clinic</value>
+          </text>
+          <text id="why_transport_cost">
+            <value>Transport was too expensive</value>
+          </text>
+          <text id="why_transport_access">
+            <value>Could not find transport in time</value>
+          </text>
+          <text id="why_transport_other">
+            <value>Other</value>
+          </text>
+          <text id="termination_type">
+            <value form="long">Was the termination spontaneous or induced?</value>
+            <value form="short">Termination type</value>
+          </text>
+          <text id="spontaneous">
+            <value>Spontaneous</value>
+          </text>
+          <text id="induced">
+            <value>Induced</value>
+          </text>
+          <text id="heavy_bleeding">
+            <value form="long">Have you had heavy vaginal bleeding for longer than two weeks?</value>
+            <value form="short">Heavy bleeding</value>
+          </text>
+          <text id="fits">
+            <value form="long">Are you having uncontrolled fits?</value>
+            <value form="short">Fits</value>
+          </text>
+          <text id="fever">
+            <value form="long">Do you have a fever?</value>
+            <value form="short">Fever</value>
+          </text>
+          <text id="abdominal_pain_discharge">
+            <value form="long">Are you having severe abdominal pain or bad-smelling discharge?</value>
+            <value form="short">Abdominal pain or Discharge</value>
+          </text>
+          <text id="pain_bleeding_urination">
+            <value form="long">Have you had pain or bleeding when you urinate?</value>
+            <value form="short">Pain or bleeding when urinating</value>
+          </text>
+          <text id="leg_swelling">
+            <value form="long">Is there swelling in your legs?</value>
+            <value form="short">Leg swelling</value>
+          </text>
+          <text id="breast_problems">
+            <value form="long">Are you experiencing swelling or redness of your breasts, or are your nipples cracked?</value>
+            <value form="short">Swelling or redness of breasts</value>
+          </text>
+          <text id="uncontrolled_urination">
+            <value form="long">Are you having trouble controlling your urination?</value>
+            <value form="short">Uncontrolled urination</value>
+          </text>
+          <text id="vaginal_stool_leaking">
+            <value form="long">Is there urine or stool leaking through your vagina?</value>
+            <value form="short">Urine or stool leakage</value>
+          </text>
+          <text id="anemia">
+            <value form="long">Do you have extreme fatigue, pale lips, or blue fingernails (anemia)?</value>
+            <value form="short">Anemia</value>
+          </text>
+          <text id="other_illness">
+            <value form="long">Have you had other major illness since delivery?</value>
+            <value form="short">Other illness</value>
+          </text>
+          <text id="which_illness">
+            <value>Which illness?</value>
+          </text>
+          <text id="seek_care">
+            <value form="long">Did the mother seek care at a clinic?</value>
+            <value form="short">Seek care?</value>
+          </text>
+          <text id="why_not">
+            <value form="long">Why not?</value>
+            <value form="short">Why</value>
+          </text>
+          <text id="felt_better">
+            <value>Felt better</value>
+          </text>
+          <text id="skeptical_clinic">
+            <value>Did not think clinic will help</value>
+          </text>
+          <text id="busy">
+            <value>Too busy</value>
+          </text>
+          <text id="transport">
+            <value>Trouble getting transport</value>
+          </text>
+          <text id="other_why_not">
+            <value>Other</value>
+          </text>
+          <text id="treatment">
+            <value form="long">Did she receive treatment?</value>
+            <value form="short">Treatment</value>
+          </text>
+          <text id="treatment_type">
+            <value>Which treatment?</value>
+          </text>
+          <text id="treatment_why_not">
+            <value>Why not?</value>
+          </text>
+          <text id="no_medicine">
+            <value>No mediciine</value>
+          </text>
+          <text id="too_many_patients">
+            <value>Too many patients</value>
+          </text>
+          <text id="no_doctor">
+            <value>No doctor</value>
+          </text>
+          <text id="no_health_workers">
+            <value>No health workers</value>
+          </text>
+          <text id="too_late">
+            <value>Died before reaching clinic</value>
+          </text>
+          <text id="treatment_why_not_other">
+            <value>Other</value>
+          </text>
+          <text id="treatment_why_not_prompt">
+            <value form="long">Advise the mother to return to the clinic, and follow up soon.</value>
+            <value form="short">Return to clinic</value>
+          </text>
+          <text id="family_planning">
+            <value form="long">Which family planning method will the mother choose?</value>
+            <value form="short">Family planning</value>
+          </text>
+          <text id="condoms">
+            <value>Condoms</value>
+          </text>
+          <text id="vasectomy">
+            <value>Vasectomy</value>
+          </text>
+          <text id="ligation">
+            <value>Tubal ligation</value>
+          </text>
+          <text id="iud">
+            <value>IUD</value>
+          </text>
+          <text id="dp_injections">
+            <value>DP injections</value>
+          </text>
+          <text id="oral">
+            <value>Oral contraceptives</value>
+          </text>
+          <text id="norplant">
+            <value>Norplant</value>
+          </text>
+          <text id="death_case_mother">
+            <value>Please register the deceased mother.</value>
+          </text>
+          <text id="death_case_infant">
+            <value>Please register the deceased infant(s).</value>
+          </text>
+          <text id="newborn_case">
+            <value>Please register the newborn case(s).</value>
+          </text>
+          <text id="thank_you">
+            <value>Thank you.</value>
+          </text>
+          <text id="referral">
+            <value>Please tell the mother to visit the clinic, and follow up soon.</value>
+          </text>
+        </translation>
+      </itext>
+    </model>
+  </h:head>
+  <h:body>
+    <select1 ref="/safe_pregnancy/what_happened">
+      <label ref="jr:itext('what_happened')"/>
+      <item>
+        <label ref="jr:itext('birth')"/>
+        <value>birth</value>
+      </item>
+      <item>
+        <label ref="jr:itext('preg_terminated')"/>
+        <value>preg_terminated</value>
+      </item>
+      <item>
+        <label ref="jr:itext('woman_moved')"/>
+        <value>moved</value>
+      </item>
+      <item>
+        <label ref="jr:itext('not_pregnant')"/>
+        <value>not_pregnant</value>
+      </item>
+      <item>
+        <label ref="jr:itext('other_what_happened')"/>
+        <value>other</value>
+      </item>
+    </select1>
+    <input ref="/safe_pregnancy/other_what_happened">
+      <label ref="jr:itext('other_what_happened')"/>
+    </input>
+    <select1 ref="/safe_pregnancy/mother_survived">
+      <label ref="jr:itext('mother_survived')"/>
+      <item>
+        <label ref="jr:itext('yes')"/>
+        <value>yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('no')"/>
+        <value>no</value>
+      </item>
+    </select1>
+    <input ref="/safe_pregnancy/infants_delivered">
+      <label ref="jr:itext('infants_delivered')"/>
+    </input>
+    <input ref="/safe_pregnancy/infants_survived">
+      <label ref="jr:itext('infants_survived')"/>
+    </input>
+    <select1 ref="/safe_pregnancy/infants_registered">
+      <label ref="jr:itext('infants_registered')"/>
+      <item>
+        <label ref="jr:itext('yes')"/>
+        <value>yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('no')"/>
+        <value>no</value>
+      </item>
+    </select1>
+    <trigger ref="/safe_pregnancy/infants_registered_prompt">
+      <label ref="jr:itext('infants_registered_prompt')"/>
+    </trigger>
+    <select1 ref="/safe_pregnancy/birth_type">
+      <label ref="jr:itext('birth_type')"/>
+      <item>
+        <label ref="jr:itext('vaginal')"/>
+        <value>vaginal</value>
+      </item>
+      <item>
+        <label ref="jr:itext('csection')"/>
+        <value>csection</value>
+      </item>
+      <item>
+        <label ref="jr:itext('forceps_or_vacuum')"/>
+        <value>forceps_or_vacuum</value>
+      </item>
+      <item>
+        <label ref="jr:itext('other_birth_type')"/>
+        <value>other</value>
+      </item>
+      <item>
+        <label ref="jr:itext('dont_know')"/>
+        <value>dont_know</value>
+      </item>
+    </select1>
+    <input ref="/safe_pregnancy/other_birth_type">
+      <label ref="jr:itext('other_birth_type')"/>
+    </input>
+    <select1 ref="/safe_pregnancy/birth_location">
+      <label ref="jr:itext('birth_location')"/>
+      <item>
+        <label ref="jr:itext('hospital')"/>
+        <value>hospital</value>
+      </item>
+      <item>
+        <label ref="jr:itext('clinic')"/>
+        <value>clinic</value>
+      </item>
+      <item>
+        <label ref="jr:itext('travel_facility')"/>
+        <value>en_route</value>
+      </item>
+      <item>
+        <label ref="jr:itext('home')"/>
+        <value>home</value>
+      </item>
+      <item>
+        <label ref="jr:itext('other_location')"/>
+        <value>other</value>
+      </item>
+      <item>
+        <label ref="jr:itext('dont_know')"/>
+        <value>dont_know</value>
+      </item>
+    </select1>
+    <input ref="/safe_pregnancy/other_location">
+      <label ref="jr:itext('other_location')"/>
+    </input>
+    <select1 ref="/safe_pregnancy/birth_attendant">
+      <label ref="jr:itext('birth_attendant')"/>
+      <item>
+        <label ref="jr:itext('clinical_officer')"/>
+        <value>clinical_officer</value>
+      </item>
+      <item>
+        <label ref="jr:itext('nurse')"/>
+        <value>nurse</value>
+      </item>
+      <item>
+        <label ref="jr:itext('chw')"/>
+        <value>chw</value>
+      </item>
+      <item>
+        <label ref="jr:itext('tba')"/>
+        <value>tba</value>
+      </item>
+      <item>
+        <label ref="jr:itext('family')"/>
+        <value>family</value>
+      </item>
+      <item>
+        <label ref="jr:itext('no_one')"/>
+        <value>no_one</value>
+      </item>
+      <item>
+        <label ref="jr:itext('other_attendant')"/>
+        <value>other</value>
+      </item>
+      <item>
+        <label ref="jr:itext('dont_know')"/>
+        <value>dont_know</value>
+      </item>
+    </select1>
+    <input ref="/safe_pregnancy/other_attendant">
+      <label ref="jr:itext('other_attendant')"/>
+    </input>
+    <select1 ref="/safe_pregnancy/why_home_delivery">
+      <label ref="jr:itext('why_home_delivery')"/>
+      <item>
+        <label ref="jr:itext('transport')"/>
+        <value>transport</value>
+      </item>
+      <item>
+        <label ref="jr:itext('preference')"/>
+        <value>preference</value>
+      </item>
+      <item>
+        <label ref="jr:itext('home_other')"/>
+        <value>other</value>
+      </item>
+    </select1>
+    <input ref="/safe_pregnancy/home_other">
+      <label ref="jr:itext('home_other')"/>
+    </input>
+    <select1 ref="/safe_pregnancy/why_transport">
+      <label ref="jr:itext('why_transport')"/>
+      <item>
+        <label ref="jr:itext('why_transport_distance')"/>
+        <value>distance</value>
+      </item>
+      <item>
+        <label ref="jr:itext('why_transport_cost')"/>
+        <value>cost</value>
+      </item>
+      <item>
+        <label ref="jr:itext('why_transport_access')"/>
+        <value>access</value>
+      </item>
+      <item>
+        <label ref="jr:itext('why_transport_other')"/>
+        <value>other</value>
+      </item>
+    </select1>
+    <input ref="/safe_pregnancy/why_transport_other">
+      <label ref="jr:itext('why_transport_other')"/>
+    </input>
+    <input ref="/safe_pregnancy/preference_explain">
+      <label ref="jr:itext('preference_explain')"/>
+    </input>
+    <input ref="/safe_pregnancy/termination_time">
+      <label ref="jr:itext('termination_time')"/>
+    </input>
+    <select1 ref="/safe_pregnancy/termination_type">
+      <label ref="jr:itext('termination_type')"/>
+      <item>
+        <label ref="jr:itext('spontaneous')"/>
+        <value>spontaneous</value>
+      </item>
+      <item>
+        <label ref="jr:itext('induced')"/>
+        <value>induced</value>
+      </item>
+    </select1>
+    <select1 ref="/safe_pregnancy/termination_location">
+      <label ref="jr:itext('termination_location')"/>
+      <item>
+        <label ref="jr:itext('hospital')"/>
+        <value>hospital</value>
+      </item>
+      <item>
+        <label ref="jr:itext('clinic')"/>
+        <value>clinic</value>
+      </item>
+      <item>
+        <label ref="jr:itext('travel_facility')"/>
+        <value>en_route</value>
+      </item>
+      <item>
+        <label ref="jr:itext('home')"/>
+        <value>home</value>
+      </item>
+      <item>
+        <label ref="jr:itext('other_termination_location')"/>
+        <value>other</value>
+      </item>
+      <item>
+        <label ref="jr:itext('dont_know')"/>
+        <value>dont_know</value>
+      </item>
+    </select1>
+    <input ref="/safe_pregnancy/other_termination_location">
+      <label ref="jr:itext('other_termination_location')"/>
+    </input>
+    <select1 ref="/safe_pregnancy/termination_attendant">
+      <label ref="jr:itext('termination_attendant')"/>
+      <item>
+        <label ref="jr:itext('clinical_officer')"/>
+        <value>clinical_officer</value>
+      </item>
+      <item>
+        <label ref="jr:itext('nurse')"/>
+        <value>nurse</value>
+      </item>
+      <item>
+        <label ref="jr:itext('chw')"/>
+        <value>chw</value>
+      </item>
+      <item>
+        <label ref="jr:itext('tba')"/>
+        <value>tba</value>
+      </item>
+      <item>
+        <label ref="jr:itext('family')"/>
+        <value>family</value>
+      </item>
+      <item>
+        <label ref="jr:itext('no_one')"/>
+        <value>no_one</value>
+      </item>
+      <item>
+        <label ref="jr:itext('other_attendant')"/>
+        <value>other</value>
+      </item>
+      <item>
+        <label ref="jr:itext('dont_know')"/>
+        <value>dont_know</value>
+      </item>
+    </select1>
+    <input ref="/safe_pregnancy/other_termination_attendant">
+      <label ref="jr:itext('other_termination_attendant')"/>
+    </input>
+    <select1 ref="/safe_pregnancy/heavy_bleeding">
+      <label ref="jr:itext('heavy_bleeding')"/>
+      <item>
+        <label ref="jr:itext('yes')"/>
+        <value>yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('no')"/>
+        <value>no</value>
+      </item>
+    </select1>
+    <select1 ref="/safe_pregnancy/fits">
+      <label ref="jr:itext('fits')"/>
+      <item>
+        <label ref="jr:itext('yes')"/>
+        <value>yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('no')"/>
+        <value>no</value>
+      </item>
+    </select1>
+    <select1 ref="/safe_pregnancy/fever">
+      <label ref="jr:itext('fever')"/>
+      <item>
+        <label ref="jr:itext('yes')"/>
+        <value>yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('no')"/>
+        <value>no</value>
+      </item>
+    </select1>
+    <select1 ref="/safe_pregnancy/abdominal_pain_discharge">
+      <label ref="jr:itext('abdominal_pain_discharge')"/>
+      <item>
+        <label ref="jr:itext('yes')"/>
+        <value>yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('no')"/>
+        <value>no</value>
+      </item>
+    </select1>
+    <select1 ref="/safe_pregnancy/pain_bleeding_urination">
+      <label ref="jr:itext('pain_bleeding_urination')"/>
+      <item>
+        <label ref="jr:itext('yes')"/>
+        <value>yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('no')"/>
+        <value>no</value>
+      </item>
+    </select1>
+    <select1 ref="/safe_pregnancy/leg_swelling">
+      <label ref="jr:itext('leg_swelling')"/>
+      <item>
+        <label ref="jr:itext('yes')"/>
+        <value>yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('no')"/>
+        <value>no</value>
+      </item>
+    </select1>
+    <select1 ref="/safe_pregnancy/breast_problems">
+      <label ref="jr:itext('breast_problems')"/>
+      <item>
+        <label ref="jr:itext('yes')"/>
+        <value>yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('no')"/>
+        <value>no</value>
+      </item>
+    </select1>
+    <select1 ref="/safe_pregnancy/uncontrolled_urination">
+      <label ref="jr:itext('uncontrolled_urination')"/>
+      <item>
+        <label ref="jr:itext('yes')"/>
+        <value>yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('no')"/>
+        <value>no</value>
+      </item>
+    </select1>
+    <select1 ref="/safe_pregnancy/vaginal_stool_leaking">
+      <label ref="jr:itext('vaginal_stool_leaking')"/>
+      <item>
+        <label ref="jr:itext('yes')"/>
+        <value>yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('no')"/>
+        <value>no</value>
+      </item>
+    </select1>
+    <select1 ref="/safe_pregnancy/anemia">
+      <label ref="jr:itext('anemia')"/>
+      <item>
+        <label ref="jr:itext('yes')"/>
+        <value>yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('no')"/>
+        <value>no</value>
+      </item>
+    </select1>
+    <select1 ref="/safe_pregnancy/other_illness">
+      <label ref="jr:itext('other_illness')"/>
+      <item>
+        <label ref="jr:itext('yes')"/>
+        <value>yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('no')"/>
+        <value>no</value>
+      </item>
+    </select1>
+    <input ref="/safe_pregnancy/which_illness">
+      <label ref="jr:itext('which_illness')"/>
+    </input>
+    <select1 ref="/safe_pregnancy/seek_care">
+      <label ref="jr:itext('seek_care')"/>
+      <item>
+        <label ref="jr:itext('yes')"/>
+        <value>yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('no')"/>
+        <value>no</value>
+      </item>
+    </select1>
+    <select1 ref="/safe_pregnancy/why_not">
+      <label ref="jr:itext('why_not')"/>
+      <item>
+        <label ref="jr:itext('felt_better')"/>
+        <value>felt_better</value>
+      </item>
+      <item>
+        <label ref="jr:itext('skeptical_clinic')"/>
+        <value>skeptical_clinic</value>
+      </item>
+      <item>
+        <label ref="jr:itext('busy')"/>
+        <value>busy</value>
+      </item>
+      <item>
+        <label ref="jr:itext('transport')"/>
+        <value>transport</value>
+      </item>
+      <item>
+        <label ref="jr:itext('other_why_not')"/>
+        <value>other</value>
+      </item>
+    </select1>
+    <input ref="/safe_pregnancy/other_why_not">
+      <label ref="jr:itext('other_why_not')"/>
+    </input>
+    <select1 ref="/safe_pregnancy/treatment">
+      <label ref="jr:itext('treatment')"/>
+      <item>
+        <label ref="jr:itext('yes')"/>
+        <value>yes</value>
+      </item>
+      <item>
+        <label ref="jr:itext('no')"/>
+        <value>no</value>
+      </item>
+    </select1>
+    <input ref="/safe_pregnancy/treatment_type">
+      <label ref="jr:itext('treatment_type')"/>
+    </input>
+    <select1 ref="/safe_pregnancy/treatment_why_not">
+      <label ref="jr:itext('treatment_why_not')"/>
+      <item>
+        <label ref="jr:itext('no_medicine')"/>
+        <value>no_medicine</value>
+      </item>
+      <item>
+        <label ref="jr:itext('too_many_patients')"/>
+        <value>too_many_patients</value>
+      </item>
+      <item>
+        <label ref="jr:itext('no_doctor')"/>
+        <value>no_doctor</value>
+      </item>
+      <item>
+        <label ref="jr:itext('no_health_workers')"/>
+        <value>no_health_workers</value>
+      </item>
+      <item>
+        <label ref="jr:itext('too_late')"/>
+        <value>too_late</value>
+      </item>
+      <item>
+        <label ref="jr:itext('treatment_why_not_other')"/>
+        <value>other</value>
+      </item>
+    </select1>
+    <input ref="/safe_pregnancy/treatment_why_not_other">
+      <label ref="jr:itext('treatment_why_not_other')"/>
+    </input>
+    <trigger ref="/safe_pregnancy/treatment_why_not_prompt">
+      <label ref="jr:itext('treatment_why_not_prompt')"/>
+    </trigger>
+    <select ref="/safe_pregnancy/family_planning">
+      <label ref="jr:itext('family_planning')"/>
+      <item>
+        <label ref="jr:itext('condoms')"/>
+        <value>condoms</value>
+      </item>
+      <item>
+        <label ref="jr:itext('vasectomy')"/>
+        <value>vasectomy</value>
+      </item>
+      <item>
+        <label ref="jr:itext('ligation')"/>
+        <value>tubal_ligation</value>
+      </item>
+      <item>
+        <label ref="jr:itext('iud')"/>
+        <value>IUD</value>
+      </item>
+      <item>
+        <label ref="jr:itext('dp_injections')"/>
+        <value>dp_injections</value>
+      </item>
+      <item>
+        <label ref="jr:itext('oral')"/>
+        <value>oral_contraception</value>
+      </item>
+      <item>
+        <label ref="jr:itext('norplant')"/>
+        <value>norplant</value>
+      </item>
+    </select>
+    <trigger ref="/safe_pregnancy/death_case_mother">
+      <label ref="jr:itext('death_case_mother')"/>
+    </trigger>
+    <trigger ref="/safe_pregnancy/death_case_infant">
+      <label ref="jr:itext('death_case_infant')"/>
+    </trigger>
+    <trigger ref="/safe_pregnancy/newborn_case">
+      <label ref="jr:itext('newborn_case')"/>
+    </trigger>
+    <trigger ref="/safe_pregnancy/thank_you">
+      <label ref="jr:itext('thank_you')"/>
+    </trigger>
+  </h:body>
+</h:html>
