@@ -1,11 +1,39 @@
 from datetime import datetime
+import logging
+from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.db import models
-from django.conf import settings
 from couchdbkit.ext.django.schema import Document, StringProperty,\
-    BooleanProperty, DateTimeProperty, IntegerProperty
+    BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty
 from dimagi.utils.timezones import fields as tz_fields
+from itertools import chain
+from langcodes import langs as all_langs
+from collections import defaultdict
 
+lang_lookup = defaultdict(str)
+
+for lang in all_langs:
+    lang_lookup[lang['three']] = lang['names'][0] # arbitrarily using the first name if there are multiple
+    if lang['two'] != '':
+        lang_lookup[lang['two']] = lang['names'][0]
+
+class DomainMigrations(DocumentSchema):
+    has_migrated_permissions = BooleanProperty(default=False)
+
+    def apply(self, domain):
+        if not self.has_migrated_permissions:
+            logging.info("Applying permissions migration to domain %s" % domain.name)
+            from corehq.apps.users.models import UserRole, WebUser
+            UserRole.init_domain_with_presets(domain.name)
+            for web_user in WebUser.by_domain(domain.name):
+                try:
+                    web_user.save()
+                except ResourceConflict:
+                    # web_user has already been saved by another thread in the last few seconds
+                    pass
+
+            self.has_migrated_permissions = True
+            domain.save()
 
 class Domain(Document):
     """Domain is the highest level collection of people/stuff
@@ -19,12 +47,25 @@ class Domain(Document):
     date_created = DateTimeProperty()
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)
+    
+    # domain metadata
+    city = StringProperty()
+    country = StringProperty()
+    region = StringProperty() # e.g. US, LAC, SA, Sub-saharn Africa, East Africa, West Africa, Southeast Asia)
+    project_type = StringProperty() # e.g. MCH, HIV
+    customer_type = StringProperty() # plus, full, etc.
+    is_test = BooleanProperty(default=False)
+    description = StringProperty()
+    is_shared = BooleanProperty(default=False)
 
-#    def save(self, **kwargs):
-#        # eventually we'll change the name of this object to just "Domain"
-#        # so correctly set the doc type for future migration
-#        self.doc_type = "Domain"
-#        super(CouchDomain, self).save(**kwargs)
+    migrations = SchemaProperty(DomainMigrations)
+
+    @classmethod
+    def wrap(cls, data):
+        self = super(Domain, cls).wrap(data)
+        if self.get_id:
+            self.apply_migrations()
+        return self
 
     @staticmethod
     def active_for_user(user, is_active=True):
@@ -35,12 +76,27 @@ class Domain(Document):
         couch_user = CouchUser.from_django_user(user)
         if couch_user:
             domain_names = couch_user.get_domains()
+            def log(json):
+                doc = json['doc']
+                return Domain.wrap(doc)
             return Domain.view("domain/by_status",
                                     keys=[[is_active, d] for d in domain_names],
                                     reduce=False,
+                                    wrapper=log,
                                     include_docs=True).all()
         else:
             return []
+
+    @classmethod
+    def categories(cls, prefix=''):
+        # unichr(0xfff8) is something close to the highest character available
+        return [d['key'] for d in cls.view("domain/categories_by_prefix",
+                                group=True,
+                                startkey=prefix,
+                                endkey="%s%c" % (prefix, unichr(0xfff8))).all()]
+
+    def apply_migrations(self):
+        self.migrations.apply(self)
 
     @staticmethod
     def all_for_user(user):
@@ -67,6 +123,18 @@ class Domain(Document):
         couch_user = model_instance.get_profile().get_couch_user()
         couch_user.add_domain_membership(self.name)
         couch_user.save()
+
+    def applications(self):
+        return ApplicationBase.view('app_manager/applications_brief',
+                                    startkey=[self.name],
+                                    endkey=[self.name, {}]).all()
+
+    def languages(self):
+        apps = self.applications()
+        return set(chain.from_iterable([a.langs for a in apps]))
+
+    def readable_languages(self):
+        return ', '.join(lang_lookup[lang] or lang for lang in self.languages())
 
     def __unicode__(self):
         return self.name
@@ -100,8 +168,9 @@ class Domain(Document):
                             reduce=False,
                             include_docs=True).all()
 
-
-
+# added after Domain is defined as per http://stackoverflow.com/questions/7199466/how-to-break-import-loop-in-python
+# to prevent import loop errors (since corehq.apps.app_manager.models has to import Domain back)
+from corehq.apps.app_manager.models import ApplicationBase
 
 ##############################################################################################################
 #

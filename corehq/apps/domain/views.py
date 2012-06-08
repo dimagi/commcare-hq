@@ -9,7 +9,8 @@ from django_tables import tables
 from django.shortcuts import redirect
 
 from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
-from corehq.apps.domain.forms import DomainSelectionForm, DomainGlobalSettingsForm
+from corehq.apps.domain.forms import DomainSelectionForm, DomainGlobalSettingsForm,\
+    DomainMetadataForm
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 
@@ -193,24 +194,53 @@ def legacy_domain_name(request, domain, path):
     return HttpResponseRedirect(get_domained_url(domain, path))
 
 @domain_admin_required
-def global_settings(request, domain, template="domain/admin/global_settings.html"):
-    domain = Domain.get_by_name(domain)
+def project_settings(request, domain, template="domain/admin/project_settings.html"):
+    
+    class _NeverFailForm(object):
+            def is_valid(self):              return True
+            def save(self, request, domain): return True
 
+    domain = Domain.get_by_name(domain)
+    user_sees_meta = request.couch_user.is_previewer()
     if request.method == "POST":
         # deal with saving the settings data
-        form = DomainGlobalSettingsForm(request.POST)
+        if user_sees_meta:
+            form = DomainMetadataForm(request.POST)
+        else:
+            form = DomainGlobalSettingsForm(request.POST)
         if form.is_valid():
             if form.save(request, domain):
-                messages.success(request, "Global project settings saved!")
+                messages.success(request, "Project settings saved!")
             else:
                 messages.error(request, "There seems to have been an error saving your settings. Please try again!")
     else:
-        form = DomainGlobalSettingsForm(initial={
-            'default_timezone': domain.default_timezone,
-            'case_sharing': json.dumps(domain.case_sharing),
-        })
+        if user_sees_meta:
+            form = DomainMetadataForm(initial={
+                'default_timezone': domain.default_timezone,
+                'case_sharing': json.dumps(domain.case_sharing),
+                'city': domain.city,
+                'country': domain.country,
+                'region': domain.region,
+                'project_type': domain.project_type,
+                'customer_type': domain.customer_type,
+                'is_test': json.dumps(domain.is_test),
+                'description': domain.description,
+                'is_shared': domain.is_shared
+            })
+        else:
+            form = DomainGlobalSettingsForm(initial={
+                'default_timezone': domain.default_timezone,
+                'case_sharing': json.dumps(domain.case_sharing),
 
+                })
+        
     return render_to_response(request, template, {
         "domain": domain.name,
-        "form": form
+        "form": form,
+        "languages": domain.readable_languages(),
+        "applications": domain.applications()
     })
+
+@domain_admin_required
+def autocomplete_categories(request, prefix=''):
+    return HttpResponse(json.dumps(Domain.categories(prefix)))

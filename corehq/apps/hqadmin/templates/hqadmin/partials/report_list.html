@@ -6,6 +6,7 @@
 {% url global_report as global_report_url %}
 {% url commcare_version_report as commcare_version_report_url %}
 {% url global_submissions_errors as errors_report_url %}
+{% url domain_update as domain_update_url %}
 <nav>
     <ul class="nav nav-list" id="report-list">
         <li class="nav-header">Administrative Reports</li>
@@ -15,5 +16,9 @@
         <li{% is_url_active request global_report_url %}><a href="{{ global_report_url }}">Global Statistics</a></li>
         <li{% is_url_active request commcare_version_report_url %}><a href="{{ commcare_version_report_url }}">CommCare Versions</a></li>
         <li{% is_url_active request errors_report_url %}><a href="{{ errors_report_url }}">Submissions &amp; Error Statistics Per Domain</a></li>
+    </ul>
+    <ul class="nav nav-list" id="report-list">
+        <li class="nav-header">Administrative Operations</li>
+        <li{% is_url_active request domain_update_url %}><a href="{{ domain_update_url }}">View / Update Domain Information</a></li>
     </ul>
 </nav>

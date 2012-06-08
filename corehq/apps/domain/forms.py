@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 
 import django_tables as tables
 from django.core.validators import validate_email
-from django.forms.fields import ChoiceField
+from django.forms.fields import ChoiceField, CharField, BooleanField
 from django.utils.encoding import smart_str
 
 from corehq.apps.domain.middleware import _SESSION_KEY_SELECTED_DOMAIN
@@ -21,6 +21,7 @@ from corehq.apps.domain.models import Domain
 #
 # super(_BaseForm, self).clean() in any derived class that overrides clean()
 from corehq.apps.domain.utils import new_domain_re
+from corehq.apps.users.models import WebUser
 from dimagi.utils.timezones.fields import TimeZoneField
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from corehq.apps.users.util import format_username
@@ -81,7 +82,7 @@ class DomainSelectionForm(forms.Form):
 class DomainGlobalSettingsForm(forms.Form):
     default_timezone = TimeZoneChoiceField(label="Default Timezone", initial="UTC")
     case_sharing = ChoiceField(label='Case Sharing', choices=(('false', 'Off'), ('true', 'On')))
-
+    
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
         timezone_field = TimeZoneField()
@@ -90,8 +91,49 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def save(self, request, domain):
         try:
-            domain.default_timezone = self.cleaned_data['default_timezone']
+            global_tz = self.cleaned_data['default_timezone']
+            domain.default_timezone = global_tz
+            users = WebUser.by_domain(domain.name)
+            for user in users.all():
+                dm = user.get_domain_membership(domain.name)
+                if not dm.override_global_tz:
+                    dm.timezone = global_tz
+                    user.save()
             domain.case_sharing = self.cleaned_data['case_sharing'] == 'true'
+            domain.save()
+            return True
+        except Exception:
+            return False
+
+class DomainMetadataForm(DomainGlobalSettingsForm):
+    is_shared = BooleanField(label='Publicly Available', help_text="""
+By checking this box, you are sharing this project with our other clients. This project's contents will be put in the
+public domain.
+""", required=False)
+    city = CharField(label="City", required=False)
+    country = CharField(label="Country", required=False)
+    region = CharField(label="Region", required=False,
+                       help_text="e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc.") 
+    project_type = CharField(label="Project Category", required=False,
+                             help_text="e.g. MCH, HIV, etc.") 
+    customer_type = ChoiceField(label='Customer Type', 
+                                choices=(('basic', 'Basic'), ('plus', 'Plus'), ('full', 'Full')))
+    is_test = ChoiceField(label='Test Project', choices=(('false', 'Real'), ('true', 'Test')))
+    description = CharField(label="Description", required=False, widget=forms.Textarea)
+
+    def save(self, request, domain):
+        res = DomainGlobalSettingsForm.save(self, request, domain)
+        if not res:
+            return False
+        try:
+            domain.city = self.cleaned_data['city']
+            domain.country = self.cleaned_data['country']
+            domain.region = self.cleaned_data['region']
+            domain.project_type = self.cleaned_data['project_type']
+            domain.customer_type = self.cleaned_data['customer_type']
+            domain.is_test = self.cleaned_data['is_test'] == 'true'
+            domain.is_shared = self.cleaned_data['is_shared']
+            domain.description = self.cleaned_data['description']
             domain.save()
             return True
         except Exception:

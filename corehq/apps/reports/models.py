@@ -8,7 +8,7 @@ import couchforms
 from dimagi.utils.mixins import UnicodeMixIn
 import settings
 
-class HQUserType:
+class HQUserType(object):
     REGISTERED = 0
     DEMO_USER = 1
     ADMIN = 2
@@ -27,17 +27,24 @@ class HQUserType:
     def use_filter(cls, ufilter):
         return [HQUserToggle(i, unicode(i) in ufilter) for i in range(len(cls.human_readable))]
 
-class HQUserToggle:
+class HQToggle(object):
     type = None
     show = False
     name = None
-
-    def __init__(self, type, show):
+    
+    def __init__(self, type, show, name):
         self.type = type
-        self.name = HQUserType.human_readable[self.type]
+        self.name = name
         self.show = show
 
-class TempCommCareUser:
+class HQUserToggle(HQToggle):
+    
+    def __init__(self, type, show):
+        name = HQUserType.human_readable[type]
+        super(HQUserToggle, self).__init__(type, show, name)
+
+
+class TempCommCareUser(object):
     filter_flag = HQUserType.UNKNOWN
 
     def __init__(self, domain, username, uuid):

@@ -103,7 +103,7 @@ def form_list(domain):
                          group=True,
                          group_level=3,
                          reduce=True)
-    return [{"display": xmlns_to_name(domain, r["key"][2]), "xmlns": r["key"][2]} for r in view]
+    return [{"text": xmlns_to_name(domain, r["key"][2]), "val": r["key"][2]} for r in view]
 
 def get_case_types(domain, user_ids=None):
     case_types = {}
@@ -228,19 +228,6 @@ def format_datatables_data(text, sort_key):
             "sort_key": sort_key}
     return data
 
-SORT_TYPE_NUMERIC = "title-numeric"
-def format_datatables_header(text, sort_type=None, sort_direction=None, css_class=None, help_text=None):
-    header = {"html": text}
-    if sort_type:
-        header["sort_type"] = sort_type
-    if sort_direction:
-        header["sort_direction"] = sort_direction
-    if css_class:
-        header["css_class"] = css_class
-    if help_text:
-        header['help_text'] = help_text
-    return header
-
 def app_export_filter(doc, app_id):
     if app_id:
         return (doc['app_id'] == app_id) if doc.has_key('app_id') else False
@@ -347,5 +334,17 @@ def get_possible_reports(domain):
     report_map.extend(settings.CUSTOM_REPORT_MAP.get(domain, {}).items())
     for heading, models in report_map:
         for model in models:
-            reports.append((model, to_function(model).name))
+            reports.append({'path': model, 'name': to_function(model).name})
     return reports
+
+def format_relative_date(date, tz=pytz.utc):
+    now = datetime.now(tz=tz)
+    time = datetime.replace(date, tzinfo=tz)
+    dtime = now - time
+    if dtime.days < 1:
+        dtext = "Today"
+    elif dtime.days < 2:
+        dtext = "Yesterday"
+    else:
+        dtext = "%s days ago" % dtime.days
+    return format_datatables_data(dtext, dtime.days)

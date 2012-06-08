@@ -3,7 +3,6 @@ import json
 from django.http import Http404, HttpResponseForbidden
 from django.views.decorators.http import require_GET, require_POST
 from corehq.apps.translations.models import Translation, TranslationMixin
-from corehq.apps.users.models import Permissions
 from dimagi.utils.web import json_response, json_request, render_to_response
 
 def validate_trans_doc(trans, request, domain=None):
@@ -12,7 +11,7 @@ def validate_trans_doc(trans, request, domain=None):
     elif trans.doc_type == "Application":
         if trans['domain'] != domain:
             raise Http404
-        elif not request.couch_user.has_permission(domain, Permissions.EDIT_APPS):
+        elif not request.couch_user.can_edit_apps(domain):
             return HttpResponseForbidden()
     else:
         raise Http404

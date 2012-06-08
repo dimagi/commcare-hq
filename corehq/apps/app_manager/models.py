@@ -634,7 +634,7 @@ class VersionedDoc(Document):
             copy = cls.wrap(copy)
             copy['copy_of'] = self._id
             copy.save(increment_version=False)
-            copy.copy_attachments(self, r'.*\.xml')
+            copy.copy_attachments(self, r'[^/]*\.xml')
         return copy
 
     def copy_attachments(self, other, regexp=None):
@@ -662,9 +662,7 @@ class VersionedDoc(Document):
         cls = self.__class__
         app = cls.wrap(app)
         app.save()
-        app.copy_attachments(copy)
-        app.delete_attachment('CommCare.jar')
-        app.delete_attachment('CommCare.jad')
+        app.copy_attachments(copy, r'[^/]*\.xml')
         return app
 
     def delete_copy(self, copy):
@@ -784,6 +782,9 @@ class ApplicationBase(VersionedDoc):
     def is_remote_app(self):
         return False
 
+    def get_latest_app(self):
+        return get_app(self.domain, self.get_id, latest=True)
+
     def set_admin_password(self, raw_password):
         import random
         algo = 'sha1'
@@ -890,12 +891,13 @@ class ApplicationBase(VersionedDoc):
         }[(self.text_input,)]
         return self.get_build().get_jadjar(spec)
 
-    def create_jadjar(self):
+    def create_jadjar(self, save=False):
         try:
             return self.fetch_attachment('CommCare.jad'), self.fetch_attachment('CommCare.jar')
         except ResourceError:
             built_on = datetime.utcnow()
-            jadjar = self.get_jadjar().pack(self.create_all_files(), {
+            all_files = self.create_all_files()
+            jadjar = self.get_jadjar().pack(all_files, {
                 'JavaRosa-Admin-Password': self.admin_password,
                 'Profile': self.profile_loc,
                 'MIDlet-Jar-URL': self.jar_url,
@@ -905,16 +907,21 @@ class ApplicationBase(VersionedDoc):
                 'CommCare-Release': "true",
                 'Build-Number': self.version,
             })
-            self.put_attachment(jadjar.jad, 'CommCare.jad')
-            self.put_attachment(jadjar.jar, 'CommCare.jar')
-            self.built_on = built_on
-            self.built_with = BuildRecord(
-                version=jadjar.version,
-                build_number=jadjar.build_number,
-                signed=jadjar.signed,
-                datetime=built_on,
-            )
-            self.save(increment_version=False)
+            if save:
+                self.built_on = built_on
+                self.built_with = BuildRecord(
+                    version=jadjar.version,
+                    build_number=jadjar.build_number,
+                    signed=jadjar.signed,
+                    datetime=built_on,
+                )
+                self.save(increment_version=False)
+
+                self.put_attachment(jadjar.jad, 'CommCare.jad')
+                self.put_attachment(jadjar.jar, 'CommCare.jar')
+                for filepath in all_files:
+                    self.put_attachment(all_files[filepath], 'files/%s' % filepath)
+
             return jadjar.jad, jadjar.jar
 
     def validate_app(self):
@@ -973,7 +980,7 @@ class ApplicationBase(VersionedDoc):
     def save_copy(self, comment=None):
         copy = super(ApplicationBase, self).save_copy()
 
-        copy.create_jadjar()
+        copy.create_jadjar(save=True)
 
         try:
             copy.short_url = bitly.shorten(
@@ -1416,7 +1423,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         if not errors:
             errors = super(Application, self).validate_app()
-        print errors
         return errors
 
     @classmethod
@@ -1461,22 +1467,46 @@ class RemoteApp(ApplicationBase):
         except Exception:
             raise AppError('Unable to access profile url: "%s"' % self.profile_url)
 
-        if self.manage_urls:
+        if self.manage_urls or self.build_langs:
             profile_xml = WrappedNode(profile)
-            profile_xml.find('property[@key="ota-restore-url"]').attrib['value'] = self.ota_restore_url
-            profile_xml.find('property[@key="PostURL"]').attrib['value'] = self.post_url
-            profile_xml.attrib['update'] = self.hq_profile_url
+
+            def set_property(key, value):
+                profile_xml.find('property[@key="%s"]' % key).attrib['value'] = value
+
+            def set_attribute(key, value):
+                profile_xml.attrib[key] = value
+
+            def reset_suite_remote_url():
+                suite_local_text = profile_xml.findtext('suite/resource/location[@authority="local"]')
+                suite_remote = profile_xml.find('suite/resource/location[@authority="remote"]')
+                suite_name = self.strip_location(suite_local_text)
+                suite_remote.xml.text = self.url_base + urljoin(reverse('download_index', args=[self.domain, self.get_id]), suite_name)
+
+            if self.manage_urls:
+                set_attribute('update', self.hq_profile_url)
+                set_property("ota-restore-url", self.ota_restore_url)
+                set_property("PostURL", self.post_url)
+                set_property("cc_user_domain", cc_user_domain(self.domain))
+                reset_suite_remote_url()
+
+            if self.build_langs:
+                set_property("cur_locale", self.build_langs[0])
+
             profile = profile_xml.render()
         return profile
 
-    def fetch_file(self, location):
+    def strip_location(self, location):
         base = '/'.join(self.profile_url.split('/')[:-1]) + '/'
-        if location.startswith('./'):
-            location = location.lstrip('./')
-        elif location.startswith(base):
-            location = location.lstrip(base)
-        elif location.startswith('jr://resource/'):
-            location = location.lstrip('jr://resource/')
+
+        def strip_left(prefix):
+            string = location
+            if string.startswith(prefix):
+                return string[len(prefix):]
+
+        return strip_left('./') or strip_left(base) or strip_left('jr://resource/') or location
+
+    def fetch_file(self, location):
+        location = self.strip_location(location)
         url = urljoin(self.profile_url, location)
         try:
             return location, urlopen(url).read().decode('utf-8')
@@ -1546,7 +1576,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
         parent_app_id = original_app.get('copy_of') or original_app['_id']
         latest_app = get_db().view('app_manager/applications',
             startkey=['^ReleasedApplications', domain, parent_app_id, {}],
-            endkey=['^ReleasedApplications', domain, parent_app_id],
+            endkey=['^ReleasedApplications', domain, parent_app_id, original_app['version']],
             limit=1,
             descending=True,
             include_docs=True

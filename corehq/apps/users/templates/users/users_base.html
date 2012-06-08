@@ -6,10 +6,12 @@
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
         $(function () {
+            var path = '{{ request.path }}';
             COMMCAREHQ.initBlock($('.hq-content'));
             $('#users-main-nav li a').each(function(e) {
-                if ($(this).attr('href') == '{{ request.path }}')
+                if ($(this).attr('href') == path) {
                     $(this).parent().addClass('active');
+                }
             });
             var activeTabCookie = 'active_tab',
                 last_active_tab = $.cookie(activeTabCookie);
@@ -68,7 +70,7 @@
     {% if request.couch_user.can_edit_web_users  %}
         <li class="nav-header">Project Administration</li>
         {% if request.couch_user.is_domain_admin %}
-        <li><a href="{% url domain_global_settings domain %}">Global Settings</a></li>
+        <li><a href="{% url domain_project_settings domain %}">Project Settings</a></li>
         {% endif %}
         <li><a href="{% url domain_forwarding domain %}">Data Forwarding</a>
             {% block forwarding_indicator %}{% endblock %}

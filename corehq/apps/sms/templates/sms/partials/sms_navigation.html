@@ -1,0 +1,11 @@
+{% load hq_shared_tags %}
+
+{% url messaging domain as default_url %}
+{% url sms_compose_message domain as compose_message_url %}
+<nav>
+    <ul class="nav nav-list" id="report-list">
+        <li class="nav-header">Messaging</li>
+        <li{% ifequal request.path_info default_url %} class="active"{% endifequal %}><a href="{{ default_url }}">Message History</a></li>
+        <li{% is_url_active request compose_message_url %}><a href="{{ compose_message_url }}">Compose SMS Message</a></li>
+    </ul>
+</nav>
