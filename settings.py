@@ -175,7 +175,6 @@ HQ_APPS = (
     'sofabed.forms',
     'soil',
     'corehq.apps.hqsofabed',
-    'xep_hq_server',
     'touchforms.formplayer',
     'phonelog',
     'pathfinder',
@@ -260,10 +259,6 @@ FIXTURE_GENERATORS = [
     "corehq.apps.fixtures.fixturegenerators.item_lists",
 ]
 
-# xep_hq_server settings
-XEP_AUTHORIZE = 'corehq.apps.app_manager.models.authorize_xform_edit'
-XEP_GET_XFORM = 'corehq.apps.app_manager.models.get_xform'
-XEP_PUT_XFORM = 'corehq.apps.app_manager.models.put_xform'
 GET_URL_BASE  = 'dimagi.utils.web.get_url_base'
 
 SMS_GATEWAY_URL = "http://localhost:8001/"
@@ -399,7 +394,6 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'translations',
         'users',
         'formplayer',
-        'xep_hq_server',
         'phonelog',
         'pathfinder',
         'registration',
@@ -493,6 +487,9 @@ STANDARD_REPORT_MAP = {
         'corehq.apps.reports.standard.ExcelExportReport',
         'corehq.apps.reports.standard.CaseExportReport',
     ],
+    "Inspect Data" : ['corehq.apps.reports.standard.SubmitHistory',
+                      'corehq.apps.reports.standard.CaseListReport',
+                      ],
     "Manage Deployments" : [
         'corehq.apps.reports.standard.ApplicationStatusReport',
         'corehq.apps.receiverwrapper.reports.SubmissionErrorReport',
