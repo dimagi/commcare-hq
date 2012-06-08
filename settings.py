@@ -170,6 +170,7 @@ HQ_APPS = (
     'corehq.apps.data_interfaces',
     'corehq.apps.hq_bootstrap',
     'corehq.apps.builds',
+    'corehq.apps.orgs',
     'corehq.apps.api',
     'corehq.couchapps',
     'sofabed.forms',
@@ -368,6 +369,7 @@ XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
 COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'api',
         'app_manager',
+        'orgs',
         'auditcare',
         'builds',
         'case',
