@@ -4,8 +4,9 @@ import re
 from corehq.apps.domain.forms import clean_password, max_pwd, _BaseForm
 from django.core.validators import validate_email
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.utils import new_domain_re
+from corehq.apps.domain.utils import new_domain_re, new_org_re, new_org_title_re
 from corehq.apps.registration.models import RegistrationRequest
+from corehq.apps.orgs.models import Organization
 
 class NewWebUserRegistrationForm(forms.Form):
     """
@@ -37,6 +38,41 @@ class NewWebUserRegistrationForm(forms.Form):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
+
+class OrganizationRegistrationForm(forms.Form):
+    """
+    form for creating an organization for the first time
+    """
+
+    org_title = forms.CharField(label='Organization Title:', max_length=25)
+    org_name = forms.CharField(label='Organization Name:', max_length=25)
+    tos_confirmed = forms.BooleanField(required=False, label="Terms of Service") # Must be set to False to have the clean_*() routine called
+
+    def clean_org_name(self):
+        data = self.cleaned_data['org_name'].strip().lower()
+        if not re.match("^%s$" % new_org_re, data):
+            raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')
+        if Organization.get_by_name(data) or Organization.get_by_name(data.replace('-', '.')):
+            raise forms.ValidationError('Organization name already taken---please try another')
+        return data
+
+    def clean_org_title(self):
+        data = self.cleaned_data['org_title'].strip()
+        if not re.match("^%s$" % new_org_title_re, data):
+            raise forms.ValidationError('Only letters and numbers allowed. Single hyphens may be used to separate words.')
+        return data
+
+    def clean_tos_confirmed(self):
+        data = self.cleaned_data['tos_confirmed']
+        if data != True:
+            raise forms.ValidationError('You must agree to our Terms Of Service in order to create your own project.')
+        return data
+
+    def clean(self):
+        for field in self.cleaned_data:
+            if isinstance(self.cleaned_data[field], basestring):
+                self.cleaned_data[field] = self.cleaned_data[field].strip()
+        return self.cleaned_data
 
 class DomainRegistrationForm(forms.Form):
     """

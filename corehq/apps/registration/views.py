@@ -9,9 +9,11 @@ from django.shortcuts import redirect
 from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL
 from corehq.apps.domain.models import Domain
 from corehq.apps.registration.models import RegistrationRequest
-from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm
+from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm, OrganizationRegistrationForm
 from corehq.apps.registration.utils import *
 from dimagi.utils.web import render_to_response, get_ip
+from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.orgs.models import Organization
 
 @transaction.commit_on_success
 def register_user(request):
@@ -38,6 +40,30 @@ def register_user(request):
 
         vals = dict(form = form)
         return render_to_response(request, 'registration/create_new_user.html', vals)
+
+@require_superuser
+@transaction.commit_on_success
+@login_required_late_eval_of_LOGIN_URL
+def register_org(request, template="registration/org_request.html"):
+    referer_url = request.GET.get('referer', '')
+    if request.method == "POST":
+        form = OrganizationRegistrationForm(request.POST)
+        if form.is_valid():
+            name = form.cleaned_data["org_name"]
+            title = form.cleaned_data["org_title"]
+
+            org = Organization(name=name, title=title)
+            org.save()
+
+            if referer_url:
+                return redirect(referer_url)
+            return HttpResponseRedirect(reverse("orgs_landing", args=[name]))
+    else:
+        form = OrganizationRegistrationForm() # An unbound form
+
+    vals = dict(form=form)
+    return render_to_response(request, template, vals)
+
 
 
 @transaction.commit_on_success
