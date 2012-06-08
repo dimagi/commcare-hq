@@ -63,6 +63,7 @@ class Domain(Document):
     # App Store/domain copying stuff
     copy_of = StringProperty()
     is_snapshot = BooleanProperty()
+    version = IntegerProperty(default=1)
 
     migrations = SchemaProperty(DomainMigrations)
 
@@ -176,13 +177,12 @@ class Domain(Document):
                             reduce=False,
                             include_docs=True).all()
 
-    def save_copy(self, new_domain_name, user):
+    def save_copy(self, new_domain_name, user=None):
         str_to_cls = {
             'UserRole': UserRole,
             }
 
         json_copy = deepcopy(self.to_json())
-        print str(json_copy)
         json_copy['name'] = new_domain_name
         json_copy['domain'] = new_domain_name
         json_copy['copy_of'] = json_copy['_id']
@@ -193,15 +193,14 @@ class Domain(Document):
         new_domain = Domain.wrap(json_copy)
         new_domain.save()
 
-        user.add_domain_membership(new_domain_name)
-        user.save()
+        if user:
+            user.add_domain_membership(new_domain_name)
+            user.save()
 
         for res in get_db().view('domain/related_to_domain', key=self.name):
             json = res['value']
-            print json
 
             doc_type = json['doc_type']
-            print doc_type
 
             if doc_type == 'Application' or doc_type == 'RemoteApp':
                 if json['copy_of'] is None:
@@ -225,6 +224,11 @@ class Domain(Document):
                     new_doc = cls.wrap(json_copy)
                 new_doc.save()
         return new_domain
+
+    def save_snapshot(self, new_domain_name=None):
+        copy = self.save_copy(new_domain_name or ('%s-snapshot' % self.name))
+        copy.is_snapshot = True
+        copy.save()
 
 ##############################################################################################################
 #

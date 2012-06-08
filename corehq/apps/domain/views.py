@@ -3,7 +3,7 @@ from django.contrib.auth.views import password_reset_confirm
 from django.views.decorators.csrf import csrf_protect
 from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.http import HttpResponseRedirect, HttpResponse, Http404, HttpResponseForbidden
 
 from django_tables import tables
 from django.shortcuts import redirect
@@ -14,7 +14,7 @@ from corehq.apps.domain.forms import DomainSelectionForm, DomainGlobalSettingsFo
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 
-from dimagi.utils.web import render_to_response
+from dimagi.utils.web import render_to_response, json_response
 from corehq.apps.users.views import require_can_edit_web_users
 from corehq.apps.receiverwrapper.forms import FormRepeaterForm
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater
@@ -244,3 +244,20 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
 @domain_admin_required
 def autocomplete_categories(request, prefix=''):
     return HttpResponse(json.dumps(Domain.categories(prefix)))
+
+@domain_admin_required
+def save_snapshot(request, domain):
+    if not request.couch_user.is_previewer():
+        return HttpResponseForbidden("Can't do that! Sorry!")
+    domain = Domain.get_by_name(domain)
+    new_domain = domain.save_snapshot()
+    return redirect("domain_project_settings", new_domain.name)
+
+@domain_admin_required
+def copy_snapshot(request, domain, new_domain_name):
+    user = request.couch_user
+    domain = Domain.get_by_name(domain)
+    if not user.is_previewer() or not domain.is_snapshot:
+        return HttpResponseForbidden("Can't do that! Sorry!")
+    new_domain = domain.save_copy(new_domain_name, user=user)
+    return redirect("domain_project_settings", new_domain.name)
