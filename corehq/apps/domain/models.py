@@ -6,9 +6,11 @@ from django.db import models
 from couchdbkit.ext.django.schema import Document, StringProperty,\
     BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty
 from dimagi.utils.timezones import fields as tz_fields
+from dimagi.utils.couch.database import get_db
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
+from copy import deepcopy
 
 lang_lookup = defaultdict(str)
 
@@ -58,7 +60,13 @@ class Domain(Document):
     description = StringProperty()
     is_shared = BooleanProperty(default=False)
 
+    # App Store/domain copying stuff
+    copy_of = StringProperty()
+    is_snapshot = BooleanProperty()
+
     migrations = SchemaProperty(DomainMigrations)
+
+    _dirty_fields = ['_id', '_rev']
 
     @classmethod
     def wrap(cls, data):
@@ -168,9 +176,55 @@ class Domain(Document):
                             reduce=False,
                             include_docs=True).all()
 
-# added after Domain is defined as per http://stackoverflow.com/questions/7199466/how-to-break-import-loop-in-python
-# to prevent import loop errors (since corehq.apps.app_manager.models has to import Domain back)
-from corehq.apps.app_manager.models import ApplicationBase
+    def save_copy(self, new_domain_name, user):
+        str_to_cls = {
+            'UserRole': UserRole,
+            }
+
+        json_copy = deepcopy(self.to_json())
+        print str(json_copy)
+        json_copy['name'] = new_domain_name
+        json_copy['domain'] = new_domain_name
+        json_copy['copy_of'] = json_copy['_id']
+        for field in self._dirty_fields:
+            if field in json_copy:
+                del json_copy[field]
+
+        new_domain = Domain.wrap(json_copy)
+        new_domain.save()
+
+        user.add_domain_membership(new_domain_name)
+        user.save()
+
+        for res in get_db().view('domain/related_to_domain', key=self.name):
+            json = res['value']
+            print json
+
+            doc_type = json['doc_type']
+            print doc_type
+
+            if doc_type == 'Application' or doc_type == 'RemoteApp':
+                if json['copy_of'] is None:
+                    import_app(json, new_domain_name)
+            elif doc_type in str_to_cls:
+                cls = str_to_cls[doc_type]
+                doc = cls.wrap(json)
+
+                if hasattr(doc, 'save_copy'):
+                    if isinstance(doc, ApplicationBase):
+                        new_doc = doc.save_copy(jadjar=False)
+                    else:
+                        new_doc = doc.save_copy()
+                else:
+                    json_copy = deepcopy(json)
+                    for field in self._dirty_fields:
+                        if field in json_copy:
+                            del json_copy[field]
+
+                    json_copy['domain'] = new_domain_name
+                    new_doc = cls.wrap(json_copy)
+                new_doc.save()
+        return new_domain
 
 ##############################################################################################################
 #
@@ -238,3 +292,8 @@ class OldDomain(models.Model):
         
     def __unicode__(self):
         return self.name
+
+# added after Domain is defined as per http://stackoverflow.com/questions/7199466/how-to-break-import-loop-in-python
+# to prevent import loop errors (since corehq.apps.app_manager.models has to import Domain back)
+from corehq.apps.app_manager.models import ApplicationBase, import_app
+from corehq.apps.users.models import UserRole
