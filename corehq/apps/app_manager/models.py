@@ -694,6 +694,7 @@ class VersionedDoc(Document):
         if copy.copy_of != self._id:
             raise VersioningError("%s is not a copy of %s" % (copy, self))
         copy.delete_app()
+        copy.save(increment_version=False)
 
     def scrub_source(self, source):
         """
@@ -1684,7 +1685,7 @@ class DeleteApplicationRecord(DeleteRecord):
     def undo(self):
         app = ApplicationBase.get(self.app_id)
         app.doc_type = app.get_doc_type()
-        app.save()
+        app.save(increment_version=False)
 
 class DeleteModuleRecord(DeleteRecord):
     app_id = StringProperty()
