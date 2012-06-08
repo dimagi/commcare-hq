@@ -1,0 +1,109 @@
+.hq-oldstyle {
+  /* has to be more specific than the existing rule */
+
+}
+.hq-oldstyle h3 {
+  font-size: 2em;
+  text-align: center;
+}
+.hq-oldstyle #main_container {
+  padding: 0;
+}
+.hq-oldstyle #apps-menu {
+  padding: 1em 1em .5em 1em;
+  background-color: #EEE;
+  display: none;
+}
+.hq-oldstyle #apps-menu > ul,
+.hq-oldstyle #app-info > ul {
+  display: table-row;
+}
+.hq-oldstyle #apps-menu > ul > li,
+.hq-oldstyle #app-info > ul > li {
+  border-right: 1px solid #CCC;
+  padding: 0 .5em;
+  display: table-cell;
+}
+.hq-oldstyle #apps-menu > ul > li:last-child,
+.hq-oldstyle #app-info > ul > li:last-child {
+  border-right: none;
+}
+.hq-oldstyle #apps-menu-toggle {
+  background-color: #EEE;
+  border: 1px solid #CCC;
+  border-top: none;
+  padding: .5em;
+  position: absolute;
+  right: 300px;
+  top: -1px;
+  width: 8em;
+}
+.hq-oldstyle #apps-menu-border {
+  background-color: #EEE;
+  border-bottom: 1px solid #CCC;
+  height: .5em;
+}
+.hq-oldstyle #title-bar {
+  position: relative;
+}
+.hq-oldstyle input.sms-autocomplete {
+  width: 90%;
+}
+.hq-oldstyle .dialog textarea {
+  width: 90%;
+  height: 100px;
+  padding: 10px;
+}
+.hq-oldstyle #build-errors a {
+  color: #0067B1 !important;
+}
+.hq-oldstyle #app-info {
+  float: left;
+}
+.hq-oldstyle .jar_download_dialog p {
+  padding-top: .5em;
+  margin-left: 1em;
+}
+.hq-oldstyle .jar_download_dialog ol li {
+  list-style: decimal outside;
+  margin-left: 2em;
+  padding-bottom: 1em;
+}
+.hq-oldstyle .delete-me {
+  float: right;
+  top: 1.5em;
+}
+.hq-oldstyle .scary-settings {
+  background-color: #FEFEFE;
+  border: 1px solid #CCC;
+  border-top: none;
+  padding: 1em;
+}
+.hq-oldstyle .scary-settings-toggle {
+  margin-top: 1em;
+  border: 1px solid transparent;
+  padding: .5em;
+}
+.hq-oldstyle .scary-settings-toggle-open {
+  border: 1px solid #CCC;
+  background-color: #EEE;
+}
+.hq-oldstyle #xform-source .syntaxhighlighter {
+  overflow: visible !important;
+}
+.hq-oldstyle #deleted-app-dialog h1 {
+  font-size: 2em;
+  padding-bottom: 1em;
+}
+.hq-oldstyle #deleted-app-dialog {
+  padding: 2em;
+  background-color: white;
+  border: 1px solid black;
+  z-index: 10000;
+  text-align: center;
+  vertical-align: middle;
+  border-radius: 10px;
+}
+.hq-oldstyle .config {
+  position: relative;
+}
