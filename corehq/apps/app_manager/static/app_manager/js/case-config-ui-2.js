@@ -46,6 +46,34 @@ ko.bindingHandlers.valueDefault = {
     }
 };
 
+ko.bindingHandlers.edit = {
+    update: function (element, valueAccessor) {
+        var editable = ko.utils.unwrapObservable(valueAccessor());
+        function getValue(e) {
+            if ($(e).is('select')) {
+                return $('option[value="' + $(e).val() + '"]', e).text() || $(e).val();
+            }
+            return $(e).val();
+        }
+        if (editable) {
+            $(element).show();
+            $(element).next('.ko-no-edit').hide();
+        } else {
+            $(element).hide();
+            var no_edit = $(element).next('.ko-no-edit');
+            if (!no_edit.length) {
+                if ($(element).hasClass('code')) {
+                    no_edit = $('<code></code>');
+                } else {
+                    no_edit = $('<span></span>');
+                }
+                no_edit.addClass('ko-no-edit').insertAfter(element);
+            }
+            no_edit.text(getValue(element)).removeClass().addClass($(element).attr('class')).addClass('ko-no-edit').addClass('ko-no-edit-' + element.tagName.toLowerCase());
+        }
+    }
+};
+
 var CaseXML = (function () {
     "use strict";
     ko.bindingHandlers.questionsOptions = {
@@ -68,6 +96,7 @@ var CaseXML = (function () {
     function SubCasesViewModel(o, utils) {
         var self = this, root = this;
         self.utils = utils;
+        self.edit = ko.observable(self.utils.edit);
         var SubCase = {
             CaseProperty: {
                 wrap: function (o, subcase) {
@@ -184,13 +213,17 @@ var CaseXML = (function () {
         self.moduleCaseTypes = o.moduleCaseTypes;
         self.caseTypes = ko.utils.arrayMap(self.moduleCaseTypes, function (o) {return o.case_type;});
         self.getCaseTypeLabel = function (caseType) {
-            var module_names = [];
+            var module_names = [], label;
             for (var i = 0; i < self.moduleCaseTypes.length; i++) {
                 if (self.moduleCaseTypes[i].case_type === caseType) {
                     module_names.push(self.moduleCaseTypes[i].module_name);
                 }
             }
-            return module_names.join(', ');
+            label = module_names.join(', ');
+            if (caseType == self.utils.caseType) {
+                label = '*' + label;
+            }
+            return label
         };
         self.subcases = ko.observableArray(ko.utils.arrayMap(o.actions.subcases, SubCase.wrap));
         self.addSubCase = function () {
@@ -228,6 +261,7 @@ var CaseXML = (function () {
             this.save_url = params.save_url;
             this.requires = params.requires;
             this.save_requires_url = params.save_requires_url;
+            this.caseType = params.caseType;
             this.template = new EJS({
                 url: "/static/app_manager/ejs/case-config-ui-2.ejs",
                 type: "["
