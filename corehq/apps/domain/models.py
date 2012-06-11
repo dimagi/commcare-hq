@@ -210,10 +210,7 @@ class Domain(Document):
                 doc = cls.wrap(json)
 
                 if hasattr(doc, 'save_copy'):
-                    if isinstance(doc, ApplicationBase):
-                        new_doc = doc.save_copy(jadjar=False)
-                    else:
-                        new_doc = doc.save_copy()
+                    new_doc = doc.save_copy()
                 else:
                     json_copy = deepcopy(json)
                     for field in self._dirty_fields:
