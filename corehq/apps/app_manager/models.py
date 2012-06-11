@@ -1015,7 +1015,7 @@ class ApplicationBase(VersionedDoc):
             )
         except (URLError, Exception):
             # for offline only
-            logging.exce ption("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
+            logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
             copy.short_url = None
         copy.build_comment = comment
         copy.save(increment_version=False)
