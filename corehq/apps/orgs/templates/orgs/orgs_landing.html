@@ -1,11 +1,32 @@
-{% extends "hqwebapp/centered.html" %}
+{% extends "hqwebapp/two_column.html" %}
 
-{% block centered-content %}
+{% block main_column %}
 <h2>
-<div style="margin-left:150px;margin-top:30px;">{{ name }} ({{ title }})</div>
+<div style="margin-left:150px;margin-top:30px;">{{ name }} ({{ title }})</div></h2>
     <hr/>
     <h3>
             Projects
     </h3>
-</h2>
+{% if user.is_superuser %}
+<br/>
+<h4>Search for Projects to add</h4>
+
+<form class="form" method="post" action="{{ request.get_full_path }}" style="margin-top:10px;">
+    <input type="text" placeholder="Project" name="domain_name"/>
+    <button class="btn btn-success" type="submit">Search</button>
+</form>
+{% endif %}
+
+    {% for domain in domains %}
+        <a href="../../a/{{ domain.name }}/reports">{{ domain.name }}</a>
+        <br/>
+        <br/>
+    {% endfor %}
+
+{% endblock %}
+{% block sidebar %}
+<br/>
+{% if user.is_superuser %}
+    <a href="{% url registration_domain %}" style="margin-left:40px;margin-top:100px;" class="btn btn-primary">Create New Project</a>
+{% endif %}
 {% endblock %}
