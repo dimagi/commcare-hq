@@ -1004,21 +1004,20 @@ class ApplicationBase(VersionedDoc):
         jadjar = jadjar.pack(self.create_all_files())
         return jadjar.jar
 
-    def save_copy(self, comment=None, jadjar=True):
+    def save_copy(self, comment=None):
         copy = super(ApplicationBase, self).save_copy()
 
-        if jadjar:
-            copy.create_jadjar(save=True)
+        copy.create_jadjar(save=True)
 
-            try:
-                copy.short_url = bitly.shorten(
-                    get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
-                )
-            except (URLError, Exception):
-                # for offline only
-                logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
-                copy.short_url = None
-            copy.build_comment = comment
+        try:
+            copy.short_url = bitly.shorten(
+                get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
+            )
+        except (URLError, Exception):
+            # for offline only
+            logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
+            copy.short_url = None
+        copy.build_comment = comment
         copy.save(increment_version=False)
 
         return copy
