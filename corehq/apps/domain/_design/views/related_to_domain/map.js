@@ -12,8 +12,9 @@ function(doc) {
         'RemoteApp': true
     };
 
-    if (doc.domain && DOC_TYPES[doc.doc_type] &&
-        ((doc.doc_type === 'Application' || doc.doc_type === 'RemoteApp') && doc.copy_of === null)) {
+    if (doc.domain && DOC_TYPES[doc.doc_type]) {
+        if ((doc.doc_type === 'Application' || doc.doc_type === 'RemoteApp') && doc.copy_of !== null)
+            return;
         emit(doc.domain, doc);
     }
 }

@@ -178,6 +178,9 @@ class Domain(Document):
                             include_docs=True).all()
 
     def save_copy(self, new_domain_name, user=None):
+        if Domain.get_by_name(new_domain_name):
+            return None
+
         str_to_cls = {
             'UserRole': UserRole,
             }
@@ -185,7 +188,7 @@ class Domain(Document):
         json_copy = deepcopy(self.to_json())
         json_copy['name'] = new_domain_name
         json_copy['domain'] = new_domain_name
-        json_copy['copy_of'] = json_copy['_id']
+        json_copy['copy_of'] = json_copy['name']
         for field in self._dirty_fields:
             if field in json_copy:
                 del json_copy[field]
@@ -217,9 +220,10 @@ class Domain(Document):
                         if field in json_copy:
                             del json_copy[field]
 
-                    json_copy['domain'] = new_domain_name
                     new_doc = cls.wrap(json_copy)
+                new_doc.domain = new_domain_name
                 new_doc.save()
+
         return new_domain
 
     def save_snapshot(self, new_domain_name=None):
@@ -227,6 +231,8 @@ class Domain(Document):
             return self
         else:
             copy = self.save_copy(new_domain_name or ('%s-snapshot' % self.name))
+            if copy is None:
+                return None
             copy.is_snapshot = True
             copy.save()
             return copy
