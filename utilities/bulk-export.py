@@ -17,7 +17,7 @@ def auth_retrieve(username, password, url, destination):
     handler = urllib2.HTTPDigestAuthHandler(password_mgr)
     opener = urllib2.build_opener(handler)
     input = opener.open(url)
-    output = open(destination, 'w')
+    output = open(destination, 'wb')
     output.write(input.read())
     output.close()
     input.close()
