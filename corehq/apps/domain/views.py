@@ -246,19 +246,52 @@ def autocomplete_categories(request, prefix=''):
     return HttpResponse(json.dumps(Domain.categories(prefix)))
 
 @domain_admin_required
-def save_snapshot(request, domain, snapshot_name=None):
-    user = request.couch_user
-    domain = Domain.get_by_name(domain)
-    if not user.is_previewer() or domain.is_snapshot:
-        return HttpResponseForbidden("Can't do that! Sorry!")
-    new_domain = domain.save_snapshot(snapshot_name)
-    return redirect("domain_project_settings", new_domain.name)
+def copy_snapshot(request, domain):
+    """
+    This both creates snapshots and copies them once they exist.
 
-@domain_admin_required
-def copy_snapshot(request, domain, new_domain_name):
+    We might want to use registration/views -> register_domain since it has a lot more detail--e.g. checking for
+    illegal characters
+    """
     user = request.couch_user
     domain = Domain.get_by_name(domain)
-    if not user.is_previewer() or not domain.is_snapshot:
+
+    if not user.is_previewer():
         return HttpResponseForbidden("Can't do that! Sorry!")
-    new_domain = domain.save_copy(new_domain_name, user=user)
-    return redirect("domain_project_settings", new_domain.name)
+
+    if request.method == 'GET':
+        if domain.is_snapshot:
+            return render_to_response(request, 'domain/copy_snapshot.html',
+                    {'domain': domain.name, 'new_domain_name': '%s-copy' % domain.name})
+        else:
+            return render_to_response(request, 'domain/create_snapshot.html',
+                    {'domain': domain.name, 'new_domain_name': '%s-snapshot' % domain.name})
+
+    elif request.method == 'POST':
+        new_domain_name = request.POST['new_domain_name']
+
+        if domain.is_snapshot:
+            new_domain = domain.save_copy(new_domain_name, user=user)
+        else:
+            new_domain = domain.save_snapshot(new_domain_name)
+
+        if new_domain:
+            if new_domain.is_snapshot:
+                return redirect('domain_copy_snapshot', new_domain.name)
+            else:
+                return redirect("domain_project_settings", new_domain.name)
+        else:
+            if domain.is_snapshot:
+                return render_to_response(request, 'domain/copy_snapshot.html',
+                        {
+                        'domain': domain.name,
+                        'new_domain_name': new_domain_name,
+                        'error_message': 'Project name taken'
+                    })
+            else:
+                return render_to_response(request, 'domain/create_snapshot.html',
+                    {
+                        'domain': domain.name,
+                        'new_domain_name': new_domain_name,
+                        'error_message': 'Project name taken'
+                    })
