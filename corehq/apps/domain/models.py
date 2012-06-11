@@ -178,7 +178,9 @@ class Domain(Document):
                             include_docs=True).all()
 
     def save_copy(self, new_domain_name, user=None):
-        if Domain.get_by_name(new_domain_name):
+        old_copy = Domain.get_by_name(new_domain_name)
+        # if it's a copy of the same app, then you can theoretically just copy over it
+        if old_copy:# and old_copy.copy_of == self.name and old_copy.is_snapshot ^ self.is_snapshot:
             return None
 
         str_to_cls = {
@@ -195,7 +197,6 @@ class Domain(Document):
 
         new_domain = Domain.wrap(json_copy)
         new_domain.is_snapshot = False
-        new_domain.save()
 
         if user:
             user.add_domain_membership(new_domain_name)
@@ -207,7 +208,7 @@ class Domain(Document):
             doc_type = json['doc_type']
 
             if doc_type == 'Application' or doc_type == 'RemoteApp':
-                import_app(json, new_domain_name)
+                import_app(json['_id'], new_domain_name)
             elif doc_type in str_to_cls:
                 cls = str_to_cls[doc_type]
                 doc = cls.wrap(json)
@@ -224,6 +225,7 @@ class Domain(Document):
                 new_doc.domain = new_domain_name
                 new_doc.save()
 
+        new_domain.save()
         return new_domain
 
     def save_snapshot(self, new_domain_name=None):
