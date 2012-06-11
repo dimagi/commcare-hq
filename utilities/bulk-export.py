@@ -31,12 +31,12 @@ def main():
     domain = args.pop(0)
     root = args.pop(0)
     username = args.pop(0)
-    password = getpass.getpass()
+    password = geta
     projects = args
 
     for project in projects:
         report_fname = date.today().strftime(REPORT_FNAME)
-        url = "%s/a/%s/reports/download/cases" % (domain, project)
+        url = "%s/a/%s/reports/download/cases/?hq_filters=true&include_closed=true" % (domain, project)
         dir = os.path.join(root, project)
         if not os.path.exists(dir):
             os.makedirs(dir)
