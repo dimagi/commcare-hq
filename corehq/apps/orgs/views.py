@@ -19,10 +19,11 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html"):
             dom = Domain.get_by_name(domain_name)
             dom.organization = org
             dom.save()
+            messages.success(request, "Project added!")
         else:
             #put an error message saying that no organization by that name was found
             messages.error(request, "Project not found")
 
     current_domains = Domain.get_by_organization(org)
-    vals = dict(name=organization.name, title=organization.title, domains=current_domains)
+    vals = dict(name=organization.name, title=organization.title, domains=current_domains, email=organization.email, url=organization.url, location=organization.location)
     return render_to_response(request, template, vals)

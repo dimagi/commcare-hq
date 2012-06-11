@@ -5,6 +5,11 @@ class Organization(Document):
     name = StringProperty() # for example "worldvision"
     title = StringProperty() # for example "World Vision"
 
+    #metadata
+    email = StringProperty()
+    url = StringProperty()
+    location = StringProperty()
+
 
     @classmethod
     def get_by_name(cls, name):

@@ -51,8 +51,11 @@ def register_org(request, template="registration/org_request.html"):
         if form.is_valid():
             name = form.cleaned_data["org_name"]
             title = form.cleaned_data["org_title"]
+            email = form.cleaned_data["email"]
+            url = form.cleaned_data["url"]
+            location = form.cleaned_data["location"]
 
-            org = Organization(name=name, title=title)
+            org = Organization(name=name, title=title, location=location, email=email, url=url)
             org.save()
 
             if referer_url:

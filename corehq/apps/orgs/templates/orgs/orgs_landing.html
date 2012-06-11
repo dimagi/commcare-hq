@@ -4,6 +4,12 @@
 <h2>
 <div style="margin-left:150px;margin-top:30px;">{{ name }} ({{ title }})</div></h2>
     <hr/>
+
+        <div>Email: <a href="mailto:{{ email }}">{{ email }}</a></div>
+        <!-- possibly bad to add http to front of url.  How else to make link absolute? -->
+        <div>URL: <a href="http://{{ url }}" target="_blank">{{ url }}</a></div>
+        <div>Location: {{ location }}</div>
+        <hr/>
     <h3>
             Projects
     </h3>
