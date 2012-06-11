@@ -247,7 +247,7 @@ def autocomplete_categories(request, prefix=''):
 
 @domain_admin_required
 def save_snapshot(request, domain):
-    if not request.couch_user.is_previewer():
+    if not request.couch_user.is_previewer() or domain.is_snapshot:
         return HttpResponseForbidden("Can't do that! Sorry!")
     domain = Domain.get_by_name(domain)
     new_domain = domain.save_snapshot()
