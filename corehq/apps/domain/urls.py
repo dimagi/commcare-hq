@@ -65,6 +65,7 @@ domain_specific = patterns('corehq.apps.domain.views',
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', 'add_repeater', name='add_repeater'),
     url(r'^forwarding/test/$', 'test_repeater', name='test_repeater'),
     url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', 'drop_repeater', name='drop_repeater'),
+    url(r'^snapshot/(?P<snapshot_name>[\w-]+)$', 'save_snapshot', name='domain_save_snapshot'),
     url(r'^snapshot$', 'save_snapshot', name='domain_save_snapshot'),
     url(r'^copy_snapshot/(?P<new_domain_name>[\w-]+)$', 'copy_snapshot', name='domain_copy_snapshot'),
 )

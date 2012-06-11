@@ -186,12 +186,12 @@ class Domain(Document):
         json_copy['name'] = new_domain_name
         json_copy['domain'] = new_domain_name
         json_copy['copy_of'] = json_copy['_id']
-        json_copy['is_snapshot'] = False
         for field in self._dirty_fields:
             if field in json_copy:
                 del json_copy[field]
 
         new_domain = Domain.wrap(json_copy)
+        new_domain.is_snapshot = False
         new_domain.save()
 
         if user:
@@ -204,8 +204,7 @@ class Domain(Document):
             doc_type = json['doc_type']
 
             if doc_type == 'Application' or doc_type == 'RemoteApp':
-                if json['copy_of'] is None:
-                    import_app(json, new_domain_name)
+                import_app(json, new_domain_name)
             elif doc_type in str_to_cls:
                 cls = str_to_cls[doc_type]
                 doc = cls.wrap(json)
@@ -230,6 +229,7 @@ class Domain(Document):
             copy = self.save_copy(new_domain_name or ('%s-snapshot' % self.name))
             copy.is_snapshot = True
             copy.save()
+            return copy
 
 ##############################################################################################################
 #
