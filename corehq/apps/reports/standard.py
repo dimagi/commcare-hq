@@ -105,9 +105,9 @@ class StandardHQReport(HQReport):
             self.get_global_params()
         return super(StandardHQReport, self).as_view()
 
-    def as_async(self):
+    def as_async(self, static_only=False):
         self.get_global_params()
-        return super(StandardHQReport, self).as_async()
+        return super(StandardHQReport, self).as_async(static_only=static_only)
 
     def as_json(self):
         self.get_global_params()

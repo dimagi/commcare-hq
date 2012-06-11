@@ -154,8 +154,11 @@ class HQReport(object):
         export_from_tables(self.context['tables'], temp, format)
         return export_response(temp, format, self.slug)
 
-    def as_async(self):
+    def as_async(self, static_only=False):
         process_filters = bool(self.request.GET.get('hq_filters'))
+        if static_only:
+            self.context.update(dict(original_template=self.get_template()))
+            self.template_name = "reports/async/static_only.html"
         if not process_filters:
             self.fields = []
         self.get_report_context()

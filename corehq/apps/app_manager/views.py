@@ -324,7 +324,8 @@ def get_form_view_context(request, form, langs, is_user_registration):
         'form_actions': form.actions.to_json(),
         'case_reserved_words_json': load_case_reserved_words(),
         'is_user_registration': is_user_registration,
-        }
+        'module_case_types': [{'module_name': module.name.get('en'), 'case_type': module.case_type} for module in form.get_app().modules if module.case_type] if not is_user_registration else None
+    }
 
 def get_apps_base_context(request, domain, app):
 

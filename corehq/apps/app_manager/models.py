@@ -160,6 +160,10 @@ class OpenCaseAction(FormAction):
     name_path   = StringProperty()
     external_id = StringProperty()
 
+class OpenSubCaseAction(FormAction):
+    case_type = StringProperty()
+    case_name = StringProperty()
+    case_properties = DictProperty()
 
 class FormActions(DocumentSchema):
     open_case       = SchemaProperty(OpenCaseAction)
@@ -172,6 +176,7 @@ class FormActions(DocumentSchema):
     case_preload    = SchemaProperty(PreloadAction)
     referral_preload= SchemaProperty(PreloadAction)
 
+    subcases        = SchemaListProperty(OpenSubCaseAction)
 
 class FormSource(object):
     def __get__(self, form, form_cls):
@@ -284,16 +289,26 @@ class FormBase(DocumentSchema):
         actions = {}
         for action_type in types:
             a = getattr(self.actions, action_type)
-            if a.is_active():
+            if isinstance(a, list):
+                if a:
+                    actions[action_type] = a
+            elif a.is_active():
                 actions[action_type] = a
         return actions
 
     def active_actions(self):
-        return self._get_active_actions((
-            'open_case', 'update_case', 'close_case',
-            'open_referral', 'update_referral', 'close_referral',
-            'case_preload', 'referral_preload'
-        ))
+        if self.get_app().application_version == '1.0':
+            action_types = (
+                'open_case', 'update_case', 'close_case',
+                'open_referral', 'update_referral', 'close_referral',
+                'case_preload', 'referral_preload'
+            )
+        else:
+            action_types = (
+                'open_case', 'update_case', 'close_case',
+                'case_preload', 'subcases',
+            )
+        return self._get_active_actions(action_types)
 
     def active_non_preloader_actions(self):
         return self._get_active_actions((
@@ -319,7 +334,7 @@ class FormBase(DocumentSchema):
     def check_actions(self):
         errors = []
         # reserved_words are hard-coded in three different places! Very lame of me
-        # Here, casexml.js, and module_view.html
+        # Here, case-config-ui-*.js, and module_view.html
         reserved_words = load_case_reserved_words()
         for key in self.actions['update_case'].update:
             if key in reserved_words:
@@ -332,21 +347,31 @@ class FormBase(DocumentSchema):
             errors.append({'type': 'invalid xml', 'message': unicode(e)})
         else:
             paths = set()
-            for _, action in self.active_actions().items():
-                if action.condition.type == 'if':
-                    paths.add(action.condition.question)
-                if hasattr(action, 'name_path'):
-                    paths.add(action.name_path)
-                if hasattr(action, 'external_id') and action.external_id:
-                    paths.add(action.external_id)
-
-            if self.actions.update_case.is_active():
-                for _, path in self.actions.update_case.update.items():
-                    paths.add(path)
-            if self.actions.case_preload.is_active():
-                for path, _ in self.actions.case_preload.preload.items():
-                    paths.add(path)
-
+            def generate_paths():
+                for _, action in self.active_actions().items():
+                    if isinstance(action, list):
+                        actions = action
+                    else:
+                        actions = [action]
+                    for action in actions:
+                        if action.condition.type == 'if':
+                            yield action.condition.question
+                        if hasattr(action, 'name_path'):
+                            yield action.name_path
+                        if hasattr(action, 'case_name'):
+                            yield action.case_name
+                        if hasattr(action, 'external_id') and action.external_id:
+                            yield action.external_id
+                        if hasattr(action, 'update'):
+                            for _, path in self.actions.update_case.update.items():
+                                yield path
+                        if hasattr(action, 'case_properties'):
+                            for _, path in self.actions.update_case.update.items():
+                                yield path
+                        if hasattr(action, 'preload'):
+                            for path, _ in self.actions.case_preload.preload.items():
+                                yield path
+            paths.update(generate_paths())
             for path in paths:
                 if path not in valid_paths:
                     errors.append({'type': 'path error', 'path': path})
@@ -668,7 +693,8 @@ class VersionedDoc(Document):
     def delete_copy(self, copy):
         if copy.copy_of != self._id:
             raise VersioningError("%s is not a copy of %s" % (copy, self))
-        copy.delete()
+        copy.delete_app()
+        copy.save(increment_version=False)
 
     def scrub_source(self, source):
         """
@@ -1659,7 +1685,7 @@ class DeleteApplicationRecord(DeleteRecord):
     def undo(self):
         app = ApplicationBase.get(self.app_id)
         app.doc_type = app.get_doc_type()
-        app.save()
+        app.save(increment_version=False)
 
 class DeleteModuleRecord(DeleteRecord):
     app_id = StringProperty()
