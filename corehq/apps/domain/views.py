@@ -246,11 +246,12 @@ def autocomplete_categories(request, prefix=''):
     return HttpResponse(json.dumps(Domain.categories(prefix)))
 
 @domain_admin_required
-def save_snapshot(request, domain):
-    if not request.couch_user.is_previewer() or domain.is_snapshot:
-        return HttpResponseForbidden("Can't do that! Sorry!")
+def save_snapshot(request, domain, snapshot_name=None):
+    user = request.couch_user
     domain = Domain.get_by_name(domain)
-    new_domain = domain.save_snapshot()
+    if not user.is_previewer() or domain.is_snapshot:
+        return HttpResponseForbidden("Can't do that! Sorry!")
+    new_domain = domain.save_snapshot(snapshot_name)
     return redirect("domain_project_settings", new_domain.name)
 
 @domain_admin_required
