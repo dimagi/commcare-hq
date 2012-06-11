@@ -31,7 +31,7 @@ def main():
     domain = args.pop(0)
     root = args.pop(0)
     username = args.pop(0)
-    password = geta
+    password = getpass.getpass()
     projects = args
 
     for project in projects:
