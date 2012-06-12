@@ -62,7 +62,7 @@ class Domain(Document):
 
     # App Store/domain copying stuff
     original_doc = StringProperty()
-    is_snapshot = BooleanProperty()
+    is_snapshot = BooleanProperty(default=False)
     snapshot_time = DateTimeProperty()
 
     migrations = SchemaProperty(DomainMigrations)

@@ -22,7 +22,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 import json
 from dimagi.utils.post import simple_post
-from django.forms.fields import ChoiceField
+from corehq.apps.registration.forms import DomainRegistrationForm
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
@@ -246,41 +246,64 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
 def autocomplete_categories(request, prefix=''):
     return HttpResponse(json.dumps(Domain.categories(prefix)))
 
-@require_previewer
 @login_and_domain_required
 def copy_snapshot(request, domain):
+    domain = Domain.get_by_name(domain)
+    if request.method == 'GET':
+        return render_to_response(request, 'domain/copy_snapshot.html',
+                    {'domain': domain.name})
+
+    elif request.method == 'POST':
+
+        args = {'domain_name' :request.POST['new_domain_name'], 'tos_confirmed': True}
+
+        form = DomainRegistrationForm(args)
+
+        if form.is_valid():
+            new_domain = domain.save_copy(form.clean_domain_name(), user=request.couch_user)
+        else:
+            return render_to_response(request, 'domain/copy_snapshot.html',
+                    {'domain': domain.name, 'error_message': 'That project name is invalid'})
+
+        if new_domain is None:
+            return render_to_response(request, 'domain/copy_snapshot.html',
+                    {'domain': domain.name, 'error_message': 'A project with that name already exists'})
+
+        return redirect("domain_project_settings", new_domain.name)
+
+@domain_admin_required
+def create_snapshot(request, domain):
+    domain = Domain.get_by_name(domain)
+    snapshots = domain.snapshots
+    if request.method == 'GET':
+        return render_to_response(request, 'domain/create_snapshot.html',
+                {'domain': domain.name, 'snapshots': snapshots})
+
+    elif request.method == 'POST':
+
+        new_domain = domain.save_snapshot()
+
+        if new_domain is None:
+            return render_to_response(request, 'domain/create_snapshot.html',
+                    {'domain': domain.name,
+                     'error_message': 'Snapshot creation failed; please try again',
+                     'snapshots': snapshots})
+
+        return redirect('domain_copy_snapshot', new_domain.name)
+
+@require_previewer
+def copy_project(request, domain):
     """
     This both creates snapshots and copies them once they exist.
 
     We might want to use registration/views -> register_domain since it has a lot more detail--e.g. checking for
     illegal characters
     """
-    user = request.couch_user
-    domain = Domain.get_by_name(domain)
 
-    if request.method == 'GET':
-        if domain.is_snapshot:
-            return render_to_response(request, 'domain/copy_snapshot.html',
-                    {'domain': domain.name})
-        else:
-            return render_to_response(request, 'domain/create_snapshot.html',
-                    {'domain': domain.name})
-
-    elif request.method == 'POST':
-
-        if domain.is_snapshot:
-            new_domain = domain.save_copy(request.POST['new_domain_name'], user=user)
-        else:
-            new_domain = domain.save_snapshot()
-
-        if new_domain is None:
-            return render_to_response(request, 'domain/copy_snapshot.html',
-                    {'domain': domain.name, 'error_message': 'A project with that name already exists'})
-
-        if new_domain.is_snapshot:
-            return redirect('domain_copy_snapshot', new_domain.name)
-        else:
-            return redirect("domain_project_settings", new_domain.name)
+    if Domain.get_by_name(domain).is_snapshot:
+        return copy_snapshot(request, domain)
+    else:
+        return create_snapshot(request, domain)
 
 @require_previewer
 @login_and_domain_required
