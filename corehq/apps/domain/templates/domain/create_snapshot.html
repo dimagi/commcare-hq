@@ -12,15 +12,13 @@
 <form class="form-horizontal" method="post">
     <fieldset>
         <legend>Create new snapshot</legend>
-        <div class="control-group{% if error_message %} error{% endif %}">
-            <label class="control-label" for="new_domain_name">{% trans 'New snapshot name' %}</label>
-            <div class="controls">
-                <input type="text" class="span3" id="new_domain_name"
-                       name="new_domain_name" value="{{ new_domain_name }}">
-                {% if error_message %}
-                    <span class="help-inline">{{ error_message }}</span>
-                {% endif %}
-            </div>
+        <div>
+            <h3>This project already has {{ request.project.snapshots|length }} snapshots</h3>
+            <ul class="nav nav-pills nav-stacked">
+                {% for snapshot in request.project.snapshots %}
+                <li><a href="{% url corehq.apps.app_manager.views.default snapshot.name %}">Created on {{ snapshot.snapshot_time }}</a></li>
+                {% endfor %}
+            </ul>
         </div>
         <div class="form-actions"><button type="submit" class="btn btn-primary">Create New Snapshot</button></div>
     </fieldset>

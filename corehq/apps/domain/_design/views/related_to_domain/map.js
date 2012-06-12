@@ -13,8 +13,8 @@ function(doc) {
     };
 
     if (doc.domain && DOC_TYPES[doc.doc_type]) {
-        if ((doc.doc_type === 'Application' || doc.doc_type === 'RemoteApp') && doc.copy_of !== null)
+        if ((doc.doc_type === 'Application' || doc.doc_type === 'RemoteApp') && doc.copy_of)
             return;
-        emit(doc.domain, doc);
+        emit(doc.domain, {doc_type: doc.doc_type, _id: doc._id});
     }
 }
