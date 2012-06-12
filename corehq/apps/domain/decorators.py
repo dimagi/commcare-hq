@@ -8,7 +8,7 @@ from django.utils.http import urlquote
 ########################################################################################################
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, PublicUser
 from django_digest.decorators import httpdigest
 
 REDIRECT_FIELD_NAME = 'next'
@@ -58,6 +58,7 @@ def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME, login_
             user = req.user
             domain_name = normalize_domain_name(domain)
             domain = Domain.get_by_name(domain_name)
+            req.project = domain
             if domain and user.is_authenticated() and user.is_active:
                 if not domain.is_active:
                     return HttpResponseRedirect(reverse("domain_select"))
@@ -71,6 +72,9 @@ def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME, login_
                 elif user.is_superuser:
                     # superusers can circumvent domain permissions.
                     return view_func(req, domain_name, *args, **kwargs)
+                elif domain.is_snapshot:
+                    # snapshots are publicly viewable
+                    return require_previewer(view_func)(req, domain_name, *args, **kwargs)
                 else:
                     raise Http404
             else:
@@ -195,3 +199,11 @@ domain_admin_required = domain_admin_required_ex()
 ########################################################################################################
     
 require_superuser = permission_required("is_superuser")
+
+def require_previewer(view_func):
+    def shim(request, *args, **kwargs):
+        if not request.couch_user.is_previewer():
+            raise Http404
+        else:
+            return view_func(request, *args, **kwargs)
+    return shim

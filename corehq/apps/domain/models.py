@@ -61,13 +61,13 @@ class Domain(Document):
     is_shared = BooleanProperty(default=False)
 
     # App Store/domain copying stuff
-    copy_of = StringProperty()
+    original_doc = StringProperty()
     is_snapshot = BooleanProperty()
-    version = IntegerProperty(default=1)
+    snapshot_time = DateTimeProperty()
 
     migrations = SchemaProperty(DomainMigrations)
 
-    _dirty_fields = ['_id', '_rev']
+    _dirty_fields = ()
 
     @classmethod
     def wrap(cls, data):
@@ -177,67 +177,83 @@ class Domain(Document):
                             reduce=False,
                             include_docs=True).all()
 
-    def save_copy(self, new_domain_name, user=None):
-        old_copy = Domain.get_by_name(new_domain_name)
-        # if it's a copy of the same app, then you can theoretically just copy over it
-        if old_copy:# and old_copy.copy_of == self.name and old_copy.is_snapshot ^ self.is_snapshot:
+    def save_copy(self, new_domain_name=None, user=None):
+        if new_domain_name is not None and Domain.get_by_name(new_domain_name):
             return None
+        db = get_db()
 
         str_to_cls = {
             'UserRole': UserRole,
+            'Application': ApplicationBase,
+            'RemoteApp': ApplicationBase,
             }
 
-        json_copy = deepcopy(self.to_json())
-        json_copy['name'] = new_domain_name
-        json_copy['domain'] = new_domain_name
-        json_copy['copy_of'] = json_copy['name']
-        for field in self._dirty_fields:
-            if field in json_copy:
-                del json_copy[field]
-
-        new_domain = Domain.wrap(json_copy)
+        new_id = db.copy_doc(self.get_id)['id']
+        if new_domain_name is None:
+            new_domain_name = new_id
+        new_domain = Domain.get(new_id)
+        new_domain.name = new_domain_name
+        new_domain.original_doc = self.name
         new_domain.is_snapshot = False
+        new_domain.snapshot_time = None
+
+        for field in self._dirty_fields:
+            if hasattr(new_domain, field):
+                delattr(new_domain, field)
 
         if user:
             user.add_domain_membership(new_domain_name)
             user.save()
 
-        for res in get_db().view('domain/related_to_domain', key=self.name):
+        for res in db.view('domain/related_to_domain', key=self.name):
             json = res['value']
-
             doc_type = json['doc_type']
+            cls = str_to_cls[doc_type]
+            new_id = db.copy_doc(json['_id'])['id']
 
-            if doc_type == 'Application' or doc_type == 'RemoteApp':
-                import_app(json['_id'], new_domain_name)
-            elif doc_type in str_to_cls:
-                cls = str_to_cls[doc_type]
-                doc = cls.wrap(json)
+            print doc_type, new_id, json['_id']
 
-                if hasattr(doc, 'save_copy'):
-                    new_doc = doc.save_copy()
-                else:
-                    json_copy = deepcopy(json)
-                    for field in self._dirty_fields:
-                        if field in json_copy:
-                            del json_copy[field]
+            new_doc = cls.get(new_id)
+            for field in self._dirty_fields:
+                if hasattr(new_doc, field):
+                    delattr(new_doc, field)
 
-                    new_doc = cls.wrap(json_copy)
-                new_doc.domain = new_domain_name
-                new_doc.save()
+            if hasattr(cls, '_meta_fields'):
+                for field in cls._meta_fields:
+                    if not field.startswith('_') and hasattr(new_doc, field):
+                        delattr(new_doc, field)
+
+            new_doc.original_doc = json['_id']
+            new_doc.domain = new_domain_name
+
+            new_doc.save()
 
         new_domain.save()
         return new_domain
 
-    def save_snapshot(self, new_domain_name=None):
+    def save_snapshot(self):
         if self.is_snapshot:
             return self
         else:
-            copy = self.save_copy(new_domain_name or ('%s-snapshot' % self.name))
+            copy = self.save_copy()
             if copy is None:
                 return None
             copy.is_snapshot = True
+            copy.snapshot_time = datetime.now()
             copy.save()
             return copy
+
+    def snapshot_of(self):
+        if is_snapshot:
+            return Domain.get_by_name(self.copy_of)
+        else:
+            return None
+
+    def snapshots(self):
+        return Domain.view('domain/snapshots', key=self.name)
+
+    def __str__(self):
+        return self.name
 
 ##############################################################################################################
 #

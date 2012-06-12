@@ -60,7 +60,19 @@
                             <div class="btn-group">
                                 <a class="btn btn-project dropdown-toggle" data-toggle="dropdown" href="#">
                                     <i class="icon-hq-white icon-hq-logo"></i>
-                                    {% if domain %}{% ifequal domain 'public' %}CommCare HQ Demo Project{% else %}{{ domain }}{% endifequal %}{% else %}No Domain Selected{% endif %}
+                                    {% if domain %}
+                                        {% ifequal domain 'public' %}
+                                            CommCare HQ Demo Project
+                                        {% else %}
+                                            {% if request.project.is_snapshot %}
+                                                Snapshot of {{ request.project.original_doc }}
+                                            {% else %}
+                                                {{ domain }}
+                                            {% endif %}
+                                        {% endifequal %}
+                                    {% else %}
+                                        No Domain Selected
+                                    {% endif %}
                                     <span class="caret"></span>
                                 </a>
                                 {% if domain %}

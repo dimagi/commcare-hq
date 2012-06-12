@@ -8,7 +8,7 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404, HttpRespons
 from django_tables import tables
 from django.shortcuts import redirect
 
-from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
+from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required, require_previewer
 from corehq.apps.domain.forms import DomainSelectionForm, DomainGlobalSettingsForm,\
     DomainMetadataForm
 from corehq.apps.domain.models import Domain
@@ -22,6 +22,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 import json
 from dimagi.utils.post import simple_post
+from django.forms.fields import ChoiceField
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
@@ -245,7 +246,8 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
 def autocomplete_categories(request, prefix=''):
     return HttpResponse(json.dumps(Domain.categories(prefix)))
 
-@domain_admin_required
+@require_previewer
+@login_and_domain_required
 def copy_snapshot(request, domain):
     """
     This both creates snapshots and copies them once they exist.
@@ -256,42 +258,66 @@ def copy_snapshot(request, domain):
     user = request.couch_user
     domain = Domain.get_by_name(domain)
 
-    if not user.is_previewer():
-        return HttpResponseForbidden("Can't do that! Sorry!")
-
     if request.method == 'GET':
         if domain.is_snapshot:
             return render_to_response(request, 'domain/copy_snapshot.html',
-                    {'domain': domain.name, 'new_domain_name': '%s-copy' % domain.name})
+                    {'domain': domain.name})
         else:
             return render_to_response(request, 'domain/create_snapshot.html',
-                    {'domain': domain.name, 'new_domain_name': '%s-snapshot' % domain.name})
+                    {'domain': domain.name})
 
     elif request.method == 'POST':
-        new_domain_name = request.POST['new_domain_name']
 
         if domain.is_snapshot:
-            new_domain = domain.save_copy(new_domain_name, user=user)
+            new_domain = domain.save_copy(request.POST['new_domain_name'], user=user)
         else:
-            new_domain = domain.save_snapshot(new_domain_name)
+            new_domain = domain.save_snapshot()
 
-        if new_domain:
-            if new_domain.is_snapshot:
-                return redirect('domain_copy_snapshot', new_domain.name)
-            else:
-                return redirect("domain_project_settings", new_domain.name)
+        if new_domain is None:
+            return render_to_response(request, 'domain/copy_snapshot.html',
+                    {'domain': domain.name, 'error_message': 'A project with that name already exists'})
+
+        if new_domain.is_snapshot:
+            return redirect('domain_copy_snapshot', new_domain.name)
         else:
-            if domain.is_snapshot:
-                return render_to_response(request, 'domain/copy_snapshot.html',
-                        {
-                        'domain': domain.name,
-                        'new_domain_name': new_domain_name,
-                        'error_message': 'Project name taken'
-                    })
-            else:
-                return render_to_response(request, 'domain/create_snapshot.html',
-                    {
-                        'domain': domain.name,
-                        'new_domain_name': new_domain_name,
-                        'error_message': 'Project name taken'
-                    })
+            return redirect("domain_project_settings", new_domain.name)
+
+@require_previewer
+@login_and_domain_required
+def snapshot_info(request, domain):
+    domain = Domain.get_by_name(domain)
+    user_sees_meta = request.couch_user.is_previewer()
+    if user_sees_meta:
+        form = DomainMetadataForm(initial={
+            'default_timezone': domain.default_timezone,
+            'case_sharing': json.dumps(domain.case_sharing),
+            'city': domain.city,
+            'country': domain.country,
+            'region': domain.region,
+            'project_type': domain.project_type,
+            'customer_type': domain.customer_type,
+            'is_test': json.dumps(domain.is_test),
+            'description': domain.description,
+            'is_shared': domain.is_shared
+        })
+    else:
+        form = DomainGlobalSettingsForm(initial={
+            'default_timezone': domain.default_timezone,
+            'case_sharing': json.dumps(domain.case_sharing),
+
+            })
+    fields = []
+    for field in form.visible_fields():
+        value = field.value()
+        if value:
+            if value == 'false':
+                value = False
+            if value == 'true':
+                value = True
+            if isinstance(value, bool):
+                value = 'Yes' if value else 'No'
+            fields.append({'label': field.label, 'value': value})
+    return render_to_response(request, 'domain/snapshot_info.html', {'domain': domain.name,
+                                                                     'fields': fields,
+                                                                     "languages": request.project.readable_languages(),
+                                                                     "applications": request.project.applications()})
