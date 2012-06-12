@@ -487,9 +487,6 @@ STANDARD_REPORT_MAP = {
         'corehq.apps.reports.standard.ExcelExportReport',
         'corehq.apps.reports.standard.CaseExportReport',
     ],
-    "Inspect Data" : ['corehq.apps.reports.standard.SubmitHistory',
-                      'corehq.apps.reports.standard.CaseListReport',
-                      ],
     "Manage Deployments" : [
         'corehq.apps.reports.standard.ApplicationStatusReport',
         'corehq.apps.receiverwrapper.reports.SubmissionErrorReport',
