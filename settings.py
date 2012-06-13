@@ -189,11 +189,12 @@ REFLEXIVE_URL_BASE = "localhost:8000"
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 TABS = [
-    ("corehq.apps.reports.views.default", "Reports"),
+    ("corehq.apps.domain.views.snapshot_info", "Info", lambda request: request.project.is_snapshot),
+    ("corehq.apps.reports.views.default", "Reports", lambda request: not request.project.is_snapshot),
     ("corehq.apps.data_interfaces.views.default", "Manage Data", lambda request: request.couch_user.can_edit_data()),
     ("corehq.apps.app_manager.views.default", "Applications"),
     ("corehq.apps.cloudcare.views.default", "CloudCare", lambda request: request.couch_user.is_previewer()),
-    ("corehq.apps.sms.views.messaging", "Messages"),
+    ("corehq.apps.sms.views.messaging", "Messages", lambda request: not request.project.is_snapshot),
     ("corehq.apps.settings.views.default", "Settings & Users", lambda request: request.couch_user.can_edit_commcare_users() or request.couch_user.can_edit_web_users()),
     ("corehq.apps.hqadmin.views.default", "Admin Reports", "is_superuser"),
 ]
