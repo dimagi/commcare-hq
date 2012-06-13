@@ -1056,8 +1056,11 @@ class ExcelExportReport(StandardDateHQReport):
                                     form['app_copy'] = {'id': app.copy_of, 'name': '?'}
                             if app.is_deleted():
                                 form['app_deleted'] = {'id': app.get_id}
-
-                            app_forms = app.get_xmlns_map()[form['xmlns']]
+                            try:
+                                app_forms = app.get_xmlns_map()[form['xmlns']]
+                            except AttributeError:
+                                # it's a remote app
+                                app_forms = None
                             if app_forms:
                                 app_form = app_forms[0]
                                 if app_form.doc_type == 'UserRegistrationForm':
