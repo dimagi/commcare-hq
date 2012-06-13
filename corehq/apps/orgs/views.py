@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.registration.forms import DomainRegistrationForm
@@ -5,14 +6,6 @@ from dimagi.utils.web import render_to_response, json_response, get_url_base
 from corehq.apps.orgs.models import Organization
 from corehq.apps.domain.models import Domain
 from django.contrib import messages
-from lib.django_rest_interface.resource import reverse
-from lib.django_rest_interface.util import request
-
-
-def orgs_base(request, template="orgs/orgs_front.html"):
-    orgs = Organization
-    return render_to_response(request, template)
-
 
 @require_superuser
 def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None):

@@ -92,8 +92,8 @@ def register_domain(request):
             return render_to_response(request, 'registration/confirmation_waiting.html', vals)
 
     if request.method == 'POST': # If the form has been submitted...
-        nextpage = request.POST['next']
-        org = request.POST['org']
+        nextpage = request.POST.get('next')
+        org = request.POST.get('org')
         form = DomainRegistrationForm(request.POST) # A form bound to the POST data
         if form.is_valid(): # All validation rules pass
             reqs_today = RegistrationRequest.get_requests_today()
