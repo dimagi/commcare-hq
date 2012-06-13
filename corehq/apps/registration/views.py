@@ -8,6 +8,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from corehq.apps.domain.decorators import login_required_late_eval_of_LOGIN_URL
 from corehq.apps.domain.models import Domain
+from corehq.apps.orgs.views import orgs_landing
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm, OrganizationRegistrationForm
 from corehq.apps.registration.utils import *
@@ -47,16 +48,23 @@ def register_user(request):
 def register_org(request, template="registration/org_request.html"):
     referer_url = request.GET.get('referer', '')
     if request.method == "POST":
-        form = OrganizationRegistrationForm(request.POST)
+        form = OrganizationRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
             name = form.cleaned_data["org_name"]
             title = form.cleaned_data["org_title"]
             email = form.cleaned_data["email"]
             url = form.cleaned_data["url"]
             location = form.cleaned_data["location"]
+            logo = form.cleaned_data["logo"]
+            if logo:
+                logo_filename = logo.name
+            else:
+                logo_filename = ''
 
-            org = Organization(name=name, title=title, location=location, email=email, url=url)
+            org = Organization(name=name, title=title, location=location, email=email, url=url, logo_filename=logo_filename)
             org.save()
+            if logo:
+                org.put_attachment(content=logo.read(), name=logo.name)
 
             if referer_url:
                 return redirect(referer_url)
@@ -71,7 +79,7 @@ def register_org(request, template="registration/org_request.html"):
 
 @transaction.commit_on_success
 @login_required_late_eval_of_LOGIN_URL
-def register_domain(request):
+def register_domain(request, form=None):
     is_new = False
     referer_url = request.GET.get('referer', '')
 
@@ -83,8 +91,11 @@ def register_domain(request):
             vals = dict(requested_domain=domains_for_user[0])
             return render_to_response(request, 'registration/confirmation_waiting.html', vals)
 
-    if request.method == 'POST': # If the form has been submitted...
-        form = DomainRegistrationForm(request.POST) # A form bound to the POST data
+    if request.method == 'POST' or form: # If the form has been submitted...
+        nextpage = request.POST['next']
+        org = request.POST['org']
+        if not form:
+            form = DomainRegistrationForm(request.POST) # A form bound to the POST data
         if form.is_valid(): # All validation rules pass
             reqs_today = RegistrationRequest.get_requests_today()
             max_req = settings.DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY
@@ -93,7 +104,7 @@ def register_domain(request):
                         'show_homepage_link': 1 }
                 return render_to_response(request, 'error.html', vals)
 
-            request_new_domain(request, form, is_new)
+            request_new_domain(request, form, org, is_new)
             requested_domain = form.cleaned_data['domain_name']
             if is_new:
                 vals = dict(alert_message="An email has been sent to %s." % request.user.username, requested_domain=requested_domain)
@@ -103,13 +114,21 @@ def register_domain(request):
                     username=request.user.username,
                     project_name=requested_domain
                 ), extra_tags="html")
+
+                if nextpage:
+                    return HttpResponseRedirect(nextpage)
                 if referer_url:
                     return redirect(referer_url)
                 return HttpResponseRedirect(reverse("domain_homepage", args=[requested_domain]))
+        else:
+            if nextpage:
+#                messages.error(request, "The new project could not be created! Please make sure to fill out all fields of the form.")
+                return orgs_landing(request, org, form=form)
     else:
         form = DomainRegistrationForm() # An unbound form
 
     vals = dict(form=form, is_new=is_new)
+
     return render_to_response(request, 'registration/domain_request.html', vals)
 
 @transaction.commit_on_success

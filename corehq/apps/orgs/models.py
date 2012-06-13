@@ -1,5 +1,8 @@
 from couchdbkit.ext.django.schema import *
 import util
+from django import forms
+from django.db import models
+
 
 class Organization(Document):
     name = StringProperty() # for example "worldvision"
@@ -9,7 +12,7 @@ class Organization(Document):
     email = StringProperty()
     url = StringProperty()
     location = StringProperty()
-
+    logo_filename = StringProperty()
 
     @classmethod
     def get_by_name(cls, name):
@@ -27,3 +30,8 @@ class Organization(Document):
             include_docs=True).first()
         return result
 
+    def get_logo(self):
+        if self.logo_filename:
+            return (self.fetch_attachment(self.logo_filename), self._attachments[self.logo_filename]['content_type'])
+        else:
+            return None

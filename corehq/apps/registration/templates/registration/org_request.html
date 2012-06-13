@@ -21,7 +21,7 @@ Create a New Organization
 
 {% block registration-content %}
     <div class="span8">
-        <form class="form-horizontal" method="post" action="{{ request.get_full_path }}">
+        <form class="form-horizontal" method="post" action="{{ request.get_full_path }}" enctype="multipart/form-data">
             <fieldset>
                 <legend>Create an Organization</legend>
                 {% for global_error in form.non_field_errors %}
