@@ -3,6 +3,7 @@ import datetime
 import json
 import logging
 import sys
+from couchdbkit.exceptions import ResourceNotFound
 import dateutil
 from corehq.apps.groups.models import Group
 from dimagi.utils.decorators.memoized import memoized
@@ -1024,8 +1025,8 @@ class ExcelExportReport(StandardDateHQReport):
             class AppCache(dict):
                 def __getitem__(self, item):
                     if not self.has_key(item):
-                        self[app] = Application.get(item)
-                    return super(AppCache, self).get(item)
+                        self[item] = Application.get(item)
+                    return super(AppCache, self).__getitem__(item)
 
             app_cache = AppCache()
 
@@ -1033,7 +1034,7 @@ class ExcelExportReport(StandardDateHQReport):
                 if form['app']['id']:
                     try:
                         app = app_cache[form['app']['id']]
-                    except Exception:
+                    except ResourceNotFound:
                         form['app_does_not_exist'] = True
                         form['possibilities'] = possibilities[form['xmlns']]
                         if form['possibilities']:
