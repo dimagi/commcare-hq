@@ -79,7 +79,7 @@ def register_org(request, template="registration/org_request.html"):
 
 @transaction.commit_on_success
 @login_required_late_eval_of_LOGIN_URL
-def register_domain(request, form=None):
+def register_domain(request):
     is_new = False
     referer_url = request.GET.get('referer', '')
 
@@ -91,11 +91,10 @@ def register_domain(request, form=None):
             vals = dict(requested_domain=domains_for_user[0])
             return render_to_response(request, 'registration/confirmation_waiting.html', vals)
 
-    if request.method == 'POST' or form: # If the form has been submitted...
+    if request.method == 'POST': # If the form has been submitted...
         nextpage = request.POST['next']
         org = request.POST['org']
-        if not form:
-            form = DomainRegistrationForm(request.POST) # A form bound to the POST data
+        form = DomainRegistrationForm(request.POST) # A form bound to the POST data
         if form.is_valid(): # All validation rules pass
             reqs_today = RegistrationRequest.get_requests_today()
             max_req = settings.DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY
