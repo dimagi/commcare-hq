@@ -156,6 +156,9 @@
                         {% ifchanged %}
                             {% if form.app.name %}
                                 {{ form.app.name }}
+                                {% if form.app_deleted %}
+                                    <span class="label label-info">deleted</span>
+                                {% endif %}
                                 <!-- Make sure to check whether {{ form.app.id }} changed -->
                             {% else %}
                                 <h6>No Application</h6>

@@ -1056,6 +1056,16 @@ class ExcelExportReport(StandardDateHQReport):
                                     form['app_copy'] = {'id': app.copy_of, 'name': '?'}
                             elif app.is_deleted():
                                 form['app_deleted'] = {'id': app.get_id}
+                                app_forms = app.get_xmlns_map()[form['xmlns']]
+                                if app_forms:
+                                    app_form = app_forms[0]
+                                    if app_form.doc_type == 'UserRegistrationForm':
+                                        form['is_user_registration'] = True
+                                    else:
+                                        app_module = app_form.get_module()
+                                        form['module'] = app_module
+                                        form['form'] = app_form
+                                    form['show_xmlns'] = False
                             else:
                                 form['no_suggestions'] = True
 
@@ -1077,12 +1087,12 @@ class ExcelExportReport(StandardDateHQReport):
         exports = filter(lambda x: x.type == "form", exports)
 
         forms = sorted(forms, key=lambda form:\
-            (0,
+            (0 if not form.get('app_deleted') else 1,
                 form['app']['name'],
                 form['app']['id'],
                 form.get('module', {'id': -1 if form.get('is_user_registration') else 1000})['id'], form.get('form', {'id': -1})['id']
             ) if form['has_app'] else\
-            (1, form['xmlns'], form['app']['id'])
+            (2, form['xmlns'], form['app']['id'])
         )
 
         self.context.update({
