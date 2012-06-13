@@ -1034,10 +1034,10 @@ class ExcelExportReport(StandardDateHQReport):
             app_cache = AppCache(self.domain)
 
             for form in unknown_forms:
+                app = None
                 if form['app']['id']:
                     try:
                         app = app_cache[form['app']['id']]
-                        form['app'] = {'id': app.get_id, 'name': app.name, 'langs': app.langs}
                         form['has_app'] = True
                     except KeyError:
                         form['app_does_not_exist'] = True
@@ -1054,20 +1054,24 @@ class ExcelExportReport(StandardDateHQReport):
                                     form['app_copy'] = {'id': app.get_id, 'name': app.name}
                                 except KeyError:
                                     form['app_copy'] = {'id': app.copy_of, 'name': '?'}
-                            elif app.is_deleted():
+                            if app.is_deleted():
                                 form['app_deleted'] = {'id': app.get_id}
-                                app_forms = app.get_xmlns_map()[form['xmlns']]
-                                if app_forms:
-                                    app_form = app_forms[0]
-                                    if app_form.doc_type == 'UserRegistrationForm':
-                                        form['is_user_registration'] = True
-                                    else:
-                                        app_module = app_form.get_module()
-                                        form['module'] = app_module
-                                        form['form'] = app_form
-                                    form['show_xmlns'] = False
-                            else:
+
+                            app_forms = app.get_xmlns_map()[form['xmlns']]
+                            if app_forms:
+                                app_form = app_forms[0]
+                                if app_form.doc_type == 'UserRegistrationForm':
+                                    form['is_user_registration'] = True
+                                else:
+                                    app_module = app_form.get_module()
+                                    form['module'] = app_module
+                                    form['form'] = app_form
+                                form['show_xmlns'] = False
+
+                            if not form.get('app_copy') and not form.get('app_deleted'):
                                 form['no_suggestions'] = True
+                    if app:
+                        form['app'] = {'id': app.get_id, 'name': app.name, 'langs': app.langs}
 
                 else:
                     form['possibilities'] = possibilities[form['xmlns']]
