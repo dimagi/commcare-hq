@@ -121,4 +121,4 @@ INSECURE_URL_BASE = "http://submit.commcarehq.org"
 PREVIEWER_RE = r'^.*@dimagi\.com$'
 GMAPS_API_KEY = '******'
 FORMTRANSLATE_TIMEOUT = 5
-LOCAL_APPS = ('django_cpserver','dimagi.utils')
+#LOCAL_APPS = ('django_cpserver','dimagi.utils')

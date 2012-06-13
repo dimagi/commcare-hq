@@ -152,6 +152,7 @@ HQ_APPS = (
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
+    'corehq.apps.orgs',
     'corehq.apps.fixtures',
     'corehq.apps.reminders',
     'corehq.apps.prescriptions',
@@ -369,6 +370,7 @@ XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
 COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'api',
         'app_manager',
+        'orgs',
         'auditcare',
         'builds',
         'case',
@@ -488,9 +490,6 @@ STANDARD_REPORT_MAP = {
         'corehq.apps.reports.standard.ExcelExportReport',
         'corehq.apps.reports.standard.CaseExportReport',
     ],
-    "Inspect Data" : ['corehq.apps.reports.standard.SubmitHistory',
-                      'corehq.apps.reports.standard.CaseListReport',
-                      ],
     "Manage Deployments" : [
         'corehq.apps.reports.standard.ApplicationStatusReport',
         'corehq.apps.receiverwrapper.reports.SubmissionErrorReport',
