@@ -9,6 +9,7 @@ REPORT_FNAME = "%%s-%m-%d-%Y.xlsx"
 import os, sys
 import urllib2
 from datetime import date
+import getpass
 
 def auth_retrieve(username, password, url, destination):
     password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
@@ -16,7 +17,7 @@ def auth_retrieve(username, password, url, destination):
     handler = urllib2.HTTPDigestAuthHandler(password_mgr)
     opener = urllib2.build_opener(handler)
     input = opener.open(url)
-    output = open(destination, 'w')
+    output = open(destination, 'wb')
     output.write(input.read())
     output.close()
     input.close()
@@ -30,12 +31,12 @@ def main():
     domain = args.pop(0)
     root = args.pop(0)
     username = args.pop(0)
-    password = args.pop(0)
+    password = getpass.getpass()
     projects = args
 
     for project in projects:
         report_fname = date.today().strftime(REPORT_FNAME)
-        url = "%s/a/%s/reports/download/cases" % (domain, project)
+        url = "%s/a/%s/reports/download/cases/?hq_filters=true&include_closed=true" % (domain, project)
         dir = os.path.join(root, project)
         if not os.path.exists(dir):
             os.makedirs(dir)
