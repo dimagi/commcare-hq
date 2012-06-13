@@ -49,6 +49,7 @@ class Domain(Document):
     date_created = DateTimeProperty()
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)
+    organization = StringProperty()
     
     # domain metadata
     city = StringProperty()
@@ -154,6 +155,14 @@ class Domain(Document):
                             key=name,
                             reduce=False,
                             include_docs=True).first()
+        return result
+
+    @classmethod
+    def get_by_organization(cls, organization):
+        result = cls.view("domain/by_organization",
+            key=organization,
+            reduce=False,
+            include_docs=True)
         return result
 
     @classmethod

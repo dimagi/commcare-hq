@@ -31,7 +31,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None):
 
     return new_user
 
-def request_new_domain(request, form, new_user=True):
+def request_new_domain(request, form, org, new_user=True):
     now = datetime.utcnow()
 
     dom_req = RegistrationRequest()
@@ -43,21 +43,21 @@ def request_new_domain(request, form, new_user=True):
 
     new_domain = Domain(name=form.cleaned_data['domain_name'],
                         is_active=False,
-                        date_created=datetime.utcnow())
+                        date_created=datetime.utcnow(), organization=org)
+
     if not new_user:
         new_domain.is_active = True
-    new_domain.save()
 
     dom_req.domain = new_domain.name
 
+    new_domain.save()
+
     if request.user.is_authenticated():
         current_user = CouchUser.from_django_user(request.user)
-        if current_user is None:
-            # Save the django user to sync it to couch
-            # I'm going to see if this helps get rid of the 500s
-            request.user.save()
-            current_user = CouchUser.from_django_user(request.user)
-
+        if not current_user:
+            current_user = WebUser()
+            current_user.sync_from_django_user(request.user)
+            current_user.save()
         current_user.add_domain_membership(new_domain.name, is_admin=True)
         current_user.save()
         dom_req.requesting_user_username = request.user.username
@@ -70,7 +70,6 @@ def request_new_domain(request, form, new_user=True):
                                        dom_req.activation_guid)
     else:
         send_global_domain_registration_email(request.user, new_domain.name)
-
     send_new_domain_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=new_user)
 
 def send_domain_registration_email(recipient, domain_name, guid):
