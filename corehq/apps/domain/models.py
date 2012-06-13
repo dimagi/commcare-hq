@@ -202,7 +202,6 @@ class Domain(Document):
             new_domain_name = new_id
         new_domain = Domain.get(new_id)
         new_domain.name = new_domain_name
-        new_domain.original_doc = self.name
         new_domain.is_snapshot = False
         new_domain.snapshot_time = None
 
@@ -249,6 +248,7 @@ class Domain(Document):
             if copy is None:
                 return None
             copy.is_snapshot = True
+            copy.original_doc = self.name
             copy.snapshot_time = datetime.now()
             copy.save()
             return copy
