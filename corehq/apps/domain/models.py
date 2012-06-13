@@ -210,10 +210,6 @@ class Domain(Document):
             if hasattr(new_domain, field):
                 delattr(new_domain, field)
 
-        if user:
-            user.add_domain_membership(new_domain_name)
-            user.save()
-
         for res in db.view('domain/related_to_domain', key=self.name):
             json = res['value']
             doc_type = json['doc_type']
@@ -238,6 +234,11 @@ class Domain(Document):
             new_doc.save()
 
         new_domain.save()
+
+        if user:
+            user.add_domain_membership(new_domain_name)
+            user.save()
+
         return new_domain
 
     def save_snapshot(self):
