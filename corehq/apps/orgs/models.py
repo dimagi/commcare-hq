@@ -22,6 +22,12 @@ class Organization(Document):
             include_docs=True).first()
         return result
 
+    @classmethod
+    def get_all(cls):
+        result = cls.view("orgs/by_name",
+            reduce=False,
+            include_docs=True).all()
+        return result
 
     def get_logo(self):
         if self.logo_filename:
