@@ -13,7 +13,7 @@
 {% block main_column %}
 <h2>
     {% if org.logo_filename %}
-    <img src="{% url orgs_logo name %}" alt="Logo"/>
+    <img src="{% url orgs_logo org.name %}" alt="Logo"/>
     {% endif %}
 
 <div style="margin-left:150px;margin-top:30px;">{{ org.name }} ({{ org.title }})</div></h2>

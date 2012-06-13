@@ -55,7 +55,15 @@
                             {% endif %}
                         </ul>
                         {% endblock %}
+
+
                         <div class="btn-toolbar secondary-nav">
+                            <div class="btn-group">
+                            {% if request.project.organization %}
+                            <a href="{% url orgs_landing request.project.organization %}" class="btn btn-info">{{ request.project.organization }}</a>
+                            {% endif %}
+                            </div>
+
                             {% if request.couch_user and request.couch_user.is_web_user %}
                             <div class="btn-group">
                                 <a class="btn btn-project dropdown-toggle" data-toggle="dropdown" href="#">
@@ -82,6 +90,7 @@
                                 {% endif %}
                             </div>
                             {% endif %}
+
                             <div class="btn-group">
                                 <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
                                     <i class="icon-hq-white icon-hq-person"></i>
