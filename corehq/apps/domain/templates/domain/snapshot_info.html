@@ -31,6 +31,23 @@
                 {{ field.value }}
             </dd>
         {% endfor %}
+        <dt>
+            Copy this snapshot into a new project
+        </dt>
+        <dd>
+            <form class="form-inline" method="post" action="{% url domain_copy_snapshot domain %}">
+                <fieldset>
+                    <div class="control-group{% if error_message %} error{% endif %}">
+                        <input type="text" class="span3" id="new_domain_name"
+                               name="new_domain_name" value="{{ new_domain_name }}" placeholder="{% trans 'New project name' %}">
+                        {% if error_message %}
+                        <span class="help-inline">{{ error_message }}</span>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary">Create New Project</button>
+                    </div>
+                </fieldset>
+            </form>
+        </dd>
     </dl>
 </div>
 {% endblock %}>
