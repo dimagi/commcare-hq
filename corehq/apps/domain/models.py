@@ -193,8 +193,8 @@ class Domain(Document):
 
         str_to_cls = {
             'UserRole': UserRole,
-            'Application': ApplicationBase,
-            'RemoteApp': ApplicationBase,
+            'Application': Application,
+            'RemoteApp': RemoteApp,
             }
 
         new_id = db.copy_doc(self.get_id)['id']
@@ -333,5 +333,5 @@ class OldDomain(models.Model):
 
 # added after Domain is defined as per http://stackoverflow.com/questions/7199466/how-to-break-import-loop-in-python
 # to prevent import loop errors (since corehq.apps.app_manager.models has to import Domain back)
-from corehq.apps.app_manager.models import ApplicationBase, import_app
+from corehq.apps.app_manager.models import ApplicationBase, import_app, RemoteApp, Application
 from corehq.apps.users.models import UserRole
