@@ -547,11 +547,11 @@ class XForm(WrappedNode):
             else:
                 return 'false()'
 
-        def add_create_block(case_block, action, case_name, case_type=None, path=''):
+        def add_create_block(case_block, action, case_name, case_type, path=''):
             create_block = make_case_elem('create')
             case_block.append(create_block)
             case_type_node = make_case_elem('case_type')
-            case_type_node.text = case_type or form.get_case_type()
+            case_type_node.text = case_type
             create_block.extend([
                 make_case_elem('case_name'),
                 make_case_elem('owner_id'),
@@ -623,8 +623,7 @@ class XForm(WrappedNode):
 
             if 'open_case' in actions:
                 open_case_action = actions['open_case']
-                add_create_block(case_block, open_case_action, case_name=open_case_action.name_path)
-                    
+                add_create_block(case_block, open_case_action, case_name=open_case_action.name_path, case_type=form.get_case_type())
                 if 'external_id' in actions['open_case'] and actions['open_case'].external_id:
                     extra_updates['external_id'] = actions['open_case'].external_id
             else:
@@ -674,7 +673,7 @@ class XForm(WrappedNode):
 
                 if case_block is not None and subcase.case_type != form.get_case_type():
                     index_node = make_case_elem('index')
-                    parent_index = make_case_elem('parent', {'case_type': subcase.case_type})
+                    parent_index = make_case_elem('parent', {'case_type': form.get_case_type()})
                     self.add_bind(
                         nodeset='%s/case/index/parent' % name,
                         calculate=self.resolve_path("case/@case_id"),

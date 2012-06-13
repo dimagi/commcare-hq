@@ -930,6 +930,7 @@ create a couch doc as such:
                 # own ajax sidebar
     template_name = "reports/async/basic.html"
     report_partial = "reports/partials/maps.html"
+    asynchronous = False
 
     def calc(self):
         self.context['maps_api_key'] = settings.GMAPS_API_KEY

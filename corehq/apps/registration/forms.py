@@ -111,13 +111,14 @@ class DomainRegistrationForm(forms.Form):
         data = self.cleaned_data['domain_name'].strip().lower()
         if not re.match("^%s$" % new_domain_re, data):
             raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')
-        if Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.')):
+        conflict = Domain.get_by_name(data) or Domain.get_by_name(data.replace('-', '.'))
+        if conflict:
             raise forms.ValidationError('Project name already taken---please try another')
         return data
 
     def clean_tos_confirmed(self):
         data = self.cleaned_data['tos_confirmed']
-        if data != True:
+        if data is not True:
             raise forms.ValidationError('You must agree to our Terms Of Service in order to create your own project.')
         return data
 
