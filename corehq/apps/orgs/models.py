@@ -22,13 +22,6 @@ class Organization(Document):
             include_docs=True).first()
         return result
 
-    @classmethod
-    def get_by_title(cls, title):
-        result = cls.view("orgs/by_title",
-            key=title,
-            reduce=False,
-            include_docs=True).first()
-        return result
 
     def get_logo(self):
         if self.logo_filename:
