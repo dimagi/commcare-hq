@@ -1004,11 +1004,6 @@ class ExcelExportReport(StandardDateHQReport):
                 unknown_forms.append(form)
             forms.append(form)
 
-        forms = sorted(forms, key=lambda form:\
-            (0, form['app']['name'], form['app']['id'], form.get('module', {'id': -1})['id'], form.get('form', {'id': -1})['id'])\
-            if form['has_app'] else\
-            (1, form['xmlns'], form['app']['id'])
-        )
         if unknown_forms:
             apps = get_db().view('reports/forms_by_xmlns',
                 startkey=['^Application', self.domain],
@@ -1041,6 +1036,8 @@ class ExcelExportReport(StandardDateHQReport):
                 if form['app']['id']:
                     try:
                         app = app_cache[form['app']['id']]
+                        form['app'] = {'id': app.get_id, 'name': app.name, 'langs': app.langs}
+                        form['has_app'] = True
                     except KeyError:
                         form['app_does_not_exist'] = True
                         form['possibilities'] = possibilities[form['xmlns']]
@@ -1056,8 +1053,11 @@ class ExcelExportReport(StandardDateHQReport):
                                     form['app_copy'] = {'id': app.get_id, 'name': app.name}
                                 except KeyError:
                                     form['app_copy'] = {'id': app.copy_of, 'name': '?'}
-                            if app.is_deleted():
+                            elif app.is_deleted():
                                 form['app_deleted'] = {'id': app.get_id}
+                            else:
+                                form['no_suggestions'] = True
+
                 else:
                     form['possibilities'] = possibilities[form['xmlns']]
                     if form['possibilities']:
@@ -1074,6 +1074,12 @@ class ExcelExportReport(StandardDateHQReport):
             include_docs=True)
 
         exports = filter(lambda x: x.type == "form", exports)
+
+        forms = sorted(forms, key=lambda form:\
+        (0, form['app']['name'], form['app']['id'], form.get('module', {'id': -1})['id'], form.get('form', {'id': -1})['id'])\
+        if form['has_app'] else\
+        (1, form['xmlns'], form['app']['id'])
+        )
 
         self.context.update({
             "forms": forms,

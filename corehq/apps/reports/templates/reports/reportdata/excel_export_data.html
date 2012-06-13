@@ -154,17 +154,18 @@
                 <tr class="{% cycle "odd" "even" %}">
                     <td>
                         {% ifchanged %}
-                            {% if form.has_app %}
+                            {% if form.app.name %}
                                 {{ form.app.name }}
                                 <!-- Make sure to check whether {{ form.app.id }} changed -->
                             {% else %}
                                 <h6>No Application</h6>
                             {% endif %}
                         {% endifchanged %}
+
                     </td>
                     <td>
                         {% ifchanged %}
-                            {% if form.has_app and not form.is_user_registration %}
+                            {% if form.has_app and form.module %}
                                 <!--Make sure to check whether {{ form.app.id }} changed-->
                                 {{ form.module.name|trans:form.app.langs }}
                                 <!--Make sure to check whether {{ form.module.id }} changed-->
@@ -174,6 +175,9 @@
                         {% endifchanged %}
                     </td>
                     <td>
+                    {% if not form.is_user_registration and not form.form %}
+                        <span class="label label-inverse">xmlns</span>
+                    {% endif %}
                     {% include "reports/partials/form_name.html" %}
                     {% if not form.has_app and not form.no_suggestions %}
                         <p><span class="label label-important suggestions">Suggestions:</span></p>
