@@ -170,15 +170,21 @@
                                 {{ form.module.name|trans:form.app.langs }}
                                 <!--Make sure to check whether {{ form.module.id }} changed-->
                             {% else %}
+                                {% if form.has_app and form.show_xmlns %}
+                                    <span class="label label-default">other forms</span>
+                                {% endif %}
                                 <!---->
                             {% endif %}
                         {% endifchanged %}
                     </td>
                     <td>
-                    {% if not form.is_user_registration and not form.form %}
-                        <span class="label label-inverse">xmlns</span>
+                    {% if form.show_xmlns %}
+                        <code>
                     {% endif %}
                     {% include "reports/partials/form_name.html" %}
+                    {% if form.show_xmlns %}
+                        </code>
+                    {% endif %}
                     {% if not form.has_app and not form.no_suggestions %}
                         <p><span class="label label-important suggestions">Suggestions:</span></p>
                         <ul>

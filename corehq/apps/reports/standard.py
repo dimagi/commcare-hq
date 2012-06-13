@@ -1001,6 +1001,7 @@ class ExcelExportReport(StandardDateHQReport):
                     'id': app_id
                 }
                 form['has_app'] = False
+                form['show_xmlns'] = True
                 unknown_forms.append(form)
             forms.append(form)
 
@@ -1076,9 +1077,12 @@ class ExcelExportReport(StandardDateHQReport):
         exports = filter(lambda x: x.type == "form", exports)
 
         forms = sorted(forms, key=lambda form:\
-        (0, form['app']['name'], form['app']['id'], form.get('module', {'id': -1})['id'], form.get('form', {'id': -1})['id'])\
-        if form['has_app'] else\
-        (1, form['xmlns'], form['app']['id'])
+            (0,
+                form['app']['name'],
+                form['app']['id'],
+                form.get('module', {'id': -1 if form.get('is_user_registration') else 1000})['id'], form.get('form', {'id': -1})['id']
+            ) if form['has_app'] else\
+            (1, form['xmlns'], form['app']['id'])
         )
 
         self.context.update({
