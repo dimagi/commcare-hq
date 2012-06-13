@@ -24,3 +24,4 @@ tmp.sh
 /loadtest/localsettings.py
 /staticfiles/*
 *.db
+\#*\#
