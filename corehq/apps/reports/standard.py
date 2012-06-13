@@ -15,7 +15,7 @@ from django.utils import html
 import pytz
 from restkit.errors import RequestFailed
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, get_app
 from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports import util
 from corehq.apps.reports.calc import entrytimes
@@ -1023,18 +1023,25 @@ class ExcelExportReport(StandardDateHQReport):
                 possibilities[app['key'][2]].append(x)
 
             class AppCache(dict):
+                def __init__(self, domain):
+                    super(AppCache, self).__init__()
+                    self.domain = domain
+
                 def __getitem__(self, item):
                     if not self.has_key(item):
-                        self[item] = Application.get(item)
+                        try:
+                            self[item] = get_app(app_id=item, domain=self.domain)
+                        except Http404:
+                            pass
                     return super(AppCache, self).__getitem__(item)
 
-            app_cache = AppCache()
+            app_cache = AppCache(self.domain)
 
             for form in unknown_forms:
                 if form['app']['id']:
                     try:
                         app = app_cache[form['app']['id']]
-                    except ResourceNotFound:
+                    except KeyError:
                         form['app_does_not_exist'] = True
                         form['possibilities'] = possibilities[form['xmlns']]
                         if form['possibilities']:
@@ -1044,8 +1051,11 @@ class ExcelExportReport(StandardDateHQReport):
                             logging.error("submission tagged with app from wrong domain: %s" % app.get_id)
                         else:
                             if app.copy_of:
-                                app = app_cache[app.copy_of]
-                                form['app_copy'] = {'id': app.get_id, 'name': app.name}
+                                try:
+                                    app = app_cache[app.copy_of]
+                                    form['app_copy'] = {'id': app.get_id, 'name': app.name}
+                                except KeyError:
+                                    form['app_copy'] = {'id': app.copy_of, 'name': '?'}
                             if app.is_deleted():
                                 form['app_deleted'] = {'id': app.get_id}
                 else:
