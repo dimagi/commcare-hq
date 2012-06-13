@@ -22,3 +22,5 @@ tmp.sh
 /resource_versions.py
 /loadtest/results/*
 /loadtest/localsettings.py
+/staticfiles/*
+*.db

@@ -1,8 +1,0 @@
-<p>
-    This setting is currently set to an item for which we can't find a corresponding question.
-    The most likely reason for this is that the question has been deleted. If that is the cause,
-    then this form will probably cause an error on the phone.
-</p>
-<p>
-    <strong>If you weren't expecting to see this, we strongly recommend resetting this field to another question.</strong>
-</p>
