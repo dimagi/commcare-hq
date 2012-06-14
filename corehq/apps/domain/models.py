@@ -50,7 +50,7 @@ class Domain(Document):
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)
     organization = StringProperty()
-    organization_slug = StringProperty() # the slug for this project within an organization
+    slug = StringProperty() # the slug for this project namespaced within an organization
     
     # domain metadata
     city = StringProperty()
@@ -161,9 +161,18 @@ class Domain(Document):
     @classmethod
     def get_by_organization(cls, organization):
         result = cls.view("domain/by_organization",
-            key=organization,
+            startkey=[organization],
+            endkey=[organization, {}],
             reduce=False,
             include_docs=True)
+        return result
+
+    @classmethod
+    def get_by_organization_and_slug(cls, organization, slug):
+        result = cls.view("domain/by_organization",
+                          key=[organization, slug],
+                          reduce=False,
+                          include_docs=True)
         return result
 
     @classmethod
@@ -275,12 +284,23 @@ class Domain(Document):
     def snapshots(self):
         return Domain.view('domain/snapshots', key=self.name)
 
-    def __str__(self):
-        return self.name
-
     def organization_doc(self):
         from corehq.apps.orgs.models import Organization
         return Organization.get_by_name(self.organization)
+
+    def display_name(self):
+        if self.organization:
+            return self.slug
+        else:
+            return self.name
+
+    __str__ = display_name
+
+    def long_display_name(self):
+        if self.organization:
+            return '%s &gt; %s' % (self.organization_doc().title, self.slug)
+        else:
+            return self.name
 
 ##############################################################################################################
 #

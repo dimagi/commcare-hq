@@ -41,16 +41,24 @@ def request_new_domain(request, form, org, new_user=True):
         dom_req.request_ip = get_ip(request)
         dom_req.activation_guid = uuid.uuid1().hex
 
-    new_domain = Domain(name=form.cleaned_data['domain_name'],
-                        is_active=False,
-                        date_created=datetime.utcnow(), organization=org)
+    if org:
+        new_domain = Domain(slug=form.cleaned_data['domain_name'],
+                            is_active=False,
+                            date_created=datetime.utcnow(), organization=org)
+    else:
+        new_domain = Domain(name=form.cleaned_data['domain_name'],
+                            is_active=False,
+                            date_created=datetime.utcnow())
 
     if not new_user:
         new_domain.is_active = True
 
-    dom_req.domain = new_domain.name
-
     new_domain.save()
+    if not new_domain.name:
+        new_domain.name = new_domain._id
+        new_domain.save() # we need to get the name from the _id
+
+    dom_req.domain = new_domain.name
 
     if request.user.is_authenticated():
         current_user = CouchUser.from_django_user(request.user)

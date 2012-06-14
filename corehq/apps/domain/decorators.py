@@ -13,6 +13,12 @@ from django_digest.decorators import httpdigest
 
 REDIRECT_FIELD_NAME = 'next'
 
+def load_domain(req, domain):
+    domain_name = normalize_domain_name(domain)
+    domain = Domain.get_by_name(domain_name)
+    req.project = domain
+    return domain_name, domain
+
 ########################################################################################################
 
 def _redirect_for_login_or_domain(request, redirect_field_name, where):
@@ -56,9 +62,7 @@ def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME, login_
         @wraps(view_func)
         def _inner(req, domain, *args, **kwargs):
             user = req.user
-            domain_name = normalize_domain_name(domain)
-            domain = Domain.get_by_name(domain_name)
-            req.project = domain
+            domain_name, domain = load_domain(req, domain)
             if domain and user.is_authenticated() and user.is_active:
                 if not domain.is_active:
                     return HttpResponseRedirect(reverse("domain_select"))
@@ -180,10 +184,11 @@ def domain_admin_required_ex( redirect_page_name = None ):
     if redirect_page_name is None:
         redirect_page_name = getattr(settings, 'DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME', 'homepage')                                                                                                 
     def _outer( view_func ): 
-        def _inner(request, *args, **kwargs):
+        def _inner(request, domain, *args, **kwargs):
+            domain_name, domain = load_domain(request, domain)
             if not request.couch_user.is_domain_admin:
                 return HttpResponseRedirect(reverse(redirect_page_name))
-            return view_func(request, *args, **kwargs)
+            return view_func(request, domain_name, *args, **kwargs)
 
         _inner.__name__ = view_func.__name__
         _inner.__doc__ = view_func.__doc__

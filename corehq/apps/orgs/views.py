@@ -17,7 +17,7 @@ def orgs_base(request, template="orgs/orgs_base.html"):
 def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None):
     organization = Organization.get_by_name(org)
     is_empty = not form
-    form = form or DomainRegistrationForm()
+    form = form or DomainRegistrationForm(initial={'organization_name': organization.name})
     current_domains = Domain.get_by_organization(org)
     vals = dict( org=organization, domains=current_domains, form=form, is_empty=is_empty)
     return render_to_response(request, template, vals)
@@ -30,7 +30,6 @@ def orgs_new_project(request, org):
     else:
         return orgs_landing(request, org, form=DomainRegistrationForm())
 
-
 @require_superuser
 def orgs_add_project(request, org):
     if request.method == "POST":
@@ -41,10 +40,10 @@ def orgs_add_project(request, org):
         elif Domain.get_by_name(domain_name):
             dom = Domain.get_by_name(domain_name)
             dom.organization = org
+            dom.slug = domain_name
             dom.save()
             messages.success(request, "Project added!")
         else:
-            #put an error message saying that no organization by that name was found
             messages.error(request, "Project not found")
     return HttpResponseRedirect(reverse(orgs_landing, args=[org]))
 
