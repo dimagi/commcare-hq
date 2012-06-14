@@ -538,7 +538,15 @@ class CaseReminderHandler(Document):
         now = now or self.get_now()
         reminder = self.get_reminder(case)
         
-        if case.closed or case.type != self.case_type or (self.recipient == RECIPIENT_USER and case.user_id is None) or (self.recipient == RECIPIENT_USER and not CommCareUser.get_by_user_id(case.user_id)):
+        try:
+            if (case.user_id == case._id) or (case.user_id is None):
+                user = None
+            else:
+                user = CommCareUser.get_by_user_id(case.user_id)
+        except Exception:
+            user = None
+        
+        if case.closed or case.type != self.case_type or (self.recipient == RECIPIENT_USER and not user):
             if reminder:
                 reminder.retire()
         else:
