@@ -24,13 +24,12 @@
     <ul class="nav nav-list">
         <li class="nav-header">Projects</li>
         {% for domain in domains %}
-        <li><a href="{% url domain_homepage domain %}">{{ domain.display_name }}</a></li>
+            <li><a href="{% url domain_homepage domain %}">{{ domain.display_name }}</a></li>
         {% endfor %}
+        <li class="divider"></li>
+        <li><a href="#create_project_modal" data-toggle="modal"><i class="icon-pencil"></i> Create New Project</a></li>
+        <li><a href="#add_project_modal" data-toggle="modal"><i class="icon-plus"></i> Add Existing Project</a></li>
     </ul>
-<div style="padding-left: 20px;">
-    <a href="#create_project_modal" class="btn btn-primary" data-toggle="modal"><i class="icon-pencil icon-white"></i> Create New Project</a>
-    <a href="#add_project_modal" class="btn btn-primary" data-toggle="modal"><i class="icon-plus icon-white"></i> Add Existing Project</a>
-</div>
 {% endblock %}
 
 {% block page-title %}
