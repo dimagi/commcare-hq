@@ -1,47 +1,56 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load hq_shared_tags %}
-        {% block js-inline %}{{ block.super }}
-        <script>
-            $(function(){
-                var is_empty = {{ is_empty|JSON }};
-                if (!is_empty) {
-                    $('#create_project_modal').modal({show:true});
-                }
-            });
-        </script>
+{% load hq_bootstrap_tags %}
+{% load i18n %}
+
+{% block js-inline %}{{ block.super }}
+    <script>
+        $(function(){
+            var is_empty = {{ is_empty|JSON }};
+        if (!is_empty) {
+            $('#create_project_modal').modal({show:true});
+        }
+        });
+    </script>
 {% endblock %}
+
 {% block main_column %}
-<h2>
-    {% if org.logo_filename %}
-    <img src="{% url orgs_logo org.name %}" alt="Logo"/>
+    <div class="page-header">
+        <h2>
+            {% if org.logo_filename %}
+            <img src="{% url orgs_logo org.name %}" alt="Logo"/>
+            {% endif %}
+
+            {{ org.name }} ({{ org.title }})
+        </h2>
+    </div>
+
+    <div>Email: <a href="mailto:{{ org.email }}">{{ org.email }}</a></div>
+    <!-- possibly bad to add http to front of url.  How else to make link absolute? -->
+    <div>URL: <a href="http://{{ org.url }}" target="_blank">{{ org.url }}</a></div>
+    <div>Location: {{ org.location }}</div>
+    <hr/>
+    <h3>
+        Projects
+    </h3>
+    {% if user.is_superuser %}
+    <br/>
+    <h4>Search for Projects to add</h4>
+
+    <form class="form-horizontal" method="post" action="{% url orgs_add_project org.name %}">
+        <fieldset>
+            {% bootstrap_form_errors add_form %}
+            {% bootstrap_fieldset add_form "Add existing project to organization" %}
+            <div class="form-actions"><button type="submit" class="btn btn-primary">Add project</button></div>
+        </fieldset>
+    </form>
     {% endif %}
 
-<div style="margin-left:150px;margin-top:30px;">{{ org.name }} ({{ org.title }})</div></h2>
-    <hr/>
-
-        <div>Email: <a href="mailto:{{ org.email }}">{{ org.email }}</a></div>
-        <!-- possibly bad to add http to front of url.  How else to make link absolute? -->
-        <div>URL: <a href="http://{{ org.url }}" target="_blank">{{ org.url }}</a></div>
-        <div>Location: {{ org.location }}</div>
-        <hr/>
-    <h3>
-            Projects
-    </h3>
-{% if user.is_superuser %}
+{% for domain in domains %}
+<a href="{% url domain_homepage domain %}">{{ domain.display_name }}</a>
 <br/>
-<h4>Search for Projects to add</h4>
-
-<form class="form" method="post" action="{% url orgs_add_project org.name %}" style="margin-top:10px;">
-    <input type="text" placeholder="Project" name="domain_name"/>
-    <button class="btn btn-success" type="submit">Search</button>
-</form>
-{% endif %}
-
-    {% for domain in domains %}
-        <a href="../../a/{{ domain.name }}/reports">{{ domain.display_name }}</a>
-        <br/>
-        <br/>
-    {% endfor %}
+<br/>
+{% endfor %}
 
 {% endblock %}
 {% block sidebar %}
@@ -51,19 +60,19 @@
 <a href="#create_project_modal" class="btn btn-info" data-toggle="modal">Create New Project</a>
 
 <div id="create_project_modal" class="modal hide fade">
-<div class="modal-header">
-<a class="close" data-dismiss="modal">&times;</a>
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">&times;</a>
         <h3>Create new Project for {{ org.title }}</h3>
     </div>
     <form class="form form-horizontal create-project-form" action="{% url orgs_new_project org.name %}" method="post">
         <div class="modal-body">
             <fieldset>
-                {% for global_error in form.non_field_errors %}
+                {% for global_error in reg_form.non_field_errors %}
                 <div class="alert alert-error">
                     {{ global_error }}
                 </div>
                 {% endfor %}
-                {% for field in form.visible_fields %}
+                {% for field in reg_form.visible_fields %}
                 <div class="control-group{% if field.errors %} error{% endif %}">
                     <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
                     <div class="controls">

@@ -104,6 +104,7 @@ class DomainRegistrationForm(forms.Form):
     """
     Form for creating a domain for the first time
     """
+    org = forms.CharField(widget=forms.HiddenInput(), required=False)
     domain_name =  forms.CharField(label='Project Name:', max_length=25)
     tos_confirmed = forms.BooleanField(required=False, label="Terms of Service") # Must be set to False to have the clean_*() routine called
 
@@ -111,7 +112,7 @@ class DomainRegistrationForm(forms.Form):
         data = self.cleaned_data['domain_name'].strip().lower()
         if not re.match("^%s$" % new_domain_re, data):
             raise forms.ValidationError('Only lowercase letters and numbers allowed. Single hyphens may be used to separate words.')
-        if 'org' in self.cleaned_data:
+        if 'org' in self.cleaned_data and self.cleaned_data['org']:
             org_name = self.cleaned_data['org']
             conflict = Domain.get_by_organization_and_slug(org_name, data) or Domain.get_by_organization_and_slug(org_name, data.replace('-', '.'))
         else:
