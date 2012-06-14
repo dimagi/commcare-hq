@@ -6,124 +6,135 @@
 {% block js-inline %}{{ block.super }}
     <script>
         $(function(){
-            var is_empty = {{ is_empty|JSON }};
-        if (!is_empty) {
+        if (!{{ reg_form_empty|JSON }}) {
             $('#create_project_modal').modal({show:true});
         }
+        if (!{{ add_form_empty|JSON }}) {
+            $('#add_project_modal').modal({show:true});
+        }
+        $("#openTOS").click(function(e) {
+            $("#tosBox").slideDown();
+            return false;
+        })
         });
     </script>
 {% endblock %}
 
-{% block main_column %}
-    <div class="page-header">
-        <h2>
-            {% if org.logo_filename %}
-            <img src="{% url orgs_logo org.name %}" alt="Logo"/>
-            {% endif %}
-
-            {{ org.name }} ({{ org.title }})
-        </h2>
-    </div>
-
-    <div>Email: <a href="mailto:{{ org.email }}">{{ org.email }}</a></div>
-    <!-- possibly bad to add http to front of url.  How else to make link absolute? -->
-    <div>URL: <a href="http://{{ org.url }}" target="_blank">{{ org.url }}</a></div>
-    <div>Location: {{ org.location }}</div>
-    <hr/>
-    <h3>
-        Projects
-    </h3>
-    {% if user.is_superuser %}
-    <br/>
-    <h4>Search for Projects to add</h4>
-
-    <form class="form-horizontal" method="post" action="{% url orgs_add_project org.name %}">
-        <fieldset>
-            {% bootstrap_form_errors add_form %}
-            {% bootstrap_fieldset add_form "Add existing project to organization" %}
-            <div class="form-actions"><button type="submit" class="btn btn-primary">Add project</button></div>
-        </fieldset>
-    </form>
-    {% endif %}
-
-{% for domain in domains %}
-<a href="{% url domain_homepage domain %}">{{ domain.display_name }}</a>
-<br/>
-<br/>
-{% endfor %}
-
-{% endblock %}
 {% block sidebar %}
-<br/>
-{% if user.is_superuser %}
-
-<a href="#create_project_modal" class="btn btn-info" data-toggle="modal">Create New Project</a>
-
-<div id="create_project_modal" class="modal hide fade">
-    <div class="modal-header">
-        <a class="close" data-dismiss="modal">&times;</a>
-        <h3>Create new Project for {{ org.title }}</h3>
-    </div>
-    <form class="form form-horizontal create-project-form" action="{% url orgs_new_project org.name %}" method="post">
-        <div class="modal-body">
-            <fieldset>
-                {% for global_error in reg_form.non_field_errors %}
-                <div class="alert alert-error">
-                    {{ global_error }}
-                </div>
-                {% endfor %}
-                {% for field in reg_form.visible_fields %}
-                <div class="control-group{% if field.errors %} error{% endif %}">
-                    <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
-                    <div class="controls">
-                        {% ifnotequal field.name 'tos_confirmed' %}
-                        {{ field }}
-                        {% else %}
-                        <label class="checkbox">{{ field }} I have read and agree to the <a data-toggle="modal" data-target="#termsOfServiceDomainModal" href="#termsOfServiceDomainModal">CommCare HQ Terms of Service</a>.</label>
-                        {% endifnotequal %}
-                        <span class="help-inline"></span>
-                        {% for error in field.errors %}
-                        <span class="help-inline">{{ error }}</span>
-                        {% endfor %}
-                        {% if field.help_text %}
-                        <p class="help-block">
-                            {{ field.help_text }}
-                        </p>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endfor %}
-            </fieldset>
-            <input type="hidden" name="next" value="{% url orgs_landing org.name %}">
-            <input type="hidden" name="org" value="{{ org.name }}">
-
-        </div>
-        <div class="modal-footer">
-            <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-            <button type="submit" class="btn btn-primary">Create New Project</button>
-        </div>
-    </form>
+    <ul class="nav nav-list">
+        <li class="nav-header">Projects</li>
+        {% for domain in domains %}
+        <li><a href="{% url domain_homepage domain %}">{{ domain.display_name }}</a></li>
+        {% endfor %}
+    </ul>
+<div style="padding-left: 20px;">
+    <a href="#create_project_modal" class="btn btn-primary" data-toggle="modal"><i class="icon-pencil icon-white"></i> Create New Project</a>
+    <a href="#add_project_modal" class="btn btn-primary" data-toggle="modal"><i class="icon-plus icon-white"></i> Add Existing Project</a>
 </div>
+{% endblock %}
 
-{% endif %}
+{% block page-title %}
+<ul class="breadcrumb">
+    <li>
+        <strong>Organizations</strong> <span class="divider">&gt;</span>
+    </li>
+    <li>
+
+        <a href="{% url orgs_landing org.name %}">{{ org.name }} ({{ org.title }})</a>
+    </li>
+</ul>
+        {% endblock %}
+
+{% block main_column %}
+    <section>
+
+        {% if org.logo_filename %}
+        <p><img src="{% url orgs_logo org.name %}" alt="Logo"/></p>
+        {% endif %}
+
+        <p>Email: <a href="mailto:{{ org.email }}">{{ org.email }}</a></p>
+        <!-- possibly bad to add http to front of url.  How else to make link absolute? -->
+        <p>URL: <a href="http://{{ org.url }}" target="_blank">{{ org.url }}</a></p>
+        <p>Location: {{ org.location }}</p>
+    </section>
+
+
+
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-<div class="modal hide fade" id="termsOfServiceDomainModal">
-    <div class="modal-header">
-        <a class="close" data-dismiss="modal">&times;</a>
-        <h3>CommCare HQ Terms of Service</h3>
-    </div>
-    <div class="modal-body">
-        The software is provided "AS IS", without warranty of any kind, express or implied,
-        INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-        FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. In no event shall the authors or
-        copyright holders be liable for any claim, damages or other liability whether in an action of
-        contract, tort or otherwise, arising from, out of or in connection with the software or the use
-        or other dealings in the software.
-    </div>
-    <div class="modal-footer">
-        <a href="#" data-dismiss="modal" class="btn">Close</a>
-    </div>
-</div>
+    {% if user.is_superuser %}
+        <div id="create_project_modal" class="modal hide fade">
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal">&times;</a>
+                <h3>Create new Project for {{ org.title }}</h3>
+            </div>
+            <form class="form-horizontal" action="{% url orgs_new_project org.name %}" method="post">
+                <div class="modal-body">
+                    <fieldset>
+                        <legend>Create a new project within this organization</legend>
+                        {% for global_error in reg_form.non_field_errors %}
+                        <div class="alert alert-error">
+                            {{ global_error }}
+                        </div>
+                        {% endfor %}
+                        {% for field in reg_form.visible_fields %}
+                        <div class="control-group{% if field.errors %} error{% endif %}">
+                            <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
+                            <div class="controls">
+                                {% ifnotequal field.name 'tos_confirmed' %}
+                                {{ field }}
+                                {% else %}
+                                <label class="checkbox">{{ field }} I have read and agree to the <a href="#" id="openTOS">CommCare HQ Terms of Service</a>.</label>
+                                <div id="tosBox" class="hide">
+                                    The software is provided "AS IS", without warranty of any kind, express or implied,
+                                    INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+                                    FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. In no event shall the authors or
+                                    copyright holders be liable for any claim, damages or other liability whether in an action of
+                                    contract, tort or otherwise, arising from, out of or in connection with the software or the use
+                                    or other dealings in the software.
+                                </div>
+                                {% endifnotequal %}
+                                <span class="help-inline"></span>
+                                {% for error in field.errors %}
+                                <span class="help-inline">{{ error }}</span>
+                                {% endfor %}
+                                {% if field.help_text %}
+                                <p class="help-block">
+                                    {{ field.help_text }}
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </fieldset>
+                    <input type="hidden" name="next" value="{% url orgs_landing org.name %}">
+                    <input type="hidden" name="org" value="{{ org.name }}">
+                </div>
+
+                <div class="modal-footer">
+                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Create New Project</button>
+                </div>
+            </form>
+        </div>
+        <div id="add_project_modal" class="modal hide fade">
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal">&times;</a>
+                <h3>Create new Project for {{ org.title }}</h3>
+            </div>
+            <form class="form-horizontal" method="post" action="{% url orgs_add_project org.name %}">
+                <div class="modal-body">
+                    <fieldset>
+                        {% bootstrap_form_errors add_form %}
+                        {% bootstrap_fieldset add_form "Add an existing project to this organization" %}
+                    </fieldset>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Add Project</button>
+                </div>
+            </form>
+        </div>
+    {% endif %}
 {% endblock %}

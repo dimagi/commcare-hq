@@ -17,11 +17,13 @@ def orgs_base(request, template="orgs/orgs_base.html"):
 @require_superuser
 def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add_form=None):
     organization = Organization.get_by_name(org)
-    is_empty = not form
+    reg_form_empty = not form
+    add_form_empty = not add_form
     reg_form = form or DomainRegistrationForm(initial={'org': organization.name})
     add_form = add_form or AddProjectForm(org)
     current_domains = Domain.get_by_organization(org)
-    vals = dict( org=organization, domains=current_domains, reg_form=reg_form, add_form=add_form, is_empty=is_empty)
+    vals = dict( org=organization, domains=current_domains, reg_form=reg_form,
+                 add_form=add_form, reg_form_empty=reg_form_empty, add_form_empty=add_form_empty)
     return render_to_response(request, template, vals)
 
 @require_superuser
