@@ -50,6 +50,7 @@ class Domain(Document):
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)
     organization = StringProperty()
+    organization_slug = StringProperty() # the slug for this project within an organization
     
     # domain metadata
     city = StringProperty()
@@ -250,9 +251,16 @@ class Domain(Document):
             if copy is None:
                 return None
             copy.is_snapshot = True
+            copy.organization = self.organization
             copy.snapshot_time = datetime.now()
             copy.save()
             return copy
+
+    def snapshot_of(self):
+        if self.is_snapshot:
+            return Domain.get_by_name(self.original_doc)
+        else:
+            return None
 
     def copied_from(self):
         original = Domain.get_by_name(self.original_doc)
@@ -269,6 +277,10 @@ class Domain(Document):
 
     def __str__(self):
         return self.name
+
+    def organization_doc(self):
+        from corehq.apps.orgs.models import Organization
+        return Organization.get_by_name(self.organization)
 
 ##############################################################################################################
 #

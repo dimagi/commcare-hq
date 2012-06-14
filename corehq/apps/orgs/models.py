@@ -34,3 +34,6 @@ class Organization(Document):
             return (self.fetch_attachment(self.logo_filename), self._attachments[self.logo_filename]['content_type'])
         else:
             return None
+
+    def __str__(self):
+        return self.title

@@ -71,7 +71,7 @@
                         <div class="btn-toolbar secondary-nav">
                             <div class="btn-group">
                             {% if request.project.organization %}
-                                <a href="{% url orgs_landing request.project.organization %}" class="btn btn-info">{{ request.project.organization }}</a>
+                                <a href="{% url orgs_landing request.project.organization %}" class="btn btn-info">{{ request.project.organization_doc.title }}</a>
                                 {% comment %}TODO: Add a drop-down list of organizations the current user is a member of?{% endcomment %}
                             {% endif %}
                             </div>
@@ -144,7 +144,7 @@
                         Originally copied from <a href="{% url domain_snapshot_info request.project.original_doc %}">a snapshot of {{ request.project.copied_from.name }}</a>
                     {% endif %}
                     {% if request.project.copied_from.organization %}
-                        by <a href="{% url orgs_landing request.project.copied_from.organization %}">{{ request.project.copied_from.organization }}</a>
+                        by <a href="{% url orgs_landing request.project.copied_from.organization %}">{{ request.project.copied_from.organization_doc.title }}</a>
                     {% endif %}
                 </div>
             {% endif %}
