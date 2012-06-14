@@ -153,7 +153,7 @@
                                 {{ form.app.name }}
                                 {% if form.app_deleted %}
                                     <span class="label label-info">deleted</span>
-                                    {% if request.couch_user.can_edit_apps %}(<a href="{% url view_app domain form.app_deleted.id %}"
+                                    {% if request.couch_user.can_edit_apps %}(<a href="{% url view_app domain form.app.id %}"
                                                      target="_blank">Restore</a>){% endif %}
                                 {% endif %}
                                 <!-- Make sure to check whether {{ form.app.id }} changed -->
@@ -214,6 +214,10 @@
                                         {% with possibility as form %}
                                         {% include "reports/partials/form_name.html" %}
                                         {% endwith %}
+                                        {% if possibility.app_deleted %}
+                                            <span class="label label-info">deleted</span>
+                                        {% endif %}
+
                                         {% if request.couch_user.can_edit_data %}
                                         <a href="{% url change_submissions_app_id domain %}" class="fix-submissions-link"
                                            data-app_id="{{ form.current_app.id }}"
