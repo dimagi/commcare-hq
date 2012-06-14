@@ -611,7 +611,8 @@ class SubmitHistory(PaginatedHistoryHQReport):
                 time = tz_utils.adjust_datetime_to_timezone(data.received_on, pytz.utc.zone, self.timezone.zone)
                 time = time.strftime("%Y-%m-%d %H:%M:%S")
                 xmlns = data.xmlns
-                xmlns = xmlns_to_name(self.domain, xmlns)
+                app_id = data.app_id
+                xmlns = xmlns_to_name(self.domain, xmlns, app_id=app_id)
                 rows.append([self.form_data_link(data.instanceID), self.usernames[data.userID], time, xmlns])
         return rows
 
