@@ -12,6 +12,8 @@ class HQFormData(FormDataBase):
     
     domain = models.CharField(max_length=200)
     username = models.CharField(max_length=200, blank=True)
+    # todo: uncomment the following
+    # app_id = models.CharField(max_length=200, null=True)
     
     def _get_username(self):
         if self.userID:

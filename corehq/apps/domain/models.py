@@ -50,6 +50,7 @@ class Domain(Document):
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)
     organization = StringProperty()
+    organization_slug = StringProperty() # the slug for this project within an organization
     
     # domain metadata
     city = StringProperty()
@@ -202,9 +203,10 @@ class Domain(Document):
             new_domain_name = new_id
         new_domain = Domain.get(new_id)
         new_domain.name = new_domain_name
-        new_domain.original_doc = self.name
         new_domain.is_snapshot = False
         new_domain.snapshot_time = None
+        new_domain.original_doc = self.name
+        new_domain.organization = None # TODO: use current user's organization (?)
 
         for field in self._dirty_fields:
             if hasattr(new_domain, field):
@@ -249,21 +251,36 @@ class Domain(Document):
             if copy is None:
                 return None
             copy.is_snapshot = True
+            copy.organization = self.organization
             copy.snapshot_time = datetime.now()
             copy.save()
             return copy
 
     def snapshot_of(self):
-        if is_snapshot:
-            return Domain.get_by_name(self.copy_of)
+        if self.is_snapshot:
+            return Domain.get_by_name(self.original_doc)
         else:
             return None
+
+    def copied_from(self):
+        original = Domain.get_by_name(self.original_doc)
+        if self.is_snapshot:
+            return original
+        else: # if this is a copy of a snapshot, we want the original, not the snapshot
+            return Domain.get_by_name(original.original_doc)
+
+    def from_snapshot(self):
+        return not self.is_snapshot and self.original_doc is not None
 
     def snapshots(self):
         return Domain.view('domain/snapshots', key=self.name)
 
     def __str__(self):
         return self.name
+
+    def organization_doc(self):
+        from corehq.apps.orgs.models import Organization
+        return Organization.get_by_name(self.organization)
 
 ##############################################################################################################
 #

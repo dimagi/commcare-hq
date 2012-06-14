@@ -8,6 +8,12 @@ from corehq.apps.domain.models import Domain
 from django.contrib import messages
 
 @require_superuser
+def orgs_base(request, template="orgs/orgs_base.html"):
+    organizations = Organization.get_all()
+    vals = dict(orgs = organizations)
+    return render_to_response(request, template, vals)
+
+@require_superuser
 def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None):
     organization = Organization.get_by_name(org)
     is_empty = not form
