@@ -189,7 +189,7 @@
                         <span class="label label-info">Mislabeled</span>
                         {% if request.couch_user.can_edit_data %}
                             (<a href="{% url change_submissions_app_id domain %}" class="fix-submissions-link"
-                               data-app_id="{{ form.old_app.id }}"
+                               data-app_id="{{ form.current_app.id }}"
                                data-xmlns="{{ form.xmlns }}"
                                data-new_app_id="{{ form.app_copy.id }}"
                                data-new_app_name="{{ form.app_copy.name }}">Fix</a>)
@@ -216,7 +216,7 @@
                                         {% endwith %}
                                         {% if request.couch_user.can_edit_data %}
                                         <a href="{% url change_submissions_app_id domain %}" class="fix-submissions-link"
-                                           data-app_id="{{ form.app.id }}"
+                                           data-app_id="{{ form.current_app.id }}"
                                            data-xmlns="{{ form.xmlns }}"
                                            data-new_app_id="{{ possibility.app.id }}"
                                            data-new_app_name="{{ possibility.app.name }}">{% if form.possibilities|length == 1 %}Fix{% else %}Select this option{% endif %}</a>
@@ -234,12 +234,12 @@
                     </td>
                     <td class="cell-vertical-centered">
                         {% if form.xmlns != None %}
-                            <a class="btn" href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ form.xmlns }}"{% if form.app.id %}&app_id={{ form.app.id }}{% endif %}&type=form'><i class="icon-star-empty"></i> Create Custom Export</a>
+                            <a class="btn" href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ form.xmlns }}"{% if form.current_app.id %}&app_id={{ form.current_app.id }}{% endif %}&type=form'><i class="icon-star-empty"></i> Create Custom Export</a>
                         {% endif %}
                     </td>
                     <td class="cell-vertical-centered">
                         {% if form.submissions %}
-                            <a data-toggle="modal" href="#export-download-status" data-formname="{% include 'reports/partials/form_name.html' %}" data-dlocation='{% url export_default_data domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&app_id={{ form.app.id }}&{{ get_filter_params.urlencode|safe }}&async=true'
+                            <a data-toggle="modal" href="#export-download-status" data-formname="{% include 'reports/partials/form_name.html' %}" data-dlocation='{% url export_default_data domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&app_id={{ form.current_app.id }}&{{ get_filter_params.urlencode|safe }}&async=true'
                                 class="btn btn-primary export-action-download" ><i class="icon-download-alt icon-white"></i> Download</a>
                         {% else %}
                             No Forms

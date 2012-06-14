@@ -1003,6 +1003,8 @@ class ExcelExportReport(StandardDateHQReport):
                 form['has_app'] = False
                 form['show_xmlns'] = True
                 unknown_forms.append(form)
+
+            form['current_app'] = form.get('app')
             forms.append(form)
 
         if unknown_forms:
@@ -1036,7 +1038,6 @@ class ExcelExportReport(StandardDateHQReport):
             for form in unknown_forms:
                 app = None
                 if form['app']['id']:
-                    form['old_app'] = form['app']
                     try:
                         app = app_cache[form['app']['id']]
                         form['has_app'] = True
