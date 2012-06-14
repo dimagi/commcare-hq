@@ -728,7 +728,15 @@ class SurveyKeyword(Document):
         app = form.get_app()
         module = form.get_module()
         lang = app.langs[0]
-        return app.name + "/" + module.name[lang] + "/" + form.name[lang]
+        try:
+            module_name = module.name[lang]
+        except Exception:
+            module_name = module.name.items()[0][1]
+        try:
+            form_name = form.name[lang]
+        except Exception:
+            form_name = form.name.items()[0][1]
+        return app.name + "/" + module_name + "/" + form_name
     
     @property
     def get_id(self):
