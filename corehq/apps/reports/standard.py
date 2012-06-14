@@ -994,6 +994,8 @@ class ExcelExportReport(StandardDateHQReport):
         unknown_forms = []
         for f in get_db().view('reports/forms_by_xmlns', startkey=[self.domain], endkey=[self.domain, {}], group=True):
             form = f['value']
+            if form.get('app_deleted') and not form.get('submissions'):
+                continue
             if 'app' in form:
                 form['has_app'] = True
             else:
