@@ -278,7 +278,7 @@ def custom_export(req, domain):
     else:
         messages.warning(req, "<strong>No data found for that form "
                       "(%s).</strong> Submit some data before creating an export!" % \
-                      xmlns_to_name(domain, export_tag[1]), extra_tags="html")
+                      xmlns_to_name(domain, export_tag[1], app_id=None), extra_tags="html")
         return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug]))
 
 @require_form_export_permission
@@ -363,7 +363,7 @@ def case_details(request, domain, case_id):
 
 
     form_lookups = dict((form.get_id,
-                         "%s: %s" % (form.received_on.date(), xmlns_to_name(domain, form.xmlns))) \
+                         "%s: %s" % (form.received_on.date(), xmlns_to_name(domain, form.xmlns, form.app_id))) \
                         for form in [XFormInstance.get(id) for id in case.xform_ids] \
                         if form)
     return render_to_response(request, "reports/reportdata/case_details.html", {

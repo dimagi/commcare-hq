@@ -86,5 +86,5 @@ class FormType(object):
             cache.set(cache_key, json.dumps(form), 10)
         return form
 
-def xmlns_to_name(domain, xmlns, app_id=None, html=False):
+def xmlns_to_name(domain, xmlns, app_id, html=False):
     return FormType(domain, xmlns, app_id).get_label(html=html)
