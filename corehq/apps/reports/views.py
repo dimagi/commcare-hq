@@ -321,7 +321,7 @@ def export_all_form_metadata(req, domain):
                "userID", "xmlns", "version")
     def _form_data_to_row(formdata):
         def _key_to_val(formdata, key):
-            if key == "type":  return xmlns_to_name(domain, formdata.xmlns)
+            if key == "type":  return xmlns_to_name(domain, formdata.xmlns, app_id=None)
             else:              return getattr(formdata, key)
         return [_key_to_val(formdata, key) for key in headers]
     

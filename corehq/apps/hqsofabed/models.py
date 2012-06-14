@@ -23,6 +23,7 @@ class HQFormData(FormDataBase):
             return XFormInstance.get(self.instanceID).app_id
         except (ResourceNotFound, AttributeError, KeyError):
             return None
+
     def _get_username(self):
         if self.userID:
             return user_id_to_username(self.userID) or ""

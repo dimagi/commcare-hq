@@ -853,7 +853,7 @@ class SubmitDistributionReport(StandardHQReport):
                                  reduce=True)
             for row in view:
                 xmlns = row["key"][-1]
-                form_name = xmlns_to_name(self.domain, xmlns)
+                form_name = xmlns_to_name(self.domain, xmlns, app_id=None)
                 if form_name in predata:
                     predata[form_name]["value"] = predata[form_name]["value"] + row["value"]
                     predata[form_name]["description"] = "(%s) submissions of %s" % \
