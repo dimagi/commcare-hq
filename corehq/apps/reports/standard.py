@@ -1036,6 +1036,7 @@ class ExcelExportReport(StandardDateHQReport):
             for form in unknown_forms:
                 app = None
                 if form['app']['id']:
+                    form['old_app'] = form['app']
                     try:
                         app = app_cache[form['app']['id']]
                         form['has_app'] = True

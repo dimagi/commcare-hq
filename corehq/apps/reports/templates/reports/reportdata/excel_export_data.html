@@ -189,7 +189,7 @@
                         <span class="label label-info">Mislabeled</span>
                         {% if request.couch_user.can_edit_data %}
                             (<a href="{% url change_submissions_app_id domain %}" class="fix-submissions-link"
-                               data-app_id="{{ form.app.id }}"
+                               data-app_id="{{ form.old_app.id }}"
                                data-xmlns="{{ form.xmlns }}"
                                data-new_app_id="{{ form.app_copy.id }}"
                                data-new_app_name="{{ form.app_copy.name }}">Fix</a>)
