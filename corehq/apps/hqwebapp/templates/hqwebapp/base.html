@@ -10,6 +10,17 @@
 
         <link rel="stylesheet" media="screen" href="{% static 'hq_bootstrap/css/hq-bootstrap.css' %}"/>
 
+        <style type="text/css">
+            .snapshot-alert {
+                text-align: right;
+                margin: 0;
+                -webkit-border-radius: 0;
+                border-radius: 0;
+                -moz-border-radius: 0;
+                border-width: 0 0 1px 0;
+            }
+        </style>
+
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hq_bootstrap/js/jquery-1.7.1.min.js' %}"></script>
         {% if DEBUG %}
@@ -60,7 +71,8 @@
                         <div class="btn-toolbar secondary-nav">
                             <div class="btn-group">
                             {% if request.project.organization %}
-                            <a href="{% url orgs_landing request.project.organization %}" class="btn btn-info">{{ request.project.organization }}</a>
+                                <a href="{% url orgs_landing request.project.organization %}" class="btn btn-info">{{ request.project.organization }}</a>
+                                {% comment %}TODO: Add a drop-down list of organizations the current user is a member of?{% endcomment %}
                             {% endif %}
                             </div>
 
@@ -123,6 +135,19 @@
                     </nav>
                 {% endif %}
             </header>
+
+            {% if request.project.original_doc %}
+                <div class="alert alert-info snapshot-alert">
+                    {% if request.project.is_snapshot %}
+                        This is a snapshot of {{ request.project.copied_from }}
+                    {% else %}
+                        Originally copied from <a href="{% url domain_snapshot_info request.project.original_doc %}">a snapshot of {{ request.project.copied_from.name }}</a>
+                    {% endif %}
+                    {% if request.project.copied_from.organization %}
+                        by <a href="{% url orgs_landing request.project.copied_from.organization %}">{{ request.project.copied_from.organization }}</a>
+                    {% endif %}
+                </div>
+            {% endif %}
 
             <div class="hq-page-header-container">
                 <div id="unsupported-browser" class="alert alert-error alert-block alert-full" style="display: none">
