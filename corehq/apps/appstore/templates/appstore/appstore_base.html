@@ -1,0 +1,25 @@
+{% extends "hqwebapp/centered.html" %}
+
+{% block centered-content %}
+
+<h2>App Store</h2>
+<hr/>
+<h4> List of all apps</h4>
+<hr/>
+
+<table>
+    <thead><tr>
+        <th>Name</th><th>Organization</th><th>Downloads</th><th></th>
+    </tr></thead>
+    <tbody>
+    {% for app in apps %}
+    <tr>
+        <td><a href=""{{app.name}}</td>
+        <td>{{app.organization}}</td>
+        <td>?</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
