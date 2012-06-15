@@ -15,4 +15,6 @@ def appstore(request, template="appstore/appstore_base.html"):
 
 @require_superuser
 def app_info(request, domain, template="appstore/app_info.html"):
-    domain = Domain.get_by_name()
+    domain = Domain.get_by_name(domain)
+    vals = dict(domain=domain)
+    return render_to_response(request, template, vals)
