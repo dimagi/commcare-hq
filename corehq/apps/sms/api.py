@@ -10,6 +10,7 @@ from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.smsforms.app import get_responses, start_session
 from corehq.apps.app_manager.models import get_app, Form
 from casexml.apps.case.models import CommCareCase
+from touchforms.formplayer.api import current_question
 
 ALTERNATIVE_BACKENDS = [("+91", unicel_api)] # TODO: move to setting?
 DEFAULT_BACKEND = mach_api
@@ -157,16 +158,45 @@ def incoming(phone_number, text):
                 session.end(False)
                 session.save()
         
+        # Respond to "#CURRENT" keyword
+        elif len(text_words) > 0 and text_words[0] == "#CURRENT":
+            if session is not None:
+                resp = current_question(session.session_id)
+                send_sms_to_verified_number(v, resp.event.text_prompt)
+        
         # Respond to unknown command
         elif len(text_words) > 0 and text_words[0][0] == "#":
             send_sms_to_verified_number(v, "Unknown command '" + text_words[0] + "'")
         
         # If there's an open session, treat the inbound text as the answer to the next question
         elif session is not None:
-            responses = get_responses(msg)
-            if len(responses) > 0:
-                response_text = format_message_list(responses)
-                send_sms_to_verified_number(v, response_text)
+            resp = current_question(session.session_id)
+            event = resp.event
+            valid = False
+            error_msg = None
+            
+            # Validate select questions
+            if event.datatype == "select":
+                try:
+                    answer = int(text.strip())
+                    if answer >= 1 and answer <= len(event._dict["choices"]):
+                        valid = True
+                except Exception:
+                    pass
+                if not valid:
+                    error_msg = "Invalid Response. " + event.text_prompt
+            
+            # For now, anything else passes
+            else:
+                valid = True
+            
+            if valid:
+                responses = get_responses(msg)
+                if len(responses) > 0:
+                    response_text = format_message_list(responses)
+                    send_sms_to_verified_number(v, response_text)
+            else:
+                send_sms_to_verified_number(v, error_msg)
         
         # Try to match the text against a keyword to start a survey
         elif len(text_words) > 0:

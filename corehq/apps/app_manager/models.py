@@ -641,6 +641,7 @@ class VersionedDoc(Document):
             if 'update' not in response_json:
                 response_json['update'] = {}
             response_json['update']['app-version'] = self.version
+
     def save_copy(self):
         cls = self.__class__
         copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True).all()

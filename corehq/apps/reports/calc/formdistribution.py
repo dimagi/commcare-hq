@@ -16,7 +16,7 @@ def get_chart_data(domain, user=None):
                          reduce=True)
     for row in view:
         xmlns = row["key"][-1]
-        form_name = xmlns_to_name(domain, xmlns)
+        form_name = xmlns_to_name(domain, xmlns, app_id=None)
         data.append({"display": form_name,
                      "value": row["value"],
                      "description": "(%s) submissions of %s" % \

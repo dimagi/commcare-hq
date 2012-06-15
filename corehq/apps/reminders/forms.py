@@ -1,5 +1,6 @@
 import json
 import re
+from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.forms.fields import *
 from django.forms.forms import Form
@@ -283,4 +284,59 @@ class ComplexCaseReminderForm(Form):
             if value is None or value == "":
                 raise ValidationError("Please enter the name of the case property.")
             return value
+    
+    def clean_default_lang(self):
+        return self.cleaned_data.get("default_lang").strip()
+    
+    def clean(self):
+        cleaned_data = super(ComplexCaseReminderForm, self).clean()
+        
+        # Do validation on schedule length and minimum intraday ticks
+        
+        events = cleaned_data.get("events")
+        iteration_type = cleaned_data.get("iteration_type")
+        max_iteration_count = cleaned_data.get("max_iteration_count")
+        schedule_length = cleaned_data.get("schedule_length")
+        event_interpretation = cleaned_data.get("event_interpretation")
+        
+        if (events is not None) and (iteration_type is not None) and (max_iteration_count is not None) and (schedule_length is not None) and (event_interpretation is not None):
+            if event_interpretation == EVENT_AS_SCHEDULE:
+                if schedule_length < 1:
+                    self._errors["schedule_length"] = self.error_class(["Schedule length must be greater than 0."])
+                    del cleaned_data["schedule_length"]
+            else:
+                if schedule_length < 0:
+                    self._errors["schedule_length"] = self.error_class(["Days to wait cannot be a negative number."])
+                    del cleaned_data["schedule_length"]
+                elif (max_iteration_count != 1) and (schedule_length == 0):
+                    first = True
+                    minimum_tick = None
+                    for e in events:
+                        if first:
+                            minimum_tick = timedelta(days = e.day_num, hours = e.fire_time.hour, minutes = e.fire_time.minute)
+                            first = False
+                        else:
+                            this_tick = timedelta(days = e.day_num, hours = e.fire_time.hour, minutes = e.fire_time.minute)
+                            if this_tick < minimum_tick:
+                                minimum_tick = this_tick
+                    if minimum_tick < timedelta(hours = 1):
+                        self._errors["events"] = self.error_class(["Minimum tick for a schedule repeated multiple times intraday is 1 hour."])
+                        del cleaned_data["events"]
+        
+        # Ensure that there is a translation for the default language
+        
+        default_lang = cleaned_data.get("default_lang")
+        method = cleaned_data.get("method")
+        events = cleaned_data.get("events")
+        
+        if (default_lang is not None) and (method is not None) and (events is not None):
+            if (method == "sms" or method == "callback"):
+                for e in events:
+                    if default_lang not in e.message:
+                        self._errors["events"] = self.error_class(["Every message must contain a translation for the default language."])
+                        del cleaned_data["events"]
+                        break
+        
+        return cleaned_data
+
 

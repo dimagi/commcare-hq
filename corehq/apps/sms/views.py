@@ -105,14 +105,23 @@ def send_to_recipients(request, domain):
 
         unknown_usernames = []
         GROUP = "[group]"
+
         for recipient in recipients:
-            if not '@' in recipient:
+            if recipient.endswith(GROUP):
                 name = recipient[:-len(GROUP)].strip()
                 group_names.append(name)
+            elif re.match(r'^\+\d+', recipient): # here we expect it to have a plus sign
+                phone_users = filter(lambda u: u.domain == domain,
+                                     CouchUser.view("users/by_default_phone", # search both with and w/o the plus
+                                             keys=[recipient, recipient[1:]], include_docs=True).all())
+                if len(phone_users) > 0:
+                    phone_numbers.append((phone_users[0], recipient))
+                else:
+                    phone_numbers.append((None, recipient))
             elif re.match(r'[\w\.]+', recipient):
                 usernames.append(recipient)
-            elif re.match(r'\+\d+', recipient):
-                phone_numbers.append((None, recipient))
+            else:
+                unknown_usernames.append(recipient)
 
 
         login_ids = dict([(r['key'], r['id']) for r in get_db().view("users/by_username", keys=usernames).all()])
@@ -121,12 +130,18 @@ def send_to_recipients(request, domain):
                 unknown_usernames.append(username)
         login_ids = login_ids.values()
 
-        users = CouchUser.view('users/by_group', keys=[[domain, gn] for gn in group_names], include_docs=True).all()
+        users = []
+        empty_groups = []
+        if len(group_names) > 0:
+            users.extend(CouchUser.view('users/by_group', keys=[[domain, gn] for gn in group_names],
+                                        include_docs=True).all())
+            if len(users) == 0:
+                empty_groups = group_names
+
         users.extend(CouchUser.view('_all_docs', keys=login_ids, include_docs=True).all())
         users = [user for user in users if user.is_active and not user.is_deleted()]
 
         phone_numbers.extend([(user, user.phone_number) for user in users])
-
 
         failed_numbers = []
         no_numbers = []
@@ -141,7 +156,10 @@ def send_to_recipients(request, domain):
                     number,
                     user.raw_username if user else "<no username>"
                 ))
-        if failed_numbers or unknown_usernames or no_numbers:
+
+        if empty_groups or failed_numbers or unknown_usernames or no_numbers:
+            if empty_groups:
+                messages.error(request, "The following groups don't exist: %s"  % (', '.join(empty_groups)))
             if no_numbers:
                 messages.error(request, "The following users don't have phone numbers: %s"  % (', '.join(no_numbers)))
             if failed_numbers:

@@ -7,6 +7,14 @@ def get_form_list(domain):
         lang = latest_app.langs[0]
         for m in latest_app.get_modules():
             for f in m.get_forms():
-                form_list.append({"code" :  f.unique_id, "name" : app.name + "/" + m.name[lang] + "/" + f.name[lang]})
+                try:
+                    module_name = m.name[lang]
+                except Exception:
+                    module_name = m.name.items()[0][1]
+                try:
+                    form_name = f.name[lang]
+                except Exception:
+                    form_name = f.name.items()[0][1]
+                form_list.append({"code" :  f.unique_id, "name" : app.name + "/" + module_name + "/" + form_name})
     return form_list
 
