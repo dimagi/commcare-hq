@@ -191,6 +191,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn):
         return itertools.chain(self.indices, self.reverse_indices)
         
     def get_json(self):
+        
         return {
             # referrals and actions excluded here
             "domain": self.domain,
@@ -224,6 +225,13 @@ class CommCareCase(CaseBase, IndexHoldingMixIn):
                     "case_type": index.referenced_type,
                     "case_id": index.referenced_id
                 }) for index in self.indices
+            ]),
+            "reverse_indices": dict([
+                # all indexes are stored in the following form
+                (index.identifier, {
+                    "case_type": index.referenced_type,
+                    "case_id": index.referenced_id
+                }) for index in self.reverse_indices
             ]),
         }
     
