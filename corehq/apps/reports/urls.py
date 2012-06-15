@@ -69,9 +69,26 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^export/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="export_report_dispatcher", kwargs={
         'export': True
     }),
+
+    url(r'^async/filters/custom/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="async_report_dispatcher", kwargs={
+        'async_filters': True
+    }),
+    url(r'^async/custom/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="async_report_dispatcher", kwargs={
+        'async': True
+    }),
     url(r'^custom/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="custom_report_dispatcher"),
+
+    url(r'^async/filters/(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="async_report_dispatcher", kwargs={
+        'async_filters': True
+    }),
+    url(r'^async/(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="async_report_dispatcher", kwargs={
+        'async': True
+    }),
     url(r'^(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="report_dispatcher"),
 
 
 )
 
+data_urls = patterns('corehq.apps.reports.views',
+    url(r'^(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="data_report_dispatcher"),
+)

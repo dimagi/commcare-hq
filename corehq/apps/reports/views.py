@@ -59,7 +59,8 @@ def default(request, domain, template="reports/report_base.html"):
     context = {
         'domain': domain,
         'slug': None,
-        'report': {'name': "Select a Report to View"}
+        'report': {'name': "Select a Report to View"},
+        'async_report': True
     }
     return render_to_response(request, template, context)
 
@@ -277,7 +278,7 @@ def custom_export(req, domain):
     else:
         messages.warning(req, "<strong>No data found for that form "
                       "(%s).</strong> Submit some data before creating an export!" % \
-                      xmlns_to_name(domain, export_tag[1]), extra_tags="html")
+                      xmlns_to_name(domain, export_tag[1], app_id=None), extra_tags="html")
         return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug]))
 
 @require_form_export_permission
@@ -305,6 +306,8 @@ def edit_custom_export(req, domain, export_id):
                                "table_config": table_config,
                                "slug": slug,
                                "domain": domain})
+
+@login_or_digest
 @require_form_export_permission
 @login_and_domain_required
 def export_all_form_metadata(req, domain):
@@ -318,7 +321,7 @@ def export_all_form_metadata(req, domain):
                "userID", "xmlns", "version")
     def _form_data_to_row(formdata):
         def _key_to_val(formdata, key):
-            if key == "type":  return xmlns_to_name(domain, formdata.xmlns)
+            if key == "type":  return xmlns_to_name(domain, formdata.xmlns, app_id=None)
             else:              return getattr(formdata, key)
         return [_key_to_val(formdata, key) for key in headers]
     
@@ -360,7 +363,7 @@ def case_details(request, domain, case_id):
 
 
     form_lookups = dict((form.get_id,
-                         "%s: %s" % (form.received_on.date(), xmlns_to_name(domain, form.xmlns))) \
+                         "%s: %s" % (form.received_on.date(), xmlns_to_name(domain, form.xmlns, form.app_id))) \
                         for form in [XFormInstance.get(id) for id in case.xform_ids] \
                         if form)
     return render_to_response(request, "reports/reportdata/case_details.html", {
@@ -482,7 +485,7 @@ def emailtest(request, domain, report_slug):
 
 @login_and_domain_required
 @datespan_default
-def report_dispatcher(request, domain, report_slug, return_json=False, map='STANDARD_REPORT_MAP', export=False, custom=False):
+def report_dispatcher(request, domain, report_slug, return_json=False, map='STANDARD_REPORT_MAP', export=False, custom=False, async=False, async_filters=False, static_only=False):
     mapping = getattr(settings, map, None)
     if not mapping or (custom and not domain in mapping):
         return HttpResponseNotFound("Sorry, no reports have been configured yet.")
@@ -499,11 +502,15 @@ def report_dispatcher(request, domain, report_slug, return_json=False, map='STAN
                     return k.as_json()
                 elif export:
                     return k.as_export()
+                elif async:
+                    return k.as_async(static_only=static_only)
+                elif async_filters:
+                    return k.as_async_filters()
                 else:
                     return k.as_view()
     raise Http404
 
 @login_and_domain_required
 @datespan_default
-def custom_report_dispatcher(request, domain, report_slug, export=False):
-    return report_dispatcher(request, domain, report_slug, export=export, map='CUSTOM_REPORT_MAP', custom=True)
+def custom_report_dispatcher(request, domain, report_slug, export=False, async=False, async_filters=False):
+    return report_dispatcher(request, domain, report_slug, export=export, map='CUSTOM_REPORT_MAP', custom=True, async=async, async_filters=async_filters)

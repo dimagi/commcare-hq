@@ -1,16 +1,19 @@
 {% load i18n %}
+{% load hq_shared_tags %}
 {% load hq_bootstrap_tags %}
-<form name="update_project_settings" class="form-horizontal" method="post">
+<form id="my-project-settings-form" name="update_project_settings" class="form-horizontal" method="post">
     <input type="hidden" name="form_type" value="project-settings" />
     {% bootstrap_form_errors proj_settings_form %}
-    {% for field in proj_settings_form.hidden_fields %}
-        {{ field }}
-    {% endfor %}
     {% bootstrap_fieldset proj_settings_form "User-Specific Project Settings" %}
-    <div class="form-actions"><button type="submit" id="update-proj-settings" class="btn disabled">Update My Project Settings</button></div>
+    <div class="form-actions"><button type="submit" id="update-proj-settings" data-bind="hqbSubmitReady: form_is_ready" class="btn disabled">Update My Project Settings</button></div>
 </form>
+<script src="{% static 'users/ko/project_settings.js' %}"></script>
 <script type="text/javascript">
     $(function() {
+        ko.applyBindings(new HQTimezoneHandler({
+            override: {{ override_global_tz|lower }}
+        }), $('#my-project-settings-form').get(0));
+
         var $globalTimezone = $('#id_global_timezone'),
                $userTimezone = $('#id_user_timezone');
 
@@ -25,18 +28,8 @@
         });
         $userTimezone.after($matchTzButton);
 
-        var $globalTimezoneStatus = $('<div class="control-group" />');
-        $globalTimezoneStatus.append($('<label class="control-label" />').text('Global Timezone:'));
-        $globalTimezoneStatus.append($('<div class="controls" />').append($('<span class="uneditable-input input-xlarge" />').text($globalTimezone.val())));
-
-        $userTimezone.parent().parent().before($globalTimezoneStatus);
-
         compare_global_user_timezones();
-        $userTimezone.change(function () {
-          compare_global_user_timezones();
-            $('#update-proj-settings').addClass('btn-primary').removeClass('disabled');
-
-        });
+        $userTimezone.change(compare_global_user_timezones);
 
         $('#update-proj-settings').click(function () {
             if ($(this).hasClass('disabled'))

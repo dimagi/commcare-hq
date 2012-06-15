@@ -44,13 +44,10 @@ class DomainMiddleware(object):
         
         if domain_from_session and domain_from_session in active_domains:
             user.selected_domain = domain_from_session
-            
+
         if not domain_from_session and len(active_domains) == 1:
             request.session[_SESSION_KEY_SELECTED_DOMAIN] = active_domains[0]
-            user.selected_domain = active_domains[0]           
-
-        if user.selected_domain:
-            user.selected_domain.apply_migrations()
+            user.selected_domain = active_domains[0]
 
         return None
     

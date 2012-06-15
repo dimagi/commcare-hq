@@ -1,9 +1,11 @@
+{% load hq_shared_tags %}
 <label for="{{ select.cssId }}" class="control-label">{{ select.label }}</label>
 <div class="controls">
-    <select id="{{ select.cssId }}" class="{{ select.cssClasses }}" name="{{ slug }}"{% if select.selected %} data-value="{{ select.selected }}"{% endif %}>
-        <option value="">{{ select.default }}</option>
-        {% for opt in select.options %}
-            <option value="{{ opt.val }}">{{ opt.text }}</option>
-        {% endfor %}
+    <select id="{{ select.cssId }}" class="{{ select.cssClasses }}" data-bind="options: select_params, optionsText: 'text', optionsValue: 'val', optionsCaption: '{{ select.default }}', value: current_selection"  name="{{ slug }}"{% if select.selected %} data-value="{{ select.selected }}"{% endif %}>
     </select>
 </div>
+<script type="text/javascript">
+    $(function () {
+       ko.applyBindings({select_params: {{ select.options|JSON }}, current_selection: ko.observable('{{ select.selected|default:'' }}')}, $('#{{ select.cssId }}').parent().get(0));
+    });
+</script>

@@ -5,12 +5,14 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm
-from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET
+from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, SurveyKeyword
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.web import render_to_response
 from dimagi.utils.parsing import string_to_datetime
 from tropo import Tropo
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
+from .util import get_form_list
+from corehq.apps.app_manager.models import get_app, ApplicationBase
 
 @login_and_domain_required
 def default(request, domain):
@@ -119,6 +121,8 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
     else:
         h = None
     
+    form_list = get_form_list(domain)
+    
     if request.method == "POST":
         form = ComplexCaseReminderForm(request.POST)
         if form.is_valid():
@@ -167,9 +171,66 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
         form = ComplexCaseReminderForm(initial=initial)
     
     return render_to_response(request, "reminders/partial/add_complex_reminder.html", {
-        "domain":   domain
-       ,"form":     form
+        "domain":       domain
+       ,"form":         form
+       ,"form_list":    form_list
     })
 
+
+@login_and_domain_required
+def manage_surveys(request, domain):
+    context = {
+        "domain" : domain,
+        "keywords" : SurveyKeyword.get_all(domain)
+    }
+    return render_to_response(request, "reminders/partial/manage_surveys.html", context)
+
+@login_and_domain_required
+def add_keyword(request, domain, keyword_id=None):
+    if keyword_id is None:
+        s = SurveyKeyword(domain = domain)
+    else:
+        s = SurveyKeyword.get(keyword_id)
+    
+    context = {
+        "domain" : domain,
+        "form_list" : get_form_list(domain),
+        "errors" : [],
+        "keyword" : s
+    }
+    
+    if request.method == "GET":
+        return render_to_response(request, "reminders/partial/add_keyword.html", context)
+    else:
+        keyword = request.POST.get("keyword", None)
+        form_unique_id = request.POST.get("survey", None)
+        
+        if keyword is not None:
+            keyword = keyword.strip()
+        
+        s.keyword = keyword
+        s.form_unique_id = form_unique_id
+        
+        errors = []
+        if keyword is None or keyword == "":
+            errors.append("Please enter a keyword.")
+        if form_unique_id is None:
+            errors.append("Please create a form first, and then add a keyword for it.")
+        duplicate_entry = SurveyKeyword.get_keyword(domain, keyword)
+        if duplicate_entry is not None and keyword_id != duplicate_entry._id:
+            errors.append("Keyword already exists.")
+        
+        if len(errors) > 0:
+            context["errors"] = errors
+            return render_to_response(request, "reminders/partial/add_keyword.html", context)
+        else:
+            s.save()
+            return HttpResponseRedirect(reverse("manage_surveys", args=[domain]))
+
+@login_and_domain_required
+def delete_keyword(request, domain, keyword_id):
+    s = SurveyKeyword.get(keyword_id)
+    s.retire()
+    return HttpResponseRedirect(reverse("manage_surveys", args=[domain]))
 
 

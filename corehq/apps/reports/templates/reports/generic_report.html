@@ -1,36 +1,17 @@
-{% extends "reports/report_base.html" %}
+{% extends report_base|default:"reports/report_base.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
 
-{% block js-inline %} {{ block.super }}
-<script type="text/javascript">
-    $(function() {
-        {% if report_datatables %}
-            var defaultNumRows = {{ report_datatables.defaultNumRows|default:10 }};
-            var reportTables = new HQReportDataTables({
-                defaultRows: defaultNumRows,
-                startAtRowNum: {{ report_datatables.startAtRowNum|default:0 }},
-                aoColumns: {{ report.headers.render_aoColumns|JSON }},
-                autoWidth: {{ report.headers.auto_width|JSON }},
-                {% if report.headers.custom_sort %}customSort: {{ report.headers.custom_sort|JSON }}{% endif %}
-            });
-            reportTables.render();
-        {% endif %}
-        $('.header-tooltip').tooltip();
-    });
-</script>
-{% endblock %}
-
 {% block reportcontent %}
-<table class="table table-striped datatable" {% if ajax_source %}data-source="{{ ajax_source }}"{% endif %}{% if ajax_params and ajax_source %}{% for param in ajax_params %} data-{{ param.name }}="{{ param.value }}"{% endfor %}{% if filter %} data-filter="true"{% endif %}{% endif %}>
+<table class="table table-striped datatable" {% if filter and ajax_source %} data-filter="true"{% endif %}>
     <thead>
         {%  if report.headers.complex %}
             {{ report.headers.render_html|safe }}
         {% else %}
         <tr>
             {% for header in report.headers %}
-<               <th {% if not ajax_source %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
+                <th {% if not ajax_source %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
                     <i class="icon-hq-white icon-hq-doublechevron"></i>
                     {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
                     {% if header.help_text %}
@@ -42,6 +23,13 @@
         {% endif %}
     </thead>
     <tbody>
+        {% if ajax_source %}
+        <tr>
+            <td colspan="{{ report.headers.header|length }}" class="dataTables_empty">
+                Loading data, please wait...
+            </td>
+        </tr>
+        {% endif %}
         {% for row in report.rows %}
             <tr>
                 {% for thing in row %}
@@ -63,4 +51,25 @@
     </tfoot>
     {% endif %}
 </table>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(function() {
+            {% if report_datatables %}
+                var defaultNumRows = {{ report_datatables.defaultNumRows|default:10 }};
+                var reportTables = new HQReportDataTables({
+                    defaultRows: defaultNumRows,
+                    startAtRowNum: {{ report_datatables.startAtRowNum|default:0 }},
+                    aoColumns: {{ report.headers.render_aoColumns|JSON }},
+                    autoWidth: {{ report.headers.auto_width|JSON }},
+                    {% if report.headers.custom_sort %}customSort: {{ report.headers.custom_sort|JSON }},{% endif %}
+                    {% if ajax_source %}ajaxSource: '{{ ajax_source }}',{% endif %}
+                    {% if ajax_params %}ajaxParams: {{ ajax_params|JSON }},{% endif %}
+                });
+                reportTables.render();
+            {% endif %}
+            $('.header-tooltip').tooltip();
+        });
+    </script>
 {% endblock %}

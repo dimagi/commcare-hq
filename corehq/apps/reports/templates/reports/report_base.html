@@ -6,8 +6,8 @@
 <script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
 {% include "imports/flot.html" %}
 <script type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
-<script type="text/javascript" src="{% static 'hqwebapp/js-custom/hq.new-notify.js' %}"></script>
+<script type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery.history.js' %}"></script>
+<script type="text/javascript" src="{% static 'reports/javascripts/async_reports.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -15,7 +15,7 @@
     <script type="text/javascript">
         $(function() {
             var reportFilterCookieName = '{{ slug }}reportFiltersHidden',
-                    savedPath = '/a/{{ domain }}/reports/';
+                    savedPath = '/a/{{ domain }}/';
             $("#reportFilters").addClass($.cookie(reportFilterCookieName));
             $("#reportFilters").on('hidden', function () {
                 $.cookie(reportFilterCookieName, '', {path: savedPath, expires: 1});
@@ -24,12 +24,12 @@
                 $.cookie(reportFilterCookieName, 'in', {path: savedPath, expires: 1});
             });
 
-            $('#paramSelectorForm button[type="submit"]').addClass('disabled');
-            $('#paramSelectorForm').change(enableFilterSubmit);
-            $('#paramSelectorForm fieldset button').click(enableFilterSubmit);
-            function enableFilterSubmit () {
-                $('#paramSelectorForm button[type="submit"]').removeClass('disabled').addClass('btn-primary');
-            }
+            {% if slug and async_report %}
+            var asyncReport = new HQAsyncReport({
+                baseSlug: '{{ base_slug|default:'reports' }}'
+            });
+            asyncReport.init();
+            {% endif %}
         });
     </script>
 {% endif %}
@@ -39,6 +39,8 @@
     {{ block.super }}
     <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
 {% endblock %}
+
+{% block title-extra %} - Report: {{ report.name|default:"Unknown Report"|safe }}{% endblock %}
 
 {% block page-title %}
     <ul class="breadcrumb">
@@ -57,7 +59,7 @@
 
 {% block sidebar %}{% include "reports/partials/report_list.html" %}{% endblock %}
 {% block main_column %}
-    <div class="hq-accordion-control" id="reportFiltersAccordion">
+    <div class="hq-accordion-control{% if async_report%} hide{% endif %}" id="reportFiltersAccordion">
         <div class="accordion-heading">
             {% if not report_hide_filters %}<a href="#reportFilters" data-toggle="collapse">Advanced Filters</a>{% else %}
                 <div class="no-filters">&nbsp;</div>
@@ -68,61 +70,27 @@
         <div id="reportFilters" class="accordion-body collapse">
             <div class="accordion-inner">
                 <form method="get" id="paramSelectorForm" class="form-horizontal">
-                    {% if custom_fields %}
-                        <fieldset>
-                            <legend>Report Filters</legend>
-                            {% for field in custom_fields %}
-                            <fieldset id="fieldset_{{ field.slug }}">
-                                <div id="group_{{ field.slug }}" class="control-group">
-                                    {{ field.field|safe }}
-                                </div>
-                            </fieldset>
-                            {% endfor %}
-                        </fieldset>
-                    {% endif %}
-                    {% if show_dates or custom_fields or show_user_filter %}
-                        <div class="form-actions">
-                            <button type="submit" class="btn btn-large">Update Filters</button>
-                            <a href="#reportFilters" data-toggle="collapse" class="btn btn-large">Close</a>
-                        </div>
-                    {% endif %}
+                    <div id="hq-report-filters">
+                        {% if not async_report %}
+                            {% include "reports/async/filters.html" %}
+                        {% endif %}
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" data-loading-text="Generating Report..." data-standard-text="Update Filters" class="btn btn-large disabled">Update Filters</button>
+                        <a href="#reportFilters" data-toggle="collapse" class="btn btn-large">Close</a>
+                    </div>
                 </form>
             </div>
         </div>
         {% endif %}
     </div>
-    {% if show_time_notice %}{% include "hqwebapp/partials/time-notice.html"%}{% endif %}
     <div id="report-content">
+        {% if not async_report and slug %}
         {% block reportcontent %}
-        {% if request.couch_user.can_view_reports or request.couch_user.get_viewable_reports %}
-            <h6 style="text-align: center; margin-top: 200px;">Select a Report to View</h6>
-        {% else %}
-            <h6 style="text-align: center; margin-top: 100px;">
-                <i class="icon-info-sign" id="no-viewable-reports"></i>
-                You are not registered to see reports
-            </h6>
-            <script>
-                $(function () {
-                    $('.sidebar').hide();
-                    $('.hq-double-col').css({background: 'white'});
-                    $('.hq-content').removeClass('span10').addClass('span12').css({margin: 0});
-                    $('#no-viewable-reports').popover({
-                        placement: 'top',
-                        title: "We're serious about security",
-                        content: "Your project may contain sensitive personal and medical information, " +
-                                "so we don't show this data to " +
-                                "just anyone. If you think you should have access to your project's reports " +
-                                "please contact your project lead."
-                    });
-                });
-            </script>
-        {% endif %}
-            <script>
-                $(function () {
-                    $('#reportFiltersAccordion').hide();
-                });
-            </script>
         {% endblock %}
+        {% else %}
+        {% include "reports/async/default.html" %}
+        {% endif %}
     </div>
 {% endblock %}
 

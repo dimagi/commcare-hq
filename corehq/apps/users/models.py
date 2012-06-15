@@ -6,7 +6,6 @@ from __future__ import absolute_import
 from datetime import datetime
 import logging
 import re
-from corehq.apps.domain.models import Domain
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
@@ -246,6 +245,7 @@ class DomainMembership(DocumentSchema):
     last_login = DateTimeProperty()
     date_joined = DateTimeProperty()
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
+    override_global_tz = BooleanProperty(default=False)
 
     role_id = StringProperty()
 
@@ -430,7 +430,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         app_label = 'users'
 
     def __unicode__(self):
-        return "couch user %s" % self.get_id
+        return "%s %s" % (self.__class__.__name__, self.get_id)
 
     def get_email(self):
         return self.email
@@ -744,7 +744,9 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
     
     @property
     def username_in_report(self):
-        return self.raw_username
+        if (self.first_name == '' and self.last_name == ''):
+            return self.raw_username
+        return self.full_name
 
     @classmethod
     def create_or_update_from_xform(cls, xform):
@@ -1018,7 +1020,10 @@ class WebUser(CouchUser):
 
     def is_web_user(self):
         return True
-    
+
+    def get_email(self):
+        return self.email or self.username
+
     def get_domain_membership(self, domain):
         domain_membership = None
         try:
@@ -1180,8 +1185,7 @@ class PublicUser(FakeUser):
         dm = CustomDomainMembership(domain=domain, is_admin=False)
         dm.set_permission('view_reports', True)
         self.domain_memberships = [dm]
-        print self.has_permission(domain, 'view_reports')
-    
+
     def get_role(self, domain=None):
         assert(domain == self.domain)
         return super(PublicUser, self).get_role(domain)
@@ -1239,3 +1243,4 @@ class RemoveWebUserRecord(DeleteRecord):
         user.save()
 
 from .signals import *
+from corehq.apps.domain.models import Domain
