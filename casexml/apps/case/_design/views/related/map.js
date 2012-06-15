@@ -5,7 +5,7 @@ function(doc) {
                 emit([doc.domain, doc._id, "index"], doc.indices[i]);
                 
                 var reverse_index = {
-                    indentifier:     doc.indices[i].indentifier,
+                    identifier:      doc.indices[i].identifier,
                     referenced_type: doc.indices[i].referenced_type,
                     referenced_id:   doc._id
                 };
