@@ -17,11 +17,18 @@
             var reportFilterCookieName = '{{ slug }}reportFiltersHidden',
                     savedPath = '/a/{{ domain }}/';
             $("#reportFilters").addClass($.cookie(reportFilterCookieName));
+            if($.cookie(reportFilterCookieName) == 'in')
+                $("#toggle-report-filters").button('hide');
+            else
+                $("#toggle-report-filters").button('show');
+
             $("#reportFilters").on('hidden', function () {
                 $.cookie(reportFilterCookieName, '', {path: savedPath, expires: 1});
+                $("#toggle-report-filters").button('show');
             });
             $("#reportFilters").on('shown', function () {
                 $.cookie(reportFilterCookieName, 'in', {path: savedPath, expires: 1});
+                $("#toggle-report-filters").button('hide');
             });
 
             {% if slug and async_report %}
@@ -40,7 +47,7 @@
     <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
 {% endblock %}
 
-{% block title-extra %} - Report: {{ report.name|default:"Unknown Report"|safe }}{% endblock %}
+{% block title %} - Report: {{ report.name|default:"Unknown Report"|safe }}{% endblock %}
 
 {% block page-title %}
     <ul class="breadcrumb">
@@ -61,9 +68,11 @@
 {% block main_column %}
     <div class="hq-accordion-control{% if async_report%} hide{% endif %}" id="reportFiltersAccordion">
         <div class="accordion-heading">
-            {% if not report_hide_filters %}<a href="#reportFilters" data-toggle="collapse">Advanced Filters</a>{% else %}
-                <div class="no-filters">&nbsp;</div>
+            <div class="accordion-actions">
+            {% if not report_hide_filters %}
+                <span>Report Actions:</span> <a href="#reportFilters" class="btn" id="toggle-report-filters" data-toggle="collapse" data-show-text="Show Filter Options" data-hide-text="Hide Filter Options">Filter Options</a>
             {% endif %}
+            </div>
             <div id="extra-filter-info" class="accordion-extra"></div>
         </div>
         {% if not report_hide_filters %}
