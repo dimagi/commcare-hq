@@ -135,6 +135,7 @@ HQ_APPS = (
     'casexml.apps.phone',
     'corehq.apps.cleanup',
     'corehq.apps.cloudcare',
+    'corehq.apps.appstore',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
     'corehq.apps.hqadmin',
@@ -371,6 +372,7 @@ XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
 COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'api',
         'app_manager',
+        'appstore',
         'orgs',
         'auditcare',
         'builds',
