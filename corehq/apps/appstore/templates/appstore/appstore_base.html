@@ -2,20 +2,37 @@
 
 {% block centered-content %}
 
-<h2>App Store</h2>
+<h2><a href="{% url appstore %}">App Store</a></h2>
 <hr/>
-<h4> List of all apps</h4>
+<form action="{% url appstore_search_snapshots %}" method="get" class="form-search">
+    <div class="controls">
+        <div class="input-append">
+            <input type="text" name="q" placeholder="Search for apps..." value="{{ search_query }}" class="search-query" />{% if search_query %}<a href="{% url appstore %}" class="btn">Clear</a>{% endif %}<button class="btn btn-primary" type="submit">Search</button>
+        </div>
+    </div>
+</form>
 <hr/>
 
-<table>
-    <thead><tr>
-        <th>Name</th><th>Organization</th><th>Downloads</th><th></th>
-    </tr></thead>
+{% if search_query %}
+    <h3>{{ apps|length }} results</h3>
+{% endif %}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Organization</th>
+            <th>Copies</th>
+            <th>License</th>
+            <th>Last updated</th>
+        </tr>
+    </thead>
     <tbody>
     {% for app in apps %}
     <tr>
         <td><a href="{% url app_info app.name %}">{{ app.copied_from.display_name }}</a></td>
         <td>
+
         {% if domain.organization %}
         <a href="{% url orgs_landing app.organization %}">{{ app.organization }}</a>
         {% else %}
@@ -23,6 +40,17 @@
         {% endif %}
         </td>
         <td>?</td>
+
+            {% if app.organization %}
+                <a href="{% url orgs_landing app.organization %}">{{ app.organization.title }}</a>
+            {% else %}
+                None
+            {% endif %}
+        </td>
+        <td>{{ app.copies_of_parent|length }}</td>
+        <td>{{ app.get_license_display }}</td>
+        <td>{{ app.snapshot_time }}</td>
+
     </tr>
     {% endfor %}
     </tbody>

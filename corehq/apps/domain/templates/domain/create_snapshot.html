@@ -14,30 +14,51 @@
         <legend>Create new snapshot</legend>
         <div>
             <h3>This project has {{ snapshots|length }} snapshots</h3>
-            <ul>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th></th>
+                    <th>Date</th>
+                    <th>License</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
                 {% for snapshot in snapshots %}
-                <li>
-                    <p><a href="{% url corehq.apps.app_manager.views.default snapshot.name %}">Snapshot created on {{ snapshot.snapshot_time }}</a>
+                <tr>
+                    <td><a class="btn btn-primary" href="{% url corehq.apps.app_manager.views.default snapshot.name %}">View</a></td>
+                    <td>{{ snapshot.snapshot_time }}</a></td>
+                    <td>{{ snapshot.get_license_display }}</td>
                     {% if snapshot.published %}
-                        <span class="label label-success">Published</span>
-                    </p>
+                        <td><span class="label label-success">Published</span></td>
+                    <td>
                         <form action="{% url domain_clear_published domain %}" method="POST">
                             <button class="btn btn-danger" type="submit">Unpublish</button>
                         </form>
+                    </td>
                     {% else %}
-                    </p>
+                    <td></td>
+                    <td>
                         <form action="{% url domain_set_published domain snapshot.name %}" method="POST">
                             <button class="btn btn-primary" type="submit">Publish</button> (only one snapshot can be published at a time)
                         </form>
+                    </td>
                     {% endif %}
-                </li>
+                </tr>
                 {% endfor %}
-            </ul>
+            </table>
         </div>
         {% if error_message %}
             <div class="alert alert-error">{{ error_message }}</div>
         {% endif %}
         <form class="form-horizontal" method="post">
+            <div class="control-group">
+                <label class="control-label" for="license">{% trans 'Snapshot with license' %}</label>
+                <div class="controls">
+                    {{ field }}
+                </div>
+            </div>
         <div class="form-actions"><button type="submit" class="btn btn-primary">Create New Snapshot</button></div>
         </form>
     </fieldset>

@@ -40,10 +40,9 @@ def app_info(request, domain, template="appstore/app_info.html"):
 
 @require_superuser
 def search_snapshots(request, template="appstore/appstore_base.html"):
-    query = 'type:snapshots %s' % request.GET['q']
-    limit = None
-    skip = 0
-    snapshots = get_db().search('appstore/search', q=query, limit=limit, skip=skip, wrapper=Domain)
-    return render_to_response(request, template, {'apps': snapshots})
+    query = request.GET.get('q')
+    limit = 10
+    snapshots = map(Domain.get, [r['id'] for r in get_db().search('domain/snapshot_search', q=query)])
+    return render_to_response(request, template, {'apps': snapshots, 'search_query': query})
 
 

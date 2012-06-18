@@ -37,6 +37,16 @@ class DomainMigrations(DocumentSchema):
             self.has_migrated_permissions = True
             domain.save()
 
+LICENSES = {
+    'public': 'Public Domain',
+    'cc': 'Creative Commons Attribution',
+    'cc-sa': 'Creative Commons Attribution, Share Alike',
+    'cc-nd': 'Creative Commons Attribution, No Derivatives',
+    'cc-nc': 'Creative Commons Attribution, Non-Commercial',
+    'cc-nc-sa': 'Creative Commons Attribution, Non-Commercial, and Share Alike',
+    'cc-nc-nd': 'Creative Commons Attribution, Non-Commercial, and No Derivatives',
+    }
+
 class Domain(Document):
     """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the
@@ -67,6 +77,7 @@ class Domain(Document):
     is_snapshot = BooleanProperty(default=False)
     snapshot_time = DateTimeProperty()
     published = BooleanProperty(default=False)
+    license = StringProperty(choices=LICENSES, default='public')
 
     migrations = SchemaProperty(DomainMigrations)
 
@@ -287,7 +298,7 @@ class Domain(Document):
 
     @classmethod
     def published_snapshots(cls):
-        return cls.view('domain/published_snapshots', include_docs=True)
+        return cls.view('domain/published_snapshots', include_docs=True, descending=True)
 
     def organization_doc(self):
         from corehq.apps.orgs.models import Organization
@@ -310,6 +321,15 @@ class Domain(Document):
             return '%s &gt; %s' % (self.organization_doc().title, self.slug)
         else:
             return self.name
+
+    def get_license_display(self):
+        return LICENSES.get(self.license)
+
+    def copies(self):
+        return Domain.view('domain/copied_from_snapshot', key=self.name, include_docs=True)
+
+    def copies_of_parent(self):
+        return Domain.view('domain/copied_from_snapshot', keys=[s.name for s in self.copied_from().snapshots()], include_docs=True)
 
 ##############################################################################################################
 #
