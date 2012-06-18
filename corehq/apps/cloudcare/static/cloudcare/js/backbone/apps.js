@@ -100,7 +100,7 @@ cloudCare.App = LocalizableModel.extend({
     idAttribute: "_id",
     initialize: function () {
         this.constructor.__super__.initialize.apply(this, [this.options]);
-        _.bindAll(this, "updateModules", "urlRoot");
+        _.bindAll(this, "updateModules", "urlRoot", "getSubmitId");
         var self = this;
         this.updateModules();
         this.on("change", function () {
@@ -110,6 +110,9 @@ cloudCare.App = LocalizableModel.extend({
     urlRoot: function () {
         return this.get("urlRoot");
     },
+    getSubmitId: function () {
+        return this.get("copy_of") || this.id
+    },
     updateModules: function () {
         var self = this;
         if (this.get("modules")) {
@@ -117,6 +120,7 @@ cloudCare.App = LocalizableModel.extend({
             this.modules = _(this.get("modules")).map(function (module) {
                 var ret = new cloudCare.Module(module);
                 ret.set("app_id", self.id);
+                ret.set("submit_app_id", self.getSubmitId());
                 ret.set("index", index);
                 index++;
                 return ret;
@@ -162,6 +166,7 @@ cloudCare.Module = LocalizableModel.extend({
             this.forms = _(this.get("forms")).map(function (form) {
                 var ret = new cloudCare.Form(form);
                 ret.set("app_id", self.get("app_id"));
+                ret.set("submit_app_id", self.get("submit_app_id"));
                 ret.set("module_index", self.get("index"));
                 ret.set("index", index);
                 index++;
@@ -355,7 +360,7 @@ cloudCare.AppView = Backbone.View.extend({
             // clear current case information
             self._clearCaseView();
             
-            var submitUrl = getSubmitUrl(self.options.submitUrlRoot, form.get("app_id"));
+            var submitUrl = getSubmitUrl(self.options.submitUrlRoot, form.get("submit_app_id"));
             // get context
             resp = $.ajax({ url: url,
                             async: false, 
