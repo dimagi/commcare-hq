@@ -18,7 +18,7 @@
 <ul class="breadcrumb">
     <li>
         <strong><a href="{% url appstore %}">App Store</a></strong>
-        {% if search_query or filter_by %}
+        {% if search_query or filter_by or domain %}
             <span class="divider">&gt;</span>
         {% endif %}
     </li>

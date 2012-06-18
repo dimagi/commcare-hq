@@ -1,4 +1,4 @@
-{% extends "hqwebapp/centered.html" %}
+{% extends "appstore/appstore_base.html" %}
 {% load hq_shared_tags %}
 {% load hq_bootstrap_tags %}
 {% load i18n %}
@@ -69,7 +69,11 @@ content: "";
 </script>
 {% endblock %}
 
-{% block centered-content %}
+{% block breadcrumb %}
+<li>{{ domain.copied_from.display_name }}</li>
+{% endblock %}
+
+{% block main_column %}
 
 <h2>{{ domain.copied_from.display_name }}</h2>
 <hr/>
