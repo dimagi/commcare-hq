@@ -611,7 +611,8 @@ class SubmitHistory(PaginatedHistoryHQReport):
                 time = tz_utils.adjust_datetime_to_timezone(data.received_on, pytz.utc.zone, self.timezone.zone)
                 time = time.strftime("%Y-%m-%d %H:%M:%S")
                 xmlns = data.xmlns
-                xmlns = xmlns_to_name(self.domain, xmlns)
+                app_id = data.app_id
+                xmlns = xmlns_to_name(self.domain, xmlns, app_id=app_id)
                 rows.append([self.form_data_link(data.instanceID), self.usernames[data.userID], time, xmlns])
         return rows
 
@@ -852,7 +853,7 @@ class SubmitDistributionReport(StandardHQReport):
                                  reduce=True)
             for row in view:
                 xmlns = row["key"][-1]
-                form_name = xmlns_to_name(self.domain, xmlns)
+                form_name = xmlns_to_name(self.domain, xmlns, app_id=None)
                 if form_name in predata:
                     predata[form_name]["value"] = predata[form_name]["value"] + row["value"]
                     predata[form_name]["description"] = "(%s) submissions of %s" % \
@@ -993,6 +994,8 @@ class ExcelExportReport(StandardDateHQReport):
         unknown_forms = []
         for f in get_db().view('reports/forms_by_xmlns', startkey=[self.domain], endkey=[self.domain, {}], group=True):
             form = f['value']
+            if form.get('app_deleted') and not form.get('submissions'):
+                continue
             if 'app' in form:
                 form['has_app'] = True
             else:

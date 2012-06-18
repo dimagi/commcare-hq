@@ -1,6 +1,7 @@
 from functools import wraps
 import json
 from corehq.apps.reports.util import get_possible_reports
+from openpyxl.shared.exc import InvalidFileException
 import re
 from smtplib import SMTPRecipientsRefused
 import urllib
@@ -674,7 +675,7 @@ class UploadCommCareUsers(TemplateView):
 
         try:
             self.workbook = WorkbookJSONReader(request.file)
-        except Exception:
+        except InvalidFileException:
             try:
                 csv.DictReader(io.StringIO(request.file.read().decode('ascii'), newline=None))
                 return HttpResponseBadRequest(

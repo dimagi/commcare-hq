@@ -58,7 +58,7 @@
 
 {% block user-view %}
     <div>
-    <h2>List of {% commcare_user %}s for Project "{{ domain }}"</h2>
+    <h2>List of {% commcare_user %}s for Project "{{ request.project.display_name }}"</h2>
     <p>{% commcare_user %}s can submit forms from phones running the CommCare Application. While {% commcare_user %}s can login to CommCare HQ and view project data, <br />they are bound to a particular project on CommCare HQ and cannot manage the project or create additional projects and users.</p>
     <div class="btn-toolbar">
         {% if not show_inactive %}

@@ -458,7 +458,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         super(CouchUser, self).delete() # Call the "real" delete() method.
 
     def get_django_user(self):
-        return User.objects.get(username=self.username)
+        return User.objects.get(username__iexact=self.username)
 
     def add_phone_number(self, phone_number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """
