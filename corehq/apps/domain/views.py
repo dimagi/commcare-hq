@@ -274,7 +274,7 @@ def copy_snapshot(request, domain):
 @domain_admin_required
 def create_snapshot(request, domain):
     domain = Domain.get_by_name(domain)
-    snapshots = domain.snapshots
+    snapshots = domain.snapshots()
     if request.method == 'GET':
         return render_to_response(request, 'domain/create_snapshot.html',
                 {'domain': domain.name, 'snapshots': snapshots})
@@ -304,6 +304,25 @@ def copy_project(request, domain):
         return copy_snapshot(request, domain)
     else:
         return create_snapshot(request, domain)
+
+@require_previewer
+@domain_admin_required
+def set_published_snapshot(request, domain, snapshot_name):
+    domain = request.project
+    snapshots = domain.snapshots()
+    if request.method == 'POST':
+        for snapshot in snapshots:
+            if snapshot.published:
+                snapshot.published = False
+                snapshot.save()
+        if snapshot_name != '':
+            published_snapshot = Domain.get_by_name(snapshot_name)
+            if published_snapshot not in snapshots:
+                messages.error(request, "Invalid snapshot")
+            published_snapshot.most_recent = True
+            published_snapshot.save()
+    return render_to_response(request, "domain/create_snapshot.html", {'domain': domain.name,
+                                                                       'snapshots': snapshots})
 
 @require_previewer
 @login_and_domain_required

@@ -66,6 +66,7 @@ class Domain(Document):
     original_doc = StringProperty()
     is_snapshot = BooleanProperty(default=False)
     snapshot_time = DateTimeProperty()
+    published = BooleanProperty(default=False)
 
     migrations = SchemaProperty(DomainMigrations)
 
@@ -289,6 +290,8 @@ class Domain(Document):
         return Organization.get_by_name(self.organization)
 
     def display_name(self):
+        if self.is_snapshot:
+            return "Snapshot of %s" % self.copied_from.display_name()
         if self.organization:
             return self.slug
         else:
@@ -297,6 +300,8 @@ class Domain(Document):
     __str__ = display_name
 
     def long_display_name(self):
+        if self.is_snapshot:
+            return "Snapshot of %s &gt; %s" % (self.organization_doc().title, self.copied_from.display_name())
         if self.organization:
             return '%s &gt; %s' % (self.organization_doc().title, self.slug)
         else:

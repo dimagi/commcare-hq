@@ -122,7 +122,7 @@ def list_my_domains(request):
     lst.append('<ul class="nav nav-pills nav-stacked">')
     for domain in domain_list:
         default_url = reverse("domain_homepage", args=[domain.name])
-        lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.name))
+        lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.display_name()))
     lst.append('</ul>')
 
     return "".join(lst)

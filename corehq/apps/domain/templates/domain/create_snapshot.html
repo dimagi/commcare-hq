@@ -3,7 +3,7 @@
 {% load i18n %}
 
 {% block subsection-title %}
-<li class="active">
+<li class="active" xmlns="http://www.w3.org/1999/html">
     <a href="#">Create New Snapshot</a>
 </li>
 {% endblock %}
@@ -14,9 +14,16 @@
         <legend>Create new snapshot</legend>
         <div>
             <h3>This project has {{ snapshots|length }} snapshots</h3>
-            <ul class="nav nav-pills nav-stacked">
+            <ul>
                 {% for snapshot in snapshots %}
-                <li><a href="{% url corehq.apps.app_manager.views.default snapshot.name %}">Created on {{ snapshot.snapshot_time }}</a></li>
+                <li>
+                    <a href="{% url corehq.apps.app_manager.views.default snapshot.name %}">Created on {{ snapshot.snapshot_time }}</a>
+                    {% if snapshot.published %}
+                        <span class="label label-success">Published</a> <a class="btn btn-danger" href="">Unpublish</a>
+                    {% else %}
+                        <a class="btn btn-primary" href="{% url corehq.apps.domain.views.set_published_snapshot snapshot_name=snapshot.name %}">Publish</a> (only one snapshot can be published at a time)
+                    {% endif %}
+                </li>
                 {% endfor %}
             </ul>
         </div>
