@@ -298,7 +298,7 @@ class Domain(Document):
 
     @classmethod
     def published_snapshots(cls):
-        return cls.view('domain/published_snapshots', include_docs=True)
+        return cls.view('domain/published_snapshots', include_docs=True, descending=True)
 
     def organization_doc(self):
         from corehq.apps.orgs.models import Organization
@@ -324,6 +324,12 @@ class Domain(Document):
 
     def get_license_display(self):
         return LICENSES.get(self.license)
+
+    def copies(self):
+        return Domain.view('domain/copied_from_snapshot', key=self.name, include_docs=True)
+
+    def copies_of_parent(self):
+        return Domain.view('domain/copied_from_snapshot', keys=[s.name for s in self.copied_from().snapshots()], include_docs=True)
 
 ##############################################################################################################
 #
