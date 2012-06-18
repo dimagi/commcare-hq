@@ -1,20 +1,50 @@
-{% extends "hqwebapp/centered.html" %}
+{% extends "hqwebapp/two_column.html" %}
 
-{% block centered-content %}
+{% block sidebar %}
+<ul class="nav nav-list">
+    <li class="nav-header">Search</li>
+    <li><form action="{% url appstore_search_snapshots %}" method="get" class="form-search">
+        <input type="text" name="q" placeholder="Search for apps..." value="{{ search_query }}" class="search-query" style="width: 80%" />
+    </form></li>
+    <li class="nav-header">Sort by</li>
+    <li><a href="{% url appstore_filter_choices "organization" %}">Organization</a></li>
+    <li><a href="{% url appstore_filter_choices "category" %}">Category</a></li>
+    <li><a href="{% url appstore_filter_choices "license" %}">License</a></li>
+    <li><a href="{% url appstore_filter_choices "region" %}">Region</a></li>
+</ul>
+{% endblock %}
 
-<h2><a href="{% url appstore %}">App Store</a></h2>
-<hr/>
-<form action="{% url appstore_search_snapshots %}" method="get" class="form-search">
+{% block page-title %}
+<ul class="breadcrumb">
+    <li>
+        <strong><a href="{% url appstore %}">App Store</a></strong>
+        {% if search_query or filter_by %}
+            <span class="divider">&gt;</span>
+        {% endif %}
+    </li>
+    {% block breadcrumb %}
+    {% endblock %}
+    {% if search_query %}
+        <li>Searching for "{{ search_query }}"</li>
+    {% endif %}
+    {% if filter_by and filter %}
+        <li>In {{ filter_by }} "{{ filter }}"</li>
+    {% endif %}
+</ul>
+{% endblock %}
+
+{% block main_column %}
+<!--<form action="{% url appstore_search_snapshots %}" method="get" class="form-search">
     <div class="controls">
         <div class="input-append">
-            <input type="text" name="q" placeholder="Search for apps..." value="{{ search_query }}" class="search-query" />{% if search_query %}<a href="{% url appstore %}" class="btn">Clear</a>{% endif %}<button class="btn btn-primary" type="submit">Search</button>
+            <input type="text" name="q" placeholder="Search for apps..." value="{{ search_query }}" class="search-query" /><button class="btn btn-primary" type="submit">Search</button>
         </div>
     </div>
 </form>
-<hr/>
+<hr/>-->
 
-{% if search_query %}
-    <h3>{{ apps|length }} results</h3>
+{% if search_query or filter_by %}
+    <h3>{{ apps|length }} result{{ apps|pluralize }}</h3>
 {% endif %}
 
 <table class="table table-striped">
@@ -22,6 +52,7 @@
         <tr>
             <th>Name</th>
             <th>Organization</th>
+            <th>Category</th>
             <th>Copies</th>
             <th>License</th>
             <th>Last updated</th>
@@ -33,11 +64,12 @@
         <td><a href="{% url app_info app.name %}">{{ app.copied_from.display_name }}</a></td>
         <td>
             {% if app.organization %}
-                <a href="{% url orgs_landing app.organization %}">{{ app.organization.title }}</a>
+                <a href="{% url orgs_landing app.organization %}">{{ app.organization_doc.title }}</a>
             {% else %}
                 None
             {% endif %}
         </td>
+        <td>{{ app.project_type }}</td>
         <td>{{ app.copies_of_parent|length }}</td>
         <td>{{ app.get_license_display }}</td>
         <td>{{ app.snapshot_time }}</td>
