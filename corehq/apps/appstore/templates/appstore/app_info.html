@@ -1,4 +1,37 @@
 {% extends "hqwebapp/centered.html" %}
+{% block js-inline %}{{ block.super }}
+<script>
+
+    function Review(title, rating, user, date_published, info) {
+        var self = this;
+        self.title = title;
+        self.rating = rating;
+        self.user = user;
+        self.date_published = date_published;
+        self.info = info;
+    }
+
+    function ReviewViewModel() {
+        var self = this;
+
+        self.reviews = ko.observableArray([]);
+
+        self.addReview = function() {
+            self.reviews.push(new Review("title", "5","user", "today", "info"));
+        }
+
+
+    }
+</script>
+{% endblock %}
 
 {% block centered-content %}
+
+<h2>{{ domain.name }}</h2>
+<hr/>
+<h4>App Info</h4>
+<hr/>
+
+
+
 {% endblock %}
