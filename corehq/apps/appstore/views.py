@@ -1,6 +1,6 @@
 import datetime
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import Http404
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
 from corehq.apps.domain.decorators import require_superuser
@@ -51,7 +51,7 @@ def search_snapshots(request, filter_by = '', filter = '', template="appstore/ap
 @require_superuser
 def filter_choices(request, filter_by, template="appstore/filter_choices.html"):
     if filter_by not in ('category', 'license', 'region', 'organization'):
-        return HttpResponseRedirect(reverse('appstore')) # does not exist
+        raise Http404("That page doesn't exist")
 
     if filter_by == 'category':
         choices = [(d.replace(' ', '+'), d) for d in Domain.categories()]
@@ -67,7 +67,7 @@ def filter_choices(request, filter_by, template="appstore/filter_choices.html"):
 @require_superuser
 def filter_snapshots(request, filter_by, filter, template="appstore/appstore_base.html"):
     if filter_by not in ('category', 'license', 'region', 'organization'):
-        return HttpResponseRedirect(reverse('appstore')) # does not exist
+        raise Http404("That page doesn't exist")
 
     filter = filter.replace('+', ' ')
 
