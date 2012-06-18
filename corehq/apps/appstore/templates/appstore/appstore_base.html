@@ -63,6 +63,15 @@
     <tr>
         <td><a href="{% url app_info app.name %}">{{ app.copied_from.display_name }}</a></td>
         <td>
+
+        {% if domain.organization %}
+        <a href="{% url orgs_landing app.organization %}">{{ app.organization }}</a>
+        {% else %}
+        {{ app.organization }}
+        {% endif %}
+        </td>
+        <td>?</td>
+
             {% if app.organization %}
                 <a href="{% url orgs_landing app.organization %}">{{ app.organization_doc.title }}</a>
             {% else %}
@@ -73,6 +82,7 @@
         <td>{{ app.copies_of_parent|length }}</td>
         <td>{{ app.get_license_display }}</td>
         <td>{{ app.snapshot_time }}</td>
+
     </tr>
     {% endfor %}
     </tbody>
