@@ -285,6 +285,10 @@ class Domain(Document):
     def snapshots(self):
         return Domain.view('domain/snapshots', startkey=[self.name, {}], endkey=[self.name], include_docs=True, descending=True)
 
+    @classmethod
+    def published_snapshots(cls):
+        return cls.view('domain/published_snapshots', include_docs=True)
+
     def organization_doc(self):
         from corehq.apps.orgs.models import Organization
         return Organization.get_by_name(self.organization)

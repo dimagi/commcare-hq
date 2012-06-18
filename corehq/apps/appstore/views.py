@@ -10,7 +10,7 @@ from django.contrib import messages
 
 @require_superuser
 def appstore(request, template="appstore/appstore_base.html"):
-    apps = Domain.get_all()
+    apps = Domain.published_snapshots()
     vals = dict(apps=apps)
     return render_to_response(request, template, vals)
 
