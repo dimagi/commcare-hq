@@ -1,7 +1,51 @@
 {% extends "hqwebapp/centered.html" %}
-{% block js-inline %}{{ block.super }}
-<script>
+{% load hq_shared_tags %}
+{% load hq_bootstrap_tags %}
+{% load i18n %}
 
+{% block js-inline %}{{ block.super }}
+<style type="text/css">
+.rating > span {
+display: inline-block;
+position: relative;
+width: 1.1em;
+}
+.rating:hover > span:before{
+content: "\2605";
+position: absolute;
+}
+.rating > span:hover ~ span:before {
+content: "";
+}​
+</style>
+
+<script>
+    ko.bindingHandlers.starRating = {
+        init: function(element, valueAccessor) {
+            $(element).addClass("starRating");
+            for (var i = 0; i < 5; i++)
+                $("<span>").appendTo(element);
+
+            // Handle mouse events on the stars
+            $("span", element).each(function(index) {
+                $(this).hover(
+                        function() { $(this).prevAll().add(this).addClass("hoverChosen") },
+                        function() { $(this).prevAll().add(this).removeClass("hoverChosen") }
+                ).click(function() {
+                            var observable = valueAccessor();  // Get the associated observable
+                            observable(index+1);               // Write the new rating to it
+                        });
+            });
+        },
+
+        update: function(element, valueAccessor) {
+            // Give the first x stars the "chosen" class, where x <= rating
+            var observable = valueAccessor();
+            $("span", element).each(function(index) {
+                $(this).toggleClass("chosen", index < observable());
+            });
+        }
+    };
     function Review(title, rating, user, date_published, info) {
         var self = this;
         self.title = title;
@@ -16,8 +60,8 @@
 
         self.reviews = ko.observableArray([]);
 
-        self.addReview = function() {
-            self.reviews.push(new Review("title", "5","user", "today", "info"));
+        self.addReview = function(title, rating, user, date_published, info) {
+            self.reviews.push(new Review(title, rating, user, "N/A", info));
         }
 
 
@@ -30,8 +74,44 @@
 <h2>{{ domain.copied_from.display_name }}</h2>
 <hr/>
 <h4>App Info</h4>
+        <p> {{ domain.description }} </p>
+
 <hr/>
 
+<a href="#add_review_modal" data-toggle="modal" class="btn btn-danger">Write a Review</a>
+        <br/><br/>
+        <div><h4>Reviews for {{ domain.copied_from.display_name }}</h4></div>
+        {% for review in reviews %}
+        <hr/>
+        <div><b>{{ review.title }}</b></div>
+        <div class="rating">
+        <span>☆</span><span>☆</span><span>☆</span><span>☆</span><span>☆</span>
+        </div>​
+        <div><p>{{ review.rating }} <small> by {{ review.nickname }} on {{ review.date_published }}</small></p></div>
+        <div>{{ review.info }}</div>
+
+        {% endfor %}
+
+{% endblock %}
 
 
+{% block modals %}{{ block.super }}
+<div id="add_review_modal" class="modal hide fade">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">&times;</a>
+        <h3>Write a review for {{ domain.name }}</h3>
+    </div>
+    <form class="form-horizontal" method="post" action="{% url app_info domain %}">
+        <div class="modal-body">
+            <fieldset>
+                {% bootstrap_form_errors form %}
+                {% bootstrap_fieldset form "Review this App" %}
+            </fieldset>
+        </div>
+        <div class="modal-footer">
+            <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+            <button type="submit" class="btn btn-primary">Post</button>
+        </div>
+    </form>
+</div>
 {% endblock %}

@@ -15,7 +15,13 @@
     {% for app in apps %}
     <tr>
         <td><a href="{% url app_info app.name %}">{{ app.copied_from.display_name }}</a></td>
-        <td><a href="{% url orgs_landing app.organization %}">{{ app.organization }}</a></td>
+        <td>
+        {% if domain.organization %}
+        <a href="{% url orgs_landing app.organization %}">{{ app.organization }}</a>
+        {% else %}
+        {{ app.organization }}
+        {% endif %}
+        </td>
         <td>?</td>
     </tr>
     {% endfor %}
