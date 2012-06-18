@@ -11,7 +11,7 @@ from django.shortcuts import redirect
 from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required, require_previewer
 from corehq.apps.domain.forms import DomainSelectionForm, DomainGlobalSettingsForm,\
     DomainMetadataForm
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 
 from dimagi.utils.web import render_to_response, json_response
@@ -23,6 +23,7 @@ from django.views.decorators.http import require_POST
 import json
 from dimagi.utils.post import simple_post
 from corehq.apps.registration.forms import DomainRegistrationForm
+from django.forms.widgets import Select
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
@@ -276,13 +277,21 @@ def copy_snapshot(request, domain):
 def create_snapshot(request, domain):
     domain = Domain.get_by_name(domain)
     snapshots = domain.snapshots()
+    field = Select(choices=LICENSES.items()).render('license', domain.license)
     if request.method == 'GET':
         return render_to_response(request, 'domain/create_snapshot.html',
-                {'domain': domain.name, 'snapshots': snapshots})
+                {'domain': domain.name, 'snapshots': snapshots, 'field': field})
 
-    elif request.method == 'POST':
+    elif request.method == 'POST' and request.POST['license'] in LICENSES:
 
         new_domain = domain.save_snapshot()
+        new_domain.license = request.POST['license']
+        for snapshot in domain.snapshots():
+            if snapshot.published:
+                snapshot.published = False
+                snapshot.save()
+        new_domain.published = True
+        new_domain.save()
 
         if new_domain is None:
             return render_to_response(request, 'domain/create_snapshot.html',
@@ -291,8 +300,10 @@ def create_snapshot(request, domain):
                      'snapshots': snapshots})
 
         messages.success(request, "Added new snapshot")
+    else:
+        messages.error()
 
-        return redirect('domain_copy_snapshot', domain.name)
+    return redirect('domain_copy_snapshot', domain.name)
 
 @domain_admin_required
 def copy_project(request, domain):

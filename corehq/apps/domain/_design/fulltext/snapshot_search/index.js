@@ -4,13 +4,9 @@ function(doc) {
         {
             var ret = new Document();
             ret.add('snapshots', {'field': 'type'})
-            if (doc.organization) { // eventually we should only allow snapshots of projects in organizations
-                ret.add(doc.slug, {"field": "name"});
-                ret.add(dog.organization, {'field': 'organization'})
-            } else {
-                ret.add(doc.name, {"field": "name"});
-            }
-
+            ret.add(dog.organization, {'field': 'organization'})
+            ret.add(doc.original_doc, {"field": "name"});
+i
             ret.add(doc.project_type, {'field': 'category'})
             ret.add(doc.snapshot_time, {'field': 'timestamp', 'type': 'date', 'index': 'not_analyzed'})
             ret.add(doc.region, {'field': 'region'})
