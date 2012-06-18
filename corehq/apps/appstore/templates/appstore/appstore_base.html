@@ -14,6 +14,7 @@
             <th>Organization</th>
             <th>Copies</th>
             <th>License</th>
+            <th>Last updated</th>
         </tr>
     </thead>
     <tbody>
@@ -29,6 +30,7 @@
         </td>
         <td>{{ app.copies_of_parent|length }}</td>
         <td>{{ app.get_license_display }}</td>
+        <td>{{ app.snapshot_time }}</td>
     </tr>
     {% endfor %}
     </tbody>
