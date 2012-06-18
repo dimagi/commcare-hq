@@ -2,10 +2,20 @@
 
 {% block centered-content %}
 
-<h2>App Store</h2>
+<h2><a href="{% url appstore %}">App Store</a></h2>
 <hr/>
-<h4> List of all apps</h4>
+<form action="{% url appstore_search_snapshots %}" method="get" class="form-search">
+    <div class="controls">
+        <div class="input-append">
+            <input type="text" name="q" placeholder="Search for apps..." value="{{ search_query }}" class="search-query" />{% if search_query %}<a href="{% url appstore %}" class="btn">Clear</a>{% endif %}<button class="btn btn-primary" type="submit">Search</button>
+        </div>
+    </div>
+</form>
 <hr/>
+
+{% if search_query %}
+    <h3>{{ apps|length }} results</h3>
+{% endif %}
 
 <table class="table table-striped">
     <thead>
