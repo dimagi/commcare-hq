@@ -12,6 +12,6 @@ function(doc) {
             entry.getBirthStats();
         }
 
-        emit([entry.data.siteId, getDCO(doc), getDCTL(doc), info.timeEnd], entry.data);
+        emit([entry.data.siteId, getDCO(doc), info.timeEnd], entry.data);
     }
 }

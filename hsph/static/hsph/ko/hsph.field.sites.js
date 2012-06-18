@@ -5,37 +5,39 @@ var HSPHSitePicker = function (refs, currentSelection) {
     for (var reg in self.siteMap)
         regions.push(new HSPHSiteItem(reg, self.siteMap[reg].name));
 
-    self.hsph_regions = ko.observableArray(regions);
-    self.hsph_selected_region = ko.observable(currentSelection.region || "");
+    self.regions = ko.observableArray(regions);
+    self.selected_region = ko.observable(currentSelection.region || "");
 
-    self.hsph_districts = ko.observableArray();
-    self.hsph_selected_district = ko.observable(currentSelection.district || "");
+    self.districts = ko.observableArray();
+    self.selected_district = ko.observable(currentSelection.district || "");
     self.enable_district = ko.observable(false);
 
-    self.hsph_sites = ko.observableArray();
+    self.sites = ko.observableArray();
     self.enable_site = ko.observable(false);
-    self.hsph_selected_site = ko.observable(currentSelection.siteNum || "");
+    self.selected_site = ko.observable(currentSelection.siteNum || "");
 
     self.updateRegion = function () {
         var districts = [];
-        self.enable_district(!!self.hsph_selected_region());
-        if (self.enable_district())
-            for (var dist in self.siteMap[self.hsph_selected_region()])
-                districts.push();
-        self.hsph_districts(districts);
+        self.enable_district(!!self.selected_region());
+        if (self.enable_district()) {
+            var availableDistricts = self.siteMap[self.selected_region()].districts;
+            for (var dist in availableDistricts)
+                districts.push(new HSPHSiteItem(dist, availableDistricts[dist].name));
+        }
+        self.districts(districts);
         self.updateDistrict();
     };
 
     self.updateDistrict = function () {
         var sites = [];
-        self.enable_site(!!self.hsph_selected_district());
+        self.enable_site(!!self.selected_district());
         if (self.enable_site()) {
-            var sitesAvailable = self.siteMap[self.hsph_selected_region()][self.hsph_selected_district()];
-            for (var site in sitesAvailable) {
-                sites.push(new HSPHSiteItem(site, sitesAvailable[site]));
+            var availableSites = self.siteMap[self.selected_region()].districts[self.selected_district()].sites;
+            for (var site in availableSites) {
+                sites.push(new HSPHSiteItem(site, availableSites[site].name));
             }
         }
-        self.hsph_sites(sites);
+        self.sites(sites);
     };
 
     self.updateRegion();

@@ -1,28 +1,6 @@
-from corehq.apps.groups.models import Group
 from corehq.apps.reports.custom import ReportField, ReportSelectField
 from corehq.apps.reports.fields import SelectMobileWorkerField, SelectFilteredMobileWorkerField
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
-from dimagi.utils.couch.database import get_db
-
-class FacilityField(ReportField):
-    slug = "facility"
-    template = "hsph/fields/facility_name.html"
-
-    def update_context(self):
-        facilities = self.getFacilties()
-        self.context['facilities'] = facilities
-        self.context['selected_facility'] = self.request.GET.get(self.slug, '')
-
-    @classmethod
-    def getFacilties(cls):
-        try:
-            data = get_db().view('hsph/facilities',
-                reduce=True,
-                group=True
-            ).all()
-            return [item.get('key','') for item in data]
-        except KeyError:
-            return []
 
 class SiteField(ReportField):
     slug = "hsph_site"
@@ -44,17 +22,8 @@ class SiteField(ReportField):
     def getFacilities(cls):
         facs = dict()
         data_type = FixtureDataType.by_domain_tag(cls.domain, 'site').first()
-        key = [cls.domain, data_type._id]
-        fixtures = get_db().view('fixtures/data_items_by_domain_type',
-            startkey=key,
-            endkey=key+[{}],
-            reduce=False,
-            include_docs=True
-        ).all()
+        fixtures = FixtureDataItem.by_data_type(cls.domain, data_type.get_id)
         for fix in fixtures:
-            fix = FixtureDataItem.wrap(fix["doc"])
-            print fix
-            print fix.fields
             region = fix.fields.get("region_id")
             district = fix.fields.get("district_id")
             site = fix.fields.get("site_number")
@@ -81,15 +50,33 @@ class NameOfCITLField(SelectFilteredMobileWorkerField):
     name = "Name of CITL"
     group_names = ["CITL"]
 
-
-class NameOfDCTLField(ReportField):
+class NameOfDCTLField(ReportSelectField):
     slug = "dctl_name"
-    template = "hsph/fields/dctl_name.html"
-    dctl_list = ["DCTL Unknown"]
+    name = "Name of DCTL"
+    domain = 'hsph'
+    default_option = "All DCTLs..."
+    cssClasses = "span3"
 
-    def update_context(self):
-        self.context["dctls"] = self.dctl_list
-        self.context["selected_dctl"] = self.request.GET.get(self.slug, '')
+    def update_params(self):
+        super(NameOfDCTLField, self).update_params()
+        self.options = self.get_dctl_list()
+
+    @classmethod
+    def get_dctl_list(cls):
+        data_type = FixtureDataType.by_domain_tag(cls.domain, 'dctl').first()
+        data_items = FixtureDataItem.by_data_type(cls.domain, data_type.get_id)
+        return [dict(text=item.fields.get("name"), val=item.fields.get("id")) for item in data_items]
+
+    @classmethod
+    def get_users_per_dctl(cls):
+        dctls = dict()
+        data_type = FixtureDataType.by_domain_tag(cls.domain, 'dctl').first()
+        data_items = FixtureDataItem.by_data_type(cls.domain, data_type.get_id)
+        for item in data_items:
+            dctls[item.fields.get("id")] = item.get_users(wrap=False)
+        return dctls
+
+
 
 class SelectCaseStatusField(ReportSelectField):
     slug = "case_status"
@@ -103,11 +90,21 @@ class SelectCaseStatusField(ReportSelectField):
 class IHForCHFField(ReportSelectField):
     slug = "ihf_or_chf"
     name = "IHF/CHF"
+    domain = 'hsph'
     cssId = "hsph_ihf_or_chf"
     cssClasses = "span2"
     options = [dict(val="IHF", text="IHF"),
                dict(val="CHF", text="CHF")]
     default_option = "Select IHF/CHF..."
+
+    @classmethod
+    def getIHFCHFFacilities(cls):
+        facilities = dict(ihf=[], chf=[])
+        data_type = FixtureDataType.by_domain_tag(cls.domain, 'site').first()
+        data_items = FixtureDataItem.by_data_type(cls.domain, data_type.get_id)
+        for item in data_items:
+            facilities.get(item.fields.get("ihf_chf").lower(), []).append(item.fields.get("site_id"))
+        return facilities
 
 
 class FacilityStatusField(ReportSelectField):
@@ -120,3 +117,23 @@ class FacilityStatusField(ReportSelectField):
                dict(val="1", text="Baseline"),
                dict(val="2", text="Trial Data")]
     default_option = "Select Status..."
+
+
+
+class FacilityField(ReportSelectField):
+    slug = "facility"
+    domain = 'hsph'
+    name = "Facility"
+    cssId = "hsph_facility_name"
+    default_option = "All Facilities..."
+    cssClasses = "span3"
+
+    def update_params(self):
+        super(FacilityField, self).update_params()
+        self.options = self.getFacilties()
+
+    @classmethod
+    def getFacilties(cls):
+        data_type = FixtureDataType.by_domain_tag(cls.domain, 'site').first()
+        data_items = FixtureDataItem.by_data_type(cls.domain, data_type.get_id)
+        return [dict(text=item.fields.get("site_name"), val=item.fields.get("site_id")) for item in data_items]

@@ -14,6 +14,6 @@ function(doc) {
         } else if (isDCOFollowUpReport(doc))
             entry.getFollowUpStatus();
 
-        emit([getDCO(doc), getDCTL(doc), info.timeEnd], entry.data);
+        emit([getDCO(doc), info.timeEnd], entry.data);
     }
 }

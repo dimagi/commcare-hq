@@ -12,8 +12,7 @@ function(keys, values, rereduce) {
     var calc = {
         numProcessData: 0,
         numOutcomeData: 0,
-        activeCollectors: [],
-        activeTLs: []
+        activeCollectors: []
     },
         births = new HSPHBirthCounter(),
         facStat = new HSPHFacilityStatusStats();
@@ -26,7 +25,6 @@ function(keys, values, rereduce) {
             calc.numProcessData += agEntry.numProcessData;
             calc.numOutcomeData += agEntry.numOutcomeData;
             keepUsersUnique(calc.activeCollectors, agEntry.activeCollectors);
-            keepUsersUnique(calc.activeTLs, agEntry.activeTLs);
         }
     } else {
         for (var j in values) {
@@ -36,12 +34,9 @@ function(keys, values, rereduce) {
             calc.numProcessData += (curEntry.processDataType) ? 1 : 0;
             calc.numOutcomeData += (curEntry.outcomeDataType) ? 1 : 0;
             if  (curEntry.userId) {
-                var uind = calc.activeCollectors.indexOf(curEntry.userId),
-                    tlind = calc.activeTLs.indexOf(curEntry.DCTL);
+                var uind = calc.activeCollectors.indexOf(curEntry.userId);
                 if (uind < 0)
                     calc.activeCollectors.push(curEntry.userId);
-                if (tlind < 0)
-                    calc.activeTLs.push(curEntry.DCTL);
             }
         }
     }

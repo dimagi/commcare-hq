@@ -16,13 +16,13 @@ function(doc) {
         }
 
         entry.data.userId = info.userID;
-        entry.data.DCTL = getDCTL(doc);
+        entry.data.DCTL = "FIX ME PLS";
 
         if (entry.data.region) {
-            emit(["full", entry.data.IHFCHF, entry.data.region, entry.data.district, entry.data.siteNum, info.timeEnd], entry.data);
-            emit(["district", entry.data.IHFCHF, entry.data.region, entry.data.district, info.timeEnd], entry.data);
-            emit(["region", entry.data.IHFCHF, entry.data.region, info.timeEnd], entry.data);
-            emit(["all", entry.data.IHFCHF, info.timeEnd], entry.data);
+            emit(["full", entry.data.siteId, entry.data.region, entry.data.district, entry.data.siteNum, info.timeEnd], entry.data);
+            emit(["district", entry.data.siteId, entry.data.region, entry.data.district, info.timeEnd], entry.data);
+            emit(["region", entry.data.siteId, entry.data.region, info.timeEnd], entry.data);
+            emit(["all", entry.data.siteId, info.timeEnd], entry.data);
         }
     }
 }

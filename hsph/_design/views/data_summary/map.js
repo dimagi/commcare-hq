@@ -18,6 +18,6 @@ function(doc) {
 
         if (entry.data.region)
             emit(["site", entry.data.region, entry.data.district, entry.data.siteNum, info.timeEnd], entry.data);
-        emit(["type", isIHForCHF(doc), info.timeEnd], entry.data);
+        emit(["site_id", entry.data.siteId, info.timeEnd], entry.data);
     }
 }

@@ -1,9 +1,0 @@
-<label for="dctl_name_select" class="control-label">Facility</label>
-<div class="controls">
-    <select id="dctl_name_select" name="{{ slug }}" data-value="{{ selected_facility }}">
-        <option value=''>Show All</option>
-        {% for fac in facilities %}
-            <option value="{{ fac }}">{{ fac }}</option>
-        {% endfor %}
-    </select>
-</div>

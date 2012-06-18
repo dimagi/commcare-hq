@@ -3,7 +3,7 @@ from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.standard import StandardTabularHQReport, StandardDateHQReport
 from dimagi.utils.couch.database import get_db
-from hsph.fields import FacilityStatusField, IHForCHFField, SiteField
+from hsph.fields import FacilityStatusField, IHForCHFField, SiteField, NameOfDCTLField
 from hsph.reports.common import HSPHSiteDataMixin
 from dimagi.utils.timezones import utils as tz_utils
 
@@ -32,28 +32,36 @@ class ProjectStatusDashboardReport(StandardDateHQReport):
             key_prefix = ["region"]
             key_suffix = [self.region]
 
-        ihf_data, ihf_collectors, ihf_dctls = self.gen_facility_data(key_prefix, key_suffix)
-        chf_data, chf_collectors, chf_dctls = self.gen_facility_data(key_prefix, key_suffix, "CHF")
+        facilities = IHForCHFField.getIHFCHFFacilities()
 
-        staff_stats = [dict(title="Total", value=len(ihf_collectors)+len(ihf_dctls)+len(chf_collectors)+len(chf_dctls)),
-                       dict(title="DCTL", value=len(ihf_dctls)+len(chf_dctls))]
+        ihf_data, ihf_collectors = self.gen_facility_data(key_prefix, key_suffix, facilities['ihf'])
+        chf_data, chf_collectors = self.gen_facility_data(key_prefix, key_suffix, facilities['chf'])
+
+        collectors = ihf_collectors.union(chf_collectors)
+        dctls = set()
+
+        users_per_dctls = NameOfDCTLField.get_users_per_dctl()
+        for dctl, users in users_per_dctls.items():
+            if len(users.intersection(collectors)) > 0:
+                dctls.add(dctl)
+
+        staff_stats = [dict(title="Number of Active Staff", val=len(collectors)+len(dctls)),
+                       dict(title="DCTL", val=len(dctls))]
 
         for group in ["DCO", "DCP", "DCC"]:
-            match = Group.by_name(self.domain, group)
-            match = match.get_user_ids() if match else []
-            ihf_matches = [uID if uID in match else None for uID in ihf_collectors]
-            chf_matches = [uID if uID in match else None for uID in chf_collectors]
-            staff_stats.append(dict(title=group, val=len(ihf_matches)+len(chf_matches)))
+            grp = Group.by_name(self.domain, group)
+            users = set(grp.get_user_ids() if grp else [])
+            staff_stats.append(dict(title=group, val=len(users.intersection(collectors))))
 
-        citl_stat = lambda x: (x/120)*100
+        citl_stat = lambda x: (float(x)/120)*100
         summary = [
             dict(title="Facilities with no status", stat=citl_stat),
             dict(title="No of facilities where S.B.R has been deployed", stat=citl_stat),
             dict(title="No. of Facilities where Baseline data collection has begun", stat=citl_stat),
             dict(title="No of Facilities where Data collection for Trial has begun", stat=citl_stat),
-            dict(title="No of Birth events observed for Processes", stat=lambda x: (x/2400)*100),
-            dict(title="No of Outcome Data Collection Completed", stat=lambda x: (x//172000)*100),
-            dict(title="No of Process Data Collection Completed", stat=lambda x: (x//2400)*100)]
+            dict(title="No of Birth events observed for Processes", stat=lambda x: (float(x)/2400)*100),
+            dict(title="No of Outcome Data Collection Completed", stat=lambda x: (float(x)//172000)*100),
+            dict(title="No of Process Data Collection Completed", stat=lambda x: (float(x)//2400)*100)]
 
         data = []
         for ind in range(len(summary)):
@@ -62,23 +70,30 @@ class ProjectStatusDashboardReport(StandardDateHQReport):
                     ihf=ihf_data[ind],
                     chf=chf_data[ind],
                     total=ihf_data[ind]+chf_data[ind],
-                    summary=summary[ind].get("stat", lambda x: x)(ihf_data[ind]+chf_data[ind])
+                    summary="%.2f%%" % summary[ind].get("stat", lambda x: x)(ihf_data[ind]+chf_data[ind])
                 ))
 
         self.context["staff"] = staff_stats
         self.context["status_data"] = data
 
-    def gen_facility_data(self, key_prefix, key_suffix, type="IHF"):
-        key = key_prefix+[type]+key_suffix
-        data = get_db().view("hsph/pm_project_status",
-                startkey=key+[self.datespan.startdate_param_utc],
-                endkey=key+[self.datespan.enddate_param_utc],
-                reduce=True
-            ).first()
-        if not data:
-            data = {}
-        values = ["numAtZero", "numSBR", "numBaseline", "numTrial", "totalBirthEvents", "numOutcomeData", "numProcessData"]
-        return [data.get(val, 0) for val in values], data.get("activeCollectors", []), data.get("activeTLs", [])
+    def gen_facility_data(self, key_prefix, key_suffix, facilities):
+        values = ["numAtZero", "numSBR", "numBaseline", "numTrial", u'totalBirthEvents', "numOutcomeData", "numProcessData"]
+        summary = dict([(val, 0) for val in values])
+        active_collectors = []
+        for facility in facilities:
+            key = key_prefix+[facility]+key_suffix
+            data = get_db().view("hsph/pm_project_status",
+                    startkey=key+[self.datespan.startdate_param_utc],
+                    endkey=key+[self.datespan.enddate_param_utc],
+                    reduce=True
+                ).first()
+            if not data:
+                data = {}
+            data = data.get('value', {})
+            for val in values:
+                summary[val] += data.get(val, 0)
+            active_collectors.extend(data.get("activeCollectors", []))
+        return [item for _, item in summary.items()], set(active_collectors)
 
 class ImplementationStatusDashboardReport(StandardTabularHQReport, StandardDateHQReport, HSPHSiteDataMixin):
     name = "Implementation Status Dashboard"
@@ -109,28 +124,30 @@ class ImplementationStatusDashboardReport(StandardTabularHQReport, StandardDateH
     def get_rows(self):
         rows = []
         site_keys = self.generate_keys()
+        facilities = IHForCHFField.getIHFCHFFacilities()
 
-        key_prefix = ["all"]
-        key_suffix = []
-        if self.facility_status and self.facility_type:
-            key_prefix = ["status_type"]
-            key_suffix = [self.facility_status, self.facility_type]
-        elif self.facility_status and not self.facility_type:
-            key_prefix = ["status"]
-            key_suffix = [self.facility_status]
-        elif self.facility_type and not self.facility_status:
-            key_prefix = ["type"]
-            key_suffix = [self.facility_type]
+        key_prefix = ["status"] if self.facility_status else ["all"]
+        key_suffix = [self.facility_status] if self.facility_status else []
 
         for user in self.users:
             for site in site_keys:
+                ihf_chf = '--'
+                site_id = ''.join(site)
+                if site_id in facilities['ihf']:
+                    ihf_chf = 'IHF'
+                elif site_id in facilities['chf']:
+                    ihf_chf = 'CHF'
+
+                if self.facility_type and self.facility_type != ihf_chf:
+                    continue
+
                 key = key_prefix + site + [user.user_id] + key_suffix
                 data = get_db().view('hsph/pm_implementation_status',
                         reduce=True,
                         startkey=key+[self.datespan.startdate_param_utc],
                         endkey=key+[self.datespan.enddate_param_utc]
                     ).all()
-                region, district, site_num, site_name = self.get_site_table_values(site)
+                region, district, site = self.get_site_table_values(site)
 
                 pb_temp = '<div class="progress"><div class="bar" style="width: %(percent)d%%;"></div></div>'
 
@@ -142,9 +159,9 @@ class ImplementationStatusDashboardReport(StandardTabularHQReport, StandardDateH
                             util.format_datatables_data(pb_temp % dict(percent=(fac_stat+2)*25), fac_stat),
                             region,
                             district,
-                            item.get("facilityType", "--"),
+                            ihf_chf,
                             user.username_in_report,
-                            site_name if site_name else site_num,
+                            site,
                             FacilityStatusField.options[fac_stat+1]['text'],
                             tz_utils.string_to_prertty_time(item.get('lastUpdated', "--"), to_tz=self.timezone)
                         ])

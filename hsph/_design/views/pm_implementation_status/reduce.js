@@ -17,13 +17,10 @@ function(keys, values, rereduce) {
                 calc.lastUpdated = visited;
                 calc.facilityStatus = agEntry.facilityStatus;
             }
-
-            calc.facilityType = agEntry.facilityType;
         }
     } else {
         for (var j in values) {
             var curEntry = values[j];
-            calc.facilityType = curEntry.IHFCHF;
             var visited = curEntry.updateDate;
             if (!calc.lastUpdated) {
                 calc.lastUpdated = visited;
@@ -32,8 +29,6 @@ function(keys, values, rereduce) {
                 calc.lastUpdated = visited;
                 calc.facilityStatus = curEntry.facilityStatus;
             }
-
-            calc.facilityType = curEntry.IHFCHF;
         }
     }
     return calc;

@@ -1,9 +1,0 @@
-<label for="dctl_name_select" class="control-label">Name of DCTL</label>
-<div class="controls">
-    <select id="dctl_name_select" name="{{ slug }}"{% if selected_dctl %} data-value="{{ selected_dctl }}"{% endif %}>
-        <option value="">All DCTLs</option>
-        {% for dctl in dctls %}
-        <option value="{{ dctl }}">{{ dctl }}</option>
-        {% endfor %}
-    </select>
-</div>

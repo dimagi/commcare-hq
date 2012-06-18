@@ -2,6 +2,7 @@ from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesColumnGroup, DataTablesHeader, DTSortType
 from corehq.apps.reports.standard import StandardTabularHQReport, StandardDateHQReport
 from dimagi.utils.couch.database import get_db
+from hsph.fields import IHForCHFField
 from hsph.reports.common import HSPHSiteDataMixin
 
 class ProgramDataSummaryReport(StandardTabularHQReport, StandardDateHQReport, HSPHSiteDataMixin):
@@ -16,7 +17,6 @@ class ProgramDataSummaryReport(StandardTabularHQReport, StandardDateHQReport, HS
             self.selected_site_map = self.site_map
 
     def get_headers(self):
-
         region = DataTablesColumn("Region")
         district = DataTablesColumn("District")
         site = DataTablesColumn("Site")
@@ -75,12 +75,12 @@ class ProgramDataSummaryReport(StandardTabularHQReport, StandardDateHQReport, HS
             ).all()
             for item in data:
                 item = item.get('value', {})
-                region, district, site_num, site_name = self.get_site_table_values(key[1:4])
+                region, district, site = self.get_site_table_values(key[1:4])
                 stat_keys = ['maternalDeaths', 'maternalNearMisses', 'stillBirthEvents', 'neonatalMortalityEvents']
                 birth_events = item.get('totalBirthEvents', 0)
                 row = [region,
                         district,
-                        site_name if site_name else site_num,
+                        site,
                         birth_events]
 
                 discharge_stats = item.get('atDischarge',{})
@@ -122,30 +122,45 @@ class ComparativeDataSummaryReport(StandardDateHQReport):
     template_name = 'hsph/reports/comparative_data_summary.html'
 
     def calc(self):
-        self.context['ihf_data'] = self.get_data_for_type()
-        self.context['chf_data'] = self.get_data_for_type("CHF")
+        facilities = IHForCHFField.getIHFCHFFacilities()
+        self.context['ihf_data'] = self.get_data(facilities['ihf'])
+        self.context['chf_data'] = self.get_data(facilities['chf'])
 
-
-    def get_data_for_type(self, ihf_or_chf="IHF"):
-        data = get_db().view('hsph/data_summary',
-                reduce=True,
-                startkey=["type", ihf_or_chf, self.datespan.startdate_param_utc],
-                endkey=["type", ihf_or_chf, self.datespan.enddate_param_utc]
-        ).first()
-        if not data:
-            data = {}
-        data = data.get('value', {})
-        birth_events = data.get('totalBirthEvents', 0)
-        positive_outcomes = data.get('totalPositiveOutcomes', 0)
-        lost_to_followup = data.get('lostToFollowUp', 0)
+    def get_data(self, facilities):
+        num_births = 0
+        birth_events = 0
+        maternal_deaths = 0
+        maternal_near_miss = 0
+        still_births = 0
+        neonatal_mortality = 0
+        positive_outcomes = 0
+        lost_to_followup = 0
+        for facility in facilities:
+            key = ["site_id", facility]
+            data = get_db().view('hsph/data_summary',
+                    reduce=True,
+                    startkey=key+[self.datespan.startdate_param_utc],
+                    endkey=key+[self.datespan.enddate_param_utc]
+            ).first()
+            if not data:
+                data = {}
+            data = data.get('value', {})
+            num_births += data.get('totalBirths', 0)
+            birth_events += data.get('totalBirthEvents', 0)
+            maternal_deaths += data.get('maternalDeaths', 0)
+            maternal_near_miss += data.get('maternalNearMisses', 0)
+            still_births += data.get('stillBirthEvents', 0)
+            neonatal_mortality += data.get('neonatalMortalityEvents', 0)
+            positive_outcomes += data.get('totalPositiveOutcomes', 0)
+            lost_to_followup += data.get('lostToFollowUp', 0)
         negative_outcomes = max(birth_events - positive_outcomes - lost_to_followup, 0)
         return {
-            "numBirths": data.get('totalBirths', 0),
+            "numBirths": num_births,
             "numBirthEvents": birth_events,
-            "maternalDeaths": data.get('maternalDeaths', 0),
-            "maternalNearMiss": data.get('maternalNearMisses', 0),
-            "stillBirths": data.get('stillBirthEvents', 0),
-            "neonatalMortality": data.get('neonatalMortalityEvents', 0),
+            "maternalDeaths": maternal_deaths,
+            "maternalNearMiss": maternal_near_miss,
+            "stillBirths": still_births,
+            "neonatalMortality": neonatal_mortality,
             "positive": positive_outcomes,
             "negative": negative_outcomes,
             "lost": lost_to_followup

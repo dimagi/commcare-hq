@@ -44,10 +44,6 @@ function getDCO(doc) {
     return doc.form.meta.userID;
 }
 
-function getDCTL(doc) {
-    return "DCTL Unknown";
-}
-
 function isIHForCHF(doc) {
     return "IHF";
 }

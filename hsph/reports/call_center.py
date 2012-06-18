@@ -92,7 +92,7 @@ class CallCenterFollowUpSummaryReport(HSPHCallCenterReport, HSPHSiteDataMixin):
             for item in data:
                 item = item.get('value')
                 if item:
-                    region, district, site_num, site_name = self.get_site_table_values(key)
+                    region, district, site = self.get_site_table_values(key)
 
                     now = self.datespan.enddate
                     day14 = now-datetime.timedelta(days=14)
@@ -107,7 +107,7 @@ class CallCenterFollowUpSummaryReport(HSPHCallCenterReport, HSPHSiteDataMixin):
                     rows.append([
                         region,
                         district,
-                        site_name if site_name else site_num,
+                        site,
                         item.get('totalBirthsWithContact', 0),
                         item.get('totalBirths', 0),
                         item.get('numCasesFollowedUpByDay8', 0),
