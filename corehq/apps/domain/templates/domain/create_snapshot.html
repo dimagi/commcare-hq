@@ -18,6 +18,7 @@
                 {% for snapshot in snapshots %}
                 <li>
                     <p><a href="{% url corehq.apps.app_manager.views.default snapshot.name %}">Snapshot created on {{ snapshot.snapshot_time }}</a>
+                        Licensed as {{ snapshot.get_license_display }}
                     {% if snapshot.published %}
                         <span class="label label-success">Published</span>
                     </p>
@@ -38,6 +39,12 @@
             <div class="alert alert-error">{{ error_message }}</div>
         {% endif %}
         <form class="form-horizontal" method="post">
+            <div class="control-group">
+                <label class="control-label">{% trans 'License' %}</label>
+                <div class="controls">
+                    ???
+                </div>
+            </div>
         <div class="form-actions"><button type="submit" class="btn btn-primary">Create New Snapshot</button></div>
         </form>
     </fieldset>

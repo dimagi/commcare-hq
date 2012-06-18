@@ -8,7 +8,7 @@ from django.forms.fields import ChoiceField, CharField, BooleanField
 from django.utils.encoding import smart_str
 
 from corehq.apps.domain.middleware import _SESSION_KEY_SELECTED_DOMAIN
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, LICENSES
 
 ########################################################################################################
 #
@@ -110,6 +110,7 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
 By checking this box, you are sharing this project with our other clients. This project's contents will be put in the
 public domain.
 """, required=False)
+    license = ChoiceField(label='License', required=False, choices=LICENSES.items())
     city = CharField(label="City", required=False)
     country = CharField(label="Country", required=False)
     region = CharField(label="Region", required=False,
@@ -132,6 +133,7 @@ public domain.
             domain.project_type = self.cleaned_data['project_type']
             domain.customer_type = self.cleaned_data['customer_type']
             domain.is_test = self.cleaned_data['is_test'] == 'true'
+            domain.license = self.cleaned_data['license']
             domain.is_shared = self.cleaned_data['is_shared']
             domain.description = self.cleaned_data['description']
             domain.save()

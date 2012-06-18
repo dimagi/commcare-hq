@@ -226,7 +226,8 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
                 'customer_type': domain.customer_type,
                 'is_test': json.dumps(domain.is_test),
                 'description': domain.description,
-                'is_shared': domain.is_shared
+                'is_shared': domain.is_shared,
+                'license': domain.license
             })
         else:
             form = DomainGlobalSettingsForm(initial={
@@ -340,7 +341,8 @@ def snapshot_info(request, domain):
             'customer_type': domain.customer_type,
             'is_test': json.dumps(domain.is_test),
             'description': domain.description,
-            'is_shared': domain.is_shared
+            'is_shared': domain.is_shared,
+            'license': domain.license
         })
     else:
         form = DomainGlobalSettingsForm(initial={

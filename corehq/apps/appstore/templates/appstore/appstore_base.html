@@ -7,16 +7,22 @@
 <h4> List of all apps</h4>
 <hr/>
 
-<table>
-    <thead><tr>
-        <th>Name</th><th>Organization</th><th>Downloads</th><th></th>
-    </tr></thead>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Organization</th>
+            <th>Copies</th>
+            <th>License</th>
+        </tr>
+    </thead>
     <tbody>
     {% for app in apps %}
     <tr>
         <td><a href="{% url app_info app.name %}">{{ app.copied_from.display_name }}</a></td>
         <td><a href="{% url orgs_landing app.organization %}">{{ app.organization }}</a></td>
         <td>?</td>
+        <td>{{ app.get_license_display }}</td>
     </tr>
     {% endfor %}
     </tbody>
