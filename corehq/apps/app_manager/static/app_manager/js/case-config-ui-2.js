@@ -239,6 +239,8 @@ var CaseXML = (function () {
         self.toJS.subscribe(function (newValue) {
             self.utils.actions.subcases = newValue;
         });
+        // Call on load
+        self.utils.actions.subcases = self.toJS();
     }
     SubCasesViewModel.prototype.getLabel = function (question) {
         return CaseXML.prototype.truncateLabel(question.label, question.tag == 'hidden' ? ' (Hidden)' : '');

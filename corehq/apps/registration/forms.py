@@ -1,3 +1,4 @@
+from corehq.apps.users.models import CouchUser
 from django import forms
 from django.contrib.auth.models import User
 import re
@@ -23,9 +24,13 @@ class NewWebUserRegistrationForm(forms.Form):
         return [data.pop(0)] + [' '.join(data)]
 
     def clean_email(self):
-        data = self.cleaned_data['email'].strip()
+        data = self.cleaned_data['email'].strip().lower()
         validate_email(data)
-        if User.objects.filter(username__iexact=data).count() > 0:
+        duplicate = CouchUser.get_by_username(data)
+        if duplicate:
+            # sync django user
+            duplicate.save()
+        if User.objects.filter(username__iexact=data).count() > 0 or duplicate:
             raise forms.ValidationError('Username already taken; please try another')
         return data
 
