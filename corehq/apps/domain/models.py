@@ -283,7 +283,7 @@ class Domain(Document):
         return not self.is_snapshot and self.original_doc is not None
 
     def snapshots(self):
-        return Domain.view('domain/snapshots', startkey=[self.name], endkey=[self.name, {}])
+        return Domain.view('domain/snapshots', startkey=[self.name, {}], endkey=[self.name], include_docs=True, descending=True)
 
     def organization_doc(self):
         from corehq.apps.orgs.models import Organization

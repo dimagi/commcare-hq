@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block user-view %}
-<form class="form-horizontal" method="post">
+
     <fieldset>
         <legend>Create new snapshot</legend>
         <div>
@@ -17,11 +17,18 @@
             <ul>
                 {% for snapshot in snapshots %}
                 <li>
-                    <a href="{% url corehq.apps.app_manager.views.default snapshot.name %}">Created on {{ snapshot.snapshot_time }}</a>
+                    <p><a href="{% url corehq.apps.app_manager.views.default snapshot.name %}">Snapshot created on {{ snapshot.snapshot_time }}</a>
                     {% if snapshot.published %}
-                        <span class="label label-success">Published</a> <a class="btn btn-danger" href="">Unpublish</a>
+                        <span class="label label-success">Published</span>
+                    </p>
+                        <form action="{% url domain_clear_published domain %}" method="POST">
+                            <button class="btn btn-danger" type="submit">Unpublish</button>
+                        </form>
                     {% else %}
-                        <a class="btn btn-primary" href="{% url corehq.apps.domain.views.set_published_snapshot snapshot_name=snapshot.name %}">Publish</a> (only one snapshot can be published at a time)
+                    </p>
+                        <form action="{% url domain_set_published domain snapshot.name %}" method="POST">
+                            <button class="btn btn-primary" type="submit">Publish</button> (only one snapshot can be published at a time)
+                        </form>
                     {% endif %}
                 </li>
                 {% endfor %}
@@ -30,7 +37,8 @@
         {% if error_message %}
             <div class="alert alert-error">{{ error_message }}</div>
         {% endif %}
+        <form class="form-horizontal" method="post">
         <div class="form-actions"><button type="submit" class="btn btn-primary">Create New Snapshot</button></div>
+        </form>
     </fieldset>
-</form>
 {% endblock %}>

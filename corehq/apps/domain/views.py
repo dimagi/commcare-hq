@@ -289,9 +289,11 @@ def create_snapshot(request, domain):
                      'error_message': 'Snapshot creation failed; please try again',
                      'snapshots': snapshots})
 
-        return redirect('domain_copy_snapshot', new_domain.name)
+        messages.success(request, "Added new snapshot")
 
-@require_previewer
+        return redirect('domain_copy_snapshot', domain.name)
+
+@domain_admin_required
 def copy_project(request, domain):
     """
     This both creates snapshots and copies them once they exist.
@@ -305,9 +307,8 @@ def copy_project(request, domain):
     else:
         return create_snapshot(request, domain)
 
-@require_previewer
 @domain_admin_required
-def set_published_snapshot(request, domain, snapshot_name):
+def set_published_snapshot(request, domain, snapshot_name=''):
     domain = request.project
     snapshots = domain.snapshots()
     if request.method == 'POST':
@@ -317,12 +318,11 @@ def set_published_snapshot(request, domain, snapshot_name):
                 snapshot.save()
         if snapshot_name != '':
             published_snapshot = Domain.get_by_name(snapshot_name)
-            if published_snapshot not in snapshots:
+            if published_snapshot.original_doc != domain.name:
                 messages.error(request, "Invalid snapshot")
-            published_snapshot.most_recent = True
+            published_snapshot.published = True
             published_snapshot.save()
-    return render_to_response(request, "domain/create_snapshot.html", {'domain': domain.name,
-                                                                       'snapshots': snapshots})
+    return redirect('domain_copy_snapshot', domain.name)
 
 @require_previewer
 @login_and_domain_required
