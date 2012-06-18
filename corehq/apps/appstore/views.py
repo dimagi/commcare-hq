@@ -51,7 +51,7 @@ def search_snapshots(request, filter_by = '', filter = '', template="appstore/ap
 @require_superuser
 def filter_choices(request, filter_by, template="appstore/filter_choices.html"):
     if filter_by not in ('category', 'license', 'region', 'organization'):
-        return redirect('appstore') # does not exist
+        return HttpResponseRedirect(reverse('appstore')) # does not exist
 
     if filter_by == 'category':
         choices = [(d.replace(' ', '+'), d) for d in Domain.categories()]
@@ -67,7 +67,7 @@ def filter_choices(request, filter_by, template="appstore/filter_choices.html"):
 @require_superuser
 def filter_snapshots(request, filter_by, filter, template="appstore/appstore_base.html"):
     if filter_by not in ('category', 'license', 'region', 'organization'):
-        return redirect('appstore') # does not exist
+        return HttpResponseRedirect(reverse('appstore')) # does not exist
 
     filter = filter.replace('+', ' ')
 
