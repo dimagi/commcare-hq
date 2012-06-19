@@ -178,8 +178,6 @@ class StandardTabularHQReport(StandardHQReport):
         if self.total_row:
             table.append(self.total_row)
 
-        print "TABLE", table
-
         table_format = [[self.name, table]]
 
         temp = StringIO()

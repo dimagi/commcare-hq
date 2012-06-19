@@ -31,6 +31,11 @@
                 $("#toggle-report-filters").button('hide');
             });
 
+            $("#export-report-excel").click(function () {
+                var params = window.location.search.substr(1);
+                window.location.href = window.location.pathname.replace('/{{ base_slug|default:'reports' }}/', '/{{ base_slug|default:'reports' }}/export/')+"?"+params;
+            });
+
             {% if slug and async_report %}
             var asyncReport = new HQAsyncReport({
                 baseSlug: '{{ base_slug|default:'reports' }}'
@@ -72,7 +77,7 @@
             {% if not report_hide_filters or exportable %}
                 <span>Report Actions:</span> 
                 {% if not report_hide_filters %}<a href="#reportFilters" class="btn" id="toggle-report-filters" data-toggle="collapse" data-show-text="Show Filter Options" data-hide-text="Hide Filter Options">Filter Options</a>{% endif %}
-                {% if exportable and async_report %}<a href="#" class="btn" id="export-report-excel"><i class="icon icon-share"></i> Export to Excel</a>{% endif %}
+                {% if exportable %}<a href="#" class="btn" id="export-report-excel"><i class="icon icon-share"></i> Export to Excel</a>{% endif %}
             {% endif %}
             </div>
             <div id="extra-filter-info" class="accordion-extra"></div>
