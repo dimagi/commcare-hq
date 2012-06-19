@@ -100,8 +100,12 @@ content: "";
         <div>
             <div>
                 <form action="{% url app_info domain=domain.name %}" method="post">
+                    {% if versioned %}
+                    <input type="hidden" name="versioned" value="">
+                    {% else %}
                     <input type="hidden" name="versioned" value="1">
-                    <button type="submit" class="btn btn-primary">Only view reviews from current version</button>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary">{% if versioned %} View all reviews {% else %} Only view reviews from current version{% endif %}</button>
                 </form>
             </div>
             <br/><br/>
