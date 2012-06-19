@@ -5,7 +5,7 @@ from corehq.apps.domain.utils import new_domain_re
 
 class AddReviewForm(forms.Form):
 
-    review_rating = forms.IntegerField(max_value=5, min_value=0)
+    review_rating = forms.IntegerField(max_value=5, min_value=0, help_text="Rate this app on a scale of 0 to 5")
     review_name = forms.CharField(label="nickname", max_length=25)
     review_title = forms.CharField(label="Title", max_length=35)
     review_info = forms.CharField(label="Review (Optional)", max_length=500, required=False)
