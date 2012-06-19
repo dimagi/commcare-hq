@@ -21,6 +21,7 @@ from casexml.apps.phone.fixtures import generator
 from casexml.apps.case.xml import V2
 from xml.etree import ElementTree
 
+
 @login_and_domain_required
 def default(request, domain):
     return HttpResponseRedirect(reverse('cloudcare_app_list', args=[domain, '']))
@@ -182,14 +183,22 @@ def get_app_api(request, domain, app_id):
     return json_response(get_app(domain, app_id))
 
 @cloudcare_api
-def get_fixtures(request, domain, user_id):
+def get_fixtures(request, domain, user_id, fixture_id=None):
     user = CommCareUser.get(user_id)
     if not user:
         raise Http404
     assert user.domain == domain
     casexml_user = user.to_casexml_user()
-    ret = ElementTree.Element("fixtures")
-    for fixture in generator.get_fixtures(casexml_user, version=V2):
-        ret.append(fixture)
-    return HttpResponse(ElementTree.tostring(ret), content_type="text/xml")
+    if not fixture_id:
+        ret = ElementTree.Element("fixtures")
+        for fixture in generator.get_fixtures(casexml_user, version=V2):
+            ret.append(fixture)
+        return HttpResponse(ElementTree.tostring(ret), content_type="text/xml")
+    else:
+        for fixture in generator.get_fixtures(casexml_user, version=V2):
+            if fixture.attrib.get("id") == fixture_id:
+                assert len(fixture.getchildren()) == 1
+                return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
+        raise Http404
+        
         
