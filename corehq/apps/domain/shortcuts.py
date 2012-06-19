@@ -7,7 +7,7 @@ def create_domain(name, active=True):
 
 def create_user(username, password, is_staff=False, is_superuser=False, is_active=True, **kwargs):
     user = User()
-    user.username = username
+    user.username = username.lower()
     for key, val in kwargs.items():
         if key and val:  setattr(user, key, val)
     user.is_staff = is_staff
