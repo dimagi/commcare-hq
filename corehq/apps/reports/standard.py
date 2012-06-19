@@ -172,11 +172,12 @@ class StandardTabularHQReport(StandardHQReport):
         table = headers.as_table
         rows = []
         for row in html_rows:
-            row = [col.get("sort_key", row) if isinstance(col, dict) else col for col in row]
+            row = [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
             rows.append(row)
         table.extend(rows)
         if self.total_row:
-            table.append(self.total_row)
+            total_row = [col.get("sort_key", col) if isinstance(col, dict) else col for col in self.total_row]
+            table.append(total_row)
 
         table_format = [[self.name, table]]
 
