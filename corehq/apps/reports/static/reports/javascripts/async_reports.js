@@ -29,6 +29,12 @@ var HQAsyncReport = function (o) {
         });
     };
 
+    $("#export-report-excel").click(function () {
+        var params = window.location.search.substr(1);
+        console.log(window.location.pathname.replace('/'+self.baseSlug+'/', '/'+self.baseSlug+'/export/')+"?"+params);
+        location(window.location.pathname.replace('/'+self.baseSlug+'/', '/'+self.baseSlug+'/export/')+"?"+params);
+    });
+
     self.updateFilters = function (form_params) {
         $.ajax({
             url: window.location.pathname.replace('/'+self.baseSlug+'/', '/'+self.baseSlug+'/async/filters/')+"?"+form_params,
