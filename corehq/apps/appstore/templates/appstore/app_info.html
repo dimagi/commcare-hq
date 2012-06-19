@@ -59,9 +59,21 @@ content: "";
         var self = this;
 
         self.reviews = ko.observableArray([]);
+        self.newReview = ko.observable();
 
         self.addReview = function(title, rating, user, date_published, info) {
             self.reviews.push(new Review(title, rating, user, "N/A", info));
+
+        self.submit = function(){
+            $.ajax('{% url app_info domain %}', {
+                type: 'post',
+                data: { data: ko.toJSON(self.review)
+            }
+        }
+        }
+        $.ajax({
+            type: owner._destroy ? 'delete' : 'post',
+            url:
         }
 
 
@@ -75,7 +87,11 @@ content: "";
 
 {% block main_column %}
 
-<h2>{{ domain.copied_from.display_name }}</h2>
+    <span>
+        <div><h2>{{ domain.copied_from.display_name }}</h2></div>
+        <div><h4>{{ domain.organization }}</h4></div>
+        <div><h5> {{ average_rating }}/5 - {{ num_ratings }} Ratings</h5></div>
+    </span>
 <hr/>
 <h4>App Info</h4>
         <p> {{ domain.description }} </p>
