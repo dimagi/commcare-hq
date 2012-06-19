@@ -103,7 +103,7 @@ class IHForCHFField(ReportSelectField):
         data_type = FixtureDataType.by_domain_tag(cls.domain, 'site').first()
         data_items = FixtureDataItem.by_data_type(cls.domain, data_type.get_id)
         for item in data_items:
-            facilities.get(item.fields.get("ihf_chf").lower(), []).append(item.fields.get("site_id"))
+            facilities.get(item.fields.get("ihf_chf", "").lower(), []).append(item.fields.get("site_id"))
         return facilities
 
 
