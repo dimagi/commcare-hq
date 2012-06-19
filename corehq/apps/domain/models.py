@@ -212,7 +212,7 @@ class Domain(Document):
 
     @classmethod
     def get_all(cls):
-        return Domain.view("domain/domains",
+        return Domain.view("domain/not_snapshots",
                             reduce=False,
                             include_docs=True).all()
 
