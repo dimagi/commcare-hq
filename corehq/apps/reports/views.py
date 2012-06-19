@@ -41,6 +41,7 @@ from fields import FilterUsersField
 from util import get_all_users_by_domain
 from corehq.apps.hqsofabed.models import HQFormData
 from StringIO import StringIO
+from corehq.apps.app_manager.util import get_app_id
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -359,13 +360,14 @@ def case_details(request, domain, case_id):
         report_name = 'Details for Case "%s"' % case.name
     except ResourceNotFound:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake plase report an issue.")
-        return HttpResponseRedirect(reverse("submit_history_report", args=[domain]))
+        return HttpResponseRedirect(reverse('report_dispatcher', 
+                                            args=[domain, standard.SubmitHistory.slug]))
 
 
     form_lookups = dict((form.get_id,
-                         "%s: %s" % (form.received_on.date(), xmlns_to_name(domain, form.xmlns, form.app_id))) \
-                        for form in [XFormInstance.get(id) for id in case.xform_ids] \
-                        if form)
+                         "%s: %s" % (form.received_on.date(), 
+                                     xmlns_to_name(domain, form.xmlns, get_app_id(form)))) \
+                        for form in case.get_forms())
     return render_to_response(request, "reports/reportdata/case_details.html", {
         "domain": domain,
         "case_id": case_id,

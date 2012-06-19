@@ -71,7 +71,7 @@ def send_sms_to_verified_number(verified_number, text):
         msg = SMSLog(
             couch_recipient_doc_type    = verified_number.owner_doc_type,
             couch_recipient             = verified_number.owner_id,
-            phone_number                = verified_number.phone_number,
+            phone_number                = "+" + str(verified_number.phone_number),
             direction                   = OUTGOING,
             date                        = datetime.utcnow(),
             domain                      = verified_number.domain,
@@ -109,17 +109,22 @@ def start_session_from_keyword(survey_keyword, verified_number):
         print "ERROR: Exception raised while starting survey for keyword " + survey_keyword.keyword + ", domain " + verified_number.domain
 
 def incoming(phone_number, text):
+    phone_without_plus = str(phone_number)
+    if phone_without_plus[0] == "+":
+        phone_without_plus = phone_without_plus[1:]
+    phone_with_plus = "+" + phone_without_plus
+    
     # Circular Import
     from corehq.apps.reminders.models import SurveyKeyword
     
     v = VerifiedNumber.view("sms/verified_number_by_number",
-        key=phone_number,
+        key=phone_without_plus,
         include_docs=True
     ).one()
     
     # Log message in message log
     msg = SMSLog(
-        phone_number    = phone_number,
+        phone_number    = phone_with_plus,
         direction       = INCOMING,
         date            = datetime.utcnow(),
         text            = text

@@ -8,7 +8,7 @@ import re
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
-from corehq.apps.sms.api import send_sms
+from corehq.apps.sms.api import send_sms, incoming
 from corehq.apps.users.models import CouchUser
 from corehq.apps.sms.models import SMSLog, INCOMING
 from corehq.apps.groups.models import Group
@@ -177,6 +177,22 @@ def send_to_recipients(request, domain):
         request.META.get('HTTP_REFERER') or
         reverse(compose_message, args=[domain])
     )
+
+@login_and_domain_required
+def message_test(request, domain, phone_number):
+    if request.method == "POST":
+        message = request.POST.get("message", "")
+        incoming(phone_number, message)
+    context = get_sms_autocomplete_context(request, domain)
+    context['domain'] = domain
+    context['messagelog'] = SMSLog.by_domain_dsc(domain)
+    context['now'] = datetime.utcnow()
+    tz = report_utils.get_timezone(request.couch_user.user_id, domain)
+    context['timezone'] = tz
+    context['timezone_now'] = datetime.now(tz=tz)
+    context['layout_flush_content'] = True
+    context['phone_number'] = phone_number
+    return render_to_response(request, "sms/message_tester.html", context)
 
 
 
