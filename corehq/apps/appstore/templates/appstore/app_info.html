@@ -62,6 +62,14 @@ content: "";
 
         self.addReview = function(title, rating, user, date_published, info) {
             self.reviews.push(new Review(title, rating, user, "N/A", info));
+
+        self.submit = function(){
+            $.ajax('{% url app_info domain %}',
+        }
+        }
+        $.ajax({
+            type: owner._destroy ? 'delete' : 'post',
+            url:
         }
 
 
