@@ -20,9 +20,9 @@ from django.core.urlresolvers import reverse
 from casexml.apps.phone.fixtures import generator
 from casexml.apps.case.xml import V2
 from xml.etree import ElementTree
+from corehq.apps.cloudcare.decorators import require_cloudcare_access
 
-
-@login_and_domain_required
+@require_cloudcare_access
 def default(request, domain):
     return HttpResponseRedirect(reverse('cloudcare_app_list', args=[domain, '']))
 
