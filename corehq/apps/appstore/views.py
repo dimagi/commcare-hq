@@ -1,7 +1,7 @@
 import datetime
 from django.core.urlresolvers import reverse
 from django.http import Http404
-from corehq.apps.appstore.forms import AddReviewForm
+from corehq.apps.appstore.forms import AddReviewForm, AppStoreAdvancedFilter
 from corehq.apps.appstore.models import Review
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.registration.forms import DomainRegistrationForm
@@ -14,7 +14,11 @@ from django.contrib import messages
 @require_superuser
 def appstore(request, template="appstore/appstore_base.html"):
     apps = Domain.published_snapshots()[:40]
-    vals = dict(apps=apps)
+    if request.method == "POST":
+        form = AppStoreAdvancedFilter(request.GET)
+    else:
+        form = AppStoreAdvancedFilter()
+    vals = dict(apps=apps, form=form)
     return render_to_response(request, template, vals)
 
 @require_superuser
@@ -23,8 +27,7 @@ def app_info(request, domain, template="appstore/app_info.html", versioned=None)
     if request.method == "POST":
         versioned = request.POST.get('versioned', '')
         nickname = request.POST.get('review_name', '')
-#        import pdb
-#        pdb.set_trace()
+
         if nickname:
             form = AddReviewForm(request.POST)
 #            pdb.set_trace()

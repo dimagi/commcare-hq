@@ -1,4 +1,7 @@
 {% extends "hqwebapp/two_column.html" %}
+{% load hq_shared_tags %}
+{% load hq_bootstrap_tags %}
+{% load i18n %}
 
 {% block sidebar %}
 <ul class="nav nav-list">
@@ -42,6 +45,30 @@
     </div>
 </form>
 <hr/>-->
+
+<div class="hq-accordion-control" id="reportFiltersAccordion">
+    <div class="accordion-heading">
+        <a href="#appFilters" data-toggle="collapse">Advanced Filters</a>
+        <div id="extra-filter-info" class="accordion-extra"></div>
+    </div>
+    <div id="appFilters" class="accordion-body collapse">
+        <div class="accordion-inner">
+            <form method="get" id="paramSelectorForm" class="form-horizontal">
+                <div id="app-filters">
+                 <!--the get form goes here-->
+                    <fieldset>
+                        {% bootstrap_form_errors form %}
+                        {% bootstrap_fieldset form "App Filters" %}
+                    </fieldset>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" data-loading-text="Searching App Store..." data-standard-text="Update Filters" class="btn btn-large disabled">Update Filters</button>
+                    <a href="#appFilters" data-toggle="collapse" class="btn btn-large">Close</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 {% if search_query or filter_by %}
     <h3>{{ apps|length }} result{{ apps|pluralize }}</h3>

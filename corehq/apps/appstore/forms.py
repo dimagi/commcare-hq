@@ -2,6 +2,7 @@ from django import forms
 from corehq.apps.domain.models import Domain
 import re
 from corehq.apps.domain.utils import new_domain_re
+from corehq.apps.orgs.models import Organization
 
 class AddReviewForm(forms.Form):
 
@@ -32,3 +33,10 @@ class AddReviewForm(forms.Form):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
+class AppStoreAdvancedFilter(forms.Form):
+
+    first = [("Any Organization", "Any Organization")]
+    orgs = [(o.name, o.title) for o in Organization.get_all()]
+    first.extend(orgs)
+    selected_org = forms.ChoiceField(label="Organization", initial="Any Organization", choices=first)
+    date_filter = 'corehq.apps.reports.fields.DatespanField'
