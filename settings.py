@@ -470,7 +470,9 @@ EMAIL_USE_TLS = True
 
 DATA_INTERFACE_MAP = {
     'Case Management' : [
-        'corehq.apps.data_interfaces.interfaces.CaseReassignmentInterface'
+        'corehq.apps.data_interfaces.interfaces.CaseReassignmentInterface',
+        'corehq.apps.appstore.interfaces.AppStoreInterface'
+
     ]
 }
 
