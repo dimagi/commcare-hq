@@ -23,9 +23,7 @@ class Review(Document):
 
     @classmethod
     def get_by_version(cls, version_name):
-        result = cls.view("appstore/by_app",
-            groups=True,
-            group_level=2,
+        result = cls.view("appstore/by_version",
             key=version_name,
             reduce=False,
             include_docs=True).all()
@@ -43,22 +41,34 @@ class Review(Document):
             return row['value']['sum'] / row['value']['count']
         return result
 
-
-
     @classmethod
     def get_average_rating_by_version(cls, version_name):
-        result = cls.view("appstore/by_app",
+        result = cls.get_db().view("appstore/by_version",
             key=version_name,
             reduce=True,
-            include_docs=False,
-            groups=True,
-            group_level=2)
-        return result['sum'] / result['count']
+            include_docs=False)
+        if result:
+            assert len(result) == 1
+            row = result.one()
+            return row['value']['sum'] / row['value']['count']
+        return result
 
     @classmethod
     def get_num_ratings_by_app(cls, app_name):
         result = cls.get_db().view("appstore/by_app",
             key=app_name,
+            reduce=True,
+            include_docs=False)
+        if result:
+            assert len(result) == 1
+            row = result.one()
+            return row['value']['count']
+        return result
+
+    @classmethod
+    def get_num_ratings_by_version(cls, version_name):
+        result = cls.get_db().view("appstore/by_version",
+            key=version_name,
             reduce=True,
             include_docs=False)
         if result:

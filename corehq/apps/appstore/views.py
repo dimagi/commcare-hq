@@ -1,7 +1,7 @@
 import datetime
 from django.core.urlresolvers import reverse
 from django.http import Http404
-from corehq.apps.appstore.forms import AddReviewForm
+from corehq.apps.appstore.forms import AddReviewForm, AppStoreAdvancedFilter
 from corehq.apps.appstore.models import Review
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.registration.forms import DomainRegistrationForm
@@ -14,30 +14,46 @@ from django.contrib import messages
 @require_superuser
 def appstore(request, template="appstore/appstore_base.html"):
     apps = Domain.published_snapshots()[:40]
-    vals = dict(apps=apps)
+    if request.method == "POST":
+        form = AppStoreAdvancedFilter(request.GET)
+    else:
+        form = AppStoreAdvancedFilter()
+    vals = dict(apps=apps, form=form)
     return render_to_response(request, template, vals)
 
 @require_superuser
-def app_info(request, domain, template="appstore/app_info.html"):
+def app_info(request, domain, template="appstore/app_info.html", versioned=None):
     dom = Domain.get_by_name(domain)
     if request.method == "POST":
-        form = AddReviewForm(request.POST)
-        if form.is_valid():
-            nickname = form.cleaned_data['review_name']
-            title = form.cleaned_data['review_title']
-            rating = form.cleaned_data['review_rating']
-            info = form.cleaned_data['review_info']
-            user = request.user.username
-            date_published = datetime.datetime.now()
-            review = Review(title=title, rating=rating, nickname=nickname, user=user, info=info, date_published = date_published, domain=domain, original_doc=dom.original_doc)
-            review.save()
+        versioned = request.POST.get('versioned', '')
+        nickname = request.POST.get('review_name', '')
+
+        if nickname:
+            form = AddReviewForm(request.POST)
+#            pdb.set_trace()
+            if form.is_valid():
+                nickname = form.cleaned_data['review_name']
+                title = form.cleaned_data['review_title']
+                rating = form.cleaned_data['review_rating']
+                info = form.cleaned_data['review_info']
+                user = request.user.username
+                date_published = datetime.datetime.now()
+                review = Review(title=title, rating=rating, nickname=nickname, user=user, info=info, date_published = date_published, domain=domain, original_doc=dom.original_doc)
+                review.save()
+        else:
+            form = AddReviewForm()
     else:
         form = AddReviewForm()
 
-    reviews = Review.get_by_app(dom.original_doc)
-    average_rating = Review.get_average_rating_by_app(dom.original_doc)
-    num_ratings = Review.get_num_ratings_by_app(dom.original_doc)
-    vals = dict(domain=dom, form=form, reviews=reviews, average_rating=average_rating, num_ratings=num_ratings)
+    if versioned:
+        reviews = Review.get_by_version(domain)
+        average_rating = Review.get_average_rating_by_version(domain)
+        num_ratings = Review.get_num_ratings_by_version(domain)
+    else:
+        reviews = Review.get_by_app(dom.original_doc)
+        average_rating = Review.get_average_rating_by_app(dom.original_doc)
+        num_ratings = Review.get_num_ratings_by_app(dom.original_doc)
+    vals = dict(domain=dom, form=form, reviews=reviews, average_rating=average_rating, num_ratings=num_ratings, versioned=versioned)
     return render_to_response(request, template, vals)
 
 @require_superuser
