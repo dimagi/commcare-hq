@@ -123,6 +123,8 @@ class StandardTabularHQReport(StandardHQReport):
     total_row = None
     default_rows = 10
     start_at_row = 0
+    fix_left_col = False
+    fix_cols = dict(num=1, width=200)
 
     exportable = True
 
@@ -154,6 +156,8 @@ class StandardTabularHQReport(StandardHQReport):
             self.context['total_row'] = self.total_row
 
         super(StandardTabularHQReport, self).get_report_context()
+        if self.fix_left_col:
+            self.context['report']['fixed_cols'] = self.fix_cols
 
     def as_export(self):
         self.get_global_params()
@@ -404,6 +408,7 @@ class CaseActivityReport(StandardTabularHQReport):
 
 class DailyReport(StandardDateHQReport, StandardTabularHQReport):
     couch_view = ''
+    fix_left_col = True
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
@@ -413,7 +418,7 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
         while self.dates[-1] < self.datespan.enddate:
             self.dates.append(self.dates[-1] + datetime.timedelta(days=1))
 
-        headers = DataTablesHeader(DataTablesColumn("Username"))
+        headers = DataTablesHeader(DataTablesColumn("Username", span=3))
         for d in self.dates:
             headers.add_column(DataTablesColumn(d.strftime(DATE_FORMAT), sort_type=DTSortType.NUMERIC))
         headers.add_column(DataTablesColumn("Total", sort_type=DTSortType.NUMERIC))
@@ -473,6 +478,7 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
+    fix_left_col = True
 
     def get_parameters(self):
         self.form_types = self.get_relevant_form_types()
@@ -485,7 +491,7 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
             # this fails if form_names, form_types is [], []
             form_names, self.form_types = zip(*sorted(zip(form_names, self.form_types)))
 
-        headers = DataTablesHeader(DataTablesColumn("User"))
+        headers = DataTablesHeader(DataTablesColumn("User", span=3))
         for name in list(form_names):
             headers.add_column(DataTablesColumn(name, sort_type=DTSortType.NUMERIC))
         headers.add_column(DataTablesColumn("All Forms", sort_type=DTSortType.NUMERIC))
