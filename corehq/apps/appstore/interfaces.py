@@ -11,9 +11,9 @@ from corehq.apps.users.models import WebUser
 from dimagi.utils.couch.database import get_db
 
 class DataInterface(HQReport):
-    base_slug = 'data'
-    template_name = "data_interfaces/data_interfaces_base.html"
-    base_template_name = "data_interfaces/data_interfaces_base.html"
+    base_slug = 'appstore'
+    template_name = "appstore/appstore_interfaces_base.html"
+    base_template_name = "appstore/appstore_interfaces_base.html"
     asynchronous = True
 
 class AppStoreInterface(DataInterface, StandardTabularHQReport, StandardDateHQReport):
@@ -27,20 +27,33 @@ class AppStoreInterface(DataInterface, StandardTabularHQReport, StandardDateHQRe
     template_name = 'data_interfaces/interfaces/case_management.html'
 
     def get_parameters(self):
-        import pdb
-        pdb.set_trace()
-        all_groups = Group.get_reporting_groups(self.domain)
-        self.all_case_sharing_groups = [group for group in all_groups if group.case_sharing]
-        self.case_sharing_groups = []
+#        all_groups = Group.get_reporting_groups(self.domain)
+#        self.all_case_sharing_groups = [group for group in all_groups if group.case_sharing]
+#        self.case_sharing_groups = []
+#
+#        if self.group and self.group.case_sharing:
+#            self.case_sharing_groups = [self.group]
+#        elif not self.individual and not self.group:
+#            self.case_sharing_groups = self.all_case_sharing_groups
 
-        if self.group and self.group.case_sharing:
-            self.case_sharing_groups = [self.group]
-        elif not self.individual and not self.group:
-            self.case_sharing_groups = self.all_case_sharing_groups
+        params = self.request_params
+        self.organization_filter = None
+        self.license_filter = None
+        self.category_filter = None
+        self.region_filter = None
+        for filter in params:
+            if filter == 'category':
+                self.category_filter = params[filter]
+            elif filter == 'license':
+                self.license_filter = params[filter]
+            elif filter == 'org':
+                self.organization_filter = params[filter]
+            elif filter == 'region':
+                self.region_filter = params[filter]
+
 
     def get_headers(self):
         headers = DataTablesHeader(
-#            DataTablesColumn('Select  <a href="#" class="select-all btn btn-mini btn-inverse">all</a> <a href="#" class="select-none btn btn-mini btn-warning">none</a>', sortable=False, span=2),
             DataTablesColumn("Name", span=3),
             DataTablesColumn("Organization", span=2),
             DataTablesColumn("Category", span=2),
@@ -53,24 +66,16 @@ class AppStoreInterface(DataInterface, StandardTabularHQReport, StandardDateHQRe
 
     def get_rows(self):
         rows = list()
-#        checkbox = '<input type="checkbox" class="selected-commcare-case" data-bind="event: {change: updateCaseSelection}" data-caseid="%(case_id)s" data-owner="%(owner)s" data-ownertype="%(owner_type)s" />'
         data = self.get_data()
         for app in data:
-#            app, app_link = self.get_app_info(item)
-#            if app:
             rows.append(['<a href="%s">%s</a>' % (reverse('app_info', args=[app.name]), app.original_doc), app.organization, app.project_type, len(app.copies_of_parent()) , app.get_license_display, util.format_relative_date(app.snapshot_time)])
         return rows
 
     def get_data(self):
         return Domain.published_snapshots()[:40]
 
-#        key = [self.domain, False, {}, owner_id ]
-#        return get_db().view('case/by_date_modified_owner',
-#                startkey=key+[self.datespan.startdate_param_utc],
-#                endkey=key+[self.datespan.enddate_param_utc],
-#                reduce=False,
-#                include_docs=True
-#            ).all()
+         # use self.organization_filter, self.license_filter, self.category_filter and self.region_filter to search with lucene
+
 
     def get_app_info(self, data):
         app =  None
@@ -84,10 +89,3 @@ class AppStoreInterface(DataInterface, StandardTabularHQReport, StandardDateHQRe
                         (reverse('app_info', args=[app.domain]), app.domain)
         return app, app_link
 
-    def get_report_context(self):
-        super(AppStoreInterface, self).get_report_context()
-        active_users = util.get_all_users_by_domain(self.domain, filter_users=HQUserType.use_defaults())
-        self.context['users'] = [dict(ownerid=user.userID, name=user.raw_username, type="user")
-                                 for user in active_users]
-        self.context['groups'] = [dict(ownerid=group.get_id, name=group.name, type="group")
-                                  for group in self.all_case_sharing_groups]

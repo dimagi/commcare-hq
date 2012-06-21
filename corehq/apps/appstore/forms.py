@@ -33,10 +33,3 @@ class AddReviewForm(forms.Form):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
-class AppStoreAdvancedFilter(forms.Form):
-
-    first = [("Any Organization", "Any Organization")]
-    orgs = [(o.name, o.title) for o in Organization.get_all()]
-    first.extend(orgs)
-    selected_org = forms.ChoiceField(label="Organization", initial="Any Organization", choices=first)
-    date_filter = 'corehq.apps.reports.fields.DatespanField'
