@@ -33,6 +33,50 @@ def download_media(request, media_type, doc_id):
         pass
     return HttpResponseServerError("No Media Found")
 
+def search_for_media(request, domain, app_id):
+    media_type = request.GET['t']
+    if media_type == 'Image':
+        files = CommCareImage.search(request.GET['q'])
+    elif media_type == 'Audio':
+        files = CommCareAudio.search(request.GET['q'])
+    else:
+        raise Http404()
+    return HttpResponse(simplejson.dumps([
+        {'url': i.url(),
+         'license': LICENSES[i.license],
+         'title': i.title,
+         'm_id': i._id} for i in files]))
+
+def choose_media(request, domain, app_id):
+    # TODO: Add error handling
+    app = get_app(domain, app_id)
+    media_type = request.POST['media_type']
+    media_id = request.POST['id']
+    if media_type == 'Image':
+        file = CommCareImage.get(media_id)
+    elif media_type == 'Audio':
+        file = CommCareImage.get(media_id)
+    else:
+        raise Http404()
+
+    if file is None:
+        return HttpResponse(simplejson.dumps({
+            'match_found': False
+        }))
+
+    file.add_domain(domain)
+    app.create_mapping(file, request.POST['path'])
+    if media_type == 'Image':
+        return HttpResponse(simplejson.dumps({
+            'match_found': True,
+            'image': {'m_id': file._id, 'url': file.url()},
+            'file': True
+        }))
+    elif media_type == 'Audio':
+        return HttpResponse(simplejson.dumps({'match_found': True, 'audio': {'m_id': file._id, 'url': file.url()}}))
+    else:
+        raise Http404()
+
 @require_can_edit_apps
 def media_map(request, domain, app_id):
     app = get_app(domain, app_id)
@@ -72,7 +116,7 @@ def uploaded(request, domain, app_id):
     else:
         specific_params = {}
 
-    replace_existing = request.POST.get('replace_existing', True);
+    replace_existing = request.POST.get('replace_existing', True)
     try:
         uploaded_file = request.FILES.get('Filedata')
         data = uploaded_file.file.read()

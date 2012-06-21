@@ -64,8 +64,8 @@ def search_snapshots(request, filter_by = '', filter = '', template="appstore/ap
         query = "%s:%s %s" % (filter_by, filter, request.GET['q'])
     else:
         query = request.GET['q']
-    results = get_db().search('domain/snapshot_search', q=query, limit=40)
-    snapshots = map(Domain.get, [r['id'] for r in results])
+
+    snapshots = Domain.snapshot_search(query, limit=40)
     return render_to_response(request, template, {'apps': snapshots, 'search_query': query})
 
 @require_superuser
