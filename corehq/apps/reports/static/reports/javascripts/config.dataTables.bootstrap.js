@@ -32,8 +32,13 @@ function HQReportDataTables(options) {
                 sDom: dataTablesDom,
                 sPaginationType: self.paginationType,
                 iDisplayLength: self.defaultRows,
-                bAutoWidth: self.autoWidth
+                bAutoWidth: self.autoWidth,
+                sScrollX: "100%"
             };
+            new FixedColumns( params, {
+                "iLeftColumns": 1,
+                "iLeftWidth": 350
+            } );
 
             if(self.ajaxSource) {
                 params.bServerSide = true;
