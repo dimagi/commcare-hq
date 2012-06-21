@@ -10,7 +10,6 @@ from dimagi.utils.couch.database import get_db
 from itertools import chain
 from langcodes import langs as all_langs
 from collections import defaultdict
-from copy import deepcopy
 
 lang_lookup = defaultdict(str)
 
@@ -217,6 +216,7 @@ class Domain(Document):
                             include_docs=True).all()
 
     def save_copy(self, new_domain_name=None, user=None):
+        from corehq.apps.hqmedia import utils
         if new_domain_name is not None and Domain.get_by_name(new_domain_name):
             return None
         db = get_db()
@@ -247,8 +247,6 @@ class Domain(Document):
             cls = str_to_cls[doc_type]
             new_id = db.copy_doc(json['_id'])['id']
 
-            print doc_type, new_id, json['_id']
-
             new_doc = cls.get(new_id)
             for field in self._dirty_fields:
                 if hasattr(new_doc, field):
@@ -261,6 +259,9 @@ class Domain(Document):
 
             new_doc.original_doc = json['_id']
             new_doc.domain = new_domain_name
+
+            #if isinstance(new_doc, ApplicationBase):
+                # TODO: add some sort of reference in the multimedia document to the new domain
 
             new_doc.save()
 
@@ -307,6 +308,11 @@ class Domain(Document):
     @classmethod
     def published_snapshots(cls):
         return cls.view('domain/published_snapshots', include_docs=True, descending=True)
+
+    @classmethod
+    def snapshost_search(cls, query, limit=40):
+        results = get_db().search('domain/snapshot_search', q=query, limit=limit)
+        return map(cls.get, [r['id'] for r in results])
 
     def organization_doc(self):
         from corehq.apps.orgs.models import Organization

@@ -7,6 +7,9 @@ from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
 import magic
 from hutch.models import AuxMedia, AttachmentImage, MediaAttachmentManager
+from corehq.apps import domain
+from corehq.apps.domain.models import LICENSES
+from dimagi.utils.couch.database import get_db
 
 class HQMediaType(object):
     IMAGE = 0
@@ -17,9 +20,17 @@ class CommCareMultimedia(Document):
 
     file_hash = StringProperty()
     aux_media = SchemaListProperty(AuxMedia)
-    tags = StringListProperty()
+    tags = StringListProperty() # this appears to be unused so I'm taking it for media-sharing purposes - timbauman
+
     last_modified = DateTimeProperty()
-    valid_domains = StringListProperty()
+    valid_domains = StringListProperty() # appears to be mostly unused as well - timbauman
+    # add something about context from the form(s) its in
+
+    title = StringProperty()
+    license = StringProperty(choices=LICENSES, default='public')
+    shared = BooleanProperty(default=False)
+    filenames = StringListProperty()
+    creator = StringProperty() # CouchUser or Organization?
 
     def attach_data(self, data, upload_path=None, username=None, attachment_id=None,
                     media_meta=None, replace_attachment=False):
@@ -95,6 +106,17 @@ class CommCareMultimedia(Document):
     def validate_content_type(cls, content_type):
         return True
 
+    @classmethod
+    def get_all(cls):
+        return cls.view('hqmedia/by_doc_type', key=cls.__name__, include_docs=True)
+
+    @classmethod
+    def tags(cls):
+        return [d['key'] for d in cls.view('hqmedia/tags', group=True).all()]
+
+    def url(self):
+        return reverse("hqmedia_download", args=[self.doc_type,
+                                                 self._id])
 
 class CommCareImage(CommCareMultimedia):
 
@@ -114,12 +136,22 @@ class CommCareImage(CommCareMultimedia):
     def validate_content_type(cls, content_type):
         return content_type in ['image/jpeg', 'image/png', 'image/gif', 'image/bmp']
 
+    @classmethod
+    def search(cls, query, limit=10):
+        results = get_db().search('hqmedia/image_search', q=query, limit=limit)
+        return map(cls.get, [r['id'] for r in results])
+
         
 class CommCareAudio(CommCareMultimedia):
 
     @classmethod
     def validate_content_type(cls, content_type):
         return content_type in ['audio/mpeg', 'audio/mp3']
+
+    @classmethod
+    def search(cls, query, limit=10):
+        results = get_db().search('hqmedia/audio_search', q=query, limit=limit)
+        return map(cls.get, [r['id'] for r in results])
 
 class HQMediaMapItem(DocumentSchema):
 
@@ -148,6 +180,9 @@ class HQMediaMixin(Document):
         map_item.multimedia_id = multimedia._id
         map_item.media_type = multimedia.doc_type
         self.multimedia_map[form_path] = map_item
+        multimedia.filenames.append(form_path)
+        multimedia.save()
+
         try:
             self.save()
         except ResourceConflict:
