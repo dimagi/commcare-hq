@@ -24,6 +24,8 @@ def appstore(request, template="appstore/appstore_base.html"):
 @require_superuser
 def app_info(request, domain, template="appstore/app_info.html", versioned=None):
     dom = Domain.get_by_name(domain)
+    if not dom or not dom.is_snapshot or not dom.published:
+        raise Http404()
     if request.method == "POST":
         versioned = request.POST.get('versioned', '')
         nickname = request.POST.get('review_name', '')

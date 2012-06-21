@@ -39,7 +39,7 @@ class Review(Document):
             assert len(result) == 1
             row = result.one()
             return row['value']['sum'] / row['value']['count']
-        return result
+        return None
 
     @classmethod
     def get_average_rating_by_version(cls, version_name):
@@ -51,7 +51,7 @@ class Review(Document):
             assert len(result) == 1
             row = result.one()
             return row['value']['sum'] / row['value']['count']
-        return result
+        return None
 
     @classmethod
     def get_num_ratings_by_app(cls, app_name):
@@ -63,7 +63,7 @@ class Review(Document):
             assert len(result) == 1
             row = result.one()
             return row['value']['count']
-        return result
+        return 0
 
     @classmethod
     def get_num_ratings_by_version(cls, version_name):
@@ -75,4 +75,4 @@ class Review(Document):
             assert len(result) == 1
             row = result.one()
             return row['value']['count']
-        return result
+        return 0
