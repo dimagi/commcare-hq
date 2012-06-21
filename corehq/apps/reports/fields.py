@@ -171,8 +171,7 @@ class SelectOrganizationField(ReportSelectField):
     default_option = "All Organizations"
 
     def update_params(self):
-        available_orgs = [(o.title) for o in Organization.get_all()]
-        available_orgs = [dict(val= name, text=name) for name in available_orgs]
+        available_orgs = [dict(val= o.name, text=o.title) for o in  Organization.get_all()]
         self.selected = self.request.GET.get(self.slug,'')
         self.options = available_orgs
 

@@ -27,6 +27,8 @@ class AppStoreInterface(DataInterface, StandardTabularHQReport, StandardDateHQRe
     template_name = 'data_interfaces/interfaces/case_management.html'
 
     def get_parameters(self):
+        import pdb
+        pdb.set_trace()
         all_groups = Group.get_reporting_groups(self.domain)
         self.all_case_sharing_groups = [group for group in all_groups if group.case_sharing]
         self.case_sharing_groups = []
