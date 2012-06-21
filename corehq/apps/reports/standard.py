@@ -3,13 +3,15 @@ import datetime
 import json
 import logging
 import sys
-from couchdbkit.exceptions import ResourceNotFound
+from StringIO import StringIO
 import dateutil
 from corehq.apps.groups.models import Group
+from couchexport.export import export_from_tables
+from couchexport.shortcuts import export_response
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from django.core.urlresolvers import reverse, NoReverseMatch
-from django.http import HttpResponseBadRequest, Http404
+from django.http import HttpResponseBadRequest, Http404, HttpResponse
 from django.template.defaultfilters import yesno
 from django.utils import html
 import pytz
@@ -51,6 +53,8 @@ class StandardHQReport(HQReport):
         self.user_filter, _ = FilterUsersField.get_user_filter(self.request)
         self.group = self.request_params.get('group','')
         self.users = util.get_all_users_by_domain(self.domain, self.group, self.individual, self.user_filter)
+        if not self.fields:
+            self.hide_filters = True
 
         if self.individual:
             self.name = "%s for %s" % (self.name, self.users[0].raw_username)
@@ -120,7 +124,8 @@ class StandardTabularHQReport(StandardHQReport):
     default_rows = 10
     start_at_row = 0
 
-#    exportable = True
+    exportable = True
+
     def get_headers(self):
         return DataTablesHeader()
 
@@ -150,6 +155,36 @@ class StandardTabularHQReport(StandardHQReport):
 
         super(StandardTabularHQReport, self).get_report_context()
 
+    def as_export(self):
+        self.get_global_params()
+        self.get_report_context()
+        self.calc()
+        try:
+            import xlwt
+        except ImportError:
+            raise Exception("It doesn't look like this machine is configured for "
+                        "excel export. To export to excel you have to run the "
+                        "command:  easy_install xlutils")
+        book = xlwt.Workbook()
+        headers = self.get_headers()
+        html_rows = self.get_rows()
+
+        table = headers.as_table
+        rows = []
+        for row in html_rows:
+            row = [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
+            rows.append(row)
+        table.extend(rows)
+        if self.total_row:
+            total_row = [col.get("sort_key", col) if isinstance(col, dict) else col for col in self.total_row]
+            table.append(total_row)
+
+        table_format = [[self.name, table]]
+
+        temp = StringIO()
+        export_from_tables(table_format, temp, "xls")
+        return export_response(temp, "xls", self.slug)
+
 
 class PaginatedHistoryHQReport(StandardTabularHQReport):
     use_json = True
@@ -158,6 +193,7 @@ class PaginatedHistoryHQReport(StandardTabularHQReport):
 
     count = 0
     _total_count = None
+    exportable = False
     
     @property
     def total_count(self):
@@ -263,9 +299,10 @@ class CaseActivityReport(StandardTabularHQReport):
 
         def header(self):
             template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
-            return template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[self.report.domain, CaseListReport.slug])),
-                               "user_id": self.user.user_id,
-                               "username": self.user.username_in_report}
+            return util.format_datatables_data(template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[self.report.domain, CaseListReport.slug])),
+                                                           "user_id": self.user.user_id,
+                                                           "username": self.user.username_in_report},
+                    self.user.username_in_report)
 
     class TotalRow(object):
         def __init__(self, rows, header):
@@ -581,11 +618,11 @@ class FormCompletionTrendsReport(StandardTabularHQReport, StandardDateHQReport):
                 if datadict['max'] is not None:
                     globalmax = max(globalmax, datadict["max"])
             if totalcount:
-                rows.insert(0, ["-- Total --",
-                                to_minutes(float(totalsum), float(totalcount)),
-                                to_minutes(globalmin),
-                                to_minutes(globalmax),
-                                totalcount])
+                self.total_row = ["Total",
+                                    to_minutes(float(totalsum), float(totalcount)),
+                                    to_minutes(globalmin),
+                                    to_minutes(globalmax),
+                                    totalcount]
         return rows
 
 
