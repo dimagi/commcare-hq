@@ -1,23 +1,25 @@
-import datetime
+from datetime import datetime
 from django.core.urlresolvers import reverse
-from django.http import Http404
-from corehq.apps.appstore.forms import AddReviewForm, AppStoreAdvancedFilter
+from django.http import Http404, HttpResponseRedirect
+from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.registration.forms import DomainRegistrationForm
+from corehq.apps.reports.dispatcher import ReportDispatcher
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
 from dimagi.utils.web import render_to_response, json_response, get_url_base
 from corehq.apps.orgs.models import Organization
 from corehq.apps.domain.models import Domain, LICENSES
 from dimagi.utils.couch.database import get_db
 from django.contrib import messages
+from django.conf import settings
+from corehq.apps.reports.views import datespan_default
+
 
 @require_superuser
 def appstore(request, template="appstore/appstore_base.html"):
     apps = Domain.published_snapshots()[:40]
-    if request.method == "POST":
-        form = AppStoreAdvancedFilter(request.GET)
-    else:
-        form = AppStoreAdvancedFilter()
     vals = dict(apps=apps, form=form)
     return render_to_response(request, template, vals)
 
@@ -39,7 +41,7 @@ def app_info(request, domain, template="appstore/app_info.html", versioned=None)
                 rating = form.cleaned_data['review_rating']
                 info = form.cleaned_data['review_info']
                 user = request.user.username
-                date_published = datetime.datetime.now()
+                date_published = datetime.now()
                 review = Review(title=title, rating=rating, nickname=nickname, user=user, info=info, date_published = date_published, domain=domain, original_doc=dom.original_doc)
                 review.save()
         else:
@@ -103,3 +105,31 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
     results = get_db().search('domain/snapshot_search', q=query, limit=40)
     snapshots = map(Domain.get, [r['id'] for r in results])
     return render_to_response(request, template, {'apps': snapshots, 'filter_by': filter_by, 'filter': filter})
+
+
+
+def default(request):
+    return HttpResponseRedirect(reverse('appstore_interface_dispatcher', args=['appstore']))
+
+@datespan_default
+def report_dispatcher(request, slug, return_json=False,
+                      map='APPSTORE_INTERFACE_MAP', export=False, custom=False,
+                      async=False, async_filters=False, static_only=False):
+
+    def permissions_check(couch_user, domain, model):
+        return True
+
+    dummy = Domain.get_by_name('dumdum')
+
+
+    if not dummy:
+        dummy = Domain(name='dumdum',
+            is_active=True,
+            date_created=datetime.utcnow())
+        dummy.save()
+
+    mapping = getattr(settings, map, None)
+    dispatcher = ReportDispatcher(mapping, permissions_check)
+    return dispatcher.dispatch(request, dummy.name, slug, return_json, export,
+                               custom, async, async_filters)
+
