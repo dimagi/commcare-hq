@@ -299,9 +299,10 @@ class CaseActivityReport(StandardTabularHQReport):
 
         def header(self):
             template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
-            return template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[self.report.domain, CaseListReport.slug])),
-                               "user_id": self.user.user_id,
-                               "username": self.user.username_in_report}
+            return util.format_datatables_data(template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[self.report.domain, CaseListReport.slug])),
+                                                           "user_id": self.user.user_id,
+                                                           "username": self.user.username_in_report},
+                    self.user.username_in_report)
 
     class TotalRow(object):
         def __init__(self, rows, header):
