@@ -31,7 +31,7 @@ class Command(LabelCommand):
         for less_file in bootstrap_less:
             exact_location = os.path.join(prefix, "submodules/"+less_file)
             parts = exact_location.split('/')
-            self.generate_output(less_file, parts)
+            self.generate_output(less_file, parts, dir_version=bool(less_file == bootstrap_less[0]))
 
         # Deal with primary Bootstrap javascript files
         for js_file in bootstrap_js:
