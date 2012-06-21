@@ -78,7 +78,7 @@ cloudCare.CaseListView = Backbone.View.extend({
     
     render: function () {
 	    var self = this;
-	    this.el = $('<section />').attr("id", "case-list").addClass("span4");
+	    this.el = $('<section />').attr("id", "case-list").addClass("span7");
         var table = $("<table />").addClass("table table-striped datatable").appendTo($(this.el));
         var thead = $("<thead />").appendTo(table);
         var theadrow = $("<tr />").appendTo(thead);
@@ -136,7 +136,7 @@ cloudCare.CaseDetailsView = Backbone.View.extend({
     render: function () {
         var self = this;
         if (!this._everRendered) {
-            this.el = $('<section />').attr("id", "case-details").addClass("span8");
+            this.el = $('<section />').attr("id", "case-details").addClass("span5");
             this._everRendered = true;    
         }
         $(this.el).html(""); // clear
