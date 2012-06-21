@@ -35,6 +35,7 @@ class Review(Document):
             key=app_name,
             reduce=True,
             include_docs=False)
+
         if result:
             assert len(result) == 1
             row = result.one()
@@ -47,6 +48,7 @@ class Review(Document):
             key=version_name,
             reduce=True,
             include_docs=False)
+
         if result:
             assert len(result) == 1
             row = result.one()

@@ -55,7 +55,15 @@ def app_info(request, domain, template="appstore/app_info.html", versioned=None)
         reviews = Review.get_by_app(dom.original_doc)
         average_rating = Review.get_average_rating_by_app(dom.original_doc)
         num_ratings = Review.get_num_ratings_by_app(dom.original_doc)
-    vals = dict(domain=dom, form=form, reviews=reviews, average_rating=average_rating, num_ratings=num_ratings, versioned=versioned)
+    average_rating = round(average_rating, 1)
+
+    vals = dict(domain=dom,
+        form=form,
+        reviews=reviews,
+        average_rating=average_rating,
+        num_ratings=num_ratings,
+        versioned=versioned
+    )
     return render_to_response(request, template, vals)
 
 @require_superuser

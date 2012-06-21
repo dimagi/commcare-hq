@@ -87,15 +87,89 @@ content: "";
 
 {% block main_column %}
 
-    <span>
-        <div><h2>{{ domain.copied_from.display_name }}</h2></div>
-        <div><h4>{{ domain.organization }}</h4></div>
-        <div><h5> {{ average_rating }}/5 - {{ num_ratings }} Ratings</h5></div>
-    </span>
-<hr/>
-<h3>App Info</h3>
-        <p> {{ domain.description }} </p>
-        <a href="{% url domain_snapshot_info domain.name %}">Test the project</a>
+<div class="page-header">
+        <h1>
+            {{ domain.copied_from.display_name }}
+            <small>by <a href="{% url orgs_landing domain.organization %}">{{ domain.organization_doc.title }}</a></small>
+        </h1>
+        <h3>
+            Ratings: <span class="badge badge-info">{{ num_ratings }}</span>
+        </h3>
+            {% if average_rating %}
+            <h3 class="rating">
+                Average rating:
+                <span>☆</span><span>☆</span><span>☆</span><span>☆</span><span>☆</span>
+                {{ average_rating }}
+            </h3>
+            {% endif %}
+        <h3>
+            <a class="btn" href="{% url corehq.apps.app_manager.views.default domain.name %}">Preview</a>
+        </h3>
+</div>
+<dl>
+    <dt>{% trans 'Description' %}</dt>
+    <dd>
+        {% if domain.description %}
+            {{ domain.description }}
+        {% else %}
+            None
+        {% endif %}
+    </dd>
+    <dt>Category</dt>
+    <dd>
+        {% if domain.project_type %}
+            {{ domain.project_type }}
+        {% else %}
+            None
+        {% endif %}
+    </dd>
+    <dt>License</dt>
+    <dd>{{ domain.get_license_display }}</dd>
+    <dt>{% trans 'Applications' %}</dt>
+    <dd>
+        {% if domain.applications|length > 0 %}
+            <ul class="nav nav-pills">
+                {% for app in domain.applications %}
+                <li><a href="{% url corehq.apps.app_manager.views.view_app domain app.id %}">{{ app.name }}</a></li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            None
+        {% endif %}
+    </dd>
+    <dt>{% trans 'Languages' %}</dt>
+    <dd>
+        {% if domain.languages %}
+            {{ domain.readable_languages }}
+        {% else %}
+            None
+        {% endif %}
+    </dd>
+    {% for field in fields %}
+    <dt>{{ field.label }}</dt>
+    <dd>
+        {{ field.value }}
+    </dd>
+    {% endfor %}
+    <dt>
+        Copy this snapshot into a new project
+    </dt>
+    <dd>
+        <form class="form-inline" method="post" action="{% url domain_copy_snapshot domain %}">
+            <fieldset>
+                <div class="control-group{% if error_message %} error{% endif %}">
+                    <input type="text" class="span3" id="new_domain_name"
+                           name="new_domain_name" value="{{ new_domain_name }}" placeholder="{% trans 'New project name' %}">
+                    {% if error_message %}
+                    <span class="help-inline">{{ error_message }}</span>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary">Create New Project</button>
+                </div>
+            </fieldset>
+        </form>
+    </dd>
+</dl>
+
 <hr/>
         <div>
             <div>
@@ -115,7 +189,7 @@ content: "";
         </div>
         {% for review in reviews %}
         <hr/>
-        <div><b>{{ review.title }}</b></div>
+        <h4>{{ review.title }}</h4>
         <div class="rating">
         <span>☆</span><span>☆</span><span>☆</span><span>☆</span><span>☆</span>
         </div>​
