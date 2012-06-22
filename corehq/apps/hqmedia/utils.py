@@ -3,6 +3,8 @@ from django.utils.datastructures import SortedDict
 import os
 import logging
 from corehq.apps.app_manager.xform import XFormValidationError, XFormError
+from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import CouchUser
 from corehq.apps.hqmedia.models import CommCareMultimedia, CommCareAudio, CommCareImage, HQMediaMapItem
 
 MULTIMEDIA_PREFIX = "jr://file/"
@@ -93,6 +95,13 @@ class HQMediaMatcher():
         self.app.multimedia_map = {}
         self.app.save()
 
+    def owner(self):
+        project = Domain.get_by_name(self.domain)
+        if project.organization:
+            return project.organization_doc()
+        else:
+            return CouchUser.get_by_username(self.username)
+
     def match_zipped(self, zip, replace_existing_media=True):
         unknown_files = []
         matched_audio = []
@@ -118,12 +127,12 @@ class HQMediaMatcher():
                 if filename in self.images:
                     form_path = self.image_paths[self.images.index(filename)]
                     data = zip.read(path)
-                    media = CommCareImage.get_by_data(data)
+                    media = CommCareImage.get_by_data(data, owner=self.owner())
                     is_image = True
                 elif filename in self.audio:
                     form_path = self.audio_paths[self.audio.index(filename)]
                     data = zip.read(path)
-                    media = CommCareAudio.get_by_data(data)
+                    media = CommCareAudio.get_by_data(data, owner=self.owner())
                 else:
                     unknown_files.append(path)
 
@@ -159,18 +168,18 @@ class HQMediaMatcher():
 
                 filename = uploaded_file.name
                 data = uploaded_file.file.read()
-                media = media_class.get_by_data(data, **kwargs)
+                media = media_class.get_by_data(data, owner=self.owner(), **kwargs)
             else:
                 filename = uploaded_file.name
 
                 if filename in self.images:
                     form_path = self.image_paths[self.images.index(filename)]
                     data = uploaded_file.file.read()
-                    media = CommCareImage.get_by_data(data, **kwargs)
+                    media = CommCareImage.get_by_data(data, owner=self.owner(), **kwargs)
                 elif filename in self.audio:
                     form_path = self.audio_paths[self.audio.index(filename)]
                     data = uploaded_file.file.read()
-                    media = CommCareAudio.get_by_data(data, **kwargs)
+                    media = CommCareAudio.get_by_data(data, owner=self.owner(), **kwargs)
                 else:
                     uploaded_file.close()
                     return False, {}, errors

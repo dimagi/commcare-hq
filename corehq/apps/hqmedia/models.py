@@ -30,7 +30,8 @@ class CommCareMultimedia(Document):
     license = StringProperty(choices=LICENSES, default='public')
     shared = BooleanProperty(default=False)
     filenames = StringListProperty()
-    creator = StringProperty() # CouchUser or Organization?
+    owner = StringProperty() # CouchUser or Organization?
+    owner_type = StringProperty()
 
     def attach_data(self, data, upload_path=None, username=None, attachment_id=None,
                     media_meta=None, replace_attachment=False):
@@ -100,6 +101,9 @@ class CommCareMultimedia(Document):
     def get_by_data(cls, data, **kwargs):
         file_hash = cls.generate_hash(data)
         media = cls.get_by_hash(file_hash)
+        if kwargs.get('owner', ''):
+            media.owner = kwargs['owner']._id
+            media.owner_type = kwargs['owner'].doc_type
         if kwargs.get('shared', ''):
             media.shared = True
         if kwargs.get('license', ''):
