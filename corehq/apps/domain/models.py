@@ -310,13 +310,19 @@ class Domain(Document):
         return cls.view('domain/published_snapshots', include_docs=True, descending=True)
 
     @classmethod
-    def snapshost_search(cls, query, limit=40):
-        results = get_db().search('domain/snapshot_search', q=query, limit=limit)
+    def snapshot_search(cls, query, limit=40, skip=0):
+        results = get_db().search('domain/snapshot_search', q=query, limit=limit, skip=skip)
         return map(cls.get, [r['id'] for r in results])
 
     def organization_doc(self):
         from corehq.apps.orgs.models import Organization
         return Organization.get_by_name(self.organization)
+
+    def organization_title(self):
+        if self.organization:
+            return self.organization_doc().title
+        else:
+            return ''
 
     def display_name(self):
         if self.is_snapshot:

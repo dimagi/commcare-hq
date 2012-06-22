@@ -171,7 +171,7 @@ class SelectOrganizationField(ReportSelectField):
     default_option = "All Organizations"
 
     def update_params(self):
-        available_orgs = [dict(val= o.name, text=o.title) for o in  Organization.get_all()]
+        available_orgs = [{'val': o.name, 'text': o.title} for o in  Organization.get_all()]
         self.selected = self.request.GET.get(self.slug,'')
         self.options = available_orgs
 
@@ -183,8 +183,7 @@ class SelectCategoryField(ReportSelectField):
     default_option = "All Categories"
 
     def update_params(self):
-        available_categories = [(d.replace(' ', '+'), d) for d in Domain.categories()]
-        available_categories = [dict(val=choice[1], text=choice[1]) for choice in available_categories]
+        available_categories = [{'val': d.replace(' ', '+'), 'text': d} for d in Domain.categories()]
         self.selected = self.request.GET.get(self.slug,'')
         self.options = available_categories
 
@@ -196,8 +195,7 @@ class SelectLicenseField(ReportSelectField):
     default_option = "All Licenses"
 
     def update_params(self):
-        available_licenses = LICENSES.items()
-        available_licenses = [dict(val=choice[1], text=choice[1]) for choice in available_licenses]
+        available_licenses = [{'val': code, 'text': license} for code, license in LICENSES.items()]
         self.selected = self.request.GET.get(self.slug,'')
         self.options = available_licenses
 
@@ -209,8 +207,7 @@ class SelectRegionField(ReportSelectField):
     default_option = "All Regions"
 
     def update_params(self):
-        available_regions = [(d.replace(' ', '+'), d) for d in Domain.regions()]
-        available_regions = [dict(val=choice, text=choice) for choice in available_regions]
+        available_regions = [{'val': d.replace(' ', '+'), 'text': d} for d in Domain.regions()]
         self.selected = self.request.GET.get(self.slug,'')
         self.options = available_regions
 
