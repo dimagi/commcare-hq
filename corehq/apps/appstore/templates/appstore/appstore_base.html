@@ -9,6 +9,7 @@
     <li><form action="{% url appstore_search_snapshots %}" method="get" class="form-search">
         <input type="text" name="q" placeholder="Search for apps..." value="{{ search_query }}" class="search-query" style="width: 80%" />
     </form></li>
+    <li><a href="{% url appstore_interface_dispatcher 'advanced' %}">Advanced search...</a></li>
     <li class="nav-header">Sort by</li>
     <li><a href="{% url appstore_filter_choices "organization" %}">Organization</a></li>
     <li><a href="{% url appstore_filter_choices "category" %}">Category</a></li>
@@ -20,7 +21,7 @@
 {% block page-title %}
 <ul class="breadcrumb">
     <li>
-        <strong><a href="{% url appstore_interfaces_default %}">App Store</a></strong>
+        <strong><a href="{% url appstore %}">App Store</a></strong>
         {% if search_query or filter_by or domain %}
             <span class="divider">&gt;</span>
         {% endif %}
@@ -37,44 +38,37 @@
 {% endblock %}
 
 {% block main_column %}
-<!--<form action="{% url appstore_search_snapshots %}" method="get" class="form-search">
-    <div class="controls">
-        <div class="input-append">
-            <input type="text" name="q" placeholder="Search for apps..." value="{{ search_query }}" class="search-query" /><button class="btn btn-primary" type="submit">Search</button>
-        </div>
-    </div>
-</form>
-<hr/>-->
-
-<div class="hq-accordion-control" id="reportFiltersAccordion">
-    <div class="accordion-heading">
-        <a href="#appFilters" data-toggle="collapse">Advanced Filters</a>
-        <div id="extra-filter-info" class="accordion-extra"></div>
-    </div>
-    <div id="appFilters" class="accordion-body collapse">
-        <div class="accordion-inner">
-            <form method="get" id="paramSelectorForm" class="form-horizontal">
-                <div id="app-filters">
-                 <!--the get form goes here-->
-                    <fieldset>
-                        {% bootstrap_form_errors form %}
-                        {% bootstrap_fieldset form "App Filters" %}
-                    </fieldset>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" data-loading-text="Searching App Store..." data-standard-text="Update Filters" class="btn btn-large disabled">Update Filters</button>
-                    <a href="#appFilters" data-toggle="collapse" class="btn btn-large">Close</a>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 {% if search_query or filter_by %}
     <h3>{{ apps|length }} result{{ apps|pluralize }}</h3>
 {% endif %}
 
-<table class="table table-striped">
+<h1>
+    All projects
+</h1>
+
+<div class="row-fluid">
+{% for app in apps %}
+    {% if forloop.counter0|divisibleby:"3" and forloop.counter0 != 0 %}
+        </div><div class="row-fluid">
+    {% endif %}
+    <div class="span3">
+        <div class="page-header">
+            <h2>
+                {{ app.copied_from.display_name }}
+                <small>By {{ app.organization_doc.title }}</small>
+                {% if app.project_type %}
+                    <h6>A project about {{ app.project_type }}</h6>
+                {% endif %}
+            </h2>
+        </div>
+        <p>{{ app.description|truncatewords:18 }}</p>
+        <a class="btn" href="{% url app_info app.name %}">View &raquo;</a>
+    </div>
+{% endfor %}
+</div>
+
+<!--<table class="table table-striped">
     <thead>
         <tr>
             <th>Name</th>
@@ -104,6 +98,6 @@
     </tr>
     {% endfor %}
     </tbody>
-</table>
+</table>-->
 
 {% endblock %}

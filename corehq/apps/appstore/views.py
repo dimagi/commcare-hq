@@ -20,7 +20,7 @@ from corehq.apps.reports.views import datespan_default
 @require_superuser
 def appstore(request, template="appstore/appstore_base.html"):
     apps = Domain.published_snapshots()[:40]
-    vals = dict(apps=apps, form=form)
+    vals = dict(apps=apps)
     return render_to_response(request, template, vals)
 
 @require_superuser
@@ -108,11 +108,6 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
     results = get_db().search('domain/snapshot_search', q=query, limit=40)
     snapshots = map(Domain.get, [r['id'] for r in results])
     return render_to_response(request, template, {'apps': snapshots, 'filter_by': filter_by, 'filter': filter})
-
-
-
-def default(request):
-    return HttpResponseRedirect(reverse('appstore_interface_dispatcher', args=['appstore']))
 
 @datespan_default
 def report_dispatcher(request, slug, return_json=False,

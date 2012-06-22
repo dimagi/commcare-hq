@@ -37,19 +37,11 @@ class AppStoreInterface(DataInterface, StandardTabularHQReport, StandardDateHQRe
 #            self.case_sharing_groups = self.all_case_sharing_groups
 
         params = self.request_params
-        self.organization_filter = None
-        self.license_filter = None
-        self.category_filter = None
-        self.region_filter = None
-        for filter in params:
-            if filter == 'category':
-                self.category_filter = params[filter]
-            elif filter == 'license':
-                self.license_filter = params[filter]
-            elif filter == 'org':
-                self.organization_filter = params[filter]
-            elif filter == 'region':
-                self.region_filter = params[filter]
+        self.organization_filter = params.get('org')
+        self.license_filter = params.get('license')
+        self.category_filter = params.get('category')
+        self.region_filter = params.get('region')
+        self.search_filter = params.get('sSearch')
 
 
     def get_headers(self):
@@ -68,11 +60,26 @@ class AppStoreInterface(DataInterface, StandardTabularHQReport, StandardDateHQRe
         rows = list()
         data = self.get_data()
         for app in data:
-            rows.append(['<a href="%s">%s</a>' % (reverse('app_info', args=[app.name]), app.original_doc), app.organization, app.project_type, len(app.copies_of_parent()) , app.get_license_display, util.format_relative_date(app.snapshot_time)])
+            rows.append(['<a href="%s">%s</a>' % (reverse('app_info', args=[app.name]), app.copied_from().display_name()), app.organization_title(), app.project_type, len(app.copies_of_parent()) , app.get_license_display, util.format_relative_date(app.snapshot_time)])
         return rows
 
     def get_data(self):
-        return Domain.published_snapshots()[:40]
+        query_parts = []
+        if self.category_filter:
+            query_parts.append('category:"%s"' % (self.category_filter))
+        elif self.license_filter:
+            query_parts.append('license:"%s"' % (self.license_filter))
+        elif self.category_filter:
+            query_parts.append('organization:"%s"' % (self.organization_filter))
+        elif self.region_filter:
+            query_parts.append('region:"%s"' % (self.region_filter))
+
+        if len(query_parts) > 0:
+            query = ' '.join(query_parts)
+            snapshots = Domain.snapshot_search(query)
+        else:
+            snapshots = Domain.published_snapshots()[:20]
+        return snapshots
 
          # use self.organization_filter, self.license_filter, self.category_filter and self.region_filter to search with lucene
 
