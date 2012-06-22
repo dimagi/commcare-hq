@@ -188,15 +188,23 @@ it doesn’t make the test unnecessarily selective */
             Ratings: <span class="badge badge-info">{{ num_ratings }}</span>
         </h3>
             {% if average_rating %}
-            <h3 class="rating">
-                Average rating:
-                <span>☆</span><span>☆</span><span>☆</span><span>☆</span><span>☆</span>
-                {{ average_rating }}
+            <div class="span3">
+            <fieldset class="rating_static" id="stars_average">
+                <input type="radio" id="star5_average"  value="5" disabled=True {% if average_rating == 5 %} checked=True {% endif %} /><label for="star5_average" title="Rocks!">5 stars</label>
+                <input type="radio" id="star4_average"  value="4" disabled=True {% if average_rating == 4 %} checked=True {% endif %} /><label for="star4_average" title="Pretty good">4 stars</label>
+                <input type="radio" id="star3_average"  value="3" disabled=True {% if average_rating == 3 %} checked=True {% endif %} /><label for="star3_average" title="Meh">3 stars</label>
+                <input type="radio" id="star2_average"  value="2" disabled=True {% if average_rating == 2 %} checked=True {% endif %} /><label for="star2_average" title="Kinda bad">2 stars</label>
+                <input type="radio" id="star1_average"  value="1" disabled=True {% if average_rating == 1 %} checked=True {% endif %} /><label for="star1_average" title="Sucks big time">1 star</label>
+            </fieldset>
+            </div>
             </h3>
             {% endif %}
-        <h3>
-            <a class="btn" href="{% url corehq.apps.app_manager.views.default domain.name %}">Preview</a>
-        </h3>
+            <div class="span1">
+                <h3>
+                    <a class="btn" href="{% url corehq.apps.app_manager.views.default domain.name %}">Preview</a>
+                </h3>
+            </div>
+    <br/>
 </div>
 <dl>
     <dt>{% trans 'Description' %}</dt>
