@@ -45,6 +45,7 @@ def search_for_media(request, domain, app_id):
         {'url': i.url(),
          'license': LICENSES[i.license],
          'title': i.title,
+         'tags': i.tags,
          'm_id': i._id} for i in files]))
 
 def choose_media(request, domain, app_id):
@@ -142,7 +143,8 @@ def uploaded(request, domain, app_id):
                 file_type = "audio"
             else:
                 raise Exception("Unsupported content type.")
-            match_found, match_map, errors = matcher.match_file(uploaded_file, replace_existing_media=replace_existing)
+            tags = [t.strip() for t in request.POST.get('tags', '').split(',')]
+            match_found, match_map, errors = matcher.match_file(uploaded_file, replace_existing_media=replace_existing, shared=request.POST.get('shared', False), tags=tags)
             response = {"match_found": match_found,
                         file_type: match_map,
                         "file": True}

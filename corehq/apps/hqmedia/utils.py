@@ -149,7 +149,7 @@ class HQMediaMatcher():
 
         return matched_images, matched_audio, unknown_files, errors
 
-    def match_file(self, uploaded_file, replace_existing_media=True):
+    def match_file(self, uploaded_file, replace_existing_media=True, **kwargs):
         errors = []
         try:
             if self.specific_params:
@@ -159,18 +159,18 @@ class HQMediaMatcher():
 
                 filename = uploaded_file.name
                 data = uploaded_file.file.read()
-                media = media_class.get_by_data(data)
+                media = media_class.get_by_data(data, **kwargs)
             else:
                 filename = uploaded_file.name
 
                 if filename in self.images:
                     form_path = self.image_paths[self.images.index(filename)]
                     data = uploaded_file.file.read()
-                    media = CommCareImage.get_by_data(data)
+                    media = CommCareImage.get_by_data(data, **kwargs)
                 elif filename in self.audio:
                     form_path = self.audio_paths[self.audio.index(filename)]
                     data = uploaded_file.file.read()
-                    media = CommCareAudio.get_by_data(data)
+                    media = CommCareAudio.get_by_data(data, **kwargs)
                 else:
                     uploaded_file.close()
                     return False, {}, errors

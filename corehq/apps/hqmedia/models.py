@@ -20,7 +20,7 @@ class CommCareMultimedia(Document):
 
     file_hash = StringProperty()
     aux_media = SchemaListProperty(AuxMedia)
-    tags = StringListProperty() # this appears to be unused so I'm taking it for media-sharing purposes - timbauman
+    tags = StringListProperty(default=[]) # this appears to be unused so I'm taking it for media-sharing purposes - timbauman
 
     last_modified = DateTimeProperty()
     valid_domains = StringListProperty() # appears to be mostly unused as well - timbauman
@@ -97,9 +97,16 @@ class CommCareMultimedia(Document):
         return result
 
     @classmethod
-    def get_by_data(cls, data):
+    def get_by_data(cls, data, **kwargs):
         file_hash = cls.generate_hash(data)
         media = cls.get_by_hash(file_hash)
+        if kwargs.get('shared', ''):
+            media.shared = True
+        if kwargs.get('license', ''):
+            media.license = kwargs['license']
+        if kwargs.get('tags', ''):
+            media.tags = kwargs['tags']
+        media.save()
         return media
 
     @classmethod
@@ -111,7 +118,7 @@ class CommCareMultimedia(Document):
         return cls.view('hqmedia/by_doc_type', key=cls.__name__, include_docs=True)
 
     @classmethod
-    def tags(cls):
+    def all_tags(cls):
         return [d['key'] for d in cls.view('hqmedia/tags', group=True).all()]
 
     def url(self):

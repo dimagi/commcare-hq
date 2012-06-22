@@ -208,12 +208,16 @@ HQMediaRef = function(mediaRef, type) {
     self.url = ko.observable(mediaRef.url || "");
     self.has_ref = ko.observable(!!mediaRef.url);
 
+    self.searching = ko.observable(false);
+    self.searched = ko.observable(false);
     self.imageOptions = ko.observableArray();
     self.audioOptions = ko.observableArray();
     self.query = ko.observable();
 
     self.searchForImages = function() {
         $.getJSON(searchUrl, {q: self.query(), t: self.type}, function (res) {
+            if (!self.searched())
+                self.searched(true);
             self.imageOptions([]);
             for (var i = 0; i < res.length; i++) {
                 self.imageOptions.push(new MediaOption(self, res[i]))
@@ -223,6 +227,8 @@ HQMediaRef = function(mediaRef, type) {
 
     self.searchForAudio = function() {
         $.getJSON(searchUrl, {q: self.query(), t: self.type}, function (res) {
+            if (!self.searched())
+                self.searched(true);
             self.audioOptions([]);
             for (var i = 0; i < res.length; i++) {
                 self.audioOptions.push(new MediaOption(self, res[i]))
@@ -278,6 +284,7 @@ MediaOption = function(mediaRef, data) {
     self.url = ko.observable(data.url); // so we can preview it; we never change .url
     self.m_id = data.m_id;
     self.uid = '';
+    self.tags = data.tags;
 
     self.choose = function() {
         $.post(chooseImageUrl, {media_type: self.mediaRef.type, path: self.mediaRef.path, id: self.m_id}, function (res) {

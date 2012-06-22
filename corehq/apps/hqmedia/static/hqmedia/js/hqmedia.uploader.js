@@ -209,6 +209,10 @@ function HQMediaUploader(options) {
             }
 
             function uploadFile(event) {
+                if ($(self.uploadElem+' .hqm-share-media').attr('checked'))
+                    self.uploadParams['shared'] = 't';
+                self.uploadParams['tags'] = $(self.uploadElem+' .hqm-media-tags').val();
+                alert(self.uploadParams['tags']);
                 showUploadButton(false);
                 showCancelButton(true);
                 if (self.singleFileUpload)
@@ -244,12 +248,14 @@ function HQMediaUploader(options) {
             }
 
             function showUploadButton(toggle_on) {
-                var $uploadButton = $(self.uploadElem+" .hqm-upload-button");
+                var $uploadButton = $(self.uploadElem+" .hqm-upload-hidden");
                 if (self.singleFileUpload)
                     (toggle_on) ? $uploadButton.removeClass('hide') : $uploadButton.addClass('hide');
                 else {
                     (toggle_on) ? $uploadButton.addClass('btn-success').removeClass('disabled') : $uploadButton.addClass('disabled').removeClass('btn-success');
                 }
+                if (!toggle_on)
+                    $(self.uploadElem+" .hqm-media-tags").val('');
             }
 
             function showCancelButton(toggle_on) {
