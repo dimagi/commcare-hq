@@ -29,6 +29,8 @@ def app_info(request, domain, template="appstore/app_info.html", versioned=None)
     if not dom or not dom.is_snapshot or not dom.published:
         raise Http404()
     if request.method == "POST":
+#        import pdb
+#        pdb.set_trace()
         versioned = request.POST.get('versioned', '')
         nickname = request.POST.get('review_name', '')
 
@@ -38,7 +40,7 @@ def app_info(request, domain, template="appstore/app_info.html", versioned=None)
             if form.is_valid():
                 nickname = form.cleaned_data['review_name']
                 title = form.cleaned_data['review_title']
-                rating = form.cleaned_data['review_rating']
+                rating = int(request.POST['rating'])
                 info = form.cleaned_data['review_info']
                 user = request.user.username
                 date_published = datetime.now()

@@ -5,18 +5,110 @@
 
 {% block js-inline %}{{ block.super }}
 <style type="text/css">
-.rating > span {
+.rating_static > span {
 display: inline-block;
 position: relative;
 width: 1.1em;
 }
-.rating:hover > span:before{
-content: "\2605";
-position: absolute;
+
+    /* :not(:checked) is a filter, so that browsers that don’t support :checked don’t
+follow these rules. Every browser that supports :checked also supports :not(), so
+it doesn’t make the test unnecessarily selective */
+.rating_static:not(:checked) > input {
+    position:absolute;
+    top:-9999px;
+    clip:rect(0,0,0,0);
 }
-.rating > span:hover ~ span:before {
-content: "";
-}​
+
+.rating_static:not(:checked) > label {
+    float:right;
+    width:1em;
+    padding:0 .1em;
+    overflow:hidden;
+    white-space:nowrap;
+    cursor:pointer;
+    font-size:200%;
+    line-height:1.2;
+    color:#ddd;
+    text-shadow:1px 1px #bbb, 2px 2px #666, .1em .1em .2em rgba(0,0,0,.5);
+}
+
+.rating_static:not(:checked) > label:before {
+    content: '★ ';
+}
+
+.rating_static > input:checked ~ label {
+    color: #f70;
+    text-shadow:1px 1px #c60, 2px 2px #940, .1em .1em .2em rgba(0,0,0,.5);
+}
+
+.rating_static > label:active {
+    position:relative;
+    top:2px;
+    left:2px;
+}
+
+
+.rating > span {
+    display: inline-block;
+    position: relative;
+    width: 1.1em;
+}
+.rating {
+    float:left;
+}
+
+    /* :not(:checked) is a filter, so that browsers that don’t support :checked don’t
+follow these rules. Every browser that supports :checked also supports :not(), so
+it doesn’t make the test unnecessarily selective */
+.rating:not(:checked) > input {
+    position:absolute;
+    top:-9999px;
+    clip:rect(0,0,0,0);
+}
+
+.rating:not(:checked) > label {
+    float:right;
+    width:1em;
+    padding:0 .1em;
+    overflow:hidden;
+    white-space:nowrap;
+    cursor:pointer;
+    font-size:200%;
+    line-height:1.2;
+    color:#ddd;
+    text-shadow:1px 1px #bbb, 2px 2px #666, .1em .1em .2em rgba(0,0,0,.5);
+}
+
+.rating:not(:checked) > label:before {
+    content: '★ ';
+}
+
+.rating > input:checked ~ label {
+    color: #f70;
+    text-shadow:1px 1px #c60, 2px 2px #940, .1em .1em .2em rgba(0,0,0,.5);
+}
+
+.rating:not(:checked) > label:hover,
+.rating:not(:checked) > label:hover ~ label {
+    color: gold;
+    text-shadow:1px 1px goldenrod, 2px 2px #B57340, .1em .1em .2em rgba(0,0,0,.5);
+}
+
+.rating > input:checked + label:hover,
+.rating > input:checked + label:hover ~ label,
+.rating > input:checked ~ label:hover,
+.rating > input:checked ~ label:hover ~ label,
+.rating > label:hover ~ input:checked ~ label {
+    color: #ea0;
+    text-shadow:1px 1px goldenrod, 2px 2px #B57340, .1em .1em .2em rgba(0,0,0,.5);
+}
+
+.rating > label:active {
+    position:relative;
+    top:2px;
+    left:2px;
+}
 </style>
 
 <script>
@@ -189,13 +281,26 @@ content: "";
         </div>
         {% for review in reviews %}
         <hr/>
+        <div class="row">
+            <div class="span1">
+                <h4 style="padding-left:25px">{{ forloop.counter }})</h4>
+            </div>
+            <div class="span6">
         <h4>{{ review.title }}</h4>
-        <div class="rating">
-        <span>☆</span><span>☆</span><span>☆</span><span>☆</span><span>☆</span>
-        </div>​
-        <div><p>{{ review.rating }} <small> by {{ review.nickname }} on {{ review.date_published }}</small></p></div>
-        <div>{{ review.info }}</div>
+        <div>
+            <p><small> by {{ review.nickname }} on {{ review.date_published }}</small></p>
+            <fieldset class="rating_static" id="stars{{ review.nickname }} ">
+                <input type="radio" id="star5{{ review.nickname }}"  value="5" disabled=True {% if review.rating == 5 %} checked=True {% endif %} /><label for="star5{{ review.nickname }}" title="Rocks!">5 stars</label>
+                <input type="radio" id="star4{{ review.nickname }}"  value="4" disabled=True {% if review.rating == 4 %} checked=True {% endif %} /><label for="star4{{ review.nickname }}" title="Pretty good">4 stars</label>
+                <input type="radio" id="star3{{ review.nickname }}"  value="3" disabled=True {% if review.rating == 3 %} checked=True {% endif %} /><label for="star3{{ review.nickname }}" title="Meh">3 stars</label>
+                <input type="radio" id="star2{{ review.nickname }}"  value="2" disabled=True {% if review.rating == 2 %} checked=True {% endif %} /><label for="star2{{ review.nickname }}" title="Kinda bad">2 stars</label>
+                <input type="radio" id="star1{{ review.nickname }}"  value="1" disabled=True {% if review.rating == 1 %} checked=True {% endif %} /><label for="star1{{ review.nickname }}" title="Sucks big time">1 star</label>
+            </fieldset>
 
+        </div>
+        <div>{{ review.info }}</div>
+            </div>
+        </div>
         {% endfor %}
 
 {% endblock %}
@@ -208,13 +313,46 @@ content: "";
 <div id="add_review_modal" class="modal hide fade">
     <div class="modal-header">
         <a class="close" data-dismiss="modal">&times;</a>
-        <h3>Write a review for {{ domain.name }}</h3>
+        <h3>Write a review for {{ domain.copied_from.display_name }}</h3>
     </div>
     <form class="form-horizontal" method="post" action="{% url app_info domain %}">
         <div class="modal-body">
             <fieldset>
-                {% bootstrap_form_errors form %}
-                {% bootstrap_fieldset form "Review this App" %}
+                <legend>Review This App</legend>
+                {% for global_error in form.non_field_errors %}
+                <div class="alert alert-error">
+                    {{ global_error }}
+                </div>
+                {% endfor %}
+                <div class="control-group">
+                    <label class="control-label">Rating</label>
+                    <div class="controls">
+                        <fieldset class="rating" title="Rating">
+                            <input type="radio" id="star5" name="rating" value="5" /><label for="star5" title="Rocks!">5 stars</label>
+                            <input type="radio" id="star4" name="rating" value="4" /><label for="star4" title="Pretty good">4 stars</label>
+                            <input type="radio" id="star3" name="rating" value="3" /><label for="star3" title="Meh">3 stars</label>
+                            <input type="radio" id="star2" name="rating" value="2" /><label for="star2" title="Kinda bad">2 stars</label>
+                            <input type="radio" id="star1" name="rating" value="1" checked=True /><label for="star1" title="Sucks big time">1 star</label>
+                        </fieldset>
+                    </div>
+                </div>
+                {% for field in form.visible_fields %}
+                <div class="control-group{% if field.errors %} error{% endif %}">
+                    <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
+                    <div class="controls">
+                        {{ field }}
+                        <span class="help-inline"></span>
+                        {% for error in field.errors %}
+                        <span class="help-inline">{{ error }}</span>
+                        {% endfor %}
+                        {% if field.help_text %}
+                        <p class="help-block">
+                            {{ field.help_text }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
             </fieldset>
             <input type="hidden" name="versioned" value="{{ versioned }}">
         </div>
