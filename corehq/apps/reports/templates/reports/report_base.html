@@ -7,42 +7,29 @@
 {% include "imports/flot.html" %}
 <script type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery.history.js' %}"></script>
-<script type="text/javascript" src="{% static 'reports/javascripts/async_reports.js' %}"></script>
+<script type="text/javascript" src="{% static 'reports/javascripts/reports.config.js' %}"></script>
+<script type="text/javascript" src="{% static 'reports/javascripts/reports.async.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
 {% if not report_hide_filters %}
     <script type="text/javascript">
-        $(function() {
-            var reportFilterCookieName = '{{ slug }}reportFiltersHidden',
-                    savedPath = '/a/{{ domain }}/';
-            $("#reportFilters").addClass($.cookie(reportFilterCookieName));
-            if($.cookie(reportFilterCookieName) == 'in')
-                $("#toggle-report-filters").button('hide');
-            else
-                $("#toggle-report-filters").button('show');
-
-            $("#reportFilters").on('hidden', function () {
-                $.cookie(reportFilterCookieName, '', {path: savedPath, expires: 1});
-                $("#toggle-report-filters").button('show');
-            });
-            $("#reportFilters").on('shown', function () {
-                $.cookie(reportFilterCookieName, 'in', {path: savedPath, expires: 1});
-                $("#toggle-report-filters").button('hide');
-            });
-
-            $("#export-report-excel").click(function () {
-                var params = window.location.search.substr(1);
-                window.location.href = window.location.pathname.replace('/{{ base_slug|default:'reports' }}/', '/{{ base_slug|default:'reports' }}/export/')+"?"+params;
-            });
-
-            {% if slug and async_report %}
-            var asyncReport = new HQAsyncReport({
-                baseSlug: '{{ base_slug|default:'reports' }}'
-            });
-            asyncReport.init();
-            {% endif %}
+        var standardHQReport = new HQReport({
+            domain: '{{ domain }}',
+            baseSlug: '{{ base_slug|default:'reports' }}',
+            {% if datespan %}datespan: {
+                startdate: '{{ datespan.startdate|date:"Y-m-d" }}',
+                enddate: '{{ datespan.enddate|date:"Y-m-d" }}'
+            },{% endif %}
         });
+        standardHQReport.init();
+
+        {% if slug and async_report %}
+            var asyncHQReport = new HQAsyncReport({
+                standardReport: standardHQReport
+            });
+            asyncHQReport.init();
+        {% endif %}
     </script>
 {% endif %}
 {% endblock %}

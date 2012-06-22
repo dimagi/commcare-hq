@@ -236,17 +236,14 @@ class StandardDateHQReport(StandardHQReport):
     def get_default_datespan(self):
         return DateSpan.since(7, format="%Y-%m-%d", timezone=self.timezone)
 
-    def get_global_params(self):
+    def process_basic(self):
         if self.request.datespan.is_valid() and not self.request.datespan.is_default:
             self.datespan.enddate = self.request.datespan.enddate
             self.datespan.startdate = self.request.datespan.startdate
             self.datespan.is_default = False
         self.request.datespan = self.datespan
-        super(StandardDateHQReport, self).get_global_params()
-
-    def get_report_context(self):
-        self.context['datespan'] = self.datespan
-        super(StandardDateHQReport, self).get_report_context()
+        self.context.update(dict(datespan=self.datespan))
+        super(StandardDateHQReport, self).process_basic()
 
 class CaseActivityReport(StandardTabularHQReport):
     """

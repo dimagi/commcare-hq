@@ -111,6 +111,9 @@ function HQReportDataTables(options) {
                 $selectField.children().append(" per page");
                 $selectField.addClass("input-medium");
             }
+            $(".dataTables_length select").change(function () {
+                $(self.dataTableElem).trigger('hqreport.tabular.lengthChange', $(this).val());
+            });
         });
     };
 }

@@ -5,9 +5,10 @@ var HQAsyncReport = function (o) {
     self.reportContent = o.reportContent ||  $('#report-content');
     self.filterForm = o.filterForm || $('#paramSelectorForm');
     self.loadingIssueModal = o.loadingIssueModal || $('#loadingReportIssueModal');
-    self.baseSlug = o.baseSlug || 'reports';
     self.issueAttempts = 0;
     self.hqLoading = null;
+    self.standardReport = o.standardReport;
+
 
     var loadFilters = function (data) {
         $('#hq-report-filters').html(data.filters);
@@ -30,30 +31,29 @@ var HQAsyncReport = function (o) {
     };
 
     self.updateFilters = function (form_params) {
+        self.standardReport.saveDatespanToCookie();
         $.ajax({
-            url: window.location.pathname.replace('/'+self.baseSlug+'/', '/'+self.baseSlug+'/async/filters/')+"?"+form_params,
+            url: window.location.pathname.replace('/'+self.standardReport.baseSlug+'/',
+                '/'+self.standardReport.baseSlug+'/async/filters/')+"?"+form_params,
             dataType: 'json',
             success: loadFilters
         });
     };
 
-    self.loadingIssueModal.on('reloadHQReport', function () {
-        self.loadingIssueModal.find('.btn-primary').button('loading');
-        self.updateReport(true, window.location.search.substr(1));
-    });
-
-    self.loadingIssueModal.on('hide', function () {
-        if (self.issueAttempts > 0) {
-            self.hqLoading = $('.hq-loading');
-            self.hqLoading.find('img').addClass('hide');
-            self.hqLoading.find('h4').text('We were unsuccessful loading the report:').attr('style', 'margin-bottom: 10px;');
-        }
-    });
-
     self.updateReport = function (initial_load, params) {
-        var process_filters = (initial_load) ? "hq_filters=true&": "";
+        var process_filters = "";
+        if (initial_load) {
+            process_filters = "hq_filters=true&";
+            if (self.standardReport.loadDatespanFromCookie()) {
+                process_filters = process_filters+
+                    "&startdate="+self.standardReport.datespan.startdate+
+                    "&enddate="+self.standardReport.datespan.enddate;
+            }
+        }
+
         $.ajax({
-            url: window.location.pathname.replace('/'+self.baseSlug+'/', '/'+self.baseSlug+'/async/')+"?"+process_filters+params,
+            url: window.location.pathname.replace('/'+self.standardReport.baseSlug+'/',
+                '/'+self.standardReport.baseSlug+'/async/')+"?"+process_filters+params,
             dataType: 'json',
             success: function(data) {
                 if (data.filters)
@@ -89,4 +89,18 @@ var HQAsyncReport = function (o) {
             }
         });
     };
+
+    self.loadingIssueModal.on('reloadHQReport', function () {
+        self.loadingIssueModal.find('.btn-primary').button('loading');
+        self.updateReport(true, window.location.search.substr(1));
+    });
+
+    self.loadingIssueModal.on('hide', function () {
+        if (self.issueAttempts > 0) {
+            self.hqLoading = $('.hq-loading');
+            self.hqLoading.find('img').addClass('hide');
+            self.hqLoading.find('h4').text('We were unsuccessful loading the report:').attr('style', 'margin-bottom: 10px;');
+        }
+    });
+
 };

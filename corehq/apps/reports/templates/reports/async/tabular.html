@@ -55,25 +55,28 @@
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
-        $(function() {
-            {% if report_datatables %}
-                var defaultNumRows = {{ report_datatables.defaultNumRows|default:10 }};
-                var reportTables = new HQReportDataTables({
-                    defaultRows: defaultNumRows,
-                    startAtRowNum: {{ report_datatables.startAtRowNum|default:0 }},
-                    aoColumns: {{ report.headers.render_aoColumns|JSON }},
-                    autoWidth: {{ report.headers.auto_width|JSON }},
-                    {% if report.headers.custom_sort %}customSort: {{ report.headers.custom_sort|JSON }},{% endif %}
-                    {% if ajax_source %}ajaxSource: '{{ ajax_source }}',{% endif %}
-                    {% if ajax_params %}ajaxParams: {{ ajax_params|JSON }},{% endif %}
-                    {% if report.fixed_cols %}
+
+        {% if report_datatables %}
+            var defaultNumRows = {{ report_datatables.defaultNumRows|default:10 }};
+            var reportTables = new HQReportDataTables({
+                defaultRows: defaultNumRows,
+                startAtRowNum: {{ report_datatables.startAtRowNum|default:0 }},
+                aoColumns: {{ report.headers.render_aoColumns|JSON }},
+                autoWidth: {{ report.headers.auto_width|JSON }},
+                {% if report.headers.custom_sort %}customSort: {{ report.headers.custom_sort|JSON }},{% endif %}
+                {% if ajax_source %}ajaxSource: '{{ ajax_source }}',{% endif %}
+                {% if ajax_params %}ajaxParams: {{ ajax_params|JSON }},{% endif %}
+                {% if report.fixed_cols %}
                     fixColumns: true,
                     fixColsNumLeft: {{ report.fixed_cols.num }},
                     fixColsWidth: {{ report.fixed_cols.width }},
-                    {% endif %}
-                });
-                reportTables.render();
-            {% endif %}
+                {% endif %}
+            });
+            standardHQReport.handleTabularReportCookies(reportTables);
+            reportTables.render();
+        {% endif %}
+
+        $(function() {
             $('.header-tooltip').tooltip();
         });
     </script>
