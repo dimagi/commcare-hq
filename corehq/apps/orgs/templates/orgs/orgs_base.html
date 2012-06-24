@@ -1,0 +1,19 @@
+{% extends "hqwebapp/centered.html" %}
+
+{% block centered-content %}
+
+        <h2> Organization Base Page</h2>
+        <hr/>
+        <h4> List of all organizations</h4>
+        <hr/>
+        {% for org in orgs %}
+        <a href="{% url orgs_landing org.name %}"> {{ org.name }} ({{ org.title }})</a>
+        {% if org.logo_filename %}
+        <img src="{% url orgs_logo org.name %}" alt="Logo" />
+        {% else %}
+        <br/>
+        {% endif %}
+        <br/>
+        {% endfor %}
+
+{% endblock %}

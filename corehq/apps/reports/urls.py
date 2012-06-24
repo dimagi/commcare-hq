@@ -61,27 +61,34 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
     url(r'^phonelog/', include(phonelog_reports)),
 
-    # HQReport handlers
-    url(r'^json/(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="json_report_dispatcher", kwargs={
-        'return_json': True
-    }),
-    # HQReport handlers
-    url(r'^export/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="export_report_dispatcher", kwargs={
-        'export': True
-    }),
 
-    url(r'^async/filters/custom/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="async_report_dispatcher", kwargs={
+    # Custom HQ Reports
+    url(r'^async/filters/custom/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="custom_report_async_filter_dispatcher", kwargs={
         'async_filters': True
     }),
-    url(r'^async/custom/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="async_report_dispatcher", kwargs={
+    url(r'^async/custom/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="custom_report_async_dispatcher", kwargs={
         'async': True
+    }),
+    url(r'^export/custom/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="custom_report_export_dispatcher", kwargs={
+        'export': True
     }),
     url(r'^custom/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="custom_report_dispatcher"),
 
-    url(r'^async/filters/(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="async_report_dispatcher", kwargs={
+
+
+    # Standard HQ Reports
+    url(r'^json/(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="json_report_dispatcher", kwargs={
+        'return_json': True
+    }),
+    url(r'^export/(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="report_export_dispatcher", kwargs={
+        'export': True
+    }),
+
+
+    url(r'^async/filters/(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="report_async_filter_dispatcher", kwargs={
         'async_filters': True
     }),
-    url(r'^async/(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="async_report_dispatcher", kwargs={
+    url(r'^async/(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="report_async_dispatcher", kwargs={
         'async': True
     }),
     url(r'^(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="report_dispatcher"),

@@ -6,7 +6,6 @@ from __future__ import absolute_import
 from datetime import datetime
 import logging
 import re
-from corehq.apps.domain.models import Domain
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
@@ -459,7 +458,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         super(CouchUser, self).delete() # Call the "real" delete() method.
 
     def get_django_user(self):
-        return User.objects.get(username=self.username)
+        return User.objects.get(username__iexact=self.username)
 
     def add_phone_number(self, phone_number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """
@@ -1244,3 +1243,4 @@ class RemoveWebUserRecord(DeleteRecord):
         user.save()
 
 from .signals import *
+from corehq.apps.domain.models import Domain

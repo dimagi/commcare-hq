@@ -68,6 +68,9 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
             data, group_names, name, password, phone_number, user_id, username = (
                 row.get(k) for k in sorted(allowed_headers)
             )
+            if isinstance(password, float):
+                # almost certainly what was intended
+                password = unicode(int(password))
             group_names = group_names or []
             try:
                 username = normalize_username(username, domain)

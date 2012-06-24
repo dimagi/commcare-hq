@@ -103,7 +103,7 @@ def domains_for_user(request, selected_domain=None):
             lst.append('<li class="nav-header">My Projects</li>')
             for domain in domain_list:
                 default_url = reverse("domain_homepage", args=[domain.name])
-                lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.name))
+                lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.long_display_name()))
             lst.append('<li class="divider"></li>')
             lst.append('<li><a href="/a/public/">View Demo Project</a></li>')
         else:

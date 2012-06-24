@@ -7,6 +7,7 @@ from django.shortcuts import render_to_response
 from django.template.context import RequestContext, Context
 from django.template.loader import render_to_string
 import pytz
+from tastypie.http import HttpBadRequest
 from corehq.apps.reports import util
 from dimagi.utils.modules import to_function
 from tempfile import NamedTemporaryFile
@@ -17,9 +18,9 @@ from couchexport.shortcuts import export_response
 class HQReport(object):
     name = ""
     slug = ""
+    base_slug = None # for instance, 'reports' or 'manage'
+
     description = ""
-    template_name = None
-    async_template_name = None
     report_partial = None
     title = None
     headers = None
@@ -32,8 +33,10 @@ class HQReport(object):
     show_time_notice = False
     fields = []
     exportable = False
-    base_slug = None
+
     asynchronous = False
+    template_name = None
+
     base_template_name = "reports/report_base.html"
     async_base_template_name = "reports/async/default.html"
 
@@ -124,7 +127,6 @@ class HQReport(object):
             self.get_report_context()
             self.calc()
             self.base_template_name = self.get_template()
-            print self.base_template_name
         return render_to_response(self.base_template_name, self.context, context_instance=RequestContext(self.request))
 
     def as_json(self):
@@ -146,16 +148,21 @@ class HQReport(object):
             t.extend(self.context['rows'])
             self.context['tables'] = [[self.name, t]]
         if not 'tables' in self.context:
-            return self.as_view()
+            return HttpBadRequest("Export not supported.")
         format = self.request.GET.get('format', None)
-        if not format: return self.as_view()
+        print format
+        if not format:
+            return HttpBadRequest("Please specify a format")
 
         temp = StringIO()
         export_from_tables(self.context['tables'], temp, format)
         return export_response(temp, format, self.slug)
 
-    def as_async(self):
+    def as_async(self, static_only=False):
         process_filters = bool(self.request.GET.get('hq_filters'))
+        if static_only:
+            self.context.update(dict(original_template=self.get_template()))
+            self.template_name = "reports/async/static_only.html"
         if not process_filters:
             self.fields = []
         self.get_report_context()

@@ -1,0 +1,29 @@
+{% extends "users/users_base.html" %}
+{% load hq_bootstrap_tags %}
+{% load i18n %}
+
+{% block subsection-title %}
+<li class="active">
+    <a href="#">Create New Snapshot</a>
+</li>
+{% endblock %}
+
+{% block user-view %}
+<form class="form-horizontal" method="post">
+    <fieldset>
+        <legend>Create new snapshot</legend>
+        <div>
+            <h3>This project has {{ snapshots|length }} snapshots</h3>
+            <ul class="nav nav-pills nav-stacked">
+                {% for snapshot in snapshots %}
+                <li><a href="{% url corehq.apps.app_manager.views.default snapshot.name %}">Created on {{ snapshot.snapshot_time }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% if error_message %}
+            <div class="alert alert-error">{{ error_message }}</div>
+        {% endif %}
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Create New Snapshot</button></div>
+    </fieldset>
+</form>
+{% endblock %}>

@@ -201,6 +201,27 @@ ko.bindingHandlers.modal = {
     }
 };
 
+ko.bindingHandlers.openModal = {
+    init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        var templateID = valueAccessor(),
+            modal = $('<div></div>').addClass('modal fade').appendTo('body'),
+            newValueAccessor = function () {
+                var clickAction = function () {
+                    ko.bindingHandlers.template.init(modal.get(0), function () {
+                        return templateID;
+                    }, allBindingsAccessor, viewModel, bindingContext);
+                    ko.bindingHandlers.template.update(modal.get(0), function () {
+                        return templateID;
+                    }, allBindingsAccessor, viewModel, bindingContext);
+                    modal.modal('show');
+                };
+                return clickAction;
+            };
+        console.log(modal);
+        ko.bindingHandlers.click.init(element, newValueAccessor, allBindingsAccessor, viewModel, bindingContext);
+    }
+};
+
 ko.bindingHandlers.visibleFade = {
     'update': function (element, valueAccessor) {
         var value = ko.utils.unwrapObservable(valueAccessor());

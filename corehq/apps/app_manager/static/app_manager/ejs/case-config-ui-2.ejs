@@ -1,0 +1,25 @@
+[% if(questions.length) { %]
+    <ul>
+        <li>
+                Requires
+                [%= renderOptions([
+                    {value: "none", label: "no case"},
+                    {value: "case", label: "a case"}
+                ], requires, 'requires', false) %]
+        </li>
+    </ul>
+    <ul>
+        [% if(requires == "none") { %]
+            [%= renderAction("open_case", "Opens a case") %]
+        [% } %]
+        [%= renderAction("update_case", "Updates the case") %]
+        [% if(requires != "none") { %]
+            [%= renderAction("case_preload", "Loads data from the case") %]
+            [%= renderAction("close_case", "Closes the case") %]
+        [% } %]
+    </ul>
+[% } else { %]
+    <p class="warning">
+        Your form has no usable questions for Case & Referral configuration.
+    </p>
+[% } %]

@@ -82,7 +82,6 @@ class CaseTypeField(ReportSelectField):
 
         open_count, all_count = self.get_case_counts(self.domain, user_ids=user_ids)
         self.selected = case_type
-#        <option value="{{ i_case_type }}">{{ i_case_type }} ({{ n_cases.open }}/{{ n_cases.all }} open)</option>
         self.options = [dict(val=case, text="%s (%d/%d open)" % (case, data.get("open", 0), data.get("all", 0)))
                         for case, data in case_types.items()]
         self.default_option = "All Case Types (%d/%d open)" % (open_count, all_count)
@@ -212,7 +211,7 @@ class SelectFilteredMobileWorkerField(SelectMobileWorkerField):
         self.group_options = []
         for group in self.group_names:
             filtered_group = Group.by_name(self.domain, group)
-            if not filtered_group:
+            if filtered_group:
                 self.group_options.append(dict(group_id=filtered_group._id,
                     name="Only %s Mobile Workers" % group))
                 self.users.extend(filtered_group.get_users(is_active=True, only_commcare=True))

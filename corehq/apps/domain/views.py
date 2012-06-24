@@ -3,18 +3,18 @@ from django.contrib.auth.views import password_reset_confirm
 from django.views.decorators.csrf import csrf_protect
 from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.http import HttpResponseRedirect, HttpResponse, Http404, HttpResponseForbidden
 
 from django_tables import tables
 from django.shortcuts import redirect
 
-from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required
+from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required, require_previewer
 from corehq.apps.domain.forms import DomainSelectionForm, DomainGlobalSettingsForm,\
     DomainMetadataForm
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 
-from dimagi.utils.web import render_to_response
+from dimagi.utils.web import render_to_response, json_response
 from corehq.apps.users.views import require_can_edit_web_users
 from corehq.apps.receiverwrapper.forms import FormRepeaterForm
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater
@@ -22,6 +22,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 import json
 from dimagi.utils.post import simple_post
+from corehq.apps.registration.forms import DomainRegistrationForm
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
@@ -244,3 +245,102 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
 @domain_admin_required
 def autocomplete_categories(request, prefix=''):
     return HttpResponse(json.dumps(Domain.categories(prefix)))
+
+@login_and_domain_required
+def copy_snapshot(request, domain):
+    domain = Domain.get_by_name(domain)
+    if request.method == 'GET':
+        return render_to_response(request, 'domain/copy_snapshot.html',
+                    {'domain': domain.name})
+
+    elif request.method == 'POST':
+
+        args = {'domain_name' :request.POST['new_domain_name'], 'tos_confirmed': True}
+
+        form = DomainRegistrationForm(args)
+
+        if form.is_valid():
+            new_domain = domain.save_copy(form.clean_domain_name(), user=request.couch_user)
+        else:
+            return render_to_response(request, 'domain/copy_snapshot.html',
+                    {'domain': domain.name, 'error_message': 'That project name is invalid'})
+
+        if new_domain is None:
+            return render_to_response(request, 'domain/copy_snapshot.html',
+                    {'domain': domain.name, 'error_message': 'A project with that name already exists'})
+
+        return redirect("domain_project_settings", new_domain.name)
+
+@domain_admin_required
+def create_snapshot(request, domain):
+    domain = Domain.get_by_name(domain)
+    snapshots = domain.snapshots
+    if request.method == 'GET':
+        return render_to_response(request, 'domain/create_snapshot.html',
+                {'domain': domain.name, 'snapshots': snapshots})
+
+    elif request.method == 'POST':
+
+        new_domain = domain.save_snapshot()
+
+        if new_domain is None:
+            return render_to_response(request, 'domain/create_snapshot.html',
+                    {'domain': domain.name,
+                     'error_message': 'Snapshot creation failed; please try again',
+                     'snapshots': snapshots})
+
+        return redirect('domain_copy_snapshot', new_domain.name)
+
+@require_previewer
+def copy_project(request, domain):
+    """
+    This both creates snapshots and copies them once they exist.
+
+    We might want to use registration/views -> register_domain since it has a lot more detail--e.g. checking for
+    illegal characters
+    """
+
+    if Domain.get_by_name(domain).is_snapshot:
+        return copy_snapshot(request, domain)
+    else:
+        return create_snapshot(request, domain)
+
+@require_previewer
+@login_and_domain_required
+def snapshot_info(request, domain):
+    domain = Domain.get_by_name(domain)
+    user_sees_meta = request.couch_user.is_previewer()
+    if user_sees_meta:
+        form = DomainMetadataForm(initial={
+            'default_timezone': domain.default_timezone,
+            'case_sharing': json.dumps(domain.case_sharing),
+            'city': domain.city,
+            'country': domain.country,
+            'region': domain.region,
+            'project_type': domain.project_type,
+            'customer_type': domain.customer_type,
+            'is_test': json.dumps(domain.is_test),
+            'description': domain.description,
+            'is_shared': domain.is_shared
+        })
+    else:
+        form = DomainGlobalSettingsForm(initial={
+            'default_timezone': domain.default_timezone,
+            'case_sharing': json.dumps(domain.case_sharing),
+
+            })
+    fields = []
+    for field in form.visible_fields():
+        value = field.value()
+        if value:
+            if value == 'false':
+                value = False
+            if value == 'true':
+                value = True
+            if isinstance(value, bool):
+                value = 'Yes' if value else 'No'
+            fields.append({'label': field.label, 'value': value})
+    return render_to_response(request, 'domain/snapshot_info.html', {'domain': domain.name,
+                                                                     'fields': fields,
+                                                                     "languages": request.project.readable_languages(),
+                                                                     "applications": request.project.applications()})

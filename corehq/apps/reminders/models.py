@@ -538,7 +538,15 @@ class CaseReminderHandler(Document):
         now = now or self.get_now()
         reminder = self.get_reminder(case)
         
-        if case.closed or case.type != self.case_type or (self.recipient == RECIPIENT_USER and case.user_id is None) or (self.recipient == RECIPIENT_USER and not CommCareUser.get_by_user_id(case.user_id)):
+        try:
+            if (case.user_id == case._id) or (case.user_id is None):
+                user = None
+            else:
+                user = CommCareUser.get_by_user_id(case.user_id)
+        except Exception:
+            user = None
+        
+        if case.closed or case.type != self.case_type or (self.recipient == RECIPIENT_USER and not user):
             if reminder:
                 reminder.retire()
         else:
@@ -728,7 +736,15 @@ class SurveyKeyword(Document):
         app = form.get_app()
         module = form.get_module()
         lang = app.langs[0]
-        return app.name + "/" + module.name[lang] + "/" + form.name[lang]
+        try:
+            module_name = module.name[lang]
+        except Exception:
+            module_name = module.name.items()[0][1]
+        try:
+            form_name = form.name[lang]
+        except Exception:
+            form_name = form.name.items()[0][1]
+        return app.name + "/" + module_name + "/" + form_name
     
     @property
     def get_id(self):

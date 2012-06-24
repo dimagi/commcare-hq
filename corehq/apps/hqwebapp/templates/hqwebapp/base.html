@@ -10,6 +10,17 @@
 
         <link rel="stylesheet" media="screen" href="{% static 'hq_bootstrap/css/hq-bootstrap.css' %}"/>
 
+        <style type="text/css">
+            .snapshot-alert {
+                text-align: right;
+                margin: 0;
+                -webkit-border-radius: 0;
+                border-radius: 0;
+                -moz-border-radius: 0;
+                border-width: 0 0 1px 0;
+            }
+        </style>
+
         {# this should eventually be moved to the end of the page #}
         <script src="{% static 'hq_bootstrap/js/jquery-1.7.1.min.js' %}"></script>
         {% if DEBUG %}
@@ -55,12 +66,33 @@
                             {% endif %}
                         </ul>
                         {% endblock %}
+
+
                         <div class="btn-toolbar secondary-nav">
+                            <div class="btn-group">
+                            {% if request.project.organization %}
+                                <a href="{% url orgs_landing request.project.organization %}" class="btn btn-info">{{ request.project.organization_doc.title }}</a>
+                                {% comment %}TODO: Add a drop-down list of organizations the current user is a member of?{% endcomment %}
+                            {% endif %}
+                            </div>
+
                             {% if request.couch_user and request.couch_user.is_web_user %}
                             <div class="btn-group">
                                 <a class="btn btn-project dropdown-toggle" data-toggle="dropdown" href="#">
                                     <i class="icon-hq-white icon-hq-logo"></i>
-                                    {% if domain %}{% ifequal domain 'public' %}CommCare HQ Demo Project{% else %}{{ domain }}{% endifequal %}{% else %}No Domain Selected{% endif %}
+                                    {% if domain %}
+                                        {% ifequal domain 'public' %}
+                                            CommCare HQ Demo Project
+                                        {% else %}
+                                            {% if request.project.is_snapshot %}
+                                                Snapshot of {{ request.project.snapshot_of.display_name }}
+                                            {% else %}
+                                                {{ request.project.display_name }}
+                                            {% endif %}
+                                        {% endifequal %}
+                                    {% else %}
+                                        No Domain Selected
+                                    {% endif %}
                                     <span class="caret"></span>
                                 </a>
                                 {% if domain %}
@@ -70,6 +102,7 @@
                                 {% endif %}
                             </div>
                             {% endif %}
+
                             <div class="btn-group">
                                 <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
                                     <i class="icon-hq-white icon-hq-person"></i>
@@ -102,6 +135,19 @@
                     </nav>
                 {% endif %}
             </header>
+
+            {% if request.project.original_doc %}
+                <div class="alert alert-info snapshot-alert">
+                    {% if request.project.is_snapshot %}
+                        This is a snapshot of {{ request.project.copied_from.display_name }}
+                    {% else %}
+                        Originally copied from <a href="{% url domain_snapshot_info request.project.original_doc %}">a snapshot of {{ request.project.copied_from.display_name }}</a>
+                    {% endif %}
+                    {% if request.project.copied_from.organization %}
+                        by <a href="{% url orgs_landing request.project.copied_from.organization %}">{{ request.project.copied_from.organization_doc.title }}</a>
+                    {% endif %}
+                </div>
+            {% endif %}
 
             <div class="hq-page-header-container">
                 <div id="unsupported-browser" class="alert alert-error alert-block alert-full" style="display: none">

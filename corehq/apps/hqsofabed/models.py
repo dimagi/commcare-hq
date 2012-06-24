@@ -1,3 +1,5 @@
+from couchdbkit.exceptions import ResourceNotFound
+from couchforms.models import XFormInstance
 from sofabed.forms.models import FormDataBase
 from django.db import models
 from sofabed.forms.exceptions import InvalidFormUpdateException
@@ -12,7 +14,16 @@ class HQFormData(FormDataBase):
     
     domain = models.CharField(max_length=200)
     username = models.CharField(max_length=200, blank=True)
-    
+    # todo: uncomment the following
+    # app_id = models.CharField(max_length=200, null=True)
+
+    @property
+    def app_id(self):
+        try:
+            return XFormInstance.get(self.instanceID).app_id
+        except (ResourceNotFound, AttributeError, KeyError):
+            return None
+
     def _get_username(self):
         if self.userID:
             return user_id_to_username(self.userID) or ""

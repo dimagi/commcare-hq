@@ -8,10 +8,16 @@ from django.utils.http import urlquote
 ########################################################################################################
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, PublicUser
 from django_digest.decorators import httpdigest
 
 REDIRECT_FIELD_NAME = 'next'
+
+def load_domain(req, domain):
+    domain_name = normalize_domain_name(domain)
+    domain = Domain.get_by_name(domain_name)
+    req.project = domain
+    return domain_name, domain
 
 ########################################################################################################
 
@@ -56,8 +62,7 @@ def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME, login_
         @wraps(view_func)
         def _inner(req, domain, *args, **kwargs):
             user = req.user
-            domain_name = normalize_domain_name(domain)
-            domain = Domain.get_by_name(domain_name)
+            domain_name, domain = load_domain(req, domain)
             if domain and user.is_authenticated() and user.is_active:
                 if not domain.is_active:
                     return HttpResponseRedirect(reverse("domain_select"))
@@ -71,6 +76,9 @@ def login_and_domain_required_ex(redirect_field_name=REDIRECT_FIELD_NAME, login_
                 elif user.is_superuser:
                     # superusers can circumvent domain permissions.
                     return view_func(req, domain_name, *args, **kwargs)
+                elif domain.is_snapshot:
+                    # snapshots are publicly viewable
+                    return require_previewer(view_func)(req, domain_name, *args, **kwargs)
                 else:
                     raise Http404
             else:
@@ -176,10 +184,11 @@ def domain_admin_required_ex( redirect_page_name = None ):
     if redirect_page_name is None:
         redirect_page_name = getattr(settings, 'DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME', 'homepage')                                                                                                 
     def _outer( view_func ): 
-        def _inner(request, *args, **kwargs):
+        def _inner(request, domain, *args, **kwargs):
+            domain_name, domain = load_domain(request, domain)
             if not request.couch_user.is_domain_admin:
                 return HttpResponseRedirect(reverse(redirect_page_name))
-            return view_func(request, *args, **kwargs)
+            return view_func(request, domain_name, *args, **kwargs)
 
         _inner.__name__ = view_func.__name__
         _inner.__doc__ = view_func.__doc__
@@ -195,3 +204,11 @@ domain_admin_required = domain_admin_required_ex()
 ########################################################################################################
     
 require_superuser = permission_required("is_superuser")
+
+def require_previewer(view_func):
+    def shim(request, *args, **kwargs):
+        if not request.couch_user.is_previewer():
+            raise Http404
+        else:
+            return view_func(request, *args, **kwargs)
+    return shim
