@@ -1,18 +1,14 @@
 {% extends eport_base|default:"reports/async/default.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
+{% block js %} {{ block.super }}
+    <script type="text/javascript" src="{% static 'reports/javascripts/reports.download_export.js' %}"></script>
+{% endblock %}
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
-        $(function() {
-           $('.export-action-download').click(function() {
-               var $modalBody = $("#export-download-status .modal-body");
-               $modalBody.text("Fetching...");
-               $("#export-download-status .modal-header h3 span").text($(this).data("formname"));
-               $.getJSON($(this).data('dlocation'), function(d) {
-                   $modalBody.empty().load(d.download_url);
-               });
-           });
-        });
+        var exportDownloader = new HQExportDownloader({});
+        exportDownloader.init();
+
         $(function () {
             // postGo is copied from main.js since that's now not being included, ever since the redesign
             function postGo (url, params) {
@@ -271,15 +267,5 @@
 
 {% block modals %}
 {{ block.super }}
-    <div id="export-download-status" class="modal hide fade">
-        <div class="modal-header">
-            <a class="close" data-dismiss="modal">×</a>
-            <h3>Downloading Export Data for '<span></span>'</h3>
-        </div>
-        <div class="modal-body downloader">
-        </div>
-        <div class="modal-footer">
-            <a href="#" class="btn" data-dismiss="modal">Close</a>
-        </div>
-    </div>
+{% include 'reports/partials/export_download_modal.html' %}
 {% endblock %}

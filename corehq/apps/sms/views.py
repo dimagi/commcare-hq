@@ -8,15 +8,16 @@ import re
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
-from corehq.apps.sms.api import send_sms, incoming
+from corehq.apps.sms.api import send_sms, incoming, send_sms_with_backend
 from corehq.apps.users.models import CouchUser
 from corehq.apps.sms.models import SMSLog, INCOMING
 from corehq.apps.groups.models import Group
 from dimagi.utils.web import render_to_response
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 from dimagi.utils.couch.database import get_db
 from django.contrib import messages
 from corehq.apps.reports import util as report_utils
+from django.views.decorators.csrf import csrf_exempt
 
 @login_and_domain_required
 def messaging(request, domain, template="sms/default.html"):
@@ -193,6 +194,23 @@ def message_test(request, domain, phone_number):
     context['layout_flush_content'] = True
     context['phone_number'] = phone_number
     return render_to_response(request, "sms/message_tester.html", context)
+
+@csrf_exempt
+@login_or_digest
+def api_send_sms(request, domain):
+    if request.method == "POST":
+        phone_number = request.POST.get("phone_number", None)
+        text = request.POST.get("text", None)
+        backend_id = request.POST.get("backend_id", None)
+        if (phone_number is None) or (text is None) or (backend_id is None):
+            return HttpResponseBadRequest("Not enough arguments.")
+        if send_sms_with_backend(domain, phone_number, text, backend_id):
+            return HttpResponse("OK")
+        else:
+            return HttpResponse("ERROR")
+    else:
+        return HttpResponseBadRequest("POST Expected.")
+
 
 
 
