@@ -131,7 +131,8 @@
                                                                 <div data-bind="foreach: tags">
                                                                     <span class="label label-info" data-bind="text: $data"></span>
                                                                 </div>
-                                                                <h6 data-bind="text: license"></h6>
+                                                                <h6 data-bind="text: license">
+                                                                </h6>
                                                                 <a href="#" class="btn" data-bind="click: choose">Use this image</a>
                                                             </div>
                                                         </li>
@@ -240,7 +241,7 @@
         <div class="controls" style="margin-top: 0;">
             <div class="hide hqm-upload-hidden">
                 <label for="shareImage"><input id="shareImage" class="hqm-share-media" type="checkbox" checked="checked" /> Share this media with other CommCareHQ users</label>
-                <input id="imageTags" class="hqm-media-tags" type="text" placeholder="Enter comma-separated tags for the image" />
+                <input id="imageTags" class="hqm-media-tags" type="text" placeholder="Enter space-separated tags for the image" />
             </div>
             <a class="hqm-upload-button hqm-upload-hidden btn btn-primary hide" onclick="return false;">Upload Image</a>
             <a class="hqm-cancel btn btn-warning hide" href="#"><i class="icon icon-white icon-remove"></i> Cancel Upload</a>
@@ -260,7 +261,7 @@
         <div class="controls" style="margin-top: 0;">
             <div class="hide hqm-upload-hidden">
                 <label for="shareAudio"><input id="shareAudio" class="hqm-share-media" type="checkbox" checked="checked" /> Share this media with other CommCareHQ users</label>
-                <input id="audioTags" class="hqm-media-tags" type="text" placeholder="Enter comma-separated tags for the image" />
+                <input id="audioTags" class="hqm-media-tags" type="text" placeholder="Enter space-separated tags for the image" />
             </div>
             <a class="hqm-upload-button hqm-upload-hidden btn btn-primary hide" onclick="return false;">Upload Audio</a>
             <a class="hqm-cancel btn btn-warning hide" href="#"><i class="icon icon-white icon-remove"></i> Cancel Upload</a>

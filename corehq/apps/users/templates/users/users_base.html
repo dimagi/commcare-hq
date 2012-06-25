@@ -71,6 +71,7 @@
         <li class="nav-header">Project Administration</li>
         {% if request.couch_user.is_domain_admin %}
         <li><a href="{% url domain_project_settings domain %}">Project Settings</a></li>
+        <li><a href="{% url domain_manage_multimedia domain %}">Manage Multimedia Sharing</a></li>
         {% endif %}
         <li><a href="{% url domain_forwarding domain %}">Data Forwarding</a>
             {% block forwarding_indicator %}{% endblock %}

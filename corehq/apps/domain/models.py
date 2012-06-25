@@ -360,6 +360,10 @@ class Domain(Document):
             db.delete_doc(doc['doc'])
         super(Domain, self).delete()
 
+    def all_media(self):
+        from corehq.apps.hqmedia.models import CommCareMultimedia
+        return CommCareMultimedia.view('hqmedia/by_domain', key=self.name, include_docs=True).all()
+
 ##############################################################################################################
 #
 # Originally had my own hacky global storage of content type, but it turns out that contenttype.models

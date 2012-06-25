@@ -127,12 +127,12 @@ class HQMediaMatcher():
                 if filename in self.images:
                     form_path = self.image_paths[self.images.index(filename)]
                     data = zip.read(path)
-                    media = CommCareImage.get_by_data(data, owner=self.owner())
+                    media = CommCareImage.get_by_data(data)
                     is_image = True
                 elif filename in self.audio:
                     form_path = self.audio_paths[self.audio.index(filename)]
                     data = zip.read(path)
-                    media = CommCareAudio.get_by_data(data, owner=self.owner())
+                    media = CommCareAudio.get_by_data(data)
                 else:
                     unknown_files.append(path)
 
@@ -142,7 +142,7 @@ class HQMediaMatcher():
                             upload_path=path,
                             username=self.username,
                             replace_attachment=replace_existing_media)
-                        media.add_domain(self.domain)
+                        media.add_domain(self.domain, owner=True)
                         self.app.create_mapping(media, form_path)
                         match_map = HQMediaMapItem.format_match_map(form_path, media.doc_type, media._id, path)
                         if is_image:
@@ -168,31 +168,30 @@ class HQMediaMatcher():
 
                 filename = uploaded_file.name
                 data = uploaded_file.file.read()
-                media = media_class.get_by_data(data, owner=self.owner(), **kwargs)
+                media = media_class.get_by_data(data)
             else:
                 filename = uploaded_file.name
 
                 if filename in self.images:
                     form_path = self.image_paths[self.images.index(filename)]
                     data = uploaded_file.file.read()
-                    media = CommCareImage.get_by_data(data, owner=self.owner(), **kwargs)
+                    media = CommCareImage.get_by_data(data)
                 elif filename in self.audio:
                     form_path = self.audio_paths[self.audio.index(filename)]
                     data = uploaded_file.file.read()
-                    media = CommCareAudio.get_by_data(data, owner=self.owner(), **kwargs)
+                    media = CommCareAudio.get_by_data(data)
                 else:
                     uploaded_file.close()
                     return False, {}, errors
-
             if media:
                 media.attach_data(data,
                     upload_path=filename,
                     username=self.username,
                     replace_attachment=replace_existing_media)
-                media.add_domain(self.domain)
+                media.add_domain(self.domain, owner=True, **kwargs)
                 self.app.create_mapping(media, form_path)
-                return True, HQMediaMapItem.format_match_map(form_path, media.doc_type, media._id, filename), errors
 
+                return True, HQMediaMapItem.format_match_map(form_path, media.doc_type, media._id, filename), errors
         except Exception as e:
             logging.error(e)
             errors.append(e.message)

@@ -76,7 +76,7 @@ class HQMediaZipUploadForm(forms.Form):
                      upload_path=path,
                      username=username,
                      replace_attachment=replace_attachment)
-                media.add_domain(domain)
+                media.add_domain(domain, owner=True)
                 app.create_mapping(media, form_path)
             if cache_handler:
                 cache_handler.sync()
@@ -125,7 +125,7 @@ class HQMediaFileUploadForm(forms.Form):
                      upload_path=media_file.name,
                      username=username,
                      replace_attachment=replace_attachment)
-            media.add_domain(domain)
+            media.add_domain(domain, owner=True)
             app.create_mapping(media, form_path)
         if cache_handler:
             cache_handler.sync()

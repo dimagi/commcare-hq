@@ -212,7 +212,6 @@ function HQMediaUploader(options) {
                 if ($(self.uploadElem+' .hqm-share-media').attr('checked'))
                     self.uploadParams['shared'] = 't';
                 self.uploadParams['tags'] = $(self.uploadElem+' .hqm-media-tags').val();
-                alert(self.uploadParams['tags']);
                 showUploadButton(false);
                 showCancelButton(true);
                 if (self.singleFileUpload)

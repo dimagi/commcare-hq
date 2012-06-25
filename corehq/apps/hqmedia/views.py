@@ -14,6 +14,7 @@ from corehq.apps.hqmedia.forms import HQMediaZipUploadForm, HQMediaFileUploadFor
 from corehq.apps.hqmedia.models import *
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.app_manager.models import Application, get_app
+from corehq.apps.domain.models import Domain
 from dimagi.utils.web import render_to_response
 
 X_PROGRESS_ERROR = 'Server Error: You must provide X-Progress-ID header or query param.'
@@ -43,9 +44,8 @@ def search_for_media(request, domain, app_id):
         raise Http404()
     return HttpResponse(simplejson.dumps([
         {'url': i.url(),
-         'license': LICENSES[i.license],
-         'title': i.title,
-         'tags': i.tags,
+         'licenses': map(LICENSES.__getitem__, i.license.values()),
+         'tags': [tag for tags in i.tags.values() for tag in tags],
          'm_id': i._id} for i in files]))
 
 def choose_media(request, domain, app_id):
@@ -60,7 +60,7 @@ def choose_media(request, domain, app_id):
     else:
         raise Http404()
 
-    if file is None:
+    if file is None or not file.shared():
         return HttpResponse(simplejson.dumps({
             'match_found': False
         }))
@@ -143,8 +143,8 @@ def uploaded(request, domain, app_id):
                 file_type = "audio"
             else:
                 raise Exception("Unsupported content type.")
-            tags = [t.strip() for t in request.POST.get('tags', '').split(',')]
-            match_found, match_map, errors = matcher.match_file(uploaded_file, replace_existing_media=replace_existing, shared=request.POST.get('shared', False), tags=tags)
+            tags = [t.strip() for t in request.POST.get('tags', '').split(' ')]
+            match_found, match_map, errors = matcher.match_file(uploaded_file, replace_existing_media=replace_existing, shared=request.POST.get('shared', False), tags=tags, license=Domain.get_by_name(domain).license)
             response = {"match_found": match_found,
                         file_type: match_map,
                         "file": True}
