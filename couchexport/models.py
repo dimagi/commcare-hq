@@ -190,7 +190,10 @@ class BaseSavedExportSchema(Document):
             previous_export_id=previous_export_id,
             filter=filter,
         )
-        return HttpResponse(json.dumps(dict(download_url=reverse('retrieve_download', kwargs={'download_id': download_id}))))
+        return HttpResponse(json.dumps(dict(
+            download_id=download_id,
+            download_url=reverse('ajax_job_poll', kwargs={'download_id': download_id}))
+        ))
 
 class FakeSavedExportSchema(BaseSavedExportSchema):
 
