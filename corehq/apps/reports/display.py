@@ -33,8 +33,6 @@ class FormType(object):
         else:
             if not form:
                 name = self.xmlns
-            elif form.get('duplicate'):
-                name = "%s (Multiple Forms)" % self.xmlns
             elif form.get('app'):
                 langs = form['app']['langs']
                 if lang:
@@ -59,6 +57,11 @@ class FormType(object):
                         form_name = "?"
                     title = "%s > %s > %s" % (app_name, module_name, form_name)
 
+                if form.get('app_deleted'):
+                    title += ' [Deleted]'
+                if form.get('duplicate'):
+                    title += " [Multiple Forms]"
+
                 if html:
                     name = u"<span>{title}</span>".format(
                         url=reverse("corehq.apps.app_manager.views.view_app", args=[self.domain, form['app']['id']])
@@ -80,11 +83,12 @@ class FormType(object):
             form = json.loads(form_json)
         else:
             form = get_db().view('reports/forms_by_xmlns', key=[domain, app_id, xmlns], group=True).one()
+            print form
             if form:
                 form = form['value']
             # only cache for 10 seconds
             cache.set(cache_key, json.dumps(form), 10)
         return form
 
-def xmlns_to_name(domain, xmlns, app_id=None, html=False):
+def xmlns_to_name(domain, xmlns, app_id, html=False):
     return FormType(domain, xmlns, app_id).get_label(html=html)

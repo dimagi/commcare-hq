@@ -45,6 +45,7 @@ urlpatterns =\
         (r'^user_registration/', include('corehq.apps.registration.user_registration_backend.urls')),
         url(r'^domain/tos/$', direct_to_template, {'template': 'tos.html'}, name='tos'),
         url(r'^domain/select/$', 'select', name='domain_select'),
+        url(r'^domain/categories/$', 'autocomplete_categories', name='autocomplete_categories'),
     ) +\
     patterns('django.contrib.auth.views',
         url(r'^accounts/password_change/$', 'password_change', auth_pages_path('password_change_form.html'), name='password_change'),
@@ -59,9 +60,14 @@ urlpatterns =\
 
 
 domain_specific = patterns('corehq.apps.domain.views',
-    url(r'^$', 'global_settings', name="domain_global_settings"),
-    url(r'^forwarding/$', 'domain_forwarding', name='domain_forwarding'),
-    url(r'^forwarding/new/(?P<repeater_type>\w+)/$', 'add_repeater', name='add_repeater'),
-    url(r'^forwarding/test/$', 'test_repeater', name='test_repeater'),
-    url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', 'drop_repeater', name='drop_repeater')
+                           url(r'^info/$', 'snapshot_info', name='domain_snapshot_info'),
 )
+
+domain_settings = patterns('corehq.apps.domain.views',
+                           url(r'^$', 'project_settings', name="domain_project_settings"),
+                           url(r'^forwarding/$', 'domain_forwarding', name='domain_forwarding'),
+                           url(r'^forwarding/new/(?P<repeater_type>\w+)/$', 'add_repeater', name='add_repeater'),
+                           url(r'^forwarding/test/$', 'test_repeater', name='test_repeater'),
+                           url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', 'drop_repeater', name='drop_repeater'),
+                           url(r'^copy/$', 'copy_project', name='domain_copy_snapshot'),
+                           )

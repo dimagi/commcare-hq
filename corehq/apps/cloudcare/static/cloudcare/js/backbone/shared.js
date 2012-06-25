@@ -1,55 +1,15 @@
 
-var getLocalizedString = function (property, language) {
-    // simple utility to localize a string based on a dict of 
-    // language mappings.
-    return this.get(property)[language] || "?";
-};
 
-var getFormUrl = function(urlRoot, appId, moduleId, formId) {
-    // TODO: make this cleaner
-    return urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/context/";
-};
+/*
+ * A localizable model, with a method "getLocalized"
+ */
 
-var getSubmitUrl = function (urlRoot, appId) {
-    // TODO: make this cleaner
-    return urlRoot + "/" + appId + "/";
-};
-
-var getCaseFilterUrl = function(urlRoot, appId, moduleId) {
-    // TODO: make this cleaner
-    return urlRoot + "module/" + appId + "/modules-" + moduleId + "/";
-};
-
-var showError = function (message, location, autoHideTime) {
-    _show(message, location, autoHideTime, "alert alert-error");
-};
-
-var showSuccess = function (message, location, autoHideTime) {
-    _show(message, location, autoHideTime, "alert alert-success");
-};
-
-var _show = function (message, location, autoHideTime, classes) {
-    var alert = $("<div />").addClass(classes).text(message);
-    alert.append($("<a />").addClass("close").attr("data-dismiss", "alert").html("&times;"));
-    location.append(alert);
-    if (autoHideTime) {
-        alert.delay(autoHideTime).fadeOut(500);
-    }
-};
-
-var showLoading = function (selector) {
-    selector = selector || "#loading";
-    $(selector).show();
-};
-
-var hideLoading = function (selector) {
-    selector = selector || "#loading";
-    $(selector).hide();
-};
-
-var hideLoadingCallback = function () {
-    hideLoading();
-};
+var LocalizableModel = Backbone.Model.extend({
+    initialize: function () {
+        _.bindAll(this, 'getLocalized');
+    },
+    getLocalized: getLocalizedString
+});
 
 /*
  * A selectable UI element with default events and css classes.

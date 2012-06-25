@@ -5,7 +5,7 @@
 
 {% block js %} {{ block.super }}
     {% block sms-js %}
-        {% include "imports/datatables.bootstrap.html" %}
+        {% include "imports/datatables.html" %}
         <script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
     {% endblock %}
 {% endblock %}

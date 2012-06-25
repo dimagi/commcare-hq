@@ -25,6 +25,12 @@
             	$('[disabled]').each(function() {
                     $(this).removeAttr('disabled');
             	});
+
+            	$(this).find('input[type=checkbox]').each(function () {
+                    $(this).attr('value', $(this).is(':checked') ? '1' : '0');
+                    $(this).attr('checked', true);
+                });
+                
                 return true;
             });
 
@@ -63,7 +69,11 @@
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                 &nbsp;&nbsp;&nbsp;&nbsp;
-                or enter a new field name:                
+                or enter a new field name:
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    
+                &nbsp;      
+                Is this a date field?      
                 </label>
                 
                 {% for i in excel_fields_range %}
@@ -82,6 +92,7 @@
                     </select>
                     
                     <input type="text" name="custom_field[]" class="custom_field" />
+                    <input type="checkbox" name="date_yesno[]" class="date_yesno" value="1" />
                     
                     <br>
                 {% endfor %}

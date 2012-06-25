@@ -103,7 +103,7 @@ def form_list(domain):
                          group=True,
                          group_level=3,
                          reduce=True)
-    return [{"text": xmlns_to_name(domain, r["key"][2]), "val": r["key"][2]} for r in view]
+    return [{"text": xmlns_to_name(domain, r["key"][2], app_id=None), "val": r["key"][2]} for r in view]
 
 def get_case_types(domain, user_ids=None):
     case_types = {}
@@ -336,3 +336,15 @@ def get_possible_reports(domain):
         for model in models:
             reports.append({'path': model, 'name': to_function(model).name})
     return reports
+
+def format_relative_date(date, tz=pytz.utc):
+    now = datetime.now(tz=tz)
+    time = datetime.replace(date, tzinfo=tz)
+    dtime = now - time
+    if dtime.days < 1:
+        dtext = "Today"
+    elif dtime.days < 2:
+        dtext = "Yesterday"
+    else:
+        dtext = "%s days ago" % dtime.days
+    return format_datatables_data(dtext, dtime.days)

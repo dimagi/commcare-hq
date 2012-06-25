@@ -5,6 +5,7 @@ import uuid
 from wsgiref.util import FileWrapper
 import zipfile
 from corehq.apps.app_manager.const import APP_V1
+from corehq.apps.domain.models import Domain
 from couchexport.export import FormattedRow
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
@@ -37,7 +38,7 @@ from corehq.apps.hqmedia.models import CommCareMultimedia, CommCareImage, CommCa
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse, resolve
+from django.core.urlresolvers import reverse, resolve, get_resolver, RegexURLResolver
 from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form, FormAction, FormActionCondition, FormActions,\
     BuildErrors, AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang
 
@@ -50,7 +51,6 @@ from dimagi.utils.web import get_url_base
 
 import json
 from dimagi.utils.make_uuid import random_hex
-from utilities.profile import profile
 import urllib
 import urlparse
 import re
@@ -192,11 +192,18 @@ def import_app(req, domain, template="app_manager/import_app.html"):
     else:
         app_id = req.GET.get('app')
         redirect_domain = req.GET.get('domain')
-        if redirect_domain:
-            return HttpResponseRedirect(
-                reverse('import_app', args=[redirect_domain])
-                + "?app={app_id}".format(app_id=app_id)
-            )
+        if redirect_domain is not None:
+            if Domain.get_by_name(redirect_domain):
+                return HttpResponseRedirect(
+                    reverse('import_app', args=[redirect_domain])
+                    + "?app={app_id}".format(app_id=app_id)
+                )
+            else:
+                if redirect_domain:
+                    messages.error(req, "We can't find a project called %s." % redirect_domain)
+                else:
+                    messages.error(req, "You left the project name blank.")
+                return HttpResponseRedirect(req.META['HTTP_REFERER'])
 
         if app_id:
             app = get_app(None, app_id)
@@ -300,7 +307,7 @@ def get_form_view_context(request, form, langs, is_user_registration):
         except XFormValidationError as e:
             messages.error(request, "%s" % e)
         except Exception as e:
-            if settings.DEBUG and False:
+            if settings.DEBUG:
                 raise
             logging.exception(e)
             messages.error(request, "Unexpected Error: %s" % e)
@@ -317,7 +324,8 @@ def get_form_view_context(request, form, langs, is_user_registration):
         'form_actions': form.actions.to_json(),
         'case_reserved_words_json': load_case_reserved_words(),
         'is_user_registration': is_user_registration,
-        }
+        'module_case_types': [{'module_name': module.name.get('en'), 'case_type': module.case_type} for module in form.get_app().modules if module.case_type] if not is_user_registration else None
+    }
 
 def get_apps_base_context(request, domain, app):
 
@@ -390,6 +398,17 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
         'saved_apps': saved_apps,
         'latest_release': latest_release,
     })
+    if not app.is_remote_app():
+        sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
+        multimedia_images, missing_image_refs = app.get_template_map(sorted_images)
+        multimedia_audio, missing_audio_refs = app.get_template_map(sorted_audio)
+        if len(multimedia_images) > 0 or len(multimedia_audio) > 0 or has_error:
+            context.update(dict(multimedia={
+                'missing_image_refs': missing_image_refs,
+                'missing_audio_refs': missing_audio_refs,
+                'errors': has_error,
+                'notice': bool(has_error or missing_image_refs > 0  or missing_audio_refs > 0)
+            }))
     response = render_to_response(request, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
@@ -569,7 +588,6 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None, is_user_reg
     context.update(locals())
     context.update({
         'edit': True,
-        'editor_url': settings.EDITOR_URL
     })
     return render_to_response(req, 'app_manager/form_designer.html', context)
 
@@ -1424,10 +1442,32 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
     all the resource files that will end up zipped into the jar.
 
     """
+    if req.app.copy_of:
+        files = [(path[len('files/'):], req.app.fetch_attachment(path)) for path in req.app._attachments if path.startswith('files/')]
+    else:
+        files = sorted(req.app.create_all_files().items())
     return render_to_response(req, template, {
         'app': req.app,
-        'files': sorted(req.app.create_all_files().items()),
-        })
+        'files': files,
+    })
+
+@safe_download
+def download_file(req, domain, app_id, path):
+    mimetype_map = {
+        'ccpr': 'commcare/profile',
+        'jad': 'text/vnd.sun.j2me.app-descriptor',
+        'jar': 'application/java-archive',
+    }
+    try:
+        response = HttpResponse(mimetype=mimetype_map[path.split('.')[-1]])
+    except KeyError:
+        response = HttpResponse()
+    try:
+        response.write(req.app.fetch_attachment('files/%s' % path))
+        return response
+    except ResourceNotFound:
+        callback, callback_args, callback_kwargs = RegexURLResolver(r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
+        return callback(req, domain, app_id, *callback_args, **callback_kwargs)
 
 @safe_download
 def download_profile(req, domain, app_id):

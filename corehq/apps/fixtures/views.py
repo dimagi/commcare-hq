@@ -35,8 +35,15 @@ def strip_json(obj, disallow_basic=None, disallow=None):
 
     return ret
 
+def _to_kwargs(req):
+    # unicode can mix this up so have a little utility to do it
+    # was seeing this only locally, not sure if python / django
+    # version dependent
+    return dict((str(k), v) for k, v in json.load(req).items())
+
 @require_can_edit_fixtures
 def data_types(request, domain, data_type_id):
+    
     if data_type_id:
         data_type = FixtureDataType.get(data_type_id)
 
@@ -47,7 +54,7 @@ def data_types(request, domain, data_type_id):
             return json_response(strip_json(data_type))
 
         elif request.method == 'PUT':
-            new = FixtureDataType(domain=domain, **json.load(request))
+            new = FixtureDataType(domain=domain, **_to_kwargs(request))
             for attr in 'tag', 'name', 'fields':
                 setattr(data_type, attr, getattr(new, attr))
             data_type.save()
@@ -62,7 +69,7 @@ def data_types(request, domain, data_type_id):
     elif data_type_id is None:
 
         if request.method == 'POST':
-            data_type = FixtureDataType(domain=domain, **json.load(request))
+            data_type = FixtureDataType(domain=domain, **_to_kwargs(request))
             data_type.save()
             return json_response(strip_json(data_type))
 
@@ -92,7 +99,7 @@ def data_items(request, domain, data_type_id, data_item_id):
         return ret
 
     if request.method == 'POST' and data_item_id is None:
-        o = FixtureDataItem(domain=domain, data_type_id=data_type_id, **json.load(request))
+        o = FixtureDataItem(domain=domain, data_type_id=data_type_id, **_to_kwargs(request))
         o.save()
         return json_response(strip_json(o, disallow=['data_type_id']))
     elif request.method == 'GET' and data_item_id is None:
@@ -103,7 +110,7 @@ def data_items(request, domain, data_type_id, data_item_id):
         return json_response(prepare_item(o))
     elif request.method == 'PUT' and data_item_id:
         original = FixtureDataItem.get(data_item_id)
-        new = FixtureDataItem(domain=domain, **json.load(request))
+        new = FixtureDataItem(domain=domain, **_to_kwargs(request))
         for attr in 'fields',:
             setattr(original, attr, getattr(new, attr))
         original.save()

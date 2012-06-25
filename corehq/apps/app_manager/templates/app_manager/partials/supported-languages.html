@@ -21,7 +21,8 @@
                 <i class="icon-move" data-bind="visible: $root.editing"></i>
             </td>
             <td class="span1">
-                <span data-bind="text: $root.languages.indexOf($data) + 1 + '.'"></span>
+                <span data-bind="text: $root.languages.indexOf($data) + 1 + '.', visible: $root.languages()[0] !== $data"></span>
+                <span class="label label-info" data-bind="visible: $root.languages()[0] === $data">1. default</span>
             </td>
             <td class="span1">
                 <span data-bind="editableBool: deploy, editing: $root.editing"></span>

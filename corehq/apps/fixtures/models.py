@@ -18,6 +18,10 @@ class FixtureDataType(Document):
     def by_domain(cls, domain):
         return cls.view('fixtures/data_types_by_domain', key=domain, reduce=False, include_docs=True)
 
+    @classmethod
+    def by_domain_tag(cls, domain, tag):
+        return cls.view('fixtures/data_types_by_domain_tag', key=[domain, tag], reduce=False, include_docs=True)
+
 class FixtureDataItem(Document):
     domain = StringProperty()
     data_type_id = StringProperty()

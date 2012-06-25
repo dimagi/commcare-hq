@@ -5,6 +5,7 @@ from corehq.apps.reports.models import HQUserType
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.datespan import datespan_in_request
+import settings
 
 datespan_default = datespan_in_request(
             from_param="startdate",
@@ -12,17 +13,26 @@ datespan_default = datespan_in_request(
             default_days=7,
         )
 
-class GroupField(ReportField):
+class GroupField(ReportSelectField):
     slug = "group"
-    template = "reports/fields/select_group.html"
+    name = "Group"
+    default_option = "Everybody"
+    cssId = "group_select"
 
-    def update_context(self):
-        group = self.request.GET.get('group', '')
-        groups = Group.get_reporting_groups(self.domain)
-        if group:
-            group = Group.get(group)
-        self.context['group'] = group
-        self.context['groups'] = groups
+    def update_params(self):
+        super(GroupField, self).update_params()
+        self.groups = Group.get_reporting_groups(self.domain)
+        self.options = [dict(val=group.get_id, text=group.name) for group in self.groups]
+
+class CaseSharingGroupField(GroupField):
+    default_option = "Any Group"
+    cssClasses = "span6"
+
+    def update_params(self):
+        super(CaseSharingGroupField, self).update_params()
+        self.options = [dict(val=group.get_id, text="%s [Case Sharing]"
+                        % group.name if group.case_sharing else group.name)
+                            for group in self.groups]
 
 class FilterUsersField(ReportField):
     slug = "ufilter"
@@ -51,24 +61,30 @@ class FilterUsersField(ReportField):
             show_filter = False
         return toggle, show_filter
 
-class CaseTypeField(ReportField):
+class CaseTypeField(ReportSelectField):
     slug = "case_type"
-    template = "reports/fields/case_type.html"
+    name = "Case Type"
+    cssId = "case_type_select"
 
-    def update_context(self):
+    def update_params(self):
         individual = self.request.GET.get('individual', '')
         group = self.request.GET.get('group', '')
-        user_filter, _ = FilterUsersField.get_user_filter(self.request)
+        if not individual and not settings.LUCENE_ENABLED:
+            user_filter = HQUserType.use_filter(['0','1','2','3'])
+        else:
+            user_filter, _ = FilterUsersField.get_user_filter(self.request)
+
         users = util.get_all_users_by_domain(self.domain, group, individual, user_filter)
         user_ids = [user.user_id for user in users]
         
         case_types = self.get_case_types(self.domain, user_ids)
-        case_type = self.request.GET.get('case_type', '')
+        case_type = self.request.GET.get(self.slug, '')
 
         open_count, all_count = self.get_case_counts(self.domain, user_ids=user_ids)
-        self.context['case_types'] = case_types
-        self.context['case_type'] = case_type
-        self.context['all_cases_count'] = {'all': all_count, 'open': open_count}
+        self.selected = case_type
+        self.options = [dict(val=case, text="%s (%d/%d open)" % (case, data.get("open", 0), data.get("all", 0)))
+                        for case, data in case_types.items()]
+        self.default_option = "All Case Types (%d/%d open)" % (open_count, all_count)
 
     @classmethod
     def get_case_types(cls, domain, user_ids=None):
@@ -113,24 +129,37 @@ class SelectFormField(ReportSelectField):
 
     def update_params(self):
         self.options = util.form_list(self.domain)
-        self.selected = self.request.GET.get('form', None)
-
+        self.selected = self.request.GET.get(self.slug, None)
 
 class SelectAllFormField(SelectFormField):
     default_option = "All Forms"
 
-class SelectApplicationField(ReportField):
-    slug = "select_app"
-    template = "reports/fields/select_app.html"
+class SelectOpenCloseField(ReportSelectField):
+    slug = "is_open"
+    name = "Opened / Closed"
+    cssId = "opened_closed"
+    cssClasses = "span3"
+    default_option = "Show All"
+    options = [dict(val="open", text="Only Open"),
+               dict(val="closed", text="Only Closed")]
 
-    def update_context(self):
+class SelectApplicationField(ReportSelectField):
+    slug = "app"
+    name = "Application"
+    cssId = "application_select"
+    cssClasses = "span6"
+    default_option = "Select Application [Latest Build Version]"
+
+    def update_params(self):
         apps_for_domain = get_db().view("app_manager/applications_brief",
             startkey=[self.domain],
             endkey=[self.domain, {}],
             include_docs=True).all()
-        available_apps = [dict(name="%s [up to build %s]" % (app['value']['name'], app['value']['version']), id=app['value']['_id']) for app in apps_for_domain]
-        self.context['selected_app'] = self.request.GET.get('app','')
-        self.context['available_apps'] = available_apps
+        available_apps = [dict(val=app['value']['_id'],
+                                text="%s [up to build %s]" % (app['value']['name'], app['value']['version']))
+                          for app in apps_for_domain]
+        self.selected = self.request.GET.get(self.slug,'')
+        self.options = available_apps
 
 class SelectMobileWorkerField(ReportField):
     slug = "select_mw"
@@ -182,7 +211,7 @@ class SelectFilteredMobileWorkerField(SelectMobileWorkerField):
         self.group_options = []
         for group in self.group_names:
             filtered_group = Group.by_name(self.domain, group)
-            if not filtered_group:
+            if filtered_group:
                 self.group_options.append(dict(group_id=filtered_group._id,
                     name="Only %s Mobile Workers" % group))
                 self.users.extend(filtered_group.get_users(is_active=True, only_commcare=True))

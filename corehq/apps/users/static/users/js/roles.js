@@ -97,15 +97,15 @@ $(function () {
             var roleCopy = UserRole.wrap(UserRole.unwrap(role));
             roleCopy.modalTitle = title;
             self.roleBeingEdited(roleCopy);
-            self.modalSaveButton.fire('change');
+            self.modalSaveButton.state('save');
         };
         self.unsetRoleBeingEdited = function () {
             self.roleBeingEdited(undefined);
-            self.modalSaveButton.setStateWhenReady('saved');
         };
-        self.modalSaveButton = SaveButton.init({
-            save: function () {
-                self.modalSaveButton.ajax({
+        self.modalSaveButton = {
+            state: ko.observable(),
+            saveOptions: function () {
+                return {
                     url: o.saveUrl,
                     type: 'post',
                     data: JSON.stringify(UserRole.unwrap(self.roleBeingEdited)),
@@ -114,9 +114,9 @@ $(function () {
                         self.addOrReplaceRole(data);
                         self.unsetRoleBeingEdited();
                     }
-                });
+                };
             }
-        });
+        }
 
     }
     $.fn.userRoles = function (o) {

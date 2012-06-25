@@ -3,42 +3,6 @@
 {% load hq_shared_tags %}
 
 {% block head %} {{ block.super }}
-{#    <style>#}
-{#        #main_container {#}
-{#            padding: 10px;#}
-{#        }#}
-{#        #main_container {#}
-{#            min-width: 500px;#}
-{#            position: relative;#}
-{#        }#}
-{#        .clear {#}
-{#            clear: both;#}
-{#        }#}
-{#        #case-list {#}
-{#            float: left;#}
-{#            width: 30%;#}
-{#        }#}
-{#        #case-list table {#}
-{#            float: left;#}
-{#            width: 100%;#}
-{#        }#}
-{#        #case-details table {#}
-{#            width: 60%;#}
-{#        }#}
-{#        .clear {#}
-{#            clear: both;#}
-{#        }#}
-{#        tr.active {#}
-{#            background-color: #f5f5ff;#}
-{#        }#}
-{#        #loading {#}
-{#            float: right;#}
-{#            display: none;#}
-{#            margin-top: 15px; #}
-{#            margin-right: 15px; #}
-{#        }#}
-{#        #}
-{#    </style>#}
 {% endblock %}
 
 {% block js %} {{ block.super }}
@@ -49,14 +13,15 @@
     <script src="{% static 'case/js/casexml.js' %}"></script>
     <script src="{% static 'cloudcare/js/case-edit-form.js' %}"></script>
     <script src="{% static 'hqwebapp/javascripts/backbone.js' %}"></script>
+    <script src="{% static 'cloudcare/js/util.js' %}"></script>
     <script src="{% static 'cloudcare/js/backbone/shared.js' %}"></script>
     <script src="{% static 'cloudcare/js/backbone/apps.js' %}"></script>
     <script src="{% static 'cloudcare/js/backbone/cases.js' %}"></script>
+    <script src="{% static 'cloudcare/js/post.js' %}"></script>
     
     {# touchforms includes #}
-    <script src="{% static 'cloudcare/js/post.js' %}"></script>
-    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/jquery-ui.min.js' %}"></script>
-    <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/themes/ui-lightness/jquery-ui.css">
+    <script language="javascript" type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-redmond-1.8.16.css' %}">
     
     <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/shortcut.js' %}"></script>
     <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/xforgasm.js' %}?version={{app_version}}"></script>
@@ -71,7 +36,7 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url cloudcare_get_apps domain %}"><strong>Cloudcare</strong></a>
+            <a href="{% url cloudcare_default domain %}"><strong>CloudCare</strong></a><sup>beta</sup>
         </li>
     </ul>
 {% endblock %}
@@ -114,14 +79,25 @@
 {% endblock %}
 
 {% block main_column %}
+	{% if preview %}
+        <div class="alert fade in alert-block alert-full alert-info">
+            <a class="close" data-dismiss="alert" href="#">&times;</a>
+            CloudCare submits REAL DATA that will create cases and show up in reports!
+        </div>
+    {% endif %}
+    {% if request.couch_user.is_web_user %}
+	    <div class="alert fade in alert-block alert-full alert-info">
+	        <a class="close" data-dismiss="alert" href="#">&times;</a>
+	        You are using CloudCare as a {% hq_web_user %}! Any data you submit might confuse your reports, and not everything
+	        may work properly. For the best experience please logout and login as a {% commcare_user %}.
+	    </div>
+	{% endif %}
     <div id="cloudcare-main" style="position:relative;">
-        <div id="loading" class="well" style="position: absolute; right: 0; margin-right: 40px; top: 40px;">
+        <div id="loading" class="well" style="display: none; position: absolute; right: 0; margin-right: 40px; top: 40px;">
             <img width="32" height="32" alt="Loading" src="{% static 'formplayer/img/loading_transparent.gif' %}" />
-            Loading...
+            {% trans "Loading" %}...
         </div>
-        <div class="row-fluid">     
-            <section id="cases"></section>
-            <section id="webforms" style="min-width: 800px;"></section>
-        </div>
+        <section id="cases" class="row-fluid"></section>
+        <section id="webforms" style="min-width: 800px;"></section>
     </div>
 {% endblock %}

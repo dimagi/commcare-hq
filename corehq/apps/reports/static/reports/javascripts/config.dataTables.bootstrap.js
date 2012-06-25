@@ -2,12 +2,21 @@
 
 function HQReportDataTables(options) {
     var self = this;
-    self.dataTableElem = (options.dataTableElem) ? options.dataTableElem : '.datatable';
-    self.paginationType = (options.paginationType) ? options.paginationType : 'bootstrap';
-    self.defaultRows = (options.defaultRows) ? options.defaultRows : 10;
-    self.startAtRowNum = (options.startAtRowNum) ? options.startAtRowNum : 0;
-    self.aoColumns = (options.aoColumns) ? options.aoColumns : null;
+    self.dataTableElem = options.dataTableElem || '.datatable';
+    self.paginationType = options.paginationType || 'bootstrap';
+    self.defaultRows = options.defaultRows || 10;
+    self.startAtRowNum = options.startAtRowNum || 0;
+    self.aoColumns = options.aoColumns;
     self.autoWidth = (options.autoWidth != undefined) ? options.autoWidth : true;
+    self.customSort = options.customSort;
+    self.ajaxParams = options.ajaxParams || new Object();
+    self.ajaxSource = options.ajaxSource;
+    self.loadingText = options.loadingText || "Loading...";
+    self.emptyText = options.emptyText || "No data available to display. Please try changing your filters.";
+    self.fixColumns = !!(options.fixColumns);
+    self.fixColsNumLeft = options.fixColsNumLeft || 1;
+    self.fixColsWidth = options.fixColsWidth || 100;
+
 
     this.render = function () {
 
@@ -27,40 +36,57 @@ function HQReportDataTables(options) {
                 sDom: dataTablesDom,
                 sPaginationType: self.paginationType,
                 iDisplayLength: self.defaultRows,
-                bAutoWidth: self.autoWidth
-            },
-                sAjaxSource = $(this).data('source');
+                bAutoWidth: self.autoWidth,
+                sScrollX: "100%"
+            };
 
-            if(sAjaxSource) {
+            if(self.ajaxSource) {
                 params.bServerSide = true;
-                params.sAjaxSource = sAjaxSource;
+                params.sAjaxSource = self.ajaxSource;
                 params.bSort = false;
                 params.bFilter = $(this).data('filter') || false;
                 params.fnServerParams = function ( aoData ) {
-                        aoData.push({ "name" : 'individual', "value": $(this).data('individual')});
-                        aoData.push({ "name" : 'group', "value": $(this).data('group')});
-                        aoData.push({ "name" : 'case_type', "value": $(this).data('casetype')});
-                        var filterNames = ["ufilter", "submitfilter"];
-                        var name, f, i, j;
-                        for (i = 0; i < filterNames.length; i++) {
-                            name = filterNames[i];
-                            f = $(this).data(name);
-                            if (f) {
-                                for (j = 0; j < f.length; j++) {
-                                    aoData.push({ "name" : name, "value": f[j]});
-                                }
+                    for (var p in self.ajaxParams) {
+                        var currentParam = self.ajaxParams[p];
+                        if(_.isObject(currentParam.value)) {
+                            for (var j=0; j < currentParam.value.length; j++) {
+                                aoData.push({
+                                    name: currentParam.name,
+                                    value: currentParam.value[j]
+                                });
                             }
+                        } else {
+                            aoData.push(currentParam);
                         }
-
-                    };
+                    }
+                };
             }
+            params.oLanguage = {
+                sProcessing: self.loadingText,
+                sLoadingRecords: self.loadingText,
+                sZeroRecords: self.emptyText
+            };
+
             if(self.aoColumns)
                 params.aoColumns = self.aoColumns;
-            $(this).dataTable(params);
+
+            var datatable = $(this).dataTable(params);
+            if(self.customSort)
+                datatable.fnSort( self.customSort );
+            if(self.fixColumns)
+                new FixedColumns( datatable, {
+                    iLeftColumns: self.fixColsNumLeft,
+                    iLeftWidth: self.fixColsWidth
+                } );
+
 
             var $dataTablesFilter = $(".dataTables_filter");
             if($dataTablesFilter && $("#extra-filter-info")) {
-                $("#extra-filter-info").append($dataTablesFilter);
+                if($dataTablesFilter.length > 1) {
+                    $($dataTablesFilter.first()).remove();
+                    $dataTablesFilter = $($dataTablesFilter.last());
+                }
+                $("#extra-filter-info").html($dataTablesFilter);
                 $dataTablesFilter.addClass("form-search");
                 var $inputField = $dataTablesFilter.find("input"),
                     $inputLabel = $dataTablesFilter.find("label");
@@ -73,10 +99,6 @@ function HQReportDataTables(options) {
                 $inputLabel.attr("for", "dataTables-filter-box");
                 $inputLabel.html($('<i />').addClass("icon-search"));
             }
-//            else if ($dataTablesFilter && $('#datatables_filter_container')) {
-//                $dataTablesFilter.remove();
-//                $('#datatables_filter_box').append($dataTablesFilter);
-//            }
 
             var $dataTablesLength = $(".dataTables_length"),
                 $dataTablesInfo = $(".dataTables_info");
@@ -89,6 +111,9 @@ function HQReportDataTables(options) {
                 $selectField.children().append(" per page");
                 $selectField.addClass("input-medium");
             }
+            $(".dataTables_length select").change(function () {
+                $(self.dataTableElem).trigger('hqreport.tabular.lengthChange', $(this).val());
+            });
         });
     };
 }

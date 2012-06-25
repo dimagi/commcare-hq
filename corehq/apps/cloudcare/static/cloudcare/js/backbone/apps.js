@@ -96,10 +96,11 @@ cloudCare.AppListView = Backbone.View.extend({
     }
 });
 
-cloudCare.App = Backbone.Model.extend({
+cloudCare.App = LocalizableModel.extend({
     idAttribute: "_id",
     initialize: function () {
-        _.bindAll(this, "updateModules");
+        this.constructor.__super__.initialize.apply(this, [this.options]);
+        _.bindAll(this, "updateModules", "urlRoot", "getSubmitId");
         var self = this;
         this.updateModules();
         this.on("change", function () {
@@ -109,6 +110,9 @@ cloudCare.App = Backbone.Model.extend({
     urlRoot: function () {
         return this.get("urlRoot");
     },
+    getSubmitId: function () {
+        return this.get("copy_of") || this.id
+    },
     updateModules: function () {
         var self = this;
         if (this.get("modules")) {
@@ -116,6 +120,7 @@ cloudCare.App = Backbone.Model.extend({
             this.modules = _(this.get("modules")).map(function (module) {
                 var ret = new cloudCare.Module(module);
                 ret.set("app_id", self.id);
+                ret.set("submit_app_id", self.getSubmitId());
                 ret.set("index", index);
                 index++;
                 return ret;
@@ -124,11 +129,7 @@ cloudCare.App = Backbone.Model.extend({
     }
 });
 
-cloudCare.Form = Backbone.Model.extend({
-    initialize: function () {
-        _.bindAll(this, 'getLocalized');
-    },
-    getLocalized: getLocalizedString
+cloudCare.Form = LocalizableModel.extend({
 });
 
 cloudCare.FormView = Selectable.extend({
@@ -142,15 +143,15 @@ cloudCare.FormView = Selectable.extend({
     }
 });
 
-cloudCare.Module = Backbone.Model.extend({
+cloudCare.Module = LocalizableModel.extend({
     initialize: function () {
-        _.bindAll(this, 'getLocalized', 'updateForms', 'getDetail');
+        this.constructor.__super__.initialize.apply(this, [this.options]);
+        _.bindAll(this, 'updateForms', 'getDetail');
         this.updateForms();
         this.on("change", function () {
             this.updateForms();
         });
     },
-    getLocalized: getLocalizedString,
     
     getDetail: function (type) {
         return _(this.get("details")).find(function (elem) {
@@ -165,6 +166,7 @@ cloudCare.Module = Backbone.Model.extend({
             this.forms = _(this.get("forms")).map(function (form) {
                 var ret = new cloudCare.Form(form);
                 ret.set("app_id", self.get("app_id"));
+                ret.set("submit_app_id", self.get("submit_app_id"));
                 ret.set("module_index", self.get("index"));
                 ret.set("index", index);
                 index++;
@@ -358,7 +360,7 @@ cloudCare.AppView = Backbone.View.extend({
             // clear current case information
             self._clearCaseView();
             
-            var submitUrl = getSubmitUrl(self.options.submitUrlRoot, form.get("app_id"));
+            var submitUrl = getSubmitUrl(self.options.submitUrlRoot, form.get("submit_app_id"));
             // get context
             resp = $.ajax({ url: url,
                             async: false, 
@@ -378,12 +380,11 @@ cloudCare.AppView = Backbone.View.extend({
 		            });
 		        };
 		        data["onerror"] = function (resp) {
-		            console.log("onerror");
 		            showError(resp.message, $("#cloudcare-main"), 10000);
 		        };
 		        var sess = new WebFormSession(data);
                 // TODO: probably shouldn't hard code these divs
-                sess.load($('#webforms'), $('#loading'), null);
+                sess.load($('#webforms'), $('#loading'), self.options.language);
             });
         };
         
@@ -550,29 +551,34 @@ cloudCare.AppMainView = Backbone.View.extend({
             self.clearAll();
         }));
         
-        
+        var _stripParams = function (val) {
+            if (val.indexOf("?") !== -1) {
+                return val.substring(0, val.indexOf("?"));
+            }            
+            return val;
+        }
         this.router.on("route:app", pauseNav(function (appId) {
             self.clearModules();
-            selectApp(appId);
+            selectApp(_stripParams(appId));
         }));
         
         this.router.on("route:app:module", pauseNav(function (appId, moduleIndex) {
             self.clearForms();
             selectApp(appId);
-            selectModule(moduleIndex);
+            selectModule(_stripParams(moduleIndex));
         }));
         this.router.on("route:app:module:form", pauseNav(function (appId, moduleIndex, formIndex) {
             self.clearForms();
             selectApp(appId);
             selectModule(moduleIndex);
-            selectForm(formIndex);
+            selectForm(_stripParams(formIndex));
         }));
         this.router.on("route:app:module:form:case", pauseNav(function (appId, moduleIndex, formIndex, caseId) {
             self.clearCases();
             selectApp(appId);
             selectModule(moduleIndex);
             selectForm(formIndex);
-            selectCase(caseId);
+            selectCase(_stripParams(caseId));
         }));
         
         // these are also incoming routes, that look funny because of how the event

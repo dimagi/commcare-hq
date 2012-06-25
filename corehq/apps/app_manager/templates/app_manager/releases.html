@@ -48,6 +48,9 @@
     .build.build-latest-release {
         background-color: #EFEFFF;
     }
+    .nowrap {
+        white-space: nowrap;
+    }
 </style>
 {% endblock %}
 {% block form-view %}
@@ -166,22 +169,26 @@
                 </form>
                 {% endif %}
             </td>
-            <td>{{ saved_app.version }}</td>
-            <td>{% utc_to_timezone saved_app.built_on timezone "%b %d, %Y" %}</td>
-            <td>{% utc_to_timezone saved_app.built_on timezone "%H:%M %Z" %}</td>
-            <td>
+            <td class="nowrap">{{ saved_app.version }}</td>
+            <td class="nowrap">{% utc_to_timezone saved_app.built_on timezone "%b %d, %Y" %}</td>
+            <td class="nowrap">{% utc_to_timezone saved_app.built_on timezone "%H:%M %Z" %}</td>
+            <td class="nowrap">
                 {% if saved_app.built_with.get_label %}{{ saved_app.built_with.get_label }}{% endif %}
                 {% if not saved_app.built_with.signed %}<h6>Unsigned Jar</h6>{% endif %}
             </td>
-            <td>
-                <div class="download-dropdown">
-                    <span>Deploy</span>
-                    <ul>
+            <td class="nowrap">
+                <div class="btn-group">
+                    <span class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                        Deploy
+                        <span class="caret"></span>
+                    </span>
+                    <ul class="dropdown-menu">
                         <li>
                             <a href="{% url emulator domain saved_app.id %}">Preview</a>
                         </li>
+                        <li class="divider"></li>
                         <li>
-                            <a class="dialog_opener" href="">CommCare Files</a>
+                            <a class="dialog_opener" href="">CommCare J2ME Files</a>
                             <div class="dialog jar_download_dialog" title="Install Build {{ saved_app.version }} for J2ME">
                                 <ol>
                                     <li>
@@ -206,7 +213,11 @@
                                 <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
                                     <label>Send to: </label>
                                     <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
-                                    <textarea name="message">Update to CommCare "{{ app.name }}" version {{ saved_app.version }}: {{ saved_app.short_url }}</textarea>
+                                    {% if app.name|length <= 12 %}
+                                        <textarea name="message">Update to CommCare: {{ saved_app.short_url }} ("{{ app.name }}" v.{{ saved_app.version }})</textarea>
+                                    {% else %}
+                                        <textarea name="message">Update to CommCare: {{ saved_app.short_url }} ("{{ app.name|slice:":10" }}.." v.{{ saved_app.version }})</textarea>
+                                    {% endif %}
                                     <input type="submit" value="Send"/>
                                 </form>
                             </div>
@@ -214,6 +225,22 @@
                         <li>
                             <a href="{% url corehq.apps.app_manager.views.odk_install domain saved_app.id %}" class="odk_install">Download to CommCare ODK</a>
                         </li>
+                        {% if request.user.is_superuser %}
+                            <li class="divider"></li>
+                            <li>
+                                <a href="{% url download_index domain saved_app.id %}">View Source Files</a>
+                            </li>
+                        {% endif %}
+                        {% ifchanged %}
+                            <li class="divider"></li>
+                            {% if multimedia %}
+                                <li>
+                                    <a href="{% if multimedia.notice %}#multimediaIssuesModal{% else %}{% url download_multimedia_zip domain app.id %}{% endif %}" {% if multimedia.notice %}data-toggle="modal" data-target="#multimediaIssuesModal"{% endif %}>Download Multimedia Zip</a>
+                                </li>
+                            {% else %}
+                                <li class="nav-header">(Multimedia Not Available)</li>
+                            {% endif %}
+                        {% endifchanged %}
                     </ul>
                 </div>
             </td>
@@ -255,4 +282,35 @@
         </tr>
         {% endfor %}
     </table>
+{% endblock %}
+
+{% block modals %}
+{{ block.super }}
+    {% if multimedia and multimedia.notice %}
+        <div class="modal hide fade" id="multimediaIssuesModal">
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal">&times;</a>
+                <h3>Issues may exist with your multimedia</h3>
+            </div>
+            <div class="modal-body">
+                {% if multimedia.missing_image_refs > 0 or multimedia.missing_audio_refs > 0 %}
+                    <p>
+                        Your multimedia zip is missing {{ multimedia.missing_image_refs }} image reference{{ multimedia.missing_image_refs|pluralize }} and
+                        {{ multimedia.missing_audio_refs }} audio reference{{ multimedia.missing_audio_refs|pluralize }}. Your app will likely crash unless this
+                        is resolved.
+                    </p>
+                {% endif %}
+                {% if multimedia.errors %}
+                    <p>
+                        Your application contains errors, therefore, your multimedia could not properly be assembled. Please fix your errors and any missing
+                        multimedia references that are found afterward before using this file.
+                    </p>
+                {% endif %}
+                <a class="btn btn-warning" href="{% url download_multimedia_zip domain app.id %}">Download Anyway</a>
+            </div>
+            <div class="modal-footer">
+                <a class="btn" href="#" data-dismiss="modal">Close</a>
+            </div>
+        </div>
+    {% endif %}
 {% endblock %}

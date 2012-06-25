@@ -3,12 +3,15 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from dimagi.utils.web import render_to_response
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction, const
+from casexml.apps.phone.xml import get_case_xml
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.importer import base
 from corehq.apps.importer.util import ExcelFile
 from tempfile import mkstemp
 from django.views.decorators.http import require_POST
-from datetime import datetime
+from datetime import datetime, date
+from xlrd import xldate_as_tuple
 
 @login_and_domain_required
 def excel_config(request, domain):
@@ -160,12 +163,13 @@ def excel_commit(request, domain):
     excel_fields = request.POST.getlist('excel_field[]')
     case_fields = request.POST.getlist('case_field[]')
     custom_fields = request.POST.getlist('custom_field[]')
+    date_yesno = request.POST.getlist('date_yesno[]')
 
     # turn all the select boxes into a useful struct
     field_map = {}
     for i, field in enumerate(excel_fields):
         if field and (case_fields[i] or custom_fields[i]):
-            field_map[field] = {'case': case_fields[i], 'custom': custom_fields[i]}
+            field_map[field] = {'case': case_fields[i], 'custom': custom_fields[i], 'date': int(date_yesno[i])}
         
     spreadsheet = ExcelFile(filename, named_columns)
     columns = spreadsheet.get_header_columns()        
@@ -196,18 +200,33 @@ def excel_commit(request, domain):
         
         row = spreadsheet.get_row(i)
         found = False
+        
+        search_id = row[search_column_index]
+
+        # see what has come out of the spreadsheet
+        try:
+            float(search_id)
+            # no error, so something that looks like a number came out of the cell
+            # in which case we should remove any decimal places
+            search_id = int(search_id)
+        except ValueError:
+            # error, so probably a string
+            pass
+        
+        # couchdb wants a string 
+        search_id = str(search_id)    
                 
         if search_field == 'case_id':
             try:
-                case = CommCareCase.get(row[search_column_index])
+                case = CommCareCase.get(search_id)
                 if case.domain == domain:
                     found = True
             except:
                 pass
         elif search_field == 'external_id':
             search_result = CommCareCase.view('hqcase/by_domain_external_id', 
-                                              startkey=[domain, row[search_column_index]], 
-                                              endkey=[domain, row[search_column_index]]
+                                              startkey=[domain, search_id], 
+                                              endkey=[domain, search_id]
                                               ).one()
             try:
                 case = CommCareCase.get(search_result['id'])
@@ -245,32 +264,27 @@ def excel_commit(request, domain):
                     # existing case field was chosen
                     update_field_name = field_map[key]['case']
                 
+                if field_map[key]['date'] == 1:
+                    update_value = date(*xldate_as_tuple(update_value, 0)[:3])
+                                    
                 fields_to_update[update_field_name] = update_value
     
         if case.type == case_type:      
-            if cases.has_key(row[search_column_index]):
-                cases[row[search_column_index]]['fields'].update(fields_to_update)
+            if cases.has_key(search_id):
+                cases[search_id]['fields'].update(fields_to_update)
             else:
-                cases[row[search_column_index]] = {'obj': case, 'fields': fields_to_update}
+                cases[search_id] = {'obj': case, 'fields': fields_to_update}
             
-    # run db updates
+    # run updates
     for id, case in cases.iteritems():
-        update_action = CommCareCaseAction()
-        update_action.action_type = const.CASE_ACTION_UPDATE
-        update_action.date = datetime.utcnow() # date field in spreadsheet if exists?
-        update_action.server_date = datetime.utcnow()
-                    
         for name, value in case['fields'].iteritems():
             case['obj'].set_case_property(name, value)
-            
-            if name in known_properties:
-                update_action.updated_known_properties[name] = value
-            else:
-                update_action.updated_unknown_properties[name] = value
                                                
-        case['obj'].actions.append(update_action)
         case['obj'].modified_on = datetime.utcnow()
-        case['obj'].save()        
+                
+        # spoof case update xform submission
+        case_block = get_case_xml(case['obj'], (const.CASE_ACTION_UPDATE,), version='2.0')
+        submit_case_blocks(case_block, domain)
             
     # unset filename session var
     try:

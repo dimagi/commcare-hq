@@ -6,7 +6,6 @@ from __future__ import absolute_import
 from datetime import datetime
 import logging
 import re
-from corehq.apps.domain.models import Domain
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
@@ -125,9 +124,9 @@ class Permissions(DocumentSchema):
         if self.has(permission, data) == value:
             return
         if data:
-            setattr(self, permission, value)
-        else:
             getattr(self, permission)(data, value)
+        else:
+            setattr(self, permission, value)
 
     def _getattr(self, name):
         a = getattr(self, name)
@@ -216,6 +215,13 @@ class UserRole(Document):
     def role_choices(cls, domain):
         return [(role.get_qualified_id(), role.name or '(No Name)') for role in [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
 
+PERMISSIONS_PRESETS = {
+    'edit-apps': {'name': 'App Editor', 'permissions': Permissions(edit_apps=True, view_reports=True)},
+    'field-implementer': {'name': 'Field Implementer', 'permissions': Permissions(edit_commcare_users=True, view_reports=True)},
+    'read-only': {'name': 'Read Only', 'permissions': Permissions(view_reports=True)},
+    'no-permissions': {'name': 'Read Only', 'permissions': Permissions(view_reports=True)},
+}
+
 class AdminUserRole(UserRole):
     def __init__(self, domain):
         super(AdminUserRole, self).__init__(domain=domain, name='Admin', permissions=Permissions.max())
@@ -239,6 +245,7 @@ class DomainMembership(DocumentSchema):
     last_login = DateTimeProperty()
     date_joined = DateTimeProperty()
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
+    override_global_tz = BooleanProperty(default=False)
 
     role_id = StringProperty()
 
@@ -311,7 +318,8 @@ class CustomDomainMembership(DomainMembership):
             return self.custom_role
 
     def set_permission(self, permission, value, data=None):
-        self.custom_role.permission.set(permission, value, data)
+        self.custom_role.domain = self.domain
+        self.custom_role.permissions.set(permission, value, data)
 
 
 class LowercaseStringProperty(StringProperty):
@@ -382,7 +390,8 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 #        ('phone_registered', 'Registered from phone'),
 #        ('site_edited',     'Manually added or edited from the HQ website.'),
     status = StringProperty()
-
+    language = StringProperty()
+    
     _user = None
     _user_checked = False
 
@@ -421,7 +430,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         app_label = 'users'
 
     def __unicode__(self):
-        return "couch user %s" % self.get_id
+        return "%s %s" % (self.__class__.__name__, self.get_id)
 
     def get_email(self):
         return self.email
@@ -449,7 +458,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         super(CouchUser, self).delete() # Call the "real" delete() method.
 
     def get_django_user(self):
-        return User.objects.get(username=self.username)
+        return User.objects.get(username__iexact=self.username)
 
     def add_phone_number(self, phone_number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """
@@ -609,12 +618,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @classmethod
     def from_django_user(cls, django_user):
-        couch_user = cls.get_by_username(django_user.username)
-        if not couch_user and django_user.is_superuser:
-            couch_user = FakeUser()
-            couch_user.sync_from_django_user(django_user)
-
-        return couch_user
+        return cls.get_by_username(django_user.username)
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
@@ -740,7 +744,9 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
     
     @property
     def username_in_report(self):
-        return self.raw_username
+        if (self.first_name == '' and self.last_name == ''):
+            return self.raw_username
+        return self.full_name
 
     @classmethod
     def create_or_update_from_xform(cls, xform):
@@ -1014,7 +1020,10 @@ class WebUser(CouchUser):
 
     def is_web_user(self):
         return True
-    
+
+    def get_email(self):
+        return self.email or self.username
+
     def get_domain_membership(self, domain):
         domain_membership = None
         try:
@@ -1133,8 +1142,11 @@ class WebUser(CouchUser):
             dm.is_admin = True
         elif role_qualified_id.startswith('user-role:'):
             dm.role_id = role_qualified_id[len('user-role:'):]
+        elif role_qualified_id in PERMISSIONS_PRESETS:
+            preset = PERMISSIONS_PRESETS[role_qualified_id]
+            dm.role_id = UserRole.get_or_create_with_permissions(domain, preset['permissions'], preset['name']).get_id
         else:
-            raise Exception
+            raise Exception("role_qualified_id is %r" % role_qualified_id)
 
     def role_label(self, domain=None):
         if not domain:
@@ -1148,6 +1160,8 @@ class WebUser(CouchUser):
             return "Unknown User"
         except DomainMembershipError:
             return "Unauthorized User"
+        except Exception:
+            return None
 
 class FakeUser(WebUser):
     """
@@ -1161,7 +1175,9 @@ class PublicUser(FakeUser):
     """
     Public users have read-only access to certain domains
     """
-    
+
+    domain_memberships = None
+
     def __init__(self, domain, **kwargs):
         super(PublicUser, self).__init__(**kwargs)
         self.domain = domain
@@ -1169,7 +1185,7 @@ class PublicUser(FakeUser):
         dm = CustomDomainMembership(domain=domain, is_admin=False)
         dm.set_permission('view_reports', True)
         self.domain_memberships = [dm]
-    
+
     def get_role(self, domain=None):
         assert(domain == self.domain)
         return super(PublicUser, self).get_role(domain)
@@ -1227,3 +1243,4 @@ class RemoveWebUserRecord(DeleteRecord):
         user.save()
 
 from .signals import *
+from corehq.apps.domain.models import Domain

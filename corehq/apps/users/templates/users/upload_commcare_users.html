@@ -1,16 +1,11 @@
 {% extends "users/users_base.html" %}
 {% load hq_shared_tags %}
 {% block js %} {{ block.super }}
-    <script src="{% static 'hqwebapp/javascripts/knockout-2.0.0.js' %}"></script>
 {% endblock %}
 {% block js-inline %} {{ block.super }}
     <script>
-            ko.applyBindings(new (function () {
-                this.file = ko.observable(null);
-                this.getFile = function () {
-                    console.log(this.file());
-                };
-            })());
+            ko.applyBindings({file: ko.observable(null)}, 
+                             $("#bulk-user-upload-form").get(0));
     </script>
 {% endblock %}
 
@@ -44,8 +39,11 @@
             </li>
         </ol>
     </p>
-    <form class="form form-horizontal" action="" method="post" enctype="multipart/form-data">
+    <form id="bulk-user-upload-form" class="form form-horizontal" action="" method="post" enctype="multipart/form-data">
         <input type="hidden" name="redirect" value="{% url commcare_users domain %}"/>
+        {% if show_secret_settings %}
+        <input type="hidden" name="async" value="true"/>
+        {% endif %}
         <fieldset>
             <legend>Choose a file for upload</legend>
             <div class="control-group">
@@ -55,6 +53,6 @@
                 </div>
             </div>
         </fieldset>
-        <div class="form-actions"><button type="submit" class="btn btn-primary" data-bind="visible: file() !== null">Create {% commcare_user %}s</button></div>
+        <div class="form-actions"><button type="submit" class="btn btn-primary" data-bind="visible: file()">Create {% commcare_user %}s</button></div>
     </form>
 {% endblock %}

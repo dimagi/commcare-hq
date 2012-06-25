@@ -164,23 +164,61 @@ ko.bindingHandlers.saveButton = {
     }
 };
 
+ko.bindingHandlers.saveButton2 = {
+    init: function (element, valueAccessor, allBindingsAccessor) {
+        var saveOptions = allBindingsAccessor().saveOptions,
+            saveButton = SaveButton.init({
+                save: function () {
+                    saveButton.ajax(saveOptions());
+                }
+            });
+        saveButton.ui.appendTo(element);
+        element.saveButton = saveButton;
+    },
+    update: function (element, valueAccessor) {
+        var state = ko.utils.unwrapObservable(valueAccessor());
+        element.saveButton.setStateWhenReady(state);
+    }
+};
+
 ko.bindingHandlers.modal = {
     init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         $(element).addClass('modal fade').modal({
             show: false,
             backdrop: false
         });
-        ko.bindingHandlers['if'].init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+//        ko.bindingHandlers['if'].init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
     },
     update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-//        ko.bindingHandlers.visible.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+        ko.bindingHandlers.visible.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         var value = ko.utils.unwrapObservable(valueAccessor());
-        ko.bindingHandlers['if'].update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+//        ko.bindingHandlers['if'].update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         if (value) {
             $(element).modal('show');
         } else {
             $(element).modal('hide');
         }
+    }
+};
+
+ko.bindingHandlers.openModal = {
+    init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+        var templateID = valueAccessor(),
+            modal = $('<div></div>').addClass('modal fade').appendTo('body'),
+            newValueAccessor = function () {
+                var clickAction = function () {
+                    ko.bindingHandlers.template.init(modal.get(0), function () {
+                        return templateID;
+                    }, allBindingsAccessor, viewModel, bindingContext);
+                    ko.bindingHandlers.template.update(modal.get(0), function () {
+                        return templateID;
+                    }, allBindingsAccessor, viewModel, bindingContext);
+                    modal.modal('show');
+                };
+                return clickAction;
+            };
+        console.log(modal);
+        ko.bindingHandlers.click.init(element, newValueAccessor, allBindingsAccessor, viewModel, bindingContext);
     }
 };
 

@@ -1,18 +1,37 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
+{% load i18n %}
 
 {% block js %}{{ block.super }}
     {% if app.get_doc_type == "Application" %}
         <script src="{% static 'app_manager/js/commcareProperties.js' %}"></script>
         <script src="{% static 'translations/js/translations.js' %}"></script>
     {% endif %}
-    <script src="{% static 'hqwebapp/javascripts/knockout-2.0.0.debug.js' %}"></script>
     <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
     <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
+    <script type="text/javascript">
+        $(function(){
+            var help_text = {
+                "Success Message": "You can optionally specify a template for the message that your CHWs receive upon successful submission of a form."
+                + "  In the template, you have access to the following variables gathered real-time from the server:" +
+                        "  $first_name, $name, $week, $today. Example: " +
+                        " Thanks $first_name! You have submitted $today forms today and $week forms since Monday."
+             };
+            $('.help_popover').popover({
+                placement: $(this).data('placement') || 'left',
+                title: function () {
+                    return $(this).attr('data-help-key');
+                },
+                content: function () {
+                    return help_text[$(this).attr('data-help-key')];
+                }
+            });
+        });
+    </script>
     {% if app %}
     <script>
         $(function () {
@@ -456,6 +475,21 @@
                         {% endif %}
                     </td>
                 </tr>
+                {% if request.couch_user.is_previewer %}
+                <tr>
+                     <th><label for="cloudcare-enabled-select">CloudCare Enabled?</label></th>
+                     <td>
+                         {% if edit %}
+                             <select id="cloudcare-enabled-select" name="cloudcare_enabled" data-value="{{ app.cloudcare_enabled|JSON }}">
+                                 <option value="false">No</option>
+                                 <option value="true">Yes</option>
+                             </select>
+                         {% else %}
+                             {% if app.cloudcare_enabled %}Yes{% else %}No{% endif %}
+                         {% endif %}
+                     </td>
+                 </tr>
+                {% endif %}
                 {% endif %}
                 {% if user.is_superuser %}
                 <tbody class="superuser-only">
@@ -484,19 +518,7 @@
                         </td>
                     </tr>
                     {% endif %}
-                    <tr>
-                        <th><label for="cloudcare-enabled-select">CloudCare Enabled?</label></th>
-                        <td>
-                            {% if edit %}
-                                <select id="cloudcare-enabled-select" name="cloudcare_enabled" data-value="{{ app.cloudcare_enabled|JSON }}">
-                                    <option value="false">No</option>
-                                    <option value="true">Yes</option>
-                                </select>
-                            {% else %}
-                                {% if app.cloudcare_enabled %}Yes{% else %}No{% endif %}
-                            {% endif %}
-                        </td>
-                    </tr>
+                    
                 </tbody>
                 {% endif %}
             {% endif %}
@@ -542,8 +564,7 @@
                 <tr>
                     <th>
                         Success Message
-                        <span class="help-link" data-help-key="app_manager/success_message"></span>
-                        <div class="help-text" data-help-key="app_manager/success_message"></div>
+                        <span class="help_popover" data-help-key="Success Message"><span> <i class="icon icon-question-sign"></i></span></span>
                     </th>
                     <td>
                         {% if edit %}
@@ -609,7 +630,7 @@
     <div>
         <form method="get" action='{% url import_app domain %}' style="font-size: .8em; text-align: right;">
             <input type="hidden" name="app" value="{{ app.id }}"/>
-            Copy this app to domain: <input type="text" name="domain" />
+            Copy this app to project: <input type="text" name="domain" />
             <input type="submit" value="Copy" />
         </form>
     </div>
