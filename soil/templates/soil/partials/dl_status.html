@@ -1,12 +1,14 @@
     {% if is_ready %}
         <div id="ready_{{ download_id }}">
-        <h3>File is ready!</h3>
-        <strong><a href="{% url retrieve_download download_id %}?get_file">Download Now</a></strong>
+        <p class="alert alert-success">Your export is ready.</p>
+        <a class="btn btn-primary" href="{% url retrieve_download download_id %}?get_file"><i class="icon icon-white icon-download-alt"></i> Download File Now</a>
+        <script type="text/javascript">
+            $("#export-download-status .loading-indicator").addClass('hide');
+        </script>
         </div>
     {% else %}
-        <img src="{{ STATIC_URL }}soil/ajax-loader.gif"> Processing...
         {% if not is_alive %}
-            <p class="error">Task processor not detected. There may be something wrong with your system. 
+            <p class="alert alert-error">Task processor not detected. There may be something wrong with your system.
             If the download takes longer than normal to complete please contact support for help.
             </p>
         {% endif %}
