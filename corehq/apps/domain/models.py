@@ -77,6 +77,7 @@ class Domain(Document):
     snapshot_time = DateTimeProperty()
     published = BooleanProperty(default=False)
     license = StringProperty(choices=LICENSES, default='public')
+    title = StringProperty()
 
     migrations = SchemaProperty(DomainMigrations)
 
