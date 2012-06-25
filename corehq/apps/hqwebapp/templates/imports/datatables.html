@@ -1,3 +1,5 @@
-    <script src="{{STATIC_URL}}hqwebapp/datatables-1.8.2/js/jquery.dataTables.min.js"></script>
-    <script src="{{STATIC_URL}}hqwebapp/datatables-1.8.2/js/plugins.js"></script>
-    <script type="text/javascript" src="{{STATIC_URL}}reports/javascripts/datatable_config.js"></script>
+{% load hq_shared_tags %}
+<script type="text/javascript" src="{% static 'hqwebapp/datatables-1.9/js/jquery.dataTables.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'hqwebapp/datatables-1.9/extras/FixedColumns/media/js/FixedColumns.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'hqwebapp/datatables-1.9/js/jquery.dataTables.plugin.bootstrapPagination.js' %}"></script>
+<script type="text/javascript" src="{% static 'hqwebapp/datatables-1.9/js/jquery.dataTables.plugins.js' %}"></script>
