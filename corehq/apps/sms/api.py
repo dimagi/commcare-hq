@@ -82,8 +82,48 @@ def send_sms_to_verified_number(verified_number, text):
         return True
     except Exception as e:
         logging.exception("Exception while sending SMS to VerifiedNumber id " + verified_number._id)
-        logging.exception(e)
         return False
+
+def send_sms_with_backend(domain, phone_number, text, backend_id):
+    msg = SMSLog(domain = domain,
+                 phone_number = phone_number,
+                 direction = OUTGOING,
+                 date = datetime.utcnow(),
+                 text = text)
+    if backend_id == "MOBILE_BACKEND_MACH":
+        try:
+            mach_api.send(msg)
+            msg.save()
+            return True
+        except Exception:
+            logging.exception("Exception while sending SMS to %s with backend %s" % (phone_number, backend_id))
+            return False
+    elif backend_id == "MOBILE_BACKEND_UNICEL":
+        try:
+            unicel_api.send(msg)
+            msg.save()
+            return True
+        except Exception:
+            logging.exception("Exception while sending SMS to %s with backend %s" % (phone_number, backend_id))
+            return False
+    else:
+        try:
+            backend = MobileBackend.get(backend_id)
+        except Exception:
+            backend = None
+        if backend is None:
+            return False
+        
+        try:
+            module = __import__(backend.outbound_module, fromlist=["send"])
+            kwargs = backend.outbound_params
+            module.send(msg, **kwargs)
+            msg.save()
+            return True
+        except Exception as e:
+            logging.exception("Exception while sending SMS to %s with backend %s" % (phone_number, backend_id))
+            return False
+
 
 def start_session_from_keyword(survey_keyword, verified_number):
     try:
