@@ -173,6 +173,7 @@ HQ_APPS = (
     'corehq.apps.builds',
     'corehq.apps.orgs',
     'corehq.apps.api',
+    'corehq.apps.importer',
     'corehq.couchapps',
     'sofabed.forms',
     'soil',
@@ -490,6 +491,7 @@ STANDARD_REPORT_MAP = {
     "Raw Data" : [
         'corehq.apps.reports.standard.ExcelExportReport',
         'corehq.apps.reports.standard.CaseExportReport',
+        'corehq.apps.importer.base.ExcelImporter',
     ],
     "Manage Deployments" : [
         'corehq.apps.reports.standard.ApplicationStatusReport',
