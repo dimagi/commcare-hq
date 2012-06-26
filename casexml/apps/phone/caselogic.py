@@ -1,6 +1,8 @@
 """
 Logic about chws phones and cases go here.
 """
+import logging
+from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import const
 
@@ -88,9 +90,13 @@ class CaseSyncOperation(object):
         # TODO: clean this up. Basically everything is a set of cases,
         # but in order to do proper comparisons we use IDs so all of these
         # operations look much more complicated than they should be.
-        
-        self.actual_owned_cases = set(CommCareCase.view("case/by_owner", keys=keys,
-                                                        include_docs=True).all())
+
+        try:
+            self.actual_owned_cases = set(CommCareCase.view("case/by_owner_liteawefasdv", keys=keys).all())
+        except ResourceNotFound, ex:
+            self.actual_owned_cases = set(CommCareCase.view("case/by_owner", include_docs=True, keys=keys).all())
+            logging.error("Error, the case views are missing the case/by_owner_lite view, reverting to slower view query")
+
         self._all_relevant_cases = get_footprint(self.actual_owned_cases)
         
         def _to_case_id_set(cases):
