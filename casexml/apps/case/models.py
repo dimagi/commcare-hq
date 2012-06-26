@@ -15,6 +15,7 @@ from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex
 from copy import copy
 import itertools
 from dimagi.utils.couch.database import get_db
+from couchdbkit.exceptions import ResourceNotFound
 
 """
 Couch models for commcare cases.  
@@ -190,6 +191,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn):
         return itertools.chain(self.indices, self.reverse_indices)
         
     def get_json(self):
+        
         return {
             # referrals and actions excluded here
             "domain": self.domain,
@@ -223,6 +225,13 @@ class CommCareCase(CaseBase, IndexHoldingMixIn):
                     "case_type": index.referenced_type,
                     "case_id": index.referenced_id
                 }) for index in self.indices
+            ]),
+            "reverse_indices": dict([
+                # all indexes are stored in the following form
+                (index.identifier, {
+                    "case_type": index.referenced_type,
+                    "case_id": index.referenced_id
+                }) for index in self.reverse_indices
             ]),
         }
     
@@ -261,6 +270,20 @@ class CommCareCase(CaseBase, IndexHoldingMixIn):
         # in theory since case ids are unique and modification dates get updated
         # upon any change, this is all we need
         return "%s::%s" % (self.case_id, self.modified_on)
+    
+    def get_forms(self):
+        """
+        Gets the form docs associated with a case. If it can't find a form
+        it won't be included.
+        """
+        def _get(id):
+            try:
+                return XFormInstance.get(id)
+            except ResourceNotFound:
+                return None
+        
+        forms = [_get(id) for id in self.xform_ids]
+        return [form for form in forms if form] 
     
     @property
     def attachments(self):
