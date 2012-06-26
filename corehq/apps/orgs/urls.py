@@ -5,5 +5,7 @@ urlpatterns = patterns('corehq.apps.orgs.views',
     url(r'^(?P<org>[\w\.-]+)/$', 'orgs_landing', name='orgs_landing'),
     url(r'^(?P<org>[\w\.-]+)/add_project/$', 'orgs_add_project', name='orgs_add_project'),
     url(r'^(?P<org>[\w\.-]+)/new_project/$', 'orgs_new_project', name='orgs_new_project'),
+    url(r'^(?P<org>[\w\.-]+)/add_member/$', 'orgs_add_member', name='orgs_add_member'),
+    url(r'^(?P<org>[\w\.-]+)/add_team/$', 'orgs_add_team', name='orgs_add_team'),
     url(r'^(?P<org>[\w\.-]+)/logo/$', 'orgs_logo', name='orgs_logo')
 )

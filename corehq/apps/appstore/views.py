@@ -46,6 +46,7 @@ def app_info(request, domain, template="appstore/app_info.html", versioned=None)
                 date_published = datetime.now()
                 review = Review(title=title, rating=rating, nickname=nickname, user=user, info=info, date_published = date_published, domain=domain, original_doc=dom.original_doc)
                 review.save()
+                form = AddReviewForm()
         else:
             form = AddReviewForm()
     else:

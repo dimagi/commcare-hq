@@ -12,6 +12,12 @@
         if (!{{ add_form_empty|JSON }}) {
             $('#add_project_modal').modal({show:true});
         }
+        if (!{{ add_member_form_empty|JSON }}) {
+            $('#add_member_modal').modal({show:true});
+        }
+        if (!{{ add_team_form_empty|JSON }}) {
+            $('#add_team_modal').modal({show:true});
+        }
         $("#openTOS").click(function(e) {
             $("#tosBox").slideDown();
             return false;
@@ -29,6 +35,10 @@
         <li class="divider"></li>
         <li><a href="#create_project_modal" data-toggle="modal"><i class="icon-pencil"></i> Create New Project</a></li>
         <li><a href="#add_project_modal" data-toggle="modal"><i class="icon-plus"></i> Add Existing Project</a></li>
+        <li><a href="#add_member_modal" data-toggle="modal"><i class="icon-plus"></i> Add New Member</a></li>
+        <li><a href="#add_team_modal" data-toggle="modal"><i class="icon-plus"></i> Add New Team</a></li>
+
+
     </ul>
 {% endblock %}
 
@@ -46,18 +56,57 @@
 
 {% block main_column %}
     <section>
+        <div class="row-fluid">
+        <div class="span3">
+            {% if org.logo_filename %}
+            <p><img src="{% url orgs_logo org.name %}" alt="Logo"/></p>
+            {% endif %}
 
-        {% if org.logo_filename %}
-        <p><img src="{% url orgs_logo org.name %}" alt="Logo"/></p>
-        {% endif %}
-
-        <p>Email: <a href="mailto:{{ org.email }}">{{ org.email }}</a></p>
-        <!-- possibly bad to add http to front of url.  How else to make link absolute? -->
-        <p>URL: <a href="http://{{ org.url }}" target="_blank">{{ org.url }}</a></p>
-        <p>Location: {{ org.location }}</p>
+            <p>Email: <a href="mailto:{{ org.email }}">{{ org.email }}</a></p>
+            <!-- possibly bad to add http to front of url.  How else to make link absolute? -->
+            <p>URL: <a href="http://{{ org.url }}" target="_blank">{{ org.url }}</a></p>
+            <p>Location: {{ org.location }}</p>
+        </div>
+        <div class="span6 offset3">
+            <h2>{{ org.members|length }} Members</h2>
+            <h2>{{ domains|length }} Projects</h2>
+            <h2>{{ teams|length }} Teams</h2>
+        </div>
+        </div>
     </section>
+    <section>
+        <div class="row-fluid">
+            <hr/></div>
+        <div class="row-fluid">
+            <div class="span6">
+                <h2>Projects<small>({{ domains|length }})</small></h2>
+                <hr/>
+                {% for domain in domains %}
+                <h4>{{ domain.name }}</h4>
+                <hr/>
+                {% endfor %}
+            </div>
+            <div class="span6">
+                <h2>Organization Members<small>({{ org.members|length }})</small></h2>
+                <hr/>
+                {% for member in org.members %}
+                <h4>{{ member }}</h4>
+                <hr/>
+                {% endfor %}
+            </div>
 
-
+        </div>
+        <div class="row-fluid">
+            <div class="span6">
+                <h2>Teams<small>({{ teams|length }})</small></h2>
+                <hr/>
+                {% for team in teams %}
+                <h4>{{ team.name }}</h4>
+                <hr/>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
 
 {% endblock %}
 
@@ -117,6 +166,7 @@
                 </div>
             </form>
         </div>
+
         <div id="add_project_modal" class="modal hide fade">
             <div class="modal-header">
                 <a class="close" data-dismiss="modal">&times;</a>
@@ -135,5 +185,44 @@
                 </div>
             </form>
         </div>
+
+        <div id="add_member_modal" class="modal hide fade">
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal">&times;</a>
+                <h3>Add a new member to {{ org.title }}</h3>
+            </div>
+            <form class="form-horizontal" method="post" action="{% url orgs_add_member org.name %}">
+                <div class="modal-body">
+                    <fieldset>
+                        {% bootstrap_form_errors add_member_form %}
+                        {% bootstrap_fieldset add_member_form "Add a new member to this organization" %}
+                    </fieldset>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Add Member</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="add_team_modal" class="modal hide fade">
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal">&times;</a>
+                <h3>Add a new team to {{ org.title }}</h3>
+            </div>
+            <form class="form-horizontal" method="post" action="{% url orgs_add_team org.name %}">
+                <div class="modal-body">
+                    <fieldset>
+                        {% bootstrap_form_errors add_team_form %}
+                        {% bootstrap_fieldset add_team_form "Add a new team to this organization" %}
+                    </fieldset>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Add Team</button>
+                </div>
+            </form>
+        </div>
+
     {% endif %}
 {% endblock %}

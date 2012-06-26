@@ -2,6 +2,7 @@ from couchdbkit.ext.django.schema import *
 import util
 from django import forms
 from django.db import models
+from corehq.apps.users.models import AuthorizableMixin
 
 
 class Organization(Document):
@@ -13,6 +14,9 @@ class Organization(Document):
     url = StringProperty()
     location = StringProperty()
     logo_filename = StringProperty()
+
+
+    members = StringListProperty()
 
     @classmethod
     def get_by_name(cls, name):
@@ -37,3 +41,40 @@ class Organization(Document):
 
     def __str__(self):
         return self.title
+
+    def add_member(self, guid):
+        for member in self.members:
+            if member.id == guid:
+                return False #already a member
+        self.members.append(guid)
+        self.save()
+        return self.members
+
+
+class Team(Document, AuthorizableMixin):
+    name = StringProperty()
+    organization = StringProperty()
+    members = StringListProperty()
+
+    def add_member(self, guid):
+    #consistency check to make sure member is not already on the team
+        if guid in self.members:
+            return False
+        self.members.append(guid)
+        self.save()
+        return self.members
+
+    @classmethod
+    def get_by_org_and_name(cls, org_name, name):
+        return cls.view("orgs/team_by_org_and_name",
+            key=[org_name,name],
+            reduce=False,
+            include_docs=True).one()
+
+    @classmethod
+    def get_by_org(cls, org_name):
+        return cls.view("orgs/team_by_org_and_name",
+            startkey = [org_name],
+            endkey=[org_name,{}],
+            reduce=False,
+            include_docs=True).all()

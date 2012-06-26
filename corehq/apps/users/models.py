@@ -322,6 +322,149 @@ class CustomDomainMembership(DomainMembership):
         self.custom_role.permissions.set(permission, value, data)
 
 
+
+class AuthorizableMixin(DocumentSchema):
+    domains = StringListProperty()
+    domain_memberships = SchemaListProperty(DomainMembership)
+
+    def get_domain_membership(self, domain):
+        domain_membership = None
+        try:
+            for d in self.domain_memberships:
+                if d.domain == domain:
+                    domain_membership = d
+                    if domain not in self.domains:
+                        raise self.Inconsistent("Domain '%s' is in domain_memberships but not domains" % domain)
+            if not domain_membership and domain in self.domains:
+                raise self.Inconsistent("Domain '%s' is in domain but not in domain_memberships" % domain)
+        except self.Inconsistent as e:
+            logging.warning(e)
+            self.domains = [d.domain for d in self.domain_memberships]
+        return domain_membership
+
+    def add_domain_membership(self, domain, **kwargs):
+        for d in self.domain_memberships:
+            if d.domain == domain:
+                if domain not in self.domains:
+                    raise self.Inconsistent("Domain '%s' is in domain_memberships but not domains" % domain)
+                return
+
+        domain_obj = Domain.get_by_name(domain)
+        if not domain_obj:
+            domain_obj = Domain(is_active=True, name=domain, date_created=datetime.utcnow())
+            domain_obj.save()
+
+        if kwargs.get('timezone'):
+            domain_membership = DomainMembership(domain=domain, **kwargs)
+        else:
+            domain_membership = DomainMembership(domain=domain,
+                                            timezone=domain_obj.default_timezone,
+                                            **kwargs)
+        self.domain_memberships.append(domain_membership)
+        self.domains.append(domain)
+
+    def delete_domain_membership(self, domain, create_record=False):
+        for i, dm in enumerate(self.domain_memberships):
+            if dm.domain == domain:
+                if create_record:
+                    record = RemoveWebUserRecord(
+                        domain=domain,
+                        user_id=self.user_id,
+                        domain_membership=dm,
+                    )
+                del self.domain_memberships[i]
+                break
+        for i, domain_name in enumerate(self.domains):
+            if domain_name == domain:
+                del self.domains[i]
+                break
+        if create_record:
+            record.save()
+            return record
+
+    def is_domain_admin(self, domain=None):
+        if not domain:
+            # hack for template
+            if hasattr(self, 'current_domain'):
+                # this is a hack needed because we can't pass parameters from views
+                domain = self.current_domain
+            else:
+                return False # no domain, no admin
+        if self.is_superuser:
+            return True
+        dm = self.get_domain_membership(domain)
+        if dm:
+            return dm.is_admin
+        else:
+            return False
+
+    def get_domains(self):
+        domains = [dm.domain for dm in self.domain_memberships]
+        if set(domains) == set(self.domains):
+            return domains
+        else:
+            raise self.Inconsistent("domains and domain_memberships out of sync")
+
+    def has_permission(self, domain, permission, data=None):
+        # is_admin is the same as having all the permissions set
+        if self.is_superuser:
+            return True
+        elif self.is_domain_admin(domain):
+            return True
+
+        dm = self.get_domain_membership(domain)
+        if dm:
+            return dm.has_permission(permission, data)
+        else:
+            return False
+
+    def get_role(self, domain=None):
+        """
+        Get the role object for this user
+
+        """
+        if domain is None:
+            # default to current_domain for django templates
+            domain = self.current_domain
+
+        if self.is_superuser:
+            return AdminUserRole(domain=domain)
+        if self.is_member_of(domain):
+            return self.get_domain_membership(domain).role
+        else:
+            raise DomainMembershipError()
+
+    def set_role(self, domain, role_qualified_id):
+        """
+        role_qualified_id is either 'admin' 'user-role:[id]'
+        """
+        dm = self.get_domain_membership(domain)
+        dm.is_admin = False
+        if role_qualified_id == "admin":
+            dm.is_admin = True
+        elif role_qualified_id.startswith('user-role:'):
+            dm.role_id = role_qualified_id[len('user-role:'):]
+        elif role_qualified_id in PERMISSIONS_PRESETS:
+            preset = PERMISSIONS_PRESETS[role_qualified_id]
+            dm.role_id = UserRole.get_or_create_with_permissions(domain, preset['permissions'], preset['name']).get_id
+        else:
+            raise Exception("role_qualified_id is %r" % role_qualified_id)
+
+    def role_label(self, domain=None):
+        if not domain:
+            try:
+                domain = self.current_domain
+            except (AttributeError, KeyError):
+                return None
+        try:
+            return self.get_role(domain).name
+        except TypeError:
+            return "Unknown User"
+        except DomainMembershipError:
+            return "Unauthorized User"
+        except Exception:
+            return None
+
 class LowercaseStringProperty(StringProperty):
     """
     Make sure that the string is always lowercase'd
@@ -995,10 +1138,10 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
             lang = None
         return lang
     
-class WebUser(CouchUser):
-    domains = StringListProperty()
-    domain_memberships = SchemaListProperty(DomainMembership)
+class WebUser(CouchUser, AuthorizableMixin):
     betahack = BooleanProperty(default=False)
+
+    #do sync and create still work?
 
     def sync_from_old_couch_user(self, old_couch_user):
         super(WebUser, self).sync_from_old_couch_user(old_couch_user)
@@ -1024,144 +1167,6 @@ class WebUser(CouchUser):
     def get_email(self):
         return self.email or self.username
 
-    def get_domain_membership(self, domain):
-        domain_membership = None
-        try:
-            for d in self.domain_memberships:
-                if d.domain == domain:
-                    domain_membership = d
-                    if domain not in self.domains:
-                        raise self.Inconsistent("Domain '%s' is in domain_memberships but not domains" % domain)
-            if not domain_membership and domain in self.domains:
-                raise self.Inconsistent("Domain '%s' is in domain but not in domain_memberships" % domain)
-        except self.Inconsistent as e:
-            logging.warning(e)
-            self.domains = [d.domain for d in self.domain_memberships]
-        return domain_membership
-
-    def add_domain_membership(self, domain, **kwargs):
-        for d in self.domain_memberships:
-            if d.domain == domain:
-                if domain not in self.domains:
-                    raise self.Inconsistent("Domain '%s' is in domain_memberships but not domains" % domain)
-                return
-
-        domain_obj = Domain.get_by_name(domain)
-        if not domain_obj:
-            domain_obj = Domain(is_active=True, name=domain, date_created=datetime.utcnow())
-            domain_obj.save()
-
-        if kwargs.get('timezone'):
-            domain_membership = DomainMembership(domain=domain, **kwargs)
-        else:
-            domain_membership = DomainMembership(domain=domain,
-                                            timezone=domain_obj.default_timezone,
-                                            **kwargs)
-        self.domain_memberships.append(domain_membership)
-        self.domains.append(domain)
-
-    def delete_domain_membership(self, domain, create_record=False):
-        for i, dm in enumerate(self.domain_memberships):
-            if dm.domain == domain:
-                if create_record:
-                    record = RemoveWebUserRecord(
-                        domain=domain,
-                        user_id=self.user_id,
-                        domain_membership=dm,
-                    )
-                del self.domain_memberships[i]
-                break
-        for i, domain_name in enumerate(self.domains):
-            if domain_name == domain:
-                del self.domains[i]
-                break
-        if create_record:
-            record.save()
-            return record
-    
-    def is_domain_admin(self, domain=None):
-        if not domain:
-            # hack for template
-            if hasattr(self, 'current_domain'):
-                # this is a hack needed because we can't pass parameters from views
-                domain = self.current_domain
-            else:
-                return False # no domain, no admin
-        if self.is_superuser:
-            return True
-        dm = self.get_domain_membership(domain)
-        if dm:
-            return dm.is_admin
-        else:
-            return False
-
-    def get_domains(self):
-        domains = [dm.domain for dm in self.domain_memberships]
-        if set(domains) == set(self.domains):
-            return domains
-        else:
-            raise self.Inconsistent("domains and domain_memberships out of sync")
-
-    def has_permission(self, domain, permission, data=None):
-        # is_admin is the same as having all the permissions set
-        if self.is_superuser:
-            return True
-        elif self.is_domain_admin(domain):
-            return True
-
-        dm = self.get_domain_membership(domain)
-        if dm:
-            return dm.has_permission(permission, data)
-        else:
-            return False
-
-
-    def get_role(self, domain=None):
-        """
-        Get the role object for this user
-
-        """
-        if domain is None:
-            # default to current_domain for django templates
-            domain = self.current_domain
-
-        if self.is_superuser:
-            return AdminUserRole(domain=domain)
-        if self.is_member_of(domain):
-            return self.get_domain_membership(domain).role
-        else:
-            raise DomainMembershipError()
-
-    def set_role(self, domain, role_qualified_id):
-        """
-        role_qualified_id is either 'admin' 'user-role:[id]'
-        """
-        dm = self.get_domain_membership(domain)
-        dm.is_admin = False
-        if role_qualified_id == "admin":
-            dm.is_admin = True
-        elif role_qualified_id.startswith('user-role:'):
-            dm.role_id = role_qualified_id[len('user-role:'):]
-        elif role_qualified_id in PERMISSIONS_PRESETS:
-            preset = PERMISSIONS_PRESETS[role_qualified_id]
-            dm.role_id = UserRole.get_or_create_with_permissions(domain, preset['permissions'], preset['name']).get_id
-        else:
-            raise Exception("role_qualified_id is %r" % role_qualified_id)
-
-    def role_label(self, domain=None):
-        if not domain:
-            try:
-                domain = self.current_domain
-            except (AttributeError, KeyError):
-                return None
-        try:
-            return self.get_role(domain).name
-        except TypeError:
-            return "Unknown User"
-        except DomainMembershipError:
-            return "Unauthorized User"
-        except Exception:
-            return None
 
 class FakeUser(WebUser):
     """

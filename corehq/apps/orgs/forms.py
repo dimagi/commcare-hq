@@ -1,7 +1,10 @@
 from django import forms
+from django.core.validators import validate_email
 from corehq.apps.domain.models import Domain
 import re
 from corehq.apps.domain.utils import new_domain_re
+from corehq.apps.orgs.models import Organization, Team
+from corehq.apps.users.models import CouchUser
 
 class AddProjectForm(forms.Form):
     domain_name = forms.CharField(label="Project name")
@@ -28,4 +31,65 @@ This project will be given a new name within this organization. You may leave it
         data = self.cleaned_data['domain_name'].strip().lower()
         if not Domain.get_by_name(data):
             raise forms.ValidationError('This project does not exist.')
+        return data
+
+class AddMemberForm(forms.Form):
+    member_email = forms.CharField(label = "User Email", max_length=25)
+
+    def __init__(self, org_name, *args, **kwargs):
+        self.org_name = org_name
+        super(AddMemberForm, self).__init__(*args, **kwargs)
+
+    def clean_member_email(self):
+        data = self.cleaned_data['member_email'].strip().lower()
+        validate_email(data)
+        exists = CouchUser.get_by_username(data)
+
+        if not exists:
+            raise forms.ValidationError('User not found!')
+
+        org = Organization.get_by_name(self.org_name)
+        for id in org.members:
+            if id == exists.id:
+                raise forms.ValidationError('User is already part of this organization!')
+
+        return data
+
+    def clean(self):
+        for field in self.cleaned_data:
+            if isinstance(self.cleaned_data[field], basestring):
+                self.cleaned_data[field] = self.cleaned_data[field].strip()
+        return self.cleaned_data
+
+#class AddMemberToTeamForm(forms.Form):
+#
+#    def __init__(self, org_name, *args, **kwargs):
+#        self.org_name = org_name
+#        super(AddMemberToTeamForm, self).__init__(*args, **kwargs)
+#
+#    @property
+#    def organization(self):
+#        return self.org_name
+#
+#    import pdb
+#    pdb.set_trace()
+#    teams = Team.get_by_org(organization)
+#    team_names = [team.name for team in teams]
+#
+#    team = forms.ChoiceField(label="Team", choices=teams)
+
+class AddTeamForm(forms.Form):
+
+    team = forms.CharField(label="Team Name", max_length=25)
+
+    def __init__(self, org_name, *args, **kwargs):
+        self.org_name = org_name
+        super(AddTeamForm, self).__init__(*args, **kwargs)
+
+    def clean_team(self):
+        data = self.cleaned_data['team'].strip()
+        org_teams = Team.get_by_org(self.org_name)
+        for t in org_teams:
+            if t.name == data:
+                raise forms.ValidationError('A team with that name already exists.')
         return data
