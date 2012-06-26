@@ -61,22 +61,20 @@ class AddMemberForm(forms.Form):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
-#class AddMemberToTeamForm(forms.Form):
-#
-#    def __init__(self, org_name, *args, **kwargs):
-#        self.org_name = org_name
-#        super(AddMemberToTeamForm, self).__init__(*args, **kwargs)
-#
-#    @property
-#    def organization(self):
-#        return self.org_name
-#
-#    import pdb
-#    pdb.set_trace()
-#    teams = Team.get_by_org(organization)
-#    team_names = [team.name for team in teams]
-#
-#    team = forms.ChoiceField(label="Team", choices=teams)
+class AddMemberToTeamForm(forms.Form):
+
+    def __init__(self, org_name, *args, **kwargs):
+        super(AddMemberToTeamForm, self).__init__(*args, **kwargs)
+        self.teams = Team.get_by_org(org_name)
+        self.team_names = [team.name for team in self.teams]
+        self.team = forms.ChoiceField(label="Team", choices=self.team_names)
+        self.fields['teams'] = self.team
+
+    @property
+    def organization(self):
+        return self.org_name
+
+
 
 class AddTeamForm(forms.Form):
 

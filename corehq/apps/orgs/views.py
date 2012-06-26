@@ -2,7 +2,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.registration.forms import DomainRegistrationForm
-from corehq.apps.orgs.forms import AddProjectForm, AddMemberForm, AddTeamForm
+from corehq.apps.orgs.forms import AddProjectForm, AddMemberForm, AddTeamForm, AddMemberToTeamForm
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.web import render_to_response, json_response, get_url_base
 from corehq.apps.orgs.models import Organization, Team
@@ -26,7 +26,7 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
 
     reg_form = form or DomainRegistrationForm(initial={'org': organization.name})
     add_form = add_form or AddProjectForm(org)
-    add_member_form = add_member_form or AddMemberForm(org)
+    add_member_form = add_member_form or AddMemberToTeamForm(org)
     add_team_form = add_team_form or AddTeamForm(org)
 
     current_teams = Team.get_by_org(org)
