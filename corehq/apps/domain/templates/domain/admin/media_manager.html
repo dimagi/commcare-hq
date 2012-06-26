@@ -22,6 +22,9 @@
         <thead>
             <tr>
                 <td>
+                    Type
+                </td>
+                <td>
                     Preview
                 </td>
                 <td>
@@ -37,12 +40,13 @@
         </thead>
         <tbody data-bind="foreach: media">
             <tr>
+                <td data-bind="text: type"></td>
                 <td class="span3">
                 <div data-bind="if: image">
                     <a data-bind="attr: {href: url}" class="thumbnail" target="_blank"><img data-bind="attr: {src: url}" /></a>
                 </div>
                 <div data-bind="if: audio || other">
-                    <a data-bind="attr: {href: url}" class="btn btn-primary" target="_blank">Preview in a new window</a>
+                    <a data-bind="attr: {href: url}" class="btn btn-primary" target="_blank">Listen in a new window</a>
                 </div>
                 </td>
                 <td><input type="checkbox" data-bind="checked: shared, attr: {name: m_id + '_shared'}" /></td>

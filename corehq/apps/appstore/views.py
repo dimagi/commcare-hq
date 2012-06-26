@@ -119,7 +119,6 @@ def report_dispatcher(request, slug, return_json=False,
 
     dummy = Domain.get_by_name('dumdum')
 
-
     if not dummy:
         dummy = Domain(name='dumdum',
             is_active=True,
