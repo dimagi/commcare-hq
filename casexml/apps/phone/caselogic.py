@@ -92,7 +92,7 @@ class CaseSyncOperation(object):
         # operations look much more complicated than they should be.
 
         try:
-            self.actual_owned_cases = set(CommCareCase.view("case/by_owner_liteawefasdv", keys=keys).all())
+            self.actual_owned_cases = set(CommCareCase.view("case/by_owner_lite", keys=keys).all())
         except ResourceNotFound, ex:
             self.actual_owned_cases = set(CommCareCase.view("case/by_owner", include_docs=True, keys=keys).all())
             logging.error("Error, the case views are missing the case/by_owner_lite view, reverting to slower view query")
