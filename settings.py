@@ -152,6 +152,7 @@ HQ_APPS = (
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
+    'corehq.apps.orgs',
     'corehq.apps.fixtures',
     'corehq.apps.reminders',
     'corehq.apps.prescriptions',
@@ -170,6 +171,7 @@ HQ_APPS = (
     'corehq.apps.data_interfaces',
     'corehq.apps.hq_bootstrap',
     'corehq.apps.builds',
+    'corehq.apps.orgs',
     'corehq.apps.api',
     'corehq.couchapps',
     'sofabed.forms',
@@ -190,11 +192,12 @@ REFLEXIVE_URL_BASE = "localhost:8000"
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 TABS = [
-    ("corehq.apps.reports.views.default", "Reports"),
+    ("corehq.apps.domain.views.snapshot_info", "Info", lambda request: request.project.is_snapshot),
+    ("corehq.apps.reports.views.default", "Reports", lambda request: not request.project.is_snapshot),
     ("corehq.apps.data_interfaces.views.default", "Manage Data", lambda request: request.couch_user.can_edit_data()),
     ("corehq.apps.app_manager.views.default", "Applications"),
     ("corehq.apps.cloudcare.views.default", "CloudCare", lambda request: request.couch_user.is_previewer()),
-    ("corehq.apps.sms.views.messaging", "Messages"),
+    ("corehq.apps.sms.views.messaging", "Messages", lambda request: not request.project.is_snapshot),
     ("corehq.apps.settings.views.default", "Settings & Users", lambda request: request.couch_user.can_edit_commcare_users() or request.couch_user.can_edit_web_users()),
     ("corehq.apps.hqadmin.views.default", "Admin Reports", "is_superuser"),
 ]
@@ -280,7 +283,7 @@ XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
-COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables-1.8.2/js/jquery.dataTables.min.js")
+COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables-1.9/js/jquery.dataTables.min.js")
 
 # These allow HQ to override what shows up in couchlog (add a domain column)
 COUCHLOG_TABLE_CONFIG = {"id_column":       0,
@@ -369,6 +372,7 @@ XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
 COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'api',
         'app_manager',
+        'orgs',
         'auditcare',
         'builds',
         'case',
@@ -490,9 +494,6 @@ STANDARD_REPORT_MAP = {
         'corehq.apps.reports.standard.ExcelExportReport',
         'corehq.apps.reports.standard.CaseExportReport',
     ],
-    "Inspect Data" : ['corehq.apps.reports.standard.SubmitHistory',
-                      'corehq.apps.reports.standard.CaseListReport',
-                      ],
     "Manage Deployments" : [
         'corehq.apps.reports.standard.ApplicationStatusReport',
         'corehq.apps.receiverwrapper.reports.SubmissionErrorReport',
