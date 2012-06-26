@@ -241,6 +241,7 @@ class StandardDateHQReport(StandardHQReport):
             self.datespan.enddate = self.request.datespan.enddate
             self.datespan.startdate = self.request.datespan.startdate
             self.datespan.is_default = False
+        self.datespan.timezone = self.timezone
         self.request.datespan = self.datespan
         self.context.update(dict(datespan=self.datespan))
         super(StandardDateHQReport, self).process_basic()
@@ -425,13 +426,14 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
         utc_dates = [tz_utils.adjust_datetime_to_timezone(date, self.timezone.zone, pytz.utc.zone) for date in self.dates]
         date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(utc_dates)])
 
+        self.datespan.inclusive = False
         results = get_db().view(
             self.couch_view,
             group=True,
             startkey=[self.domain,
-                      tz_utils.adjust_datetime_to_timezone(self.datespan.startdate, self.timezone.zone, pytz.utc.zone).isoformat()],
+                      self.datespan.startdate_param_utc],
             endkey=[self.domain,
-                    tz_utils.adjust_datetime_to_timezone(self.datespan.enddate, self.timezone.zone, pytz.utc.zone).isoformat(), {}]
+                    self.datespan.enddate_param_utc, {}]
         ).all()
         user_map = dict([(user.user_id, i) for (i, user) in enumerate(self.users)])
         userIDs = [user.user_id for user in self.users]
@@ -442,7 +444,7 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
             _, date, user_id = result['key']
             val = result['value']
             if user_id in userIDs:
-                rows[user_map[user_id]][date_map[date]] = val
+                rows[user_map[user_id]][date_map[date[0:10]]] = val
 
         for i, user in enumerate(self.users):
             rows[i][0] = user.username_in_report
