@@ -10,7 +10,7 @@
        <input type="checkbox" name="submitfilter" value="{{ type.type }}" class="hide" id="submission-filter-{{ forloop.counter }}" {% if type.show %}checked="checked"{% endif %}/>
     {% endfor %}
 </div>
-<script type="text/javascript" src="{% static 'reports/javascripts/reportfilters.js' %}"></script>
+<script type="text/javascript" src="{% static 'reports/javascripts/field.filter_buttons.js' %}"></script>
 <script type="text/javascript">
     $(function() {
         linkButtonGroup("submission-filter-buttons");

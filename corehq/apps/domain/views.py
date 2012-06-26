@@ -376,3 +376,34 @@ def snapshot_info(request, domain):
                                                                      'fields': fields,
                                                                      "languages": request.project.readable_languages(),
                                                                      "applications": request.project.applications()})
+
+@require_previewer
+@domain_admin_required
+def manage_multimedia(request, domain):
+    media = request.project.all_media()
+    if request.method == "POST":
+        for m_file in media:
+            if '%s_tags' % m_file._id in request.POST:
+                m_file.tags[domain] = request.POST.get('%s_tags' % m_file._id, '').split(' ')
+
+            if domain not in m_file.shared_by and request.POST.get('%s_shared' % m_file._id, False):
+                m_file.shared_by.append(domain)
+            elif domain in m_file.shared_by and not request.POST.get('%s_shared' % m_file._id, False):
+                m_file.shared_by.remove(domain)
+
+            if '%s_license' % m_file._id in request.POST:
+                m_file.license[domain] = request.POST.get('%s_license' % m_file._id, 'public')
+            m_file.save()
+        messages.success(request, "Multimedia updated successfully!")
+
+    return render_to_response(request, 'domain/admin/media_manager.html', {'domain': domain,
+        'media': [{
+            'license': m.license.get(domain, 'public'),
+            'shared': domain in m.shared_by,
+            'url': m.url(),
+            'm_id': m._id,
+            'tags': m.tags.get(domain, []),
+            'type': m.doc_type
+                   } for m in media],
+        'licenses': LICENSES.items()
+                                                                     })

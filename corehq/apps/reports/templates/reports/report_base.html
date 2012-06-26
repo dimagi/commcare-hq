@@ -2,35 +2,34 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-{% include "imports/datatables.bootstrap.html" %}
+{% include "imports/datatables.html" %}
 <script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
 {% include "imports/flot.html" %}
 <script type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery.history.js' %}"></script>
-<script type="text/javascript" src="{% static 'reports/javascripts/async_reports.js' %}"></script>
+<script type="text/javascript" src="{% static 'reports/javascripts/reports.config.js' %}"></script>
+<script type="text/javascript" src="{% static 'reports/javascripts/reports.async.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
 {% if not report_hide_filters %}
     <script type="text/javascript">
-        $(function() {
-            var reportFilterCookieName = '{{ slug }}reportFiltersHidden',
-                    savedPath = '/a/{{ domain }}/';
-            $("#reportFilters").addClass($.cookie(reportFilterCookieName));
-            $("#reportFilters").on('hidden', function () {
-                $.cookie(reportFilterCookieName, '', {path: savedPath, expires: 1});
-            });
-            $("#reportFilters").on('shown', function () {
-                $.cookie(reportFilterCookieName, 'in', {path: savedPath, expires: 1});
-            });
-
-            {% if slug and async_report %}
-            var asyncReport = new HQAsyncReport({
-                baseSlug: '{{ base_slug|default:'reports' }}'
-            });
-            asyncReport.init();
-            {% endif %}
+        var standardHQReport = new HQReport({
+            domain: '{{ domain }}',
+            baseSlug: '{{ base_slug|default:'reports' }}',
+            {% if datespan %}datespan: {
+                startdate: '{{ datespan.startdate|date:"Y-m-d" }}',
+                enddate: '{{ datespan.enddate|date:"Y-m-d" }}'
+            },{% endif %}
         });
+        standardHQReport.init();
+
+        {% if slug and async_report %}
+            var asyncHQReport = new HQAsyncReport({
+                standardReport: standardHQReport
+            });
+            asyncHQReport.init();
+        {% endif %}
     </script>
 {% endif %}
 {% endblock %}
@@ -40,7 +39,7 @@
     <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
 {% endblock %}
 
-{% block title-extra %} - Report: {{ report.name|default:"Unknown Report"|safe }}{% endblock %}
+{% block title %} - Report: {{ report.name|default:"Unknown Report"|safe }}{% endblock %}
 
 {% block page-title %}
     <ul class="breadcrumb">
@@ -61,9 +60,13 @@
 {% block main_column %}
     <div class="hq-accordion-control{% if async_report%} hide{% endif %}" id="reportFiltersAccordion">
         <div class="accordion-heading">
-            {% if not report_hide_filters %}<a href="#reportFilters" data-toggle="collapse">Advanced Filters</a>{% else %}
-                <div class="no-filters">&nbsp;</div>
+            <div class="accordion-actions">
+            {% if not report_hide_filters or exportable %}
+                <span>Report Actions:</span> 
+                {% if not report_hide_filters %}<a href="#reportFilters" class="btn" id="toggle-report-filters" data-toggle="collapse" data-show-text="Show Filter Options" data-hide-text="Hide Filter Options">Filter Options</a>{% endif %}
+                {% if exportable %}<a href="#" class="btn" id="export-report-excel"><i class="icon icon-share"></i> Export to Excel</a>{% endif %}
             {% endif %}
+            </div>
             <div id="extra-filter-info" class="accordion-extra"></div>
         </div>
         {% if not report_hide_filters %}

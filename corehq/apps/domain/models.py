@@ -77,6 +77,7 @@ class Domain(Document):
     snapshot_time = DateTimeProperty()
     published = BooleanProperty(default=False)
     license = StringProperty(choices=LICENSES, default='public')
+    title = StringProperty()
 
     migrations = SchemaProperty(DomainMigrations)
 
@@ -241,7 +242,7 @@ class Domain(Document):
             if hasattr(new_domain, field):
                 delattr(new_domain, field)
 
-        for res in db.view('domain/related_to_domain', key=self.name):
+        for res in db.view('domain/related_to_domain', key=[self.name, True]):
             json = res['value']
             doc_type = json['doc_type']
             cls = str_to_cls[doc_type]
@@ -350,6 +351,18 @@ class Domain(Document):
 
     def copies_of_parent(self):
         return Domain.view('domain/copied_from_snapshot', keys=[s.name for s in self.copied_from().snapshots()], include_docs=True)
+
+    def delete(self):
+        # delete all associated objects
+        db = get_db()
+        related_docs = db.view('domain/related_to_domain', startkey=[self.name], endkey=[self.name, {}], include_docs=True)
+        for doc in related_docs:
+            db.delete_doc(doc['doc'])
+        super(Domain, self).delete()
+
+    def all_media(self):
+        from corehq.apps.hqmedia.models import CommCareMultimedia
+        return CommCareMultimedia.view('hqmedia/by_domain', key=self.name, include_docs=True).all()
 
 ##############################################################################################################
 #

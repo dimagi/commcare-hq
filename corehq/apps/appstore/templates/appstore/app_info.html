@@ -184,6 +184,9 @@ it doesn’t make the test unnecessarily selective */
             {{ domain.copied_from.display_name }}
             <small>by <a href="{% url orgs_landing domain.organization %}">{{ domain.organization_doc.title }}</a></small>
         </h1>
+    <h3>
+        <a class="btn" href="{% url corehq.apps.app_manager.views.default domain.name %}">Preview this project</a>
+    </h3>
         <h3>
             Ratings: <span class="badge badge-info">{{ num_ratings }}</span>
         </h3>
@@ -278,13 +281,14 @@ it doesn’t make the test unnecessarily selective */
                     {% else %}
                     <input type="hidden" name="versioned" value="1">
                     {% endif %}
-                    <button type="submit" class="btn btn-primary">{% if versioned %} View all reviews {% else %} Only view reviews from current version{% endif %}</button>
                 </form>
             </div>
-            <br/><br/>
             <div><h3>Reviews for {% if versioned %} the current version of {% endif %} {{ domain.copied_from.display_name }}</h3></div>
             <br/>
-            <div><a href="#add_review_modal" data-toggle="modal" class="btn btn-danger">Write a Review</a></div>
+            <div>
+                <a href="#add_review_modal" data-toggle="modal" class="btn btn-danger">Write a Review</a>
+                <button type="submit" class="btn btn-primary">{% if versioned %} View all reviews {% else %} Only show reviews from current version{% endif %}</button>
+            </div>
         </div>
         {% for review in reviews %}
         <hr/>

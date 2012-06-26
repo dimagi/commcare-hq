@@ -18,7 +18,7 @@ class DataInterface(HQReport):
 
 class AppStoreInterface(DataInterface, StandardTabularHQReport, StandardDateHQReport):
     name = "App Store"
-    slug = "appstore"
+    slug = "advanced"
     fields = ['corehq.apps.reports.fields.SelectOrganizationField',
               'corehq.apps.reports.fields.SelectLicenseField',
               'corehq.apps.reports.fields.SelectCategoryField',

@@ -13,6 +13,10 @@ function HQReportDataTables(options) {
     self.ajaxSource = options.ajaxSource;
     self.loadingText = options.loadingText || "Loading...";
     self.emptyText = options.emptyText || "No data available to display. Please try changing your filters.";
+    self.fixColumns = !!(options.fixColumns);
+    self.fixColsNumLeft = options.fixColsNumLeft || 1;
+    self.fixColsWidth = options.fixColsWidth || 100;
+
 
     this.render = function () {
 
@@ -32,7 +36,8 @@ function HQReportDataTables(options) {
                 sDom: dataTablesDom,
                 sPaginationType: self.paginationType,
                 iDisplayLength: self.defaultRows,
-                bAutoWidth: self.autoWidth
+                bAutoWidth: self.autoWidth,
+                sScrollX: "100%"
             };
 
             if(self.ajaxSource) {
@@ -68,6 +73,11 @@ function HQReportDataTables(options) {
             var datatable = $(this).dataTable(params);
             if(self.customSort)
                 datatable.fnSort( self.customSort );
+            if(self.fixColumns)
+                new FixedColumns( datatable, {
+                    iLeftColumns: self.fixColsNumLeft,
+                    iLeftWidth: self.fixColsWidth
+                } );
 
 
             var $dataTablesFilter = $(".dataTables_filter");
@@ -101,6 +111,9 @@ function HQReportDataTables(options) {
                 $selectField.children().append(" per page");
                 $selectField.addClass("input-medium");
             }
+            $(".dataTables_length select").change(function () {
+                $(self.dataTableElem).trigger('hqreport.tabular.lengthChange', $(this).val());
+            });
         });
     };
 }

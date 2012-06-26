@@ -20,17 +20,15 @@ class CommCareMultimedia(Document):
 
     file_hash = StringProperty()
     aux_media = SchemaListProperty(AuxMedia)
-    tags = StringListProperty() # this appears to be unused so I'm taking it for media-sharing purposes - timbauman
 
     last_modified = DateTimeProperty()
     valid_domains = StringListProperty() # appears to be mostly unused as well - timbauman
     # add something about context from the form(s) its in
 
-    title = StringProperty()
-    license = StringProperty(choices=LICENSES, default='public')
-    shared = BooleanProperty(default=False)
-    filenames = StringListProperty()
-    creator = StringProperty() # CouchUser or Organization?
+    owners = StringListProperty(default=[])
+    license = DictProperty(default={}) # dict of strings
+    shared_by = StringListProperty(default=[])
+    tags = DictProperty(default={}) # dict of string lists
 
     def attach_data(self, data, upload_path=None, username=None, attachment_id=None,
                     media_meta=None, replace_attachment=False):
@@ -59,10 +57,28 @@ class CommCareMultimedia(Document):
             self.aux_media.append(new_media)
         self.save()
 
-    def add_domain(self, domain):
+    def add_domain(self, domain, owner=None, **kwargs):
+
+        if owner and domain not in self.owners:
+            self.owners.append(domain)
+        elif owner == False and domain in self.owners:
+            self.owners.remove(domain)
+
+        if domain in self.owners:
+            shared = kwargs.get('shared', '')
+            if shared and domain not in self.shared_by:
+                self.shared_by.append(domain)
+            elif not shared and shared != '' and domain in self.shared_by:
+                self.shared_by.remove(domain)
+
+            if kwargs.get('license', ''):
+                self.license[domain] = kwargs['license']
+            if kwargs.get('tags', ''):
+                self.tags[domain] = kwargs['tags']
+
         if domain not in self.valid_domains:
             self.valid_domains.append(domain)
-            self.save()
+        self.save()
 
     def get_display_file(self, return_type=True):
         all_ids = self.current_attachments
@@ -100,6 +116,7 @@ class CommCareMultimedia(Document):
     def get_by_data(cls, data):
         file_hash = cls.generate_hash(data)
         media = cls.get_by_hash(file_hash)
+        media.save()
         return media
 
     @classmethod
@@ -111,12 +128,15 @@ class CommCareMultimedia(Document):
         return cls.view('hqmedia/by_doc_type', key=cls.__name__, include_docs=True)
 
     @classmethod
-    def tags(cls):
+    def all_tags(cls):
         return [d['key'] for d in cls.view('hqmedia/tags', group=True).all()]
 
     def url(self):
         return reverse("hqmedia_download", args=[self.doc_type,
                                                  self._id])
+
+    def shared(self):
+        return len(self.shared_by) > 0
 
 class CommCareImage(CommCareMultimedia):
 
@@ -180,8 +200,6 @@ class HQMediaMixin(Document):
         map_item.multimedia_id = multimedia._id
         map_item.media_type = multimedia.doc_type
         self.multimedia_map[form_path] = map_item
-        multimedia.filenames.append(form_path)
-        multimedia.save()
 
         try:
             self.save()
