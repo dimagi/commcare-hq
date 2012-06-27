@@ -169,7 +169,6 @@ class StandardTabularHQReport(StandardHQReport):
             raise Exception("It doesn't look like this machine is configured for "
                         "excel export. To export to excel you have to run the "
                         "command:  easy_install xlutils")
-        book = xlwt.Workbook()
         headers = self.get_headers()
         html_rows = self.get_rows()
 

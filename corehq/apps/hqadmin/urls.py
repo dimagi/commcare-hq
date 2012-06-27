@@ -2,6 +2,7 @@ from django.conf.urls.defaults import *
 
 urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^$', 'default', name="default_admin_report"),
+    url(r'^export/global/$', 'global_report', name="export_global_report", kwargs=dict(as_export=True)),
     url(r'^global/$', 'global_report', name="global_report"),
     url(r'^domains/list/$', 'domain_list', name="domain_list"),
     url(r'^users/$', 'active_users', name="active_users"),
