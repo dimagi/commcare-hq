@@ -120,7 +120,7 @@ ko.bindingHandlers.uploadMediaButton = {
             $(element).text("Replace "+params.type());
             $(element).addClass("btn-primary");
         } else {
-            $(element).text("Upload "+params.type());
+            $(element).text("Upload or select "+params.type());
             $(element).addClass("btn-success");
         }
 
@@ -192,7 +192,7 @@ var MultimediaMap = function (data, jplayerSwfPath) {
 
     _.each(data.images, function(ref) {
         var refObj = new HQMediaRef(ref, "Image")
-        self.image_refs.push(refObj);
+;        self.image_refs.push(refObj);
         self.by_path[ref.uid] = refObj;
     });
 
