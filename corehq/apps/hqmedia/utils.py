@@ -1,6 +1,7 @@
 from django.core.urlresolvers import reverse
 from django.utils.datastructures import SortedDict
 import os
+import sys
 import logging
 from corehq.apps.app_manager.xform import XFormValidationError, XFormError
 from corehq.apps.domain.models import Domain
@@ -161,8 +162,8 @@ class HQMediaMatcher():
     def match_file(self, uploaded_file, replace_existing_media=True, **kwargs):
         errors = []
         try:
-            if self.specific_params:
-                media_class = eval(self.specific_params['media_type'][0])
+            if self.specific_params and self.specific_params['media_type'][0].startswith('CommCare'):
+                media_class = getattr(sys.modules[__name__], self.specific_params['media_type'][0])
                 form_path = self.specific_params['path'][0]
                 replace_existing_media = self.specific_params['replace_attachment'][0]
 
