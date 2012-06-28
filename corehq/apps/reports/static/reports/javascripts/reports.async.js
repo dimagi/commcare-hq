@@ -13,6 +13,7 @@ var HQAsyncReport = function (o) {
     var loadFilters = function (data) {
         $('#hq-report-filters').html(data.filters);
         $('#reportFiltersAccordion').removeClass('hide');
+        self.resetFilterState();
     };
 
     self.init = function () {
@@ -37,6 +38,15 @@ var HQAsyncReport = function (o) {
                 '/'+self.standardReport.baseSlug+'/async/filters/')+"?"+form_params,
             dataType: 'json',
             success: loadFilters
+        });
+    };
+
+    self.resetFilterState = function () {
+        $('#paramSelectorForm fieldset button, #paramSelectorForm fieldset span[data-dropdown="dropdown"]').click(function() {
+            $('#paramSelectorForm button[type="submit"]').button('reset').addClass('btn-primary');
+        });
+        $('#paramSelectorForm fieldset').change(function () {
+            $('#paramSelectorForm button[type="submit"]').button('reset').addClass('btn-primary');
         });
     };
 

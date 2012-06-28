@@ -150,7 +150,6 @@ class HQReport(object):
         if not 'tables' in self.context:
             return HttpBadRequest("Export not supported.")
         format = self.request.GET.get('format', None)
-        print format
         if not format:
             return HttpBadRequest("Please specify a format")
 
