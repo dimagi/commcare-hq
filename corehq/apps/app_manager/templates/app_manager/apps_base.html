@@ -16,6 +16,14 @@
             color: white;
             background-color: #1557A2;
         }
+        /* stupid hacks to make bootstrap btns not look bad */
+        .hq-oldstyle a.btn {
+            text-decoration: none;
+            color: black; /* i think this is the wrong color - maybe like #CCC or something is right? */
+        }
+        .hq-oldstyle a.btn-primary, .hq-oldstyle a.btn-info {
+            color: white;
+        }
         #release-manager-nav {
             float: right;
         }
@@ -227,7 +235,7 @@
             </div>
             {% if applications and request.couch_user.can_edit_apps %}
                 <div id="edit">
-                    Switch to: 
+                    Switch to:
                     {% if edit %}
                         <a href="{% urlencode request.path request.GET with "edit" as "false" %}">
                             Read Only

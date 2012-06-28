@@ -105,7 +105,7 @@ ko.bindingHandlers.previewHQImage = {
 ko.bindingHandlers.uploadMediaButton = {
     init: function(element, valueAccessor, allBindingsAccessor) {
         var params = allBindingsAccessor().uploadMediaButtonParams;
-        var modal_id = 'hqm-'+params.type+'-modal-'+params.uid;
+        var modal_id = 'hqm-'+params.type()+'-modal-'+params.uid();
 
         $(element).addClass("btn");
         $(element).attr('data-toggle', 'modal');
@@ -117,10 +117,10 @@ ko.bindingHandlers.uploadMediaButton = {
 
         $(element).removeClass("btn-primary btn-success");
         if (has_ref) {
-            $(element).text("Replace "+params.type);
+            $(element).text("Replace "+params.type());
             $(element).addClass("btn-primary");
         } else {
-            $(element).text("Upload "+params.type);
+            $(element).text("Upload "+params.type());
             $(element).addClass("btn-success");
         }
 
@@ -130,10 +130,10 @@ ko.bindingHandlers.uploadMediaButton = {
 ko.bindingHandlers.uploadMediaModal = {
     init: function(element, valueAccessor, allBindingsAccessor) {
         var params = allBindingsAccessor().uploadMediaModalParams;
-        var modal_id = 'hqm-'+params.type+'-modal-'+params.uid;
+        var modal_id = 'hqm-'+params.type()+'-modal-'+params.uid();
         $(element).attr('id', modal_id);
         $(element).on('show', function () {
-            var $uploadForm = $('#hqmedia-upload-'+params.type);
+            var $uploadForm = $('#hqmedia-upload-'+params.type());
             $uploadForm.remove();
             $uploadForm.removeClass('hide');
             $(this).find('.upload-form-placeholder').append($uploadForm);
@@ -152,6 +152,7 @@ var MultimediaMap = function (data, jplayerSwfPath) {
     var self = this;
     self.image_refs = ko.observableArray();
     self.audio_refs = ko.observableArray();
+    self.by_path = {};
 
     self.is_audio_playing = ko.observable(false);
 
@@ -190,19 +191,23 @@ var MultimediaMap = function (data, jplayerSwfPath) {
 
 
     _.each(data.images, function(ref) {
-        self.image_refs.push(new HQMediaRef(ref, "Image"));
+        var refObj = new HQMediaRef(ref, "Image")
+        self.image_refs.push(refObj);
+        self.by_path[ref.uid] = refObj;
     });
 
     _.each(data.audio, function(ref) {
-        self.audio_refs.push(new HQMediaRef(ref, "Audio"));
+        var refObj = new HQMediaRef(ref, "Audio");
+        self.audio_refs.push(refObj);
+        self.by_path[ref.uid] = refObj;
     });
 },
 
 HQMediaRef = function(mediaRef, type) {
     var self = this;
-    self.type = type;
-    self.path = mediaRef.path;
-    self.uid = mediaRef.uid;
+    self.type = ko.observable(type);
+    self.path = ko.observable(mediaRef.path);
+    self.uid = ko.observable(mediaRef.uid);
 
     self.m_id = ko.observable(mediaRef.m_id || "");
     self.url = ko.observable(mediaRef.url || "");
@@ -215,7 +220,7 @@ HQMediaRef = function(mediaRef, type) {
     self.query = ko.observable();
 
     self.searchForImages = function() {
-        $.getJSON(searchUrl, {q: self.query(), t: self.type}, function (res) {
+        $.getJSON(searchUrl, {q: self.query(), t: self.type()}, function (res) {
             if (!self.searched())
                 self.searched(true);
             self.imageOptions([]);
@@ -226,7 +231,7 @@ HQMediaRef = function(mediaRef, type) {
     };
 
     self.searchForAudio = function() {
-        $.getJSON(searchUrl, {q: self.query(), t: self.type}, function (res) {
+        $.getJSON(searchUrl, {q: self.query(), t: self.type()}, function (res) {
             if (!self.searched())
                 self.searched(true);
             self.audioOptions([]);
@@ -239,7 +244,7 @@ HQMediaRef = function(mediaRef, type) {
     self.uploadNewImage = function () {
         if (hqimage_uploader) {
             hqimage_uploader.uploadParams = {
-                path: self.path,
+                path: self.path(),
                 media_type : "CommCareImage",
                 old_ref: self.m_id || "",
                 replace_attachment: true
@@ -259,7 +264,7 @@ HQMediaRef = function(mediaRef, type) {
     self.uploadNewAudio = function () {
         if (hqaudio_uploader) {
             hqaudio_uploader.uploadParams = {
-                path: self.path,
+                path: self.path(),
                 media_type : "CommCareAudio",
                 old_ref: self.m_id || "",
                 replace_attachment: true
@@ -288,10 +293,10 @@ MediaOption = function(mediaRef, data) {
     self.tags = data.tags;
 
     self.choose = function() {
-        $.post(chooseImageUrl, {media_type: self.mediaRef.type, path: self.mediaRef.path, id: self.m_id}, function (res) {
-            if (self.mediaRef.type == "Image")
+        $.post(chooseImageUrl, {media_type: self.mediaRef.type(), path: self.mediaRef.path(), id: self.m_id}, function (res) {
+            if (self.mediaRef.type() == "Image")
                 self.mediaRef.foundNewImage(null, res);
-            else if (self.mediaRef.type == "Audio")
+            else if (self.mediaRef.type() == "Audio")
                 self.mediaRef.foundNewAudio(null, res);
         }, 'json');
     }
