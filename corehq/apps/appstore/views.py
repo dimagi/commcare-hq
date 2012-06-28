@@ -19,14 +19,14 @@ from corehq.apps.reports.views import datespan_default
 
 @require_superuser
 def appstore(request, template="appstore/appstore_base.html"):
-    apps = Domain.published_snapshots()[:40]
+    apps = Domain.published_snapshots(include_unapproved=request.user.is_superuser)
     vals = dict(apps=apps)
     return render_to_response(request, template, vals)
 
 @require_superuser
 def app_info(request, domain, template="appstore/app_info.html", versioned=None):
     dom = Domain.get_by_name(domain)
-    if not dom or not dom.is_snapshot or not dom.published:
+    if not dom or not dom.is_snapshot or not dom.published or (not dom.is_approved and not request.user.is_superuser):
         raise Http404()
     if request.method == "POST":
 #        import pdb
@@ -130,3 +130,13 @@ def report_dispatcher(request, slug, return_json=False,
     return dispatcher.dispatch(request, dummy.name, slug, return_json, export,
                                custom, async, async_filters)
 
+@require_superuser
+def approve_app(request, domain):
+    domain = Domain.get_by_name(domain)
+    if request.GET.get('approve') == 'true':
+        domain.is_approved = True
+        domain.save()
+    elif request.GET.get('approve') == 'false':
+        domain.is_approved = False
+        domain.save()
+    return HttpResponseRedirect(reverse('appstore'))

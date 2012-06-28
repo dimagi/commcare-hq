@@ -53,6 +53,13 @@
         </div>
         <p>{{ app.description|truncatewords:18 }}</p>
         <a class="btn" href="{% url app_info app.name %}">View &raquo;</a>
+        {% if user.is_superuser %}
+            {% if app.is_approved %}
+                <a class="btn btn-danger" href="{% url approve_appstore_app app.name %}?approve=false">Unapprove</a>
+            {% else %}
+                <a class="btn btn-success" href="{% url approve_appstore_app app.name %}?approve=true">Approve</a>
+            {% endif %}
+        {% endif %}
     </div>
 {% endfor %}
 </div>

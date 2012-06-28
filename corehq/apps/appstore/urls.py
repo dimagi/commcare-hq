@@ -14,6 +14,7 @@ urlpatterns = patterns('corehq.apps.appstore.views',
         'async': True
     }),
     url(r'^store/(?P<slug>[\w_]+)/$', 'report_dispatcher', name="appstore_interface_dispatcher"),
-    url(r'^store/appstore/$', 'report_dispatcher', name="appstore_interfaces_default", kwargs={'slug':'appstore'})
+    url(r'^store/appstore/$', 'report_dispatcher', name="appstore_interfaces_default", kwargs={'slug':'appstore'}),
+    url(r'^approve/(?P<domain>[\w\.-]+)/$', 'approve_app', name='approve_appstore_app'),
 
 )

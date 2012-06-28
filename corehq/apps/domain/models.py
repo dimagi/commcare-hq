@@ -74,6 +74,7 @@ class Domain(Document):
     # App Store/domain copying stuff
     original_doc = StringProperty()
     is_snapshot = BooleanProperty(default=False)
+    is_approved = BooleanProperty(default=False)
     snapshot_time = DateTimeProperty()
     published = BooleanProperty(default=False)
     license = StringProperty(choices=LICENSES, default='public')
@@ -307,8 +308,11 @@ class Domain(Document):
         return Domain.view('domain/snapshots', startkey=[self.name, {}], endkey=[self.name], include_docs=True, descending=True)
 
     @classmethod
-    def published_snapshots(cls):
-        return cls.view('domain/published_snapshots', include_docs=True, descending=True)
+    def published_snapshots(cls, include_unapproved=False):
+        if include_unapproved:
+            return cls.view('domain/published_snapshots', include_docs=True, descending=True)
+        else:
+            return cls.view('domain/published_snapshots', endkey=[True], include_docs=True, descending=True)
 
     @classmethod
     def snapshot_search(cls, query, limit=40, skip=0):
