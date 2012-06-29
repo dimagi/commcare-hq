@@ -16,11 +16,14 @@ from django.contrib import messages
 from django.conf import settings
 from corehq.apps.reports.views import datespan_default
 
+PER_PAGE = 3 # 9
 
 @require_superuser
 def appstore(request, template="appstore/appstore_base.html"):
-    apps = Domain.published_snapshots(include_unapproved=request.user.is_superuser)
-    vals = dict(apps=apps)
+    page = int(request.GET.get('page', 1))
+    results = Domain.published_snapshots(include_unapproved=request.user.is_superuser, page=page, per_page=PER_PAGE)
+    more_pages = page * PER_PAGE < results.total_rows
+    vals = dict(apps=results, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages)
     return render_to_response(request, template, vals)
 
 @require_superuser
@@ -73,13 +76,16 @@ def app_info(request, domain, template="appstore/app_info.html", versioned=None)
 
 @require_superuser
 def search_snapshots(request, filter_by = '', filter = '', template="appstore/appstore_base.html"):
+    page = int(request.GET.get('page', 1))
     if filter_by != '':
         query = "%s:%s %s" % (filter_by, filter, request.GET['q'])
     else:
         query = request.GET['q']
 
-    snapshots = Domain.snapshot_search(query, limit=40)
-    return render_to_response(request, template, {'apps': snapshots, 'search_query': query})
+    snapshots, total_rows = Domain.snapshot_search(query, page=page, per_page=PER_PAGE)
+    more_pages = page * PER_PAGE < total_rows
+    vals = dict(apps=snapshots, search_query=query, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages)
+    return render_to_response(request, template, vals)
 
 @require_superuser
 def filter_choices(request, filter_by, template="appstore/filter_choices.html"):
@@ -102,12 +108,15 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
     if filter_by not in ('category', 'license', 'region', 'organization'):
         raise Http404("That page doesn't exist")
 
+    page = int(request.GET.get('page', 1))
+
     filter = filter.replace('+', ' ')
 
     query = '%s:"%s"' % (filter_by, filter)
-    results = get_db().search('domain/snapshot_search', q=query, limit=40)
-    snapshots = map(Domain.get, [r['id'] for r in results])
-    return render_to_response(request, template, {'apps': snapshots, 'filter_by': filter_by, 'filter': filter})
+    results, total_rows = Domain.snapshot_search(query, page=page, per_page=PER_PAGE)
+    more_pages = page * PER_PAGE < total_rows
+    vals = dict(apps=results, filter_by=filter_by, filter=filter, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages)
+    return render_to_response(request, template, vals)
 
 @datespan_default
 def report_dispatcher(request, slug, return_json=False,

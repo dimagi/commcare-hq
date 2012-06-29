@@ -1,6 +1,6 @@
 function(doc) {
 //    try {
-        if (doc.doc_type == "Domain" && doc.is_snapshot && doc.published)
+        if (doc.doc_type == "Domain" && doc.is_snapshot && doc.published && doc.is_approved)
         {
             var ret = new Document();
             ret.add(doc.original_doc);

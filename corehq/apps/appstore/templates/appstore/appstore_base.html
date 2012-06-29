@@ -36,7 +36,7 @@
     All projects
 </h1>
 
-<div class="row-fluid">
+<section class="row-fluid">
 {% for app in apps %}
     {% if forloop.counter0|divisibleby:"3" and forloop.counter0 != 0 %}
         </div><div class="row-fluid">
@@ -62,7 +62,22 @@
         {% endif %}
     </div>
 {% endfor %}
-</div>
+</section>
+
+<section class="row-fluid">
+    <ul class="pager span10">
+        {% if page > 1 %}
+        <li class="previous">
+            <a href="?page={{ prev_page }}{% if search_query %}&q={{ search_query }}{% endif %}">&larr; Previous</a>
+        </li>
+        {% endif %}
+        {% if more_pages %}
+        <li class="next">
+            <a href="?page={{ next_page }}{% if search_query %}&q={{ search_query }}{% endif %}">Next &rarr;</a>
+        </li>
+        {% endif %}
+    </ul>
+</section>
 
 <!--<table class="table table-striped">
     <thead>
