@@ -27,8 +27,7 @@ def appstore(request, template="appstore/appstore_base.html"):
     return render_to_response(request, template, vals)
 
 @require_superuser
-def app_info(request, project, template="appstore/app_info.html"):
-    domain = project
+def project_info(request, domain, template="appstore/project_info.html"):
     dom = Domain.get_by_name(domain)
     if not dom or not dom.is_snapshot or not dom.published or (not dom.is_approved and not request.user.is_superuser):
         raise Http404()
@@ -82,7 +81,8 @@ def app_info(request, project, template="appstore/app_info.html"):
     if versioned:
         all_link = 'true'
 
-    vals = dict(domain=dom,
+    vals = dict(
+        project=dom,
         form=form,
         reviews=reviews,
         average_rating=average_rating,

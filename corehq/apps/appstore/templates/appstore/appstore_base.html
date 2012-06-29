@@ -10,8 +10,8 @@
 {% block page-title %}
 <ul class="breadcrumb">
     <li>
-        <strong><a href="{% url appstore %}">App Store</a></strong>
-        {% if search_query or filter_by or domain %}
+        <strong><a href="{% url appstore %}">Project Store</a></strong>
+        {% if search_query or filter_by or domain or project %}
             <span class="divider">&gt;</span>
         {% endif %}
     </li>
@@ -52,7 +52,7 @@
             </h2>
         </div>
         <p>{{ app.description|truncatewords:18 }}</p>
-        <a class="btn" href="{% url app_info app.name %}">View &raquo;</a>
+        <a class="btn" href="{% url project_info app.name %}">View &raquo;</a>
         {% if user.is_superuser %}
             {% if app.is_approved %}
                 <a class="btn btn-danger" href="{% url approve_appstore_app app.name %}?approve=false">Unapprove</a>
@@ -93,7 +93,7 @@
     <tbody>
     {% for app in apps %}
     <tr>
-        <td><a href="{% url app_info app.name %}">{{ app.copied_from.display_name }}</a></td>
+        <td><a href="{% url project_info app.name %}">{{ app.copied_from.display_name }}</a></td>
         <td>
             {% if app.organization %}
                 <a href="{% url orgs_landing app.organization %}">{{ app.organization_doc.title }}</a>

@@ -1,7 +1,7 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('corehq.apps.appstore.views',
-    url(r'^info/(?P<project>[\w\.-]+)/$', 'app_info', name='app_info'),
+    url(r'^info/(?P<domain>[\w\.-]+)/$', 'project_info', name='project_info'),
     url(r'^search/$', 'search_snapshots', name='appstore_search_snapshots'),
     url(r'^filter/(?P<filter_by>[\w]+)/(?P<filter>[+\w-]+)/', 'filter_snapshots', name='appstore_filter_snapshots'),
     url(r'^filter/(?P<filter_by>[\w]+)/', 'filter_choices', name='appstore_filter_choices'),

@@ -71,7 +71,7 @@ class Domain(Document):
     description = StringProperty()
     is_shared = BooleanProperty(default=False)
 
-    # App Store/domain copying stuff
+    # project store/domain copying stuff
     original_doc = StringProperty()
     is_snapshot = BooleanProperty(default=False)
     is_approved = BooleanProperty(default=False)
@@ -82,7 +82,8 @@ class Domain(Document):
 
     migrations = SchemaProperty(DomainMigrations)
 
-    _dirty_fields = ()
+    # to be eliminated from projects and related documents when they are copied for the project store
+    _dirty_fields = ('admin_password', 'admin_password_charset')
 
     @classmethod
     def wrap(cls, data):
