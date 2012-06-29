@@ -16,7 +16,7 @@ from django.contrib import messages
 from django.conf import settings
 from corehq.apps.reports.views import datespan_default
 
-PER_PAGE = 3 # 9
+PER_PAGE = 9
 
 @require_superuser
 def appstore(request, template="appstore/appstore_base.html"):
