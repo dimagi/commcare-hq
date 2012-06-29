@@ -27,32 +27,45 @@ def appstore(request, template="appstore/appstore_base.html"):
     return render_to_response(request, template, vals)
 
 @require_superuser
-def app_info(request, domain, template="appstore/app_info.html", versioned=None):
+def app_info(request, project, template="appstore/app_info.html"):
+    domain = project
     dom = Domain.get_by_name(domain)
     if not dom or not dom.is_snapshot or not dom.published or (not dom.is_approved and not request.user.is_superuser):
         raise Http404()
     if request.method == "POST":
+        versioned = True
 #        import pdb
 #        pdb.set_trace()
-        versioned = request.POST.get('versioned', '')
-        nickname = request.POST.get('review_name', '')
 
-        if nickname:
-            form = AddReviewForm(request.POST)
-#            pdb.set_trace()
-            if form.is_valid():
-                nickname = form.cleaned_data['review_name']
-                title = form.cleaned_data['review_title']
-                rating = int(request.POST['rating'])
-                info = form.cleaned_data['review_info']
-                user = request.user.username
-                date_published = datetime.now()
-                review = Review(title=title, rating=rating, nickname=nickname, user=user, info=info, date_published = date_published, domain=domain, original_doc=dom.original_doc)
-                review.save()
+        form = AddReviewForm(request.POST)
+        # pdb.set_trace()
+        if form.is_valid():
+            title = form.cleaned_data['review_title']
+            rating = int(request.POST.get('rating'))
+            if rating < 1:
+                rating = 1
+            if rating > 5:
+                rating = 5
+            info = form.cleaned_data['review_info']
+            date_published = datetime.now()
+            user = request.user.username
+
+            old_review = Review.get_by_version_and_user(domain, user)
+
+            if len(old_review) > 0: # replace old review
+                review = old_review[0]
+                review.title = title
+                review.rating = rating
+                review.info = info
+                review.date_published = date_published
+            else:
+                review = Review(title=title, rating=rating, user=user, info=info, date_published = date_published, domain=domain, original_doc=dom.original_doc)
+            review.save()
         else:
             form = AddReviewForm()
     else:
         form = AddReviewForm()
+        versioned = not request.GET.get('all', '')
 
     if versioned:
         reviews = Review.get_by_version(domain)
@@ -65,12 +78,17 @@ def app_info(request, domain, template="appstore/app_info.html", versioned=None)
     if average_rating:
         average_rating = round(average_rating, 1)
 
+    all_link = ''
+    if versioned:
+        all_link = 'true'
+
     vals = dict(domain=dom,
         form=form,
         reviews=reviews,
         average_rating=average_rating,
         num_ratings=num_ratings,
-        versioned=versioned
+        versioned=versioned,
+        all_link=all_link
     )
     return render_to_response(request, template, vals)
 
