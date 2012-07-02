@@ -92,7 +92,13 @@
 	        may work properly. For the best experience please logout and login as a {% commcare_user %}.
 	    </div>
 	{% endif %}
-    <div id="cloudcare-main" style="position:relative;">
+	<div id="cloudcare-main" style="position:relative;">
+	    {% if not apps_raw %}
+	    <h3>No Apps found</h3>
+	    <p>Sorry, it doesn't look like you have any CloudCare apps available. To learn more about how to
+	    enable and use CloudCare, please check out our <a href="https://confluence.dimagi.com/pages/viewpage.action?pageId=10224014" target="_blank">wiki documentation</a>.
+	    </p>
+	    {% endif %}
         <div id="loading" class="well" style="display: none; position: absolute; right: 0; margin-right: 40px; top: 40px;">
             <img width="32" height="32" alt="Loading" src="{% static 'formplayer/img/loading_transparent.gif' %}" />
             {% trans "Loading" %}...
