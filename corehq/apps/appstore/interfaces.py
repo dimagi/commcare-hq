@@ -60,7 +60,7 @@ class AppStoreInterface(DataInterface, StandardTabularHQReport, StandardDateHQRe
         rows = list()
         data = self.get_data()
         for app in data:
-            rows.append(['<a href="%s">%s</a>' % (reverse('app_info', args=[app.name]), app.copied_from().display_name()), app.organization_title(), app.project_type, len(app.copies_of_parent()) , app.get_license_display, util.format_relative_date(app.snapshot_time)])
+            rows.append(['<a href="%s">%s</a>' % (reverse('project_info', args=[app.name]), app.copied_from().display_name()), app.organization_title(), app.project_type, len(app.copies_of_parent()) , app.get_license_display, util.format_relative_date(app.snapshot_time)])
         return rows
 
     def get_data(self):
@@ -93,6 +93,6 @@ class AppStoreInterface(DataInterface, StandardTabularHQReport, StandardDateHQRe
             app = CommCareCase.get(data["id"])
         if app:
             app_link = '<a href="%s">%s</a>' %\
-                        (reverse('app_info', args=[app.domain]), app.domain)
+                        (reverse('project_info', args=[app.domain]), app.domain)
         return app, app_link
 

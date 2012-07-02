@@ -71,9 +71,10 @@ class Domain(Document):
     description = StringProperty()
     is_shared = BooleanProperty(default=False)
 
-    # App Store/domain copying stuff
+    # project store/domain copying stuff
     original_doc = StringProperty()
     is_snapshot = BooleanProperty(default=False)
+    is_approved = BooleanProperty(default=False)
     snapshot_time = DateTimeProperty()
     published = BooleanProperty(default=False)
     license = StringProperty(choices=LICENSES, default='public')
@@ -81,7 +82,8 @@ class Domain(Document):
 
     migrations = SchemaProperty(DomainMigrations)
 
-    _dirty_fields = ()
+    # to be eliminated from projects and related documents when they are copied for the project store
+    _dirty_fields = ('admin_password', 'admin_password_charset')
 
     @classmethod
     def wrap(cls, data):
@@ -307,13 +309,26 @@ class Domain(Document):
         return Domain.view('domain/snapshots', startkey=[self.name, {}], endkey=[self.name], include_docs=True, descending=True)
 
     @classmethod
-    def published_snapshots(cls):
-        return cls.view('domain/published_snapshots', include_docs=True, descending=True)
+    def published_snapshots(cls, include_unapproved=False, page=None, per_page=10):
+        skip = None
+        limit = None
+        if page:
+            skip = (page - 1) * per_page
+            limit = per_page
+        if include_unapproved:
+            return cls.view('domain/published_snapshots', include_docs=True, descending=True, limit=limit, skip=skip)
+        else:
+            return cls.view('domain/published_snapshots', endkey=[True], include_docs=True, descending=True)
 
     @classmethod
-    def snapshot_search(cls, query, limit=40, skip=0):
+    def snapshot_search(cls, query, page=None, per_page=10):
+        skip = None
+        limit = None
+        if page:
+            skip = (page - 1) * per_page
+            limit = per_page
         results = get_db().search('domain/snapshot_search', q=query, limit=limit, skip=skip)
-        return map(cls.get, [r['id'] for r in results])
+        return map(cls.get, [r['id'] for r in results]), results.total_rows
 
     def organization_doc(self):
         from corehq.apps.orgs.models import Organization

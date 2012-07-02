@@ -34,6 +34,7 @@ def download_media(request, media_type, doc_id):
         pass
     return HttpResponseServerError("No Media Found")
 
+@require_can_edit_apps
 def search_for_media(request, domain, app_id):
     media_type = request.GET['t']
     if media_type == 'Image':
@@ -48,6 +49,7 @@ def search_for_media(request, domain, app_id):
          'tags': [tag for tags in i.tags.values() for tag in tags],
          'm_id': i._id} for i in files]))
 
+@require_can_edit_apps
 def choose_media(request, domain, app_id):
     # TODO: Add error handling
     app = get_app(domain, app_id)
@@ -77,6 +79,16 @@ def choose_media(request, domain, app_id):
         return HttpResponse(simplejson.dumps({'match_found': True, 'audio': {'m_id': file._id, 'url': file.url()}}))
     else:
         raise Http404()
+
+@require_can_edit_apps
+def media_urls(request, domain, app_id):
+    app = get_app(domain, app_id)
+    refs, missing_refs = app.get_template_map(request.GET.getlist('path[]'))
+    pathUrls = {}
+    for ref in refs:
+        pathUrls[ref['path']] = ref
+
+    return HttpResponse(simplejson.dumps(pathUrls))
 
 @require_can_edit_apps
 def media_map(request, domain, app_id):

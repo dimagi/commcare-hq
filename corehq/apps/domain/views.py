@@ -244,7 +244,6 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
         "applications": domain.applications()
     })
 
-@domain_admin_required
 def autocomplete_categories(request, prefix=''):
     return HttpResponse(json.dumps(Domain.categories(prefix)))
 
@@ -285,7 +284,11 @@ def create_snapshot(request, domain):
     elif request.method == 'POST' and request.POST['license'] in LICENSES:
 
         new_domain = domain.save_snapshot()
-        new_domain.license = request.POST['license']
+        if request.POST['license'] in LICENSES.keys():
+            new_domain.license = request.POST['license']
+        new_domain.description = request.POST['description']
+        new_domain.project_type = request.POST['project_type']
+        new_domain.region = request.POST['region']
         for snapshot in domain.snapshots():
             if snapshot.published:
                 snapshot.published = False

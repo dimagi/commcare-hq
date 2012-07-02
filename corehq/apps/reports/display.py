@@ -83,7 +83,6 @@ class FormType(object):
             form = json.loads(form_json)
         else:
             form = get_db().view('reports/forms_by_xmlns', key=[domain, app_id, xmlns], group=True).one()
-            print form
             if form:
                 form = form['value']
             # only cache for 10 seconds

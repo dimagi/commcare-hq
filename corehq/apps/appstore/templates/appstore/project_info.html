@@ -111,7 +111,7 @@ it doesn’t make the test unnecessarily selective */
 }
 </style>
 
-<script>
+<!--<script>
     ko.bindingHandlers.starRating = {
         init: function(element, valueAccessor) {
             $(element).addClass("starRating");
@@ -154,38 +154,37 @@ it doesn’t make the test unnecessarily selective */
         self.newReview = ko.observable();
 
         self.addReview = function(title, rating, user, date_published, info) {
-            self.reviews.push(new Review(title, rating, user, "N/A", info));
+            self.reviews.push(new Review(title, rating, user, date_published, info));
 
         self.submit = function(){
-            $.ajax('{% url app_info domain %}', {
+            $.ajax('{% url project_info project %}', {
                 type: 'post',
-                data: { data: ko.toJSON(self.review)
-            }
-        }
+                data: { data: ko.toJSON(self.review) }
+            });
         }
         $.ajax({
             type: owner._destroy ? 'delete' : 'post',
             url:
-        }
+        });
 
 
     }
-</script>
+</script>-->
 {% endblock %}
 
 {% block breadcrumb %}
-<li>{{ domain.copied_from.display_name }}</li>
+<li>{{ project.copied_from.display_name }}</li>
 {% endblock %}
 
 {% block main_column %}
 
 <div class="page-header">
         <h1>
-            {{ domain.copied_from.display_name }}
-            <small>by <a href="{% url orgs_landing domain.organization %}">{{ domain.organization_doc.title }}</a></small>
+            {{ project.copied_from.display_name }}
+            <small>by <a href="{% url orgs_landing project.organization %}">{{ project.organization_doc.title }}</a></small>
         </h1>
     <h3>
-        <a class="btn" href="{% url corehq.apps.app_manager.views.default domain.name %}">Preview this project</a>
+        <a class="btn" href="{% url corehq.apps.app_manager.views.default project.name %}">Preview this project</a>
     </h3>
         <h3>
             Ratings: <span class="badge badge-info">{{ num_ratings }}</span>
@@ -211,28 +210,28 @@ it doesn’t make the test unnecessarily selective */
 <dl>
     <dt>{% trans 'Description' %}</dt>
     <dd>
-        {% if domain.description %}
-            {{ domain.description }}
+        {% if project.description %}
+            {{ project.description }}
         {% else %}
             None
         {% endif %}
     </dd>
     <dt>Category</dt>
     <dd>
-        {% if domain.project_type %}
-            {{ domain.project_type }}
+        {% if project.project_type %}
+            {{ project.project_type }}
         {% else %}
             None
         {% endif %}
     </dd>
     <dt>License</dt>
-    <dd>{{ domain.get_license_display }}</dd>
+    <dd>{{ project.get_license_display }}</dd>
     <dt>{% trans 'Applications' %}</dt>
     <dd>
-        {% if domain.applications|length > 0 %}
+        {% if project.applications|length > 0 %}
             <ul class="nav nav-pills">
-                {% for app in domain.applications %}
-                <li><a href="{% url corehq.apps.app_manager.views.view_app domain app.id %}">{{ app.name }}</a></li>
+                {% for app in project.applications %}
+                <li><a href="{% url app_summary project app.id %}">{{ app.name }}</a></li>
                 {% endfor %}
             </ul>
         {% else %}
@@ -241,8 +240,8 @@ it doesn’t make the test unnecessarily selective */
     </dd>
     <dt>{% trans 'Languages' %}</dt>
     <dd>
-        {% if domain.languages %}
-            {{ domain.readable_languages }}
+        {% if project.languages %}
+            {{ project.readable_languages }}
         {% else %}
             None
         {% endif %}
@@ -257,11 +256,11 @@ it doesn’t make the test unnecessarily selective */
         Copy this snapshot into a new project
     </dt>
     <dd>
-        <form class="form-inline" method="post" action="{% url domain_copy_snapshot domain %}">
+        <form class="form-inline" method="post" action="{% url domain_copy_snapshot project %}">
             <fieldset>
                 <div class="control-group{% if error_message %} error{% endif %}">
-                    <input type="text" class="span3" id="new_domain_name"
-                           name="new_domain_name" value="{{ new_domain_name }}" placeholder="{% trans 'New project name' %}">
+                    <input type="text" class="span3" id="new_project_name"
+                           name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">
                     {% if error_message %}
                     <span class="help-inline">{{ error_message }}</span>
                     {% endif %}
@@ -275,7 +274,7 @@ it doesn’t make the test unnecessarily selective */
 <hr/>
         <div>
             <div>
-                <form action="{% url app_info domain=domain.name %}" method="post">
+                <form action="{% url project_info project %}" method="post">
                     {% if versioned %}
                     <input type="hidden" name="versioned" value="">
                     {% else %}
@@ -283,11 +282,11 @@ it doesn’t make the test unnecessarily selective */
                     {% endif %}
                 </form>
             </div>
-            <div><h3>Reviews for {% if versioned %} the current version of {% endif %} {{ domain.copied_from.display_name }}</h3></div>
+            <div><h3>Reviews for {% if versioned %} the current version of {% endif %} {{ project.copied_from.display_name }}</h3></div>
             <br/>
             <div>
                 <a href="#add_review_modal" data-toggle="modal" class="btn btn-danger">Write a Review</a>
-                <button type="submit" class="btn btn-primary">{% if versioned %} View all reviews {% else %} Only show reviews from current version{% endif %}</button>
+                <a href="?all={{ all_link }}" class="btn btn-primary">{% if versioned %} View all reviews {% else %} Only show reviews from current version{% endif %}</a>
             </div>
         </div>
         {% for review in reviews %}
@@ -299,13 +298,13 @@ it doesn’t make the test unnecessarily selective */
             <div class="span6">
         <h4>{{ review.title }}</h4>
         <div>
-            <p><small> by {{ review.nickname }} on {{ review.date_published }}</small></p>
-            <fieldset class="rating_static" id="stars{{ review.nickname }} ">
-                <input type="radio" id="star5{{ review.nickname }}"  value="5" disabled=True {% if review.rating == 5 %} checked=True {% endif %} /><label for="star5{{ review.nickname }}" title="Rocks!">5 stars</label>
-                <input type="radio" id="star4{{ review.nickname }}"  value="4" disabled=True {% if review.rating == 4 %} checked=True {% endif %} /><label for="star4{{ review.nickname }}" title="Pretty good">4 stars</label>
-                <input type="radio" id="star3{{ review.nickname }}"  value="3" disabled=True {% if review.rating == 3 %} checked=True {% endif %} /><label for="star3{{ review.nickname }}" title="Meh">3 stars</label>
-                <input type="radio" id="star2{{ review.nickname }}"  value="2" disabled=True {% if review.rating == 2 %} checked=True {% endif %} /><label for="star2{{ review.nickname }}" title="Kinda bad">2 stars</label>
-                <input type="radio" id="star1{{ review.nickname }}"  value="1" disabled=True {% if review.rating == 1 %} checked=True {% endif %} /><label for="star1{{ review.nickname }}" title="Sucks big time">1 star</label>
+            <p><small> on {{ review.date_published }}</small></p>
+            <fieldset class="rating_static" id="stars{{ review_id }}">
+                <input type="radio" value="5" disabled=True {% if review.rating == 5 %} checked=True {% endif %} />
+                <input type="radio" value="4" disabled=True {% if review.rating == 4 %} checked=True {% endif %} />
+                <input type="radio" value="3" disabled=True {% if review.rating == 3 %} checked=True {% endif %} />
+                <input type="radio" value="2" disabled=True {% if review.rating == 2 %} checked=True {% endif %} />
+                <input type="radio" value="1" disabled=True {% if review.rating == 1 %} checked=True {% endif %} />
             </fieldset>
 
         </div>
@@ -324,9 +323,9 @@ it doesn’t make the test unnecessarily selective */
 <div id="add_review_modal" class="modal hide fade">
     <div class="modal-header">
         <a class="close" data-dismiss="modal">&times;</a>
-        <h3>Write a review for {{ domain.copied_from.display_name }}</h3>
+        <h3>Write a review for {{ project.copied_from.display_name }}</h3>
     </div>
-    <form class="form-horizontal" method="post" action="{% url app_info domain %}">
+    <form class="form-horizontal" method="post" action="{% url project_info project %}">
         <div class="modal-body">
             <fieldset>
                 <legend>Review This App</legend>

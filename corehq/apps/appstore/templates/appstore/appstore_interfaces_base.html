@@ -1,12 +1,17 @@
 {% extends 'reports/report_base.html' %}
 
 {% block sidebar %}
-        <p>nothing</p>
-        {% endblock %}
+{% include 'appstore/sidebar.html' %}
+{% endblock %}
 
 {% block page-title %}
 <ul class="breadcrumb">
     <li>
-        <strong><a href="{% url appstore_interfaces_default %}">App Store</a></strong>
+        <strong><a href="{% url appstore %}">App Store</a></strong>
+        <span class="divider">&gt;</span>
+    </li>
+    {% block breadcrumb %}
+    <li>Advanced search</li>
+    {% endblock %}
 </ul>
 {% endblock %}

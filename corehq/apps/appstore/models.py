@@ -11,7 +11,6 @@ class Review(Document):
     user = StringProperty() # for example "stank"
     date_published = DateTimeProperty()
     info = StringProperty() # for example "this app has a few bugs, but it works great overall!"
-    nickname = StringProperty()
 
     @classmethod
     def get_by_app(cls, app_name):
@@ -24,7 +23,16 @@ class Review(Document):
     @classmethod
     def get_by_version(cls, version_name):
         result = cls.view("appstore/by_version",
-            key=version_name,
+            startkey=[version_name],
+            endkey=[version_name, {}],
+            reduce=False,
+            include_docs=True).all()
+        return result
+
+    @classmethod
+    def get_by_version_and_user(cls, version_name, user):
+        result = cls.view("appstore/by_version",
+            key=[version_name, user],
             reduce=False,
             include_docs=True).all()
         return result
@@ -45,7 +53,8 @@ class Review(Document):
     @classmethod
     def get_average_rating_by_version(cls, version_name):
         result = cls.get_db().view("appstore/by_version",
-            key=version_name,
+            startkey=[version_name],
+            endkey=[version_name, {}],
             reduce=True,
             include_docs=False)
 
@@ -70,7 +79,8 @@ class Review(Document):
     @classmethod
     def get_num_ratings_by_version(cls, version_name):
         result = cls.get_db().view("appstore/by_version",
-            key=version_name,
+            startkey=[version_name],
+            endkey=[version_name, {}],
             reduce=True,
             include_docs=False)
         if result:

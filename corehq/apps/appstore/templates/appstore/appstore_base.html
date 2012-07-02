@@ -4,25 +4,14 @@
 {% load i18n %}
 
 {% block sidebar %}
-<ul class="nav nav-list">
-    <li class="nav-header">Search</li>
-    <li><form action="{% url appstore_search_snapshots %}" method="get" class="form-search">
-        <input type="text" name="q" placeholder="Search for apps..." value="{{ search_query }}" class="search-query" style="width: 80%" />
-    </form></li>
-    <li><a href="{% url appstore_interface_dispatcher 'advanced' %}">Advanced search...</a></li>
-    <li class="nav-header">Sort by</li>
-    <li><a href="{% url appstore_filter_choices "organization" %}">Organization</a></li>
-    <li><a href="{% url appstore_filter_choices "category" %}">Category</a></li>
-    <li><a href="{% url appstore_filter_choices "license" %}">License</a></li>
-    <li><a href="{% url appstore_filter_choices "region" %}">Region</a></li>
-</ul>
+{% include 'appstore/sidebar.html' %}
 {% endblock %}
 
 {% block page-title %}
 <ul class="breadcrumb">
     <li>
-        <strong><a href="{% url appstore %}">App Store</a></strong>
-        {% if search_query or filter_by or domain %}
+        <strong><a href="{% url appstore %}">Project Store</a></strong>
+        {% if search_query or filter_by or domain or project %}
             <span class="divider">&gt;</span>
         {% endif %}
     </li>
@@ -47,12 +36,12 @@
     All projects
 </h1>
 
-<div class="row-fluid">
+<div class="row">
 {% for app in apps %}
     {% if forloop.counter0|divisibleby:"3" and forloop.counter0 != 0 %}
-        </div><div class="row-fluid">
+        </div><div class="row">
     {% endif %}
-    <div class="span3">
+    <div class="span4">
         <div class="page-header">
             <h2>
                 {{ app.copied_from.display_name }}
@@ -63,9 +52,31 @@
             </h2>
         </div>
         <p>{{ app.description|truncatewords:18 }}</p>
-        <a class="btn" href="{% url app_info app.name %}">View &raquo;</a>
+        <a class="btn" href="{% url project_info app.name %}">View &raquo;</a>
+        {% if user.is_superuser %}
+            {% if app.is_approved %}
+                <a class="btn btn-danger" href="{% url approve_appstore_app app.name %}?approve=false">Unapprove</a>
+            {% else %}
+                <a class="btn btn-success" href="{% url approve_appstore_app app.name %}?approve=true">Approve</a>
+            {% endif %}
+        {% endif %}
     </div>
 {% endfor %}
+</div>
+
+<div class="row">
+    <ul class="pager span12">
+        {% if page > 1 %}
+        <li class="previous">
+            <a href="?page={{ prev_page }}{% if search_query %}&q={{ search_query }}{% endif %}">&larr; Previous</a>
+        </li>
+        {% endif %}
+        {% if more_pages %}
+        <li class="next">
+            <a href="?page={{ next_page }}{% if search_query %}&q={{ search_query }}{% endif %}">Next &rarr;</a>
+        </li>
+        {% endif %}
+    </ul>
 </div>
 
 <!--<table class="table table-striped">
@@ -82,7 +93,7 @@
     <tbody>
     {% for app in apps %}
     <tr>
-        <td><a href="{% url app_info app.name %}">{{ app.copied_from.display_name }}</a></td>
+        <td><a href="{% url project_info app.name %}">{{ app.copied_from.display_name }}</a></td>
         <td>
             {% if app.organization %}
                 <a href="{% url orgs_landing app.organization %}">{{ app.organization_doc.title }}</a>

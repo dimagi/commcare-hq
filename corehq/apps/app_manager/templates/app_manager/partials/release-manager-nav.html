@@ -1,14 +1,17 @@
 {% load hq_shared_tags %}
 
 <ul class="nav nav-pills" id="release-manager-nav">
-    <li {% if not release_manager %}class="active"{% endif %}>
+    <li {% if not release_manager and not summary %}class="active"{% endif %}>
     <a href="{% url view_app domain app.id %}?edit={{ edit|BOOL }}">
         Structure and Configuration
     </a>
     </li>
-    <li {% if release_manager %}class="active"{% endif %}>
+    <li {% if release_manager and not summary %}class="active"{% endif %}>
     <a href="{% url release_manager domain app.id %}?edit={{ edit|BOOL }}">
         Release Manager
     </a>
+    </li>
+    <li {% if summary %}class="active"{% endif %}>
+        <a href="{% url app_summary domain app.id %}">Application Summary</a>
     </li>
 </ul>

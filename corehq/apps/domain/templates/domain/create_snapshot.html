@@ -4,14 +4,28 @@
 
 {% block subsection-title %}
 <li class="active" xmlns="http://www.w3.org/1999/html">
-    <a href="#">Create New Snapshot</a>
+    <a href="#">Manage Project Store</a>
 </li>
 {% endblock %}
 
-{% block user-view %}
+{% block js-inline %}
+{{ block.super }}
+        <!-- unfortunately copied from project settings -->
+<script type="text/javascript">
+    $(function(){
+        $("#id_project_type").focus(function() {
+            $.getJSON('{% url autocomplete_categories %}', function(results) {
+                $("#id_project_type").typeahead({ source: results,
+                    items: 8
+                }).
+                        attr("autocomplete", "off");
+            });
+        });
+    });
+</script>
+{% endblock %}
 
-    <fieldset>
-        <legend>Create new snapshot</legend>
+{% block user-view %}
         <div>
             <h3>This project has {{ snapshots|length }} snapshots</h3>
             <table class="table table-striped">
@@ -20,7 +34,7 @@
                     <th></th>
                     <th>Date</th>
                     <th>License</th>
-                    <th>Status</th>
+                    <th>Published in project store?</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -53,13 +67,40 @@
             <div class="alert alert-error">{{ error_message }}</div>
         {% endif %}
         <form class="form-horizontal" method="post">
-            <div class="control-group">
-                <label class="control-label" for="license">{% trans 'Snapshot with license' %}</label>
-                <div class="controls">
-                    {{ field }}
+            <fieldset>
+                <legend>Create new snapshot</legend>
+                <div class="control-group">
+                    <label class="control-label" for="license">{% trans 'License' %}</label>
+                    <div class="controls">
+                        {{ field }}
+                    </div>
                 </div>
-            </div>
+                <div class="control-group">
+                    <label class="control-label" for="id_region">{% trans 'Region' %}</label>
+                    <div class="controls">
+                        <input type="text" name="region" id="id_region" value="{{ request.project.region }}" />
+                        <p class="help-block">
+                            e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc.
+                        </p>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="id_project_type">{% trans 'Category' %}</label>
+                    <div class="controls">
+                        <input type="text" name="project_type" id="id_project_type" value="{{ request.project.project_type }}" />
+                        <p class="help-block">
+                            e.g. MCH, HIV, etc.
+                        </p>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="id_description">{% trans 'Description' %}</label>
+                    <div class="controls">
+                        <textarea id="id_description" rows="10" cols="40" name="description">{{ request.project.description }}</textarea>
+                    </div>
+                </div>
+            </fieldset>
+
         <div class="form-actions"><button type="submit" class="btn btn-primary">Create New Snapshot</button></div>
         </form>
-    </fieldset>
 {% endblock %}>

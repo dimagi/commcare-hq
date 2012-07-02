@@ -16,41 +16,56 @@ from django.contrib import messages
 from django.conf import settings
 from corehq.apps.reports.views import datespan_default
 
+PER_PAGE = 9
 
 @require_superuser
 def appstore(request, template="appstore/appstore_base.html"):
-    apps = Domain.published_snapshots()[:40]
-    vals = dict(apps=apps)
+    page = int(request.GET.get('page', 1))
+    results = Domain.published_snapshots(include_unapproved=request.user.is_superuser, page=page, per_page=PER_PAGE)
+    more_pages = page * PER_PAGE < results.total_rows
+    vals = dict(apps=results, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages)
     return render_to_response(request, template, vals)
 
 @require_superuser
-def app_info(request, domain, template="appstore/app_info.html", versioned=None):
+def project_info(request, domain, template="appstore/project_info.html"):
     dom = Domain.get_by_name(domain)
-    if not dom or not dom.is_snapshot or not dom.published:
+    if not dom or not dom.is_snapshot or not dom.published or (not dom.is_approved and not request.user.is_superuser):
         raise Http404()
     if request.method == "POST":
+        versioned = True
 #        import pdb
 #        pdb.set_trace()
-        versioned = request.POST.get('versioned', '')
-        nickname = request.POST.get('review_name', '')
 
-        if nickname:
-            form = AddReviewForm(request.POST)
-#            pdb.set_trace()
-            if form.is_valid():
-                nickname = form.cleaned_data['review_name']
-                title = form.cleaned_data['review_title']
-                rating = int(request.POST['rating'])
-                info = form.cleaned_data['review_info']
-                user = request.user.username
-                date_published = datetime.now()
-                review = Review(title=title, rating=rating, nickname=nickname, user=user, info=info, date_published = date_published, domain=domain, original_doc=dom.original_doc)
-                review.save()
-                form = AddReviewForm()
+        form = AddReviewForm(request.POST)
+        # pdb.set_trace()
+        if form.is_valid():
+            title = form.cleaned_data['review_title']
+            rating = int(request.POST.get('rating'))
+            if rating < 1:
+                rating = 1
+            if rating > 5:
+                rating = 5
+            info = form.cleaned_data['review_info']
+            date_published = datetime.now()
+            user = request.user.username
+
+            old_review = Review.get_by_version_and_user(domain, user)
+
+            if len(old_review) > 0: # replace old review
+                review = old_review[0]
+                review.title = title
+                review.rating = rating
+                review.info = info
+                review.date_published = date_published
+            else:
+                review = Review(title=title, rating=rating, user=user, info=info, date_published = date_published, domain=domain, original_doc=dom.original_doc)
+            review.save()
+
         else:
             form = AddReviewForm()
     else:
         form = AddReviewForm()
+        versioned = not request.GET.get('all', '')
 
     if versioned:
         reviews = Review.get_by_version(domain)
@@ -63,24 +78,33 @@ def app_info(request, domain, template="appstore/app_info.html", versioned=None)
     if average_rating:
         average_rating = round(average_rating, 1)
 
-    vals = dict(domain=dom,
+    all_link = ''
+    if versioned:
+        all_link = 'true'
+
+    vals = dict(
+        project=dom,
         form=form,
         reviews=reviews,
         average_rating=average_rating,
         num_ratings=num_ratings,
-        versioned=versioned
+        versioned=versioned,
+        all_link=all_link
     )
     return render_to_response(request, template, vals)
 
 @require_superuser
 def search_snapshots(request, filter_by = '', filter = '', template="appstore/appstore_base.html"):
+    page = int(request.GET.get('page', 1))
     if filter_by != '':
         query = "%s:%s %s" % (filter_by, filter, request.GET['q'])
     else:
         query = request.GET['q']
 
-    snapshots = Domain.snapshot_search(query, limit=40)
-    return render_to_response(request, template, {'apps': snapshots, 'search_query': query})
+    snapshots, total_rows = Domain.snapshot_search(query, page=page, per_page=PER_PAGE)
+    more_pages = page * PER_PAGE < total_rows
+    vals = dict(apps=snapshots, search_query=query, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages)
+    return render_to_response(request, template, vals)
 
 @require_superuser
 def filter_choices(request, filter_by, template="appstore/filter_choices.html"):
@@ -103,12 +127,15 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
     if filter_by not in ('category', 'license', 'region', 'organization'):
         raise Http404("That page doesn't exist")
 
+    page = int(request.GET.get('page', 1))
+
     filter = filter.replace('+', ' ')
 
     query = '%s:"%s"' % (filter_by, filter)
-    results = get_db().search('domain/snapshot_search', q=query, limit=40)
-    snapshots = map(Domain.get, [r['id'] for r in results])
-    return render_to_response(request, template, {'apps': snapshots, 'filter_by': filter_by, 'filter': filter})
+    results, total_rows = Domain.snapshot_search(query, page=page, per_page=PER_PAGE)
+    more_pages = page * PER_PAGE < total_rows
+    vals = dict(apps=results, filter_by=filter_by, filter=filter, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages)
+    return render_to_response(request, template, vals)
 
 @datespan_default
 def report_dispatcher(request, slug, return_json=False,
@@ -131,3 +158,13 @@ def report_dispatcher(request, slug, return_json=False,
     return dispatcher.dispatch(request, dummy.name, slug, return_json, export,
                                custom, async, async_filters)
 
+@require_superuser
+def approve_app(request, domain):
+    domain = Domain.get_by_name(domain)
+    if request.GET.get('approve') == 'true':
+        domain.is_approved = True
+        domain.save()
+    elif request.GET.get('approve') == 'false':
+        domain.is_approved = False
+        domain.save()
+    return HttpResponseRedirect(reverse('appstore'))

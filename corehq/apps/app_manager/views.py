@@ -59,6 +59,7 @@ from couchdbkit.resource import ResourceNotFound
 from corehq.apps.app_manager.decorators import safe_download
 from django.utils.datastructures import SortedDict
 from xml.dom.minidom import parseString
+from formtranslate import api
 
 try:
     from lxml.etree import XMLSyntaxError
@@ -1693,3 +1694,74 @@ def formdefs(request, domain, app_id):
         return response
     else:
         return json_response(formdefs)
+
+def _questions_for_form(request, form, langs):
+    # copied from get_form_view_context
+    xform_questions = []
+    xform = None
+    xform = form.wrapped_xform()
+    try:
+        xform = form.wrapped_xform()
+    except XFormError as e:
+        messages.error(request, "Error in form: %s" % e)
+    except Exception as e:
+        logging.exception(e)
+        messages.error(request, "Unexpected error in form: %s" % e)
+
+    if xform and xform.exists():
+        form.validate_form()
+        xform_questions = xform.get_questions(langs)
+        try:
+            form.validate_form()
+            xform_questions = xform.get_questions(langs)
+        except XMLSyntaxError as e:
+            messages.error(request, "Syntax Error: %s" % e)
+        except AppError as e:
+            messages.error(request, "Error in application: %s" % e)
+        except XFormValidationError as e:
+            message = unicode(e)
+            # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
+            messages.error(request, "Validation Error:\n")
+            for msg in message.split("\n")[2:]:
+                messages.error(request, "%s" % msg)
+        except XFormError as e:
+            messages.error(request, "Error in form: %s" % e)
+        # any other kind of error should fail hard, but for now there are too many for that to be practical
+        except Exception as e:
+            if settings.DEBUG:
+                raise
+            logging.exception(e)
+            messages.error(request, "Unexpected System Error: %s" % e)
+    return xform_questions
+
+def _find_name(names, langs):
+    name = None
+    for lang in langs:
+        if lang in names:
+            name = names[lang]
+            break
+    if name is None:
+        lang = names.keys()[0]
+        name = names[lang]
+    return name
+
+@login_and_domain_required
+def summary(request, domain, app_id):
+    app = Application.get(app_id)
+    context = get_apps_base_context(request, domain, app)
+    langs = context['langs']
+
+    modules = []
+
+    for module in app.get_modules():
+        forms = []
+        for form in module.get_forms():
+            forms.append({'name': _find_name(form.name, langs),
+                          'questions': _questions_for_form(request, form, langs)})
+
+        modules.append({'name': _find_name(module.name, langs), 'forms': forms})
+
+    context['modules'] = modules
+    context['summary'] = True
+
+    return render_to_response(request, "app_manager/summary.html", context)
