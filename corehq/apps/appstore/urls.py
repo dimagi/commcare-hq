@@ -1,7 +1,7 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('corehq.apps.appstore.views',
-    url(r'^info/(?P<domain>[\w\.-]+)/$', 'project_info', name='project_info'),
+    url(r'^(?P<domain>[\w\.-]+)/info/$', 'project_info', name='project_info'),
     url(r'^search/$', 'search_snapshots', name='appstore_search_snapshots'),
     url(r'^filter/(?P<filter_by>[\w]+)/(?P<filter>[+\w-]+)/', 'filter_snapshots', name='appstore_filter_snapshots'),
     url(r'^filter/(?P<filter_by>[\w]+)/', 'filter_choices', name='appstore_filter_choices'),
@@ -15,6 +15,7 @@ urlpatterns = patterns('corehq.apps.appstore.views',
     }),
     url(r'^store/(?P<slug>[\w_]+)/$', 'report_dispatcher', name="appstore_interface_dispatcher"),
     url(r'^store/appstore/$', 'report_dispatcher', name="appstore_interfaces_default", kwargs={'slug':'appstore'}),
-    url(r'^approve/(?P<domain>[\w\.-]+)/$', 'approve_app', name='approve_appstore_app'),
+    url(r'^(?P<domain>[\w\.-]+)/approve/$', 'approve_app', name='approve_appstore_app'),
+    url(r'^(?P<domain>[\w\.-]+)/copy/', 'copy_snapshot_app', name='copy_snapshot_app')
 
 )

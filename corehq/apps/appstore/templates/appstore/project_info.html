@@ -222,7 +222,9 @@ it doesn’t make the test unnecessarily selective */
         {% if project.applications|length > 0 %}
             <ul class="nav nav-pills">
                 {% for app in project.applications %}
-                <li><a href="{% url app_summary project app.id %}">{{ app.name }}</a></li>
+                <li>
+                    <a href="{% url app_summary project app.id %}">{{ app.name }}</a>
+                </li>
                 {% endfor %}
             </ul>
         {% else %}
@@ -243,24 +245,44 @@ it doesn’t make the test unnecessarily selective */
         {{ field.value }}
     </dd>
     {% endfor %}
-    <dt>
-        Copy this snapshot into a new project
-    </dt>
-    <dd>
-        <form class="form-inline" method="post" action="{% url domain_copy_snapshot project %}">
-            <fieldset>
-                <div class="control-group{% if error_message %} error{% endif %}">
-                    <input type="text" class="span3" id="new_project_name"
-                           name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">
-                    {% if error_message %}
-                    <span class="help-inline">{{ error_message }}</span>
-                    {% endif %}
+ </dl>
+        <div>
+            <form action="{% url copy_snapshot_app project.name %}" method="post">
+                <fieldset>
+                    <legend>Copy individual application into existing project</legend>
+                    <label for="app_to_copy_select">
+                        Application to copy
+                    </label>
+                    <select name="app_id" id="app_to_copy_select">
+                        {% for app in project.applications %}
+                        <option value="{{ app.id }}">{{ app.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <label for="project_select">
+                        Destination project
+                    </label>
+                    <select name="project" id="project_select">
+                        {% for p in request.couch_user.projects %}
+                        <option value="{{ p.name }}">{{ p.display_name }}</option>
+                        {% endfor %}
+                    </select>
+                </fieldset>
+                <button class="btn btn-primary" type="submit">Copy application</button>
+            </form>
+            <form method="post" action="{% url domain_copy_snapshot project %}">
+                <fieldset>
+                    <legend>Copy entire project into new project</legend>
+                    <div{% if error_message %} class="error"{% endif %}>
+                        <input type="text" class="span3" id="new_project_name"
+                               name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">
+                        {% if error_message %}
+                        <span class="help-inline">{{ error_message }}</span>
+                        {% endif %}
+                    </div>
                     <button type="submit" class="btn btn-primary">Create New Project</button>
-                </div>
-            </fieldset>
-        </form>
-    </dd>
-</dl>
+                </fieldset>
+            </form>
+        </div>
 
 <hr/>
         <div>

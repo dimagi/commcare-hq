@@ -1102,6 +1102,10 @@ class WebUser(CouchUser):
         else:
             raise self.Inconsistent("domains and domain_memberships out of sync")
 
+    @property
+    def projects(self):
+        return map(Domain.get_by_name, self.domains)
+
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
         if self.is_superuser:
