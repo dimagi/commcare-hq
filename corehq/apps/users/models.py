@@ -1190,6 +1190,10 @@ class WebUser(CouchUser, AuthorizableMixin):
     def get_email(self):
         return self.email or self.username
 
+    @property
+    def projects(self):
+        return map(Domain.get_by_name, self.domains)
+
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
         from corehq.apps.orgs.models import Team

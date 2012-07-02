@@ -224,12 +224,6 @@ class Domain(Document):
             return None
         db = get_db()
 
-        str_to_cls = {
-            'UserRole': UserRole,
-            'Application': Application,
-            'RemoteApp': RemoteApp,
-            }
-
         new_id = db.copy_doc(self.get_id)['id']
         if new_domain_name is None:
             new_domain_name = new_id
@@ -245,28 +239,7 @@ class Domain(Document):
                 delattr(new_domain, field)
 
         for res in db.view('domain/related_to_domain', key=[self.name, True]):
-            json = res['value']
-            doc_type = json['doc_type']
-            cls = str_to_cls[doc_type]
-            new_id = db.copy_doc(json['_id'])['id']
-
-            new_doc = cls.get(new_id)
-            for field in self._dirty_fields:
-                if hasattr(new_doc, field):
-                    delattr(new_doc, field)
-
-            if hasattr(cls, '_meta_fields'):
-                for field in cls._meta_fields:
-                    if not field.startswith('_') and hasattr(new_doc, field):
-                        delattr(new_doc, field)
-
-            new_doc.original_doc = json['_id']
-            new_doc.domain = new_domain_name
-
-            #if isinstance(new_doc, ApplicationBase):
-                # TODO: add some sort of reference in the multimedia document to the new domain
-
-            new_doc.save()
+            self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
 
         new_domain.save()
 
@@ -275,6 +248,34 @@ class Domain(Document):
             user.save()
 
         return new_domain
+
+    def copy_component(self, doc_type, id, new_domain_name, user=None):
+        from corehq.apps.hqmedia.models import HQMediaMixin
+        str_to_cls = {
+            'UserRole': UserRole,
+            'Application': Application,
+            'RemoteApp': RemoteApp,
+            }
+        db = get_db()
+        doc_type = doc_type
+        cls = str_to_cls[doc_type]
+        new_id = db.copy_doc(id)['id']
+
+        new_doc = cls.get(new_id)
+        for field in self._dirty_fields:
+            if hasattr(new_doc, field):
+                delattr(new_doc, field)
+
+        if hasattr(cls, '_meta_fields'):
+            for field in cls._meta_fields:
+                if not field.startswith('_') and hasattr(new_doc, field):
+                    delattr(new_doc, field)
+
+        new_doc.original_doc = id
+        new_doc.domain = new_domain_name
+
+        new_doc.save()
+        return new_doc
 
     def save_snapshot(self):
         if self.is_snapshot:

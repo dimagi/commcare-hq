@@ -256,7 +256,7 @@ def copy_snapshot(request, domain):
 
     elif request.method == 'POST':
 
-        args = {'domain_name' :request.POST['new_domain_name'], 'tos_confirmed': True}
+        args = {'domain_name' :request.POST['new_project_name'], 'tos_confirmed': True}
 
         form = DomainRegistrationForm(args)
 

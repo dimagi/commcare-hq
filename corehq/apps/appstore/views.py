@@ -31,13 +31,10 @@ def project_info(request, domain, template="appstore/project_info.html"):
     dom = Domain.get_by_name(domain)
     if not dom or not dom.is_snapshot or not dom.published or (not dom.is_approved and not request.user.is_superuser):
         raise Http404()
+
     if request.method == "POST":
         versioned = True
-#        import pdb
-#        pdb.set_trace()
-
         form = AddReviewForm(request.POST)
-        # pdb.set_trace()
         if form.is_valid():
             title = form.cleaned_data['review_title']
             rating = int(request.POST.get('rating'))
@@ -60,7 +57,6 @@ def project_info(request, domain, template="appstore/project_info.html"):
             else:
                 review = Review(title=title, rating=rating, user=user, info=info, date_published = date_published, domain=domain, original_doc=dom.original_doc)
             review.save()
-
         else:
             form = AddReviewForm()
     else:
@@ -75,6 +71,7 @@ def project_info(request, domain, template="appstore/project_info.html"):
         reviews = Review.get_by_app(dom.original_doc)
         average_rating = Review.get_average_rating_by_app(dom.original_doc)
         num_ratings = Review.get_num_ratings_by_app(dom.original_doc)
+
     if average_rating:
         average_rating = round(average_rating, 1)
 
@@ -168,3 +165,23 @@ def approve_app(request, domain):
         domain.is_approved = False
         domain.save()
     return HttpResponseRedirect(reverse('appstore'))
+<<<<<<< HEAD
+=======
+
+@require_superuser
+def copy_snapshot_app(request, domain):
+    user = request.couch_user
+    dom = Domain.get_by_name(domain)
+    if request.method == 'POST':
+        new_domain_name = request.POST['project']
+        app_id = request.POST['app_id']
+        if user.is_member_of(new_domain_name):
+            #try: # no way to know if it's an Application or RemoteApp
+            new_doc = dom.copy_component('Application', app_id, new_domain_name, user)
+            new_doc.clean_mapping()
+            #except:
+            #    new_doc = dom.copy_component('RemoteApp', app_id, new_domain_name, user)
+            messages.info(request, "Application successfully copied!")
+            return HttpResponseRedirect(reverse('view_app', args=[new_domain_name, new_doc.id]))
+    return HttpResponseRedirect(reverse('project_info', args=[domain]))
+>>>>>>> ba4845615663df075097ca823f2bd65d7c711058

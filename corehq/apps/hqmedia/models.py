@@ -2,7 +2,7 @@ from StringIO import StringIO
 from PIL import Image
 from datetime import datetime
 import hashlib
-from couchdbkit.exceptions import ResourceConflict
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from couchdbkit.ext.django.schema import *
 from django.core.urlresolvers import reverse
 import magic
@@ -135,7 +135,8 @@ class CommCareMultimedia(Document):
         return reverse("hqmedia_download", args=[self.doc_type,
                                                  self._id])
 
-    def shared(self):
+    @property
+    def is_shared(self):
         return len(self.shared_by) > 0
 
 class CommCareImage(CommCareMultimedia):
@@ -208,10 +209,14 @@ class HQMediaMixin(Document):
             updated_doc = self.get(self._id)
             updated_doc.create_mapping(multimedia, form_path)
 
-    def get_map_display_data(self):
+    def get_media_documents(self):
         for form_path, map_item in self.multimedia_map.items():
             media = eval(map_item.media_type)
-            media = media.get(map_item.multimedia_id)
+            try:
+                media = media.get(map_item.multimedia_id)
+            except ResourceNotFound:
+                media = None
+            yield form_path, media
 
     def get_template_map(self, sorted_files):
         product = []
@@ -229,3 +234,9 @@ class HQMediaMixin(Document):
             except AttributeError:
                 pass
         return product, missing_refs
+
+    def clean_mapping(self):
+        for path, media in self.get_media_documents():
+            if not media or (not media.is_shared and self.domain not in media.owners):
+                del self.multimedia_map[path]
+        self.save()
