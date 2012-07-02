@@ -76,3 +76,6 @@
 [submodule "submodules/hsph-reports"]
 	path = submodules/hsph-reports
 	url = git://github.com/dimagi/hsph-reports.git
+[submodule "submodules/pathindia-reports"]
+	path = submodules/pathindia-reports
+	url = git://github.com/dimagi/pathindia-reports.git
