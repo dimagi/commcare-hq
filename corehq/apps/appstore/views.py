@@ -177,6 +177,7 @@ def copy_snapshot_app(request, domain):
         if user.is_member_of(new_domain_name):
             #try: # no way to know if it's an Application or RemoteApp
             new_doc = dom.copy_component('Application', app_id, new_domain_name, user)
+            new_doc.clean_mapping()
             #except:
             #    new_doc = dom.copy_component('RemoteApp', app_id, new_domain_name, user)
             messages.info(request, "Application successfully copied!")

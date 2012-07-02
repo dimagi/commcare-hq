@@ -274,12 +274,6 @@ class Domain(Document):
         new_doc.original_doc = id
         new_doc.domain = new_domain_name
 
-        if isinstance(new_doc, HQMediaMixin):
-            # delete media from application
-            for path, media in new_doc.get_media_documents():
-                if not media or (not media.is_shared and user not in media.owners):
-                    del new_doc.multimedia_map[path]
-
         new_doc.save()
         return new_doc
 

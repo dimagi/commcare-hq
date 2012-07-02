@@ -62,7 +62,7 @@ def choose_media(request, domain, app_id):
     else:
         raise Http404()
 
-    if file is None or not file.shared():
+    if file is None or not file.is_shared:
         return HttpResponse(simplejson.dumps({
             'match_found': False
         }))
