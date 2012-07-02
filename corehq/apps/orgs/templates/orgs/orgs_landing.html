@@ -4,7 +4,7 @@
 {% load i18n %}
 
 {% block js-inline %}{{ block.super }}
-    <script>
+<script xmlns="http://www.w3.org/1999/html">
         $(function(){
         if (!{{ reg_form_empty|JSON }}) {
             $('#create_project_modal').modal({show:true});
@@ -38,6 +38,12 @@
         <li><a href="#add_member_modal" data-toggle="modal"><i class="icon-plus"></i> Add New Member</a></li>
         <li><a href="#add_team_modal" data-toggle="modal"><i class="icon-plus"></i> Add New Team</a></li>
 
+        <li class="divider"></li>
+        <li class="nav-header"><a href="{% url orgs_teams org.name %}">Teams</a></li>
+        {% for team in teams %}
+        <li><a href="{% url orgs_team_members org.name team.get_id %}">{{ team.name }}</a></li>
+        {% endfor %}
+
 
     </ul>
 {% endblock %}
@@ -62,15 +68,21 @@
             <p><img src="{% url orgs_logo org.name %}" alt="Logo"/></p>
             {% endif %}
 
-            <p>Email: <a href="mailto:{{ org.email }}">{{ org.email }}</a></p>
+            <p>Email: {% if org.email %}<a href="mailto:{{ org.email }}">{{ org.email }}</a>{% else %} None{% endif %}</p>
             <!-- possibly bad to add http to front of url.  How else to make link absolute? -->
-            <p>URL: <a href="http://{{ org.url }}" target="_blank">{{ org.url }}</a></p>
+            <p>URL: {% if org.url %}<a href="http://{{ org.url }}" target="_blank">{{ org.url }}</a>{% else %} None{% endif %}</p>
             <p>Location: {{ org.location }}</p>
         </div>
         <div class="span6 offset3">
-            <h2>{{ org.members|length }} Members</h2>
-            <h2>{{ domains|length }} Projects</h2>
-            <h2>{{ teams|length }} Teams</h2>
+            <div class="span2">
+            <h2>{{ org.members|length }} <small>Members</small></h2>
+            </div>
+            <div class="span2">
+            <h2>{{ domains|length }} <small>Projects</small></h2>
+            </div>
+            <div class="span2">
+            <h2>{{ teams|length }} <small>Teams</small></h2>
+            </div>
         </div>
         </div>
     </section>
@@ -79,7 +91,7 @@
             <hr/></div>
         <div class="row-fluid">
             <div class="span6">
-                <h2>Projects<small>({{ domains|length }})</small></h2>
+                <a href="#"><h2>Projects<small>({{ domains|length }})</small></h2></a>
                 <hr/>
                 {% for domain in domains %}
                 <h4>{{ domain.name }}</h4>
@@ -87,10 +99,10 @@
                 {% endfor %}
             </div>
             <div class="span6">
-                <h2>Organization Members<small>({{ org.members|length }})</small></h2>
+                <a href="#"><h2>Organization Members<small>({{ org.members|length }})</small></h2></a>
                 <hr/>
-                {% for member in org.members %}
-                <h4>{{ member }}</h4>
+                {% for member in members %}
+                <h4>{{ member.username }}{% if member.first_name and member.last_name %} <small>({{ member.full_name }})</small>{% endif %}{% if member.teams %} - Teams:{% for member_team in member.teams %} {{ member_team.0 }}, {% endfor %}{% endif %} </h4>
                 <hr/>
                 {% endfor %}
             </div>
@@ -98,10 +110,10 @@
         </div>
         <div class="row-fluid">
             <div class="span6">
-                <h2>Teams<small>({{ teams|length }})</small></h2>
+                <a href="{% url orgs_teams org.name %}"><h2>Teams<small>({{ teams|length }})</small></h2></a>
                 <hr/>
                 {% for team in teams %}
-                <h4>{{ team.name }}</h4>
+                <a href="{% url orgs_team_members org.name team.get_id %}"><h4>{{ team.name }}</h4></a>
                 <hr/>
                 {% endfor %}
             </div>

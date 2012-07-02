@@ -50,7 +50,7 @@ class AddMemberForm(forms.Form):
 
         org = Organization.get_by_name(self.org_name)
         for id in org.members:
-            if id == exists.id:
+            if id == exists.get_id:
                 raise forms.ValidationError('User is already part of this organization!')
 
         return data
@@ -61,19 +61,19 @@ class AddMemberForm(forms.Form):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
-class AddMemberToTeamForm(forms.Form):
-
-    def __init__(self, org_name, *args, **kwargs):
-        super(AddMemberToTeamForm, self).__init__(*args, **kwargs)
-        self.teams = Team.get_by_org(org_name)
-        self.team_names = [team.name for team in self.teams]
-        self.team = forms.ChoiceField(label="Team", choices=self.team_names)
-        self.fields['teams'] = self.team
-
-    @property
-    def organization(self):
-        return self.org_name
-
+#class AddMemberToTeamForm(forms.Form):
+#
+#    def __init__(self, org_name, *args, **kwargs):
+#        super(AddMemberToTeamForm, self).__init__(*args, **kwargs)
+#        self.teams = Team.get_by_org(org_name)
+#        self.team_names = [team.name for team in self.teams]
+#        self.team = forms.ChoiceField(label="Team", choices=self.team_names)
+#        self.fields['teams'] = self.team
+#
+#    @property
+#    def organization(self):
+#        return self.org_name
+#
 
 
 class AddTeamForm(forms.Form):
