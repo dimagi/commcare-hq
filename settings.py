@@ -536,6 +536,11 @@ CUSTOM_REPORT_MAP = {
                     'hsph.reports.data_summary.ProgramDataSummaryReport',
                     'hsph.reports.data_summary.ComparativeDataSummaryReport']
     },
+    "pathindia": {
+        'Custom Reports': [
+                    'pathindia.reports.PathIndiaKrantiReport'
+        ]
+    }
 #    "test": [
 #        'corehq.apps.reports.deid.FormDeidExport',
 #    ]
