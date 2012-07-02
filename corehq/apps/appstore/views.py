@@ -165,8 +165,6 @@ def approve_app(request, domain):
         domain.is_approved = False
         domain.save()
     return HttpResponseRedirect(reverse('appstore'))
-<<<<<<< HEAD
-=======
 
 @require_superuser
 def copy_snapshot_app(request, domain):
@@ -184,4 +182,3 @@ def copy_snapshot_app(request, domain):
             messages.info(request, "Application successfully copied!")
             return HttpResponseRedirect(reverse('view_app', args=[new_domain_name, new_doc.id]))
     return HttpResponseRedirect(reverse('project_info', args=[domain]))
->>>>>>> ba4845615663df075097ca823f2bd65d7c711058
