@@ -202,7 +202,7 @@ it doesn’t make the test unnecessarily selective */
             {% endif %}
             <div class="span1">
                 <h3>
-                    <a class="btn" href="{% url corehq.apps.app_manager.views.default domain.name %}">Preview</a>
+                    <a class="btn" href="{% url corehq.apps.app_manager.views.default project.name %}">Preview</a>
                 </h3>
             </div>
     <br/>
@@ -299,12 +299,12 @@ it doesn’t make the test unnecessarily selective */
         <h4>{{ review.title }}</h4>
         <div>
             <p><small> on {{ review.date_published }}</small></p>
-            <fieldset class="rating_static" id="stars{{ review_id }}">
-                <input type="radio" value="5" disabled=True {% if review.rating == 5 %} checked=True {% endif %} />
-                <input type="radio" value="4" disabled=True {% if review.rating == 4 %} checked=True {% endif %} />
-                <input type="radio" value="3" disabled=True {% if review.rating == 3 %} checked=True {% endif %} />
-                <input type="radio" value="2" disabled=True {% if review.rating == 2 %} checked=True {% endif %} />
-                <input type="radio" value="1" disabled=True {% if review.rating == 1 %} checked=True {% endif %} />
+            <fieldset class="rating_static" id="stars{{ review.get_id }}">
+                <input type="radio" id="star5{{ review.get_id }}" value="5" disabled=True {% if review.rating == 5 %} checked=True {% endif %}/><label for="star5{{ review.get_id }}" title="Rocks!">5 stars</label>
+                <input type="radio" id="star4{{ review.get_id }}" value="4" disabled=True {% if review.rating == 4 %} checked=True {% endif %}/><label for="star4{{ review.get_id }}" title="Pretty Good">4 stars</label>
+                <input type="radio" id="star3{{ review.get_id }}" value="3" disabled=True {% if review.rating == 3 %} checked=True {% endif %}/><label for="star3{{ review.get_id }}" title="Meh">3 stars</label>
+                <input type="radio" id="star2{{ review.get_id }}" value="2" disabled=True {% if review.rating == 2 %} checked=True {% endif %}/><label for="star2{{ review.get_id }}" title="Kinda Bad">2 stars</label>
+                <input type="radio" id="star1{{ review.get_id }}" value="1" disabled=True {% if review.rating == 1 %} checked=True {% endif %}/><label for="star1{{ review.get_id }}" title="Sucks Big Time">1 stars</label>
             </fieldset>
 
         </div>

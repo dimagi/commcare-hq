@@ -3,7 +3,7 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpRespons
 from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.registration.forms import DomainRegistrationForm
-from corehq.apps.orgs.forms import AddProjectForm, AddMemberForm, AddTeamForm
+from corehq.apps.orgs.forms import AddProjectForm, AddMemberForm, AddTeamForm, UpdateOrgInfo
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.users.views import require_can_edit_commcare_users
 from dimagi.utils.web import render_to_response, json_response, get_url_base
@@ -20,24 +20,26 @@ def orgs_base(request, template="orgs/orgs_base.html"):
     return render_to_response(request, template, vals)
 
 @require_superuser
-def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add_form=None, add_member_form=None, add_team_form=None):
+def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add_form=None, add_member_form=None, add_team_form=None, update_form=None):
     organization = Organization.get_by_name(org)
 
     reg_form_empty = not form
     add_form_empty = not add_form
     add_member_form_empty = not add_member_form
     add_team_form_empty = not add_team_form
+    update_form_empty = not update_form
 
     reg_form = form or DomainRegistrationForm(initial={'org': organization.name})
     add_form = add_form or AddProjectForm(org)
     add_member_form = add_member_form or AddMemberForm(org)
     add_team_form = add_team_form or AddTeamForm(org)
+    update_form = update_form or UpdateOrgInfo()
 
     current_teams = Team.get_by_org(org)
     current_domains = Domain.get_by_organization(org)
     members = [WebUser.get_by_user_id(user_id) for user_id in organization.members]
     vals = dict( org=organization, domains=current_domains, reg_form=reg_form,
-                 add_form=add_form, reg_form_empty=reg_form_empty, add_form_empty=add_form_empty, add_member_form=add_member_form, add_member_form_empty=add_member_form_empty, add_team_form=add_team_form, add_team_form_empty=add_team_form_empty, teams=current_teams, members=members)
+                 add_form=add_form, reg_form_empty=reg_form_empty, add_form_empty=add_form_empty, update_form=update_form, update_form_empty=update_form_empty, add_member_form=add_member_form, add_member_form_empty=add_member_form_empty, add_team_form=add_team_form, add_team_form_empty=add_team_form_empty, teams=current_teams, members=members)
     return render_to_response(request, template, vals)
 
 @require_superuser
@@ -47,6 +49,30 @@ def orgs_new_project(request, org):
         return register_domain(request)
     else:
         return orgs_landing(request, org, form=DomainRegistrationForm())
+
+@require_superuser
+def orgs_update_info(request, org):
+    organization = Organization.get_by_name(org)
+    if request.method == "POST":
+        form = UpdateOrgInfo(request.POST)
+        if form.is_valid():
+            if form.cleaned_data['org_title']:
+                organization.title = form.cleaned_data['org_title']
+            if form.cleaned_data['email']:
+                organization.email = form.cleaned_data['email']
+            if form.cleaned_data['url']:
+                organization.url = form.cleaned_data['url']
+            if form.cleaned_data['location']:
+                organization.location = form.cleaned_data['location']
+                #logo not working, need to look into this
+            if form.cleaned_data['logo']:
+                organization.logo_filename = form.cleaned_data['logo']
+            organization.save()
+        else:
+            return orgs_landing(request, org, update_form=form)
+    return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
+
+
 
 @require_superuser
 def orgs_add_project(request, org):

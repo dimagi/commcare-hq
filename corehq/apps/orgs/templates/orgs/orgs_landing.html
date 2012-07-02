@@ -9,6 +9,9 @@
         if (!{{ reg_form_empty|JSON }}) {
             $('#create_project_modal').modal({show:true});
         }
+        if (!{{ update_form_empty|JSON }}) {
+            $('#update_info_modal').modal({show:true});
+        }
         if (!{{ add_form_empty|JSON }}) {
             $('#add_project_modal').modal({show:true});
         }
@@ -28,6 +31,8 @@
 
 {% block sidebar %}
     <ul class="nav nav-list">
+        <li class="nav-header">Settings</li>
+        <li><a href="#update_info_modal" data-toggle="modal">Update Organization Info</a></li>
         <li class="nav-header">Projects</li>
         {% for domain in domains %}
             <li><a href="{% url domain_homepage domain %}">{{ domain.display_name }}</a></li>
@@ -39,7 +44,7 @@
         <li><a href="#add_team_modal" data-toggle="modal"><i class="icon-plus"></i> Add New Team</a></li>
 
         <li class="divider"></li>
-        <li class="nav-header"><a href="{% url orgs_teams org.name %}">Teams</a></li>
+        <li class="nav-header">Teams</li>
         {% for team in teams %}
         <li><a href="{% url orgs_team_members org.name team.get_id %}">{{ team.name }}</a></li>
         {% endfor %}
@@ -175,6 +180,25 @@
                 <div class="modal-footer">
                     <a href="#" data-dismiss="modal" class="btn">Cancel</a>
                     <button type="submit" class="btn btn-primary">Create New Project</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="update_info_modal" class="modal hide fade">
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal">&times;</a>
+                <h3>Update Info For {{ org.title }}</h3>
+            </div>
+            <form class="form-horizontal" method="post" action="{% url orgs_update_info org.name %}">
+                <div class="modal-body">
+                    <fieldset>
+                        {% bootstrap_form_errors update_form %}
+                        {% bootstrap_fieldset update_form %}
+                    </fieldset>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Update</button>
                 </div>
             </form>
         </div>

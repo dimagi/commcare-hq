@@ -143,6 +143,7 @@ class Permissions(DocumentSchema):
         permissions = Permissions()
         for name in permissions.properties():
             permissions._setattr(name, self._getattr(name) | other._getattr(name))
+        return permissions
 
     def __eq__(self, other):
         for name in self.properties():
@@ -1209,8 +1210,7 @@ class WebUser(CouchUser, AuthorizableMixin):
         #now find out which dm has the highest permissions
         if dm_list:
             role = self.total_domain_membership(dm_list, domain)
-            role.save()
-            dm = DomainMembership(domain=domain, role_id=role.get_id)
+            dm = CustomDomainMembership(domain=domain, custom_role=role)
             return dm.has_permission(permission, data)
         else:
             return False
@@ -1251,23 +1251,10 @@ class WebUser(CouchUser, AuthorizableMixin):
         total_reports_list = list()
         for domain_membership in domain_memberships:
             permission = domain_membership.permissions
-            if permission.edit_web_users:
-                total_permission.edit_web_users = True
-            if permission.edit_commcare_users:
-                total_permission.edit_commcare_users = True
-            if permission.edit_data:
-                total_permission.edit_data = True
-            if permission.edit_apps:
-                total_permission.edit_apps = True
-            if permission.view_reports:
-                total_permission.view_reports = True
-            if permission.view_report_list:
-                for report in permission.view_report_list:
-                    if report not in total_permission.view_report_list:
-                        total_permission.view_report_list.append(report)
+            total_permission |= permission
 
         #set up a user role
-        return UserRole.get_or_create_with_permissions(domain=domain, permissions=total_permission, name='Custom Role')
+        return UserRole(domain=domain, permissions=total_permission, name=', '.join([domain_membership.role.name for domain_membership in domain_memberships]))
         #set up a domain_membership
 
 

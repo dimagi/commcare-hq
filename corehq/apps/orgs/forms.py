@@ -2,7 +2,7 @@ from django import forms
 from django.core.validators import validate_email
 from corehq.apps.domain.models import Domain
 import re
-from corehq.apps.domain.utils import new_domain_re
+from corehq.apps.domain.utils import new_domain_re, website_re, new_org_title_re
 from corehq.apps.orgs.models import Organization, Team
 from corehq.apps.users.models import CouchUser
 
@@ -91,3 +91,47 @@ class AddTeamForm(forms.Form):
             if t.name == data:
                 raise forms.ValidationError('A team with that name already exists.')
         return data
+
+
+class UpdateOrgInfo(forms.Form):
+
+    org_title = forms.CharField(label='Organization Title:', max_length=25, required=False, help_text='i.e. - The World Bank')
+    email = forms.CharField(label='Organization Email:', max_length=35, required=False)
+    url = forms.CharField(label='Organization Homepage:', max_length=35, required=False)
+    location = forms.CharField(label='Organization Location:', max_length=25, required=False)
+    logo = forms.ImageField(label='Organization Logo:', required=False)
+
+
+    def clean_org_title(self):
+        data = self.cleaned_data['org_title'].strip()
+        if not re.match("^%s$" % new_org_title_re, data) and not data == '':
+            raise forms.ValidationError('Only letters and numbers allowed. Single spaces may be used to separate words.')
+        return data
+
+    def clean_email(self):
+        data = self.cleaned_data['email'].strip()
+        if not data == '':
+            validate_email(data)
+        return data
+
+    def clean_url(self):
+        data = self.cleaned_data['url'].strip()
+        if not re.match("^%s$" % website_re, data) and not data == '':
+            raise forms.ValidationError('invalid url')
+        return data
+
+    def clean_location(self):
+        data = self.cleaned_data['location']
+        return data
+
+    def clean_logo(self):
+        data = self.cleaned_data['logo']
+        #resize image to fit in website nicely
+        return data
+
+
+    def clean(self):
+        for field in self.cleaned_data:
+            if isinstance(self.cleaned_data[field], basestring):
+                self.cleaned_data[field] = self.cleaned_data[field].strip()
+        return self.cleaned_data
