@@ -113,12 +113,12 @@ def send_to_recipients(request, domain):
                 name = recipient[:-len(GROUP)].strip()
                 group_names.append(name)
             elif re.match(r'^\+\d+', recipient): # here we expect it to have a plus sign
-                def find_user_by_type(u):
+                def wrap_user_by_type(u):
                     return getattr(user_models, u['doc']['doc_type']).wrap(u['doc'])
 
                 phone_users = CouchUser.view("users/by_default_phone", # search both with and w/o the plus
                     keys=[recipient, recipient[1:]], include_docs=True,
-                    wrapper=find_user_by_type).all()
+                    wrapper=wrap_user_by_type).all()
 
                 phone_users = filter(lambda u: u.is_member_of(domain), phone_users)
                 if len(phone_users) > 0:
