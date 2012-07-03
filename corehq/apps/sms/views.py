@@ -119,10 +119,8 @@ def send_to_recipients(request, domain):
                 phone_users = CouchUser.view("users/by_default_phone", # search both with and w/o the plus
                     keys=[recipient, recipient[1:]], include_docs=True,
                     wrapper=find_user_by_type).all()
-                print len(phone_users), [u.username for u in phone_users]
 
                 phone_users = filter(lambda u: u.is_member_of(domain), phone_users)
-                print len(phone_users), [u.get_domains() for u in phone_users]
                 if len(phone_users) > 0:
                     phone_numbers.append((phone_users[0], recipient))
                 else:
