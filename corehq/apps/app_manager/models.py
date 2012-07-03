@@ -812,6 +812,32 @@ class ApplicationBase(VersionedDoc):
     def get_latest_app(self):
         return get_app(self.domain, self.get_id, latest=True)
 
+    def get_latest_saved(self):
+        if not hasattr(self, '_latest_saved'):
+            released = self.__class__.view('app_manager/applications',
+                startkey=['^ReleasedApplications', self.domain, self._id, {}],
+                endkey=['^ReleasedApplications', self.domain, self._id],
+                limit=1,
+                descending=True,
+                include_docs=True
+            )
+            if len(released) > 0:
+                self._latest_saved = released.all()[0]
+                print self._latest_saved.is_released
+            else:
+                saved = self.__class__.view('app_manager/saved_app',
+                    startkey=[self.domain, self._id, {}],
+                    endkey=[self.domain, self._id],
+                    descending=True,
+                    limit=1,
+                    include_docs=True
+                )
+                if len(saved) > 0:
+                    self._latest_saved = saved.all()[0]
+                else:
+                    self._latest_saved = None # do not return this app!
+        return self._latest_saved
+
     def set_admin_password(self, raw_password):
         import random
         algo = 'sha1'

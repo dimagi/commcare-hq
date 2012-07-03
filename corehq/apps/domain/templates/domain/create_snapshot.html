@@ -66,12 +66,68 @@
         {% if error_message %}
             <div class="alert alert-error">{{ error_message }}</div>
         {% endif %}
+        {% if has_builds %}
         <form class="form-horizontal" method="post">
             <fieldset>
                 {% bootstrap_form_errors form %}
                 {% bootstrap_fieldset form "Create new snapshot" %}
             </fieldset>
+            <div>
+                Snapshots are taken from the latest starred builds, or, if no builds are starred, from the latest build overall.
+            </div>
+            <div>
+                You are about to create a snapshot that contains the following builds:
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>
+                                Name
+                            </th>
+                            <th>
+                                Version
+                            </th>
+                            <th>
+                                Build comment
+                            </th>
+                            <th>
+                                Build source
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in request.project.applications %}
+                            <tr>
+                                <td>{{ app.name }}</td>
+
+                                {% if app.get_latest_saved %}
+                                    <td>{{ app.get_latest_saved.version }}</td>
+                                    <td>
+                                        {{ app.get_latest_saved.build_comment }}
+                                    </td>
+                                    <td>
+                                        {% if app.get_latest_saved.is_released %}
+                                        From latest starred build
+                                        {% else %}
+                                        From latest build
+                                        {% endif %}
+                                    </td>
+                                {% else %}
+                                    <td>
+                                        {{ app.version }}
+                                    </td>
+                                    <td></td>
+                                    <td>
+                                        No builds--from current copy
+                                    </td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
         <div class="form-actions"><button type="submit" class="btn btn-primary">Create New Snapshot</button></div>
         </form>
+        {% else %}
+        {% endif %}
 {% endblock %}>

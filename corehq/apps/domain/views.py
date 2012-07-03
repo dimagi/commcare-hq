@@ -279,7 +279,7 @@ def create_snapshot(request, domain):
     form = SnapshotSettingsForm()
     if request.method == 'GET':
         return render_to_response(request, 'domain/create_snapshot.html',
-                {'domain': domain.name, 'snapshots': snapshots, 'form': form})
+                {'domain': domain.name, 'snapshots': snapshots, 'form': form, 'has_builds': True})
 
     elif request.method == 'POST' and request.POST['license'] in LICENSES:
 
