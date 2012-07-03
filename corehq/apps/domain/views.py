@@ -10,7 +10,7 @@ from django.shortcuts import redirect
 
 from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required, require_previewer
 from corehq.apps.domain.forms import DomainSelectionForm, DomainGlobalSettingsForm,\
-    DomainMetadataForm
+    DomainMetadataForm, SnapshotSettingsForm
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 
@@ -276,10 +276,10 @@ def copy_snapshot(request, domain):
 def create_snapshot(request, domain):
     domain = Domain.get_by_name(domain)
     snapshots = domain.snapshots()
-    field = Select(choices=LICENSES.items()).render('license', domain.license)
+    form = SnapshotSettingsForm()
     if request.method == 'GET':
         return render_to_response(request, 'domain/create_snapshot.html',
-                {'domain': domain.name, 'snapshots': snapshots, 'field': field})
+                {'domain': domain.name, 'snapshots': snapshots, 'form': form})
 
     elif request.method == 'POST' and request.POST['license'] in LICENSES:
 
@@ -299,6 +299,7 @@ def create_snapshot(request, domain):
         if new_domain is None:
             return render_to_response(request, 'domain/create_snapshot.html',
                     {'domain': domain.name,
+                     'form': form,
                      'error_message': 'Snapshot creation failed; please try again',
                      'snapshots': snapshots})
 

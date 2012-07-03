@@ -80,6 +80,10 @@ class Domain(Document):
     license = StringProperty(choices=LICENSES, default='public')
     title = StringProperty()
 
+    author = StringProperty()
+    deployment_date = DateTimeProperty()
+    phone_model = StringProperty()
+
     migrations = SchemaProperty(DomainMigrations)
 
     # to be eliminated from projects and related documents when they are copied for the project store

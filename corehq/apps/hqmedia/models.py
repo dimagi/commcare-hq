@@ -235,7 +235,7 @@ class HQMediaMixin(Document):
                 pass
         return product, missing_refs
 
-    def clean_mapping(self):
+    def clean_mapping(self, user=None):
         for path, media in self.get_media_documents():
             if not media or (not media.is_shared and self.domain not in media.owners):
                 del self.multimedia_map[path]

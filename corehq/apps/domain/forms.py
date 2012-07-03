@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 
 import django_tables as tables
 from django.core.validators import validate_email
-from django.forms.fields import ChoiceField, CharField, BooleanField
+from django.forms.fields import ChoiceField, CharField, BooleanField, DateField
 from django.utils.encoding import smart_str
 
 from corehq.apps.domain.middleware import _SESSION_KEY_SELECTED_DOMAIN
@@ -79,6 +79,25 @@ class DomainSelectionForm(forms.Form):
 
 ########################################################################################################
 
+class SnapshotSettingsMixin(forms.Form):
+    title = CharField(label="Title", required=True)
+    author = CharField(label="Author name", required=True)
+    description = CharField(label="Description", required=False, widget=forms.Textarea)
+    license = ChoiceField(label='License', required=False, choices=LICENSES.items())
+    city = CharField(label="City", required=False)
+    country = CharField(label="Country", required=False)
+    region = CharField(label="Region", required=False,
+        help_text="e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc.")
+    project_type = CharField(label="Project Category", required=False,
+        help_text="e.g. MCH, HIV, etc.")
+    deployment_date = DateField(label="Deployment date", required=False)
+    phone_model = CharField(label="Phone model", widget=forms.Textarea, required=False)
+
+class SnapshotSettingsForm(SnapshotSettingsMixin):
+    pass
+
+########################################################################################################
+
 class DomainGlobalSettingsForm(forms.Form):
     default_timezone = TimeZoneChoiceField(label="Default Timezone", initial="UTC")
     case_sharing = ChoiceField(label='Case Sharing', choices=(('false', 'Off'), ('true', 'On')))
@@ -105,22 +124,14 @@ class DomainGlobalSettingsForm(forms.Form):
         except Exception:
             return False
 
-class DomainMetadataForm(DomainGlobalSettingsForm):
+class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
     is_shared = BooleanField(label='Publicly Available', help_text="""
 By checking this box, you are sharing this project with our other clients. This project's contents will be put in the
 public domain.
 """, required=False)
-    license = ChoiceField(label='License', required=False, choices=LICENSES.items())
-    city = CharField(label="City", required=False)
-    country = CharField(label="Country", required=False)
-    region = CharField(label="Region", required=False,
-                       help_text="e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc.") 
-    project_type = CharField(label="Project Category", required=False,
-                             help_text="e.g. MCH, HIV, etc.") 
     customer_type = ChoiceField(label='Customer Type', 
                                 choices=(('basic', 'Basic'), ('plus', 'Plus'), ('full', 'Full')))
     is_test = ChoiceField(label='Test Project', choices=(('false', 'Real'), ('true', 'Test')))
-    description = CharField(label="Description", required=False, widget=forms.Textarea)
 
     def save(self, request, domain):
         res = DomainGlobalSettingsForm.save(self, request, domain)

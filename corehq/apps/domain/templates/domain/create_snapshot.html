@@ -68,37 +68,8 @@
         {% endif %}
         <form class="form-horizontal" method="post">
             <fieldset>
-                <legend>Create new snapshot</legend>
-                <div class="control-group">
-                    <label class="control-label" for="license">{% trans 'License' %}</label>
-                    <div class="controls">
-                        {{ field }}
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label class="control-label" for="id_region">{% trans 'Region' %}</label>
-                    <div class="controls">
-                        <input type="text" name="region" id="id_region" value="{{ request.project.region }}" />
-                        <p class="help-block">
-                            e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc.
-                        </p>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label class="control-label" for="id_project_type">{% trans 'Category' %}</label>
-                    <div class="controls">
-                        <input type="text" name="project_type" id="id_project_type" value="{{ request.project.project_type }}" />
-                        <p class="help-block">
-                            e.g. MCH, HIV, etc.
-                        </p>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label class="control-label" for="id_description">{% trans 'Description' %}</label>
-                    <div class="controls">
-                        <textarea id="id_description" rows="10" cols="40" name="description">{{ request.project.description }}</textarea>
-                    </div>
-                </div>
+                {% bootstrap_form_errors form %}
+                {% bootstrap_fieldset form "Create new snapshot" %}
             </fieldset>
 
         <div class="form-actions"><button type="submit" class="btn btn-primary">Create New Snapshot</button></div>
