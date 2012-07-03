@@ -34,7 +34,8 @@
                     Tags
                 </td>
                 <td>
-                    License
+                    License<br />
+                    {% include "domain/partials/license_explanations.html" %}
                 </td>
             </tr>
         </thead>
@@ -51,7 +52,10 @@
                 </td>
                 <td><input type="checkbox" data-bind="checked: shared, attr: {name: m_id + '_shared'}" /></td>
                 <td><input type="text" data-bind="value: tags, enable: shared, attr: {name: m_id + '_tags'}" placeholder="Space-separated tags" /></td>
-                <td><select data-bind="options: $root.licenses, optionsText: 'name', optionsValue: 'code', value: license, enable: shared, attr: {name: m_id + '_license'}"></select></td>
+                <td><select data-bind="options: $root.licenses, optionsText: 'name', optionsValue: 'code', value: license, enable: shared, attr: {name: m_id + '_license'}"></select>
+                    <br />
+                    <a data-toggle="modal" href="#license-explanations">More information</a>
+                </td>
             </tr>
         </tbody>
     </table>

@@ -25,6 +25,7 @@ from corehq.apps.users.models import WebUser
 from dimagi.utils.timezones.fields import TimeZoneField
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from corehq.apps.users.util import format_username
+from django.template.loader import render_to_string
 
 class _BaseForm(object):
     def clean(self):
@@ -83,7 +84,7 @@ class SnapshotSettingsMixin(forms.Form):
     title = CharField(label="Title", required=True)
     author = CharField(label="Author name", required=True)
     description = CharField(label="Description", required=False, widget=forms.Textarea)
-    license = ChoiceField(label='License', required=False, choices=LICENSES.items())
+    license = ChoiceField(label='License', required=False, choices=LICENSES.items(), help_text=render_to_string('domain/partials/license_explanations.html'))
     city = CharField(label="City", required=False)
     country = CharField(label="Country", required=False)
     region = CharField(label="Region", required=False,
