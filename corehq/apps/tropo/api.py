@@ -1,6 +1,8 @@
 from urllib import urlencode
 from urllib2 import urlopen
 
+API_ID = "TROPO"
+
 def send(msg, *args, **kwargs):
     """
     Expected kwargs:

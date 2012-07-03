@@ -1,4 +1,5 @@
 import json
+from .api import API_ID as TROPO_BACKEND_API_ID
 from tropo import Tropo
 from corehq.apps.ivr.api import incoming as incoming_call
 from corehq.apps.sms.api import incoming as incoming_sms
@@ -33,7 +34,7 @@ def sms_in(request):
         if phone_number is not None and len(phone_number) > 1:
             if phone_number[0] == "+":
                 phone_number = phone_number[1:]
-        incoming_sms(phone_number, text)
+        incoming_sms(phone_number, text, TROPO_BACKEND_API_ID)
         t = Tropo()
         t.hangup()
         return HttpResponse(t.RenderJson())
@@ -49,7 +50,7 @@ def ivr_in(request):
         data = json.loads(request.raw_post_data)
         phone_number = data["session"]["from"]["id"]
         #
-        incoming_call(phone_number)
+        incoming_call(phone_number, TROPO_BACKEND_API_ID)
         #
         t = Tropo()
         t.reject()
