@@ -3,6 +3,7 @@ import urllib
 from django.conf import settings
 import urllib2
 
+API_ID = "MACH"
 
 def send(msg):
     """
