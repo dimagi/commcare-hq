@@ -1,8 +1,6 @@
 """
 Logic about chws phones and cases go here.
 """
-import logging
-from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import const
 
@@ -66,7 +64,10 @@ class CaseSyncOperation(object):
             if not last_sync:
                 return True
             else:
-                for action in case.actions:
+                # HACK: the optimized by_owner_lite view removes the actions
+                # so explicitly go get them if necessary.
+                actions = case.actions or CommCareCase.get(case.get_id).actions
+                for action in actions:
                     if action.server_date and \
                        action.server_date >= last_sync.date and \
                        action.sync_log_id != last_sync.get_id:
@@ -91,12 +92,7 @@ class CaseSyncOperation(object):
         # but in order to do proper comparisons we use IDs so all of these
         # operations look much more complicated than they should be.
 
-        try:
-            self.actual_owned_cases = set(CommCareCase.view("case/by_owner_lite", keys=keys).all())
-        except ResourceNotFound, ex:
-            self.actual_owned_cases = set(CommCareCase.view("case/by_owner", include_docs=True, keys=keys).all())
-            logging.error("Error, the case views are missing the case/by_owner_lite view, reverting to slower view query")
-
+        self.actual_owned_cases = set(CommCareCase.view("case/by_owner_lite", keys=keys).all())
         self._all_relevant_cases = get_footprint(self.actual_owned_cases)
         
         def _to_case_id_set(cases):
