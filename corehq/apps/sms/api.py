@@ -132,12 +132,11 @@ def send_sms_with_backend(domain, phone_number, text, backend_id):
             return False
         
         try:
-            msg.backend_api = backend.API_ID
-        except Exception:
-            pass
-        
-        try:
             module = __import__(backend.outbound_module, fromlist=["send"])
+            try:
+                msg.backend_api = module.API_ID
+            except Exception:
+                pass
             kwargs = backend.outbound_params
             module.send(msg, **kwargs)
             msg.save()
