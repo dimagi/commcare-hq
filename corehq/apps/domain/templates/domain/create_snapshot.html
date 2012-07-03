@@ -66,7 +66,6 @@
         {% if error_message %}
             <div class="alert alert-error">{{ error_message }}</div>
         {% endif %}
-        {% if has_builds %}
         <form class="form-horizontal" method="post">
             <fieldset>
                 {% bootstrap_form_errors form %}
@@ -97,9 +96,9 @@
                     <tbody>
                         {% for app in request.project.applications %}
                             <tr>
-                                <td>{{ app.name }}</td>
 
                                 {% if app.get_latest_saved %}
+                                    <td><a href="{% url app_summary domain app.id %}">{{ app.get_latest_saved.name }}</a></td>
                                     <td>{{ app.get_latest_saved.version }}</td>
                                     <td>
                                         {{ app.get_latest_saved.build_comment }}
@@ -112,6 +111,7 @@
                                         {% endif %}
                                     </td>
                                 {% else %}
+                                    <td><a href="{% url app_summary domain app.id %}">{{ app.name }}</a></td>
                                     <td>
                                         {{ app.version }}
                                     </td>
@@ -128,6 +128,4 @@
 
         <div class="form-actions"><button type="submit" class="btn btn-primary">Create New Snapshot</button></div>
         </form>
-        {% else %}
-        {% endif %}
 {% endblock %}>
