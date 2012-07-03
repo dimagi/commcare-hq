@@ -33,7 +33,8 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
     add_form = add_form or AddProjectForm(org)
     add_member_form = add_member_form or AddMemberForm(org)
     add_team_form = add_team_form or AddTeamForm(org)
-    update_form = update_form or UpdateOrgInfo()
+
+    update_form = update_form or UpdateOrgInfo(initial={'org_title': organization.title, 'email': organization.email, 'url': organization.url, 'location': organization.location})
 
     current_teams = Team.get_by_org(org)
     current_domains = Domain.get_by_organization(org)
@@ -54,8 +55,11 @@ def orgs_new_project(request, org):
 def orgs_update_info(request, org):
     organization = Organization.get_by_name(org)
     if request.method == "POST":
-        form = UpdateOrgInfo(request.POST)
+        form = UpdateOrgInfo(request.POST, request.FILES)
         if form.is_valid():
+            logo = None
+            import pdb
+            pdb.set_trace()
             if form.cleaned_data['org_title']:
                 organization.title = form.cleaned_data['org_title']
             if form.cleaned_data['email']:
@@ -66,8 +70,13 @@ def orgs_update_info(request, org):
                 organization.location = form.cleaned_data['location']
                 #logo not working, need to look into this
             if form.cleaned_data['logo']:
-                organization.logo_filename = form.cleaned_data['logo']
+                logo = form.cleaned_data['logo']
+                organization.logo_filename = logo.name
+
+
             organization.save()
+            if logo:
+                organization.put_attachment(content=logo.read(), name=logo.name)
         else:
             return orgs_landing(request, org, update_form=form)
     return HttpResponseRedirect(reverse('orgs_landing', args=[org]))
@@ -170,31 +179,6 @@ def orgs_team_members(request, org, team_id, template="orgs/orgs_team_members.ht
     vals = dict(org=organization, team=team, teams=teams, members=members, nonmembers=non_members, domains=current_domains, team_domains=domains, team_nondomains=non_domains)
     return render_to_response(request, template, vals)
 
-#@require_domain_admin
-#def my_groups(request, domain, template="groups/groups.html"):
-#    return group_membership(request, domain, request.couch_user._id, template)
-
-
-#def group_membership(request, org, couch_user_id, template="groups/groups.html"):
-#    couch_user = CouchUser.get_by_user_id(couch_user_id, domain)
-#    if request.method == "POST" and 'group' in request.POST:
-#        group = request.POST['group']
-#        group.add_user(couch_user)
-#        group.save()
-#        #messages.success(request, '%s joined group %s' % (couch_user.username, group.name))
-#    my_groups = Group.view("groups/by_user", key=couch_user_id, include_docs=True).all()
-#    all_groups = Group.view("groups/by_domain", key=domain, include_docs=True).all()
-#    other_groups = []
-#    for group in all_groups:
-#        if group.get_id not in [g.get_id for g in my_groups]:
-#            other_groups.append(group)
-#    #other_groups = [group for group in all_groups if group not in my_groups]
-#    context.update({"domain": domain,
-#                    "groups": my_groups,
-#                    "other_groups": other_groups,
-#                    "couch_user":couch_user })
-#    return render_to_response(request, template, context)
-
 @require_superuser
 def add_team(request, org):
     team_name = request.POST['team_name']
@@ -215,8 +199,6 @@ def join_team(request, org, team_id, couch_user_id):
     repeat(add_user, 3)
     if 'redirect_url' in request.POST:
         return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
-#    else:
-#        return HttpResponseRedirect(reverse("group_membership", args=(org, couch_user_id)))
 
 @require_superuser
 def leave_team(request, org, team_id, couch_user_id):
@@ -227,8 +209,6 @@ def leave_team(request, org, team_id, couch_user_id):
     repeat(remove_user, 3)
     if 'redirect_url' in request.POST:
         return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
-#    else:
-#        return HttpResponseRedirect(reverse("group_membership", args=(org, couch_user_id)))
 
 @require_POST
 @require_superuser
@@ -236,12 +216,13 @@ def delete_team(request, org, team_id):
     team = Team.get(team_id)
     if team.organization == org:
         record = team.soft_delete()
-        messages.success(request, 'You have deleted a team')
+        messages.success(request, 'You have deleted a team. <a href="{url}" class="post-link">Undo</a>'.format(
+            url=reverse('undo_delete_team', args=[org, record.get_id])
+        ), extra_tags="html")
         return HttpResponseRedirect(reverse("orgs_teams", args=(org, )))
     else:
         return HttpResponseForbidden()
 
-@require_POST
 @require_superuser
 def undo_delete_team(request, org, record_id):
     record = DeleteTeamRecord.get(record_id)
@@ -256,8 +237,6 @@ def add_domain_to_team(request, org, team_id, domain):
         team.save()
     if 'redirect_url' in request.POST:
         return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
-#    else:
-#        return HttpResponseRedirect(reverse("group_membership", args=(org, couch_user_id)))
 
 @require_superuser
 def remove_domain_from_team(request, org, team_id, domain):
@@ -267,8 +246,6 @@ def remove_domain_from_team(request, org, team_id, domain):
         team.save()
     if 'redirect_url' in request.POST:
         return HttpResponseRedirect(reverse(request.POST['redirect_url'], args=(org, team_id)))
-#    else:
-#        return HttpResponseRedirect(reverse("group_membership", args=(org, couch_user_id)))
 
 @require_superuser
 def set_team_permission_for_domain(request, org, team_id, domain, role_label):

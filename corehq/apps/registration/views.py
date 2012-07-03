@@ -50,6 +50,8 @@ def register_org(request, template="registration/org_request.html"):
     if request.method == "POST":
         form = OrganizationRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
+            import pdb
+            pdb.set_trace()
             name = form.cleaned_data["org_name"]
             title = form.cleaned_data["org_title"]
             email = form.cleaned_data["email"]

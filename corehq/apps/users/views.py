@@ -1,5 +1,6 @@
 from functools import wraps
 import json
+from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
 from openpyxl.shared.exc import InvalidFileException
 import re
@@ -76,6 +77,14 @@ require_can_edit_commcare_users = require_permission('edit_commcare_users')
 def _users_context(request, domain):
     couch_user = request.couch_user
     web_users = WebUser.by_domain(domain)
+    import pdb
+    pdb.set_trace()
+    teams = Team.get_by_domain(domain)
+    for team in teams:
+        for member_id in team.member_ids:
+            team_user = WebUser.get(member_id)
+            if team_user.get_id not in [web_user.get_id for web_user in web_users]:
+                    web_users.append(team_user)
 
     for user in [couch_user] + list(web_users):
         user.current_domain = domain

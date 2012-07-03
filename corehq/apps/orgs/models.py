@@ -112,6 +112,13 @@ class Team(UndoableDocument, AuthorizableMixin):
             reduce=False,
             include_docs=True).all()
 
+    @classmethod
+    def get_by_domain(cls, domain):
+        return cls.view("orgs/team_by_domain",
+            key=domain,
+            reduce=False,
+            include_docs=True).all()
+
     def save(self, *args, **kwargs):
         # forcibly replace empty name with '-'
         self.name = self.name or '-'

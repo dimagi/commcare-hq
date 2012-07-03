@@ -650,7 +650,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             startkey=key,
             endkey=key + [{}],
             include_docs=True,
-        )
+        ).all()
 
     @classmethod
     def phone_users_by_domain(cls, domain):
@@ -1203,13 +1203,15 @@ class WebUser(CouchUser, AuthorizableMixin):
             return True
 
         dm_list = list()
+
+        dm = self.get_domain_membership(domain)
+        if dm:
+            dm_list.append([dm, ''])
+
         for team_name, team_id in self.teams:
             team = Team.get(team_id)
             if domain in team.domains:
-                dm_list.append(team.get_domain_membership(domain))
-        dm = self.get_domain_membership(domain)
-        if dm:
-            dm_list.append(dm)
+                dm_list.append([team.get_domain_membership(domain), '(' + team_name + ')'])
 
         #now find out which dm has the highest permissions
         if dm_list:
@@ -1235,13 +1237,15 @@ class WebUser(CouchUser, AuthorizableMixin):
             return AdminUserRole(domain=domain)
 
         dm_list = list()
+
+        dm = self.get_domain_membership(domain)
+        if dm:
+            dm_list.append([dm, ''])
+
         for team_name, team_id in self.teams:
             team = Team.get(team_id)
             if domain in team.domains:
-                dm_list.append(team.get_domain_membership(domain))
-        dm = self.get_domain_membership(domain)
-        if dm:
-            dm_list.append(dm)
+                dm_list.append([team.get_domain_membership(domain), ' (' + team_name + ')'])
 
         #now find out which dm has the highest permissions
         if dm_list:
@@ -1253,12 +1257,12 @@ class WebUser(CouchUser, AuthorizableMixin):
         #sort out the permissions
         total_permission = Permissions()
         total_reports_list = list()
-        for domain_membership in domain_memberships:
+        for domain_membership, membership_source in domain_memberships:
             permission = domain_membership.permissions
             total_permission |= permission
 
         #set up a user role
-        return UserRole(domain=domain, permissions=total_permission, name=', '.join([domain_membership.role.name for domain_membership in domain_memberships]))
+        return UserRole(domain=domain, permissions=total_permission, name=', '.join([domain_membership.role.name + membership_source for domain_membership, membership_source in domain_memberships]))
         #set up a domain_membership
 
 

@@ -18,7 +18,7 @@ urlpatterns = patterns('corehq.apps.orgs.views',
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/(?P<domain>[\w-]+)/(?P<role_label>[\w-]+)/set_permission$', 'set_team_permission_for_domain', name='set_team_permission_for_domain'),
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/(?P<domain>[\w-]+)/remove_domain$', 'remove_domain_from_team', name='remove_domain_from_team'),
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/delete_team$', 'delete_team', name='delete_team'),
-    url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/undo_delete_team', 'undo_delete_team', name='undo_delete_team'),
+    url(r'^(?P<org>[\w\.-]+)/teams/(?P<record_id>[ \w-]+)/undo_delete_team', 'undo_delete_team', name='undo_delete_team'),
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/(?P<couch_user_id>[\w-]+)/join_team$', 'join_team', name='join_team'),
     url(r'^(?P<org>[\w\.-]+)/teams/(?P<team_id>[ \w-]+)/(?P<couch_user_id>[\w-]+)/leave_team$', 'leave_team', name='leave_team')
 )
