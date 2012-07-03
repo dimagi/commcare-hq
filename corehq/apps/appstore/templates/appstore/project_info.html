@@ -231,13 +231,9 @@ it doesn’t make the test unnecessarily selective */
         {% if project.applications|length > 0 %}
             <ul class="nav nav-pills">
                 {% for app in project.applications %}
-<<<<<<< HEAD:corehq/apps/appstore/templates/appstore/project_info.html
-                <li><a href="{% url app_summary project app.id %}">{{ app.name }}</a></li>
-=======
                 <li>
                     <a href="{% url app_summary project app.id %}">{{ app.name }}</a>
                 </li>
->>>>>>> ba4845615663df075097ca823f2bd65d7c711058:corehq/apps/appstore/templates/appstore/project_info.html
                 {% endfor %}
             </ul>
         {% else %}
@@ -258,20 +254,6 @@ it doesn’t make the test unnecessarily selective */
         {{ field.value }}
     </dd>
     {% endfor %}
-<<<<<<< HEAD:corehq/apps/appstore/templates/appstore/project_info.html
-    <dt>
-        Copy this snapshot into a new project
-    </dt>
-    <dd>
-        <form class="form-inline" method="post" action="{% url domain_copy_snapshot project %}">
-            <fieldset>
-                <div class="control-group{% if error_message %} error{% endif %}">
-                    <input type="text" class="span3" id="new_project_name"
-                           name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">
-                    {% if error_message %}
-                    <span class="help-inline">{{ error_message }}</span>
-                    {% endif %}
-=======
  </dl>
         <div>
             <form action="{% url copy_snapshot_app project.name %}" method="post">
@@ -306,7 +288,6 @@ it doesn’t make the test unnecessarily selective */
                         <span class="help-inline">{{ error_message }}</span>
                         {% endif %}
                     </div>
->>>>>>> ba4845615663df075097ca823f2bd65d7c711058:corehq/apps/appstore/templates/appstore/project_info.html
                     <button type="submit" class="btn btn-primary">Create New Project</button>
                 </fieldset>
             </form>
