@@ -235,6 +235,8 @@ class XForm(WrappedNode):
     def resolve_path(self, path, path_context=""):
         if path == "":
             return path_context
+        elif path is None:
+            raise CaseError("Every case must have a name")
         elif path[0] == "/":
             return path
         elif not path_context:
