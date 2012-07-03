@@ -181,10 +181,15 @@ class CommCareCase(CaseBase, IndexHoldingMixIn):
     
     @property
     def reverse_indices(self):
-        return map(lambda row: CommCareCaseIndex.wrap(row["value"]), 
-                   get_db().view("case/related", 
-                                 key=[self.domain, self.get_id,"reverse_index"],
-                                 reduce=False).all())
+        def wrap_row(row):
+            index = CommCareCaseIndex.wrap(row['value'])
+            index.is_reverse = True
+            return index
+        return get_db().view("case/related",
+            key=[self.domain, self.get_id, "reverse_index"],
+            reduce=False,
+            wrapper=wrap_row
+        ).all()
         
     @property
     def all_indices(self):

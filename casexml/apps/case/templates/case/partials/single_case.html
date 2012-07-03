@@ -12,7 +12,7 @@
     <tr><td>name</td><td>{{ case.name }}</td></tr>
     <tr><td>opened_on</td><td>{%  utc_to_timezone case.opened_on timezone %}</td></tr>
     <tr><td>modified_on</td><td>{% utc_to_timezone case.modified_on timezone %}</td></tr>
-    <tr><td>type</td><td>{{ case.type }}</td></tr>
+    <tr><td>type</td><td><code>{{ case.type }}</code></td></tr>
     <tr><td>closed?</td><td>{{ case.closed|yesno }}</td></tr>
     <tr><td>closed_on</td><td>{% utc_to_timezone case.closed_on timezone %}</td></tr>
     <tr><td>domain</td><td>{{ case.domain }}</td></tr>
@@ -27,6 +27,8 @@
             {% for form_id, filename in case.attachments %}
             {% if not forloop.first %}<br>{% endif %}
             <a href="{% url xform_attachment form_id filename %}">{{ filename }}</a>
+            {% empty %}
+                <h6>No Attachments</h6>
             {% endfor %}
         </td>
     </tr>
@@ -91,8 +93,8 @@
 {% for case_index in case.all_indices %}
     <tr>
         <td class="case_ref" data-caseid="{{ case_index.referenced_id }}">{{ case_index.referenced_case.name }}</td>
-        <td>{{ case_index.referenced_type }}</td>
-        <td>{{ case_index.referenced_case.type }}</td>
+        <td>{{ case.name }}'s {{ case_index.is_reverse|yesno:"Child, Parent" }}</td>
+        <td><code>{{ case_index.referenced_case.type }}</code></td>
         <td>{{ case_index.referenced_case.opened_on}}</td>
         <td>{{ case_index.referenced_case.modified_on}}</td>
         <td>{{ case_index.referenced_case.closed|yesno:"closed,open" }}</td>
@@ -109,7 +111,7 @@
 <thead>
     <tr>
         <th>Date</th>
-        <th>Type</th>
+        <th>Action</th>
         <th>Form</th>
     </tr>
 </thead>

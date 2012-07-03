@@ -98,12 +98,7 @@ class CaseSyncOperation(object):
         # but in order to do proper comparisons we use IDs so all of these
         # operations look much more complicated than they should be.
 
-        try:
-            self.actual_owned_cases = set(CommCareCase.view("case/by_owner_lite", keys=keys).all())
-        except ResourceNotFound, ex:
-            self.actual_owned_cases = set(CommCareCase.view("case/by_owner", include_docs=True, keys=keys).all())
-            logging.error("Error, the case views are missing the case/by_owner_lite view, reverting to slower view query")
-
+        self.actual_owned_cases = set(CommCareCase.view("case/by_owner_lite", keys=keys).all())
         self._all_relevant_cases = get_footprint(self.actual_owned_cases)
         
         def _to_case_id_set(cases):
