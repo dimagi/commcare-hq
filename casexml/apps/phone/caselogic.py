@@ -2,7 +2,9 @@
 Logic about chws phones and cases go here.
 """
 import logging
+import pdb
 from couchdbkit.exceptions import ResourceNotFound
+from datetime import datetime
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import const
 
@@ -66,10 +68,15 @@ class CaseSyncOperation(object):
             if not last_sync:
                 return True
             else:
-                for action in case.actions:
-                    if action.server_date and \
-                       action.server_date >= last_sync.date and \
-                       action.sync_log_id != last_sync.get_id:
+                case_actions = CommCareCase.get_db().view('case/actions_by_case', key=case._id).all()
+                actions_sorted = sorted(case_actions, key=lambda x: x['value']['seq'])
+                for action in actions_sorted:
+                    server_date = datetime.strptime(action['value'].get('server_date', None), '%Y-%m-%dT%H:%M:%SZ')
+                    sync_log_id = action['value'].get('sync_log_id', None)
+
+                    if server_date and \
+                       server_date >= last_sync.date and \
+                       sync_log_id != last_sync.get_id:
                         return True
             
             # If we got down here, as a last check make sure the phone
