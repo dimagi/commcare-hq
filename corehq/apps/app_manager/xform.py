@@ -344,20 +344,27 @@ class XForm(WrappedNode):
         else:
             self.add_case_and_meta_2(form)
 
+    def already_has_meta(self):
+        meta_blocks = set()
+        for meta_xpath in ('{orx}meta', '{x}meta', '{orx}Meta', '{x}Meta'):
+            meta = self.data_node.find(meta_xpath)
+            if meta.exists():
+                meta_blocks.add(meta)
+
+        return meta_blocks
+
     def add_case_and_meta_2(self, form):
         case = self.case_node
 
         case_parent = self.data_node
-        bind_parent = self.model_node
 
         self.create_casexml_2(form)
 
-
         # Test all of the possibilities so that we don't end up with two "meta" blocks
-        if  not case_parent.find('{orx}meta').exists() and\
-            not case_parent.find('{x}meta').exists() and\
-            not case_parent.find('{orx}Meta').exists() and\
-            not case_parent.find('{x}Meta').exists():
+        for meta in self.already_has_meta():
+            case_parent.remove(meta.xml)
+
+        def add_meta():
             orx = namespaces['orx'][1:-1]
             nsmap = {None: orx, 'cc': namespaces['cc'][1:-1]}
 
@@ -406,6 +413,7 @@ class XForm(WrappedNode):
                 ref="meta/appVersion",
                 value="instance('commcaresession')/session/context/appversion"
             )
+        add_meta()
 
     def add_case_and_meta_1(self, form):
         case = self.case_node
@@ -445,10 +453,10 @@ class XForm(WrappedNode):
 
 
         # Test all of the possibilities so that we don't end up with two "meta" blocks
-        if  not case_parent.find('{orx}meta').exists() and \
-            not case_parent.find('{x}meta').exists() and \
-            not case_parent.find('{orx}Meta').exists() and \
-            not case_parent.find('{x}Meta').exists():
+        for meta in self.already_has_meta():
+            case_parent.remove(meta.xml)
+
+        def add_meta():
             orx = namespaces['orx'][1:-1]
             nsmap = {"orx": orx}
             meta = ET.Element("{orx}meta".format(**namespaces), nsmap=nsmap)
@@ -467,7 +475,7 @@ class XForm(WrappedNode):
             for bind in binds:
                 bind = _make_elem('bind', bind)
                 bind_parent.append(bind)
-
+        add_meta()
         # apply any other transformations
         # necessary to make casexml work
         transformation()
