@@ -3,7 +3,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
-from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
 from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.reports.dispatcher import ReportDispatcher
 from corehq.apps.users.decorators import require_permission
@@ -17,6 +17,7 @@ from django.conf import settings
 from corehq.apps.reports.views import datespan_default
 from corehq.apps.hqmedia import utils
 from corehq.apps.app_manager.models import Application
+from django.shortcuts import redirect
 
 PER_PAGE = 9
 
@@ -195,3 +196,27 @@ def copy_snapshot_app(request, domain):
             messages.info(request, "Application successfully copied!")
             return HttpResponseRedirect(reverse('view_app', args=[new_domain_name, new_doc.id]))
     return HttpResponseRedirect(reverse('project_info', args=[domain]))
+
+@login_and_domain_required
+def copy_snapshot(request, domain):
+    dom = Domain.get_by_name(domain)
+    if request.method == "POST" and dom.is_snapshot:
+        args = {'domain_name': request.POST['new_project_name'], 'tos_confirmed': True}
+        form = DomainRegistrationForm(args)
+
+        print request.POST['new_project_name']
+        print form.is_valid()
+        print form.errors
+
+        if form.is_valid():
+            new_domain = dom.save_copy(form.clean_domain_name(), user=request.couch_user)
+        else:
+            messages.error(request, form.errors)
+            return project_info(request, domain)
+
+        if new_domain is None:
+            messages.error(request, "A project by that name already exists")
+            return project_info(request, domain)
+
+        messages.success(request, "Project copied successfully!")
+        return redirect("domain_project_settings", new_domain.name)

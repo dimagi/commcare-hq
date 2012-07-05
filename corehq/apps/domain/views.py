@@ -241,11 +241,14 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
         "domain": domain.name,
         "form": form,
         "languages": domain.readable_languages(),
-        "applications": domain.applications()
+        "applications": domain.applications(),
+        'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')
     })
 
-def autocomplete_categories(request, prefix=''):
-    return HttpResponse(json.dumps(Domain.categories(prefix)))
+def autocomplete_fields(request, field):
+    prefix = request.GET.get('prefix', '')
+    results = Domain.field_by_prefix(field, prefix)
+    return HttpResponse(json.dumps(results))
 
 @domain_admin_required
 def snapshot_settings(request, domain):
@@ -261,9 +264,14 @@ def create_snapshot(request, domain):
     if request.method == 'GET':
         return render_to_response(request, 'domain/create_snapshot.html',
             {'domain': domain.name,
-             'form': form})
+             'form': form,
+             'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
     elif request.method == 'POST':
-        form = SnapshotSettingsForm()
+        form = SnapshotSettingsForm(request.POST)
+        if not form.is_valid():
+            return render_to_response(request, 'domain/create_snapshot.html',
+                    {'domain': domain.name,
+                     'form': form})
         new_domain = domain.save_snapshot()
         if request.POST['license'] in LICENSES.keys():
             new_domain.license = request.POST['license']
@@ -271,7 +279,7 @@ def create_snapshot(request, domain):
         new_domain.project_type = request.POST['project_type']
         new_domain.region = request.POST['region']
         for snapshot in domain.snapshots():
-            if snapshot.published:
+            if snapshot.published and snapshot._id != new_domain._id:
                 snapshot.published = False
                 snapshot.save()
         new_domain.published = True

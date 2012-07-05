@@ -16,5 +16,6 @@ urlpatterns = patterns('corehq.apps.appstore.views',
     url(r'^store/(?P<slug>[\w_]+)/$', 'report_dispatcher', name="appstore_interface_dispatcher"),
     url(r'^store/appstore/$', 'report_dispatcher', name="appstore_interfaces_default", kwargs={'slug':'appstore'}),
     url(r'^(?P<domain>[\w\.-]+)/approve/$', 'approve_app', name='approve_appstore_app'),
-    url(r'^(?P<domain>[\w\.-]+)/copy/', 'copy_snapshot_app', name='copy_snapshot_app')
+    url(r'^(?P<domain>[\w\.-]+)/copyapp/', 'copy_snapshot_app', name='copy_snapshot_app'),
+    url(r'^(?P<domain>[\w\.-]+)/copy/$', 'copy_snapshot', name='domain_copy_snapshot'),
 )

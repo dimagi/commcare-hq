@@ -45,7 +45,7 @@ urlpatterns =\
         (r'^user_registration/', include('corehq.apps.registration.user_registration_backend.urls')),
         url(r'^domain/tos/$', direct_to_template, {'template': 'tos.html'}, name='tos'),
         url(r'^domain/select/$', 'select', name='domain_select'),
-        url(r'^domain/categories/$', 'autocomplete_categories', name='autocomplete_categories'),
+        url(r'^domain/autocomplete/(?P<field>\w+)/$', 'autocomplete_fields', name='domain_autocomplete_fields'),
     ) +\
     patterns('django.contrib.auth.views',
         url(r'^accounts/password_change/$', 'password_change', auth_pages_path('password_change_form.html'), name='password_change'),
@@ -73,5 +73,5 @@ domain_settings = patterns('corehq.apps.domain.views',
                            url(r'^snapshots/set_published/$', 'set_published_snapshot', name='domain_clear_published'),
                            url(r'^snapshots/$', 'snapshot_settings', name='domain_snapshot_settings'),
                            url(r'^snapshots/new/$', 'create_snapshot', name='domain_create_snapshot'),
-                           url(r'^multimedia/$', 'manage_multimedia', name='domain_manage_multimedia')
+                           url(r'^multimedia/$', 'manage_multimedia', name='domain_manage_multimedia'),
                            )

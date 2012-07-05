@@ -9,6 +9,8 @@ from django.utils.encoding import smart_str
 
 from corehq.apps.domain.middleware import _SESSION_KEY_SELECTED_DOMAIN
 from corehq.apps.domain.models import Domain, LICENSES
+from django.forms.extras.widgets import SelectDateWidget
+import datetime
 
 ########################################################################################################
 #
@@ -81,8 +83,6 @@ class DomainSelectionForm(forms.Form):
 ########################################################################################################
 
 class SnapshotSettingsMixin(forms.Form):
-    title = CharField(label="Title", required=True)
-    author = CharField(label="Author name", required=True)
     description = CharField(label="Description", required=False, widget=forms.Textarea)
     license = ChoiceField(label='License', required=False, choices=LICENSES.items(), help_text=render_to_string('domain/partials/license_explanations.html'))
     city = CharField(label="City", required=False)
@@ -91,11 +91,32 @@ class SnapshotSettingsMixin(forms.Form):
         help_text="e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc.")
     project_type = CharField(label="Project Category", required=False,
         help_text="e.g. MCH, HIV, etc.")
-    deployment_date = DateField(label="Deployment date", required=False)
-    phone_model = CharField(label="Phone model", widget=forms.Textarea, required=False)
+    deployment_date = DateField(label="Deployment date", required=False, widget=SelectDateWidget(years=range(2009, datetime.date.today().year+10)))
+    phone_model = CharField(label="Phone model", required=False)
+    user_type = CharField(label="User type", required=True,
+        help_text="e.g. CHW, ASHA, RA, etc")
 
 class SnapshotSettingsForm(SnapshotSettingsMixin):
-    pass
+    title = CharField(label="Title", required=True)
+    author = CharField(label="Author name", required=True)
+    description = CharField(label="Description", required=True, widget=forms.Textarea)
+    project_type = CharField(label="Project Category", required=True,
+        help_text="e.g. MCH, HIV, etc.")
+
+    def __init__(self, *args, **kw):
+        super(SnapshotSettingsForm, self).__init__(*args, **kw)
+        self.fields.keyOrder = [
+            'title',
+            'author',
+            'description',
+            'license',
+            'city',
+            'country',
+            'region',
+            'project_type',
+            'user_type',
+            'deployment_date',
+            'phone_model']
 
 ########################################################################################################
 
@@ -148,6 +169,8 @@ public domain.
             domain.license = self.cleaned_data['license']
             domain.is_shared = self.cleaned_data['is_shared']
             domain.description = self.cleaned_data['description']
+            domain.deployment_date = self.cleaned_data['deployment_date']
+            domain.phone_model = self.cleaned_data['phone_model']
             domain.save()
             return True
         except Exception:

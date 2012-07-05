@@ -117,12 +117,12 @@ class Domain(Document):
             return []
 
     @classmethod
-    def categories(cls, prefix=''):
+    def field_by_prefix(cls, field, prefix=''):
         # unichr(0xfff8) is something close to the highest character available
-        return [d['key'] for d in cls.view("domain/categories_by_prefix",
+        return [d['key'][1] for d in cls.view("domain/fields_by_prefix",
                                 group=True,
-                                startkey=prefix,
-                                endkey="%s%c" % (prefix, unichr(0xfff8))).all()]
+                                startkey=[field, prefix],
+                                endkey=[field, "%s%c" % (prefix, unichr(0xfff8))]).all()]
 
     @classmethod
     def regions(cls, prefix=''):
@@ -245,7 +245,10 @@ class Domain(Document):
         for res in db.view('domain/related_to_domain', key=[self.name, True]):
             if not self.is_snapshot and res['value']['doc_type'] in ('Application', 'RemoteApp'):
                 app = get_app(self.name, res['value']['_id']).get_latest_saved()
-                self.copy_component(app.doc_type, app._id, new_domain_name, user=user)
+                if app:
+                    self.copy_component(app.doc_type, app._id, new_domain_name, user=user)
+                else:
+                    self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
             else:
                 self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
 

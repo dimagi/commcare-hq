@@ -13,14 +13,16 @@
 <!-- unfortunately copied from project settings -->
 <script type="text/javascript">
     $(function(){
-        $("#id_project_type").focus(function() {
-            $.getJSON('{% url autocomplete_categories %}', function(results) {
-                $("#id_project_type").typeahead({ source: results,
-                    items: 8
-                }).
-                        attr("autocomplete", "off");
+        {% for field in autocomplete_fields %}
+            $("#id_{{ field }}").focus(function() {
+                $.getJSON('{% url domain_autocomplete_fields field %}', function(results) {
+                    $("#id_{{ field }}").typeahead({ source: results,
+                        items: 8
+                    }).
+                            attr("autocomplete", "off");
+                });
             });
-        });
+        {% endfor %}
     });
 </script>
 {% endblock %}
@@ -29,7 +31,7 @@
 <form class="form-horizontal" method="post" action="{% url domain_create_snapshot domain %}">
     <fieldset>
         {% bootstrap_form_errors form %}
-        {% bootstrap_fieldset form "Snapshot settings" %}
+        {% bootstrap_fieldset form "Creating new snapshot..." %}
     </fieldset>
 
     <div class="form-actions"><button type="submit" class="btn btn-primary">Create New Snapshot</button></div>
