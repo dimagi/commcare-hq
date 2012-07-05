@@ -18,7 +18,7 @@
             + "modules, you will have to use the same name for the case type. When you view the case data online, it " +
                     "will be organized by case type. Perhaps you will have one case called \"pregnant_mother\", and " +
                     "another called \"routine_patient\", etc.",
-            "Case List": "Whether to have an item in the module's menu that lets you browse the case list without" +
+            "Case List": "Whether to have an item in the module's menu that lets you browse the case list without " +
                     "moving on to fill out a form."
 
         };
@@ -31,6 +31,13 @@
                 return help_text[$(this).attr('data-help-key')];
             }
         });
+    });
+    $(function () {
+        function updateCaseListLabel() {
+            $(this).next()[$(this).val() === 'true' ? 'show' : 'hide']();
+        }
+        $('#case_list-label input').attr('name', 'case_list-label').removeClass('wide');
+        $('[name="case_list-show"]').change(updateCaseListLabel).each(updateCaseListLabel);
     });
 </script>
 {% endblock %}
@@ -118,15 +125,15 @@
                             Case List
                             <span class="help_popover" data-help-key="Case List"><span> <i class="icon icon-question-sign"></i></span></span>
                         </th>
-                        <th>
+                        <td>
                             <select class="code" type="text" name="case_list-show" data-value="{% if module.case_list.show %}true{% else %}false{% endif %}">
                                 <option value="false">Don't Show</option>
                                 <option value="true">Show</option>
                             </select>
-                            <span>
-                                Label: <input type="text" name="case_list-label" value="{{ module.case_list.label|trans:langs }}"/>
+                            <span id="case_list-label">
+                                with label: {{ module.case_list.label|input_trans:langs|safe }}
                             </span>
-                        </th>
+                        </td>
                     </tr>
                     <tr class="form editable">
                         <th>
