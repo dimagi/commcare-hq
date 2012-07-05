@@ -675,6 +675,10 @@ class CaseListReport(PaginatedHistoryHQReport):
                            'corehq.apps.reports.fields.SelectOpenCloseField']
         super(CaseListReport,self).__init__(domain, request, base_context)
 
+    def get_parameters(self):
+        super(CaseListReport, self).get_parameters()
+        self.case_sharing_groups = Group.case_sharing_groups_by_user(self.individual) if self.individual else []
+
     def get_report_context(self):
         self.context.update({"filter": settings.LUCENE_ENABLED })
         super(PaginatedHistoryHQReport, self).get_report_context()
@@ -737,32 +741,36 @@ class CaseListReport(PaginatedHistoryHQReport):
 
             key = prefix+key
 
-            startkey = key+[self.individual] if self.individual else key
-            endkey = key+[self.individual] if self.individual else key+[{}]
+            results = dict(individual=[], group=[])
+            self.count = 0
+            for i, case_owner in enumerate([self.individual]+self.case_sharing_groups):
+                startkey = key+[case_owner] if case_owner else key
+                endkey = key+[case_owner] if case_owner else key+[{}]
 
-            results = get_db().view(view,
-                startkey=startkey,
-                endkey=endkey,
-                reduce=False,
-                limit=limit,
-                skip=skip
-            ).all()
+                owner_type = 'group' if i > 0 else 'individual'
+                results.get(owner_type, []).extend(get_db().view(view,
+                        startkey=startkey,
+                        endkey=endkey,
+                        reduce=False,
+                        limit=limit,
+                        skip=skip
+                    ).all())
 
-            self.count = get_db().view(view,
-                startkey=startkey,
-                endkey=endkey,
-                reduce=True
-            ).first()
-            self.count = self.count.get('value', 0) if self.count else 0
+                reduced_results = get_db().view(view,
+                    startkey=startkey,
+                    endkey=endkey,
+                    reduce=True
+                ).first()
+                self.count += reduced_results.get('value', 0) if reduced_results else 0
 
-            for row in results:
-                row = self.format_row(row)
-                if row is not None:
-                    rows.append(row)
-                # just ignore poorly formatted search terms for now
+            for type, data in results.items():
+                for row in data:
+                    row = self.format_row(row, owner_type=type)
+                    if row is not None:
+                        rows.append(row)
         return rows
 
-    def format_row(self, row):
+    def format_row(self, row, owner_type='individual'):
         if "doc" in row:
             case = CommCareCase.wrap(row["doc"])
         elif "id" in row:
@@ -775,9 +783,27 @@ class CaseListReport(PaginatedHistoryHQReport):
 
         assert(case.domain == self.domain)
 
+        owner_id = case.owner_id if case.owner_id else case.user_id
+        owning_group = None
+        if not self.individual:
+            try:
+                print owner_id
+                owning_group = Group.get(owner_id)
+            except Exception:
+                pass
+
+        if owning_group:
+            print owning_group.name
+            case_owner = '%s <span class="label label-info">Group</span>' % owning_group.name
+        else:
+            case_owner = self.usernames.get(owner_id, "Unknown [%s]" % owner_id)
+
+        if owner_type == 'group':
+            case_owner = '%s <span class="label label-info">in Group FOO</span>' % (case_owner)
+
         return ([] if self.case_type else [case.type]) + [
             self.case_data_link(row['id'], case.name),
-            self.usernames.get(case.user_id, "Unknown [%s]" % case.user_id),
+            case_owner,
             self.date_to_json(case.opened_on),
             self.date_to_json(case.modified_on),
             yesno(case.closed, "closed,open")
