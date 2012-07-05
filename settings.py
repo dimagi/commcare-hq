@@ -185,6 +185,7 @@ HQ_APPS = (
     'dca',
     'loadtest',
     'hsph',
+    'pathindia',
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
@@ -196,7 +197,7 @@ TABS = [
     ("corehq.apps.reports.views.default", "Reports", lambda request: not request.project.is_snapshot),
     ("corehq.apps.data_interfaces.views.default", "Manage Data", lambda request: request.couch_user.can_edit_data()),
     ("corehq.apps.app_manager.views.default", "Applications"),
-    ("corehq.apps.cloudcare.views.default", "CloudCare", lambda request: request.couch_user.is_previewer()),
+    ("corehq.apps.cloudcare.views.default", "CloudCare", lambda request: request.couch_user.can_edit_data()),
     ("corehq.apps.sms.views.messaging", "Messages", lambda request: not request.project.is_snapshot),
     ("corehq.apps.settings.views.default", "Settings & Users", lambda request: request.couch_user.can_edit_commcare_users() or request.couch_user.can_edit_web_users()),
     ("corehq.apps.hqadmin.views.default", "Admin Reports", "is_superuser"),
@@ -406,6 +407,8 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'hutch',
         'dca',
         'hsph',
+        'pathindia',
+
     ]
 ] + [("couchlog", "%s/%s" %(COUCH_SERVER, COUCHLOG_DATABASE_NAME))]
 
@@ -541,6 +544,11 @@ CUSTOM_REPORT_MAP = {
                     'hsph.reports.data_summary.ProgramDataSummaryReport',
                     'hsph.reports.data_summary.ComparativeDataSummaryReport']
     },
+    "pathindia": {
+        'Custom Reports': [
+                    'pathindia.reports.PathIndiaKrantiReport'
+        ]
+    }
 #    "test": [
 #        'corehq.apps.reports.deid.FormDeidExport',
 #    ]
