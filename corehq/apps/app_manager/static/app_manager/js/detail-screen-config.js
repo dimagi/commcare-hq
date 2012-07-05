@@ -580,7 +580,9 @@ var DetailScreenConfig = (function () {
             }
 
             addScreen(spec.state.case_short, spec.state.case_long);
-            addScreen(spec.state.ref_short, spec.state.ref_long);
+            if (spec.applicationVersion === '1.0') {
+                addScreen(spec.state.ref_short, spec.state.ref_long);
+            }
         };
         DetailScreenConfig.init = function ($home, spec) {
             return new DetailScreenConfig($home, spec);

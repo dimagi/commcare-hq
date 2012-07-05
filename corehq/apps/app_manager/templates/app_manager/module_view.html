@@ -53,7 +53,8 @@
                 lang: {{ lang|JSON }},
                 langs: {{ app.langs|JSON }},
                 edit: {{ edit|JSON }},
-                saveUrl: "{% url edit_module_detail_screens domain app.id module.id %}"
+                saveUrl: "{% url edit_module_detail_screens domain app.id module.id %}",
+                applicationVersion: {{ app.application_version|JSON }}
             });
         });
     </script>
@@ -208,107 +209,4 @@
 
 
     <div id="detail-screen-config"></div>
-    {% comment %}
-    {% for detail in module.details %}
-        {% if detail.type in module.detail_types %}
-            <h4>
-                {% if detail.type == "case_short" %}
-                    Case List View
-                {% endif %}
-                {% if detail.type == "case_long" %}
-                    Case Full View
-                {% endif %}
-                {% if detail.type == "ref_short" %}
-                    Referral List View
-                {% endif %}
-                {% if detail.type == "ref_long" %}
-                    Referral Full View
-                {% endif %}
-            </h4>
-            <table class="config detail-headers" id="{{ detail_type }}_detail">
-
-                <thead>
-                    <tr>
-                        {% if edit %}
-                            <th class="drag-button-column"></th>
-                            <th class="delete-button-column"></th>
-                        {% endif %}
-                        <th class="model-column">
-                            {# if we're dealing with a referral screen #}
-                            {% if detail.type.0 == 'r' %}
-                                Model
-                            {% endif %}
-                        </th>
-                        <th class="field-column">Property</th>
-                        <th class="header-column">Name</th>
-                        <th class="format-column">Format</th>
-                        <th class="enum-column">Enum</th>
-                        {% if edit %}
-                            <th></th>
-                        {% endif %}
-                    </tr>
-                </thead>
-
-                <tbody {% if edit %}class="sortable"{% endif %}>
-                    {% if edit %}
-                     <tr class="sort-action">
-                            <td>
-                                <form method="post" action="{% url corehq.apps.app_manager.views.rearrange domain app.id 'detail' %}">
-                                    <input type="hidden" name="detail_type" value="{{ detail.type }}" />
-                                    <input type="hidden" name="module_id" value="{{ module.id  }}" />
-                                    <input type="hidden" name="ajax" value="true" />
-                                </form>
-                            </td>
-                        </tr>
-                    {% endif %}
-                    {% for column in detail.get_columns %}
-                        {% include "app_manager/partials/detail_column.html" %}
-                    {% endfor %}
-                    {% if edit %}
-                        <tr class="sort-disabled form new-detail-header"
-                            data-action="{% url corehq.apps.app_manager.views.edit_module_detail domain app.id module.id %}">
-                            <td class="drag-button-column">
-                                <input type="hidden" name="detail_type" value="{{ detail.type }}" />
-                            </td>
-                            <td class="delete-button-column"></td>
-                            <td class="model-column">
-                                {% if detail.type.0 == 'r' %}
-                                    <select name="model" data-value="case">
-                                        <option>case</option>
-                                        <option>referral</option>
-                                    </select>
-                                {% else %}
-                                    <input type="hidden" name="model" value="case" />
-                                {% endif %}
-                            </td>
-                            <td class="field-column">
-                                <input type="text" class="code" name="field" />
-                            </td>
-                            <td class="header-column">
-                                <input type="text" name="header" />
-                            </td>
-                            <td class="format-column">
-                                <select class="format code" name="format" data-value="plain">
-                                    <option value="plain">plain</option>
-                                    <option value="date">date</option>
-                                    <option value="years-ago">years-ago</option>
-                                    <option value="phone">phone</option>
-                                    <option value="enum">enum</option>
-                                    <option value="late-flag">late-flag</option>
-{#                                    <option value="advanced">advanced</option>#}
-                                </select>
-                            </td>
-                            <td class="enum-column">
-                                <textarea name="enum"></textarea>
-                            </td>
-                            <td>
-                                <a class="button detail-column-add" href="#">Add</a>
-                            </td>
-                        </tr>
-                    {% endif %}
-                </tbody>
-            </table>
-        {% endif %}
-    {% endfor %}
-    {% endcomment %}
 {% endblock %}
