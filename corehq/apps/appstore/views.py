@@ -15,6 +15,8 @@ from dimagi.utils.couch.database import get_db
 from django.contrib import messages
 from django.conf import settings
 from corehq.apps.reports.views import datespan_default
+from corehq.apps.hqmedia import utils
+from corehq.apps.app_manager.models import Application
 
 PER_PAGE = 9
 
@@ -79,6 +81,15 @@ def project_info(request, domain, template="appstore/project_info.html"):
     if versioned:
         all_link = 'true'
 
+    images = set()
+    audio = set()
+#    for app in dom.applications():
+#        if app.doc_type == 'Application':
+#            app = Application.get(app._id)
+#            sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
+#            images.update(i['url'] for i in app.get_template_map(sorted_images)[0] if i['url'])
+#            audio.update(a['url'] for a in app.get_template_map(sorted_audio)[0] if a['url'])
+
     vals = dict(
         project=dom,
         form=form,
@@ -86,7 +97,9 @@ def project_info(request, domain, template="appstore/project_info.html"):
         average_rating=average_rating,
         num_ratings=num_ratings,
         versioned=versioned,
-        all_link=all_link
+        all_link=all_link,
+        images=images,
+        audio=audio,
     )
     return render_to_response(request, template, vals)
 

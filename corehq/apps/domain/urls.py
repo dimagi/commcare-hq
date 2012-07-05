@@ -71,6 +71,7 @@ domain_settings = patterns('corehq.apps.domain.views',
                            url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', 'drop_repeater', name='drop_repeater'),
                            url(r'^snapshots/set_published/(?P<snapshot_name>[\w-]+)/$', 'set_published_snapshot', name='domain_set_published'),
                            url(r'^snapshots/set_published/$', 'set_published_snapshot', name='domain_clear_published'),
-                           url(r'^snapshots/$', 'copy_project', name='domain_copy_snapshot'),
+                           url(r'^snapshots/$', 'snapshot_settings', name='domain_snapshot_settings'),
+                           url(r'^snapshots/new/$', 'create_snapshot', name='domain_create_snapshot'),
                            url(r'^multimedia/$', 'manage_multimedia', name='domain_manage_multimedia')
                            )

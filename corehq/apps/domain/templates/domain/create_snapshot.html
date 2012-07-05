@@ -10,7 +10,7 @@
 
 {% block js-inline %}
 {{ block.super }}
-        <!-- unfortunately copied from project settings -->
+<!-- unfortunately copied from project settings -->
 <script type="text/javascript">
     $(function(){
         $("#id_project_type").focus(function() {
@@ -26,106 +26,12 @@
 {% endblock %}
 
 {% block user-view %}
-        <div>
-            <h3>This project has {{ snapshots|length }} snapshots</h3>
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th></th>
-                    <th>Date</th>
-                    <th>License</th>
-                    <th>Published in project store?</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for snapshot in snapshots %}
-                <tr>
-                    <td><a class="btn btn-primary" href="{% url corehq.apps.app_manager.views.default snapshot.name %}">View</a></td>
-                    <td>{{ snapshot.snapshot_time }}</a></td>
-                    <td>{{ snapshot.get_license_display }}</td>
-                    {% if snapshot.published %}
-                        <td><span class="label label-success">Published</span></td>
-                    <td>
-                        <form action="{% url domain_clear_published domain %}" method="POST">
-                            <button class="btn btn-danger" type="submit">Unpublish</button>
-                        </form>
-                    </td>
-                    {% else %}
-                    <td></td>
-                    <td>
-                        <form action="{% url domain_set_published domain snapshot.name %}" method="POST">
-                            <button class="btn btn-primary" type="submit">Publish</button> (only one snapshot can be published at a time)
-                        </form>
-                    </td>
-                    {% endif %}
-                </tr>
-                {% endfor %}
-            </table>
-        </div>
-        {% if error_message %}
-            <div class="alert alert-error">{{ error_message }}</div>
-        {% endif %}
-        <form class="form-horizontal" method="post">
-            <fieldset>
-                {% bootstrap_form_errors form %}
-                {% bootstrap_fieldset form "Create new snapshot" %}
-            </fieldset>
-            <div>
-                Snapshots are taken from the latest starred builds, or, if no builds are starred, from the latest build overall.
-            </div>
-            <div>
-                You are about to create a snapshot that contains the following builds:
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>
-                                Name
-                            </th>
-                            <th>
-                                Version
-                            </th>
-                            <th>
-                                Build comment
-                            </th>
-                            <th>
-                                Build source
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for app in request.project.applications %}
-                            <tr>
+<form class="form-horizontal" method="post" action="{% url domain_create_snapshot domain %}">
+    <fieldset>
+        {% bootstrap_form_errors form %}
+        {% bootstrap_fieldset form "Snapshot settings" %}
+    </fieldset>
 
-                                {% if app.get_latest_saved %}
-                                    <td><a href="{% url app_summary domain app.id %}">{{ app.get_latest_saved.name }}</a></td>
-                                    <td>{{ app.get_latest_saved.version }}</td>
-                                    <td>
-                                        {{ app.get_latest_saved.build_comment }}
-                                    </td>
-                                    <td>
-                                        {% if app.get_latest_saved.is_released %}
-                                        From latest starred build
-                                        {% else %}
-                                        From latest build
-                                        {% endif %}
-                                    </td>
-                                {% else %}
-                                    <td><a href="{% url app_summary domain app.id %}">{{ app.name }}</a></td>
-                                    <td>
-                                        {{ app.version }}
-                                    </td>
-                                    <td></td>
-                                    <td>
-                                        No builds--from current copy
-                                    </td>
-                                {% endif %}
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-        <div class="form-actions"><button type="submit" class="btn btn-primary">Create New Snapshot</button></div>
-        </form>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Create New Snapshot</button></div>
+</form>
 {% endblock %}>

@@ -109,6 +109,13 @@ it doesn’t make the test unnecessarily selective */
     top:2px;
     left:2px;
 }
+
+.scrollable {
+    overflow-x: scroll;
+    overflow-y:hidden;
+    white-space:nowrap;
+    /*max-height: 300px;*/
+}
 </style>
 
 <!--<script>
@@ -254,6 +261,22 @@ it doesn’t make the test unnecessarily selective */
         All versions: {{ project.copies_of_parent|length }}
     </dd>
  </dl>
+ <div>
+     <h3>Media</h3>
+     <ul class="scrollable">
+         {% for image in images %}
+            <a href="{{ image }}" class="thumbnail" target="_blank"><img src="{{ image }}" style="max-width: 220px;" /></a>
+         {% endfor %}
+     </ul>
+     <ul class="thumbnails">
+         {% for a in audio %}
+         <li class="span1">
+             <a href="{{ a }}" class="btn btn-primary" target="_blank">Listen in a new window</a>
+         </li>
+         {% endfor %}
+     </ul>
+
+ </div>
         <div>
             <form action="{% url copy_snapshot_app project.name %}" method="post">
                 <fieldset>
