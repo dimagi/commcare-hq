@@ -276,6 +276,8 @@ def get_form_view_context(request, form, langs, is_user_registration):
         messages.error(request, "Unexpected error in form: %s" % e)
 
     if xform and xform.exists():
+        if xform.already_has_meta():
+            messages.warning(request, "This form has a meta block already! It will be replaced by CommCare HQ's standard meta block.")
         try:
             form.validate_form()
             xform_questions = xform.get_questions(langs)
