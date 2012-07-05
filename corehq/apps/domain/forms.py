@@ -99,7 +99,8 @@ class SnapshotSettingsMixin(forms.Form):
 class SnapshotSettingsForm(SnapshotSettingsMixin):
     title = CharField(label="Title", required=True)
     author = CharField(label="Author name", required=True)
-    description = CharField(label="Description", required=True, widget=forms.Textarea)
+    description = CharField(label="Description", required=True,
+        widget=forms.Textarea, help_text="Be sure to add attribution notes and a description of the internal details of the project")
     project_type = CharField(label="Project Category", required=True,
         help_text="e.g. MCH, HIV, etc.")
 

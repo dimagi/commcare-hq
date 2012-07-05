@@ -278,10 +278,19 @@ def create_snapshot(request, domain):
         new_domain.description = request.POST['description']
         new_domain.project_type = request.POST['project_type']
         new_domain.region = request.POST['region']
+        new_domain.city = request.POST['city']
+        new_domain.country = request.POST['country']
+        if int(request.POST['deployment_date_year']) > 2009 and request.POST['deployment_date_month'] and request.POST['deployment_date_day']:
+            new_domain.deployment_date = datetime.datetime(int(request.POST['deployment_date_year']), int(request.POST['deployment_date_month']), int(request.POST['deployment_date_day']))
+        new_domain.phone_model = request.POST['phone_model']
+        new_domain.user_type = request.POST['user_type']
+        new_domain.title = request.POST['title']
+        new_domain.author = request.POST['author']
         for snapshot in domain.snapshots():
             if snapshot.published and snapshot._id != new_domain._id:
                 snapshot.published = False
                 snapshot.save()
+        new_domain.is_approved = False
         new_domain.published = True
         new_domain.save()
 
@@ -291,8 +300,8 @@ def create_snapshot(request, domain):
                      'form': form,
                      'error_message': 'Snapshot creation failed; please try again'})
 
-        messages.success(request, "Added new snapshot")
-        return redirect('domain_snapshot_settings', domain.name)
+        messages.success(request, "Created snapshot")
+        return redirect('project_info', new_domain.name)
 
 @domain_admin_required
 def set_published_snapshot(request, domain, snapshot_name=''):

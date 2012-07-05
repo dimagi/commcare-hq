@@ -32,7 +32,7 @@ def appstore(request, template="appstore/appstore_base.html"):
 @require_superuser
 def project_info(request, domain, template="appstore/project_info.html"):
     dom = Domain.get_by_name(domain)
-    if not dom or not dom.is_snapshot or not dom.published or (not dom.is_approved and not request.user.is_superuser):
+    if not dom or not dom.is_snapshot or not dom.published or (not dom.is_approved and not request.couch_user.is_domain_admin(domain)):
         raise Http404()
 
     if request.method == "POST":

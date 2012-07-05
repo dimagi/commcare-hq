@@ -187,8 +187,14 @@ it doesn’t make the test unnecessarily selective */
 
 <div class="page-header">
         <h1>
-            {{ project.copied_from.display_name }}
-            <small>by <a href="{% url orgs_landing project.organization %}">{{ project.organization_doc.title }}</a></small>
+            {{ project.title }}
+            <small>by
+                {% if project.organization %}
+                <a href="{% url orgs_landing project.organization %}">{{ project.organization_doc.title }}</a>
+                {% else %}
+                    {{ project.author }}
+                {% endif %}
+            </small>
         </h1>
     <h3>
         <a class="btn" href="{% url corehq.apps.app_manager.views.default project.name %}">Preview this project</a>
@@ -207,21 +213,12 @@ it doesn’t make the test unnecessarily selective */
                 </fieldset>
             </div>
             {% endif %}
-            <div class="span1">
-                <h3>
-                    <a class="btn" href="{% url corehq.apps.app_manager.views.default project.name %}">Preview</a>
-                </h3>
-            </div>
     <br/>
 </div>
 <dl>
     <dt>{% trans 'Description' %}</dt>
     <dd>
-        {% if project.description %}
-            {{ project.description }}
-        {% else %}
-            None
-        {% endif %}
+        {{ project.description }}
     </dd>
     <dt>Category</dt>
     <dd>
@@ -231,52 +228,74 @@ it doesn’t make the test unnecessarily selective */
             None
         {% endif %}
     </dd>
-    <dt>License</dt>
-    <dd>{{ project.get_license_display }}</dd>
-    <dt>{% trans 'Applications' %}</dt>
-    <dd>
-        {% if project.applications|length > 0 %}
-            <ul class="nav nav-pills">
-                {% for app in project.applications %}
-                <li>
-                    <a href="{% url app_summary project app.id %}">{{ app.name }}</a>
-                </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            None
-        {% endif %}
-    </dd>
+    {% if project.phone_model %}
+    <dt>Phone model</dt>
+    <dd>{{ project.phone_model }}</dd>
+    {% endif %}
+    {% if project.user_type %}
+    <dt>User type</dt>
+    <dd>{{ project.user_type }}</dd>
+    {% endif %}
+    {% if project.city %}
+    <dt>City</dt>
+    <dd>{{ project.city }}</dd>
+    {% endif %}
+    {% if project.country %}
+    <dt>Country</dt>
+    <dd>{{ project.country }}</dd>
+    {% endif %}
+    <dt>Region</dt>
+    <dd>{{ project.region }}</dd>
     <dt>{% trans 'Languages' %}</dt>
     <dd>
         {% if project.languages %}
-            {{ project.readable_languages }}
+        {{ project.readable_languages }}
         {% else %}
-            None
+        None
         {% endif %}
     </dd>
+    {% if project.deployment_date %}
+    <dt>Deployment date</dt>
+    <dd>{{ project.deployment_date.date }}</dd>
+    {% endif %}
+    <dt>Status</dt>
+    <dd>
+        {% if project.is_active %}
+            Active
+        {% else %}
+            Inactive
+        {% endif %}
+    </dd>
+    <dt>License</dt>
+    <dd>{{ project.get_license_display }}</dd>
     <dt>{% trans 'Download count' %}</dt>
     <dd>
         This version: {{ project.copies|length }};
         All versions: {{ project.copies_of_parent|length }}
     </dd>
- </dl>
- <div>
-     <h3>Media</h3>
-     <ul class="scrollable">
-         {% for image in images %}
-            <a href="{{ image }}" class="thumbnail" target="_blank"><img src="{{ image }}" style="max-width: 220px;" /></a>
-         {% endfor %}
-     </ul>
-     <ul class="thumbnails">
-         {% for a in audio %}
-         <li class="span1">
-             <a href="{{ a }}" class="btn btn-primary" target="_blank">Listen in a new window</a>
-         </li>
-         {% endfor %}
-     </ul>
+    <dt>CommCare Version</dt>
+    <dd>
 
- </div>
+    </dd>
+    <dt>Uses Case Management?</dt>
+    <dd>
+
+    </dd>
+    <dt>{% trans 'Applications' %}</dt>
+    <dd>
+        {% if project.applications|length > 0 %}
+        {% for app in project.applications %}
+            <a href="{% url app_summary project app.id %}">{{ app.name }}</a>{% if not forloop.last %},{% endif %}
+        {% endfor %}
+        {% else %}
+        None
+        {% endif %}
+    </dd>
+    <dt>Media</dt>
+    <dd>
+
+    </dd>
+ </dl>
         <div>
             <form action="{% url copy_snapshot_app project.name %}" method="post">
                 <fieldset>
