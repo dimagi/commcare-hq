@@ -2,7 +2,7 @@ from datetime import datetime
 from corehq.apps.sms.models import CallLog, INCOMING
 from corehq.apps.sms.mixin import VerifiedNumber
 
-def incoming(phone_number):
+def incoming(phone_number, backend_api):
     cleaned_number = phone_number
     if len(cleaned_number) > 0 and cleaned_number[0] == "+":
         cleaned_number = cleaned_number[1:]
@@ -25,6 +25,7 @@ def incoming(phone_number):
         phone_number    = cleaned_number,
         direction       = INCOMING,
         date            = datetime.utcnow(),
+        backend_api     = backend_api
     )
     if v is not None:
         msg.domain = v.domain

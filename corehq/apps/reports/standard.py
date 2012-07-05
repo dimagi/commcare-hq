@@ -425,25 +425,25 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
         utc_dates = [tz_utils.adjust_datetime_to_timezone(date, self.timezone.zone, pytz.utc.zone) for date in self.dates]
         date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(utc_dates)])
 
-        self.datespan.inclusive = False
+        key = [self.domain]
         results = get_db().view(
             self.couch_view,
-            group=True,
-            startkey=[self.domain,
-                      self.datespan.startdate_param_utc],
-            endkey=[self.domain,
-                    self.datespan.enddate_param_utc, {}]
+            reduce=False,
+            startkey=key+[self.datespan.startdate_param_utc],
+            endkey=key+[self.datespan.enddate_param_utc]
         ).all()
+
         user_map = dict([(user.user_id, i) for (i, user) in enumerate(self.users)])
         userIDs = [user.user_id for user in self.users]
         rows = [[0]*(2+len(date_map)) for _ in range(len(self.users))]
         total_row = [0]*(2+len(date_map))
 
         for result in results:
-            _, date, user_id = result['key']
+            _, date = result['key']
             val = result['value']
+            user_id = val.get("user_id")
             if user_id in userIDs:
-                rows[user_map[user_id]][date_map[date[0:10]]] = val
+                rows[user_map[user_id]][date_map[date[0:10]]] += 1
 
         for i, user in enumerate(self.users):
             rows[i][0] = user.username_in_report
@@ -512,10 +512,10 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
                 except Exception:
                     row.append(0)
             row_sum = sum(row)
-            rows.append([user.username_in_report] + [util.format_datatables_data(row_data, row_data) for row_data in row] + [util.format_datatables_data("* %s" % row_sum, row_sum)])
+            rows.append([user.username_in_report] + [util.format_datatables_data(row_data, row_data) for row_data in row] + [util.format_datatables_data("<strong>%s</strong>" % row_sum, row_sum)])
 
         totals_by_form = [totals_by_form[form_type] for form_type in self.form_types]
-        self.total_row = ["All Users"] + ["%s" % t for t in totals_by_form] + ["* %s" % sum(totals_by_form)]
+        self.total_row = ["All Users"] + ["%s" % t for t in totals_by_form] + ["<strong>%s</strong>" % sum(totals_by_form)]
 
         return rows
 

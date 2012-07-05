@@ -1,5 +1,7 @@
 from django.conf import settings
 
+API_ID = "TEST"
+
 def send(msg, *args, **kwargs):
     debug = getattr(settings, "DEBUG", False)
     if debug:
