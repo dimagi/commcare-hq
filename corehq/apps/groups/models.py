@@ -116,6 +116,15 @@ class Group(UndoableDocument):
             return [r['id'] for r in results]
 
     @classmethod
+    def get_case_sharing_groups(cls, domain, wrap=True):
+        all_groups = cls.by_domain(domain)
+        if wrap:
+            return [group for group in all_groups if group.case_sharing]
+        else:
+            return [group._id for group in all_groups if group.case_sharing]
+
+
+    @classmethod
     def get_reporting_groups(cls, domain):
         key = ['^Reporting', domain]
         return cls.view('groups/by_name', startkey=key, endkey=key + [{}], include_docs=True)

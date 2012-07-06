@@ -11,13 +11,15 @@
 
 {% block js-inline %} {{ block.super }}
 <script type="text/javascript">
-    ko.applyBindings(new CaseManagement( {
+
+    var caseManagementModel = new CaseManagement( {
         users: {{ users|JSON }},
         groups: {{ groups|JSON }},
         receiverUrl: '{% url receiver_post domain %}',
-        enddate: '{{ datespan.enddate|date:"Y-m-d" }}',
+        enddate: '{{ datespan.enddate_param_utc }}',
         webUserID: '{{ request.couch_user.userID }}'
-    } ), $('#case-management')[0]);
+    });
+    ko.applyBindings(caseManagementModel, $('#case-management')[0]);
 
     $(function () {
         $('#case-management a.select-all').click(function () {
@@ -27,9 +29,12 @@
 
         $('#case-management a.select-none').click(function() {selectNone(); return false;});
         $('#case-management .dataTables_paginate a').mouseup(selectNone);
+        $('#case-management .dataTables_length select').change(selectNone);
 
         function selectNone() {
             $('#case-management input.selected-commcare-case:checked').attr('checked', false).change();
+            ko.cleanNode($('#case-management table tbody')[0]);
+            ko.applyBindings(caseManagementModel, $('#case-management table tbody')[0]);
         }
 
     });
