@@ -185,6 +185,7 @@ HQ_APPS = (
     'dca',
     'loadtest',
     'hsph',
+    'pathindia',
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
@@ -192,11 +193,11 @@ REFLEXIVE_URL_BASE = "localhost:8000"
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 TABS = [
-    ("corehq.apps.domain.views.snapshot_info", "Info", lambda request: request.project.is_snapshot),
+    ("corehq.apps.appstore.views.project_info", "Info", lambda request: request.project.is_snapshot),
     ("corehq.apps.reports.views.default", "Reports", lambda request: not request.project.is_snapshot),
     ("corehq.apps.data_interfaces.views.default", "Manage Data", lambda request: request.couch_user.can_edit_data()),
     ("corehq.apps.app_manager.views.default", "Applications"),
-    ("corehq.apps.cloudcare.views.default", "CloudCare", lambda request: request.couch_user.is_previewer()),
+    ("corehq.apps.cloudcare.views.default", "CloudCare", lambda request: request.couch_user.can_edit_data()),
     ("corehq.apps.sms.views.messaging", "Messages", lambda request: not request.project.is_snapshot),
     ("corehq.apps.settings.views.default", "Settings & Users", lambda request: request.couch_user.can_edit_commcare_users() or request.couch_user.can_edit_web_users()),
     ("corehq.apps.hqadmin.views.default", "Admin Reports", "is_superuser"),
@@ -283,7 +284,7 @@ XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
-COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables-1.8.2/js/jquery.dataTables.min.js")
+COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables-1.9/js/jquery.dataTables.min.js")
 
 # These allow HQ to override what shows up in couchlog (add a domain column)
 COUCHLOG_TABLE_CONFIG = {"id_column":       0,
@@ -406,6 +407,8 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'hutch',
         'dca',
         'hsph',
+        'pathindia',
+
     ]
 ] + [("couchlog", "%s/%s" %(COUCH_SERVER, COUCHLOG_DATABASE_NAME))]
 
@@ -541,6 +544,11 @@ CUSTOM_REPORT_MAP = {
                     'hsph.reports.data_summary.ProgramDataSummaryReport',
                     'hsph.reports.data_summary.ComparativeDataSummaryReport']
     },
+    "pathindia": {
+        'Custom Reports': [
+                    'pathindia.reports.PathIndiaKrantiReport'
+        ]
+    }
 #    "test": [
 #        'corehq.apps.reports.deid.FormDeidExport',
 #    ]
