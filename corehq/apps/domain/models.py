@@ -1,10 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.db import models
 from couchdbkit.ext.django.schema import Document, StringProperty,\
-    BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty
+    BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty, DictProperty
 from dimagi.utils.timezones import fields as tz_fields
 from dimagi.utils.couch.database import get_db
 from itertools import chain
@@ -46,6 +46,16 @@ LICENSES = {
     'cc-nc-nd': 'Creative Commons Attribution, Non-Commercial, and No Derivatives',
     }
 
+def cached_property(method):
+    def find_cached(self):
+        try:
+            return self.cached_properties[method.__name__]
+        except KeyError:
+            self.cached_properties[method.__name__] = method(self)
+            self.save()
+            return self.cached_properties[method.__name__]
+    return find_cached
+
 class Domain(Document):
     """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the
@@ -85,6 +95,8 @@ class Domain(Document):
     phone_model = StringProperty()
 
     migrations = SchemaProperty(DomainMigrations)
+
+    cached_properties = DictProperty()
 
     # to be eliminated from projects and related documents when they are copied for the project store
     _dirty_fields = ('admin_password', 'admin_password_charset')
@@ -166,6 +178,56 @@ class Domain(Document):
                                     startkey=[self.name],
                                     endkey=[self.name, {}]).all()
 
+    def full_applications(self):
+        WRAPPERS = {'Application': Application, 'RemoteApp': RemoteApp}
+        def wrap_application(a):
+            return WRAPPERS[a['doc']['doc_type']].wrap(a['doc'])
+
+        return get_db().view('app_manager/applications',
+            startkey=[self.name],
+            endkey=[self.name, {}],
+            include_docs=True,
+            wrapper=wrap_application).all()
+
+    @cached_property
+    def versions(self):
+        apps = self.applications()
+        return list(set(a.application_version for a in apps))
+
+    @cached_property
+    def has_case_management(self):
+        for app in self.full_applications():
+            if app.doc_type == 'Application':
+                for module in app.get_modules():
+                    for form in module.get_forms():
+                        if len(form.active_actions()) > 0:
+                            return True
+        return False
+
+    @cached_property
+    def has_media(self):
+        for app in self.full_applications():
+            if app.doc_type == 'Application' and len(app.multimedia_map) > 0:
+                return True
+        return False
+
+    def has_shared_media(self):
+        return False
+
+    def recent_submissions(self):
+        res = get_db().view('reports/all_submissions',
+            startkey=[self.name, {}],
+            endkey=[self.name],
+            descending=True,
+            reduce=False,
+            include_docs=False,
+            limit=1).all()
+        if len(res) > 0: # if there have been any submissions in the past 30 days
+            return datetime.now() <= datetime.strptime(res[0]['value']['time'], "%Y-%m-%dT%H:%M:%SZ") + timedelta(days=30)
+        else:
+            return False
+
+    @cached_property
     def languages(self):
         apps = self.applications()
         return set(chain.from_iterable([a.langs for a in apps]))
@@ -261,7 +323,6 @@ class Domain(Document):
         return new_domain
 
     def copy_component(self, doc_type, id, new_domain_name, user=None):
-        from corehq.apps.hqmedia.models import HQMediaMixin
         str_to_cls = {
             'UserRole': UserRole,
             'Application': Application,
@@ -284,6 +345,9 @@ class Domain(Document):
 
         new_doc.original_doc = id
         new_doc.domain = new_domain_name
+
+        if self.is_snapshot and doc_type == 'Application':
+            new_doc.clean_mapping()
 
         new_doc.save()
         return new_doc
