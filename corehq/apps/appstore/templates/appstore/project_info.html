@@ -275,11 +275,18 @@ it doesn’t make the test unnecessarily selective */
     </dd>
     <dt>CommCare Version</dt>
     <dd>
-
+        {% if project.versions|length == 1 %}
+            {{ project.versions.0 }}
+        {% endif %}
+        {% if project.versions|length == 2 %}
+            Both 1.0 and 2.0 apps included
+        {% endif %}
+        {% if project.versions|length == 0 %}
+            No apps
+        {% endif %}
     </dd>
     <dt>Uses Case Management?</dt>
     <dd>
-
     </dd>
     <dt>{% trans 'Applications' %}</dt>
     <dd>

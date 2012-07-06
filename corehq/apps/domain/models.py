@@ -166,6 +166,15 @@ class Domain(Document):
                                     startkey=[self.name],
                                     endkey=[self.name, {}]).all()
 
+    def versions(self):
+        apps = self.applications()
+        return list(set(a.application_version for a in apps))
+
+    def case_management(self):
+
+
+    def has_shared_media(self):
+
     def languages(self):
         apps = self.applications()
         return set(chain.from_iterable([a.langs for a in apps]))
