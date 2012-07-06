@@ -16,7 +16,8 @@ function(doc) {
                 ret.add(doc.closed_on, {"field": "closed"}); 
             } else {
                 ret.add("open", {"field": "is"});
-            } 
+            }
+            ret.add(doc.owner_id || doc.user_id, {"field": "owner_id"});
             
             return ret;
         }
