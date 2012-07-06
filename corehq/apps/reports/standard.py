@@ -1192,6 +1192,8 @@ class CaseListReport(PaginatedHistoryHQReport):
         self.context.update({"filter": settings.LUCENE_ENABLED })
         super(PaginatedHistoryHQReport, self).get_report_context()
         self.context['ajax_params'].append(dict(name=SelectOpenCloseField.slug, value=self.request.GET.get(SelectOpenCloseField.slug, '')))
+        if self.disable_lucene:
+            self.context['ajax_params'].append(dict(name='no_lucene', value=self.disable_lucene))
 
     def get_headers(self):
         headers = DataTablesHeader(DataTablesColumn("Name"),
