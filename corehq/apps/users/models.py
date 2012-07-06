@@ -650,7 +650,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             startkey=key,
             endkey=key + [{}],
             include_docs=True,
-        )
+        ).all()
 
     @classmethod
     def phone_users_by_domain(cls, domain):
@@ -748,6 +748,10 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
 
     def is_member_of(self, domain_qs):
+        """
+        takes either a domain name or a domain object and returns whether the user is part of that domain
+        either natively or through a team
+        """
         try:
             return domain_qs.name in self.get_domains() or self.is_global_admin()
         except Exception:
@@ -756,6 +760,11 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @classmethod
     def get_by_user_id(cls, userID, domain=None):
+        """
+        if domain is given, checks to make sure the user is a member of that domain
+        returns None if there's no user found or if the domain check fails
+
+        """
         try:
             couch_user = cls.wrap_correctly(get_db().get(userID))
         except ResourceNotFound:
@@ -763,17 +772,8 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         if couch_user.doc_type != cls.__name__ and cls.__name__ != "CouchUser":
             raise CouchUser.AccountTypeError()
         if domain:
-            if hasattr(couch_user, 'domain'):
-                if couch_user.domain != domain and not couch_user.is_superuser:
-                    return None
-            elif hasattr(couch_user, 'domains'):
-                if domain not in couch_user.domains and not couch_user.is_superuser:
-                    return None
-            else:
-                raise CouchUser.AccountTypeError("User %s (%s) has neither domain nor domains" % (
-                    couch_user.username,
-                    couch_user.user_id
-                ))
+            if not couch_user.is_member_of(domain):
+                return None
         return couch_user
 
     @classmethod
@@ -1194,6 +1194,18 @@ class WebUser(CouchUser, AuthorizableMixin):
     def projects(self):
         return map(Domain.get_by_name, self.domains)
 
+    def get_domains(self):
+        from corehq.apps.orgs.models import Team
+        domains = [dm.domain for dm in self.domain_memberships]
+        if self.teams:
+            for team_name, team_id in self.teams:
+                team = Team.get(team_id)
+                team_domains = [dm.domain for dm in team.domain_memberships]
+                for domain in team_domains:
+                    if domain not in domains:
+                        domains.append(domain)
+        return domains
+
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
         from corehq.apps.orgs.models import Team
@@ -1203,13 +1215,15 @@ class WebUser(CouchUser, AuthorizableMixin):
             return True
 
         dm_list = list()
-        for team_name, team_id in self.teams:
-            team = Team.get(team_id)
-            if domain in team.domains:
-                dm_list.append(team.get_domain_membership(domain))
+
         dm = self.get_domain_membership(domain)
         if dm:
-            dm_list.append(dm)
+            dm_list.append([dm, ''])
+
+        for team_name, team_id in self.teams:
+            team = Team.get(team_id)
+            if team.get_domain_membership(domain) and team.get_domain_membership(domain).role:
+                dm_list.append([team.get_domain_membership(domain), '(' + team_name + ')'])
 
         #now find out which dm has the highest permissions
         if dm_list:
@@ -1235,13 +1249,15 @@ class WebUser(CouchUser, AuthorizableMixin):
             return AdminUserRole(domain=domain)
 
         dm_list = list()
-        for team_name, team_id in self.teams:
-            team = Team.get(team_id)
-            if domain in team.domains:
-                dm_list.append(team.get_domain_membership(domain))
+
         dm = self.get_domain_membership(domain)
         if dm:
-            dm_list.append(dm)
+            dm_list.append([dm, ''])
+
+        for team_name, team_id in self.teams:
+            team = Team.get(team_id)
+            if team.get_domain_membership(domain) and team.get_domain_membership(domain).role:
+                dm_list.append([team.get_domain_membership(domain), ' (' + team_name + ')'])
 
         #now find out which dm has the highest permissions
         if dm_list:
@@ -1249,17 +1265,20 @@ class WebUser(CouchUser, AuthorizableMixin):
         else:
             raise DomainMembershipError()
 
+
+
     def total_domain_membership(self, domain_memberships, domain):
         #sort out the permissions
         total_permission = Permissions()
         total_reports_list = list()
-        for domain_membership in domain_memberships:
-            permission = domain_membership.permissions
-            total_permission |= permission
+        if domain_memberships:
+            for domain_membership, membership_source in domain_memberships:
+                permission = domain_membership.permissions
+                total_permission |= permission
 
-        #set up a user role
-        return UserRole(domain=domain, permissions=total_permission, name=', '.join([domain_membership.role.name for domain_membership in domain_memberships]))
-        #set up a domain_membership
+            #set up a user role
+            return UserRole(domain=domain, permissions=total_permission, name=', '.join([domain_membership.role.name + membership_source for domain_membership, membership_source in domain_memberships]))
+            #set up a domain_membership
 
 
 class FakeUser(WebUser):
