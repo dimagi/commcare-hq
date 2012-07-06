@@ -185,6 +185,7 @@ HQ_APPS = (
     'loadtest',
     'hsph',
     'pathindia',
+    'payments',
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
@@ -406,6 +407,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'dca',
         'hsph',
         'pathindia',
+        'payments',
 
     ]
 ] + [("couchlog", "%s/%s" %(COUCH_SERVER, COUCHLOG_DATABASE_NAME))]
