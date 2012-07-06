@@ -1283,7 +1283,7 @@ class CaseListReport(PaginatedHistoryHQReport):
                 limit=limit, skip=skip, sort="\sort_modified")
             try:
                 for row in results:
-                    row = self.format_row(row)
+                    row = _format_row(row)
                     if row is not None:
                         rows.append(row)
                 self.count = results.total_rows
