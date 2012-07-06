@@ -58,21 +58,20 @@ def orgs_update_info(request, org):
         form = UpdateOrgInfo(request.POST, request.FILES)
         if form.is_valid():
             logo = None
-            import pdb
-            pdb.set_trace()
-            if form.cleaned_data['org_title']:
+            if form.cleaned_data['org_title'] or organization.title:
                 organization.title = form.cleaned_data['org_title']
-            if form.cleaned_data['email']:
+            if form.cleaned_data['email'] or organization.email:
                 organization.email = form.cleaned_data['email']
-            if form.cleaned_data['url']:
+            if form.cleaned_data['url'] or organization.url:
                 organization.url = form.cleaned_data['url']
-            if form.cleaned_data['location']:
+            if form.cleaned_data['location'] or organization.location:
                 organization.location = form.cleaned_data['location']
                 #logo not working, need to look into this
             if form.cleaned_data['logo']:
                 logo = form.cleaned_data['logo']
-                organization.logo_filename = logo.name
-
+                if organization.logo_filename:
+                    organization.delete_attachment(organization.logo_filename)
+                    organization.logo_filename = logo.name
 
             organization.save()
             if logo:

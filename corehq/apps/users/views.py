@@ -77,8 +77,6 @@ require_can_edit_commcare_users = require_permission('edit_commcare_users')
 def _users_context(request, domain):
     couch_user = request.couch_user
     web_users = WebUser.by_domain(domain)
-    import pdb
-    pdb.set_trace()
     teams = Team.get_by_domain(domain)
     for team in teams:
         for member_id in team.member_ids:
