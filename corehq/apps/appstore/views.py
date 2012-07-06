@@ -188,11 +188,9 @@ def copy_snapshot_app(request, domain):
         new_domain_name = request.POST['project']
         app_id = request.POST['app_id']
         if user.is_member_of(new_domain_name):
-            #try: # no way to know if it's an Application or RemoteApp
-            new_doc = dom.copy_component('Application', app_id, new_domain_name, user)
-            new_doc.clean_mapping()
-            #except:
-            #    new_doc = dom.copy_component('RemoteApp', app_id, new_domain_name, user)
+            doc_type = get_db().get(app_id)['doc_type']
+            new_doc = dom.copy_component(doc_type, app_id, new_domain_name, user)
+
             messages.info(request, "Application successfully copied!")
             return HttpResponseRedirect(reverse('view_app', args=[new_domain_name, new_doc.id]))
     return HttpResponseRedirect(reverse('project_info', args=[domain]))

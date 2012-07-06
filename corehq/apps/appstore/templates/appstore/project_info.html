@@ -180,7 +180,7 @@ it doesn’t make the test unnecessarily selective */
 {% endblock %}
 
 {% block breadcrumb %}
-<li>{{ project.copied_from.display_name }}</li>
+<li>{{ project.title }}</li>
 {% endblock %}
 
 {% block main_column %}
@@ -215,7 +215,7 @@ it doesn’t make the test unnecessarily selective */
             {% endif %}
     <br/>
 </div>
-<dl>
+<dl class="dl-horizontal">
     <dt>{% trans 'Description' %}</dt>
     <dd>
         {{ project.description }}
@@ -260,23 +260,19 @@ it doesn’t make the test unnecessarily selective */
     {% endif %}
     <dt>Status</dt>
     <dd>
-        {% if project.is_active %}
-            Active
-        {% else %}
-            Inactive
-        {% endif %}
+        {{ project.copied_from.is_active|yesno:"Active,Inactive" }}
     </dd>
     <dt>License</dt>
     <dd>{{ project.get_license_display }}</dd>
-    <dt>{% trans 'Download count' %}</dt>
+    <dt>{% trans 'Copy count' %}</dt>
     <dd>
         This version: {{ project.copies|length }};
         All versions: {{ project.copies_of_parent|length }}
     </dd>
-    <dt>CommCare Version</dt>
+    <dt>CommCare</dt>
     <dd>
         {% if project.versions|length == 1 %}
-            {{ project.versions.0 }}
+            Version {{ project.versions.0 }}
         {% endif %}
         {% if project.versions|length == 2 %}
             Both 1.0 and 2.0 apps included
@@ -285,8 +281,9 @@ it doesn’t make the test unnecessarily selective */
             No apps
         {% endif %}
     </dd>
-    <dt>Uses Case Management?</dt>
+    <dt>Uses cases?</dt>
     <dd>
+        {{ project.has_case_management|yesno:"Yes,No" }}
     </dd>
     <dt>{% trans 'Applications' %}</dt>
     <dd>
@@ -298,17 +295,17 @@ it doesn’t make the test unnecessarily selective */
         None
         {% endif %}
     </dd>
-    <dt>Media</dt>
+    <dt>Has media?</dt>
     <dd>
-
+        {{ project.has_media|yesno:"Yes,No" }}
     </dd>
  </dl>
         <div>
             <form action="{% url copy_snapshot_app project.name %}" method="post">
                 <fieldset>
-                    <legend>Download individual application into existing project</legend>
+                    <legend>Copy individual application into existing project</legend>
                     <label for="app_to_copy_select">
-                        Application to download
+                        Application to Copy
                     </label>
                     <select name="app_id" id="app_to_copy_select">
                         {% for app in project.applications %}
@@ -324,11 +321,11 @@ it doesn’t make the test unnecessarily selective */
                         {% endfor %}
                     </select>
                 </fieldset>
-                <button class="btn btn-primary" type="submit">Download application</button>
+                <button class="btn btn-primary" type="submit">Copy application</button>
             </form>
             <form method="post" action="{% url domain_copy_snapshot project %}">
                 <fieldset>
-                    <legend>Download entire project into new project</legend>
+                    <legend>Copy entire project into new project</legend>
                     <div{% if error_message %} class="error"{% endif %}>
                         <input type="text" class="span3" id="new_project_name"
                                name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">

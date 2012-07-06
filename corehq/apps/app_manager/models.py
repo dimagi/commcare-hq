@@ -426,6 +426,7 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
 
     def get_app(self):
         return self._parent._parent
+
     def get_module(self):
         return self._parent
 
