@@ -122,7 +122,7 @@ def filter_choices(request, filter_by, template="appstore/filter_choices.html"):
         raise Http404("That page doesn't exist")
 
     if filter_by == 'category':
-        choices = [(d.replace(' ', '+'), d) for d in Domain.categories()]
+        choices = [(d.replace(' ', '+'), d) for d in Domain.field_by_prefix('project_type')]
     elif filter_by == 'organization':
         choices = [(o.name, o.title) for o in Organization.get_all()]
     elif filter_by == 'license':
