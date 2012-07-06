@@ -301,7 +301,7 @@ def create_snapshot(request, domain):
                      'error_message': 'Snapshot creation failed; please try again'})
 
         messages.success(request, "Created snapshot. The snapshot will be posted to the project store pending approval by admins.")
-        return redirect('domain_snapshot_settings', new_domain.name)
+        return redirect('domain_snapshot_settings', domain.name)
 
 @domain_admin_required
 def set_published_snapshot(request, domain, snapshot_name=''):

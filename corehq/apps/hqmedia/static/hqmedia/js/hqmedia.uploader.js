@@ -247,7 +247,8 @@ function HQMediaUploader(options) {
             }
 
             function showUploadButton(toggle_on) {
-                var $uploadButton = $(self.uploadElem+" .hqm-upload-hidden");
+                var $uploadButton = $(self.uploadElem+" .hqm-upload-hidden").css('float', 'none').css('text-align', 'left');
+                $uploadButton.find('input[type=text]').css('float', 'none').css('text-align', 'left');
                 if (self.singleFileUpload)
                     (toggle_on) ? $uploadButton.removeClass('hide') : $uploadButton.addClass('hide');
                 else {

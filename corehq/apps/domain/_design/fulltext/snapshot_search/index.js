@@ -8,6 +8,9 @@ function(doc) {
             ret.add(doc.organization);
             ret.add(doc.region);
             ret.add(doc.city);
+            ret.add(doc.title);
+            ret.add(doc.author);
+            ret.add(doc.phone_model);
             ret.add(doc.country);
             ret.add({
                         'public': 'Public Domain',

@@ -112,6 +112,9 @@ def search_snapshots(request, filter_by = '', filter = '', template="appstore/ap
     else:
         query = request.GET['q']
 
+    if query == '':
+        return redirect('appstore')
+
     snapshots, total_rows = Domain.snapshot_search(query, page=page, per_page=PER_PAGE)
     more_pages = page * PER_PAGE < total_rows
     vals = dict(apps=snapshots, search_query=query, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages)
