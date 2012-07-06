@@ -162,8 +162,11 @@ def get_all_users_by_domain(domain, group='', individual='', filter_users=None):
             group = Group.get(group)
         users =  group.get_users(only_commcare=True)
     elif individual:
-        users = [CommCareUser.get_by_user_id(individual)]
-        if users[0] is None:
+        try:
+            users = [CommCareUser.get_by_user_id(individual)]
+        except Exception:
+            users = []
+        if users and users[0] is None:
             raise Http404()
     else:
         if not filter_users:

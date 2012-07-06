@@ -57,11 +57,10 @@
     <script type="text/javascript">
 
         {% if report_datatables %}
-            var defaultNumRows = {{ report_datatables.defaultNumRows|default:10 }};
             var reportTables = new HQReportDataTables({
-                defaultRows: defaultNumRows,
+                defaultRows: {{ report_datatables.defaultNumRows|default:10 }},
                 startAtRowNum: {{ report_datatables.startAtRowNum|default:0 }},
-                aoColumns: {{ report.headers.render_aoColumns|JSON }},
+                {% if report.headers.render_aoColumns %}aoColumns: {{ report.headers.render_aoColumns|JSON }}, {% endif %}
                 autoWidth: {{ report.headers.auto_width|JSON }},
                 {% if report.headers.custom_sort %}customSort: {{ report.headers.custom_sort|JSON }},{% endif %}
                 {% if ajax_source %}ajaxSource: '{{ ajax_source }}',{% endif %}
@@ -73,6 +72,7 @@
                 {% endif %}
             });
             standardHQReport.handleTabularReportCookies(reportTables);
+            console.log(reportTables.defaultRows);
             reportTables.render();
         {% endif %}
 
