@@ -362,9 +362,9 @@ def get_apps_base_context(request, domain, app):
             limit=1,
         ).one()
         latest_app_version = latest_app_version.version if latest_app_version else -1
-        for lang in app.success_message:
+        for lang in app.langs:
             try:
-                SuccessMessage(app.success_message.get(lang), '').check_message()
+                SuccessMessage(app.success_message.get(lang, ''), '').check_message()
             except Exception as e:
                 messages.error(request, "Your success message is malformed: %s is not a keyword" % e)
 
