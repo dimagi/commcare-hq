@@ -258,9 +258,9 @@ it doesn’t make the test unnecessarily selective */
     <dt>Deployment date</dt>
     <dd>{{ project.deployment_date.date }}</dd>
     {% endif %}
-    <dt>Status</dt>
+    <dt>Active?</dt>
     <dd>
-        {{ project.copied_from.is_active|yesno:"Active,Inactive" }}
+        {{ project.copied_from.recent_submissions|yesno:"Yes,No" }}
     </dd>
     <dt>License</dt>
     <dd>{{ project.get_license_display }}</dd>

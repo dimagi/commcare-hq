@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
@@ -213,6 +213,19 @@ class Domain(Document):
 
     def has_shared_media(self):
         return False
+
+    def recent_submissions(self):
+        res = get_db().view('reports/all_submissions',
+            startkey=[self.name, {}],
+            endkey=[self.name],
+            descending=True,
+            reduce=False,
+            include_docs=False,
+            limit=1).all()
+        if len(res) > 0: # if there have been any submissions in the past 30 days
+            return datetime.now() <= datetime.strptime(res[0]['value']['time'], "%Y-%m-%dT%H:%M:%SZ") + timedelta(days=30)
+        else:
+            return False
 
     @cached_property
     def languages(self):
