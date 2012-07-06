@@ -1168,7 +1168,8 @@ class CaseListReport(PaginatedHistoryHQReport):
               'corehq.apps.reports.fields.CaseTypeField']
 
     def __init__(self, domain, request, base_context = None):
-        if not settings.LUCENE_ENABLED:
+        self.disable_lucene = bool(request.GET.get('no_lucene', False))
+        if not settings.LUCENE_ENABLED or self.disable_lucene:
             self.fields = ['corehq.apps.reports.fields.SelectMobileWorkerField',
                            'corehq.apps.reports.fields.CaseTypeField',
                            'corehq.apps.reports.fields.SelectOpenCloseField']
@@ -1184,9 +1185,8 @@ class CaseListReport(PaginatedHistoryHQReport):
             except Exception:
                 pass
         self.case_sharing_groups = user.get_case_sharing_groups() if user else []
-        if not settings.LUCENE_ENABLED:
+        if not settings.LUCENE_ENABLED or self.disable_lucene:
             self.user_filter = HQUserType.use_defaults(show_all=True)
-        self.disable_lucene = self.request.GET.get('no_lucene', False)
 
     def get_report_context(self):
         self.context.update({"filter": settings.LUCENE_ENABLED })
