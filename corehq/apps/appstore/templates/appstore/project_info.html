@@ -109,6 +109,13 @@ it doesn’t make the test unnecessarily selective */
     top:2px;
     left:2px;
 }
+
+.scrollable {
+    overflow-x: scroll;
+    overflow-y:hidden;
+    white-space:nowrap;
+    /*max-height: 300px;*/
+}
 </style>
 
 <!--<script>
@@ -180,8 +187,14 @@ it doesn’t make the test unnecessarily selective */
 
 <div class="page-header">
         <h1>
-            {{ project.copied_from.display_name }}
-            <small>by <a href="{% url orgs_landing project.organization %}">{{ project.organization_doc.title }}</a></small>
+            {{ project.title }}
+            <small>by
+                {% if project.organization %}
+                <a href="{% url orgs_landing project.organization %}">{{ project.organization_doc.title }}</a>
+                {% else %}
+                    {{ project.author }}
+                {% endif %}
+            </small>
         </h1>
     <h3>
         <a class="btn" href="{% url corehq.apps.app_manager.views.default project.name %}">Preview this project</a>
@@ -200,21 +213,12 @@ it doesn’t make the test unnecessarily selective */
                 </fieldset>
             </div>
             {% endif %}
-            <div class="span1">
-                <h3>
-                    <a class="btn" href="{% url corehq.apps.app_manager.views.default project.name %}">Preview</a>
-                </h3>
-            </div>
     <br/>
 </div>
 <dl>
     <dt>{% trans 'Description' %}</dt>
     <dd>
-        {% if project.description %}
-            {{ project.description }}
-        {% else %}
-            None
-        {% endif %}
+        {{ project.description }}
     </dd>
     <dt>Category</dt>
     <dd>
@@ -224,43 +228,80 @@ it doesn’t make the test unnecessarily selective */
             None
         {% endif %}
     </dd>
-    <dt>License</dt>
-    <dd>{{ project.get_license_display }}</dd>
-    <dt>{% trans 'Applications' %}</dt>
-    <dd>
-        {% if project.applications|length > 0 %}
-            <ul class="nav nav-pills">
-                {% for app in project.applications %}
-                <li>
-                    <a href="{% url app_summary project app.id %}">{{ app.name }}</a>
-                </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            None
-        {% endif %}
-    </dd>
+    {% if project.phone_model %}
+    <dt>Phone model</dt>
+    <dd>{{ project.phone_model }}</dd>
+    {% endif %}
+    {% if project.user_type %}
+    <dt>User type</dt>
+    <dd>{{ project.user_type }}</dd>
+    {% endif %}
+    {% if project.city %}
+    <dt>City</dt>
+    <dd>{{ project.city }}</dd>
+    {% endif %}
+    {% if project.country %}
+    <dt>Country</dt>
+    <dd>{{ project.country }}</dd>
+    {% endif %}
+    <dt>Region</dt>
+    <dd>{{ project.region }}</dd>
     <dt>{% trans 'Languages' %}</dt>
     <dd>
         {% if project.languages %}
-            {{ project.readable_languages }}
+        {{ project.readable_languages }}
         {% else %}
-            None
+        None
         {% endif %}
     </dd>
-    {% for field in fields %}
-    <dt>{{ field.label }}</dt>
+    {% if project.deployment_date %}
+    <dt>Deployment date</dt>
+    <dd>{{ project.deployment_date.date }}</dd>
+    {% endif %}
+    <dt>Status</dt>
     <dd>
-        {{ field.value }}
+        {% if project.is_active %}
+            Active
+        {% else %}
+            Inactive
+        {% endif %}
     </dd>
-    {% endfor %}
+    <dt>License</dt>
+    <dd>{{ project.get_license_display }}</dd>
+    <dt>{% trans 'Download count' %}</dt>
+    <dd>
+        This version: {{ project.copies|length }};
+        All versions: {{ project.copies_of_parent|length }}
+    </dd>
+    <dt>CommCare Version</dt>
+    <dd>
+
+    </dd>
+    <dt>Uses Case Management?</dt>
+    <dd>
+
+    </dd>
+    <dt>{% trans 'Applications' %}</dt>
+    <dd>
+        {% if project.applications|length > 0 %}
+        {% for app in project.applications %}
+            <a href="{% url app_summary project app.id %}">{{ app.name }}</a>{% if not forloop.last %},{% endif %}
+        {% endfor %}
+        {% else %}
+        None
+        {% endif %}
+    </dd>
+    <dt>Media</dt>
+    <dd>
+
+    </dd>
  </dl>
         <div>
             <form action="{% url copy_snapshot_app project.name %}" method="post">
                 <fieldset>
-                    <legend>Copy individual application into existing project</legend>
+                    <legend>Download individual application into existing project</legend>
                     <label for="app_to_copy_select">
-                        Application to copy
+                        Application to download
                     </label>
                     <select name="app_id" id="app_to_copy_select">
                         {% for app in project.applications %}
@@ -276,11 +317,11 @@ it doesn’t make the test unnecessarily selective */
                         {% endfor %}
                     </select>
                 </fieldset>
-                <button class="btn btn-primary" type="submit">Copy application</button>
+                <button class="btn btn-primary" type="submit">Download application</button>
             </form>
             <form method="post" action="{% url domain_copy_snapshot project %}">
                 <fieldset>
-                    <legend>Copy entire project into new project</legend>
+                    <legend>Download entire project into new project</legend>
                     <div{% if error_message %} class="error"{% endif %}>
                         <input type="text" class="span3" id="new_project_name"
                                name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">

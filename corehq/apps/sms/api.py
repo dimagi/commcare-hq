@@ -48,7 +48,12 @@ def send_sms(domain, id, phone_number, text):
                      date = datetime.utcnow(),
                      text = text)
     try:
-        get_backend_api(msg).send(msg)
+        api = get_backend_api(msg)
+        try:
+            msg.backend_api = api.API_ID
+        except Exception:
+            pass
+        api.send(msg)
         msg.save()
         return True
     except Exception:
@@ -77,6 +82,10 @@ def send_sms_to_verified_number(verified_number, text):
             domain                      = verified_number.domain,
             text                        = text
         )
+        try:
+            msg.backend_api = module.API_ID
+        except Exception:
+            pass
         module.send(msg, **kwargs)
         msg.save()
         return True
@@ -92,6 +101,10 @@ def send_sms_with_backend(domain, phone_number, text, backend_id):
                  text = text)
     if backend_id == "MOBILE_BACKEND_MACH":
         try:
+            try:
+                msg.backend_api = mach_api.API_ID
+            except Exception:
+                pass
             mach_api.send(msg)
             msg.save()
             return True
@@ -100,6 +113,10 @@ def send_sms_with_backend(domain, phone_number, text, backend_id):
             return False
     elif backend_id == "MOBILE_BACKEND_UNICEL":
         try:
+            try:
+                msg.backend_api = unicel_api.API_ID
+            except Exception:
+                pass
             unicel_api.send(msg)
             msg.save()
             return True
@@ -116,6 +133,10 @@ def send_sms_with_backend(domain, phone_number, text, backend_id):
         
         try:
             module = __import__(backend.outbound_module, fromlist=["send"])
+            try:
+                msg.backend_api = module.API_ID
+            except Exception:
+                pass
             kwargs = backend.outbound_params
             module.send(msg, **kwargs)
             msg.save()
@@ -148,7 +169,7 @@ def start_session_from_keyword(survey_keyword, verified_number):
         print e
         print "ERROR: Exception raised while starting survey for keyword " + survey_keyword.keyword + ", domain " + verified_number.domain
 
-def incoming(phone_number, text):
+def incoming(phone_number, text, backend_api):
     phone_without_plus = str(phone_number)
     if phone_without_plus[0] == "+":
         phone_without_plus = phone_without_plus[1:]
@@ -167,7 +188,8 @@ def incoming(phone_number, text):
         phone_number    = phone_with_plus,
         direction       = INCOMING,
         date            = datetime.utcnow(),
-        text            = text
+        text            = text,
+        backend_api     = backend_api
     )
     if v is not None:
         msg.couch_recipient_doc_type    = v.owner_doc_type

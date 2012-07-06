@@ -10,7 +10,7 @@ from django.shortcuts import redirect
 
 from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required, require_previewer
 from corehq.apps.domain.forms import DomainSelectionForm, DomainGlobalSettingsForm,\
-    DomainMetadataForm
+    DomainMetadataForm, SnapshotSettingsForm
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 
@@ -241,86 +241,67 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
         "domain": domain.name,
         "form": form,
         "languages": domain.readable_languages(),
-        "applications": domain.applications()
+        "applications": domain.applications(),
+        'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')
     })
 
-def autocomplete_categories(request, prefix=''):
-    return HttpResponse(json.dumps(Domain.categories(prefix)))
+def autocomplete_fields(request, field):
+    prefix = request.GET.get('prefix', '')
+    results = Domain.field_by_prefix(field, prefix)
+    return HttpResponse(json.dumps(results))
 
-@login_and_domain_required
-def copy_snapshot(request, domain):
+@domain_admin_required
+def snapshot_settings(request, domain):
     domain = Domain.get_by_name(domain)
-    if request.method == 'GET':
-        return render_to_response(request, 'domain/copy_snapshot.html',
-                    {'domain': domain.name})
-
-    elif request.method == 'POST':
-
-        args = {'domain_name' :request.POST['new_project_name'], 'tos_confirmed': True}
-
-        form = DomainRegistrationForm(args)
-
-        if form.is_valid():
-            new_domain = domain.save_copy(form.clean_domain_name(), user=request.couch_user)
-        else:
-            return render_to_response(request, 'domain/copy_snapshot.html',
-                    {'domain': domain.name, 'error_message': 'That project name is invalid'})
-
-        if new_domain is None:
-            return render_to_response(request, 'domain/copy_snapshot.html',
-                    {'domain': domain.name, 'error_message': 'A project with that name already exists'})
-
-        return redirect("domain_project_settings", new_domain.name)
+    snapshots = domain.snapshots()
+    return render_to_response(request, 'domain/snapshot_settings.html',
+                {'domain': domain.name, 'snapshots': snapshots})
 
 @domain_admin_required
 def create_snapshot(request, domain):
     domain = Domain.get_by_name(domain)
-    snapshots = domain.snapshots()
-    field = Select(choices=LICENSES.items()).render('license', domain.license)
+    form = SnapshotSettingsForm()
     if request.method == 'GET':
         return render_to_response(request, 'domain/create_snapshot.html',
-                {'domain': domain.name, 'snapshots': snapshots, 'field': field})
-
-    elif request.method == 'POST' and request.POST['license'] in LICENSES:
-
+            {'domain': domain.name,
+             'form': form,
+             'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
+    elif request.method == 'POST':
+        form = SnapshotSettingsForm(request.POST)
+        if not form.is_valid():
+            return render_to_response(request, 'domain/create_snapshot.html',
+                    {'domain': domain.name,
+                     'form': form})
         new_domain = domain.save_snapshot()
         if request.POST['license'] in LICENSES.keys():
             new_domain.license = request.POST['license']
         new_domain.description = request.POST['description']
         new_domain.project_type = request.POST['project_type']
         new_domain.region = request.POST['region']
+        new_domain.city = request.POST['city']
+        new_domain.country = request.POST['country']
+        if int(request.POST['deployment_date_year']) > 2009 and request.POST['deployment_date_month'] and request.POST['deployment_date_day']:
+            new_domain.deployment_date = datetime.datetime(int(request.POST['deployment_date_year']), int(request.POST['deployment_date_month']), int(request.POST['deployment_date_day']))
+        new_domain.phone_model = request.POST['phone_model']
+        new_domain.user_type = request.POST['user_type']
+        new_domain.title = request.POST['title']
+        new_domain.author = request.POST['author']
         for snapshot in domain.snapshots():
-            if snapshot.published:
+            if snapshot.published and snapshot._id != new_domain._id:
                 snapshot.published = False
                 snapshot.save()
+        new_domain.is_approved = False
         new_domain.published = True
         new_domain.save()
 
         if new_domain is None:
-            return render_to_response(request, 'domain/create_snapshot.html',
+            return render_to_response(request, 'domain/snapshot_settings.html',
                     {'domain': domain.name,
-                     'error_message': 'Snapshot creation failed; please try again',
-                     'snapshots': snapshots})
+                     'form': form,
+                     'error_message': 'Snapshot creation failed; please try again'})
 
-        messages.success(request, "Added new snapshot")
-    else:
-        messages.error()
-
-    return redirect('domain_copy_snapshot', domain.name)
-
-@domain_admin_required
-def copy_project(request, domain):
-    """
-    This both creates snapshots and copies them once they exist.
-
-    We might want to use registration/views -> register_domain since it has a lot more detail--e.g. checking for
-    illegal characters
-    """
-
-    if Domain.get_by_name(domain).is_snapshot:
-        return copy_snapshot(request, domain)
-    else:
-        return create_snapshot(request, domain)
+        messages.success(request, "Created snapshot")
+        return redirect('project_info', new_domain.name)
 
 @domain_admin_required
 def set_published_snapshot(request, domain, snapshot_name=''):

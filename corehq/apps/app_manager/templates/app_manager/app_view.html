@@ -372,7 +372,6 @@
                         {% endif %}
                     </td>
                 </tr>
-                {% if show_secret_settings %}
                 <tr>
                     <th>App Version</th>
                     <td>
@@ -386,7 +385,6 @@
                         {% endif %}
                     </td>
                 </tr>
-                {% endif %}
                 <tr>
                     <th>CommCare Version</th>
                     <td>
@@ -475,7 +473,6 @@
                         {% endif %}
                     </td>
                 </tr>
-                {% if request.couch_user.is_previewer %}
                 <tr>
                      <th><label for="cloudcare-enabled-select">CloudCare Enabled?</label></th>
                      <td>
@@ -489,7 +486,6 @@
                          {% endif %}
                      </td>
                  </tr>
-                {% endif %}
                 {% endif %}
                 {% if user.is_superuser %}
                 <tbody class="superuser-only">

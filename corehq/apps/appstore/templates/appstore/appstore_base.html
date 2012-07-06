@@ -44,8 +44,14 @@
     <div class="span4">
         <div class="page-header">
             <h2>
-                {{ app.copied_from.display_name }}
-                <small>By {{ app.organization_doc.title }}</small>
+                {{ app.title }}
+                <small>By
+                    {% if app.organization %}
+                        {{ app.organization_doc.title }}
+                    {% else %}
+                        {{ app.author }}
+                    {% endif %}
+                </small>
                 {% if app.project_type %}
                     <h6>{{ app.project_type }}</h6>
                 {% endif %}

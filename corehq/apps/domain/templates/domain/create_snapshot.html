@@ -10,97 +10,30 @@
 
 {% block js-inline %}
 {{ block.super }}
-        <!-- unfortunately copied from project settings -->
+<!-- unfortunately copied from project settings -->
 <script type="text/javascript">
     $(function(){
-        $("#id_project_type").focus(function() {
-            $.getJSON('{% url autocomplete_categories %}', function(results) {
-                $("#id_project_type").typeahead({ source: results,
-                    items: 8
-                }).
-                        attr("autocomplete", "off");
+        {% for field in autocomplete_fields %}
+            $("#id_{{ field }}").focus(function() {
+                $.getJSON('{% url domain_autocomplete_fields field %}', function(results) {
+                    $("#id_{{ field }}").typeahead({ source: results,
+                        items: 8
+                    }).
+                            attr("autocomplete", "off");
+                });
             });
-        });
+        {% endfor %}
     });
 </script>
 {% endblock %}
 
 {% block user-view %}
-        <div>
-            <h3>This project has {{ snapshots|length }} snapshots</h3>
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th></th>
-                    <th>Date</th>
-                    <th>License</th>
-                    <th>Published in project store?</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for snapshot in snapshots %}
-                <tr>
-                    <td><a class="btn btn-primary" href="{% url corehq.apps.app_manager.views.default snapshot.name %}">View</a></td>
-                    <td>{{ snapshot.snapshot_time }}</a></td>
-                    <td>{{ snapshot.get_license_display }}</td>
-                    {% if snapshot.published %}
-                        <td><span class="label label-success">Published</span></td>
-                    <td>
-                        <form action="{% url domain_clear_published domain %}" method="POST">
-                            <button class="btn btn-danger" type="submit">Unpublish</button>
-                        </form>
-                    </td>
-                    {% else %}
-                    <td></td>
-                    <td>
-                        <form action="{% url domain_set_published domain snapshot.name %}" method="POST">
-                            <button class="btn btn-primary" type="submit">Publish</button> (only one snapshot can be published at a time)
-                        </form>
-                    </td>
-                    {% endif %}
-                </tr>
-                {% endfor %}
-            </table>
-        </div>
-        {% if error_message %}
-            <div class="alert alert-error">{{ error_message }}</div>
-        {% endif %}
-        <form class="form-horizontal" method="post">
-            <fieldset>
-                <legend>Create new snapshot</legend>
-                <div class="control-group">
-                    <label class="control-label" for="license">{% trans 'License' %}</label>
-                    <div class="controls">
-                        {{ field }}
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label class="control-label" for="id_region">{% trans 'Region' %}</label>
-                    <div class="controls">
-                        <input type="text" name="region" id="id_region" value="{{ request.project.region }}" />
-                        <p class="help-block">
-                            e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc.
-                        </p>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label class="control-label" for="id_project_type">{% trans 'Category' %}</label>
-                    <div class="controls">
-                        <input type="text" name="project_type" id="id_project_type" value="{{ request.project.project_type }}" />
-                        <p class="help-block">
-                            e.g. MCH, HIV, etc.
-                        </p>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <label class="control-label" for="id_description">{% trans 'Description' %}</label>
-                    <div class="controls">
-                        <textarea id="id_description" rows="10" cols="40" name="description">{{ request.project.description }}</textarea>
-                    </div>
-                </div>
-            </fieldset>
+<form class="form-horizontal" method="post" action="{% url domain_create_snapshot domain %}">
+    <fieldset>
+        {% bootstrap_form_errors form %}
+        {% bootstrap_fieldset form "Creating new snapshot..." %}
+    </fieldset>
 
-        <div class="form-actions"><button type="submit" class="btn btn-primary">Create New Snapshot</button></div>
-        </form>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Create New Snapshot</button></div>
+</form>
 {% endblock %}>

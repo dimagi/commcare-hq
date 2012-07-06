@@ -211,7 +211,16 @@ var CaseXML = (function () {
             }
         };
         self.moduleCaseTypes = o.moduleCaseTypes;
-        self.caseTypes = ko.utils.arrayMap(self.moduleCaseTypes, function (o) {return o.case_type;});
+        self.caseTypes = [];
+        var caseTypeSet = {};
+        for (var i = 0; i < self.moduleCaseTypes.length; i++) {
+            var case_type = self.moduleCaseTypes[i].case_type;
+            if (!caseTypeSet.hasOwnProperty(case_type)) {
+                caseTypeSet[case_type] = true;
+                self.caseTypes.push(case_type);
+            }
+        }
+
         self.getCaseTypeLabel = function (caseType) {
             var module_names = [], label;
             for (var i = 0; i < self.moduleCaseTypes.length; i++) {

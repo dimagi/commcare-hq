@@ -359,7 +359,7 @@
                             href="{% url get_xform_source domain app.id module.id form.id %}?download=true"
                         {% endif %}><span class="ui-icon ui-icon-arrowthick-1-s"></span>Download</a>
                 </li>
-{% if request.couch_user.is_previewer and app.application_version == '2.0' %}
+{% if app.application_version == '2.0' %}
                 <li><a {% if not form.source or is_user_registration %}class="disabled"{% endif %}
                             id="cloudcare-preview-url" href="#"
                         ><span class="ui-icon ui-icon-play"></span>Try in CloudCare</a>

@@ -3,7 +3,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
-from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
 from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.reports.dispatcher import ReportDispatcher
 from corehq.apps.users.decorators import require_permission
@@ -15,6 +15,9 @@ from dimagi.utils.couch.database import get_db
 from django.contrib import messages
 from django.conf import settings
 from corehq.apps.reports.views import datespan_default
+from corehq.apps.hqmedia import utils
+from corehq.apps.app_manager.models import Application
+from django.shortcuts import redirect
 
 PER_PAGE = 9
 
@@ -29,7 +32,7 @@ def appstore(request, template="appstore/appstore_base.html"):
 @require_superuser
 def project_info(request, domain, template="appstore/project_info.html"):
     dom = Domain.get_by_name(domain)
-    if not dom or not dom.is_snapshot or not dom.published or (not dom.is_approved and not request.user.is_superuser):
+    if not dom or not dom.is_snapshot or not dom.published or (not dom.is_approved and not request.couch_user.is_domain_admin(domain)):
         raise Http404()
 
     if request.method == "POST":
@@ -79,6 +82,15 @@ def project_info(request, domain, template="appstore/project_info.html"):
     if versioned:
         all_link = 'true'
 
+    images = set()
+    audio = set()
+#    for app in dom.applications():
+#        if app.doc_type == 'Application':
+#            app = Application.get(app._id)
+#            sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
+#            images.update(i['url'] for i in app.get_template_map(sorted_images)[0] if i['url'])
+#            audio.update(a['url'] for a in app.get_template_map(sorted_audio)[0] if a['url'])
+
     vals = dict(
         project=dom,
         form=form,
@@ -86,7 +98,9 @@ def project_info(request, domain, template="appstore/project_info.html"):
         average_rating=average_rating,
         num_ratings=num_ratings,
         versioned=versioned,
-        all_link=all_link
+        all_link=all_link,
+        images=images,
+        audio=audio,
     )
     return render_to_response(request, template, vals)
 
@@ -182,3 +196,27 @@ def copy_snapshot_app(request, domain):
             messages.info(request, "Application successfully copied!")
             return HttpResponseRedirect(reverse('view_app', args=[new_domain_name, new_doc.id]))
     return HttpResponseRedirect(reverse('project_info', args=[domain]))
+
+@login_and_domain_required
+def copy_snapshot(request, domain):
+    dom = Domain.get_by_name(domain)
+    if request.method == "POST" and dom.is_snapshot:
+        args = {'domain_name': request.POST['new_project_name'], 'tos_confirmed': True}
+        form = DomainRegistrationForm(args)
+
+        print request.POST['new_project_name']
+        print form.is_valid()
+        print form.errors
+
+        if form.is_valid():
+            new_domain = dom.save_copy(form.clean_domain_name(), user=request.couch_user)
+        else:
+            messages.error(request, form.errors)
+            return project_info(request, domain)
+
+        if new_domain is None:
+            messages.error(request, "A project by that name already exists")
+            return project_info(request, domain)
+
+        messages.success(request, "Project copied successfully!")
+        return redirect("domain_project_settings", new_domain.name)

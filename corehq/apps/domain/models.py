@@ -80,6 +80,10 @@ class Domain(Document):
     license = StringProperty(choices=LICENSES, default='public')
     title = StringProperty()
 
+    author = StringProperty()
+    deployment_date = DateTimeProperty()
+    phone_model = StringProperty()
+
     migrations = SchemaProperty(DomainMigrations)
 
     # to be eliminated from projects and related documents when they are copied for the project store
@@ -113,12 +117,12 @@ class Domain(Document):
             return []
 
     @classmethod
-    def categories(cls, prefix=''):
+    def field_by_prefix(cls, field, prefix=''):
         # unichr(0xfff8) is something close to the highest character available
-        return [d['key'] for d in cls.view("domain/categories_by_prefix",
+        return [d['key'][1] for d in cls.view("domain/fields_by_prefix",
                                 group=True,
-                                startkey=prefix,
-                                endkey="%s%c" % (prefix, unichr(0xfff8))).all()]
+                                startkey=[field, prefix],
+                                endkey=[field, "%s%c" % (prefix, unichr(0xfff8))]).all()]
 
     @classmethod
     def regions(cls, prefix=''):
@@ -239,7 +243,14 @@ class Domain(Document):
                 delattr(new_domain, field)
 
         for res in db.view('domain/related_to_domain', key=[self.name, True]):
-            self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
+            if not self.is_snapshot and res['value']['doc_type'] in ('Application', 'RemoteApp'):
+                app = get_app(self.name, res['value']['_id']).get_latest_saved()
+                if app:
+                    self.copy_component(app.doc_type, app._id, new_domain_name, user=user)
+                else:
+                    self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
+            else:
+                self.copy_component(res['value']['doc_type'], res['value']['_id'], new_domain_name, user=user)
 
         new_domain.save()
 
@@ -449,5 +460,5 @@ class OldDomain(models.Model):
 
 # added after Domain is defined as per http://stackoverflow.com/questions/7199466/how-to-break-import-loop-in-python
 # to prevent import loop errors (since corehq.apps.app_manager.models has to import Domain back)
-from corehq.apps.app_manager.models import ApplicationBase, import_app, RemoteApp, Application
+from corehq.apps.app_manager.models import ApplicationBase, import_app, RemoteApp, Application, get_app
 from corehq.apps.users.models import UserRole
