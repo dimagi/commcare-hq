@@ -19,7 +19,7 @@ m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.parent
     {% for module in app.get_modules %}
 modules.m{{ module.id }}={{ module.name|clean_trans:langs }}
         {% if module.case_list.show %}
-case_lists.m{{ module.id }}={{ module.case_list.label|clean_trans:langs }}
+case_lists.m{{ module.id }}={{ module.case_list.label|clean_trans:langs|default:"Case List" }}
         {% endif %}
         {% if module.referral_list.show %}
 referral_lists.m{{ module.id }}={{ module.referral_list.label|clean_trans:langs }}
