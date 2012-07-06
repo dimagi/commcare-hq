@@ -24,15 +24,22 @@ class GroupField(ReportSelectField):
         self.groups = Group.get_reporting_groups(self.domain)
         self.options = [dict(val=group.get_id, text=group.name) for group in self.groups]
 
-class CaseSharingGroupField(GroupField):
-    default_option = "Any Group"
+class SelectReportingGroupField(GroupField):
+    name = "Reporting Group"
+    default_option = "All Groups"
     cssClasses = "span6"
 
     def update_params(self):
-        super(CaseSharingGroupField, self).update_params()
-        self.options = [dict(val=group.get_id, text="%s [Case Sharing]"
-                        % group.name if group.case_sharing else group.name)
-                            for group in self.groups]
+        super(SelectReportingGroupField, self).update_params()
+        individual = self.request.GET.get('individual', '')
+        if individual:
+            try:
+                group = Group.get(individual)
+            except Exception:
+                group = None
+            if group:
+                self.hide_field = True
+        self.options = [dict(val=group.get_id, text=group.name) for group in self.groups if not group.case_sharing]
 
 class FilterUsersField(ReportField):
     slug = "ufilter"
@@ -190,6 +197,15 @@ class SelectMobileWorkerField(ReportField):
            user_filter[HQUserType.DEMO_USER].show or user_filter[HQUserType.UNKNOWN].show:
             default = '%s & Others' % default
         return default
+
+class SelectCaseOwnerField(SelectMobileWorkerField):
+    name = "Select Case Owner"
+    default_option = "All Case Owners"
+
+    def update_params(self):
+        case_sharing_groups = Group.get_case_sharing_groups(self.domain)
+        self.context["groups"] = [dict(group_id=group._id, name=group.name) for group in case_sharing_groups]
+
 
 class SelectFilteredMobileWorkerField(SelectMobileWorkerField):
     """

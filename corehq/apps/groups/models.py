@@ -116,8 +116,8 @@ class Group(UndoableDocument):
             return [r['id'] for r in results]
 
     @classmethod
-    def case_sharing_groups_by_user(cls, user, wrap=True):
-        all_groups = cls.by_user(user)
+    def get_case_sharing_groups(cls, domain, wrap=True):
+        all_groups = cls.by_domain(domain)
         if wrap:
             return [group for group in all_groups if group.case_sharing]
         else:
