@@ -43,14 +43,18 @@
 <dl class="dl-horizontal">
     <dt>{% trans 'Description' %}</dt>
     <dd>
-        {{ project.description }}
+        {% if project.description %}
+            {{ project.description }}
+        {% else %}
+            <h6>None</h6>
+        {% endif %}
     </dd>
     <dt>Category</dt>
     <dd>
         {% if project.project_type %}
             {{ project.project_type }}
         {% else %}
-            None
+            <h6>None</h6>
         {% endif %}
     </dd>
     {% if project.phone_model %}
@@ -69,8 +73,10 @@
     <dt>Country</dt>
     <dd>{{ project.country }}</dd>
     {% endif %}
+    {% if project.region %}
     <dt>Region</dt>
     <dd>{{ project.region }}</dd>
+    {% endif %}
     <dt>{% trans 'Languages' %}</dt>
     <dd>
         {% if project.languages %}
