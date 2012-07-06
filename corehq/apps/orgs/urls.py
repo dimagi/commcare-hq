@@ -4,6 +4,7 @@ from django.conf.urls.defaults import *
 urlpatterns = patterns('corehq.apps.orgs.views',
     url(r'^(?P<org>[\w\.-]+)/$', 'orgs_landing', name='orgs_landing'),
     url(r'^(?P<org>[\w\.-]+)/update_info/$', 'orgs_update_info', name='orgs_update_info'),
+    url(r'^(?P<org>[\w\.-]+)/get_data/$', 'get_data', name='get_data'),
     url(r'^(?P<org>[\w\.-]+)/add_project/$', 'orgs_add_project', name='orgs_add_project'),
     url(r'^(?P<org>[\w\.-]+)/new_project/$', 'orgs_new_project', name='orgs_new_project'),
     url(r'^(?P<org>[\w\.-]+)/add_member/$', 'orgs_add_member', name='orgs_add_member'),

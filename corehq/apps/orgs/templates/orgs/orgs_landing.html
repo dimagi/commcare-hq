@@ -26,10 +26,25 @@
             return false;
         })
 
-        $("#add_project_btn").popover({title:"Add Existing Project", placement:"top"});
-        $("#create_project_btn").popover({title:"Create New Project", placement:"top"});
-        $("#add_team_btn").popover({title:"Create New Team", placement:"top"});
-        $("#add_member_btn").popover({title:"Add New Member", placement:"top"});
+        $("#add_project_btn").tooltip({title:"Add Existing Project", placement:"top"});
+        $("#create_project_btn").tooltip({title:"Create New Project", placement:"top"});
+        $("#add_team_btn").tooltip({title:"Create New Team", placement:"top"});
+        $("#add_member_btn").tooltip({title:"Add New Member", placement:"top"});
+
+        $('#load_data').click(function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: $(this).attr('href'),
+                data: '',
+                dataType: 'json',
+                success: function(data) {
+//                    console.log(data)
+                    $('#data-container').html(JSON.stringify(data))
+                }
+
+            });
+        });
+
 
 
         });
@@ -61,7 +76,6 @@
 {% endblock %}
 
 {% block centered-content %}
-
     <section>
         <div class="row-fluid">
             <div class="span2">

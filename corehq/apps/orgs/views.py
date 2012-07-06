@@ -44,6 +44,11 @@ def orgs_landing(request, org, template="orgs/orgs_landing.html", form=None, add
     return render_to_response(request, template, vals)
 
 @require_superuser
+def get_data(request, org):
+    organization = Organization.get_by_name(org)
+    return json_response(organization)
+
+@require_superuser
 def orgs_new_project(request, org):
     from corehq.apps.registration.views import register_domain
     if request.method == 'POST':

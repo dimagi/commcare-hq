@@ -21,15 +21,16 @@ from django.shortcuts import redirect
 
 PER_PAGE = 9
 
-@require_superuser
 def appstore(request, template="appstore/appstore_base.html"):
     page = int(request.GET.get('page', 1))
     results = Domain.published_snapshots(include_unapproved=request.user.is_superuser, page=page, per_page=PER_PAGE)
+    average_ratings = list()
+    for result in results:
+        average_ratings.append([result.name, Review.get_average_rating_by_app(result.original_doc)])
     more_pages = page * PER_PAGE < results.total_rows
-    vals = dict(apps=results, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages)
+    vals = dict(apps=results, average_ratings=average_ratings, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages)
     return render_to_response(request, template, vals)
 
-@require_superuser
 def project_info(request, domain, template="appstore/project_info.html"):
     dom = Domain.get_by_name(domain)
     if not dom or not dom.is_snapshot or not dom.published or (not dom.is_approved and not request.couch_user.is_domain_admin(domain)):
@@ -104,7 +105,6 @@ def project_info(request, domain, template="appstore/project_info.html"):
     )
     return render_to_response(request, template, vals)
 
-@require_superuser
 def search_snapshots(request, filter_by = '', filter = '', template="appstore/appstore_base.html"):
     page = int(request.GET.get('page', 1))
     if filter_by != '':
@@ -117,7 +117,6 @@ def search_snapshots(request, filter_by = '', filter = '', template="appstore/ap
     vals = dict(apps=snapshots, search_query=query, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages)
     return render_to_response(request, template, vals)
 
-@require_superuser
 def filter_choices(request, filter_by, template="appstore/filter_choices.html"):
     if filter_by not in ('category', 'license', 'region', 'organization'):
         raise Http404("That page doesn't exist")
@@ -133,7 +132,6 @@ def filter_choices(request, filter_by, template="appstore/filter_choices.html"):
 
     return render_to_response(request, template, {'choices': choices, 'filter_by': filter_by})
 
-@require_superuser
 def filter_snapshots(request, filter_by, filter, template="appstore/appstore_base.html"):
     if filter_by not in ('category', 'license', 'region', 'organization'):
         raise Http404("That page doesn't exist")
@@ -180,7 +178,6 @@ def approve_app(request, domain):
         domain.save()
     return HttpResponseRedirect(reverse('appstore'))
 
-@require_superuser
 def copy_snapshot_app(request, domain):
     user = request.couch_user
     dom = Domain.get_by_name(domain)
