@@ -18,6 +18,8 @@
 
 .detail-screen-table th.detail-screen-checkbox {
     font-size: .8em;
+    text-decoration: underline;
+    cursor: pointer;
 }
 .detail-screen-table .detail-screen-checkbox {
     width: 30px;

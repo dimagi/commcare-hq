@@ -28,8 +28,9 @@ var HQReport = function (options) {
     self.handleTabularReportCookies = function (reportDatatable) {
         var defaultRowsCookieName = self.domain+'.hqreport.tabularSetting.defaultRows',
             savedPath = window.location.pathname;
+        var defaultRowsCookie = ''+$.cookie(defaultRowsCookieName);
+        reportDatatable.defaultRows = parseInt(defaultRowsCookie) || reportDatatable.defaultRows;
 
-        reportDatatable.defaultRows = $.cookie(defaultRowsCookieName) || reportDatatable.defaultRows;
         $(reportDatatable.dataTableElem).on('hqreport.tabular.lengthChange', function (event, value) {
             $.cookie(defaultRowsCookieName, value,
                 {path: savedPath, expires: 2});

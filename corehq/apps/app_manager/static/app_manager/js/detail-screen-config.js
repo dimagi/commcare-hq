@@ -498,8 +498,8 @@ var DetailScreenConfig = (function () {
                     // grip
                     $('<th/>').addClass('detail-screen-icon').appendTo($tr);
 
-                    $('<th/>').addClass('detail-screen-checkbox').text(DetailScreenConfig.message.SHORT).appendTo($tr);
-                    $('<th/>').addClass('detail-screen-checkbox').text(DetailScreenConfig.message.LONG).appendTo($tr);
+                    $('<th/>').addClass('detail-screen-checkbox').text(DetailScreenConfig.message.SHORT).appendTo($tr).popover(DetailScreenConfig.message.SHORT_POPOVER);
+                    $('<th/>').addClass('detail-screen-checkbox').text(DetailScreenConfig.message.LONG).appendTo($tr).popover(DetailScreenConfig.message.LONG_POPOVER);
                     if (this.model === "referral") {
                         $('<th/>').addClass('detail-screen-model').text(DetailScreenConfig.message.MODEL).appendTo($tr);
                     }
@@ -593,8 +593,24 @@ var DetailScreenConfig = (function () {
     DetailScreenConfig.message = {
         EMPTY_SCREEN: 'No detail screen configured',
 
-        SHORT: 'Short',
-        LONG: 'Long',
+        SHORT: 'List',
+        SHORT_POPOVER: {
+            title: 'List View',
+            content: (
+                "Checked properties will be displayed in the case list, where each case is listed as a row on the phone's screen. " +
+                "We recommend using 2-3 case properties that will help the mobile worker identify each case."
+            ),
+            placement: 'top'
+        },
+        LONG: 'Detail',
+        LONG_POPOVER: {
+            title: 'Detail View',
+            content: (
+                "Checked properties will be shown in the detail view that appears after selecting an item in the list view. " +
+                "We recommend that you include all properties that the mobile worker will find relevant. "
+            ),
+            placement: 'top'
+        },
 
         MODEL: 'Model',
         FIELD: 'Property',
