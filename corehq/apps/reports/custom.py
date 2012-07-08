@@ -207,19 +207,22 @@ class ReportSelectField(ReportField):
     cssId = "generic_select_box"
     cssClasses = "span4"
     selected = None
+    hide_field = False
 
     def update_params(self):
         self.selected = self.request.GET.get(self.slug)
 
     def update_context(self):
         self.update_params()
+        self.context['hide_field'] = self.hide_field
         self.context['select'] = dict(
             options=self.options,
             default=self.default_option,
             cssId=self.cssId,
             cssClasses=self.cssClasses,
             label=self.name,
-            selected=self.selected)
+            selected=self.selected
+        )
 
 class MonthField(ReportField):
     slug = "month"

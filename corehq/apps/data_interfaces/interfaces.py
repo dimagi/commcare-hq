@@ -20,19 +20,23 @@ class CaseReassignmentInterface(DataInterface, StandardTabularHQReport, Standard
     slug = "reassign_cases"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.DatespanField',
-              'corehq.apps.reports.fields.SelectMobileWorkerField',
-              'corehq.apps.reports.fields.CaseSharingGroupField']
+              'corehq.apps.reports.fields.SelectCaseOwnerField',
+              'corehq.apps.reports.fields.SelectReportingGroupField']
     template_name = 'data_interfaces/interfaces/case_management.html'
 
     def get_parameters(self):
-        all_groups = Group.get_reporting_groups(self.domain)
-        self.all_case_sharing_groups = [group for group in all_groups if group.case_sharing]
-        self.case_sharing_groups = []
-        
-        if self.group and self.group.case_sharing:
-            self.case_sharing_groups = [self.group]
-        elif not self.individual and not self.group:
-            self.case_sharing_groups = self.all_case_sharing_groups
+        self.all_case_sharing_groups = Group.get_case_sharing_groups(self.domain)
+        self.case_sharing_groups = self.all_case_sharing_groups
+
+        if self.individual:
+            try:
+                group = Group.get(self.individual)
+            except Exception:
+                group = None
+            if group:
+                self.users = []
+                self.case_sharing_groups = [group]
+
 
     def get_headers(self):
         headers = DataTablesHeader(
@@ -56,7 +60,7 @@ class CaseReassignmentInterface(DataInterface, StandardTabularHQReport, Standard
                     rows.append([checkbox % dict(case_id=case._id, owner=user.userID, owner_type="user"),
                                  case_link, case.type, user.username_in_report, util.format_relative_date(case.modified_on)])
         for group in self.case_sharing_groups:
-            data = self.get_data(group.get_id)
+            data = self.get_data(group._id)
             for item in data:
                 case, case_link = self.get_case_info(item)
                 if case:
@@ -66,7 +70,7 @@ class CaseReassignmentInterface(DataInterface, StandardTabularHQReport, Standard
         return rows
 
     def get_data(self, owner_id):
-        key = [self.domain, False, {}, owner_id ]
+        key = [self.domain, "open", {}, owner_id ]
         return get_db().view('case/by_date_modified_owner',
                 startkey=key+[self.datespan.startdate_param_utc],
                 endkey=key+[self.datespan.enddate_param_utc],
@@ -89,7 +93,7 @@ class CaseReassignmentInterface(DataInterface, StandardTabularHQReport, Standard
     def get_report_context(self):
         super(CaseReassignmentInterface, self).get_report_context()
         active_users = util.get_all_users_by_domain(self.domain, filter_users=HQUserType.use_defaults())
-        self.context['users'] = [dict(ownerid=user.userID, name=user.raw_username, type="user")
+        self.context['users'] = [dict(ownerid=user.userID, name=user.username_in_report, type="user")
                                  for user in active_users]
         self.context['groups'] = [dict(ownerid=group.get_id, name=group.name, type="group")
                                   for group in self.all_case_sharing_groups]

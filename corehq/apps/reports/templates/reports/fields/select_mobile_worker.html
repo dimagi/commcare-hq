@@ -2,11 +2,14 @@
 <div class="controls">
     <select id="individual_select" name="individual" data-bind="value: selected_individual">
         <option></option>
+        {% for group in groups %}
+            <option value="{{ group.group_id }}">{{ group.name }} (Group)</option>
+        {% endfor %}
         {% for user in users %}
             {% ifchanged user.is_active %}
                 {% if not user.is_active %}<optgroup label="Inactive">{% endif %}
             {% endifchanged %}
-            <option value="{{ user.user_id }}">{{ user.raw_username }}</option>
+            <option value="{{ user.user_id }}">{{ user.username_in_report }}</option>
             {% ifchanged user.is_active %}
                 {% if not user.is_active %}</optgroup>{% endif %}
             {% endifchanged %}

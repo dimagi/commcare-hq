@@ -39,6 +39,7 @@ function HQReportDataTables(options) {
                 bAutoWidth: self.autoWidth,
                 sScrollX: "100%"
             };
+            console.log(params.iDisplayLength);
 
             if(self.ajaxSource) {
                 params.bServerSide = true;
@@ -78,6 +79,8 @@ function HQReportDataTables(options) {
                     iLeftColumns: self.fixColsNumLeft,
                     iLeftWidth: self.fixColsWidth
                 } );
+
+            console.log(datatable);
 
 
             var $dataTablesFilter = $(".dataTables_filter");

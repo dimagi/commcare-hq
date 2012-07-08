@@ -6,6 +6,8 @@ from django.conf import settings
 from urllib2 import urlopen
 from urllib import urlencode
 
+API_ID = "UNICEL"
+
 OUTBOUND_URLBASE = "http://www.unicel.in/SendSMS/sendmsg.php"
 
 class InboundParams(object):
@@ -75,7 +77,8 @@ def create_from_request(request):
                         direction=INCOMING,
                         date=actual_timestamp,
                         text=message,
-                        domain=domain)
+                        domain=domain,
+                        backend_api=API_ID)
     log.save()
     
     return log

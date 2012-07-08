@@ -54,6 +54,7 @@ def app_list(request, domain, urlPath):
                               {"domain": domain,
                                "language": language,
                                "apps": json.dumps(apps),
+                               "apps_raw": apps,
                                "preview": preview,
                                "maps_api_key": settings.GMAPS_API_KEY })
 
