@@ -10,6 +10,16 @@
         $(function() {
             $('.custom_field').change(function() {
                 selectField = $(this).prev();
+
+                // check if field is valid for xml
+                var value = $(this).val();
+                var regx = new RegExp(/^xml/i); 
+
+                value = value.replace(/\s/g, "_"); // space to underscore
+                value = value.replace(/[^a-zA-Z0-9_\-]/g, ""); // remove other symbols
+                value = value.replace(regx, ""); // remove xml from beginning of string
+                
+                $(this).val(value);
                 
                 if ($(this).val() != '') {
                 	selectField.val('');
@@ -27,8 +37,7 @@
             	});
 
             	$(this).find('input[type=checkbox]').each(function () {
-                    $(this).attr('value', $(this).is(':checked') ? '1' : '0');
-                    $(this).attr('checked', true);
+            	    $(this).prev().val($(this).is(':checked') ? '1' : '0');
                 });
                 
                 return true;
@@ -92,7 +101,9 @@
                     </select>
                     
                     <input type="text" name="custom_field[]" class="custom_field" />
-                    <input type="checkbox" name="date_yesno[]" class="date_yesno" value="1" />
+                    
+                    <input type="hidden" name="date_yesno[]" value="0" />
+                    <input type="checkbox" />
                     
                     <br>
                 {% endfor %}
