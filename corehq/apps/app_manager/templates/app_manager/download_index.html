@@ -21,7 +21,7 @@
     <ul>
         {% for path,source in files %}
             <li>
-                (<a href="{{ path }}">link</a>)<a class="toggle-next" href="{{ path }}">{{ path }}</a>
+                (<a href="{{ path }}">link</a>) <a class="toggle-next" href="{{ path }}">{{ path }}</a>
                 <pre class="prettyprint linenums">{{ source|force_escape }}</pre>
             </li>
         {% empty %}
