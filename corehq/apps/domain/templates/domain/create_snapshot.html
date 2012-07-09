@@ -32,6 +32,17 @@
     <fieldset>
         {% bootstrap_form_errors form %}
         {% bootstrap_fieldset form "Creating new snapshot..." %}
+        <h3>Application descriptions</h3>
+        {% for app in latest_applications %}
+            <div class="control-group">
+            <label class="control-label" for="id_{{ app.id }}_description">
+                Description for {{ app.name }}
+            </label>
+            <div class="controls">
+                <textarea id="id_{{ app.id }}_description" name="{{ app.id }}_description" rows="5"></textarea>
+            </div>
+            </div>
+        {% endfor %}
     </fieldset>
 
     <div class="form-actions"><button type="submit" class="btn btn-primary">Create New Snapshot</button></div>

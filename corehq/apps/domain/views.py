@@ -261,10 +261,12 @@ def snapshot_settings(request, domain):
 def create_snapshot(request, domain):
     domain = Domain.get_by_name(domain)
     form = SnapshotSettingsForm()
+    latest_applications = [app.get_latest_saved() or app for app in domain.applications()]
     if request.method == 'GET':
         return render_to_response(request, 'domain/create_snapshot.html',
             {'domain': domain.name,
              'form': form,
+             'latest_applications': latest_applications,
              'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
     elif request.method == 'POST':
         form = SnapshotSettingsForm(request.POST)
@@ -276,6 +278,7 @@ def create_snapshot(request, domain):
         if request.POST['license'] in LICENSES.keys():
             new_domain.license = request.POST['license']
         new_domain.description = request.POST['description']
+        new_domain.attribution_notes = request.POST['attribution_notes']
         new_domain.project_type = request.POST['project_type']
         new_domain.region = request.POST['region']
         new_domain.city = request.POST['city']
@@ -294,10 +297,17 @@ def create_snapshot(request, domain):
         new_domain.published = True
         new_domain.save()
 
+        for application in new_domain.full_applications():
+            original_id = application.original_doc
+            application.description = request.POST["%s_description" % original_id]
+            if application.description != '':
+                application.save()
+
         if new_domain is None:
             return render_to_response(request, 'domain/snapshot_settings.html',
                     {'domain': domain.name,
                      'form': form,
+                     'latest_applications': latest_applications,
                      'error_message': 'Snapshot creation failed; please try again'})
 
         messages.success(request, "Created snapshot. The snapshot will be posted to the project store pending approval by admins.")
