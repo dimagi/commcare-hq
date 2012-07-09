@@ -28,6 +28,7 @@ function(doc) {
             ret.add(doc.organization, {'field': 'organization'});
             ret.add(doc.project_type, {'field': 'category'});
             ret.add(doc.region, {'field': 'region'});
+            ret.add(doc.author, {'field': 'author'});
 
             return ret;
         }
