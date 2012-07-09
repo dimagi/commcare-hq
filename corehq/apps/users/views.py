@@ -728,10 +728,10 @@ class UploadCommCareUsers(TemplateView):
                 response_rows.append(row)
 
             for record in ret['deleted_groups']:
-                messages.warning(request, 'Group <strong>%s</strong> was deleted. <a href="%s">Undo</a>' % (map(escape, (
-                    record.get_doc().name,
-                    reverse('undo_delete_group', args=[self.domain, record.get_id])
-                ))))
+                messages.warning(request, 'Group <strong>%s</strong> was deleted. <a href="%s" class="post-link">Undo</a>' % (
+                    escape(record.get_doc().name),
+                    escape(reverse('undo_delete_group', args=[self.domain, record.get_id]))
+                ), extra_tags='html')
 
         redirect = request.POST.get('redirect')
         if redirect:

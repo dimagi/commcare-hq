@@ -140,10 +140,11 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
     except Exception:
         pass
     else:
+        ret['deleted_groups'] = []
         if overwrite_groups:
             delete_records = group_memoizer.delete_other()
             for record in delete_records:
-                ret['deleted_groups'] = record
+                ret['deleted_groups'].append(record)
     finally:
         group_memoizer.save_all()
     
