@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from xml.sax.saxutils import escape
 from functools import wraps
 import json
 from corehq.apps.reports.util import get_possible_reports
@@ -724,6 +726,12 @@ class UploadCommCareUsers(TemplateView):
             for row in ret["rows"]:
                 response_writer.writerow(row)
                 response_rows.append(row)
+
+            for record in ret['deleted_groups']:
+                messages.warning(request, 'Group <strong>%s</strong> was deleted. <a href="%s">Undo</a>' % (map(escape, (
+                    record.get_doc().name,
+                    reverse('undo_delete_group', args=[self.domain, record.get_id])
+                ))))
 
         redirect = request.POST.get('redirect')
         if redirect:
