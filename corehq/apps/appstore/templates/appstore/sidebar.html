@@ -6,6 +6,8 @@
     <!--<li{% if report %} class="active"{% endif %}><a href="{% url appstore_interfaces_default %}">Advanced search...</a></li>-->
     <li class="nav-header">Filter by</li>
     <!--<li{% if filter_by == 'organization' %} class="active"{% endif %}><a href="{% url appstore_filter_choices "organization" %}">Organization</a></li>-->
+    <li{% if filter_by == 'best' %} class="active"{% endif %}><a href="{% url highest_rated %}">Best</a></li>
+
     <li{% if filter_by == 'author' %} class="active"{% endif %}><a href="{% url appstore_filter_choices "author" %}">Author</a></li>
     <li{% if filter_by == 'category' %} class="active"{% endif %}><a href="{% url appstore_filter_choices "category" %}">Category</a></li>
     <li{% if filter_by == 'license' %} class="active"{% endif %}><a href="{% url appstore_filter_choices "license" %}">License</a></li>

@@ -1,0 +1,33 @@
+<<<<<<< HEAD
+*.pyc
+*~
+local.ini*
+localsettings.py
+.settings/*
+.project
+.pydevproject
+.idea
+xforms/*
+data/*
+submissions/*
+export/*
+bad/*
+rapidsms-django.log*
+rapidsms.log*
+*.log
+CommCare.ja*
+startover.sh
+celery.db
+*.sql
+/resource_versions.py
+/loadtest/results/*
+/loadtest/localsettings.py
+=======
+localsettings.*
+*.pyc
+*.py~
+/data
+corehq/apps/releasemanager/DimagiKeyStore
+corehq/apps/hq-bootstrap/static
+corehq/apps/hq_bootstrap/static
+>>>>>>> appstore

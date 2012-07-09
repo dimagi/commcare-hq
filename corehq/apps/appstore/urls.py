@@ -6,7 +6,9 @@ urlpatterns = patterns('corehq.apps.appstore.views',
     url(r'^filter/(?P<filter_by>[\w]+)/(?P<filter>[+\w-]+)/', 'filter_snapshots', name='appstore_filter_snapshots'),
     url(r'^filter/(?P<filter_by>[\w]+)/', 'filter_choices', name='appstore_filter_choices'),
     url(r'^$', 'appstore', name='appstore'),
-#    url(r'^$', "default", name="appstore_interfaces_default"),
+    url(r'^best$', 'highest_rated', name='highest_rated'),
+
+    #    url(r'^$', "default", name="appstore_interfaces_default"),
     url(r'^store/appstore/async/filters/(?P<slug>[\w_]+)/$', 'report_dispatcher', name="appstore_interface_dispatcher", kwargs={
         'async_filters': True
     }),

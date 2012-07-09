@@ -5,6 +5,7 @@ from django.conf import settings
 from django.db import models
 from couchdbkit.ext.django.schema import Document, StringProperty,\
     BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty, DictProperty
+from corehq.apps.appstore.models import Review
 from dimagi.utils.timezones import fields as tz_fields
 from dimagi.utils.couch.database import get_db
 from itertools import chain
@@ -458,6 +459,37 @@ class Domain(Document):
         from corehq.apps.hqmedia.models import CommCareMultimedia
         return CommCareMultimedia.view('hqmedia/by_domain', key=self.name, include_docs=True).all()
 
+    @classmethod
+    def popular_sort(cls, domains, page):
+        popular_domains = list()
+        temp_sorting_list = list()
+        total_average_sum = 0
+        total_average_count = 0
+        MIN_REVIEWS = 1
+        for domain in domains:
+            num_ratings = Review.get_num_ratings_by_app(domain.original_doc)
+            if num_ratings > 0:
+                average_rating = Review.get_average_rating_by_app(domain.original_doc)
+                total_average_sum = total_average_sum + average_rating
+                total_average_count = (total_average_count + 1)
+                popular_domains.append(domain)
+
+        total_average = (total_average_sum / total_average_count)
+
+        for domain in popular_domains:
+            average_rating = Review.get_average_rating_by_app(domain.original_doc)
+            num_ratings = Review.get_num_ratings_by_app(domain.original_doc)
+            weighted_rating = ((num_ratings / (num_ratings + MIN_REVIEWS)) * average_rating + (MIN_REVIEWS / (num_ratings + MIN_REVIEWS)) * total_average)
+            temp_sorting_list.append([domain, weighted_rating])
+
+        temp_sorting_list = sorted(temp_sorting_list, key=lambda domain: domain[1])
+
+        sorted_list = list()
+
+        for domain, rating in temp_sorting_list:
+            sorted_list.append(domain)
+
+        return sorted_list[((page-1)*9):((page)*9)]
 ##############################################################################################################
 #
 # Originally had my own hacky global storage of content type, but it turns out that contenttype.models

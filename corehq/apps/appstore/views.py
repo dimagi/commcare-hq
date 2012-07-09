@@ -31,6 +31,20 @@ def appstore(request, template="appstore/appstore_base.html"):
     vals = dict(apps=results, average_ratings=average_ratings, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages)
     return render_to_response(request, template, vals)
 
+def highest_rated(request, template="appstore/appstore_best.html"):
+    page = int(request.GET.get('page', 1))
+    results = Domain.published_snapshots(include_unapproved=request.user.is_superuser)
+    #sort by popularity
+    results = Domain.popular_sort(results, page)
+    average_ratings = list()
+    for result in results:
+        average_ratings.append([result.name, Review.get_average_rating_by_app(result.original_doc)])
+    more_pages = page * PER_PAGE < len(results)
+    print(results)
+    filter_by = 'best'
+    vals = dict(apps=results, average_ratings=average_ratings, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages, filter_by=filter_by)
+    return render_to_response(request, template, vals)
+
 def project_info(request, domain, template="appstore/project_info.html"):
     dom = Domain.get_by_name(domain)
     if not dom or not dom.is_snapshot or not dom.published or (not dom.is_approved and not request.couch_user.is_domain_admin(domain)):
