@@ -1168,7 +1168,9 @@ class CaseListReport(PaginatedHistoryHQReport):
               'corehq.apps.reports.fields.CaseTypeField']
 
     def __init__(self, domain, request, base_context = None):
-        self.disable_lucene = bool(request.GET.get('no_lucene', False))
+#        self.disable_lucene = bool(request.GET.get('no_lucene', False))
+        # this is temporary...sorry!!!
+        self.disable_lucene = True
         if not settings.LUCENE_ENABLED or self.disable_lucene:
             self.fields = ['corehq.apps.reports.fields.SelectMobileWorkerField',
                            'corehq.apps.reports.fields.CaseTypeField',
@@ -1192,6 +1194,8 @@ class CaseListReport(PaginatedHistoryHQReport):
         self.context.update({"filter": settings.LUCENE_ENABLED })
         super(PaginatedHistoryHQReport, self).get_report_context()
         self.context['ajax_params'].append(dict(name=SelectOpenCloseField.slug, value=self.request.GET.get(SelectOpenCloseField.slug, '')))
+        if self.disable_lucene:
+            self.context['ajax_params'].append(dict(name='no_lucene', value=self.disable_lucene))
 
     def get_headers(self):
         headers = DataTablesHeader(DataTablesColumn("Name"),
