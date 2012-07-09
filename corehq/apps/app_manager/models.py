@@ -22,7 +22,7 @@ import current_builds
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.web import get_url_base, parse_int
 from copy import deepcopy
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, cached_property
 import hashlib
 from django.template.loader import render_to_string
 from urllib2 import urlopen, URLError
@@ -780,6 +780,9 @@ class ApplicationBase(VersionedDoc):
     # only the languages that go in the build
     build_langs = StringListProperty()
 
+    cached_properties = DictProperty()
+    description = StringProperty()
+
     @classmethod
     def wrap(cls, data):
         # scrape for old conventions and get rid of them
@@ -1392,6 +1395,16 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for f,form in enumerate(module['forms']):
                 change_unique_id(source['modules'][m]['forms'][f])
 
+    @cached_property
+    def has_case_management(self):
+        for module in self.get_modules():
+            for form in module.get_forms():
+                if len(form.active_actions()) > 0:
+                    return True
+        return False
+
+    def has_media(self):
+        return len(self.multimedia_map) > 0
 
     def get_xmlns_map(self):
         map = defaultdict(list)

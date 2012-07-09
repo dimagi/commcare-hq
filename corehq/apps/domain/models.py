@@ -93,6 +93,7 @@ class Domain(Document):
     author = StringProperty()
     deployment_date = DateTimeProperty()
     phone_model = StringProperty()
+    attribution_notes = StringProperty()
 
     migrations = SchemaProperty(DomainMigrations)
 
@@ -198,18 +199,20 @@ class Domain(Document):
     def has_case_management(self):
         for app in self.full_applications():
             if app.doc_type == 'Application':
-                for module in app.get_modules():
-                    for form in module.get_forms():
-                        if len(form.active_actions()) > 0:
-                            return True
+                if app.has_case_management():
+                    return True
         return False
 
     @cached_property
     def has_media(self):
         for app in self.full_applications():
-            if app.doc_type == 'Application' and len(app.multimedia_map) > 0:
+            if app.doc_type == 'Application' and app.has_media():
                 return True
         return False
+
+    def all_users(self):
+        from corehq.apps.users.models import CouchUser
+        return CouchUser.by_domain(self.name)
 
     def has_shared_media(self):
         return False

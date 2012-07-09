@@ -62,6 +62,8 @@
     <dd>{{ project.phone_model }}</dd>
     {% endif %}
     {% if project.user_type %}
+    <dt>Users</dt>
+    <dd>{{ project.copied_from.all_users|length }}</dd>
     <dt>User type</dt>
     <dd>{{ project.user_type }}</dd>
     {% endif %}
@@ -100,41 +102,49 @@
         This version: {{ project.copies|length }};
         All versions: {{ project.copies_of_parent|length }}
     </dd>
-    <dt>CommCare</dt>
-    <dd>
-        {% if project.versions|length == 1 %}
-            Version {{ project.versions.0 }}
-        {% endif %}
-        {% if project.versions|length == 2 %}
-            Both 1.0 and 2.0 apps included
-        {% endif %}
-        {% if project.versions|length == 0 %}
-            No apps
-        {% endif %}
-    </dd>
-    <dt>Uses cases?</dt>
-    <dd>
-        {{ project.has_case_management|yesno:"Yes,No" }}
-    </dd>
-    <dt>{% trans 'Applications' %}</dt>
-    <dd>
-        {% if project.applications|length > 0 %}
-        {% for app in project.applications %}
-            <a href="{% url app_summary project app.id %}">{{ app.name }}</a>{% if not forloop.last %},{% endif %}
-        {% endfor %}
-        {% else %}
-        None
-        {% endif %}
-    </dd>
-    <dt>Has media?</dt>
-    <dd>
-        {{ project.has_media|yesno:"Yes,No" }}
-    </dd>
  </dl>
+
+<h2>Applications</h2>
+        <div class="accordion" id="application-accordion">
+            {% for app in project.full_applications %}
+                <div class="accordion-group">
+                    <div class="accordion-heading">
+                        <a class="accordion-toggle" href="#application-{{ app.id }}" data-toggle="collapse" data-parent="#application-accordion">{{ app.name }}</a>
+                    </div>
+                    <div id="application-{{ app.id }}" class="accordion-body collapse">
+                        <dl class="dl-horizontal">
+                            <dt>Uses cases?</dt>
+                            <dd>{{ app.has_case_management|yesno:"Yes,No" }}</dd>
+                            <dt>Has media?</dt>
+                            <dd>
+                                {{ app.has_media|yesno:"Yes,No" }}
+                            </dd>
+                            <dt>CommCare</dt>
+                            <dd>
+                                Version {{ app.application_version }}
+                            </dd>
+                            {% if app.description %}
+                                <dt>{% trans 'Description' %}</dt>
+                                <dd>
+                                    {{ project.description }}
+                                </dd>
+                            {% endif %}
+                            <dd><a href="{% url app_summary project app.id %}">Application summary</a></dd>
+                        </dl>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
         <div>
             <form action="{% url copy_snapshot_app project.name %}" method="post">
                 <fieldset>
                     <legend>Copy individual application into existing project</legend>
+                    {% if project.attribution_notes %}
+                        <dl>
+                            <dt>Attribution notes</dt>
+                            <dd>{{ project.attribution_notes }}</dd>
+                        </dl>
+                    {% endif %}
                     <label for="app_to_copy_select">
                         Application to Copy
                     </label>
@@ -154,17 +164,24 @@
                 </fieldset>
                 <button class="btn btn-primary" type="submit">Copy application</button>
             </form>
-            <form method="post" action="{% url domain_copy_snapshot project %}">
+            <form method="post" class="form-inline" action="{% url domain_copy_snapshot project %}">
                 <fieldset>
                     <legend>Copy entire project into new project</legend>
+                    {% if project.attribution_notes %}
+                    <dl>
+                        <dt>Attribution notes</dt>
+                        <dd>{{ project.attribution_notes }}</dd>
+                    </dl>
+                    {% endif %}
                     <div{% if error_message %} class="error"{% endif %}>
                         <input type="text" class="span3" id="new_project_name"
                                name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">
                         {% if error_message %}
                         <span class="help-inline">{{ error_message }}</span>
                         {% endif %}
-                    </div>
                     <button type="submit" class="btn btn-primary">Create New Project</button>
+                    </div>
+
                 </fieldset>
             </form>
         </div>
