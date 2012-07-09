@@ -11,13 +11,14 @@ from corehq.apps.users.models import WebUser
 from dimagi.utils.couch.database import get_db
 
 class DataInterface(HQReport):
-    base_slug = 'appstore'
+    base_slug = 'advanced'
     template_name = "appstore/appstore_interfaces_base.html"
     base_template_name = "appstore/appstore_interfaces_base.html"
     asynchronous = True
+    exportable = False
 
 class AppStoreInterface(DataInterface, StandardTabularHQReport, StandardDateHQReport):
-    name = "App Store"
+    name = "Project Store"
     slug = "advanced"
     fields = ['corehq.apps.reports.fields.SelectOrganizationField',
               'corehq.apps.reports.fields.SelectLicenseField',
@@ -41,7 +42,7 @@ class AppStoreInterface(DataInterface, StandardTabularHQReport, StandardDateHQRe
         self.license_filter = params.get('license')
         self.category_filter = params.get('category')
         self.region_filter = params.get('region')
-        self.search_filter = params.get('sSearch')
+#        self.search_filter = params.get('sSearch')
 
 
     def get_headers(self):

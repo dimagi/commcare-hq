@@ -121,13 +121,15 @@ def search_snapshots(request, filter_by = '', filter = '', template="appstore/ap
     return render_to_response(request, template, vals)
 
 def filter_choices(request, filter_by, template="appstore/filter_choices.html"):
-    if filter_by not in ('category', 'license', 'region', 'organization'):
+    if filter_by not in ('category', 'license', 'region', 'organization', 'author'):
         raise Http404("That page doesn't exist")
 
     if filter_by == 'category':
         choices = [(d.replace(' ', '+'), d) for d in Domain.field_by_prefix('project_type')]
     elif filter_by == 'organization':
         choices = [(o.name, o.title) for o in Organization.get_all()]
+    elif filter_by == 'author':
+        choices = [(d.replace(' ', '+'), d) for d in Domain.field_by_prefix('author')]
     elif filter_by == 'license':
         choices = LICENSES.items()
     elif filter_by == 'region':
@@ -136,7 +138,7 @@ def filter_choices(request, filter_by, template="appstore/filter_choices.html"):
     return render_to_response(request, template, {'choices': choices, 'filter_by': filter_by})
 
 def filter_snapshots(request, filter_by, filter, template="appstore/appstore_base.html"):
-    if filter_by not in ('category', 'license', 'region', 'organization'):
+    if filter_by not in ('category', 'license', 'region', 'organization', 'author'):
         raise Http404("That page doesn't exist")
 
     page = int(request.GET.get('page', 1))
