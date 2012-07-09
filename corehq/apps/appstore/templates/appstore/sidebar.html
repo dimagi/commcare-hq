@@ -4,7 +4,7 @@
         <input type="text" name="q" placeholder="Search for apps..." value="{{ search_query }}" class="search-query" style="width: 80%" />
     </form></li>
     <!--<li{% if report %} class="active"{% endif %}><a href="{% url appstore_interfaces_default %}">Advanced search...</a></li>-->
-    <!--<li class="nav-header">Filter by</li>-->
+    <li class="nav-header">Filter by</li>
     <!--<li{% if filter_by == 'organization' %} class="active"{% endif %}><a href="{% url appstore_filter_choices "organization" %}">Organization</a></li>-->
     <li{% if filter_by == 'author' %} class="active"{% endif %}><a href="{% url appstore_filter_choices "author" %}">Author</a></li>
     <li{% if filter_by == 'category' %} class="active"{% endif %}><a href="{% url appstore_filter_choices "category" %}">Category</a></li>
