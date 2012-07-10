@@ -170,8 +170,12 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
             results = Domain.hit_sort(results, page)
         results = results[(page-1)*PER_PAGE:page*PER_PAGE]
 
+    average_ratings = list()
+    for result in results:
+        average_ratings.append([result.name, Review.get_average_rating_by_app(result.original_doc)])
 
-    vals = dict(apps=results, filter_by=filter_by, filter=filter, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages, sort_by=sort_by)
+
+    vals = dict(apps=results, filter_by=filter_by, filter=filter, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages, sort_by=sort_by, average_ratings=average_ratings)
     return render_to_response(request, template, vals)
 
 @datespan_default

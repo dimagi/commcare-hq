@@ -173,7 +173,7 @@
     {% endblock %}
 </h1>
 
-<div class="row">
+<div class="row-fluid">
     {% block view-tabs %}
     <div class="tabbable" style="padding-top: 15px;">
         <ul class="nav nav-pills">
@@ -192,12 +192,13 @@
     </div>
     {% endblock %}
 </div>
-<div class="row">
+<div class="row-fluid">
 {% for app in apps %}
     {% if forloop.counter0|divisibleby:"3" and forloop.counter0 != 0 %}
-        </div><div class="row">
+        </div><div class="row-fluid">
     {% endif %}
-    <div class="span4">
+    <div class="span3">
+        <div class="well">
         <div class="page-header">
             <h2>
                 {{ app.title }}
@@ -240,12 +241,13 @@
                 <a class="btn btn-success" href="{% url approve_appstore_app app.name %}?approve=true">Approve</a>
             {% endif %}
         {% endif %}
+        </div>
     </div>
 {% endfor %}
 </div>
 
-<div class="row">
-    <ul class="pager span12">
+<div class="row-fluid">
+    <ul class="pager span10">
         {% if page > 1 %}
         <li class="previous">
             <a href="?page={{ prev_page }}{% if search_query %}&q={{ search_query }}{% endif %}">&larr; Previous</a>
