@@ -1,4 +1,5 @@
 from couchdbkit.exceptions import MultipleResultsFound
+from django.contrib import messages
 from corehq.apps.groups.models import Group
 from corehq.apps.users.util import normalize_username, raw_username
 from corehq.apps.users.models import CommCareUser
@@ -39,6 +40,15 @@ class GroupMemoizer(object):
                 self.groups[group_name] = Group(domain=self.domain, name=group_name)
         return self.groups[group_name]
 
+    def delete_other(self):
+        all_groups = Group.by_domain(self.domain)
+        records = []
+        for group in all_groups:
+            if not self.groups.has_key(group.name):
+                record = group.soft_delete()
+                records.append(record)
+        return records
+
     def save_all(self):
         for group in self.groups.values():
             group.save()
@@ -62,6 +72,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
             group.reporting = reporting
     usernames = set()
     user_ids = set()
+    overwrite_groups = True
 
     try:
         for row in user_specs:
@@ -126,6 +137,14 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                     status_row['flag'] = 'error: %s' % e
                     
             ret["rows"].append(status_row)
+    except Exception:
+        pass
+    else:
+        ret['deleted_groups'] = []
+        if overwrite_groups:
+            delete_records = group_memoizer.delete_other()
+            for record in delete_records:
+                ret['deleted_groups'].append(record)
     finally:
         group_memoizer.save_all()
     

@@ -339,7 +339,7 @@ def get_apps_base_context(request, domain, app):
     lang = request.GET.get('lang',
         request.COOKIES.get('lang', app.langs[0] if hasattr(app, 'langs') and app.langs else '')
     )
-
+    langs = None
     if app and hasattr(app, 'langs'):
         if not app.langs and not app.is_remote_app:
             # lots of things fail if the app doesn't have any languages.
@@ -361,17 +361,23 @@ def get_apps_base_context(request, domain, app):
             limit=1,
         ).one()
         latest_app_version = latest_app_version.version if latest_app_version else -1
-        for lang in app.langs:
+        for _lang in app.langs:
             try:
-                SuccessMessage(app.success_message.get(lang, ''), '').check_message()
+                SuccessMessage(app.success_message.get(_lang, ''), '').check_message()
             except Exception as e:
                 messages.error(request, "Your success message is malformed: %s is not a keyword" % e)
-
     else:
         latest_app_version = -1
-    context = locals()
-    del context['request']
-
+    context = {
+        ''
+        'lang': lang,
+        'langs': langs,
+        'domain': domain,
+        'edit': edit,
+        'applications': applications,
+        'latest_app_version': latest_app_version,
+        'app': app
+    }
     build_errors_id = request.GET.get('build_errors', "")
     build_errors = []
     if build_errors_id:
@@ -1451,6 +1457,7 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
     all the resource files that will end up zipped into the jar.
 
     """
+    files = []
     if req.app.copy_of:
         files = [(path[len('files/'):], req.app.fetch_attachment(path)) for path in req.app._attachments if path.startswith('files/')]
     else:
