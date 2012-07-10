@@ -8,6 +8,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.importer import base
 from corehq.apps.importer.util import ExcelFile
+from couchdbkit.exceptions import MultipleResultsFound
 from tempfile import mkstemp
 from django.views.decorators.http import require_POST
 from datetime import datetime, date
@@ -172,6 +173,10 @@ def excel_commit(request, domain):
             field_map[field] = {'case': case_fields[i], 'custom': custom_fields[i], 'date': int(date_yesno[i])}
         
     spreadsheet = ExcelFile(filename, named_columns)
+
+    if filename is None or spreadsheet is None:
+        return HttpResponseRedirect(reverse("report_dispatcher", args=[domain, base.ExcelImporter.slug]) + "?error=cache")
+    
     columns = spreadsheet.get_header_columns()        
     
     # find indexes of user selected columns
@@ -189,6 +194,7 @@ def excel_commit(request, domain):
 
     no_match_count = 0
     match_count = 0
+    too_many_matches = 0
     
     cases = {}
    
@@ -224,16 +230,19 @@ def excel_commit(request, domain):
             except:
                 pass
         elif search_field == 'external_id':
-            search_result = CommCareCase.view('hqcase/by_domain_external_id', 
-                                              startkey=[domain, search_id], 
-                                              endkey=[domain, search_id]
-                                              ).one()
             try:
-                case = CommCareCase.get(search_result['id'])
-                found = True       
-            except:
-                pass
-
+                search_result = CommCareCase.view('hqcase/by_domain_external_id', 
+                                                  startkey=[domain, search_id], 
+                                                  endkey=[domain, search_id]
+                                                  ).one()
+                try:
+                    case = CommCareCase.get(search_result['id'])
+                    found = True       
+                except:
+                    pass
+            except MultipleResultsFound:
+                too_many_matches += 1     
+               
         if found:
             match_count += 1
         else:
@@ -295,6 +304,7 @@ def excel_commit(request, domain):
     return render_to_response(request, "excel_commit.html", {
                                 'match_count': match_count,
                                 'no_match_count': no_match_count,
+                                'too_many_matches': too_many_matches,
                                 'domain': domain,
                                 'report': {
                                     'name': 'Import: Completed'

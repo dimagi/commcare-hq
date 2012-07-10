@@ -16,3 +16,5 @@ class ExcelImporter(HQReport):
             self.context['error_text'] = 'The Excel file you chose could not be processed. Please check that it is saved as a Microsoft Excel 97/2000 .xls file.'
         elif error == "cases":
             self.context['error_text'] = 'No cases have been submitted to this domain. You cannot update case details from an Excel file until you have existing cases.'            
+        elif error == "cache":
+            self.context['error_text'] = 'The session containing the file you uploaded has expired - please upload a new one.'

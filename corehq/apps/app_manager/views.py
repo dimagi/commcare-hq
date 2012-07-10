@@ -5,6 +5,7 @@ import uuid
 from wsgiref.util import FileWrapper
 import zipfile
 from corehq.apps.app_manager.const import APP_V1
+from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.domain.models import Domain
 from couchexport.export import FormattedRow
 from couchexport.models import Format
@@ -276,6 +277,8 @@ def get_form_view_context(request, form, langs, is_user_registration):
         messages.error(request, "Unexpected error in form: %s" % e)
 
     if xform and xform.exists():
+        if xform.already_has_meta():
+            messages.warning(request, "This form has a meta block already! It will be replaced by CommCare HQ's standard meta block.")
         try:
             form.validate_form()
             xform_questions = xform.get_questions(langs)
@@ -358,6 +361,12 @@ def get_apps_base_context(request, domain, app):
             limit=1,
         ).one()
         latest_app_version = latest_app_version.version if latest_app_version else -1
+        for lang in app.langs:
+            try:
+                SuccessMessage(app.success_message.get(lang, ''), '').check_message()
+            except Exception as e:
+                messages.error(request, "Your success message is malformed: %s is not a keyword" % e)
+
     else:
         latest_app_version = -1
     context = locals()

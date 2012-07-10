@@ -1,6 +1,7 @@
 from datetime import timedelta, datetime
 import json
 from copy import deepcopy
+from django.core.files import temp
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import permission_required
@@ -18,7 +19,7 @@ from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response, render_to_response
 from django.views.decorators.cache import cache_page
-from couchexport.export import export_raw
+from couchexport.export import export_raw, export_from_tables
 from couchexport.shortcuts import export_response
 from couchexport.models import Format
 from StringIO import StringIO
@@ -132,10 +133,13 @@ def active_users(request):
     return json_response({"break_down": final_count, "total": sum(final_count.values())})
 
 @require_superuser
-def global_report(request, template="hqadmin/global.html"):
+def global_report(request, template="hqadmin/global.html", as_export=False):
 
     def _flot_format(result):
         return int(datetime(year=result['key'][0], month=result['key'][1], day=1).strftime("%s"))*1000
+
+    def _export_format(result):
+        return datetime(year=result['key'][0], month=result['key'][1], day=1).strftime("%Y-%m-%d")
 
     context = get_hqadmin_base_context(request)
 
@@ -147,7 +151,7 @@ def global_report(request, template="hqadmin/global.html"):
                (int(result['key'][0]) < datetime.utcnow().year or
                 (int(result['key'][0]) == datetime.utcnow().year and
                  int(result['key'][1]) <= datetime.utcnow().month)):
-                counts.append([_flot_format(result), result['value']])
+                counts.append([_export_format(result) if as_export else _flot_format(result), result['value']])
         context['%s_counts' % name] = counts
         counts_int = deepcopy(counts)
         for i in range(1, len(counts_int)):
@@ -155,9 +159,10 @@ def global_report(request, template="hqadmin/global.html"):
                 counts_int[i][1] += counts_int[i-1][1]
         context['%s_counts_int' % name] = counts_int
 
-    _metric('case')
-    _metric('form')
-    _metric('user')
+    standard_metrics = ["case", "form", "user"]
+    for m in standard_metrics:
+        _metric(m)
+
     def _active_metric(name):
         dates = {}
         for result in get_db().view("hqadmin/%ss_over_time" % name, group=True):
@@ -166,7 +171,7 @@ def global_report(request, template="hqadmin/global.html"):
                (int(result['key'][0]) < datetime.utcnow().year or
                 (int(result['key'][0]) == datetime.utcnow().year and
                  int(result['key'][1]) <= datetime.utcnow().month)):
-                date = _flot_format(result)
+                date = _export_format(result) if as_export else _flot_format(result)
                 if not date in dates:
                     dates[date] = set([result['key'][2]])
                 else:
@@ -179,10 +184,37 @@ def global_report(request, template="hqadmin/global.html"):
         domainlist_int = [[x[0], len(x[1])] for x in domainlist_int]
         context['%s_counts' % name] = domainlist
         context['%s_counts_int' % name] = domainlist_int
-    _active_metric("active_domain")
-    _active_metric("active_user")
+
+    active_metrics = ["active_domain", "active_user"]
+    for a in active_metrics:
+        _active_metric(a)
+
+
+    if as_export:
+        all_metrics = standard_metrics + active_metrics
+        format = request.GET.get("format", "xls")
+        tables = []
+        for metric_name in all_metrics:
+            table = context.get('%s_counts' % metric_name, [])
+            table = [["%s" % item[0], "%d" % item[1]] for item in table]
+            table.reverse()
+            table.append(["date", "%s count" % metric_name])
+            table.reverse()
+
+            table_int = context.get('%s_counts_int' % metric_name, [])
+            table_int = [["%s" % item[0], "%d" % item[1]] for item in table_int]
+            table_int.reverse()
+            table_int.append(["date", "%s count, cumulative" % metric_name])
+            table_int.reverse()
+
+            tables.append(["%s counts" % metric_name, table])
+            tables.append(["%s cumulative" % metric_name, table_int])
+        temp = StringIO()
+        export_from_tables(tables, temp, format)
+        return export_response(temp, format, "GlobalReport")
 
     context['hide_filters'] = True
+
     return render_to_response(request, template, context)
 
 @require_superuser

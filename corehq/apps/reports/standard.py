@@ -6,6 +6,7 @@ import sys
 from StringIO import StringIO
 import dateutil
 from corehq.apps.groups.models import Group
+from corehq.apps.users.models import CommCareUser
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 from dimagi.utils.decorators.memoized import memoized
@@ -29,7 +30,7 @@ from corehq.apps.reports.models import HQUserType, FormExportSchema
 from couchexport.models import SavedExportSchema
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.couch.pagination import DatatablesParams
+from dimagi.utils.couch.pagination import DatatablesParams, CouchFilter, FilteredPaginator
 from dimagi.utils.dates import DateSpan, force_to_datetime
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.timezones import utils as tz_utils
@@ -56,7 +57,7 @@ class StandardHQReport(HQReport):
         if not self.fields:
             self.hide_filters = True
 
-        if self.individual:
+        if self.individual and self.users:
             self.name = "%s for %s" % (self.name, self.users[0].raw_username)
         if self.show_time_notice:
             self.context.update(
@@ -169,7 +170,6 @@ class StandardTabularHQReport(StandardHQReport):
             raise Exception("It doesn't look like this machine is configured for "
                         "excel export. To export to excel you have to run the "
                         "command:  easy_install xlutils")
-        book = xlwt.Workbook()
         headers = self.get_headers()
         html_rows = self.get_rows()
 
@@ -238,9 +238,11 @@ class StandardDateHQReport(StandardHQReport):
 
     def process_basic(self):
         if self.request.datespan.is_valid() and not self.request.datespan.is_default:
-            self.datespan.enddate = self.request.datespan.enddate
-            self.datespan.startdate = self.request.datespan.startdate
+            current_time = datetime.datetime.now(tz=self.timezone).time()
+            self.datespan.enddate = datetime.datetime.combine(self.request.datespan.enddate, current_time)
+            self.datespan.startdate = datetime.datetime.combine(self.request.datespan.startdate, current_time)
             self.datespan.is_default = False
+        self.datespan.timezone = self.timezone
         self.request.datespan = self.datespan
         self.context.update(dict(datespan=self.datespan))
         super(StandardDateHQReport, self).process_basic()
@@ -425,24 +427,25 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
         utc_dates = [tz_utils.adjust_datetime_to_timezone(date, self.timezone.zone, pytz.utc.zone) for date in self.dates]
         date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(utc_dates)])
 
+        key = [self.domain]
         results = get_db().view(
             self.couch_view,
-            group=True,
-            startkey=[self.domain,
-                      tz_utils.adjust_datetime_to_timezone(self.datespan.startdate, self.timezone.zone, pytz.utc.zone).isoformat()],
-            endkey=[self.domain,
-                    tz_utils.adjust_datetime_to_timezone(self.datespan.enddate, self.timezone.zone, pytz.utc.zone).isoformat(), {}]
+            reduce=False,
+            startkey=key+[self.datespan.startdate_param_utc],
+            endkey=key+[self.datespan.enddate_param_utc]
         ).all()
+
         user_map = dict([(user.user_id, i) for (i, user) in enumerate(self.users)])
         userIDs = [user.user_id for user in self.users]
         rows = [[0]*(2+len(date_map)) for _ in range(len(self.users))]
         total_row = [0]*(2+len(date_map))
 
         for result in results:
-            _, date, user_id = result['key']
+            _, date = result['key']
             val = result['value']
+            user_id = val.get("user_id")
             if user_id in userIDs:
-                rows[user_map[user_id]][date_map[date]] = val
+                rows[user_map[user_id]][date_map[date[0:10]]] += 1
 
         for i, user in enumerate(self.users):
             rows[i][0] = user.username_in_report
@@ -511,10 +514,10 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
                 except Exception:
                     row.append(0)
             row_sum = sum(row)
-            rows.append([user.username_in_report] + [util.format_datatables_data(row_data, row_data) for row_data in row] + [util.format_datatables_data("* %s" % row_sum, row_sum)])
+            rows.append([user.username_in_report] + [util.format_datatables_data(row_data, row_data) for row_data in row] + [util.format_datatables_data("<strong>%s</strong>" % row_sum, row_sum)])
 
         totals_by_form = [totals_by_form[form_type] for form_type in self.form_types]
-        self.total_row = ["All Users"] + ["%s" % t for t in totals_by_form] + ["* %s" % sum(totals_by_form)]
+        self.total_row = ["All Users"] + ["%s" % t for t in totals_by_form] + ["<strong>%s</strong>" % sum(totals_by_form)]
 
         return rows
 
@@ -660,140 +663,7 @@ class SubmitHistory(PaginatedHistoryHQReport):
         return "<a class='ajax_dialog' href='%s'>View Form</a>" % reverse('render_form_data', args=[self.domain, instance_id])
 
 
-class CaseListReport(PaginatedHistoryHQReport):
-    name = 'Case List'
-    slug = 'case_list'
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectMobileWorkerField',
-              'corehq.apps.reports.fields.CaseTypeField']
 
-    def __init__(self, domain, request, base_context = None):
-        if not settings.LUCENE_ENABLED:
-            self.fields = ['corehq.apps.reports.fields.SelectMobileWorkerField',
-                           'corehq.apps.reports.fields.CaseTypeField',
-                           'corehq.apps.reports.fields.SelectOpenCloseField']
-        super(CaseListReport,self).__init__(domain, request, base_context)
-
-    def get_report_context(self):
-        self.context.update({"filter": settings.LUCENE_ENABLED })
-        super(PaginatedHistoryHQReport, self).get_report_context()
-        self.context['ajax_params'].append(dict(name=SelectOpenCloseField.slug, value=self.request.GET.get(SelectOpenCloseField.slug, '')))
-
-    def get_headers(self):
-        headers = DataTablesHeader(DataTablesColumn("Name"),
-                                    DataTablesColumn("User"),
-                                    DataTablesColumn("Created Date"),
-                                    DataTablesColumn("Modified Date"),
-                                    DataTablesColumn("Status"))
-        headers.no_sort = True
-        if not self.individual:
-            self.name = "%s for %s" % (self.name, SelectMobileWorkerField.get_default_text(self.user_filter))
-        if not self.case_type:
-            headers.prepend_column(DataTablesColumn("Case Type"))
-        open, all = CaseTypeField.get_case_counts(self.domain, self.case_type, self.userIDs)
-        if all > 0:
-            self.name = "%s (%s/%s open)" % (self.name, open, all)
-        else:
-            self.name = "%s (empty)" % self.name
-        return headers
-
-    def paginate_rows(self, skip, limit):
-        rows = []
-        self.count = 0
-
-        if settings.LUCENE_ENABLED:
-            search_key = self.request_params.get("sSearch", "")
-            query = "domain:(%s)" % self.domain
-            query = "%s AND user_id:(%s)" % (query, " OR ".join(self.userIDs))
-            if self.case_type:
-                query = "%s AND type:%s" % (query, self.case_type)
-            if search_key:
-                query = "(%s) AND %s" % (search_key, query)
-
-            results = get_db().search("case/search", q=query,
-                                      handler="_fti/_design",
-                                      limit=limit, skip=skip, sort="\sort_modified")
-            try:
-                for row in results:
-                    row = self.format_row(row)
-                    if row is not None:
-                        rows.append(row)
-                self.count = results.total_rows
-            except RequestFailed:
-                pass
-        else:
-            view = "case/all_cases"
-            prefix = ["all"]
-            key = [self.domain]
-            is_open = self.request.GET.get(SelectOpenCloseField.slug)
-            if self.case_type:
-                prefix = ["type"]
-                key = key+[self.case_type]
-                if is_open:
-                    prefix = ["%s type" % is_open]
-            elif is_open:
-                prefix = [is_open]
-
-            key = prefix+key
-
-            startkey = key+[self.individual] if self.individual else key
-            endkey = key+[self.individual] if self.individual else key+[{}]
-
-            results = get_db().view(view,
-                startkey=startkey,
-                endkey=endkey,
-                reduce=False,
-                limit=limit,
-                skip=skip
-            ).all()
-
-            self.count = get_db().view(view,
-                startkey=startkey,
-                endkey=endkey,
-                reduce=True
-            ).first()
-            self.count = self.count.get('value', 0) if self.count else 0
-
-            for row in results:
-                row = self.format_row(row)
-                if row is not None:
-                    rows.append(row)
-                # just ignore poorly formatted search terms for now
-        return rows
-
-    def format_row(self, row):
-        if "doc" in row:
-            case = CommCareCase.wrap(row["doc"])
-        elif "id" in row:
-            case = CommCareCase.get(row["id"])
-        else:
-            raise ValueError("Can't construct case object from row result %s" % row)
-
-        if case.domain != self.domain:
-            logging.error("case.domain != self.domain; %r and %r, respectively" % (case.domain, self.domain))
-
-        assert(case.domain == self.domain)
-
-        return ([] if self.case_type else [case.type]) + [
-            self.case_data_link(row['id'], case.name),
-            self.usernames.get(case.user_id, "Unknown [%s]" % case.user_id),
-            self.date_to_json(case.opened_on),
-            self.date_to_json(case.modified_on),
-            yesno(case.closed, "closed,open")
-        ]
-
-    def date_to_json(self, date):
-        return tz_utils.adjust_datetime_to_timezone\
-            (date, pytz.utc.zone, self.timezone.zone).strftime\
-            ('%Y-%m-%d %H:%M:%S') if date else ""
-
-    def case_data_link(self, case_id, case_name):
-        try: 
-            return "<a class='ajax_dialog' href='%s'>%s</a>" % \
-                        (reverse('case_details', args=[self.domain, case_id]),
-                         case_name)
-        except NoReverseMatch:
-            return "%s (bad ID format)" % case_name
 
 
 class SubmissionTimesReport(StandardHQReport):
@@ -1248,3 +1118,206 @@ class ApplicationStatusReport(StandardTabularHQReport):
             row = [user.username_in_report, last_seen, version, app_name]
             rows.append(row)
         return rows
+
+
+class CaseListFilter(CouchFilter):
+    view = "case/all_cases"
+
+    def __init__(self, domain, case_owner=None, case_type=None, open_case=None):
+
+        self.domain = domain
+
+        key = [self.domain]
+        prefix = [open_case] if open_case else ["all"]
+
+        if case_type:
+            prefix.append("type")
+            key = key+[case_type]
+        if case_owner:
+            prefix.append("owner")
+            key = key+[case_owner]
+
+        key = [" ".join(prefix)]+key
+
+        self._kwargs = dict(
+            startkey=key,
+            endkey=key+[{}],
+            reduce=False
+        )
+
+    def get_total(self):
+        if 'reduce' in self._kwargs:
+            self._kwargs['reduce'] = True
+        all_records = get_db().view(self.view,
+            **self._kwargs).first()
+        return all_records.get('value', 0) if all_records else 0
+
+    def get(self, count):
+        if 'reduce' in self._kwargs:
+            self._kwargs['reduce'] = False
+        return get_db().view(self.view,
+            include_docs=True,
+            limit=count,
+            **self._kwargs).all()
+
+class CaseListReport(PaginatedHistoryHQReport):
+    name = 'Case List'
+    slug = 'case_list'
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.SelectCaseOwnerField',
+              'corehq.apps.reports.fields.CaseTypeField']
+
+    def __init__(self, domain, request, base_context = None):
+#        self.disable_lucene = bool(request.GET.get('no_lucene', False))
+        # this is temporary...sorry!!!
+        self.disable_lucene = True
+        if not settings.LUCENE_ENABLED or self.disable_lucene:
+            self.fields = ['corehq.apps.reports.fields.SelectMobileWorkerField',
+                           'corehq.apps.reports.fields.CaseTypeField',
+                           'corehq.apps.reports.fields.SelectOpenCloseField']
+        super(CaseListReport,self).__init__(domain, request, base_context)
+
+    def get_parameters(self):
+        super(CaseListReport, self).get_parameters()
+        user = None
+        if self.individual:
+            try:
+                user = CommCareUser.get_by_user_id(self.individual)
+                user = user if user.username_in_report else None
+            except Exception:
+                pass
+        self.case_sharing_groups = user.get_case_sharing_groups() if user else []
+        if not settings.LUCENE_ENABLED or self.disable_lucene:
+            self.user_filter = HQUserType.use_defaults(show_all=True)
+
+    def get_report_context(self):
+        self.context.update({"filter": settings.LUCENE_ENABLED })
+        super(PaginatedHistoryHQReport, self).get_report_context()
+        self.context['ajax_params'].append(dict(name=SelectOpenCloseField.slug, value=self.request.GET.get(SelectOpenCloseField.slug, '')))
+        if self.disable_lucene:
+            self.context['ajax_params'].append(dict(name='no_lucene', value=self.disable_lucene))
+
+    def get_headers(self):
+        headers = DataTablesHeader(DataTablesColumn("Name"),
+            DataTablesColumn("User"),
+            DataTablesColumn("Created Date"),
+            DataTablesColumn("Modified Date"),
+            DataTablesColumn("Status"))
+        headers.no_sort = True
+        if not self.individual:
+            self.name = "%s for %s" % (self.name, SelectMobileWorkerField.get_default_text(self.user_filter))
+        if not self.case_type:
+            headers.prepend_column(DataTablesColumn("Case Type"))
+        open, all = CaseTypeField.get_case_counts(self.domain, self.case_type, self.userIDs)
+        if all > 0:
+            self.name = "%s (%s/%s open)" % (self.name, open, all)
+        else:
+            self.name = "%s (empty)" % self.name
+        return headers
+
+    def paginate_rows(self, skip, limit):
+        rows = []
+        self.count = 0
+
+        def _compare_cases(x, y):
+            x = x.get('key', [])
+            y = y.get('key', [])
+            try:
+                x = x[-1]
+                y = y[-1]
+            except Exception:
+                x = ""
+                y = ""
+            return cmp(x, y)
+
+        def _format_row(row):
+            if "doc" in row:
+                case = CommCareCase.wrap(row["doc"])
+            elif "id" in row:
+                case = CommCareCase.get(row["id"])
+            else:
+                raise ValueError("Can't construct case object from row result %s" % row)
+
+            if case.domain != self.domain:
+                logging.error("case.domain != self.domain; %r and %r, respectively" % (case.domain, self.domain))
+
+            assert(case.domain == self.domain)
+
+            owner_id = case.owner_id if case.owner_id else case.user_id
+            owning_group = None
+            try:
+                owning_group = Group.get(owner_id)
+            except Exception:
+                pass
+
+            user_id = self.individual if self.individual else owner_id
+            case_owner = self.usernames.get(user_id, "Unknown [%s]" % user_id)
+
+            if owning_group and owning_group.name:
+                if self.individual:
+                    case_owner = '%s <span class="label label-inverse">%s</span>' % (case_owner, owning_group.name)
+                else:
+                    case_owner = '%s <span class="label label-inverse">Group</span>' % owning_group.name
+
+
+            return ([] if self.case_type else [case.type]) + [
+                self.case_data_link(row['id'], case.name),
+                case_owner,
+                self.date_to_json(case.opened_on),
+                self.date_to_json(case.modified_on),
+                yesno(case.closed, "closed,open")
+            ]
+
+        if settings.LUCENE_ENABLED and not self.disable_lucene:
+            group_owners = self.case_sharing_groups if self.individual else Group.get_case_sharing_groups(self.domain)
+            group_owners = [group._id for group in group_owners]
+            case_owners = self.userIDs + group_owners
+
+
+            search_key = self.request_params.get("sSearch", "")
+            query = "domain:(%s)" % self.domain
+            query = "%s AND owner_id:(%s)" % (query, " OR ".join(case_owners))
+            if self.case_type:
+                query = "%s AND type:%s" % (query, self.case_type)
+            if search_key:
+                query = "(%s) AND %s" % (search_key, query)
+
+            results = get_db().search("case/search", q=query,
+                handler="_fti/_design",
+                limit=limit, skip=skip, sort="\sort_modified")
+            try:
+                for row in results:
+                    row = _format_row(row)
+                    if row is not None:
+                        rows.append(row)
+                self.count = results.total_rows
+            except RequestFailed:
+                pass
+        else:
+            is_open = self.request.GET.get(SelectOpenCloseField.slug)
+            all_owners = [self.individual]+[group._id for group in self.case_sharing_groups]
+            filters = [CaseListFilter(self.domain, case_owner, case_type=self.case_type, open_case=is_open)
+                       for case_owner in all_owners]
+            paginator = FilteredPaginator(filters, _compare_cases)
+            items = paginator.get(skip, limit)
+            self.count = paginator.total
+
+            for item in items:
+                row = _format_row(item)
+                if row is not None:
+                    rows.append(row)
+
+        return rows
+
+    def date_to_json(self, date):
+        return tz_utils.adjust_datetime_to_timezone\
+            (date, pytz.utc.zone, self.timezone.zone).strftime\
+            ('%Y-%m-%d %H:%M:%S') if date else ""
+
+    def case_data_link(self, case_id, case_name):
+        try:
+            return "<a class='ajax_dialog' href='%s'>%s</a>" %\
+                   (reverse('case_details', args=[self.domain, case_id]),
+                    case_name)
+        except NoReverseMatch:
+            return "%s (bad ID format)" % case_name

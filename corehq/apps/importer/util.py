@@ -16,7 +16,7 @@ class ExcelFile(object):
         try:
             self.workbook = xlrd.open_workbook(self.file_path)
         except:
-            pass
+            return None
                 
     def get_first_sheet(self):
         if self.workbook:
