@@ -461,50 +461,30 @@ class Domain(Document):
 
     @classmethod
     def popular_sort(cls, domains, page):
-        popular_domains = list()
-        temp_sorting_list = list()
-        total_average_sum = 0
-        total_average_count = 0
+        sorted_list = []
         MIN_REVIEWS = 1
-        for domain in domains:
-            num_ratings = Review.get_num_ratings_by_app(domain.original_doc)
-            if num_ratings > 0:
-                average_rating = Review.get_average_rating_by_app(domain.original_doc)
-                total_average_sum = total_average_sum + average_rating
-                total_average_count = (total_average_count + 1)
-                popular_domains.append(domain)
+
+        domains = [(domain, Review.get_average_rating_by_app(domain.original_doc), Review.get_num_ratings_by_app(domain.original_doc)) for domain in domains]
+        domains = [(domain, avg, num) for domain, avg, num in domains if num > 0]
+
+        total_average_sum = sum(avg for domain, avg, num in domains)
+        total_average_count = len(domains)
 
         total_average = (total_average_sum / total_average_count)
 
-        for domain in popular_domains:
-            average_rating = Review.get_average_rating_by_app(domain.original_doc)
-            num_ratings = Review.get_num_ratings_by_app(domain.original_doc)
+        for domain, average_rating, num_ratings in domains:
             weighted_rating = ((num_ratings / (num_ratings + MIN_REVIEWS)) * average_rating + (MIN_REVIEWS / (num_ratings + MIN_REVIEWS)) * total_average)
-            temp_sorting_list.append([domain, weighted_rating])
+            sorted_list.append((weighted_rating, domain))
 
-        temp_sorting_list = sorted(temp_sorting_list, key=lambda domain: domain[1])
-
-        sorted_list = list()
-
-        for domain, rating in temp_sorting_list:
-            sorted_list.append(domain)
+        sorted_list = [domain for weighted_rating, domain in sorted(sorted_list)]
 
         return sorted_list[((page-1)*9):((page)*9)]
 
     @classmethod
     def hit_sort(cls, domains, page):
-        domains = domains.all()
+        domains = list(domains)
         sorted(domains, key=lambda domain: len(domain.copies_of_parent()))
         return domains[((page-1)*9):((page)*9)]
-
-    @classmethod
-    def number_rated(cls, domains):
-        total = 0
-        for domain in domains:
-            num_ratings = Review.get_num_ratings_by_app(domain.original_doc)
-            if num_ratings > 0:
-                total = (total + 1)
-        return total
 
 
 ##############################################################################################################

@@ -158,21 +158,17 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
 
     query = '%s:"%s"' % (filter_by, filter)
 
-#    results, total_rows = Domain.snapshot_search(query, page=page, per_page=PER_PAGE)
-#    more_pages = page * PER_PAGE < total_rows
-
     if not sort_by:
-        results = Domain.published_snapshots(query, page=page, per_page=PER_PAGE, sort_by=None)
+        results, total_rows = Domain.snapshot_search(query, page=page, per_page=PER_PAGE)
         more_pages = page * PER_PAGE < total_rows
     else:
-        total_results = Domain.published_snapshots(query)
+        results, total_rows = Domain.snapshot_search(query, per_page=None)
+        more_pages = page * PER_PAGE < total_rows
         if sort_by == 'best':
-            results = Domain.popular_sort(total_results, page)
-            num_rated = Domain.number_rated(total_results)
-            more_pages = page * PER_PAGE < num_rated and page <= 10
+            results = Domain.popular_sort(results, page)
         elif sort_by == 'hits':
-            results = Domain.hit_sort(total_results, page)
-            more_pages = page * PER_PAGE < len(total_results) and page <= 10
+            results = Domain.hit_sort(results, page)
+        results = results[(page-1)*PER_PAGE:page*PER_PAGE]
 
 
     vals = dict(apps=results, filter_by=filter_by, filter=filter, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages, sort_by=sort_by)
