@@ -176,7 +176,7 @@
 <div class="row">
     {% block view-tabs %}
     <div class="tabbable" style="padding-top: 15px;">
-        <ul class="nav nav-tabs">
+        <ul class="nav nav-pills">
             {% if filter_by %}
             <li{% if not sort_by %} class="active"{% endif %}><a href="{% url appstore_filter_snapshots filter_by filter %}">All Projects</a></li>
             <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% url sorted_appstore_filter_snapshots filter_by filter 'best' %}">Highest Rated</a></li>
