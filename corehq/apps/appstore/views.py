@@ -21,29 +21,26 @@ from django.shortcuts import redirect
 
 PER_PAGE = 9
 
-def appstore(request, template="appstore/appstore_base.html"):
+def appstore(request, template="appstore/appstore_base.html", sort_by=None):
     page = int(request.GET.get('page', 1))
-    results = Domain.published_snapshots(include_unapproved=request.user.is_superuser, page=page, per_page=PER_PAGE)
+    if not sort_by:
+        results = Domain.published_snapshots(include_unapproved=request.user.is_superuser, page=page, per_page=PER_PAGE)
+        more_pages = page * PER_PAGE < results.total_rows
+    else:
+        total_results = Domain.published_snapshots(include_unapproved=request.user.is_superuser)
+        if sort_by == 'best':
+            results = Domain.popular_sort(total_results, page)
+            num_rated = Domain.number_rated(total_results)
+            more_pages = page * PER_PAGE < num_rated and page <= 10
+        elif sort_by == 'hits':
+            results = Domain.hit_sort(total_results, page)
+            more_pages = page * PER_PAGE < len(total_results) and page <= 10
     average_ratings = list()
     for result in results:
         average_ratings.append([result.name, Review.get_average_rating_by_app(result.original_doc)])
-    more_pages = page * PER_PAGE < results.total_rows
-    vals = dict(apps=results, average_ratings=average_ratings, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages)
+    vals = dict(apps=results, average_ratings=average_ratings, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages, sort_by=sort_by)
     return render_to_response(request, template, vals)
 
-def highest_rated(request, template="appstore/appstore_best.html"):
-    page = int(request.GET.get('page', 1))
-    results = Domain.published_snapshots(include_unapproved=request.user.is_superuser)
-    #sort by popularity
-    results = Domain.popular_sort(results, page)
-    average_ratings = list()
-    for result in results:
-        average_ratings.append([result.name, Review.get_average_rating_by_app(result.original_doc)])
-    more_pages = page * PER_PAGE < len(results)
-    print(results)
-    filter_by = 'best'
-    vals = dict(apps=results, average_ratings=average_ratings, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages, filter_by=filter_by)
-    return render_to_response(request, template, vals)
 
 def project_info(request, domain, template="appstore/project_info.html"):
     dom = Domain.get_by_name(domain)
@@ -151,7 +148,7 @@ def filter_choices(request, filter_by, template="appstore/filter_choices.html"):
 
     return render_to_response(request, template, {'choices': choices, 'filter_by': filter_by})
 
-def filter_snapshots(request, filter_by, filter, template="appstore/appstore_base.html"):
+def filter_snapshots(request, filter_by, filter, template="appstore/appstore_base.html", sort_by=None):
     if filter_by not in ('category', 'license', 'region', 'organization', 'author'):
         raise Http404("That page doesn't exist")
 
@@ -160,9 +157,25 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
     filter = filter.replace('+', ' ')
 
     query = '%s:"%s"' % (filter_by, filter)
-    results, total_rows = Domain.snapshot_search(query, page=page, per_page=PER_PAGE)
-    more_pages = page * PER_PAGE < total_rows
-    vals = dict(apps=results, filter_by=filter_by, filter=filter, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages)
+
+#    results, total_rows = Domain.snapshot_search(query, page=page, per_page=PER_PAGE)
+#    more_pages = page * PER_PAGE < total_rows
+
+    if not sort_by:
+        results = Domain.published_snapshots(query, page=page, per_page=PER_PAGE, sort_by=None)
+        more_pages = page * PER_PAGE < total_rows
+    else:
+        total_results = Domain.published_snapshots(query)
+        if sort_by == 'best':
+            results = Domain.popular_sort(total_results, page)
+            num_rated = Domain.number_rated(total_results)
+            more_pages = page * PER_PAGE < num_rated and page <= 10
+        elif sort_by == 'hits':
+            results = Domain.hit_sort(total_results, page)
+            more_pages = page * PER_PAGE < len(total_results) and page <= 10
+
+
+    vals = dict(apps=results, filter_by=filter_by, filter=filter, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages, sort_by=sort_by)
     return render_to_response(request, template, vals)
 
 @datespan_default

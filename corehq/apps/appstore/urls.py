@@ -4,9 +4,12 @@ urlpatterns = patterns('corehq.apps.appstore.views',
     url(r'^(?P<domain>[\w\.-]+)/info/$', 'project_info', name='project_info'),
     url(r'^search/$', 'search_snapshots', name='appstore_search_snapshots'),
     url(r'^filter/(?P<filter_by>[\w]+)/(?P<filter>[+\w-]+)/', 'filter_snapshots', name='appstore_filter_snapshots'),
+    url(r'^filter/(?P<filter_by>[\w]+)/(?P<filter>[+\w-]+)/(?P<sort_by>[\w_]+)/', 'filter_snapshots', name='sorted_appstore_filter_snapshots'),
+
     url(r'^filter/(?P<filter_by>[\w]+)/', 'filter_choices', name='appstore_filter_choices'),
     url(r'^$', 'appstore', name='appstore'),
-    url(r'^highest_rated$', 'highest_rated', name='highest_rated'),
+    url(r'^(?P<sort_by>[\w_]+)/$', 'appstore', name='sorted_appstore'),
+
 
     #    url(r'^$', "default", name="appstore_interfaces_default"),
     url(r'^store/appstore/async/filters/(?P<slug>[\w_]+)/$', 'report_dispatcher', name="appstore_interface_dispatcher", kwargs={

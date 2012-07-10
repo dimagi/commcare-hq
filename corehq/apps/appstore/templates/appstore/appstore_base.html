@@ -139,7 +139,7 @@
 <ul class="breadcrumb">
     <li>
         <strong><a href="{% url appstore %}">Project Store</a></strong>
-        {% if search_query or filter_by or domain or project %}
+        {% if search_query or filter_by or domain or project or sort_by %}
             <span class="divider">&gt;</span>
         {% endif %}
     </li>
@@ -151,21 +151,47 @@
     {% if filter_by and filter %}
         <li>In {{ filter_by }} "{{ filter }}"</li>
     {% endif %}
+    {% if sort_by  == 'best' %}
+    <li>Highest Rated</li>
+    {% endif %}
+    {% if sort_by == 'hits' %}
+    <li>Most Downloaded</li>
+    {% endif %}
+
 </ul>
 {% endblock %}
 
 {% block main_column %}
 
-{% if search_query or filter_by %}
-    <h3>{{ apps|length }} result{{ apps|pluralize }}</h3>
-{% endif %}
+<!--{% if search_query or filter_by %}-->
+    <!--<h3>{{ apps|length }} result{{ apps|pluralize }}</h3>-->
+<!--{% endif %}-->
 
 <h1>
     {% block store-header %}
-    All projects
+    Projects
     {% endblock %}
 </h1>
 
+<div class="row">
+    {% block view-tabs %}
+    <div class="tabbable" style="padding-top: 15px;">
+        <ul class="nav nav-tabs">
+            {% if filter_by %}
+            <li{% if not sort_by %} class="active"{% endif %}><a href="{% url appstore_filter_snapshots filter_by filter %}">All Projects</a></li>
+            <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% url sorted_appstore_filter_snapshots filter_by filter 'best' %}">Highest Rated</a></li>
+            <li{% if sort_by == 'hits' %} class="active"{% endif %}><a href="{% url sorted_appstore_filter_snapshots filter_by filter 'hits' %}">Most Downloaded</a></li>
+            {% endif %}
+
+            {% if not filter_by %}
+            <li{% if not sort_by %} class="active"{% endif %}><a href="{% url appstore %}">All Projects</a></li>
+            <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% url sorted_appstore 'best' %}">Highest Rated</a></li>
+            <li{% if sort_by == 'hits' %} class="active"{% endif %}><a href="{% url sorted_appstore 'hits' %}">Most Downloaded</a></li>
+            {% endif %}
+            </ul>
+    </div>
+    {% endblock %}
+</div>
 <div class="row">
 {% for app in apps %}
     {% if forloop.counter0|divisibleby:"3" and forloop.counter0 != 0 %}

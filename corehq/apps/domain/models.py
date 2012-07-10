@@ -490,6 +490,23 @@ class Domain(Document):
             sorted_list.append(domain)
 
         return sorted_list[((page-1)*9):((page)*9)]
+
+    @classmethod
+    def hit_sort(cls, domains, page):
+        domains = domains.all()
+        sorted(domains, key=lambda domain: len(domain.copies_of_parent()))
+        return domains[((page-1)*9):((page)*9)]
+
+    @classmethod
+    def number_rated(cls, domains):
+        total = 0
+        for domain in domains:
+            num_ratings = Review.get_num_ratings_by_app(domain.original_doc)
+            if num_ratings > 0:
+                total = (total + 1)
+        return total
+
+
 ##############################################################################################################
 #
 # Originally had my own hacky global storage of content type, but it turns out that contenttype.models
