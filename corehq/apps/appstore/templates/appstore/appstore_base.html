@@ -146,10 +146,20 @@
     {% block breadcrumb %}
     {% endblock %}
     {% if search_query %}
-        <li>Searching for "{{ search_query }}"</li>
+        <li>
+            Searching for "{{ search_query }}"
+            {% if sort_by %}
+                <span class="divider">&gt;</span>
+            {% endif %}
+        </li>
     {% endif %}
     {% if filter_by and filter %}
-        <li>In {{ filter_by }} "{{ filter }}"</li>
+        <li>
+            In {{ filter_by }} "{{ filter }}"
+            {% if sort_by %}
+                <span class="divider">&gt;</span>
+            {% endif %}
+        </li>
     {% endif %}
     {% if sort_by  == 'best' %}
     <li>Highest Rated</li>

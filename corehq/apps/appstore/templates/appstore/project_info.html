@@ -201,7 +201,7 @@
             <br/>
             <div>
                 <a href="#add_review_modal" data-toggle="modal" class="btn btn-danger">Write a Review</a>
-                <a href="?all={{ all_link }}" class="btn btn-primary">{% if versioned %} View all reviews {% else %} Only show reviews from current version{% endif %}</a>
+                <a href="?current={{ current_link }}" class="btn btn-primary">{% if versioned %} View all reviews {% else %} Only show reviews from current version{% endif %}</a>
             </div>
         </div>
         {% for review in reviews %}

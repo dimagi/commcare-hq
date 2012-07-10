@@ -478,7 +478,7 @@ class Domain(Document):
 
         sorted_list = [domain for weighted_rating, domain in sorted(sorted_list)]
 
-        return sorted_list[((page-1)*9):((page)*9)]
+        return sorted_list[((page-1)*9):((page)*9)], total_average_count
 
     @classmethod
     def hit_sort(cls, domains, page):

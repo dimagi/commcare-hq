@@ -29,9 +29,8 @@ def appstore(request, template="appstore/appstore_base.html", sort_by=None):
     else:
         total_results = Domain.published_snapshots(include_unapproved=request.user.is_superuser)
         if sort_by == 'best':
-            results = Domain.popular_sort(total_results, page)
-            num_rated = Domain.number_rated(total_results)
-            more_pages = page * PER_PAGE < num_rated and page <= 10
+            results, results_count = Domain.popular_sort(total_results, page)
+            more_pages = page * PER_PAGE < results_count and page <= 10
         elif sort_by == 'hits':
             results = Domain.hit_sort(total_results, page)
             more_pages = page * PER_PAGE < len(total_results) and page <= 10
@@ -76,7 +75,7 @@ def project_info(request, domain, template="appstore/project_info.html"):
             form = AddReviewForm()
     else:
         form = AddReviewForm()
-        versioned = not request.GET.get('all', '')
+        versioned = request.GET.get('current', False)
 
     if versioned:
         reviews = Review.get_by_version(domain)
@@ -90,9 +89,9 @@ def project_info(request, domain, template="appstore/project_info.html"):
     if average_rating:
         average_rating = round(average_rating, 1)
 
-    all_link = ''
-    if versioned:
-        all_link = 'true'
+    current_link = ''
+    if not versioned:
+        current_link = 'true'
 
     images = set()
     audio = set()
@@ -110,7 +109,7 @@ def project_info(request, domain, template="appstore/project_info.html"):
         average_rating=average_rating,
         num_ratings=num_ratings,
         versioned=versioned,
-        all_link=all_link,
+        current_link=current_link,
         images=images,
         audio=audio,
     )
@@ -165,10 +164,10 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
         results, total_rows = Domain.snapshot_search(query, per_page=None)
         more_pages = page * PER_PAGE < total_rows
         if sort_by == 'best':
-            results = Domain.popular_sort(results, page)
+            results, results_count = Domain.popular_sort(results, page)
+            more_pages = page * PER_PAGE < results_count
         elif sort_by == 'hits':
             results = Domain.hit_sort(results, page)
-        results = results[(page-1)*PER_PAGE:page*PER_PAGE]
 
     average_ratings = list()
     for result in results:
