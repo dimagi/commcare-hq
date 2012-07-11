@@ -851,7 +851,6 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     def has_permission(self, domain, permission, data=None):
         """To be overridden by subclasses"""
-        print("+_____+")
         return False
 
     def __getattr__(self, item):
