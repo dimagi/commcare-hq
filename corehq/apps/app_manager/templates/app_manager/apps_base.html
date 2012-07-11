@@ -262,7 +262,10 @@
                 </p>
                 <form action="{% url new_app domain %}">
                     <input type="hidden" name="type" value="Application">
-                    <a href="#" class="submit">Create a blank app</a> or <a href="{% url appstore %}">copy an existing app from the project store</a>.
+                    <a href="#" class="submit">Create a blank app</a>
+                    {% if request.user.is_superuser %}
+                        or <a href="{% url appstore %}">copy an existing app from the project store</a>.
+                    {% endif %}
                 </form>
             </div>
         {% endif %}
