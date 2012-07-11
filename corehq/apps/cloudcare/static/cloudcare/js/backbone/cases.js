@@ -79,16 +79,17 @@ cloudCare.CaseListView = Backbone.View.extend({
     render: function () {
 	    var self = this;
 	    this.el = $('<section />').attr("id", "case-list").addClass("span7");
-        var table = $("<table />").addClass("table table-striped datatable").appendTo($(this.el));
+        var table = $("<table />").addClass("table table-striped datatable").css('clear', 'both').appendTo($(this.el));
         var thead = $("<thead />").appendTo(table);
         var theadrow = $("<tr />").appendTo(thead);
         _(this.detailsShort.get("columns")).each(function (col) {
-            $("<th />").text(col.header[self.options.language] || "?").appendTo(theadrow);
+            $("<th />").append('<i class="icon-hq-white icon-hq-doublechevron"></i> ').append(col.header[self.options.language] || "?").appendTo(theadrow);
         });
         var tbody = $("<tbody />").appendTo(table);
         _(this.caseList.models).each(function(item){ 
             self.appendItem(item);
         });
+
         return this;
     },
     appendItem: function (item) {
@@ -116,11 +117,32 @@ cloudCare.CaseListView = Backbone.View.extend({
       
         $('table tbody', this.el).append(caseView.render().el);
         this.caseMap[item.id] = caseView;
-        
       
     },
     appendAll: function () {
         this.caseList.each(this.appendItem);
+        $('table', this.el).dataTable({
+            'bFilter': true,
+            'bPaginate': false,
+            'bSort': true,
+            "oLanguage": {
+      "sSearch": "Filter cases:"
+    }
+        });
+        var $dataTablesFilter = $(".dataTables_filter");
+        $dataTablesFilter.css('float', 'none').css('padding', '3px').addClass('span12');
+        $dataTablesFilter.addClass("form-search");
+                var $inputField = $dataTablesFilter.find("input"),
+                    $inputLabel = $dataTablesFilter.find("label");
+
+                $dataTablesFilter.append($inputField);
+                $inputField.attr("id", "dataTables-filter-box");
+                $inputField.addClass("search-query").addClass("input-large");
+                $inputField.attr("placeholder", "Filter...");
+
+                $inputLabel.attr("for", "dataTables-filter-box");
+                $inputLabel.text('Filter cases:');
+        this.el.parent().before($('<section class="row-fluid" />').append($dataTablesFilter));
     }, 
 });
 
@@ -202,3 +224,9 @@ cloudCare.CaseMainView = Backbone.View.extend({
         return this;
     }
 });
+
+$.extend( $.fn.dataTableExt.oStdClasses, {
+    "sSortAsc": "header headerSortDown",
+    "sSortDesc": "header headerSortUp",
+    "sSortable": "header"
+} );
