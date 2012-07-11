@@ -1,5 +1,6 @@
 {% extends "users/users_base.html" %}
 {% load hq_bootstrap_tags %}
+{% load hq_shared_tags %}
 {% load i18n %}
 
 {% block subsection-title %}
@@ -8,10 +9,17 @@
 </li>
 {% endblock %}
 
+{% block js %}{{ block.super }}
+<script type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"/>
+{% endblock %}
+
 {% block js-inline %}
 {{ block.super }}
 <!-- unfortunately copied from project settings -->
 <script type="text/javascript">
+
+
+
     $(function(){
         {% for field in autocomplete_fields %}
             $("#id_{{ field }}").focus(function() {
@@ -23,12 +31,27 @@
                 });
             });
         {% endfor %}
+
+        $('#snapshot_form input[name="deployment_date"]').datepicker({
+            changeMonth: true,
+            changeYear: true,
+            showButtonPanel: true,
+            dateFormat: 'yy-mm-dd',
+            maxDate: '0',
+            numberOfMonths: 2
+        });
+
     });
 </script>
 {% endblock %}
 
+{% block head %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+{% endblock %}
+
 {% block user-view %}
-<form class="form-horizontal" method="post" action="{% url domain_create_snapshot domain %}">
+<form class="form-horizontal" method="post" action="{% url domain_create_snapshot domain %}" id="snapshot_form">
     <fieldset>
         {% bootstrap_form_errors form %}
         {% bootstrap_fieldset form "Creating new snapshot..." %}

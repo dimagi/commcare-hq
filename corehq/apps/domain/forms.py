@@ -91,7 +91,8 @@ class SnapshotSettingsMixin(forms.Form):
         help_text="e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc.")
     project_type = CharField(label="Project Category", required=False,
         help_text="e.g. MCH, HIV, etc.")
-    deployment_date = DateField(label="Deployment date", required=False, widget=SelectDateWidget(years=range(2009, datetime.date.today().year+10)))
+#    deployment_date = DateField(label="Deployment date", required=False, widget=SelectDateWidget(years=range(2009, datetime.date.today().year+10)))
+    deployment_date = CharField(label="Deployment date", required=False)
     phone_model = CharField(label="Phone model", required=False)
     user_type = CharField(label="User type", required=False,
         help_text="e.g. CHW, ASHA, RA, etc")
