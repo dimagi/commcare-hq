@@ -476,7 +476,7 @@ class Domain(Document):
             weighted_rating = ((num_ratings / (num_ratings + MIN_REVIEWS)) * average_rating + (MIN_REVIEWS / (num_ratings + MIN_REVIEWS)) * total_average)
             sorted_list.append((weighted_rating, domain))
 
-        sorted_list = [domain for weighted_rating, domain in sorted(sorted_list)]
+        sorted_list = [domain for weighted_rating, domain in sorted(sorted_list, key=lambda domain: domain[0])]
 
         return sorted_list[((page-1)*9):((page)*9)], total_average_count
 
