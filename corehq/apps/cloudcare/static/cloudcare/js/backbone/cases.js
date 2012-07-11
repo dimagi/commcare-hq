@@ -130,7 +130,7 @@ cloudCare.CaseListView = Backbone.View.extend({
     }
         });
         var $dataTablesFilter = $(".dataTables_filter");
-        $dataTablesFilter.css('float', 'none');
+        $dataTablesFilter.css('float', 'none').css('padding', '3px').addClass('span12');
         $dataTablesFilter.addClass("form-search");
                 var $inputField = $dataTablesFilter.find("input"),
                     $inputLabel = $dataTablesFilter.find("label");
@@ -141,7 +141,8 @@ cloudCare.CaseListView = Backbone.View.extend({
                 $inputField.attr("placeholder", "Filter...");
 
                 $inputLabel.attr("for", "dataTables-filter-box");
-                $inputLabel.text('Filter cases:')
+                $inputLabel.text('Filter cases:');
+        this.el.parent().before($('<section class="row-fluid" />').append($dataTablesFilter));
     }, 
 });
 
