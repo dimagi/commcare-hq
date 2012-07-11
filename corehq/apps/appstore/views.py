@@ -21,6 +21,7 @@ from django.shortcuts import redirect
 
 PER_PAGE = 9
 
+@require_superuser # remove for production
 def appstore(request, template="appstore/appstore_base.html", sort_by=None):
     page = int(request.GET.get('page', 1))
     if not sort_by:
@@ -40,7 +41,7 @@ def appstore(request, template="appstore/appstore_base.html", sort_by=None):
     vals = dict(apps=results, average_ratings=average_ratings, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages, sort_by=sort_by)
     return render_to_response(request, template, vals)
 
-
+@require_superuser # remove for production
 def project_info(request, domain, template="appstore/project_info.html"):
     dom = Domain.get_by_name(domain)
     if not dom or not dom.is_snapshot or not dom.published or (not dom.is_approved and not request.couch_user.is_domain_admin(domain)):
@@ -115,6 +116,7 @@ def project_info(request, domain, template="appstore/project_info.html"):
     )
     return render_to_response(request, template, vals)
 
+@require_superuser # remove for production
 def search_snapshots(request, filter_by = '', filter = '', template="appstore/appstore_base.html"):
     page = int(request.GET.get('page', 1))
     if filter_by != '':
@@ -130,6 +132,7 @@ def search_snapshots(request, filter_by = '', filter = '', template="appstore/ap
     vals = dict(apps=snapshots, search_query=query, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages)
     return render_to_response(request, template, vals)
 
+@require_superuser # remove for production
 def filter_choices(request, filter_by, template="appstore/filter_choices.html"):
     if filter_by not in ('category', 'license', 'region', 'organization', 'author'):
         raise Http404("That page doesn't exist")
@@ -177,6 +180,7 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
     vals = dict(apps=results, filter_by=filter_by, filter=filter, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages, sort_by=sort_by, average_ratings=average_ratings)
     return render_to_response(request, template, vals)
 
+@require_superuser # remove for production
 @datespan_default
 def report_dispatcher(request, slug, return_json=False,
                       map='APPSTORE_INTERFACE_MAP', export=False, custom=False,
@@ -198,6 +202,7 @@ def report_dispatcher(request, slug, return_json=False,
     return dispatcher.dispatch(request, dummy.name, slug, return_json, export,
                                custom, async, async_filters)
 
+@require_superuser # remove for production
 @require_superuser
 def approve_app(request, domain):
     domain = Domain.get_by_name(domain)
@@ -209,6 +214,7 @@ def approve_app(request, domain):
         domain.save()
     return HttpResponseRedirect(reverse('appstore'))
 
+@require_superuser # remove for production
 def copy_snapshot_app(request, domain):
     user = request.couch_user
     dom = Domain.get_by_name(domain)
@@ -223,7 +229,8 @@ def copy_snapshot_app(request, domain):
             return HttpResponseRedirect(reverse('view_app', args=[new_domain_name, new_doc.id]))
     return HttpResponseRedirect(reverse('project_info', args=[domain]))
 
-@login_and_domain_required
+#@login_and_domain_required
+@require_superuser # remove for production
 def copy_snapshot(request, domain):
     dom = Domain.get_by_name(domain)
     if request.method == "POST" and dom.is_snapshot:
