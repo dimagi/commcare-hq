@@ -122,7 +122,6 @@ cloudCare.CaseListView = Backbone.View.extend({
     appendAll: function () {
         this.caseList.each(this.appendItem);
         $('table', this.el).dataTable({
-            //"bJQueryUI": true,
             'bFilter': false,
             'bPaginate': false,
             'bInfo': false,
