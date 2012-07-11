@@ -283,8 +283,10 @@ def create_snapshot(request, domain):
         new_domain.region = request.POST['region']
         new_domain.city = request.POST['city']
         new_domain.country = request.POST['country']
-        if int(request.POST['deployment_date_year']) > 2009 and request.POST['deployment_date_month'] and request.POST['deployment_date_day']:
-            new_domain.deployment_date = datetime.datetime(int(request.POST['deployment_date_year']), int(request.POST['deployment_date_month']), int(request.POST['deployment_date_day']))
+        date_picked = request.POST['deployment_date'].split('-')
+        if len(date_picked) > 1:
+            if int(date_picked[0]) > 2009 and date_picked[1] and date_picked[2]:
+                new_domain.deployment_date = datetime.datetime(int(date_picked[0]), int(date_picked[1]), int(date_picked[2]))
         new_domain.phone_model = request.POST['phone_model']
         new_domain.user_type = request.POST['user_type']
         new_domain.title = request.POST['title']
