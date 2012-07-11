@@ -1,4 +1,5 @@
 from couchdbkit.exceptions import MultipleResultsFound
+from django.contrib import messages
 from corehq.apps.groups.models import Group
 from corehq.apps.users.util import normalize_username, raw_username
 from corehq.apps.users.models import CommCareUser
@@ -38,6 +39,15 @@ class GroupMemoizer(object):
             else:
                 self.groups[group_name] = Group(domain=self.domain, name=group_name)
         return self.groups[group_name]
+
+    def delete_other(self):
+        all_groups = Group.by_domain(self.domain)
+        records = []
+        for group in all_groups:
+            if not self.groups.has_key(group.name):
+                record = group.soft_delete()
+                records.append(record)
+        return records
 
     def save_all(self):
         for group in self.groups.values():
@@ -115,6 +125,11 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                         # With this line, digest auth works.
                         # Other than that, I'm not sure what's going on
                         user.get_django_user().check_password(password)
+                    for group in Group.by_user(user):
+                        if group.name not in group_names:
+                            group = group_memoizer.get_or_create_group(group.name)
+                            group.remove_user(user)
+
                     for group_name in group_names:
                         try:
                             group_memoizer.get_group(group_name).add_user(user)
