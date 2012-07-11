@@ -83,13 +83,13 @@ cloudCare.CaseListView = Backbone.View.extend({
         var thead = $("<thead />").appendTo(table);
         var theadrow = $("<tr />").appendTo(thead);
         _(this.detailsShort.get("columns")).each(function (col) {
-            $("<th />").text(col.header[self.options.language] || "?").appendTo(theadrow);
+            $("<th />").append('<i class="icon-hq-white icon-hq-doublechevron"></i> ').append(col.header[self.options.language] || "?").appendTo(theadrow);
         });
         var tbody = $("<tbody />").appendTo(table);
         _(this.caseList.models).each(function(item){ 
             self.appendItem(item);
         });
-        table.dataTable({'bFilter': false, 'bPaginate': false, 'bInfo': false, 'bSort': true});
+
         return this;
     },
     appendItem: function (item) {
@@ -117,11 +117,17 @@ cloudCare.CaseListView = Backbone.View.extend({
       
         $('table tbody', this.el).append(caseView.render().el);
         this.caseMap[item.id] = caseView;
-        
       
     },
     appendAll: function () {
         this.caseList.each(this.appendItem);
+        $('table', this.el).dataTable({
+            //"bJQueryUI": true,
+            'bFilter': false,
+            'bPaginate': false,
+            'bInfo': false,
+            'bSort': true
+        });
     }, 
 });
 
@@ -203,3 +209,9 @@ cloudCare.CaseMainView = Backbone.View.extend({
         return this;
     }
 });
+
+$.extend( $.fn.dataTableExt.oStdClasses, {
+    "sSortAsc": "header headerSortDown",
+    "sSortDesc": "header headerSortUp",
+    "sSortable": "header"
+} );
