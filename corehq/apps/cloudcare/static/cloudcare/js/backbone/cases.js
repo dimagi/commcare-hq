@@ -89,6 +89,7 @@ cloudCare.CaseListView = Backbone.View.extend({
         _(this.caseList.models).each(function(item){ 
             self.appendItem(item);
         });
+        table.dataTable({'bFilter': false, 'bPaginate': false, 'bInfo': false, 'bSort': true});
         return this;
     },
     appendItem: function (item) {

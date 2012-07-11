@@ -1458,6 +1458,7 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
     all the resource files that will end up zipped into the jar.
 
     """
+    files = []
     if req.app.copy_of:
         files = [(path[len('files/'):], req.app.fetch_attachment(path)) for path in req.app._attachments if path.startswith('files/')]
     else:
