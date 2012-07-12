@@ -540,16 +540,44 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     if app:
         if app.is_remote_app():
             options = CommCareBuildConfig.fetch().get_menu()
+            commcare_build_options = options
+            current_options = options
+            is_standard_build = [o.build.to_string() for o in options if o.build.to_string() == app.build_spec.to_string()]
         else:
-            options = CommCareBuildConfig.fetch().get_menu(app.application_version)
-        is_standard_build = [o.build.to_string() for o in options if o.build.to_string() == app.build_spec.to_string()]
+            versions = ['1.0', '2.0']
+            commcare_build_options = {}
+            for version in versions:
+                options = CommCareBuildConfig.fetch().get_menu(version)
+                options_labels = list()
+                options_builds = list()
+                for option in options:
+                    options_labels.append(option.get_label())
+                    options_builds.append(option.build.to_string())
+                    commcare_build_options[version] = {"options" : options, "labels" : options_labels, "builds" : options_builds}
+
+            current_options = CommCareBuildConfig.fetch().get_menu(app.application_version)
+            is_standard_build = [o.build.to_string() for o in current_options if o.build.to_string() == app.build_spec.to_string()]
+
+        app_build_spec_string = app.build_spec.to_string()
+        app_build_spec_label = app.build_spec.get_label()
+#        import pdb
+#        pdb.set_trace()
         context.update({
-            "commcare_build_options": options,
-            "is_standard_build": bool(is_standard_build)
+            "commcare_build_options" : commcare_build_options,
+            "is_standard_build": bool(is_standard_build),
+            "app_build_spec_string" : app_build_spec_string,
+            "app_build_spec_label" : app_build_spec_label,
+            "app_version" : app.application_version,
+            "current_options" : current_options
         })
     response = render_to_response(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
+
+@login_and_domain_required
+def get_commcare_version(request, app_id, app_version):
+    options = CommCareBuildConfig.fetch().get_menu(app_version)
+    return json_response(options)
 
 @login_and_domain_required
 def view_user_registration(request, domain, app_id):
