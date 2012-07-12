@@ -4,7 +4,7 @@ import json
 from restkit.errors import RequestFailed
 import itertools
 
-DEFAULT_DISPLAY_LENGTH = "25"
+DEFAULT_DISPLAY_LENGTH = "10"
 DEFAULT_START = "0"
 DEFAULT_ECHO = "0"
 
