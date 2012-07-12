@@ -7,7 +7,7 @@ from casexml.apps.phone.xml import get_case_xml
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.importer import base
-from corehq.apps.importer.util import ExcelFile
+from corehq.apps.importer.util import ExcelFile, get_case_properties
 from couchdbkit.exceptions import MultipleResultsFound
 from tempfile import mkstemp
 from datetime import datetime, date
@@ -97,17 +97,9 @@ def excel_fields(request, domain):
         excel_fields.remove(value_column)                 
     else:
         excel_fields = columns
-              
-    # get all unique existing case properties, known and unknown
+                  
     # TODO limit to case type
-    case_fields = []
-    row = CommCareCase.view('hqcase/unique_known_properties',reduce=True,group=True,startkey=domain,endkey=domain).one()
-    for value in row['value']:
-        case_fields.append(value)
-        
-    row = CommCareCase.view('hqcase/unique_unknown_properties',reduce=True,group=True,startkey=domain,endkey=domain).one()
-    for value in row['value']:
-        case_fields.append(value)       
+    case_fields = get_case_properties(domain)
     
     # hide search column and matching case fields from the update list
     try:    
@@ -145,18 +137,7 @@ def excel_commit(request, domain):
     search_column = request.POST['search_column']
     search_field = request.POST['search_field']
     key_column = request.POST['key_column']
-    value_column = request.POST['value_column']    
-    
-    # get all unique existing case properties, known and unknown
-    known_properties = []
-    row = CommCareCase.view('hqcase/unique_known_properties',reduce=True,group=True,startkey=domain,endkey=domain).one()
-    for value in row['value']:
-        known_properties.append(value)
-        
-    unknown_properties = []
-    row = CommCareCase.view('hqcase/unique_unknown_properties',reduce=True,group=True,startkey=domain,endkey=domain).one()
-    for value in row['value']:
-        unknown_properties.append(value)     
+    value_column = request.POST['value_column']
     
     # TODO musn't be able to select an excel_field twice (in html)
     excel_fields = request.POST.getlist('excel_field[]')
