@@ -1180,7 +1180,7 @@ class CaseListReport(PaginatedHistoryHQReport):
         # this is temporary...sorry!!!
         self.disable_lucene = True
         if not settings.LUCENE_ENABLED or self.disable_lucene:
-            self.fields = ['corehq.apps.reports.fields.SelectMobileWorkerField',
+            self.fields = ['corehq.apps.reports.fields.SelectCaseOwnerField',
                            'corehq.apps.reports.fields.CaseTypeField',
                            'corehq.apps.reports.fields.SelectOpenCloseField']
         super(CaseListReport,self).__init__(domain, request, base_context)
