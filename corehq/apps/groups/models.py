@@ -32,6 +32,8 @@ class Group(UndoableDocument):
         self.save()
         
     def remove_user(self, couch_user_id):
+        if not isinstance(couch_user_id, basestring):
+            couch_user_id = couch_user_id.user_id
         if couch_user_id in self.users:
             for i in range(0,len(self.users)):
                 if self.users[i] == couch_user_id:
