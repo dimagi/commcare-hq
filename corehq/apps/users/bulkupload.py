@@ -72,7 +72,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
             group.reporting = reporting
     usernames = set()
     user_ids = set()
-    overwrite_groups = True
 
     try:
         for row in user_specs:
@@ -126,6 +125,11 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                         # With this line, digest auth works.
                         # Other than that, I'm not sure what's going on
                         user.get_django_user().check_password(password)
+                    for group in Group.by_user(user):
+                        if group.name not in group_names:
+                            group = group_memoizer.get_or_create_group(group.name)
+                            group.remove_user(user)
+
                     for group_name in group_names:
                         try:
                             group_memoizer.get_group(group_name).add_user(user)
@@ -137,14 +141,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                     status_row['flag'] = 'error: %s' % e
                     
             ret["rows"].append(status_row)
-    except Exception:
-        pass
-    else:
-        ret['deleted_groups'] = []
-        if overwrite_groups:
-            delete_records = group_memoizer.delete_other()
-            for record in delete_records:
-                ret['deleted_groups'].append(record)
     finally:
         group_memoizer.save_all()
     
