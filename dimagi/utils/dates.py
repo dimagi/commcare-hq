@@ -118,8 +118,8 @@ class DateSpan(object):
     @property
     def startdate_param_utc(self):
         if self.startdate:
-            adjusted_startdate = tz_utils.adjust_datetime_to_timezone(self.startdate, self.timezone.zone, pytz.utc.zone)
-            return adjusted_startdate.strftime(self.format)
+            adjusted_startdate = self.adjust_to_utc(self.startdate)
+            return adjusted_startdate.isoformat()
 
     @property
     def startdate_display(self):
@@ -140,9 +140,14 @@ class DateSpan(object):
     def enddate_param_utc(self):
         if self.enddate:
             # you need to add a day to enddate if your dates are meant to be inclusive
-            adjusted_enddate = tz_utils.adjust_datetime_to_timezone(self.enddate, self.timezone.zone, pytz.utc.zone)
-            offset = timedelta(days=1 if self.inclusive else 0)
-            return (adjusted_enddate + offset).strftime(self.format)
+            adjusted_enddate = self.adjust_to_utc(self.enddate)
+            adjusted_enddate = (adjusted_enddate + timedelta(days=1 if self.inclusive else 0))
+            return adjusted_enddate.isoformat()
+
+    def adjust_to_utc(self, date):
+        localized = self.timezone.localize(date)
+        offset = localized.strftime("%z")
+        return date - timedelta(hours=int(offset[0:3]), minutes=int(offset[0]+offset[3:5]), seconds=1)
 
     @property
     def end_of_end_day(self):
