@@ -40,7 +40,11 @@ class WorksheetJSONReader(object):
     def __init__(self, worksheet):
         self.headers = []
         self.worksheet = worksheet
-        for cell in self.worksheet.iter_rows().next():
+        try:
+            rows = self.worksheet.iter_rows().next()
+        except StopIteration:
+            rows = []
+        for cell in rows:
             if cell.internal_value is None:
                 break
             else:

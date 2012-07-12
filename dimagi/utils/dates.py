@@ -87,18 +87,45 @@ class DateSpan(object):
         return cls(string_to_datetime(data['startdate'], data['enddate']))
 
     @property
+    def computed_startdate(self):
+        """
+        This is used for queries that need an actual date (e.g. django)
+        that is computed based on the inclusive flag.
+        """
+        return self.startdate
+        
+    @property
+    def computed_enddate(self):
+        """
+        This is used for queries that need an actual date (e.g. django)
+        that is computed based on the inclusive flag.
+        """
+        if self.enddate:
+            # you need to add a day to enddate if your dates are meant to be inclusive
+            offset = timedelta(days=1 if self.inclusive else 0)
+            return (self.enddate + offset)
+        
+    
+    @property
     def startdate_param(self):
+        """
+        This is used for couch queries to get the adjusted date as a string
+        that can be easily used in a couch view.
+        """
         if self.startdate:
             return self.startdate.strftime(self.format)
 
     @property
     def startdate_param_utc(self):
         if self.startdate:
-            adjusted_startdate = tz_utils.adjust_datetime_to_timezone(self.startdate, self.timezone.zone, pytz.utc.zone)
-            return adjusted_startdate.strftime(self.format)
+            adjusted_startdate = self.adjust_to_utc(self.startdate)
+            return adjusted_startdate.isoformat()
 
     @property
     def startdate_display(self):
+        """
+        This can be used in templates to regenerate this object.
+        """
         if self.startdate:
             return self.startdate.strftime(self.format)
 
@@ -113,9 +140,14 @@ class DateSpan(object):
     def enddate_param_utc(self):
         if self.enddate:
             # you need to add a day to enddate if your dates are meant to be inclusive
-            adjusted_enddate = tz_utils.adjust_datetime_to_timezone(self.enddate, self.timezone.zone, pytz.utc.zone)
-            offset = timedelta(days=1 if self.inclusive else 0)
-            return (adjusted_enddate + offset).strftime(self.format)
+            adjusted_enddate = self.adjust_to_utc(self.enddate)
+            adjusted_enddate = (adjusted_enddate + timedelta(days=1 if self.inclusive else 0))
+            return adjusted_enddate.isoformat()
+
+    def adjust_to_utc(self, date):
+        localized = self.timezone.localize(date)
+        offset = localized.strftime("%z")
+        return date - timedelta(hours=int(offset[0:3]), minutes=int(offset[0]+offset[3:5]), seconds=1)
 
     @property
     def end_of_end_day(self):
@@ -126,6 +158,9 @@ class DateSpan(object):
 
     @property
     def enddate_display(self):
+        """
+        This can be used in templates to regenerate this object.
+        """
         if self.enddate:
             return self.enddate.strftime(self.format)
     
@@ -172,16 +207,16 @@ class DateSpan(object):
     def since(cls, days, enddate=None, format=DEFAULT_DATE_FORMAT, inclusive=True, timezone=pytz.utc):
         """
         Generate a DateSpan ending with a certain date, and going back 
-        N days. The enddate defaults to tomorrow midnight 
-        (so it's inclusive of today).
+        N days. The enddate defaults to today midnight but is inclusive
+        (which means it will look like tomorrow midnight)
         
         Will always ignore times.
         """
         if enddate is None:
-            enddate = datetime.now(tz=timezone) + timedelta(days=0 if inclusive else 1)
+            enddate = datetime.now(tz=timezone) 
         end = datetime(enddate.year, enddate.month, enddate.day)
-        start = end - timedelta(days=days - 1 if inclusive else days)
-        return DateSpan(start, end, format)
+        start = end - timedelta(days=days)
+        return DateSpan(start, end, format, inclusive)
                     
     
     def parse(self, startdate_str, enddate_str, parse_format, display_format=None):

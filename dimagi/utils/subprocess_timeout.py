@@ -30,6 +30,9 @@ class Subprocess(object):
         if thread.is_alive():
             self.process.terminate()
             thread.join()
-            raise ProcessTimedOut("Process `%s` timed out" % ' '.join(self.args[0] if self.args else self.kwargs.get('args')))
+            raise ProcessTimedOut("Process `%s` timed out after %s seconds" % (
+                ' '.join(self.args[0] if self.args else self.kwargs.get('args')),
+                timeout
+            ))
         else:
             return self.process.returncode

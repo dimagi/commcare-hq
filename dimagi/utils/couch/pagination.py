@@ -2,11 +2,64 @@ from dimagi.utils.couch.database import get_db
 from django.http import HttpResponse
 import json
 from restkit.errors import RequestFailed
+import itertools
 
 DEFAULT_DISPLAY_LENGTH = "10"
 DEFAULT_START = "0"
 DEFAULT_ECHO = "0"
 
+class CouchFilter(object):
+    """
+    An 'interface' that you should override if you want to use the 
+    FilteredPaginator.
+    """
+    def get_total(self):
+        """
+        Should return the total number of objects matching this filter
+        """ 
+        raise NotImplementedError("Override this!")
+    
+    def get(self, count): 
+        """
+        Should return the first [count] objects matching this filter.
+        """ 
+        raise NotImplementedError("Override this!")
+    
+
+class FilteredPaginator(object):
+    """
+    A class to do filtered pagination in couch. Takes in a list of filters, 
+    each of which is responsible for providing access to its underlying 
+    objects, and then paginates across all of them in memory (sorting
+    by a passed in comparator).
+    """
+    
+    def __init__(self, filters, comparator):
+        self.filters = filters
+        self.comparator = comparator
+        self.total = sum(f.get_total() for f in self.filters)
+    
+    def get(self, skip, limit):
+        # this is a total disaster in couch.
+        # what we'll do is fetch up to the maximum amount of data for each of the
+        # selected types. then iterate through those sorted in memory by date.
+        
+        # as users start to scroll through this will get sloooooow....
+        
+        # first collect the maximum amount of objects
+        all_objs = list(itertools.chain(*[f.get(skip + limit) for f in self.filters]))
+        
+        # nothing more 
+        if len(all_objs) < skip: 
+            return []
+        
+        # sort 
+        all_objs = sorted(all_objs, self.comparator)
+        
+        # filter
+        max = min([skip + limit, len(all_objs)])
+        return all_objs[skip:max]
+        
 
 class DatatablesParams(object):
     
@@ -40,7 +93,9 @@ class CouchPaginator(object):
     """
     
     
-    def __init__(self, view_name, generator_func, search=True, search_preprocessor=lambda x: x, use_reduce_to_count=False, view_args=None):
+    def __init__(self, view_name, generator_func, search=True, 
+                 search_preprocessor=lambda x: x, use_reduce_to_count=False, 
+                 view_args=None, database=None):
         """
         The generator function should be able to convert a couch 
         view results row into the appropriate json.
@@ -52,7 +107,9 @@ class CouchPaginator(object):
         self._search = search
         self._search_preprocessor = search_preprocessor
         self._view_args = view_args or {}
+        self.database = database or get_db()
         self.use_reduce_to_count = use_reduce_to_count
+        
 
     def get_ajax_response(self, request, default_display_length=DEFAULT_DISPLAY_LENGTH, 
                           default_start=DEFAULT_START, extras={}):
@@ -69,11 +126,16 @@ class CouchPaginator(object):
         # search
         search_key = query.get("sSearch", "")
         if self._search and search_key:
-            items = get_db().view(self._view, skip=params.start, limit=params.count, descending=params.desc, key=self._search_preprocessor(search_key), reduce=False, **self._view_args)
+            items = self.database.view(self._view, skip=params.start, 
+                                       limit=params.count, descending=params.desc, 
+                                       key=self._search_preprocessor(search_key), 
+                                       reduce=False, **self._view_args)
             if params.start + len(items) < params.count:
                 total_display_rows = len(items)
             else:
-                total_display_rows = get_db().view(self._view, key=self._search_preprocessor(search_key), reduce=True).one()["value"]
+                total_display_rows = self.database.view(self._view, 
+                                                        key=self._search_preprocessor(search_key), 
+                                                        reduce=True).one()["value"]
             total_rows = items.total_rows
                 
         else:
@@ -86,12 +148,12 @@ class CouchPaginator(object):
             else:
                 kwargs.update(skip=params.start, limit=params.count, descending=params.desc)
                 kwargs.update(self._view_args)
-            items = get_db().view(self._view, **kwargs)
+            items = self.database.view(self._view, **kwargs)
 
             if self.use_reduce_to_count:
                 kwargs.update(reduce=True, group_level=0, include_docs=False, skip=0, limit=None)
                 total_display_rows = total_rows = (
-                    get_db().view(self._view, **kwargs).one() or {'value': 0}
+                    self.database.view(self._view, **kwargs).one() or {'value': 0}
                 )['value']
             else:
                 total_rows = items.total_rows
@@ -130,13 +192,14 @@ class LucenePaginator(object):
     """
     
     
-    def __init__(self, search_view_name, generator_func): 
+    def __init__(self, search_view_name, generator_func, database=None): 
         """
         The generator function should be able to convert a couch 
         view results row into the appropriate json.
         """
         self._search_view = search_view_name
         self._generator_func = generator_func
+        self.database = database or get_db()
         
     def get_ajax_response(self, request, search_query, extras={}):
         """
@@ -149,9 +212,9 @@ class LucenePaginator(object):
         query = request.POST if request.method == "POST" else request.GET
         params = DatatablesParams.from_request_dict(query)
         
-        results = get_db().search(self._search_view, q=search_query,
-                                  handler="_fti/_design", 
-                                  limit=params.count, skip=params.start)
+        results = self.database.search(self._search_view, q=search_query,
+                                       handler="_fti/_design", 
+                                       limit=params.count, skip=params.start)
         all_json = []
         try:
             for row in results:
