@@ -4,7 +4,7 @@ import json
 from restkit.errors import RequestFailed
 import itertools
 
-DEFAULT_DISPLAY_LENGTH = "10"
+DEFAULT_DISPLAY_LENGTH = "25"
 DEFAULT_START = "0"
 DEFAULT_ECHO = "0"
 
@@ -72,9 +72,9 @@ class DatatablesParams(object):
     @classmethod
     def from_request_dict(cls, query):
         
-        count = int(query.get("iDisplayLength", DEFAULT_DISPLAY_LENGTH));
+        count = int(query.get("iDisplayLength", DEFAULT_DISPLAY_LENGTH))
         
-        start = int(query.get("iDisplayStart", DEFAULT_START));
+        start = int(query.get("iDisplayStart", DEFAULT_START))
         
         # sorting
         desc_str = query.get("sSortDir_0", "desc")
