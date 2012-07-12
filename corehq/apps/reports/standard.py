@@ -238,9 +238,8 @@ class StandardDateHQReport(StandardHQReport):
 
     def process_basic(self):
         if self.request.datespan.is_valid() and not self.request.datespan.is_default:
-            current_time = datetime.datetime.now(tz=self.timezone).time()
-            self.datespan.enddate = datetime.datetime.combine(self.request.datespan.enddate, current_time)
-            self.datespan.startdate = datetime.datetime.combine(self.request.datespan.startdate, current_time)
+            self.datespan.enddate = self.request.datespan.enddate
+            self.datespan.startdate = self.request.datespan.startdate
             self.datespan.is_default = False
         self.datespan.timezone = self.timezone
         self.request.datespan = self.datespan
@@ -442,10 +441,16 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
 
         for result in results:
             _, date = result['key']
+            date = dateutil.parser.parse(date)
+            tz_offset = self.timezone.localize(self.datespan.enddate).strftime("%z")
+            date = date + datetime.timedelta(hours=int(tz_offset[0:3]), minutes=int(tz_offset[0]+tz_offset[3:5]))
+            date = date.isoformat()
             val = result['value']
             user_id = val.get("user_id")
             if user_id in userIDs:
-                rows[user_map[user_id]][date_map[date[0:10]]] += 1
+                date_key = date_map.get(date[0:10], None)
+                if date_key:
+                    rows[user_map[user_id]][date_key] += 1
 
         for i, user in enumerate(self.users):
             rows[i][0] = user.username_in_report
@@ -523,6 +528,8 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
 
     def get_submissions_by_form_json(self):
         userIDs = [user.user_id for user in self.users]
+        self.datespan.startdate_param
+        self.datespan.enddate_param
         submissions = XFormInstance.view('reports/all_submissions',
             startkey=[self.domain, self.datespan.startdate_param_utc],
             endkey=[self.domain, self.datespan.enddate_param_utc],
@@ -657,6 +664,7 @@ class SubmitHistory(PaginatedHistoryHQReport):
                 app_id = data.app_id
                 xmlns = xmlns_to_name(self.domain, xmlns, app_id=app_id)
                 rows.append([self.form_data_link(data.instanceID), self.usernames[data.userID], time, xmlns])
+
         return rows
 
     def form_data_link(self, instance_id):
