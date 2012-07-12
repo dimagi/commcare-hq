@@ -1262,7 +1262,7 @@ def edit_app_attr(req, domain, app_id, attr):
     attributes = [
         'all',
         'recipients', 'name', 'success_message', 'use_commcare_sense',
-        'text_input', 'build_spec', 'show_user_registration',
+        'text_input', 'platform', 'build_spec', 'show_user_registration',
         'use_custom_suite', 'custom_suite',
         'admin_password',
         # Application only
@@ -1296,6 +1296,9 @@ def edit_app_attr(req, domain, app_id, attr):
     if should_edit("text_input"):
         text_input = req.POST['text_input']
         app.text_input = text_input
+    if should_edit("platform"):
+        platform = req.POST['platform']
+        app.platform = platform
     if should_edit("build_spec"):
         build_spec = req.POST['build_spec']
         app.build_spec = BuildSpec.from_string(build_spec)

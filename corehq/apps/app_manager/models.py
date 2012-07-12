@@ -755,6 +755,7 @@ class ApplicationBase(VersionedDoc):
 
     # this is the supported way of specifying which commcare build to use
     build_spec = SchemaProperty(BuildSpec)
+    platform = StringProperty(choices=["nokia/s40", "nokia/s60", "winmo", "generic"], default="nokia/s40")
     text_input = StringProperty(choices=['roman', 'native', 'custom-keys'], default="roman")
     success_message = DictProperty()
 
@@ -905,18 +906,38 @@ class ApplicationBase(VersionedDoc):
             self.url_base,
             reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id]),
         )
-    
-    def get_jadjar(self):
+
+    @classmethod
+    def platform_options(cls):
+        return [
+            {'label': 'Nokia S40 (default)', 'value': 'nokia/s40'},
+            {'label': 'Nokia S60', 'value': 'nokia/s60'},
+            {'label': 'WinMo', 'value': 'winmo'},
+            {'label': 'Generic', 'value': 'generic'},
+        ]
+    def get_jar_path(self):
         build = self.get_build()
         if self.text_input == 'custom-keys' and build.minor_release() < (1,3):
             raise AppError("Custom Keys not supported in CommCare versions before 1.3. (Using %s.%s)" % build.minor_release())
 
         spec = {
-            ('native',): 'Nokia/S40-native-input',
-            ('roman',): 'Nokia/S40-generic',
-            ('custom-keys',):  'Nokia/S40-custom-keys',
-        }[(self.text_input,)]
-        return self.get_build().get_jadjar(spec)
+            'nokia/s40': 'Nokia/S40',
+            'nokia/s60': 'Nokia/S60',
+            'generic': 'Generic/Default',
+            'winmo': 'Native/WinMo'
+        }[self.platform]
+
+        if self.platform in ('nokia/s40', 'nokia/s60'):
+            spec += {
+                ('native',): '-native-input',
+                ('roman',): '-generic',
+                ('custom-keys',):  '-custom-keys',
+            }[(self.text_input,)]
+
+        return spec
+
+    def get_jadjar(self):
+        return self.get_build().get_jadjar(self.get_jar_path())
 
     def create_jadjar(self, save=False):
         try:
