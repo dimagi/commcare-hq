@@ -5,7 +5,7 @@ def get_case_properties(domain):
     # get all unique existing case properties, known and unknown
     case_fields = []
     
-    rows = get_db().view('hqcase/by_domain_action_properties',reduce=False,startkey=domain,endkey=domain).all()
+    rows = get_db().view('hqcase/by_domain_action_properties',startkey=domain,endkey=domain).all()
     
     for row in rows:
         for field in row['value']['known']:
