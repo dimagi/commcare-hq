@@ -1,5 +1,5 @@
 def export_users(users, workbook):
-    user_keys = ('user_id', 'username', 'is_active')
+    user_keys = ('user_id', 'username', 'is_active', 'name')
     user_rows = []
     fields = set()
     for user in users:
@@ -7,10 +7,12 @@ def export_users(users, workbook):
         for key in user_keys:
             if key == 'username':
                 user_row[key] = user.raw_username
+            elif key == 'name':
+                user_row[key] = user.full_name
             else:
                 user_row[key] = getattr(user, key)
         for key in user.user_data:
-            user_row["d.%s" % key] = user.user_data[key]
+            user_row["data: %s" % key] = user.user_data[key]
         user_rows.append(user_row)
         fields.update(user_row.keys())
     workbook.open("User", list(user_keys) + sorted(fields - set(user_keys)))

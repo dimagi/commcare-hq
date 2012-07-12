@@ -37,6 +37,8 @@ from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request, get_url_base
 
 DATE_FORMAT = "%Y-%m-%d"
+user_link_template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
+
 
 class StandardHQReport(HQReport):
     user_filter = HQUserType.use_defaults()
@@ -238,9 +240,8 @@ class StandardDateHQReport(StandardHQReport):
 
     def process_basic(self):
         if self.request.datespan.is_valid() and not self.request.datespan.is_default:
-            current_time = datetime.datetime.now(tz=self.timezone).time()
-            self.datespan.enddate = datetime.datetime.combine(self.request.datespan.enddate, current_time)
-            self.datespan.startdate = datetime.datetime.combine(self.request.datespan.startdate, current_time)
+            self.datespan.enddate = self.request.datespan.enddate
+            self.datespan.startdate = self.request.datespan.startdate
             self.datespan.is_default = False
         self.datespan.timezone = self.timezone
         self.request.datespan = self.datespan
@@ -301,10 +302,10 @@ class CaseActivityReport(StandardTabularHQReport):
             )
 
         def header(self):
-            template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
-            return util.format_datatables_data(template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[self.report.domain, CaseListReport.slug])),
-                                                           "user_id": self.user.user_id,
-                                                           "username": self.user.username_in_report},
+            template = user_link_template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[self.report.domain, CaseListReport.slug])),
+                                   "user_id": self.user.user_id,
+                                   "username": self.user.username_in_report}
+            return util.format_datatables_data(template,
                     self.user.username_in_report)
 
     class TotalRow(object):
@@ -442,13 +443,21 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
 
         for result in results:
             _, date = result['key']
+            date = dateutil.parser.parse(date)
+            tz_offset = self.timezone.localize(self.datespan.enddate).strftime("%z")
+            date = date + datetime.timedelta(hours=int(tz_offset[0:3]), minutes=int(tz_offset[0]+tz_offset[3:5]))
+            date = date.isoformat()
             val = result['value']
             user_id = val.get("user_id")
             if user_id in userIDs:
-                rows[user_map[user_id]][date_map[date[0:10]]] += 1
+                date_key = date_map.get(date[0:10], None)
+                if date_key:
+                    rows[user_map[user_id]][date_key] += 1
 
         for i, user in enumerate(self.users):
-            rows[i][0] = user.username_in_report
+            rows[i][0] = user_link_template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[self.domain, CaseListReport.slug])),
+                                     "user_id": user.user_id,
+                                     "username": user.username_in_report}
             total = sum(rows[i][1:-1])
             rows[i][-1] = total
             total_row[1:-1] = [total_row[ind+1]+val for ind, val in enumerate(rows[i][1:-1])]
@@ -514,7 +523,10 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
                 except Exception:
                     row.append(0)
             row_sum = sum(row)
-            rows.append([user.username_in_report] + [util.format_datatables_data(row_data, row_data) for row_data in row] + [util.format_datatables_data("<strong>%s</strong>" % row_sum, row_sum)])
+            template = user_link_template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[self.domain, CaseListReport.slug])),
+                                     "user_id": user.user_id,
+                                     "username": user.username_in_report}
+            rows.append([template] + [util.format_datatables_data(row_data, row_data) for row_data in row] + [util.format_datatables_data("<strong>%s</strong>" % row_sum, row_sum)])
 
         totals_by_form = [totals_by_form[form_type] for form_type in self.form_types]
         self.total_row = ["All Users"] + ["%s" % t for t in totals_by_form] + ["<strong>%s</strong>" % sum(totals_by_form)]
@@ -523,6 +535,8 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
 
     def get_submissions_by_form_json(self):
         userIDs = [user.user_id for user in self.users]
+        self.datespan.startdate_param
+        self.datespan.enddate_param
         submissions = XFormInstance.view('reports/all_submissions',
             startkey=[self.domain, self.datespan.startdate_param_utc],
             endkey=[self.domain, self.datespan.enddate_param_utc],
@@ -611,7 +625,10 @@ class FormCompletionTrendsReport(StandardTabularHQReport, StandardDateHQReport):
             globalmax = 0
             for user in self.users:
                 datadict = entrytimes.get_user_data(self.domain, user.user_id, form, self.datespan)
-                rows.append([user.username_in_report,
+                template = user_link_template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[self.domain, CaseListReport.slug])),
+                                         "user_id": user.user_id,
+                                         "username": user.username_in_report}
+                rows.append([template,
                              to_minutes(float(datadict["sum"]), float(datadict["count"])),
                              to_minutes(datadict["min"]),
                              to_minutes(datadict["max"]),
@@ -657,6 +674,7 @@ class SubmitHistory(PaginatedHistoryHQReport):
                 app_id = data.app_id
                 xmlns = xmlns_to_name(self.domain, xmlns, app_id=app_id)
                 rows.append([self.form_data_link(data.instanceID), self.usernames[data.userID], time, xmlns])
+
         return rows
 
     def form_data_link(self, instance_id):
@@ -1172,7 +1190,7 @@ class CaseListReport(PaginatedHistoryHQReport):
         # this is temporary...sorry!!!
         self.disable_lucene = True
         if not settings.LUCENE_ENABLED or self.disable_lucene:
-            self.fields = ['corehq.apps.reports.fields.SelectMobileWorkerField',
+            self.fields = ['corehq.apps.reports.fields.SelectCaseOwnerField',
                            'corehq.apps.reports.fields.CaseTypeField',
                            'corehq.apps.reports.fields.SelectOpenCloseField']
         super(CaseListReport,self).__init__(domain, request, base_context)
