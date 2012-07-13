@@ -544,11 +544,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'app': app,
         })
     if app:
-        if app.is_remote_app():
-            options = CommCareBuildConfig.fetch().get_menu()
-            commcare_build_options = options
-            is_standard_build = [o.build.to_string() for o in options if o.build.to_string() == app.build_spec.to_string()]
-        else:
+        if True:
+            # decided to do Application and RemoteApp the same way; might change later
             versions = ['1.0', '2.0']
             commcare_build_options = {}
             for version in versions:
@@ -560,15 +557,11 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
                     options_builds.append(option.build.to_string())
                     commcare_build_options[version] = {"options" : options, "labels" : options_labels, "builds" : options_builds}
 
-            is_standard_build = [o.build.to_string() for o in current_options if o.build.to_string() == app.build_spec.to_string()]
-
         app_build_spec_string = app.build_spec.to_string()
         app_build_spec_label = app.build_spec.get_label()
-#        import pdb
-#        pdb.set_trace()
+
         context.update({
             "commcare_build_options" : commcare_build_options,
-            "is_standard_build": bool(is_standard_build),
             "app_build_spec_string" : app_build_spec_string,
             "app_build_spec_label" : app_build_spec_label,
             "app_version" : app.application_version,
