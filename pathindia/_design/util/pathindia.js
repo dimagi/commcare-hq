@@ -28,12 +28,12 @@ var PathIndiaReport = function (doc) {
         var anc = {};
         anc.pregnancy_status = false;
         anc.is_anc_visit = false;
+        anc.missed_period = missed_period;
+        anc.pregnancy_confirmation = pregnancy_confirmation;
+        anc.using_contraception = using_contraception;
 
-        if ((missed_period || pregnancy_confirmation || using_contraception) && anc_group_present) {
+        if (anc_group_present) {
             anc.is_anc_visit = true;
-            anc.missed_period = missed_period;
-            anc.pregnancy_confirmation = pregnancy_confirmation;
-            anc.using_contraception = using_contraception;
 
             var anc_info = self.form.anc_group;
 
@@ -58,9 +58,9 @@ var PathIndiaReport = function (doc) {
             anc.anc_no_fetal_mvmt = (anc_info.anc_no_fetal_mvmt === 'yes');
             anc.anc_bleeding = (anc_info.anc_bleeding === 'yes');
             anc.delivery_place_determined = anc_info.delivery_place_determined;
-
-            self.data.antenatal = anc;
         }
+        if (missed_period || pregnancy_confirmation || using_contraception || anc_group_present)
+            self.data.antenatal = anc;
     };
 
     self.getIntranatalData = function () {

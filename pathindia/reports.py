@@ -2,8 +2,8 @@ from corehq.apps.reports.standard import StandardDateHQReport
 from dimagi.utils.couch.database import get_db
 
 class PathIndiaKrantiReport(StandardDateHQReport):
-    name = "Kranti Report"
-    slug = "pathindia_kranti"
+    name = "Key Indicators"
+    slug = "pathindia_key_indicators"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
                 'corehq.apps.reports.fields.GroupField',
                 'corehq.apps.reports.fields.DatespanField']
@@ -28,7 +28,8 @@ class PathIndiaKrantiReport(StandardDateHQReport):
         complications_total = complications.get("bleeding", 0) + \
                                 complications.get("fever", 0) + \
                                 complications.get("convulsions", 0)
-        report_data["postnatal"]["complications_total"] = complications_total
+        if "postnatal" in report_data:
+            report_data["postnatal"]["complications_total"] = complications_total
 
         reg_preg_total = report_data.get("antenatal", {}).get("registered_preg", 0)
         anc_exam_total = report_data.get("antenatal", {}).get("anc_examination", 0)
