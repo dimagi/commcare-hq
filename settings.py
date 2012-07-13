@@ -313,7 +313,10 @@ UNICEL_CONFIG = {"username": "Dimagi",
 
 
 #auditcare parameters
-AUDIT_MODEL_SAVE = []
+AUDIT_MODEL_SAVE = [
+    'corehq.apps.app_manager.Application',
+    'corehq.apps.app_manager.RemoteApp',
+]
 AUDIT_VIEWS = [
     'corehq.apps.domain.views.registration_request',
     'corehq.apps.domain.views.registration_confirm',
