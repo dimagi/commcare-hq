@@ -25,3 +25,4 @@ tmp.sh
 /staticfiles/*
 *.db
 \#*\#
+.DS_Store
