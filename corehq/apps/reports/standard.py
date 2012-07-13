@@ -50,6 +50,7 @@ class StandardHQReport(HQReport):
     base_slug = 'reports'
     asynchronous = True
 
+
     def process_basic(self):
         self.request_params = json_request(self.request.GET)
         self.individual = self.request_params.get('individual', '')
@@ -121,6 +122,12 @@ class StandardHQReport(HQReport):
         self.get_global_params()
         return super(StandardHQReport, self).as_json()
 
+    @classmethod
+    def get_user_link(cls, domain, user):
+        user_link = user_link_template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[domain, CaseListReport.slug])),
+                               "user_id": user.user_id,
+                               "username": user.username_in_report}
+        return user_link
 
 class StandardTabularHQReport(StandardHQReport):
     total_row = None
@@ -262,6 +269,7 @@ class CaseActivityReport(StandardTabularHQReport):
     all_users = None
     display_data = ['percent']
 
+
     class Row(object):
         def __init__(self, report, user):
             self.report = report
@@ -302,10 +310,7 @@ class CaseActivityReport(StandardTabularHQReport):
             )
 
         def header(self):
-            template = user_link_template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[self.report.domain, CaseListReport.slug])),
-                                   "user_id": self.user.user_id,
-                                   "username": self.user.username_in_report}
-            return util.format_datatables_data(template,
+            return util.format_datatables_data(StandardHQReport.get_user_link(self.report.domain, self.user),
                     self.user.username_in_report)
 
     class TotalRow(object):
@@ -455,9 +460,7 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
                     rows[user_map[user_id]][date_key] += 1
 
         for i, user in enumerate(self.users):
-            rows[i][0] = user_link_template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[self.domain, CaseListReport.slug])),
-                                     "user_id": user.user_id,
-                                     "username": user.username_in_report}
+            rows[i][0] = StandardHQReport.get_user_link(self.domain, user)
             total = sum(rows[i][1:-1])
             rows[i][-1] = total
             total_row[1:-1] = [total_row[ind+1]+val for ind, val in enumerate(rows[i][1:-1])]
@@ -523,10 +526,7 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
                 except Exception:
                     row.append(0)
             row_sum = sum(row)
-            template = user_link_template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[self.domain, CaseListReport.slug])),
-                                     "user_id": user.user_id,
-                                     "username": user.username_in_report}
-            rows.append([template] + [util.format_datatables_data(row_data, row_data) for row_data in row] + [util.format_datatables_data("<strong>%s</strong>" % row_sum, row_sum)])
+            rows.append([StandardHQReport.get_user_link(self.domain, user)] + [util.format_datatables_data(row_data, row_data) for row_data in row] + [util.format_datatables_data("<strong>%s</strong>" % row_sum, row_sum)])
 
         totals_by_form = [totals_by_form[form_type] for form_type in self.form_types]
         self.total_row = ["All Users"] + ["%s" % t for t in totals_by_form] + ["<strong>%s</strong>" % sum(totals_by_form)]
@@ -625,10 +625,7 @@ class FormCompletionTrendsReport(StandardTabularHQReport, StandardDateHQReport):
             globalmax = 0
             for user in self.users:
                 datadict = entrytimes.get_user_data(self.domain, user.user_id, form, self.datespan)
-                template = user_link_template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[self.domain, CaseListReport.slug])),
-                                         "user_id": user.user_id,
-                                         "username": user.username_in_report}
-                rows.append([template,
+                rows.append([StandardHQReport.get_user_link(self.domain, user),
                              to_minutes(float(datadict["sum"]), float(datadict["count"])),
                              to_minutes(datadict["min"]),
                              to_minutes(datadict["max"]),

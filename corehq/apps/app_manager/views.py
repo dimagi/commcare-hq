@@ -547,7 +547,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         if app.is_remote_app():
             options = CommCareBuildConfig.fetch().get_menu()
             commcare_build_options = options
-            current_options = options
             is_standard_build = [o.build.to_string() for o in options if o.build.to_string() == app.build_spec.to_string()]
         else:
             versions = ['1.0', '2.0']
@@ -561,7 +560,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
                     options_builds.append(option.build.to_string())
                     commcare_build_options[version] = {"options" : options, "labels" : options_labels, "builds" : options_builds}
 
-            current_options = CommCareBuildConfig.fetch().get_menu(app.application_version)
             is_standard_build = [o.build.to_string() for o in current_options if o.build.to_string() == app.build_spec.to_string()]
 
         app_build_spec_string = app.build_spec.to_string()
@@ -574,7 +572,6 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             "app_build_spec_string" : app_build_spec_string,
             "app_build_spec_label" : app_build_spec_label,
             "app_version" : app.application_version,
-            "current_options" : current_options
         })
     response = render_to_response(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
