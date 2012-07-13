@@ -13,9 +13,6 @@
 [submodule "submodules/dimagi-utils-src"]
 	path = submodules/dimagi-utils-src
 	url = git://github.com/dimagi/dimagi-utils.git
-[submodule "submodules/xep_hq_server"]
-	path = submodules/xep_hq_server
-	url = git://github.com/dimagi/xep_hq_server.git
 [submodule "submodules/couchlog-src"]
 	path = submodules/couchlog-src
 	url = git://github.com/dimagi/couchlog.git
@@ -79,3 +76,6 @@
 [submodule "submodules/hsph-reports"]
 	path = submodules/hsph-reports
 	url = git://github.com/dimagi/hsph-reports.git
+[submodule "submodules/pathindia-reports"]
+	path = submodules/pathindia-reports
+	url = git://github.com/dimagi/pathindia-reports.git

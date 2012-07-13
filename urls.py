@@ -17,6 +17,7 @@ handler404 = 'corehq.apps.hqwebapp.views.not_found'
 from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specific
 from corehq.apps.settings.urls import domain_specific as settings_domain_specific
 from corehq.apps.settings.urls import users_redirect, domain_redirect
+from corehq.apps.domain.urls import domain_specific as domain_domain_specific
 domain_specific = patterns('',
     (r'^apps/', include('corehq.apps.app_manager.urls')),
     (r'^api/', include('corehq.apps.api.urls')),
@@ -32,7 +33,9 @@ domain_specific = patterns('',
     (r'^sms/', include('corehq.apps.sms.urls')),
     (r'^reminders/', include('corehq.apps.reminders.urls')),
     (r'^reports/', include('corehq.apps.reports.urls')),
+    (r'^data/', include('corehq.apps.data_interfaces.urls')),
     (r'^', include(hqwebapp_domain_specific)),
+    (r'^', include(domain_domain_specific)),
     (r'^', include('django_user_registration.urls')),
     (r'^case/', include('corehq.apps.hqcase.urls')),
     (r'^submitlist/', include('corehq.apps.hqsofabed.urls')),
@@ -48,8 +51,9 @@ urlpatterns = patterns('',
     (r'^register/', include('corehq.apps.registration.urls')),
     (r'^auditcare/', include('auditcare.urls')),
     (r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
+    (r'^o/', include('corehq.apps.orgs.urls')),
+    url(r'^organizations/$', 'corehq.apps.orgs.views.orgs_base', name='orgs_base'),
     (r'^couch/', include('djangocouch.urls')),
-    (r'^xep/', include('xep_hq_server.urls')),
     (r'^webforms/', include('touchforms.formplayer.urls')),
     (r'', include('corehq.apps.hqwebapp.urls')),
     (r'', include('corehq.apps.domain.urls')),

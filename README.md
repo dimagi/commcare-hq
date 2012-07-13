@@ -63,6 +63,9 @@ To install:
 
 Run `source ~/.virtualenvs/commcare-hq/bin/activate` to enter your virtualenv.
 
+`libmagic` is required by `python-magic`, which pip will install automatically. Unfortunately, on Mac OS X, pip doesn't install libmagic itself. To add it, just
+
+     brew install libmagic
 
 #### HQ Bootstrap Requirements
 
@@ -80,7 +83,7 @@ Once all the requirements are in order, please do the following:
     git submodule update --init --recursive
     source ~/.virtualenvs/commcare-hq/bin/activate      # enter your virtualenv if you have one
     pip install -r requirements.txt
-    cp localsettings.py.example localsettings.py
+    cp localsettings.example.py localsettings.py
 
 
 #### Edit localsettings.py
@@ -102,7 +105,7 @@ Please make sure you're still in the root directory of commcare-hq and that you 
     ./manage.py syncdb
     ./manage.py migrate
     # this will do some basic setup, create a superuser, and create a project
-    ./manage.py bootstrap <project-name> <user> <password>
+    ./manage.py bootstrap <project-name> <email> <password>
     ./manage.py make_bootstrap # (if it fails add the 'direct-lessc' directive)
     ./manage.py collectstatic
 
@@ -114,7 +117,7 @@ Please make sure you're still in the root directory of commcare-hq and that you 
 
 #### Couch-lucene
 
-    Enable  Lucene settings in  settings.py (to view  case list in the  Report section)
+    Enable  Lucene settings in  localsettings.py (to view  case list in the  Report section)
 
 #### Celery (asynchronous task scheduler)
 

@@ -153,6 +153,7 @@ HQ_APPS = (
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
+    'corehq.apps.orgs',
     'corehq.apps.fixtures',
     'corehq.apps.reminders',
     'corehq.apps.prescriptions',
@@ -168,14 +169,15 @@ HQ_APPS = (
     'corehq.apps.registration',
     'corehq.apps.unicel',
     'corehq.apps.reports',
-    'corehq.apps.hq-bootstrap',
+    'corehq.apps.data_interfaces',
+    'corehq.apps.hq_bootstrap',
     'corehq.apps.builds',
+    'corehq.apps.orgs',
     'corehq.apps.api',
     'corehq.couchapps',
     'sofabed.forms',
     'soil',
     'corehq.apps.hqsofabed',
-    'xep_hq_server',
     'touchforms.formplayer',
     'phonelog',
     'pathfinder',
@@ -183,6 +185,7 @@ HQ_APPS = (
     'dca',
     'loadtest',
     'hsph',
+    'pathindia',
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
@@ -190,10 +193,13 @@ REFLEXIVE_URL_BASE = "localhost:8000"
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 TABS = [
-    ("corehq.apps.reports.views.default", "Reports"),
+    ("corehq.apps.domain.views.snapshot_info", "Info", lambda request: request.project.is_snapshot),
+    ("corehq.apps.reports.views.default", "Reports", lambda request: not request.project.is_snapshot),
+    ("corehq.apps.data_interfaces.views.default", "Manage Data", lambda request: request.couch_user.can_edit_data()),
     ("corehq.apps.app_manager.views.default", "Applications"),
-    ("corehq.apps.sms.views.messaging", "Messages"),
-    ("corehq.apps.settings.views.default", "Settings & Users"),
+    ("corehq.apps.cloudcare.views.default", "CloudCare", lambda request: request.couch_user.can_edit_data()),
+    ("corehq.apps.sms.views.messaging", "Messages", lambda request: not request.project.is_snapshot),
+    ("corehq.apps.settings.views.default", "Settings & Users", lambda request: request.couch_user.can_edit_commcare_users() or request.couch_user.can_edit_web_users()),
     ("corehq.apps.hqadmin.views.default", "Admin Reports", "is_superuser"),
 ]
 
@@ -258,10 +264,6 @@ FIXTURE_GENERATORS = [
     "corehq.apps.fixtures.fixturegenerators.item_lists",
 ]
 
-# xep_hq_server settings
-XEP_AUTHORIZE = 'corehq.apps.app_manager.models.authorize_xform_edit'
-XEP_GET_XFORM = 'corehq.apps.app_manager.models.get_xform'
-XEP_PUT_XFORM = 'corehq.apps.app_manager.models.put_xform'
 GET_URL_BASE  = 'dimagi.utils.web.get_url_base'
 
 SMS_GATEWAY_URL = "http://localhost:8001/"
@@ -282,7 +284,7 @@ XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
-COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables-1.8.2/js/jquery.dataTables.min.js")
+COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables-1.9/js/jquery.dataTables.min.js")
 
 # These allow HQ to override what shows up in couchlog (add a domain column)
 COUCHLOG_TABLE_CONFIG = {"id_column":       0,
@@ -295,6 +297,7 @@ COUCHLOG_TABLE_CONFIG = {"id_column":       0,
 COUCHLOG_DISPLAY_COLS = ["id", "archived?", "date", "exception type", 
                          "message", "domain", "user", "url", "actions", "report"]
 COUCHLOG_RECORD_WRAPPER = "corehq.apps.hqcouchlog.wrapper"
+COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
 
 # couchlog/case search
 LUCENE_ENABLED = False
@@ -311,6 +314,7 @@ UNICEL_CONFIG = {"username": "Dimagi",
 
 
 #auditcare parameters
+AUDIT_MODEL_SAVE = []
 AUDIT_VIEWS = [
     'corehq.apps.domain.views.registration_request',
     'corehq.apps.domain.views.registration_confirm',
@@ -369,6 +373,7 @@ XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
 COUCHDB_APPS = [
         'api',
         'app_manager',
+        'orgs',
         'auditcare',
         'builds',
         'case',
@@ -377,7 +382,6 @@ COUCHDB_APPS = [
         'couch', # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
         'couchforms',
         'couchexport',
-        'couchlog',
         'hqadmin',
         'domain',
         'forms',
@@ -396,14 +400,20 @@ COUCHDB_APPS = [
         'translations',
         'users',
         'formplayer',
-        'xep_hq_server',
         'phonelog',
         'pathfinder',
         'registration',
         'hutch',
         'dca',
         'hsph',
+<<<<<<< HEAD
     ]
+=======
+        'pathindia',
+
+    ]
+] + [("couchlog", "%s/%s" %(COUCH_SERVER, COUCHLOG_DATABASE_NAME))]
+>>>>>>> ace3afe56b3dc82ba2838dd7e23c2790dc6007c2
 
 COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS ]
 
@@ -464,6 +474,12 @@ EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
+
+DATA_INTERFACE_MAP = {
+    'Case Management' : [
+        'corehq.apps.data_interfaces.interfaces.CaseReassignmentInterface'
+    ]
+}
 
 STANDARD_REPORT_MAP = {
     "Monitor Workers" : [
@@ -526,6 +542,11 @@ CUSTOM_REPORT_MAP = {
                     'hsph.reports.data_summary.ProgramDataSummaryReport',
                     'hsph.reports.data_summary.ComparativeDataSummaryReport']
     },
+    "pathindia": {
+        'Custom Reports': [
+                    'pathindia.reports.PathIndiaKrantiReport'
+        ]
+    }
 #    "test": [
 #        'corehq.apps.reports.deid.FormDeidExport',
 #    ]
