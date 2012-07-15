@@ -1,12 +1,12 @@
-def export_cases_and_referrals(cases, workbook, users=None):
-    if users:
-        by_user_id = dict([(user.user_id, user) for user in users])
-    else:
-        by_user_id = None
+def export_cases_and_referrals(cases, workbook, users=None, groups=None):
+    by_user_id = dict([(user.user_id, user) for user in users]) if users else None
+    by_group_id = dict([(g.get_id, g) for g in groups]) if groups else {}
     case_static_keys = (
         "case_id",
         "username",
         "user_id",
+        "owner_id",
+        "owner_name",
         "type",
         "name",
         "opened_on",
@@ -44,6 +44,13 @@ def export_cases_and_referrals(cases, workbook, users=None):
                     try:
                         case_row[key] = by_user_id[case.user_id].raw_username
                     except TypeError:
+                        case_row[key] = ''
+                elif key == 'owner_name':
+                    if users and case.owner_id in by_user_id:
+                        case_row[key] = by_user_id[case.owner_id].full_name
+                    elif case.owner_id in by_group_id:
+                        case_row[key] = by_group_id[case.owner_id].name
+                    else:
                         case_row[key] = ''
                 else:
                     case_row[key] = getattr(case, key)
