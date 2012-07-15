@@ -42,6 +42,7 @@ from util import get_all_users_by_domain
 from corehq.apps.hqsofabed.models import HQFormData
 from StringIO import StringIO
 from corehq.apps.app_manager.util import get_app_id
+from corehq.apps.groups.models import Group
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -395,11 +396,13 @@ def download_cases(request, domain):
     group = request.GET.get('group', None)
     user_filter, _ = FilterUsersField.get_user_filter(request)
     users = get_all_users_by_domain(domain, group=group, filter_users=user_filter)
+    groups = Group.get_case_sharing_groups(domain)
+    
 #    if not group:
 #        users.extend(CommCareUser.by_domain(domain, is_active=False))
 
     workbook = WorkBook()
-    export_cases_and_referrals(cases, workbook, users=users)
+    export_cases_and_referrals(cases, workbook, users=users, groups=groups)
     export_users(users, workbook)
     response = HttpResponse(workbook.format(format.slug))
     response['Content-Type'] = "%s" % format.mimetype

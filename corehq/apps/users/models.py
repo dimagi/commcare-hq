@@ -440,6 +440,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         return "%s %s" % (self.first_name, self.last_name)
 
     formatted_name = full_name
+    name = full_name
 
     def set_full_name(self, full_name):
         data = full_name.split()

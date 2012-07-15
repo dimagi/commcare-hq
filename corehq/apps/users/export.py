@@ -1,5 +1,5 @@
 def export_users(users, workbook):
-    user_keys = ('user_id', 'username', 'is_active', 'name')
+    user_keys = ('user_id', 'username', 'is_active', 'name', 'groups')
     user_rows = []
     fields = set()
     for user in users:
@@ -9,6 +9,8 @@ def export_users(users, workbook):
                 user_row[key] = user.raw_username
             elif key == 'name':
                 user_row[key] = user.full_name
+            elif key == 'groups':
+                user_row[key] = ", ".join(user.get_group_ids())
             else:
                 user_row[key] = getattr(user, key)
         for key in user.user_data:
