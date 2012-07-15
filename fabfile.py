@@ -18,17 +18,18 @@ def _join(*args):
 def production():
     """ use production environment on remote host"""
     env.root = root = '/home/cchq/production'
-    env.virtualenv_root = _join(root, '/home/cchq/.virtualenvs/commcarehq')
+    env.virtualenv_root = _join('/home/cchq', '.virtualenvs/commcarehq')
     env.code_root       = _join(root, 'src/commcare-hq')
     env.pre_code_root   = _join(root, 'src/_commcare-hq')
     env.log_root   = _join(root, 'log')
     env.code_branch = 'master'
     env.sudo_user = 'cchq'
     #env.hosts = ['10.84.168.241']
-    env.hosts = ['10.183.198.145',]
+    #env.hosts = ['10.183.198.145', '192.168.100.60']
+    env.hosts = ['10.183.198.145', ] #'192.168.100.60']
     env.environment = 'production'
     env.user = prompt("Username: ", default=env.user)
-    env.make_bootstrap_command = 'python manage.py make_bootstrap direct-lessc'
+    env.make_bootstrap_command = 'python manage.py make_bootstrap'
 
 def migration():
     """pull from staging branch into production to do a data migration"""
@@ -149,16 +150,10 @@ def update_env():
 
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
-<<<<<<< HEAD
     require('root', provided_by=('staging', 'production', 'india', 'rackspace'))
     if env.environment in ('production', 'india', 'rackspace'):
-        if not console.confirm('Are you sure you want to deploy to %s?' % env.environment, default=False):
-=======
-    require('root', provided_by=('staging', 'production', 'india'))
-    if env.environment in ('production', 'india'):
         if not console.confirm('Are you sure you want to deploy to {env.environment}? '.format(env=env), default=False) or\
            not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
->>>>>>> ace3afe56b3dc82ba2838dd7e23c2790dc6007c2
             utils.abort('Deployment aborted.')
 
     with cd(env.code_root):
