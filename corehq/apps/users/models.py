@@ -710,6 +710,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
     domain = StringProperty()
     registering_device_id = StringProperty()
     user_data = DictProperty()
+    role_id = StringProperty()
 
     def sync_from_old_couch_user(self, old_couch_user):
         super(CommCareUser, self).sync_from_old_couch_user(old_couch_user)
@@ -994,7 +995,17 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
             # Gracefully handle when user_data is None, or does not have a "language_code" entry
             lang = None
         return lang
-    
+
+    def has_permission(self, domain, permission, data=None):
+        if self.role_id is None:
+            return False
+        else:
+            role = UserRole.get(self.role_id)
+            if role is not None:
+                return role.permissions.has(permission, data)
+            else:
+                return False
+
 class WebUser(CouchUser):
     domains = StringListProperty()
     domain_memberships = SchemaListProperty(DomainMembership)
