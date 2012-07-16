@@ -57,7 +57,6 @@ def _setup_path():
     env.code_root = posixpath.join(env.root, 'code_root')
     env.project_root = posixpath.join(env.code_root, env.project)
     env.project_media = posixpath.join(env.code_root, 'media')
-    env.project_static = posixpath.join(env.project_root, 'static')
     env.virtualenv_root = posixpath.join(env.root, 'python_env')
     env.services = posixpath.join(env.home, 'services')
 
@@ -97,7 +96,7 @@ def staging():
 @task
 def production():
     """ use production environment on remote host"""
-    env.code_branch = 'master'
+    env.code_branch = 'newprod'
     env.sudo_user = 'cchq'
     env.environment = 'production'
     env.server_port = '9010'
@@ -195,9 +194,10 @@ def bootstrap():
     """ initialize remote host environment (virtualenv, deploy, update) """
     require('root', provided_by=('staging', 'production'))
     sudo('mkdir -p %(root)s' % env, user=env.sudo_user)
+    execute(clone_repo)
+    execute(update_code)
     execute(create_virtualenv)
     execute(update_requirements)
-    execute(clone_repo)
     execute(setup_dirs)
     execute(update_services)
     execute(fix_locale_perms)
@@ -221,6 +221,16 @@ def clone_repo():
             sudo('git clone %(code_repo)s %(code_root)s' % env, user=env.sudo_user)
 
 
+@roles('django_celery','django_app')
+def update_code():
+     with cd(env.code_root):
+        sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
+        sudo('git pull', user=env.sudo_user)
+        sudo('git submodule init', user=env.sudo_user)
+        sudo('git submodule update', user=env.sudo_user)
+
+
+
 @roles('django_celery', 'django_app')
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
@@ -233,12 +243,7 @@ def deploy():
     with settings(warn_only=True):
         stop()
     try:
-        with cd(env.code_root):
-            sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
-            sudo('git pull', user=env.sudo_user)
-            sudo('git submodule init', user=env.sudo_user)
-            sudo('git submodule update', user=env.sudo_user)
-        #        update_requirements()
+        execute(update_code)
         execute(update_services)
         execute(migrate)
         execute(collectstatic)
@@ -253,7 +258,7 @@ def deploy():
 def update_requirements():
     """ update external dependencies on remote host """
     require('code_root', provided_by=('staging', 'production'))
-    requirements = posixpath.join(env.project_root, 'requirements')
+    requirements = posixpath.join(env.code_root, 'requirements')
     with cd(requirements):
         cmd = ['%(virtualenv_root)s/bin/pip install' % env]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'prod-requirements.txt')]
@@ -352,8 +357,8 @@ def servers_restart():
 @roles('django_app')
 def migrate():
     """ run south migration on remote environment """
-    require('project_root', provided_by=('production', 'demo', 'staging'))
-    with cd(env.project_root):
+    require('code_root', provided_by=('production', 'demo', 'staging'))
+    with cd(env.code_root):
         run('%(virtualenv_root)s/bin/python manage.py syncdb --noinput --settings=%(settings)s' % env)
         run('%(virtualenv_root)s/bin/python manage.py migrate --noinput --settings=%(settings)s' % env)
 
@@ -361,8 +366,8 @@ def migrate():
 @roles('django_app')
 def collectstatic():
     """ run collectstatic on remote environment """
-    require('project_root', provided_by=('production', 'demo', 'staging'))
-    with cd(env.project_root):
+    require('code_root', provided_by=('production', 'demo', 'staging'))
+    with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput --settings=%(settings)s' % env, user=env.sudo_user)
 
 
