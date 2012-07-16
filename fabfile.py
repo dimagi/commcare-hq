@@ -1,195 +1,483 @@
-from fabric.api import *
-from fabric.contrib import console, files
+"""
+Server layout:
+    ~/services/
+        This contains two subfolders
+            /apache/
+            /supervisor/
+        which hold the configurations for these applications
+        for each environment (staging, demo, etc) running on the server.
+        Theses folders are included in the global /etc/apache2 and
+        /etc/supervisor configurations.
+
+    ~/www/
+        This folder contains the code, python environment, and logs
+        for each environment (staging, demo, etc) running on the server.
+        Each environment has its own subfolder named for its evironment
+        (i.e. ~/www/staging/logs and ~/www/demo/logs).
+"""
+import pdb
+import uuid
+from fabric.context_managers import settings, cd
+from fabric.operations import require, local
+
+import os, sys
+
+from fabric.api import run, roles, execute, task, sudo, env
+from fabric.contrib import files, console
 from fabric import utils
-import os
+import posixpath
 
-# these defaults can be overridden if necessary
+
+PROJECT_ROOT = os.path.dirname(__file__)
+RSYNC_EXCLUDE = (
+    '.DS_Store',
+    '.git',
+    '*.pyc',
+    '*.example',
+    '*.db',
+    )
+env.project = 'commcare-hq'
 env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
-env.jython_home = "/usr/bin/jython"
-env.restart_server = True
-env.service_manager = "upstart"
+env.home = "/home/cchq"
 
-def _join(*args):
-    """
-    We're deploying on Linux, so hard-code that path separator here.
-    """
-    return '/'.join(args)
+env.roledefs = {
+        'couch': [], #['192.168.100.60'],
+        'pg': [], #['192.168.100.60'],
+        'rabbitmq': ['192.168.100.60'],
+        'django_celery': ['192.168.100.60'], #['192.168.100.60'],
+        'django_app': ['10.183.198.145','10.183.192.225' ],
+        'lb': [], #['10.180.36.47'],
+    }
 
-def production():
-    """ use production environment on remote host"""
-    env.root = root = '/home/cchq/production'
-    env.virtualenv_root = _join('/home/cchq', '.virtualenvs/commcarehq')
-    env.code_root       = _join(root, 'src/commcare-hq')
-    env.pre_code_root   = _join(root, 'src/_commcare-hq')
-    env.log_root   = _join(root, 'log')
-    env.code_branch = 'master'
-    env.sudo_user = 'cchq'
-    #env.hosts = ['10.84.168.241']
-    #env.hosts = ['10.183.198.145', '192.168.100.60']
-    env.hosts = ['10.183.198.145', ] #'192.168.100.60']
-    env.environment = 'production'
-    env.user = prompt("Username: ", default=env.user)
-    env.make_bootstrap_command = 'python manage.py make_bootstrap'
+@task
+def _setup_path():
+    # using posixpath to ensure unix style slashes. See bug-ticket: http://code.fabfile.org/attachments/61/posixpath.patch
+    env.root = posixpath.join(env.home, 'www', env.environment)
+    env.log_dir = posixpath.join(env.home, 'www', env.environment, 'log')
+    env.code_root = posixpath.join(env.root, 'code_root')
+    env.project_root = posixpath.join(env.code_root, env.project)
+    env.project_media = posixpath.join(env.code_root, 'media')
+    env.project_static = posixpath.join(env.project_root, 'static')
+    env.virtualenv_root = posixpath.join(env.root, 'python_env')
+    env.services = posixpath.join(env.home, 'services')
 
-def migration():
-    """pull from staging branch into production to do a data migration"""
-    production()
-    env.code_branch = 'staging'
-    env.restart_server = False
+@task
+def _set_apache_user():
+    if what_os() == 'ubuntu':
+        env.apache_user = 'www-data'
+    elif what_os() == 'redhat':
+        env.apache_user = 'apache'
 
+@roles('lb')
+def setup_apache_dirs():
+    sudo('mkdir -p %(services)s/apache' % env, user=env.sudo_user)
+
+@roles('django_celery', 'django_app')
+def setup_dirs():
+    """ create (if necessary) and make writable uploaded media, log, etc. directories """
+    sudo('mkdir -p %(log_dir)s' % env, user=env.sudo_user)
+    sudo('chmod a+w %(log_dir)s' % env, user=env.sudo_user)
+    sudo('mkdir -p %(services)s/supervisor' % env, user=env.sudo_user)
+    #execute(setup_apache_dirs)
+
+@task
 def staging():
     """ use staging environment on remote host"""
-    env.root = root = '/home/dimagivm/'
-    env.virtualenv_root = _join(root, 'cchq')
-    env.code_root       = _join(root, 'commcare-hq')
-    env.log_root   = _join(root, 'log')
-    env.code_branch = 'staging'
-    env.sudo_user = 'root'
-    env.hosts = ['192.168.7.223']
+    env.code_branch = 'develop'
+    env.sudo_user = 'commcare-hq'
     env.environment = 'staging'
-    env.user = prompt("Username: ", default='dimagivm')
-    env.make_bootstrap_command = 'python manage.py make_bootstrap direct-lessc'
+    env.server_port = '9002'
+    env.server_name = 'noneset'
+    env.hosts = ['192.168.56.1']
+    env.settings = '%(project)s.localsettings' % env
+    env.remote_os = None
+    env.db = '%s_%s' % (env.project, env.environment)
+    _setup_path()
 
-def india():
-    """Our production server in India."""
-    env.root = root = '/home/commcarehq'
-    env.virtualenv_root = _join(root, '.virtualenvs/commcarehq')
-    env.code_root       = _join(root, 'src/commcare-hq')
-    env.pre_code_root   = _join(root, 'src/_commcare-hq')
-    env.log_root   = _join(root, 'log')
+@task
+def production():
+    """ use production environment on remote host"""
     env.code_branch = 'master'
-    env.sudo_user = 'commcarehq'
-    env.hosts = ['220.226.209.82']
-    env.environment = 'india'
-    env.user = prompt("Username: ", default=env.user)
-    env.service_manager = "supervisor"
-    env.make_bootstrap_command = 'python manage.py make_bootstrap'
+    env.sudo_user = 'cchq'
+    env.environment = 'production'
+    env.server_port = '9010'
 
-def rackspace():
-    """Our production server on Rackspace.  This is to be come the new production() method"""
-    env.root = root = '/home/commcarehq'
-    env.virtualenv_root = _join(root, '.virtualenvs/commcarehq')
-    env.code_root       = _join(root, 'src/commcare-hq')
-    env.pre_code_root   = _join(root, 'src/_commcare-hq')
-    env.code_branch = 'master'
-    env.sudo_user = 'commcarehq'
-    env.hosts = ['192.168.100.62']
-    env.environment = 'rackspace'
-    env.user = prompt("Username: ", default=env.user)
+    env.hosts = []
+    env.server_name = 'commcare-hq-production'
+    env.settings = '%(project)s.localsettings' % env
+    env.remote_os = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
+    env.db = '%s_%s' % (env.project, env.environment)
+    _setup_path()
 
-def enter_virtualenv():
+@task
+def install_packages():
+    """Install packages, given a list of package names"""
+    require('environment', provided_by=('staging', 'production'))
+    packages_list = ''
+    installer_command = ''
+    if what_os() == 'ubuntu':
+        packages_list = 'apt-packages.txt'
+        installer_command = 'apt-get install -y'
+    elif what_os() == 'redhat':
+        packages_list = 'yum-packages.txt'
+        installer_command = 'yum install -y'
+    packages_file = posixpath.join(PROJECT_ROOT, 'requirements', packages_list)
+    with open(packages_file) as f:
+        packages = f.readlines()
+    sudo("%s %s" % (installer_command, " ".join(map(lambda x: x.strip('\n\r'), packages))))
+
+
+@task
+def upgrade_packages():
     """
-    modify path to use virtualenv's python
-
-    usage:
-
-        with enter_virtualenv():
-            run('python script.py')
-
+    Bring all the installed packages up to date.
+    This is a bad idea in RedHat as it can lead to an
+    OS Upgrade (e.g RHEL 5.1 to RHEL 6).
+    Should be avoided.  Run install packages instead.
     """
-    return prefix('PATH=%(virtualenv_root)s/bin/:$PATH' % env)
+    require('environment', provided_by=('staging', 'production'))
+    if what_os() == 'ubuntu':
+        sudo("apt-get update -y")
+        sudo("apt-get upgrade -y")
+    else:
+        return #disabled for RedHat (see docstring)
 
-def preindex_views():
-    with cd(env.pre_code_root):
-        update_code()
-        with enter_virtualenv():
-            sudo('nohup python manage.py sync_prepare_couchdb > preindex_views.out 2> preindex_views.err', user=env.sudo_user)
+@task
+def what_os():
+    with settings(warn_only=True):
+        require('environment', provided_by=('staging','production'))
+        if env.remote_os is None: #make sure we only run this check once per fab execution.
+            print 'Testing operating system type...'
+            if(files.exists('/etc/lsb-release',verbose=True) and files.contains(text='DISTRIB_ID=Ubuntu', filename='/etc/lsb-release')):
+                env.remote_os = 'ubuntu'
+                print 'Found lsb-release and contains "DISTRIB_ID=Ubuntu", this is an Ubuntu System.'
+            elif(files.exists('/etc/redhat-release',verbose=True)):
+                env.remote_os = 'redhat'
+                print 'Found /etc/redhat-release, this is a RedHat system.'
+            else:
+                print 'System OS not recognized! Aborting.'
+                exit()
+        return env.remote_os
 
-def update_code():
-    sudo('git pull', user=env.sudo_user)
-    sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
-    sudo('git pull', user=env.sudo_user)
-    sudo('git submodule sync', user=env.sudo_user)
-    sudo('git submodule update --init --recursive', user=env.sudo_user)
+@roles('pg','django_celery','django_app')
+def setup_server():
+    """Set up a server for the first time in preparation for deployments."""
+    require('environment', provided_by=('staging', 'production'))
+    upgrade_packages()
+    # Install required system packages for deployment, plus some extras
+    # Install pip, and use it to install virtualenv
+    install_packages()
+    sudo("easy_install -U pip")
+    sudo("pip install -U virtualenv")
+    upgrade_packages()
+    execute(create_db_user)
+    execute(create_db)
 
-def upload_upstart_conf():
-    """
-    Upload and link upstart configuration from the templates.
-    """
-    require('root', provided_by=('staging', 'production', 'india'))
-    template_dir = os.path.join(os.path.dirname(__file__), 'utilities', 'deployment', 'upstart_templates')
-    for file in os.listdir(template_dir):
-        destination = _join(env.code_root, 'utilities', 'deployment', file)
-        template = os.path.join(template_dir, file)
-        tmp_destination = "/tmp/%s.tmp" % file
-        files.upload_template(template, tmp_destination, context=env)
-        sudo('chown -R %(user)s:%(user)s %(file)s' % {"user": env.sudo_user,
-                                                      "file": tmp_destination})
-        sudo('chmod -R g+w %s' % tmp_destination)
-        sudo('mv -f %s %s' % (tmp_destination, destination), user=env.sudo_user)
-    
-def _supervisor_command(command):
-    require('root', provided_by=('staging', 'production', 'india'))
-    sudo('supervisorctl %s' % command)
-    
-def upload_supervisor_conf():
-    """
-    Upload and link supervisor configuration from the templates.
-    """
-    require('root', provided_by=('staging', 'production', 'india'))
-    file = os.path.join(os.path.dirname(__file__), 'utilities', 'deployment', 'supervisor_templates', "supervisor.conf")
-    destination = _join(env.code_root, 'utilities', 'deployment', "supervisor.conf")
-    #destination = _join(env.code_root, file)
-    tmp_destination = "/tmp/supervisor.conf.tmp"
-    files.upload_template(file, tmp_destination, context=env)
-    sudo('chown -R %(user)s:%(user)s %(file)s' % {"user": env.sudo_user,
-                                                  "file": tmp_destination})
-    sudo('chmod -R g+w %s' % tmp_destination)
-    sudo('mv -f %s %s' % (tmp_destination, destination), user=env.sudo_user)
 
-def update_env():
-    require('root', provided_by=('staging', 'production', 'india'))
-    with enter_virtualenv():
-        sudo('pip install -r requirements.txt', user=env.sudo_user)
-        sudo(env.make_bootstrap_command, user=env.sudo_user)
-        sudo('python manage.py sync_finish_couchdb', user=env.sudo_user)
-        sudo('python manage.py syncdb --noinput', user=env.sudo_user)
-        sudo('python manage.py migrate --noinput', user=env.sudo_user)
-        sudo('python manage.py collectstatic --noinput', user=env.sudo_user)
-        sudo('rm -f tmp.sh resource_versions.py; python manage.py printstatic > tmp.sh; bash tmp.sh > resource_versions.py', user=env.sudo_user)
+@roles('pg')
+def create_db_user():
+    """Create the Postgres user."""
 
+    require('environment', provided_by=('staging', 'production'))
+    sudo('createuser -D -A -R %(sudo_user)s' % env, user='postgres')
+
+
+@roles('pg')
+def create_db():
+    """Create the Postgres database."""
+
+    require('environment', provided_by=('staging', 'production'))
+    sudo('createdb -O %(sudo_user)s %(db)s' % env, user='postgres')
+
+
+@task
+def bootstrap():
+    """ initialize remote host environment (virtualenv, deploy, update) """
+    require('root', provided_by=('staging', 'production'))
+    sudo('mkdir -p %(root)s' % env, user=env.sudo_user)
+    execute(create_virtualenv)
+    execute(update_requirements)
+    execute(clone_repo)
+    execute(setup_dirs)
+    execute(update_services)
+    execute(fix_locale_perms)
+
+
+@roles('django_celery', 'django_app')
+def create_virtualenv():
+    """ setup virtualenv on remote host """
+    require('virtualenv_root', provided_by=('staging', 'production'))
+    with settings(warn_only=True):
+        sudo('rm -rf %(virtualenv_root)s' % env, shell=False)
+    args = '--clear --distribute --no-site-packages'
+    sudo('virtualenv %s %s' % (args, env.virtualenv_root), shell=False, user=env.sudo_user)
+
+
+@roles('django_celery', 'django_app')
+def clone_repo():
+    """ clone a new copy of the git repository """
+    with settings(warn_only=True):
+        with cd(env.root):
+            sudo('git clone %(code_repo)s %(code_root)s' % env, user=env.sudo_user)
+
+
+@roles('django_celery', 'django_app')
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
-    require('root', provided_by=('staging', 'production', 'india', 'rackspace'))
-    if env.environment in ('production', 'india', 'rackspace'):
-        if not console.confirm('Are you sure you want to deploy to {env.environment}? '.format(env=env), default=False) or\
-           not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
-            utils.abort('Deployment aborted.')
-
-    with cd(env.code_root):
-        update_code()
-        update_env()
-        # remove all .pyc files in the project
-        sudo("find . -name '*.pyc' -delete")
-        
-    if env.restart_server:
-        service_restart()
-
-def service_restart():
-    """
-    Restart cchq services on remote host.
-    """
-    require('service_manager', provided_by=('staging', 'production', 'india'))
-    assert env.service_manager in ("upstart", "supervisor")
-    
-    if env.service_manager == "upstart":
-        upload_upstart_conf()
-        with settings(sudo_user="root"):
-            sudo('stop cchq_www', user=env.sudo_user)
-            sudo('initctl reload-configuration', user=env.sudo_user)
-            sudo('start cchq_www', user=env.sudo_user)
-    else:
-        # for supervisor we update the templates each time
-        upload_supervisor_conf()
-        with settings(sudo_user="root"):
-            sudo('supervisorctl update', user=env.sudo_user)
-            sudo('supervisorctl restart all', user=env.sudo_user)
-
-def service_stop():
-    """
-    stop cchq_www service on remote host.
-
-    """
     require('root', provided_by=('staging', 'production'))
-    with settings(sudo_user="root"):
-        sudo('stop cchq_www', user=env.sudo_user)
+    sudo('echo ping!') #hack/workaround for delayed console response
+    if env.environment == 'production':
+        if not console.confirm('Are you sure you want to deploy production?',
+            default=False):
+            utils.abort('Production deployment aborted.')
+    with settings(warn_only=True):
+        stop()
+    try:
+        with cd(env.code_root):
+            sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
+            sudo('git pull', user=env.sudo_user)
+            sudo('git submodule init', user=env.sudo_user)
+            sudo('git submodule update', user=env.sudo_user)
+        #        update_requirements()
+        execute(update_services)
+        execute(migrate)
+        execute(collectstatic)
+        execute(touch_apache)
+        execute(touch_django)
+    finally:
+        # hopefully bring the server back to life if anything goes wrong
+        startcelery()
+
+
+@roles('django_celery', 'django_app')
+def update_requirements():
+    """ update external dependencies on remote host """
+    require('code_root', provided_by=('staging', 'production'))
+    requirements = posixpath.join(env.project_root, 'requirements')
+    with cd(requirements):
+        cmd = ['%(virtualenv_root)s/bin/pip install' % env]
+        cmd += ['--requirement %s' % posixpath.join(requirements, 'prod-requirements.txt')]
+        cmd += ['--requirement %s' % posixpath.join(requirements, 'requirements.txt')]
+        sudo(' '.join(cmd), user=env.sudo_user)
+
+
+@roles('lb')
+def touch_apache():
+    """ touch apache and supervisor conf files to trigger reload. Also calls supervisorctl update to load latest supervisor.conf """
+    require('code_root', provided_by=('staging', 'production'))
+    apache_path = posixpath.join(posixpath.join(env.services, 'apache'), 'apache.conf')
+    sudo('touch %s' % apache_path, user=env.sudo_user)
+
+
+
+@roles('django_celery', 'django_app')
+def touch_supervisor():
+    """ touch apache and supervisor conf files to trigger reload. Also calls supervisorctl update to load latest supervisor.conf """
+    require('code_root', provided_by=('staging', 'production'))
+    supervisor_path = posixpath.join(posixpath.join(env.services, 'supervisor'), 'supervisor.conf')
+    sudo('touch %s' % supervisor_path, user=env.sudo_user)
+    _supervisor_command('update')
+
+
+@task
+def update_services():
+    """ upload changes to services such as nginx """
+    with settings(warn_only=True):
+        execute(stopcelery)
+        execute(servers_stop)
+    execute(upload_supervisor_conf)
+    execute(upload_apache_conf)
+    execute(startcelery)
+    execute(server_start)
+    netstat_plnt()
+
+@roles('lb')
+def configtest():
+    """ test Apache configuration """
+    require('root', provided_by=('staging', 'production'))
+    run('apache2ctl configtest')
+
+@roles('lb')
+def apache_reload():
+    """ reload Apache on remote host """
+    require('root', provided_by=('staging', 'production'))
+    if what_os() == 'redhat':
+        sudo('/etc/init.d/httpd reload')
+    elif what_os() == 'ubuntu':
+        sudo('/etc/init.d/apache2 reload')
+
+
+@roles('lb')
+def apache_restart():
+    """ restart Apache on remote host """
+    require('root', provided_by=('staging', 'production'))
+    sudo('/etc/init.d/apache2 restart')
+
+@task
+def netstat_plnt():
+    """ run netstat -plnt on a remote host """
+    require('hosts', provided_by=('production', 'staging'))
+    sudo('netstat -plnt')
+
+@roles('django_celery')
+def stopcelery():
+    """ stop server and celery on remote host """
+    require('environment', provided_by=('staging', 'demo', 'production'))
+    _supervisor_command('stop %(project)s-%(environment)s:*' % env)
+
+@roles('django_celery')
+def startcelery():
+    """ start server and celery on remote host """
+    require('environment', provided_by=('staging', 'demo', 'production'))
+    _supervisor_command('start %(project)s-%(environment)s:*' % env)
+
+@roles('django_app')
+def servers_start():
+    ''' Start the gunicorn servers '''
+    require('environment', provided_by=('staging', 'demo', 'production'))
+    _supervisor_command('start  %(project)s-%(environment)s:%(project)s-%(environment)s-server' % env)
+
+@roles('django_app')
+def servers_stop():
+    ''' Stop the gunicorn servers '''
+    require('environment', provided_by=('staging', 'demo', 'production'))
+    _supervisor_command('stop  %(project)s-%(environment)s:%(project)s-%(environment)s-server' % env)
+
+@roles('django_app')
+def servers_restart():
+    ''' Start the gunicorn servers '''
+    require('environment', provided_by=('staging', 'demo', 'production'))
+    _supervisor_command('restart  %(project)s-%(environment)s:%(project)s-%(environment)s-server' % env)
+
+@roles('django_app')
+def migrate():
+    """ run south migration on remote environment """
+    require('project_root', provided_by=('production', 'demo', 'staging'))
+    with cd(env.project_root):
+        run('%(virtualenv_root)s/bin/python manage.py syncdb --noinput --settings=%(settings)s' % env)
+        run('%(virtualenv_root)s/bin/python manage.py migrate --noinput --settings=%(settings)s' % env)
+
+
+@roles('django_app')
+def collectstatic():
+    """ run collectstatic on remote environment """
+    require('project_root', provided_by=('production', 'demo', 'staging'))
+    with cd(env.project_root):
+        sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput --settings=%(settings)s' % env, user=env.sudo_user)
+
+
+@task
+def reset_local_db():
+    """ Reset local database from remote host """
+    require('code_root', provided_by=('production', 'staging'))
+    if env.environment == 'production':
+        utils.abort('Local DB reset is for staging environment only')
+    question = 'Are you sure you want to reset your local '\
+               'database with the %(environment)s database?' % env
+    sys.path.append('.')
+    if not console.confirm(question, default=False):
+        utils.abort('Local database reset aborted.')
+    local_db = loc['default']['NAME']
+    remote_db = remote['default']['NAME']
+    with settings(warn_only=True):
+        local('dropdb %s' % local_db)
+    local('createdb %s' % local_db)
+    host = '%s@%s' % (env.user, env.hosts[0])
+    local('ssh -C %s sudo -u commcare-hq pg_dump -Ox %s | psql %s' % (host, remote_db, local_db))
+@task
+def fix_locale_perms():
+    """ Fix the permissions on the locale directory """
+    require('root', provided_by=('staging', 'production'))
+    _set_apache_user()
+    locale_dir = '%s/commcare-hq/locale/' % env.code_root
+    sudo('chown -R %s %s' % (env.sudo_user, locale_dir), user=env.sudo_user)
+    sudo('chgrp -R %s %s' % (env.apache_user, locale_dir), user='root')
+    sudo('chmod -R g+w %s' % (locale_dir), user=env.sudo_user)
+
+@task
+def commit_locale_changes():
+    """ Commit locale changes on the remote server and pull them in locally """
+    fix_locale_perms()
+    with cd(env.code_root):
+        sudo('-H -u %s git add commcare-hq/locale' % env.sudo_user)
+        sudo('-H -u %s git commit -m "updating translation"' % env.sudo_user)
+    local('git pull ssh://%s%s' % (env.host, env.code_root))
+
+def _upload_supervisor_conf(filename):
+    upload_dict = {}
+    upload_dict["template"] = posixpath.join(os.path.dirname(__file__), 'services', 'templates', filename)
+    upload_dict["destination"] = '/var/tmp/%s.blah' % filename
+    upload_dict["enabled"] =  posixpath.join(env.services, u'supervisor/%s' % filename)
+    if what_os() == 'ubuntu':
+        upload_dict["main_supervisor_conf_dir"] = '/etc/supervisor'
+    else:
+        upload_dict["main_supervisor_conf_dir"] = '/etc'
+
+    files.upload_template(upload_dict["template"], upload_dict["destination"], context=env, use_sudo=True)
+    sudo('chown -R %s %s' % (env.sudo_user, upload_dict["destination"]))
+    #sudo('chgrp -R %s %s' % (env.apache_user, upload_dict["destination"]))
+    sudo('chmod -R g+w %(destination)s' % upload_dict)
+    sudo('mv -f %(destination)s %(enabled)s' % upload_dict)
+
+@roles('django_celery')
+def upload_celery_supervisorconf():
+    _upload_supervisor_conf('supervisor_celery.conf')
+
+@roles('django_app')
+def upload_djangoapp_supervisorconf():
+    _upload_supervisor_conf('supervisor_django.conf')
+
+@task
+def upload_supervisor_conf():
+    """Upload and link Supervisor configuration from the template."""
+    require('environment', provided_by=('staging', 'demo', 'production'))
+    _set_apache_user()
+    execute(upload_celery_supervisorconf)
+    execute(upload_djangoapp_supervisorconf)
+
+    #update the line in the supervisord config file that points to our supervisor.conf
+    #remove the line if it already exists
+    replace_dict = {}
+    if what_os() == 'ubuntu':
+        replace_dict["main_supervisor_conf_dir"] = '/etc/supervisor'
+    else:
+        replace_dict["main_supervisor_conf_dir"] = '/etc'
+    replace_dict["tmp"] = posixpath.join('/','var','tmp', "supervisord_%s.tmp" % uuid.uuid4().hex)
+    sudo("sed '/.conf/d' %(main_supervisor_conf_dir)s/supervisord.conf > %(tmp)s" % replace_dict)
+    sudo('echo "files = %s/supervisor/*.conf" >> %s' % (env.services, replace_dict["tmp"]) )
+    sudo('mv -f %(tmp)s %(main_supervisor_conf_dir)s/supervisord.conf' % replace_dict)
+    _supervisor_command('update')
+
+@roles('lb')
+def upload_apache_conf():
+    """Upload and link Supervisor configuration from the template."""
+    require('environment', provided_by=('staging', 'demo', 'production'))
+    _set_apache_user()
+    template = posixpath.join(os.path.dirname(__file__), 'services', 'templates', 'apache.conf')
+    destination = '/var/tmp/apache.conf.temp'
+    files.upload_template(template, destination, context=env, use_sudo=True)
+    enabled =  posixpath.join(env.services, u'apache/%(environment)s.conf' % env)
+    sudo('chown -R %s %s' % (env.sudo_user, destination))
+    sudo('chgrp -R %s %s' % (env.apache_user, destination))
+    sudo('chmod -R g+w %s' % destination)
+    sudo('mv -f %s %s' % (destination, enabled))
+    if what_os() == 'ubuntu':
+        sudo('a2enmod proxy')  #loaded by default in redhat
+        sudo('a2enmod proxy_http') #loaded by default in redhat
+
+    sites_enabled_dirfile = ''
+    if what_os() == 'ubuntu':
+        sites_enabled_dirfile = '/etc/apache2/sites-enabled/%(project)s.conf' % env
+    elif what_os() == 'redhat':
+        sites_enabled_dirfile = '/etc/httpd/conf.d/%(project)s.conf' % env
+    with settings(warn_only=True):
+        if files.exists(sites_enabled_dirfile):
+            sudo('rm %s' % sites_enabled_dirfile)
+
+    sudo('ln -s %s/apache/%s.conf %s' % (env.services, env.environment, sites_enabled_dirfile))
+    apache_reload()
+
+@roles('django_celery', 'django_app')
+def _supervisor_command(command):
+    require('hosts', provided_by=('staging', 'production'))
+    sudo('supervisorctl %s' % command)
