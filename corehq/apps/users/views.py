@@ -470,8 +470,13 @@ def _handle_user_form(request, domain, couch_user=None):
         create_user = True
     can_change_admin_status = \
         (request.user.is_superuser or request.couch_user.can_edit_web_users(domain=domain))\
-        and request.couch_user.user_id != couch_user.user_id and not couch_user.is_commcare_user()
-    role_choices = UserRole.role_choices(domain)
+        and request.couch_user.user_id != couch_user.user_id
+    
+    if couch_user.is_commcare_user():
+        role_choices = UserRole.commcareuser_role_choices(domain)
+    else:
+        role_choices = UserRole.role_choices(domain)
+    
     if request.method == "POST" and request.POST['form_type'] == "basic-info":
         form = UserForm(request.POST, role_choices=role_choices)
         if form.is_valid():
@@ -498,7 +503,15 @@ def _handle_user_form(request, domain, couch_user=None):
             form.initial['email'] = couch_user.email
             form.initial['language'] = couch_user.language
             if can_change_admin_status:
-                form.initial['role'] = couch_user.get_role(domain).get_qualified_id() or ''
+                if couch_user.is_commcare_user():
+                    role = couch_user.get_role(domain)
+                    if role is None:
+                        initial = "none"
+                    else:
+                        initial = role.get_qualified_id()
+                    form.initial['role'] = initial
+                else:
+                    form.initial['role'] = couch_user.get_role(domain).get_qualified_id() or ''
 
     if not can_change_admin_status:
         del form.fields['role']

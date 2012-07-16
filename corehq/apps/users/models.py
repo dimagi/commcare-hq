@@ -214,6 +214,10 @@ class UserRole(Document):
     @classmethod
     def role_choices(cls, domain):
         return [(role.get_qualified_id(), role.name or '(No Name)') for role in [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
+    
+    @classmethod
+    def commcareuser_role_choices(cls, domain):
+        return [('none','(none)')] + [(role.get_qualified_id(), role.name or '(No Name)') for role in list(cls.by_domain(domain))]
 
 PERMISSIONS_PRESETS = {
     'edit-apps': {'name': 'App Editor', 'permissions': Permissions(edit_apps=True, view_reports=True)},
@@ -1005,6 +1009,36 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
                 return role.permissions.has(permission, data)
             else:
                 return False
+    
+    def get_role(self, domain=None):
+        """
+        Get the role object for this user
+        """
+        if domain is None:
+            # default to current_domain for django templates
+            domain = self.current_domain
+        
+        if domain != self.domain:
+            return None
+        elif self.role_id is None:
+            return None
+        else:
+            return UserRole.get(self.role_id)
+    
+    def set_role(self, domain, role_qualified_id):
+        """
+        role_qualified_id is either 'none' 'admin' 'user-role:[id]'
+        """
+        if domain != self.domain:
+            raise Exception("Mobile worker does not have access to domain %s" % domain)
+        else:
+            # For now, only allow mobile workers to take non-admin roles
+            if role_qualified_id.startswith('user-role:'):
+                self.role_id = role_qualified_id[len('user-role:'):]
+            elif role_qualified_id == 'none':
+                self.role_id = None
+            else:
+                raise Exception("unexpected role_qualified_id: %r" % role_qualified_id)
 
 class WebUser(CouchUser):
     domains = StringListProperty()
