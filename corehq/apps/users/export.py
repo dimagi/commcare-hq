@@ -1,4 +1,5 @@
-def export_users(users, workbook):
+def export_users(users, workbook, mimic_upload=False):
+    data_prefix = 'data: ' if mimic_upload else 'd.'
     user_keys = ('user_id', 'username', 'is_active', 'name', 'groups')
     user_rows = []
     fields = set()
@@ -14,7 +15,7 @@ def export_users(users, workbook):
             else:
                 user_row[key] = getattr(user, key)
         for key in user.user_data:
-            user_row["data: %s" % key] = user.user_data[key]
+            user_row["%s%s" % (data_prefix, key)] = user.user_data[key]
         user_rows.append(user_row)
         fields.update(user_row.keys())
     workbook.open("User", list(user_keys) + sorted(fields - set(user_keys)))
