@@ -546,7 +546,7 @@ def add_scheduled_report(request, domain, couch_user_id):
     context = _users_context(request, domain)
     context.update({"hours": [(val, "%s:00" % val) for val in range(24)],
                     "days":  [(val, calendar.day_name[val]) for val in range(7)],
-                    "reports": dict([(key, value) for (key, value) in  ScheduledReportFactory.get_reports().items() if value.auth(request.user)])})
+                    "reports": dict([(key, value) for (key, value) in  ScheduledReportFactory.get_reports(domain).items() if value.auth(request.user) and request.couch_user.can_view_report(domain, value._report.__module__ + "." + value._report.__name__)])})
     return render_to_response(request, "users/add_scheduled_report.html", context)
 
 @login_and_domain_required
@@ -568,7 +568,11 @@ def drop_scheduled_report(request, domain, couch_user_id, report_id):
 @require_POST
 def test_scheduled_report(request, domain, couch_user_id, report_id):
     rep = ReportNotification.get(report_id)
-    user = WebUser.get_by_user_id(couch_user_id, domain)
+    try:
+        user = WebUser.get_by_user_id(couch_user_id, domain)
+    except CouchUser.AccountTypeError:
+        user = CommCareUser.get_by_user_id(couch_user_id, domain)
+    
     try:
         send_report(rep, user)
     except SMTPRecipientsRefused:

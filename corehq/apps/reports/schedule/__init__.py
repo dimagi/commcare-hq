@@ -5,7 +5,7 @@ from django.http import HttpRequest
 import json
 from corehq.apps.reports.schedule.parsers import ReportParser
 from django.template.loader import render_to_string
-from corehq.apps.reports.views import report_dispatcher
+from corehq.apps.reports.views import report_dispatcher, custom_report_dispatcher
 
 class SpoofRequest(HttpRequest):
     def __init__(self, couch_user, domain):
@@ -70,3 +70,9 @@ class BasicReportSchedule(ReportSchedule):
 
     def view(self, request, domain):
         return report_dispatcher(request, domain, self._report.slug, async=True, static_only=True)
+
+class CustomReportSchedule(BasicReportSchedule):
+    def view(self, request, domain):
+        return custom_report_dispatcher(request, domain, self._report.slug, async=True)
+
+
