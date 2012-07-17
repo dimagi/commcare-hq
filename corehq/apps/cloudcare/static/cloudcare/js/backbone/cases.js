@@ -183,7 +183,10 @@ cloudCare.CaseMainView = Backbone.View.extend({
     
     initialize: function () {
         _.bindAll(this, 'render', 'selectCase', 'fetchCaseList');
+        // adding an internal section so that the filter button displays correctly
         this.el = this.options.el;
+        this.section = $('<section class="row-fluid" />');
+        this.section.appendTo(this.el);
         var self = this;
         this.listView = new cloudCare.CaseListView({details: this.options.listDetails,
                                           cases: this.options.cases,
@@ -191,12 +194,12 @@ cloudCare.CaseMainView = Backbone.View.extend({
                                           language: this.options.language,
                                           caseUrl: this.options.caseUrl,
                                           appConfig: this.options.appConfig});
-        $(this.listView.render().el).appendTo($(this.el));
+        $(this.listView.render().el).appendTo($(this.section));
         this.detailsView = new cloudCare.CaseDetailsView({details: this.options.summaryDetails,
                                                 language: this.options.language,
                                                 appConfig: this.options.appConfig});
-        $(this.detailsView.render().el).appendTo($(this.el));
-        $("<div />").addClass("clear").appendTo($(this.el));
+        $(this.detailsView.render().el).appendTo($(this.section));
+        $("<div />").addClass("clear").appendTo($(this.section));
         cloudCare.dispatch.on("case:selected", function (caseModel) {
             self.selectCase(caseModel);
         });
