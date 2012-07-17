@@ -1135,6 +1135,11 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
         return [group for group in Group.by_user(self) if group.case_sharing]
+
+    @classmethod
+    def cannot_share(cls, domain):
+        return [user for user in cls.by_domain(domain) if len(user.get_case_sharing_groups()) != 1]
+
     def get_group_ids(self):
         from corehq.apps.groups.models import Group
         return Group.by_user(self, wrap=False)

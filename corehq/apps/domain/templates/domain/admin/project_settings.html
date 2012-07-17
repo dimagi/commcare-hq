@@ -1,6 +1,16 @@
 {% extends "users/users_base.html" %}
 {% load hq_bootstrap_tags %}
+{% load hq_shared_tags %}
 {% load i18n %}
+
+{% block js %}{{ block.super }}
+<script type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"/>
+{% endblock %}
+
+{% block head %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+{% endblock %}
 
 {% block js-inline %}
 {{ block.super }}
@@ -18,8 +28,16 @@
                     });
                 }
             });
-            {% endfor %}
+        {% endfor %}
+        $('#id_deployment_date').datepicker({
+            changeMonth: true,
+            changeYear: true,
+            showButtonPanel: true,
+            dateFormat: 'yy-mm-dd',
+            maxDate: '0',
+            numberOfMonths: 2
         });
+    });
 </script>
 {% endblock %}
 
