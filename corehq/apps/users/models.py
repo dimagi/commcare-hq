@@ -685,7 +685,15 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     def get_viewable_reports(self, domain=None, name=True):
         domain = domain or self.current_domain
         try:
-            models = self.get_domain_membership(domain).viewable_reports()
+            if self.is_commcare_user():
+                role = self.get_role(domain)
+                if role is None:
+                    models = []
+                else:
+                    models = role.permissions.view_report_list
+            else:
+                models = self.get_domain_membership(domain).viewable_reports()
+            
             if name:
                 return [to_function(m).name for m in models]
             else:
