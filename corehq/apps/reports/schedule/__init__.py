@@ -75,4 +75,9 @@ class CustomReportSchedule(BasicReportSchedule):
     def view(self, request, domain):
         return custom_report_dispatcher(request, domain, self._report.slug, async=True)
 
+    def get_report_data(self, content):
+        report_data = json.loads(content)
+        parser = ReportParser(report_data.get('report', ''))
+        return parser.get_html()
+
 
