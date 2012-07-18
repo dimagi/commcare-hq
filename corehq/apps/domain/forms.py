@@ -94,7 +94,7 @@ class DomainGlobalSettingsForm(forms.Form):
             global_tz = self.cleaned_data['default_timezone']
             domain.default_timezone = global_tz
             users = WebUser.by_domain(domain.name)
-            for user in users:
+            for user in users.all():
                 dm = user.get_domain_membership(domain.name)
                 if not dm.override_global_tz:
                     dm.timezone = global_tz
@@ -134,12 +134,6 @@ public domain.
             domain.is_test = self.cleaned_data['is_test'] == 'true'
             domain.is_shared = self.cleaned_data['is_shared']
             domain.description = self.cleaned_data['description']
-            if self.cleaned_data['deployment_date'] != '':
-                year, month, day = map(int, self.cleaned_data['deployment_date'].split('-'))
-                domain.deployment_date = datetime.datetime(year, month, day)
-            else:
-                domain.deployment_date = None
-            domain.phone_model = self.cleaned_data['phone_model']
             domain.save()
             return True
         except Exception:

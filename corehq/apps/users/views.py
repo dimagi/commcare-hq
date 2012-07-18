@@ -232,20 +232,15 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
 @require_can_edit_commcare_users
 def commcare_users(request, domain, template="users/commcare_users.html"):
     show_inactive = json.loads(request.GET.get('show_inactive', 'false'))
-    cannot_share = json.loads(request.GET.get('cannot_share', 'false'))
     context = _users_context(request, domain)
-    if cannot_share:
-        users = CommCareUser.cannot_share(domain)
-    else:
-        users = CommCareUser.by_domain(domain)
-        if show_inactive:
-            users = list(users)
-            users.extend(CommCareUser.by_domain(domain, is_active=False))
+    users = CommCareUser.by_domain(domain)
+    if show_inactive:
+        users = list(users)
+        users.extend(CommCareUser.by_domain(domain, is_active=False))
     context.update({
         'commcare_users': users,
         'show_case_sharing': Domain.get_by_name(domain).case_sharing,
         'show_inactive': show_inactive,
-        'cannot_share': cannot_share,
         'reset_password_form': SetPasswordForm(user="")
     })
     return render_to_response(request, template, context)
