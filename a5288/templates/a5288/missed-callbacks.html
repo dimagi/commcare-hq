@@ -1,61 +1,40 @@
 {% extends "reports/report_base.html" %}
 {% load i18n %}
 
-{% block head %}
-    <style type="text/css">
-        table, tr, td, th {
-            border: 1px solid black;
-            border-spacing: 0;
-            white-space: nowrap;
-        }
-        td, th {
-            padding: 5px;
-            color: black;
-            text-align: center;
-        }
-        td.ok {
-            //color: #0A0;
-            //font-weight: bold;
-        }
-        td.no_response {
-            background-color: #F33;
-            font-weight: bold;
-        }
-        th {
-            font-weight: bold;
-            background-color: #CCC;
-        }
-    </style>
-{% endblock %}
+{% comment %}
+
+    The styles are included in each element rather than in the <style> tag to improve consistency for the emailed HTML report.
+
+{% endcomment %}
 
 {% block reportcontent %}
-    <table>
+    <table style="border: 1px solid black; border-spacing: 0;">
         <tr>
-            <th>Patient ID</th>
-            <th>Total No Response</th>
-            <th>Total Indicated</th>
-            <th>Total Pending</th>
+            <th style="border: 1px solid black; font-weight: bold; background-color: #CCC; text-align: center; padding: 2px; white-space: nowrap;">Patient ID</th>
+            <th style="border: 1px solid black; font-weight: bold; background-color: #CCC; text-align: center; padding: 2px;">Total No Response</th>
+            <th style="border: 1px solid black; font-weight: bold; background-color: #CCC; text-align: center; padding: 2px;">Total Indicated</th>
+            <th style="border: 1px solid black; font-weight: bold; background-color: #CCC; text-align: center; padding: 2px;">Total Pending</th>
             {% for date in report_data.date_list %}
-                <th>{{ date }}</th>
+                <th style="border: 1px solid black; font-weight: bold; background-color: #CCC; text-align: center; padding: 2px;">{{ date }}</th>
             {% endfor %}
         </tr>
         {% for id, info in report_data.data.items %}
         <tr>
-            <td>{{ info.recipient.name }}</td>
-            <td{% if info.total_no_response > 0 %} class="no_response"{% endif %}>{{ info.total_no_response }}</td>
-            <td>{{ info.total_indicated }}</td>
-            <td>{{ info.total_pending }}</td>
+            <td style="border: 1px solid black; white-space: nowrap; text-align: center; padding: 2px;">{{ info.recipient.name }}</td>
+            <td style="border: 1px solid black; text-align: center; padding: 2px; {% if info.total_no_response > 0 %}background-color: #F33; font-weight: bold;{% endif %}">{{ info.total_no_response }}</td>
+            <td style="border: 1px solid black; text-align: center; padding: 2px;">{{ info.total_indicated }}</td>
+            <td style="border: 1px solid black; text-align: center; padding: 2px;">{{ info.total_pending }}</td>
             {% for date in info.dates %}
                 {% if date.not_sent %}
-                    <td>(not indicated)</td>
+                    <td style="border: 1px solid black; text-align: center; padding: 2px;">not indicated</td>
                 {% else %}
                     {% if date.ok %}
-                        <td class="ok">OK</td>
+                        <td style="border: 1px solid black; text-align: center; padding: 2px;">OK</td>
                     {% else %}
                         {% if date.no_response %}
-                            <td class="no_response">No Response</td>
+                            <td style="border: 1px solid black; text-align: center; background-color: #F33; font-weight: bold; padding: 2px;">No Response</td>
                         {% else %}
-                            <td>(pending)</td>
+                            <td style="border: 1px solid black; text-align: center; padding: 2px;">pending</td>
                         {% endif %}
                     {% endif %}
                 {% endif %}
