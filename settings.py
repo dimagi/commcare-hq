@@ -185,6 +185,7 @@ HQ_APPS = (
     'loadtest',
     'hsph',
     'pathindia',
+    'a5288',
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
@@ -543,6 +544,12 @@ CUSTOM_REPORT_MAP = {
         'Custom Reports': [
                     'pathindia.reports.PathIndiaKrantiReport'
         ]
+    },
+    "a5288": {
+        "Custom Reports": ["a5288.reports.MissedCallbackReport"]
+    },
+    "a5288-test": {
+        "Custom Reports": ["a5288.reports.MissedCallbackReport"]
     }
 #    "test": [
 #        'corehq.apps.reports.deid.FormDeidExport',
