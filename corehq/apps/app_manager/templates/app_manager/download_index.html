@@ -21,10 +21,20 @@
     <ul>
         {% for path,source in files %}
             <li>
-                (<a href="{{ path }}">link</a>)<a class="toggle-next" href="{{ path }}">{{ path }}</a>
+                (<a href="{{ path }}">link</a>) <a class="toggle-next" href="{{ path }}">{{ path }}</a>
                 <pre class="prettyprint linenums">{{ source|force_escape }}</pre>
             </li>
+        {% empty %}
+            <li><h6>No Files</h6></li>
         {% endfor %}
+        {% if app.copy_of and not files %}
+
+            <div class="alert alert-info">
+                This build was made before I knew how to save the files for a specific build.
+                To see this view for the current not-yet-built version of this app,
+                <a href="{% url download_index app.domain app.copy_of%}">click here</a>.
+            </div>
+        {% endif %}
     </ul>
     <script>
         $(function(){

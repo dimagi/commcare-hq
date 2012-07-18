@@ -242,7 +242,6 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
         "applications": domain.applications()
     })
 
-@domain_admin_required
 def autocomplete_categories(request, prefix=''):
     return HttpResponse(json.dumps(Domain.categories(prefix)))
 

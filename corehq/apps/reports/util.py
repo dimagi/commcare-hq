@@ -150,8 +150,9 @@ def get_group_params(domain, group='', users=None, user_id_only=False, **kwargs)
         users = sorted(users, key=lambda user: user.user_id)
     return group, users
 
-# New HQReport Structure stuff. There's a lot of duplicate code from above, only because I don't want to ruin any old
-# reports until everything is fully refactored....
+# New HQReport Structure stuff. There's a lot of duplicate code from above, 
+# only because I don't want to ruin any old reports until everything is fully 
+# refactored....
 
 def get_all_users_by_domain(domain, group='', individual='', filter_users=None):
     """ Returns a list of CommCare Users based on domain, group, and user filter (demo_user, admin, registered, unknown)
@@ -162,8 +163,11 @@ def get_all_users_by_domain(domain, group='', individual='', filter_users=None):
             group = Group.get(group)
         users =  group.get_users(only_commcare=True)
     elif individual:
-        users = [CommCareUser.get_by_user_id(individual)]
-        if users[0] is None:
+        try:
+            users = [CommCareUser.get_by_user_id(individual)]
+        except Exception:
+            users = []
+        if users and users[0] is None:
             raise Http404()
     else:
         if not filter_users:

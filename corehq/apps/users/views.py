@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from xml.sax.saxutils import escape
 from functools import wraps
 import json
 from corehq.apps.reports.util import get_possible_reports

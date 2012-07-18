@@ -30,6 +30,45 @@
                     return help_text[$(this).attr('data-help-key')];
                 }
             });
+
+            var version_function = function () {
+                var i;
+                var options = {{ commcare_build_options|JSON }};
+                var app_version = $(this).val();
+                var version = options[app_version];
+                var commcare_versions = version['options'];
+                var commcare_version_val = $('#commcare_version').val() || {{ app_build_spec_string|JSON }};
+
+                var commcare_version_label = $('#commcare_version option:selected').text() || {{ app_build_spec_label|JSON }};
+                var superuser = {{ user.is_superuser|BOOL }};
+                $('#commcare_version').find('option').remove().end().find('optgroup').remove().end();
+                for (i = 0; i < commcare_versions.length; i++) {
+                    var option = commcare_versions[i];
+                    var superuser_option = option['superuser_only'];
+                    if (superuser || !(superuser_option)) {
+                        var option_val = version["builds"][i];
+                        var option_label = version["labels"][i];
+                        $('#commcare_version').append('<option value="' + option_val + '">' + option_label + '</option>');
+                    }
+                }
+                var standard_build = false;
+                for (i = 0; i < commcare_versions.length; i++) {
+                    if (commcare_version_val === version["builds"][i]) {
+                        standard_build = true;
+                    }
+                }
+                if (!standard_build && commcare_version_val != null) {
+                    $('#commcare_version').append(
+                        $('<optgroup label="Custom">').append('<option value="' + commcare_version_val + '">' + commcare_version_label + '</option>')
+                    );
+                }
+                $('#commcare_version').val(commcare_version_val);
+
+            };
+
+            $('#app_version').change(version_function);
+            $('#app_version').each(version_function);
+
         });
     </script>
     {% if app %}
@@ -376,7 +415,7 @@
                     <th>App Version</th>
                     <td>
                         {% if edit %}
-                            <select name="application_version" data-value="{{ app.application_version }}">
+                            <select name="application_version" data-value="{{ app.application_version }}" id="app_version">
                                 <option value="1.0">1.x</option>
                                 <option value="2.0">2.x</option>
                             </select>
@@ -389,21 +428,7 @@
                     <th>CommCare Version</th>
                     <td>
                         {% if edit %}
-                            <select name="build_spec" data-value="{{ app.build_spec.to_string }}">
-                                {% for option in commcare_build_options %}
-                                    {% if user.is_superuser or not option.superuser_only %}
-                                    <option value='{{ option.build.to_string }}'>
-                                        {{ option.label }}
-                                    </option>
-                                    {% endif %}
-                                {% endfor %}
-                                {% if not is_standard_build %}
-                                    <optgroup label="Custom">
-                                        <option value='{{ app.build_spec.to_string }}'>
-                                            {{ app.build_spec.get_label }}
-                                        </option>
-                                    </optgroup>
-                                {% endif %}
+                            <select name="build_spec" data-value="{{ app.build_spec.to_string }}" id="commcare_version">
                             </select>
                         {% else %}
                             {{ app.get_build_label }}

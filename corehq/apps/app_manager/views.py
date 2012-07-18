@@ -5,6 +5,7 @@ import uuid
 from wsgiref.util import FileWrapper
 import zipfile
 from corehq.apps.app_manager.const import APP_V1
+from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.domain.models import Domain
 from couchexport.export import FormattedRow
 from couchexport.models import Format
@@ -276,6 +277,8 @@ def get_form_view_context(request, form, langs, is_user_registration):
         messages.error(request, "Unexpected error in form: %s" % e)
 
     if xform and xform.exists():
+        if xform.already_has_meta():
+            messages.warning(request, "This form has a meta block already! It will be replaced by CommCare HQ's standard meta block.")
         try:
             form.validate_form()
             xform_questions = xform.get_questions(langs)
@@ -336,7 +339,7 @@ def get_apps_base_context(request, domain, app):
     lang = request.GET.get('lang',
         request.COOKIES.get('lang', app.langs[0] if hasattr(app, 'langs') and app.langs else '')
     )
-
+    langs = None
     if app and hasattr(app, 'langs'):
         if not app.langs and not app.is_remote_app:
             # lots of things fail if the app doesn't have any languages.
@@ -358,11 +361,23 @@ def get_apps_base_context(request, domain, app):
             limit=1,
         ).one()
         latest_app_version = latest_app_version.version if latest_app_version else -1
+        for _lang in app.langs:
+            try:
+                SuccessMessage(app.success_message.get(_lang, ''), '').check_message()
+            except Exception as e:
+                messages.error(request, "Your success message is malformed: %s is not a keyword" % e)
     else:
         latest_app_version = -1
-    context = locals()
-    del context['request']
-
+    context = {
+        ''
+        'lang': lang,
+        'langs': langs,
+        'domain': domain,
+        'edit': edit,
+        'applications': applications,
+        'latest_app_version': latest_app_version,
+        'app': app
+    }
     build_errors_id = request.GET.get('build_errors', "")
     build_errors = []
     if build_errors_id:
@@ -529,18 +544,36 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'app': app,
         })
     if app:
-        if app.is_remote_app():
-            options = CommCareBuildConfig.fetch().get_menu()
-        else:
-            options = CommCareBuildConfig.fetch().get_menu(app.application_version)
-        is_standard_build = [o.build.to_string() for o in options if o.build.to_string() == app.build_spec.to_string()]
+        if True:
+            # decided to do Application and RemoteApp the same way; might change later
+            versions = ['1.0', '2.0']
+            commcare_build_options = {}
+            for version in versions:
+                options = CommCareBuildConfig.fetch().get_menu(version)
+                options_labels = list()
+                options_builds = list()
+                for option in options:
+                    options_labels.append(option.get_label())
+                    options_builds.append(option.build.to_string())
+                    commcare_build_options[version] = {"options" : options, "labels" : options_labels, "builds" : options_builds}
+
+        app_build_spec_string = app.build_spec.to_string()
+        app_build_spec_label = app.build_spec.get_label()
+
         context.update({
-            "commcare_build_options": options,
-            "is_standard_build": bool(is_standard_build)
+            "commcare_build_options" : commcare_build_options,
+            "app_build_spec_string" : app_build_spec_string,
+            "app_build_spec_label" : app_build_spec_label,
+            "app_version" : app.application_version,
         })
     response = render_to_response(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
+
+@login_and_domain_required
+def get_commcare_version(request, app_id, app_version):
+    options = CommCareBuildConfig.fetch().get_menu(app_version)
+    return json_response(options)
 
 @login_and_domain_required
 def view_user_registration(request, domain, app_id):
@@ -1442,6 +1475,7 @@ def download_index(req, domain, app_id, template="app_manager/download_index.htm
     all the resource files that will end up zipped into the jar.
 
     """
+    files = []
     if req.app.copy_of:
         files = [(path[len('files/'):], req.app.fetch_attachment(path)) for path in req.app._attachments if path.startswith('files/')]
     else:

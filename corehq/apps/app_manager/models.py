@@ -961,6 +961,8 @@ class ApplicationBase(VersionedDoc):
         except (AppError, XFormValidationError, XFormError) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
         except Exception as e:
+            if settings.DEBUG:
+                raise
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
@@ -1119,7 +1121,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 #        )
     def fetch_xform(self, module_id, form_id):
         form = self.get_module(module_id).get_form(form_id)
-        return form.validate_form().render_xform()
+        return form.validate_form().render_xform().encode('utf-8')
 
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
         def non_empty_only(dct):
@@ -1149,9 +1151,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for lc in reversed(self.langs):
                 if lc == "default": continue
                 messages.update(
-                    commcare_translations.loads(self.create_app_strings(lc).encode('utf-8'))
+                    commcare_translations.loads(self.create_app_strings(lc))
                 )
-        return commcare_translations.dumps(messages)
+        return commcare_translations.dumps(messages).encode('utf-8')
 
 
     def create_profile(self, is_odk=False, template='app_manager/profile.xml'):
@@ -1204,7 +1206,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             "suite.xml": self.create_suite(),
         }
         if self.show_user_registration:
-            files["user_registration.xml"] = self.get_user_registration().validate_form().render_xform()
+            files["user_registration.xml"] = self.get_user_registration().validate_form().render_xform().encode('utf-8')
         for lang in ['default'] + self.build_langs:
             files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)
         for module in self.get_modules():
@@ -1535,19 +1537,31 @@ class RemoteApp(ApplicationBase):
     def fetch_file(self, location):
         location = self.strip_location(location)
         url = urljoin(self.profile_url, location)
+
         try:
-            return location, urlopen(url).read().decode('utf-8')
+            content = urlopen(url).read()
         except Exception:
             raise AppError('Unable to access resource url: "%s"' % url)
+
+        return location, content
 
     def create_all_files(self):
         files = {
             'profile.xml': self.create_profile(),
         }
         tree = _parse_xml(files['profile.xml'])
-        suite_loc = tree.find('suite/resource/location[@authority="local"]').text
-        suite_loc, suite = self.fetch_file(suite_loc)
-        files[suite_loc] = suite
+        def add_file_from_path(path):
+            try:
+                loc = tree.find(path).text
+            except TypeError:
+                return
+            loc, file = self.fetch_file(loc)
+            files[loc] = file
+            return loc, file
+
+        add_file_from_path('features/users/logo')
+        _, suite = add_file_from_path('suite/resource/location[@authority="local"]')
+
         suite_xml = _parse_xml(suite)
 
         locations = []

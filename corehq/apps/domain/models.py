@@ -136,6 +136,7 @@ class Domain(Document):
         couch_user.save()
 
     def applications(self):
+        from corehq.apps.app_manager.models import ApplicationBase
         return ApplicationBase.view('app_manager/applications_brief',
                                     startkey=[self.name],
                                     endkey=[self.name, {}]).all()
@@ -197,6 +198,9 @@ class Domain(Document):
                             include_docs=True).all()
 
     def save_copy(self, new_domain_name=None, user=None):
+        from corehq.apps.app_manager.models import RemoteApp, Application
+        from corehq.apps.users.models import UserRole
+
         if new_domain_name is not None and Domain.get_by_name(new_domain_name):
             return None
         db = get_db()
@@ -368,8 +372,3 @@ class OldDomain(models.Model):
         
     def __unicode__(self):
         return self.name
-
-# added after Domain is defined as per http://stackoverflow.com/questions/7199466/how-to-break-import-loop-in-python
-# to prevent import loop errors (since corehq.apps.app_manager.models has to import Domain back)
-from corehq.apps.app_manager.models import ApplicationBase, import_app, RemoteApp, Application
-from corehq.apps.users.models import UserRole

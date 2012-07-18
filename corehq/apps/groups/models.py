@@ -32,6 +32,8 @@ class Group(UndoableDocument):
         self.save()
         
     def remove_user(self, couch_user_id):
+        if not isinstance(couch_user_id, basestring):
+            couch_user_id = couch_user_id.user_id
         if couch_user_id in self.users:
             for i in range(0,len(self.users)):
                 if self.users[i] == couch_user_id:
@@ -114,6 +116,15 @@ class Group(UndoableDocument):
             return results
         else:
             return [r['id'] for r in results]
+
+    @classmethod
+    def get_case_sharing_groups(cls, domain, wrap=True):
+        all_groups = cls.by_domain(domain)
+        if wrap:
+            return [group for group in all_groups if group.case_sharing]
+        else:
+            return [group._id for group in all_groups if group.case_sharing]
+
 
     @classmethod
     def get_reporting_groups(cls, domain):
