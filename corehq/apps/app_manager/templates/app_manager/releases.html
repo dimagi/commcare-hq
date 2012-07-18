@@ -32,11 +32,6 @@
                 $(defaultMessage).hide();
             }
         });
-        $('.showAccordionButton').click(function(e) {
-            $($(this).attr('href')).slideDown();
-            $(this).parent().hide();
-            return false;
-        });
     });
 </script>
 {% endblock %}
@@ -248,12 +243,8 @@
                         <li>{{ user.raw_username }}</li>
                     {% endfor %}
                 </ul>
-                <p>
-                    <a href="{% url commcare_users domain %}?cannot_share=true" class="btn">Edit mobile users</a>
-                    <a href="#{{ saved_app.id }}_accordion" class="btn showAccordionButton">Deploy anyway</a>
-                </p>
             {% endif %}
-            <div class="accordion{% if saved_app.case_sharing and users_cannot_share|length > 0 %} hide {% endif %}" id="{{ saved_app.id }}_accordion">
+            <div class="accordion" id="{{ saved_app.id }}_accordion">
                 <div class="accordion-group">
                   <div class="accordion-heading">
                     <a class="accordion-toggle"{% if saved_app.cloudcare_enabled %} data-toggle="collapse" data-parent="#{{ saved_app.id }}_accordion" href="#{{ saved_app.id }}_preview"{% else %} href="{% url emulator domain saved_app.id %}"{% endif %}>
@@ -274,7 +265,7 @@
                 <div class="accordion-group">
                   <div class="accordion-heading">
                     <a class="accordion-toggle" data-toggle="collapse" data-parent="#{{ saved_app.id }}_accordion" href="#{{ saved_app.id }}_j2me">
-                      Download to J2ME
+                      Install to J2ME
                     </a>
                   </div>
                   <div id="{{ saved_app.id }}_j2me" class="accordion-body collapse">
@@ -285,6 +276,13 @@
                             <p><a href="{% url corehq.apps.app_manager.views.download_jad domain saved_app.id %}">Download CommCare.jad</a></p>
                             <p><a href="{% url corehq.apps.app_manager.views.download_jar domain saved_app.id %}">Download CommCare.jar</a></p>
                         </li>
+                        {% ifchanged %}
+                            {% if multimedia %}
+                                <li>
+                                    Don't forget to <a href="{% if multimedia.notice %}#multimediaIssuesModal{% else %}{% url download_multimedia_zip domain app.id %}{% endif %}" {% if multimedia.notice %}data-toggle="modal" data-target="#multimediaIssuesModal"{% endif %}>download the Multimedia Zip</a>
+                                </li>
+                            {% endif %}
+                        {% endifchanged %}
                         <li>
                             For help on how to install, see our <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Set+Up+Mobile+Phone">Set Up Mobile Phone</a>.
                         </li>
@@ -328,25 +326,7 @@
                             {% if multimedia %}
                 <div class="accordion-group">
                   <div class="accordion-heading">
-                    <a class="accordion-toggle" href="{% if multimedia.notice %}#{{ saved_app.id }}_multimedia{% else %}{% url download_multimedia_zip domain app.id %}{% endif %}" {% if multimedia.notice %}data-toggle="collapse" data-target="#{{ saved_app.id }}_multimedia"{% endif %}>Download Multimedia Zip</a>
-                  </div>
-                  <div class="accordion-body collapse" id="{{ saved_app.id }}_multimedia">
-                    <div class="accordion-inner">
-                    {% if multimedia.missing_image_refs > 0 or multimedia.missing_audio_refs > 0 %}
-                        <p>
-                            Your multimedia zip is missing {{ multimedia.missing_image_refs }} image reference{{ multimedia.missing_image_refs|pluralize }} and
-                            {{ multimedia.missing_audio_refs }} audio reference{{ multimedia.missing_audio_refs|pluralize }}. Your app will likely crash unless this
-                            is resolved.
-                        </p>
-                    {% endif %}
-                    {% if multimedia.errors %}
-                        <p>
-                            Your application contains errors, therefore, your multimedia could not properly be assembled. Please fix your errors and any missing
-                            multimedia references that are found afterward before using this file.
-                        </p>
-                    {% endif %}
-                    <a class="btn btn-warning" href="{% url download_multimedia_zip domain app.id %}">Download Anyway</a>
-                    </div>
+                    <a class="accordion-toggle" href="{% if multimedia.notice %}#multimediaIssuesModal{% else %}{% url download_multimedia_zip domain app.id %}{% endif %}" {% if multimedia.notice %}data-toggle="modal" data-target="#multimediaIssuesModal"{% endif %}>Download Multimedia Zip</a>
                   </div>
                 </div>
                             {% endif %}
@@ -365,4 +345,31 @@
             </div>
         </div>
     {% endfor %}
+    {% if multimedia and multimedia.notice %}
+        <div class="modal hide fade" id="multimediaIssuesModal">
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal">&times;</a>
+                <h3>Issues may exist with your multimedia</h3>
+            </div>
+            <div class="modal-body">
+                {% if multimedia.missing_image_refs > 0 or multimedia.missing_audio_refs > 0 %}
+                    <p>
+                        Your multimedia zip is missing {{ multimedia.missing_image_refs }} image reference{{ multimedia.missing_image_refs|pluralize }} and
+                        {{ multimedia.missing_audio_refs }} audio reference{{ multimedia.missing_audio_refs|pluralize }}. Your app will likely crash unless this
+                        is resolved.
+                    </p>
+                {% endif %}
+                {% if multimedia.errors %}
+                    <p>
+                        Your application contains errors, therefore, your multimedia could not properly be assembled. Please fix your errors and any missing
+                        multimedia references that are found afterward before using this file.
+                    </p>
+                {% endif %}
+                <a class="btn btn-warning" href="{% url download_multimedia_zip domain app.id %}">Download Anyway</a>
+            </div>
+            <div class="modal-footer">
+                <a class="btn" href="#" data-dismiss="modal">Close</a>
+            </div>
+        </div>
+    {% endif %}
 {% endblock %}
