@@ -243,12 +243,25 @@ def commcare_users(request, domain, template="users/commcare_users.html"):
             users.extend(CommCareUser.by_domain(domain, is_active=False))
     context.update({
         'commcare_users': users,
-        'show_case_sharing': reduce(lambda x,y: x or y, [app.case_sharing for app in request.project.applications()]),
+        'groups': Group.get_case_sharing_groups(domain),
+        'show_case_sharing': request.project.case_sharing_included(),
         'show_inactive': show_inactive,
         'cannot_share': cannot_share,
         'reset_password_form': SetPasswordForm(user="")
     })
     return render_to_response(request, template, context)
+
+@require_can_edit_commcare_users
+def set_commcare_user_group(request, domain):
+    user_id = request.GET.get('user', '')
+    user = CommCareUser.get_by_user_id(user_id)
+    group = Group.by_name(domain, request.GET.get('group', ''))
+    if not user.is_commcare_user() or user.domain != domain or not group:
+        return HttpResponseForbidden()
+    if user in group.get_users():
+        return HttpResponseBadRequest()
+    group.add_user(user)
+    return HttpResponseRedirect(reverse('commcare_users', args=[domain]))
 
 @require_can_edit_commcare_users
 def archive_commcare_user(request, domain, user_id, is_active=False):
