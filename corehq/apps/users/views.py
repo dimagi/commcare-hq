@@ -243,7 +243,7 @@ def commcare_users(request, domain, template="users/commcare_users.html"):
             users.extend(CommCareUser.by_domain(domain, is_active=False))
     context.update({
         'commcare_users': users,
-        'show_case_sharing': Domain.get_by_name(domain).case_sharing,
+        'show_case_sharing': reduce(lambda x,y: x or y, [app.case_sharing for app in request.project.applications()]),
         'show_inactive': show_inactive,
         'cannot_share': cannot_share,
         'reset_password_form': SetPasswordForm(user="")

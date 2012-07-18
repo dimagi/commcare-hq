@@ -197,6 +197,9 @@ class Domain(Document):
                             reduce=False,
                             include_docs=True).all()
 
+    def case_sharing_included(self):
+        return self.case_sharing or reduce(lambda x, y: x or y, [app.case_sharing for app in self.applications()])
+
     def save_copy(self, new_domain_name=None, user=None):
         from corehq.apps.app_manager.models import RemoteApp, Application
         from corehq.apps.users.models import UserRole
