@@ -17,14 +17,14 @@ class ScheduledReportFactory(object):
     
     @classmethod
     def get_report(cls, slug):
-        if slug.startswith("custom/"):
+        if slug.startswith("custom-"):
             custom_reports = {}
             for domain, values in settings.CUSTOM_REPORT_MAP.items():
                 for heading, models in values.items():
                     for model in models:
                         klass = to_function(model)
                         custom_reports[klass.slug] = CustomReportSchedule(klass)
-            return custom_reports[slug[len("custom/"):]]
+            return custom_reports[slug[len("custom-"):]]
         else:
             return getattr(cls, "_%s" % slug)()
         
@@ -35,7 +35,7 @@ class ScheduledReportFactory(object):
             for heading, models in settings.CUSTOM_REPORT_MAP.get(domain, {}).items():
                 for model in models:
                     klass = to_function(model)
-                    slug = "custom/" + klass.slug
+                    slug = "custom-" + klass.slug
                     reports[slug] = CustomReportSchedule(klass)
         return reports
     
