@@ -29,7 +29,7 @@ class ReportSchedule(object):
         else: 
             self._view_args = {}
         self._title = title
-        self.auth = auth if auth else (lambda user: True)
+        self.auth = auth if auth else (lambda request: True)
     
     @property
     def title(self):
@@ -58,7 +58,7 @@ class BasicReportSchedule(ReportSchedule):
     
     def __init__(self, report):
         self._report = report
-        self.auth = lambda user: True
+        self.auth = lambda request: request.couch_user.can_view_report(request.couch_user.current_domain, self._report.__module__ + "." + self._report.__name__)
 
     @property
     def title(self):

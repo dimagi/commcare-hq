@@ -546,7 +546,7 @@ def add_scheduled_report(request, domain, couch_user_id):
     context = _users_context(request, domain)
     context.update({"hours": [(val, "%s:00" % val) for val in range(24)],
                     "days":  [(val, calendar.day_name[val]) for val in range(7)],
-                    "reports": dict([(key, value) for (key, value) in  ScheduledReportFactory.get_reports(domain).items() if value.auth(request.user) and request.couch_user.can_view_report(domain, value._report.__module__ + "." + value._report.__name__)])})
+                    "reports": dict([(key, value) for (key, value) in  ScheduledReportFactory.get_reports(domain).items() if value.auth(request)])})
     return render_to_response(request, "users/add_scheduled_report.html", context)
 
 @login_and_domain_required

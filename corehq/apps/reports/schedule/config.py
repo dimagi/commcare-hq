@@ -58,4 +58,4 @@ class ScheduledReportFactory(object):
     @classmethod
     def _admin_domains(cls):
         return ReportSchedule(domain_list,
-                              title="Domain Summary", auth=lambda user: user.is_superuser)
+                              title="Domain Summary", auth=lambda request: request.user.is_superuser)
