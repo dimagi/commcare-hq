@@ -15,8 +15,13 @@ class MissedCallbackReport(HQReport):
     def calc(self):
         self.context["report_data"] = self.get_missed_callback_report_context(self.domain)
     
-    # site_list should be None for all sites, or a list of sites to filter on
-    def get_missed_callback_report_context(self, domain, site_list=None, end_date=None):
+    def get_missed_callback_report_context(self, domain, end_date=None):
+        group_id = None
+        if hasattr(self.request, "couch_user") and self.request.couch_user is not None and self.request.couch_user.is_commcare_user():
+            group_list = self.request.couch_user.get_group_ids()
+            if len(group_list) > 0:
+                group_id = group_list[0]
+        #
         date_list = []
         if end_date is None:
             end_date = datetime.utcnow().date()
@@ -25,7 +30,7 @@ class MissedCallbackReport(HQReport):
         data = {}
         for case in CommCareCase.view("hqcase/types_by_domain", startkey=[domain, "patient"], endkey=[domain, "patient"], reduce=False, include_docs=True).all():
             site = case.get_case_property("site")
-            if((site_list is None) or (site in site_list)):
+            if((group_id is None) or (case.owner_id == group_id)):
                 entry = {"dates" : []}
                 for date in date_list:
                     entry["dates"].append({"sms_count" : 0, "call_count" : 0, "missed_callback_count" : 0})
