@@ -16,7 +16,7 @@
         </tr>
     </thead>
     <tbody data-bind="sortable: languages">
-        <tr class="row control-group" data-bind="css: {error: message, light: !deploy()}">
+        <tr class="row control-group" data-bind="css: {error: show_error, light: !deploy()}">
             <td class="span1" data-bind="css: {'sortable-handle': $root.editing}">
                 <i class="icon-move" data-bind="visible: $root.editing"></i>
             </td>
