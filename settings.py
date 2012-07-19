@@ -186,6 +186,7 @@ HQ_APPS = (
     'hsph',
     'pathindia',
     'hqpayments',
+    'a5288'
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
@@ -314,7 +315,10 @@ UNICEL_CONFIG = {"username": "Dimagi",
 
 
 #auditcare parameters
-AUDIT_MODEL_SAVE = []
+AUDIT_MODEL_SAVE = [
+    'corehq.apps.app_manager.Application',
+    'corehq.apps.app_manager.RemoteApp',
+]
 AUDIT_VIEWS = [
     'corehq.apps.domain.views.registration_request',
     'corehq.apps.domain.views.registration_confirm',
@@ -542,6 +546,12 @@ CUSTOM_REPORT_MAP = {
         'Custom Reports': [
                     'pathindia.reports.PathIndiaKrantiReport'
         ]
+    },
+    "a5288": {
+        "Custom Reports": ["a5288.reports.MissedCallbackReport"]
+    },
+    "a5288-test": {
+        "Custom Reports": ["a5288.reports.MissedCallbackReport"]
     }
 #    "test": [
 #        'corehq.apps.reports.deid.FormDeidExport',
