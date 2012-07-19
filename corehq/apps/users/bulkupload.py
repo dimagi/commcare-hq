@@ -111,6 +111,8 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs):
                             user.set_password(password)
                         status_row['flag'] = 'updated'
                     else:
+                        if not password:
+                            raise Exception("Cannot create a new user with a blank password")
                         user = CommCareUser.create(domain, username, password, uuid=user_id or '')
                         status_row['flag'] = 'created'
                     if phone_number:
