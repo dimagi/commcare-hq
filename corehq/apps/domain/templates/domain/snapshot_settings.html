@@ -17,18 +17,24 @@
             <th></th>
             <th>Date</th>
             <th>License</th>
-            <th>Published in project store?</th>
+            <th>In project store?</th>
             <th></th>
         </tr>
         </thead>
         <tbody>
         {% for snapshot in snapshots %}
         <tr>
-            <td><a class="btn btn-primary" href="{% url corehq.apps.app_manager.views.default snapshot.name %}">View</a></td>
+            <td><a class="btn btn-primary" href="{% url project_info snapshot.name %}">View</a></td>
             <td>{{ snapshot.snapshot_time }}</a></td>
             <td>{{ snapshot.get_license_display }}</td>
             {% if snapshot.published %}
-            <td><span class="label label-success">Published</span></td>
+            <td>
+                {% if snapshot.is_approved %}
+                    <span class="label label-success">Published & approved</span>
+                {% else %}
+                    <span class="label label-warning">Not yet approved</span>
+                {% endif %}
+            </td>
             <td>
                 <form action="{% url domain_clear_published domain %}" method="POST">
                     <button class="btn btn-danger" type="submit">Unpublish</button>

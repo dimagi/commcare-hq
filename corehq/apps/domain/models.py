@@ -329,26 +329,27 @@ class Domain(Document):
     def copy_component(self, doc_type, id, new_domain_name, user=None):
         str_to_cls = {
             'UserRole': UserRole,
-            'Application': Application,
-            'RemoteApp': RemoteApp,
             }
         db = get_db()
-        doc_type = doc_type
-        cls = str_to_cls[doc_type]
-        new_id = db.copy_doc(id)['id']
+        if doc_type in ('Application', 'RemoteApp'):
+            new_doc = import_app(id, new_domain_name)
+        else:
+            cls = str_to_cls[doc_type]
+            new_id = db.copy_doc(id)['id']
 
-        new_doc = cls.get(new_id)
-        for field in self._dirty_fields:
-            if hasattr(new_doc, field):
-                delattr(new_doc, field)
-
-        if hasattr(cls, '_meta_fields'):
-            for field in cls._meta_fields:
-                if not field.startswith('_') and hasattr(new_doc, field):
+            new_doc = cls.get(new_id)
+            for field in self._dirty_fields:
+                if hasattr(new_doc, field):
                     delattr(new_doc, field)
 
+            if hasattr(cls, '_meta_fields'):
+                for field in cls._meta_fields:
+                    if not field.startswith('_') and hasattr(new_doc, field):
+                        delattr(new_doc, field)
+
+            new_doc.domain = new_domain_name
+
         new_doc.original_doc = id
-        new_doc.domain = new_domain_name
 
         if self.is_snapshot and doc_type == 'Application':
             new_doc.clean_mapping()
