@@ -1,3 +1,5 @@
+$.fn.bootstrapButton = $.fn.button;
+
 $(function () {
     var $hqwebappBugReportModal = $('#reportIssueModal'),
         $hqwebappBugReportForm = $('#hqwebapp-bugReportForm'),
@@ -5,9 +7,9 @@ $(function () {
         isBugReportSubmitting = false;
 
     $hqwebappBugReportModal.on('show', function() {
-        $hqwebappBugReportForm.find("button[type='submit']").button('reset');
+        $hqwebappBugReportForm.find("button[type='submit']").bootstrapButton('reset');
         $hqwebappBugReportForm.resetForm();
-        $hqwebappBugReportCancel.button('reset');
+        $hqwebappBugReportCancel.bootstrapButton('reset');
     });
     $hqwebappBugReportModal.on('shown', function() {
         $("input#bug-report-subject").focus();
@@ -18,8 +20,8 @@ $(function () {
         if(!isBugReportSubmitting && $submitButton.text() == $submitButton.data("complete-text")) {
             $hqwebappBugReportModal.modal("hide");
         }else if(!isBugReportSubmitting) {
-            $submitButton.button('loading');
-            $hqwebappBugReportCancel.button('loading');
+            $submitButton.bootstrapButton('loading');
+            $hqwebappBugReportCancel.bootstrapButton('loading');
             $(this).ajaxSubmit({
                 type: "POST",
                 url: $(this).attr('action'),
@@ -41,7 +43,7 @@ $(function () {
 
     function hqwebappBugReportSucccess(data) {
         isBugReportSubmitting = false;
-        $hqwebappBugReportForm.find("button[type='submit']").button('complete');
+        $hqwebappBugReportForm.find("button[type='submit']").bootstrapButton('complete');
     }
 
 });

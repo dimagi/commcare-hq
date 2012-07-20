@@ -4,6 +4,24 @@ var SupportedLanguages = (function () {
         this.langcode = ko.observable(langcode);
         this.originalLangcode = ko.observable(langcode);
         this.deploy = ko.observable(deploy === undefined ? true : deploy);
+        this.message_content = ko.observable();
+        this.show_error = ko.observable();
+        this.message = ko.computed(function () {
+            if (self.message_content() === '') {
+                var lang = self.langcode().toLowerCase();
+                $.getJSON('/langcodes/langs.json', {term: lang}, function(res) {
+                    var index = _.map(res, function(r) { return r.code; }).indexOf(lang);
+                    if (index === -1) {
+                        self.message_content("Warning: unrecognized language");
+                        self.show_error(true);
+                    } else {
+                        self.message_content(res[index].name);
+                        self.show_error(false);
+                    }
+                });
+            }
+            return self.message_content();
+        });
     }
     function SupportedLanguages(options) {
         var langs = options.langs;
@@ -81,8 +99,9 @@ var SupportedLanguages = (function () {
         this.removedLanguages = ko.observableArray([]);
         function newLanguage(langcode, deploy) {
             var language = new Language(langcode, deploy);
-            language.langcode.subscribe(changeSaveButton);
+            language.langcode.subscribe(changeSaveButton)
             language.deploy.subscribe(changeSaveButton);
+            language.langcode.subscribe(function () { self.validateLanguage(language); });
             return language;
         }
         this.addLanguage = function () {
@@ -126,12 +145,14 @@ var SupportedLanguages = (function () {
             }
             return message;
         };
+
         this.validateLanguage = function (language) {
             if (!validate) {
+                language.message_content("");
                 return "";
             }
             var message = "";
-            if (!language.langcode()) {
+            if (!language) {
                 message = "Please enter language";
             } else if (!/^[a-z]{2,3}(-[a-z]*)?$/.exec(language.langcode())) {
                 message = "Invalid language code";
@@ -141,12 +162,14 @@ var SupportedLanguages = (function () {
                 self.languages()[i].originalLangcode();
                 if (message || language == self.languages()[i]) {
                     continue;
-                } else if (language.langcode() === self.languages()[i].langcode()) {
+                } else if (language === self.languages()[i].langcode()) {
                     message = "Language appears twice";
-                } else if (language.langcode() === self.languages()[i].originalLangcode()) {
+                } else if (language === self.languages()[i].originalLangcode()) {
                     message = "This conflicts with a current language";
                 }
             }
+            language.message_content(message);
+            language.show_error(message);
             return message;
         };
     }

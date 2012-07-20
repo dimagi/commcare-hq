@@ -94,7 +94,7 @@ class DomainGlobalSettingsForm(forms.Form):
             global_tz = self.cleaned_data['default_timezone']
             domain.default_timezone = global_tz
             users = WebUser.by_domain(domain.name)
-            for user in users:
+            for user in users.all():
                 dm = user.get_domain_membership(domain.name)
                 if not dm.override_global_tz:
                     dm.timezone = global_tz

@@ -58,7 +58,7 @@ def require_permission_to_edit_user(view_func):
         go_ahead = False
         if hasattr(request, "couch_user"):
             user = request.couch_user
-            if user.is_superuser or user.user_id == couch_user_id or user.is_domain_admin():
+            if user.is_superuser or user.user_id == couch_user_id or (hasattr(user, "is_domain_admin") and user.is_domain_admin()):
                 go_ahead = True
             else:
                 couch_user = CouchUser.get_by_user_id(couch_user_id)
@@ -232,21 +232,16 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
 @require_can_edit_commcare_users
 def commcare_users(request, domain, template="users/commcare_users.html"):
     show_inactive = json.loads(request.GET.get('show_inactive', 'false'))
-    cannot_share = json.loads(request.GET.get('cannot_share', 'false'))
     context = _users_context(request, domain)
-    if cannot_share:
-        users = CommCareUser.cannot_share(domain)
-    else:
-        users = CommCareUser.by_domain(domain)
-        if show_inactive:
-            users = list(users)
-            users.extend(CommCareUser.by_domain(domain, is_active=False))
+    users = CommCareUser.by_domain(domain)
+    if show_inactive:
+        users = list(users)
+        users.extend(CommCareUser.by_domain(domain, is_active=False))
     context.update({
         'commcare_users': users,
         'groups': Group.get_case_sharing_groups(domain),
         'show_case_sharing': request.project.case_sharing_included(),
         'show_inactive': show_inactive,
-        'cannot_share': cannot_share,
         'reset_password_form': SetPasswordForm(user="")
     })
     return render_to_response(request, template, context)
@@ -491,8 +486,13 @@ def _handle_user_form(request, domain, couch_user=None):
         create_user = True
     can_change_admin_status = \
         (request.user.is_superuser or request.couch_user.can_edit_web_users(domain=domain))\
-        and request.couch_user.user_id != couch_user.user_id and not couch_user.is_commcare_user()
-    role_choices = UserRole.role_choices(domain)
+        and request.couch_user.user_id != couch_user.user_id
+    
+    if couch_user.is_commcare_user():
+        role_choices = UserRole.commcareuser_role_choices(domain)
+    else:
+        role_choices = UserRole.role_choices(domain)
+    
     if request.method == "POST" and request.POST['form_type'] == "basic-info":
         form = UserForm(request.POST, role_choices=role_choices)
         if form.is_valid():
@@ -519,7 +519,15 @@ def _handle_user_form(request, domain, couch_user=None):
             form.initial['email'] = couch_user.email
             form.initial['language'] = couch_user.language
             if can_change_admin_status:
-                form.initial['role'] = couch_user.get_role(domain).get_qualified_id() or ''
+                if couch_user.is_commcare_user():
+                    role = couch_user.get_role(domain)
+                    if role is None:
+                        initial = "none"
+                    else:
+                        initial = role.get_qualified_id()
+                    form.initial['role'] = initial
+                else:
+                    form.initial['role'] = couch_user.get_role(domain).get_qualified_id() or ''
 
     if not can_change_admin_status:
         del form.fields['role']
@@ -554,7 +562,7 @@ def add_scheduled_report(request, domain, couch_user_id):
     context = _users_context(request, domain)
     context.update({"hours": [(val, "%s:00" % val) for val in range(24)],
                     "days":  [(val, calendar.day_name[val]) for val in range(7)],
-                    "reports": dict([(key, value) for (key, value) in  ScheduledReportFactory.get_reports().items() if value.auth(request.user)])})
+                    "reports": dict([(key, value) for (key, value) in  ScheduledReportFactory.get_reports(domain).items() if value.auth(request)])})
     return render_to_response(request, "users/add_scheduled_report.html", context)
 
 @login_and_domain_required
@@ -576,7 +584,11 @@ def drop_scheduled_report(request, domain, couch_user_id, report_id):
 @require_POST
 def test_scheduled_report(request, domain, couch_user_id, report_id):
     rep = ReportNotification.get(report_id)
-    user = WebUser.get_by_user_id(couch_user_id, domain)
+    try:
+        user = WebUser.get_by_user_id(couch_user_id, domain)
+    except CouchUser.AccountTypeError:
+        user = CommCareUser.get_by_user_id(couch_user_id, domain)
+    
     try:
         send_report(rep, user)
     except SMTPRecipientsRefused:

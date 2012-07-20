@@ -12,8 +12,7 @@ function(doc){
             built_on: doc.built_on,
             built_with: doc.built_with,
             build_comment: doc.build_comment,
-            is_released: doc.is_released,
-            case_sharing: doc.case_sharing
+            is_released: doc.is_released
         });
     }
 }
