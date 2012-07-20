@@ -148,8 +148,30 @@
                             <li>{{ group.name }}</li>
                             {% endfor %}
                         </ul>
+                        <div class="btn-group">
+                            <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+                            Select only one group
+                            <span class="caret"></span>
+                            </a>
+                            <ul class="dropdown-menu">
+                                {% for group in user.get_case_sharing_groups %}
+                                    <li><a href="{% url set_commcare_user_group domain %}?user={{ user.user_id }}&group={{ group.name }}">{{ group.name }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                         {% else %}
                         <span class="label label-warning">No Groups</span>
+                            <div class="btn-group">
+                                <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+                                Add to a group
+                                <span class="caret"></span>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    {% for group in groups %}
+                                        <li><a href="{% url set_commcare_user_group domain %}?user={{ user.user_id }}&group={{ group.name }}">{{ group.name }}</a></li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
                         {% endif %}
                         {% endif %}
                     </td>
