@@ -83,7 +83,7 @@ cloudCare.CaseListView = Backbone.View.extend({
         var thead = $("<thead />").appendTo(table);
         var theadrow = $("<tr />").appendTo(thead);
         _(this.detailsShort.get("columns")).each(function (col) {
-            $("<th />").append('<i class="icon-hq-white icon-hq-doublechevron"></i> ').append(col.header[self.options.language] || "?").appendTo(theadrow);
+            $("<th />").append('<i class="icon-hq-white icon-hq-doublechevron"></i> ').append(localize(col.header, self.options.language)).appendTo(theadrow);
         });
         var tbody = $("<tbody />").appendTo(table);
         _(this.caseList.models).each(function(item){ 
@@ -171,7 +171,7 @@ cloudCare.CaseDetailsView = Backbone.View.extend({
 	        
             _(this.details.get("columns")).each(function (col) {
                 var row = $("<tr />").appendTo(table);
-                $("<th />").text(col.header[self.options.language] || "?").appendTo(row);
+                $("<th />").text(localized(col.header, self.options.language)).appendTo(row);
                 $("<td />").text(self.model.getProperty(col.field) || "?").appendTo(row);
             });
         }
