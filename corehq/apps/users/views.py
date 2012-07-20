@@ -255,11 +255,12 @@ def commcare_users(request, domain, template="users/commcare_users.html"):
 def set_commcare_user_group(request, domain):
     user_id = request.GET.get('user', '')
     user = CommCareUser.get_by_user_id(user_id)
-    group = Group.by_name(domain, request.GET.get('group', ''))
+    group_name = request.GET.get('group', '')
+    group = Group.by_name(domain, group_name)
     if not user.is_commcare_user() or user.domain != domain or not group:
         return HttpResponseForbidden()
-    if user in group.get_users():
-        return HttpResponseBadRequest()
+    for group in user.get_case_sharing_groups():
+        group.remove_user(user)
     group.add_user(user)
     return HttpResponseRedirect(reverse('commcare_users', args=[domain]))
 
