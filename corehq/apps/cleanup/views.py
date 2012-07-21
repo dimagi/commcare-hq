@@ -1,10 +1,12 @@
 from collections import defaultdict
 from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.groups.models import Group
 from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 import json
 from django.views.decorators.http import require_POST
 from casexml.apps.case.models import CommCareCase
@@ -261,3 +263,31 @@ def delete_all_data(request, domain, template="cleanup/delete_all_data.html"):
             thing['-deletion_id'] = deletion_id
             thing.save()
     return HttpResponseRedirect(reverse('homepage'))
+
+# ----bihar migration----
+
+def reassign_cases_to_correct_owner(request, domain):
+
+    @memoized
+    def get_correct_group_id(user_id, group_id):
+        group_ids = [group.id for group in Group.by_user(user_id) if group.case_sharing]
+        if group_id in group_ids:
+            return group_id
+        else:
+            try:
+                g, = group_ids
+                return g
+            except ValueError:
+                # too many values to unpack
+                return None
+
+    for case in CommCareCase.view('hqcase/all_cases', startkey=[domain], endkey=[domain, {}], reduce=False):
+        group_id = get_correct_group_id(case.user_id, case.owner_id)
+        if group_id:
+            if group_id != case.owner_id:
+                #set'er and save'er
+                pass
+        else:
+            print case.user_id, case.owner_id, group_id
+
+    return HttpResponse()
