@@ -913,7 +913,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
 
     @property
     def case_count(self):
-        result = CommCareCase.view('case/by_owner',
+        result = CommCareCase.view('case/by_user',
             startkey=[self.user_id],
             endkey=[self.user_id, {}],
             group_level=0
