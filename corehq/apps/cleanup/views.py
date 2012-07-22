@@ -1,4 +1,5 @@
 from collections import defaultdict
+from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.groups.models import Group
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -265,12 +266,13 @@ def delete_all_data(request, domain, template="cleanup/delete_all_data.html"):
     return HttpResponseRedirect(reverse('homepage'))
 
 # ----bihar migration----
-
-def reassign_cases_to_correct_owner(request, domain):
-
+@require_can_cleanup
+def reassign_cases_to_correct_owner(request, domain, template='cleanup/reassign_cases_to_correct_owner.html'):
+    log = {'unaffected': [], 'affected': [], 'unsure': []}
+    names = {}
     @memoized
     def get_correct_group_id(user_id, group_id):
-        group_ids = [group.id for group in Group.by_user(user_id) if group.case_sharing]
+        group_ids = [group.get_id for group in Group.by_user(user_id) if group.case_sharing]
         if group_id in group_ids:
             return group_id
         else:
@@ -280,14 +282,44 @@ def reassign_cases_to_correct_owner(request, domain):
             except ValueError:
                 # too many values to unpack
                 return None
+    @memoized
+    def get_meta(id):
+        try:
+            doc = get_db().get(id)
+        except (ResourceNotFound, AttributeError):
+            return {'name': None, 'doc_type': None}
+        return {
+            'name': {
+                'CommCareUser': lambda user: CommCareUser.wrap(user).raw_username,
+                'WebUser': lambda user: user['username'],
+                'Group': lambda group: group['name']
+            }.get(doc['doc_type'], lambda x: None)(doc),
+            'doc_type': doc['doc_type']
+        }
 
-    for case in CommCareCase.view('hqcase/all_cases', startkey=[domain], endkey=[domain, {}], reduce=False):
+    for case in CommCareCase.view('hqcase/all_cases', startkey=[domain], endkey=[domain, {}], include_docs=True, reduce=False):
         group_id = get_correct_group_id(case.user_id, case.owner_id)
+        case_data = {
+            'case': {'id': case.case_id, 'meta': {'name': case.name, 'doc_type': case.doc_type}},
+            'user': {'id': case.user_id, 'meta': get_meta(case.user_id)},
+            'owner': {'id': case.owner_id, 'meta': get_meta(case.owner_id)},
+            'suggested': {'id': group_id, 'meta': get_meta(group_id)},
+        }
         if group_id:
             if group_id != case.owner_id:
                 #set'er and save'er
-                pass
+                log['affected'].append(case_data)
+                if request.method == 'POST':
+                    raise Exception()
+            else:
+                log['unaffected'].append(case_data)
         else:
-            print case.user_id, case.owner_id, group_id
+            log['unsure'].append(case_data)
 
-    return HttpResponse()
+    if request.GET.get('ajax'):
+        return json_response(log)
+    else:
+        return render_to_response(request, template, {
+            'domain': domain,
+            'results': log
+        })
