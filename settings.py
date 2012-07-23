@@ -165,6 +165,7 @@ HQ_APPS = (
     'corehq.apps.smsforms',
     'corehq.apps.ivr',
     'corehq.apps.tropo',
+    'corehq.apps.yo',
     'corehq.apps.registration',
     'corehq.apps.unicel',
     'corehq.apps.reports',
