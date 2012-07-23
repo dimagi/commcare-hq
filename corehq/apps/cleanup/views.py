@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 import json
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, Permissions
@@ -124,7 +124,7 @@ def relabel_submissions(request, domain):
         case.user_id = userID
         case.save()
 
-    
+
     return HttpResponseRedirect(reverse('corehq.apps.cleanup.views.submissions', args=[domain]))
 
 # -----------cases-------------
@@ -133,7 +133,7 @@ def relabel_submissions(request, domain):
 def cases(request, domain, template="cleanup/cases.html"):
     return render_to_response(request, template, {'domain': domain})
 
-@require_can_cleanup 
+@require_can_cleanup
 def cases_json(request, domain):
     def query(stale="ok", **kwargs):
         subs = [dict(
@@ -183,7 +183,7 @@ def cases_json(request, domain):
         })
     return query(**json_request(request.GET))
 
-@require_can_cleanup 
+@require_can_cleanup
 @require_POST
 def close_cases(request, domain):
     data = json.loads(request.POST['data'])
@@ -210,8 +210,8 @@ def _get_submissions(domain, keys):
 
 def _get_cases(xforms):
     cases = []
-    for case in CommCareCase.view('case/by_xform_id', 
-                                  keys=[xform.get_id for xform in xforms], 
+    for case in CommCareCase.view('case/by_xform_id',
+                                  keys=[xform.get_id for xform in xforms],
                                   reduce=False, include_docs=True).all():
         cases.append(case)
     return cases
@@ -266,10 +266,10 @@ def delete_all_data(request, domain, template="cleanup/delete_all_data.html"):
     return HttpResponseRedirect(reverse('homepage'))
 
 # ----bihar migration----
+@require_GET
 @require_can_cleanup
 def reassign_cases_to_correct_owner(request, domain, template='cleanup/reassign_cases_to_correct_owner.html'):
     log = {'unaffected': [], 'affected': [], 'unsure': []}
-    names = {}
     @memoized
     def get_correct_group_id(user_id, group_id):
         group_ids = [group.get_id for group in Group.by_user(user_id) if group.case_sharing]
@@ -297,24 +297,21 @@ def reassign_cases_to_correct_owner(request, domain, template='cleanup/reassign_
             'doc_type': doc['doc_type']
         }
 
-    for case in CommCareCase.view('hqcase/all_cases', startkey=[domain], endkey=[domain, {}], include_docs=True, reduce=False):
+    for case in CommCareCase.view('hqcase/all_cases', startkey=[domain, {}, {}], endkey=[domain, {}, {}, {}], include_docs=True, reduce=False):
         group_id = get_correct_group_id(case.user_id, case.owner_id)
         case_data = {
-            'case': {'id': case.case_id, 'meta': {'name': case.name, 'doc_type': case.doc_type}},
+            'case': {'id': case.case_id, 'meta': {'name': case.name, 'doc_type': case.doc_type}, 'modified': case.modified_on},
             'user': {'id': case.user_id, 'meta': get_meta(case.user_id)},
             'owner': {'id': case.owner_id, 'meta': get_meta(case.owner_id)},
             'suggested': {'id': group_id, 'meta': get_meta(group_id)},
         }
         if group_id:
             if group_id != case.owner_id:
-                #set'er and save'er
                 log['affected'].append(case_data)
-                if request.method == 'POST':
-                    raise Exception()
-            else:
-                log['unaffected'].append(case_data)
-        else:
-            log['unsure'].append(case_data)
+#            else:
+#                log['unaffected'].append(case_data)
+#        else:
+#            log['unsure'].append(case_data)
 
     if request.GET.get('ajax'):
         return json_response(log)
