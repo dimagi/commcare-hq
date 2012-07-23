@@ -1,0 +1,32 @@
+{% extends base_template %}
+{% load hq_shared_tags %}
+{% block js-inline %}
+    <script>
+    $(function () {
+        var results = {{ results|JSON }};
+        ko.applyBindings({results: results});
+    }());
+    </script>
+{% endblock %}
+{% block content %}
+    <table>
+        <tr>
+            <th>Case</th>
+            <th>User</th>
+            <th>Owner</th>
+            <th>Suggested Group</th>
+        </tr>
+        <tbody data-bind="foreach: results.affected">
+            <tr>
+                <!--ko foreach: [$data['case'], user, owner, suggested]-->
+                <td>
+                    <h5 data-bind="text: meta.name"></h5>
+                    <h6 data-bind="if: !meta.name">No Name</h6>
+                    <p style="size: .5em; color: #888;" data-bind="text: id"></p>
+                    <p style="size: .5em; color: #888;" data-bind="text: meta.doc_type"></p>
+                </td>
+                <!--/ko-->
+            </tr>
+        </tbody>
+    </table>
+{% endblock %}
