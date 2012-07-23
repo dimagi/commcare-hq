@@ -1557,7 +1557,7 @@ class RemoteApp(ApplicationBase):
         def add_file_from_path(path):
             try:
                 loc = tree.find(path).text
-            except TypeError:
+            except (TypeError, AttributeError):
                 return
             loc, file = self.fetch_file(loc)
             files[loc] = file
