@@ -171,7 +171,7 @@ class LendingGroupAggregate(object):
         users = [CommCareUser.get(user_id) for user_id in user_ids]
         groups = []
         for user in users:
-            tmp = get_db().view('case/by_owner', key=[user._id, False], include_docs=True).all()
+            tmp = get_db().view('case/by_owner', key=[user._id, False], include_docs=True, reduce=False).all()
             for t in tmp:
                 groups.append(LendingGroup(CommCareCase.get(t['doc']['_id']), month, year))
         self.groups = groups if groups else []
