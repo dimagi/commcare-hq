@@ -902,7 +902,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
         if deleted:
             view_name = 'users/deleted_cases_by_user'
         else:
-            view_name = 'case/by_user'
+            view_name = 'case/by_owner'
 
         return CommCareCase.view(view_name,
             startkey=[self.user_id],

@@ -12,6 +12,7 @@ from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.resource_conflict import repeat, retry_resource
 from django.utils import simplejson
+from django.utils.http import urlencode as django_urlencode
 import os
 import re
 
@@ -1024,6 +1025,16 @@ def rename_language(req, domain, form_unique_id):
         response = HttpResponse(json.dumps({'status': 'error', 'message': unicode(e)}))
         response.status_code = 409
         return response
+
+@require_GET
+@login_and_domain_required
+def validate_language(request, domain, app_id):
+    app = get_app(domain, app_id)
+    term = request.GET.get('term', '').lower()
+    if term in [lang.lower() for lang in app.langs]:
+        return HttpResponse(json.dumps({'match': {"code": term, "name": term}, 'suggestions': []}))
+    else:
+        return HttpResponseRedirect("%s?%s" % (reverse('langcodes.views.validate', args=[]), django_urlencode({'term': term})))
 
 @require_POST
 @require_can_edit_apps

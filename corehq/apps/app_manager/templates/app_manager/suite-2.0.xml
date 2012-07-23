@@ -135,4 +135,13 @@
 {% else %}
     {{ app.custom_suite|safe }}
 {% endif %}
+    {% if app.case_sharing %}
+    <fixture id="user-groups" user_id="demo_user">
+        <groups>
+            <group id="demo_user_group_id">
+                <name>Demo Group</name>
+            </group>
+        </groups>
+    </fixture>
+    {% endif %}
 </suite>

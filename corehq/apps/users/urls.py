@@ -36,6 +36,7 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'^commcare/restore/(?P<user_id>[\w-]+)/$', 'restore_commcare_user', name='restore_commcare_user'),
     url(r'^commcare/upload/$', UploadCommCareUsers.as_view(), name='upload_commcare_users'),
     url(r'^commcare/upload-example/$', 'upload_commcare_users_example', name='upload_commcare_users_example'),
+    url(r'^commcare/set_group/$', 'set_commcare_user_group', name='set_commcare_user_group'),
 
     url(r'^httpdigest/?$', 'test_httpdigest'),
     #url(r'my_groups/?$', 'my_groups', name='my_groups'),

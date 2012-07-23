@@ -10,8 +10,8 @@
             $('#id_add_phone_number').keydown(function (event) {
                 // Allow: backspace, delete, tab and escape
                 if ( event.keyCode == 46 || event.keyCode == 8 || event.keyCode == 9 || event.keyCode == 27 ||
-                    // Allow: Ctrl+A
-                        (event.keyCode == 65 && event.ctrlKey === true) ||
+                    // Allow: Ctrl,Alt,Cmd+anything
+                        event.ctrlKey === true || event.metaKey === true || event.altKey === true ||
                     // Allow: home, end, left, right
                         (event.keyCode >= 35 && event.keyCode <= 39)) {
                     // let it happen, don't do anything

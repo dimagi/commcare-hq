@@ -1,8 +1,21 @@
 var getLocalizedString = function (property, language) {
     // simple utility to localize a string based on a dict of 
     // language mappings.
-    return this.get(property)[language] || "?";
+    return localize(this.get(property));
 };
+
+var localize = function(obj, language) {
+    s = obj[language];
+    if (!s) {
+        for (var lang in obj) {
+            if (obj[lang]) {
+                s = "(" + lang + ") " + obj[lang];
+                break;
+            }
+        }
+    }
+    return s || "?";
+}
 
 var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
     var url = urlRoot;
