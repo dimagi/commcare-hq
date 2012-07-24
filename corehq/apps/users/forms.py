@@ -96,9 +96,6 @@ class UserForm(RoleForm):
 class Meta:
         app_label = 'users'
 
-NUMERIC_RE = re.compile(r'^\d+$')
-ALPHANUMERIC_RE = re.compile(r'^[0-9a-zA-Z\.]+$')
-
 class CommCareAccountForm(forms.Form):
     """
     Form for CommCareAccounts
@@ -120,12 +117,8 @@ class CommCareAccountForm(forms.Form):
         else:
             if password != password_2:
                 raise forms.ValidationError("Passwords do not match")
-            if password_format == 'n':
-                if not NUMERIC_RE.match(password):
-                    raise forms.ValidationError("Password is not numeric")
-            else:
-                if not ALPHANUMERIC_RE.match(password):
-                    raise forms.ValidationError("Password is not alphanumeric")
+            if self.password_format == 'n' and not password.isnumeric():
+                raise forms.ValidationError("Password is not numeric")
 
         try:
             username = self.cleaned_data['username']

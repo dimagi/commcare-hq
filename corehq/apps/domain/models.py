@@ -141,6 +141,16 @@ class Domain(Document):
                                     startkey=[self.name],
                                     endkey=[self.name, {}]).all()
 
+    def full_applications(self):
+        from corehq.apps.app_manager.models import Application, RemoteApp
+        def wrap_by_doc_type(r):
+            return {'Application': Application, 'RemoteApp': RemoteApp}[r['doc']['doc_type']].wrap(r['doc'])
+        return get_db().view('app_manager/applications',
+                                    include_docs=True,
+                                    startkey=[self.name],
+                                    endkey=[self.name, {}],
+                                    wrapper=wrap_by_doc_type).all()
+
     def languages(self):
         apps = self.applications()
         return set(chain.from_iterable([a.langs for a in apps]))
@@ -195,7 +205,7 @@ class Domain(Document):
         """
         If a single application is alphanumeric, return alphanumeric; otherwise, return numeric
         """
-        for app in self.applications():
+        for app in self.full_applications():
             if hasattr(app, 'profile'):
                 format = app.profile.get('properties', {}).get('password_format', 'n')
                 if format == 'a':
