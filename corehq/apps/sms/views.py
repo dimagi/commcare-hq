@@ -189,7 +189,7 @@ def send_to_recipients(request, domain):
 def message_test(request, domain, phone_number):
     if request.method == "POST":
         message = request.POST.get("message", "")
-        incoming(phone_number, message)
+        incoming(phone_number, message, "TEST")
     context = get_sms_autocomplete_context(request, domain)
     context['domain'] = domain
     context['messagelog'] = SMSLog.by_domain_dsc(domain)
