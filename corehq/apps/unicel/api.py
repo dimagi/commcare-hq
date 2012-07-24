@@ -1,4 +1,5 @@
 from datetime import datetime, date, timedelta
+import logging
 from corehq.apps.sms.models import SMSLog, INCOMING
 from corehq.apps.sms.util import domains_for_phone, users_for_phone,\
     clean_phone_number, clean_outgoing_sms_text
@@ -80,7 +81,14 @@ def create_from_request(request):
                         domain=domain,
                         backend_api=API_ID)
     log.save()
-    
+
+    try:
+        # attempt to bill client
+        from hqpayments.tasks import bill_client_for_sms
+        bill_client_for_sms('UnicelSMSBillableItem', message)
+    except Exception as e:
+        logging.debug("UNICEL API contacted, errors in billing. Error: %s" % e)
+
     return log
     
 
@@ -104,6 +112,18 @@ def send(message):
         params.extend(UNICODE_PARAMS)
         encoded = message.text.encode("utf_16_be").encode("hex").upper()
         params.append((OutboundParams.MESSAGE, encoded))
-    data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params))).read()
+
+    try:
+        data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params))).read()
+    except Exception:
+        data = None
+
+    try:
+        # attempt to bill client
+        from hqpayments.tasks import bill_client_for_sms
+        bill_client_for_sms('UnicelSMSBillableItem', message, **dict(data=data))
+    except Exception as e:
+        logging.debug("UNICEL API contacted, errors in billing. Error: %s" % e)
+
     
     

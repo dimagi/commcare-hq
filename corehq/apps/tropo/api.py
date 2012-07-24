@@ -1,3 +1,4 @@
+import logging
 from urllib import urlencode
 from urllib2 import urlopen
 
@@ -21,4 +22,11 @@ def send(msg, *args, **kwargs):
     url = "https://api.tropo.com/1.0/sessions?%s" % params
     response = urlopen(url).read()
     print response
+
+    try:
+        # attempt to bill client
+        from hqpayments.tasks import bill_client_for_sms
+        bill_client_for_sms('TropoSMSBillableItem', msg)
+    except Exception as e:
+        logging.debug("UNICEL API contacted, errors in billing. Error: %s" % e)
 
