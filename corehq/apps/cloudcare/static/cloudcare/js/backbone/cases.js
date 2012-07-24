@@ -171,7 +171,7 @@ cloudCare.CaseDetailsView = Backbone.View.extend({
 	        
             _(this.details.get("columns")).each(function (col) {
                 var row = $("<tr />").appendTo(table);
-                $("<th />").text(localized(col.header, self.options.language)).appendTo(row);
+                $("<th />").text(localize(col.header, self.options.language)).appendTo(row);
                 $("<td />").text(self.model.getProperty(col.field) || "?").appendTo(row);
             });
         }
