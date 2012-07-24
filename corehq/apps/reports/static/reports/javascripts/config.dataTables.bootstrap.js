@@ -16,6 +16,7 @@ function HQReportDataTables(options) {
     self.fixColumns = !!(options.fixColumns);
     self.fixColsNumLeft = options.fixColsNumLeft || 1;
     self.fixColsWidth = options.fixColsWidth || 100;
+    self.datatable = null;
 
 
     this.render = function () {
@@ -39,7 +40,6 @@ function HQReportDataTables(options) {
                 bAutoWidth: self.autoWidth,
                 sScrollX: "100%"
             };
-            console.log(params.iDisplayLength);
 
             if(self.ajaxSource) {
                 params.bServerSide = true;
@@ -72,6 +72,8 @@ function HQReportDataTables(options) {
                 params.aoColumns = self.aoColumns;
 
             var datatable = $(this).dataTable(params);
+            if (!self.datatable)
+                self.datatable = datatable;
             if(self.customSort)
                 datatable.fnSort( self.customSort );
             if(self.fixColumns)
@@ -79,8 +81,6 @@ function HQReportDataTables(options) {
                     iLeftColumns: self.fixColsNumLeft,
                     iLeftWidth: self.fixColsWidth
                 } );
-
-            console.log(datatable);
 
 
             var $dataTablesFilter = $(".dataTables_filter");
