@@ -558,6 +558,14 @@ CUSTOM_REPORT_MAP = {
 #    ]
 }
 
+BILLING_REPORT_MAP = {
+    "Manage SMS Backend Rates": [
+        "hqpayments.reports.backend_rates.MachRateReport",
+        "hqpayments.reports.backend_rates.TropoRateReport",
+        "hqpayments.reports.backend_rates.UnicelRateReport"
+    ]
+}
+
 MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
     messages.DEBUG: '',
@@ -568,4 +576,6 @@ MESSAGE_TAGS = {
 
 COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
+
+DEFAULT_CURRENCY = "USD"
 
