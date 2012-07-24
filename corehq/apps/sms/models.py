@@ -31,6 +31,8 @@ class MessageLog(Document, UnicodeMixIn):
     date                        = DateTimeProperty()
     domain                      = StringProperty()
     backend_api                 = StringProperty() # This must be set to <backend module>.API_ID in order to process billing correctly
+    billed                      = BooleanProperty(default=False)
+    billing_errors              = ListProperty()
 
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
