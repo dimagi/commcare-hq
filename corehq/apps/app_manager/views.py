@@ -28,7 +28,7 @@ from corehq.apps.hqmedia import upload
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import Permissions, CommCareUser
 
 from dimagi.utils.web import render_to_response, json_response, json_request
 
