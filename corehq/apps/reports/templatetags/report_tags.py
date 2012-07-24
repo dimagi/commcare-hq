@@ -245,8 +245,8 @@ def attribute_lookup(obj, attr):
         return getattr(obj, attr)
 
 @register.simple_tag
-def standard_report_list(user, domain, current_slug=""):
-    mapping = getattr(settings, 'STANDARD_REPORT_MAP', None)
+def standard_report_list(user, domain, current_slug="", report_map="STANDARD_REPORT_MAP"):
+    mapping = getattr(settings, report_map, None)
     if not mapping: return ""
     lst = []
     for key, models in mapping.iteritems():
