@@ -33,6 +33,7 @@ class HQReport(object):
     show_time_notice = False
     fields = []
     exportable = False
+    is_admin_report = False
 
     asynchronous = False
     template_name = None
@@ -41,16 +42,20 @@ class HQReport(object):
     async_base_template_name = "reports/async/default.html"
 
     def __init__(self, domain, request, base_context = None):
+        if request.method == 'POST':
+            self.asynchronous = False
         base_context = base_context or {}
         if not self.name or not self.slug:
             raise NotImplementedError
         self.domain = domain
         self.request = request
-
-        try:
-            self.timezone = util.get_timezone(self.request.couch_user.user_id, domain)
-        except AttributeError:
-            self.timezone = util.get_timezone(None, domain)
+        if not self.domain:
+            self.timezone = pytz.utc
+        else:
+            try:
+                self.timezone = util.get_timezone(self.request.couch_user.user_id, domain)
+            except AttributeError:
+                self.timezone = util.get_timezone(None, domain)
 
         if not self.rows:
             self.rows = []
@@ -67,7 +72,8 @@ class HQReport(object):
                             export_path = self.request.get_full_path().replace('/custom/', '/export/'),
                             export_formats = Format.VALID_FORMATS,
                             async_report = self.asynchronous,
-                            report_base = self.async_base_template_name
+                            report_base = self.async_base_template_name,
+                            is_admin_report = self.is_admin_report
         )
 
     def build_selector_form(self):
