@@ -783,6 +783,8 @@ class ApplicationBase(VersionedDoc):
     # only the languages that go in the build
     build_langs = StringListProperty()
 
+    case_sharing = BooleanProperty(default=False)
+
     @classmethod
     def wrap(cls, data):
         # scrape for old conventions and get rid of them
@@ -1059,7 +1061,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
-    case_sharing = BooleanProperty(default=False)
     
     @classmethod
     def wrap(cls, data):
@@ -1557,7 +1558,7 @@ class RemoteApp(ApplicationBase):
         def add_file_from_path(path):
             try:
                 loc = tree.find(path).text
-            except TypeError:
+            except (TypeError, AttributeError):
                 return
             loc, file = self.fetch_file(loc)
             files[loc] = file
