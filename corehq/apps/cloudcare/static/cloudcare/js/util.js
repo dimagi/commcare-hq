@@ -1,7 +1,7 @@
 var getLocalizedString = function (property, language) {
     // simple utility to localize a string based on a dict of 
     // language mappings.
-    return localize(this.get(property));
+    return localize(this.get(property), language);
 };
 
 var localize = function(obj, language) {
@@ -9,7 +9,7 @@ var localize = function(obj, language) {
     if (!s) {
         for (var lang in obj) {
             if (obj[lang]) {
-                s = "(" + lang + ") " + obj[lang];
+                s = obj[lang];
                 break;
             }
         }
