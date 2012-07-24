@@ -4,7 +4,7 @@ var SupportedLanguages = (function () {
         this.langcode = ko.observable(langcode);
         this.originalLangcode = ko.observable(langcode);
         this.deploy = ko.observable(deploy === undefined ? true : deploy);
-        this.message_content = ko.observable();
+        this.message_content = ko.observable('');
         this.show_error = ko.observable();
         this.message = ko.computed(function () {
             if (self.message_content() === '') {

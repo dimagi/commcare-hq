@@ -324,6 +324,10 @@ class FormBase(DocumentSchema):
         return json.dumps(source) if dump_json else source
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
+        try:
+            self.rename_xform_language(old_lang, new_lang)
+        except XFormError:
+            pass
 
     def rename_xform_language(self, old_code, new_code):
         source = XForm(self.source)
@@ -566,7 +570,7 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
-        for form in self.forms:
+        for form in self.get_forms():
             form.rename_lang(old_lang, new_lang)
         for detail in self.details:
             detail.rename_lang(old_lang, new_lang)
@@ -1332,7 +1336,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for i,lang in enumerate(self.langs):
             if lang == old_lang:
                 self.langs[i] = new_lang
-        for module in self.modules:
+        for module in self.get_modules():
             module.rename_lang(old_lang, new_lang)
         _rename_key(self.translations, old_lang, new_lang)
 
@@ -1554,7 +1558,7 @@ class RemoteApp(ApplicationBase):
         def add_file_from_path(path):
             try:
                 loc = tree.find(path).text
-            except TypeError:
+            except (TypeError, AttributeError):
                 return
             loc, file = self.fetch_file(loc)
             files[loc] = file
