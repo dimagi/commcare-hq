@@ -407,12 +407,15 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     saved_apps = ApplicationBase.view('app_manager/saved_app',
         startkey=[domain, app.id, {}],
         endkey=[domain, app.id],
+        include_doc=True,
         descending=True
     ).all()
+    users_cannot_share = CommCareUser.cannot_share(domain)
     context.update({
         'release_manager': True,
         'saved_apps': saved_apps,
         'latest_release': latest_release,
+        'users_cannot_share': users_cannot_share,
     })
     if not app.is_remote_app():
         sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
