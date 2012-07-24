@@ -685,6 +685,7 @@ def add_commcare_account(request, domain, template="users/add_commcare_account.h
     context = _users_context(request, domain)
     if request.method == "POST":
         form = CommCareAccountForm(request.POST)
+        form.password_format = domain.password_format()
         if form.is_valid():
             username = form.cleaned_data["username"]
             password = form.cleaned_data["password"]
@@ -695,6 +696,7 @@ def add_commcare_account(request, domain, template="users/add_commcare_account.h
     else:
         form = CommCareAccountForm()
     context.update(form=form)
+    context.update(only_numeric=(request.project.password_format() == 'n'))
     return render_to_response(request, template, context)
 
 class UploadCommCareUsers(TemplateView):

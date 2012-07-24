@@ -191,6 +191,17 @@ class Domain(Document):
             new_domain.save()
             return new_domain
 
+    def password_format(self):
+        """
+        If a single application is alphanumeric, return alphanumeric; otherwise, return numeric
+        """
+        for app in self.applications():
+            if hasattr(app, 'profile'):
+                format = app.profile.get('properties', {}).get('password_format', 'n')
+                if format == 'a':
+                    return 'a'
+        return 'n'
+
     @classmethod
     def get_all(cls):
         return Domain.view("domain/domains",

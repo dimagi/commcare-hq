@@ -10,6 +10,7 @@ from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from corehq.apps.users.models import CouchUser, WebUser, OldRoles, DomainMembership
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
+import re
 
 def wrapped_language_validation(value):
     try:
@@ -95,13 +96,16 @@ class UserForm(RoleForm):
 class Meta:
         app_label = 'users'
 
+NUMERIC_RE = re.compile(r'^\d+$')
+ALPHANUMERIC_RE = re.compile(r'^[0-9a-zA-Z\.]+$')
+
 class CommCareAccountForm(forms.Form):
     """
     Form for CommCareAccounts
     """
-    username = forms.CharField(max_length=15)
-    password = forms.CharField(widget=PasswordInput())
-    password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput())
+    username = forms.CharField(max_length=15, required=True)
+    password = forms.CharField(widget=PasswordInput(), required=True, min_length=1, help_text="Only numbers are allowed in passwords")
+    password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
     domain = forms.CharField(widget=HiddenInput())
     
     class Meta:
@@ -116,6 +120,12 @@ class CommCareAccountForm(forms.Form):
         else:
             if password != password_2:
                 raise forms.ValidationError("Passwords do not match")
+            if password_format == 'n':
+                if not NUMERIC_RE.match(password):
+                    raise forms.ValidationError("Password is not numeric")
+            else:
+                if not ALPHANUMERIC_RE.match(password):
+                    raise forms.ValidationError("Password is not alphanumeric")
 
         try:
             username = self.cleaned_data['username']
