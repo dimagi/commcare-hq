@@ -313,6 +313,11 @@ UNICEL_CONFIG = {"username": "Dimagi",
                  "password": "changeme",
                  "sender": "Promo" }
 
+# mach sms config
+MACH_CONFIG = {"username": "Dimagi",
+               "password": "changeme",
+               "service_profile": "changeme"
+               }
 
 #auditcare parameters
 AUDIT_MODEL_SAVE = [
