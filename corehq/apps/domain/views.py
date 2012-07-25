@@ -359,7 +359,7 @@ def set_published_snapshot(request, domain, snapshot_name=''):
                 messages.error(request, "Invalid snapshot")
             published_snapshot.published = True
             published_snapshot.save()
-    return redirect('domain_copy_snapshot', domain.name)
+    return redirect('domain_snapshot_settings', domain.name)
 
 @require_superuser # remove for production
 @login_and_domain_required
