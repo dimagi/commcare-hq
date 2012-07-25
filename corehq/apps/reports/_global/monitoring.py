@@ -1,24 +1,36 @@
 from _collections import defaultdict
 import datetime
 import dateutil
+from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.conf import settings
 import pytz
 import sys
 from corehq.apps.reports import util
+from corehq.apps.reports._global.inspect import CaseListReport
 from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.display import xmlns_to_name, FormType
-from corehq.apps.reports.standard import StandardTabularHQReport, StandardHQReport, StandardDateHQReport
+from corehq.apps.reports.standard import StandardTabularHQReport, StandardHQReport, StandardDateHQReport, user_link_template, DATE_FORMAT
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
+from dimagi.utils.web import get_url_base
 
-DATE_FORMAT = "%Y-%m-%d"
 
-class CaseActivityReport(StandardTabularHQReport):
+class MonitoringReportMixin(object):
+
+    @classmethod
+    def get_user_link(cls, domain, user):
+        user_link = user_link_template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[domain, CaseListReport.slug])),
+                                          "user_id": user.user_id,
+                                          "username": user.username_in_report}
+        return user_link
+
+
+class CaseActivityReport(StandardTabularHQReport, MonitoringReportMixin):
     """
     User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
     danny   5 (25%)         10 (50%)        20 (100%)       17                          6
@@ -73,7 +85,7 @@ class CaseActivityReport(StandardTabularHQReport):
             )
 
         def header(self):
-            return util.format_datatables_data(StandardHQReport.get_user_link(self.report.domain, self.user),
+            return util.format_datatables_data(CaseActivityReport.get_user_link(self.report.domain, self.user),
                 self.user.username_in_report)
 
     class TotalRow(object):
@@ -175,7 +187,7 @@ class CaseActivityReport(StandardTabularHQReport):
         ).one() or 0
 
 
-class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
+class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport, MonitoringReportMixin):
     name = "Submissions By Form"
     slug = "submissions_by_form"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
@@ -217,7 +229,7 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
                 except Exception:
                     row.append(0)
             row_sum = sum(row)
-            rows.append([StandardHQReport.get_user_link(self.domain, user)] + [util.format_datatables_data(row_data, row_data) for row_data in row] + [util.format_datatables_data("<strong>%s</strong>" % row_sum, row_sum)])
+            rows.append([self.get_user_link(self.domain, user)] + [util.format_datatables_data(row_data, row_data) for row_data in row] + [util.format_datatables_data("<strong>%s</strong>" % row_sum, row_sum)])
 
         totals_by_form = [totals_by_form[form_type] for form_type in self.form_types]
         self.total_row = ["All Users"] + ["%s" % t for t in totals_by_form] + ["<strong>%s</strong>" % sum(totals_by_form)]
@@ -283,7 +295,7 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport):
         return sorted(form_types)
 
 
-class DailyReport(StandardDateHQReport, StandardTabularHQReport):
+class DailyReport(StandardDateHQReport, StandardTabularHQReport, MonitoringReportMixin):
     couch_view = ''
     fix_left_col = True
     fields = ['corehq.apps.reports.fields.FilterUsersField',
@@ -332,7 +344,7 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport):
                     rows[user_map[user_id]][date_key] += 1
 
         for i, user in enumerate(self.users):
-            rows[i][0] = StandardHQReport.get_user_link(self.domain, user)
+            rows[i][0] = self.get_user_link(self.domain, user)
             total = sum(rows[i][1:-1])
             rows[i][-1] = total
             total_row[1:-1] = [total_row[ind+1]+val for ind, val in enumerate(rows[i][1:-1])]
@@ -358,7 +370,7 @@ class DailyFormCompletionsReport(DailyReport):
     couch_view = 'reports/daily_completions'
 
 
-class FormCompletionTrendsReport(StandardTabularHQReport, StandardDateHQReport):
+class FormCompletionTrendsReport(StandardTabularHQReport, StandardDateHQReport, MonitoringReportMixin):
     name = "Form Completion Trends"
     slug = "completion_times"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
@@ -390,7 +402,7 @@ class FormCompletionTrendsReport(StandardTabularHQReport, StandardDateHQReport):
             globalmax = 0
             for user in self.users:
                 datadict = entrytimes.get_user_data(self.domain, user.user_id, form, self.datespan)
-                rows.append([StandardHQReport.get_user_link(self.domain, user),
+                rows.append([self.get_user_link(self.domain, user),
                              to_minutes(float(datadict["sum"]), float(datadict["count"])),
                              to_minutes(datadict["min"]),
                              to_minutes(datadict["max"]),
