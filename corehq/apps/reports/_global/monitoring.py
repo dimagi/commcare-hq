@@ -540,3 +540,34 @@ class SubmitDistributionReport(StandardHQReport):
             "graph_width": 900,
             "graph_height": 500
         })
+
+
+class FormCompletionVsSubmissionTrendsReport(StandardDateHQReport, StandardTabularHQReport, MonitoringReportMixin):
+    name = "Form Completion vs. Submission Trends"
+    slug = "completion_vs_submission"
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.SelectFormField',
+              'corehq.apps.reports.fields.GroupField',
+              'corehq.apps.reports.fields.SelectMobileWorkerField',
+              'corehq.apps.reports.fields.DatespanField']
+
+    def get_headers(self):
+        return DataTablesHeader(DataTablesColumn("User"),
+            DataTablesColumn("Completion Time"),
+            DataTablesColumn("Submission Time"),
+            DataTablesColumn("Difference", sort_type=DTSortType.NUMERIC))
+
+    def get_rows(self):
+        rows = list()
+        prefix = ["user"]
+        form = self.request_params.get('form', '')
+#        for user in self.users:
+#
+#        rows.append([
+#            "worker",
+#            "date",
+#            "date",
+#            util.format_datatables_data(text="moo", sort_key=0)
+#        ])
+        self.total_row = ["Average", "-", "-", "n days, p hours"]
+        return rows
