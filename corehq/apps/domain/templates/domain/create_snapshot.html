@@ -43,6 +43,11 @@
         {% endfor %}
 
         _.each(ids, function (id) {
+            var publish = $('#id_' + id + '-publish');
+            publish.change(function () {
+                $(this).parent().parent().siblings().slideToggle();
+            });
+            publish.parent().parent().siblings().toggle(publish.is(':checked'))
             $('#id_' + id + '-deployment_date').datepicker({
                 changeMonth: true,
                 changeYear: true,

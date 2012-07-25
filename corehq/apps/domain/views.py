@@ -269,7 +269,7 @@ def create_snapshot(request, domain):
         app_forms = []
         for app in domain.applications():
             app = app.get_latest_saved() or app
-            app_forms.append((app, SnapshotApplicationForm(prefix=app.id)))
+            app_forms.append((app, SnapshotApplicationForm(initial={'publish': True}, prefix=app.id)))
         return render_to_response(request, 'domain/create_snapshot.html',
             {'domain': domain.name,
              'form': form,
@@ -279,9 +279,18 @@ def create_snapshot(request, domain):
     elif request.method == 'POST':
         form = SnapshotSettingsForm(request.POST)
         app_forms = []
+        publishing = False
         for app in domain.applications():
             app = app.get_latest_saved() or app
             app_forms.append((app, SnapshotApplicationForm(request.POST, prefix=app.id)))
+            publishing = publishing or request.POST.get("%s-publish" % app.id, False)
+        if not publishing:
+            messages.error(request, "Cannot publish a project without applications to the Project Store")
+            return render_to_response(request, 'domain/create_snapshot.html',
+                {'domain': domain.name,
+                 'form': form,
+                 'app_forms': app_forms,
+                 'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
         if not form.is_valid():
             return render_to_response(request, 'domain/create_snapshot.html',
                     {'domain': domain.name,
@@ -309,16 +318,19 @@ def create_snapshot(request, domain):
 
         for application in new_domain.full_applications():
             original_id = application.original_doc
-            application.description = request.POST["%s-description" % original_id]
-            date_picked = request.POST["%s-deployment_date" % original_id].split('-')
-            if len(date_picked) > 1:
-                if int(date_picked[0]) > 2009 and date_picked[1] and date_picked[2]:
-                    application.deployment_date = datetime.datetime(int(date_picked[0]), int(date_picked[1]), int(date_picked[2]))
-            application.phone_model = request.POST["%s-phone_model" % original_id]
-            application.attribution_notes = request.POST["%s-attribution_notes" % original_id]
-            application.user_type = request.POST["%s-user_type" % original_id]
-            if application.description != '':
-                application.save()
+            if request.POST.get("%s-publish" % original_id, False):
+                application.description = request.POST["%s-description" % original_id]
+                date_picked = request.POST["%s-deployment_date" % original_id].split('-')
+                if len(date_picked) > 1:
+                    if int(date_picked[0]) > 2009 and date_picked[1] and date_picked[2]:
+                        application.deployment_date = datetime.datetime(int(date_picked[0]), int(date_picked[1]), int(date_picked[2]))
+                application.phone_model = request.POST["%s-phone_model" % original_id]
+                application.attribution_notes = request.POST["%s-attribution_notes" % original_id]
+                application.user_type = request.POST["%s-user_type" % original_id]
+                if application.description != '':
+                    application.save()
+            else:
+                application.delete()
 
         if new_domain is None:
             return render_to_response(request, 'domain/snapshot_settings.html',

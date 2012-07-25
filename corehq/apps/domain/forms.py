@@ -91,6 +91,7 @@ class SnapshotSettingsMixin(forms.Form):
         help_text="e.g. MCH, HIV, etc.")
 
 class SnapshotApplicationForm(forms.Form):
+    publish = BooleanField(label="Publish?", required=False)
     description = CharField(label="Description", required=False, widget=forms.Textarea)
     deployment_date = CharField(label="Deployment date", required=False)
     phone_model = CharField(label="Phone model", required=False)
