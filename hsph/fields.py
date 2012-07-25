@@ -64,14 +64,14 @@ class NameOfDCTLField(ReportSelectField):
     @classmethod
     def get_dctl_list(cls):
         data_type = FixtureDataType.by_domain_tag(cls.domain, 'dctl').first()
-        data_items = FixtureDataItem.by_data_type(cls.domain, data_type.get_id)
+        data_items = FixtureDataItem.by_data_type(cls.domain, data_type.get_id if data_type else None)
         return [dict(text=item.fields.get("name"), val=item.fields.get("id")) for item in data_items]
 
     @classmethod
     def get_users_per_dctl(cls):
         dctls = dict()
         data_type = FixtureDataType.by_domain_tag(cls.domain, 'dctl').first()
-        data_items = FixtureDataItem.by_data_type(cls.domain, data_type.get_id)
+        data_items = FixtureDataItem.by_data_type(cls.domain, data_type.get_id if data_type else None)
         for item in data_items:
             dctls[item.fields.get("id")] = item.get_users(wrap=False)
         return dctls

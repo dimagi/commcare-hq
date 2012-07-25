@@ -19,7 +19,7 @@ class HSPHFieldManagementReport(StandardTabularHQReport, StandardDateHQReport):
     def get_parameters(self):
         self.selected_dctl = self.request.GET.get(NameOfDCTLField.slug, '')
         self.dctl_fixture = FixtureDataType.by_domain_tag(self.domain, "dctl").first()
-        self.dctl_fixture = self.dctl_fixture.get_id
+        self.dctl_fixture = self.dctl_fixture.get_id if self.dctl_fixture else None
 
     def user_to_dctl(self, user):
         dctl_name = "Unknown DCTL"
