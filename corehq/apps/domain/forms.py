@@ -83,15 +83,16 @@ class DomainSelectionForm(forms.Form):
 ########################################################################################################
 
 class SnapshotSettingsMixin(forms.Form):
-    description = CharField(label="Description", required=False, widget=forms.Textarea)
-    license = ChoiceField(label='License', required=False, choices=LICENSES.items(), help_text=render_to_string('domain/partials/license_explanations.html'))
     city = CharField(label="City", required=False)
     country = CharField(label="Country", required=False)
     region = CharField(label="Region", required=False,
         help_text="e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc.")
     project_type = CharField(label="Project Category", required=False,
         help_text="e.g. MCH, HIV, etc.")
-#    deployment_date = DateField(label="Deployment date", required=False, widget=SelectDateWidget(years=range(2009, datetime.date.today().year+10)))
+
+class SnapshotApplicationForm(forms.Form):
+    publish = BooleanField(label="Publish?", required=False)
+    description = CharField(label="Description", required=False, widget=forms.Textarea)
     deployment_date = CharField(label="Deployment date", required=False)
     phone_model = CharField(label="Phone model", required=False)
     user_type = CharField(label="User type", required=False,
@@ -102,10 +103,10 @@ class SnapshotSettingsMixin(forms.Form):
 class SnapshotSettingsForm(SnapshotSettingsMixin):
     title = CharField(label="Title", required=True)
     author = CharField(label="Author name", required=True)
-    description = CharField(label="Description", required=True,
-        widget=forms.Textarea, help_text="Be sure to add attribution notes and a description of the internal details of the project")
     project_type = CharField(label="Project Category", required=True,
         help_text="e.g. MCH, HIV, etc.")
+    license = ChoiceField(label='License', required=False, choices=LICENSES.items(), help_text=render_to_string('domain/partials/license_explanations.html'))
+    description = CharField(label="Description", required=False, widget=forms.Textarea)
 
     def __init__(self, *args, **kw):
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
@@ -117,11 +118,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             'city',
             'country',
             'region',
-            'project_type',
-            'user_type',
-            'deployment_date',
-            'phone_model',
-            'attribution_notes']
+            'project_type']
 
 ########################################################################################################
 
@@ -152,10 +149,6 @@ class DomainGlobalSettingsForm(forms.Form):
             return False
 
 class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
-    is_shared = BooleanField(label='Publicly Available', help_text="""
-By checking this box, you are sharing this project with our other clients. This project's contents will be put in the
-public domain.
-""", required=False)
     customer_type = ChoiceField(label='Customer Type', 
                                 choices=(('basic', 'Basic'), ('plus', 'Plus'), ('full', 'Full')))
     is_test = ChoiceField(label='Test Project', choices=(('false', 'Real'), ('true', 'Test')))
