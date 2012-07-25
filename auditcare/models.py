@@ -412,7 +412,7 @@ class AccessAudit(AuditEvent):
         '''
         audit = cls.create_audit(cls, username)
         audit.ip_address = utils.get_ip(request)
-        audit.access_type = 'failed'
+        audit.access_type = 'login_failed'
         if username != None:
             audit.description = "Login Failure: %s" % (username)
         else:
