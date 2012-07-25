@@ -118,6 +118,8 @@ class StandardHQReport(HQReport):
         return super(StandardHQReport, self).as_json()
 
 
+# TODO Make everything below a mixin instead of a subclass where possible...
+
 class StandardTabularHQReport(StandardHQReport):
     total_row = None
     default_rows = 10
