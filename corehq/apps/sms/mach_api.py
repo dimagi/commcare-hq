@@ -1,3 +1,4 @@
+import logging
 from corehq.apps.sms.util import clean_outgoing_sms_text
 import urllib
 from django.conf import settings
@@ -17,6 +18,11 @@ def send(msg):
     url = "%s?%s" % (settings.SMS_GATEWAY_URL, settings.SMS_GATEWAY_PARAMS % context)
     # just opening the url is enough to send the message
     # TODO, check response
-    resp = urllib2.urlopen(url)
-    
-    
+    resp = urllib2.urlopen(url).read()
+
+    try:
+        # attempt to bill client
+        from hqpayments.tasks import bill_client_for_sms
+        bill_client_for_sms('MachSMSBillableItem', msg, **dict(response=resp))
+    except Exception as e:
+        logging.debug("MACH API contacted, errors in billing. Error: %s" % e)
