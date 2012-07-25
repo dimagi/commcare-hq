@@ -57,16 +57,8 @@
             <h6>None</h6>
         {% endif %}
     </dd>
-    {% if project.phone_model %}
-    <dt>Phone model</dt>
-    <dd>{{ project.phone_model }}</dd>
-    {% endif %}
-    {% if project.user_type %}
     <dt>Users</dt>
     <dd>{{ project.copied_from.all_users|length }}</dd>
-    <dt>User type</dt>
-    <dd>{{ project.user_type }}</dd>
-    {% endif %}
     {% if project.city %}
     <dt>City</dt>
     <dd>{{ project.city }}</dd>
@@ -87,10 +79,6 @@
         None
         {% endif %}
     </dd>
-    {% if project.deployment_date %}
-    <dt>Deployment date</dt>
-    <dd>{{ project.deployment_date.date }}</dd>
-    {% endif %}
     <dt>Active?</dt>
     <dd>
         {{ project.copied_from.recent_submissions|yesno:"Yes,No" }}
@@ -123,6 +111,18 @@
                             <dd>
                                 Version {{ app.application_version }}
                             </dd>
+                            {% if app.user_type %}
+                                <dt>User type</dt>
+                                <dd>{{ app.user_type }}</dd>
+                            {% endif %}
+                            {% if app.phone_model %}
+                                <dt>Phone model</dt>
+                                <dd>{{ app.phone_model }}</dd>
+                            {% endif %}
+                            {% if app.deployment_date %}
+                                <dt>Deployment date</dt>
+                                <dd>{{ app.deployment_date.date }}</dd>
+                            {% endif %}
                             {% if app.description %}
                                 <dt>{% trans 'Description' %}</dt>
                                 <dd>

@@ -780,8 +780,13 @@ class ApplicationBase(VersionedDoc):
     # only the languages that go in the build
     build_langs = StringListProperty()
 
+    # project store properties
     cached_properties = DictProperty()
     description = StringProperty()
+    deployment_date = DateTimeProperty()
+    phone_model = StringProperty()
+    user_type = StringProperty()
+    attribution_notes = StringProperty()
 
     # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)

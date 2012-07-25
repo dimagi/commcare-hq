@@ -10,7 +10,7 @@ from django.shortcuts import redirect
 
 from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required, require_previewer
 from corehq.apps.domain.forms import DomainSelectionForm, DomainGlobalSettingsForm,\
-    DomainMetadataForm, SnapshotSettingsForm
+    DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 
@@ -263,35 +263,40 @@ def snapshot_settings(request, domain):
 @domain_admin_required
 def create_snapshot(request, domain):
     domain = Domain.get_by_name(domain)
-    form = SnapshotSettingsForm()
-    latest_applications = [app.get_latest_saved() or app for app in domain.applications()]
+    #latest_applications = [app.get_latest_saved() or app for app in domain.applications()]
     if request.method == 'GET':
+        form = SnapshotSettingsForm()
+        app_forms = []
+        for app in domain.applications():
+            app = app.get_latest_saved() or app
+            app_forms.append((app, SnapshotApplicationForm(prefix=app.id)))
         return render_to_response(request, 'domain/create_snapshot.html',
             {'domain': domain.name,
              'form': form,
-             'latest_applications': latest_applications,
+             #'latest_applications': latest_applications,
+             'app_forms': app_forms,
              'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
     elif request.method == 'POST':
         form = SnapshotSettingsForm(request.POST)
+        app_forms = []
+        for app in domain.applications():
+            app = app.get_latest_saved() or app
+            app_forms.append((app, SnapshotApplicationForm(request.POST, prefix=app.id)))
         if not form.is_valid():
             return render_to_response(request, 'domain/create_snapshot.html',
                     {'domain': domain.name,
-                     'form': form})
+                     'form': form,
+                     #'latest_applications': latest_applications,
+                     'app_forms': app_forms,
+                     'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
         new_domain = domain.save_snapshot()
         if request.POST['license'] in LICENSES.keys():
             new_domain.license = request.POST['license']
         new_domain.description = request.POST['description']
-        new_domain.attribution_notes = request.POST['attribution_notes']
         new_domain.project_type = request.POST['project_type']
         new_domain.region = request.POST['region']
         new_domain.city = request.POST['city']
         new_domain.country = request.POST['country']
-        date_picked = request.POST['deployment_date'].split('-')
-        if len(date_picked) > 1:
-            if int(date_picked[0]) > 2009 and date_picked[1] and date_picked[2]:
-                new_domain.deployment_date = datetime.datetime(int(date_picked[0]), int(date_picked[1]), int(date_picked[2]))
-        new_domain.phone_model = request.POST['phone_model']
-        new_domain.user_type = request.POST['user_type']
         new_domain.title = request.POST['title']
         new_domain.author = request.POST['author']
         for snapshot in domain.snapshots():
@@ -304,7 +309,14 @@ def create_snapshot(request, domain):
 
         for application in new_domain.full_applications():
             original_id = application.original_doc
-            application.description = request.POST["%s_description" % original_id]
+            application.description = request.POST["%s-description" % original_id]
+            date_picked = request.POST["%s-deployment_date" % original_id].split('-')
+            if len(date_picked) > 1:
+                if int(date_picked[0]) > 2009 and date_picked[1] and date_picked[2]:
+                    application.deployment_date = datetime.datetime(int(date_picked[0]), int(date_picked[1]), int(date_picked[2]))
+            application.phone_model = request.POST["%s-phone_model" % original_id]
+            application.attribution_notes = request.POST["%s-attribution_notes" % original_id]
+            application.user_type = request.POST["%s-user_type" % original_id]
             if application.description != '':
                 application.save()
 
@@ -312,7 +324,8 @@ def create_snapshot(request, domain):
             return render_to_response(request, 'domain/snapshot_settings.html',
                     {'domain': domain.name,
                      'form': form,
-                     'latest_applications': latest_applications,
+                     #'latest_applications': latest_applications,
+                     'app_forms': app_forms,
                      'error_message': 'Snapshot creation failed; please try again'})
 
         messages.success(request, "Created snapshot. The snapshot will be posted to the project store pending approval by admins.")

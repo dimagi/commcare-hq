@@ -101,7 +101,7 @@ class Domain(Document):
     cached_properties = DictProperty()
 
     # to be eliminated from projects and related documents when they are copied for the project store
-    _dirty_fields = ('admin_password', 'admin_password_charset')
+    _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'country', 'region', 'customer_type')
 
     @classmethod
     def wrap(cls, data):
