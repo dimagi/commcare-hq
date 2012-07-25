@@ -26,7 +26,7 @@ def send(msg, *args, **kwargs):
     try:
         # attempt to bill client
         from hqpayments.tasks import bill_client_for_sms
-        bill_client_for_sms('TropoSMSBillableItem', msg)
+        bill_client_for_sms('TropoSMSBillableItem', msg, **dict(response=response))
     except Exception as e:
-        logging.debug("UNICEL API contacted, errors in billing. Error: %s" % e)
+        logging.debug("TROPO API contacted, errors in billing. Error: %s" % e)
 
