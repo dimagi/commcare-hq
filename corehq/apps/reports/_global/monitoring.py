@@ -27,7 +27,7 @@ class MonitoringReportMixin(object):
         user_link = user_link_template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[domain, CaseListReport.slug])),
                                           "user_id": user.user_id,
                                           "username": user.username_in_report}
-        return user_link
+        return util.format_datatables_data(text=user_link, sort_key=user.username_in_report)
 
 
 class CaseActivityReport(StandardTabularHQReport, MonitoringReportMixin):
@@ -85,8 +85,7 @@ class CaseActivityReport(StandardTabularHQReport, MonitoringReportMixin):
             )
 
         def header(self):
-            return util.format_datatables_data(CaseActivityReport.get_user_link(self.report.domain, self.user),
-                self.user.username_in_report)
+            return CaseActivityReport.get_user_link(self.report.domain, self.user)
 
     class TotalRow(object):
         def __init__(self, rows, header):
@@ -542,32 +541,93 @@ class SubmitDistributionReport(StandardHQReport):
         })
 
 
-class FormCompletionVsSubmissionTrendsReport(StandardDateHQReport, StandardTabularHQReport, MonitoringReportMixin):
+class FormCompletionVsSubmissionTrendsReport(StandardTabularHQReport, StandardDateHQReport, MonitoringReportMixin):
     name = "Form Completion vs. Submission Trends"
     slug = "completion_vs_submission"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectFormField',
+              'corehq.apps.reports.fields.SelectAllFormField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.SelectMobileWorkerField',
               'corehq.apps.reports.fields.DatespanField']
 
     def get_headers(self):
-        return DataTablesHeader(DataTablesColumn("User"),
-            DataTablesColumn("Completion Time"),
-            DataTablesColumn("Submission Time"),
-            DataTablesColumn("Difference", sort_type=DTSortType.NUMERIC))
+        return DataTablesHeader(DataTablesColumn("User", span=3),
+            DataTablesColumn("Completion Time", span=2),
+            DataTablesColumn("Submission Time", span=2),
+            DataTablesColumn("View", sortable=False, span=2),
+            DataTablesColumn("Difference", sort_type=DTSortType.NUMERIC, span=3)
+        )
 
     def get_rows(self):
         rows = list()
         prefix = ["user"]
-        form = self.request_params.get('form', '')
-#        for user in self.users:
-#
-#        rows.append([
-#            "worker",
-#            "date",
-#            "date",
-#            util.format_datatables_data(text="moo", sort_key=0)
-#        ])
-        self.total_row = ["Average", "-", "-", "n days, p hours"]
+        selected_form = self.request_params.get('form')
+        if selected_form:
+            prefix.append("form_type")
+        total = 0
+        total_seconds = 0
+        for user in self.users:
+            key = [" ".join(prefix), self.domain, user.userID]
+            if selected_form:
+                key.append(selected_form)
+            data = get_db().view("reports/completion_vs_submission",
+                startkey=key+[self.datespan.startdate_param_utc],
+                endkey=key+[self.datespan.enddate_param_utc],
+                reduce=False
+            ).all()
+            for item in data:
+                vals = item.get('value')
+                completion_time = dateutil.parser.parse(vals.get('completion_time'))
+                submission_time = dateutil.parser.parse(vals.get('submission_time'))
+                td = submission_time-completion_time
+
+                DFORMAT  = "%d %b %Y, %H:%M"
+                td_total = td.total_seconds()
+
+                rows.append([
+                    self.get_user_link(self.domain, user),
+                    completion_time.strftime(DFORMAT),
+                    submission_time.strftime(DFORMAT),
+                    self.view_form_link(item.get('id', '')),
+                    util.format_datatables_data(text=self.format_td_status(td), sort_key=td_total)
+                ])
+
+                if td_total >= 0:
+                    total_seconds += td_total
+                    total += 1
+
+        self.total_row = ["Average", "-", "-", "-", self.format_td_status(int(total_seconds/total), False) if total > 0 else "--"]
         return rows
+
+    def format_td_status(self, td, use_label=True):
+        status = list()
+        template = '<span class="label %(klass)s">%(status)s</span>'
+        klass = ""
+        if isinstance(td, int):
+            td = datetime.timedelta(seconds=td)
+        if isinstance(td, datetime.timedelta):
+            hours = td.seconds//3600
+            minutes = (td.seconds//60)%60
+            vals = [td.days, hours, minutes, (td.seconds - hours*3600 - minutes*60)]
+            names = ["day", "hour", "minute", "second"]
+            status = ["%s %s%s" % (val, names[i], "s" if val != 1 else "") for (i, val) in enumerate(vals) if val > 0]
+
+            if td.days > 1:
+                klass = "label-important"
+            elif td.days == 1:
+                klass = "label-warning"
+            elif hours > 5:
+                klass = "label-info"
+            if not status:
+                status.append("same")
+            elif td.days < 0:
+                status = ["submitted before completed [strange]"]
+                klass = "label-inverse"
+
+        if use_label:
+            return template % dict(status=", ".join(status), klass=klass)
+        else:
+            return ", ".join(status)
+
+    def view_form_link(self, instance_id):
+        return '<a class="btn" href="%s">View Form</a>' % reverse('render_form_data', args=[self.domain, instance_id])
