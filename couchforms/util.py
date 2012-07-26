@@ -113,9 +113,9 @@ def _handle_id_conflict(instance, attachments):
         
         # if we get here search more creatively for some of the older
         # formats
-        _PATTERNS = (r"<instanceID>(\w+)</instanceID>", 
-                     r"<uid>(\w+)</uid>", 
-                     r"<uuid>(\w+)</uuid>")
+        _PATTERNS = (r"<instanceID>([\w-]+)</instanceID>",
+                     r"<uid>([\w-]+)</uid>",
+                     r"<uuid>([\w-]+)</uuid>")
         for pattern in _PATTERNS:
             if re.search(pattern, xml): 
                 return re.search(pattern, xml).groups()[0]
