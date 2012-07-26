@@ -134,7 +134,7 @@ class FixtureDataItem(Document):
         if isinstance(data_type, basestring):
             data_type_id = data_type
         else:
-            data_type_id = data_type.get_id
+            data_type_id = data_type.get_id if data_type else None
         return cls.view('fixtures/data_items_by_domain_type', key=[domain, data_type], reduce=False, include_docs=True)
 
 class FixtureOwnership(Document):

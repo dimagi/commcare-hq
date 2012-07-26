@@ -232,18 +232,37 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
 @require_can_edit_commcare_users
 def commcare_users(request, domain, template="users/commcare_users.html"):
     show_inactive = json.loads(request.GET.get('show_inactive', 'false'))
+    cannot_share = json.loads(request.GET.get('cannot_share', 'false'))
     context = _users_context(request, domain)
-    users = CommCareUser.by_domain(domain)
-    if show_inactive:
-        users = list(users)
-        users.extend(CommCareUser.by_domain(domain, is_active=False))
+    if cannot_share:
+        users = CommCareUser.cannot_share(domain)
+    else:
+        users = CommCareUser.by_domain(domain)
+        if show_inactive:
+            users = list(users)
+            users.extend(CommCareUser.by_domain(domain, is_active=False))
     context.update({
         'commcare_users': users,
-        'show_case_sharing': Domain.get_by_name(domain).case_sharing,
+        'groups': Group.get_case_sharing_groups(domain),
+        'show_case_sharing': request.project.case_sharing_included(),
         'show_inactive': show_inactive,
+        'cannot_share': cannot_share,
         'reset_password_form': SetPasswordForm(user="")
     })
     return render_to_response(request, template, context)
+
+@require_can_edit_commcare_users
+def set_commcare_user_group(request, domain):
+    user_id = request.GET.get('user', '')
+    user = CommCareUser.get_by_user_id(user_id)
+    group_name = request.GET.get('group', '')
+    group = Group.by_name(domain, group_name)
+    if not user.is_commcare_user() or user.domain != domain or not group:
+        return HttpResponseForbidden()
+    for group in user.get_case_sharing_groups():
+        group.remove_user(user)
+    group.add_user(user)
+    return HttpResponseRedirect(reverse('commcare_users', args=[domain]))
 
 @require_can_edit_commcare_users
 def archive_commcare_user(request, domain, user_id, is_active=False):
@@ -666,6 +685,7 @@ def add_commcare_account(request, domain, template="users/add_commcare_account.h
     context = _users_context(request, domain)
     if request.method == "POST":
         form = CommCareAccountForm(request.POST)
+        form.password_format = request.project.password_format()
         if form.is_valid():
             username = form.cleaned_data["username"]
             password = form.cleaned_data["password"]
@@ -676,6 +696,7 @@ def add_commcare_account(request, domain, template="users/add_commcare_account.h
     else:
         form = CommCareAccountForm()
     context.update(form=form)
+    context.update(only_numeric=(request.project.password_format() == 'n'))
     return render_to_response(request, template, context)
 
 class UploadCommCareUsers(TemplateView):

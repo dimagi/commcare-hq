@@ -10,6 +10,7 @@ from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from corehq.apps.users.models import CouchUser, WebUser, OldRoles, DomainMembership
 from corehq.apps.users.util import format_username
 from corehq.apps.app_manager.models import validate_lang
+import re
 
 def wrapped_language_validation(value):
     try:
@@ -99,9 +100,9 @@ class CommCareAccountForm(forms.Form):
     """
     Form for CommCareAccounts
     """
-    username = forms.CharField(max_length=15)
-    password = forms.CharField(widget=PasswordInput())
-    password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput())
+    username = forms.CharField(max_length=15, required=True)
+    password = forms.CharField(widget=PasswordInput(), required=True, min_length=1, help_text="Only numbers are allowed in passwords")
+    password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
     domain = forms.CharField(widget=HiddenInput())
     
     class Meta:
@@ -116,6 +117,8 @@ class CommCareAccountForm(forms.Form):
         else:
             if password != password_2:
                 raise forms.ValidationError("Passwords do not match")
+            if self.password_format == 'n' and not password.isnumeric():
+                raise forms.ValidationError("Password is not numeric")
 
         try:
             username = self.cleaned_data['username']

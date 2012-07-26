@@ -836,6 +836,10 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
             )])
         )
 
+    @classmethod
+    def cannot_share(cls, domain):
+        return [user for user in cls.by_domain(domain) if len(user.get_case_sharing_groups()) != 1]
+
     def is_commcare_user(self):
         return True
 
@@ -913,7 +917,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
 
     @property
     def case_count(self):
-        result = CommCareCase.view('case/by_owner',
+        result = CommCareCase.view('case/by_user',
             startkey=[self.user_id],
             endkey=[self.user_id, {}],
             group_level=0

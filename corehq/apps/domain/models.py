@@ -141,6 +141,16 @@ class Domain(Document):
                                     startkey=[self.name],
                                     endkey=[self.name, {}]).all()
 
+    def full_applications(self):
+        from corehq.apps.app_manager.models import Application, RemoteApp
+        def wrap_by_doc_type(r):
+            return {'Application': Application, 'RemoteApp': RemoteApp}[r['doc']['doc_type']].wrap(r['doc'])
+        return get_db().view('app_manager/applications',
+                                    include_docs=True,
+                                    startkey=[self.name],
+                                    endkey=[self.name, {}],
+                                    wrapper=wrap_by_doc_type).all()
+
     def languages(self):
         apps = self.applications()
         return set(chain.from_iterable([a.langs for a in apps]))
@@ -191,11 +201,25 @@ class Domain(Document):
             new_domain.save()
             return new_domain
 
+    def password_format(self):
+        """
+        If a single application is alphanumeric, return alphanumeric; otherwise, return numeric
+        """
+        for app in self.full_applications():
+            if hasattr(app, 'profile'):
+                format = app.profile.get('properties', {}).get('password_format', 'n')
+                if format == 'a':
+                    return 'a'
+        return 'n'
+
     @classmethod
     def get_all(cls):
         return Domain.view("domain/domains",
                             reduce=False,
                             include_docs=True).all()
+
+    def case_sharing_included(self):
+        return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
 
     def save_copy(self, new_domain_name=None, user=None):
         from corehq.apps.app_manager.models import RemoteApp, Application

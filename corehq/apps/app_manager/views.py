@@ -12,6 +12,7 @@ from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.resource_conflict import repeat, retry_resource
 from django.utils import simplejson
+from django.utils.http import urlencode as django_urlencode
 import os
 import re
 
@@ -27,7 +28,7 @@ from corehq.apps.hqmedia import upload
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import Permissions, CommCareUser
 
 from dimagi.utils.web import render_to_response, json_response, json_request
 
@@ -406,12 +407,15 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     saved_apps = ApplicationBase.view('app_manager/saved_app',
         startkey=[domain, app.id, {}],
         endkey=[domain, app.id],
+        include_doc=True,
         descending=True
     ).all()
+    users_cannot_share = CommCareUser.cannot_share(domain)
     context.update({
         'release_manager': True,
         'saved_apps': saved_apps,
         'latest_release': latest_release,
+        'users_cannot_share': users_cannot_share,
     })
     if not app.is_remote_app():
         sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
@@ -1024,6 +1028,16 @@ def rename_language(req, domain, form_unique_id):
         response = HttpResponse(json.dumps({'status': 'error', 'message': unicode(e)}))
         response.status_code = 409
         return response
+
+@require_GET
+@login_and_domain_required
+def validate_language(request, domain, app_id):
+    app = get_app(domain, app_id)
+    term = request.GET.get('term', '').lower()
+    if term in [lang.lower() for lang in app.langs]:
+        return HttpResponse(json.dumps({'match': {"code": term, "name": term}, 'suggestions': []}))
+    else:
+        return HttpResponseRedirect("%s?%s" % (reverse('langcodes.views.validate', args=[]), django_urlencode({'term': term})))
 
 @require_POST
 @require_can_edit_apps
