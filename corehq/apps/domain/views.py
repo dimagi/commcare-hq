@@ -227,9 +227,6 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
                 'project_type': domain.project_type,
                 'customer_type': domain.customer_type,
                 'is_test': json.dumps(domain.is_test),
-                'description': domain.description,
-                'is_shared': domain.is_shared,
-                'license': domain.license
             })
         else:
             form = DomainGlobalSettingsForm(initial={
@@ -265,7 +262,14 @@ def create_snapshot(request, domain):
     domain = Domain.get_by_name(domain)
     #latest_applications = [app.get_latest_saved() or app for app in domain.applications()]
     if request.method == 'GET':
-        form = SnapshotSettingsForm()
+        form = SnapshotSettingsForm(initial={
+                'default_timezone': domain.default_timezone,
+                'case_sharing': json.dumps(domain.case_sharing),
+                'city': domain.city,
+                'country': domain.country,
+                'region': domain.region,
+                'project_type': domain.project_type,
+            })
         app_forms = []
         for app in domain.applications():
             app = app.get_latest_saved() or app

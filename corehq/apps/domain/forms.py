@@ -164,15 +164,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             domain.project_type = self.cleaned_data['project_type']
             domain.customer_type = self.cleaned_data['customer_type']
             domain.is_test = self.cleaned_data['is_test'] == 'true'
-            domain.license = self.cleaned_data['license']
-            domain.is_shared = self.cleaned_data['is_shared']
-            domain.description = self.cleaned_data['description']
-            if 'deployment_date' in self.cleaned_data and self.cleaned_data['deployment_date'] != '':
-                year, month, day = map(int, self.cleaned_data['deployment_date'].split('-'))
-                domain.deployment_date = datetime.datetime(year, month, day)
-            else:
-                domain.deployment_date = None
-            domain.phone_model = self.cleaned_data.get('phone_model', '')
             domain.save()
             return True
         except Exception:

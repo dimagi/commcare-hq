@@ -1219,8 +1219,6 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
                 raise Exception("unexpected role_qualified_id: %r" % role_qualified_id)
 
 class WebUser(CouchUser, AuthorizableMixin):
-    domains = StringListProperty()
-    domain_memberships = SchemaListProperty(DomainMembership)
     betahack = BooleanProperty(default=False)
     teams = StringListProperty()
 
