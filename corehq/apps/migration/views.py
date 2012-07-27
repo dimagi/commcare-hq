@@ -170,11 +170,7 @@ def resubmit_for_users(request, domain):
             forms = []
             for form in tasks.forms_for_cases_for_users(id_mapping['users'].keys(), domain):
                 new_id = submission_xml.IdMap(url)(form.get_id)
-                try:
-                    XFormInstance.get(new_id)
-                    went_through = True
-                except Exception:
-                    went_through = False
+                went_through = get_db().doc_exist(new_id)
                 if not went_through:
                     new_xml = prepare_for_resubmission(form.get_xml(), copy(user_id_mapping), copy(group_id_mapping), salt=url)
                     forms.append({

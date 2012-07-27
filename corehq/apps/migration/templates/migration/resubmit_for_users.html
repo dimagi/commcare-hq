@@ -78,8 +78,7 @@
                         }
                     });
                 };
-                this.check = function (value) {
-                    value = value || 'check';
+                this.post = function (value) {
                     var data = JSON.parse(self.dataJSON());
                     data[value] = true;
                     $.ajax({
@@ -103,8 +102,11 @@
                         }
                     });
                 };
+                this.check = function () {
+                    return self.post('check');
+                };
                 this.debug = function () {
-                    return self.check('debug');
+                    return self.post('debug');
                 };
             }
             ko.applyBindings(new ResubmitForUsersUI());
