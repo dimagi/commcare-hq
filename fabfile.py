@@ -82,7 +82,7 @@ def preindex_views():
             sudo('nohup python manage.py sync_prepare_couchdb > preindex_views.out 2> preindex_views.err', user=env.sudo_user)
 
 def update_code():
-    sudo('git pull', user=env.sudo_user)
+    sudo('git pull origin master', user=env.sudo_user)
     sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
     sudo('git pull', user=env.sudo_user)
     sudo('git submodule sync', user=env.sudo_user)
