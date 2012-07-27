@@ -584,10 +584,7 @@ class FormCompletionVsSubmissionTrendsReport(StandardTabularHQReport, StandardDa
                 td = submission_time-completion_time
 
                 DFORMAT  = "%d %b %Y, %H:%M"
-                if isinstance(td, datetime.timedelta):
-                    td_total = td.total_seconds()
-                else:
-                    td_total = 0
+                td_total = (td.seconds + td.days * 24 * 3600)
 
                 rows.append([
                     self.get_user_link(self.domain, user),
