@@ -90,6 +90,7 @@
                 langcodes: {{ xform_languages|JSON }},
                 edit: edit,
                 renameURL: "{% url corehq.apps.app_manager.views.rename_language app.domain form.unique_id %}",
+                validateURL: "{% url corehq.apps.app_manager.views.validate_language app.domain app.id %}"
             });
             var form_empty = {% if form.source %}false{% else %}true{% endif %};
         {% if is_user_registration %}

@@ -176,11 +176,13 @@ class Domain(Document):
         couch_user.save()
 
     def applications(self):
+        from corehq.apps.app_manager.models import ApplicationBase
         return ApplicationBase.view('app_manager/applications_brief',
                                     startkey=[self.name],
                                     endkey=[self.name, {}]).all()
 
     def full_applications(self):
+        from corehq.apps.app_manager.models import Application, RemoteApp
         WRAPPERS = {'Application': Application, 'RemoteApp': RemoteApp}
         def wrap_application(a):
             return WRAPPERS[a['doc']['doc_type']].wrap(a['doc'])
@@ -282,14 +284,30 @@ class Domain(Document):
             new_domain.save()
             return new_domain
 
+    def password_format(self):
+        """
+        If a single application is alphanumeric, return alphanumeric; otherwise, return numeric
+        """
+        for app in self.full_applications():
+            if hasattr(app, 'profile'):
+                format = app.profile.get('properties', {}).get('password_format', 'n')
+                if format == 'a':
+                    return 'a'
+        return 'n'
+
     @classmethod
     def get_all(cls):
         return Domain.view("domain/not_snapshots",
                             reduce=False,
                             include_docs=True).all()
 
+    def case_sharing_included(self):
+        return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
+
     def save_copy(self, new_domain_name=None, user=None):
         from corehq.apps.hqmedia import utils
+        from corehq.apps.app_manager.models import RemoteApp, Application
+        from corehq.apps.users.models import UserRole
         if new_domain_name is not None and Domain.get_by_name(new_domain_name):
             return None
         db = get_db()
@@ -554,8 +572,3 @@ class OldDomain(models.Model):
         
     def __unicode__(self):
         return self.name
-
-# added after Domain is defined as per http://stackoverflow.com/questions/7199466/how-to-break-import-loop-in-python
-# to prevent import loop errors (since corehq.apps.app_manager.models has to import Domain back)
-from corehq.apps.app_manager.models import ApplicationBase, import_app, RemoteApp, Application, get_app
-from corehq.apps.users.models import UserRole

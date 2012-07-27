@@ -15,30 +15,43 @@ from couchexport.models import Format
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 
+# Eventually this should all be merged with the StandardHQReport structure. Someday.
+# Too confusing to have this and standard.py be essentially very similar things.
+
 class HQReport(object):
-    name = ""
-    slug = ""
-    base_slug = None # for instance, 'reports' or 'manage'
+    name = "" # the name of the report, will show up in navigation sidebar
+    base_slug = None # (ex: manage, billing, reports)
+    slug = "" # report's unique (per base_slug) url slug
 
-    description = ""
     report_partial = None
-    title = None
-    headers = None
-    rows = None
-    individual = None
-    case_type = None
-    group = None
-    form = None,
-    datespan = None
-    show_time_notice = False
-    fields = []
-    exportable = False
 
-    asynchronous = False
-    template_name = None
+    # used in StandardHQReport --- should check on how these are used in legacy custom reports
+    individual = None # selected mobile worker
+    case_type = None # case id
+    group = None #group id
 
+    # others
+    show_time_notice = False # This report is in <foo> timezone. Current time is <bar>.
+    fields = [] # all the report filters
+    exportable = False # legacy custom reports export differently from StandardTabularHQReport
+
+    asynchronous = False # to display the "loading..." notification or not. Mostly set to False for custom legacy reports and True for new reports
+    template_name = None # the default main template to use for this report (usually a template in the async folder, if we're dealing with the global reports)
+
+    # for async and proper non-async fallback to work
     base_template_name = "reports/report_base.html"
     async_base_template_name = "reports/async/default.html"
+
+    # still somewhat used legacy custom report stuff
+    headers = None # new reports should use get_headers() and be a subclass of StandardTabularHQReport
+    rows = None # new reports should use get_rows() and be a subclass of StandardTabularHQReport
+    datespan = None # legacy custom reports and StandardDateHQReports implement this strangely. TODO
+
+    # to my knowledge, this is legacy/possibly unused from original custom reports iteration, and something smarter should be done here
+    title = None # How is this different from name? TODO
+    description = "" # where is this ever used / should we use this? TODO
+    form = None # reports that actually use the form xmlns grab it from the GET parameter directly. That all seems strange. TODO
+
 
     def __init__(self, domain, request, base_context = None):
         base_context = base_context or {}
@@ -85,6 +98,7 @@ class HQReport(object):
         # circular import
         from .util import report_context
         self.build_selector_form()
+        # to my knowledge, this is legacy from original custom reports iteration, and something smarter should be done here
         self.context.update(report_context(self.domain,
                                         report_partial = self.report_partial,
                                         title = self.name,
@@ -248,6 +262,7 @@ class ExampleInputField(ReportField):
         self.context['example_input_default'] = "Some Example Text"
 
 class SampleHQReport(HQReport):
+    # Don't use. Phase out soon.
     name = "Sample Report"
     slug = "sample"
     description = "A sample report demonstrating the HQ reports system."

@@ -37,6 +37,7 @@ def users_for_phone(phone):
 
 
 def format_message_list(message_list):
+    """
     question = message_list[-1]
     if len(question) > 160:
         return question[0:157] + "..."
@@ -49,5 +50,7 @@ def format_message_list(message_list):
             if len(message_start) > extra_space:
                 message_start = message_start[0:extra_space-3] + "..."
         return message_start + question
-
+    """
+    # Some gateways (yo) allow a longer message to be sent and handle splitting it up on their end, so for now just join all messages together
+    return " ".join(message_list)
 

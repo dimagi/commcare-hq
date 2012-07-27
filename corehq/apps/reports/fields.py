@@ -141,7 +141,7 @@ class SelectFormField(ReportSelectField):
         self.selected = self.request.GET.get(self.slug, None)
 
 class SelectAllFormField(SelectFormField):
-    default_option = "All Forms"
+    default_option = "Show All Forms"
 
 class SelectOpenCloseField(ReportSelectField):
     slug = "is_open"

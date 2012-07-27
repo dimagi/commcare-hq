@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import json
 from corehq.apps.reports import util, standard
+from corehq.apps.reports._global import inspect, export
 from corehq.apps.reports.models import FormExportSchema
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
@@ -43,6 +44,7 @@ from corehq.apps.hqsofabed.models import HQFormData
 from StringIO import StringIO
 from corehq.apps.app_manager.util import get_app_id
 from corehq.apps.reports.dispatcher import ReportDispatcher
+from corehq.apps.groups.models import Group
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -52,8 +54,8 @@ datespan_default = datespan_in_request(
     default_days=7,
 )
 
-require_form_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.ExcelExportReport', login_decorator=None)
-require_case_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.CaseExportReport', login_decorator=None)
+require_form_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports._global.export.ExcelExportReport', login_decorator=None)
+require_case_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports._global.export.CaseExportReport', login_decorator=None)
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
@@ -118,7 +120,7 @@ def export_data(req, domain):
         messages.error(req, "Sorry, there was no data found for the tag '%s'." % export_tag)
         next = req.GET.get("next", "")
         if not next:
-            next = reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug])
+            next = reverse('report_dispatcher', args=[domain, export.ExcelExportReport.slug])
         return HttpResponseRedirect(next)
 
 @require_form_export_permission
@@ -228,7 +230,7 @@ def export_default_or_custom_data(request, domain, export_id=None):
         return export_object.export_data_async(filter, filename, previous_export_id, format=format)
     else:
         if not next:
-            next = reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug])
+            next = reverse('report_dispatcher', args=[domain, export.ExcelExportReport.slug])
         resp = export_object.download_data(format, filter=filter)
         if resp:
             return resp
@@ -274,14 +276,14 @@ def custom_export(req, domain):
             saved_export.app_id = app_id
         return render_to_response(req, "reports/reportdata/customize_export.html",
                                   {"saved_export": saved_export,
-                                   "slug": standard.ExcelExportReport.slug, 
+                                   "slug": export.ExcelExportReport.slug,
                                    "table_config": saved_export.table_configuration[0],
                                    "domain": domain})
     else:
         messages.warning(req, "<strong>No data found for that form "
                       "(%s).</strong> Submit some data before creating an export!" % \
                       xmlns_to_name(domain, export_tag[1], app_id=None), extra_tags="html")
-        return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug]))
+        return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, export.ExcelExportReport.slug]))
 
 @require_form_export_permission
 @login_and_domain_required
@@ -301,8 +303,8 @@ def edit_custom_export(req, domain, export_id):
         helper.custom_export.save()
     table_config = helper.custom_export.table_configuration[0]
     
-    slug = standard.ExcelExportReport.slug if helper.export_type == "form" \
-            else standard.CaseExportReport.slug
+    slug = export.ExcelExportReport.slug if helper.export_type == "form" \
+            else export.CaseExportReport.slug
     return render_to_response(req, "reports/reportdata/customize_export.html",
                               {"saved_export": helper.custom_export,
                                "table_config": table_config,
@@ -347,9 +349,9 @@ def delete_custom_export(req, domain, export_id):
     saved_export.delete()
     messages.success(req, "Custom export was deleted.")
     if type == "form":
-        return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug]))
+        return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, export.ExcelExportReport.slug]))
     else:
-        return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.CaseExportReport.slug]))
+        return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, export.CaseExportReport.slug]))
 
 @require_can_view_all_reports
 @login_and_domain_required
@@ -362,7 +364,7 @@ def case_details(request, domain, case_id):
     except ResourceNotFound:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake plase report an issue.")
         return HttpResponseRedirect(reverse('report_dispatcher', 
-                                            args=[domain, standard.SubmitHistory.slug]))
+                                            args=[domain, inspect.SubmitHistory.slug]))
 
 
     form_lookups = dict((form.get_id,
@@ -372,7 +374,7 @@ def case_details(request, domain, case_id):
     return render_to_response(request, "reports/reportdata/case_details.html", {
         "domain": domain,
         "case_id": case_id,
-        "slug": standard.CaseListReport.slug,
+        "slug": inspect.CaseListReport.slug,
         "form_lookups": form_lookups,
         "report": {
             "name": report_name
@@ -396,11 +398,13 @@ def download_cases(request, domain):
     group = request.GET.get('group', None)
     user_filter, _ = FilterUsersField.get_user_filter(request)
     users = get_all_users_by_domain(domain, group=group, filter_users=user_filter)
+    groups = Group.get_case_sharing_groups(domain)
+    
 #    if not group:
 #        users.extend(CommCareUser.by_domain(domain, is_active=False))
 
     workbook = WorkBook()
-    export_cases_and_referrals(cases, workbook, users=users)
+    export_cases_and_referrals(cases, workbook, users=users, groups=groups)
     export_users(users, workbook)
     response = HttpResponse(workbook.format(format.slug))
     response['Content-Type'] = "%s" % format.mimetype
@@ -429,7 +433,7 @@ def form_data(request, domain, instance_id):
                                    instance=instance,
                                    cases=cases,
                                    timezone=timezone,
-                                   slug=standard.SubmitHistory.slug,
+                                   slug=inspect.SubmitHistory.slug,
                                    form_data=dict(name=form_name,
                                                   modified=instance.received_on)))
 @require_form_export_permission

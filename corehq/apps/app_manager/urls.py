@@ -47,6 +47,7 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
                                                                             'edit_form_attr',
                                                                        name='edit_form_attr'),
     (r'^rename_language/(?P<form_unique_id>[\w-]+)/$',                          'rename_language'),
+    (r'^validate_langcode/(?P<app_id>[\w-]+)/$', 'validate_language'),
     (r'^edit_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
                                                                             'edit_form_actions'),
     # multimedia stuff

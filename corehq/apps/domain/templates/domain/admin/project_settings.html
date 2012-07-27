@@ -51,6 +51,13 @@
     <form class="form-horizontal" method="post">
         {% bootstrap_form_errors form %}
         {% bootstrap_fieldset form "Project Settings" %}
+        <script type="text/javascript">
+            $(function() {
+                $('#id_default_timezone').combobox({
+                    placeholder: 'Select a Timezone...'
+                });
+            });
+        </script>
         <div class="form-actions"><button type="submit" class="btn btn-primary">Update Project Settings</button></div>
         <fieldset>
             {% if languages|length > 0 %}

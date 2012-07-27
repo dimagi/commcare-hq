@@ -215,6 +215,10 @@ class UserRole(Document):
     @classmethod
     def role_choices(cls, domain):
         return [(role.get_qualified_id(), role.name or '(No Name)') for role in [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
+    
+    @classmethod
+    def commcareuser_role_choices(cls, domain):
+        return [('none','(none)')] + [(role.get_qualified_id(), role.name or '(No Name)') for role in list(cls.by_domain(domain))]
 
 PERMISSIONS_PRESETS = {
     'edit-apps': {'name': 'App Editor', 'permissions': Permissions(edit_apps=True, view_reports=True)},
@@ -598,6 +602,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         return "%s %s" % (self.first_name, self.last_name)
 
     formatted_name = full_name
+    name = full_name
 
     def set_full_name(self, full_name):
         data = full_name.split()
@@ -841,7 +846,15 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     def get_viewable_reports(self, domain=None, name=True):
         domain = domain or self.current_domain
         try:
-            models = self.get_domain_membership(domain).viewable_reports()
+            if self.is_commcare_user():
+                role = self.get_role(domain)
+                if role is None:
+                    models = []
+                else:
+                    models = role.permissions.view_report_list
+            else:
+                models = self.get_domain_membership(domain).viewable_reports()
+            
             if name:
                 return [to_function(m).name for m in models]
             else:
@@ -870,6 +883,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
     domain = StringProperty()
     registering_device_id = StringProperty()
     user_data = DictProperty()
+    role_id = StringProperty()
 
     def sync_from_old_couch_user(self, old_couch_user):
         super(CommCareUser, self).sync_from_old_couch_user(old_couch_user)
@@ -982,6 +996,10 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
             )])
         )
 
+    @classmethod
+    def cannot_share(cls, domain):
+        return [user for user in cls.by_domain(domain) if len(user.get_case_sharing_groups()) != 1]
+
     def is_commcare_user(self):
         return True
 
@@ -1048,7 +1066,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
         if deleted:
             view_name = 'users/deleted_cases_by_user'
         else:
-            view_name = 'case/by_user'
+            view_name = 'case/by_owner'
 
         return CommCareCase.view(view_name,
             startkey=[self.user_id],
@@ -1160,7 +1178,49 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
             lang = None
         return lang
 
+    def has_permission(self, domain, permission, data=None):
+        if self.role_id is None:
+            return False
+        else:
+            role = UserRole.get(self.role_id)
+            if role is not None:
+                return role.permissions.has(permission, data)
+            else:
+                return False
+    
+    def get_role(self, domain=None):
+        """
+        Get the role object for this user
+        """
+        if domain is None:
+            # default to current_domain for django templates
+            domain = self.current_domain
+        
+        if domain != self.domain:
+            return None
+        elif self.role_id is None:
+            return None
+        else:
+            return UserRole.get(self.role_id)
+    
+    def set_role(self, domain, role_qualified_id):
+        """
+        role_qualified_id is either 'none' 'admin' 'user-role:[id]'
+        """
+        if domain != self.domain:
+            raise Exception("Mobile worker does not have access to domain %s" % domain)
+        else:
+            # For now, only allow mobile workers to take non-admin roles
+            if role_qualified_id.startswith('user-role:'):
+                self.role_id = role_qualified_id[len('user-role:'):]
+            elif role_qualified_id == 'none':
+                self.role_id = None
+            else:
+                raise Exception("unexpected role_qualified_id: %r" % role_qualified_id)
+
 class WebUser(CouchUser, AuthorizableMixin):
+    domains = StringListProperty()
+    domain_memberships = SchemaListProperty(DomainMembership)
     betahack = BooleanProperty(default=False)
     teams = StringListProperty()
 

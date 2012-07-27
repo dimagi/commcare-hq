@@ -10,6 +10,7 @@ function(doc){
             domain: doc.domain,
             langs: doc.langs,
             cached_properties: doc.cached_properties
+            case_sharing: doc.case_sharing
         });
     }
 }

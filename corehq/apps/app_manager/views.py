@@ -12,6 +12,7 @@ from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.resource_conflict import repeat, retry_resource
 from django.utils import simplejson
+from django.utils.http import urlencode as django_urlencode
 import os
 import re
 
@@ -548,18 +549,36 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         'app': app,
         })
     if app:
-        if app.is_remote_app():
-            options = CommCareBuildConfig.fetch().get_menu()
-        else:
-            options = CommCareBuildConfig.fetch().get_menu(app.application_version)
-        is_standard_build = [o.build.to_string() for o in options if o.build.to_string() == app.build_spec.to_string()]
+        if True:
+            # decided to do Application and RemoteApp the same way; might change later
+            versions = ['1.0', '2.0']
+            commcare_build_options = {}
+            for version in versions:
+                options = CommCareBuildConfig.fetch().get_menu(version)
+                options_labels = list()
+                options_builds = list()
+                for option in options:
+                    options_labels.append(option.get_label())
+                    options_builds.append(option.build.to_string())
+                    commcare_build_options[version] = {"options" : options, "labels" : options_labels, "builds" : options_builds}
+
+        app_build_spec_string = app.build_spec.to_string()
+        app_build_spec_label = app.build_spec.get_label()
+
         context.update({
-            "commcare_build_options": options,
-            "is_standard_build": bool(is_standard_build)
+            "commcare_build_options" : commcare_build_options,
+            "app_build_spec_string" : app_build_spec_string,
+            "app_build_spec_label" : app_build_spec_label,
+            "app_version" : app.application_version,
         })
     response = render_to_response(req, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
+
+@login_and_domain_required
+def get_commcare_version(request, app_id, app_version):
+    options = CommCareBuildConfig.fetch().get_menu(app_version)
+    return json_response(options)
 
 @login_and_domain_required
 def view_user_registration(request, domain, app_id):
@@ -1010,6 +1029,16 @@ def rename_language(req, domain, form_unique_id):
         response = HttpResponse(json.dumps({'status': 'error', 'message': unicode(e)}))
         response.status_code = 409
         return response
+
+@require_GET
+@login_and_domain_required
+def validate_language(request, domain, app_id):
+    app = get_app(domain, app_id)
+    term = request.GET.get('term', '').lower()
+    if term in [lang.lower() for lang in app.langs]:
+        return HttpResponse(json.dumps({'match': {"code": term, "name": term}, 'suggestions': []}))
+    else:
+        return HttpResponseRedirect("%s?%s" % (reverse('langcodes.views.validate', args=[]), django_urlencode({'term': term})))
 
 @require_POST
 @require_can_edit_apps

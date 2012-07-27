@@ -188,7 +188,8 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
     user = CommCareUser.get(user_id)
     if not user:
         raise Http404
-    assert user.domain == domain
+    
+    assert user.is_member_of(domain)
     casexml_user = user.to_casexml_user()
     if not fixture_id:
         ret = ElementTree.Element("fixtures")
