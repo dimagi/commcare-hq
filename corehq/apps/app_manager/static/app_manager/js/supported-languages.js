@@ -8,17 +8,19 @@ var SupportedLanguages = (function () {
         this.show_error = ko.observable();
         this.message = ko.computed(function () {
             if (self.message_content() === '') {
-                var lang = self.langcode().toLowerCase();
-                $.getJSON('/langcodes/langs.json', {term: lang}, function(res) {
-                    var index = _.map(res, function(r) { return r.code; }).indexOf(lang);
-                    if (index === -1) {
-                        self.message_content("Warning: unrecognized language");
-                        self.show_error(true);
-                    } else {
-                        self.message_content(res[index].name);
-                        self.show_error(false);
-                    }
-                });
+                if (self.langcode()) {
+                    var lang = self.langcode().toLowerCase();
+                    $.getJSON('/langcodes/langs.json', {term: lang}, function(res) {
+                        var index = _.map(res, function(r) { return r.code; }).indexOf(lang);
+                        if (index === -1) {
+                            self.message_content("Warning: unrecognized language");
+                            self.show_error(true);
+                        } else {
+                            self.message_content(res[index].name);
+                            self.show_error(false);
+                        }
+                    });
+                }
             }
             return self.message_content();
         });
