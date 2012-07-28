@@ -65,7 +65,6 @@ def audited_views(request, *args, **kwargs):
     db = AccessAudit.get_db()
     views = db.view('auditcare/urlpath_by_user_date', reduce=False).all()
     template = "auditcare/audit_views.html"
-    print views
     return render_to_response(template,
             {"audit_views": views},
         context_instance=RequestContext(request))
