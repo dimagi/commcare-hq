@@ -3,11 +3,19 @@
 {% load hq_shared_tags %}
 {% block js %} {{ block.super }}
     <script type="text/javascript" src="{% static 'reports/javascripts/reports.download_export.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/ko/export.bulk_export_manager.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
-        var exportDownloader = new HQExportDownloader({});
+        var exportDownloader = new HQExportDownloader({
+            domain: '{{ domain }}'
+        });
         exportDownloader.init();
+
+        var bulkExports = new BulkExportManager( {
+            domain: '{{ domain }}'
+        } );
+        ko.applyBindings(bulkExports, $('#full-form-export')[0]);
 
         $(function () {
             // postGo is copied from main.js since that's now not being included, ever since the redesign
@@ -80,8 +88,12 @@
 
 {% block reportcontent %}
     <div class="hq-generic-report">
+
+
+{#    CUSTOM EXPORTS #}
+{% if saved_exports %}
         <h2>Saved Custom Exports</h2>
-        {% if saved_exports %}
+
         <table class="export_data table table-striped">
             <thead>
                 <tr>
@@ -126,141 +138,161 @@
         </div>
         {% endif %}
 
-
-        {% if forms %}
-        <h2>Export full forms</h2>
-        <table class="export_data table table-striped">
-            <thead>
-            <tr>
-                <th>Application</th>
-                <th>Module</th>
-                <th>Form</th>
-                <th>Custom Export</th>
-                <th>Download</th>
-                <th>Total Submissions</th>
-            </tr>
-            </thead>
-            <tbody>
-                {% for form in forms %}
-                <tr class="{% cycle "odd" "even" %}">
-                    <td>
-                        {% ifchanged %}
-                            {% if form.app.name %}
-                                {{ form.app.name }}
-                                {% if form.app_deleted %}
-                                    <span class="label label-info">deleted</span>
-                                    {% if request.couch_user.can_edit_apps %}(<a href="{% url view_app domain form.app.id %}"
-                                                     target="_blank">Restore</a>){% endif %}
-                                {% endif %}
-                                <!-- Make sure to check whether {{ form.app.id }} changed -->
-                            {% else %}
-                                <h6>No Application</h6>
+{# EXPORTS #}
+{% if forms %}
+<section id="full-form-export">
+    <h2>Export full forms</h2>
+    <div class="well">
+        <a class="btn btn-primary"><i class="icon-download-alt icon-white"></i> Download Bulk Export of Full Forms</a>
+    </div>
+    <table class="export_data table table-striped">
+        <thead>
+        <tr>
+            <th>Application</th>
+            <th>Module</th>
+            <th>Form</th>
+            <th>Custom Export</th>
+            <th>Download</th>
+            <th>Total Submissions</th>
+            <th>Add to Bulk Export</th>
+        </tr>
+        </thead>
+        <tbody>
+            {% for form in forms %}
+            <tr class="{% cycle "odd" "even" %}">
+                <td>
+                    {% ifchanged %}
+                        {% if form.app.name %}
+                            {{ form.app.name }}
+                            {% if form.app_deleted %}
+                                <span class="label label-info">deleted</span>
+                                {% if request.couch_user.can_edit_apps %}(<a href="{% url view_app domain form.app.id %}"
+                                                 target="_blank">Restore</a>){% endif %}
                             {% endif %}
-                        {% endifchanged %}
-
-                    </td>
-                    <td>
-                        {% ifchanged %}
-                            {% if form.has_app and form.module %}
-                                <!--Make sure to check whether {{ form.app.id }} changed-->
-                                {{ form.module.name|trans:form.app.langs }}
-                                <!--Make sure to check whether {{ form.module.id }} changed-->
-                            {% else %}
-                                {% if form.has_app and form.show_xmlns %}
-                                    <span class="label label-default">other forms</span>
-                                {% endif %}
-                                <!---->
-                            {% endif %}
-                        {% endifchanged %}
-                    </td>
-                    <td>
-                    {% if form.show_xmlns %}
-                        <code>
-                    {% endif %}
-                    {% include "reports/partials/form_name.html" %}
-                    {% if form.show_xmlns %}
-                        </code>
-                    {% endif %}
-                    {% if form.app_copy %}
-                        <span class="label label-info">Mislabeled</span>
-                        {% if request.couch_user.can_edit_data %}
-                            (<a href="{% url change_submissions_app_id domain %}" class="fix-submissions-link"
-                               data-app_id="{{ form.current_app.id }}"
-                               data-xmlns="{{ form.xmlns }}"
-                               data-new_app_id="{{ form.app_copy.id }}"
-                               data-new_app_name="{{ form.app_copy.name }}">Fix</a>)
-                        {% endif %}
-                    {% endif %}
-                    {% if not form.has_app and not form.no_suggestions %}
-                        <p><span class="label label-important suggestions">Suggestions:</span></p>
-                        <ul>
-                        {% if form.app_does_not_exist %}
-                            <li>These submissions are tagged as if they belong to an application that doesn't exist.</li>
-                        {% endif %}
-                        {% if form.duplicate %}
-                            <li>
-                                <p>These submissions could belong to one of the following forms:</p>
-                                <ul>
-                                    {% for possibility in form.possibilities %}
-                                    <li>
-                                        {{ possibility.app.name }} &gt;
-                                        {% if not app.is_user_registration %}
-                                        {{ possibility.module.name|trans:possibility.app.langs }} &gt;
-                                        {% endif %}
-                                        {% with possibility as form %}
-                                        {% include "reports/partials/form_name.html" %}
-                                        {% endwith %}
-                                        {% if possibility.app_deleted %}
-                                            <span class="label label-info">deleted</span>
-                                        {% endif %}
-
-                                        {% if request.couch_user.can_edit_data %}
-                                        <a href="{% url change_submissions_app_id domain %}" class="fix-submissions-link"
-                                           data-app_id="{{ form.current_app.id }}"
-                                           data-xmlns="{{ form.xmlns }}"
-                                           data-new_app_id="{{ possibility.app.id }}"
-                                           data-new_app_name="{{ possibility.app.name }}">{% if form.possibilities|length == 1 %}Fix{% else %}Select this option{% endif %}</a>
-                                        {% endif %}
-                                    </li>
-                                    {% endfor %}
-                                </ul>
-                            </li>
-                        {% endif %}
-                        </ul>
-                        {% if form.no_suggestions %}
-                            <h6>No suggestions</h6>
-                        {% endif %}
-                    {% endif %}
-                    </td>
-                    <td class="cell-vertical-centered">
-                        {% if form.xmlns != None %}
-                            <a class="btn" href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ form.xmlns }}"{% if form.current_app.id %}&app_id={{ form.current_app.id }}{% endif %}&type=form'><i class="icon-star-empty"></i> Create Custom Export</a>
-                        {% endif %}
-                    </td>
-                    <td class="cell-vertical-centered">
-                        {% if form.submissions %}
-                            <a data-toggle="modal" href="#export-download-status" data-formname="{% include 'reports/partials/form_name.html' %}" data-dlocation='{% url export_default_data domain %}?export_tag={% if form.xmlns != None %}["{{ domain }}", "{{ form.xmlns }}"]{% endif %}&filename={% include "reports/partials/form_name.html" %}&app_id={{ form.current_app.id }}&{{ get_filter_params.urlencode|safe }}&async=true'
-                                class="btn btn-primary export-action-download" ><i class="icon-download-alt icon-white"></i> Download</a>
+                            <!-- Make sure to check whether {{ form.app.id }} changed -->
                         {% else %}
-                            No Forms
+                            <h6>No Application</h6>
                         {% endif %}
-                    </td>
-                    <td>
-                        {{ form.submissions }} {% if form.submissions %}
-                        <i class="icon-info-sign all-users-all-time">
-                        </i>{% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% endif %}
+                    {% endifchanged %}
+
+                </td>
+                <td>
+                    {% ifchanged %}
+                        {% if form.has_app and form.module %}
+                            <!--Make sure to check whether {{ form.app.id }} changed-->
+                            {{ form.module.name|trans:form.app.langs }}
+                            <!--Make sure to check whether {{ form.module.id }} changed-->
+                        {% else %}
+                            {% if form.has_app and form.show_xmlns %}
+                                <span class="label label-default">other forms</span>
+                            {% endif %}
+                            <!---->
+                        {% endif %}
+                    {% endifchanged %}
+                </td>
+                <td>
+                {% if form.show_xmlns %}
+                    <code>
+                {% endif %}
+                {% include "reports/partials/form_name.html" %}
+                {% if form.show_xmlns %}
+                    </code>
+                {% endif %}
+                {% if form.app_copy %}
+                    <span class="label label-info">Mislabeled</span>
+                    {% if request.couch_user.can_edit_data %}
+                        (<a href="{% url change_submissions_app_id domain %}" class="fix-submissions-link"
+                           data-app_id="{{ form.current_app.id }}"
+                           data-xmlns="{{ form.xmlns }}"
+                           data-new_app_id="{{ form.app_copy.id }}"
+                           data-new_app_name="{{ form.app_copy.name }}">Fix</a>)
+                    {% endif %}
+                {% endif %}
+                {% if not form.has_app and not form.no_suggestions %}
+                    <p><span class="label label-important suggestions">Suggestions:</span></p>
+                    <ul>
+                    {% if form.app_does_not_exist %}
+                        <li>These submissions are tagged as if they belong to an application that doesn't exist.</li>
+                    {% endif %}
+                    {% if form.duplicate %}
+                        <li>
+                            <p>These submissions could belong to one of the following forms:</p>
+                            <ul>
+                                {% for possibility in form.possibilities %}
+                                <li>
+                                    {{ possibility.app.name }} &gt;
+                                    {% if not app.is_user_registration %}
+                                    {{ possibility.module.name|trans:possibility.app.langs }} &gt;
+                                    {% endif %}
+                                    {% with possibility as form %}
+                                    {% include "reports/partials/form_name.html" %}
+                                    {% endwith %}
+                                    {% if possibility.app_deleted %}
+                                        <span class="label label-info">deleted</span>
+                                    {% endif %}
+
+                                    {% if request.couch_user.can_edit_data %}
+                                    <a href="{% url change_submissions_app_id domain %}" class="fix-submissions-link"
+                                       data-app_id="{{ form.current_app.id }}"
+                                       data-xmlns="{{ form.xmlns }}"
+                                       data-new_app_id="{{ possibility.app.id }}"
+                                       data-new_app_name="{{ possibility.app.name }}">{% if form.possibilities|length == 1 %}Fix{% else %}Select this option{% endif %}</a>
+                                    {% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                    {% endif %}
+                    </ul>
+                    {% if form.no_suggestions %}
+                        <h6>No suggestions</h6>
+                    {% endif %}
+                {% endif %}
+                </td>
+                <td class="cell-vertical-centered">
+                    {% if form.xmlns != None %}
+                        <a class="btn" href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ form.xmlns }}"{% if form.current_app.id %}&app_id={{ form.current_app.id }}{% endif %}&type=form'><i class="icon-star-empty"></i> Create Custom Export</a>
+                    {% endif %}
+                </td>
+                <td class="cell-vertical-centered">
+                    {% if form.submissions %}
+                        <a data-toggle="modal" href="#export-download-status"
+                           data-formname="{% if form.app.name %}{{ form.app.name }} > {% endif %}{% include 'reports/partials/form_name.html' %}"
+                           data-xmlns="{% if form.xmlns != None %}{{ form.xmlns }}{% endif %}"
+                           data-appid='{{ form.current_app.id }}'
+                           data-dlocation='{% url export_default_data domain %}?filename={% include "reports/partials/form_name.html" %}&{{ get_filter_params.urlencode|safe }}&async=true'
+                           class="btn btn-primary export-action-download" ><i class="icon-download-alt icon-white"></i> Download</a>
+                    {% else %}
+                        No Forms
+                    {% endif %}
+                </td>
+                <td>
+                    {{ form.submissions }} {% if form.submissions %}
+                    <i class="icon-info-sign all-users-all-time">
+                    </i>{% endif %}
+                </td>
+                <td>
+                    {% if form.submissions %}
+                        <input type="checkbox" data-bind="event: {change: updateSelectedExports}" />
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endif %}
+
+
         <h2>Export all Forms' Metadata</h2>
-        <p>Export basic data for all forms in this domain. Note that this export does not support the filters above.
-        <a class="btn btn-primary" href='{% url corehq.apps.reports.views.export_all_form_metadata domain %}'>
-        <i class="icon-download-alt icon-white"></i> Download
-        </a>
-        </p>
+        <div class="well" style="margin: 0 20px;">
+            <p>
+                Export basic data for all forms in this domain. Note that this export does not support the filters above.
+            </p>
+            <a class="btn btn-primary" href='{% url corehq.apps.reports.views.export_all_form_metadata domain %}'>
+                <i class="icon-download-alt icon-white"></i> Download
+            </a>
+        </div>
         
     </div>
 {% endblock %}

@@ -74,11 +74,13 @@ def export_data(req, domain):
     """
     Download all data for a couchdbkit model
     """
+    print "export data"
     try:
         export_tag = json.loads(req.GET.get("export_tag", "null") or "null")
     except ValueError:
         return HttpResponseBadRequest()
 
+    print export_tag
     group, users = util.get_group_params(domain, **json_request(req.GET))
     include_errors = string_to_boolean(req.GET.get("include_errors", False))
 
@@ -129,13 +131,13 @@ def export_data_async(request, domain):
     """
     Download all data for a couchdbkit model
     """
-
+    print "export data async"
     try:
         export_tag = json.loads(request.GET.get("export_tag", "null") or "null")
         export_type = request.GET.get("type", "form")
     except ValueError:
         return HttpResponseBadRequest()
-
+    print export_tag, export_type
     assert(export_tag[0] == domain)
 
     filter = util.create_export_filter(request, domain, export_type=export_type)
@@ -198,13 +200,20 @@ def export_default_or_custom_data(request, domain, export_id=None):
     """
     Export data from a saved export schema
     """
-
+    print "export default or custom data"
     async = request.GET.get('async') == 'true'
     next = request.GET.get("next", "")
     format = request.GET.get("format", "")
     export_type = request.GET.get("type", "form")
     previous_export_id = request.GET.get("previous_export", None)
     filename = request.GET.get("filename", None)
+
+    print "async", async
+    print "next", next
+    print "format", format
+    print "export_type", export_type
+    print "previous_export_id", previous_export_id
+    print "filename", filename
 
     filter = util.create_export_filter(request, domain, export_type=export_type)
 
@@ -223,6 +232,7 @@ def export_default_or_custom_data(request, domain, export_id=None):
         assert(export_tag[0] == domain)
 
         export_object = FakeSavedExportSchema(index=export_tag)
+        print "export_tag", export_tag
 
 
     if async:
@@ -243,6 +253,7 @@ def custom_export(req, domain):
     """
     Customize an export
     """
+    print "custom export"
     try:
         export_tag = [domain, json.loads(req.GET.get("export_tag", "null") or "null")]
     except ValueError:
@@ -290,6 +301,7 @@ def edit_custom_export(req, domain, export_id):
     """
     Customize an export
     """
+    print "edit custom export"
     helper = CustomExportHelper(req, domain, export_id)
     if req.method == "POST":
         helper.update_custom_export()
@@ -413,6 +425,7 @@ def download_cases(request, domain):
 @require_can_view_all_reports
 @login_and_domain_required
 def form_data(request, domain, instance_id):
+    print "form data"
     timezone = util.get_timezone(request.couch_user.user_id, domain)
     try:
         instance = XFormInstance.get(instance_id)

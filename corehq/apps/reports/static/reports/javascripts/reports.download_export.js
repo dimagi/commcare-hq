@@ -4,6 +4,7 @@ var HQExportDownloader = function (options) {
     self.modal = options.modal || "#export-download-status";
     self.loadingIndicator = options.loadingIndicator || ".loading-indicator";
     self.loadedData = options.loadedData || ".loaded-data";
+    self.domain = options.domain;
 
     self.init = function () {
         $(function () {
@@ -13,7 +14,12 @@ var HQExportDownloader = function (options) {
                 $modal.find(self.loadedData).empty();
                 $modal.find('.modal-header h3 span').text($(this).data("formname"));
 
-                $.getJSON($(this).data('dlocation'), function (d) {
+                console.log($(this).data('exporttag'));
+                var download_url = $(this).data('dlocation') + '&export_tag=["' +
+                        self.domain + '","'+$(this).data('xmlns')+'"]'+ "&app_id=" + $(this).data('appid');
+                console.log(download_url);
+
+                $.getJSON(download_url, function (d) {
                     var autoRefresh = '';
                     var pollDownloader = function () {
                         if ($('#ready_'+d.download_id).length == 0)
