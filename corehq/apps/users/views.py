@@ -111,6 +111,8 @@ def users(request, domain):
 
 @require_can_edit_web_users
 def web_users(request, domain, template="users/web_users.html"):
+    import pdb
+    pdb.set_trace()
     context = _users_context(request, domain)
     user_roles = [AdminUserRole(domain=domain)]
     user_roles.extend(sorted(UserRole.by_domain(domain), key=lambda role: role.name if role.name else u'\uFFFF'))
