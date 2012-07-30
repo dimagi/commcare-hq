@@ -47,7 +47,7 @@ def project_info(request, domain, template="appstore/project_info.html"):
     if not dom or not dom.is_snapshot or not dom.published or (not dom.is_approved and not request.couch_user.is_domain_admin(domain)):
         raise Http404()
 
-    if request.method == "POST":
+    if request.method == "POST" and dom.original_doc not in request.couch_user.get_domains():
         versioned = True
         form = AddReviewForm(request.POST)
         if form.is_valid():
