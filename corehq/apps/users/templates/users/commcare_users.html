@@ -45,6 +45,7 @@
                     return help_text[$(this).attr('data-help-key')];
                 }
             });
+            $('.reset-password-form input').keydown(allowNumeric);
         });
     </script>
 {% endblock %}
