@@ -251,7 +251,9 @@ def commcare_users(request, domain, template="users/commcare_users.html"):
         'show_case_sharing': request.project.case_sharing_included(),
         'show_inactive': show_inactive,
         'cannot_share': cannot_share,
-        'reset_password_form': SetPasswordForm(user="")
+        'reset_password_form': SetPasswordForm(user=""),
+        'only_numeric': (request.project.password_format() == 'n'),
+
     })
     return render_to_response(request, template, context)
 
@@ -452,7 +454,7 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
     django_user = commcare_user.get_django_user()
     if request.method == "POST":
         form = SetPasswordForm(user=django_user, data=request.POST)
-        if form.is_valid():
+        if form.is_valid() and (request.project.password_format() != 'n' or request.POST.get('new_password1').isnumeric()):
             form.save()
             json_dump['status'] = 'OK'
             form = SetPasswordForm(user=django_user)

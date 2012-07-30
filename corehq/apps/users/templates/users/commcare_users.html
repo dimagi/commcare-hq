@@ -49,7 +49,12 @@
                     return help_text[$(this).attr('data-help-key')];
                 }
             });
+
+            {% if only_numeric %}
             $('.reset-password-form input').keydown(allowNumeric);
+            {% else %}
+            $("#add_commcare_account_form .help-block").hide();
+            {% endif %}
         });
     </script>
 {% endblock %}
