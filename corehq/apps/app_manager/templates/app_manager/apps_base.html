@@ -186,7 +186,7 @@
                                     <a href="#" class="submit">{% trans 'Remote App (Advanced Users Only)' %}</a>
                                 </li>
                                 <li>
-                                    <a href="{% url appstore %}">{% trans 'Visit Project Store to copy existing app...' %}</a>
+                                    <a href="{% url appstore %}">{% trans 'Visit CommCare Exchange to copy existing app...' %}</a>
                                 </li>
                             </ul>
                         </div>
@@ -264,7 +264,7 @@
                     <input type="hidden" name="type" value="Application">
                     <a href="#" class="submit">Create a blank app</a>
                     {% if request.user.is_superuser %}
-                        or <a href="{% url appstore %}">copy an existing app from the project store</a>.
+                        or <a href="{% url appstore %}">copy an existing app from CommCare Exchange</a>.
                     {% endif %}
                 </form>
             </div>

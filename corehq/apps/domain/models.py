@@ -82,7 +82,7 @@ class Domain(Document):
     description = StringProperty()
     is_shared = BooleanProperty(default=False)
 
-    # project store/domain copying stuff
+    # exchange/domain copying stuff
     original_doc = StringProperty()
     is_snapshot = BooleanProperty(default=False)
     is_approved = BooleanProperty(default=False)
@@ -100,7 +100,7 @@ class Domain(Document):
 
     cached_properties = DictProperty()
 
-    # to be eliminated from projects and related documents when they are copied for the project store
+    # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'country', 'region', 'customer_type')
 
     @classmethod

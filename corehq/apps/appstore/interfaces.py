@@ -18,7 +18,7 @@ class DataInterface(HQReport):
     exportable = False
 
 class AppStoreInterface(DataInterface, StandardTabularHQReport, StandardDateHQReport):
-    name = "Project Store"
+    name = "Exchange"
     slug = "advanced"
     fields = ['corehq.apps.reports.fields.SelectOrganizationField',
               'corehq.apps.reports.fields.SelectLicenseField',

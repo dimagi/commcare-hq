@@ -290,7 +290,7 @@ def create_snapshot(request, domain):
             app_forms.append((app, SnapshotApplicationForm(request.POST, prefix=app.id)))
             publishing_apps = publishing_apps or request.POST.get("%s-publish" % app.id, False)
         if not publishing_apps:
-            messages.error(request, "Cannot publish a project without applications to the Project Store")
+            messages.error(request, "Cannot publish a project without applications to CommCare Exchange")
             return render_to_response(request, 'domain/create_snapshot.html',
                 {'domain': domain.name,
                  'form': form,
@@ -354,7 +354,7 @@ def create_snapshot(request, domain):
                      'app_forms': app_forms,
                      'error_message': 'Snapshot creation failed; please try again'})
 
-        messages.success(request, "Created snapshot. The snapshot will be posted to the project store pending approval by admins.")
+        messages.success(request, "Created snapshot. The snapshot will be posted to CommCare Exchange pending approval by admins.")
         return redirect('domain_snapshot_settings', domain.name)
 
 @require_superuser # remove for production
