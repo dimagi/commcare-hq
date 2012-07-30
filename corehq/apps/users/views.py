@@ -232,15 +232,19 @@ def invite_web_user(request, domain, template="users/invite_web_user.html"):
 @require_can_edit_commcare_users
 def commcare_users(request, domain, template="users/commcare_users.html"):
     show_inactive = json.loads(request.GET.get('show_inactive', 'false'))
+    sort_by = request.GET.get('sortBy', 'abc')
     cannot_share = json.loads(request.GET.get('cannot_share', 'false'))
     context = _users_context(request, domain)
     if cannot_share:
         users = CommCareUser.cannot_share(domain)
     else:
-        users = CommCareUser.by_domain(domain)
+        users = CommCareUser.by_domain(domain).all()
         if show_inactive:
-            users = list(users)
             users.extend(CommCareUser.by_domain(domain, is_active=False))
+
+    if sort_by == 'forms':
+        users.sort(key=lambda user: -user.form_count)
+
     context.update({
         'commcare_users': users,
         'groups': Group.get_case_sharing_groups(domain),
