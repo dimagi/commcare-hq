@@ -82,7 +82,7 @@ class Domain(Document):
     description = StringProperty()
     is_shared = BooleanProperty(default=False)
 
-    # project store/domain copying stuff
+    # exchange/domain copying stuff
     original_doc = StringProperty()
     original_doc_display_name = StringProperty()
     is_snapshot = BooleanProperty(default=False)
@@ -101,7 +101,7 @@ class Domain(Document):
 
     cached_properties = DictProperty()
 
-    # to be eliminated from projects and related documents when they are copied for the project store
+    # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'country', 'region', 'customer_type')
 
     @classmethod
@@ -306,9 +306,7 @@ class Domain(Document):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
 
     def save_copy(self, new_domain_name=None, user=None):
-        from corehq.apps.hqmedia import utils
-        from corehq.apps.app_manager.models import RemoteApp, Application
-        from corehq.apps.users.models import UserRole
+        from corehq.apps.app_manager.models import get_app
         if new_domain_name is not None and Domain.get_by_name(new_domain_name):
             return None
         db = get_db()
@@ -347,6 +345,8 @@ class Domain(Document):
         return new_domain
 
     def copy_component(self, doc_type, id, new_domain_name, user=None):
+        from corehq.apps.app_manager.models import import_app
+        from corehq.apps.users.models import UserRole
         str_to_cls = {
             'UserRole': UserRole,
             }

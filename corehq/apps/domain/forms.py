@@ -107,6 +107,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         help_text="e.g. MCH, HIV, etc.")
     license = ChoiceField(label='License', required=False, choices=LICENSES.items(), help_text=render_to_string('domain/partials/license_explanations.html'))
     description = CharField(label="Description", required=False, widget=forms.Textarea)
+    share_multimedia = BooleanField(label="Share all multimedia?", required=False, help_text="This will allow any user to see and use all multimedia in this project")
 
     def __init__(self, *args, **kw):
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
@@ -118,7 +119,8 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             'city',
             'country',
             'region',
-            'project_type']
+            'project_type',
+            'share_multimedia']
 
 ########################################################################################################
 

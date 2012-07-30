@@ -72,7 +72,7 @@
         {% if request.couch_user.is_domain_admin %}
         <li><a href="{% url domain_project_settings domain %}">Project Settings</a></li>
         {% if request.couch_user.is_superuser %}
-        <li><a href="{% url domain_snapshot_settings domain %}">Manage Project Store</a></li>
+        <li><a href="{% url domain_snapshot_settings domain %}">Manage CommCare Exchange</a></li>
         {% endif %}
         <li><a href="{% url domain_manage_multimedia domain %}">Manage Multimedia Sharing</a></li>
         {% endif %}

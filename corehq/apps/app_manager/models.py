@@ -784,7 +784,7 @@ class ApplicationBase(VersionedDoc):
     # only the languages that go in the build
     build_langs = StringListProperty()
 
-    # project store properties
+    # exchange properties
     cached_properties = DictProperty()
     description = StringProperty()
     deployment_date = DateTimeProperty()
