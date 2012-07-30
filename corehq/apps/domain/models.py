@@ -84,6 +84,7 @@ class Domain(Document):
 
     # exchange/domain copying stuff
     original_doc = StringProperty()
+    original_doc_display_name = StringProperty()
     is_snapshot = BooleanProperty(default=False)
     is_approved = BooleanProperty(default=False)
     snapshot_time = DateTimeProperty()
@@ -318,6 +319,7 @@ class Domain(Document):
         new_domain.is_snapshot = False
         new_domain.snapshot_time = None
         new_domain.original_doc = self.name
+        new_domain.original_doc_display_name = self.display_name()
         new_domain.organization = None # TODO: use current user's organization (?)
 
         for field in self._dirty_fields:
