@@ -21,6 +21,9 @@ from django.shortcuts import redirect
 
 PER_PAGE = 9
 
+def redirect(request, path):
+    return HttpResponseRedirect('/exchange' + path)
+
 @require_superuser # remove for production
 def appstore(request, template="appstore/appstore_base.html", sort_by=None):
     page = int(request.GET.get('page', 1))

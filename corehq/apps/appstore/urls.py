@@ -10,12 +10,10 @@ urlpatterns = patterns('corehq.apps.appstore.views',
     url(r'^$', 'appstore', name='appstore'),
     url(r'^(?P<sort_by>[\w_]+)/$', 'appstore', name='sorted_appstore'),
 
-
-    #    url(r'^$', "default", name="appstore_interfaces_default"),
-    url(r'^store/appstore/async/filters/(?P<slug>[\w_]+)/$', 'report_dispatcher', name="appstore_interface_dispatcher", kwargs={
+    url(r'^async/filters/(?P<slug>[\w_]+)/$', 'report_dispatcher', name="appstore_interface_dispatcher", kwargs={
         'async_filters': True
     }),
-    url(r'^store/appstore/async/(?P<slug>[\w_]+)/$', 'report_dispatcher', name="async_report_dispatcher", kwargs={
+    url(r'^async/(?P<slug>[\w_]+)/$', 'report_dispatcher', name="async_report_dispatcher", kwargs={
         'async': True
     }),
     url(r'^store/(?P<slug>[\w_]+)/$', 'report_dispatcher', name="appstore_interface_dispatcher"),
