@@ -269,6 +269,7 @@ def create_snapshot(request, domain):
                 'country': domain.country,
                 'region': domain.region,
                 'project_type': domain.project_type,
+                'share_multimedia': True,
             })
         app_forms = []
         for app in domain.applications():
@@ -283,18 +284,19 @@ def create_snapshot(request, domain):
     elif request.method == 'POST':
         form = SnapshotSettingsForm(request.POST)
         app_forms = []
-        publishing = False
+        publishing_apps = False
         for app in domain.applications():
             app = app.get_latest_saved() or app
             app_forms.append((app, SnapshotApplicationForm(request.POST, prefix=app.id)))
-            publishing = publishing or request.POST.get("%s-publish" % app.id, False)
-        if not publishing:
+            publishing_apps = publishing_apps or request.POST.get("%s-publish" % app.id, False)
+        if not publishing_apps:
             messages.error(request, "Cannot publish a project without applications to the Project Store")
             return render_to_response(request, 'domain/create_snapshot.html',
                 {'domain': domain.name,
                  'form': form,
                  'app_forms': app_forms,
                  'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
+        
         if not form.is_valid():
             return render_to_response(request, 'domain/create_snapshot.html',
                     {'domain': domain.name,
@@ -302,6 +304,14 @@ def create_snapshot(request, domain):
                      #'latest_applications': latest_applications,
                      'app_forms': app_forms,
                      'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
+
+        if request.POST.get('share_multimedia', False):
+            media = domain.all_media()
+            for m_file in media:
+                if domain.name not in m_file.shared_by:
+                    m_file.shared_by.append(domain.name)
+                    m_file.license[domain.name] = domain.license
+                    m_file.save()
         new_domain = domain.save_snapshot()
         if request.POST['license'] in LICENSES.keys():
             new_domain.license = request.POST['license']

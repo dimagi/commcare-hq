@@ -305,9 +305,7 @@ class Domain(Document):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
 
     def save_copy(self, new_domain_name=None, user=None):
-        from corehq.apps.hqmedia import utils
-        from corehq.apps.app_manager.models import RemoteApp, Application
-        from corehq.apps.users.models import UserRole
+        from corehq.apps.app_manager.models import get_app
         if new_domain_name is not None and Domain.get_by_name(new_domain_name):
             return None
         db = get_db()
@@ -345,6 +343,8 @@ class Domain(Document):
         return new_domain
 
     def copy_component(self, doc_type, id, new_domain_name, user=None):
+        from corehq.apps.app_manager.models import import_app
+        from corehq.apps.users.models import UserRole
         str_to_cls = {
             'UserRole': UserRole,
             }
