@@ -111,8 +111,6 @@ def users(request, domain):
 
 @require_can_edit_web_users
 def web_users(request, domain, template="users/web_users.html"):
-    import pdb
-    pdb.set_trace()
     context = _users_context(request, domain)
     user_roles = [AdminUserRole(domain=domain)]
     user_roles.extend(sorted(UserRole.by_domain(domain), key=lambda role: role.name if role.name else u'\uFFFF'))
@@ -176,7 +174,7 @@ def accept_invitation(request, domain, invitation_id):
                        "another invitation.")
         return HttpResponseRedirect(reverse("login"))
     if request.user.is_authenticated():
-        # if you are already authenticated, just add the domain to your 
+        # if you are already authenticated, just add the domain to your
         # list of domains
         if request.couch_user.username != invitation.email:
             messages.error(request, "The invited user %s and your user %s do not match!" % (invitation.email, request.couch_user.username))
@@ -207,7 +205,7 @@ def accept_invitation(request, domain, invitation_id):
                 return HttpResponseRedirect(reverse("login"))
         else:
             form = NewWebUserRegistrationForm(initial={'email': invitation.email})
-        
+
         return render_to_response(request, "users/accept_invite.html", {"form": form})
 
 
@@ -501,12 +499,12 @@ def _handle_user_form(request, domain, couch_user=None):
     can_change_admin_status = \
         (request.user.is_superuser or request.couch_user.can_edit_web_users(domain=domain))\
         and request.couch_user.user_id != couch_user.user_id
-    
+
     if couch_user.is_commcare_user():
         role_choices = UserRole.commcareuser_role_choices(domain)
     else:
         role_choices = UserRole.role_choices(domain)
-    
+
     if request.method == "POST" and request.POST['form_type'] == "basic-info":
         form = UserForm(request.POST, role_choices=role_choices)
         if form.is_valid():
@@ -572,7 +570,7 @@ def add_scheduled_report(request, domain, couch_user_id):
         report.save()
         messages.success(request, "New scheduled report added!")
         return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
-    
+
     context = _users_context(request, domain)
     context.update({"hours": [(val, "%s:00" % val) for val in range(24)],
                     "days":  [(val, calendar.day_name[val]) for val in range(7)],
@@ -602,7 +600,7 @@ def test_scheduled_report(request, domain, couch_user_id, report_id):
         user = WebUser.get_by_user_id(couch_user_id, domain)
     except CouchUser.AccountTypeError:
         user = CommCareUser.get_by_user_id(couch_user_id, domain)
-    
+
     try:
         send_report(rep, user)
     except SMTPRecipientsRefused:
@@ -681,7 +679,7 @@ def group_membership(request, domain, couch_user_id, template="groups/groups.htm
             other_groups.append(group)
     #other_groups = [group for group in all_groups if group not in my_groups]
     context.update({"domain": domain,
-                    "groups": my_groups, 
+                    "groups": my_groups,
                     "other_groups": other_groups,
                     "couch_user":couch_user })
     return render_to_response(request, template, context)
