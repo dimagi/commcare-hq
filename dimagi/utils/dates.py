@@ -48,11 +48,23 @@ def months_between(start, end):
     return months        
 
 def add_months(year, months, offset):
+    """
+    Add a number of months to the passed in year and month, returning
+    a tuple of (year, month)
+    """
     months = months - 1 # 0 index months coming in
     nextmonths = months + offset
     months_offset = nextmonths % 12 + 1 # 1 index it going out
     years_offset = nextmonths / 12
     return (year + years_offset, months_offset)
+
+def first_of_next_month(ref_date):
+    """
+    Given a datetime, return a datetime that is the first of the following
+    month.
+    """
+    year, month = add_months(ref_date.year, ref_date.month, 1)
+    return datetime(year, month, 1)
 
 def delta_secs(td):
     """convert a timedelta to seconds"""
