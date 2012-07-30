@@ -1,5 +1,5 @@
 from django.http import HttpResponseRedirect
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
 from django.core.urlresolvers import reverse
 from dimagi.utils.web import json_response
 
@@ -15,7 +15,7 @@ def redirect_users(request, domain, old_url=""):
 def redirect_domain_settings(request, domain, old_url=""):
     return HttpResponseRedirect(reverse("domain_forwarding", args=[domain]))
 
-
+@require_superuser
 def project_id_mapping(request, domain):
     from corehq.apps.users.models import CommCareUser
     from corehq.apps.groups.models import Group

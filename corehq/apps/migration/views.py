@@ -114,17 +114,18 @@ def resubmit_for_users(request, domain):
         check = data.get('check', False)
         url_base = data['url_base']
         app_id = data['app_id']
-
-        def get_remote_id_mapping():
-            url = url_base + '/settings/api/id_mapping/'
-            response = restkit.request(url)
-            if response.status[0] == '2':
-                body = response.body_string()
-                return json.loads(body)
-            else:
-                raise Exception("Failure at %s" % url)
-
-        remote_mapping = get_remote_id_mapping()
+        remote_mapping = data['remote_mapping']
+        # having this exposed was totally insecure...
+#        def get_remote_id_mapping():
+#            url = url_base + '/settings/api/id_mapping/'
+#            response = restkit.request(url)
+#            if response.status[0] == '2':
+#                body = response.body_string()
+#                return json.loads(body)
+#            else:
+#                raise Exception("Failure at %s" % url)
+#
+#        remote_mapping = get_remote_id_mapping()
 
         def get_id(type, origin, name):
             """
