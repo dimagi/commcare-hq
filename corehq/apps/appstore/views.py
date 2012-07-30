@@ -153,6 +153,7 @@ def filter_choices(request, filter_by, template="appstore/filter_choices.html"):
 
     return render_to_response(request, template, {'choices': choices, 'filter_by': filter_by})
 
+@require_superuser # remove for production
 def filter_snapshots(request, filter_by, filter, template="appstore/appstore_base.html", sort_by=None):
     if filter_by not in ('category', 'license', 'region', 'organization', 'author'):
         raise Http404("That page doesn't exist")
@@ -206,7 +207,6 @@ def report_dispatcher(request, slug, return_json=False,
                                custom, async, async_filters)
 
 @require_superuser # remove for production
-@require_superuser
 def approve_app(request, domain):
     domain = Domain.get_by_name(domain)
     if request.GET.get('approve') == 'true':

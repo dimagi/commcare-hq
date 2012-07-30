@@ -185,9 +185,11 @@
                                     <input type="hidden" name="type" value="RemoteApp" />
                                     <a href="#" class="submit">{% trans 'Remote App (Advanced Users Only)' %}</a>
                                 </li>
+                                {% if request.user.is_superuser %}
                                 <li>
                                     <a href="{% url appstore %}">{% trans 'Visit CommCare Exchange to copy existing app...' %}</a>
                                 </li>
+                                {% endif %}
                             </ul>
                         </div>
                     </div>
