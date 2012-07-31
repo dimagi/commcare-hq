@@ -1,8 +1,8 @@
 var SupportedLanguages = (function () {
     function Language(langcode, deploy) {
         var self = this;
-        this.langcode = ko.observable(langcode);
-        this.originalLangcode = ko.observable(langcode);
+        this.langcode = ko.observable(deploy === undefined ? '' : langcode);
+        this.originalLangcode = ko.observable(deploy === undefined ? '' : langcode);
         this.deploy = ko.observable(deploy === undefined ? true : deploy);
         this.message_content = ko.observable('');
         this.show_error = ko.observable();

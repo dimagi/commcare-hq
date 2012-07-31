@@ -43,6 +43,7 @@ from util import get_all_users_by_domain
 from corehq.apps.hqsofabed.models import HQFormData
 from StringIO import StringIO
 from corehq.apps.app_manager.util import get_app_id
+from corehq.apps.reports.dispatcher import ReportDispatcher
 from corehq.apps.groups.models import Group
 
 DATE_FORMAT = "%Y-%m-%d"
@@ -491,30 +492,18 @@ def emailtest(request, domain, report_slug):
 
 @login_and_domain_required
 @datespan_default
-def report_dispatcher(request, domain, report_slug, return_json=False, map='STANDARD_REPORT_MAP', export=False, custom=False, async=False, async_filters=False, static_only=False):
+def report_dispatcher(request, domain, report_slug, return_json=False, 
+                      map='STANDARD_REPORT_MAP', export=False, custom=False, 
+                      async=False, async_filters=False, static_only=False):
+    
+    def permissions_check(couch_user, domain, model):
+        return couch_user.can_view_report(domain, model)
+    
     mapping = getattr(settings, map, None)
-    if not mapping or (custom and not domain in mapping):
-        return HttpResponseNotFound("Sorry, no reports have been configured yet.")
-    if custom:
-        mapping = mapping[domain]
-    for key, models in mapping.items():
-        for model in models:
-            klass = to_function(model)
-            if klass.slug == report_slug:
-                k = klass(domain, request)
-                if not request.couch_user.can_view_report(domain, model):
-                     raise Http404
-                elif return_json:
-                    return k.as_json()
-                elif export:
-                    return k.as_export()
-                elif async:
-                    return k.as_async(static_only=static_only)
-                elif async_filters:
-                    return k.as_async_filters()
-                else:
-                    return k.as_view()
-    raise Http404
+    dispatcher = ReportDispatcher(mapping, permissions_check)
+    return dispatcher.dispatch(request, domain, report_slug, return_json, 
+                               export, custom, async, async_filters, 
+                               static_only)
 
 @login_and_domain_required
 @datespan_default

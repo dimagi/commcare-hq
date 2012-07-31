@@ -24,7 +24,7 @@ import current_builds
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.web import get_url_base, parse_int
 from copy import deepcopy
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, cached_property
 import hashlib
 from django.template.loader import render_to_string
 from urllib2 import urlopen, URLError
@@ -440,6 +440,7 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
 
     def get_app(self):
         return self._parent._parent
+
     def get_module(self):
         return self._parent
 
@@ -798,6 +799,15 @@ class ApplicationBase(VersionedDoc):
     # only the languages that go in the build
     build_langs = StringListProperty()
 
+    # exchange properties
+    cached_properties = DictProperty()
+    description = StringProperty()
+    deployment_date = DateTimeProperty()
+    phone_model = StringProperty()
+    user_type = StringProperty()
+    attribution_notes = StringProperty()
+
+    # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)
 
     @classmethod
@@ -832,6 +842,32 @@ class ApplicationBase(VersionedDoc):
 
     def get_latest_app(self):
         return get_app(self.domain, self.get_id, latest=True)
+
+    def get_latest_saved(self):
+        if not hasattr(self, '_latest_saved'):
+            released = self.__class__.view('app_manager/applications',
+                startkey=['^ReleasedApplications', self.domain, self._id, {}],
+                endkey=['^ReleasedApplications', self.domain, self._id],
+                limit=1,
+                descending=True,
+                include_docs=True
+            )
+            if len(released) > 0:
+                self._latest_saved = released.all()[0]
+                print self._latest_saved.is_released
+            else:
+                saved = self.__class__.view('app_manager/saved_app',
+                    startkey=[self.domain, self._id, {}],
+                    endkey=[self.domain, self._id],
+                    descending=True,
+                    limit=1,
+                    include_docs=True
+                )
+                if len(saved) > 0:
+                    self._latest_saved = saved.all()[0]
+                else:
+                    self._latest_saved = None # do not return this app!
+        return self._latest_saved
 
     def set_admin_password(self, raw_password):
         import random
@@ -1407,6 +1443,16 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for f,form in enumerate(module['forms']):
                 change_unique_id(source['modules'][m]['forms'][f])
 
+    @cached_property
+    def has_case_management(self):
+        for module in self.get_modules():
+            for form in module.get_forms():
+                if len(form.active_actions()) > 0:
+                    return True
+        return False
+
+    def has_media(self):
+        return len(self.multimedia_map) > 0
 
     def get_xmlns_map(self):
         map = defaultdict(list)

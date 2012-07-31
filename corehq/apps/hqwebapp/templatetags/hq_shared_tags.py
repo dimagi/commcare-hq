@@ -111,6 +111,8 @@ def domains_for_user(request, selected_domain=None):
             lst.append('<li><a href="/a/public/">CommCare Demo Project</a></li>')
             lst.append('<li class="divider"></li>')
     lst.append('<li><a href="%s">New Project...</a></li>' % new_domain_url)
+    if request.couch_user.is_previewer:
+        lst.append('<li><a href="%s">CommCare Exchange...</a></li>' % reverse("appstore"))
     lst.append("</ul>")
 
     return "".join(lst)
@@ -122,7 +124,7 @@ def list_my_domains(request):
     lst.append('<ul class="nav nav-pills nav-stacked">')
     for domain in domain_list:
         default_url = reverse("domain_homepage", args=[domain.name])
-        lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.name))
+        lst.append('<li><a href="%s">%s</a></li>' % (default_url, domain.display_name()))
     lst.append('</ul>')
 
     return "".join(lst)
