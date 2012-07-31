@@ -23,6 +23,8 @@ class ExportConfiguration(object):
     
     def __init__(self, database, schema_index, previous_export=None, filter=None):
         self.database = database
+        if len(schema_index) > 2:
+            schema_index = schema_index[0:2]
         self.schema_index = schema_index
         self.previous_export = previous_export
         self.filter = filter
@@ -148,44 +150,61 @@ def export_raw(headers, data, file, format=Format.XLS_2007,
     writer.close()
     
 def export(schema_index, file, format=Format.XLS_2007, 
-           previous_export_id=None, filter=None, 
+           previous_export_id=None, filter=None,
            max_column_size=2000, separator='|', export_object=None):
     """
     Exports data from couch documents matching a given tag to a file. 
     Returns true if it finds data, otherwise nothing
     """
-    
-    previous_export = ExportSchema.get(previous_export_id) \
-                      if previous_export_id else None
+    print "trying to fetch components"
+    config, updated_schema, export_schema_checkpoint = get_export_components(schema_index,
+                                                                    previous_export_id, filter)
+    print "fetched components"
+    # transform docs onto output and save
+    if config:
+        writer = get_writer(format)
+
+        # open the doc and the headers
+        formatted_headers = get_headers(updated_schema, separator=separator)
+        writer.open(formatted_headers, file)
+
+        for doc in config.get_docs():
+            if export_object and export_object.transform:
+                doc = export_object.transform(doc)
+            writer.write(format_tables(create_intermediate_tables(doc, updated_schema),
+                                       include_headers=False, separator=separator))
+        writer.close()
+    return export_schema_checkpoint
+
+
+def get_export_components(schema_index, previous_export_id=None, filter=None):
+    """
+    Get all the components needed to build an export file.
+    """
+
+    previous_export = ExportSchema.get(previous_export_id)\
+        if previous_export_id else None
     database = get_db()
-    config = ExportConfiguration(database, schema_index, 
-                                 previous_export, filter)
-    
-    # handle empty case 
+    config = ExportConfiguration(database, schema_index,
+        previous_export, filter)
+
+    # handle empty case
+    print config
     if not config.potentially_relevant_ids:
-        return None
-        
+        return None, None, None
+
+
     # get and checkpoint the latest schema
     updated_schema = get_schema_new(config)
-    export_schema_checkpoint = ExportSchema(seq=config.current_seq, 
-                                            schema=updated_schema,
-                                            index=config.schema_index)
+
+    export_schema_checkpoint = ExportSchema(seq=config.current_seq,
+        schema=updated_schema,
+        index=config.schema_index)
+
     export_schema_checkpoint.save()
-    
-    # transform docs onto output and save
-    writer = get_writer(format)
-    
-    # open the doc and the headers
-    formatted_headers = get_headers(updated_schema, separator=separator)
-    writer.open(formatted_headers, file)
-    
-    for doc in config.get_docs():
-        if export_object and export_object.transform:
-            doc = export_object.transform(doc)
-        writer.write(format_tables(create_intermediate_tables(doc, updated_schema),
-                                   include_headers=False, separator=separator))
-    writer.close()
-    return export_schema_checkpoint
+
+    return config, updated_schema, export_schema_checkpoint
+
 
 class Constant(UnicodeMixIn):
     def __init__(self, message):

@@ -1,9 +1,10 @@
 import uuid
 from couchdbkit.ext.django.schema import Document, IntegerProperty, DictProperty,\
     Property, DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
-    StringListProperty, DateTimeProperty, SchemaProperty
+    StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty
 import json
 from StringIO import StringIO
+from corehq.apps.reports.display import xmlns_to_name
 from couchexport import util
 import couchexport
 from couchexport.util import SerializableFunctionProperty
@@ -169,7 +170,6 @@ class ExportTable(DocumentSchema):
         return ret
 
 class BaseSavedExportSchema(Document):
-
     # signature: filter(doc)
     filter_function = SerializableFunctionProperty()
     # signature: transform(doc)
@@ -178,6 +178,10 @@ class BaseSavedExportSchema(Document):
     @property
     def filter(self):
         return self.filter_function
+
+    @property
+    def is_bulk(self):
+        return False
 
     def export_data_async(self, filter, filename, previous_export_id, format):
         download_id = uuid.uuid4().hex
@@ -195,18 +199,49 @@ class BaseSavedExportSchema(Document):
             download_url=reverse('ajax_job_poll', kwargs={'download_id': download_id}))
         ))
 
-class FakeSavedExportSchema(BaseSavedExportSchema):
+    def parse_headers(self, headers):
+        return headers
 
+    def parse_tables(self, tables):
+        return tables
+
+class FakeSavedExportSchema(BaseSavedExportSchema):
     index = JsonProperty()
 
     @property
     def name(self):
         return self.index
 
+    @property
+    def indices(self):
+        return [self.index]
+
+    @property
+    def table_name(self):
+        if len(self.index) > 2:
+            return self.index[2]
+        else:
+            return "Form"
+
+    def parse_headers(self, headers):
+        print "parsing headers"
+        first_header = headers[0][1]
+        return [(self.table_name, first_header)]
+
+    def parse_tables(self, tables):
+        print "parsing tables"
+        first_row = tables[0][1]
+        return [(self.table_name, first_row)]
+
+    def get_export_components(self, previous_export_id=None, filter=None):
+        from couchexport.export import get_export_components
+        return get_export_components(self.index, previous_export_id, filter)
+
     def get_export_files(self, format=None, previous_export_id=None, filter=None,
                          use_cache=True, max_column_size=2000, separator='|'):
         # the APIs of how these methods are broken down suck, but at least
         # it's DRY
+        print "getting files for FakeSavedExportSchema"
 
         from couchexport.export import export
         from django.core.cache import cache
@@ -239,9 +274,11 @@ class FakeSavedExportSchema(BaseSavedExportSchema):
         if checkpoint:
             if use_cache:
                 cache.set(cache_key, (tmp, checkpoint), CACHE_TIME)
+            print "tmp", type(checkpoint)
             return tmp, checkpoint
 
         return None, None # hacky empty case
+
 
 class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     """
@@ -329,7 +366,11 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         formatted_headers = self.get_table_headers()
         tmp = StringIO()
         writer.open(formatted_headers, tmp)
-        
+        print "creating export files in SavedExportSchema"
+        print "formatted headers", formatted_headers
+        print "tmp", tmp
+        print "config docs", config.get_docs()
+
         for doc in config.get_docs():
             if self.transform:
                 doc = self.transform(doc)
@@ -394,4 +435,7 @@ class SavedBasicExport(Document):
     @property
     def size(self):
         return self._attachments[self.configuration.filename]["length"]
+
+
+
     
