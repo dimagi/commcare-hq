@@ -1037,7 +1037,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
         user._hq_user = self # don't tell anyone that we snuck this here
         return user
 
-    def get_forms(self, deleted=False):
+    def get_forms(self, deleted=False, wrap=True):
         if deleted:
             view_name = 'users/deleted_forms_by_user'
         else:
@@ -1047,7 +1047,8 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
             startkey=[self.user_id],
             endkey=[self.user_id, {}],
             reduce=False,
-            include_docs=True,
+            include_docs=wrap,
+            wrapper=None if wrap else lambda x: x['id']
         )
 
     @property
@@ -1062,9 +1063,11 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
         else:
             return 0
 
-    def get_cases(self, deleted=False):
+    def get_cases(self, deleted=False, last_submitter=False):
         if deleted:
             view_name = 'users/deleted_cases_by_user'
+        elif last_submitter:
+            view_name = 'case/by_user'
         else:
             view_name = 'case/by_owner'
 

@@ -2,6 +2,10 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'users/js/key_filters.js' %}"></script>
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function(){
@@ -45,6 +49,12 @@
                     return help_text[$(this).attr('data-help-key')];
                 }
             });
+
+            {% if only_numeric %}
+            $('.reset-password-form input').keydown(allowNumeric);
+            {% else %}
+            $("#add_commcare_account_form .help-block").hide();
+            {% endif %}
         });
     </script>
 {% endblock %}

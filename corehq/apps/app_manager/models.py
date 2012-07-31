@@ -1,6 +1,8 @@
 # coding=utf-8
 from collections import defaultdict
 from datetime import datetime
+from django.utils.encoding import force_unicode
+from django.utils.safestring import mark_safe
 import re
 from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import BadValueError
@@ -97,6 +99,14 @@ def put_xform(form_unique_id, source):
     form, app = Form.get_form(form_unique_id, and_app=True)
     form.source = source
     app.save()
+
+def partial_escape(xpath):
+    """
+    Copied from http://stackoverflow.com/questions/275174/how-do-i-perform-html-decoding-encoding-using-python-django
+    but without replacing the single quote
+
+    """
+    return mark_safe(force_unicode(xpath).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;'))
 
 class IndexedSchema(DocumentSchema):
     """
@@ -528,12 +538,15 @@ class Detail(DocumentSchema):
     def display(self):
         return "short" if self.type.endswith('short') else 'long'
 
+
     def filter_xpath(self):
+
         filters = []
         for i,column in enumerate(self.columns):
             if column.format == 'filter':
                 filters.append("(%s)" % column.filter_xpath.replace('.', '%s_%s_%s' % (column.model, column.field, i + 1)))
-        return ' && '.join(filters)
+        xpath = ' && '.join(filters)
+        return partial_escape(xpath)
 
     def filter_xpath_2(self):
         filters = []
@@ -541,9 +554,10 @@ class Detail(DocumentSchema):
             if column.format == 'filter':
                 filters.append("(%s)" % column.filter_xpath.replace('.', column.xpath))
         if filters:
-            return '[%s]' % (' && '.join(filters))
+            xpath = '[%s]' % (' && '.join(filters))
         else:
-            return ''
+            xpath = ''
+        return partial_escape(xpath)
 
 class CaseList(IndexedSchema):
     label = DictProperty()
