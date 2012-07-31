@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% block js %} {{ block.super }}
     <script type="text/javascript" src="{% static 'reports/javascripts/reports.download_export.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reports/ko/export.bulk_export_manager.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/ko/export.manager.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
@@ -12,10 +12,22 @@
         });
         exportDownloader.init();
 
-        var bulkExports = new BulkExportManager( {
-            domain: '{{ domain }}'
+        var customExportManager = new ExportManager( {
+            domain: '{{ domain }}',
+            exportFilters: '{{ get_filter_params.urlencode|safe }}',
+            bulkDownloadUrl: '{% url export_bulk_download domain %}',
+            is_custom: true
         } );
-        ko.applyBindings(bulkExports, $('#full-form-export')[0]);
+        ko.applyBindings(customExportManager, $('#custom-form-export')[0]);
+
+        var exportManager = new ExportManager( {
+            domain: '{{ domain }}',
+            exportFilters: '{{ get_filter_params.urlencode|safe }}',
+            bulkDownloadUrl: '{% url export_bulk_download domain %}',
+            downloadUrl: '{% url export_default_data domain %}'
+
+        } );
+        ko.applyBindings(exportManager, $('#full-form-export')[0]);
 
         $(function () {
             // postGo is copied from main.js since that's now not being included, ever since the redesign
@@ -87,64 +99,72 @@
 {% endblock %}
 
 {% block reportcontent %}
-    <div class="hq-generic-report">
-
+<div class="hq-generic-report">
 
 {#    CUSTOM EXPORTS #}
+<section id="custom-form-export">
+<h2>Saved Custom Exports</h2>
 {% if saved_exports %}
-        <h2>Saved Custom Exports</h2>
-
-        <table class="export_data table table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Form</th>
-                    <th>Preview</th>
-                    <th>Edit</th>
-                    <th>Download</th>
-                    <th>Delete</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for export in saved_exports %}
-                <tr class="{% cycle "odd" "even" %}">
-                    <td>{{ export.name|default:"[blank]" }}</td>
-                    <td>{{ export.formname }}</td>
-                    <td class="cell-vertical-centered">
-                        <a class="btn" href='{% url export_custom_data domain export.get_id %}?format=html&{{ get_filter_params.urlencode|safe }}'>
-                            HTML Preview
-                        </a>
-                    </td>
-                    <td class="cell-vertical-centered">
-                        <a class="btn btn-info" href='{% url corehq.apps.reports.views.edit_custom_export domain export.get_id %}?type=form'>
-                            <i class="icon-pencil icon-white"></i> Edit
-                        </a>
-                    </td>
-                    <td class="cell-vertical-centered">
-                        <a data-toggle="modal" href="#export-download-status" data-formname="{{ export.name }}" data-dlocation='{% url export_custom_data domain export.get_id %}?{{ get_filter_params.urlencode|safe }}&async=true'
-                           class="btn btn-primary export-action-download" ><i class="icon-download-alt icon-white"></i> Download</a>
-                    </td>
-                    <td class="cell-vertical-centered">
-                        <a class="btn btn-danger" data-toggle="modal" class="delete_link" href="#delete-export-modal-{{ export.get_id }}"><i class="icon-remove icon-white"></i> Delete</a>
-                        {% include "reports/dialogs/delete_custom_export_dialog.html" %}
-                     </td>
-                 </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <div class="alert alert-info">
-            <strong>No Custom Exports yet!</strong> Click "Create Custom Export" on a form below to make one.
-        </div>
-        {% endif %}
+    {% include 'reports/partials/bulk_export_notice.html' %}
+    <table class="export_data table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Form</th>
+                <th>Preview</th>
+                <th>Edit</th>
+                <th>Download</th>
+                <th>Add to Bulk Download</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for export in saved_exports %}
+            <tr class="{% cycle "odd" "even" %}">
+                <td>{{ export.name|default:"[blank]" }}</td>
+                <td>{{ export.formname }}</td>
+                <td class="cell-vertical-centered">
+                    <a class="btn" href='{% url export_custom_data domain export.get_id %}?format=html&{{ get_filter_params.urlencode|safe }}'>
+                        HTML Preview
+                    </a>
+                </td>
+                <td class="cell-vertical-centered">
+                    <a class="btn btn-info" href='{% url corehq.apps.reports.views.edit_custom_export domain export.get_id %}?type=form'>
+                        <i class="icon-pencil icon-white"></i> Edit
+                    </a>
+                </td>
+                <td class="cell-vertical-centered">
+                    <a data-toggle="modal" href="#export-download-status"
+                       data-formname="{{ export.name }}"
+                       data-xmlns="{{ export.xmlns }}"
+                       data-exportid="{{ export.get_id }}"
+                       data-dlocation='{% url export_custom_data domain export.get_id %}'
+                       data-bind="click: requestDownload"
+                       class="btn btn-primary dl-export"><i class="icon-download-alt icon-white"></i> Download</a>
+                </td>
+                <td>
+                    <input type="checkbox" data-bind="event: {change: updateSelectedExports}" />
+                </td>
+                <td class="cell-vertical-centered">
+                    <a class="btn btn-danger" data-toggle="modal" class="delete_link" href="#delete-export-modal-{{ export.get_id }}"><i class="icon-remove icon-white"></i> Delete</a>
+                    {% include "reports/dialogs/delete_custom_export_dialog.html" %}
+                 </td>
+             </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <div class="alert alert-info">
+        <strong>No Custom Exports yet!</strong> Click "Create Custom Export" on a form below to make one.
+    </div>
+{% endif %}
+</section>
 
 {# EXPORTS #}
 {% if forms %}
 <section id="full-form-export">
     <h2>Export full forms</h2>
-    <div class="well">
-        <a class="btn btn-primary"><i class="icon-download-alt icon-white"></i> Download Bulk Export of Full Forms</a>
-    </div>
+    {% include 'reports/partials/bulk_export_notice.html' %}
     <table class="export_data table table-striped">
         <thead>
         <tr>
@@ -191,13 +211,9 @@
                     {% endifchanged %}
                 </td>
                 <td>
-                {% if form.show_xmlns %}
-                    <code>
-                {% endif %}
+                {% if form.show_xmlns %}<code>{% endif %}
                 {% include "reports/partials/form_name.html" %}
-                {% if form.show_xmlns %}
-                    </code>
-                {% endif %}
+                {% if form.show_xmlns %}</code>{% endif %}
                 {% if form.app_copy %}
                     <span class="label label-info">Mislabeled</span>
                     {% if request.couch_user.can_edit_data %}
@@ -250,18 +266,22 @@
                 {% endif %}
                 </td>
                 <td class="cell-vertical-centered">
-                    {% if form.xmlns != None %}
+                    {% if form.submissions %}
                         <a class="btn" href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ form.xmlns }}"{% if form.current_app.id %}&app_id={{ form.current_app.id }}{% endif %}&type=form'><i class="icon-star-empty"></i> Create Custom Export</a>
                     {% endif %}
                 </td>
                 <td class="cell-vertical-centered">
                     {% if form.submissions %}
                         <a data-toggle="modal" href="#export-download-status"
-                           data-formname="{% if form.app.name %}{{ form.app.name }} > {% endif %}{% include 'reports/partials/form_name.html' %}"
+                           data-modulename="{% if form.has_app and form.module %}{{ form.module.name|trans:form.app.langs }}{% endif %}"
+                           data-formname="{% include 'reports/partials/form_name.html' %}"
                            data-xmlns="{% if form.xmlns != None %}{{ form.xmlns }}{% endif %}"
-                           data-appid='{{ form.current_app.id }}'
-                           data-dlocation='{% url export_default_data domain %}?filename={% include "reports/partials/form_name.html" %}&{{ get_filter_params.urlencode|safe }}&async=true'
-                           class="btn btn-primary export-action-download" ><i class="icon-download-alt icon-white"></i> Download</a>
+                           data-appid="{{ form.app.id }}"
+                           data-appname="{{ form.app.name }}"
+                           data-moduleid="{{ form.module.id }}"
+                           data-formid="{{ form.form.id }}"
+                           data-bind="click: requestDownload"
+                           class="btn btn-primary dl-export" ><i class="icon-download-alt icon-white"></i> Download</a>
                     {% else %}
                         No Forms
                     {% endif %}
@@ -282,19 +302,19 @@
     </table>
 </section>
 {% endif %}
-
-
-        <h2>Export all Forms' Metadata</h2>
-        <div class="well" style="margin: 0 20px;">
-            <p>
-                Export basic data for all forms in this domain. Note that this export does not support the filters above.
-            </p>
-            <a class="btn btn-primary" href='{% url corehq.apps.reports.views.export_all_form_metadata domain %}'>
-                <i class="icon-download-alt icon-white"></i> Download
-            </a>
-        </div>
-        
+<section id="all-forms-metadata">
+    <h2>Export all Forms' Metadata</h2>
+    <div class="well">
+        <p>
+            Export basic data for all forms in this domain. Note that this export does not support the filters above.
+        </p>
+        <a class="btn btn-primary" href='{% url corehq.apps.reports.views.export_all_form_metadata domain %}'>
+            <i class="icon-download-alt icon-white"></i> Download
+        </a>
     </div>
+</section>
+
+</div>
 {% endblock %}
 
 {% block modals %}
