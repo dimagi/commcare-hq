@@ -435,6 +435,7 @@
                         {% endif %}
                     </td>
                 </tr>
+                {% if request.couch_user.is_previewer %}
                 <tr>
                     <th>Platform</th>
                     <td>
@@ -449,6 +450,7 @@
                         {% endif %}
                     </td>
                 </tr>
+                {% endif %}
                 <tr>
                     <th>Text Input</th>
                     <td>
