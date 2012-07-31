@@ -15,9 +15,15 @@ class Command(LabelCommand):
         domain = args[0]
         case_type = "patient"
         times_of_day = {
+            "0000" : time(0,0,0),
+            "0600" : time(6,0,0),
+            "0700" : time(7,0,0),
             "0800" : time(8,0,0),
+            "1100" : time(11,0,0),
             "1200" : time(12,0,0),
-            "2000" : time(20,0,0)
+            "1900" : time(19,0,0),
+            "2000" : time(20,0,0),
+            "2100" : time(21,0,0),
         }
         message = {
             "xx" : "{case.personal_message}",
