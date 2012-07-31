@@ -185,7 +185,7 @@
                                     <input type="hidden" name="type" value="RemoteApp" />
                                     <a href="#" class="submit">{% trans 'Remote App (Advanced Users Only)' %}</a>
                                 </li>
-                                {% if request.user.is_superuser %}
+                                {% if request.couch_user.is_previewer %}
                                 <li>
                                     <a href="{% url appstore %}">{% trans 'Visit CommCare Exchange to copy existing app...' %}</a>
                                 </li>
@@ -265,7 +265,7 @@
                 <form action="{% url new_app domain %}">
                     <input type="hidden" name="type" value="Application">
                     <a href="#" class="submit">Create a blank app</a>
-                    {% if request.user.is_superuser %}
+                    {% if request.couch_user.is_previewer %}
                         or <a href="{% url appstore %}">copy an existing app from CommCare Exchange</a>.
                     {% endif %}
                 </form>

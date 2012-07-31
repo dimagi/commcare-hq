@@ -111,7 +111,7 @@ def domains_for_user(request, selected_domain=None):
             lst.append('<li><a href="/a/public/">CommCare Demo Project</a></li>')
             lst.append('<li class="divider"></li>')
     lst.append('<li><a href="%s">New Project...</a></li>' % new_domain_url)
-    if request.user.is_superuser:
+    if request.couch_user.is_previewer:
         lst.append('<li><a href="%s">CommCare Exchange...</a></li>' % reverse("appstore"))
     lst.append("</ul>")
 

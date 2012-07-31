@@ -18,7 +18,6 @@ from dimagi.utils.web import render_to_response, json_response
 from corehq.apps.users.views import require_can_edit_web_users
 from corehq.apps.receiverwrapper.forms import FormRepeaterForm
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater
-from corehq.apps.domain.decorators import require_superuser
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 import json
@@ -248,7 +247,7 @@ def autocomplete_fields(request, field):
     results = Domain.field_by_prefix(field, prefix)
     return HttpResponse(json.dumps(results))
 
-@require_superuser # remove for production
+@require_previewer # remove for production
 @domain_admin_required
 def snapshot_settings(request, domain):
     domain = Domain.get_by_name(domain)
@@ -256,7 +255,7 @@ def snapshot_settings(request, domain):
     return render_to_response(request, 'domain/snapshot_settings.html',
                 {'domain': domain.name, 'snapshots': snapshots})
 
-@require_superuser # remove for production
+@require_previewer # remove for production
 @domain_admin_required
 def create_snapshot(request, domain):
     domain = Domain.get_by_name(domain)
@@ -357,7 +356,7 @@ def create_snapshot(request, domain):
         messages.success(request, "Created snapshot. The snapshot will be posted to CommCare Exchange pending approval by admins.")
         return redirect('domain_snapshot_settings', domain.name)
 
-@require_superuser # remove for production
+@require_previewer # remove for production
 @domain_admin_required
 def set_published_snapshot(request, domain, snapshot_name=''):
     domain = request.project
@@ -375,7 +374,7 @@ def set_published_snapshot(request, domain, snapshot_name=''):
             published_snapshot.save()
     return redirect('domain_snapshot_settings', domain.name)
 
-@require_superuser # remove for production
+@require_previewer # remove for production
 @login_and_domain_required
 def snapshot_info(request, domain):
     domain = Domain.get_by_name(domain)
