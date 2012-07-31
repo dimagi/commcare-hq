@@ -12,7 +12,8 @@
                     url_base: ko.observable(''),
                     users: ko.observable('{}'),
                     groups: ko.observable('{}'),
-                    app_id: ko.observable('')
+                    app_id: ko.observable(''),
+                    remote_mapping: ko.observable('{}')
                 };
 
                 this.dataJSON = ko.computed({
@@ -21,7 +22,8 @@
                             url_base: self.data.url_base(),
                             users: JSON.parse(self.data.users()),
                             groups: JSON.parse(self.data.groups()),
-                            app_id: self.data.app_id()
+                            app_id: self.data.app_id(),
+                            remote_mapping: JSON.parse(self.data.remote_mapping())
                         });
                     },
                     write: function (value) {
@@ -30,6 +32,7 @@
                         self.data.app_id(value.app_id);
                         self.data.users(JSON.stringify(value.users));
                         self.data.groups(JSON.stringify(value.groups));
+                        self.data.remote_mapping(JSON.stringify(value.remote_mapping || {}));
                     }
                 });
                 this.failedForms = ko.observableArray();
@@ -131,6 +134,10 @@
             <tr>
                 <td><label for="_groups">Groups Map (JSON)</label></td>
                 <td><textarea id="_groups" data-bind="value: data.groups"></textarea></td>
+            </tr>
+            <tr>
+                <td><label for="_remote_mapping">Remote Mapping (JSON)</label></td>
+                <td><textarea id="_remote_mapping" data-bind="value: data.remote_mapping"></textarea></td>
             </tr>
         </table>
         <div class="span1"><h6>OR</h6></div>
