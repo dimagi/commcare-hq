@@ -1,4 +1,4 @@
-<profile version="{{ app.version }}" update="{{ profile_url }}">
+<profile version="{{ app.version }}" update="{{ profile_url }}" requiredMajor="{{ app.build_spec.major_release }}" requiredMinor="{{ app.get_build.minor_release.1 }}">
     <property key="BackupMode" value="file_mode"/>
     <property key="backup-url" value="file:///E:/CommCare.Backup"/>
     <property key="restore-url" value="file:///E:/CommCare.Backup"/>
