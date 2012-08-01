@@ -59,6 +59,9 @@ class CommCareMultimedia(Document):
 
     def add_domain(self, domain, owner=None, **kwargs):
 
+        if len(self.owners) == 0:
+            self.owners = self.valid_domains
+
         if owner and domain not in self.owners:
             self.owners.append(domain)
         elif owner == False and domain in self.owners:
