@@ -20,6 +20,8 @@ var ExportManager = function (o) {
 
     self.xmlns_formdesigner = o.xmlns_formdesigner || 'formdesigner';
 
+    self.sheet_names = ko.observable(new Object());
+
     var resetModal = function (modal_title, newLine) {
             self.$modal.find(self.exportModalLoading).removeClass('hide');
             self.$modal.find(self.exportModalLoadedData).empty();
@@ -48,6 +50,12 @@ var ExportManager = function (o) {
             });
             autoRefresh = setInterval(pollDownloader, 2000);
         },
+        displayModalError = function(error_text) {
+            var $error = $('<p class="alert alert-error" />');
+            $error.text(error_text);
+            self.$modal.find(self.exportModalLoadedData).html($error);
+            self.$modal.find(self.exportModalLoading).addClass('hide');
+        },
         getSheetName = function(module, form, xmlns) {
             var a = module,
                 b = form;
@@ -58,9 +66,7 @@ var ExportManager = function (o) {
                 if (a===self.xmlns_formdesigner || a.indexOf('.org') > 0)
                     return b.substring(0,31);
             }
-            b = b.substr(0,14);
-            a = a.substr(0,28-b.length);
-            return a+" > "+b;
+            return getFormattedSheetName(a,b);
         };
 
     self.updateSelectedExports = function (data, event) {
@@ -91,9 +97,12 @@ var ExportManager = function (o) {
                 form = curExpButton.data('formname');
 
             var sheetName = "sheet";
-            if (self.is_custom)
+            if (self.is_custom) {
+                var $sheetNameElem = curExpButton.parent().parent().find('.sheetname');
+                if($sheetNameElem.data('duplicate'))
+                    break;
                 sheetName = curExpButton.parent().parent().find('.sheetname').val();
-            else
+            } else
                 sheetName = getSheetName(module, form, xmlns);
 
             var export_tag;
@@ -112,13 +121,19 @@ var ExportManager = function (o) {
                 _id = "unknown_application";
 
             if (self.is_custom)
-                prepareExport.push(export_tag)
+                prepareExport.push(export_tag);
             else {
                 if (!prepareExport.hasOwnProperty(_id))
                     prepareExport[_id] = new Array();
                 prepareExport[_id].push(export_tag);
             }
         }
+
+        if (self.is_custom && prepareExport.length == 0) {
+            displayModalError('No valid sheets were available for Custom Bulk Export. Please check for duplicate sheet names.');
+            return;
+        }
+
         var downloadUrl = self.bulkDownloadUrl +
             "?"+self.exportFilters +
             "&export_tags="+encodeURIComponent(JSON.stringify(prepareExport)) +
@@ -151,13 +166,20 @@ var ExportManager = function (o) {
     self.checkCustomSheetNameLength = function(data, event) {
         var $input = $(event.srcElement);
         var valLength = $input.val().length;
-        return (valLength < 31 || event.keyCode == 8);
+        return (valLength < 31 || event.keyCode == 8 || (event.srcElement.selectionEnd-event.srcElement.selectionStart) > 0);
     };
+
     self.updateCustomSheetNameCharacterCount = function (data, event) {
         var $input = $(event.srcElement);
-        $input.parent().find('.label').text($input.val().length);
+        if ($input.data('exportid')) {
+            var new_names = self.sheet_names();
+            new_names[$input.data('exportid')] = $input.val();
+            self.sheet_names(new_names);
+        }
+        $input.parent().find('.sheetname-count').text($input.val().length);
         return true;
     };
+
     self.toggleSelectAllExports = function (data, event) {
         var $toggleBtn = $(event.srcElement),
             check_class = (self.is_custom) ? '.select-custom' : '.select-bulk';
@@ -173,7 +195,12 @@ var ExportManager = function (o) {
             });
     };
 
-};
+},
+    getFormattedSheetName = function (a, b) {
+        b = b.substr(0, 14);
+        a = a.substr(0,28-b.length);
+        return a+" > "+b;
+    };
 
 ko.bindingHandlers.showBulkExportNotice = {
     update: function(element, valueAccessor) {
@@ -185,25 +212,63 @@ ko.bindingHandlers.showBulkExportNotice = {
     }
 };
 
-ko.bindingHandlers.updateCustomSheetName = {
-    init: function(element, valueAccessor) {
-        var value = valueAccessor()();
-        var originalName = $(element).val();
-        var MAX_LENGTH = 31;
-        if (originalName.length > MAX_LENGTH) {
-            $(element).val(originalName.substring(0,MAX_LENGTH));
-            $(element).data('shortened', true);
-        } else {
-            $(element).parent().find('.label').text(originalName.length);
-        }
-    },
+ko.bindingHandlers.checkForUniqueSheetName = {
     update: function(element, valueAccessor) {
-        var value = valueAccessor()();
-        var $parentRow = $(element).parent().parent().parent();
-        if($parentRow.find('.select-custom').attr('checked') === 'checked')
+        var value = valueAccessor()(),
+            current_name = $(element).val(),
+            $dupeNotice = $(element).parent().find('.sheetname-duplicate'),
+            $parentCol = $(element).parent().parent();
+        var all_names = _.toArray(value);
+        if( (_.lastIndexOf(all_names, current_name) - _.indexOf(all_names, current_name)) > 0) {
+            $dupeNotice.removeClass('hide');
+            $parentCol.addClass('error');
+            $(element).data('duplicate', true);
+        } else {
+            $dupeNotice.addClass('hide');
+            $parentCol.removeClass('error');
+            $(element).data('duplicate', false);
+        }
+    }
+};
+
+ko.bindingHandlers.updateCustomSheetName = {
+    init: function(element, valueAccessor, allBindingsAccessor) {
+        var value = valueAccessor()(),
+            originalName = $(element).val(),
+            MAX_LENGTH = 31,
+            SPLIT_CHAR = '>';
+
+        if (originalName.indexOf(SPLIT_CHAR) > 0 && originalName.length > MAX_LENGTH) {
+            // intelligently generate a sheetname
+            var splitName = originalName.split(SPLIT_CHAR);
+            var formname = splitName[splitName.length-1].trim(),
+                modulename = splitName[splitName.length-2].trim();
+            originalName = getFormattedSheetName(modulename, formname);
+            $(element).val(originalName);
+        }
+
+        if (originalName.length > MAX_LENGTH) {
+            $(element).val(originalName.substring(Math.max(0, originalName.length-MAX_LENGTH),originalName.length));
+        } else {
+            $(element).parent().find('.sheetname-count').text(originalName.length);
+        }
+
+
+    },
+    update: function(element, valueAccessor, allBindingsAccessor) {
+        var value = valueAccessor()(),
+            allSheetNames = allBindingsAccessor().checkForUniqueSheetName;
+        var $parentRow = $(element).parent().parent().parent(),
+            exportID = $(element).data('exportid');
+        if($parentRow.find('.select-custom').attr('checked') === 'checked') {
             $(element).parent().fadeIn();
-        else
+            if(exportID)
+                allSheetNames()[exportID] = $(element).val();
+        } else {
             $(element).parent().fadeOut();
+            if(exportID)
+                delete allSheetNames()[exportID];
+        }
     }
 };
 

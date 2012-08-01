@@ -15,11 +15,6 @@ from couchexport.models import FakeSavedExportSchema, Format, SavedExportSchema
 
 class BulkExport(object):
 
-    def __init__(self, export_tags, export_filter, format=Format.XLS_2007):
-        self.export_filter = export_filter
-        self.format=format
-        self.generate_export_objects(export_tags)
-
     @property
     def filename(self):
         return "bulk_export.%s" % Format.from_format(self.format).extension
@@ -27,6 +22,11 @@ class BulkExport(object):
     @property
     def separator(self):
         return "."
+
+    def create(self, export_tags, export_filter, format=Format.XLS_2007):
+        self.export_filter = export_filter
+        self.format=format
+        self.generate_export_objects(export_tags)
 
     def generate_export_objects(self, export_tags):
         self.export_objects = []
@@ -36,7 +36,6 @@ class BulkExport(object):
         schemas = list()
         checkpoints = list()
         file = StringIO()
-
 
         for export_object in self.export_objects:
             config, schema, checkpoint = export_object.get_export_components(filter=self.export_filter)
@@ -171,7 +170,8 @@ class ApplicationBulkExportHelper(BulkExportHelper):
     def generate_bulk_files(self, export_tags, export_filter):
         self.bulk_files = []
         for appid, indices in export_tags.items():
-            app_bulk_export = ApplicationBulkExport(indices, export_filter)
+            app_bulk_export = ApplicationBulkExport()
+            app_bulk_export.create(indices, export_filter)
             app_bulk_export.export_id = appid
             self.bulk_files.append(app_bulk_export)
 
@@ -182,6 +182,7 @@ class CustomBulkExportHelper(BulkExportHelper):
         return False
 
     def generate_bulk_files(self, export_tags, export_filter):
-        bulk_export = CustomBulkExport(export_tags, export_filter)
+        bulk_export = CustomBulkExport()
+        bulk_export.create(export_tags, export_filter)
         bulk_export.domain = self.domain
         self.bulk_files = [bulk_export]

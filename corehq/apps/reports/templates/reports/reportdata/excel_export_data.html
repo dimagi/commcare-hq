@@ -94,10 +94,30 @@
                         "separately. We strongly recommend that you Report an Issue with the button below.",
                 placement: 'right'
             });
-            $('.short-name-info').popover({
-                title: "Short Name",
-                content: "Excel sheet names are limited to a maximum of 31 characters."+
-                    "This will be this custom export's sheet name in your bulk custom export.",
+            $('.sheet-name-info').popover({
+                title: "Sheet Name",
+                content: "Excel sheet names are limited to a maximum of 31 characters. "+
+                        "This will be this custom export's sheet name in your bulk custom export.",
+                placement: 'right'
+            });
+            $('.custom-bulk-export-info').popover({
+                title: "What is Custom Bulk Export?",
+                content: "Custom Bulk Export creates a single Excel file " +
+                        "with each export as a separate sheet inside that file."+
+                        "<br /><br />NOTE: Excel 2007+ is currently the only bulk export format supported.",
+                placement: 'left'
+            });
+            $('.bulk-export-info').popover({
+                title: "What is Bulk Export?",
+                content: "Bulk Export creates a zip file with containing an Excel file for each application, " +
+                        "with each form as a separate sheet inside that file."+
+                        "<br /><br />NOTE: Excel 2007+ is currently the only bulk export format supported.",
+                placement: 'left'
+            });
+            $('.sheetname-duplicate').popover({
+                title: "Duplicate Sheet Name",
+                content: "This sheet name is a duplicate of another. Custom exports with duplicate sheet names will " +
+                        "not be included in the Bulk Custom Export. Change the sheet name to resolve this issue.",
                 placement: 'right'
             });
         }());
@@ -121,7 +141,7 @@
                 <th>Edit</th>
                 <th>Download</th>
                 <th>
-                    Add to Bulk Export
+                    Add to Custom Bulk Export <i class="icon-white icon-info-sign custom-bulk-export-info"></i>
                     <small style="display: block;">
                         Select:
                         <a href="#" class="btn btn-mini" data-all="true" data-bind="click: toggleSelectAllExports">all</a>
@@ -134,14 +154,16 @@
         <tbody>
             {% for export in saved_exports %}
             <tr class="{% cycle "odd" "even" %}">
-                <td>
+                <td class="control-group form-inline">
                     {{ export.name|default:"[blank]" }}
-                    <p style="display:none; margin-top:1em;" class="form-inline">
-                        <label>Short Name <i class="icon icon-info-sign short-name-info"></i>:</label>
-                        <input data-bind="updateCustomSheetName: selected_exports, event: {keydown: checkCustomSheetNameLength, keyup: updateCustomSheetNameCharacterCount}"
+                    <p style="display:none; margin-top:1em;" class="controls">
+                        <label>Sheet Name <i class="icon icon-info-sign sheet-name-info"></i>:</label>
+                        <input data-bind="updateCustomSheetName: selected_exports, checkForUniqueSheetName: sheet_names, event: {keydown: checkCustomSheetNameLength, keyup: updateCustomSheetNameCharacterCount}"
                                class="sheetname"
+                               data-exportid="{{ export.get_id }}"
                                value="{{ export.name|default:"[blank]" }}" />
-                        <span class="label label-info">31</span>
+                        <span class="label label-info sheetname-count">31</span>
+                        <span class="label label-important sheetname-duplicate hide">duplicate <i class="icon-white icon-info-sign"></i></span>
                     </p>
                 </td>
                 <td>{{ export.formname }}</td>
@@ -201,7 +223,7 @@
             <th>Download</th>
             <th>Total Submissions</th>
             <th>
-                Add to Bulk Export
+                Add to Bulk Export <i class="bulk-export-info icon-white icon-info-sign"></i>
                 <small style="display: block;">
                     Select:
                     <a href="#" class="btn btn-mini" data-all="true" data-bind="click: toggleSelectAllExports">all</a>
