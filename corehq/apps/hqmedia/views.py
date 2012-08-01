@@ -19,9 +19,15 @@ from dimagi.utils.web import render_to_response
 
 X_PROGRESS_ERROR = 'Server Error: You must provide X-Progress-ID header or query param.'
 
+def get_media_type(media_type):
+    return {
+        'CommCareImage': CommCareImage,
+        'CommCareAudio': CommCareAudio,
+    }[media_type]
+
 def download_media(request, media_type, doc_id):
     try:
-        media = eval(media_type)
+        media = media_type
         try:
             media = media.get(doc_id)
             data, content_type = media.get_display_file()
@@ -30,7 +36,7 @@ def download_media(request, media_type, doc_id):
             return response
         except ResourceNotFound:
             pass
-    except NameError:
+    except AttributeError:
         pass
     return HttpResponseServerError("No Media Found")
 
