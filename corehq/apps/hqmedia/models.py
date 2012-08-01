@@ -30,6 +30,14 @@ class CommCareMultimedia(Document):
     shared_by = StringListProperty(default=[])
     tags = DictProperty(default={}) # dict of string lists
 
+    @classmethod
+    def wrap(cls, data):
+        if data.get('tags') == []:
+            data['tags'] = {}
+        if not data.get('owners'):
+            data['owners'] = data.get('valid_domains', [])
+        return super(CommCareMultimedia, cls).wrap(data)
+
     def attach_data(self, data, upload_path=None, username=None, attachment_id=None,
                     media_meta=None, replace_attachment=False):
         self.last_modified = datetime.utcnow()
@@ -58,8 +66,14 @@ class CommCareMultimedia(Document):
         self.save()
 
     def add_domain(self, domain, owner=None, **kwargs):
+        print owner
+        print self.owners
+        print self.valid_domains
 
         if len(self.owners) == 0:
+            # this is intended to simulate migration--if it happens that a media file somehow gets no more owners
+            # (which should be impossible) it will transfer ownership to all copiers... not necessarily a bad thing,
+            # just something to be aware of
             self.owners = self.valid_domains
 
         if owner and domain not in self.owners:
