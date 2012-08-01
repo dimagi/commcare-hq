@@ -9,7 +9,7 @@ m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.counte
 
                 {% if d.format == "enum" %}
                     {% for key, val in d.enum.items %}
-m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.parentloop.counter }}.enum.{{ key }}={{ val|clean_trans:langs }}
+m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.parentloop.counter }}.enum.k{{ key }}={{ val|clean_trans:langs }}
                     {% endfor %}
                 {% endif %}
             {% endfor %}
