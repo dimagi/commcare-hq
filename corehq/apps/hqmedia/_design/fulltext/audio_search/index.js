@@ -10,7 +10,7 @@ function(doc) {
                 });
             }
 
-            ret.add(doc.license[domain]);
+            ret.add(doc.licenses[domain]);
             ret.add({
                 'public': 'Public Domain',
                 'cc': 'Creative Commons Attribution',
@@ -19,7 +19,7 @@ function(doc) {
                 'cc-nc': 'Creative Commons Attribution, Non-Commercial',
                 'cc-nc-sa': 'Creative Commons Attribution, Non-Commercial, and Share Alike',
                 'cc-nc-nd': 'Creative Commons Attribution, Non-Commercial, and No Derivatives'
-            }[doc.license[domain]]); // directly copied from models.py. Be sure to update--for now just a hack.
+            }[doc.licenses[domain]]); // directly copied from models.py. Be sure to update--for now just a hack.
         })
 
         return ret;

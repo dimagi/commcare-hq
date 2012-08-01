@@ -26,7 +26,7 @@ class CommCareMultimedia(Document):
     # add something about context from the form(s) its in
 
     owners = StringListProperty(default=[])
-    license = DictProperty(default={}) # dict of strings
+    licenses = DictProperty(default={}) # dict of strings
     shared_by = StringListProperty(default=[])
     tags = DictProperty(default={}) # dict of string lists
 
@@ -71,8 +71,8 @@ class CommCareMultimedia(Document):
             elif not shared and shared != '' and domain in self.shared_by:
                 self.shared_by.remove(domain)
 
-            if kwargs.get('license', ''):
-                self.license[domain] = kwargs['license']
+            if kwargs.get('licenses', ''):
+                self.licenses[domain] = kwargs['license']
             if kwargs.get('tags', ''):
                 self.tags[domain] = kwargs['tags']
 

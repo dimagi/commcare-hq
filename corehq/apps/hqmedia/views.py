@@ -45,7 +45,7 @@ def search_for_media(request, domain, app_id):
         raise Http404()
     return HttpResponse(simplejson.dumps([
         {'url': i.url(),
-         'licenses': map(LICENSES.__getitem__, i.license.values()),
+         'licenses': map(LICENSES.__getitem__, i.licenses.values()),
          'tags': [tag for tags in i.tags.values() for tag in tags],
          'm_id': i._id} for i in files]))
 
