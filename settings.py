@@ -378,7 +378,7 @@ XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
 COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'api',
         'app_manager',
-        'appstore',
+#        'appstore',
         'orgs',
         'auditcare',
         'builds',
