@@ -1,14 +1,21 @@
 from datetime import datetime
 from django.http import HttpRequest, HttpResponseBadRequest
 from dimagi.utils.dates import DateSpan
-from datetime import datetime
 
 def datespan_in_request(from_param="from", to_param="to", 
-                        format_string="%Y-%m-%d", default_days=30, inclusive=True):
+                        format_string="%Y-%m-%d", default_days=30, 
+                        inclusive=True, default_function=None):
     """
     Wraps a request with dates based on url params or defaults and
     Checks date validity.
     """
+    # you can pass in a function to say what the default should be, 
+    # if you don't it will pull the value from the last default_days
+    # in. If you override default_function, default_days is ignored.
+    if default_function is None:
+        default_function = lambda: DateSpan.since(default_days, 
+                                                  format=format_string, 
+                                                  inclusive=inclusive)
     
     # this is loosely modeled after example number 4 of decorator
     # usage here: http://www.python.org/dev/peps/pep-0318/
@@ -39,8 +46,7 @@ def datespan_in_request(from_param="from", to_param="to",
                 if startdate or enddate:
                     req.datespan = DateSpan(startdate, enddate, format_string)
                 else:        
-                    # default to the last N days
-                    req.datespan = DateSpan.since(default_days, format=format_string, inclusive=inclusive)
+                    req.datespan = default_function()
                     req.datespan.is_default = True
                     
             return f(*args, **kwargs) 
