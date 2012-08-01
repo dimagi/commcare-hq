@@ -27,7 +27,7 @@ def get_media_type(media_type):
 
 def download_media(request, media_type, doc_id):
     try:
-        media = media_type
+        media = get_media_type(media_type)
         try:
             media = media.get(doc_id)
             data, content_type = media.get_display_file()
