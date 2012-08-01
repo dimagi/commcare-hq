@@ -1,3 +1,4 @@
+import logging
 import uuid
 from corehq.apps.app_manager.views import require_can_edit_apps
 import magic
@@ -29,16 +30,20 @@ def download_media(request, media_type, doc_id):
     try:
         media = get_media_type(media_type)
         try:
-            media = media.get(doc_id)
+            try:
+                media = media.get(doc_id)
+            except Exception:
+                logging.error("looks like %r.get(%r) failed" % (media, doc_id))
             data, content_type = media.get_display_file()
             response = HttpResponse(mimetype=content_type)
             response.write(data)
             return response
         except ResourceNotFound:
-            pass
-    except AttributeError:
-        pass
-    return HttpResponseServerError("No Media Found")
+            raise Http404("No Media Found")
+    except KeyError:
+        raise Http404("unknown media type %s" % media_type)
+
+
 
 @require_can_edit_apps
 def search_for_media(request, domain, app_id):
