@@ -188,13 +188,13 @@
     <div class="tabbable" style="padding-top: 15px;">
         <ul class="nav nav-pills">
             {% if filter_by %}
-            <li{% if not sort_by %} class="active"{% endif %}><a href="{% url appstore_filter_snapshots filter_by filter %}">All Projects</a></li>
+            <li{% if not sort_by %} class="active"{% endif %}><a href="{% url appstore_filter_snapshots filter_by filter %}">Newest</a></li>
             <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% url sorted_appstore_filter_snapshots filter_by filter 'best' %}">Highest Rated</a></li>
             <li{% if sort_by == 'hits' %} class="active"{% endif %}><a href="{% url sorted_appstore_filter_snapshots filter_by filter 'hits' %}">Most Downloaded</a></li>
             {% endif %}
 
             {% if not filter_by %}
-            <li{% if not sort_by %} class="active"{% endif %}><a href="{% url appstore %}">All Projects</a></li>
+            <li{% if not sort_by %} class="active"{% endif %}><a href="{% url appstore %}">Newest</a></li>
             <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% url sorted_appstore 'best' %}">Highest Rated</a></li>
             <li{% if sort_by == 'hits' %} class="active"{% endif %}><a href="{% url sorted_appstore 'hits' %}">Most Downloaded</a></li>
             {% endif %}
@@ -209,7 +209,6 @@
     {% endif %}
     <div class="span3">
         <div class="well">
-        <div class="page-header">
             <h2>
                 {{ app.title }}
                 <small>By
@@ -241,7 +240,6 @@
                     {% endif %}
                 {% endfor %}
             <br/>
-        </div>
         <p>{{ app.description|truncatewords:18 }}</p>
         <a class="btn" href="{% url project_info app.name %}">View &raquo;</a>
         {% if user.is_superuser %}
