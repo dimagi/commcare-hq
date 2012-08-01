@@ -23,19 +23,18 @@ var ExportManager = function (o) {
     var resetModal = function (modal_title, newLine) {
             self.$modal.find(self.exportModalLoading).removeClass('hide');
             self.$modal.find(self.exportModalLoadedData).empty();
+
             var $title = self.$modal.find('.modal-header h3 span');
             $title.text(modal_title);
             if (newLine)
                 $title.attr('style', 'display: block;');
             else
                 $title.attr('style', '');
-
         },
         updateModal = function(d) {
             var autoRefresh = '';
             var pollDownloader = function () {
-                if ($('#ready_'+d.download_id).length == 0)
-                {
+                if ($('#ready_'+d.download_id).length == 0) {
                     $.get(d.download_url, function(data) {
                         self.$modal.find(self.exportModalLoadedData).html(data);
                     });
@@ -56,7 +55,7 @@ var ExportManager = function (o) {
                 var parts = xmlns.split('/');
                 a = parts[parts.length-2];
                 b = parts[parts.length-1];
-                if (a===self.xmlns_formdesigner)
+                if (a===self.xmlns_formdesigner || a.indexOf('.org') > 0)
                     return b.substring(0,31);
             }
             b = b.substr(0,14);
@@ -67,17 +66,18 @@ var ExportManager = function (o) {
     self.updateSelectedExports = function (data, event) {
         var $checkbox = $(event.srcElement);
         var add_to_list = ($checkbox.attr('checked') === 'checked'),
-            downloadButton = $checkbox.parent().parent().find('.dl-export');
-        if (add_to_list)
+            downloadButton = $checkbox.parent().parent().parent().find('.dl-export');
+        if (add_to_list) {
+            $checkbox.parent().find('.label').removeClass('label-info').addClass('label-success');
             self.selected_exports.push(downloadButton);
-        else
+        } else {
+            $checkbox.parent().find('.label').removeClass('label-success').addClass('label-info');
             self.selected_exports.splice(self.selected_exports().indexOf(downloadButton), 1);
+        }
     };
 
     self.requestBulkDownload = function(data, event) {
-        console.log("requesting bulk download");
         resetModal("Bulk "+self.bulk_download_notice_text, false);
-
         var prepareExport = new Object();
         if (self.is_custom)
             prepareExport = new Array();
@@ -87,19 +87,36 @@ var ExportManager = function (o) {
             var _id = curExpButton.data('appid') || curExpButton.data('exportid'),
                 xmlns = curExpButton.data('xmlns'),
                 module = curExpButton.data('modulename'),
+                export_type = curExpButton.data('exporttype'),
                 form = curExpButton.data('formname');
-            var sheetName = getSheetName(module, form, xmlns);
-            var schema_index = [self.domain, xmlns, sheetName];
+
+            var sheetName = "sheet";
+            if (self.is_custom)
+                sheetName = curExpButton.parent().parent().find('.sheetname').val();
+            else
+                sheetName = getSheetName(module, form, xmlns);
+
+            var export_tag;
+            if (self.is_custom)
+                export_tag = {
+                    domain: self.domain,
+                    xmlns: xmlns,
+                    sheet_name: sheetName,
+                    export_id: _id,
+                    export_type: export_type
+                };
+            else
+                export_tag = [self.domain, xmlns, sheetName];
 
             if (!_id)
                 _id = "unknown_application";
 
-            if (self.is_custom) {
-                prepareExport.push(schema_index)
-            } else {
+            if (self.is_custom)
+                prepareExport.push(export_tag)
+            else {
                 if (!prepareExport.hasOwnProperty(_id))
                     prepareExport[_id] = new Array();
-                prepareExport[_id].push(schema_index);
+                prepareExport[_id].push(export_tag);
             }
         }
         var downloadUrl = self.bulkDownloadUrl +
@@ -109,14 +126,17 @@ var ExportManager = function (o) {
             "&async=true";
 
         $.getJSON(downloadUrl, updateModal);
-        console.log(prepareExport);
     };
-
 
     self.requestDownload = function(data, event) {
         var $button = $(event.srcElement);
-        resetModal("'"+($button.data('appname') || "Form: ")+$button.data('formname')+"'", true);
+        var modalTitle = $button.data('formname') || $button.data('xmlns');
         var downloadUrl = self.downloadUrl || $button.data('dlocation');
+
+        if ($button.data('modulename'))
+            modalTitle  = $button.data('modulename')+" > "+modalTitle;
+        resetModal("'"+modalTitle+"'", true);
+
         downloadUrl = downloadUrl +
             "?"+self.exportFilters+
             '&export_tag=["'+self.domain+'","'+$button.data('xmlns')+'","'+$button.data('formname')+'"]' +
@@ -124,9 +144,33 @@ var ExportManager = function (o) {
             '&async=true';
         if (!self.is_custom)
             downloadUrl = downloadUrl+'&app_id='+$button.data('appid');
-        console.log(downloadUrl);
 
         $.getJSON(downloadUrl, updateModal);
+    };
+
+    self.checkCustomSheetNameLength = function(data, event) {
+        var $input = $(event.srcElement);
+        var valLength = $input.val().length;
+        return (valLength < 31 || event.keyCode == 8);
+    };
+    self.updateCustomSheetNameCharacterCount = function (data, event) {
+        var $input = $(event.srcElement);
+        $input.parent().find('.label').text($input.val().length);
+        return true;
+    };
+    self.toggleSelectAllExports = function (data, event) {
+        var $toggleBtn = $(event.srcElement),
+            check_class = (self.is_custom) ? '.select-custom' : '.select-bulk';
+        if ($toggleBtn.data('all'))
+            $.each($(check_class), function () {
+                $(this).attr('checked', true);
+                self.updateSelectedExports({}, {srcElement: this})
+            });
+        else
+            $.each($(check_class), function () {
+                $(this).attr('checked', false);
+                self.updateSelectedExports({}, {srcElement: this})
+            });
     };
 
 };
@@ -138,6 +182,28 @@ ko.bindingHandlers.showBulkExportNotice = {
             $(element).fadeIn();
         else
             $(element).fadeOut();
+    }
+};
+
+ko.bindingHandlers.updateCustomSheetName = {
+    init: function(element, valueAccessor) {
+        var value = valueAccessor()();
+        var originalName = $(element).val();
+        var MAX_LENGTH = 31;
+        if (originalName.length > MAX_LENGTH) {
+            $(element).val(originalName.substring(0,MAX_LENGTH));
+            $(element).data('shortened', true);
+        } else {
+            $(element).parent().find('.label').text(originalName.length);
+        }
+    },
+    update: function(element, valueAccessor) {
+        var value = valueAccessor()();
+        var $parentRow = $(element).parent().parent().parent();
+        if($parentRow.find('.select-custom').attr('checked') === 'checked')
+            $(element).parent().fadeIn();
+        else
+            $(element).parent().fadeOut();
     }
 };
 

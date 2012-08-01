@@ -1,83 +1,110 @@
 from StringIO import StringIO
+import logging
 import uuid
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 import json
 import zipfile
 from corehq.apps.app_manager.models import Application
+from corehq.apps.reports.models import FormExportSchema
 import couchexport
 from couchexport.export import get_headers, get_writer, format_tables, create_intermediate_tables
-from couchexport.models import FakeSavedExportSchema, Format
+from couchexport.models import FakeSavedExportSchema, Format, SavedExportSchema
 
-# couchexport is a mess. Sorry. Sorry. This is gross.
+# couchexport is a mess. Sorry. Sorry. This is gross, too.
 
-class BaseBulkExport(object):
-    export_id = None
-    first_checkpoint_id = None
+class BulkExport(object):
 
-    def __init__(self,
-                 schema_indices,
-                 export_filter,
-                 export_object=FakeSavedExportSchema,
-                 format=Format.XLS_2007):
-        self.export_objects = list()
+    def __init__(self, export_tags, export_filter, format=Format.XLS_2007):
         self.export_filter = export_filter
         self.format=format
-        for schema_index in schema_indices:
-            self.export_objects.append(export_object(index=schema_index))
+        self.generate_export_objects(export_tags)
 
     @property
     def filename(self):
-        return self.export_id if self.export_id else "bulk_export.%s" % Format.from_format(self.format).extension
+        return "bulk_export.%s" % Format.from_format(self.format).extension
 
-    def generate_bulk_file(self, separator='|'):
+    @property
+    def separator(self):
+        return "."
+
+    def generate_export_objects(self, export_tags):
+        self.export_objects = []
+
+    def generate_bulk_file(self):
         configs = list()
         schemas = list()
         checkpoints = list()
         file = StringIO()
 
-        print "checkpoint 1"
-        print self.export_objects
+
         for export_object in self.export_objects:
             config, schema, checkpoint = export_object.get_export_components(filter=self.export_filter)
             configs.append(config)
             schemas.append(schema)
             checkpoints.append(checkpoint)
-            if checkpoint and not self.first_checkpoint_id:
-                # ew
-                self.first_checkpoint_id = checkpoint.get_id
 
-        print "point 2"
         # generate the headers for the bulk excel file
         headers = []
         for i, schema in enumerate(schemas):
             if not checkpoints[i]:
                 continue
-            header = self.export_objects[i].parse_headers(get_headers(schema, separator=separator))
-
+            header = self.export_objects[i].parse_headers(get_headers(schema, separator=self.separator))
             headers.extend(header)
-        print "headers", headers
+
         writer = get_writer(self.format)
         writer.open(headers, file)
 
-        print "point 3"
         # now that the headers are set, lets build the rows
         for i, config in enumerate(configs):
             for doc in config.get_docs():
                 if self.export_objects[i].transform:
                     doc = self.export_objects[i].transform(doc)
                 table = format_tables(create_intermediate_tables(doc, schemas[i]),
-                                    include_headers=False, separator=separator)
+                                    include_headers=False, separator=self.separator)
                 table = self.export_objects[i].parse_tables(table)
                 writer.write(table)
 
         writer.close()
-
         return file
 
+    def generate_table_headers(self, schemas, checkpoints):
+        return []
 
+class CustomBulkExport(BulkExport):
+    domain = None
 
-class ApplicationBulkExport(BaseBulkExport):
+    @property
+    def filename(self):
+        return "%s_custom_bulk_export.%s" % (self.domain, Format.from_format(self.format).extension)
+
+    def generate_export_objects(self, export_tags):
+        self.export_objects = []
+        for tag in export_tags:
+            export_id = tag.get('export_id', None)
+            export_type = tag.get('type', 'form')
+            sheet_name = tag.get('sheet_name', 'Untitled')
+
+            if export_type == 'form':
+                ExportSchemaClass = FormExportSchema
+            else:
+                ExportSchemaClass = SavedExportSchema
+            if export_id:
+                export_object = ExportSchemaClass.get(export_id)
+                export_object.sheet_name = sheet_name
+                self.export_objects.append(export_object)
+
+    def generate_table_headers(self, schemas, checkpoints):
+        headers = []
+        for export_object in self.export_objects:
+            if export_object.parse_headers:
+                headers.extend(export_object.parse_headers(export_object.get_table_headers()))
+            else:
+                logging.error("Not able to parse a header during custom bulk export.")
+        return headers
+
+class ApplicationBulkExport(BulkExport):
+    export_id = None
 
     @property
     def filename(self):
@@ -91,18 +118,39 @@ class ApplicationBulkExport(BaseBulkExport):
             pass
         return filename
 
+    @property
+    def separator(self):
+        return "|"
+
+    def generate_table_headers(self, schemas, checkpoints):
+        headers = []
+        for i, schema in enumerate(schemas):
+            if not checkpoints[i]:
+                continue
+            header = self.export_objects[i].parse_headers(get_headers(schema, separator=self.separator))
+            headers.extend(header)
+        return headers
+
+    def generate_export_objects(self, export_tags):
+        self.export_objects = []
+        for schema_index in export_tags:
+            self.export_objects.append(FakeSavedExportSchema(index=schema_index))
+
 
 class BulkExportHelper(object):
-    bulk_files = list()
-    domain=None
 
-    def prepare_export(self):
-        print "preparing export", self.bulk_files
+    @property
+    def zip_export(self):
+        return True
+
+    def prepare_export(self, export_tags, export_filter, domain=None):
+        self.domain = domain
+        self.generate_bulk_files(export_tags, export_filter)
+
         download_id = uuid.uuid4().hex
         couchexport.tasks.bulk_export_async.delay(
             self,
             download_id,
-            self.bulk_files,
             domain=self.domain
         )
         return HttpResponse(json.dumps(dict(
@@ -110,27 +158,30 @@ class BulkExportHelper(object):
             download_url=reverse('ajax_job_poll', kwargs={'download_id': download_id}))
         ))
 
+    def generate_bulk_files(self, export_tags, export_filter):
+        self.bulk_files = []
+
     @property
     def get_id(self):
-        try:
-            first_checkpoint_id = self.bulk_files[0].first_checkpoint_id
-            return first_checkpoint_id if first_checkpoint_id else ""
-        except Exception:
-            return ""
+        return uuid.uuid4().hex
 
 
+class ApplicationBulkExportHelper(BulkExportHelper):
 
-class BulkExportPerApplicationHelper(BulkExportHelper):
-
-    def __init__(self, export_tags, export_filter, domain=None):
-        self.domain = domain
+    def generate_bulk_files(self, export_tags, export_filter):
+        self.bulk_files = []
         for appid, indices in export_tags.items():
-            app_bulk_export = ApplicationBulkExport(
-                indices,
-                export_filter
-            )
+            app_bulk_export = ApplicationBulkExport(indices, export_filter)
             app_bulk_export.export_id = appid
-            print app_bulk_export
             self.bulk_files.append(app_bulk_export)
 
-        print self.bulk_files
+class CustomBulkExportHelper(BulkExportHelper):
+
+    @property
+    def zip_export(self):
+        return False
+
+    def generate_bulk_files(self, export_tags, export_filter):
+        bulk_export = CustomBulkExport(export_tags, export_filter)
+        bulk_export.domain = self.domain
+        self.bulk_files = [bulk_export]

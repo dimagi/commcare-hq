@@ -94,6 +94,12 @@
                         "separately. We strongly recommend that you Report an Issue with the button below.",
                 placement: 'right'
             });
+            $('.short-name-info').popover({
+                title: "Short Name",
+                content: "Excel sheet names are limited to a maximum of 31 characters."+
+                    "This will be this custom export's sheet name in your bulk custom export.",
+                placement: 'right'
+            });
         }());
     </script>
 {% endblock %}
@@ -114,14 +120,30 @@
                 <th>Preview</th>
                 <th>Edit</th>
                 <th>Download</th>
-                <th>Add to Bulk Download</th>
+                <th>
+                    Add to Bulk Export
+                    <small style="display: block;">
+                        Select:
+                        <a href="#" class="btn btn-mini" data-all="true" data-bind="click: toggleSelectAllExports">all</a>
+                        <a href="#" class="btn btn-mini btn-inverse" data-bind="click: toggleSelectAllExports">none</a>
+                    </small>
+                </th>
                 <th>Delete</th>
             </tr>
         </thead>
         <tbody>
             {% for export in saved_exports %}
             <tr class="{% cycle "odd" "even" %}">
-                <td>{{ export.name|default:"[blank]" }}</td>
+                <td>
+                    {{ export.name|default:"[blank]" }}
+                    <p style="display:none; margin-top:1em;" class="form-inline">
+                        <label>Short Name <i class="icon icon-info-sign short-name-info"></i>:</label>
+                        <input data-bind="updateCustomSheetName: selected_exports, event: {keydown: checkCustomSheetNameLength, keyup: updateCustomSheetNameCharacterCount}"
+                               class="sheetname"
+                               value="{{ export.name|default:"[blank]" }}" />
+                        <span class="label label-info">31</span>
+                    </p>
+                </td>
                 <td>{{ export.formname }}</td>
                 <td class="cell-vertical-centered">
                     <a class="btn" href='{% url export_custom_data domain export.get_id %}?format=html&{{ get_filter_params.urlencode|safe }}'>
@@ -138,12 +160,16 @@
                        data-formname="{{ export.name }}"
                        data-xmlns="{{ export.xmlns }}"
                        data-exportid="{{ export.get_id }}"
+                       data-exporttype="form"
                        data-dlocation='{% url export_custom_data domain export.get_id %}'
                        data-bind="click: requestDownload"
-                       class="btn btn-primary dl-export"><i class="icon-download-alt icon-white"></i> Download</a>
+                       class="dl-export btn btn-primary"><i class="icon-download-alt icon-white"></i> Download</a>
                 </td>
-                <td>
-                    <input type="checkbox" data-bind="event: {change: updateSelectedExports}" />
+                <td class="form-inline">
+                    <label>
+                        <input type="checkbox" class="select-custom" data-bind="event: {change: updateSelectedExports}" />
+                        <span class="label label-info">+ Bulk Export</span>
+                    </label>
                 </td>
                 <td class="cell-vertical-centered">
                     <a class="btn btn-danger" data-toggle="modal" class="delete_link" href="#delete-export-modal-{{ export.get_id }}"><i class="icon-remove icon-white"></i> Delete</a>
@@ -174,7 +200,14 @@
             <th>Custom Export</th>
             <th>Download</th>
             <th>Total Submissions</th>
-            <th>Add to Bulk Export</th>
+            <th>
+                Add to Bulk Export
+                <small style="display: block;">
+                    Select:
+                    <a href="#" class="btn btn-mini" data-all="true" data-bind="click: toggleSelectAllExports">all</a>
+                    <a href="#" class="btn btn-mini btn-inverse" data-bind="click: toggleSelectAllExports">none</a>
+                </small>
+            </th>
         </tr>
         </thead>
         <tbody>
@@ -277,9 +310,6 @@
                            data-formname="{% include 'reports/partials/form_name.html' %}"
                            data-xmlns="{% if form.xmlns != None %}{{ form.xmlns }}{% endif %}"
                            data-appid="{{ form.app.id }}"
-                           data-appname="{{ form.app.name }}"
-                           data-moduleid="{{ form.module.id }}"
-                           data-formid="{{ form.form.id }}"
                            data-bind="click: requestDownload"
                            class="btn btn-primary dl-export" ><i class="icon-download-alt icon-white"></i> Download</a>
                     {% else %}
@@ -291,9 +321,14 @@
                     <i class="icon-info-sign all-users-all-time">
                     </i>{% endif %}
                 </td>
-                <td>
+                <td class="form-inline">
                     {% if form.submissions %}
-                        <input type="checkbox" data-bind="event: {change: updateSelectedExports}" />
+                        <label>
+                            <input type="checkbox" class="select-bulk" data-bind="event: {change: updateSelectedExports}" />
+                            <span class="label label-info">+ Bulk Export</span>
+                        </label>
+                    {% else %}
+                        <span class="label">Not Available</span>
                     {% endif %}
                 </td>
             </tr>
