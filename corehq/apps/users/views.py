@@ -245,7 +245,7 @@ def commcare_users(request, domain, template="users/commcare_users.html"):
     if cannot_share:
         users = CommCareUser.cannot_share(domain)
     else:
-        users = CommCareUser.by_domain(domain).all()
+        users = CommCareUser.by_domain(domain)
         if show_inactive:
             users.extend(CommCareUser.by_domain(domain, is_active=False))
 
