@@ -1342,7 +1342,7 @@ class WebUser(CouchUser, AuthorizableMixin):
                 total_permission |= permission
 
             #set up a user role
-            return UserRole(domain=domain, permissions=total_permission, name=', '.join([domain_membership.role.name + membership_source for domain_membership, membership_source in domain_memberships]))
+            return UserRole(domain=domain, permissions=total_permission, name=', '.join(["%s %s" % (domain_membership.role.name, membership_source) for domain_membership, membership_source in domain_memberships]))
             #set up a domain_membership
 
 
