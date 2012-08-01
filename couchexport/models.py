@@ -199,11 +199,20 @@ class BaseSavedExportSchema(Document):
             download_url=reverse('ajax_job_poll', kwargs={'download_id': download_id}))
         ))
 
+    @property
+    def table_name(self):
+        if len(self.index) > 2:
+            return self.index[2]
+        else:
+            return "Form"
+
     def parse_headers(self, headers):
-        return headers
+        first_header = headers[0][1]
+        return [(self.table_name, first_header)]
 
     def parse_tables(self, tables):
-        return tables
+        first_row = tables[0][1]
+        return [(self.table_name, first_row)]
 
 class FakeSavedExportSchema(BaseSavedExportSchema):
     index = JsonProperty()
@@ -216,23 +225,6 @@ class FakeSavedExportSchema(BaseSavedExportSchema):
     def indices(self):
         return [self.index]
 
-    @property
-    def table_name(self):
-        if len(self.index) > 2:
-            return self.index[2]
-        else:
-            return "Form"
-
-    def parse_headers(self, headers):
-        print "parsing headers"
-        first_header = headers[0][1]
-        return [(self.table_name, first_header)]
-
-    def parse_tables(self, tables):
-        print "parsing tables"
-        first_row = tables[0][1]
-        return [(self.table_name, first_row)]
-
     def get_export_components(self, previous_export_id=None, filter=None):
         from couchexport.export import get_export_components
         return get_export_components(self.index, previous_export_id, filter)
@@ -241,8 +233,6 @@ class FakeSavedExportSchema(BaseSavedExportSchema):
                          use_cache=True, max_column_size=2000, separator='|'):
         # the APIs of how these methods are broken down suck, but at least
         # it's DRY
-        print "getting files for FakeSavedExportSchema"
-
         from couchexport.export import export
         from django.core.cache import cache
         import hashlib
@@ -274,7 +264,6 @@ class FakeSavedExportSchema(BaseSavedExportSchema):
         if checkpoint:
             if use_cache:
                 cache.set(cache_key, (tmp, checkpoint), CACHE_TIME)
-            print "tmp", type(checkpoint)
             return tmp, checkpoint
 
         return None, None # hacky empty case
@@ -291,6 +280,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     schema_id = StringProperty()
     tables = SchemaListProperty(ExportTable)
     type = StringProperty()
+    sheet_name = StringProperty()
 
     def __unicode__(self):
         return "%s (%s)" % (self.name, self.index)
@@ -300,8 +290,11 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     def schema(self):
         if self._schema is None:
             self._schema = ExportSchema.get(self.schema_id)
-    
         return self._schema
+
+    @property
+    def table_name(self):
+        return self.sheet_name if self.sheet_name else "%s" % self._id
     
     @classmethod
     def default(cls, schema, name="", type='form'):
@@ -337,28 +330,35 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
                                        table_index, # TODO: figure out a way to separate index from display 
                                        self._table_dict[table_index].trim(data)))
         return trimmed_tables
-    
-    def get_export_files(self, format="", previous_export=None, filter=None):
-        from couchexport.export import get_writer, get_schema_new, \
-            format_tables, create_intermediate_tables
-        
-        if not format:
-            format = self.default_format or Format.XLS_2007
-        
+
+    def get_export_components(self, previous_export_id=None, filter=None):
+        from couchexport.export import get_schema_new
         from couchexport.export import ExportConfiguration
+
         database = get_db()
 
         config = ExportConfiguration(database, self.index,
-                                     previous_export, 
-                                     self.filter & filter)
-        
-        
+            previous_export_id,
+            self.filter & filter)
+
         # get and checkpoint the latest schema
         updated_schema = get_schema_new(config)
-        export_schema_checkpoint = ExportSchema(seq=config.current_seq, 
-                                                schema=updated_schema,
-                                                index=config.schema_index)
+        export_schema_checkpoint = ExportSchema(seq=config.current_seq,
+            schema=updated_schema,
+            index=config.schema_index)
         export_schema_checkpoint.save()
+
+        return config, updated_schema, export_schema_checkpoint
+    
+    def get_export_files(self, format="", previous_export=None, filter=None):
+        from couchexport.export import get_writer,\
+            format_tables, create_intermediate_tables
+
+        if not format:
+            format = self.default_format or Format.XLS_2007
+
+        config, updated_schema, export_schema_checkpoint = self.get_export_components(previous_export, filter)
+
         # transform docs onto output and save
         writer = get_writer(format)
         
@@ -366,10 +366,6 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         formatted_headers = self.get_table_headers()
         tmp = StringIO()
         writer.open(formatted_headers, tmp)
-        print "creating export files in SavedExportSchema"
-        print "formatted headers", formatted_headers
-        print "tmp", tmp
-        print "config docs", config.get_docs()
 
         for doc in config.get_docs():
             if self.transform:
@@ -438,4 +434,7 @@ class SavedBasicExport(Document):
 
 
 
-    
+class FakeCheckpoint(object):
+    @property
+    def get_id(self):
+        return uuid.uuid4().hex

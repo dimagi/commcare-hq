@@ -156,10 +156,8 @@ def export(schema_index, file, format=Format.XLS_2007,
     Exports data from couch documents matching a given tag to a file. 
     Returns true if it finds data, otherwise nothing
     """
-    print "trying to fetch components"
     config, updated_schema, export_schema_checkpoint = get_export_components(schema_index,
                                                                     previous_export_id, filter)
-    print "fetched components"
     # transform docs onto output and save
     if config:
         writer = get_writer(format)
@@ -189,7 +187,6 @@ def get_export_components(schema_index, previous_export_id=None, filter=None):
         previous_export, filter)
 
     # handle empty case
-    print config
     if not config.potentially_relevant_ids:
         return None, None, None
 
@@ -514,4 +511,3 @@ def _next_unique(string, reserved_strings, max_len=500):
             string = "%s%s" % (orig_string[-(max_len - counterlen):], counter)
         counter = counter + 1
     return string
-    
