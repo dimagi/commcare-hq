@@ -117,10 +117,12 @@ def send(message):
         data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params))).read()
     except Exception:
         data = None
+    print "data", data
 
     try:
         # attempt to bill client
         from hqpayments.tasks import bill_client_for_sms
+        logging.error(message)
         bill_client_for_sms('UnicelSMSBillableItem', message, **dict(response=data))
     except Exception as e:
         logging.debug("UNICEL API contacted, errors in billing. Error: %s" % e)
