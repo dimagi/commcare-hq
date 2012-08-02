@@ -167,6 +167,7 @@ class ExportTable(DocumentSchema):
             ret.append(FormattedRow([row_data[self._header_to_index_map[col]] \
                                               for col in self._cols if col != "id"], 
                                     id, id_index=self._cols.index("id") if id else 0))
+
         return ret
 
 class BaseSavedExportSchema(Document):
@@ -207,8 +208,7 @@ class BaseSavedExportSchema(Document):
             return "Form"
 
     def parse_headers(self, headers):
-        first_header = headers[0][1]
-        return [(self.table_name, first_header)]
+        return headers
 
     def parse_tables(self, tables):
         first_row = tables[0][1]
@@ -224,6 +224,10 @@ class FakeSavedExportSchema(BaseSavedExportSchema):
     @property
     def indices(self):
         return [self.index]
+
+    def parse_headers(self, headers):
+        first_header = headers[0][1]
+        return [(self.table_name, first_header)]
 
     def get_export_components(self, previous_export_id=None, filter=None):
         from couchexport.export import get_export_components
@@ -311,8 +315,8 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
                                               "selected": False} for c in self.schema.get_columns(index)],
                  "selected": index in table_dict} 
     
-    def get_table_headers(self):
-        return ((t.index, [t.get_headers_row()]) for t in self.tables)
+    def get_table_headers(self, override_name=False):
+        return ((self.table_name if override_name and i==0 else t.index, [t.get_headers_row()]) for i, t in enumerate(self.tables))
         
     @property
     def table_configuration(self):
