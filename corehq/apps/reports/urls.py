@@ -47,6 +47,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^emailtest/(?P<report_slug>[\w_]+)/$', 'emailtest', name="emailable_report_test"),
 
     # Create and Manage Custom Exports
+    url(r"^export/$", 'export_data'),
     url(r"^export/customize/$", 'custom_export', name="custom_export"),
     url(r"^export/custom/(?P<export_id>[\w\-]+)/edit/$", 'edit_custom_export', name="edit_custom_export"),
     url(r"^export/custom/(?P<export_id>[\w\-]+)/delete/$", 'delete_custom_export', name="delete_custom_export"),
