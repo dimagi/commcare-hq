@@ -299,7 +299,6 @@ class Domain(Document):
     @classmethod
     def get_all(cls):
         return Domain.view("domain/not_snapshots",
-                            reduce=False,
                             include_docs=True).all()
 
     def case_sharing_included(self):
