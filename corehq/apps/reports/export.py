@@ -43,24 +43,24 @@ class BulkExport(object):
             schemas.append(schema)
             checkpoints.append(checkpoint)
 
-        # generate the headers for the bulk excel file
-        headers = []
-        for i, schema in enumerate(schemas):
-            if not checkpoints[i]:
-                continue
-            header = self.export_objects[i].parse_headers(get_headers(schema, separator=self.separator))
-            headers.extend(header)
-
         writer = get_writer(self.format)
+
+        # generate the headers for the bulk excel file
+        headers = self.generate_table_headers(schemas, checkpoints)
+
         writer.open(headers, file)
 
         # now that the headers are set, lets build the rows
+
+
         for i, config in enumerate(configs):
             for doc in config.get_docs():
                 if self.export_objects[i].transform:
                     doc = self.export_objects[i].transform(doc)
                 table = format_tables(create_intermediate_tables(doc, schemas[i]),
-                                    include_headers=False, separator=self.separator)
+                                    include_headers=isinstance(self, CustomBulkExport), separator=self.separator)
+                if isinstance(self, CustomBulkExport):
+                    table = self.export_objects[i].trim(table)
                 table = self.export_objects[i].parse_tables(table)
                 writer.write(table)
 
@@ -69,6 +69,10 @@ class BulkExport(object):
 
     def generate_table_headers(self, schemas, checkpoints):
         return []
+
+    def generate_table_rows(self, configs, schemas):
+        return []
+
 
 class CustomBulkExport(BulkExport):
     domain = None
@@ -96,10 +100,7 @@ class CustomBulkExport(BulkExport):
     def generate_table_headers(self, schemas, checkpoints):
         headers = []
         for export_object in self.export_objects:
-            if export_object.parse_headers:
-                headers.extend(export_object.parse_headers(export_object.get_table_headers()))
-            else:
-                logging.error("Not able to parse a header during custom bulk export.")
+            headers.extend(export_object.get_table_headers(True))
         return headers
 
 class ApplicationBulkExport(BulkExport):
@@ -121,6 +122,11 @@ class ApplicationBulkExport(BulkExport):
     def separator(self):
         return "|"
 
+    def generate_export_objects(self, export_tags):
+        self.export_objects = []
+        for schema_index in export_tags:
+            self.export_objects.append(FakeSavedExportSchema(index=schema_index))
+
     def generate_table_headers(self, schemas, checkpoints):
         headers = []
         for i, schema in enumerate(schemas):
@@ -130,10 +136,8 @@ class ApplicationBulkExport(BulkExport):
             headers.extend(header)
         return headers
 
-    def generate_export_objects(self, export_tags):
-        self.export_objects = []
-        for schema_index in export_tags:
-            self.export_objects.append(FakeSavedExportSchema(index=schema_index))
+    def generate_table_rows(self, configs, schemas):
+        return []
 
 
 class BulkExportHelper(object):

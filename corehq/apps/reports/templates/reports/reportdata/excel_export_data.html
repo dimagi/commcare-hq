@@ -120,6 +120,11 @@
                         "not be included in the Bulk Custom Export. Change the sheet name to resolve this issue.",
                 placement: 'right'
             });
+            $('.custom-bulk-format-na').popover({
+                title: "Format Not Available",
+                content: "Custom Bulk Export does not support this format at the time.",
+                placement: 'left'
+            });
         }());
     </script>
 {% endblock %}
@@ -188,10 +193,14 @@
                        class="dl-export btn btn-primary"><i class="icon-download-alt icon-white"></i> Download</a>
                 </td>
                 <td class="form-inline">
+                    {% ifequal export.default_format custom_bulk_export_format %}
                     <label>
                         <input type="checkbox" class="select-custom" data-bind="event: {change: updateSelectedExports}" />
                         <span class="label label-info">+ Bulk Export</span>
                     </label>
+                    {% else %}
+                        <span class="label custom-bulk-format-na">{{ export.default_format }} Not Available</span>
+                    {% endifequal %}
                 </td>
                 <td class="cell-vertical-centered">
                     <a class="btn btn-danger" data-toggle="modal" class="delete_link" href="#delete-export-modal-{{ export.get_id }}"><i class="icon-remove icon-white"></i> Delete</a>

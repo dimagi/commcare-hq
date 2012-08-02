@@ -4,7 +4,7 @@ import logging
 from django.http import Http404
 from corehq.apps.reports.models import FormExportSchema
 from corehq.apps.reports.standard import StandardHQReport, StandardDateHQReport
-from couchexport.models import SavedExportSchema
+from couchexport.models import SavedExportSchema, Format
 from dimagi.utils.couch.database import get_db
 from corehq.apps.app_manager.models import get_app
 from dimagi.utils.parsing import string_to_datetime
@@ -164,6 +164,7 @@ class ExcelExportReport(StandardDateHQReport):
             "saved_exports": exports,
             "edit": self.request.GET.get('edit') == 'true',
             "get_filter_params": self.get_filter_params(),
+            "custom_bulk_export_format": Format.XLS_2007
             })
 
     def get_filter_params(self):
