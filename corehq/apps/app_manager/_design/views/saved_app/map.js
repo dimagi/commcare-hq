@@ -7,6 +7,8 @@ function(doc){
             _id: doc._id,
             name: doc.name,
             build_spec: doc.build_spec,
+            text_input: doc.text_input,
+            platform: doc.platform,
             copy_of: doc.copy_of,
             domain: doc.domain,
             built_on: doc.built_on,

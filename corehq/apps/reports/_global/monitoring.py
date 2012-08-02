@@ -578,11 +578,13 @@ class FormCompletionVsSubmissionTrendsReport(StandardTabularHQReport, StandardDa
             for item in data:
                 vals = item.get('value')
                 completion_time = dateutil.parser.parse(vals.get('completion_time'))
+                completion_time = completion_time.replace(tzinfo=pytz.utc)
                 submission_time = dateutil.parser.parse(vals.get('submission_time'))
+                submission_time = submission_time.replace(tzinfo=pytz.utc)
                 td = submission_time-completion_time
 
                 DFORMAT  = "%d %b %Y, %H:%M"
-                td_total = td.total_seconds()
+                td_total = (td.seconds + td.days * 24 * 3600)
 
                 rows.append([
                     self.get_user_link(self.domain, user),

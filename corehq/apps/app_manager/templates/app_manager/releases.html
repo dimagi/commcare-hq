@@ -179,6 +179,7 @@
             <td class="nowrap">{% utc_to_timezone saved_app.built_on timezone "%H:%M %Z" %}</td>
             <td class="nowrap">
                 {% if saved_app.built_with.get_label %}{{ saved_app.built_with.get_label }}{% endif %}
+                <p>{{ saved_app.get_jar_path }}</p>
                 {% if not saved_app.built_with.signed %}<h6>Unsigned Jar</h6>{% endif %}
             </td>
             <td class="nowrap">

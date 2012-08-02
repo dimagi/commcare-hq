@@ -14,7 +14,7 @@
         {% if applications|length > 0 %}
             <dt>{% trans 'Applications' %}</dt>
             <dd>
-                <ul class="nav nav-pills nav-stacked">
+                <ul class="nav nav-pills">
                     {% for app in applications %}
                     <li><a href="{% url corehq.apps.app_manager.views.view_app domain app.id %}">{{ app.name }}</a></li>
                     {% endfor %}

@@ -1,8 +1,11 @@
 from django.core.urlresolvers import reverse
 from django.utils.datastructures import SortedDict
 import os
+import sys
 import logging
 from corehq.apps.app_manager.xform import XFormValidationError, XFormError
+from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import CouchUser
 from corehq.apps.hqmedia.models import CommCareMultimedia, CommCareAudio, CommCareImage, HQMediaMapItem
 
 MULTIMEDIA_PREFIX = "jr://file/"
@@ -93,6 +96,13 @@ class HQMediaMatcher():
         self.app.multimedia_map = {}
         self.app.save()
 
+    def owner(self):
+        project = Domain.get_by_name(self.domain)
+        if project.organization:
+            return project.organization_doc()
+        else:
+            return CouchUser.get_by_username(self.username)
+
     def match_zipped(self, zip, replace_existing_media=True):
         unknown_files = []
         matched_audio = []
@@ -133,7 +143,7 @@ class HQMediaMatcher():
                             upload_path=path,
                             username=self.username,
                             replace_attachment=replace_existing_media)
-                        media.add_domain(self.domain)
+                        media.add_domain(self.domain, owner=True)
                         self.app.create_mapping(media, form_path)
                         match_map = HQMediaMapItem.format_match_map(form_path, media.doc_type, media._id, path)
                         if is_image:
@@ -149,11 +159,11 @@ class HQMediaMatcher():
 
         return matched_images, matched_audio, unknown_files, errors
 
-    def match_file(self, uploaded_file, replace_existing_media=True):
+    def match_file(self, uploaded_file, replace_existing_media=True, **kwargs):
         errors = []
         try:
-            if self.specific_params:
-                media_class = eval(self.specific_params['media_type'][0])
+            if self.specific_params and self.specific_params['media_type'][0].startswith('CommCare'):
+                media_class = getattr(sys.modules[__name__], self.specific_params['media_type'][0])
                 form_path = self.specific_params['path'][0]
                 replace_existing_media = self.specific_params['replace_attachment'][0]
 
@@ -174,16 +184,15 @@ class HQMediaMatcher():
                 else:
                     uploaded_file.close()
                     return False, {}, errors
-
             if media:
                 media.attach_data(data,
                     upload_path=filename,
                     username=self.username,
                     replace_attachment=replace_existing_media)
-                media.add_domain(self.domain)
+                media.add_domain(self.domain, owner=True, **kwargs)
                 self.app.create_mapping(media, form_path)
-                return True, HQMediaMapItem.format_match_map(form_path, media.doc_type, media._id, filename), errors
 
+                return True, HQMediaMapItem.format_match_map(form_path, media.doc_type, media._id, filename), errors
         except Exception as e:
             logging.error(e)
             errors.append(e.message)

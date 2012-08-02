@@ -16,6 +16,14 @@
             color: white;
             background-color: #1557A2;
         }
+        /* stupid hacks to make bootstrap btns not look bad */
+        .hq-oldstyle a.btn {
+            text-decoration: none;
+            color: black; /* i think this is the wrong color - maybe like #CCC or something is right? */
+        }
+        .hq-oldstyle a.btn-primary, .hq-oldstyle a.btn-info {
+            color: white;
+        }
         #release-manager-nav {
             float: right;
         }
@@ -177,6 +185,11 @@
                                     <input type="hidden" name="type" value="RemoteApp" />
                                     <a href="#" class="submit">{% trans 'Remote App (Advanced Users Only)' %}</a>
                                 </li>
+                                {% if request.couch_user.is_previewer %}
+                                <li>
+                                    <a href="{% url appstore %}">{% trans 'Visit CommCare Exchange to copy existing app...' %}</a>
+                                </li>
+                                {% endif %}
                             </ul>
                         </div>
                     </div>
@@ -227,7 +240,7 @@
             </div>
             {% if applications and request.couch_user.can_edit_apps %}
                 <div id="edit">
-                    Switch to: 
+                    Switch to:
                     {% if edit %}
                         <a href="{% urlencode request.path request.GET with "edit" as "false" %}">
                             Read Only
@@ -251,7 +264,10 @@
                 </p>
                 <form action="{% url new_app domain %}">
                     <input type="hidden" name="type" value="Application">
-                    <a href="#" class="submit">Click here to create your first app.</a>
+                    <a href="#" class="submit">Create a blank app</a>
+                    {% if request.couch_user.is_previewer %}
+                        or <a href="{% url appstore %}">copy an existing app from CommCare Exchange</a>.
+                    {% endif %}
                 </form>
             </div>
         {% endif %}
