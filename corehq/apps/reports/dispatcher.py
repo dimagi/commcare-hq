@@ -2,7 +2,7 @@ from django.http import HttpResponseNotFound, Http404
 from dimagi.utils.modules import to_function
 
 
-class ReportDispatcher():
+class ReportDispatcher(object):
     """
     This is sorta like a poor man's class based view. Added so that multiple
     modules can easily leverage the reports framework in their views.
@@ -39,10 +39,10 @@ class ReportDispatcher():
         report is not found. Otherwise returns an HTTP response from the 
         matching report object.
         """
-        if not self.mapping or (custom and not self.domain in self.mapping):
+        if not self.mapping or (custom and not domain in self.mapping):
             return HttpResponseNotFound("Sorry, no reports have been configured yet.")
         
-        mapping = self.mapping[self.domain] if custom else self.mapping
+        mapping = self.mapping[domain] if custom else self.mapping
         for key, models in mapping.items():
             for model in models:
                 klass = to_function(model)
