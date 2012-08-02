@@ -482,6 +482,8 @@ class Domain(Document):
 
     @classmethod
     def popular_sort(cls, domains, page):
+        if len(domains) == 0:
+            return [], 0
         sorted_list = []
         MIN_REVIEWS = 1.0
 
@@ -490,6 +492,7 @@ class Domain(Document):
 
         total_average_sum = sum(avg for domain, avg, num in domains)
         total_average_count = len(domains)
+
 
         total_average = (total_average_sum / total_average_count)
 
