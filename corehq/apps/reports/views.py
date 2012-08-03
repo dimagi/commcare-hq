@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import json
 from corehq.apps.reports import util, standard
 from corehq.apps.reports._global import inspect, export
+from corehq.apps.reports.export import BulkExportHelper, ApplicationBulkExportHelper, CustomBulkExportHelper
 from corehq.apps.reports.models import FormExportSchema
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
@@ -130,13 +131,11 @@ def export_data_async(request, domain):
     """
     Download all data for a couchdbkit model
     """
-
     try:
         export_tag = json.loads(request.GET.get("export_tag", "null") or "null")
         export_type = request.GET.get("type", "form")
     except ValueError:
         return HttpResponseBadRequest()
-
     assert(export_tag[0] == domain)
 
     filter = util.create_export_filter(request, domain, export_type=export_type)
@@ -191,11 +190,10 @@ class CustomExportHelper(object):
             self.custom_export.include_errors = bool(self.request.POST.get("include-errors"))
             self.custom_export.app_id = self.request.POST.get('app_id')
 
-
 @login_or_digest
 @require_form_export_permission
 @datespan_default
-def export_default_or_custom_data(request, domain, export_id=None):
+def export_default_or_custom_data(request, domain, export_id=None, bulk_export=False):
     """
     Export data from a saved export schema
     """
@@ -208,8 +206,18 @@ def export_default_or_custom_data(request, domain, export_id=None):
     filename = request.GET.get("filename", None)
 
     filter = util.create_export_filter(request, domain, export_type=export_type)
+    if bulk_export:
+        try:
+            is_custom = json.loads(request.GET.get("is_custom", "false"))
+            export_tags = json.loads(request.GET.get("export_tags", "null") or "null")
+        except ValueError:
+            return HttpResponseBadRequest()
 
-    if export_id:
+        export_helper = CustomBulkExportHelper() if is_custom else ApplicationBulkExportHelper()
+        return export_helper.prepare_export(export_tags, filter, domain=domain)
+
+    elif export_id:
+        # this is a custom export
         export_object = CustomExportHelper(request, domain, export_id).custom_export
     else:
         if not async:
@@ -222,10 +230,7 @@ def export_default_or_custom_data(request, domain, export_id=None):
         except ValueError:
             return HttpResponseBadRequest()
         assert(export_tag[0] == domain)
-
         export_object = FakeSavedExportSchema(index=export_tag)
-
-
     if async:
         return export_object.export_data_async(filter, filename, previous_export_id, format=format)
     else:
