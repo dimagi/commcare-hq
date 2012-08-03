@@ -4,7 +4,6 @@ from couchdbkit.ext.django.schema import Document, IntegerProperty, DictProperty
     StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty
 import json
 from StringIO import StringIO
-from corehq.apps.reports.display import xmlns_to_name
 from couchexport import util
 import couchexport
 from couchexport.util import SerializableFunctionProperty
