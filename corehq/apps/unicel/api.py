@@ -122,8 +122,8 @@ def send(message):
     try:
         # attempt to bill client
         from hqpayments.tasks import bill_client_for_sms
-        logging.error(message)
-        bill_client_for_sms('UnicelSMSBillableItem', message, **dict(response=data))
+        logging.error("MESSAGE %s", message.get_id)
+        bill_client_for_sms('UnicelSMSBillableItem', message.get_id, **dict(response=data))
     except Exception as e:
         logging.debug("UNICEL API contacted, errors in billing. Error: %s" % e)
 
