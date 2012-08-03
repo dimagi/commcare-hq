@@ -3,12 +3,21 @@
     <li><form action="{% url appstore_search_snapshots %}" method="get" class="form-search">
         <input type="text" name="q" placeholder="Search for apps..." value="{{ search_query }}" class="search-query" style="width: 80%" />
     </form></li>
+    {% if request.user.is_superuser and not filter_by %}
+        <li{% if not include_unapproved %} class="active"{% endif %}><a href="?">Approved only</a></li>
+        <li{% if include_unapproved %} class="active"{% endif %}><a href="?unapproved=true">Unapproved only</a></li>
+    {% endif %}
     <!--<li{% if report %} class="active"{% endif %}><a href="{% url appstore_interfaces_default %}">Advanced search...</a></li>-->
 
-    <li class="nav-header">Filter by</li>
-    <!--<li{% if filter_by == 'organization' %} class="active"{% endif %}><a href="{% url appstore_filter_choices "organization" %}">Organization</a></li>-->
-    <li{% if filter_by == 'author' %} class="active"{% endif %}><a href="{% url appstore_filter_choices "author" %}">Author</a></li>
-    <li{% if filter_by == 'category' %} class="active"{% endif %}><a href="{% url appstore_filter_choices "category" %}">Category</a></li>
-    <li{% if filter_by == 'license' %} class="active"{% endif %}><a href="{% url appstore_filter_choices "license" %}">License</a></li>
-    <li{% if filter_by == 'region' %} class="active"{% endif %}><a href="{% url appstore_filter_choices "region" %}">Region</a></li>
+    {% for sortable, choices in sortables.items %}
+        <li class="nav-header">{{ sortable.title }}</li>
+            {% for url, name, count in choices %}
+                <li class="sortable-{{ sortable }}{% if filter_by == sortable and filter == url %} active{% endif %}{% if forloop.counter > 4 and choices|length > 5 %} hide{% endif %}">
+                    <a href="{% url appstore_filter_snapshots sortable url %}">{{ name }}</a>
+                </li>
+            {% endfor %}
+            {% if choices|length > 5 %}
+                <li><a class="more-sortable-button" data-sortable="{{ sortable }}" href="#">More...</a></li>
+            {% endif %}
+    {% endfor %}
 </ul>

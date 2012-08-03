@@ -3,6 +3,20 @@
 {% load hq_bootstrap_tags %}
 {% load i18n %}
 
+{% block js %}{{ block.super }}
+    <script type="text/javascript">
+        $(function () {
+            $(".more-sortable-button").click(function() {
+                var e = $(this);
+                var sortable = e.data('sortable');
+                $('.sortable-' + sortable).show();
+                e.hide();
+                return false;
+            });
+        });
+    </script>
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
 <style type="text/css">
 
@@ -268,37 +282,5 @@
         {% endif %}
     </ul>
 </div>
-
-<!--<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Organization</th>
-            <th>Category</th>
-            <th>Copies</th>
-            <th>License</th>
-            <th>Last updated</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for app in apps %}
-    <tr>
-        <td><a href="{% url project_info app.name %}">{{ app.copied_from.display_name }}</a></td>
-        <td>
-            {% if app.organization %}
-                <a href="{% url orgs_landing app.organization %}">{{ app.organization_doc.title }}</a>
-            {% else %}
-                None
-            {% endif %}
-        </td>
-        <td>{{ app.project_type }}</td>
-        <td>{{ app.copies_of_parent|length }}</td>
-        <td>{{ app.get_license_display }}</td>
-        <td>{{ app.snapshot_time }}</td>
-
-    </tr>
-    {% endfor %}
-    </tbody>
-</table>-->
 
 {% endblock %}

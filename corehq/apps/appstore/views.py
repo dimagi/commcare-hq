@@ -27,22 +27,41 @@ def redirect(request, path):
 @require_previewer # remove for production
 def appstore(request, template="appstore/appstore_base.html", sort_by=None):
     page = int(request.GET.get('page', 1))
+    include_unapproved = (request.user.is_superuser and request.GET.get('unapproved', False))
     if not sort_by:
-        results = Domain.published_snapshots(include_unapproved=request.user.is_superuser, page=page, per_page=PER_PAGE)
+        results = Domain.published_snapshots(include_unapproved=include_unapproved, page=page, per_page=PER_PAGE)
         more_pages = page * PER_PAGE < results.total_rows
     else:
-        total_results = Domain.published_snapshots(include_unapproved=request.user.is_superuser)
+        total_results = Domain.published_snapshots(include_unapproved=include_unapproved)
+        more_pages = page * PER_PAGE < total_results.total_rows
         if sort_by == 'best':
-            results, results_count = Domain.popular_sort(total_results, page)
-            more_pages = page * PER_PAGE < results_count and page <= 10
+            results = Domain.popular_sort(total_results, page)
+            #more_pages = page * PER_PAGE < total_results and page <= 10
         elif sort_by == 'hits':
             results = Domain.hit_sort(total_results, page)
-            more_pages = page * PER_PAGE < len(total_results) and page <= 10
+            #more_pages = page * PER_PAGE < len(total_results) and page <= 10
     average_ratings = list()
     for result in results:
         average_ratings.append([result.name, Review.get_average_rating_by_app(result.original_doc)])
-    vals = dict(apps=results, average_ratings=average_ratings, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages, sort_by=sort_by)
-    return render_to_response(request, template, vals)
+
+    sortables = {
+            'author': [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('author')],
+            'license': [(d, LICENSES.get(d), count) for d, count in Domain.field_by_prefix('license')],
+            'category': [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('project_type')],
+            'region': [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('region')],
+        }
+
+    return render_to_response(request, template, {
+        'apps': results,
+        'average_ratings': average_ratings,
+        'page': page,
+        'prev_page': (page-1),
+        'next_page': (page+1),
+        'more_pages': more_pages,
+        'sort_by': sort_by,
+        'sortables': sortables,
+        'include_unapproved': include_unapproved
+    })
 
 @require_previewer # remove for production
 def project_info(request, domain, template="appstore/project_info.html"):
@@ -135,53 +154,42 @@ def search_snapshots(request, filter_by = '', filter = '', template="appstore/ap
     vals = dict(apps=snapshots, search_query=query, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages)
     return render_to_response(request, template, vals)
 
-@require_previewer # remove for production
-def filter_choices(request, filter_by, template="appstore/filter_choices.html"):
-    if filter_by not in ('category', 'license', 'region', 'organization', 'author'):
-        raise Http404("That page doesn't exist")
-
-    if filter_by == 'category':
-        choices = [(d.replace(' ', '+'), d) for d in Domain.field_by_prefix('project_type')]
-    elif filter_by == 'organization':
-        choices = [(o.name, o.title) for o in Organization.get_all()]
-    elif filter_by == 'author':
-        choices = [(d.replace(' ', '+'), d) for d in Domain.field_by_prefix('author')]
-    elif filter_by == 'license':
-        choices = LICENSES.items()
-    elif filter_by == 'region':
-        choices = [(d.replace(' ', '+'), d) for d in Domain.regions()]
-
-    return render_to_response(request, template, {'choices': choices, 'filter_by': filter_by})
+FILTERS = {'category': 'project_type', 'license': 'license', 'region': 'region', 'author': 'author'}
 
 @require_previewer # remove for production
 def filter_snapshots(request, filter_by, filter, template="appstore/appstore_base.html", sort_by=None):
-    if filter_by not in ('category', 'license', 'region', 'organization', 'author'):
+    if filter_by not in ('category', 'license', 'region', 'author'): # 'organization',
         raise Http404("That page doesn't exist")
 
     page = int(request.GET.get('page', 1))
-
     filter = filter.replace('+', ' ')
+    #query = '%s:"%s"' % (filter_by, filter)
 
-    query = '%s:"%s"' % (filter_by, filter)
+    results = Domain.get_by_field(FILTERS[filter_by], filter)
+    total_rows = len(results)
 
     if not sort_by:
-        results, total_rows = Domain.snapshot_search(query, page=page, per_page=PER_PAGE)
-        more_pages = page * PER_PAGE < total_rows
+        results = results[(page-1)*PER_PAGE : page*PER_PAGE]
     else:
-        results, total_rows = Domain.snapshot_search(query, per_page=None)
-        more_pages = page * PER_PAGE < total_rows
+        #results, total_rows = Domain.snapshot_search(query, per_page=None)
         if sort_by == 'best':
-            results, results_count = Domain.popular_sort(results, page)
-            more_pages = page * PER_PAGE < results_count
+            results = Domain.popular_sort(results, page)
         elif sort_by == 'hits':
             results = Domain.hit_sort(results, page)
+
+    more_pages = page * PER_PAGE < total_rows
 
     average_ratings = list()
     for result in results:
         average_ratings.append([result.name, Review.get_average_rating_by_app(result.original_doc)])
 
-
     vals = dict(apps=results, filter_by=filter_by, filter=filter, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages, sort_by=sort_by, average_ratings=average_ratings)
+    vals['sortables'] = {
+            'author': [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('author')],
+            'license': [(d, LICENSES.get(d), count) for d, count in Domain.field_by_prefix('license')],
+            'category': [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('project_type')],
+            'region': [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('region')],
+        }
     return render_to_response(request, template, vals)
 
 @require_previewer # remove for production
