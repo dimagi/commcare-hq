@@ -3,7 +3,7 @@
     <li><form action="{% url appstore_search_snapshots %}" method="get" class="form-search">
         <input type="text" name="q" placeholder="Search for apps..." value="{{ search_query }}" class="search-query" style="width: 80%" />
     </form></li>
-    {% if request.user.is_superuser and not filter_by %}
+    {% if request.user.is_superuser and not search_query and not filter_by and not project %}
         <li{% if not include_unapproved %} class="active"{% endif %}><a href="?">All approved</a></li>
         <li{% if include_unapproved %} class="active"{% endif %}><a href="?unapproved=true">All unapproved</a></li>
     {% endif %}

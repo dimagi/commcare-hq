@@ -24,6 +24,15 @@ PER_PAGE = 9
 def redirect(request, path):
     return HttpResponseRedirect('/exchange' + path)
 
+def _appstore_context(context={}):
+    context['sortables'] = [
+            ('category', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('project_type')]),
+            ('region', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('region')]),
+            ('author', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('author')]),
+            ('license', [(d, LICENSES.get(d), count) for d, count in Domain.field_by_prefix('license')]),
+        ]
+    return context
+
 @require_previewer # remove for production
 def appstore(request, template="appstore/appstore_base.html", sort_by=None):
     page = int(request.GET.get('page', 1))
@@ -44,14 +53,7 @@ def appstore(request, template="appstore/appstore_base.html", sort_by=None):
     for result in results:
         average_ratings.append([result.name, Review.get_average_rating_by_app(result.original_doc)])
 
-    sortables = [
-            ('category', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('project_type')]),
-            ('region', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('region')]),
-            ('author', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('author')]),
-            ('license', [(d, LICENSES.get(d), count) for d, count in Domain.field_by_prefix('license')]),
-        ]
-
-    return render_to_response(request, template, {
+    return render_to_response(request, template, _appstore_context({
         'apps': results,
         'average_ratings': average_ratings,
         'page': page,
@@ -59,14 +61,13 @@ def appstore(request, template="appstore/appstore_base.html", sort_by=None):
         'next_page': (page+1),
         'more_pages': more_pages,
         'sort_by': sort_by,
-        'sortables': sortables,
         'include_unapproved': include_unapproved
-    })
+    }))
 
 @require_previewer # remove for production
 def project_info(request, domain, template="appstore/project_info.html"):
     dom = Domain.get_by_name(domain)
-    if not dom or not dom.is_snapshot or not dom.published or (not dom.is_approved and not request.couch_user.is_domain_admin(domain)):
+    if not dom or not dom.is_snapshot or (not dom.is_approved and not request.couch_user.is_domain_admin(domain)):
         raise Http404()
 
     if request.method == "POST" and dom.original_doc not in request.couch_user.get_domains():
@@ -125,7 +126,7 @@ def project_info(request, domain, template="appstore/project_info.html"):
 #            images.update(i['url'] for i in app.get_template_map(sorted_images)[0] if i['url'])
 #            audio.update(a['url'] for a in app.get_template_map(sorted_audio)[0] if a['url'])
 
-    vals = dict(
+    vals = _appstore_context(dict(
         project=dom,
         form=form,
         reviews=reviews,
@@ -135,7 +136,7 @@ def project_info(request, domain, template="appstore/project_info.html"):
         current_link=current_link,
         images=images,
         audio=audio,
-    )
+    ))
     return render_to_response(request, template, vals)
 
 @require_previewer # remove for production
@@ -152,7 +153,7 @@ def search_snapshots(request, filter_by = '', filter = '', template="appstore/ap
     snapshots, total_rows = Domain.snapshot_search(query, page=page, per_page=PER_PAGE)
     more_pages = page * PER_PAGE < total_rows
     vals = dict(apps=snapshots, search_query=query, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages)
-    return render_to_response(request, template, vals)
+    return render_to_response(request, template, _appstore_context(vals))
 
 FILTERS = {'category': 'project_type', 'license': 'license', 'region': 'region', 'author': 'author'}
 
@@ -183,13 +184,15 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
     for result in results:
         average_ratings.append([result.name, Review.get_average_rating_by_app(result.original_doc)])
 
-    vals = dict(apps=results, filter_by=filter_by, filter=filter, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages, sort_by=sort_by, average_ratings=average_ratings)
-    vals['sortables'] = [
-            ('author', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('author')]),
-            ('license', [(d, LICENSES.get(d), count) for d, count in Domain.field_by_prefix('license')]),
-            ('category', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('project_type')]),
-            ('region', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('region')]),
-        ]
+    vals = _appstore_context(dict(apps=results,
+                                  filter_by=filter_by,
+                                  filter=filter,
+                                  page=page,
+                                  prev_page=(page-1),
+                                  next_page=(page+1),
+                                  more_pages=more_pages,
+                                  sort_by=sort_by,
+                                  average_ratings=average_ratings))
     return render_to_response(request, template, vals)
 
 @require_previewer # remove for production
