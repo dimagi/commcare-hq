@@ -481,23 +481,22 @@ class Domain(Document):
 
     @classmethod
     def popular_sort(cls, domains, page):
-        if len(domains) == 0:
-            return [], 0
         sorted_list = []
         MIN_REVIEWS = 1.0
 
         domains = [(domain, Review.get_average_rating_by_app(domain.original_doc), Review.get_num_ratings_by_app(domain.original_doc)) for domain in domains]
-        domains = [(domain, avg, num) for domain, avg, num in domains if num > 0]
+        domains = [(domain, avg or 0.0, num or 0) for domain, avg, num in domains]
 
         total_average_sum = sum(avg for domain, avg, num in domains)
         total_average_count = len(domains)
-
-
         total_average = (total_average_sum / total_average_count)
 
         for domain, average_rating, num_ratings in domains:
-            weighted_rating = ((num_ratings / (num_ratings + MIN_REVIEWS)) * average_rating + (MIN_REVIEWS / (num_ratings + MIN_REVIEWS)) * total_average)
-            sorted_list.append((weighted_rating, domain))
+            if num_ratings == 0:
+                sorted_list.append((0.0, domain))
+            else:
+                weighted_rating = ((num_ratings / (num_ratings + MIN_REVIEWS)) * average_rating + (MIN_REVIEWS / (num_ratings + MIN_REVIEWS)) * total_average)
+                sorted_list.append((weighted_rating, domain))
 
         sorted_list = [domain for weighted_rating, domain in sorted(sorted_list, key=lambda domain: domain[0], reverse=True)]
 
