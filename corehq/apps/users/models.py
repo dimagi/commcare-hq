@@ -429,17 +429,15 @@ class AuthorizableMixin(DocumentSchema):
 
     def is_member_of(self, domain_qs):
         try:
-            return domain_qs.name in self.get_domains() or self.is_global_admin()
+            return self.is_global_admin() or domain_qs.name in self.get_domains()
         except Exception:
-            return domain_qs in self.get_domains() or self.is_global_admin()
+            return self.is_global_admin() or domain_qs in self.get_domains()
 
     def get_role(self, domain=None):
         """
         Get the role object for this user
 
         """
-        print(self.get_domain_membership(domain))
-        dm = self.get_domain_membership(domain)
         if domain is None:
             # default to current_domain for django templates
             domain = self.current_domain
