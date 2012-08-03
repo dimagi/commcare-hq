@@ -25,6 +25,8 @@ class HQReport(object):
 
     report_partial = None
 
+    is_admin_report=False
+
     # used in StandardHQReport --- should check on how these are used in legacy custom reports
     individual = None # selected mobile worker
     case_type = None # case id
