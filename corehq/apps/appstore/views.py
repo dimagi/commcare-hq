@@ -44,12 +44,12 @@ def appstore(request, template="appstore/appstore_base.html", sort_by=None):
     for result in results:
         average_ratings.append([result.name, Review.get_average_rating_by_app(result.original_doc)])
 
-    sortables = {
-            'author': [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('author')],
-            'license': [(d, LICENSES.get(d), count) for d, count in Domain.field_by_prefix('license')],
-            'category': [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('project_type')],
-            'region': [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('region')],
-        }
+    sortables = [
+            ('category', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('project_type')]),
+            ('region', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('region')]),
+            ('author', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('author')]),
+            ('license', [(d, LICENSES.get(d), count) for d, count in Domain.field_by_prefix('license')]),
+        ]
 
     return render_to_response(request, template, {
         'apps': results,
@@ -184,12 +184,12 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
         average_ratings.append([result.name, Review.get_average_rating_by_app(result.original_doc)])
 
     vals = dict(apps=results, filter_by=filter_by, filter=filter, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages, sort_by=sort_by, average_ratings=average_ratings)
-    vals['sortables'] = {
-            'author': [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('author')],
-            'license': [(d, LICENSES.get(d), count) for d, count in Domain.field_by_prefix('license')],
-            'category': [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('project_type')],
-            'region': [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('region')],
-        }
+    vals['sortables'] = [
+            ('author', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('author')]),
+            ('license', [(d, LICENSES.get(d), count) for d, count in Domain.field_by_prefix('license')]),
+            ('category', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('project_type')]),
+            ('region', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('region')]),
+        ]
     return render_to_response(request, template, vals)
 
 @require_previewer # remove for production
@@ -223,7 +223,8 @@ def approve_app(request, domain):
     elif request.GET.get('approve') == 'false':
         domain.is_approved = False
         domain.save()
-    return HttpResponseRedirect(reverse('appstore'))
+    meta = request.META
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('appstore'))
 
 @require_previewer # remove for production
 def copy_snapshot_app(request, domain):

@@ -4,15 +4,15 @@
         <input type="text" name="q" placeholder="Search for apps..." value="{{ search_query }}" class="search-query" style="width: 80%" />
     </form></li>
     {% if request.user.is_superuser and not filter_by %}
-        <li{% if not include_unapproved %} class="active"{% endif %}><a href="?">Approved only</a></li>
-        <li{% if include_unapproved %} class="active"{% endif %}><a href="?unapproved=true">Unapproved only</a></li>
+        <li{% if not include_unapproved %} class="active"{% endif %}><a href="?">All approved</a></li>
+        <li{% if include_unapproved %} class="active"{% endif %}><a href="?unapproved=true">All unapproved</a></li>
     {% endif %}
     <!--<li{% if report %} class="active"{% endif %}><a href="{% url appstore_interfaces_default %}">Advanced search...</a></li>-->
 
-    {% for sortable, choices in sortables.items %}
+    {% for sortable, choices in sortables %}
         <li class="nav-header">{{ sortable.title }}</li>
             {% for url, name, count in choices %}
-                <li class="sortable-{{ sortable }}{% if filter_by == sortable and filter == url %} active{% endif %}{% if forloop.counter > 4 and choices|length > 5 %} hide{% endif %}">
+                <li class="sortable-{{ sortable }}{% if filter_by == sortable and filter == url %} active{% else %}{% if forloop.counter > 4 and choices|length > 5 %} hide{% endif %}{% endif %}">
                     <a href="{% url appstore_filter_snapshots sortable url %}">{{ name }}</a>
                 </li>
             {% endfor %}
