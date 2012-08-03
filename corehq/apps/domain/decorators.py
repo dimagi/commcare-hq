@@ -207,7 +207,7 @@ require_superuser = permission_required("is_superuser")
 
 def require_previewer(view_func):
     def shim(request, *args, **kwargs):
-        if not request.couch_user.is_previewer():
+        if not hasattr(request, 'couch_user') or not request.couch_user.is_previewer():
             raise Http404
         else:
             return view_func(request, *args, **kwargs)
