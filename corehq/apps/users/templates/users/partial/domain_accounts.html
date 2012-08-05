@@ -23,7 +23,7 @@
                             <a class="close" data-dismiss="modal">&times;</a>
                             <h3>Remove Project Membership?</h3>
                         </div>
-                        <form class="form form-horizontal" name="delete_domain_membership" action="{% url delete_domain_membership domain couch_user.couch_id dom %}" method="post">
+                        <form class="form form-horizontal" name="delete_domain_membership" action="{% url delete_domain_membership domain couch_user.couch_id domain %}" method="post">
                             <div class="modal-body">
                                 <p>Are you sure you want to remove {{ couch_user.html_username|safe }} from the project "{{ dom }}"?</p>
                             </div>

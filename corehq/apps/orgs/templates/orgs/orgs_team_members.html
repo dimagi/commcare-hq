@@ -1,0 +1,167 @@
+{% extends "orgs/orgs_teams.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block head %} {{ block.super }}
+<style type="text/css">
+    .group-bubble {
+        margin: .3em 0 .8em;
+    }
+</style>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script type="text/javascript">
+    $(function () {
+        var i, j, index,
+                wrapper = $('#non-members'),
+                users = wrapper.find(' > *'),
+                nCols = 3,
+                nNames = Math.ceil(users.length*1.0/nCols),
+                col;
+        for (i = 0; i < nCols; i += 1) {
+            col = $('<div/>').addClass('user-bubbles').appendTo(wrapper);
+            for (j = 0; j < nNames; j += 1) {
+                index = i * nNames + j;
+                if (index < users.length) {
+                    users.slice(index, index + 1).appendTo(col);
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
+
+{% block page-title %}
+<ul class="breadcrumb">
+    <li>
+        <strong>Organizations</strong> <span class="divider">&gt;</span>
+    </li>
+    <li>
+
+        <a href="{% url orgs_landing org.name %}">{{ org.name }} ({{ org.title }})</a>
+    </li>
+    <li>
+        <span class="divider">&gt;</span><a href="#">Editing Team "{{ team.name }}"</a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block team-header %}
+        <h2>Teams:</h2>
+        {% endblock %}
+
+<!--{% block team_indicator %}-->
+<!--<ul class="nav nav-list">-->
+    <!--<li class="active"><a href="#">Editing "{{ team.name }}"</a></li>-->
+<!--</ul>-->
+<!--{% endblock %}-->
+
+{% block team-info %}
+
+    <div class="btn-toolbar">
+        <!--<a href="#editTeamSettings" class="btn" data-toggle="modal"><i class="icon icon-pencil"></i> Edit Settings</a>-->
+        <form name="delete_group" style="margin-right: 45px;" class="pull-right" action="{% url delete_team org.name team.get_id %}" method="post">
+            <button class="btn btn-danger" type="submit"><i class="icon icon-white icon-remove"></i> Delete Team "{{ team.name }}"</button>
+        </form>
+    </div>
+
+    <div class="modal hide fade" id="editTeamSettings">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">×</a>
+            <h3>Edit Settings for Team "{{ team.name }}"</h3>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block team-view %}
+<div class="container"><h2>Manage Team Members</h2><br/>
+<div class="row-fluid">
+    <div class="span6" id="members">
+        <h3>Organization Members in Team
+        {% if members|length %}
+        <form name="clear_team" class="pull-right" action="{% url remove_all_from_team org.name team.get_id %}" method="post">
+            <input type="hidden" name="redirect_url" value="orgs_team_members" />
+            <button class="btn btn-danger" type="submit">Remove All</button>
+        </form>
+        {% endif %}
+        </h3><br/>
+        <div class="well">
+            {% for member in members %}
+            <form class="group-bubble" name="leave_team" action="{% url leave_team org.name team.get_id member.user_id %}" method="post">
+                <input type="hidden" name="redirect_url" value="orgs_team_members" />
+                <button type="submit" class="btn btn-primary"><i class="icon icon-white icon-minus"></i> {{ member.raw_username }}</button>
+            </form>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="span6" id="non-members">
+        <h3>Available Organization Members
+        {% if nonmembers|length %}
+        <form name="add_all_to_team" class="pull-right" action="{% url add_all_to_team org.name team.get_id %}" method="post">
+            <input type="hidden" name="redirect_url" value="orgs_team_members" />
+            <button class="btn btn-success" type="submit">Add All</button>
+        </form>
+            {% endif %}
+        </h3><br/>
+        <div class="well">
+            {% for nonmember in nonmembers %}
+            <form class="group-bubble" name="join_team" action="{% url join_team org.name team.get_id nonmember.user_id %}" method="post">
+                <input type="hidden" name="redirect_url" value="orgs_team_members" />
+                <button type="submit" class="btn btn-success"><i class="icon icon-white icon-plus"></i> {{ nonmember.raw_username }}</button>
+            </form>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+    <hr/>
+</div>
+<div class="container"><h2>Manage Team Projects</h2><br/>
+<div class="row-fluid">
+    <div class="span6" id="domains">
+        <h3>Team Projects
+        <!--<form name="clear_team_domains" class="pull-right" action="" method="post">-->
+            <!--<button class="btn btn-danger" type="submit">Remove All</button>-->
+        <!--</form>--></h3><br/>
+        <div class="well">
+            {% for domain, role in team_domains %}
+            <form class="group-bubble" name="remove_domain" action="{% url remove_domain_from_team org.name team.get_id domain.name %}" method="post">
+                <input type="hidden" name="redirect_url" value="orgs_team_members" />
+                <div class="btn-toolbar">
+                <button type="submit" class="btn btn-primary"><i class="icon icon-white icon-minus"></i> {{ domain.display_name }}</button>
+                <div class="btn-group" style="vertical-align: middle;">
+                    <a href="#" class="btn btn-inverse dropdown-toggle" data-toggle="dropdown"><i class="icon icon-white icon-lock"></i> {% if role %}{{ role }}{% else %}None{% endif %}
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="{% url set_team_permission_for_domain org.name team.get_id domain.name 'admin' %}">Admin</a></li>
+                        <li><a href="{% url set_team_permission_for_domain org.name team.get_id domain.name 'edit-apps' %}">App Editor</a></li>
+                        <li><a href="{% url set_team_permission_for_domain org.name team.get_id domain.name 'field-implementer' %}">Field Implementer</a></li>
+                        <li><a href="{% url set_team_permission_for_domain org.name team.get_id domain.name 'read-only' %}">Read Only</a></li>
+                    </ul>
+                </div>
+                </div>
+            </form>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="span6" id="non-domains">
+        <h3>Available Projects
+        <!--<form name="add_all_domains_to_team" class="pull-right" action="" method="post">-->
+            <!--<button class="btn btn-success" type="submit">Add All</button>-->
+        <!--</form>-->
+        </h3><br/>
+        <div class="well">
+            {% for nondomain in team_nondomains %}
+            <form class="group-bubble" name="add_domain" action="{% url add_domain_to_team org.name team.get_id nondomain.name %}" method="post">
+                <input type="hidden" name="redirect_url" value="orgs_team_members" />
+                <button type="submit" class="btn btn-success"><i class="icon icon-white icon-plus"></i> {{ nondomain.display_name }}</button>
+            </form>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
+

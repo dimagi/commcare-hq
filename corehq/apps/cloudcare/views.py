@@ -185,10 +185,10 @@ def get_app_api(request, domain, app_id):
 
 @cloudcare_api
 def get_fixtures(request, domain, user_id, fixture_id=None):
-    user = CommCareUser.get(user_id)
+    user = CommCareUser.get_by_user_id(user_id)
     if not user:
         raise Http404
-    
+
     assert user.is_member_of(domain)
     casexml_user = user.to_casexml_user()
     if not fixture_id:

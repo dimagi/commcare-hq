@@ -150,8 +150,9 @@ def get_group_params(domain, group='', users=None, user_id_only=False, **kwargs)
         users = sorted(users, key=lambda user: user.user_id)
     return group, users
 
-# New HQReport Structure stuff. There's a lot of duplicate code from above, only because I don't want to ruin any old
-# reports until everything is fully refactored....
+# New HQReport Structure stuff. There's a lot of duplicate code from above, 
+# only because I don't want to ruin any old reports until everything is fully 
+# refactored....
 
 def get_all_users_by_domain(domain, group='', individual='', filter_users=None):
     """ Returns a list of CommCare Users based on domain, group, and user filter (demo_user, admin, registered, unknown)

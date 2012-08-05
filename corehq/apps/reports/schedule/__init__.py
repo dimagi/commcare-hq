@@ -5,7 +5,7 @@ from django.http import HttpRequest
 import json
 from corehq.apps.reports.schedule.parsers import ReportParser
 from django.template.loader import render_to_string
-from corehq.apps.reports.views import report_dispatcher
+from corehq.apps.reports.views import report_dispatcher, custom_report_dispatcher
 
 class SpoofRequest(HttpRequest):
     def __init__(self, couch_user, domain):
@@ -29,7 +29,7 @@ class ReportSchedule(object):
         else: 
             self._view_args = {}
         self._title = title
-        self.auth = auth if auth else (lambda user: True)
+        self.auth = auth if auth else (lambda request: True)
     
     @property
     def title(self):
@@ -58,7 +58,7 @@ class BasicReportSchedule(ReportSchedule):
     
     def __init__(self, report):
         self._report = report
-        self.auth = lambda user: True
+        self.auth = lambda request: request.couch_user.can_view_report(request.couch_user.current_domain, self._report.__module__ + "." + self._report.__name__)
 
     @property
     def title(self):
@@ -70,3 +70,14 @@ class BasicReportSchedule(ReportSchedule):
 
     def view(self, request, domain):
         return report_dispatcher(request, domain, self._report.slug, async=True, static_only=True)
+
+class CustomReportSchedule(BasicReportSchedule):
+    def view(self, request, domain):
+        return custom_report_dispatcher(request, domain, self._report.slug, async=True)
+
+    def get_report_data(self, content):
+        report_data = json.loads(content)
+        parser = ReportParser(report_data.get('report', ''))
+        return parser.get_html()
+
+

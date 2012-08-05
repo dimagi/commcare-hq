@@ -8,7 +8,9 @@ function(doc){
             name: doc.name,
             build_spec: doc.build_spec,
             domain: doc.domain,
-            langs: doc.langs
+            langs: doc.langs,
+            cached_properties: doc.cached_properties,
+            case_sharing: doc.case_sharing
         });
     }
 }

@@ -1,0 +1,62 @@
+{% extends "app_manager/apps_base.html" %}
+{% load xforms_extras %}
+{% load url_extras %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+{% if app.get_doc_type == "Application" %}
+<script src="{% static 'app_manager/js/commcareProperties.js' %}"></script>
+<script src="{% static 'translations/js/translations.js' %}"></script>
+{% endif %}
+<script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+<script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
+{% endblock %}
+
+{% block app-content %}
+<div id="langs" class="container">
+    {% if not app.is_remote_app %}
+    Language:
+    <select class="code" name="lang">
+        {% for lang in app.langs %}
+        <option value="{% urlencode request.path request.GET with "lang" as lang %}"
+        {% if lang == langs.0 %}selected=""{% endif %}>
+        {{ lang }} {% if lang == app.langs.0 %}(default){% endif %}
+        </option>
+        {% endfor %}
+    </select>
+    {% else %}
+    <select style="visibility: hidden;"></select>
+    {% endif %}
+    {% include 'app_manager/partials/release-manager-nav.html' %}
+</div>
+<h3>{{ app.name }} summary</h3>
+<ol>
+    {% for module in modules %}
+        <li>
+            {{ module.name }}
+            <ol>
+                {% for form in module.forms %}
+                    <li>
+                        {{ form.name }}
+                        <ol>
+                            {% for question in form.questions %}
+                                <li>
+                                    <span class="label">{{ question.tag }}</span> {{ question.label }}
+                                    {% if question.options %}
+                                        <ol>
+                                            {% for option in question.options %}
+                                                <li>{{ option.label }}</li>
+                                            {% endfor %}
+                                        </ol>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ol>
+                    </li>
+                {% endfor %}
+            </ol>
+        </li>
+    {% endfor %}
+</ol>
+{% endblock %}

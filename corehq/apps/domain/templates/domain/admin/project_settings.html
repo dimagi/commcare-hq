@@ -1,18 +1,41 @@
 {% extends "users/users_base.html" %}
 {% load hq_bootstrap_tags %}
+{% load hq_shared_tags %}
 {% load i18n %}
+
+{% block js %}{{ block.super }}
+<script type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"/>
+{% endblock %}
+
+{% block head %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+{% endblock %}
 
 {% block js-inline %}
 {{ block.super }}
 <script type="text/javascript">
     $(function(){
-        $("#id_project_type").focus(function() {
-            $.getJSON('{% url autocomplete_categories %}', function(results) {
-                $("#id_project_type").typeahead({ source: results,
-                               items: 8
-                           }).
-                attr("autocomplete", "off");
+        {% for field in autocomplete_fields %}
+            $("#id_{{ field }}").focus(function() {
+                if (!$("#id_{{ field }}").data('loaded')) {
+                    $("#id_{{ field }}").data('loaded', 'true');
+                    $.getJSON('{% url domain_autocomplete_fields field %}', function(results) {
+                        $("#id_{{ field }}").typeahead({ source: results,
+                            items: 8
+                        }).
+                                attr("autocomplete", "off");
+                    });
+                }
             });
+        {% endfor %}
+        $('#id_deployment_date').datepicker({
+            changeMonth: true,
+            changeYear: true,
+            showButtonPanel: true,
+            dateFormat: 'yy-mm-dd',
+            maxDate: '0',
+            numberOfMonths: 2
         });
     });
 </script>

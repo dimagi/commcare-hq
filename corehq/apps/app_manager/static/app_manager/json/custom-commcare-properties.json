@@ -24,14 +24,6 @@
     "default": "7",
     "values_txt": "Any positive integer. Represents period of purging in days."
 }, {
-    "disabled": true,
-    "name": "Phone Locale",
-    "description": "The locale (Language) that the application will use. Must be installed",
-    "id": "cur_locale",
-    "default": "default",
-    "values_txt": "The two/three letter language code (or validly defined language code) of a locale file which has been properly registered.",
-    "group": "language"
-}, {
     "name": "Logging Enabled",
     "description": "Whether logging of incidents should be activated on the client.",
     "id": "logenabled",
@@ -89,7 +81,9 @@
     "id": "server-tether",
     "values": ["push-only", "sync"],
     "value_names": ["Push Only", "Two-Way Sync"],
-    "default": "push-only"
+    "default": "push-only",
+    "requires": "{$parent.case_sharing}='false'",
+    "contingent_default": [{"condition": "{$parent.case_sharing}='true'", "value": "sync"}]
 }, {
     "name": "OTA Restore Tolerance",
     "description": "Whether OTA Restore is tolerant of failures, ambiguity, duplicate registrations, etc (and proceeds as best it can), or whether it fails immediately in these cases.",

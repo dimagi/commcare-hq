@@ -6,7 +6,7 @@ from django.template.loader import render_to_string
 import json
 import calendar
 from django.conf import settings
-from corehq.apps.reports.standard import ExcelExportReport, CaseExportReport
+from corehq.apps.reports._global.export import ExcelExportReport, CaseExportReport
 from dimagi.utils.modules import to_function
 #from bhoma.apps.locations.models import Location
 

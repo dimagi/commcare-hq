@@ -7,12 +7,15 @@ function(doc){
             _id: doc._id,
             name: doc.name,
             build_spec: doc.build_spec,
+            text_input: doc.text_input,
+            platform: doc.platform,
             copy_of: doc.copy_of,
             domain: doc.domain,
             built_on: doc.built_on,
             built_with: doc.built_with,
             build_comment: doc.build_comment,
-            is_released: doc.is_released
+            is_released: doc.is_released,
+            case_sharing: doc.case_sharing
         });
     }
 }

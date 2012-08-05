@@ -1,0 +1,6 @@
+<div class="well" data-bind="showBulkExportNotice: selected_exports" style="display: none;">
+        <span class="lead">
+            Download <span data-bind="text: bulk_download_notice_text"></span>:
+            <a data-toggle="modal" href="#export-download-status" class="btn btn-success pull-right" data-bind="click: requestBulkDownload"><i class="icon-download-alt icon-white"></i> Bulk Download of <span data-bind="text: bulk_download_notice_text"></span></a>
+        </span>
+</div>

@@ -1,3 +1,5 @@
+from corehq.apps.domain.models import Domain, LICENSES
+from corehq.apps.orgs.models import Organization
 from corehq.apps.reports import util
 from corehq.apps.reports.custom import ReportField, ReportSelectField
 from corehq.apps.groups.models import Group
@@ -139,7 +141,7 @@ class SelectFormField(ReportSelectField):
         self.selected = self.request.GET.get(self.slug, None)
 
 class SelectAllFormField(SelectFormField):
-    default_option = "All Forms"
+    default_option = "Show All Forms"
 
 class SelectOpenCloseField(ReportSelectField):
     slug = "is_open"
@@ -167,6 +169,55 @@ class SelectApplicationField(ReportSelectField):
                           for app in apps_for_domain]
         self.selected = self.request.GET.get(self.slug,'')
         self.options = available_apps
+
+class SelectOrganizationField(ReportSelectField):
+    slug = "org"
+    name = "Organization"
+    cssId = "organization_select"
+    cssClasses = "span6"
+    default_option = "All Organizations"
+
+    def update_params(self):
+        available_orgs = [{'val': o.name, 'text': o.title} for o in  Organization.get_all()]
+        self.selected = self.request.GET.get(self.slug,'')
+        self.options = available_orgs
+
+class SelectCategoryField(ReportSelectField):
+    slug = "category"
+    name = "Category"
+    cssId = "category_select"
+    cssClasses = "span6"
+    default_option = "All Categories"
+
+    def update_params(self):
+        available_categories = [{'val': d.replace(' ', '+'), 'text': d} for d in Domain.categories()]
+        self.selected = self.request.GET.get(self.slug,'')
+        self.options = available_categories
+
+class SelectLicenseField(ReportSelectField):
+    slug = "license"
+    name = "License"
+    cssId = "license_select"
+    cssClasses = "span6"
+    default_option = "All Licenses"
+
+    def update_params(self):
+        available_licenses = [{'val': code, 'text': license} for code, license in LICENSES.items()]
+        self.selected = self.request.GET.get(self.slug,'')
+        self.options = available_licenses
+
+class SelectRegionField(ReportSelectField):
+    slug = "region"
+    name = "Region"
+    cssId = "region_select"
+    cssClasses = "span6"
+    default_option = "All Regions"
+
+    def update_params(self):
+        available_regions = [{'val': d.replace(' ', '+'), 'text': d} for d in Domain.regions()]
+        self.selected = self.request.GET.get(self.slug,'')
+        self.options = available_regions
+
 
 class SelectMobileWorkerField(ReportField):
     slug = "select_mw"

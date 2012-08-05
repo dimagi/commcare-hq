@@ -15,7 +15,7 @@ var CommcareProperty = {
             needsToBeSaved = false,
             parseCondition = function (condition) {
                 var parts = condition ? condition.split('&&') : [],
-                    parse_part = /\{(\w+)\.([\w\-]+)\}='([\w\-]*)'/,
+                    parse_part = /\{([\$\w]+)\.([\w\-]+)\}='([\w\-]*)'/,
                     result,
                     type,
                     variable,
@@ -252,6 +252,19 @@ var CommcareSettings = {
                 $homes = $();
                 that.properties = {};
                 that.features = {};
+                that.$parent = {'case_sharing': (function () {
+                    var el = $('#case-sharing-select'),
+                        that = {
+                            val: function () {
+                                return el.val()
+                            }
+                        };
+                    eventize(that);
+                    el.change(function () {
+                        that.fire('change');
+                    });
+                    return that;
+                }())};
 
                 for (i = 0; i < that.length; i += 1) {
                     p = that[i];

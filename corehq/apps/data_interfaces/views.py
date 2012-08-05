@@ -7,6 +7,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseNotFound, Http404, HttpResponseRedirect
 from django.conf import settings
+from corehq.apps.reports.dispatcher import ReportDispatcher
 
 require_can_edit_data = require_permission(Permissions.edit_data)
 
@@ -22,27 +23,15 @@ def default(request, domain, template="data_interfaces/data_interfaces_base.html
 
 @require_can_edit_data
 @datespan_default
-def report_dispatcher(request, domain, slug, return_json=False, map='DATA_INTERFACE_MAP', export=False, custom=False, async=False, async_filters=False):
+def report_dispatcher(request, domain, slug, return_json=False, 
+                      map='DATA_INTERFACE_MAP', export=False, custom=False, 
+                      async=False, async_filters=False, static_only=False):
+    
+    def permissions_check(couch_user, domain, model):
+        return couch_user.can_edit_data(domain)
+    
     mapping = getattr(settings, map, None)
-    if not mapping or (custom and not domain in mapping):
-        return HttpResponseNotFound("Sorry, no reports have been configured yet.")
-    if custom:
-        mapping = mapping[domain]
-    for key, models in mapping.items():
-        for model in models:
-            klass = to_function(model)
-            if klass.slug == slug:
-                k = klass(domain, request)
-                if not request.couch_user.can_edit_data(domain):
-                    raise Http404
-                elif return_json:
-                    return k.as_json()
-                elif export:
-                    return k.as_export()
-                elif async:
-                    return k.as_async()
-                elif async_filters:
-                    return k.as_async_filters()
-                else:
-                    return k.as_view()
-    raise Http404
+    dispatcher = ReportDispatcher(mapping, permissions_check)
+    return dispatcher.dispatch(request, domain, slug, return_json, export, 
+                               custom, async, async_filters)
+    
