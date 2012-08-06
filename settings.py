@@ -480,8 +480,8 @@ EMAIL_USE_TLS = True
 
 DATA_INTERFACE_MAP = {
     'Case Management' : [
-        'corehq.apps.data_interfaces.interfaces.CaseReassignmentInterface'
-
+        'corehq.apps.data_interfaces.interfaces.CaseReassignmentInterface',
+        'corehq.apps.importer.base.ImportCases',
     ]
 }
 APPSTORE_INTERFACE_MAP = {
@@ -509,7 +509,6 @@ STANDARD_REPORT_MAP = {
     "Raw Data" : [
         'corehq.apps.reports._global.export.ExcelExportReport',
         'corehq.apps.reports._global.export.CaseExportReport',
-        'corehq.apps.importer.base.ExcelImporter',
     ],
     "Manage Deployments" : [
         'corehq.apps.reports._global.deployments.ApplicationStatusReport',
