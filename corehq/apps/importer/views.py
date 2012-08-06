@@ -215,7 +215,7 @@ def excel_commit(request, domain):
                                          key=[domain, search_id], 
                                          reduce=False, 
                                          include_docs=True).one()
-                found = True
+                found = True if case else False
             except NoResultFound:
                 pass
             except MultipleResultsFound:
