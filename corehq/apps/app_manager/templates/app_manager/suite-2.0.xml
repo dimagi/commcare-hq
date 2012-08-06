@@ -45,8 +45,11 @@
          {% if d.format == "plain" or d.format == "phone" and detail.type == "case_short" or d.format == "phone" and detail.type == "ref_short" %}
             <template><text><xpath function="{{ d.xpath }}"/></text></template>
          {% else %}{% ifequal d.format "date" %}
-{#            <template><text><xpath function="format_date({{ d.xpath }}, 'short')"/></text></template>#}
-            <template><text><xpath function="if({{ d.xpath }} = '', '', format_date(date(if({{ d.xpath }} = '', 0, {{ d.xpath }})),'short'))"/></text></template>
+             {% if detail.display == 'short' %}
+             <template width="0"><text><xpath function="{{ d.xpath }}"/></text></template>
+             {% else %}
+             <template><text><xpath function="if({{ d.xpath }} = '', '', format_date(date(if({{ d.xpath }} = '', 0, {{ d.xpath }})),'short'))"/></text></template>
+             {% endif %}
          {% else %}{% ifequal d.format "advanced" %}
             <template><text><xpath function="{{ d.model }}_{{ d.field }}_{{ forloop.counter }}"/></text></template>
          {% else %}{% if d.format == "enum" or d.format == "enum-image"%}
@@ -78,8 +81,15 @@
          {% else %}{% if d.format == "invisible" %}
              <template{% if detail.display == "short" %} width="0"{% endif %}><text><xpath function="{{ d.xpath }}" /></text></template>
          {% endif %}{% endifequal %}{% endifequal %}{% endifequal %}{% endifequal %}{% endif %}{% endifequal %}{% endifequal %}{% endif %}
-
         </field>
+
+        {% if d.format == 'date' and detail.display == "short" %}
+        <field>
+            <header width="0"><text/></header>
+            <template><text><xpath function="if({{ d.xpath }} = '', '', format_date(date(if({{ d.xpath }} = '', 0, {{ d.xpath }})),'short'))"/></text></template>
+        </field>
+        {% endif %}
+
         {% endif %}
      {% endfor %}
     </detail>

@@ -1245,6 +1245,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 if property.has_key('commcare_default') and property['commcare_default'] != property['default']:
                     app_profile[type][property['id']] = property['default']
 
+        if self.case_sharing:
+            app_profile['properties']['server-tether'] = 'sync'
+
         return render_to_string(template, {
             'is_odk': is_odk,
             'app': self,

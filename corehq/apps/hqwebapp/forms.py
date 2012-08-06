@@ -11,3 +11,6 @@ class EmailAuthenticationForm(AuthenticationForm):
     def clean_username(self):
         username = self.cleaned_data['username'].lower()
         return username
+
+class CloudCareAuthenticationForm(EmailAuthenticationForm):
+    username = forms.EmailField(label=_("Username"), max_length=75)

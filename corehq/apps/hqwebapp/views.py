@@ -13,7 +13,8 @@ from django.shortcuts import redirect
 from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
 from corehq.apps.app_manager.models import import_app
 from corehq.apps.domain.utils import normalize_domain_name, legacy_domain_re, get_domain_from_url
-from corehq.apps.hqwebapp.forms import EmailAuthenticationForm
+from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
+from corehq.apps.users.util import format_username
 
 from dimagi.utils.web import render_to_response, get_url_base
 from django.core.urlresolvers import reverse
@@ -124,8 +125,13 @@ def login(req, template_name="login_and_password/login.html"):
     if req.user.is_authenticated() and req.method != "POST":
         return HttpResponseRedirect(reverse('homepage'))
 
+    if req.method == 'POST' and req.POST.get('domain') and '@' not in req.POST.get('username', '@'):
+        req.POST._mutable = True
+        req.POST['username'] = format_username(req.POST['username'], req.POST['domain'])
+        req.POST._mutable = False
+
     req.base_template = settings.BASE_TEMPLATE
-    return django_login(req, template_name=template_name, authentication_form=EmailAuthenticationForm)
+    return django_login(req, template_name=template_name, authentication_form=EmailAuthenticationForm if not req.GET.get('domain') else CloudCareAuthenticationForm)
 
 def logout(req, template_name="hqwebapp/loggedout.html"):
     req.base_template = settings.BASE_TEMPLATE
