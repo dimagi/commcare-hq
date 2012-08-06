@@ -8,7 +8,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.importer import base
 from corehq.apps.importer.util import ExcelFile, get_case_properties
-from couchdbkit.exceptions import MultipleResultsFound
+from couchdbkit.exceptions import MultipleResultsFound, NoResultFound
 from tempfile import mkstemp
 from django.views.decorators.http import require_POST
 from datetime import datetime, date
@@ -99,8 +99,7 @@ def excel_fields(request, domain):
     else:
         excel_fields = columns
                   
-    # TODO limit to case type
-    case_fields = get_case_properties(domain)
+    case_fields = get_case_properties(domain, case_type)
     
     # hide search column and matching case fields from the update list
     try:    
@@ -212,15 +211,13 @@ def excel_commit(request, domain):
                 pass
         elif search_field == 'external_id':
             try:
-                search_result = CommCareCase.view('hqcase/by_domain_external_id', 
-                                                  startkey=[domain, search_id], 
-                                                  endkey=[domain, search_id]
-                                                  ).one()
-                try:
-                    case = CommCareCase.get(search_result['id'])
-                    found = True       
-                except:
-                    pass
+                case = CommCareCase.view('hqcase/by_domain_external_id', 
+                                         key=[domain, search_id], 
+                                         reduce=False, 
+                                         include_docs=True).one()
+                found = True
+            except NoResultFound:
+                pass
             except MultipleResultsFound:
                 too_many_matches += 1     
                

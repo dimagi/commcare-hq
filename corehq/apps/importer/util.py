@@ -1,22 +1,16 @@
 import xlrd
 from dimagi.utils.couch.database import get_db
 
-def get_case_properties(domain):
-    # get all unique existing case properties, known and unknown
-    case_fields = []
-    
-    rows = get_db().view('hqcase/by_domain_action_properties',startkey=domain,endkey=domain).all()
-    
-    for row in rows:
-        for field in row['value']['known']:
-            if field not in case_fields:
-                case_fields.append(field)
-
-        for field in row['value']['unknown']:
-            if field not in case_fields:
-                case_fields.append(field)    
-    
-    return case_fields
+def get_case_properties(domain, case_type):
+    """
+    For a given case type and domain, get all unique existing case properties,
+    known and unknown
+    """
+    rows = get_db().view('hqcase/all_case_properties',
+                         startkey=[domain, case_type],
+                         endkey=[domain, case_type, {}], 
+                         reduce=True, group=True, group_level=3).all()
+    return [r['key'][2] for r in rows]
     
 # class to deal with Excel files
 class ExcelFile(object):
