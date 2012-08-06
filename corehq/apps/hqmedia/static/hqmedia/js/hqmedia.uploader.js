@@ -12,7 +12,7 @@ function HQMediaUploader(options) {
     self.swfLocation = options.swfLocation;
 
     self.render = function() {
-        YUI().use("uploader", function(Y) {
+        YUI({combine: false, base: '/static/hqmedia/yui/'}).use("uploader", function(Y) {
             var upEl = this;
             var uploader = undefined,
                 selectedFiles = {},
