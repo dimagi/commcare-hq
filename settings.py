@@ -155,6 +155,7 @@ HQ_APPS = (
     'corehq.apps.app_manager',
     'corehq.apps.orgs',
     'corehq.apps.fixtures',
+    'corehq.apps.importer',
     'corehq.apps.reminders',
     'corehq.apps.prescriptions',
     'corehq.apps.translations',
@@ -395,6 +396,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'groups',
         'hqcase',
         'hqmedia',
+        'importer',
         'migration',
         'phone',
         'receiverwrapper',
@@ -507,6 +509,7 @@ STANDARD_REPORT_MAP = {
     "Raw Data" : [
         'corehq.apps.reports._global.export.ExcelExportReport',
         'corehq.apps.reports._global.export.CaseExportReport',
+        'corehq.apps.importer.base.ExcelImporter',
     ],
     "Manage Deployments" : [
         'corehq.apps.reports._global.deployments.ApplicationStatusReport',
@@ -576,4 +579,3 @@ MESSAGE_TAGS = {
 
 COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
-
