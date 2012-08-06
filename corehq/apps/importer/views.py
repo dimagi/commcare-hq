@@ -28,7 +28,6 @@ def excel_config(request, domain):
         extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
         
         if extension in ExcelFile.ALLOWED_EXTENSIONS:
-            print 'got here'
             # get a temp file
             fd, filename = mkstemp(suffix='.'+extension)
             
