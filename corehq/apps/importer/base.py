@@ -1,12 +1,14 @@
+from corehq.apps.data_interfaces.interfaces import DataInterface
 from corehq.apps.reports.custom import HQReport
 
-class ExcelImporter(HQReport):
-    name = "Import data from Excel"
-    slug = "excel_import"
+class ImportCases(DataInterface):
+    name = "Import Cases from Excel"
+    slug = "import_cases"
     description = "Import case data from an external Excel file"
-    template_name = "excel_import.html"
+    template_name = "importer/import_cases.html"
     fields = []
-    
+    asynchronous = False
+
     def calc(self):
         error = self.request.GET.get("error", None)
         

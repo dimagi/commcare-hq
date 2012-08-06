@@ -1,6 +1,5 @@
 import os.path
 from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
 from dimagi.utils.web import render_to_response
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction, const
 from casexml.apps.phone.xml import get_case_xml
@@ -28,7 +27,8 @@ def excel_config(request, domain):
         
         extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
         
-        if extension in ExcelFile.ALLOWED_EXTENSIONS and uploaded_file_handle.content_type == 'application/vnd.ms-excel':
+        if extension in ExcelFile.ALLOWED_EXTENSIONS:
+            print 'got here'
             # get a temp file
             fd, filename = mkstemp(suffix='.'+extension)
             
@@ -53,7 +53,7 @@ def excel_config(request, domain):
                     case_types.append(row['key'][1])
                     
             if len(case_types) > 0:                                                
-                return render_to_response(request, "excel_config.html", {
+                return render_to_response(request, "importer/excel_config.html", {
                                             'named_columns': named_columns, 
                                             'columns': columns,
                                             'case_types': case_types,
@@ -61,14 +61,14 @@ def excel_config(request, domain):
                                             'report': {
                                                 'name': 'Import: Configuration'
                                              },
-                                            'slug': base.ExcelImporter.slug})
+                                            'slug': base.ImportCases.slug})
             else:
                 error_type = "cases"
         else:
             error_type = "file"
     
     #TODO show bad/invalid file error on this page
-    return HttpResponseRedirect(reverse("report_dispatcher", args=[domain, base.ExcelImporter.slug]) + "?error=" + error_type)
+    return HttpResponseRedirect(base.ImportCases.get_url(domain) + "?error=" + error_type)
       
 @require_can_edit_data
 def excel_fields(request, domain):
@@ -116,7 +116,7 @@ def excel_fields(request, domain):
     except:
         pass                    
     
-    return render_to_response(request, "excel_fields.html", {
+    return render_to_response(request, "importer/excel_fields.html", {
                                 'named_columns': named_columns,
                                 'case_type': case_type,                                                               
                                 'search_column': search_column, 
@@ -131,7 +131,7 @@ def excel_fields(request, domain):
                                 'report': {
                                     'name': 'Import: Match columns to fields'
                                  },
-                                'slug': base.ExcelImporter.slug})     
+                                'slug': base.ImportCases.slug})
 
 @require_POST
 @require_can_edit_data
@@ -159,7 +159,7 @@ def excel_commit(request, domain):
     spreadsheet = ExcelFile(filename, named_columns)
 
     if filename is None or spreadsheet is None:
-        return HttpResponseRedirect(reverse("report_dispatcher", args=[domain, base.ExcelImporter.slug]) + "?error=cache")
+        return HttpResponseRedirect(base.ImportCases.get_url(domain) + "?error=cache")
     
     columns = spreadsheet.get_header_columns()        
     
@@ -283,7 +283,7 @@ def excel_commit(request, domain):
     except KeyError:
         pass            
     
-    return render_to_response(request, "excel_commit.html", {
+    return render_to_response(request, "importer/excel_commit.html", {
                                 'match_count': match_count,
                                 'no_match_count': no_match_count,
                                 'too_many_matches': too_many_matches,
@@ -291,5 +291,5 @@ def excel_commit(request, domain):
                                 'report': {
                                     'name': 'Import: Completed'
                                  },
-                                'slug': base.ExcelImporter.slug})    
+                                'slug': base.ImportCases.slug})
      

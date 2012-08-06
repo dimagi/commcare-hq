@@ -2,6 +2,7 @@ from StringIO import StringIO
 import json
 from datetime import datetime
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext, Context
@@ -22,8 +23,10 @@ class HQReport(object):
     name = "" # the name of the report, will show up in navigation sidebar
     base_slug = None # (ex: manage, billing, reports)
     slug = "" # report's unique (per base_slug) url slug
+    icon = None
 
     report_partial = None
+    dispatcher = 'report_dispatcher'
 
     # used in StandardHQReport --- should check on how these are used in legacy custom reports
     individual = None # selected mobile worker
@@ -189,6 +192,9 @@ class HQReport(object):
         filter_template = render_to_string('reports/async/filters.html', self.context, context_instance=RequestContext(self.request))
         return HttpResponse(json.dumps(dict(filters=filter_template, title=self.name, slug=self.slug)))
 
+    @classmethod
+    def get_url(cls, domain):
+        return reverse(cls.dispatcher, args=[domain, cls.slug])
 
 class ReportField(object):
     slug = ""
