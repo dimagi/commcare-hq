@@ -44,3 +44,13 @@ def string_to_prertty_time(date_string, to_tz, from_tz=pytz.utc, fmt="%b %d, %Y 
         return date.strftime(fmt)
     except Exception:
         return date_string
+
+def is_timezone_in_dst(tz, compare_time=None):
+    now = datetime.datetime.now(tz=tz) if not compare_time else tz.localize(compare_time)
+    transitions = []
+    for dst_transition in tz._utc_transition_times:
+        if dst_transition.year == now.year:
+            transitions.append(tz.localize(dst_transition))
+    if transitions[0] <= now <= transitions[1]:
+        return True
+    return False
