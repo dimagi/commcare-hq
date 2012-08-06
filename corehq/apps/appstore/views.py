@@ -187,6 +187,7 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
     vals = _appstore_context(dict(apps=results,
                                   filter_by=filter_by,
                                   filter=filter,
+                                  filter_url=filter.replace(' ', '+'),
                                   page=page,
                                   prev_page=(page-1),
                                   next_page=(page+1),
