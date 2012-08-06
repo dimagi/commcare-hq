@@ -28,3 +28,4 @@ xlutils==1.4.1
 xlrd==0.7.3
 mock==0.8.0
 requests
+poster
