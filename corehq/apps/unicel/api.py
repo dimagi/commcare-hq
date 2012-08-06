@@ -10,6 +10,7 @@ from urllib import urlencode
 API_ID = "UNICEL"
 
 OUTBOUND_URLBASE = "http://www.unicel.in/SendSMS/sendmsg.php"
+BILLABLE_ITEM = 'UnicelSMSBillableItem'
 
 class InboundParams(object):
     """
@@ -50,7 +51,7 @@ def _config():
     _check_environ() 
     return settings.UNICEL_CONFIG
 
-def create_from_request(request):
+def create_from_request(request, delay=True):
     """
     From an inbound request (representing an incoming message), 
     create a message (log) object with the right fields populated.
@@ -85,14 +86,17 @@ def create_from_request(request):
     try:
         # attempt to bill client
         from hqpayments.tasks import bill_client_for_sms
-        bill_client_for_sms('UnicelSMSBillableItem', message)
+        if delay:
+            bill_client_for_sms.delay(BILLABLE_ITEM, log)
+        else:
+            bill_client_for_sms(BILLABLE_ITEM, log)
     except Exception as e:
         logging.debug("UNICEL API contacted, errors in billing. Error: %s" % e)
 
     return log
     
 
-def send(message):
+def send(message, delay=True):
     """
     Send an outbound message using the Unicel API
     """
@@ -117,15 +121,18 @@ def send(message):
         data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params))).read()
     except Exception:
         data = None
-    print "data", data
 
     try:
         # attempt to bill client
         from hqpayments.tasks import bill_client_for_sms
-        logging.error("MESSAGE %s", message.get_id)
-        bill_client_for_sms('UnicelSMSBillableItem', message.get_id, **dict(response=data))
+        if delay:
+            bill_client_for_sms.delay(BILLABLE_ITEM, message, **dict(response=data))
+        else:
+            bill_client_for_sms(BILLABLE_ITEM, message, **dict(response=data))
     except Exception as e:
         logging.debug("UNICEL API contacted, errors in billing. Error: %s" % e)
+
+    return data
 
     
     

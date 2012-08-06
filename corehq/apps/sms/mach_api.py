@@ -6,7 +6,9 @@ import urllib2
 
 API_ID = "MACH"
 
-def send(msg):
+BILLABLE_ITEM = 'MachSMSBillableItem'
+
+def send(msg, delay=True):
     """
     Sends a message via mach's API
     """
@@ -23,6 +25,11 @@ def send(msg):
     try:
         # attempt to bill client
         from hqpayments.tasks import bill_client_for_sms
-        bill_client_for_sms('MachSMSBillableItem', msg, **dict(response=resp))
+        if delay:
+            bill_client_for_sms.delay(BILLABLE_ITEM, msg, **dict(response=resp))
+        else:
+            bill_client_for_sms(BILLABLE_ITEM, msg, **dict(response=resp))
     except Exception as e:
         logging.debug("MACH API contacted, errors in billing. Error: %s" % e)
+
+    return resp
