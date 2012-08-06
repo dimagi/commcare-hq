@@ -13,8 +13,12 @@ from tempfile import mkstemp
 from django.views.decorators.http import require_POST
 from datetime import datetime, date
 from xlrd import xldate_as_tuple
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
 
-@login_and_domain_required
+require_can_edit_data = require_permission(Permissions.edit_data)
+
+@require_can_edit_data
 def excel_config(request, domain):
     error_type = "nofile"
     
@@ -66,7 +70,7 @@ def excel_config(request, domain):
     #TODO show bad/invalid file error on this page
     return HttpResponseRedirect(reverse("report_dispatcher", args=[domain, base.ExcelImporter.slug]) + "?error=" + error_type)
       
-@login_and_domain_required
+@require_can_edit_data
 def excel_fields(request, domain):
     named_columns = request.POST['named_columns']
     filename = request.session.get('excel_path')
@@ -130,7 +134,7 @@ def excel_fields(request, domain):
                                 'slug': base.ExcelImporter.slug})     
 
 @require_POST
-@login_and_domain_required
+@require_can_edit_data
 def excel_commit(request, domain):  
     named_columns = request.POST['named_columns'] 
     filename = request.session.get('excel_path')
