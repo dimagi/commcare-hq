@@ -281,7 +281,7 @@ def create_snapshot(request, domain):
              'app_forms': app_forms,
              'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
     elif request.method == 'POST':
-        form = SnapshotSettingsForm(request.POST)
+        form = SnapshotSettingsForm(request.POST, request.FILES)
         app_forms = []
         publishing_apps = False
         for app in domain.applications():
@@ -327,7 +327,16 @@ def create_snapshot(request, domain):
                 snapshot.save()
         new_domain.is_approved = False
         new_domain.published = True
+        image = form.cleaned_data['image']
+        if new_domain.image_path:
+            new_domain.delete_attachment(new_domain.image_path)
+        if image:
+            new_domain.image_path = image.name
+            new_domain.image_type = image.content_type
         new_domain.save()
+
+        if image:
+            new_domain.put_attachment(content=image.read(), name=image.name)
 
         for application in new_domain.full_applications():
             original_id = application.original_doc
