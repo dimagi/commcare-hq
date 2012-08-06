@@ -16,7 +16,7 @@ from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request, get_url_base
 
 class FormErrorReport(StandardTabularHQReport, StandardDateHQReport):
-    name = "Errors &amp; Warnings Summary"
+    name = "Errors & Warnings Summary"
     slug = "form_errors"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
