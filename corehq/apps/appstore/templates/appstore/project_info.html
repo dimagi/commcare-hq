@@ -10,7 +10,13 @@
 
 {% block main_column %}
 
-<div class="page-header">
+<div class="page-header row-fluid">
+<div class="span2">
+    {% if project.image_path %}
+        <img src="{% url appstore_project_image project.name %}" style="max-width: 200px; max-height:200px;" />
+    {% endif %}
+</div>
+    <div class="span7">
         <h1>
             {{ project.title }}
             <small>by
@@ -39,10 +45,8 @@
             </div>
             {% endif %}
     <br/>
+    </div>
 </div>
-{% if project.image_path %}
-<img src="{% url appstore_project_image project.name %}" style="max-width: 400px; max-height:500px;" />
-{% endif %}
 <dl class="dl-horizontal">
     <dt>{% trans 'Description' %}</dt>
     <dd>

@@ -223,6 +223,9 @@
     {% endif %}
     <div class="span3">
         <div class="well">
+            {% if app.image_path %}
+            <img src="{% url appstore_project_image app.name %}" style="max-width: 200px; max-height:200px;" />
+            {% endif %}
             <h2>
                 {{ app.title }}
                 <small>By

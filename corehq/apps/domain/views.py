@@ -21,6 +21,7 @@ from django.views.decorators.http import require_POST
 import json
 from dimagi.utils.post import simple_post
 from corehq.apps.app_manager.models import get_app
+import Image, cStringIO
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
@@ -366,7 +367,11 @@ def create_snapshot(request, domain):
         new_domain.save()
 
         if image:
-            new_domain.put_attachment(content=image.read(), name=image.name)
+            im = Image.open(image)
+            out = cStringIO.StringIO()
+            im.thumbnail((200, 200), Image.ANTIALIAS)
+            im.save(out, new_domain.image_type.split('/')[-1])
+            new_domain.put_attachment(content=out.getvalue(), name=image.name)
         elif request.POST.get('old_image', False):
             new_domain.put_attachment(content=old.fetch_attachment(old.image_path), name=new_domain.image_path)
 
