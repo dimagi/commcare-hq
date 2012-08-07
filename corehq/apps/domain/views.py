@@ -339,6 +339,7 @@ def create_snapshot(request, domain):
                     m_file.shared_by.append(domain.name)
                     m_file.licenses[domain.name] = domain.license
                     m_file.save()
+        old = domain.published_snapshot()
         new_domain = domain.save_snapshot()
         if request.POST['license'] in LICENSES.keys():
             new_domain.license = request.POST['license']
@@ -356,15 +357,18 @@ def create_snapshot(request, domain):
         new_domain.is_approved = False
         new_domain.published = True
         image = form.cleaned_data['image']
-        if new_domain.image_path:
-            new_domain.delete_attachment(new_domain.image_path)
         if image:
             new_domain.image_path = image.name
             new_domain.image_type = image.content_type
+        elif request.POST.get('old_image', False):
+            new_domain.image_path = old.image_path
+            new_domain.image_type = old.image_type
         new_domain.save()
 
         if image:
             new_domain.put_attachment(content=image.read(), name=image.name)
+        elif request.POST.get('old_image', False):
+            new_domain.put_attachment(content=old.fetch_attachment(old.image_path), name=new_domain.image_path)
 
         for application in new_domain.full_applications():
             original_id = application.original_doc
