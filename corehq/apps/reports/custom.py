@@ -196,6 +196,10 @@ class HQReport(object):
     def get_url(cls, domain):
         return reverse(cls.dispatcher, args=[domain, cls.slug])
 
+    @classmethod
+    def show_in_list(cls, domain, user):
+        return True
+
 class ReportField(object):
     slug = ""
     template = ""

@@ -20,3 +20,7 @@ class ImportCases(DataInterface):
             self.context['error_text'] = 'No cases have been submitted to this domain. You cannot update case details from an Excel file until you have existing cases.'            
         elif error == "cache":
             self.context['error_text'] = 'The session containing the file you uploaded has expired - please upload a new one.'
+
+    @classmethod
+    def show_in_list(cls, domain, user):
+        return user.is_superuser or user.is_previewer()

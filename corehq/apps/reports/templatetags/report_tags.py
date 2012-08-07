@@ -256,6 +256,8 @@ def report_list(mapping, dispatcher, user, domain, current_slug=""):
             if not user.can_view_report(domain, model):
                 continue
             klass = to_function(model)
+            if not klass.show_in_list(domain, user):
+                continue
             sublist.append('<li%s><a href="%s" title="%s">' %\
                            ((' class="active"' if klass.slug == current_slug else ""),
                             reverse(dispatcher, args=(domain, escape(klass.slug))),
