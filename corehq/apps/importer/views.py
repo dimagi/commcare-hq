@@ -98,7 +98,8 @@ def excel_fields(request, domain):
         excel_fields = columns + excel_fields
         # remove key/value column names from list
         excel_fields.remove(key_column)
-        excel_fields.remove(value_column)                 
+        if value_column in excel_fields:
+            excel_fields.remove(value_column)                 
     else:
         excel_fields = columns
                   
