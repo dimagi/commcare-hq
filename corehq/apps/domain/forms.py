@@ -118,13 +118,13 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             'title',
             'author',
             'description',
-            'image',
             'license',
             'city',
             'country',
             'region',
             'project_type',
-            'share_multimedia']
+            'share_multimedia',
+            'image',]
 
 ########################################################################################################
 

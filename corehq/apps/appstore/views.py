@@ -253,10 +253,6 @@ def copy_snapshot(request, domain):
         args = {'domain_name': request.POST['new_project_name'], 'tos_confirmed': True}
         form = DomainRegistrationForm(args)
 
-        print request.POST['new_project_name']
-        print form.is_valid()
-        print form.errors
-
         if form.is_valid():
             new_domain = dom.save_copy(form.clean_domain_name(), user=request.couch_user)
         else:

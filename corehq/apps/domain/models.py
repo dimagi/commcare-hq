@@ -411,7 +411,7 @@ class Domain(Document):
         return Domain.view('domain/snapshots', startkey=[self.name, {}], endkey=[self.name], include_docs=True, descending=True)
 
     def published_snapshot(self):
-        snapshots = self.snapshots()
+        snapshots = self.snapshots().all()
         for snapshot in snapshots:
             if snapshot.published:
                 return snapshot
@@ -454,7 +454,7 @@ class Domain(Document):
 
     def display_name(self):
         if self.is_snapshot:
-            return "Snapshot of %s" % self.copied_from.display_name()
+            return "Snapshot of %s" % self.copied_from().display_name()
         if self.organization:
             return self.slug
         else:
