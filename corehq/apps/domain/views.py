@@ -1,9 +1,7 @@
 import datetime
-from django.contrib.auth.views import password_reset_confirm
-from django.views.decorators.csrf import csrf_protect
 from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, HttpResponse, Http404, HttpResponseForbidden
+from django.http import HttpResponseRedirect, HttpResponse, Http404
 
 from django_tables import tables
 from django.shortcuts import redirect
@@ -14,7 +12,7 @@ from corehq.apps.domain.forms import DomainSelectionForm, DomainGlobalSettingsFo
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 
-from dimagi.utils.web import render_to_response, json_response
+from dimagi.utils.web import render_to_response
 from corehq.apps.users.views import require_can_edit_web_users
 from corehq.apps.receiverwrapper.forms import FormRepeaterForm
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater
@@ -22,8 +20,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 import json
 from dimagi.utils.post import simple_post
-from corehq.apps.registration.forms import DomainRegistrationForm
-from django.forms.widgets import Select
+from corehq.apps.app_manager.models import get_app
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
@@ -269,11 +266,42 @@ def create_snapshot(request, domain):
                 'region': domain.region,
                 'project_type': domain.project_type,
                 'share_multimedia': True,
+                'license': domain.license
             })
+        published_snapshot = domain.published_snapshot()
+        published_apps = {}
+        if published_snapshot is not None:
+            form = SnapshotSettingsForm(initial={
+                'default_timezone': published_snapshot.default_timezone,
+                'case_sharing': json.dumps(published_snapshot.case_sharing),
+                'city': published_snapshot.city,
+                'country': published_snapshot.country,
+                'region': published_snapshot.region,
+                'project_type': published_snapshot.project_type,
+                'license': published_snapshot.license,
+                'title': published_snapshot.title,
+                'author': published_snapshot.author,
+                'share_multimedia': True,
+                'description': published_snapshot.description
+            })
+            for app in published_snapshot.full_applications():
+                published_apps[app.original_doc] = app
         app_forms = []
         for app in domain.applications():
             app = app.get_latest_saved() or app
-            app_forms.append((app, SnapshotApplicationForm(initial={'publish': True}, prefix=app.id)))
+            if published_snapshot and app._id in published_apps:
+                original = published_apps[app._id]
+                app_forms.append((app, SnapshotApplicationForm(initial={
+                    'publish': True,
+                    'description': original.description,
+                    'deployment_date': original.deployment_date,
+                    'user_type': original.user_type,
+                    'attribution_notes': original.attribution_notes,
+                    'phone_model': original.phone_model,
+
+                }, prefix=app.id)))
+            else:
+                app_forms.append((app, SnapshotApplicationForm(initial={'publish': published_snapshot is None}, prefix=app.id)))
         return render_to_response(request, 'domain/create_snapshot.html',
             {'domain': domain.name,
              'form': form,
@@ -281,7 +309,7 @@ def create_snapshot(request, domain):
              'app_forms': app_forms,
              'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
     elif request.method == 'POST':
-        form = SnapshotSettingsForm(request.POST)
+        form = SnapshotSettingsForm(request.POST, request.FILES)
         app_forms = []
         publishing_apps = False
         for app in domain.applications():
@@ -327,7 +355,16 @@ def create_snapshot(request, domain):
                 snapshot.save()
         new_domain.is_approved = False
         new_domain.published = True
+        image = form.cleaned_data['image']
+        if new_domain.image_path:
+            new_domain.delete_attachment(new_domain.image_path)
+        if image:
+            new_domain.image_path = image.name
+            new_domain.image_type = image.content_type
         new_domain.save()
+
+        if image:
+            new_domain.put_attachment(content=image.read(), name=image.name)
 
         for application in new_domain.full_applications():
             original_id = application.original_doc

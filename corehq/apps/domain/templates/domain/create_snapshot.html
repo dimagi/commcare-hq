@@ -62,7 +62,7 @@
 {% endblock %}
 
 {% block user-view %}
-<form class="form-horizontal" method="post" action="{% url domain_create_snapshot domain %}" id="snapshot_form">
+<form class="form-horizontal" enctype="multipart/form-data" method="post" action="{% url domain_create_snapshot domain %}" id="snapshot_form">
     <fieldset>
         {% bootstrap_form_errors form %}
         {% bootstrap_fieldset form "Creating new snapshot..." %}

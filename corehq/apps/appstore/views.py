@@ -1,6 +1,6 @@
 from datetime import datetime
 from django.core.urlresolvers import reverse
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, HttpResponse
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
 from corehq.apps.domain.decorators import require_previewer, login_and_domain_required
@@ -187,6 +187,7 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
     vals = _appstore_context(dict(apps=results,
                                   filter_by=filter_by,
                                   filter=filter,
+                                  filter_url=filter.replace(' ', '+'),
                                   page=page,
                                   prev_page=(page-1),
                                   next_page=(page+1),
@@ -268,3 +269,12 @@ def copy_snapshot(request, domain):
 
         messages.success(request, "Project copied successfully!")
         return redirect("domain_project_settings", new_domain.name)
+
+@require_previewer # remove for production
+def project_image(request, domain):
+    project = Domain.get_by_name(domain)
+    if project.image_path:
+        image = project.fetch_attachment(project.image_path)
+        return HttpResponse(image, content_type=project.image_type)
+    else:
+        raise Http404()

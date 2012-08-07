@@ -40,6 +40,9 @@
             {% endif %}
     <br/>
 </div>
+{% if project.image_path %}
+<img src="{% url appstore_project_image project.name %}" style="max-width: 400px; max-height:500px;" />
+{% endif %}
 <dl class="dl-horizontal">
     <dt>{% trans 'Description' %}</dt>
     <dd>

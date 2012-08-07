@@ -92,7 +92,8 @@ class SnapshotSettingsMixin(forms.Form):
 
 class SnapshotApplicationForm(forms.Form):
     publish = BooleanField(label="Publish?", required=False)
-    description = CharField(label="Description", required=False, widget=forms.Textarea)
+    description = CharField(label="Description", required=False, widget=forms.Textarea,
+                            help_text="A technical description of the app design")
     deployment_date = CharField(label="Deployment date", required=False)
     phone_model = CharField(label="Phone model", required=False)
     user_type = CharField(label="User type", required=False,
@@ -106,8 +107,10 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
     project_type = CharField(label="Project Category", required=True,
         help_text="e.g. MCH, HIV, etc.")
     license = ChoiceField(label='License', required=False, choices=LICENSES.items(), help_text=render_to_string('domain/partials/license_explanations.html'))
-    description = CharField(label="Description", required=False, widget=forms.Textarea)
+    description = CharField(label="Description", required=False, widget=forms.Textarea,
+                            help_text="A high-level overview of your project as a whole")
     share_multimedia = BooleanField(label="Share all multimedia?", required=False, help_text="This will allow any user to see and use all multimedia in this project")
+    image = forms.ImageField(label="Exchange image", required=False, help_text="An optional image to show other users your logo or what your app looks like")
 
     def __init__(self, *args, **kw):
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
@@ -115,6 +118,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             'title',
             'author',
             'description',
+            'image',
             'license',
             'city',
             'country',
