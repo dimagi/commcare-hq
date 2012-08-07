@@ -224,7 +224,9 @@
     <div class="span3">
         <div class="well">
             {% if app.image_path %}
-            <img src="{% url appstore_project_image app.name %}" style="max-width: 200px; max-height:200px;" />
+            <div style="text-align: center;">
+                <img src="{% url appstore_project_image app.name %}" style="max-width: 200px; max-height:200px;" />
+            </div>
             {% endif %}
             <h2>
                 {{ app.title }}
@@ -275,12 +277,12 @@
     <ul class="pager span10">
         {% if page > 1 %}
         <li class="previous">
-            <a href="?page={{ prev_page }}{% if search_query %}&q={{ search_query }}{% endif %}">&larr; Previous</a>
+            <a href="?page={{ prev_page }}{% if search_query %}&q={{ search_query }}{% endif %}{% if include_unapproved %}&unapproved=true{% endif %}">&larr; Previous</a>
         </li>
         {% endif %}
         {% if more_pages %}
         <li class="next">
-            <a href="?page={{ next_page }}{% if search_query %}&q={{ search_query }}{% endif %}">Next &rarr;</a>
+            <a href="?page={{ next_page }}{% if search_query %}&q={{ search_query }}{% endif %}{% if include_unapproved %}&unapproved=true{% endif %}">Next &rarr;</a>
         </li>
         {% endif %}
     </ul>

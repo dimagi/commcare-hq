@@ -39,10 +39,10 @@ def appstore(request, template="appstore/appstore_base.html", sort_by=None):
     include_unapproved = (request.user.is_superuser and request.GET.get('unapproved', False))
     if not sort_by:
         results = Domain.published_snapshots(include_unapproved=include_unapproved, page=page, per_page=PER_PAGE)
-        more_pages = page * PER_PAGE < results.total_rows
+        more_pages = page * PER_PAGE < results.total_rows and len(results) == PER_PAGE # hacky way to deal with approved vs unapproved
     else:
         total_results = Domain.published_snapshots(include_unapproved=include_unapproved)
-        more_pages = page * PER_PAGE < total_results.total_rows
+        more_pages = page * PER_PAGE < total_results.total_rows and len(results) == PER_PAGE # hacky way to deal with approved vs unapproved
         if sort_by == 'best':
             results = Domain.popular_sort(total_results, page)
             #more_pages = page * PER_PAGE < total_results and page <= 10

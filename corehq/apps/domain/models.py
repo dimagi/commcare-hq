@@ -430,7 +430,7 @@ class Domain(Document):
         if include_unapproved:
             return cls.view('domain/published_snapshots', startkey=[False, {}], include_docs=True, descending=True, limit=limit, skip=skip)
         else:
-            return cls.view('domain/published_snapshots', endkey=[True], include_docs=True, descending=True)
+            return cls.view('domain/published_snapshots', endkey=[True], include_docs=True, descending=True, limit=limit, skip=skip)
 
     @classmethod
     def snapshot_search(cls, query, page=None, per_page=10):
