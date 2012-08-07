@@ -23,4 +23,4 @@ class ImportCases(DataInterface):
 
     @classmethod
     def show_in_list(cls, domain, user):
-        return user.is_superuser or user.is_previewer()
+        return user.is_superuser or user.is_previewer() or domain == 'khayelitsha'
