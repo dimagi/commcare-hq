@@ -16,6 +16,7 @@
         var standardHQReport = new HQReport({
             domain: '{{ domain }}',
             baseSlug: '{{ base_slug|default:'reports' }}',
+            {% if global_root %}globalSavePath: '{{ global_root }}',{% endif %}
             {% if datespan %}datespan: {
                 startdate: '{{ datespan.startdate|date:"Y-m-d" }}',
                 enddate: '{{ datespan.enddate|date:"Y-m-d" }}'
@@ -45,9 +46,11 @@
             <a href="{{ default_report_url }}"><strong>{{ reporting_section_name|default:"Reports" }}</strong></a> <span class="divider">&gt;</span>
         </li>
         {% if not report_breadcrumbs %}
+        {% block sub-page-title %}
         <li class="active">
             <div id="report-title"><a href="#">{{ report.name|default:"Unknown Report"|safe }}</a></div>
         </li>
+        {% endblock %}
         {% else %}
         {{ report_breadcrumbs|safe }}
         {% endif %}
