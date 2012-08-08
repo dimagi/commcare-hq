@@ -296,16 +296,19 @@ class SelectFilteredMobileWorkerField(SelectMobileWorkerField):
 
 
 class DatespanField(ReportField):
+    name = "Date Range"
     slug = "datespan"
     template = "reports/fields/datespan.html"
 
     def update_context(self):
+        self.context["datespan_name"] = self.name
         self.datespan = DateSpan.since(7, format="%Y-%m-%d", timezone=self.timezone)
         if self.request.datespan.is_valid():
             self.datespan.startdate = self.request.datespan.startdate
             self.datespan.enddate = self.request.datespan.enddate
         self.context['timezone'] = self.timezone.zone
         self.context['datespan'] = self.datespan
+
 
 class DeviceLogTagField(ReportField):
     slug = "logtag"
