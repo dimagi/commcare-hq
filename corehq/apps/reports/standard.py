@@ -46,6 +46,7 @@ class StandardHQReport(HQReport):
     base_slug = 'reports'
     reporting_section_name = "Reports"
     asynchronous = True
+    global_root = None
 
     def process_basic(self):
         self.request_params = json_request(self.request.GET)
@@ -71,7 +72,8 @@ class StandardHQReport(HQReport):
             report_breadcrumbs = self.custom_breadcrumbs,
             base_slug = self.base_slug,
             reporting_section_name = self.reporting_section_name,
-            default_report_url = self.get_default_report_url()
+            default_report_url = self.get_default_report_url(),
+            global_root=self.global_root
         )
 
     def get_global_params(self):
