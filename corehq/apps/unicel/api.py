@@ -87,9 +87,9 @@ def create_from_request(request, delay=True):
         # attempt to bill client
         from hqpayments.tasks import bill_client_for_sms
         if delay:
-            bill_client_for_sms.delay(BILLABLE_ITEM, log)
+            bill_client_for_sms.delay(BILLABLE_ITEM, log._id)
         else:
-            bill_client_for_sms(BILLABLE_ITEM, log)
+            bill_client_for_sms(BILLABLE_ITEM, log._id)
     except Exception as e:
         logging.debug("UNICEL API contacted, errors in billing. Error: %s" % e)
 
@@ -121,14 +121,14 @@ def send(message, delay=True):
         data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params))).read()
     except Exception:
         data = None
-
+    message.save()
     try:
         # attempt to bill client
         from hqpayments.tasks import bill_client_for_sms
         if delay:
-            bill_client_for_sms.delay(BILLABLE_ITEM, message, **dict(response=data))
+            bill_client_for_sms.delay(BILLABLE_ITEM, message.get_id, **dict(response=data))
         else:
-            bill_client_for_sms(BILLABLE_ITEM, message, **dict(response=data))
+            bill_client_for_sms(BILLABLE_ITEM, message.get_id, **dict(response=data))
     except Exception as e:
         logging.debug("UNICEL API contacted, errors in billing. Error: %s" % e)
 

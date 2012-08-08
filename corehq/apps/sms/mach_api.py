@@ -21,14 +21,14 @@ def send(msg, delay=True):
     # just opening the url is enough to send the message
     # TODO, check response
     resp = urllib2.urlopen(url).read()
-
+    msg.save()
     try:
         # attempt to bill client
         from hqpayments.tasks import bill_client_for_sms
         if delay:
-            bill_client_for_sms.delay(BILLABLE_ITEM, msg, **dict(response=resp))
+            bill_client_for_sms.delay(BILLABLE_ITEM, msg.get_id, **dict(response=resp))
         else:
-            bill_client_for_sms(BILLABLE_ITEM, msg, **dict(response=resp))
+            bill_client_for_sms(BILLABLE_ITEM, msg.get_id, **dict(response=resp))
     except Exception as e:
         logging.debug("MACH API contacted, errors in billing. Error: %s" % e)
 
