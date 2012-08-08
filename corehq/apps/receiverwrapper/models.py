@@ -7,6 +7,7 @@ from dimagi.utils.mixins import UnicodeMixIn
 from datetime import datetime, timedelta
 from dimagi.utils.post import simple_post
 import json
+from dimagi.utils.parsing import json_format_datetime
 
 repeater_types = {}
 
@@ -107,8 +108,9 @@ class ShortFormRepeater(Repeater):
     def get_payload(self, repeat_record):
         form = XFormInstance.get(repeat_record.payload_id)
         cases = CommCareCase.get_by_xform_id(form.get_id)
-        rt = json.dumps({'form_id': form._id, 'received_on': form.received_on, 'case_ids': [case._id for case in cases]})
-        return rt
+        return json.dumps({'form_id': form._id,
+                           'received_on': json_format_datetime(form.received_on),
+                           'case_ids': [case._id for case in cases]})
 
     def __unicode__(self):
         return "forwarding short form to: %s" % self.url
@@ -185,8 +187,9 @@ class RepeatRecord(Document):
             # we don't use celery's version of retry because
             # we want to override the success/fail each try
             for i in range(max_tries):
+                payload = self.get_payload()
                 try:
-                    resp = post_fn(self.get_payload(), self.url)
+                    resp = post_fn(payload, self.url)
                     if 200 <= resp.status < 300:
                         self.update_success()
                         break
