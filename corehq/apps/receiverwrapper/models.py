@@ -6,6 +6,7 @@ from couchdbkit.ext.django.schema import *
 from dimagi.utils.mixins import UnicodeMixIn
 from datetime import datetime, timedelta
 from dimagi.utils.post import simple_post
+import json
 
 repeater_types = {}
 
@@ -93,6 +94,24 @@ class CaseRepeater(Repeater):
 
     def __unicode__(self):
         return "forwarding cases to: %s" % self.url
+
+@register_repeater_type
+class ShortFormRepeater(Repeater):
+    """
+    Record that form id & case ids should be repeated to a new url
+
+    """
+
+    version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
+
+    def get_payload(self, repeat_record):
+        form = XFormInstance.get(repeat_record.payload_id)
+        cases = CommCareCase.get_by_xform_id(form.get_id)
+        rt = json.dumps({'form_id': form._id, 'received_on': form.received_on, 'case_ids': [case._id for case in cases]})
+        return rt
+
+    def __unicode__(self):
+        return "forwarding short form to: %s" % self.url
 
 class RepeatRecord(Document):
     """
