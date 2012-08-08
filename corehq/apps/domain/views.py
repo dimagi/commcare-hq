@@ -286,7 +286,10 @@ def create_snapshot(request, domain):
                 'description': published_snapshot.description
             })
             for app in published_snapshot.full_applications():
-                published_apps[app.original_doc] = app
+                if domain == published_snapshot:
+                    published_apps[app._id] = app
+                else:
+                    published_apps[app.original_doc] = app
         app_forms = []
         for app in domain.applications():
             app = app.get_latest_saved() or app
