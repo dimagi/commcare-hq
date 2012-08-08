@@ -10,7 +10,7 @@ var HQReport = function (options) {
 
     self.toggleFiltersCookie = self.domain+'.hqreport.toggleFilterState';
     self.datespanCookie = self.domain+".hqreport.filterSetting.test.datespan";
-    self.globalSavePath = '/a/'+self.domain+'/';
+    self.globalSavePath = options.globalSavePath || '/a/'+self.domain+'/';
 
     self.initialLoad = true;
 
