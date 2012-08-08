@@ -278,7 +278,7 @@ def standard_report_list(user, domain, current_slug=""):
 @register.simple_tag
 def custom_report_list(user, domain, current_slug=""):
     mapping = getattr(settings, 'CUSTOM_REPORT_MAP', {}).get(domain)
-    return report_list(mapping, 'report_dispatcher', user, domain, current_slug)
+    return report_list(mapping, 'custom_report_dispatcher', user, domain, current_slug)
 
 
 @register.simple_tag
