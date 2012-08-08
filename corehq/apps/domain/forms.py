@@ -92,6 +92,7 @@ class SnapshotSettingsMixin(forms.Form):
 
 class SnapshotApplicationForm(forms.Form):
     publish = BooleanField(label="Publish?", required=False)
+    name = CharField(label="Name", required=True)
     description = CharField(label="Description", required=False, widget=forms.Textarea,
                             help_text="A technical description of the app design")
     deployment_date = CharField(label="Deployment date", required=False)
