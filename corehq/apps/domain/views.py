@@ -269,7 +269,7 @@ def create_snapshot(request, domain):
                 'share_multimedia': True,
                 'license': domain.license
             })
-        published_snapshot = domain.published_snapshot()
+        published_snapshot = domain.published_snapshot() or domain
         published_apps = {}
         if published_snapshot is not None:
             form = SnapshotSettingsForm(initial={
@@ -294,6 +294,7 @@ def create_snapshot(request, domain):
                 original = published_apps[app._id]
                 app_forms.append((app, SnapshotApplicationForm(initial={
                     'publish': True,
+                    'name': original.name,
                     'description': original.description,
                     'deployment_date': original.deployment_date,
                     'user_type': original.user_type,
@@ -302,7 +303,7 @@ def create_snapshot(request, domain):
 
                 }, prefix=app.id)))
             else:
-                app_forms.append((app, SnapshotApplicationForm(initial={'publish': published_snapshot is None}, prefix=app.id)))
+                app_forms.append((app, SnapshotApplicationForm(initial={'publish': (published_snapshot is None or published_snapshot == domain)}, prefix=app.id)))
         return render_to_response(request, 'domain/create_snapshot.html',
             {'domain': domain.name,
              'form': form,
@@ -378,16 +379,17 @@ def create_snapshot(request, domain):
         for application in new_domain.full_applications():
             original_id = application.original_doc
             if request.POST.get("%s-publish" % original_id, False):
+                application.name = request.POST["%s-name" % original_id]
                 application.description = request.POST["%s-description" % original_id]
                 date_picked = request.POST["%s-deployment_date" % original_id].split('-')
                 if len(date_picked) > 1:
                     if int(date_picked[0]) > 2009 and date_picked[1] and date_picked[2]:
                         application.deployment_date = datetime.datetime(int(date_picked[0]), int(date_picked[1]), int(date_picked[2]))
+                #if request.POST.get("%s-name" % original_id):
                 application.phone_model = request.POST["%s-phone_model" % original_id]
                 application.attribution_notes = request.POST["%s-attribution_notes" % original_id]
                 application.user_type = request.POST["%s-user_type" % original_id]
-                if application.description != '':
-                    application.save()
+                application.save()
             else:
                 application.delete()
 
