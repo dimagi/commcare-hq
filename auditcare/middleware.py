@@ -53,9 +53,6 @@ class AuditMiddleware(object):
         is_tests = filter(is_test_trace, traces)
         if len(is_tests)  == 0:
             logging.debug("Middleware is running in a running context")
-            auth_views.login = watch_login(auth_views.login)
-            auth_views.logout = watch_logout(auth_views.logout)
-
             admin.site.login = watch_login(admin.site.login)
             admin.site.logout = watch_logout(admin.site.logout)
         else:

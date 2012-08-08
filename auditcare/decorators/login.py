@@ -9,7 +9,7 @@ except ImportError:
 
 from datetime import datetime, timedelta
 from django.conf import settings
-from django.contrib.auth import   logout
+from django.contrib.auth import  logout
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext

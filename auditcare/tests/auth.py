@@ -24,7 +24,7 @@ class authenticationTestCase(unittest.TestCase):
         self._createUser()
 
     def _createUser(self):
-        model_count = ModelActionAudit.view("auditcare/model_actions").count()
+        model_count = ModelActionAudit.view("auditcare/model_actions_by_id", include_docs=True, reduce=False).count()
         total_count = AuditEvent.view("auditcare/all_events").count()
         
         usr = User()
@@ -34,21 +34,23 @@ class authenticationTestCase(unittest.TestCase):
         usr.last_name = 'mock'
         usr.save()
 
-        model_count2 = ModelActionAudit.view("auditcare/model_actions").count()
+        model_count2 = ModelActionAudit.view("auditcare/model_actions_by_id", include_docs=True, reduce=False).count()
         total_count2 = AuditEvent.view("auditcare/all_events").count()
         
         self.assertEqual(model_count+1, model_count2)    
         self.assertEqual(total_count+1, total_count2)
     
     def testModifyUser(self):
-        model_count = ModelActionAudit.view("auditcare/model_actions").count()
+        model_count = ModelActionAudit.view("auditcare/model_actions_by_id", include_docs=True, reduce=False).count()
         total_count = AuditEvent.view("auditcare/all_events").count()
         
         usr = User.objects.get(username='mockmock@mockmock.com')
         usr.first_name='aklsjfl'
+        time.sleep(1)
         usr.save()
-        
-        model_count2 = ModelActionAudit.view("auditcare/model_actions").count()
+        time.sleep(1)
+
+        model_count2 = ModelActionAudit.view("auditcare/model_actions_by_id", include_docs=True, reduce=False).count()
         total_count2 = AuditEvent.view("auditcare/all_events").count()
                 
         self.assertEqual(model_count+1, model_count2)    
