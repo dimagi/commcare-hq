@@ -1,6 +1,7 @@
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from http_parser.http import NoMoreData
 from couchforms.util import post_xform_to_couch, SubmissionError
 from django.http import HttpResponse, HttpResponseServerError,\
     HttpResponseBadRequest
@@ -52,6 +53,8 @@ def post(request, callback=None, error_callback=None,
         if error_callback:
             return error_callback(e.error_log)
         return HttpResponseServerError("FAIL")
+    except NoMoreData:
+        raise
     except Exception, e:
         raise Exception("Problem receiving submission to %s. %s" % \
                         (request.path, str(e)))
