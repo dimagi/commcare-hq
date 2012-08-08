@@ -153,6 +153,7 @@ var MultimediaMap = function (data, jplayerSwfPath) {
     self.image_refs = ko.observableArray();
     self.audio_refs = ko.observableArray();
     self.by_path = {};
+    self.has_ref = false;
 
     self.is_audio_playing = ko.observable(false);
 
@@ -213,32 +214,38 @@ HQMediaRef = function(mediaRef, type) {
     self.url = ko.observable(mediaRef.url || "");
     self.has_ref = ko.observable(!!mediaRef.url);
 
-    self.searching = ko.observable(false);
+    self.searching = ko.observable(0);
     self.searched = ko.observable(false);
     self.imageOptions = ko.observableArray();
     self.audioOptions = ko.observableArray();
     self.query = ko.observable();
 
     self.searchForImages = function() {
-        $.getJSON(searchUrl, {q: self.query(), t: self.type()}, function (res) {
-            if (!self.searched())
-                self.searched(true);
-            self.imageOptions([]);
-            for (var i = 0; i < res.length; i++) {
-                self.imageOptions.push(new MediaOption(self, res[i]))
-            }
-        });
+        if (self.query()) {
+            self.searched(true);
+            self.searching(self.searching() + 1);
+            $.getJSON(searchUrl, {q: self.query(), t: self.type()}, function (res) {
+                self.searching(self.searching() - 1);
+                self.imageOptions([]);
+                for (var i = 0; i < res.length; i++) {
+                    self.imageOptions.push(new MediaOption(self, res[i]))
+                }
+            });
+        }
     };
 
     self.searchForAudio = function() {
-        $.getJSON(searchUrl, {q: self.query(), t: self.type()}, function (res) {
-            if (!self.searched())
-                self.searched(true);
-            self.audioOptions([]);
-            for (var i = 0; i < res.length; i++) {
-                self.audioOptions.push(new MediaOption(self, res[i]))
-            }
-        });
+        if (self.query()) {
+            self.searched(true);
+            self.searching(self.searching() + 1);
+            $.getJSON(searchUrl, {q: self.query(), t: self.type()}, function (res) {
+                self.searching(self.searching() - 1);
+                self.audioOptions([]);
+                for (var i = 0; i < res.length; i++) {
+                    self.audioOptions.push(new MediaOption(self, res[i]))
+                }
+            });
+        }
     };
 
     self.uploadNewImage = function () {

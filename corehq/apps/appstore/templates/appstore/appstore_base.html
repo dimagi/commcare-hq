@@ -3,6 +3,20 @@
 {% load hq_bootstrap_tags %}
 {% load i18n %}
 
+{% block js %}{{ block.super }}
+    <script type="text/javascript">
+        $(function () {
+            $(".more-sortable-button").click(function() {
+                var e = $(this);
+                var sortable = e.data('sortable');
+                $('.sortable-' + sortable).show();
+                e.hide();
+                return false;
+            });
+        });
+    </script>
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
 <style type="text/css">
 
@@ -155,7 +169,7 @@
     {% endif %}
     {% if filter_by and filter %}
         <li>
-            In {{ filter_by }} "{{ filter }}"
+            With {{ filter_by }} {{ filter }}
             {% if sort_by %}
                 <span class="divider">&gt;</span>
             {% endif %}
@@ -209,8 +223,14 @@
     {% endif %}
     <div class="span3">
         <div class="well">
+            {% if app.image_path %}
+            <div style="text-align: center;">
+                <img src="{% url appstore_project_image app.name %}" style="max-width: 200px; max-height:200px;" />
+            </div>
+            {% endif %}
             <h2>
                 {{ app.title }}
+                <br/>
                 <small>By
                     {% if app.organization %}
                         {{ app.organization_doc.title }}
@@ -240,7 +260,9 @@
                     {% endif %}
                 {% endfor %}
             <br/>
+            <h6>{{ app.copies_of_parent|length }} download{{ app.copies_of_parent|length|pluralize }}</h6>
         <p>{{ app.description|truncatewords:18 }}</p>
+        <p>Last updated: {{ app.snapshot_time|date:"N j, Y" }}</p>
         <a class="btn" href="{% url project_info app.name %}">View &raquo;</a>
         {% if user.is_superuser %}
             {% if app.is_approved %}
@@ -258,47 +280,15 @@
     <ul class="pager span10">
         {% if page > 1 %}
         <li class="previous">
-            <a href="?page={{ prev_page }}{% if search_query %}&q={{ search_query }}{% endif %}">&larr; Previous</a>
+            <a href="?page={{ prev_page }}{% if search_query %}&q={{ search_query }}{% endif %}{% if include_unapproved %}&unapproved=true{% endif %}">&larr; Previous</a>
         </li>
         {% endif %}
         {% if more_pages %}
         <li class="next">
-            <a href="?page={{ next_page }}{% if search_query %}&q={{ search_query }}{% endif %}">Next &rarr;</a>
+            <a href="?page={{ next_page }}{% if search_query %}&q={{ search_query }}{% endif %}{% if include_unapproved %}&unapproved=true{% endif %}">Next &rarr;</a>
         </li>
         {% endif %}
     </ul>
 </div>
-
-<!--<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Organization</th>
-            <th>Category</th>
-            <th>Copies</th>
-            <th>License</th>
-            <th>Last updated</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for app in apps %}
-    <tr>
-        <td><a href="{% url project_info app.name %}">{{ app.copied_from.display_name }}</a></td>
-        <td>
-            {% if app.organization %}
-                <a href="{% url orgs_landing app.organization %}">{{ app.organization_doc.title }}</a>
-            {% else %}
-                None
-            {% endif %}
-        </td>
-        <td>{{ app.project_type }}</td>
-        <td>{{ app.copies_of_parent|length }}</td>
-        <td>{{ app.get_license_display }}</td>
-        <td>{{ app.snapshot_time }}</td>
-
-    </tr>
-    {% endfor %}
-    </tbody>
-</table>-->
 
 {% endblock %}

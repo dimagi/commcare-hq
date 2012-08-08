@@ -42,7 +42,7 @@ class SubmitFilter(CouchFilter):
 
 
 class SubmissionErrorReport(PaginatedHistoryHQReport, StandardDateHQReport):
-    name = "Raw Forms, Errors &amp; Duplicates"
+    name = "Raw Forms, Errors & Duplicates"
     slug = "submit_errors"
     fields = ['corehq.apps.receiverwrapper.fields.SubmissionTypeField',
               # 'corehq.apps.reports.fields.GroupField',

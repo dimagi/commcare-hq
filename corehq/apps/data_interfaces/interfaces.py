@@ -14,6 +14,7 @@ class DataInterface(HQReport):
     template_name = "data_interfaces/data_interfaces_base.html"
     base_template_name = "data_interfaces/data_interfaces_base.html"
     asynchronous = True
+    dispatcher = 'data_interface_dispatcher'
 
 class CaseReassignmentInterface(DataInterface, StandardTabularHQReport, StandardDateHQReport):
     name = "Reassign Cases"

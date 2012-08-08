@@ -124,7 +124,11 @@
                                                 </form>
                                                 <!-- ko if: searched -->
                                                 <div class="well">
-                                                    <ul data-bind="foreach: imageOptions" class="thumbnails">
+                                                    <div data-bind="if: searching() > 0" style="text-align: center;">
+                                                        <img src="/static/formdesigner/images/ajax-loader.gif" />
+                                                    </div>
+                                                    <div data-bind="if: searching() == 0">
+                                                        <ul data-bind="foreach: imageOptions" class="thumbnails">
                                                         <li class="span3">
                                                             <div class="thumbnail">
                                                                 <img data-bind="attr: {src: url}" />
@@ -137,6 +141,7 @@
                                                             </div>
                                                         </li>
                                                     </ul>
+                                                    </div>
                                                 </div>
                                                 <!-- /ko -->
                                             </div>
@@ -197,18 +202,23 @@
                                             </form>
                                             <!-- ko if: searched -->
                                             <div class="well">
-                                                <ul data-bind="foreach: audioOptions" class="thumbnails">
-                                                    <li class="span3">
-                                                        <div class="thumbnail">
-                                                            <div data-bind="previewHQAudioButton: url, HQAudioIsPlaying: $root.is_audio_playing, previewHQAudioParams: {uid: uid}"></div>
-                                                            <div data-bind="foreach: tags">
-                                                                <span class="label label-info" data-bind="text: $data"></span>
+                                                <div data-bind="if: searching() > 0" style="text-align: center;">
+                                                    <img src="/static/formdesigner/images/ajax-loader.gif" />
+                                                </div>
+                                                <div data-bind="if: searching() == 0">
+                                                    <ul data-bind="foreach: audioOptions" class="thumbnails">
+                                                        <li class="span3">
+                                                            <div class="thumbnail">
+                                                                <div data-bind="previewHQAudioButton: url, HQAudioIsPlaying: $root.is_audio_playing, previewHQAudioParams: {uid: uid}"></div>
+                                                                <div data-bind="foreach: tags">
+                                                                    <span class="label label-info" data-bind="text: $data"></span>
+                                                                </div>
+                                                                <h6 data-bind="text: license"></h6>
+                                                                <a href="#" class="btn" data-bind="click: choose">Use this audio</a>
                                                             </div>
-                                                            <h6 data-bind="text: license"></h6>
-                                                            <a href="#" class="btn" data-bind="click: choose">Use this audio</a>
-                                                        </div>
-                                                    </li>
-                                                </ul>
+                                                        </li>
+                                                    </ul>
+                                                </div>
                                             </div>
                                             <!-- /ko -->
                                         </div>

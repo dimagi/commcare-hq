@@ -16,6 +16,7 @@ class ExcelExportReport(StandardDateHQReport):
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
     template_name = "reports/reportdata/excel_export_data.html"
+    icon = "icon-list-alt"
 
     def get_default_datespan(self):
         datespan = super(ExcelExportReport, self).get_default_datespan()
@@ -175,11 +176,12 @@ class ExcelExportReport(StandardDateHQReport):
 
 
 class CaseExportReport(StandardHQReport):
-    name = "Export Cases, Referrals, &amp; Users"
+    name = "Export Cases, Referrals, & Users"
     slug = "case_export"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField']
     template_name = "reports/reportdata/case_export_data.html"
+    icon = "icon-share"
 
     def calc(self):
         startkey = json.dumps([self.domain, ""])[:-3]

@@ -48,6 +48,7 @@ class StandardHQReport(HQReport):
     asynchronous = True
     global_root = None
 
+
     def process_basic(self):
         self.request_params = json_request(self.request.GET)
         self.individual = self.request_params.get('individual', '')

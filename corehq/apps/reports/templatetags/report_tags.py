@@ -6,6 +6,7 @@ from django.template.loader import render_to_string
 import json
 import calendar
 from django.conf import settings
+from django.utils.html import escape
 from corehq.apps.reports._global.export import ExcelExportReport, CaseExportReport
 from dimagi.utils.modules import to_function
 #from bhoma.apps.locations.models import Location
@@ -244,31 +245,40 @@ def attribute_lookup(obj, attr):
     if (hasattr(obj, attr)):
         return getattr(obj, attr)
 
-@register.simple_tag
-def standard_report_list(user, domain, current_slug="", report_map="STANDARD_REPORT_MAP"):
-    mapping = getattr(settings, report_map, None)
+def report_list(mapping, dispatcher, user, domain, current_slug=""):
     if not mapping: return ""
     lst = []
     for key, models in mapping.iteritems():
         sublist = []
-        nav_header = '<li class="nav-header">%s</li>' % key
+        nav_header = '<li class="nav-header">%s</li>' % escape(key)
         for model in models:
             if not user.can_view_report(domain, model):
                 continue
             klass = to_function(model)
+            if not klass.show_in_list(domain, user):
+                continue
             sublist.append('<li%s><a href="%s" title="%s">' %\
-                       ((' class="active"' if klass.slug == current_slug else ""),
-                        reverse('report_dispatcher', args=(domain, klass.slug)),
-                        klass.description))
-            if klass.slug == ExcelExportReport.slug:
-                sublist.append('<i class="icon-list-alt"></i> ')
-            elif klass.slug == CaseExportReport.slug:
-                sublist.append('<i class="icon-share"></i> ')
-            sublist.append('%s</a></li>' % klass.name)
+                           ((' class="active"' if klass.slug == current_slug else ""),
+                            reverse(dispatcher, args=(domain, escape(klass.slug))),
+                            escape(klass.description)))
+            if klass.icon:
+                sublist.append('<i class="%s"></i> ' % escape(klass.icon))
+            sublist.append('%s</a></li>' % escape(klass.name))
         if sublist:
             lst.append(nav_header)
             lst.extend(sublist)
     return "\n".join(lst)
+
+@register.simple_tag
+def standard_report_list(user, domain, current_slug=""):
+    mapping = getattr(settings, 'STANDARD_REPORT_MAP', None)
+    return report_list(mapping, 'report_dispatcher', user, domain, current_slug)
+
+@register.simple_tag
+def custom_report_list(user, domain, current_slug=""):
+    mapping = getattr(settings, 'CUSTOM_REPORT_MAP', {}).get(domain)
+    return report_list(mapping, 'custom_report_dispatcher', user, domain, current_slug)
+
 
 @register.simple_tag
 def custom_reports_exist(domain):
@@ -278,24 +288,6 @@ def custom_reports_exist(domain):
     return True
 
 @register.simple_tag
-def custom_report_list(user, domain, current_slug=""):
-    mapping = getattr(settings, 'CUSTOM_REPORT_MAP', None)
-    if not mapping: return ""
-    if not domain in mapping: return ""
-    lst = []
-    for key, models in mapping[domain].items():
-        sublist = []
-        nav_header = '<li class="nav-header">%s</li>' % key
-        for model in models:
-            if not user.can_view_report(domain, model):
-                continue
-            klass = to_function(model)
-            sublist.append('<li%s><a href="%s" title="%s">%s</a></li>' % \
-                       ((' class="active"' if klass.slug == current_slug else ""),
-                        reverse('custom_report_dispatcher', args=(domain, klass.slug)),
-                        klass.description,
-                        klass.name))
-        if sublist:
-            lst.append(nav_header)
-            lst.extend(sublist)
-    return "\n".join(lst)
+def data_interfaces_list(user, domain, current_slug=""):
+    mapping = getattr(settings, 'DATA_INTERFACE_MAP', None)
+    return report_list(mapping, 'data_interface_dispatcher', user, domain, current_slug)

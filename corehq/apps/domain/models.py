@@ -97,6 +97,9 @@ class Domain(Document):
     phone_model = StringProperty()
     attribution_notes = StringProperty()
 
+    image_path = StringProperty()
+    image_type = StringProperty()
+
     migrations = SchemaProperty(DomainMigrations)
 
     cached_properties = DictProperty()
@@ -132,20 +135,19 @@ class Domain(Document):
             return []
 
     @classmethod
-    def field_by_prefix(cls, field, prefix=''):
+    def field_by_prefix(cls, field, prefix='', is_approved=True):
         # unichr(0xfff8) is something close to the highest character available
-        return [d['key'][1] for d in cls.view("domain/fields_by_prefix",
-                                group=True,
-                                startkey=[field, prefix],
-                                endkey=[field, "%s%c" % (prefix, unichr(0xfff8))]).all()]
+        res = cls.view("domain/fields_by_prefix",
+                                    group=True,
+                                    startkey=[field, is_approved, prefix],
+                                    endkey=[field, is_approved, "%s%c" % (prefix, unichr(0xfff8)), {}])
+        vals = [(d['value'], d['key'][2]) for d in res]
+        vals.sort(reverse=True)
+        return [(v[1], v[0]) for v in vals]
 
     @classmethod
-    def regions(cls, prefix=''):
-        # unichr(0xfff8) is something close to the highest character available
-        return [d['key'] for d in cls.view("domain/regions",
-                                           group=True,
-                                           startkey=prefix,
-                                           endkey="%s%c" % (prefix, unichr(0xfff8))).all()]
+    def get_by_field(cls, field, value, is_approved=True):
+        return cls.view('domain/fields_by_prefix', key=[field, is_approved, value], reduce=False, include_docs=True).all()
 
     def apply_migrations(self):
         self.migrations.apply(self)
@@ -408,6 +410,16 @@ class Domain(Document):
     def snapshots(self):
         return Domain.view('domain/snapshots', startkey=[self.name, {}], endkey=[self.name], include_docs=True, descending=True)
 
+    def published_snapshot(self):
+        snapshots = self.snapshots().all()
+        for snapshot in snapshots:
+            if snapshot.published:
+                return snapshot
+        if len(snapshots) > 0:
+            return snapshots[0]
+        else:
+            return None
+
     @classmethod
     def published_snapshots(cls, include_unapproved=False, page=None, per_page=10):
         skip = None
@@ -416,9 +428,9 @@ class Domain(Document):
             skip = (page - 1) * per_page
             limit = per_page
         if include_unapproved:
-            return cls.view('domain/published_snapshots', include_docs=True, descending=True, limit=limit, skip=skip)
+            return cls.view('domain/published_snapshots', startkey=[False, {}], include_docs=True, descending=True, limit=limit, skip=skip)
         else:
-            return cls.view('domain/published_snapshots', endkey=[True], include_docs=True, descending=True)
+            return cls.view('domain/published_snapshots', endkey=[True], include_docs=True, descending=True, limit=limit, skip=skip)
 
     @classmethod
     def snapshot_search(cls, query, page=None, per_page=10):
@@ -442,7 +454,7 @@ class Domain(Document):
 
     def display_name(self):
         if self.is_snapshot:
-            return "Snapshot of %s" % self.copied_from.display_name()
+            return "Snapshot of %s" % self.copied_from().display_name()
         if self.organization:
             return self.slug
         else:
@@ -481,27 +493,26 @@ class Domain(Document):
 
     @classmethod
     def popular_sort(cls, domains, page):
-        if len(domains) == 0:
-            return [], 0
         sorted_list = []
         MIN_REVIEWS = 1.0
 
         domains = [(domain, Review.get_average_rating_by_app(domain.original_doc), Review.get_num_ratings_by_app(domain.original_doc)) for domain in domains]
-        domains = [(domain, avg, num) for domain, avg, num in domains if num > 0]
+        domains = [(domain, avg or 0.0, num or 0) for domain, avg, num in domains]
 
         total_average_sum = sum(avg for domain, avg, num in domains)
         total_average_count = len(domains)
-
-
         total_average = (total_average_sum / total_average_count)
 
         for domain, average_rating, num_ratings in domains:
-            weighted_rating = ((num_ratings / (num_ratings + MIN_REVIEWS)) * average_rating + (MIN_REVIEWS / (num_ratings + MIN_REVIEWS)) * total_average)
-            sorted_list.append((weighted_rating, domain))
+            if num_ratings == 0:
+                sorted_list.append((0.0, domain))
+            else:
+                weighted_rating = ((num_ratings / (num_ratings + MIN_REVIEWS)) * average_rating + (MIN_REVIEWS / (num_ratings + MIN_REVIEWS)) * total_average)
+                sorted_list.append((weighted_rating, domain))
 
         sorted_list = [domain for weighted_rating, domain in sorted(sorted_list, key=lambda domain: domain[0], reverse=True)]
 
-        return sorted_list[((page-1)*9):((page)*9)], total_average_count
+        return sorted_list[((page-1)*9):((page)*9)]
 
     @classmethod
     def hit_sort(cls, domains, page):

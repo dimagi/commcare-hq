@@ -1,0 +1,22 @@
+{% extends "data_interfaces/data_interfaces_base.html" %}
+{% load report_tags %}
+
+{% block head %}
+    {{ block.super }}
+{% endblock %}
+
+{% block main_column %}
+    <form class="form-horizontal form-report" action="#" method="post">
+
+    <fieldset>
+        <legend>Success!</legend>
+        <br>
+        Import complete. <strong>{{match_count}}</strong> rows were matched and updated, <strong>{{no_match_count}}</strong>
+        rows did not match any cases.<br>
+        <br>
+        <strong>{{too_many_matches}}</strong> rows matched more than one case at the same time - this means that there
+        are cases in your system with the same external ID.       
+    </fieldset>    
+    
+    </form>
+{% endblock %}

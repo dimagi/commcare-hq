@@ -62,10 +62,23 @@
 {% endblock %}
 
 {% block user-view %}
-<form class="form-horizontal" method="post" action="{% url domain_create_snapshot domain %}" id="snapshot_form">
+<form class="form-horizontal" enctype="multipart/form-data" method="post" action="{% url domain_create_snapshot domain %}" id="snapshot_form">
     <fieldset>
         {% bootstrap_form_errors form %}
         {% bootstrap_fieldset form "Creating new snapshot..." %}
+        {% if request.project.published_snapshot.image_path %}
+            <div class="control-group">
+                <div class="control-label"><label for="id_old_image">Use current image</label></div>
+                <div class="controls">
+                    <input type="checkbox" checked="checked" id="id_old_image" name="old_image" value="true" />
+                    <br />
+                    <img src="{% url appstore_project_image request.project.published_snapshot.name %}" style="max-width: 400px; max-height:500px;" />
+                    <p class="help-block">
+                        If you upload an image, it will automatically erase the current image and use that instead.
+                    </p>
+                </div>
+            </div>
+        {% endif %}
         {% for app, app_form in app_forms %}
             <h3>Application: {{ app.name }}</h3>
             {% bootstrap_fieldset app_form %}

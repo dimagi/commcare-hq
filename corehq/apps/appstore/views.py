@@ -1,6 +1,6 @@
 from datetime import datetime
 from django.core.urlresolvers import reverse
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, HttpResponse
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
 from corehq.apps.domain.decorators import require_previewer, login_and_domain_required
@@ -24,30 +24,50 @@ PER_PAGE = 9
 def redirect(request, path):
     return HttpResponseRedirect('/exchange' + path)
 
+def _appstore_context(context={}):
+    context['sortables'] = [
+            ('category', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('project_type')]),
+            ('region', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('region')]),
+            ('author', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('author')]),
+            ('license', [(d, LICENSES.get(d), count) for d, count in Domain.field_by_prefix('license')]),
+        ]
+    return context
+
 @require_previewer # remove for production
 def appstore(request, template="appstore/appstore_base.html", sort_by=None):
     page = int(request.GET.get('page', 1))
+    include_unapproved = (request.user.is_superuser and request.GET.get('unapproved', False))
     if not sort_by:
-        results = Domain.published_snapshots(include_unapproved=request.user.is_superuser, page=page, per_page=PER_PAGE)
-        more_pages = page * PER_PAGE < results.total_rows
+        results = Domain.published_snapshots(include_unapproved=include_unapproved, page=page, per_page=PER_PAGE)
+        more_pages = page * PER_PAGE < results.total_rows and len(results) == PER_PAGE # hacky way to deal with approved vs unapproved
     else:
-        total_results = Domain.published_snapshots(include_unapproved=request.user.is_superuser)
+        total_results = Domain.published_snapshots(include_unapproved=include_unapproved)
+        more_pages = page * PER_PAGE < total_results.total_rows and len(total_results) == PER_PAGE # hacky way to deal with approved vs unapproved
         if sort_by == 'best':
-            results, results_count = Domain.popular_sort(total_results, page)
-            more_pages = page * PER_PAGE < results_count and page <= 10
+            results = Domain.popular_sort(total_results, page)
+            #more_pages = page * PER_PAGE < total_results and page <= 10
         elif sort_by == 'hits':
             results = Domain.hit_sort(total_results, page)
-            more_pages = page * PER_PAGE < len(total_results) and page <= 10
+            #more_pages = page * PER_PAGE < len(total_results) and page <= 10
     average_ratings = list()
     for result in results:
         average_ratings.append([result.name, Review.get_average_rating_by_app(result.original_doc)])
-    vals = dict(apps=results, average_ratings=average_ratings, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages, sort_by=sort_by)
-    return render_to_response(request, template, vals)
+
+    return render_to_response(request, template, _appstore_context({
+        'apps': results,
+        'average_ratings': average_ratings,
+        'page': page,
+        'prev_page': (page-1),
+        'next_page': (page+1),
+        'more_pages': more_pages,
+        'sort_by': sort_by,
+        'include_unapproved': include_unapproved
+    }))
 
 @require_previewer # remove for production
 def project_info(request, domain, template="appstore/project_info.html"):
     dom = Domain.get_by_name(domain)
-    if not dom or not dom.is_snapshot or not dom.published or (not dom.is_approved and not request.couch_user.is_domain_admin(domain)):
+    if not dom or not dom.is_snapshot or (not dom.is_approved and not request.couch_user.is_domain_admin(domain)):
         raise Http404()
 
     if request.method == "POST" and dom.original_doc not in request.couch_user.get_domains():
@@ -106,7 +126,7 @@ def project_info(request, domain, template="appstore/project_info.html"):
 #            images.update(i['url'] for i in app.get_template_map(sorted_images)[0] if i['url'])
 #            audio.update(a['url'] for a in app.get_template_map(sorted_audio)[0] if a['url'])
 
-    vals = dict(
+    vals = _appstore_context(dict(
         project=dom,
         form=form,
         reviews=reviews,
@@ -116,7 +136,7 @@ def project_info(request, domain, template="appstore/project_info.html"):
         current_link=current_link,
         images=images,
         audio=audio,
-    )
+    ))
     return render_to_response(request, template, vals)
 
 @require_previewer # remove for production
@@ -133,55 +153,47 @@ def search_snapshots(request, filter_by = '', filter = '', template="appstore/ap
     snapshots, total_rows = Domain.snapshot_search(query, page=page, per_page=PER_PAGE)
     more_pages = page * PER_PAGE < total_rows
     vals = dict(apps=snapshots, search_query=query, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages)
-    return render_to_response(request, template, vals)
+    return render_to_response(request, template, _appstore_context(vals))
 
-@require_previewer # remove for production
-def filter_choices(request, filter_by, template="appstore/filter_choices.html"):
-    if filter_by not in ('category', 'license', 'region', 'organization', 'author'):
-        raise Http404("That page doesn't exist")
-
-    if filter_by == 'category':
-        choices = [(d.replace(' ', '+'), d) for d in Domain.field_by_prefix('project_type')]
-    elif filter_by == 'organization':
-        choices = [(o.name, o.title) for o in Organization.get_all()]
-    elif filter_by == 'author':
-        choices = [(d.replace(' ', '+'), d) for d in Domain.field_by_prefix('author')]
-    elif filter_by == 'license':
-        choices = LICENSES.items()
-    elif filter_by == 'region':
-        choices = [(d.replace(' ', '+'), d) for d in Domain.regions()]
-
-    return render_to_response(request, template, {'choices': choices, 'filter_by': filter_by})
+FILTERS = {'category': 'project_type', 'license': 'license', 'region': 'region', 'author': 'author'}
 
 @require_previewer # remove for production
 def filter_snapshots(request, filter_by, filter, template="appstore/appstore_base.html", sort_by=None):
-    if filter_by not in ('category', 'license', 'region', 'organization', 'author'):
+    if filter_by not in ('category', 'license', 'region', 'author'): # 'organization',
         raise Http404("That page doesn't exist")
 
     page = int(request.GET.get('page', 1))
-
     filter = filter.replace('+', ' ')
+    #query = '%s:"%s"' % (filter_by, filter)
 
-    query = '%s:"%s"' % (filter_by, filter)
+    results = Domain.get_by_field(FILTERS[filter_by], filter)
+    total_rows = len(results)
 
     if not sort_by:
-        results, total_rows = Domain.snapshot_search(query, page=page, per_page=PER_PAGE)
-        more_pages = page * PER_PAGE < total_rows
+        results = results[(page-1)*PER_PAGE : page*PER_PAGE]
     else:
-        results, total_rows = Domain.snapshot_search(query, per_page=None)
-        more_pages = page * PER_PAGE < total_rows
+        #results, total_rows = Domain.snapshot_search(query, per_page=None)
         if sort_by == 'best':
-            results, results_count = Domain.popular_sort(results, page)
-            more_pages = page * PER_PAGE < results_count
+            results = Domain.popular_sort(results, page)
         elif sort_by == 'hits':
             results = Domain.hit_sort(results, page)
+
+    more_pages = page * PER_PAGE < total_rows
 
     average_ratings = list()
     for result in results:
         average_ratings.append([result.name, Review.get_average_rating_by_app(result.original_doc)])
 
-
-    vals = dict(apps=results, filter_by=filter_by, filter=filter, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages, sort_by=sort_by, average_ratings=average_ratings)
+    vals = _appstore_context(dict(apps=results,
+                                  filter_by=filter_by,
+                                  filter=filter,
+                                  filter_url=filter.replace(' ', '+'),
+                                  page=page,
+                                  prev_page=(page-1),
+                                  next_page=(page+1),
+                                  more_pages=more_pages,
+                                  sort_by=sort_by,
+                                  average_ratings=average_ratings))
     return render_to_response(request, template, vals)
 
 @require_previewer # remove for production
@@ -215,7 +227,8 @@ def approve_app(request, domain):
     elif request.GET.get('approve') == 'false':
         domain.is_approved = False
         domain.save()
-    return HttpResponseRedirect(reverse('appstore'))
+    meta = request.META
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('appstore'))
 
 @require_previewer # remove for production
 def copy_snapshot_app(request, domain):
@@ -240,10 +253,6 @@ def copy_snapshot(request, domain):
         args = {'domain_name': request.POST['new_project_name'], 'tos_confirmed': True}
         form = DomainRegistrationForm(args)
 
-        print request.POST['new_project_name']
-        print form.is_valid()
-        print form.errors
-
         if form.is_valid():
             new_domain = dom.save_copy(form.clean_domain_name(), user=request.couch_user)
         else:
@@ -256,3 +265,12 @@ def copy_snapshot(request, domain):
 
         messages.success(request, "Project copied successfully!")
         return redirect("domain_project_settings", new_domain.name)
+
+@require_previewer # remove for production
+def project_image(request, domain):
+    project = Domain.get_by_name(domain)
+    if project.image_path:
+        image = project.fetch_attachment(project.image_path)
+        return HttpResponse(image, content_type=project.image_type)
+    else:
+        raise Http404()
