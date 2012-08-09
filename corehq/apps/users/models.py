@@ -5,6 +5,7 @@ from __future__ import absolute_import
 
 from datetime import datetime
 import logging
+from http_parser.http import NoMoreData
 import re
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
@@ -735,7 +736,12 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @classmethod
     def get_by_username(cls, username):
-        result = get_db().view('users/by_username', key=username, include_docs=True).one()
+        try:
+            result = get_db().view('users/by_username', key=username, include_docs=True)
+            result = result.one()
+        except NoMoreData:
+            logging.exception('called get_by_username(%r) and it failed pretty bad' % username)
+            raise
         if result:
             return cls.wrap_correctly(result['doc'])
         else:
