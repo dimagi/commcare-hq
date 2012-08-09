@@ -224,9 +224,10 @@ def clone_repo():
 @roles('django_celery','django_app')
 def update_code():
      with cd(env.code_root):
+		sudo('git pull origin master', user=env.sudo_user)
         sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
         sudo('git pull', user=env.sudo_user)
-        sudo('git submodule init', user=env.sudo_user)
+        sudo('git submodule sync', user=env.sudo_user)
         sudo('git submodule update', user=env.sudo_user)
 
 
