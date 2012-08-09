@@ -21,7 +21,9 @@ from django.views.decorators.http import require_POST
 import json
 from dimagi.utils.post import simple_post
 from corehq.apps.app_manager.models import get_app
-import Image, cStringIO
+import cStringIO
+from PIL import Image
+
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
