@@ -46,7 +46,8 @@ env.roledefs = {
         'rabbitmq': ['192.168.100.60'],
         'django_celery': ['192.168.100.60'], #['192.168.100.60'],
         'django_app': ['10.183.198.145','10.183.192.225' ],
-        'lb': [], #['10.180.36.47'],
+        'lb': [], #['10.180.36.47'], #static stuff goes here!
+        'staticfiles': [],
     }
 
 @task
@@ -74,9 +75,9 @@ def setup_apache_dirs():
 @roles('django_celery', 'django_app')
 def setup_dirs():
     """ create (if necessary) and make writable uploaded media, log, etc. directories """
-    sudo('mkdir -p %(log_dir)s' % env, user=env.sudo_user)
-    sudo('chmod a+w %(log_dir)s' % env, user=env.sudo_user)
-    sudo('mkdir -p %(services)s/supervisor' % env, user=env.sudo_user)
+    run('mkdir -p %(log_dir)s' % env)
+    run('chmod a+w %(log_dir)s' % env)
+    run('mkdir -p %(services)s/supervisor' % env)
     #execute(setup_apache_dirs)
 
 @task
@@ -101,7 +102,8 @@ def production():
     env.environment = 'production'
     env.server_port = '9010'
 
-    env.hosts = []
+    #env.hosts = []
+    env.roles = env.roledefs.keys()
     env.server_name = 'commcare-hq-production'
     env.settings = '%(project)s.localsettings' % env
     env.remote_os = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
@@ -158,16 +160,16 @@ def what_os():
                 exit()
         return env.remote_os
 
+@task
 @roles('pg','django_celery','django_app')
 def setup_server():
     """Set up a server for the first time in preparation for deployments."""
     require('environment', provided_by=('staging', 'production'))
-    upgrade_packages()
     # Install required system packages for deployment, plus some extras
     # Install pip, and use it to install virtualenv
     install_packages()
     sudo("easy_install -U pip")
-    sudo("pip install -U virtualenv")
+    run("pip install -U virtualenv")
     upgrade_packages()
     execute(create_db_user)
     execute(create_db)
@@ -193,11 +195,11 @@ def create_db():
 def bootstrap():
     """ initialize remote host environment (virtualenv, deploy, update) """
     require('root', provided_by=('staging', 'production'))
-    sudo('mkdir -p %(root)s' % env, user=env.sudo_user)
+    run('mkdir -p %(root)s' % env)
     execute(clone_repo)
     execute(update_code)
     execute(create_virtualenv)
-    execute(update_requirements)
+    execute(do_update_requirements)
     execute(setup_dirs)
     execute(update_services)
     execute(fix_locale_perms)
@@ -208,9 +210,9 @@ def create_virtualenv():
     """ setup virtualenv on remote host """
     require('virtualenv_root', provided_by=('staging', 'production'))
     with settings(warn_only=True):
-        sudo('rm -rf %(virtualenv_root)s' % env, shell=False)
+        run('rm -rf %(virtualenv_root)s' % env)
     args = '--clear --distribute --no-site-packages'
-    sudo('virtualenv %s %s' % (args, env.virtualenv_root), shell=False, user=env.sudo_user)
+    run('virtualenv %s %s' % (args, env.virtualenv_root))
 
 
 @roles('django_celery', 'django_app')
@@ -218,31 +220,32 @@ def clone_repo():
     """ clone a new copy of the git repository """
     with settings(warn_only=True):
         with cd(env.root):
-            sudo('git clone %(code_repo)s %(code_root)s' % env, user=env.sudo_user)
+            if not files.exists(env.code_root):
+                run('git clone %(code_repo)s %(code_root)s' % env)
 
 
-@roles('django_celery','django_app')
+@task
+@roles('django_celery','django_app', 'staticfiles')
 def update_code():
      with cd(env.code_root):
-		sudo('git pull origin master', user=env.sudo_user)
-        sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
-        sudo('git pull', user=env.sudo_user)
-        sudo('git submodule sync', user=env.sudo_user)
-        sudo('git submodule update', user=env.sudo_user)
+	run('git pull')
+        run('git checkout %(code_branch)s' % env)
+        run('git submodule sync')
+        run('git submodule update')
 
 
 
-@roles('django_celery', 'django_app')
+@task
+@roles('django_celery', 'django_app','staticfiles')
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
     require('root', provided_by=('staging', 'production'))
-    sudo('echo ping!') #hack/workaround for delayed console response
+    run('echo ping!') #hack/workaround for delayed console response
     if env.environment == 'production':
-        if not console.confirm('Are you sure you want to deploy production?',
-            default=False):
-            utils.abort('Production deployment aborted.')
+        if not console.confirm('Are you sure you want to deploy production?', default=False): utils.abort('Production deployment aborted.')
     with settings(warn_only=True):
-        stop()
+        execute(stopcelery)
+        execute(servers_stop)
     try:
         execute(update_code)
         execute(update_services)
@@ -252,19 +255,26 @@ def deploy():
         execute(touch_django)
     finally:
         # hopefully bring the server back to life if anything goes wrong
-        startcelery()
+        execute(startcelery)
+        execute(servers_start)
 
+
+@task
+def update_requirements():
+    execute(do_update_requirements)
 
 @roles('django_celery', 'django_app')
-def update_requirements():
+def do_update_requirements():
     """ update external dependencies on remote host """
     require('code_root', provided_by=('staging', 'production'))
     requirements = posixpath.join(env.code_root, 'requirements')
-    with cd(requirements):
+    #with cd(requirements):
+    with cd(env.code_root):
         cmd = ['%(virtualenv_root)s/bin/pip install' % env]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'prod-requirements.txt')]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'requirements.txt')]
-        sudo(' '.join(cmd), user=env.sudo_user)
+        print ' '.join(cmd)
+        run(' '.join(cmd), shell=False, pty=False)
 
 
 @roles('lb')
@@ -364,12 +374,12 @@ def migrate():
         run('%(virtualenv_root)s/bin/python manage.py migrate --noinput --settings=%(settings)s' % env)
 
 
-@roles('django_app')
+@roles('staticfiles')
 def collectstatic():
     """ run collectstatic on remote environment """
     require('code_root', provided_by=('production', 'demo', 'staging'))
     with cd(env.code_root):
-        sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput --settings=%(settings)s' % env, user=env.sudo_user)
+        run('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput --settings=%(settings)s' % env)
 
 
 @task
@@ -396,17 +406,17 @@ def fix_locale_perms():
     require('root', provided_by=('staging', 'production'))
     _set_apache_user()
     locale_dir = '%s/commcare-hq/locale/' % env.code_root
-    sudo('chown -R %s %s' % (env.sudo_user, locale_dir), user=env.sudo_user)
+    run('chown -R %s %s' % (env.sudo_user, locale_dir))
     sudo('chgrp -R %s %s' % (env.apache_user, locale_dir), user='root')
-    sudo('chmod -R g+w %s' % (locale_dir), user=env.sudo_user)
+    run('chmod -R g+w %s' % (locale_dir))
 
 @task
 def commit_locale_changes():
     """ Commit locale changes on the remote server and pull them in locally """
     fix_locale_perms()
     with cd(env.code_root):
-        sudo('-H -u %s git add commcare-hq/locale' % env.sudo_user)
-        sudo('-H -u %s git commit -m "updating translation"' % env.sudo_user)
+        run('-H -u %s git add commcare-hq/locale' % env.sudo_user)
+        run('-H -u %s git commit -m "updating translation"' % env.sudo_user)
     local('git pull ssh://%s%s' % (env.host, env.code_root))
 
 def _upload_supervisor_conf(filename):
@@ -486,4 +496,4 @@ def upload_apache_conf():
 @roles('django_celery', 'django_app')
 def _supervisor_command(command):
     require('hosts', provided_by=('staging', 'production'))
-    sudo('supervisorctl %s' % command)
+    sudo('supervisorctl %s' % command, user=env.sudo_user)

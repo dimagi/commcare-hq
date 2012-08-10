@@ -1,2 +1,3 @@
 cherrypy
 git+git://github.com/dimagi/django-cpserver.git
+celerymon

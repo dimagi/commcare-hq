@@ -418,8 +418,6 @@ COUCHDB_APPS = [
         'hsph',
 
         'pathindia',
-
-    ]
 ] + [("couchlog", "%s/%s" %(COUCH_SERVER, COUCHLOG_DATABASE_NAME))]
 
 
