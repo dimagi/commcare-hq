@@ -157,4 +157,4 @@ class XFormInstanceResource(Resource):
         return form
 
     class Meta(CustomResourceMeta):
-        resource_name = 'xform'
+        resource_name = 'form'
