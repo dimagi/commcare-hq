@@ -70,6 +70,10 @@ def delta_secs(td):
     """convert a timedelta to seconds"""
     return 86400. * td.days + td.seconds + 1.0e-6 * td.microseconds
 
+def secs_to_days(seconds):
+    """convert a number of seconds to days"""
+    return float(seconds) / 86400. 
+
 
 def utcnow_sans_milliseconds():
     return datetime.utcnow().replace(microsecond=0)
