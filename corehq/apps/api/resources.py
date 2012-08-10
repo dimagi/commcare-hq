@@ -131,7 +131,7 @@ class CommCareCaseResource(Resource):
         resource_name = 'case'
 
 class XFormInstanceResource(Resource):
-    type = "xform"
+    type = "form"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
 
     form = fields.CharField(attribute='get_form')
