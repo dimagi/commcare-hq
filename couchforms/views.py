@@ -1,7 +1,7 @@
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from http_parser.http import NoMoreData
+from restkit.errors import NoMoreData
 from couchforms.util import post_xform_to_couch, SubmissionError
 from django.http import HttpResponse, HttpResponseServerError,\
     HttpResponseBadRequest
