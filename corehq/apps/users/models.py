@@ -5,8 +5,8 @@ from __future__ import absolute_import
 
 from datetime import datetime
 import logging
-from http_parser.http import NoMoreData
 import re
+from restkit.errors import NoMoreData
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
