@@ -244,7 +244,7 @@ def clone_repo():
 @task
 def update_code():
     with cd(env.code_root):
-	    run('git pull')
+	run('git pull')
         run('git checkout %(code_branch)s' % env)
         run('git submodule sync')
         run('git submodule update --init --recursive')
