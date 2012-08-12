@@ -397,7 +397,7 @@ def collectstatic():
     require('code_root', provided_by=('production', 'demo', 'staging'))
     execute(update_code)
     with cd(env.code_root):
-        run('%(virtualenv_root)s/bin/python manage.py make_bootsrap' % env)
+        run('%(virtualenv_root)s/bin/python manage.py make_bootstrap' % env)
         run('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env)
 
 @task
