@@ -243,11 +243,11 @@ def clone_repo():
 @roles('django_celery','django_app', 'staticfiles')
 @task
 def update_code():
-     with cd(env.code_root):
-	run('git pull')
+    with cd(env.code_root):
+	    run('git pull')
         run('git checkout %(code_branch)s' % env)
         run('git submodule sync')
-        run('git submodule update')
+        run('git submodule update --init --recursive')
 
 
 

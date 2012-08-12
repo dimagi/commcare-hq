@@ -197,7 +197,6 @@ REFLEXIVE_URL_BASE = "localhost:8000"
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 TABS = [
-    ("corehq.apps.domain.views.snapshot_info", "Info", lambda request: request.project.is_snapshot),
     ("corehq.apps.appstore.views.project_info", "Info", lambda request: request.project.is_snapshot),
     ("corehq.apps.reports.views.default", "Reports", lambda request: not request.project.is_snapshot),
     ("corehq.apps.data_interfaces.views.default", "Manage Data", lambda request: request.couch_user.can_edit_data()),
