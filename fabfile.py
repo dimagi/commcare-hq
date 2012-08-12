@@ -41,14 +41,15 @@ env.project = 'commcare-hq'
 env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
 env.home = "/home/cchq"
 
+
 env.roledefs = {
-        'couch': ['192.168.100.60'],
-        'pg': ['192.168.100.60'],
-        'rabbitmq': ['192.168.100.60'],
-        'django_celery': ['192.168.100.60'],
-        'django_app': ['10.176.160.43', '10.176.163.85'],
-        'lb': [], #todo on apache level config
-        'staticfiles': ['10.176.162.109'],
+        'couch': [],
+        'pg': [],
+        'rabbitmq': [],
+        'django_celery': [],
+        'django_app': [],
+        'lb': [],
+        'staticfiles': [],
     }
 
 @task
@@ -104,8 +105,19 @@ def production():
     env.server_port = '9010'
 
     #env.hosts = []
-    env.roles = env.roledefs.keys()
-    #env.roles = []
+    env.roledefs = {
+        'couch': ['192.168.100.60'],
+        'pg': ['192.168.100.60'],
+        'rabbitmq': ['192.168.100.60'],
+        'django_celery': ['192.168.100.60'],
+        'django_app': ['10.176.160.43', '10.176.163.85'],
+        'lb': [], #todo on apache level config
+        'staticfiles': ['10.176.162.109'],
+    }
+
+    if env.roles == []:
+        env.roles = env.roledefs.keys()
+        #if the command line is set for the role in question, do nothing
     env.server_name = 'commcare-hq-production'
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
@@ -117,7 +129,6 @@ def production():
 
 
 
-@roles(env.roledefs.keys())
 @task
 def install_packages():
     """Install packages, given a list of package names"""
@@ -157,7 +168,7 @@ def what_os():
     with settings(warn_only=True):
         require('environment', provided_by=('staging','production'))
         if env.host_os_map is None:
-            #prior use case of setting a env.remote_os did not work when doing multiple hosts with different os!
+            #prior use case of setting a env.remote_os did not work when doing multiple hosts with different os! Need to keep state per host!
             env.host_os_map = defaultdict(lambda: '')
         if env.host_os_map[env.host_string] == '':
             print 'Testing operating system type...'
@@ -191,7 +202,6 @@ def setup_server():
 @roles('pg')
 def create_db_user():
     """Create the Postgres user."""
-
     require('environment', provided_by=('staging', 'production'))
     sudo('createuser -D -A -R %(sudo_user)s' % env, user='postgres')
 
@@ -199,16 +209,14 @@ def create_db_user():
 @roles('pg')
 def create_db():
     """Create the Postgres database."""
-
     require('environment', provided_by=('staging', 'production'))
     sudo('createdb -O %(sudo_user)s %(db)s' % env, user='postgres')
 
 
 @task
 def bootstrap():
-    """ initialize remote host environment (virtualenv, deploy, update) """
+    """Initialize remote host environment (virtualenv, deploy, update) """
     require('root', provided_by=('staging', 'production'))
-    #sudo('mkdir -p %(root)s' % env, user=env.sudo_user)
     run('mkdir -p %(root)s' % env, shell=False)
     execute(clone_repo)
     execute(update_code)
@@ -249,8 +257,7 @@ def update_code():
         run('git submodule sync')
         run('git submodule update --init --recursive')
 
-
-
+@roles('django_celery','django_app', 'staticfiles')
 @task
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
@@ -259,27 +266,22 @@ def deploy():
     if env.environment == 'production':
         if not console.confirm('Are you sure you want to deploy production?', default=False): utils.abort('Production deployment aborted.')
     with settings(warn_only=True):
-        execute(stopcelery)
-        execute(servers_stop)
+        execute(services_stop)
     try:
         execute(update_code)
         execute(update_services)
         execute(migrate)
         execute(collectstatic)
-        execute(touch_apache)
-        execute(touch_django)
+        #execute(touch_apache)
     finally:
         # hopefully bring the server back to life if anything goes wrong
-        execute(startcelery)
-        execute(servers_start)
+        execute(services_stop)
+        execute(services_start)
 
 
 @task
-def update_requirements():
-    execute(do_update_requirements)
-
 @roles('django_celery', 'django_app','staticfiles')
-def do_update_requirements():
+def update_requirements():
     """ update external dependencies on remote host """
     require('code_root', provided_by=('staging', 'production'))
     requirements = posixpath.join(env.code_root, 'requirements')
@@ -315,12 +317,10 @@ def touch_supervisor():
 def update_services():
     """ upload changes to services such as nginx """
     with settings(warn_only=True):
-        execute(stopcelery)
-        execute(servers_stop)
+        execute(services_stop)
     execute(upload_supervisor_conf)
-    execute(upload_apache_conf)
-    execute(startcelery)
-    execute(server_start)
+    #execute(upload_apache_conf)
+    execute(services_start)
     netstat_plnt()
 
 @roles('lb')
@@ -351,32 +351,21 @@ def netstat_plnt():
     require('hosts', provided_by=('production', 'staging'))
     sudo('netstat -plnt')
 
-@roles('django_celery')
-def stopcelery():
-    """ stop server and celery on remote host """
-    require('environment', provided_by=('staging', 'demo', 'production'))
-    _supervisor_command('stop %(project)s-%(environment)s:*' % env)
-
-@roles('django_celery')
-def startcelery():
-    """ start server and celery on remote host """
-    require('environment', provided_by=('staging', 'demo', 'production'))
-    _supervisor_command('start %(project)s-%(environment)s:*' % env)
-
-@roles('django_app')
-def servers_start():
+@roles('django_app', 'django_celery')
+def services_start():
     ''' Start the gunicorn servers '''
     require('environment', provided_by=('staging', 'demo', 'production'))
-    _supervisor_command('start  %(project)s-%(environment)s:%(project)s-%(environment)s-server' % env)
+    _supervisor_command('update')
+    _supervisor_command('start  %(project)s-%(environment)s*' % env)
 
-@roles('django_app')
-def servers_stop():
+@roles('django_app', 'django_celery')
+def services_stop():
     ''' Stop the gunicorn servers '''
     require('environment', provided_by=('staging', 'demo', 'production'))
-    _supervisor_command('stop  %(project)s-%(environment)s:%(project)s-%(environment)s-server' % env)
+    _supervisor_command('stop  %(project)s-%(environment)s*' % env)
 
-@roles('django_app')
-def servers_restart():
+@roles('django_app', 'django_celery')
+def services_restart():
     ''' Start the gunicorn servers '''
     require('environment', provided_by=('staging', 'demo', 'production'))
     _supervisor_command('restart  %(project)s-%(environment)s:%(project)s-%(environment)s-server' % env)
@@ -390,12 +379,12 @@ def migrate():
         run('%(virtualenv_root)s/bin/python manage.py migrate --noinput' % env)
 
 
-@roles('staticfiles')
+@roles('staticfiles',)
 @task
 def collectstatic():
     """ run collectstatic on remote environment """
     require('code_root', provided_by=('production', 'demo', 'staging'))
-    execute(update_code)
+    update_code() #not wrapped in execute because we only want the staticfiles machine to run it
     with cd(env.code_root):
         run('%(virtualenv_root)s/bin/python manage.py make_bootstrap' % env)
         run('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env)
