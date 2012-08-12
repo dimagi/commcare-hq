@@ -386,8 +386,8 @@ def migrate():
     """ run south migration on remote environment """
     require('code_root', provided_by=('production', 'demo', 'staging'))
     with cd(env.code_root):
-        run('%(virtualenv_root)s/bin/python manage.py syncdb --noinput --settings=%(settings)s' % env)
-        run('%(virtualenv_root)s/bin/python manage.py migrate --noinput --settings=%(settings)s' % env)
+        run('%(virtualenv_root)s/bin/python manage.py syncdb --noinput' % env)
+        run('%(virtualenv_root)s/bin/python manage.py migrate --noinput' % env)
 
 
 @roles('staticfiles')
@@ -397,7 +397,7 @@ def collectstatic():
     require('code_root', provided_by=('production', 'demo', 'staging'))
     execute(update_code)
     with cd(env.code_root):
-        run('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput --settings=%(settings)s' % env)
+        run('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env)
 
 @task
 def reset_local_db():
