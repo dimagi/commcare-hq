@@ -45,7 +45,7 @@ env.roledefs = {
         'pg': [], #['192.168.100.60'],
         'rabbitmq': ['192.168.100.60'],
         'django_celery': ['192.168.100.60'], #['192.168.100.60'],
-        'django_app': ['10.183.198.145','10.183.192.225' ],
+        'django_app': ['10.176.160.43', '10.176.163.85'],
         'lb': [], #['10.180.36.47'], #static stuff goes here!
         'staticfiles': [],
     }
@@ -108,9 +108,15 @@ def production():
     env.settings = '%(project)s.localsettings' % env
     env.remote_os = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
     env.db = '%s_%s' % (env.project, env.environment)
+
+
+    env.jython_home = '/usr/local/lib/jython'
     _setup_path()
 
+
+
 @task
+@roles(env.roledefs.keys())
 def install_packages():
     """Install packages, given a list of package names"""
     require('environment', provided_by=('staging', 'production'))
@@ -122,6 +128,7 @@ def install_packages():
     elif what_os() == 'redhat':
         packages_list = 'yum-packages.txt'
         installer_command = 'yum install -y'
+        return
     packages_file = posixpath.join(PROJECT_ROOT, 'requirements', packages_list)
     with open(packages_file) as f:
         packages = f.readlines()
@@ -168,8 +175,8 @@ def setup_server():
     # Install required system packages for deployment, plus some extras
     # Install pip, and use it to install virtualenv
     install_packages()
-    sudo("easy_install -U pip")
-    run("pip install -U virtualenv")
+    sudo("easy_install -U pip", user=env.sudo_user)
+    sudo("pip install -U virtualenv", user=env.sudo_user)
     upgrade_packages()
     execute(create_db_user)
     execute(create_db)
@@ -195,7 +202,8 @@ def create_db():
 def bootstrap():
     """ initialize remote host environment (virtualenv, deploy, update) """
     require('root', provided_by=('staging', 'production'))
-    run('mkdir -p %(root)s' % env)
+    #sudo('mkdir -p %(root)s' % env, user=env.sudo_user)
+    run('mkdir -p %(root)s' % env, shell=False)
     execute(clone_repo)
     execute(update_code)
     execute(create_virtualenv)
@@ -236,7 +244,6 @@ def update_code():
 
 
 @task
-@roles('django_celery', 'django_app','staticfiles')
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
     require('root', provided_by=('staging', 'production'))
@@ -263,7 +270,7 @@ def deploy():
 def update_requirements():
     execute(do_update_requirements)
 
-@roles('django_celery', 'django_app')
+@roles('django_celery', 'django_app','staticfiles')
 def do_update_requirements():
     """ update external dependencies on remote host """
     require('code_root', provided_by=('staging', 'production'))
@@ -286,7 +293,7 @@ def touch_apache():
 
 
 
-@roles('django_celery', 'django_app')
+@roles('django_celery', 'django_app','staticfiles')
 def touch_supervisor():
     """ touch apache and supervisor conf files to trigger reload. Also calls supervisorctl update to load latest supervisor.conf """
     require('code_root', provided_by=('staging', 'production'))
@@ -381,7 +388,6 @@ def collectstatic():
     with cd(env.code_root):
         run('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput --settings=%(settings)s' % env)
 
-
 @task
 def reset_local_db():
     """ Reset local database from remote host """
@@ -424,10 +430,7 @@ def _upload_supervisor_conf(filename):
     upload_dict["template"] = posixpath.join(os.path.dirname(__file__), 'services', 'templates', filename)
     upload_dict["destination"] = '/var/tmp/%s.blah' % filename
     upload_dict["enabled"] =  posixpath.join(env.services, u'supervisor/%s' % filename)
-    if what_os() == 'ubuntu':
-        upload_dict["main_supervisor_conf_dir"] = '/etc/supervisor'
-    else:
-        upload_dict["main_supervisor_conf_dir"] = '/etc'
+    upload_dict["main_supervisor_conf_dir"] = '/etc'
 
     files.upload_template(upload_dict["template"], upload_dict["destination"], context=env, use_sudo=True)
     sudo('chown -R %s %s' % (env.sudo_user, upload_dict["destination"]))
@@ -443,7 +446,7 @@ def upload_celery_supervisorconf():
 def upload_djangoapp_supervisorconf():
     _upload_supervisor_conf('supervisor_django.conf')
 
-@task
+@roles('django_app', 'django_celery')
 def upload_supervisor_conf():
     """Upload and link Supervisor configuration from the template."""
     require('environment', provided_by=('staging', 'demo', 'production'))
@@ -454,13 +457,11 @@ def upload_supervisor_conf():
     #update the line in the supervisord config file that points to our supervisor.conf
     #remove the line if it already exists
     replace_dict = {}
-    if what_os() == 'ubuntu':
-        replace_dict["main_supervisor_conf_dir"] = '/etc/supervisor'
-    else:
-        replace_dict["main_supervisor_conf_dir"] = '/etc'
+    replace_dict["main_supervisor_conf_dir"] = '/etc'
     replace_dict["tmp"] = posixpath.join('/','var','tmp', "supervisord_%s.tmp" % uuid.uuid4().hex)
-    sudo("sed '/.conf/d' %(main_supervisor_conf_dir)s/supervisord.conf > %(tmp)s" % replace_dict)
-    sudo('echo "files = %s/supervisor/*.conf" >> %s' % (env.services, replace_dict["tmp"]) )
+    sudo("echo_supervisord_conf > %(tmp)s" % replace_dict)
+    files.uncomment(replace_dict['tmp'], "^;[include]", use_sudo=True, char=';')
+    files.sed(replace_dict["tmp"], ";files = relative/directory/*.ini", "files = %s/supervisor/*.conf", use_sudo=True)
     sudo('mv -f %(tmp)s %(main_supervisor_conf_dir)s/supervisord.conf' % replace_dict)
     _supervisor_command('update')
 
@@ -496,4 +497,8 @@ def upload_apache_conf():
 @roles('django_celery', 'django_app')
 def _supervisor_command(command):
     require('hosts', provided_by=('staging', 'production'))
-    sudo('supervisorctl %s' % command, user=env.sudo_user)
+    if what_os() == 'redhat':
+        cmd_exec = "/usr/bin/supervisorctl"
+    elif what_os() == 'ubuntu':
+        cmd_exec = "/usr/local/bin/supervisorctl"
+    sudo('%s %s' % (cmd_exec, command), user=env.sudo_user)
