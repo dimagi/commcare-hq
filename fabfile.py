@@ -26,6 +26,7 @@ from fabric.api import run, roles, execute, task, sudo, env
 from fabric.contrib import files, console
 from fabric import utils
 import posixpath
+from collections import defaultdict
 
 
 PROJECT_ROOT = os.path.dirname(__file__)
@@ -41,13 +42,13 @@ env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
 env.home = "/home/cchq"
 
 env.roledefs = {
-        'couch': [], #['192.168.100.60'],
-        'pg': [], #['192.168.100.60'],
+        'couch': ['192.168.100.60'],
+        'pg': ['192.168.100.60'],
         'rabbitmq': ['192.168.100.60'],
-        'django_celery': ['192.168.100.60'], #['192.168.100.60'],
+        'django_celery': ['192.168.100.60'],
         'django_app': ['10.176.160.43', '10.176.163.85'],
-        'lb': [], #['10.180.36.47'], #static stuff goes here!
-        'staticfiles': [],
+        'lb': [], #todo on apache level config
+        'staticfiles': ['10.176.162.109'],
     }
 
 @task
@@ -90,7 +91,7 @@ def staging():
     env.server_name = 'noneset'
     env.hosts = ['192.168.56.1']
     env.settings = '%(project)s.localsettings' % env
-    env.remote_os = None
+    env.host_os_map = None
     env.db = '%s_%s' % (env.project, env.environment)
     _setup_path()
 
@@ -104,9 +105,10 @@ def production():
 
     #env.hosts = []
     env.roles = env.roledefs.keys()
+    #env.roles = []
     env.server_name = 'commcare-hq-production'
     env.settings = '%(project)s.localsettings' % env
-    env.remote_os = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
+    env.host_os_map = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
     env.db = '%s_%s' % (env.project, env.environment)
 
 
@@ -115,8 +117,8 @@ def production():
 
 
 
-@task
 @roles(env.roledefs.keys())
+@task
 def install_packages():
     """Install packages, given a list of package names"""
     require('environment', provided_by=('staging', 'production'))
@@ -154,21 +156,25 @@ def upgrade_packages():
 def what_os():
     with settings(warn_only=True):
         require('environment', provided_by=('staging','production'))
-        if env.remote_os is None: #make sure we only run this check once per fab execution.
+        if env.host_os_map is None:
+            #prior use case of setting a env.remote_os did not work when doing multiple hosts with different os!
+            env.host_os_map = defaultdict(lambda: '')
+        if env.host_os_map[env.host_string] == '':
             print 'Testing operating system type...'
             if(files.exists('/etc/lsb-release',verbose=True) and files.contains(text='DISTRIB_ID=Ubuntu', filename='/etc/lsb-release')):
-                env.remote_os = 'ubuntu'
+                remote_os = 'ubuntu'
                 print 'Found lsb-release and contains "DISTRIB_ID=Ubuntu", this is an Ubuntu System.'
             elif(files.exists('/etc/redhat-release',verbose=True)):
-                env.remote_os = 'redhat'
+                remote_os = 'redhat'
                 print 'Found /etc/redhat-release, this is a RedHat system.'
             else:
                 print 'System OS not recognized! Aborting.'
                 exit()
-        return env.remote_os
+            env.host_os_map[env.host_string] = remote_os
+        return env.host_os_map[env.host_string]
 
-@task
 @roles('pg','django_celery','django_app')
+@task
 def setup_server():
     """Set up a server for the first time in preparation for deployments."""
     require('environment', provided_by=('staging', 'production'))
@@ -230,10 +236,12 @@ def clone_repo():
         with cd(env.root):
             if not files.exists(env.code_root):
                 run('git clone %(code_repo)s %(code_root)s' % env)
+            with cd(env.code_root):
+                run('git submodule init')
 
 
-@task
 @roles('django_celery','django_app', 'staticfiles')
+@task
 def update_code():
      with cd(env.code_root):
 	run('git pull')
@@ -302,6 +310,7 @@ def touch_supervisor():
     _supervisor_command('update')
 
 
+@roles('django_celery', 'django_app')
 @task
 def update_services():
     """ upload changes to services such as nginx """
@@ -382,9 +391,11 @@ def migrate():
 
 
 @roles('staticfiles')
+@task
 def collectstatic():
     """ run collectstatic on remote environment """
     require('code_root', provided_by=('production', 'demo', 'staging'))
+    execute(update_code)
     with cd(env.code_root):
         run('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput --settings=%(settings)s' % env)
 
@@ -460,9 +471,10 @@ def upload_supervisor_conf():
     replace_dict["main_supervisor_conf_dir"] = '/etc'
     replace_dict["tmp"] = posixpath.join('/','var','tmp', "supervisord_%s.tmp" % uuid.uuid4().hex)
     sudo("echo_supervisord_conf > %(tmp)s" % replace_dict)
-    files.uncomment(replace_dict['tmp'], "^;[include]", use_sudo=True, char=';')
-    files.sed(replace_dict["tmp"], ";files = relative/directory/*.ini", "files = %s/supervisor/*.conf", use_sudo=True)
-    sudo('mv -f %(tmp)s %(main_supervisor_conf_dir)s/supervisord.conf' % replace_dict)
+    files.uncomment(replace_dict['tmp'], "^;\[include\]", use_sudo=True, char=';')
+    files.sed(replace_dict["tmp"], ";files = relative/directory/\*\.ini", "files = %s/supervisor/*.conf" % env.services, use_sudo=True)
+    #sudo('mv -f %(tmp)s %(main_supervisor_conf_dir)s/supervisord.conf' % replace_dict)
+    sudo('cp -f %(tmp)s %(main_supervisor_conf_dir)s/supervisord.conf' % replace_dict)
     _supervisor_command('update')
 
 @roles('lb')
@@ -501,4 +513,4 @@ def _supervisor_command(command):
         cmd_exec = "/usr/bin/supervisorctl"
     elif what_os() == 'ubuntu':
         cmd_exec = "/usr/local/bin/supervisorctl"
-    sudo('%s %s' % (cmd_exec, command), user=env.sudo_user)
+    run('sudo %s %s' % (cmd_exec, command))
