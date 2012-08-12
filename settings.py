@@ -415,9 +415,10 @@ COUCHDB_APPS = [
         'hutch',
         'dca',
         'hsph',
+        'couchlog',
 
         'pathindia',
-] + [("couchlog", "%s/%s" %(COUCH_SERVER, COUCHLOG_DATABASE_NAME))]
+]
 
 
 COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS ]
