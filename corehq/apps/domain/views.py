@@ -15,13 +15,15 @@ from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 from dimagi.utils.web import render_to_response
 from corehq.apps.users.views import require_can_edit_web_users
 from corehq.apps.receiverwrapper.forms import FormRepeaterForm
-from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater
+from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 import json
 from dimagi.utils.post import simple_post
 from corehq.apps.app_manager.models import get_app
-import Image, cStringIO
+import cStringIO
+from PIL import Image
+
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
@@ -123,11 +125,13 @@ def _dict_for_one_user( user, domain ):
 def domain_forwarding(request, domain):
     form_repeaters = FormRepeater.by_domain(domain)
     case_repeaters = CaseRepeater.by_domain(domain)
+    short_form_repeaters = ShortFormRepeater.by_domain(domain)
     return render_to_response(request, "domain/admin/domain_forwarding.html", {
         "domain": domain,
         "repeaters": (
             ("FormRepeater", form_repeaters),
-            ("CaseRepeater", case_repeaters)
+            ("CaseRepeater", case_repeaters),
+            ("ShortFormRepeater", short_form_repeaters)
         ),
     })
 
@@ -308,7 +312,10 @@ def create_snapshot(request, domain):
                 'description': published_snapshot.description
             })
             for app in published_snapshot.full_applications():
-                published_apps[app.original_doc] = app
+                if domain == published_snapshot:
+                    published_apps[app._id] = app
+                else:
+                    published_apps[app.original_doc] = app
         app_forms = []
         for app in domain.applications():
             app = app.get_latest_saved() or app

@@ -6,6 +6,7 @@ from __future__ import absolute_import
 from datetime import datetime
 import logging
 import re
+from restkit.errors import NoMoreData
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
@@ -263,6 +264,9 @@ class DomainMembership(DocumentSchema):
 
     @classmethod
     def wrap(cls, data):
+        if data.get('subject'):
+            data['domain'] = data['subject']
+            del data['subject']
         # Do a just-in-time conversion of old permissions
         old_permissions = data.get('permissions')
         if old_permissions is not None:
@@ -735,7 +739,12 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @classmethod
     def get_by_username(cls, username):
-        result = get_db().view('users/by_username', key=username, include_docs=True).one()
+        try:
+            result = get_db().view('users/by_username', key=username, include_docs=True)
+            result = result.one()
+        except NoMoreData:
+            logging.exception('called get_by_username(%r) and it failed pretty bad' % username)
+            raise
         if result:
             return cls.wrap_correctly(result['doc'])
         else:

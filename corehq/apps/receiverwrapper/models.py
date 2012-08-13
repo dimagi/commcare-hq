@@ -6,6 +6,8 @@ from couchdbkit.ext.django.schema import *
 from dimagi.utils.mixins import UnicodeMixIn
 from datetime import datetime, timedelta
 from dimagi.utils.post import simple_post
+import json
+from dimagi.utils.parsing import json_format_datetime
 
 repeater_types = {}
 
@@ -94,6 +96,25 @@ class CaseRepeater(Repeater):
     def __unicode__(self):
         return "forwarding cases to: %s" % self.url
 
+@register_repeater_type
+class ShortFormRepeater(Repeater):
+    """
+    Record that form id & case ids should be repeated to a new url
+
+    """
+
+    version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
+
+    def get_payload(self, repeat_record):
+        form = XFormInstance.get(repeat_record.payload_id)
+        cases = CommCareCase.get_by_xform_id(form.get_id)
+        return json.dumps({'form_id': form._id,
+                           'received_on': json_format_datetime(form.received_on),
+                           'case_ids': [case._id for case in cases]})
+
+    def __unicode__(self):
+        return "forwarding short form to: %s" % self.url
+
 class RepeatRecord(Document):
     """
     An record of a particular instance of something that needs to be forwarded
@@ -166,8 +187,9 @@ class RepeatRecord(Document):
             # we don't use celery's version of retry because
             # we want to override the success/fail each try
             for i in range(max_tries):
+                payload = self.get_payload()
                 try:
-                    resp = post_fn(self.get_payload(), self.url)
+                    resp = post_fn(payload, self.url)
                     if 200 <= resp.status < 300:
                         self.update_success()
                         break

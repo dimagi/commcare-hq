@@ -58,21 +58,26 @@ def explode_cases(request, domain, template="hqcase/explode_cases.html"):
     if request.method == 'POST':
         user_id = request.POST['user_id']
         user = CommCareUser.get_by_user_id(user_id, domain)
-        factor = int(request.POST.get('factor', '2'))
-        keys = [[owner_id, False] for owner_id in user.get_owner_ids()]
-        for case in CommCareCase.view('case/by_owner',
-            keys=keys,
-            include_docs=True,
-            reduce=False
-        ):
-            # we'll be screwing with this guy, so make him unsaveable
-            case.save = None
-            for i in range(factor - 1):
+        factor = request.POST.get('factor', '2')
+        try:
+            factor = int(factor)
+        except ValueError:
+            messages.error(request, 'factor must be an int; was: %s' % factor)
+        else:
+            keys = [[owner_id, False] for owner_id in user.get_owner_ids()]
+            for case in CommCareCase.view('case/by_owner',
+                keys=keys,
+                include_docs=True,
+                reduce=False
+            ):
+                # we'll be screwing with this guy, so make him unsaveable
+                case.save = None
+                for i in range(factor - 1):
 
-                case._id = uuid.uuid4().hex
-                case_block = get_case_xml(case, (const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE), version='2.0')
-                submit_case_blocks(case_block, domain)
-        messages.success(request, "All of %s's cases were exploded by a factor of %d" % (user.raw_username, factor))
+                    case._id = uuid.uuid4().hex
+                    case_block = get_case_xml(case, (const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE), version='2.0')
+                    submit_case_blocks(case_block, domain)
+            messages.success(request, "All of %s's cases were exploded by a factor of %d" % (user.raw_username, factor))
 
     return render_to_response(request, template, {
         'domain': domain,
