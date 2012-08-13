@@ -264,6 +264,9 @@ class DomainMembership(DocumentSchema):
 
     @classmethod
     def wrap(cls, data):
+        if data.get('subject'):
+            data['domain'] = data['subject']
+            del data['subject']
         # Do a just-in-time conversion of old permissions
         old_permissions = data.get('permissions')
         if old_permissions is not None:
