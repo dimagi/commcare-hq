@@ -4,8 +4,6 @@ from urllib2 import urlopen
 
 API_ID = "TROPO"
 
-BILLABLE_ITEM = 'TropoSMSBillableItem'
-
 def send(msg, delay=True, *args, **kwargs):
     """
     Expected kwargs:
@@ -26,11 +24,12 @@ def send(msg, delay=True, *args, **kwargs):
     msg.save()
     try:
         # attempt to bill client
-        from hqpayments.tasks import bill_client_for_sms
+        from hqbilling.tasks import bill_client_for_sms
+        from hqbilling.models import TropoSMSBillable
         if delay:
-            bill_client_for_sms.delay(BILLABLE_ITEM, msg.get_id, **dict(response=response))
+            bill_client_for_sms.delay(TropoSMSBillable, msg.get_id, **dict(response=response))
         else:
-            bill_client_for_sms(BILLABLE_ITEM, msg.get_id, **dict(response=response))
+            bill_client_for_sms(TropoSMSBillable, msg.get_id, **dict(response=response))
     except Exception as e:
         logging.debug("TROPO API contacted, errors in billing. Error: %s" % e)
 
