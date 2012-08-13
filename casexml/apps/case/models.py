@@ -450,5 +450,10 @@ class CommCareCase(CaseBase, IndexHoldingMixIn):
         else:
             elem = get_case_element(self, ('create', 'update'), version)
         return ElementTree.tostring(elem)
+    
+    @classmethod
+    def get_by_xform_id(cls, xform_id):
+        return cls.view("case/by_xform_id", reduce=False, include_docs=True, 
+                        key=xform_id)
 
 import casexml.apps.case.signals
