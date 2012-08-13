@@ -289,14 +289,16 @@ class Domain(Document):
 
     def password_format(self):
         """
-        If a single application is alphanumeric, return alphanumeric; otherwise, return numeric
+        This was a performance hit, so for now we'll just return 'a' no matter what
+#        If a single application is alphanumeric, return alphanumeric; otherwise, return numeric
         """
-        for app in self.full_applications():
-            if hasattr(app, 'profile'):
-                format = app.profile.get('properties', {}).get('password_format', 'n')
-                if format == 'a':
-                    return 'a'
-        return 'n'
+#        for app in self.full_applications():
+#            if hasattr(app, 'profile'):
+#                format = app.profile.get('properties', {}).get('password_format', 'n')
+#                if format == 'a':
+#                    return 'a'
+#        return 'n'
+        return 'a'
 
     @classmethod
     def get_all(cls):
