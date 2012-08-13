@@ -3,7 +3,7 @@
 {% if show_time_notice %}{% include "hqwebapp/partials/time-notice.html"%}{% endif %}
 
 {% block reportcontent %}
-    {% if request.couch_user.can_view_reports or request.couch_user.get_viewable_reports %}
+    {% if request.couch_user.can_view_reports or request.couch_user.get_viewable_reports or is_admin_report %}
         {% if slug %}
             <div class="hq-loading" style="display: none;">
                 <h4>Loading Report</h4>

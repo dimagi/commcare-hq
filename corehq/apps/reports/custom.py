@@ -28,6 +28,8 @@ class HQReport(object):
     report_partial = None
     dispatcher = 'report_dispatcher'
 
+    is_admin_report=False
+
     # used in StandardHQReport --- should check on how these are used in legacy custom reports
     individual = None # selected mobile worker
     case_type = None # case id
@@ -57,16 +59,20 @@ class HQReport(object):
 
 
     def __init__(self, domain, request, base_context = None):
+        if request.method == 'POST':
+            self.asynchronous = False
         base_context = base_context or {}
         if not self.name or not self.slug:
             raise NotImplementedError
         self.domain = domain
         self.request = request
-
-        try:
-            self.timezone = util.get_timezone(self.request.couch_user.user_id, domain)
-        except AttributeError:
-            self.timezone = util.get_timezone(None, domain)
+        if not self.domain:
+            self.timezone = pytz.utc
+        else:
+            try:
+                self.timezone = util.get_timezone(self.request.couch_user.user_id, domain)
+            except AttributeError:
+                self.timezone = util.get_timezone(None, domain)
 
         if not self.rows:
             self.rows = []
@@ -83,7 +89,8 @@ class HQReport(object):
                             export_path = self.request.get_full_path().replace('/custom/', '/export/'),
                             export_formats = Format.VALID_FORMATS,
                             async_report = self.asynchronous,
-                            report_base = self.async_base_template_name
+                            report_base = self.async_base_template_name,
+                            is_admin_report = self.is_admin_report
         )
 
     def build_selector_form(self):
@@ -94,7 +101,7 @@ class HQReport(object):
         field_classes = []
         for f in self.fields:
             klass = to_function(f)
-            field_classes.append(klass(self.request, self.domain, self.timezone))
+            field_classes.append(klass(self.request, self.domain, self.timezone, parent_report=self))
         self.context['custom_fields'] = [{"field": f.render(), "slug": f.slug} for f in field_classes]
 
     def get_report_context(self):
@@ -205,10 +212,11 @@ class ReportField(object):
     template = ""
     context = Context()
 
-    def __init__(self, request, domain=None, timezone=pytz.utc):
+    def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None):
         self.request = request
         self.domain = domain
         self.timezone = timezone
+        self.parent_report = parent_report
 
     def render(self):
         if not self.template: return ""
@@ -232,6 +240,7 @@ class ReportSelectField(ReportField):
     cssClasses = "span4"
     selected = None
     hide_field = False
+    as_combo = False
 
     def update_params(self):
         self.selected = self.request.GET.get(self.slug)
@@ -245,7 +254,8 @@ class ReportSelectField(ReportField):
             cssId=self.cssId,
             cssClasses=self.cssClasses,
             label=self.name,
-            selected=self.selected
+            selected=self.selected,
+            use_combo_box=self.as_combo
         )
 
 class MonthField(ReportField):

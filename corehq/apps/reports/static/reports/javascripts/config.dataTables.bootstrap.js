@@ -16,6 +16,7 @@ function HQReportDataTables(options) {
     self.fixColumns = !!(options.fixColumns);
     self.fixColsNumLeft = options.fixColsNumLeft || 1;
     self.fixColsWidth = options.fixColsWidth || 100;
+    self.datatable = null;
 
 
     this.render = function () {
@@ -71,6 +72,8 @@ function HQReportDataTables(options) {
                 params.aoColumns = self.aoColumns;
 
             var datatable = $(this).dataTable(params);
+            if (!self.datatable)
+                self.datatable = datatable;
             if(self.customSort)
                 datatable.fnSort( self.customSort );
             if(self.fixColumns)

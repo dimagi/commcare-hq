@@ -199,14 +199,13 @@ def legacy_domain_name(request, domain, path):
 
 @domain_admin_required
 def project_settings(request, domain, template="domain/admin/project_settings.html"):
-    
     class _NeverFailForm(object):
             def is_valid(self):              return True
             def save(self, request, domain): return True
-
     domain = Domain.get_by_name(domain)
     user_sees_meta = request.couch_user.is_previewer()
-    if request.method == "POST":
+
+    if request.method == "POST" and 'billing_info_form' not in request.POST:
         # deal with saving the settings data
         if user_sees_meta:
             form = DomainMetadataForm(request.POST)
@@ -232,17 +231,39 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
         else:
             form = DomainGlobalSettingsForm(initial={
                 'default_timezone': domain.default_timezone,
-                'case_sharing': json.dumps(domain.case_sharing),
-
+                'case_sharing': json.dumps(domain.case_sharing)
                 })
-        
-    return render_to_response(request, template, {
-        "domain": domain.name,
-        "form": form,
-        "languages": domain.readable_languages(),
-        "applications": domain.applications(),
-        'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')
-    })
+
+    try:
+        from hqbilling.forms import DomainBillingInfoForm
+        # really trying to make corehq not dependent on hqbilling here
+        if request.method == 'POST' and 'billing_info_form' in request.POST:
+            billing_info_form = DomainBillingInfoForm(request.POST)
+            if billing_info_form.is_valid():
+                billing_info_form.save(domain)
+                messages.info(request, "The billing address for project %s was successfully updated!" % domain.name)
+        else:
+            initial = dict(phone_number=domain.billing_number, currency_code=domain.currency_code)
+            initial.update(domain.billing_address._doc)
+            billing_info_form = DomainBillingInfoForm(initial=initial)
+        billing_info_partial = 'hqbilling/domain/forms/billing_info.html'
+        billing_enabled=True
+    except ImportError:
+        billing_enabled=False
+        billing_info_form = None
+        billing_info_partial = None
+
+
+    return render_to_response(request, template, dict(
+        domain=domain.name,
+        form=form,
+        languages=domain.readable_languages(),
+        applications=domain.applications(),
+        autocomplete_fields=('project_type', 'phone_model', 'user_type', 'city', 'country', 'region'),
+        billing_info_form=billing_info_form,
+        billing_info_partial=billing_info_partial,
+        billing_enabled=billing_enabled
+    ))
 
 def autocomplete_fields(request, field):
     prefix = request.GET.get('prefix', '')

@@ -245,7 +245,6 @@ def attribute_lookup(obj, attr):
     if (hasattr(obj, attr)):
         return getattr(obj, attr)
 
-
 def report_list(mapping, dispatcher, user, domain, current_slug=""):
     if not mapping: return ""
     lst = []

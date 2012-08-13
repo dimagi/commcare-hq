@@ -44,7 +44,9 @@ class StandardHQReport(HQReport):
     hide_filters = False
     custom_breadcrumbs = None
     base_slug = 'reports'
+    reporting_section_name = "Reports"
     asynchronous = True
+    global_root = None
 
 
     def process_basic(self):
@@ -69,7 +71,10 @@ class StandardHQReport(HQReport):
             layout_flush_content = True,
             report_hide_filters = self.hide_filters,
             report_breadcrumbs = self.custom_breadcrumbs,
-            base_slug = self.base_slug
+            base_slug = self.base_slug,
+            reporting_section_name = self.reporting_section_name,
+            default_report_url = self.get_default_report_url(),
+            global_root=self.global_root
         )
 
     def get_global_params(self):
@@ -92,6 +97,9 @@ class StandardHQReport(HQReport):
         # here's where you can define any extra parameters you want to process before
         # proceeding with the rest of get_report_context
         pass
+
+    def get_default_report_url(self):
+        return reverse("default_report", kwargs=dict(domain=self.domain)) if self.domain else "#"
 
     def get_report_context(self):
         self.build_selector_form()

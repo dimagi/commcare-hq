@@ -43,26 +43,26 @@ def report_context(domain,
     }
     if report_partial:
         context.update(report_partial=report_partial)
-    if individual is not None:
+    if individual is not None and domain is not None:
         context.update(
             show_users=True,
             users= user_list(domain),
             individual=individual,
         )
-    if form is not None:
+    if form is not None and domain is not None:
         context.update(
             show_forms=True,
             selected_form=form,
             forms=form_list(domain),
         )
         
-    if group is not None:
+    if group is not None and domain is not None:
         context.update(
             show_groups=True,
             group=group,
             groups=Group.get_reporting_groups(domain),
         )
-    if case_type is not None:
+    if case_type is not None and domain is not None:
         if individual:
             user_ids = [individual]
         elif group is not None:
