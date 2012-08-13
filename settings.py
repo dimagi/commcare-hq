@@ -187,7 +187,7 @@ HQ_APPS = (
     'loadtest',
     'hsph',
     'pathindia',
-    'hqpayments',
+    'hqbilling',
     'a5288'
 )
 
@@ -419,7 +419,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'dca',
         'hsph',
         'pathindia',
-        'hqpayments',
+        'hqbilling',
 
     ]
 ] + [("couchlog", "%s/%s" %(COUCH_SERVER, COUCHLOG_DATABASE_NAME))]
@@ -575,9 +575,18 @@ CUSTOM_REPORT_MAP = {
 
 BILLING_REPORT_MAP = {
     "Manage SMS Backend Rates": [
-        "hqpayments.reports.backend_rates.MachRateReport",
-        "hqpayments.reports.backend_rates.TropoRateReport",
-        "hqpayments.reports.backend_rates.UnicelRateReport"
+        "hqbilling.reports.backend_rates.DimagiRateReport",
+        "hqbilling.reports.backend_rates.MachRateReport",
+        "hqbilling.reports.backend_rates.TropoRateReport",
+        "hqbilling.reports.backend_rates.UnicelRateReport"
+    ],
+    "Billing Details": [
+        "hqbilling.reports.details.SMSDetailReport",
+        "hqbilling.reports.details.MonthlyBillReport"
+    ],
+    "Billing Tools": [
+        "hqbilling.reports.tools.BillableCurrencyReport",
+        "hqbilling.reports.tools.TaxRateReport"
     ]
 }
 
