@@ -72,9 +72,9 @@ class DatatablesParams(object):
     @classmethod
     def from_request_dict(cls, query):
         
-        count = int(query.get("iDisplayLength", DEFAULT_DISPLAY_LENGTH));
+        count = int(query.get("iDisplayLength", DEFAULT_DISPLAY_LENGTH))
         
-        start = int(query.get("iDisplayStart", DEFAULT_START));
+        start = int(query.get("iDisplayStart", DEFAULT_START))
         
         # sorting
         desc_str = query.get("sSortDir_0", "desc")
