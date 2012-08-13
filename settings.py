@@ -155,6 +155,7 @@ HQ_APPS = (
     'corehq.apps.app_manager',
     'corehq.apps.orgs',
     'corehq.apps.fixtures',
+    'corehq.apps.importer',
     'corehq.apps.reminders',
     'corehq.apps.prescriptions',
     'corehq.apps.translations',
@@ -401,6 +402,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'groups',
         'hqcase',
         'hqmedia',
+        'importer',
         'migration',
         'phone',
         'receiverwrapper',
@@ -485,8 +487,8 @@ EMAIL_USE_TLS = True
 
 DATA_INTERFACE_MAP = {
     'Case Management' : [
-        'corehq.apps.data_interfaces.interfaces.CaseReassignmentInterface'
-
+        'corehq.apps.data_interfaces.interfaces.CaseReassignmentInterface',
+        'corehq.apps.importer.base.ImportCases',
     ]
 }
 APPSTORE_INTERFACE_MAP = {
