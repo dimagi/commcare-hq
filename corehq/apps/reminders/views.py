@@ -4,14 +4,14 @@ from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm
-from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, SurveyKeyword
+from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm
+from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, SurveyKeyword, Survey, SurveySample
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.web import render_to_response
 from dimagi.utils.parsing import string_to_datetime
 from tropo import Tropo
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
-from .util import get_form_list
+from .util import get_form_list, get_sample_list
 from corehq.apps.app_manager.models import get_app, ApplicationBase
 
 @login_and_domain_required
@@ -233,4 +233,49 @@ def delete_keyword(request, domain, keyword_id):
     s.retire()
     return HttpResponseRedirect(reverse("manage_surveys", args=[domain]))
 
+@login_and_domain_required
+def add_survey(request, domain):
+    if request.method == "POST":
+        form = SurveyForm(request.POST)
+        if form.is_valid():
+            name            = form.cleaned_data.get("name")
+            form_id         = form.cleaned_data.get("form_id")
+            schedule_date   = form.cleaned_data.get("schedule_date")
+            schedule_time   = form.cleaned_data.get("schedule_time")
+            sample_id       = form.cleaned_data.get("sample_id")
+            sample_name     = form.cleaned_data.get("sample_name")
+            sample_contacts = form.cleaned_data.get("sample_contacts")
+            
+            if sample_id == "--new--":
+                sample = SurveySample (
+                    domain = domain,
+                    name = sample_name,
+                    contacts = sample_contacts
+                )
+                sample.save()
+                sample_id = sample._id
+            
+            survey = Survey (
+                domain = domain,
+                name = name,
+                form_id = form_id,
+                sample_id = sample_id
+            )
+            survey.save()
+    else:
+        initial = {}
+        form = SurveyForm(initial=initial)
+    
+    form_list = get_form_list(domain)
+    form_list.insert(0, {"code":"--choose--", "name":"-- Choose --"})
+    sample_list = get_sample_list(domain)
+    sample_list.insert(0, {"code":"--new--", "name":"-- Create New Sample --"})
+    
+    context = {
+        "domain" : domain,
+        "form" : form,
+        "form_list" : form_list,
+        "sample_list" : sample_list,
+    }
+    return render_to_response(request, "reminders/partial/add_survey.html", context)
 

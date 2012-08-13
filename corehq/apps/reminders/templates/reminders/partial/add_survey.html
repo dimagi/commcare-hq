@@ -1,0 +1,190 @@
+{% extends "reminders/reminders_base.html" %}
+
+{% block head %}{{ block.super }}
+<style type="text/css">
+    h2 {
+        border-bottom: 1px solid #59C;
+        color: #59C;
+    }
+    .errorlist ul {
+        margin: 0;
+        padding: 0;
+    }
+    .errorlist li {
+        background-color: #F88;
+        border: 1px solid #A44;
+        padding: 2px;
+    }
+</style>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script type="text/javascript">
+    function create_contact_record() {
+        var tr = document.createElement("TR");
+        var td1 = document.createElement("TD");
+        var td2 = document.createElement("TD");
+        var td3 = document.createElement("TD");
+        var input1 = document.createElement("INPUT");
+        input1.setAttribute("type", "text");
+        input1.setAttribute("class", "short");
+        input1.setAttribute("name", "sample_contact." + current_sample_contact_num + ".id");
+        var input2 = document.createElement("INPUT");
+        input2.setAttribute("type", "text");
+        input2.setAttribute("name", "sample_contact." + current_sample_contact_num + ".phone_number");
+        var button = document.createElement("SPAN");
+        button.setAttribute("class", "btn btn-danger");
+        button.innerHTML = '<i class="icon icon-white icon-remove"></i> Remove';
+        //
+        current_sample_contact_num++;
+        //
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        tr.appendChild(td3);
+        td1.appendChild(input1);
+        td2.appendChild(input2);
+        td3.appendChild(button);
+        //
+        return tr;
+    }
+    
+    function add_contact_record() {
+        document.getElementById("sample").appendChild(create_contact_record());
+    }
+    
+    {% if form.sample_contacts.value|length == 0 %}
+    var current_sample_contact_num = 1;
+    {% else %}
+    var current_sample_contact_num = {{ form.sample_contacts.value|length }};
+    {% endif %}
+</script>
+
+{% endblock %}
+
+{% block reminders_content %}
+<br />
+<form action="" method="post">
+    <h2>Survey</h2>
+    <br />
+    <table>
+        {% if form.name.errors %}
+        <tr>
+            <th></th>
+            <td>{{ form.name.errors }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <th>Name:</th>
+            <td>{{ form.name }}</td>
+        </tr>
+        {% if form.form_id.errors %}
+        <tr>
+            <th></th>
+            <td>{{ form.form_id.errors }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <th>Questionnaire:</th>
+            <td>
+                <select name="form_id">
+                    {% for f in form_list %}
+                        <option value="{{ f.code }}" {% if f.code == form.form_id.value %}selected="selected"{% endif %}>{{ f.name }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+        </tr>
+    </table>
+
+    <h2>Schedule</h2>
+    <br />
+    <table>
+        {% if form.schedule_date.errors %}
+        <tr>
+            <th></th>
+            <td>{{ form.schedule_date.errors }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <th>Date:</th>
+            <td>{{ form.schedule_date }}</td>
+        </tr>
+        {% if form.schedule_time.errors %}
+        <tr>
+            <th></th>
+            <td>{{ form.schedule_time.errors }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <th>Time:</th>
+            <td>{{ form.schedule_time }}</td>
+        </tr>
+    </table>
+
+    <h2>Sample</h2>
+    <br />
+    <table>
+        {% if form.sample_id.errors %}
+        <tr>
+            <th></th>
+            <td>{{ form.sample_id.errors }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <th>Choose:</th>
+            <td>
+                <select name="sample_id">
+                    {% for s in sample_list %}
+                        <option value="{{ s.code }}" {% if s.code == form.sample_id.value %}selected="selected"{% endif %}>{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+        </tr>
+        {% if form.sample_name.errors %}
+        <tr>
+            <th></th>
+            <td>{{ form.sample_name.errors }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <th>Name:</th>
+            <td>{{ form.sample_name }}</td>
+        </tr>
+    </table>
+
+    {% if form.sample_contacts.errors %}
+    <tr>
+        <th></th>
+        <td>{{ form.sample_contacts.errors }}</td>
+    </tr>
+    {% endif %}
+    <table id="sample">
+        <tr>
+            <th>ID</th>
+            <th>Phone Number</th>
+            <th></th>
+        </tr>
+        {% if form.sample_contacts.value|length == 0 %}
+        <tr>
+            <td><input name="sample_contact.0.id" type="text" class="short" /></td>
+            <td><input name="sample_contact.0.phone_number" type="text" /></td>
+            <td><span class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Remove</span></td>
+        </tr>
+        {% else %}
+            {% for contact in form.sample_contacts.value %}
+            <tr>
+                <td><input name="sample_contact.{{ forloop.counter0 }}.id" type="text" class="short" value="{{ contact.id }}" /></td>
+                <td><input name="sample_contact.{{ forloop.counter0 }}.phone_number" type="text" value="{{ contact.phone_number }}" /></td>
+                <td><span class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Remove</span></td>
+            </tr>
+            {% endfor %}
+        {% endif %}
+    </table>
+    <span class="btn btn-success" onClick="add_contact_record();"><i class="icon icon-white icon-plus"></i> Add Contact</span>
+    <br />
+    <br />
+    <h2></h2>
+    <br />
+    <input type="submit" class="btn btn-primary" value="Submit" />
+</form>
+
+{% endblock %}

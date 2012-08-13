@@ -340,3 +340,57 @@ class ComplexCaseReminderForm(Form):
         return cleaned_data
 
 
+
+class SampleContactsWidget(Widget):
+    
+    def value_from_datadict(self, data, files, name, *args, **kwargs):
+        contacts_raw = {}
+        for key in data:
+            if key[0:15] == "sample_contact.":
+                contacts_raw[key] = data[key]
+        
+        contacts_dict = DotExpandedDict(contacts_raw)
+        contacts = []
+        if len(contacts_dict) > 0:
+            for key in sorted(contacts_dict["sample_contact"].iterkeys()):
+                contacts.append(contacts_dict["sample_contact"][key])
+        
+        return contacts
+
+class SampleContactsField(Field):
+    required = None
+    label = None
+    initial = None
+    widget = None
+    help_text = None
+    
+    def __init__(self, required=True, label="", initial=[], widget=SampleContactsWidget(), help_text="", *args, **kwargs):
+        self.required = required
+        self.label = label
+        self.initial = initial
+        self.widget = widget
+        self.help_text = help_text
+    
+    def clean(self, value):
+        for contact in value:
+            if contact["id"] == "" or contact["phone_number"] == "":
+                raise ValidationError("Please enter all fields.")
+        return value
+
+class SurveyForm(Form):
+    name = CharField()
+    form_id = CharField()
+    schedule_date = DateField()
+    schedule_time = TimeField()
+    sample_id = CharField()
+    sample_name = CharField()
+    sample_contacts = SampleContactsField()
+
+    def clean_form_id(self):
+        form_id = self.cleaned_data.get("form_id")
+        if form_id == "--choose--":
+            raise ValidationError("Please choose a questionnaire.")
+        else:
+            return form_id
+
+

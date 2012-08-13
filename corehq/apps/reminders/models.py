@@ -765,4 +765,16 @@ class SurveyKeyword(Document):
             include_docs=True
         ).one()
 
+class SurveySample(Document):
+    domain = StringProperty()
+    name = StringProperty()
+    contacts = ListProperty(DictProperty)
+
+class Survey(Document):
+    domain = StringProperty()
+    name = StringProperty()
+    form_id = StringProperty()
+    sample_id = StringProperty()
+    
+
 from .signals import *
