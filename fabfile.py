@@ -221,7 +221,7 @@ def bootstrap():
     execute(clone_repo)
     execute(update_code)
     execute(create_virtualenv)
-    execute(do_update_requirements)
+    execute(update_requirements)
     execute(setup_dirs)
     execute(update_services)
     execute(fix_locale_perms)
@@ -284,10 +284,11 @@ def deploy():
 def update_requirements():
     """ update external dependencies on remote host """
     require('code_root', provided_by=('staging', 'production'))
+    update_code()
     requirements = posixpath.join(env.code_root, 'requirements')
     #with cd(requirements):
     with cd(env.code_root):
-        cmd = ['%(virtualenv_root)s/bin/pip install' % env]
+        cmd = ['%(virtualenv_root)s/bin/pip install -U ' % env]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'prod-requirements.txt')]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'requirements.txt')]
         print ' '.join(cmd)
