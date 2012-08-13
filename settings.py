@@ -115,6 +115,7 @@ DEFAULT_APPS = (
     #'django.contrib.messages', # don't need this for messages and it's causing some error
     'django.contrib.staticfiles', 
     'south',
+    'djcelery.transport',
     'djcelery',    # pip install django-celery
     'djtables',    # pip install djtables
     #'ghettoq',     # pip install ghettoq
@@ -274,7 +275,7 @@ SMS_GATEWAY_URL = "http://localhost:8001/"
 SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&text=%(message)s"
 
 # celery
-CARROT_BACKEND = "django"
+BROKER_URL = 'django://' #default django db based
 
 
 SKIP_SOUTH_TESTS = True
