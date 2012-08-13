@@ -51,7 +51,7 @@ class CaseState(DocumentSchema, IndexHoldingMixIn):
     
     @classmethod
     def from_case(cls, case):
-        return CaseState(case_id=case.get_id, 
+        return cls(case_id=case.get_id,
                          indices=case.indices)
     
 
