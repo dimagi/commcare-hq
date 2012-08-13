@@ -11,7 +11,7 @@
                     <span class="help-inline">{{ error }}</span>
                 {% endfor %}
                 {% if field.errors|length == 0 and field.field.required %}
-                    <span class="help-inline"><h6>required</h6></span>
+                    <span class="help-inline"><small class="label">REQUIRED</small></span>
                 {% endif %}
                 {% if field.help_text %}
                     <p class="help-block">
