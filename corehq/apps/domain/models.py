@@ -4,7 +4,8 @@ from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
 from django.db import models
 from couchdbkit.ext.django.schema import Document, StringProperty,\
-    BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty, DictProperty
+    BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty, DictProperty, ListProperty
+from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review
 from dimagi.utils.timezones import fields as tz_fields
 from dimagi.utils.couch.database import get_db
@@ -57,7 +58,60 @@ def cached_property(method):
             return self.cached_properties[method.__name__]
     return find_cached
 
-class Domain(Document):
+class HQBillingAddress(DocumentSchema):
+    """
+        A billing address for clients
+    """
+    country = StringProperty()
+    postal_code = StringProperty()
+    state_province = StringProperty()
+    city = StringProperty()
+    address = ListProperty()
+    name = StringProperty()
+
+    @property
+    def html_address(self):
+        template = """<address>
+            <strong>%(name)s</strong><br />
+            %(address)s<br />
+            %(city)s%(state)s %(postal_code)s<br />
+            %(country)s
+        </address>"""
+        filtered_address = [a for a in self.address if a]
+        address = template % dict(
+            name=self.name,
+            address="<br />\n".join(filtered_address),
+            city=self.city,
+            state=", %s" % self.state_province if self.state_province else "",
+            postal_code=self.postal_code,
+            country=self.country
+        )
+        return mark_safe(address)
+
+    def update_billing_address(self, **kwargs):
+        self.country = kwargs.get('country','')
+        self.postal_code = kwargs.get('postal_code','')
+        self.state_province = kwargs.get('state_province', '')
+        self.city = kwargs.get('city', '')
+        self.address = kwargs.get('address', [''])
+        self.name = kwargs.get('name', '')
+
+
+class HQBillingDomainMixin(DocumentSchema):
+    """
+        This contains all the attributes required to bill a client for CommCare HQ services.
+    """
+    billing_address = SchemaProperty(HQBillingAddress)
+    billing_number = StringProperty()
+    currency_code = StringProperty(default=settings.DEFAULT_CURRENCY)
+
+    def update_billing_info(self, **kwargs):
+        self.billing_number = kwargs.get('phone_number','')
+        self.billing_address.update_billing_address(**kwargs)
+        self.currency_code = kwargs.get('currency_code', settings.DEFAULT_CURRENCY)
+
+
+class Domain(Document, HQBillingDomainMixin):
     """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the
        domain-level, including user membership, permission to
@@ -587,3 +641,4 @@ class OldDomain(models.Model):
         
     def __unicode__(self):
         return self.name
+
