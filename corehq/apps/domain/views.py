@@ -237,7 +237,6 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
     try:
         from hqbilling.forms import DomainBillingInfoForm
         # really trying to make corehq not dependent on hqbilling here
-        print request.POST
         if request.method == 'POST' and 'billing_info_form' in request.POST:
             billing_info_form = DomainBillingInfoForm(request.POST)
             if billing_info_form.is_valid():
