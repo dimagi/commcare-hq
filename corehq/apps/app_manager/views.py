@@ -978,19 +978,23 @@ def edit_form_attr(req, domain, app_id, unique_form_id, attr):
                 except Exception:
                     pass
             if xform:
-                xform = XForm(xform)
-                duplicates = app.get_xmlns_map()[xform.data_node.tag_xmlns]
-                for duplicate in duplicates:
-                    if form == duplicate:
-                        continue
-                    else:
-                        data = xform.data_node.render()
-                        xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
-                        data = data.replace(xform.data_node.tag_xmlns, xmlns, 1)
-                        xform.instance_node.remove(xform.data_node.xml)
-                        xform.instance_node.append(parse_xml(data))
-                        break
-                form.source = xform.render()
+                try:
+                    xform = XForm(xform)
+                except XFormError:
+                    form.source = xform
+                else:
+                    duplicates = app.get_xmlns_map()[xform.data_node.tag_xmlns]
+                    for duplicate in duplicates:
+                        if form == duplicate:
+                            continue
+                        else:
+                            data = xform.data_node.render()
+                            xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
+                            data = data.replace(xform.data_node.tag_xmlns, xmlns, 1)
+                            xform.instance_node.remove(xform.data_node.xml)
+                            xform.instance_node.append(parse_xml(data))
+                            break
+                    form.source = xform.render()
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception, e:
