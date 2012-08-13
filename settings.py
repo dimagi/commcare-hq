@@ -188,7 +188,8 @@ HQ_APPS = (
     'loadtest',
     'hsph',
     'pathindia',
-    'a5288',
+    'hqbilling',
+    'a5288'
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
@@ -315,6 +316,11 @@ UNICEL_CONFIG = {"username": "Dimagi",
                  "password": "changeme",
                  "sender": "Promo" }
 
+# mach sms config
+MACH_CONFIG = {"username": "Dimagi",
+               "password": "changeme",
+               "service_profile": "changeme"
+               }
 
 #auditcare parameters
 AUDIT_MODEL_SAVE = [
@@ -415,6 +421,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'dca',
         'hsph',
         'pathindia',
+        'hqbilling',
 
     ]
 ] + [("couchlog", "%s/%s" %(COUCH_SERVER, COUCHLOG_DATABASE_NAME))]
@@ -568,6 +575,23 @@ CUSTOM_REPORT_MAP = {
 #    ]
 }
 
+BILLING_REPORT_MAP = {
+    "Manage SMS Backend Rates": [
+        "hqbilling.reports.backend_rates.DimagiRateReport",
+        "hqbilling.reports.backend_rates.MachRateReport",
+        "hqbilling.reports.backend_rates.TropoRateReport",
+        "hqbilling.reports.backend_rates.UnicelRateReport"
+    ],
+    "Billing Details": [
+        "hqbilling.reports.details.SMSDetailReport",
+        "hqbilling.reports.details.MonthlyBillReport"
+    ],
+    "Billing Tools": [
+        "hqbilling.reports.tools.BillableCurrencyReport",
+        "hqbilling.reports.tools.TaxRateReport"
+    ]
+}
+
 MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
     messages.DEBUG: '',
@@ -578,3 +602,6 @@ MESSAGE_TAGS = {
 
 COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
+
+DEFAULT_CURRENCY = "USD"
+
