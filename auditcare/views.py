@@ -1,9 +1,11 @@
 #modified version of django-axes axes/decorator.py
 #for more information see: http://code.google.com/p/django-axes/
-from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.contenttypes.models import ContentType
+from django.http import HttpResponse
 from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_protect
+from dimagi.utils import csv 
 from auditcare.decorators.login import lockout_response
 from auditcare.decorators.login import log_request
 from auditcare.inspect import history_for_doc
@@ -38,6 +40,16 @@ def auditAll(request, template="auditcare/index.html"):
     return render_to_response(template, 
                               {"audit_table": AuditLogTable(realEvents, request=request)}, 
                               context_instance=RequestContext(request))
+
+def export_all(request):
+    auditEvents = AccessAudit.view("auditcare/by_date_access_events", descending=True, include_docs=True).all()
+    response = HttpResponse()
+    response['Content-Disposition'] = 'attachment; filename=AuditAll.xls'
+    writer = csv.UnicodeWriter(response)
+    writer.writerow(['User', 'Access Type', 'Date'])
+    for a in auditEvents:
+        writer.writerow([a.user, a.access_type, a.event_date])
+    return response
 
 from django.contrib.auth import views as auth_views
 
