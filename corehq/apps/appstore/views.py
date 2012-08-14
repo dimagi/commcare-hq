@@ -23,8 +23,8 @@ from django.shortcuts import redirect
 
 PER_PAGE = 9
 
-def redirect(request, path):
-    return HttpResponseRedirect('/exchange' + path)
+def rewrite_url(request, path):
+    return HttpResponseRedirect('/exchange%s?%s' % (path, request.META['QUERY_STRING']))
 
 def _appstore_context(context={}):
     context['sortables'] = [
