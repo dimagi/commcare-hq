@@ -48,6 +48,7 @@ env.roledefs = {
         'rabbitmq': [],
         'django_celery': [],
         'django_app': [],
+        'formsplayer': [],
         'lb': [],
         'staticfiles': [],
     }
@@ -111,6 +112,7 @@ def production():
         'rabbitmq': ['192.168.100.60'],
         'django_celery': ['192.168.100.60'],
         'django_app': ['10.176.160.43', '10.176.163.85'],
+        'formsplayer': ['10.176.163.85'],
         'lb': [], #todo on apache level config
         'staticfiles': ['10.176.162.109'],
     }
@@ -313,12 +315,15 @@ def touch_supervisor():
     _supervisor_command('update')
 
 
-@roles('django_celery', 'django_app')
+@roles('django_celery', 'django_app', 'formsplayer')
 @task
 def update_services():
     """ upload changes to services such as nginx """
     with settings(warn_only=True):
         execute(services_stop)
+    #remove old confs from directory first
+    services_dir =  posixpath.join(env.services, u'supervisor', '*')
+    run('rm -f %s' % services_dir)
     execute(upload_supervisor_conf)
     #execute(upload_apache_conf)
     execute(services_start)
@@ -448,13 +453,17 @@ def upload_celery_supervisorconf():
 def upload_djangoapp_supervisorconf():
     _upload_supervisor_conf('supervisor_django.conf')
 
-@roles('django_app', 'django_celery')
+@roles('formsplayer')
+def upload_formsplayer_supervisorconf():
+    _upload_supervisor_conf('supervisor_formsplayer.conf')
+
 def upload_supervisor_conf():
     """Upload and link Supervisor configuration from the template."""
     require('environment', provided_by=('staging', 'demo', 'production'))
     _set_apache_user()
     execute(upload_celery_supervisorconf)
     execute(upload_djangoapp_supervisorconf)
+    execute(upload_formsplayer_supervisorconf)
 
     #update the line in the supervisord config file that points to our supervisor.conf
     #remove the line if it already exists
