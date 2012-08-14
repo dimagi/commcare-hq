@@ -58,7 +58,7 @@
                   {% for key, val in d.enum.items %}
                      if({{ d.xpath }} = '{{ key }}', $k{{ key }},
                   {% endfor %}
-                     '?'
+                     ''
                   {% for _ in d.enum %}
                      )
                   {% endfor %}
