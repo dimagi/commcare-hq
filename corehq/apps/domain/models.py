@@ -557,6 +557,8 @@ class Domain(Document, HQBillingDomainMixin):
 
         total_average_sum = sum(avg for domain, avg, num in domains)
         total_average_count = len(domains)
+        if not total_average_count:
+            return []
         total_average = (total_average_sum / total_average_count)
 
         for domain, average_rating, num_ratings in domains:
