@@ -156,8 +156,9 @@ def search_snapshots(request, filter_by='', filter='', template="appstore/appsto
     try:
         snapshots, total_rows = Domain.snapshot_search(query, page=page, per_page=PER_PAGE)
     except RequestFailed:
-        logging.exception("Domain snapshot_search RequestFailed")
-        messages.error(request, "Oops! ")
+        logging.Logger('notify').exception("Domain snapshot_search RequestFailed")
+        messages.error(request, "Oops! Our search backend is experiencing problems")
+        return redirect('appstore')
     else:
         more_pages = page * PER_PAGE < total_rows
         vals = dict(apps=snapshots, search_query=query, page=page, prev_page=(page-1), next_page=(page+1), more_pages=more_pages)

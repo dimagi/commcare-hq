@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import json
 import logging
 from couchdbkit.exceptions import ResourceConflict
 from django.conf import settings
@@ -495,7 +496,7 @@ class Domain(Document, HQBillingDomainMixin):
         if page:
             skip = (page - 1) * per_page
             limit = per_page
-        results = get_db().search('domain/snapshot_search', q=query, limit=limit, skip=skip)
+        results = get_db().search('domain/snapshot_search', q=json.dumps(query), limit=limit, skip=skip)
         return map(cls.get, [r['id'] for r in results]), results.total_rows
 
     def organization_doc(self):
