@@ -473,6 +473,11 @@ LOGGING = {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
+        },
+        'notify': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': True,
         }
     }
 }
