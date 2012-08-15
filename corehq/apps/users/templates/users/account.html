@@ -185,38 +185,7 @@
         {% endif %}
     </div>
     {% if couch_user.is_commcare_user and couch_user.user_id != request.couch_user.user_id %}
-        <a class="btn btn-danger" href="#delete_user_{{ couch_user.user_id }}" data-toggle="modal"><i class="icon-white icon-trash"></i> Delete {% commcare_user %}</a>
-        <div id="delete_user_{{ couch_user.user_id }}" class="modal hide fade">
-            <div class="modal-header">
-                <a class="close" data-dismiss="modal">&times;</a>
-                <h3>Delete {% commcare_user %} {{ couch_user.raw_username }}? <small>Permanent Action</small></h3>
-            </div>
-            <form class="form form-horizontal" style="margin: 0; padding: 0" action="{% url delete_commcare_user domain couch_user.user_id %}" method="post">
-                <div class="modal-body">
-                    <p><span class="label label-warning">
-                            <i class="icon-white icon-warning-sign"></i>
-                            Bad things will happen if you don't read this
-                        </span></p>
-                    <p>Are you sure you want to permanently delete <strong>{{ couch_user.raw_username }}</strong>?</p>
-                    <p>This action:</p>
-                    <ul>
-                        <li>Will delete {{ couch_user.raw_username }}.</li>
-                        <li>Will delete <strong>all</strong> of {{ couch_user.raw_username }}'s form submissions.</li>
-                        <li>Is permanent.</li>
-                    </ul>
-                    <p>If you ever want to use {{ couch_user.raw_username }}'s data in the future, we suggest that you use the <strong>Archive User</strong> option
-                        <a href="{% url commcare_users domain %}">here</a>.</p>
-                    <p>If even after reading this you decide that you really want to delete this user and all of their data, type "I understand" into the box below.</p>
-
-                    <input data-bind="value: signOff, valueUpdate: 'textchange'"/>
-                </div>
-                <div class="modal-footer">
-                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                    <button type="submit" class="btn btn-danger" data-bind="visible: signOff().toLowerCase() === 'i understand'"><i class="icon icon-white icon-trash"></i> Delete {% commcare_user %}</button>
-                    <button class="btn btn-danger disabled" disabled="true" data-bind="visible: signOff().toLowerCase() !== 'i understand'"><i class="icon icon-white icon-trash"></i> Delete {% commcare_user %}</button>
-                </div>
-            </form>
-        </div>
+        <p><a class="btn btn-danger" href="#delete_user_{{ couch_user.user_id }}" data-toggle="modal"><i class="icon-white icon-trash"></i> Delete {% commcare_user %}</a></p>
     {% endif %}
 {% endblock %}
 
@@ -238,5 +207,38 @@
             </form>
         </div>
     {% endfor %}
+    {% if couch_user.is_commcare_user and couch_user.user_id != request.couch_user.user_id %}
+    <div id="delete_user_{{ couch_user.user_id }}" class="modal hide fade">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h3>Delete {% commcare_user %} {{ couch_user.raw_username }}? <small>Permanent Action</small></h3>
+        </div>
+        <form class="form form-horizontal" style="margin: 0; padding: 0" action="{% url delete_commcare_user domain couch_user.user_id %}" method="post">
+            <div class="modal-body">
+                <p><span class="label label-warning">
+                            <i class="icon-white icon-warning-sign"></i>
+                            Bad things will happen if you don't read this
+                        </span></p>
+                <p>Are you sure you want to permanently delete <strong>{{ couch_user.raw_username }}</strong>?</p>
+                <p>This action:</p>
+                <ul>
+                    <li>Will delete {{ couch_user.raw_username }}.</li>
+                    <li>Will delete <strong>all</strong> of {{ couch_user.raw_username }}'s form submissions.</li>
+                    <li>Is permanent.</li>
+                </ul>
+                <p>If you ever want to use {{ couch_user.raw_username }}'s data in the future, we suggest that you use the <strong>Archive User</strong> option
+                    <a href="{% url commcare_users domain %}">here</a>.</p>
+                <p>If even after reading this you decide that you really want to delete this user and all of their data, type "I understand" into the box below.</p>
+
+                <input data-bind="value: signOff, valueUpdate: 'textchange'"/>
+            </div>
+            <div class="modal-footer">
+                <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                <button type="submit" class="btn btn-danger" data-bind="visible: signOff().toLowerCase() === 'i understand'"><i class="icon icon-white icon-trash"></i> Delete {% commcare_user %}</button>
+                <button class="btn btn-danger disabled" disabled="true" data-bind="visible: signOff().toLowerCase() !== 'i understand'"><i class="icon icon-white icon-trash"></i> Delete {% commcare_user %}</button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
 {% endblock %}
 
