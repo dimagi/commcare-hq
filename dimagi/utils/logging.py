@@ -38,3 +38,4 @@ def log_exception(e=None, extra_info=""):
     logging.error(traceback_string)
     #exception_logged.send(sender="logutil", exc_info=(exc_type, value, tb), extra_info=extra_info)
 
+notify_logger = logging.Logger('notify')
