@@ -44,12 +44,12 @@ class CaseActivityReport(StandardTabularHQReport, MonitoringReportMixin):
     all_users = None
     display_data = ['percent']
 
-
     class Row(object):
         def __init__(self, report, user):
             self.report = report
             self.user = user
 
+        @memoized
         def active_count(self):
             """Open clients seen in the last 120 days"""
             return self.report.get_number_cases(
@@ -59,6 +59,7 @@ class CaseActivityReport(StandardTabularHQReport, MonitoringReportMixin):
                 closed=False,
             )
 
+        @memoized
         def inactive_count(self):
             """Open clients not seen in the last 120 days"""
             return self.report.get_number_cases(
@@ -67,6 +68,7 @@ class CaseActivityReport(StandardTabularHQReport, MonitoringReportMixin):
                 closed=False,
             )
 
+        @memoized
         def modified_count(self, startdate=None, enddate=None):
             enddate = enddate or self.report.utc_now
             return self.report.get_number_cases(
@@ -75,6 +77,7 @@ class CaseActivityReport(StandardTabularHQReport, MonitoringReportMixin):
                 modified_before=enddate,
             )
 
+        @memoized
         def closed_count(self, startdate=None, enddate=None):
             enddate = enddate or self.report.utc_now
             return self.report.get_number_cases(
@@ -92,15 +95,19 @@ class CaseActivityReport(StandardTabularHQReport, MonitoringReportMixin):
             self.rows = rows
             self._header = header
 
+        @memoized
         def active_count(self):
             return sum([row.active_count() for row in self.rows])
 
+        @memoized
         def inactive_count(self):
             return sum([row.inactive_count() for row in self.rows])
 
+        @memoized
         def modified_count(self, startdate=None, enddate=None):
             return sum([row.modified_count(startdate, enddate) for row in self.rows])
 
+        @memoized
         def closed_count(self, startdate=None, enddate=None):
             return sum([row.closed_count(startdate, enddate) for row in self.rows])
 
@@ -165,6 +172,7 @@ class CaseActivityReport(StandardTabularHQReport, MonitoringReportMixin):
         return map(format_row, rows)
 
     def get_number_cases(self, user_id, modified_after=None, modified_before=None, closed=None):
+        print "call out to couch"
         key = [self.domain, {} if closed is None else closed, self.case_type or {}, user_id]
 
         if modified_after is None:
