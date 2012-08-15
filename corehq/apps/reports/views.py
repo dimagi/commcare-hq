@@ -218,7 +218,10 @@ def export_default_or_custom_data(request, domain, export_id=None, bulk_export=F
 
     elif export_id:
         # this is a custom export
-        export_object = CustomExportHelper(request, domain, export_id).custom_export
+        try:
+            export_object = CustomExportHelper(request, domain, export_id).custom_export
+        except ResourceNotFound:
+            raise Http404()
     else:
         if not async:
             # this function doesn't support synchronous export without a custom export object
@@ -296,7 +299,10 @@ def edit_custom_export(req, domain, export_id):
     """
     Customize an export
     """
-    helper = CustomExportHelper(req, domain, export_id)
+    try:
+        helper = CustomExportHelper(req, domain, export_id)
+    except ResourceNotFound:
+        raise Http404()
     if req.method == "POST":
         helper.update_custom_export()
     
