@@ -10,6 +10,7 @@ from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.reports.dispatcher import ReportDispatcher
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import render_to_response, json_response, get_url_base
 from corehq.apps.orgs.models import Organization
 from corehq.apps.domain.models import Domain, LICENSES
@@ -156,8 +157,8 @@ def search_snapshots(request, filter_by='', filter='', template="appstore/appsto
     try:
         snapshots, total_rows = Domain.snapshot_search(query, page=page, per_page=PER_PAGE)
     except RequestFailed:
-        logging.Logger('notify').exception("Domain snapshot_search RequestFailed")
-        messages.error(request, "Oops! Our search backend is experiencing problems")
+        notify_exception("Domain snapshot_search RequestFailed")
+        messages.error(request, "Oops! Our search backend is experiencing problems. Please try again later.")
         return redirect('appstore')
     else:
         more_pages = page * PER_PAGE < total_rows
