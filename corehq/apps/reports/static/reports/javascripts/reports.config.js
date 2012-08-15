@@ -1,4 +1,5 @@
 var HQReport = function (options) {
+    'use strict';
     var self = this;
     self.domain = options.domain;
     self.datespan = options.datespan;

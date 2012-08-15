@@ -8,9 +8,26 @@ var HQAsyncReport = function (o) {
     self.issueAttempts = 0;
     self.hqLoading = null;
     self.standardReport = o.standardReport;
+    self.filterRequest = null;
+    self.reportRequest = null;
+
+    self.humanReadableErrors = {
+        400: "Please check your Internet connection!",
+        404: "Report Not Found.",
+        408: "Request timed out when rendering this report. This might be an issue with our servers"+
+            " or with your Internet connection. We encourage you to report an issue to CommCare HQ Support so we"+
+            " can look into any possible issues.",
+        500: "Problem Rendering Report. Please report this issue to CommCare HQ Support," +
+            " so we can fix it as soon as possible.",
+        502: "Bad Gateway. Please contact CommCare HQ Support.",
+        503: "CommCare HQ is experiencing server difficulties. We're working quickly to resolve it."+
+            " Thank you for your patience. We are extremely sorry.",
+        504: "Gateway Timeout. Please contact CommCare HQ Support."
+    };
 
 
     var loadFilters = function (data) {
+        self.filterRequest = null;
         $('#hq-report-filters').html(data.filters);
         $('#reportFiltersAccordion').removeClass('hide');
         self.resetFilterState();
@@ -29,11 +46,12 @@ var HQAsyncReport = function (o) {
             self.updateReport(false, params);
             return false;
         });
+
     };
 
     self.updateFilters = function (form_params) {
         self.standardReport.saveDatespanToCookie();
-        $.ajax({
+        self.filterRequest = $.ajax({
             url: window.location.pathname.replace('/'+self.standardReport.baseSlug+'/',
                 '/'+self.standardReport.baseSlug+'/async/filters/')+"?"+form_params,
             dataType: 'json',
@@ -61,11 +79,12 @@ var HQAsyncReport = function (o) {
             }
         }
 
-        $.ajax({
+        self.reportRequest = $.ajax({
             url: window.location.pathname.replace('/'+self.standardReport.baseSlug+'/',
                 '/'+self.standardReport.baseSlug+'/async/')+"?"+process_filters+params,
             dataType: 'json',
             success: function(data) {
+                self.reportRequest = null;
                 if (data.filters)
                     loadFilters(data);
                 self.issueAttempts = 0;
@@ -82,11 +101,21 @@ var HQAsyncReport = function (o) {
 
                 self.submitButton.removeClass('btn-primary').button('standard');
             },
-            error: function () {
-                if (self.issueAttempts > 0)
-                    self.loadingIssueModal.find('.btn-primary').button('fail');
-                self.issueAttempts += 1;
-                self.loadingIssueModal.modal('show');
+            error: function (data) {
+                self.reportRequest = null;
+                if (data.status != 0) {
+                    var humanReadable = self.humanReadableErrors[data.status];
+                    self.loadingIssueModal.find('.report-error-status').html('<strong>'+data.status+'</strong> ' +
+                        ((humanReadable) ? humanReadable : ""));
+                    if (self.issueAttempts > 0)
+                        self.loadingIssueModal.find('.btn-primary').button('fail');
+                    self.issueAttempts += 1;
+                    self.loadingIssueModal.modal('show');
+                } else {
+                    self.hqLoading = $('.hq-loading');
+                    self.hqLoading.find('h4').text("Loading Stopped");
+                    self.hqLoading.find('img').attr('style', 'visibility: hidden;');
+                }
             },
             beforeSend: function () {
                 self.submitButton.button('loading');
@@ -112,5 +141,6 @@ var HQAsyncReport = function (o) {
             self.hqLoading.find('h4').text('We were unsuccessful loading the report:').attr('style', 'margin-bottom: 10px;');
         }
     });
+
 
 };
