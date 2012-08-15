@@ -12,9 +12,11 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404,\
 from django.shortcuts import redirect
 from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
 from corehq.apps.app_manager.models import import_app
+from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.utils import normalize_domain_name, legacy_domain_re, get_domain_from_url
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.users.util import format_username
+from dimagi.utils.logging import notify_exception
 
 from dimagi.utils.web import render_to_response, get_url_base
 from django.core.urlresolvers import reverse
@@ -137,6 +139,14 @@ def logout(req, template_name="hqwebapp/loggedout.html"):
     req.base_template = settings.BASE_TEMPLATE
     response = django_logout(req, **{"template_name" : template_name})
     return HttpResponseRedirect(reverse('login'))
+
+@require_superuser
+def debug_notify(request):
+    try:
+        0/0
+    except ZeroDivisionError:
+        notify_exception(request, "If you want to achieve a 500-style email-out but don't want the user to see a 500, use notify_exception(request[, message])")
+    return HttpResponse("Email should have been sent")
 
 def bug_report(req):
     report = dict([(key, req.POST.get(key, '')) for key in (
