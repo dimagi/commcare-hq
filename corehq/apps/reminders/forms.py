@@ -6,7 +6,7 @@ from django.forms.fields import *
 from django.forms.forms import Form
 from django.forms import Field, Widget, Select, TextInput
 from django.utils.datastructures import DotExpandedDict
-from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_USER, RECIPIENT_CASE, MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET
+from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_USER, RECIPIENT_CASE, MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET, SurveySample
 from dimagi.utils.parsing import string_to_datetime
 
 METHOD_CHOICES = (
@@ -385,6 +385,9 @@ class SurveyForm(Form):
     sample_id = CharField()
     sample_name = CharField()
     sample_contacts = SampleContactsField()
+    refresh_sample = CharField(required=False)
+    refresh_sample_name = ""
+    refresh_sample_contacts = []
 
     def clean_form_id(self):
         form_id = self.cleaned_data.get("form_id")
@@ -392,5 +395,29 @@ class SurveyForm(Form):
             raise ValidationError("Please choose a questionnaire.")
         else:
             return form_id
+
+    def clean_refresh_sample(self):
+        value = self.cleaned_data.get("refresh_sample")
+        if value == "1":
+            sample_id = self.cleaned_data.get("sample_id")
+            if sample_id == "--new--":
+                self.refresh_sample_name = ""
+                self.refresh_sample_contacts = []
+            else:
+                sample = SurveySample.get(sample_id)
+                self.refresh_sample_name = sample.name
+                self.refresh_sample_contacts = sample.contacts
+            raise ValidationError("") # Raise a dummy validation error so that the form does not get processed, but instead just refreshes the sample
+        return value
+
+    def clean(self):
+        cleaned_data = super(SurveyForm, self).clean()
+        if "refresh_sample" in self._errors:
+            if "sample_name" in self._errors:
+                del self._errors["sample_name"]
+            if "sample_contacts" in self._errors:
+                del self._errors["sample_contacts"]
+        return cleaned_data
+
 
 
