@@ -172,7 +172,6 @@ class CaseActivityReport(StandardTabularHQReport, MonitoringReportMixin):
         return map(format_row, rows)
 
     def get_number_cases(self, user_id, modified_after=None, modified_before=None, closed=None):
-        print "call out to couch"
         key = [self.domain, {} if closed is None else closed, self.case_type or {}, user_id]
 
         if modified_after is None:
