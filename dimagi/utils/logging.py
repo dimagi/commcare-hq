@@ -38,4 +38,13 @@ def log_exception(e=None, extra_info=""):
     logging.error(traceback_string)
     #exception_logged.send(sender="logutil", exc_info=(exc_type, value, tb), extra_info=extra_info)
 
-notify_logger = logging.Logger('notify')
+notify_logger = logging.getLogger('notify')
+
+def notify_exception(request, message=None):
+    notify_logger.error('Notify Exception: %s' % (message or request.path),
+        exc_info=sys.exc_info(),
+        extra={
+            'status_code': 500,
+            'request':request
+        }
+    )
