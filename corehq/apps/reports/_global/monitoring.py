@@ -584,31 +584,37 @@ class FormCompletionVsSubmissionTrendsReport(StandardTabularHQReport, StandardDa
             ).all()
             for item in data:
                 vals = item.get('value')
-                completion_time = dateutil.parser.parse(vals.get('completion_time'))
-                completion_time = completion_time.replace(tzinfo=pytz.utc)
+                completion_time = dateutil.parser.parse(vals.get('completion_time')).replace(tzinfo=None)
+                completion_dst = tz_utils.is_timezone_in_dst(self.timezone, completion_time)
+                completion_time = self.timezone.localize(completion_time, is_dst=completion_dst)
                 submission_time = dateutil.parser.parse(vals.get('submission_time'))
                 submission_time = submission_time.replace(tzinfo=pytz.utc)
                 td = submission_time-completion_time
 
                 DFORMAT  = "%d %b %Y, %H:%M"
                 td_total = (td.seconds + td.days * 24 * 3600)
-
                 rows.append([
                     self.get_user_link(self.domain, user),
-                    completion_time.strftime(DFORMAT),
-                    submission_time.strftime(DFORMAT),
-                    self.view_form_link(item.get('id', '')),
-                    util.format_datatables_data(text=self.format_td_status(td), sort_key=td_total)
+                    self._format_date(completion_time),
+                    self._format_date(submission_time),
+                    self._view_form_link(item.get('id', '')),
+                    util.format_datatables_data(text=self._format_td_status(td), sort_key=td_total)
                 ])
 
                 if td_total >= 0:
                     total_seconds += td_total
                     total += 1
 
-        self.total_row = ["Average", "-", "-", "-", self.format_td_status(int(total_seconds/total), False) if total > 0 else "--"]
+        self.total_row = ["Average", "-", "-", "-", self._format_td_status(int(total_seconds/total), False) if total > 0 else "--"]
         return rows
 
-    def format_td_status(self, td, use_label=True):
+    def _format_date(self, date, d_format="%d %b %Y, %H:%M"):
+        return util.format_datatables_data(
+            "%s (%s)" % (date.strftime(d_format), date.tzinfo._tzname),
+            date
+        )
+
+    def _format_td_status(self, td, use_label=True):
         status = list()
         template = '<span class="label %(klass)s">%(status)s</span>'
         klass = ""
@@ -638,5 +644,5 @@ class FormCompletionVsSubmissionTrendsReport(StandardTabularHQReport, StandardDa
         else:
             return ", ".join(status)
 
-    def view_form_link(self, instance_id):
+    def _view_form_link(self, instance_id):
         return '<a class="btn" href="%s">View Form</a>' % reverse('render_form_data', args=[self.domain, instance_id])
