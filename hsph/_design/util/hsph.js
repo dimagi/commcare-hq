@@ -67,6 +67,8 @@ function HSPHEntry(doc) {
 
     self.getBirthStats = function () {
         self.data.numBirths = 0;
+        self.data.birthRegistration = isDCOBirthRegReport(doc);
+
         if (self.form.mother_delivered_or_referred === "delivered" && self.form.date_delivery) {
             self.data.numBirths = (self.form.multiple_birth === 'yes') ?
                                     parseInt(self.form.multiple_birth_number) : 1;

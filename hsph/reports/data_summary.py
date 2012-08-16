@@ -5,11 +5,12 @@ from dimagi.utils.couch.database import get_db
 from hsph.fields import IHForCHFField
 from hsph.reports.common import HSPHSiteDataMixin
 
-class ProgramDataSummaryReport(StandardTabularHQReport, StandardDateHQReport, HSPHSiteDataMixin):
-    name = "Program Data Summary"
-    slug = "hsph_program_summary"
+class PrimaryOutcomeReport(StandardTabularHQReport, StandardDateHQReport, HSPHSiteDataMixin):
+    name = "Primary Outcome Report"
+    slug = "hsph_priamry_outcome"
     fields = ['corehq.apps.reports.fields.DatespanField',
               'hsph.fields.SiteField']
+    show_all_rows_option = True
 
     def get_parameters(self):
         self.generate_sitemap()
@@ -49,8 +50,8 @@ class ProgramDataSummaryReport(StandardTabularHQReport, StandardDateHQReport, HS
         positive_outcomes.css_span = 2
 
 
-        primary_outcome = DataTablesColumn("Primary Outcome Positive")
-        negative_outcome = DataTablesColumn("Total Negative Outcomes")
+        primary_outcome = DataTablesColumn("Primary Outcome Yes")
+        negative_outcome = DataTablesColumn("Primary Outcome No")
         lost = DataTablesColumn("Lost to Followup")
 
         return DataTablesHeader(region,
@@ -77,7 +78,7 @@ class ProgramDataSummaryReport(StandardTabularHQReport, StandardDateHQReport, HS
                 item = item.get('value', {})
                 region, district, site = self.get_site_table_values(key[1:4])
                 stat_keys = ['maternalDeaths', 'maternalNearMisses', 'stillBirthEvents', 'neonatalMortalityEvents']
-                birth_events = item.get('totalBirthEvents', 0)
+                birth_events = item.get('totalBirthEventsOnRegistration', 0)
                 row = [region,
                         district,
                         site,
@@ -117,7 +118,7 @@ class ProgramDataSummaryReport(StandardTabularHQReport, StandardDateHQReport, HS
 
 class SecondaryOutcomeReport(StandardDateHQReport):
     name = "Secondary Outcome Report"
-    slug = "hsph_comparative_data_summary"
+    slug = "hsph_secondary_outcome"
     fields = ['corehq.apps.reports.fields.DatespanField']
     template_name = 'hsph/reports/comparative_data_summary.html'
 
