@@ -234,7 +234,11 @@ def delete_keyword(request, domain, keyword_id):
     return HttpResponseRedirect(reverse("manage_surveys", args=[domain]))
 
 @login_and_domain_required
-def add_survey(request, domain):
+def add_survey(request, domain, survey_id=None):
+    survey = None
+    if survey_id is not None:
+        survey = Survey.get(survey_id)
+    
     if request.method == "POST":
         form = SurveyForm(request.POST)
         if form.is_valid():
@@ -253,17 +257,40 @@ def add_survey(request, domain):
                     contacts = sample_contacts
                 )
                 sample.save()
-                sample_id = sample._id
+            else:
+                sample = SurveySample.get(sample_id)
+                sample.name = sample_name
+                sample.contacts = sample_contacts
+                sample.save()
             
-            survey = Survey (
-                domain = domain,
-                name = name,
-                form_id = form_id,
-                sample_id = sample_id
-            )
+            if survey is None:
+                survey = Survey (
+                    domain = domain,
+                    name = name,
+                    form_id = form_id,
+                    sample_id = sample._id,
+                    schedule_date = schedule_date,
+                    schedule_time = schedule_time
+                )
+            else:
+                survey.name = name
+                survey.form_id = form_id
+                survey.sample_id = sample._id
+                survey.schedule_date = schedule_date
+                survey.schedule_time = schedule_time
             survey.save()
+            return HttpResponseRedirect(reverse("edit_survey", args=[domain, survey._id]))
     else:
         initial = {}
+        if survey is not None:
+            sample = SurveySample.get(survey.sample_id)
+            initial["name"] = survey.name
+            initial["form_id"] = survey.form_id
+            initial["sample_id"] = survey.sample_id
+            initial["schedule_date"] = survey.schedule_date
+            initial["schedule_time"] = survey.schedule_time
+            initial["sample_name"] = sample.name
+            initial["sample_contacts"] = sample.contacts
         form = SurveyForm(initial=initial)
     
     form_list = get_form_list(domain)

@@ -14,4 +14,5 @@ urlpatterns = patterns('corehq.apps.reminders.views',
     url(r'^edit_keyword/(?P<keyword_id>[\w-]+)/$', 'add_keyword', name='edit_keyword'),
     url(r'^delete_keyword/(?P<keyword_id>[\w-]+)/$', 'delete_keyword', name='delete_keyword'),
     url(r'^add_survey/$', 'add_survey', name='add_survey'),
+    url(r'^edit_survey/(?P<survey_id>[\w-]+)/$', 'add_survey', name='edit_survey'),
 )

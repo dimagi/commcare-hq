@@ -775,6 +775,8 @@ class Survey(Document):
     name = StringProperty()
     form_id = StringProperty()
     sample_id = StringProperty()
+    schedule_date = DateProperty()
+    schedule_time = TimeProperty()
     
 
 from .signals import *
