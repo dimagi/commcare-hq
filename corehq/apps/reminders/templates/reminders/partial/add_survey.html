@@ -1,22 +1,4 @@
-{% extends "reminders/reminders_base.html" %}
-
-{% block head %}{{ block.super }}
-<style type="text/css">
-    h2 {
-        border-bottom: 1px solid #59C;
-        color: #59C;
-    }
-    .errorlist ul {
-        margin: 0;
-        padding: 0;
-    }
-    .errorlist li {
-        background-color: #F88;
-        border: 1px solid #A44;
-        padding: 2px;
-    }
-</style>
-{% endblock %}
+{% extends "reminders/survey_base.html" %}
 
 {% block js-inline %}{{ block.super }}
 <script type="text/javascript">
@@ -69,7 +51,7 @@
 
 {% endblock %}
 
-{% block reminders_content %}
+{% block survey_content %}
 <br />
 <form id="survey_form" action="#" method="post">
     <h2>Survey</h2>

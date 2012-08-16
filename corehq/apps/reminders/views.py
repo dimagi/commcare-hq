@@ -267,14 +267,14 @@ def add_survey(request, domain, survey_id=None):
                 survey = Survey (
                     domain = domain,
                     name = name,
-                    form_id = form_id,
+                    form_unique_id = form_id,
                     sample_id = sample._id,
                     schedule_date = schedule_date,
                     schedule_time = schedule_time
                 )
             else:
                 survey.name = name
-                survey.form_id = form_id
+                survey.form_unique_id = form_id
                 survey.sample_id = sample._id
                 survey.schedule_date = schedule_date
                 survey.schedule_time = schedule_time
@@ -285,7 +285,7 @@ def add_survey(request, domain, survey_id=None):
         if survey is not None:
             sample = SurveySample.get(survey.sample_id)
             initial["name"] = survey.name
-            initial["form_id"] = survey.form_id
+            initial["form_id"] = survey.form_unique_id
             initial["sample_id"] = survey.sample_id
             initial["schedule_date"] = survey.schedule_date
             initial["schedule_time"] = survey.schedule_time
@@ -305,4 +305,13 @@ def add_survey(request, domain, survey_id=None):
         "sample_list" : sample_list,
     }
     return render_to_response(request, "reminders/partial/add_survey.html", context)
+
+@login_and_domain_required
+def survey_list(request, domain):
+    context = {
+        "domain" : domain,
+        "surveys" : Survey.get_all(domain)
+    }
+    return render_to_response(request, "reminders/partial/survey_list.html", context)
+
 
