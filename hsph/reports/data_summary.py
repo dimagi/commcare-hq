@@ -115,8 +115,8 @@ class ProgramDataSummaryReport(StandardTabularHQReport, StandardDateHQReport, HS
         return rows
 
 
-class ComparativeDataSummaryReport(StandardDateHQReport):
-    name = "Comparative Data Summary Report"
+class SecondaryOutcomeReport(StandardDateHQReport):
+    name = "Secondary Outcome Report"
     slug = "hsph_comparative_data_summary"
     fields = ['corehq.apps.reports.fields.DatespanField']
     template_name = 'hsph/reports/comparative_data_summary.html'
