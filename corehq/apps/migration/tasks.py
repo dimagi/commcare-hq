@@ -1,10 +1,12 @@
+from celery.log import get_task_logger
 from celery.task import task
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.migration.post import post_data
 from corehq.apps.migration.util.submission_xml import prepare_for_resubmission
 from corehq.apps.users.models import CommCareUser
-import logging
 from couchforms.models import XFormInstance
+
+logging = get_task_logger()
 
 def _resubmit_form(url, form, user_id_mapping, owner_id_mapping):
     xml = prepare_for_resubmission(form.get_xml(), user_id_mapping, owner_id_mapping, salt=url)
