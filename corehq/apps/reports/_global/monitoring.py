@@ -307,6 +307,7 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport, MonitoringRepor
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
+    dates_in_utc = True
 
     def get_headers(self):
         self.dates = [self.datespan.startdate]
@@ -320,15 +321,18 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport, MonitoringRepor
         return headers
 
     def get_rows(self):
-        utc_dates = [tz_utils.adjust_datetime_to_timezone(date, self.timezone.zone, pytz.utc.zone) for date in self.dates]
-        date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(utc_dates)])
+        if self.dates_in_utc:
+            _dates = [tz_utils.adjust_datetime_to_timezone(date, self.timezone.zone, pytz.utc.zone) for date in self.dates]
+        else:
+            _dates = self.dates
+        date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(_dates)])
 
         key = [self.domain]
         results = get_db().view(
             self.couch_view,
             reduce=False,
-            startkey=key+[self.datespan.startdate_param_utc],
-            endkey=key+[self.datespan.enddate_param_utc]
+            startkey=key+[self.datespan.startdate_param_utc if self.dates_in_utc else self.datespan.startdate_param],
+            endkey=key+[self.datespan.enddate_param_utc if self.dates_in_utc else self.datespan.enddate_param]
         ).all()
 
         user_map = dict([(user.user_id, i) for (i, user) in enumerate(self.users)])
@@ -374,6 +378,7 @@ class DailyFormCompletionsReport(DailyReport):
     name = "Daily Form Completions"
     slug = "daily_completions"
     couch_view = 'reports/daily_completions'
+    dates_in_utc = False
 
 
 class FormCompletionTrendsReport(StandardTabularHQReport, StandardDateHQReport, MonitoringReportMixin):
