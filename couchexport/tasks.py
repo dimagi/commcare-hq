@@ -1,4 +1,4 @@
-import logging
+from celery.log import get_task_logger
 from unidecode import unidecode
 from celery.decorators import task
 from django.core.cache import cache
@@ -9,6 +9,8 @@ from couchexport.models import Format, FakeCheckpoint
 import tempfile
 import os
 import stat
+
+logging = get_task_logger()
 
 @task
 def export_async(custom_export, download_id, format=None, filename=None, previous_export_id=None, filter=None):
