@@ -5,8 +5,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm
-from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, SurveyKeyword, Survey, SurveySample
-from corehq.apps.users.models import CouchUser
+from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST
+from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.web import render_to_response
 from dimagi.utils.parsing import string_to_datetime
 from tropo import Tropo
@@ -279,7 +279,7 @@ def add_survey(request, domain, survey_id=None):
                 survey.schedule_date = schedule_date
                 survey.schedule_time = schedule_time
             survey.save()
-            return HttpResponseRedirect(reverse("edit_survey", args=[domain, survey._id]))
+            return HttpResponseRedirect(reverse("survey_list", args=[domain]))
     else:
         initial = {}
         if survey is not None:
@@ -303,6 +303,8 @@ def add_survey(request, domain, survey_id=None):
         "form" : form,
         "form_list" : form_list,
         "sample_list" : sample_list,
+        "method_list" : SURVEY_METHOD_LIST,
+        "user_list" : CommCareUser.by_domain(domain).all(),
     }
     return render_to_response(request, "reminders/partial/add_survey.html", context)
 

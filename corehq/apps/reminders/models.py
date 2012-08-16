@@ -36,6 +36,8 @@ MATCH_REGEX = "REGEX"
 MATCH_ANY_VALUE = "ANY_VALUE"
 MATCH_TYPE_CHOICES = [MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE]
 
+SURVEY_METHOD_LIST = ["SMS","CATI"]
+
 def is_true_value(val):
     return val == 'ok' or val == 'OK'
 

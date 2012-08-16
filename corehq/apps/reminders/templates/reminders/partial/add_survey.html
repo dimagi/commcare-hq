@@ -7,6 +7,8 @@
         var td1 = document.createElement("TD");
         var td2 = document.createElement("TD");
         var td3 = document.createElement("TD");
+        var td4 = document.createElement("TD");
+        var td5 = document.createElement("TD");
         var input1 = document.createElement("INPUT");
         input1.setAttribute("type", "text");
         input1.setAttribute("class", "short");
@@ -14,6 +16,22 @@
         var input2 = document.createElement("INPUT");
         input2.setAttribute("type", "text");
         input2.setAttribute("name", "sample_contact." + current_sample_contact_num + ".phone_number");
+        var select1 = document.createElement("SELECT");
+        select1.setAttribute("name", "sample_contact." + current_sample_contact_num + ".method");
+        {% for method in method_list %}
+        var option = document.createElement("OPTION");
+        option.setAttribute("value", "{{ method }}");
+        option.innerHTML = "{{ method }}";
+        select1.appendChild(option);
+        {% endfor %}
+        var select2 = document.createElement("SELECT");
+        select2.setAttribute("name", "sample_contact." + current_sample_contact_num + ".cati_operator");
+        {% for user in user_list %}
+        var option = document.createElement("OPTION");
+        option.setAttribute("value", "{{ user.get_id }}");
+        option.innerHTML = "{{ user.raw_username }}";
+        select2.appendChild(option);
+        {% endfor %}
         var button = document.createElement("SPAN");
         button.setAttribute("class", "btn btn-danger");
         button.innerHTML = '<i class="icon icon-white icon-remove"></i> Remove';
@@ -23,9 +41,13 @@
         tr.appendChild(td1);
         tr.appendChild(td2);
         tr.appendChild(td3);
+        tr.appendChild(td4);
+        tr.appendChild(td5);
         td1.appendChild(input1);
         td2.appendChild(input2);
-        td3.appendChild(button);
+        td3.appendChild(select1);
+        td4.appendChild(select2);
+        td5.appendChild(button);
         //
         return tr;
     }
@@ -153,6 +175,8 @@
         <tr>
             <th>ID</th>
             <th>Phone Number</th>
+            <th>Method</th>
+            <th>CATI Operator</th>
             <th></th>
         </tr>
         {% if form.refresh_sample.value == "1" %}
@@ -160,6 +184,8 @@
             <tr>
                 <td><input name="sample_contact.0.id" type="text" class="short" /></td>
                 <td><input name="sample_contact.0.phone_number" type="text" /></td>
+                <td><select name="sample_contact.0.method">{% for method in method_list %}<option value="{{ method }}">{{ method }}</option>{% endfor %}</select></td>
+                <td><select name="sample_contact.0.cati_operator">{% for user in user_list %}<option value="{{ user.get_id }}">{{ user.raw_username }}</option>{% endfor %}</select></td>
                 <td><span class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Remove</span></td>
             </tr>
             {% else %}
@@ -167,6 +193,8 @@
                 <tr>
                     <td><input name="sample_contact.{{ forloop.counter0 }}.id" type="text" class="short" value="{{ contact.id }}" /></td>
                     <td><input name="sample_contact.{{ forloop.counter0 }}.phone_number" type="text" value="{{ contact.phone_number }}" /></td>
+                    <td><select name="sample_contact.{{ forloop.counter0 }}.method">{% for method in method_list %}<option value="{{ method }}" {% if contact.method == method %}selected="selected"{% endif %}>{{ method }}</option>{% endfor %}</select></td>
+                    <td><select name="sample_contact.{{ forloop.counter0 }}.cati_operator">{% for user in user_list %}<option value="{{ user.get_id }}" {% if contact.cati_operator == user.get_id %}selected="selected"{% endif %}>{{ user.raw_username }}</option>{% endfor %}</select></td>
                     <td><span class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Remove</span></td>
                 </tr>
                 {% endfor %}
@@ -176,6 +204,8 @@
             <tr>
                 <td><input name="sample_contact.0.id" type="text" class="short" /></td>
                 <td><input name="sample_contact.0.phone_number" type="text" /></td>
+                <td><select name="sample_contact.0.method">{% for method in method_list %}<option value="{{ method }}">{{ method }}</option>{% endfor %}</select></td>
+                <td><select name="sample_contact.0.cati_operator">{% for user in user_list %}<option value="{{ user.get_id }}">{{ user.raw_username }}</option>{% endfor %}</select></td>
                 <td><span class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Remove</span></td>
             </tr>
             {% else %}
@@ -183,6 +213,8 @@
                 <tr>
                     <td><input name="sample_contact.{{ forloop.counter0 }}.id" type="text" class="short" value="{{ contact.id }}" /></td>
                     <td><input name="sample_contact.{{ forloop.counter0 }}.phone_number" type="text" value="{{ contact.phone_number }}" /></td>
+                    <td><select name="sample_contact.{{ forloop.counter0 }}.method">{% for method in method_list %}<option value="{{ method }}" {% if contact.method == method %}selected="selected"{% endif %}>{{ method }}</option>{% endfor %}</select></td>
+                    <td><select name="sample_contact.{{ forloop.counter0 }}.cati_operator">{% for user in user_list %}<option value="{{ user.get_id }}" {% if contact.cati_operator == user.get_id %}selected="selected"{% endif %}>{{ user.raw_username }}</option>{% endfor %}</select></td>
                     <td><span class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Remove</span></td>
                 </tr>
                 {% endfor %}
