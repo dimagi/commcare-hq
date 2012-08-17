@@ -561,8 +561,8 @@ CUSTOM_REPORT_MAP = {
                     'hsph.reports.call_center.CallCenterFollowUpSummaryReport'
                     ],
         'Data Summary Reports': [
-                    'hsph.reports.data_summary.ProgramDataSummaryReport',
-                    'hsph.reports.data_summary.ComparativeDataSummaryReport']
+                    'hsph.reports.data_summary.PrimaryOutcomeReport',
+                    'hsph.reports.data_summary.SecondaryOutcomeReport']
     },
     "pathindia": {
         'Custom Reports': [
