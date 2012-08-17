@@ -590,7 +590,8 @@ class FormCompletionVsSubmissionTrendsReport(StandardTabularHQReport, StandardDa
             for item in data:
                 vals = item.get('value')
                 completion_time = dateutil.parser.parse(vals.get('completion_time')).replace(tzinfo=None)
-                completion_dst = tz_utils.is_timezone_in_dst(self.timezone, completion_time)
+                completion_dst = False if self.timezone == pytz.utc else \
+                                    tz_utils.is_timezone_in_dst(self.timezone, completion_time)
                 completion_time = self.timezone.localize(completion_time, is_dst=completion_dst)
                 submission_time = dateutil.parser.parse(vals.get('submission_time'))
                 submission_time = submission_time.replace(tzinfo=pytz.utc)
