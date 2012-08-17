@@ -372,6 +372,8 @@ class SampleContactsField(Field):
         self.help_text = help_text
     
     def clean(self, value):
+        if len(value) == 0:
+            raise ValidationError("Please add at least one contact.");
         for contact in value:
             if contact["id"] == "" or contact["phone_number"] == "":
                 raise ValidationError("Please enter all fields.")
