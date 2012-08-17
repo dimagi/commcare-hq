@@ -17,8 +17,10 @@ var HQAsyncReport = function (o) {
         408: "Request timed out when rendering this report. This might be an issue with our servers"+
             " or with your Internet connection. We encourage you to report an issue to CommCare HQ Support so we"+
             " can look into any possible issues.",
-        500: "Problem Rendering Report. Please report this issue to CommCare HQ Support," +
-            " so we can fix it as soon as possible.",
+        500: "Problem Rendering Report. Our error monitoring tools have noticed this and we are working quickly to" +
+            " resolve this issue as soon as possible. We encourage you to contact CommCare HQ Support" +
+            " if this issue persists for more than a few minutes. We appreciate any additional information" +
+            " you can give us about this problem so we can fix it immediately.",
         502: "Bad Gateway. Please contact CommCare HQ Support.",
         503: "CommCare HQ is experiencing server difficulties. We're working quickly to resolve it."+
             " Thank you for your patience. We are extremely sorry.",

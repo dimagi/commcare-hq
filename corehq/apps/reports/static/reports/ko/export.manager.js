@@ -70,7 +70,7 @@ var ExportManager = function (o) {
         };
 
     self.updateSelectedExports = function (data, event) {
-        var $checkbox = $(event.srcElement);
+        var $checkbox = $(event.srcElement || event.currentTarget);
         var add_to_list = ($checkbox.attr('checked') === 'checked'),
             downloadButton = $checkbox.parent().parent().parent().find('.dl-export');
         if (add_to_list) {
@@ -90,6 +90,7 @@ var ExportManager = function (o) {
 
         for (var i in self.selected_exports()) {
             var curExpButton = self.selected_exports()[i];
+
             var _id = curExpButton.data('appid') || curExpButton.data('exportid'),
                 xmlns = curExpButton.data('xmlns'),
                 module = curExpButton.data('modulename'),
@@ -144,7 +145,7 @@ var ExportManager = function (o) {
     };
 
     self.requestDownload = function(data, event) {
-        var $button = $(event.srcElement);
+        var $button = $(event.srcElement || event.currentTarget);
         var modalTitle = $button.data('formname') || $button.data('xmlns');
         var downloadUrl = self.downloadUrl || $button.data('dlocation');
 
@@ -164,13 +165,14 @@ var ExportManager = function (o) {
     };
 
     self.checkCustomSheetNameLength = function(data, event) {
-        var $input = $(event.srcElement);
+        var src = event.srcElement || event.currentTarget;
+        var $input = $(src);
         var valLength = $input.val().length;
-        return (valLength < 31 || event.keyCode == 8 || (event.srcElement.selectionEnd-event.srcElement.selectionStart) > 0);
+        return (valLength < 31 || event.keyCode == 8 || (src.selectionEnd-src.selectionStart) > 0);
     };
 
     self.updateCustomSheetNameCharacterCount = function (data, event) {
-        var $input = $(event.srcElement);
+        var $input = $(event.srcElement || event.currentTarget);
         if ($input.data('exportid')) {
             var new_names = self.sheet_names();
             new_names[$input.data('exportid')] = $input.val();
@@ -181,7 +183,7 @@ var ExportManager = function (o) {
     };
 
     self.toggleSelectAllExports = function (data, event) {
-        var $toggleBtn = $(event.srcElement),
+        var $toggleBtn = $(event.srcElement || event.currentTarget),
             check_class = (self.is_custom) ? '.select-custom' : '.select-bulk';
         if ($toggleBtn.data('all'))
             $.each($(check_class), function () {
