@@ -9,8 +9,6 @@ django-kombu
 django-digest
 django-tastypie
 djtables==0.1.1
-Fabric
-gunicorn==0.12.0
 lxml==2.3
 mocker==1.1
 openpyxl==1.5.6
