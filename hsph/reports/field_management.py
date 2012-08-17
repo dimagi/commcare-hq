@@ -44,6 +44,7 @@ class DCOActivityReport(HSPHFieldManagementReport):
             DataTablesColumn("No. of Facility Visits with less than 2 visits/week"),
             DataTablesColumn("No. of Births Recorded"),
             DataTablesColumn("Average time per Birth Record (min)"),
+            DataTablesColumn("No. of Births with no contact information provided"),
             DataTablesColumn("No. of Home Visits assigned"),
             DataTablesColumn("No. of Home Visits completed"),
             DataTablesColumn("No. of Home Visits open at 21 days"))
@@ -61,6 +62,7 @@ class DCOActivityReport(HSPHFieldManagementReport):
             num_fac_visits_lt2 = 0
             num_births = 0
             avg_time = "---"
+            births_without_contact = 0
             num_home_assigned = 0
             num_home_completed = 0
             num_home_21days = 0
@@ -80,6 +82,7 @@ class DCOActivityReport(HSPHFieldManagementReport):
                 num_fac_visits_lt2 = data.get('lessThanTwoWeeklyFacilityVisits', 0)
                 num_births = data.get('totalBirths', 0)
                 reg_length = data.get('averageRegistrationLength', None)
+                births_without_contact = data.get('totalBirthsWithoutContact', 0)
                 if reg_length:
                     reg_length = datetime.datetime.fromtimestamp(reg_length//1000)
                     avg_time = reg_length.strftime("%M:%S")
@@ -94,6 +97,7 @@ class DCOActivityReport(HSPHFieldManagementReport):
                 num_fac_visits_lt2,
                 num_births,
                 avg_time,
+                births_without_contact,
                 num_home_assigned,
                 num_home_completed,
                 num_home_21days
