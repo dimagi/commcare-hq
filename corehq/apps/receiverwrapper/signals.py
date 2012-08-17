@@ -82,6 +82,11 @@ def create_case_repeat_records(sender, case, **kwargs):
     from corehq.apps.receiverwrapper.models import CaseRepeater
     create_repeat_records(CaseRepeater, case)
 
+def create_short_form_repeat_records(sender, xform, **kwargs):
+    from corehq.apps.receiverwrapper.models import ShortFormRepeater
+    xform.domain = _get_domain(xform)
+    create_repeat_records(ShortFormRepeater, xform)
+
 def create_repeat_records(repeater_cls, payload):
     domain = payload.domain
     if domain:
@@ -98,4 +103,5 @@ submission_error_received.connect(add_domain)
 submission_error_received.connect(add_app_id)
 
 successful_form_received.connect(create_form_repeat_records)
+successful_form_received.connect(create_short_form_repeat_records)
 case_post_save.connect(create_case_repeat_records)

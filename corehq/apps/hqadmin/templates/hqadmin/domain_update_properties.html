@@ -14,7 +14,7 @@
 <tbody>
 {% for domain in domains %}
     <tr>
-        <td><a href="{% url default_report domain.name %}">{{ domain.name }}</a></td>
+        <td><a href="{% url default_report domain.name %}">{{ domain.display_name }}</a></td>
 		<td>{{ domain.city|default:"" }}</td>
 		<td>{{ domain.country|default:"" }}</td>
 		<td>{{ domain.region|default:"" }}</td>

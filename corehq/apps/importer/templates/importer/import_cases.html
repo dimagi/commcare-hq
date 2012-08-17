@@ -1,0 +1,36 @@
+{% extends 'reports/async/basic.html' %}
+{% load report_tags %}
+
+{% block head %}
+    {{ block.super }}
+{% endblock %}
+
+{% block main_column %}
+    {% if error_text %}
+    <div class="alert alert-info alert-full">
+        <strong>{{error_text}}</strong>
+    </div>
+    {% endif %}
+    
+    <form class="form-horizontal form-report" action="{% url corehq.apps.importer.views.excel_config domain %}" method="post" enctype="multipart/form-data">
+
+    <fieldset>
+        <legend>Select an Excel file from your computer to import</legend>
+        <div class="control-group">
+            <div class="controls">
+                <input class="input-small" name="file" id="file" type="file" />
+                
+                <label for="named_columns">Are there column headers in this file?</label>
+                <select class="input-small" name="named_columns" id="named_columns">
+                    <option selected>yes</option>
+                    <option>no</option>
+                </select>
+            </div>
+        </div>
+    </fieldset>
+    
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary btn-large"><i class="icon-forward icon-white"></i> Next step</button>
+    </div>
+    </form>
+{% endblock %}

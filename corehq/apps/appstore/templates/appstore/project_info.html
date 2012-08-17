@@ -1,0 +1,306 @@
+{% extends "appstore/appstore_base.html" %}
+{% load hq_shared_tags %}
+{% load hq_bootstrap_tags %}
+{% load i18n %}
+
+
+{% block breadcrumb %}
+<li>{{ project.title }}</li>
+{% endblock %}
+
+{% block main_column %}
+
+<div class="page-header row-fluid">
+<div class="span2" style="text-align: center;">
+    {% if project.image_path %}
+        <img src="{% url appstore_project_image project.name %}" style="max-width: 200px; max-height:200px;" />
+    {% endif %}
+</div>
+    <div class="span7">
+        <h1>
+            {{ project.title }}
+            <small>by
+                {% if project.organization %}
+                <a href="{% url orgs_landing project.organization %}">{{ project.organization_doc.title }}</a>
+                {% else %}
+                    {{ project.author }}
+                {% endif %}
+            </small>
+        </h1>
+    <h3>
+        <a class="btn" href="{% url corehq.apps.app_manager.views.default project.name %}">Preview this project</a>
+    </h3>
+        <h3>
+            Ratings: <span class="badge badge-info">{{ num_ratings }}</span>
+        </h3>
+            {% if average_rating %}
+            <div class="span3">
+                <fieldset class="rating_static" id="stars{{ average_rating }} ">
+                    <input type="radio" id="star5{{ average_rating }}"  value="5" disabled=True {% if average_rating == 5 %} checked=True {% endif %} /><label for="star5{{ average_rating }}">5 stars</label>
+                    <input type="radio" id="star4{{ average_rating }}"  value="4" disabled=True {% if average_rating == 4 %} checked=True {% endif %} /><label for="star4{{ average_rating }}">4 stars</label>
+                    <input type="radio" id="star3{{ average_rating }}"  value="3" disabled=True {% if average_rating == 3 %} checked=True {% endif %} /><label for="star3{{ average_rating }}">3 stars</label>
+                    <input type="radio" id="star2{{ average_rating }}"  value="2" disabled=True {% if average_rating == 2 %} checked=True {% endif %} /><label for="star2{{ average_rating }}">2 stars</label>
+                    <input type="radio" id="star1{{ average_rating }}"  value="1" disabled=True {% if average_rating == 1 %} checked=True {% endif %} /><label for="star1{{ average_rating }}">1 star</label>
+                </fieldset>
+            </div>
+            {% endif %}
+    <br/>
+    </div>
+</div>
+<dl class="dl-horizontal">
+    <dt>{% trans 'Description' %}</dt>
+    <dd>
+        {% if project.description %}
+            {{ project.description }}
+        {% else %}
+            <h6>None</h6>
+        {% endif %}
+    </dd>
+    <dt>Category</dt>
+    <dd>
+        {% if project.project_type %}
+            {{ project.project_type }}
+        {% else %}
+            <h6>None</h6>
+        {% endif %}
+    </dd>
+    <dt>Users</dt>
+    <dd>{{ project.copied_from.all_users|length }}</dd>
+    {% if project.city %}
+    <dt>City</dt>
+    <dd>{{ project.city }}</dd>
+    {% endif %}
+    {% if project.country %}
+    <dt>Country</dt>
+    <dd>{{ project.country }}</dd>
+    {% endif %}
+    {% if project.region %}
+    <dt>Region</dt>
+    <dd>{{ project.region }}</dd>
+    {% endif %}
+    <dt>{% trans 'Languages' %}</dt>
+    <dd>
+        {% if project.languages %}
+        {{ project.readable_languages }}
+        {% else %}
+        None
+        {% endif %}
+    </dd>
+    <dt>Active?</dt>
+    <dd>
+        {{ project.copied_from.recent_submissions|yesno:"Yes,No" }}
+    </dd>
+    <dt>License</dt>
+    <dd>{{ project.get_license_display }}</dd>
+    <dt>{% trans 'Copy count' %}</dt>
+    <dd>
+        This version: {{ project.copies|length }};
+        All versions: {{ project.copies_of_parent|length }}
+    </dd>
+ </dl>
+
+<h2>Applications</h2>
+        <div class="accordion" id="application-accordion">
+            {% for app in project.full_applications %}
+                <div class="accordion-group">
+                    <div class="accordion-heading">
+                        <a class="accordion-toggle" href="#application-{{ app.id }}" data-toggle="collapse" data-parent="#application-accordion">{{ app.name }}</a>
+                    </div>
+                    <div id="application-{{ app.id }}" class="accordion-body collapse">
+                        <dl class="dl-horizontal">
+                            <dt>Uses cases?</dt>
+                            <dd>{{ app.has_case_management|yesno:"Yes,No" }}</dd>
+                            <dt>Has media?</dt>
+                            <dd>
+                                {{ app.has_media|yesno:"Yes,No" }}
+                            </dd>
+                            <dt>CommCare</dt>
+                            <dd>
+                                Version {{ app.application_version }}
+                            </dd>
+                            {% if app.user_type %}
+                                <dt>User type</dt>
+                                <dd>{{ app.user_type }}</dd>
+                            {% endif %}
+                            {% if app.phone_model %}
+                                <dt>Phone model</dt>
+                                <dd>{{ app.phone_model }}</dd>
+                            {% endif %}
+                            {% if app.deployment_date %}
+                                <dt>Deployment date</dt>
+                                <dd>{{ app.deployment_date.date }}</dd>
+                            {% endif %}
+                            {% if app.description %}
+                                <dt>{% trans 'Description' %}</dt>
+                                <dd>
+                                    {{ project.description }}
+                                </dd>
+                            {% endif %}
+                            <dd><a href="{% url app_summary project app.id %}">Application summary</a></dd>
+                        </dl>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div>
+            <form action="{% url copy_snapshot_app project.name %}" method="post">
+                <fieldset>
+                    <legend>Copy individual application into existing project</legend>
+                    {% if project.attribution_notes %}
+                        <dl>
+                            <dt>Attribution notes</dt>
+                            <dd>{{ project.attribution_notes }}</dd>
+                        </dl>
+                    {% endif %}
+                    <label for="app_to_copy_select">
+                        Application to Copy
+                    </label>
+                    <select name="app_id" id="app_to_copy_select">
+                        {% for app in project.applications %}
+                        <option value="{{ app.id }}">{{ app.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <label for="project_select">
+                        Destination project
+                    </label>
+                    <select name="project" id="project_select">
+                        {% for p in request.couch_user.projects %}
+                        <option value="{{ p.name }}">{{ p.display_name }}</option>
+                        {% endfor %}
+                    </select>
+                </fieldset>
+                <button class="btn btn-primary" type="submit">Copy application</button>
+            </form>
+            <form method="post" class="form-inline" action="{% url domain_copy_snapshot project %}">
+                <fieldset>
+                    <legend>Copy entire project into new project</legend>
+                    {% if project.attribution_notes %}
+                    <dl>
+                        <dt>Attribution notes</dt>
+                        <dd>{{ project.attribution_notes }}</dd>
+                    </dl>
+                    {% endif %}
+                    <div{% if error_message %} class="error"{% endif %}>
+                        <input type="text" class="span3" id="new_project_name"
+                               name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">
+                        {% if error_message %}
+                        <span class="help-inline">{{ error_message }}</span>
+                        {% endif %}
+                    <button type="submit" class="btn btn-primary">Create New Project</button>
+                    </div>
+
+                </fieldset>
+            </form>
+        </div>
+
+<hr/>
+        <div>
+            <div>
+                <form action="{% url project_info project %}" method="post">
+                    {% if versioned %}
+                    <input type="hidden" name="versioned" value="">
+                    {% else %}
+                    <input type="hidden" name="versioned" value="1">
+                    {% endif %}
+                </form>
+            </div>
+            <h3>
+                Reviews for {% if versioned %} the current version {% else %} all versions {% endif %} of {{ project.copied_from.display_name }}
+                <small><a href="?current={{ current_link }}" class="btn btn-primary">{% if versioned %} View reviews for all versions {% else %} Only show reviews from current version{% endif %}</a></small>
+            </h3>
+            <br/>
+            {% if project.original_doc not in request.couch_user.get_domains %}
+            <div>
+                <a href="#add_review_modal" data-toggle="modal" class="btn btn-inverse">Write a Review</a>
+            </div>
+            {% endif %}
+            <div>
+                
+            </div>
+        </div>
+        {% for review in reviews %}
+        <hr/>
+        <div class="row">
+            <div class="span1">
+                <h4 style="padding-left:25px">{{ forloop.counter }})</h4>
+            </div>
+            <div class="span6">
+        <h4>{{ review.title }}</h4>
+        <div>
+            <p><small> on {{ review.date_published }}</small></p>
+            <fieldset class="rating_static" id="stars{{ review.get_id }}">
+                <input type="radio" id="star5{{ review.get_id }}" value="5" disabled=True {% if review.rating == 5 %} checked=True {% endif %}/><label for="star5{{ review.get_id }}">5 stars</label>
+                <input type="radio" id="star4{{ review.get_id }}" value="4" disabled=True {% if review.rating == 4 %} checked=True {% endif %}/><label for="star4{{ review.get_id }}">4 stars</label>
+                <input type="radio" id="star3{{ review.get_id }}" value="3" disabled=True {% if review.rating == 3 %} checked=True {% endif %}/><label for="star3{{ review.get_id }}">3 stars</label>
+                <input type="radio" id="star2{{ review.get_id }}" value="2" disabled=True {% if review.rating == 2 %} checked=True {% endif %}/><label for="star2{{ review.get_id }}">2 stars</label>
+                <input type="radio" id="star1{{ review.get_id }}" value="1" disabled=True {% if review.rating == 1 %} checked=True {% endif %}/><label for="star1{{ review.get_id }}">1 stars</label>
+            </fieldset>
+
+        </div>
+        <div>{{ review.info }}</div>
+            </div>
+        </div>
+        {% endfor %}
+
+{% endblock %}
+
+
+
+
+
+{% if project.original_doc not in request.couch_user.get_domains %}
+{% block modals %}{{ block.super }}
+<div id="add_review_modal" class="modal hide fade">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">&times;</a>
+        <h3>Write a review for {{ project.copied_from.display_name }}</h3>
+    </div>
+    <form class="form-horizontal" method="post" action="{% url project_info project %}">
+        <div class="modal-body">
+            <fieldset>
+                <legend>Review This App</legend>
+                {% for global_error in form.non_field_errors %}
+                <div class="alert alert-error">
+                    {{ global_error }}
+                </div>
+                {% endfor %}
+                <div class="control-group">
+                    <label class="control-label">Rating</label>
+                    <div class="controls">
+                        <fieldset class="rating" title="Rating">
+                            <input type="radio" id="star5" name="rating" value="5" /><label for="star5">5 stars</label>
+                            <input type="radio" id="star4" name="rating" value="4" /><label for="star4">4 stars</label>
+                            <input type="radio" id="star3" name="rating" value="3" /><label for="star3">3 stars</label>
+                            <input type="radio" id="star2" name="rating" value="2" /><label for="star2">2 stars</label>
+                            <input type="radio" id="star1" name="rating" value="1" checked=True /><label for="star1">1 star</label>
+                        </fieldset>
+                    </div>
+                </div>
+                {% for field in form.visible_fields %}
+                <div class="control-group{% if field.errors %} error{% endif %}">
+                    <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
+                    <div class="controls">
+                        {{ field }}
+                        <span class="help-inline"></span>
+                        {% for error in field.errors %}
+                        <span class="help-inline">{{ error }}</span>
+                        {% endfor %}
+                        {% if field.help_text %}
+                        <p class="help-block">
+                            {{ field.help_text }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </fieldset>
+            <input type="hidden" name="versioned" value="{{ versioned }}">
+        </div>
+        <div class="modal-footer">
+            <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+            <button type="submit" class="btn btn-primary">Post</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+{% endif %}

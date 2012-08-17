@@ -4,6 +4,8 @@ from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
 from datetime import datetime
 from corehq.apps.unicel import api as unicel_api
+
+from corehq.apps.tropo import api as tropo_api
 from corehq.apps.sms import mach_api
 from corehq.apps.sms.util import format_message_list
 from corehq.apps.smsforms.models import XFormsSession

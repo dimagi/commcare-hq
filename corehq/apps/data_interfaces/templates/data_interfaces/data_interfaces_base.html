@@ -1,4 +1,5 @@
 {% extends 'reports/report_base.html' %}
+{% load report_tags %}
 
 {% block page-title %}
 <ul class="breadcrumb">
@@ -18,10 +19,11 @@
 {% block sidebar %}
 <nav>
     <ul class="nav nav-list">
-        <li class="nav-header">Case Management</li>
-        <li {% if slug == 'reassign_cases' %}class="active"{% endif %}>
-            <a href="{% url data_interface_dispatcher domain 'reassign_cases' %}">Reassign Cases</a>
-        </li>
+{#        <li class="nav-header">Case Management</li>#}
+{#        <li {% if slug == 'reassign_cases' %}class="active"{% endif %}>#}
+{#            <a href="{% url data_interface_dispatcher domain 'reassign_cases' %}">Reassign Cases</a>#}
+{#        </li>#}
+        {% data_interfaces_list request.couch_user domain slug %}
     </ul>
 </nav>
 {% endblock %}

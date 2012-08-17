@@ -1,4 +1,5 @@
 from datetime import datetime, date, timedelta
+import logging
 from corehq.apps.sms.models import SMSLog, INCOMING
 from corehq.apps.sms.util import domains_for_phone, users_for_phone,\
     clean_phone_number, clean_outgoing_sms_text
@@ -49,7 +50,7 @@ def _config():
     _check_environ() 
     return settings.UNICEL_CONFIG
 
-def create_from_request(request):
+def create_from_request(request, delay=True):
     """
     From an inbound request (representing an incoming message), 
     create a message (log) object with the right fields populated.
@@ -80,11 +81,22 @@ def create_from_request(request):
                         domain=domain,
                         backend_api=API_ID)
     log.save()
-    
+
+    try:
+        # attempt to bill client
+        from hqbilling.tasks import bill_client_for_sms
+        from hqbilling.models import UnicelSMSBillable
+        if delay:
+            bill_client_for_sms.delay(UnicelSMSBillable, log._id)
+        else:
+            bill_client_for_sms(UnicelSMSBillable, log._id)
+    except Exception as e:
+        logging.debug("UNICEL API contacted, errors in billing. Error: %s" % e)
+
     return log
     
 
-def send(message):
+def send(message, delay=True):
     """
     Send an outbound message using the Unicel API
     """
@@ -104,6 +116,24 @@ def send(message):
         params.extend(UNICODE_PARAMS)
         encoded = message.text.encode("utf_16_be").encode("hex").upper()
         params.append((OutboundParams.MESSAGE, encoded))
-    data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params))).read()
+
+    try:
+        data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params))).read()
+    except Exception:
+        data = None
+    message.save()
+    try:
+        # attempt to bill client
+        from hqbilling.tasks import bill_client_for_sms
+        from hqbilling.models import UnicelSMSBillable
+        if delay:
+            bill_client_for_sms.delay(UnicelSMSBillable, message.get_id, **dict(response=data))
+        else:
+            bill_client_for_sms(UnicelSMSBillable, message.get_id, **dict(response=data))
+    except Exception as e:
+        logging.debug("UNICEL API contacted, errors in billing. Error: %s" % e)
+
+    return data
+
     
     

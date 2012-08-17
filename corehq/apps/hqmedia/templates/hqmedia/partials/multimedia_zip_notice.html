@@ -1,6 +1,6 @@
 {% load multimedia_tags %}
 
-{% if multimedia.images and multimedia.audio %}
+{% if multimedia.images or multimedia.audio %}
     <p>This .zip file is structured to match the multimedia paths referenced in your CommCare application.</p>
     <p><a class="btn btn-large btn-primary" style="color: #ffffff; text-decoration: none;" href="{% url download_multimedia_zip domain app.get_id  %}">Download ZIP</a></p>
 {% else %}

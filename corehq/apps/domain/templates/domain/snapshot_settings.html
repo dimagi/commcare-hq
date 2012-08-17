@@ -1,0 +1,122 @@
+{% extends "users/users_base.html" %}
+{% load hq_bootstrap_tags %}
+{% load i18n %}
+
+{% block subsection-title %}
+<li class="active" xmlns="http://www.w3.org/1999/html">
+    <a href="#">CommCare Exchange</a>
+</li>
+{% endblock %}
+
+{% block user-view %}
+<div>
+    <h3>This project has {{ snapshots|length }} snapshots</h3>
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th></th>
+            <th>Date</th>
+            <th>License</th>
+            <th>In Exchange?</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for snapshot in snapshots %}
+        <tr>
+            <td><a class="btn btn-primary" href="{% url project_info snapshot.name %}">View</a></td>
+            <td>{{ snapshot.snapshot_time }}</a></td>
+            <td>{{ snapshot.get_license_display }}</td>
+            {% if snapshot.published %}
+            <td>
+                {% if snapshot.is_approved %}
+                    <span class="label label-success">Published & approved</span>
+                {% else %}
+                    <span class="label label-warning">Not yet approved</span>
+                {% endif %}
+            </td>
+            <td>
+                <form action="{% url domain_clear_published domain %}" method="POST">
+                    <button class="btn btn-danger" type="submit">Unpublish</button>
+                </form>
+            </td>
+            {% else %}
+            <td></td>
+            <td>
+                <form action="{% url domain_set_published domain snapshot.name %}" method="POST">
+                    <button class="btn btn-primary" type="submit">Publish</button> (only one snapshot can be published at a time)
+                </form>
+            </td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% if error_message %}
+<div class="alert alert-error">{{ error_message }}</div>
+{% endif %}
+<form class="form-horizontal" method="get" action="{% url domain_create_snapshot domain %}">
+    <fieldset>
+        <legend>
+            Create a new snapshot
+        </legend>
+        <div class="alert alert-info">
+            <a href="#" class="close" data-dismiss="alert">×</a>
+            <h3>You are about to create a snapshot that contains the following builds:</h3>
+            <p>Snapshots are taken from the latest starred builds, or, if no builds are starred, from the latest build overall.</p>
+        </div>
+        <div>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>
+                        Name
+                    </th>
+                    <th>
+                        Build source
+                    </th>
+                    <th>
+                        Version
+                    </th>
+                    <th>
+                        Build comment
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for app in request.project.applications %}
+                <tr>
+
+                    {% if app.get_latest_saved %}
+                    <td><a href="{% url app_summary domain app.id %}">{{ app.get_latest_saved.name }}</a></td>
+                    <td>
+                        {% if app.get_latest_saved.is_released %}
+                        Latest starred build
+                        {% else %}
+                        No starred builds - From latest build
+                        {% endif %}
+                    </td>
+                    <td>{{ app.get_latest_saved.version }}</td>
+                    <td>
+                        {{ app.get_latest_saved.build_comment }}
+                    </td>
+                    {% else %}
+                    <td><a href="{% url app_summary domain app.id %}">{{ app.name }}</a></td>
+                    <td>
+                        No builds - from current copy
+                    </td>
+                    <td>
+                        {{ app.version }}
+                    </td>
+                    <td></td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </fieldset>
+
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Create snapshot from these builds</button></div>
+</form>
+{% endblock %}>

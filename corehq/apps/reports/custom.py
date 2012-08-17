@@ -2,6 +2,7 @@ from StringIO import StringIO
 import json
 from datetime import datetime
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext, Context
@@ -15,42 +16,63 @@ from couchexport.models import Format
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 
+# Eventually this should all be merged with the StandardHQReport structure. Someday.
+# Too confusing to have this and standard.py be essentially very similar things.
+
 class HQReport(object):
-    name = ""
-    slug = ""
-    base_slug = None # for instance, 'reports' or 'manage'
+    name = "" # the name of the report, will show up in navigation sidebar
+    base_slug = None # (ex: manage, billing, reports)
+    slug = "" # report's unique (per base_slug) url slug
+    icon = None
 
-    description = ""
     report_partial = None
-    title = None
-    headers = None
-    rows = None
-    individual = None
-    case_type = None
-    group = None
-    form = None,
-    datespan = None
-    show_time_notice = False
-    fields = []
-    exportable = False
+    dispatcher = 'report_dispatcher'
 
-    asynchronous = False
-    template_name = None
+    is_admin_report=False
 
+    # used in StandardHQReport --- should check on how these are used in legacy custom reports
+    individual = None # selected mobile worker
+    case_type = None # case id
+    group = None #group id
+
+    # others
+    show_time_notice = False # This report is in <foo> timezone. Current time is <bar>.
+    fields = [] # all the report filters
+    exportable = False # legacy custom reports export differently from StandardTabularHQReport
+
+    asynchronous = False # to display the "loading..." notification or not. Mostly set to False for custom legacy reports and True for new reports
+    template_name = None # the default main template to use for this report (usually a template in the async folder, if we're dealing with the global reports)
+
+    # for async and proper non-async fallback to work
     base_template_name = "reports/report_base.html"
     async_base_template_name = "reports/async/default.html"
 
+    # still somewhat used legacy custom report stuff
+    headers = None # new reports should use get_headers() and be a subclass of StandardTabularHQReport
+    rows = None # new reports should use get_rows() and be a subclass of StandardTabularHQReport
+    datespan = None # legacy custom reports and StandardDateHQReports implement this strangely. TODO
+
+    # to my knowledge, this is legacy/possibly unused from original custom reports iteration, and something smarter should be done here
+    title = None # How is this different from name? TODO
+    description = "" # where is this ever used / should we use this? TODO
+    form = None # reports that actually use the form xmlns grab it from the GET parameter directly. That all seems strange. TODO
+
+
     def __init__(self, domain, request, base_context = None):
+        if request.method == 'POST':
+            self.asynchronous = False
         base_context = base_context or {}
         if not self.name or not self.slug:
             raise NotImplementedError
         self.domain = domain
         self.request = request
-
-        try:
-            self.timezone = util.get_timezone(self.request.couch_user.user_id, domain)
-        except AttributeError:
-            self.timezone = util.get_timezone(None, domain)
+        if not self.domain:
+            self.timezone = pytz.utc
+        else:
+            try:
+                self.timezone = util.get_timezone(self.request.couch_user.user_id, domain)
+            except AttributeError:
+                self.timezone = util.get_timezone(None, domain)
 
         if not self.rows:
             self.rows = []
@@ -67,7 +89,8 @@ class HQReport(object):
                             export_path = self.request.get_full_path().replace('/custom/', '/export/'),
                             export_formats = Format.VALID_FORMATS,
                             async_report = self.asynchronous,
-                            report_base = self.async_base_template_name
+                            report_base = self.async_base_template_name,
+                            is_admin_report = self.is_admin_report
         )
 
     def build_selector_form(self):
@@ -78,13 +101,14 @@ class HQReport(object):
         field_classes = []
         for f in self.fields:
             klass = to_function(f)
-            field_classes.append(klass(self.request, self.domain, self.timezone))
+            field_classes.append(klass(self.request, self.domain, self.timezone, parent_report=self))
         self.context['custom_fields'] = [{"field": f.render(), "slug": f.slug} for f in field_classes]
 
     def get_report_context(self):
         # circular import
         from .util import report_context
         self.build_selector_form()
+        # to my knowledge, this is legacy from original custom reports iteration, and something smarter should be done here
         self.context.update(report_context(self.domain,
                                         report_partial = self.report_partial,
                                         title = self.name,
@@ -175,16 +199,24 @@ class HQReport(object):
         filter_template = render_to_string('reports/async/filters.html', self.context, context_instance=RequestContext(self.request))
         return HttpResponse(json.dumps(dict(filters=filter_template, title=self.name, slug=self.slug)))
 
+    @classmethod
+    def get_url(cls, domain):
+        return reverse(cls.dispatcher, args=[domain, cls.slug])
+
+    @classmethod
+    def show_in_list(cls, domain, user):
+        return True
 
 class ReportField(object):
     slug = ""
     template = ""
     context = Context()
 
-    def __init__(self, request, domain=None, timezone=pytz.utc):
+    def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None):
         self.request = request
         self.domain = domain
         self.timezone = timezone
+        self.parent_report = parent_report
 
     def render(self):
         if not self.template: return ""
@@ -208,6 +240,7 @@ class ReportSelectField(ReportField):
     cssClasses = "span4"
     selected = None
     hide_field = False
+    as_combo = False
 
     def update_params(self):
         self.selected = self.request.GET.get(self.slug)
@@ -221,7 +254,8 @@ class ReportSelectField(ReportField):
             cssId=self.cssId,
             cssClasses=self.cssClasses,
             label=self.name,
-            selected=self.selected
+            selected=self.selected,
+            use_combo_box=self.as_combo
         )
 
 class MonthField(ReportField):
@@ -248,6 +282,7 @@ class ExampleInputField(ReportField):
         self.context['example_input_default'] = "Some Example Text"
 
 class SampleHQReport(HQReport):
+    # Don't use. Phase out soon.
     name = "Sample Report"
     slug = "sample"
     description = "A sample report demonstrating the HQ reports system."

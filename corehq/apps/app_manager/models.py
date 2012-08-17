@@ -1,6 +1,8 @@
 # coding=utf-8
 from collections import defaultdict
 from datetime import datetime
+from django.utils.encoding import force_unicode
+from django.utils.safestring import mark_safe
 import re
 from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import BadValueError
@@ -22,7 +24,7 @@ import current_builds
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.web import get_url_base, parse_int
 from copy import deepcopy
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, cached_property
 import hashlib
 from django.template.loader import render_to_string
 from urllib2 import urlopen, URLError
@@ -97,6 +99,14 @@ def put_xform(form_unique_id, source):
     form, app = Form.get_form(form_unique_id, and_app=True)
     form.source = source
     app.save()
+
+def partial_escape(xpath):
+    """
+    Copied from http://stackoverflow.com/questions/275174/how-do-i-perform-html-decoding-encoding-using-python-django
+    but without replacing the single quote
+
+    """
+    return mark_safe(force_unicode(xpath).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;'))
 
 class IndexedSchema(DocumentSchema):
     """
@@ -430,6 +440,7 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
 
     def get_app(self):
         return self._parent._parent
+
     def get_module(self):
         return self._parent
 
@@ -527,12 +538,15 @@ class Detail(DocumentSchema):
     def display(self):
         return "short" if self.type.endswith('short') else 'long'
 
+
     def filter_xpath(self):
+
         filters = []
         for i,column in enumerate(self.columns):
             if column.format == 'filter':
                 filters.append("(%s)" % column.filter_xpath.replace('.', '%s_%s_%s' % (column.model, column.field, i + 1)))
-        return ' && '.join(filters)
+        xpath = ' && '.join(filters)
+        return partial_escape(xpath)
 
     def filter_xpath_2(self):
         filters = []
@@ -540,9 +554,10 @@ class Detail(DocumentSchema):
             if column.format == 'filter':
                 filters.append("(%s)" % column.filter_xpath.replace('.', column.xpath))
         if filters:
-            return '[%s]' % (' && '.join(filters))
+            xpath = '[%s]' % (' && '.join(filters))
         else:
-            return ''
+            xpath = ''
+        return partial_escape(xpath)
 
 class CaseList(IndexedSchema):
     label = DictProperty()
@@ -759,6 +774,7 @@ class ApplicationBase(VersionedDoc):
 
     # this is the supported way of specifying which commcare build to use
     build_spec = SchemaProperty(BuildSpec)
+    platform = StringProperty(choices=["nokia/s40", "nokia/s60", "winmo", "generic"], default="nokia/s40")
     text_input = StringProperty(choices=['roman', 'native', 'custom-keys'], default="roman")
     success_message = DictProperty()
 
@@ -783,6 +799,15 @@ class ApplicationBase(VersionedDoc):
     # only the languages that go in the build
     build_langs = StringListProperty()
 
+    # exchange properties
+    cached_properties = DictProperty()
+    description = StringProperty()
+    deployment_date = DateTimeProperty()
+    phone_model = StringProperty()
+    user_type = StringProperty()
+    attribution_notes = StringProperty()
+
+    # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)
 
     @classmethod
@@ -817,6 +842,32 @@ class ApplicationBase(VersionedDoc):
 
     def get_latest_app(self):
         return get_app(self.domain, self.get_id, latest=True)
+
+    def get_latest_saved(self):
+        if not hasattr(self, '_latest_saved'):
+            released = self.__class__.view('app_manager/applications',
+                startkey=['^ReleasedApplications', self.domain, self._id, {}],
+                endkey=['^ReleasedApplications', self.domain, self._id],
+                limit=1,
+                descending=True,
+                include_docs=True
+            )
+            if len(released) > 0:
+                self._latest_saved = released.all()[0]
+                print self._latest_saved.is_released
+            else:
+                saved = self.__class__.view('app_manager/saved_app',
+                    startkey=[self.domain, self._id, {}],
+                    endkey=[self.domain, self._id],
+                    descending=True,
+                    limit=1,
+                    include_docs=True
+                )
+                if len(saved) > 0:
+                    self._latest_saved = saved.all()[0]
+                else:
+                    self._latest_saved = None # do not return this app!
+        return self._latest_saved
 
     def set_admin_password(self, raw_password):
         import random
@@ -911,18 +962,38 @@ class ApplicationBase(VersionedDoc):
             self.url_base,
             reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id]),
         )
-    
-    def get_jadjar(self):
+
+    @classmethod
+    def platform_options(cls):
+        return [
+            {'label': 'Nokia S40 (default)', 'value': 'nokia/s40'},
+            {'label': 'Nokia S60', 'value': 'nokia/s60'},
+            {'label': 'WinMo', 'value': 'winmo'},
+            {'label': 'Generic', 'value': 'generic'},
+        ]
+    def get_jar_path(self):
         build = self.get_build()
         if self.text_input == 'custom-keys' and build.minor_release() < (1,3):
             raise AppError("Custom Keys not supported in CommCare versions before 1.3. (Using %s.%s)" % build.minor_release())
 
         spec = {
-            ('native',): 'Nokia/S40-native-input',
-            ('roman',): 'Nokia/S40-generic',
-            ('custom-keys',):  'Nokia/S40-custom-keys',
-        }[(self.text_input,)]
-        return self.get_build().get_jadjar(spec)
+            'nokia/s40': 'Nokia/S40',
+            'nokia/s60': 'Nokia/S60',
+            'generic': 'Generic/Default',
+            'winmo': 'Native/WinMo'
+        }[self.platform]
+
+        if self.platform in ('nokia/s40', 'nokia/s60'):
+            spec += {
+                ('native',): '-native-input',
+                ('roman',): '-generic',
+                ('custom-keys',):  '-custom-keys',
+            }[(self.text_input,)]
+
+        return spec
+
+    def get_jadjar(self):
+        return self.get_build().get_jadjar(self.get_jar_path())
 
     def create_jadjar(self, save=False):
         try:
@@ -1174,6 +1245,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 if property.has_key('commcare_default') and property['commcare_default'] != property['default']:
                     app_profile[type][property['id']] = property['default']
 
+        if self.case_sharing:
+            app_profile['properties']['server-tether'] = 'sync'
+
         return render_to_string(template, {
             'is_odk': is_odk,
             'app': self,
@@ -1372,6 +1446,16 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for f,form in enumerate(module['forms']):
                 change_unique_id(source['modules'][m]['forms'][f])
 
+    @cached_property
+    def has_case_management(self):
+        for module in self.get_modules():
+            for form in module.get_forms():
+                if len(form.active_actions()) > 0:
+                    return True
+        return False
+
+    def has_media(self):
+        return len(self.multimedia_map) > 0
 
     def get_xmlns_map(self):
         map = defaultdict(list)

@@ -12,11 +12,11 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-{% if not report_hide_filters %}
     <script type="text/javascript">
         var standardHQReport = new HQReport({
             domain: '{{ domain }}',
             baseSlug: '{{ base_slug|default:'reports' }}',
+            {% if global_root %}globalSavePath: '{{ global_root }}',{% endif %}
             {% if datespan %}datespan: {
                 startdate: '{{ datespan.startdate|date:"Y-m-d" }}',
                 enddate: '{{ datespan.enddate|date:"Y-m-d" }}'
@@ -26,12 +26,11 @@
 
         {% if slug and async_report %}
             var asyncHQReport = new HQAsyncReport({
-                standardReport: standardHQReport
+                standardReport: standardHQReport,
             });
             asyncHQReport.init();
         {% endif %}
     </script>
-{% endif %}
 {% endblock %}
 
 {% block head %}
@@ -44,12 +43,14 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url default_report domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
+            <a href="{{ default_report_url }}"><strong>{{ reporting_section_name|default:"Reports" }}</strong></a> <span class="divider">&gt;</span>
         </li>
         {% if not report_breadcrumbs %}
+        {% block sub-page-title %}
         <li class="active">
             <div id="report-title"><a href="#">{{ report.name|default:"Unknown Report"|safe }}</a></div>
         </li>
+        {% endblock %}
         {% else %}
         {{ report_breadcrumbs|safe }}
         {% endif %}

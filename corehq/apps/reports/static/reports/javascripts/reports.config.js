@@ -1,4 +1,5 @@
 var HQReport = function (options) {
+    'use strict';
     var self = this;
     self.domain = options.domain;
     self.datespan = options.datespan;
@@ -10,7 +11,9 @@ var HQReport = function (options) {
 
     self.toggleFiltersCookie = self.domain+'.hqreport.toggleFilterState';
     self.datespanCookie = self.domain+".hqreport.filterSetting.test.datespan";
-    self.globalSavePath = '/a/'+self.domain+'/';
+    self.globalSavePath = options.globalSavePath || '/a/'+self.domain+'/';
+
+    self.initialLoad = true;
 
     self.init = function () {
         $(function () {
@@ -18,6 +21,12 @@ var HQReport = function (options) {
 
             $(self.exportReportButton).click(function () {
                 var params = window.location.search.substr(1);
+                if (params.length <= 1) {
+                    if (self.loadDatespanFromCookie()) {
+                        params = "startdate="+self.datespan.startdate+
+                            "&enddate="+self.datespan.enddate;
+                    }
+                }
                 window.location.href = window.location.pathname.replace('/'+self.baseSlug+'/',
                     '/'+self.baseSlug+'/export/')+"?"+params;
             });
