@@ -60,6 +60,7 @@
             var reportTables = new HQReportDataTables({
                 defaultRows: {{ report_datatables.defaultNumRows|default:10 }},
                 startAtRowNum: {{ report_datatables.startAtRowNum|default:0 }},
+                showAllRowsOption: {{ report_datatables.showAllRows|JSON }},
                 {% if report.headers.render_aoColumns %}aoColumns: {{ report.headers.render_aoColumns|JSON }}, {% endif %}
                 autoWidth: {{ report.headers.auto_width|JSON }},
                 {% if report.headers.custom_sort %}customSort: {{ report.headers.custom_sort|JSON }},{% endif %}

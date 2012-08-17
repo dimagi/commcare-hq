@@ -135,6 +135,7 @@ class StandardTabularHQReport(StandardHQReport):
     start_at_row = 0
     fix_left_col = False
     fix_cols = dict(num=1, width=200)
+    show_all_rows_option = False
 
     exportable = True
 
@@ -145,10 +146,11 @@ class StandardTabularHQReport(StandardHQReport):
         return self.rows
 
     def get_report_context(self):
-        self.context['report_datatables'] = {
-            "defaultNumRows": self.default_rows,
-            "startAtRowNum": self.start_at_row
-        }
+        self.context.update(dict(report_datatables=dict(
+                defaultNumRows=self.default_rows,
+                startAtRowNum=self.start_at_row,
+                showAllRows=self.show_all_rows_option
+        )))
         if self.use_json:
             self.context['ajax_source'] = reverse('json_report_dispatcher',
                                                   args=[self.domain, self.slug])

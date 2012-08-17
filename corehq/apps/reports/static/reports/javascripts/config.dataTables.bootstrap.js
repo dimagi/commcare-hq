@@ -6,6 +6,7 @@ function HQReportDataTables(options) {
     self.paginationType = options.paginationType || 'bootstrap';
     self.defaultRows = options.defaultRows || 10;
     self.startAtRowNum = options.startAtRowNum || 0;
+    self.showAllRowsOption = options.showAllRowsOption || false;
     self.aoColumns = options.aoColumns;
     self.autoWidth = (options.autoWidth != undefined) ? options.autoWidth : true;
     self.customSort = options.customSort;
@@ -112,6 +113,8 @@ function HQReportDataTables(options) {
                 $dataTablesLength.append($selectField);
                 $selectLabel.remove();
                 $selectField.children().append(" per page");
+                if (self.showAllRowsOption)
+                    $selectField.append($('<option value="-1" />').text("All Rows"));
                 $selectField.addClass("input-medium");
             }
             $(".dataTables_length select").change(function () {
