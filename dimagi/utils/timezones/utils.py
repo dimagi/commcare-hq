@@ -51,6 +51,6 @@ def is_timezone_in_dst(tz, compare_time=None):
     for dst_transition in tz._utc_transition_times:
         if dst_transition.year == now.year:
             transitions.append(tz.localize(dst_transition))
-    if transitions[0] <= now <= transitions[1]:
+    if len(transitions) >= 2 and (transitions[0] <= now <= transitions[1]):
         return True
     return False
