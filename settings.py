@@ -478,6 +478,11 @@ LOGGING = {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
+        },
+        'celery.task': {
+            'handlers': ['console', 'file', 'couchlog'],
+            'level': 'INFO',
+            'propagate': True
         }
     }
 }
