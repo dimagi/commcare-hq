@@ -242,13 +242,14 @@ def add_survey(request, domain, survey_id=None):
     if request.method == "POST":
         form = SurveyForm(request.POST)
         if form.is_valid():
-            name            = form.cleaned_data.get("name")
-            form_id         = form.cleaned_data.get("form_id")
-            schedule_date   = form.cleaned_data.get("schedule_date")
-            schedule_time   = form.cleaned_data.get("schedule_time")
-            sample_id       = form.cleaned_data.get("sample_id")
-            sample_name     = form.cleaned_data.get("sample_name")
-            sample_contacts = form.cleaned_data.get("sample_contacts")
+            name                = form.cleaned_data.get("name")
+            form_id             = form.cleaned_data.get("form_id")
+            schedule_date       = form.cleaned_data.get("schedule_date")
+            schedule_time       = form.cleaned_data.get("schedule_time")
+            sample_id           = form.cleaned_data.get("sample_id")
+            sample_name         = form.cleaned_data.get("sample_name")
+            sample_contacts     = form.cleaned_data.get("sample_contacts")
+            send_automatically  = form.cleaned_data.get("send_automatically")
             
             if sample_id == "--new--":
                 sample = SurveySample (
@@ -270,7 +271,8 @@ def add_survey(request, domain, survey_id=None):
                     form_unique_id = form_id,
                     sample_id = sample._id,
                     schedule_date = schedule_date,
-                    schedule_time = schedule_time
+                    schedule_time = schedule_time,
+                    send_automatically = send_automatically
                 )
             else:
                 survey.name = name
@@ -278,6 +280,7 @@ def add_survey(request, domain, survey_id=None):
                 survey.sample_id = sample._id
                 survey.schedule_date = schedule_date
                 survey.schedule_time = schedule_time
+                survey.send_automatically = send_automatically
             survey.save()
             return HttpResponseRedirect(reverse("survey_list", args=[domain]))
     else:
@@ -291,6 +294,7 @@ def add_survey(request, domain, survey_id=None):
             initial["schedule_time"] = survey.schedule_time
             initial["sample_name"] = sample.name
             initial["sample_contacts"] = sample.contacts
+            initial["send_automatically"] = survey.send_automatically
         form = SurveyForm(initial=initial)
     
     form_list = get_form_list(domain)

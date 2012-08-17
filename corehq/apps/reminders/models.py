@@ -768,6 +768,7 @@ class Survey(Document):
     sample_id = StringProperty()
     schedule_date = DateProperty()
     schedule_time = TimeProperty()
+    send_automatically = BooleanProperty()
     
     @classmethod
     def get_all(cls, domain):

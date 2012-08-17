@@ -382,8 +382,9 @@ class SampleContactsField(Field):
 class SurveyForm(Form):
     name = CharField()
     form_id = CharField()
-    schedule_date = DateField()
-    schedule_time = TimeField()
+    send_automatically = BooleanField(required=False)
+    schedule_date = DateField(required=False)
+    schedule_time = TimeField(required=False)
     sample_id = CharField()
     sample_name = CharField()
     sample_contacts = SampleContactsField()
@@ -411,7 +412,21 @@ class SurveyForm(Form):
                 self.refresh_sample_contacts = sample.contacts
             raise ValidationError("") # Raise a dummy validation error so that the form does not get processed, but instead just refreshes the sample
         return value
-
+    
+    def clean_schedule_date(self):
+        value = self.cleaned_data.get("schedule_date")
+        if self.cleaned_data.get("send_automatically"):
+            if value is None or value == "":
+                raise ValidationError("Please enter a date.")
+        return value
+    
+    def clean_schedule_time(self):
+        value = self.cleaned_data.get("schedule_time")
+        if self.cleaned_data.get("send_automatically"):
+            if value is None or value == "":
+                raise ValidationError("Please enter a time.")
+        return value
+    
     def clean(self):
         cleaned_data = super(SurveyForm, self).clean()
         if "refresh_sample" in self._errors:

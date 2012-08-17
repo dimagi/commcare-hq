@@ -118,6 +118,10 @@
     <h2>Schedule</h2>
     <br />
     <table>
+        <tr>
+            <th></th>
+            <td><input type="checkbox" name="send_automatically" {% if form.send_automatically.value %}value="on" checked="checked"{% endif %}/> Send Automatically</td>
+        </tr>
         {% if form.schedule_date.errors %}
         <tr>
             <th></th>
