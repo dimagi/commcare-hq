@@ -1,6 +1,6 @@
 from datetime import datetime
-import logging
 from smtplib import SMTPRecipientsRefused
+from celery.log import get_task_logger
 from celery.schedules import crontab
 from celery.decorators import periodic_task, task
 from django.http import Http404
@@ -11,6 +11,8 @@ from corehq.apps.reports.schedule import config
 from corehq.apps.reports.schedule.html2text import html2text
 from dimagi.utils.django.email import send_HTML_email
 from corehq.apps.reports.schedule.config import ScheduledReportFactory
+
+logging = get_task_logger()
 
 @periodic_task(run_every=crontab(hour="*", minute="0", day_of_week="*"))
 def daily_reports():    
