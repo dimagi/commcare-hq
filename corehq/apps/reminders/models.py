@@ -15,6 +15,7 @@ from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.app_manager.models import get_app, Form
 from corehq.apps.sms.util import format_message_list
+from corehq.apps.reminders.util import get_form_name
 
 REPEAT_SCHEDULE_INDEFINITELY = -1
 
@@ -34,6 +35,8 @@ MATCH_EXACT = "EXACT"
 MATCH_REGEX = "REGEX"
 MATCH_ANY_VALUE = "ANY_VALUE"
 MATCH_TYPE_CHOICES = [MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE]
+
+SURVEY_METHOD_LIST = ["SMS","CATI"]
 
 def is_true_value(val):
     return val == 'ok' or val == 'OK'
@@ -732,19 +735,7 @@ class SurveyKeyword(Document):
     
     @property
     def survey_name(self):
-        form = Form.get_form(self.form_unique_id)
-        app = form.get_app()
-        module = form.get_module()
-        lang = app.langs[0]
-        try:
-            module_name = module.name[lang]
-        except Exception:
-            module_name = module.name.items()[0][1]
-        try:
-            form_name = form.name[lang]
-        except Exception:
-            form_name = form.name.items()[0][1]
-        return app.name + "/" + module_name + "/" + form_name
+        return get_form_name(self.form_unique_id)
     
     @property
     def get_id(self):
@@ -764,5 +755,36 @@ class SurveyKeyword(Document):
             key = [domain, keyword.upper()],
             include_docs=True
         ).one()
+
+class SurveySample(Document):
+    domain = StringProperty()
+    name = StringProperty()
+    contacts = ListProperty(DictProperty)
+
+class Survey(Document):
+    domain = StringProperty()
+    name = StringProperty()
+    form_unique_id = StringProperty()
+    sample_id = StringProperty()
+    schedule_date = DateProperty()
+    schedule_time = TimeProperty()
+    send_automatically = BooleanProperty()
+    
+    @classmethod
+    def get_all(cls, domain):
+        return cls.view('reminders/survey_by_domain',
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=True
+        ).all()
+    
+    @property
+    def sample(self):
+        return SurveySample.get(self.sample_id)
+
+    @property
+    def questionnaire_name(self):
+        return get_form_name(self.form_unique_id)
+
 
 from .signals import *
