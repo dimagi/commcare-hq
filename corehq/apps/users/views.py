@@ -258,9 +258,6 @@ def commcare_users(request, domain, template="users/commcare_users.html"):
         'show_case_sharing': request.project.case_sharing_included(),
         'show_inactive': show_inactive,
         'cannot_share': cannot_share,
-        'reset_password_form': SetPasswordForm(user=""),
-        'only_numeric': (request.project.password_format() == 'n'),
-
     })
     return render_to_response(request, template, context)
 
@@ -311,6 +308,11 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     context.update({
         'couch_user': couch_user,
     })
+    if couch_user.is_commcare_user():
+        context.update({
+            'reset_password_form': SetPasswordForm(user=""),
+            'only_numeric': (request.project.password_format() == 'n'),
+        })
 
     if couch_user.is_deleted():
         if couch_user.is_commcare_user():
