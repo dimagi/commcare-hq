@@ -18,6 +18,8 @@ from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specifi
 from corehq.apps.settings.urls import domain_specific as settings_domain_specific
 from corehq.apps.settings.urls import users_redirect, domain_redirect
 from corehq.apps.domain.urls import domain_specific as domain_domain_specific
+
+
 domain_specific = patterns('',
     (r'^apps/', include('corehq.apps.app_manager.urls')),
     (r'^api/', include('corehq.apps.api.urls')),
@@ -55,11 +57,12 @@ urlpatterns = patterns('',
     (r'^o/', include('corehq.apps.orgs.urls')),
     url(r'^organizations/$', 'corehq.apps.orgs.views.orgs_base', name='orgs_base'),
     (r'^couch/', include('djangocouch.urls')),
-    (r'^project_store(.*)$', 'corehq.apps.appstore.views.redirect'),
+    (r'^project_store(.*)$', 'corehq.apps.appstore.views.rewrite_url'),
     (r'^exchange/', include('corehq.apps.appstore.urls')),
     (r'^webforms/', include('touchforms.formplayer.urls')),
     (r'', include('corehq.apps.hqwebapp.urls')),
     (r'', include('corehq.apps.domain.urls')),
+    (r'^hq/billing/', include('hqbilling.urls')),
     (r'^hq/multimedia/', include('corehq.apps.hqmedia.urls')),
     (r'^hq/admin/', include('corehq.apps.hqadmin.urls')),
     (r'^hq/prescriptions/', include('corehq.apps.prescriptions.urls')),
