@@ -152,4 +152,10 @@ class HQGroupExportConfiguration(GroupExportConfiguration):
     def by_domain(cls, domain):
         return cls.view("groupexport/by_domain", key=domain, 
                         reduce=False, include_docs=True).all()
-    
+
+class CaseActivityReportData(Document):
+    domain = StringProperty()
+    last_updated = DateTimeProperty()
+    active_cases = DictProperty()
+    inactive_cases = DictProperty()
+    landmarks = DictProperty()
