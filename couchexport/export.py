@@ -173,7 +173,8 @@ def export(schema_index, file, format=Format.XLS_2007,
         writer.open(formatted_headers, file)
 
         total_docs = len(config.potentially_relevant_ids)
-        DownloadBase.set_progress(process, 0, total_docs)
+        if process:
+            DownloadBase.set_progress(process, 0, total_docs)
         for i, doc in config.enum_docs():
             if export_object and export_object.transform:
                 doc = export_object.transform(doc)

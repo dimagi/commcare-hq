@@ -369,7 +369,8 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         writer.open(formatted_headers, tmp)
 
         total_docs = len(config.potentially_relevant_ids)
-        DownloadBase.set_progress(process, 0, total_docs)
+        if process:
+            DownloadBase.set_progress(process, 0, total_docs)
         for i, doc in config.enum_docs():
             if self.transform:
                 doc = self.transform(doc)
