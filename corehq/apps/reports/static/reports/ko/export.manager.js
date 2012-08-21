@@ -39,6 +39,10 @@ var ExportManager = function (o) {
                 if ($('#ready_'+d.download_id).length == 0) {
                     $.get(d.download_url, function(data) {
                         self.$modal.find(self.exportModalLoadedData).html(data);
+                    }).error(function () {
+                        self.$modal.find(self.exportModalLoading).addClass('hide');
+                        self.$modal.find(self.exportModalLoadedData).html('<p class="alert alert-error">Oh no! Your download was unable to be completed. We have been notified and are already hard at work solving this issue.</p>');
+                        clearInterval(autoRefresh);
                     });
                 } else {
                     self.$modal.find(self.exportModalLoading).addClass('hide');
