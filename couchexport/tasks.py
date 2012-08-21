@@ -59,7 +59,6 @@ def bulk_export_async(bulk_export_helper, download_id,
         )
 
 def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=None, expiry=10*60*60):
-
     if checkpoint:
         fd, path = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as file:
@@ -71,14 +70,18 @@ def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=
             filename = unidecode(filename)
         except Exception: 
             pass
-        cache.set(download_id, FileDownload(path, mimetype=format.mimetype,
-                                            content_disposition='attachment; filename=%s.%s' % \
-                                            (filename, format.extension),
-                                            extras={'X-CommCareHQ-Export-Token': checkpoint.get_id}),
-                                            expiry)
+        FileDownload(path,
+            mimetype=format.mimetype,
+            content_disposition='attachment; filename=%s.%s' % (filename, format.extension),
+            extras={'X-CommCareHQ-Export-Token': checkpoint.get_id},
+            download_id=download_id
+        ).save(expiry)
     else:
         temp_id = uuid.uuid4().hex
         cache.set(temp_id, "Sorry, there wasn't any data.", expiry)
-        cache.set(download_id, CachedDownload(temp_id,content_disposition="", 
-                                              mimetype="text/html"), expiry)
-        
+        CachedDownload(temp_id,
+            content_disposition="",
+            mimetype="text/html",
+            download_id=download_id
+        ).save(expiry)
+

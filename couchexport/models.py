@@ -12,6 +12,7 @@ from dimagi.utils.modules import try_import, to_function
 from dimagi.utils.couch.database import get_db
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
+from soil import DownloadBase
 
 class Format(object):
     """
@@ -184,20 +185,17 @@ class BaseSavedExportSchema(Document):
         return False
 
     def export_data_async(self, filter, filename, previous_export_id, format):
-        download_id = uuid.uuid4().hex
+        download = DownloadBase()
         format = format or Format.XLS_2007
         couchexport.tasks.export_async.delay(
             self,
-            download_id,
+            download.download_id,
             format=format,
             filename=filename,
             previous_export_id=previous_export_id,
             filter=filter,
         )
-        return HttpResponse(json.dumps(dict(
-            download_id=download_id,
-            download_url=reverse('ajax_job_poll', kwargs={'download_id': download_id}))
-        ))
+        return download.get_start_response()
 
     @property
     def table_name(self):
