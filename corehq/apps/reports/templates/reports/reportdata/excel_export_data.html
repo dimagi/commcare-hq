@@ -82,7 +82,7 @@
                 return false;
             })
         });
-        (function () {
+        $(function () {
             $('.all-users-all-time').popover({
                 title: "All users over all time",
                 content: "This number includes submissions that may not match your filter.",
@@ -125,7 +125,7 @@
                 content: "Custom Bulk Export does not support this format at the time.",
                 placement: 'left'
             });
-        }());
+        });
     </script>
 {% endblock %}
 
@@ -367,6 +367,14 @@
         </tbody>
     </table>
 </section>
+{% if group_exports %}
+<section>
+    <h2>Saved Export Files</h2>
+    {% for group in group_exports %}
+    {% include "reports/partials/hqexport_group_table.html" %}
+    {% endfor %}
+</section>
+{% endif %}
 {% endif %}
 <section id="all-forms-metadata">
     <h2>Export all Forms' Metadata</h2>

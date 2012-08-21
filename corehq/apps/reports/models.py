@@ -2,7 +2,7 @@ from datetime import datetime
 from corehq.apps import reports
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
-from couchexport.models import SavedExportSchema
+from couchexport.models import SavedExportSchema, GroupExportConfiguration
 from couchexport.util import FilterFunction
 import couchforms
 from dimagi.utils.mixins import UnicodeMixIn
@@ -141,3 +141,15 @@ class FormExportSchema(SavedExportSchema):
     @property
     def formname(self):
         return xmlns_to_name(self.domain, self.xmlns, app_id=self.app_id)
+    
+class HQGroupExportConfiguration(GroupExportConfiguration):
+    """
+    HQ's version of a group export, tagged with a domain
+    """
+    domain = StringProperty()
+    
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.view("groupexport/by_domain", key=domain, 
+                        reduce=False, include_docs=True).all()
+    
