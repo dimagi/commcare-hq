@@ -3,10 +3,10 @@ from datetime import datetime
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
-from django.core.cache import cache
 import logging
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+from soil import DownloadBase
 from soil.tasks import demo_sleep
 import json
 from soil.heartbeat import get_file_heartbeat, get_cache_heartbeat,\
@@ -35,7 +35,7 @@ def heartbeat_status(request):
 
 @login_required
 def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html"):
-    download_data = cache.get(download_id, None)
+    download_data = DownloadBase.get(download_id)
     if download_data is None:
         is_ready = False
     else:
@@ -61,7 +61,7 @@ def retrieve_download(request, download_id, template="soil/file_download.html"):
     context['download_id'] = download_id
     do_download = request.GET.has_key('get_file')
     if do_download:
-        download = cache.get(download_id, None)
+        download = DownloadBase.get(download_id)
         if download is None:
             logging.error("Download file request for expired/nonexistent file requested")
             raise Http404
