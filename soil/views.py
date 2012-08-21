@@ -36,7 +36,7 @@ def heartbeat_status(request):
 @login_required
 def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html"):
     download_data = cache.get(download_id, None)
-    if download_data == None:
+    if download_data is None:
         is_ready = False
     else:
         is_ready=True
@@ -62,7 +62,7 @@ def retrieve_download(request, download_id, template="soil/file_download.html"):
     do_download = request.GET.has_key('get_file')
     if do_download:
         download = cache.get(download_id, None)
-        if download == None:
+        if download is None:
             logging.error("Download file request for expired/nonexistent file requested")
             raise Http404
         else:

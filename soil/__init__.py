@@ -8,11 +8,11 @@ class DownloadBase(object):
     
     def __init__(self, mimetype="text/plain", 
                  content_disposition="attachment; filename=download.txt", 
-                 transfer_encoding=None, extras={}):
+                 transfer_encoding=None, extras=None):
         self.mimetype = mimetype
         self.content_disposition = content_disposition
         self.transfer_encoding = transfer_encoding
-        self.extras = {}
+        self.extras = extras or {}
         
     def get_content(self):
         raise NotImplemented("Use CachedDownload or FileDownload!")
@@ -36,7 +36,7 @@ class CachedDownload(DownloadBase):
     
     def __init__(self, cacheindex, mimetype="text/plain", 
                  content_disposition="attachment; filename=download.txt", 
-                 transfer_encoding=None, extras={}):
+                 transfer_encoding=None, extras=None):
         super(CachedDownload, self).__init__(mimetype, content_disposition, 
                                              transfer_encoding, extras)
         self.cacheindex = cacheindex
@@ -51,7 +51,7 @@ class FileDownload(DownloadBase):
     
     def __init__(self, filename, mimetype="text/plain", 
                  content_disposition="attachment; filename=download.txt", 
-                 transfer_encoding=None, extras={}):
+                 transfer_encoding=None, extras=None):
         super(FileDownload, self).__init__(mimetype, content_disposition, 
                                              transfer_encoding, extras)
         self.filename = filename
