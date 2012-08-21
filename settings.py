@@ -549,6 +549,13 @@ CUSTOM_REPORT_MAP = {
                    'dca.reports.PerformanceReport',
                    'dca.reports.PerformanceRatiosReport'],
                 },
+    "eagles-fahu": {
+        'Custom Reports': [
+                   'dca.reports.ProjectOfficerReport',
+                   'dca.reports.PortfolioComparisonReport',
+                   'dca.reports.PerformanceReport',
+                   'dca.reports.PerformanceRatiosReport'],
+                },
     "hsph": {
         'Field Management Reports': [
                     'hsph.reports.field_management.DCOActivityReport',
