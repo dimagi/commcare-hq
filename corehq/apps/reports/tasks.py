@@ -6,7 +6,7 @@ from celery.decorators import periodic_task, task
 from django.http import Http404
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.models import DailyReportNotification,\
-    HQGroupExportConfiguration
+    HQGroupExportConfiguration, CaseActivityReportCache
 from corehq.apps.users.models import CouchUser
 from corehq.apps.reports.schedule.html2text import html2text
 from dimagi.utils.django.email import send_HTML_email
@@ -72,3 +72,9 @@ def _run_reports(reps):
         for user_id in rep.user_ids:
             user = CouchUser.get(user_id)
             send_report.delay(rep, user.to_json())
+
+@periodic_task(run_every=crontab(hour=range(0,23,3), minute="0"))
+def build_case_activity_report():
+    all_domains = Domain.get_all()
+    for domain in all_domains:
+        CaseActivityReportCache.build_report(domain)
