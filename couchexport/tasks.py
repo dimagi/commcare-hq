@@ -12,6 +12,8 @@ import stat
 
 logging = get_task_logger()
 
+GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
+
 @task
 def export_async(custom_export, download_id, format=None, filename=None, previous_export_id=None, filter=None):
     tmp, checkpoint = custom_export.get_export_files(format, previous_export_id, filter)
@@ -40,8 +42,7 @@ def bulk_export_async(bulk_export_helper, download_id,
                 logging.error("FAILED to add file to bulk export archive. %s" % e)
         zf.close()
 
-        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP |\
-                       stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
+        os.chmod(path, GLOBAL_RW)
 
         cache.set(download_id, FileDownload(path, mimetype='application/zip',
                                         content_disposition='attachment; filename=%s.zip' %\
@@ -64,8 +65,7 @@ def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=
         with os.fdopen(fd, 'wb') as file:
             file.write(tmp.getvalue())
         # make file globally read/writeable in case celery runs as root
-        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | \
-                 stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH) 
+        os.chmod(path, GLOBAL_RW)
         format = Format.from_format(format)
         try:
             filename = unidecode(filename)
