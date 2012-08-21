@@ -1,3 +1,4 @@
+from couchdbkit.schema.base import DocumentBase
 from couchexport.schema import get_docs, get_schema, get_schema_new
 import csv
 import json
@@ -14,6 +15,7 @@ from couchdbkit.consumer import Consumer
 from dimagi.utils.couch.database import get_db
 from couchexport.writers import Excel2007ExportWriter, CsvExportWriter,\
     Excel2003ExportWriter, JsonExportWriter, HtmlExportWriter
+from soil import DownloadBase
 
 class ExportConfiguration(object):
     """
@@ -67,12 +69,16 @@ class ExportConfiguration(object):
         else:
             return self._all_ids()
     
-    def get_docs(self):
-        for doc_id in self.potentially_relevant_ids:
+    def enum_docs(self):
+        for i, doc_id in enumerate(self.potentially_relevant_ids):
             doc = self.database.get(doc_id)
             if self.include(doc):
-                yield doc
-    
+                yield i, doc
+
+    def get_docs(self):
+        for _, doc in self.enum_docs():
+            yield doc
+
     def last_checkpoint(self):
         return self.previous_export or ExportSchema.last(self.schema_index)
 
@@ -151,7 +157,7 @@ def export_raw(headers, data, file, format=Format.XLS_2007,
     
 def export(schema_index, file, format=Format.XLS_2007, 
            previous_export_id=None, filter=None,
-           max_column_size=2000, separator='|', export_object=None):
+           max_column_size=2000, separator='|', export_object=None, process=None):
     """
     Exports data from couch documents matching a given tag to a file. 
     Returns true if it finds data, otherwise nothing
@@ -166,11 +172,15 @@ def export(schema_index, file, format=Format.XLS_2007,
         formatted_headers = get_headers(updated_schema, separator=separator)
         writer.open(formatted_headers, file)
 
-        for doc in config.get_docs():
+        total_docs = len(config.potentially_relevant_ids)
+        DownloadBase.set_progress(process, 0, total_docs)
+        for i, doc in config.enum_docs():
             if export_object and export_object.transform:
                 doc = export_object.transform(doc)
             writer.write(format_tables(create_intermediate_tables(doc, updated_schema),
                                        include_headers=False, separator=separator))
+            if process:
+                DownloadBase.set_progress(process, i + 1, total_docs)
         writer.close()
     return export_schema_checkpoint
 

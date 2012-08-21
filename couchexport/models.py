@@ -185,16 +185,16 @@ class BaseSavedExportSchema(Document):
         return False
 
     def export_data_async(self, filter, filename, previous_export_id, format):
-        download = DownloadBase()
         format = format or Format.XLS_2007
-        couchexport.tasks.export_async.delay(
+        download = DownloadBase()
+        download.set_task(couchexport.tasks.export_async.delay(
             self,
             download.download_id,
             format=format,
             filename=filename,
             previous_export_id=previous_export_id,
             filter=filter,
-        )
+        ))
         return download.get_start_response()
 
     @property
@@ -231,7 +231,7 @@ class FakeSavedExportSchema(BaseSavedExportSchema):
         return get_export_components(self.index, previous_export_id, filter)
 
     def get_export_files(self, format=None, previous_export_id=None, filter=None,
-                         use_cache=True, max_column_size=2000, separator='|'):
+                         use_cache=True, max_column_size=2000, separator='|', process=None):
         # the APIs of how these methods are broken down suck, but at least
         # it's DRY
         from couchexport.export import export
@@ -260,7 +260,7 @@ class FakeSavedExportSchema(BaseSavedExportSchema):
         checkpoint = export(export_tag, tmp, format=format,
             previous_export_id=previous_export_id,
             filter=filter, max_column_size=max_column_size,
-            separator=separator, export_object=self)
+            separator=separator, export_object=self, process=process)
 
         if checkpoint:
             if use_cache:
@@ -351,7 +351,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
 
         return config, updated_schema, export_schema_checkpoint
     
-    def get_export_files(self, format="", previous_export=None, filter=None):
+    def get_export_files(self, format="", previous_export=None, filter=None, process=None):
         from couchexport.export import get_writer,\
             format_tables, create_intermediate_tables
 
@@ -368,12 +368,17 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         tmp = StringIO()
         writer.open(formatted_headers, tmp)
 
-        for doc in config.get_docs():
+        total_docs = len(config.potentially_relevant_ids)
+        DownloadBase.set_progress(process, 0, total_docs)
+        for i, doc in config.enum_docs():
             if self.transform:
                 doc = self.transform(doc)
             writer.write(self.trim(format_tables\
                              (create_intermediate_tables(doc, updated_schema), 
                               separator=".")))
+            if process:
+                DownloadBase.set_progress(process, i + 1, total_docs)
+
         writer.close()
         # hacky way of passing back the new format
         tmp.format = format
