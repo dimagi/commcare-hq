@@ -11,5 +11,16 @@
             <p class="alert alert-error">Task processor not detected. There may be something wrong with your system.
             If the download takes longer than normal to complete please contact support for help.
             </p>
+        {% else %}
+            {% if progress.percent %}
+                <div class="progress progress-striped active">
+                    <div class="bar" style="width: {{ progress.percent }}%;"></div>
+                </div>
+            {% endif %}
+            {% if progress.total %}
+                <p class="help-inline">Scanned {{ progress.current }} out of {{ progress.total }} forms</p>
+            {% else %}
+{#                <p class="help-inline">Preparing...</p>#}
+            {% endif %}
         {% endif %}
     {% endif %}

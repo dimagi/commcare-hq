@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponse
+from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseServerError
 import logging
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
@@ -37,16 +37,20 @@ def heartbeat_status(request):
 def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html"):
     download_data = DownloadBase.get(download_id)
     if download_data is None:
+        download_data = DownloadBase(download_id=download_id)
         is_ready = False
+        if download_data.task.failed():
+            return HttpResponseServerError()
     else:
         is_ready=True
     alive = True
     if heartbeat_enabled():
         alive = is_alive()
-    
+
     context = RequestContext(request)
     context['is_ready'] = is_ready
     context['is_alive'] = alive
+    context['progress'] = download_data.get_progress()
     context['download_id'] = download_id
     return render_to_response(template, context_instance=context)
 

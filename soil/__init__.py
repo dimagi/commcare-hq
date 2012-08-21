@@ -1,4 +1,5 @@
 import json
+from celery.task.base import Task
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
@@ -41,10 +42,40 @@ class DownloadBase(object):
         return HttpResponse(json.dumps({
             'download_id': self.download_id,
             'download_url': reverse('ajax_job_poll', kwargs={'download_id': self.download_id})
-        })) 
+        }))
 
     def __str__(self):
         return "content-type: %s, disposition: %s" % (self.mimetype, self.content_disposition)
+
+    def set_task(self, task):
+        cache.set(self._task_key(), task.task_id)
+
+    def _task_key(self):
+        return self.download_id + ".task_id"
+    @property
+    def task_id(self):
+        return cache.get(self._task_key(), None)
+
+    @property
+    def task(self):
+        return Task.AsyncResult(self.task_id)
+
+    def get_progress(self):
+        if self.task.info is None:
+            current = total = percent = None
+        else:
+            current = self.task.info.get('current')
+            total = self.task.info.get('total')
+            percent = current * 100./ total if total and current is not None else 0
+        return {
+            'current': current,
+            'total': total,
+            'percent': percent
+        }
+
+    @classmethod
+    def set_progress(cls, task, current, total):
+        task.update_state(state='PROGRESS', meta={'current': current, 'total': total})
 
 class CachedDownload(DownloadBase):
     """
