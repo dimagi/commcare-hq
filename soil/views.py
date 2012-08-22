@@ -42,7 +42,7 @@ def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html")
         try:
             if download_data.task.failed():
                 return HttpResponseServerError()
-        except TypeError, NotImplementedError:
+        except (TypeError, NotImplementedError):
             # no result backend / improperly configured
             pass
     else:

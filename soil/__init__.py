@@ -61,12 +61,17 @@ class DownloadBase(object):
         return Task.AsyncResult(self.task_id)
 
     def get_progress(self):
-        if self.task.info is None:
+        try:
+            info = self.task.info
+        except (TypeError, NotImplementedError):
             current = total = percent = None
         else:
-            current = self.task.info.get('current')
-            total = self.task.info.get('total')
-            percent = current * 100./ total if total and current is not None else 0
+            if info is None:
+                current = total = percent = None
+            else:
+                current = info.get('current')
+                total = info.get('total')
+                percent = current * 100./ total if total and current is not None else 0
         return {
             'current': current,
             'total': total,
@@ -75,7 +80,10 @@ class DownloadBase(object):
 
     @classmethod
     def set_progress(cls, task, current, total):
-        task.update_state(state='PROGRESS', meta={'current': current, 'total': total})
+        try:
+            task.update_state(state='PROGRESS', meta={'current': current, 'total': total})
+        except (TypeError, NotImplementedError):
+            pass
 
 class CachedDownload(DownloadBase):
     """
