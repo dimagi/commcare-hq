@@ -39,8 +39,12 @@ def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html")
     if download_data is None:
         download_data = DownloadBase(download_id=download_id)
         is_ready = False
-        if download_data.task.failed():
-            return HttpResponseServerError()
+        try:
+            if download_data.task.failed():
+                return HttpResponseServerError()
+        except TypeError, NotImplementedError:
+            # no result backend / improperly configured
+            pass
     else:
         is_ready=True
     alive = True
