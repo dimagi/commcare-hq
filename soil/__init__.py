@@ -1,5 +1,4 @@
 import json
-from celery.task.base import Task
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
@@ -58,6 +57,7 @@ class DownloadBase(object):
 
     @property
     def task(self):
+        from celery.task.base import Task
         return Task.AsyncResult(self.task_id)
 
     def get_progress(self):
