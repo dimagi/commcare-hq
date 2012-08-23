@@ -266,9 +266,8 @@ def fit_to_schema(doc, schema):
     if isinstance(schema, dict):
         if not doc:
             doc = {}
-
         if not isinstance(doc, dict):
-            doc = {'#text': doc}
+            doc = {'': doc}
         doc_keys = set(doc.keys())
         schema_keys = set(schema.keys())
         if doc_keys - schema_keys:
