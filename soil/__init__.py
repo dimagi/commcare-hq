@@ -1,4 +1,5 @@
 import json
+import logging
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
@@ -65,6 +66,7 @@ class DownloadBase(object):
             info = self.task.info
         except (TypeError, NotImplementedError):
             current = total = percent = None
+            logging.exception("No celery result backend?")
         else:
             if info is None:
                 current = total = percent = None
