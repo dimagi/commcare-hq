@@ -7,8 +7,8 @@ from dimagi.utils.web import get_url_base
 new_domain_re = r"(?:[a-z0-9]+\-)*[a-z0-9]+" # lowercase letters, numbers, and '-' (at most one between "words")
 new_org_title_re = r"(?:[a-zA-Z0-9]+\s)*[a-zA-Z0-9]+" # lowercase letters, numbers, and ' ' (at most one between "words")
 new_org_re = r"(?:[a-z0-9]+\-)*[a-zA-Z0-9]+" # lowercase and uppercase letters, numbers, and '-' (at most one between "words")
-grandfathered_domain_re = r"[a-z0-9\-\.]+"
-legacy_domain_re = r"[\w\.-]+"
+grandfathered_domain_re = r"[a-z0-9\-\.:]+"
+legacy_domain_re = r"[\w\.:-]+"
 commcare_public_domain_url = '/a/public/'
 website_re = '(http(s?)\:\/\/|~/|/)?([a-zA-Z]{1}([\w\-]+\.)+([\w]{2,5}))(:[\d]{1,5})?/?(\w+\.[\w]{3,4})?((\?\w+=\w+)?(&\w+=\w+)*)?'
 
