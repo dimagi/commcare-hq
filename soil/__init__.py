@@ -47,8 +47,8 @@ class DownloadBase(object):
     def __str__(self):
         return "content-type: %s, disposition: %s" % (self.mimetype, self.content_disposition)
 
-    def set_task(self, task):
-        cache.set(self._task_key(), task.task_id)
+    def set_task(self, task, timeout=60 * 60 * 24):
+        cache.set(self._task_key(), task.task_id, timeout)
 
     def _task_key(self):
         return self.download_id + ".task_id"
@@ -83,7 +83,8 @@ class DownloadBase(object):
     @classmethod
     def set_progress(cls, task, current, total):
         try:
-            task.update_state(state='PROGRESS', meta={'current': current, 'total': total})
+            if task:
+                task.update_state(state='PROGRESS', meta={'current': current, 'total': total})
         except (TypeError, NotImplementedError):
             pass
 
