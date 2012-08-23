@@ -96,6 +96,24 @@ def staging():
     env.host_os_map = None
     env.db = '%s_%s' % (env.project, env.environment)
     _setup_path()
+    env.user = prompt("Username: ", default='dimagivm')
+    env.make_bootstrap_command = 'python manage.py make_bootstrap direct-lessc'
+
+def india():
+    """Our production server in India."""
+    env.root = root = '/home/commcarehq'
+    env.virtualenv_root = _join(root, '.virtualenvs/commcarehq')
+    env.code_root       = _join(root, 'src/commcare-hq')
+    env.pre_code_root   = _join(root, 'src/_commcare-hq')
+    env.log_root   = _join(root, 'log')
+    env.code_branch = 'master'
+    env.sudo_user = 'commcarehq'
+    env.hosts = ['220.226.209.83']
+    env.environment = 'india'
+    env.user = prompt("Username: ", default=env.user)
+    env.service_manager = "supervisor"
+    env.make_bootstrap_command = 'python manage.py make_bootstrap'
+
 
 @task
 def production():
