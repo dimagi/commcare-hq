@@ -7,11 +7,10 @@ var HQReport = function (options) {
     self.filterAccordion = options.filterAccordion || "#reportFilters";
     self.toggleFiltersButton = options.toggleFiltersButton || "#toggle-report-filters";
     self.exportReportButton = options.exportReportButton || "#export-report-excel";
-    self.baseSlug = options.baseSlug || 'reports';
+    self.urlRoot = options.urlRoot;
 
     self.toggleFiltersCookie = self.domain+'.hqreport.toggleFilterState';
     self.datespanCookie = self.domain+".hqreport.filterSetting.test.datespan";
-    self.globalSavePath = options.globalSavePath || '/a/'+self.domain+'/';
 
     self.initialLoad = true;
 
@@ -27,8 +26,8 @@ var HQReport = function (options) {
                             "&enddate="+self.datespan.enddate;
                     }
                 }
-                window.location.href = window.location.pathname.replace('/'+self.baseSlug+'/',
-                    '/'+self.baseSlug+'/export/')+"?"+params;
+                window.location.href = window.location.pathname.replace(self.urlRoot,
+                    self.urlRoot+'export/')+"?"+params;
             });
 
         });
@@ -49,9 +48,9 @@ var HQReport = function (options) {
     self.saveDatespanToCookie = function () {
         if (self.datespan) {
             $.cookie(self.datespanCookie+'.startdate', self.datespan.startdate,
-                {path: self.globalSavePath, expires: 1});
+                {path: self.urlRoot, expires: 1});
             $.cookie(self.datespanCookie+'.enddate', self.datespan.enddate,
-                {path: self.globalSavePath, expires: 1});
+                {path: self.urlRoot, expires: 1});
         }
     };
 
@@ -79,12 +78,12 @@ var HQReport = function (options) {
             $(self.toggleFiltersButton).button('show');
 
         $(self.filterAccordion).on('hidden', function () {
-            $.cookie(self.toggleFiltersCookie, '', {path: self.globalSavePath, expires: 1});
+            $.cookie(self.toggleFiltersCookie, '', {path: self.urlRoot, expires: 1});
             $(self.toggleFiltersButton).button('show');
         });
 
         $(self.filterAccordion).on('show', function () {
-            $.cookie(self.toggleFiltersCookie, 'in', {path: self.globalSavePath, expires: 1});
+            $.cookie(self.toggleFiltersCookie, 'in', {path: self.urlRoot, expires: 1});
             $(self.toggleFiltersButton).button('hide');
         })
     };

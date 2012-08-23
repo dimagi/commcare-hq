@@ -7,8 +7,10 @@ import json
 from django.template.loader import render_to_string
 import pytz
 from corehq.apps.reports import util
+from corehq.apps.reports.datatables import DataTablesHeader
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
+from dimagi.utils.couch.pagination import DatatablesParams
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import render_to_response, json_request
 
@@ -52,26 +54,29 @@ class GenericReportView(object):
     """
     # required to create a report based on this
     name = None         # string. the name of the report that shows up in the heading and the
-    section_name = None # string. ex: "Reports"
     slug = None         # string. the report_slug_in_the_url
+    section_name = None # string. ex: "Reports"
+    app_slug = None     # string. ex: 'reports' or 'manage'
+    dispatcher = None   # string. example report_dispatcher
     # todo: find instances of base_slug and replace with section_slug
 
     # not required
+    description = None  # string. description of the report. Currently not being used.
+    report_template_path = None
+    report_partial_path = None
+
     asynchronous = False
     hide_filters = False
     exportable = False
     export_format_override = None
-    description = None  # string. description of the report. Currently not being used.
     icon = None
-    templates = dict(
+
+    # the defaults for this should be sufficient. But if they aren't, well go for it.
+    base_templates = dict(
         base=None,
         base_async=None,
-        report=None,
-        report_partial=None,
         filters=None
     )
-
-    dispatcher = "report_dispatcher"
 
     flush_layout = False
     # Todo: maybe make these a little cleaner?
@@ -80,7 +85,7 @@ class GenericReportView(object):
     is_admin_report = False
 
     def __init__(self, request, domain=None, base_context=None):
-        if not self.name or not self.section_name or not self.slug:
+        if not self.name or not self.section_name or not self.slug or not self.dispatcher:
             raise NotImplementedError
         self.request = request
         self.request_params = json_request(self.request.GET)
@@ -97,7 +102,8 @@ class GenericReportView(object):
                 is_admin=self.is_admin_report
             ),
             show_time_notice=self.show_time_notice,
-            domain=self.domain
+            domain=self.domain,
+            flush_layout=self.flush_layout
         )
 
     _url_root = None
@@ -137,14 +143,14 @@ class GenericReportView(object):
     @property
     def template_base(self):
         if self._template_base is None:
-            self._template_base = self.templates.get('base') or "%s/base_template.html" % self.section_name
+            self._template_base = self.base_templates.get('base') or "%s/base_template.html" % self.app_slug
         return self._template_base
 
     _template_async_base = None
     @property
     def template_async_base(self):
         if self._template_async_base is None:
-            self._template_async_base = (self.templates.get('base_async') or "reports/async/default.html") \
+            self._template_async_base = (self.base_templates.get('base_async') or "reports/async/default.html") \
                                         if self.asynchronous else self.template_base
         return self._template_async_base
 
@@ -152,44 +158,75 @@ class GenericReportView(object):
     @property
     def template_report(self):
         if self._template_report is None:
-            self._template_report = self.templates.get('report') or "reports/async/basic.html"
+            self._template_report = self.report_template_path or "reports/async/basic.html"
         return self._template_report
 
     _template_report_partial = None
     @property
     def template_report_partial(self):
+        """
+            Don't override.
+        """
         if self._template_report_partial is None:
-            self._template_report_partial = self.templates.get('report_partial') or None
+            override_partial = self.override_report_partial_template
+            self._template_report_partial = override_partial if isinstance(override_partial, str) \
+                                                else self.report_partial_path
         return self._template_report_partial
+
+    @property
+    def override_report_partial_template(self):
+        """
+            Here exists future flexibility to do things with selecting the
+            report_partial based on get parameters.
+        """
+        return None
 
     _template_filters = None
     @property
     def template_filters(self):
         if self._template_filters is None:
-            self._template_filters = self.templates.get('filters') or "reports/async/filters.html"
+            self._template_filters = self.base_templates.get('filters') or "reports/async/filters.html"
         return self._template_filters
 
     _rendered_report_title = None
     @property
     def rendered_report_title(self):
         """
+            Don't override.
+        """
+        if self._rendered_report_title is None:
+            rendered_title = self.render_report_title
+            self._rendered_report_title = rendered_title if isinstance(rendered_title, str) else self.name
+        return self._rendered_report_title
+
+    @property
+    def render_report_title(self):
+        """
             Override this to do special report titles that include specific info from the report (ex: a username).
             Inserted into the template as the report title upon rending the report asynchronously or when
             self.asynchronous is false
         """
-        if self._rendered_report_title is None:
-            self._rendered_report_title = self.name
-        return self._rendered_report_title
+        return None
 
     _filter_fields = None
     @property
     def filter_fields(self):
         """
-            Returns a list of filters for the report.
+            Don't override.
         """
         if self._filter_fields is None:
-            self._filter_fields = []
+            generated_fields = self.generate_fields
+            self._filter_fields = generated_fields if isinstance(generated_fields, list) else []
         return self._filter_fields
+
+    @property
+    def generate_fields(self):
+        """
+            Override.
+            Returns a list of filter field classes for the report.
+            ex ['corehq.apps.reports.fields.FilterUsersField']
+        """
+        return []
 
     _filter_classes = None
     @property
@@ -401,8 +438,201 @@ class GenericReportView(object):
     @classmethod
     def get_url(cls, *args, **kwargs):
         reverse_args = [args[i] for i in args]
-        return reverse(cls.dispatcher, args=reverse_args+[cls.slug])
+        dispatcher = cls.dispatcher
+        type = kwargs.get('type')
+        if type:
+            if not(type == 'json' or type == 'async' or type == 'export'):
+                raise ValueError('The type parameter is not one of the three allowed values: json, async, export.')
+            dispatcher = "%s_%s" % (type, dispatcher)
+        return reverse(dispatcher, args=reverse_args+[cls.slug])
 
     @classmethod
     def show_in_list(cls, **kwargs):
         return True
+
+class GenericTabularReport(GenericReportView):
+    """
+        Override the following properties:
+        @property
+        headers
+            - returns a DataTablesHeader object
+
+        @property
+        rows
+            - returns a 2D list of rows.
+    """
+    # new class properties
+    total_row = None
+    default_rows = 10
+    start_at_row = 0
+    show_all_rows = False
+    fix_left_col = False
+    ajax_pagination = False
+
+    # override old class properties
+    report_template_path = "reports/async/tabular.html"
+    flush_layout = True
+
+    @property
+    def headers(self):
+        """
+            Override this method to create a functional tabular report.
+            Returns a DataTablesHeader() object (or a list, but preferably the former.
+        """
+        return DataTablesHeader()
+
+    @property
+    def rows(self):
+        """
+            Override this method to create a functional tabular report.
+            Returns 2D list of rows.
+            [['row1'],[row2']]
+        """
+        return []
+
+    @property
+    def total_records(self):
+        """
+            Override for pagination.
+            Returns an integer.
+        """
+        return 0
+
+    @property
+    def shared_pagination_GET_params(self):
+        """
+            Override.
+            Should return a list of dicts with the name and value of the GET parameters
+            that you'd like to pass to the server-side pagination.
+            ex: [dict(name='group', value=self.group_name)]
+        """
+        return []
+
+    @property
+    def pagination_source(self):
+        args = [self.domain] if self.domain else []
+        return self.get_url(*args, **dict(type='json'))
+
+    _pagination = None
+    @property
+    def pagination(self):
+        if self._pagination is None:
+            self._pagination = DatatablesParams.from_request_dict(self.request.REQUEST)
+        return self._pagination
+
+    @property
+    def json_dict(self):
+        """
+            When you implement self.rows for a paginated report,
+            it should take into consideration the following:
+            self.pagination.start (skip)
+            self.pagination.count (limit)
+        """
+        rows = self.rows
+        total_records = self.total_records
+        if not isinstance(self.total_records, int):
+            raise ValueError("Property 'total_records' should return an int.")
+        return dict(
+            sEcho=self.pagination.echo,
+            iTotalDisplayRecords=len(rows),
+            iTotalRecords=total_records,
+            aaData=rows
+        )
+
+    @property
+    def fixed_cols_spec(self):
+        """
+            Override
+            Returns a dict formatted like:
+            dict(num=<num_cols_to_fix>, width=<width_of_total_fixed_cols>)
+        """
+        return dict(num=1, width=200)
+
+    @property
+    def override_export_sheet_name(self):
+        """
+            Override the export sheet name here. Return a string.
+        """
+        return None
+
+    _export_sheet_name = None
+    @property
+    def export_sheet_name(self):
+        if self._export_sheet_name is None:
+            override = self.override_export_sheet_name
+            self._export_sheet_name = override if isinstance(override, str) else self.name
+        return self._export_sheet_name
+
+    @property
+    def export_table(self):
+        try:
+            import xlwt
+        except ImportError:
+            raise Exception("It doesn't look like this machine is configured for "
+                            "excel export. To export to excel you have to run the "
+                            "command:  easy_install xlutils")
+        headers = self.headers
+        formatted_rows = self.rows
+
+        def _unformat_row(row):
+            return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
+
+        table = headers.as_table
+        rows = [_unformat_row(row) for row in formatted_rows]
+        table.extend(rows)
+        if self.total_row:
+            table.append(_unformat_row(self.total_row))
+
+        return [[self.export_sheet_name, table]]
+
+    @property
+    def report_context(self):
+        """
+            Don't override.
+            Override the properties headers and rows instead of this.
+        """
+        headers = self.headers
+        if not (isinstance(headers, DataTablesHeader) or isinstance(headers, list)):
+            raise ValueError("Property 'headers' should return a DataTablesHeader object or a list.")
+        if isinstance(headers, list):
+            raise DeprecationWarning("Property 'headers' should return a DataTablesHeader object, not a list.")
+
+        if not self.ajax_pagination:
+            rows = self.rows
+            if not isinstance(rows, list):
+                raise ValueError("Property 'rows' should return a list.")
+        else:
+            rows = []
+
+        if self.total_row is not None and not isinstance(self.total_row, list):
+            raise ValueError("'total_row' should be a list.")
+
+        pagination_spec = dict(is_on=self.ajax_pagination)
+        if self.ajax_pagination:
+            shared_params = self.shared_pagination_GET_params
+            if not isinstance(shared_params, list):
+                raise ValueError("Property 'pagination_params' should return a list.")
+            pagination_spec.update(
+                params=shared_params,
+                source=self.pagination_source,
+            )
+
+        left_col = dict(is_fixed=self.fix_left_col)
+        if self.fix_left_col:
+            spec = self.fixed_cols_spec
+            if not isinstance(spec, dict):
+                raise ValueError("Property 'fixed_cols_spec' should return a dict.")
+            left_col.update(fixed=spec)
+
+        return dict(
+            report_table=dict(
+                headers=headers,
+                rows=rows,
+                total_row=self.total_row,
+                default_rows=self.default_rows,
+                start_at_row=self.start_at_row,
+                show_all_rows=self.show_all_rows,
+                pagination=pagination_spec,
+                left_col=left_col
+            )
+        )

@@ -6,12 +6,13 @@
 {% block reportcontent %}
     <table class="table table-striped datatable" {% if filter and ajax_source %} data-filter="true"{% endif %}>
         <thead>
-        {%  if report.headers.complex %}
-            {{ report.headers.render_html|safe }}
+        {%  if report_table.headers.complex %}
+            {{ report_table.headers.render_html|safe }}
         {% else %}
+            {# This method is depricated and will likely be removed once Legacy Custom Reports are moved over. #}
             <tr>
-                {% for header in report.headers %}
-                    <th {% if not ajax_source %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
+                {% for header in report_table.headers %}
+                    <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
                         <i class="icon-hq-white icon-hq-doublechevron"></i>
                         {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
                         {% if header.help_text %}
@@ -23,28 +24,28 @@
         {% endif %}
         </thead>
         <tbody>
-        {% if ajax_source %}
+        {% if report_table.pagination.is_on %}
             <tr>
-                <td colspan="{{ report.headers.header|length }}" class="dataTables_empty">
+                <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
                     Fetching additional data, please wait...
                 </td>
             </tr>
         {% endif %}
-        {% for row in report.rows %}
+        {% for row in report_table.rows %}
             <tr>
-                {% for thing in row %}
-                    <td class="{% if not thing or thing.html != None and not thing.html %}null-entry{% endif %}">
-                        {% if thing.html != None %}{{ thing.html|safe }}{% else %}{{ thing|safe }}{% endif %}
-                        <span title="{% if thing.sort_key != "" %}{{ thing.sort_key }}{% else %}{{ thing }}{% endif %}"></span>
+                {% for col in row %}
+                    <td class="{% if not col or col.html != None and not col.html %}null-entry{% endif %}">
+                        {% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}
+                        <span title="{% if col.sort_key != "" %}{{ col.sort_key }}{% else %}{{ col }}{% endif %}"></span>
                     </td>
                 {% endfor %}
             </tr>
         {% endfor %}
         </tbody>
-        {% if total_row and report.rows %}
+        {% if report_table.total_row and report_table.rows %}
             <tfoot>
             <tr>
-                {% for col in total_row %}
+                {% for col in report_table.total_row %}
                     <td>{% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}</td>
                 {% endfor %}
             </tr>
@@ -58,18 +59,23 @@
 
         {% if report_datatables %}
             var reportTables = new HQReportDataTables({
-                defaultRows: {{ report_datatables.defaultNumRows|default:10 }},
-                startAtRowNum: {{ report_datatables.startAtRowNum|default:0 }},
-                showAllRowsOption: {{ report_datatables.showAllRows|JSON }},
-                {% if report.headers.render_aoColumns %}aoColumns: {{ report.headers.render_aoColumns|JSON }}, {% endif %}
-                autoWidth: {{ report.headers.auto_width|JSON }},
-                {% if report.headers.custom_sort %}customSort: {{ report.headers.custom_sort|JSON }},{% endif %}
-                {% if ajax_source %}ajaxSource: '{{ ajax_source }}',{% endif %}
-                {% if ajax_params %}ajaxParams: {{ ajax_params|JSON }},{% endif %}
-                {% if report.fixed_cols %}
+                defaultRows: {{ report_table.default_rows|default:10 }},
+                startAtRowNum: {{ report_table.start_at_row|default:0 }},
+                showAllRowsOption: {{ report_table.show_all_rows|JSON }},
+
+                {% if report_table.headers.render_aoColumns %}aoColumns: {{ report_table.headers.render_aoColumns|JSON }},{% endif %}
+                autoWidth: {{ report_table.headers.auto_width|JSON }},
+                {% if report_table.headers.custom_sort %}customSort: {{ report_table.headers.custom_sort|JSON }},{% endif %}
+
+                {% if report_table.pagination.is_on %}
+                    ajaxSource: '{{ report_table.pagination.source }}',
+                    ajaxParams: {{ report_table.pagination.params|JSON }},
+                {% endif %}
+
+                {% if report_table.left_col.is_fixed %}
                     fixColumns: true,
-                    fixColsNumLeft: {{ report.fixed_cols.num }},
-                    fixColsWidth: {{ report.fixed_cols.width }},
+                    fixColsNumLeft: {{ report_table.left_col.fixed.num }},
+                    fixColsWidth: {{ report_table.left_col.fixed.width }},
                 {% endif %}
             });
             standardHQReport.handleTabularReportCookies(reportTables);
