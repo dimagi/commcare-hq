@@ -162,6 +162,9 @@ def export(schema_index, file, format=Format.XLS_2007,
     Exports data from couch documents matching a given tag to a file. 
     Returns true if it finds data, otherwise nothing
     """
+
+    DownloadBase.set_progress(process, 0, 1)
+
     config, updated_schema, export_schema_checkpoint = get_export_components(schema_index,
                                                                     previous_export_id, filter)
     # transform docs onto output and save
