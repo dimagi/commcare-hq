@@ -2,7 +2,8 @@ from collections import defaultdict
 import json
 import logging
 from django.http import Http404
-from corehq.apps.reports.models import FormExportSchema
+from corehq.apps.reports.models import FormExportSchema,\
+    HQGroupExportConfiguration
 from corehq.apps.reports.standard import StandardHQReport, StandardDateHQReport
 from couchexport.models import SavedExportSchema, Format
 from dimagi.utils.couch.database import get_db
@@ -160,13 +161,16 @@ class ExcelExportReport(StandardDateHQReport):
         (2, form['xmlns'], form['app']['id'])
         )
 
+        # if there is a custom group export defined grab it here
+        groups = HQGroupExportConfiguration.by_domain(self.domain)
         self.context.update({
             "forms": forms,
             "saved_exports": exports,
             "edit": self.request.GET.get('edit') == 'true',
             "get_filter_params": self.get_filter_params(),
-            "custom_bulk_export_format": Format.XLS_2007
-            })
+            "custom_bulk_export_format": Format.XLS_2007,
+            "group_exports": groups
+        })
 
     def get_filter_params(self):
         params = self.request.GET.copy()

@@ -18,28 +18,7 @@
                 "Case Sharing": "You have selected to use case sharing in your apps. To use basic case sharing, " +
                         "a user must belong to exactly one case sharing group."
             };
-            $('.reset-password-form').submit(function(){
-                $(this).ajaxSubmit({
-                    url: $(this).attr('action'),
-                    type: 'POST',
-                    dataType: 'json',
-                    success: function (response, status, xhr, form) {
-                        if (response.status == "OK") {
-                            form.find('.modal-body').html($('<p />').text('Password changed successfully!'));
-                            form.find('button[type="submit"]').addClass('disabled');
-                            form.find('.modal-footer a').text("Close");
-                            form.parent().on('hidden', function() {
-                                form.find('.modal-body').html(response.formHTML);
-                                form.find('button[type="submit"]').removeClass('disabled');
-                                form.find('.modal-footer a').text("Cancel");
-                            })
-                        }else if (response.formHTML) {
-                            form.find('.modal-body').html(response.formHTML);
-                        }
-                    }
-                });
-                return false;
-            });
+
             $('.help_popover').popover({
                 placement: $(this).data('placement') || 'left',
                 title: function () {
@@ -49,12 +28,6 @@
                     return help_text[$(this).attr('data-help-key')];
                 }
             });
-
-            {% if only_numeric %}
-            $('.reset-password-form input').keydown(allowNumeric);
-            {% else %}
-            $("#add_commcare_account_form .help-block").hide();
-            {% endif %}
         });
     </script>
 {% endblock %}
@@ -95,15 +68,18 @@
                     <th></th>
                     <th>{% trans "Username" %}</th>
                     <th>{% trans "Full Name" %}</th>
-                    <th>{% trans "Password" %}</th>
                     <th>{% trans "Date Registered" %}</th>
+                    <th>{% trans "Phone" %}</th>
+                    {% if show_more_columns %}
                     <th>{% trans "Forms" %}</th>
                     <th>{% trans "Cases" %}</th>
-                    <th>{% trans "Phone" %}</th>
                     {% if show_case_sharing %}
                     <th class="help_popover" data-help-key="Case Sharing" data-placement="right">
                         <div>{% trans "Case Sharing" %} <i class="icon icon-question-sign"></i></div>
                     </th>
+                    {% endif %}
+                    {% else %}
+                    <th><a href="?show_more_columns=true">{% trans "More..." %}</a></th>
                     {% endif %}
                     {% if couch_user.can_edit_commcare_users %}
                     <th class="help_popover" data-help-key="Archive User"><div >{% trans "Archive" %} <i class="icon icon-question-sign"></i></div></th>
@@ -124,28 +100,7 @@
                     <td>{{ forloop.counter }}</td>
                     <td><a href="{% url user_account domain user.user_id %}">{{ user.raw_username }}</a></td>
                     <td>{{ user.full_name }}</td>
-                    <td>
-                        <a href="#reset_password_{{ user.user_id }}" class="btn btn-info" data-toggle="modal">Reset Password</a>
-
-                        <div id="reset_password_{{ user.user_id }}" class="modal hide fade">
-                            <div class="modal-header">
-                                <a class="close" data-dismiss="modal">&times;</a>
-                                <h3>Reset Password for <small>{{ user.html_username|safe }}</small></h3>
-                            </div>
-                            <form class="form form-horizontal reset-password-form" action="{% url change_password domain user.user_id %}" method="post">
-                                <div class="modal-body">
-                                    {% include 'users/partial/reset_password.html' %}
-                                </div>
-                                <div class="modal-footer">
-                                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                                    <button type="submit" class="btn btn-primary">Reset Password</button>
-                                </div>
-                            </form>
-                        </div>
-                    </td>
                     <td>{{ user.date_joined.date }}</td>
-                    <td>{{ user.form_count }}</td>
-                    <td>{{ user.case_count }}</td>
                     <td>
                         {% if user.phone_numbers %}
                             +{{ user.phone_numbers.0 }}
@@ -154,6 +109,9 @@
                             {% endif %}
                         {% endif %}
                     </td>
+                    {% if show_more_columns %}
+                    <td>{{ user.form_count }}</td>
+                    <td>{{ user.case_count }}</td>
                     {% if show_case_sharing %}
                     <td>
                         {% if user.get_case_sharing_groups|length == 1 %}
@@ -167,33 +125,36 @@
                             <li>{{ group.name }}</li>
                             {% endfor %}
                         </ul>
-                        <div class="btn-group">
-                            <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
-                            Select only one group
-                            <span class="caret"></span>
-                            </a>
-                            <ul class="dropdown-menu">
-                                {% for group in user.get_case_sharing_groups %}
-                                    <li><a href="{% url set_commcare_user_group domain %}?user={{ user.user_id }}&group={{ group.name }}">{{ group.name }}</a></li>
-                                {% endfor %}
-                            </ul>
-                        </div>
+{#                        <div class="btn-group">#}
+{#                            <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">#}
+{#                            Select only one group#}
+{#                            <span class="caret"></span>#}
+{#                            </a>#}
+{#                            <ul class="dropdown-menu">#}
+{#                                {% for group in user.get_case_sharing_groups %}#}
+{#                                    <li><a href="{% url set_commcare_user_group domain %}?user={{ user.user_id }}&group={{ group.name }}">{{ group.name }}</a></li>#}
+{#                                {% endfor %}#}
+{#                            </ul>#}
+{#                        </div>#}
                         {% else %}
                         <span class="label label-warning">No Groups</span>
-                            <div class="btn-group">
-                                <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
-                                Add to a group
-                                <span class="caret"></span>
-                                </a>
-                                <ul class="dropdown-menu">
-                                    {% for group in groups %}
-                                        <li><a href="{% url set_commcare_user_group domain %}?user={{ user.user_id }}&group={{ group.name }}">{{ group.name }}</a></li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
+{#                            <div class="btn-group">#}
+{#                                <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">#}
+{#                                Add to a group#}
+{#                                <span class="caret"></span>#}
+{#                                </a>#}
+{#                                <ul class="dropdown-menu">#}
+{#                                    {% for group in groups %}#}
+{#                                        <li><a href="{% url set_commcare_user_group domain %}?user={{ user.user_id }}&group={{ group.name }}">{{ group.name }}</a></li>#}
+{#                                    {% endfor %}#}
+{#                                </ul>#}
+{#                            </div>#}
                         {% endif %}
                         {% endif %}
                     </td>
+                    {% endif %}
+                    {% else %}
+                    <td><a href="?show_more_columns=true">...</a></td>
                     {% endif %}
                     {% if couch_user.can_edit_commcare_users %}
                     <td>

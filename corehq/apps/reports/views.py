@@ -3,7 +3,8 @@ import json
 from corehq.apps.reports import util, standard
 from corehq.apps.reports._global import inspect, export
 from corehq.apps.reports.export import BulkExportHelper, ApplicationBulkExportHelper, CustomBulkExportHelper
-from corehq.apps.reports.models import FormExportSchema
+from corehq.apps.reports.models import FormExportSchema,\
+    HQGroupExportConfiguration
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import Permissions
@@ -32,7 +33,7 @@ from casexml.apps.case.export import export_cases_and_referrals
 from corehq.apps.reports.display import xmlns_to_name
 from couchexport.schema import build_latest_schema
 from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
-    ExportTable, Format, FakeSavedExportSchema
+    ExportTable, Format, FakeSavedExportSchema, SavedBasicExport
 from couchexport import views as couchexport_views
 from couchexport.shortcuts import export_data_shared, export_raw_data,\
     export_response
@@ -322,6 +323,16 @@ def edit_custom_export(req, domain, export_id):
                                "slug": slug,
                                "domain": domain})
 
+@login_or_digest
+@require_form_export_permission
+@login_and_domain_required
+def hq_download_saved_export(req, domain, export_id):
+    export = SavedBasicExport.get(export_id)
+    # quasi-security hack: the first key of the index is always assumed 
+    # to be the domain
+    assert domain == export.configuration.index[0]
+    return couchexport_views.download_saved_export(req, export_id)
+    
 @login_or_digest
 @require_form_export_permission
 @login_and_domain_required

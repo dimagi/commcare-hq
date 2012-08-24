@@ -241,6 +241,7 @@ def commcare_users(request, domain, template="users/commcare_users.html"):
     show_inactive = json.loads(request.GET.get('show_inactive', 'false'))
     sort_by = request.GET.get('sortBy', 'abc')
     cannot_share = json.loads(request.GET.get('cannot_share', 'false'))
+    show_more_columns = request.GET.get('show_more_columns') is not None
     context = _users_context(request, domain)
     if cannot_share:
         users = CommCareUser.cannot_share(domain)
@@ -258,12 +259,13 @@ def commcare_users(request, domain, template="users/commcare_users.html"):
         'show_case_sharing': request.project.case_sharing_included(),
         'show_inactive': show_inactive,
         'cannot_share': cannot_share,
-        'reset_password_form': SetPasswordForm(user=""),
-        'only_numeric': (request.project.password_format() == 'n'),
-
+        'show_more_columns': show_more_columns or cannot_share,
     })
     return render_to_response(request, template, context)
 
+# this was originally written with a GET, which is wrong
+# I'm not fixing for now, just adding the require_POST to make it unusable
+@require_POST
 @require_can_edit_commcare_users
 def set_commcare_user_group(request, domain):
     user_id = request.GET.get('user', '')
@@ -311,6 +313,11 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     context.update({
         'couch_user': couch_user,
     })
+    if couch_user.is_commcare_user():
+        context.update({
+            'reset_password_form': SetPasswordForm(user=""),
+            'only_numeric': (request.project.password_format() == 'n'),
+        })
 
     if couch_user.is_deleted():
         if couch_user.is_commcare_user():

@@ -12,6 +12,7 @@ from couchexport.export import get_headers, get_writer, format_tables, create_in
 from couchexport.models import FakeSavedExportSchema, Format, SavedExportSchema
 
 # couchexport is a mess. Sorry. Sorry. This is gross, too.
+from soil import DownloadBase
 
 class BulkExport(object):
 
@@ -150,16 +151,13 @@ class BulkExportHelper(object):
         self.domain = domain
         self.generate_bulk_files(export_tags, export_filter)
 
-        download_id = uuid.uuid4().hex
+        download = DownloadBase()
         couchexport.tasks.bulk_export_async.delay(
             self,
-            download_id,
+            download.download_id,
             domain=self.domain
         )
-        return HttpResponse(json.dumps(dict(
-            download_id=download_id,
-            download_url=reverse('ajax_job_poll', kwargs={'download_id': download_id}))
-        ))
+        return download.get_start_response()
 
     def generate_bulk_files(self, export_tags, export_filter):
         self.bulk_files = []

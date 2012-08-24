@@ -1,3 +1,5 @@
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import Http404
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_or_digest
 from corehq.apps.groups.models import Group
@@ -101,8 +103,11 @@ class CommCareCaseResource(Resource):
 
     def obj_get(self, request, **kwargs):
         case = CommCareCase.get(kwargs['pk'])
-        assert case.domain == kwargs['domain'] # stupid "security"
-        return case
+        # stupid "security"
+        if case.domain == kwargs['domain'] and case.doc_type == 'CommCareCase':
+            return case
+        else:
+            raise ObjectDoesNotExist()
 
     def obj_get_list(self, request, **kwargs):
         domain = kwargs['domain']
@@ -152,9 +157,11 @@ class XFormInstanceResource(Resource):
         form_id = kwargs['pk']
 
         form = XFormInstance.get(form_id)
-        assert form.domain == domain # stupid "security"
-
-        return form
+        # stupid "security"
+        if form.domain == domain and form.doc_type == 'XFormInstance':
+            return form
+        else:
+            raise ObjectDoesNotExist()
 
     class Meta(CustomResourceMeta):
         resource_name = 'form'

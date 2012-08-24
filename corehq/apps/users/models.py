@@ -1161,6 +1161,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
     def get_group_fixture(self):
         return group_fixture(self.get_case_sharing_groups(), self)
 
+    @memoized
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
         return [group for group in Group.by_user(self) if group.case_sharing]

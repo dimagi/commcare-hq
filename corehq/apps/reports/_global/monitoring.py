@@ -6,11 +6,14 @@ from django.http import Http404
 from django.conf import settings
 import pytz
 import sys
+from corehq.apps.domain.models import Domain
 from corehq.apps.reports import util
+from corehq.apps.reports._global import CouchCachedReportMixin
 from corehq.apps.reports._global.inspect import CaseListReport
 from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.display import xmlns_to_name, FormType
+from corehq.apps.reports.models import CaseActivityReportCache
 from corehq.apps.reports.standard import StandardTabularHQReport, StandardHQReport, StandardDateHQReport, user_link_template, DATE_FORMAT
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
@@ -21,16 +24,23 @@ from dimagi.utils.web import get_url_base
 
 
 class MonitoringReportMixin(object):
+    """
+        This generates a link to the user's case list data.
+    """
+    def __getattr__(self, item):
+        if item == "domain":
+            return ""
+        raise AttributeError
 
-    @classmethod
-    def get_user_link(cls, domain, user):
-        user_link = user_link_template % {"link": "%s%s" % (get_url_base(), reverse("report_dispatcher", args=[domain, CaseListReport.slug])),
+    def get_user_link(self, user):
+        user_link = user_link_template % {"link": "%s%s" % (get_url_base(),
+                                                            reverse("report_dispatcher",
+                                                                args=[self.domain, CaseListReport.slug])),
                                           "user_id": user.user_id,
                                           "username": user.username_in_report}
         return util.format_datatables_data(text=user_link, sort_key=user.username_in_report)
 
-
-class CaseActivityReport(StandardTabularHQReport, MonitoringReportMixin):
+class CaseActivityReport(StandardTabularHQReport, MonitoringReportMixin, CouchCachedReportMixin):
     """
     User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
     danny   5 (25%)         10 (50%)        20 (100%)       17                          6
@@ -44,153 +54,99 @@ class CaseActivityReport(StandardTabularHQReport, MonitoringReportMixin):
     all_users = None
     display_data = ['percent']
 
-    class Row(object):
-        def __init__(self, report, user):
-            self.report = report
-            self.user = user
+    _default_landmarks = [30, 60, 90]
+    _default_milestone = 120
 
-        @memoized
-        def active_count(self):
-            """Open clients seen in the last 120 days"""
-            return self.report.get_number_cases(
-                user_id=self.user.get_id,
-                modified_after=self.report.utc_now - self.report.inactive,
-                modified_before=self.report.utc_now,
-                closed=False,
-            )
-
-        @memoized
-        def inactive_count(self):
-            """Open clients not seen in the last 120 days"""
-            return self.report.get_number_cases(
-                user_id=self.user.get_id,
-                modified_before=self.report.utc_now - self.report.inactive,
-                closed=False,
-            )
-
-        @memoized
-        def modified_count(self, startdate=None, enddate=None):
-            enddate = enddate or self.report.utc_now
-            return self.report.get_number_cases(
-                user_id=self.user.get_id,
-                modified_after=startdate,
-                modified_before=enddate,
-            )
-
-        @memoized
-        def closed_count(self, startdate=None, enddate=None):
-            enddate = enddate or self.report.utc_now
-            return self.report.get_number_cases(
-                user_id=self.user.get_id,
-                modified_after=startdate,
-                modified_before=enddate,
-                closed=True
-            )
-
-        def header(self):
-            return CaseActivityReport.get_user_link(self.report.domain, self.user)
-
-    class TotalRow(object):
-        def __init__(self, rows, header):
-            self.rows = rows
-            self._header = header
-
-        @memoized
-        def active_count(self):
-            return sum([row.active_count() for row in self.rows])
-
-        @memoized
-        def inactive_count(self):
-            return sum([row.inactive_count() for row in self.rows])
-
-        @memoized
-        def modified_count(self, startdate=None, enddate=None):
-            return sum([row.modified_count(startdate, enddate) for row in self.rows])
-
-        @memoized
-        def closed_count(self, startdate=None, enddate=None):
-            return sum([row.closed_count(startdate, enddate) for row in self.rows])
-
-        def header(self):
-            return self._header
+    def _fetch_cached_report(self):
+        report = CaseActivityReportCache.get_by_domain(self.domain).first()
+        if not report:
+            domain = Domain.get_by_name(self.domain)
+            report = CaseActivityReportCache.build_report(domain)
+        return report
 
     def get_parameters(self):
-        landmarks_param = self.request_params.get('landmarks', [30,60,90])
-        inactive_param = self.request_params.get('inactive', 120)
-        self.display_data = self.request_params.get('display', ['percent'])
-        if landmarks_param + [inactive_param] != sorted(landmarks_param + [inactive_param]):
-            raise Http404()
-        self.landmarks = [datetime.timedelta(days=l) for l in landmarks_param]
-        self.inactive = datetime.timedelta(days=inactive_param)
-        if self.history:
-            self.now = self.history
-        else:
-            self.now = datetime.datetime.now(tz=self.timezone)
+        landmarks_param = self.request_params.get('landmarks')
+        landmarks_param = landmarks_param if isinstance(landmarks_param, list) else []
+        landmarks_param = [param for param in landmarks_param if isinstance(param, int)]
+        if landmarks_param:
+            for landmark in landmarks_param:
+                if landmark not in self.cached_report.landmark_data:
+                    self.cached_report.update_landmarks(landmarks=landmarks_param)
+                    self.cached_report.save()
+                    break
+        milestone_param = self.request_params.get('milestone')
+        milestone_param = milestone_param if isinstance(milestone_param, int) else None
+        if milestone_param:
+            if milestone_param not in self.cached_report.active_cases or \
+                milestone_param not in self.cached_report.inactive_cases:
+                print "UPDATING status"
+                self.cached_report.update_status(milestone=milestone_param)
+                self.cached_report.save()
 
-    @property
-    @memoized
-    def utc_now(self):
-        return tz_utils.adjust_datetime_to_timezone(self.now, self.timezone.zone, pytz.utc.zone)
+        self.landmarks = landmarks_param if landmarks_param else self._default_landmarks
+        self.milestone = milestone_param if milestone_param else self._default_milestone
 
     def get_headers(self):
-        headers = DataTablesHeader(DataTablesColumn("Users"))
+        headers = DataTablesHeader(DataTablesColumn("User"))
         for landmark in self.landmarks:
-            headers.add_column(DataTablesColumn("Last %s Days" % landmark.days if landmark else "Ever",
+            headers.add_column(DataTablesColumn("Last %s Days" % landmark if landmark else "Ever",
                 sort_type=DTSortType.NUMERIC,
-                help_text='Number of cases modified (or closed) in the last %s days' % landmark.days))
-        headers.add_column(DataTablesColumn("Active Cases",
+                help_text='Number of cases modified (or closed) in the last %s days ' % landmark))
+        headers.add_column(DataTablesColumn("Active Cases ",
             sort_type=DTSortType.NUMERIC,
-            help_text='Number of cases modified in the last %s days that are still open' % self.inactive.days))
-        headers.add_column(DataTablesColumn("Inactive Cases",
+            help_text='Number of cases modified in the last %s days that are still open' % self.milestone))
+        headers.add_column(DataTablesColumn("Inactive Cases ",
             sort_type=DTSortType.NUMERIC,
-            help_text="Number of cases that are open but haven't been touched in the last %s days" % self.inactive.days))
+            help_text="Number of cases that are open but haven't been touched in the last %s days" % self.milestone))
         return headers
 
     def get_rows(self):
-        rows = [self.Row(self, user) for user in self.users]
-        total_row = self.TotalRow(rows, "All Users")
+        rows = []
+        # TODO: cleanup...case type should be None, but not sure how that affects other rports
+        self.case_type = self.case_type if self.case_type else None
 
-        def format_row(row):
-            cells = [row.header()]
-            def add_numeric_cell(text, value=None):
-                if value is None:
-                    value = int(text)
-                cells.append(util.format_datatables_data(text=text, sort_key=value))
-            for landmark in self.landmarks:
-                value = row.modified_count(self.utc_now - landmark)
-                total = row.active_count() + row.closed_count(self.utc_now - landmark)
+        def _numeric_val(text, value=None):
+            if value is None:
+                value = int(text)
+            return util.format_datatables_data(text=text, sort_key=value)
 
-                try:
-                    display = '%d (%d%%)' % (value, value * 100. / total)
-                except ZeroDivisionError:
-                    display = '%d' % value
-                add_numeric_cell(display, value)
-            add_numeric_cell(row.active_count())
-            add_numeric_cell(row.inactive_count())
-            return cells
-        self.total_row = format_row(total_row)
-        return map(format_row, rows)
+        def _format_val(value, total):
+            try:
+                display = '%d (%d%%)' % (value, value * 100. / total)
+            except ZeroDivisionError:
+                display = '%d' % value
+            return display
 
-    def get_number_cases(self, user_id, modified_after=None, modified_before=None, closed=None):
-        key = [self.domain, {} if closed is None else closed, self.case_type or {}, user_id]
+        case_key =  self.cached_report.case_key(self.case_type)
 
-        if modified_after is None:
-            start = ""
-        else:
-            start = json_format_datetime(modified_after)
+        landmark_data = [self.cached_report.landmark_data.get(case_key,
+                {}).get(self.cached_report.day_key(landmark), {}) for landmark in self.landmarks]
+        active_data = self.cached_report.active_cases.get(case_key,
+                {}).get(self.cached_report.day_key(self.milestone), {})
+        inactive_data = self.cached_report.inactive_cases.get(case_key,
+                {}).get(self.cached_report.day_key(self.milestone), {})
 
-        if modified_before is None:
-            end = {}
-        else:
-            end = json_format_datetime(modified_before)
+        for user in self.users:
+            row = [self.get_user_link(user)]
+            total_active = active_data.get(user.user_id, 0)
+            total_inactive = inactive_data.get(user.user_id, 0)
+            total = total_active + total_inactive
+            for ld in landmark_data:
+                value = ld.get(user.user_id, 0)
+                row.append(_numeric_val(_format_val(value, total), value))
+            row.append(_numeric_val(total_active))
+            row.append(_numeric_val(total_inactive))
+            rows.append(row)
 
-        return get_db().view('case/by_date_modified',
-            startkey=key + [start],
-            endkey=key + [end],
-            group=True,
-            group_level=0,
-            wrapper=lambda row: row['value']
-        ).one() or 0
+        total_row = ["All Users"]
+        for i in range(1, len(self.landmarks)+3):
+            total_row.append(sum([row[i].get('sort_key', 0) for row in rows]))
+        grand_total = sum(total_row[-2:])
+        for i, val in enumerate(total_row[1:-2]):
+            total_row[1+i] = _numeric_val(_format_val(val, grand_total), val)
+        self.total_row = total_row
+
+        return rows
 
 
 class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport, MonitoringReportMixin):
@@ -235,7 +191,7 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport, Mon
                 except Exception:
                     row.append(0)
             row_sum = sum(row)
-            rows.append([self.get_user_link(self.domain, user)] + [util.format_datatables_data(row_data, row_data) for row_data in row] + [util.format_datatables_data("<strong>%s</strong>" % row_sum, row_sum)])
+            rows.append([self.get_user_link(user)] + [util.format_datatables_data(row_data, row_data) for row_data in row] + [util.format_datatables_data("<strong>%s</strong>" % row_sum, row_sum)])
 
         totals_by_form = [totals_by_form[form_type] for form_type in self.form_types]
         self.total_row = ["All Users"] + ["%s" % t for t in totals_by_form] + ["<strong>%s</strong>" % sum(totals_by_form)]
@@ -354,7 +310,7 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport, MonitoringRepor
                     rows[user_map[user_id]][date_key] += 1
 
         for i, user in enumerate(self.users):
-            rows[i][0] = self.get_user_link(self.domain, user)
+            rows[i][0] = self.get_user_link(user)
             total = sum(rows[i][1:-1])
             rows[i][-1] = total
             total_row[1:-1] = [total_row[ind+1]+val for ind, val in enumerate(rows[i][1:-1])]
@@ -413,7 +369,7 @@ class FormCompletionTrendsReport(StandardTabularHQReport, StandardDateHQReport, 
             globalmax = 0
             for user in self.users:
                 datadict = entrytimes.get_user_data(self.domain, user.user_id, form, self.datespan)
-                rows.append([self.get_user_link(self.domain, user),
+                rows.append([self.get_user_link(user),
                              to_minutes(float(datadict["sum"]), float(datadict["count"])),
                              to_minutes(datadict["min"]),
                              to_minutes(datadict["max"]),
@@ -590,16 +546,16 @@ class FormCompletionVsSubmissionTrendsReport(StandardTabularHQReport, StandardDa
             for item in data:
                 vals = item.get('value')
                 completion_time = dateutil.parser.parse(vals.get('completion_time')).replace(tzinfo=None)
-                completion_dst = tz_utils.is_timezone_in_dst(self.timezone, completion_time)
+                completion_dst = False if self.timezone == pytz.utc else \
+                                    tz_utils.is_timezone_in_dst(self.timezone, completion_time)
                 completion_time = self.timezone.localize(completion_time, is_dst=completion_dst)
                 submission_time = dateutil.parser.parse(vals.get('submission_time'))
                 submission_time = submission_time.replace(tzinfo=pytz.utc)
                 td = submission_time-completion_time
 
-                DFORMAT  = "%d %b %Y, %H:%M"
                 td_total = (td.seconds + td.days * 24 * 3600)
                 rows.append([
-                    self.get_user_link(self.domain, user),
+                    self.get_user_link(user),
                     self._format_date(completion_time),
                     self._format_date(submission_time),
                     self._view_form_link(item.get('id', '')),

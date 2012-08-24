@@ -28,6 +28,28 @@
                 }
             }).trigger('change');
         });
+        $('.reset-password-form').submit(function(){
+            $(this).ajaxSubmit({
+                url: $(this).attr('action'),
+                type: 'POST',
+                dataType: 'json',
+                success: function (response, status, xhr, form) {
+                    if (response.status == "OK") {
+                        form.find('.modal-body').html($('<p />').text('Password changed successfully!'));
+                        form.find('button[type="submit"]').addClass('disabled');
+                        form.find('.modal-footer a').text("Close");
+                        form.parent().on('hidden', function() {
+                            form.find('.modal-body').html(response.formHTML);
+                            form.find('button[type="submit"]').removeClass('disabled');
+                            form.find('.modal-footer a').text("Cancel");
+                        })
+                    }else if (response.formHTML) {
+                        form.find('.modal-body').html(response.formHTML);
+                    }
+                }
+            });
+            return false;
+        });
     </script>
     <script>
         $(function () {
@@ -184,6 +206,29 @@
         </div>
         {% endif %}
     </div>
+    {% if couch_user.is_commcare_user %}
+        <fieldset>
+            <legend>Reset Password</legend>
+            <a href="#reset_password_{{ couch_user.user_id }}" class="btn btn-info" data-toggle="modal">Reset Password</a>
+
+            <div id="reset_password_{{ couch_user.user_id }}" class="modal hide fade">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h3>Reset Password for <small>{{ couch_user.html_username|safe }}</small></h3>
+                </div>
+                <form class="form form-horizontal reset-password-form" action="{% url change_password domain couch_user.user_id %}" method="post">
+                    <div class="modal-body">
+                        {% include 'users/partial/reset_password.html' %}
+                    </div>
+                    <div class="modal-footer">
+                        <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Reset Password</button>
+                    </div>
+                </form>
+            </div>
+        </fieldset>
+        <div class="form-actions"></div>
+    {% endif %}
     {% if couch_user.is_commcare_user and couch_user.user_id != request.couch_user.user_id %}
         <p><a class="btn btn-danger" href="#delete_user_{{ couch_user.user_id }}" data-toggle="modal"><i class="icon-white icon-trash"></i> Delete {% commcare_user %}</a></p>
     {% endif %}

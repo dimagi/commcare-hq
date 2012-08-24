@@ -5,12 +5,13 @@ from celery.schedules import crontab
 from celery.decorators import periodic_task, task
 from django.http import Http404
 from corehq.apps.domain.models import Domain
-from corehq.apps.reports.models import DailyReportNotification
+from corehq.apps.reports.models import DailyReportNotification,\
+    HQGroupExportConfiguration, CaseActivityReportCache
 from corehq.apps.users.models import CouchUser
-from corehq.apps.reports.schedule import config
 from corehq.apps.reports.schedule.html2text import html2text
 from dimagi.utils.django.email import send_HTML_email
 from corehq.apps.reports.schedule.config import ScheduledReportFactory
+from couchexport.groupexports import export_for_group
 
 logging = get_task_logger()
 
@@ -60,8 +61,20 @@ def send_report(scheduled_report, user):
             else:
                 scheduled_report.save()
 
+@periodic_task(run_every=crontab(hour=[0,12], minute="0", day_of_week="*"))
+def saved_exports():    
+    for row in HQGroupExportConfiguration.view("groupexport/by_domain", reduce=False).all():
+        export_for_group(row["id"], "couch")
+
+
 def _run_reports(reps):
     for rep in reps:
         for user_id in rep.user_ids:
             user = CouchUser.get(user_id)
             send_report.delay(rep, user.to_json())
+
+@periodic_task(run_every=crontab(hour=range(0,23,3), minute="0"))
+def build_case_activity_report():
+    all_domains = Domain.get_all()
+    for domain in all_domains:
+        CaseActivityReportCache.build_report(domain)

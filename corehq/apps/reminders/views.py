@@ -308,7 +308,7 @@ def add_survey(request, domain, survey_id=None):
         "form_list" : form_list,
         "sample_list" : sample_list,
         "method_list" : SURVEY_METHOD_LIST,
-        "user_list" : CommCareUser.by_domain(domain).all(),
+        "user_list" : CommCareUser.by_domain(domain),
     }
     return render_to_response(request, "reminders/partial/add_survey.html", context)
 
