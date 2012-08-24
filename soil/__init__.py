@@ -52,9 +52,13 @@ class DownloadBase(object):
 
     def _task_key(self):
         return self.download_id + ".task_id"
+
     @property
     def task_id(self):
-        return cache.get(self._task_key(), None)
+        timeout = 60 * 60 * 24
+        task_id = cache.get(self._task_key(), None)
+        cache.set(self._task_key(), task_id, timeout)
+        return task_id
 
     @property
     def task(self):
