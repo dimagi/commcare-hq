@@ -760,6 +760,14 @@ class SurveySample(Document):
     domain = StringProperty()
     name = StringProperty()
     contacts = ListProperty(DictProperty)
+    
+    @classmethod
+    def get_all(cls, domain):
+        return cls.view('reminders/sample_by_domain',
+            startkey=[domain],
+            endkey=[domain, {}],
+            include_docs=True
+        ).all()
 
 class Survey(Document):
     domain = StringProperty()

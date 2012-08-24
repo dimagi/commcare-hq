@@ -437,4 +437,7 @@ class SurveyForm(Form):
         return cleaned_data
 
 
+class SurveySampleForm(Form):
+    name = CharField()
+    sample_contacts = SampleContactsField()
 

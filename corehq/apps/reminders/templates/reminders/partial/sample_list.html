@@ -1,0 +1,38 @@
+{% extends "reminders/survey_base.html" %}
+
+{% block head %}{{ block.super }}
+    <style>
+        table tr td {
+            border: 1px solid #CCC;
+            padding: 5px 10px 5px 10px;
+        }
+        table tr th {
+            border: 1px solid #CCC;
+            background-color: #CCC;
+            padding: 5px 10px 5px 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block survey_content %}
+<br />
+<h2>Samples</h2>
+<br />
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Contacts</th>
+        <th></th>
+    </tr>
+    {% for sample in samples %}
+    <tr>
+        <td>{{ sample.name }}</td>
+        <td>{{ sample.contacts|length }}</td>
+        <td><a href="{% url edit_sample domain sample.get_id %}"><span class="btn btn-primary">Edit</span></a></td>
+    </tr>
+    {% endfor %}
+</table>
+<br />
+<center><a href="{% url add_sample domain %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i> New Sample</span></a></center>
+
+{% endblock %}

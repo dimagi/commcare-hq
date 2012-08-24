@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm
+from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm
 from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST
 from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.web import render_to_response
@@ -320,4 +320,47 @@ def survey_list(request, domain):
     }
     return render_to_response(request, "reminders/partial/survey_list.html", context)
 
+@login_and_domain_required
+def add_sample(request, domain, sample_id=None):
+    sample = None
+    if sample_id is not None:
+        sample = SurveySample.get(sample_id)
+    
+    if request.method == "POST":
+        form = SurveySampleForm(request.POST)
+        if form.is_valid():
+            name            = form.cleaned_data.get("name")
+            sample_contacts = form.cleaned_data.get("sample_contacts")
+            
+            if sample is None:
+                sample = SurveySample (
+                    domain = domain,
+                    name = name,
+                    contacts = sample_contacts
+                )
+            else:
+                sample.name = name
+                sample.contacts = sample_contacts
+            sample.save()
+            return HttpResponseRedirect(reverse("sample_list", args=[domain]))
+    else:
+        initial = {}
+        if sample is not None:
+            initial["name"] = sample.name
+            initial["sample_contacts"] = sample.contacts
+        form = SurveySampleForm(initial=initial)
+    
+    context = {
+        "domain" : domain,
+        "form" : form
+    }
+    return render_to_response(request, "reminders/partial/add_sample.html", context)
+
+@login_and_domain_required
+def sample_list(request, domain):
+    context = {
+        "domain" : domain,
+        "samples" : SurveySample.get_all(domain)
+    }
+    return render_to_response(request, "reminders/partial/sample_list.html", context)
 
