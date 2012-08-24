@@ -1,4 +1,4 @@
-{% extends base_template %}
+{% extends 'hqwebapp/two_column.html' %}
 
 {% block head %}
     {{ block.super }}
@@ -46,17 +46,13 @@
         }
     </style>
 {% endblock %}
-{% block content %}
-    <div id="main_container">
-        <ul class="horizontal">
-            <li>
-                <a href="{% url sample_list domain %}">Sample List</a>
-            </li>
-            <li>
-                <a href="{% url survey_list domain %}">Survey List</a>
-            </li>
-        </ul>
-        {% block survey_content %}
-        {% endblock %}
-    </div>
+
+{% block sidebar %}
+    {% include 'reminders/partial/survey_navigation.html' %}
 {% endblock %}
+
+{% block main_column %}
+    {% block survey_content %}
+    {% endblock %}
+{% endblock %}
+
