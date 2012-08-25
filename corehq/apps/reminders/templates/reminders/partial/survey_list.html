@@ -17,8 +17,6 @@
     <thead>
         <tr>
             <th>Name</th>
-            <th>Questionnaire</th>
-            <th>Sample</th>
             <th></th>
         </tr>
     </thead>
@@ -26,8 +24,6 @@
         {% for survey in surveys %}
         <tr>
             <td>{{ survey.name }}</td>
-            <td>{{ survey.questionnaire_name }}</td>
-            <td>{{ survey.sample.name }}</td>
             <td><a href="{% url edit_survey domain survey.get_id %}"><span class="btn btn-primary">Edit</span></a></td>
         </tr>
         {% endfor %}

@@ -6,6 +6,7 @@
     #sample {
         width: auto;
         margin-left: 0px;
+        background-color: #FFF;
     }
     #sample_info {
         width: auto;
@@ -88,42 +89,47 @@
             </tr>
             {% endif %}
             <tr>
-                <th>Name:</th>
+                <th><h4>Name: </h4></th>
                 <td>{{ form.name }}</td>
             </tr>
         </tbody>
     </table>
+    <br />
+    <h4>Contacts</h4>
+    <br />
     {{ form.sample_contacts.errors }}
-    <table id="sample" class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Identifier</th>
-                <th>Phone Number</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody id="sample_tbody">
-            {% if form.sample_contacts.value|length == 0 %}
-            <tr>
-                <td><input name="sample_contact.0.id" type="text" class="short" /></td>
-                <td><input name="sample_contact.0.phone_number" type="text" /></td>
-                <td><span class="btn btn-danger" onClick="remove_contact_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span></td>
-            </tr>
-            {% else %}
-                {% for contact in form.sample_contacts.value %}
+    <div class="form-block">
+        <table id="sample" class="table table-bordered">
+            <thead>
                 <tr>
-                    <td><input name="sample_contact.{{ forloop.counter0 }}.id" type="text" class="short" value="{{ contact.id }}" /></td>
-                    <td><input name="sample_contact.{{ forloop.counter0 }}.phone_number" type="text" value="{{ contact.phone_number }}" /></td>
+                    <th>Identifier</th>
+                    <th>Phone Number</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="sample_tbody">
+                {% if form.sample_contacts.value|length == 0 %}
+                <tr>
+                    <td><input name="sample_contact.0.id" type="text" class="short" /></td>
+                    <td><input name="sample_contact.0.phone_number" type="text" /></td>
                     <td><span class="btn btn-danger" onClick="remove_contact_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span></td>
                 </tr>
-                {% endfor %}
-            {% endif %}
-        </tbody>
-    </table>
+                {% else %}
+                    {% for contact in form.sample_contacts.value %}
+                    <tr>
+                        <td><input name="sample_contact.{{ forloop.counter0 }}.id" type="text" class="short" value="{{ contact.id }}" /></td>
+                        <td><input name="sample_contact.{{ forloop.counter0 }}.phone_number" type="text" value="{{ contact.phone_number }}" /></td>
+                        <td><span class="btn btn-danger" onClick="remove_contact_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span></td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+        <br />
+        <span class="btn btn-success" onClick="add_contact_record();"><i class="icon icon-white icon-plus"></i> Add Contact</span>
+        <br />
+    </div>
     <br />
-    <span class="btn btn-success" onClick="add_contact_record();"><i class="icon icon-white icon-plus"></i> Add Contact</span>
-    <br />
-    <hr />
     <input type="submit" class="btn btn-primary" value="Submit" />
 </form>
 

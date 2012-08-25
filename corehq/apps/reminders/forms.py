@@ -341,37 +341,75 @@ class ComplexCaseReminderForm(Form):
 
 
 
-class SampleContactsWidget(Widget):
+class RecordListWidget(Widget):
+    
+    # When initialized, expects to be passed attrs={"input_name" : < first dot-separated name of all related records in the html form >}
     
     def value_from_datadict(self, data, files, name, *args, **kwargs):
-        contacts_raw = {}
+        input_name = self.attrs["input_name"]
+        raw = {}
         for key in data:
-            if key[0:15] == "sample_contact.":
-                contacts_raw[key] = data[key]
+            if key.startswith(input_name + "."):
+                raw[key] = data[key]
         
-        contacts_dict = DotExpandedDict(contacts_raw)
-        contacts = []
-        if len(contacts_dict) > 0:
-            for key in sorted(contacts_dict["sample_contact"].iterkeys()):
-                contacts.append(contacts_dict["sample_contact"][key])
+        data_dict = DotExpandedDict(raw)
+        data_list = []
+        if len(data_dict) > 0:
+            for key in sorted(data_dict[input_name].iterkeys()):
+                data_list.append(data_dict[input_name][key])
         
-        return contacts
+        return data_list
 
-class SampleContactsField(Field):
+class RecordListField(Field):
     required = None
     label = None
     initial = None
     widget = None
     help_text = None
     
-    def __init__(self, required=True, label="", initial=[], widget=SampleContactsWidget(), help_text="", *args, **kwargs):
+    # When initialized, expects to be passed kwarg input_name, which is the first dot-separated name of all related records in the html form
+    
+    def __init__(self, required=True, label="", initial=[], widget=None, help_text="", *args, **kwargs):
         self.required = required
         self.label = label
         self.initial = initial
-        self.widget = widget
+        self.widget = RecordListWidget(attrs={"input_name" : kwargs["input_name"]})
         self.help_text = help_text
     
     def clean(self, value):
+        return value
+
+class SurveyForm(Form):
+    name = CharField()
+    waves = RecordListField(input_name="wave")
+    followups = RecordListField(input_name="followup")
+    samples = RecordListField(input_name="sample")
+    send_automatically = BooleanField(required=False)
+    send_followup = BooleanField(required=False)
+    
+    def clean_waves(self):
+        value = self.cleaned_data["waves"]
+        return value
+    
+    def clean_followups(self):
+        value = self.cleaned_data["followups"]
+        return value
+    
+    def clean_samples(self):
+        value = self.cleaned_data["samples"]
+        return value
+
+    def clean(self):
+        cleaned_data = super(SurveyForm, self).clean()
+        return cleaned_data
+
+
+class SurveySampleForm(Form):
+    name = CharField()
+    sample_contacts = RecordListField(input_name="sample_contact")
+    
+    def clean_sample_contacts(self):
+        value = self.cleaned_data["sample_contacts"]
         if len(value) == 0:
             raise ValidationError("Please add at least one contact.");
         for contact in value:
@@ -379,65 +417,5 @@ class SampleContactsField(Field):
                 raise ValidationError("Please enter all fields.")
         return value
 
-class SurveyForm(Form):
-    name = CharField()
-    form_id = CharField()
-    send_automatically = BooleanField(required=False)
-    schedule_date = DateField(required=False)
-    schedule_time = TimeField(required=False)
-    sample_id = CharField()
-    sample_name = CharField()
-    sample_contacts = SampleContactsField()
-    refresh_sample = CharField(required=False)
-    refresh_sample_name = ""
-    refresh_sample_contacts = []
 
-    def clean_form_id(self):
-        form_id = self.cleaned_data.get("form_id")
-        if form_id == "--choose--":
-            raise ValidationError("Please choose a questionnaire.")
-        else:
-            return form_id
-
-    def clean_refresh_sample(self):
-        value = self.cleaned_data.get("refresh_sample")
-        if value == "1":
-            sample_id = self.cleaned_data.get("sample_id")
-            if sample_id == "--new--":
-                self.refresh_sample_name = ""
-                self.refresh_sample_contacts = []
-            else:
-                sample = SurveySample.get(sample_id)
-                self.refresh_sample_name = sample.name
-                self.refresh_sample_contacts = sample.contacts
-            raise ValidationError("") # Raise a dummy validation error so that the form does not get processed, but instead just refreshes the sample
-        return value
-    
-    def clean_schedule_date(self):
-        value = self.cleaned_data.get("schedule_date")
-        if self.cleaned_data.get("send_automatically"):
-            if value is None or value == "":
-                raise ValidationError("Please enter a date.")
-        return value
-    
-    def clean_schedule_time(self):
-        value = self.cleaned_data.get("schedule_time")
-        if self.cleaned_data.get("send_automatically"):
-            if value is None or value == "":
-                raise ValidationError("Please enter a time.")
-        return value
-    
-    def clean(self):
-        cleaned_data = super(SurveyForm, self).clean()
-        if "refresh_sample" in self._errors:
-            if "sample_name" in self._errors:
-                del self._errors["sample_name"]
-            if "sample_contacts" in self._errors:
-                del self._errors["sample_contacts"]
-        return cleaned_data
-
-
-class SurveySampleForm(Form):
-    name = CharField()
-    sample_contacts = SampleContactsField()
 

@@ -772,11 +772,11 @@ class SurveySample(Document):
 class Survey(Document):
     domain = StringProperty()
     name = StringProperty()
-    form_unique_id = StringProperty()
-    sample_id = StringProperty()
-    schedule_date = DateProperty()
-    schedule_time = TimeProperty()
+    waves = ListProperty(DictProperty)
+    followups = ListProperty(DictProperty)
+    samples = ListProperty(DictProperty)
     send_automatically = BooleanProperty()
+    send_followup = BooleanProperty()
     
     @classmethod
     def get_all(cls, domain):
@@ -785,14 +785,6 @@ class Survey(Document):
             endkey=[domain, {}],
             include_docs=True
         ).all()
-    
-    @property
-    def sample(self):
-        return SurveySample.get(self.sample_id)
-
-    @property
-    def questionnaire_name(self):
-        return get_form_name(self.form_unique_id)
 
 
 from .signals import *
