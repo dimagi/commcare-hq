@@ -1,7 +1,19 @@
 {% extends "reminders/survey_base.html" %}
 
+{% block head %}{{ block.super }}
+
+<style type="text/css">
+    #survey_list_table {
+        width: auto;
+        margin-left: 0px;
+        min-width: 50%;
+    }
+</style>
+
+{% endblock %}
+
 {% block survey_content %}
-<table class="table table-striped datatable">
+<table id="survey_list_table" class="table table-striped datatable table-bordered">
     <thead>
         <tr>
             <th>Name</th>

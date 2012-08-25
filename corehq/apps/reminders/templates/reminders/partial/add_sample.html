@@ -1,12 +1,37 @@
 {% extends "reminders/survey_base.html" %}
 
+{% block head %}{{ block.super }}
+
+<style type="text/css">
+    #sample {
+        width: auto;
+        margin-left: 0px;
+    }
+    #sample_info {
+        width: auto;
+        margin-left: 0px;
+    }
+</style>
+
+{% endblock %}
+
+{% block sample_nav %}
+<ul class="nav nav-list">
+    {% if sample_id %}
+    <li class="active"><a href="{% url edit_sample domain sample_id %}">{{ form.name.value }}</a></li>
+    {% else %}
+    <li class="active"><a href="{% url add_sample domain %}">New Sample</a></li>
+    {% endif %}
+</ul>
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
 <script type="text/javascript">
     function remove_contact_record(ref) {
         cell_ref = ref.parentNode;
         row_ref = cell_ref.parentNode;
-        table_ref = row_ref.parentNode;
-        table_ref.removeChild(row_ref);
+        tbody_ref = row_ref.parentNode;
+        tbody_ref.removeChild(row_ref);
     }
     
     function create_contact_record() {
@@ -39,7 +64,7 @@
     }
     
     function add_contact_record() {
-        document.getElementById("sample").appendChild(create_contact_record());
+        document.getElementById("sample_tbody").appendChild(create_contact_record());
     }
     
     {% if form.sample_contacts.value|length == 0 %}
@@ -54,47 +79,51 @@
 {% block survey_content %}
 <br />
 <form id="sample_form" action="" method="post">
-    <h2>Sample</h2>
-    <table>
-        {% if form.name.errors %}
-        <tr>
-            <th></th>
-            <td>{{ form.name.errors }}</td>
-        </tr>
-        {% endif %}
-        <tr>
-            <th>Name:</th>
-            <td>{{ form.name }}</td>
-        </tr>
+    <table id="sample_info">
+        <tbody>
+            {% if form.name.errors %}
+            <tr>
+                <th></th>
+                <td>{{ form.name.errors }}</td>
+            </tr>
+            {% endif %}
+            <tr>
+                <th>Name:</th>
+                <td>{{ form.name }}</td>
+            </tr>
+        </tbody>
     </table>
     {{ form.sample_contacts.errors }}
-    <table id="sample">
-        <tr>
-            <th>Identifier</th>
-            <th>Phone Number</th>
-            <th></th>
-        </tr>
-        {% if form.sample_contacts.value|length == 0 %}
-        <tr>
-            <td><input name="sample_contact.0.id" type="text" class="short" /></td>
-            <td><input name="sample_contact.0.phone_number" type="text" /></td>
-            <td><span class="btn btn-danger" onClick="remove_contact_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span></td>
-        </tr>
-        {% else %}
-            {% for contact in form.sample_contacts.value %}
+    <table id="sample" class="table table-bordered">
+        <thead>
             <tr>
-                <td><input name="sample_contact.{{ forloop.counter0 }}.id" type="text" class="short" value="{{ contact.id }}" /></td>
-                <td><input name="sample_contact.{{ forloop.counter0 }}.phone_number" type="text" value="{{ contact.phone_number }}" /></td>
+                <th>Identifier</th>
+                <th>Phone Number</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="sample_tbody">
+            {% if form.sample_contacts.value|length == 0 %}
+            <tr>
+                <td><input name="sample_contact.0.id" type="text" class="short" /></td>
+                <td><input name="sample_contact.0.phone_number" type="text" /></td>
                 <td><span class="btn btn-danger" onClick="remove_contact_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span></td>
             </tr>
-            {% endfor %}
-        {% endif %}
+            {% else %}
+                {% for contact in form.sample_contacts.value %}
+                <tr>
+                    <td><input name="sample_contact.{{ forloop.counter0 }}.id" type="text" class="short" value="{{ contact.id }}" /></td>
+                    <td><input name="sample_contact.{{ forloop.counter0 }}.phone_number" type="text" value="{{ contact.phone_number }}" /></td>
+                    <td><span class="btn btn-danger" onClick="remove_contact_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span></td>
+                </tr>
+                {% endfor %}
+            {% endif %}
+        </tbody>
     </table>
+    <br />
     <span class="btn btn-success" onClick="add_contact_record();"><i class="icon icon-white icon-plus"></i> Add Contact</span>
     <br />
-    <br />
-    <h2></h2>
-    <br />
+    <hr />
     <input type="submit" class="btn btn-primary" value="Submit" />
 </form>
 

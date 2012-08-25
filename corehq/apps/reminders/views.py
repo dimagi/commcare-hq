@@ -304,6 +304,7 @@ def add_survey(request, domain, survey_id=None):
     
     context = {
         "domain" : domain,
+        "survey_id" : survey_id,
         "form" : form,
         "form_list" : form_list,
         "sample_list" : sample_list,
@@ -352,7 +353,8 @@ def add_sample(request, domain, sample_id=None):
     
     context = {
         "domain" : domain,
-        "form" : form
+        "form" : form,
+        "sample_id" : sample_id
     }
     return render_to_response(request, "reminders/partial/add_sample.html", context)
 
