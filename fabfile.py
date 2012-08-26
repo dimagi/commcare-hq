@@ -125,14 +125,15 @@ def production():
 
     #env.hosts = []
     env.roledefs = {
-        'couch': ['192.168.100.60'],
-        'pg': ['192.168.100.60'],
-        'rabbitmq': ['192.168.100.60'],
-        'django_celery': ['192.168.100.60'],
-        'django_app': ['10.176.160.43', '10.176.163.85'],
-        'formsplayer': ['10.176.163.85'],
+        'couch': ['hqdb.internal.commcarehq.org'],
+        'pg': ['hqdb.internal.commcarehq.org'],
+        'rabbitmq': ['hqdb.internal.commcarehq.org'],
+        #'sofabed': ['hqdb.internal.commcarehq.org'], #todo, right now group it with celery
+        'django_celery': ['hqdb.internal.commcarehq.org'],
+        'django_app': ['hqdjango1.internal.commcarehq.org', 'hqdjango0.internal.commcarehq.org'],
+        'formsplayer': ['hqdjango0.internal.commcarehq.org'],
         'lb': [], #todo on apache level config
-        'staticfiles': ['10.176.162.109'],
+        'staticfiles': ['hqproxy0.internal.commcarehq.org'],
     }
 
     if env.roles == []:
@@ -340,10 +341,9 @@ def update_services():
     with settings(warn_only=True):
         execute(services_stop)
     #remove old confs from directory first
-    services_dir =  posixpath.join(env.services, u'supervisor', '*')
+    services_dir =  posixpath.join(env.services, u'supervisor', 'supervisor_*.conf')
     run('rm -f %s' % services_dir)
-    execute(upload_supervisor_conf)
-    #execute(upload_apache_conf)
+    execute(upload_and_set_supervisor_config)
     execute(services_start)
     netstat_plnt()
 
@@ -450,7 +450,7 @@ def commit_locale_changes():
         run('-H -u %s git commit -m "updating translation"' % env.sudo_user)
     local('git pull ssh://%s%s' % (env.host, env.code_root))
 
-def _upload_supervisor_conf(filename):
+def _upload_supervisor_conf_file(filename):
     upload_dict = {}
     upload_dict["template"] = posixpath.join(os.path.dirname(__file__), 'services', 'templates', filename)
     upload_dict["destination"] = '/var/tmp/%s.blah' % filename
@@ -465,29 +465,36 @@ def _upload_supervisor_conf(filename):
 
 @roles('django_celery')
 def upload_celery_supervisorconf():
-    _upload_supervisor_conf('supervisor_celery.conf')
+    _upload_supervisor_conf_file('supervisor_celery.conf')
+
+@roles('django_celery')
+def upload_sofabed_supervisorconf():
+    _upload_supervisor_conf_file('supervisor_sofabed.conf')
 
 @roles('django_app')
 def upload_djangoapp_supervisorconf():
-    _upload_supervisor_conf('supervisor_django.conf')
+    _upload_supervisor_conf_file('supervisor_django.conf')
 
 @roles('formsplayer')
 def upload_formsplayer_supervisorconf():
-    _upload_supervisor_conf('supervisor_formsplayer.conf')
+    _upload_supervisor_conf_file('supervisor_formsplayer.conf')
 
-def upload_supervisor_conf():
+def upload_and_set_supervisor_config():
     """Upload and link Supervisor configuration from the template."""
     require('environment', provided_by=('staging', 'demo', 'production'))
     _set_apache_user()
     execute(upload_celery_supervisorconf)
+    execute(upload_sofabed_supervisorconf)
     execute(upload_djangoapp_supervisorconf)
     execute(upload_formsplayer_supervisorconf)
 
-    #update the line in the supervisord config file that points to our supervisor.conf
-    #remove the line if it already exists
+    #regenerate a brand new supervisor conf file from scratch.
+    #Set the line in the supervisord config file that points to our project's supervisor directory with conf files
     replace_dict = {}
     replace_dict["main_supervisor_conf_dir"] = '/etc'
     replace_dict["tmp"] = posixpath.join('/','var','tmp', "supervisord_%s.tmp" % uuid.uuid4().hex)
+
+    #create brand new one
     sudo("echo_supervisord_conf > %(tmp)s" % replace_dict)
     files.uncomment(replace_dict['tmp'], "^;\[include\]", use_sudo=True, char=';')
     files.sed(replace_dict["tmp"], ";files = relative/directory/\*\.ini", "files = %s/supervisor/*.conf" % env.services, use_sudo=True)
