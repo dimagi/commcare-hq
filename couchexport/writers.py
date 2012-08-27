@@ -1,9 +1,41 @@
+import re
 import zipfile
 from StringIO import StringIO
 import csv
 import json
 from django.template.loader import render_to_string
 from openpyxl import style
+
+class UniqueHeaderGenerator(object):
+    def __init__(self, max_column_size=None):
+        self.used = set()
+        self.max_column_size = max_column_size or 2000
+
+    def next_unique(self, header):
+        header = self._next_unique(header)
+        self.used.add(header)
+        return header
+
+    def _next_unique(self, string):
+        counter = 1
+        if len(string) > self.max_column_size:
+            # truncate from the beginning since the end has more specific information
+            string = string[-self.max_column_size:]
+        orig_string = string
+        while string in self.used:
+            string = "%s%s" % (orig_string, counter)
+            if len(string) > self.max_column_size:
+                counterlen = len(str(counter))
+                string = "%s%s" % (orig_string[-(self.max_column_size - counterlen):], counter)
+            counter += 1
+
+        return string
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
 
 class ExportWriter(object):
     max_table_name_size = 500
@@ -16,38 +48,33 @@ class ExportWriter(object):
         self.max_column_size = max_column_size
         self._current_primary_id = 0
         self.file = file
-        
-        from couchexport.export import _next_unique, _clean_name
-        
+
+        def _clean_name(name):
+            return re.sub(r"[[\\?*/:\]]", "-", name)
+
+
         self._init()
-        used_names = []
+        name_g = UniqueHeaderGenerator(self.max_table_name_size)
         for table_name, table in header_table:
-            used_headers = []
-            table_name_truncated = _clean_name(_next_unique(table_name, used_names,
-                                                             self.max_table_name_size))
-            used_names.append(table_name_truncated)
-            def _truncate(val):
-                ret = _next_unique(val, used_headers, max_column_size)
-                used_headers.append(ret)
-                return ret
-            
-            assert(len(table) == 1)
+            table_name_truncated = _clean_name(name_g.next_unique(table_name))
+
             row = table[0]
             # make sure we trim the headers
-            row.data = map(_truncate, row.data)
+            with UniqueHeaderGenerator(max_column_size) as g:
+                row.data = [g.next_unique(header) for header in row.data]
             self._init_table(table_name, table_name_truncated)
-            self._write_row(table_name, row) 
-        
-        
-        
-    def write(self, document_table):
+            self._write_row(table_name, row)
+
+    def write(self, document_table, skip_first=False):
         """
         Given a document that's been parsed into the appropriate
         rows, write those rows to the resulting files.
         """
         assert(self._isopen)
         for table_name, table in document_table:
-            for row in table:
+            for i, row in enumerate(table):
+                if skip_first and i is 0:
+                    continue
                 # update the primary component of the ID to match
                 # how many docs we've seen
                 if row.has_id():
@@ -64,7 +91,18 @@ class ExportWriter(object):
         assert(self._isopen)
         self._close()
         self._isopen = False
-        
+
+    def _init(self):
+        raise NotImplementedError
+
+    def _init_table(self, table_name, table_name_truncated):
+        raise NotImplementedError
+
+    def _write_row(self, sheet_index, row):
+        raise NotImplementedError
+
+    def _close(self):
+        raise NotImplementedError
 
 class CsvExportWriter(ExportWriter):
     
@@ -164,7 +202,7 @@ class Excel2003ExportWriter(ExportWriter):
             sheet.write(row_index,i,unicode(val))
         self.table_indices[sheet_index] = row_index + 1
     
-    def _close(self):                
+    def _close(self):
         self.book.save(self.file)
 
 class InMemoryExportWriter(ExportWriter):
@@ -193,14 +231,23 @@ class JsonExportWriter(InMemoryExportWriter):
     """
     Write tables to JSON
     """
-    
+
+    class ConstantEncoder(json.JSONEncoder):
+
+        def default(self, obj):
+            from dimagi.utils.web import json_handler
+            from couchexport.export import Constant
+            if isinstance(obj, Constant):
+                return obj.message
+            else:
+                return json_handler(obj)
+
     def _close(self):
-        from couchexport.export import ConstantEncoder
         new_tables = {}
         for tablename, data in self.tables.items():
             new_tables[tablename] = {"headers":data[0], "rows": data[1:]}
     
-        self.file.write(json.dumps(new_tables, cls=ConstantEncoder))
+        self.file.write(json.dumps(new_tables, cls=self.ConstantEncoder))
 
         
 class HtmlExportWriter(InMemoryExportWriter):

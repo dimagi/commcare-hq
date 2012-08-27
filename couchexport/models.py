@@ -136,11 +136,11 @@ class ExportTable(DocumentSchema):
         all_cols = schema.top_level_nodes
         cols = []
         for c in self.columns:
-            cols += [{"index": c.index, "display": c.display, "selected": True}]
+            cols.append({"index": c.index, "display": c.display, "selected": True})
             all_cols = filter(lambda x: x != c.index, all_cols) # exclude
-        cols += [{"index": c,
+        cols.extend([{"index": c,
                  "display": self.col_dict[c] if c in self.col_dict else c,
-                 "selected": c in self.col_dict} for c in all_cols]
+                 "selected": c in self.col_dict} for c in all_cols])
         #cols.sort(key=lambda x: not x["selected"])
         return cols
     
@@ -184,7 +184,7 @@ class BaseSavedExportSchema(Document):
     def is_bulk(self):
         return False
 
-    def export_data_async(self, filter, filename, previous_export_id, format):
+    def export_data_async(self, filter, filename, previous_export_id, format, max_column_size=None):
         format = format or Format.XLS_2007
         download = DownloadBase()
         download.set_task(couchexport.tasks.export_async.delay(
@@ -194,6 +194,7 @@ class BaseSavedExportSchema(Document):
             filename=filename,
             previous_export_id=previous_export_id,
             filter=filter,
+            max_column_size=max_column_size
         ))
         return download.get_start_response()
 
@@ -351,9 +352,8 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
 
         return config, updated_schema, export_schema_checkpoint
     
-    def get_export_files(self, format="", previous_export=None, filter=None, process=None):
-        from couchexport.export import get_writer,\
-            format_tables, create_intermediate_tables
+    def get_export_files(self, format="", previous_export=None, filter=None, process=None, max_column_size=None):
+        from couchexport.export import get_writer, format_tables, create_intermediate_tables
 
         if not format:
             format = self.default_format or Format.XLS_2007
@@ -364,9 +364,9 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         writer = get_writer(format)
         
         # open the doc and the headers
-        formatted_headers = self.get_table_headers()
+        formatted_headers = list(self.get_table_headers())
         tmp = StringIO()
-        writer.open(formatted_headers, tmp)
+        writer.open(formatted_headers, tmp, max_column_size=max_column_size)
 
         total_docs = len(config.potentially_relevant_ids)
         if process:
@@ -374,9 +374,13 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         for i, doc in config.enum_docs():
             if self.transform:
                 doc = self.transform(doc)
-            writer.write(self.trim(format_tables\
-                             (create_intermediate_tables(doc, updated_schema), 
-                              separator=".")))
+            formatted_tables = self.trim(
+                format_tables(
+                    create_intermediate_tables(doc, updated_schema),
+                    separator="."
+                )
+            )
+            writer.write(formatted_tables)
             if process:
                 DownloadBase.set_progress(process, i + 1, total_docs)
 

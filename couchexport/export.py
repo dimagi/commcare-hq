@@ -1,16 +1,7 @@
-from couchdbkit.schema.base import DocumentBase
-from couchexport.schema import get_docs, get_schema, get_schema_new
-import csv
-import json
-import zipfile
-from StringIO import StringIO
-from dimagi.utils.web import json_handler
+from couchexport.schema import get_schema_new
 from django.conf import settings
 from couchexport.models import ExportSchema, Format
-import logging
-import re
 from dimagi.utils.mixins import UnicodeMixIn
-from django.template.loader import render_to_string
 from couchdbkit.consumer import Consumer
 from dimagi.utils.couch.database import get_db
 from couchexport.writers import Excel2007ExportWriter, CsvExportWriter,\
@@ -100,21 +91,14 @@ def get_writer(format):
         raise UnsupportedExportFormat("Unsupported export format: %s!" % format)
         
 def export_from_tables(tables, file, format, max_column_size=2000):
-    if format == Format.CSV:
-        _export_csv(tables, file, max_column_size)
-    elif format == Format.HTML:
-        _export_html(tables, file, max_column_size)
-    elif format == Format.JSON:
-        _export_json(tables, file)
-    elif format == Format.XLS:
-        _export_excel(tables, max_column_size).save(file)
-    elif format == Format.XLS_2007:
-        _export_excel_2007(tables, max_column_size).save(file)
-    else:
-        raise Exception("Unsupported export format: %s!" % format)
-    
+    tables = FormattedRow.wrap_all_rows(tables)
+    writer = get_writer(format)
+    writer.open(tables, file, max_column_size=max_column_size)
+    writer.write(tables, skip_first=True)
+    writer.close()
 
-def export_raw(headers, data, file, format=Format.XLS_2007, 
+
+def export_raw(headers, data, file, format=Format.XLS_2007,
                max_column_size=2000, separator='|'):
     """
     Do a raw export from an in-memory representation of headers and data.
@@ -143,27 +127,21 @@ def export_raw(headers, data, file, format=Format.XLS_2007,
     
     
     # format the headers the way the export likes them
-    headers = map(lambda table_headers: (table_headers[0], 
-                                         [FormattedRow(table_headers[1])]),
-                  headers)
-    writer.open(headers, file)
+    headers = FormattedRow.wrap_all_rows(headers)
+    writer.open(headers, file, max_column_size=max_column_size)
     
     # do the same for the data
-    data = map(lambda table_data: (table_data[0],
-                                   [FormattedRow(row) for row in table_data[1]]),
-               data)
+    data = FormattedRow.wrap_all_rows(headers)
     writer.write(data)
     writer.close()
-    
-def export(schema_index, file, format=Format.XLS_2007, 
+
+def export(schema_index, file, format=Format.XLS_2007,
            previous_export_id=None, filter=None,
            max_column_size=2000, separator='|', export_object=None, process=None):
     """
     Exports data from couch documents matching a given tag to a file. 
     Returns true if it finds data, otherwise nothing
     """
-
-    DownloadBase.set_progress(process, 0, 1)
 
     config, updated_schema, export_schema_checkpoint = get_export_components(schema_index,
                                                                     previous_export_id, filter)
@@ -173,7 +151,7 @@ def export(schema_index, file, format=Format.XLS_2007,
 
         # open the doc and the headers
         formatted_headers = get_headers(updated_schema, separator=separator)
-        writer.open(formatted_headers, file)
+        writer.open(formatted_headers, file, max_column_size=max_column_size)
 
         total_docs = len(config.potentially_relevant_ids)
         if process:
@@ -293,10 +271,26 @@ def fit_to_schema(doc, schema):
 
 
 def get_headers(schema, separator="|"):
-    return format_tables(create_intermediate_tables(schema, schema), 
-                             include_data=False, separator=separator)
+    return format_tables(
+        create_intermediate_tables(schema, schema),
+        include_data=False,
+        separator=separator,
+    )
 
 def create_intermediate_tables(docs, schema, integer='#'):
+    """
+    return {
+        table_name: {
+            row_id_number: {
+                column_name: cell_data,
+                ...
+            },
+            ...
+        },
+        ...
+    }
+
+    """
     def lookup(doc, keys):
         for key in keys:
             doc = doc[key]
@@ -373,9 +367,30 @@ class FormattedRow(object):
         # during the loop, so do it here
         if self.has_id() and self.id_index >= len(self.data):
             yield self.formatted_id
-        
+
+    @classmethod
+    def wrap_all_rows(cls, tables):
+        ret = []
+        for name, rows in tables:
+            ret.append(
+                (name, [cls(row) for row in (rows if hasattr(rows, '__iter__') else [rows])])
+            )
+        return ret
+
 def format_tables(tables, id_label='id', separator='.', include_headers=True,
                       include_data=True):
+    """
+    tables nested dict structure from create_intermediate_tables
+    return [
+        (table_name, [
+            (FormattedRow(headers, [id_label], separator) if include_headers),
+            FormattedRow(values, id, separator),
+            FormattedRow(values, id, separator),
+            ...
+        ])
+    ]
+
+    """
     answ = []
     assert include_data or include_headers, "This method is pretty useless if you don't include anything!"
     
@@ -394,134 +409,3 @@ def format_tables(tables, id_label='id', separator='.', include_headers=True,
         
         answ.append((separator.join(table_name), new_table))
     return answ
-
-def _export_csv(tables, file, max_column_size):
-    #temp = tempfile.TemporaryFile()
-    temp = file
-    archive = zipfile.ZipFile(temp, 'w', zipfile.ZIP_DEFLATED)
-    
-    # write forms
-    used_names = []
-    for table_name, table in tables:
-        used_headers = []
-        table_name_truncated = _clean_name(_next_unique(table_name, used_names))
-        used_names.append(table_name_truncated)
-        table_file = StringIO()
-        writer = csv.writer(table_file, dialect=csv.excel)
-        def _truncate(val):
-            ret = _next_unique(val, used_headers, max_column_size)
-            used_headers.append(ret)
-            return ret
-        
-        for rowcount, row in enumerate(table):
-            if rowcount == 0:
-                # make sure we trim the headers
-                row = map(_truncate, row)
-            for i, val in enumerate(row):
-                if isinstance(val, unicode):
-                    row[i] = val.encode("utf8")
-            writer.writerow(row)
-        archive.writestr("%s.csv" % table_name_truncated, table_file.getvalue())
-        
-    archive.close()
-    temp.seek(0)
-    return temp
-
-
-def _export_html(tables, file, max_column_size):
-    file.write(render_to_string("couchexport/html_export.html", {'tables': tables}))
-
-class ConstantEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Constant):
-            return obj.message
-        else:
-            return json_handler(obj)
-
-def _export_json(tables, file):
-    new_tables = dict()
-    for table in tables:
-        new_tables[table[0]] = {"headers":table[1][0], "rows": table[1][1:]}
-
-    file.write(json.dumps(new_tables, cls=ConstantEncoder))
-
-def _export_excel(tables, max_column_size):
-    try:
-        import xlwt
-    except ImportError:
-        raise Exception("It doesn't look like this machine is configured for "
-                        "excel export. To export to excel you have to run the "
-                        "command:  easy_install xlutils")
-    book = xlwt.Workbook()
-    used_names = []
-    for table_name, table in tables:
-        used_headers = []
-        def _truncate(val):
-            ret = _next_unique(val, used_headers, max_column_size)
-            used_headers.append(ret)
-            return ret
-
-        # this is in case the first 20 characters are the same, but we    
-        # should do something smarter.    
-        table_name_truncated = _next_unique(table_name, used_names, 20)
-        used_names.append(table_name_truncated)
-        sheet = book.add_sheet(_clean_name(table_name_truncated))
-        
-        for i,row in enumerate(table):
-            if i == 0:
-                # make sure we trim the headers
-                row = map(_truncate, row)
-            for j,val in enumerate(row):
-                sheet.write(i,j,unicode(val))
-    return book
-
-def _export_excel_2007(tables, max_column_size):
-    try:
-        import openpyxl
-    except ImportError:
-        raise Exception("It doesn't look like this machine is configured for "
-                        "excel export. To export to excel you have to run the "
-                        "command:  easy_install openpyxl")
-    book = openpyxl.workbook.Workbook()
-    book.remove_sheet(book.worksheets[0])
-    used_names = []
-    for table_name, table in tables:
-        used_headers = []
-        def _truncate(val):
-            ret = _next_unique(val, used_headers, max_column_size)
-            used_headers.append(ret)
-            return ret
-
-        # this is in case the first 20 characters are the same, but we    
-        # should do something smarter.    
-        table_name_truncated = _next_unique(table_name, used_names, 31)
-        used_names.append(table_name_truncated)
-        sheet = book.create_sheet()
-        sheet.title = _clean_name(table_name_truncated)
-        for i,row in enumerate(table):
-            if i == 0:
-                # make sure we trim the headers
-                row = map(_truncate, row)
-            # the docs claim this should work but the source claims it doesn't 
-            #sheet.append(row) 
-            for j,val in enumerate(row):
-                sheet.cell(row=i,column=j).value = unicode(val)
-    return book
-
-
-def _clean_name(name):
-    return re.sub(r"[[\\?*/:\]]", "-", name)
-    
-def _next_unique(string, reserved_strings, max_len=500):
-    counter = 1
-    if len(string) > max_len:
-        # truncate from the beginning since the end has more specific information
-        string = string[-max_len:] 
-    orig_string = string
-    while string in reserved_strings:
-        string = "%s%s" % (orig_string, counter)
-        if len(string) > max_len:
-            counterlen = len(str(counter))
-            string = "%s%s" % (orig_string[-(max_len - counterlen):], counter)
-        counter = counter + 1
-    return string

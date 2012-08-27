@@ -15,8 +15,8 @@ logging = get_task_logger()
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
 
 @task
-def export_async(custom_export, download_id, format=None, filename=None, previous_export_id=None, filter=None):
-    tmp, checkpoint = custom_export.get_export_files(format, previous_export_id, filter, process=export_async)
+def export_async(custom_export, download_id, format=None, filename=None, previous_export_id=None, filter=None, max_column_size=None):
+    tmp, checkpoint = custom_export.get_export_files(format, previous_export_id, filter, process=export_async, max_column_size=max_column_size)
     try:
         format = tmp.format
     except AttributeError:
