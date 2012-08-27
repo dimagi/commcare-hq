@@ -1,15 +1,18 @@
+from corehq.apps.reports._global import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.standard import StandardDateHQReport
 from dimagi.utils.couch.database import get_db
 
-class PathIndiaKrantiReport(StandardDateHQReport):
+class PathIndiaKrantiReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     name = "Key Indicators"
     slug = "pathindia_key_indicators"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
                 'corehq.apps.reports.fields.GroupField',
                 'corehq.apps.reports.fields.DatespanField']
-    template_name = "pathindia/reports/kranti_report.html"
+    report_template_path = "pathindia/reports/kranti_report.html"
+    flush_layout = True
 
-    def calc(self):
+    @property
+    def report_context(self):
         report_data = dict()
         for user in self.users:
             key = [user.userID]
@@ -19,7 +22,7 @@ class PathIndiaKrantiReport(StandardDateHQReport):
                 endkey = key+[self.datespan.enddate_param_utc]
             ).all()
             for item in data:
-                report_data = self.merge_data(report_data, item.get('value', {}))
+                report_data = self._merge_data(report_data, item.get('value', {}))
 
         delivery_place_total = report_data.get("antenatal", {}).get("delivery_place", {}).get("govt", 0) + \
                                report_data.get("antenatal", {}).get("delivery_place", {}).get("priv", 0)
@@ -98,16 +101,14 @@ class PathIndiaKrantiReport(StandardDateHQReport):
             )
         )
 
-        self.context.update(dict(kranti=report_data))
-
-        kranti_percentages = self.get_percentages(report_data, kranti_expected)
-        self.context.update(dict(percentages=kranti_percentages))
-
+        kranti_percentages = self._get_percentages(report_data, kranti_expected)
         month_reporting_range = self.datespan.enddate.strftime("%B %Y")
         if self.datespan.enddate.strftime("%B %Y") != self.datespan.startdate.strftime("%B %Y"):
             month_reporting_range = "%s to %s" % (self.datespan.startdate.strftime("%B %Y"), month_reporting_range)
 
-        self.context.update(dict(
+        return dict(
+            kranti=report_data,
+            percentages=kranti_percentages,
             general_info=dict(
                 total_link_workers=len(self.users),
                 month_of_reporting=month_reporting_range,
@@ -117,15 +118,15 @@ class PathIndiaKrantiReport(StandardDateHQReport):
                 ).first().get('value', 0),
                 uhp=self.group.name if self.group else "All UHPs"
             )
-        ))
+        )
 
-    def merge_data(self, dict1, dict2):
+    def _merge_data(self, dict1, dict2):
         for key, val in dict2.items():
             if isinstance(val, dict):
                 if key not in dict1:
                     dict1[key] = val
                 else:
-                    dict1[key] = self.merge_data(dict1[key], val)
+                    dict1[key] = self._merge_data(dict1[key], val)
             elif isinstance(val, int):
                 if key not in dict1:
                     dict1[key] = val
@@ -133,11 +134,11 @@ class PathIndiaKrantiReport(StandardDateHQReport):
                     dict1[key] += val
         return dict1
 
-    def get_percentages(self, data, expected,
+    def _get_percentages(self, data, expected,
                               compute_percent=lambda x,expected: (float(x)/expected)*100 if expected != 0 else 0):
         for key, val in expected.items():
             if isinstance(val, dict):
-                self.get_percentages(data.get(key, {}), expected[key])
+                self._get_percentages(data.get(key, {}), expected[key])
             elif isinstance(val, int):
                 expected[key] = "%.2f%%" % compute_percent(data.get(key, 0), val)
         return expected
