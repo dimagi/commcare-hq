@@ -1,0 +1,29 @@
+{% extends 'reports/base_template.html' %}
+{% load report_tags %}
+
+{#{% block page-title %}#}
+{#<ul class="breadcrumb">#}
+{#    <li>#}
+{#        <a href="{% url data_interfaces_default domain %}"><strong>Manage Data</strong></a> <span class="divider">&gt;</span>#}
+{#    </li>#}
+{#    {% if not report_breadcrumbs %}#}
+{#    <li class="active">#}
+{#        <div id="report-title"><a href="#">{{ report.name|default:"Unknown Data Interface"|safe }}</a></div>#}
+{#    </li>#}
+{#    {% else %}#}
+{#        {{ report_breadcrumbs|safe }}#}
+{#    {% endif %}#}
+{#</ul>#}
+{#{% endblock %}#}
+
+{% block sidebar %}
+<nav>
+    <ul class="nav nav-list">
+{#        <li class="nav-header">Case Management</li>#}
+{#        <li {% if slug == 'reassign_cases' %}class="active"{% endif %}>#}
+{#            <a href="{% url data_interface_dispatcher domain 'reassign_cases' %}">Reassign Cases</a>#}
+{#        </li>#}
+        {% report_list 'corehq.apps.data_interfaces.dispatcher.DataInterfaceDispatcher' %}
+    </ul>
+</nav>
+{% endblock %}

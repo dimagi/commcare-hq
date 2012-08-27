@@ -1,6 +1,6 @@
 from django.conf.urls.defaults import *
 from corehq.apps.domain.decorators import login_and_domain_required as protect
-from corehq.apps.reports.dispatcher import ReportDispatcher, ProjectReportDispatcher
+from corehq.apps.reports.dispatcher import ReportDispatcher, ProjectReportDispatcher, CustomProjectReportDispatcher
 
 dodoma_reports = patterns('corehq.apps.reports.dodoma',
     url('^household_verification_json$', 'household_verification_json'),
@@ -12,6 +12,11 @@ _phonelog_context = {
         'name': "Device Logs",
     }
 }
+
+custom_report_urls = patterns('',
+    url(CustomProjectReportDispatcher.pattern(), CustomProjectReportDispatcher.as_view(),
+        name=CustomProjectReportDispatcher.name())
+)
 
 phonelog_reports = patterns('',
     url(r'^$', 'phonelog.views.devices', name="phonelog_devices", kwargs={
@@ -68,40 +73,14 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
     # TODO should this even be here?
     url(r'^phonelog/', include(phonelog_reports)),
-#
-#    # Custom HQ Reports
-#    url(r'^async/filters/custom/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="custom_report_async_filter_dispatcher", kwargs={
-#        'async_filters': True
-#    }),
-#    url(r'^async/custom/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="custom_report_async_dispatcher", kwargs={
-#        'async': True
-#    }),
-#    url(r'^custom/export/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="custom_report_export_dispatcher", kwargs={
-#        'export': True
-#    }),
-#    url(r'^custom/(?P<report_slug>[\w_]+)/$', 'custom_report_dispatcher', name="custom_report_dispatcher"),
 
-
-#    # Standard HQ Reports
-#    url(r'^json/(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="json_report_dispatcher", kwargs={
-#        'return_json': True
-#    }),
-#    url(r'^export/(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="report_export_dispatcher", kwargs={
-#        'export': True
-#    }),
-#    url(r'^async/filters/(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="report_async_filter_dispatcher", kwargs={
-#        'async_filters': True
-#    }),
-#    url(r'^async/(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="report_async_dispatcher", kwargs={
-#        'async': True
-#    }),
-#    url(r'^(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="report_dispatcher"),
-    # Project-Level Standard Reports
-
+    url(r'^custom/', include(custom_report_urls)),
     url(ProjectReportDispatcher.pattern(), ProjectReportDispatcher.as_view(),
         name=ProjectReportDispatcher.name()
-    ),
+    )
 )
+
+
 
 data_urls = patterns('corehq.apps.reports.views',
     url(r'^(?P<report_slug>[\w_]+)/$', 'report_dispatcher', name="data_report_dispatcher"),

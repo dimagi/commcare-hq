@@ -85,7 +85,6 @@ class GenericReportView(object):
     show_timezone_notice = False
     show_time_notice = False
     is_admin_report = False
-    show_in_navigation = True
 
     def __init__(self, request, base_context=None, *args, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
@@ -473,6 +472,10 @@ class GenericReportView(object):
             reverse_args.append(type+'/')
         return reverse(cls.dispatcher.name(), args=reverse_args+[cls.slug])
 
+    @classmethod
+    def show_in_navigation(cls, request, *args, **kwargs):
+        return True
+
 
 class GenericTabularReport(GenericReportView):
     """
@@ -509,6 +512,7 @@ class GenericTabularReport(GenericReportView):
     show_all_rows = False
     fix_left_col = False
     ajax_pagination = False
+    use_datatables = True
 
     # override old class properties
     report_template_path = "reports/async/tabular.html"
@@ -687,6 +691,7 @@ class GenericTabularReport(GenericReportView):
                 start_at_row=self.start_at_row,
                 show_all_rows=self.show_all_rows,
                 pagination=pagination_spec,
-                left_col=left_col
+                left_col=left_col,
+                datatables=self.use_datatables,
             )
         )

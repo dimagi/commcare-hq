@@ -1,23 +1,31 @@
+from corehq.apps.appstore.dispatcher import AppstoreDispatcher
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
+from corehq.apps.reports._global import DatespanMixin, ProjectReportParametersMixin
 from corehq.apps.reports.custom import HQReport
 from django.core.urlresolvers import reverse
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
+from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import StandardTabularHQReport, StandardDateHQReport
 from corehq.apps.users.models import WebUser
 from dimagi.utils.couch.database import get_db
 
-class DataInterface(HQReport):
-    base_slug = 'advanced'
-    template_name = "appstore/appstore_interfaces_base.html"
-    base_template_name = "appstore/appstore_interfaces_base.html"
+class AppstoreInterface(GenericReportView):
+    section_name = "CommCare Exchange"
+    app_slug = 'appstore'
     asynchronous = True
     exportable = False
+    dispatcher = AppstoreDispatcher
 
-class AppStoreInterface(DataInterface, StandardTabularHQReport, StandardDateHQReport):
+    @property
+    def default_report_url(self):
+        return reverse('appstore_interfaces_default')
+
+
+class CommCareExchangeAdvanced(GenericTabularReport, AppstoreInterface, DatespanMixin):
     name = "Exchange"
     slug = "advanced"
     fields = ['corehq.apps.reports.fields.SelectOrganizationField',
@@ -25,27 +33,38 @@ class AppStoreInterface(DataInterface, StandardTabularHQReport, StandardDateHQRe
               'corehq.apps.reports.fields.SelectCategoryField',
               'corehq.apps.reports.fields.SelectRegionField']
 
-    template_name = 'data_interfaces/interfaces/case_management.html'
+    report_template_path = 'data_interfaces/interfaces/case_management.html'
 
-    def get_parameters(self):
-#        all_groups = Group.get_reporting_groups(self.domain)
-#        self.all_case_sharing_groups = [group for group in all_groups if group.case_sharing]
-#        self.case_sharing_groups = []
-#
-#        if self.group and self.group.case_sharing:
-#            self.case_sharing_groups = [self.group]
-#        elif not self.individual and not self.group:
-#            self.case_sharing_groups = self.all_case_sharing_groups
+    _organization_filter = None
+    @property
+    def organization_filter(self):
+        if self._organization_filter is None:
+            self._organization_filter = self.request_params.get('org')
+        return self._organization_filter
 
-        params = self.request_params
-        self.organization_filter = params.get('org')
-        self.license_filter = params.get('license')
-        self.category_filter = params.get('category')
-        self.region_filter = params.get('region')
-#        self.search_filter = params.get('sSearch')
+    _license_filter = None
+    @property
+    def license_filter(self):
+        if self._license_filter is None:
+            self._license_filter = self.request_params.get('license')
+        return self._license_filter
 
+    _category_filter = None
+    @property
+    def category_filter(self):
+        if self._category_filter is None:
+            self._category_filter = self.request_params.get('category')
+        return self._category_filter
 
-    def get_headers(self):
+    _region_filter = None
+    @property
+    def region_filter(self):
+        if self._region_filter is None:
+            self._region_filter = self.request_params.get('region')
+        return self._region_filter
+
+    @property
+    def headers(self):
         headers = DataTablesHeader(
             DataTablesColumn("Name", span=3),
             DataTablesColumn("Organization", span=2),
@@ -57,23 +76,31 @@ class AppStoreInterface(DataInterface, StandardTabularHQReport, StandardDateHQRe
         headers.custom_sort = [[1, 'asc']]
         return headers
 
-    def get_rows(self):
+    @property
+    def rows(self):
         rows = list()
-        data = self.get_data()
+        data = self._get_data()
         for app in data:
-            rows.append(['<a href="%s">%s</a>' % (reverse('project_info', args=[app.name]), app.copied_from().display_name()), app.organization_title(), app.project_type, len(app.copies_of_parent()) , app.get_license_display, util.format_relative_date(app.snapshot_time)])
+            rows.append(['<a href="%s">%s</a>' % (reverse('project_info', args=[app.name]),
+                                                  app.copied_from().display_name()),
+                         app.organization_title(),
+                         app.project_type,
+                         len(app.copies_of_parent()),
+                         app.get_license_display,
+                         util.format_relative_date(app.snapshot_time)]
+            )
         return rows
 
-    def get_data(self):
+    def _get_data(self):
         query_parts = []
         if self.category_filter:
-            query_parts.append('category:"%s"' % (self.category_filter))
+            query_parts.append('category:"%s"' % self.category_filter)
         elif self.license_filter:
-            query_parts.append('license:"%s"' % (self.license_filter))
+            query_parts.append('license:"%s"' % self.license_filter)
         elif self.category_filter:
-            query_parts.append('organization:"%s"' % (self.organization_filter))
+            query_parts.append('organization:"%s"' % self.organization_filter)
         elif self.region_filter:
-            query_parts.append('region:"%s"' % (self.region_filter))
+            query_parts.append('region:"%s"' % self.region_filter)
 
         if len(query_parts) > 0:
             query = ' '.join(query_parts)
@@ -83,7 +110,6 @@ class AppStoreInterface(DataInterface, StandardTabularHQReport, StandardDateHQRe
         return snapshots
 
          # use self.organization_filter, self.license_filter, self.category_filter and self.region_filter to search with lucene
-
 
     def get_app_info(self, data):
         app =  None

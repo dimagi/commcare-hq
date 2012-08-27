@@ -3,7 +3,7 @@ from django.core.urlresolvers import reverse
 import pytz
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
-from corehq.apps.reports.dispatcher import ProjectReportDispatcher
+from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.fields import FilterUsersField
 from corehq.apps.reports.generic import GenericReportView
 from dimagi.utils.dates import DateSpan
@@ -32,6 +32,9 @@ class ProjectReport(GenericReportView):
     def default_report_url(self):
         return reverse('default_report', args=[self.request.project])
 
+class CustomProjectReport(ProjectReport):
+    dispatcher = CustomProjectReportDispatcher
+
 
 class ProjectReportParametersMixin(object):
     """
@@ -59,7 +62,7 @@ class ProjectReportParametersMixin(object):
     @property
     def group(self):
         if self._group is None:
-            self._group = Group.get_by_name(self.group_name)
+            self._group = Group.by_name(self.domain, self.group_name)
         return self._group
 
     _individual = None

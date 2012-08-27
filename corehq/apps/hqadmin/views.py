@@ -445,7 +445,7 @@ def update_domains(request):
                      reduce=False, limit=1, 
                      startkey=[dom.name, "by_date"],
                      endkey=[dom.name, "by_date", {}]).all()[0]["key"][2]).strftime("%Y-%m-%d")
-            except ValueError:
+            except Exception:
                 dom.first_submission = ""
             
             try:
@@ -454,7 +454,7 @@ def update_domains(request):
                      reduce=False, limit=1, descending=True,
                      startkey=[dom.name, "by_date", {}],
                      endkey=[dom.name, "by_date"]).all()[0]["key"][2]).strftime("%Y-%m-%d")
-            except ValueError:
+            except Exception:
                 dom.last_submission = ""
         else:
             dom.first_submission = ""

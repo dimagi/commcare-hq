@@ -116,7 +116,7 @@ class CaseActivityReport(WorkerMonitoringReportTable, CouchCachedReportMixin):
     def rows(self):
         rows = []
         # TODO: cleanup...case type should be None, but not sure how that affects other rports
-        self.case_type = self.case_type if self.case_type else None
+        self._case_type = self.case_type if self.case_type else None
 
         def _numeric_val(text, value=None):
             if value is None:

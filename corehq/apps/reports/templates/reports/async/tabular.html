@@ -57,7 +57,7 @@
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
 
-        {% if report_table %}
+        {% if report_table and report_table.datatables %}
             var reportTables = new HQReportDataTables({
                 defaultRows: {{ report_table.default_rows|default:10 }},
                 startAtRowNum: {{ report_table.start_at_row|default:0 }},

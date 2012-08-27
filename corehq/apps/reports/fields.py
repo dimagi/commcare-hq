@@ -190,7 +190,10 @@ class SelectCategoryField(ReportSelectField):
     default_option = "All Categories"
 
     def update_params(self):
-        available_categories = [{'val': d.replace(' ', '+'), 'text': d} for d in Domain.categories()]
+        if hasattr(Domain, 'categories'):
+            available_categories = [{'val': d.replace(' ', '+'), 'text': d} for d in Domain.categories()]
+        else:
+            available_categories = []
         self.selected = self.request.GET.get(self.slug,'')
         self.options = available_categories
 
@@ -214,7 +217,10 @@ class SelectRegionField(ReportSelectField):
     default_option = "All Regions"
 
     def update_params(self):
-        available_regions = [{'val': d.replace(' ', '+'), 'text': d} for d in Domain.regions()]
+        if hasattr(Domain, 'regions'):
+            available_regions = [{'val': d.replace(' ', '+'), 'text': d} for d in Domain.regions()]
+        else:
+            available_regions = []
         self.selected = self.request.GET.get(self.slug,'')
         self.options = available_regions
 

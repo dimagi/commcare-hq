@@ -444,7 +444,10 @@ class AuthorizableMixin(DocumentSchema):
         """
         if domain is None:
             # default to current_domain for django templates
-            domain = self.current_domain
+            if hasattr(self, 'current_domain'):
+                domain = self.current_domain
+            else:
+                domain = None
 
         if self.is_global_admin():
             return AdminUserRole(domain=domain)
@@ -595,6 +598,11 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     def __unicode__(self):
         return "%s %s" % (self.__class__.__name__, self.get_id)
+
+    def __getattr__(self, item):
+        if item == 'current_domain':
+            return None
+        super(CouchUser, self).__getattr__(item)
 
     def get_email(self):
         return self.email
@@ -852,7 +860,10 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         return self.base_doc.endswith(DELETED_SUFFIX)
 
     def get_viewable_reports(self, domain=None, name=True):
-        domain = domain or self.current_domain
+        try:
+            domain = domain or self.current_domain
+        except AttributeError:
+            domain = None
         try:
             if self.is_commcare_user():
                 role = self.get_role(domain)
@@ -879,7 +890,10 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             perm = item[len('can_'):]
             if perm:
                 def fn(domain=None, data=None):
-                    domain = domain or self.current_domain
+                    try:
+                        domain = domain or self.current_domain
+                    except AttributeError:
+                        domain = None
                     return self.has_permission(domain, perm, data)
                 fn.__name__ = item
                 return fn

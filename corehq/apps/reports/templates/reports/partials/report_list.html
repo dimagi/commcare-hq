@@ -2,6 +2,6 @@
 <nav>
     <ul class="nav nav-list" id="report-list">
         {% report_list 'corehq.apps.reports.dispatcher.ProjectReportDispatcher' %}
-{#        {% custom_report_list request.couch_user domain slug %}#}
+        {% report_list 'corehq.apps.reports.dispatcher.CustomProjectReportDispatcher' %}
     </ul>
 </nav>

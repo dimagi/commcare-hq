@@ -2,6 +2,7 @@ from collections import defaultdict
 import json
 import logging
 from django.http import Http404
+from corehq.apps.reports._global import ProjectReportParametersMixin, ProjectReport, DatespanMixin
 from corehq.apps.reports.models import FormExportSchema,\
     HQGroupExportConfiguration
 from corehq.apps.reports.standard import StandardHQReport, StandardDateHQReport
@@ -10,17 +11,25 @@ from dimagi.utils.couch.database import get_db
 from corehq.apps.app_manager.models import get_app
 from dimagi.utils.parsing import string_to_datetime
 
-class ExcelExportReport(StandardDateHQReport):
+class ExportReport(ProjectReport, ProjectReportParametersMixin):
+    """
+        Base class for export reports.
+    """
+    flush_layout = True
+
+class ExcelExportReport(ExportReport, DatespanMixin):
     name = "Export Submissions to Excel"
     slug = "excel_export_data"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
-    template_name = "reports/reportdata/excel_export_data.html"
+    report_template_path = "reports/reportdata/excel_export_data.html"
     icon = "icon-list-alt"
 
-    def get_default_datespan(self):
-        datespan = super(ExcelExportReport, self).get_default_datespan()
+
+    @property
+    def default_datespan(self):
+        datespan = super(ExcelExportReport, self).default_datespan
         def extract_date(x):
             try:
                 def clip_timezone(datestring):
@@ -41,7 +50,8 @@ class ExcelExportReport(StandardDateHQReport):
             datespan.startdate = startdate
         return datespan
 
-    def calc(self):
+    @property
+    def report_context(self):
         # This map for this view emits twice, once with app_id and once with {}, letting you join across all app_ids.
         # However, we want to separate out by (app_id, xmlns) pair not just xmlns so we use [domain] to [domain, {}]
         forms = []
@@ -163,14 +173,14 @@ class ExcelExportReport(StandardDateHQReport):
 
         # if there is a custom group export defined grab it here
         groups = HQGroupExportConfiguration.by_domain(self.domain)
-        self.context.update({
-            "forms": forms,
-            "saved_exports": exports,
-            "edit": self.request.GET.get('edit') == 'true',
-            "get_filter_params": self.get_filter_params(),
-            "custom_bulk_export_format": Format.XLS_2007,
-            "group_exports": groups
-        })
+        return dict(
+            forms=forms,
+            saved_exports=exports,
+            edit=self.request.GET.get('edit') == 'true',
+            get_filter_params=self.get_filter_params(),
+            custom_bulk_export_format=Format.XLS_2007,
+            group_exports=groups
+        )
 
     def get_filter_params(self):
         params = self.request.GET.copy()
@@ -179,29 +189,30 @@ class ExcelExportReport(StandardDateHQReport):
         return params
 
 
-class CaseExportReport(StandardHQReport):
+class CaseExportReport(ExportReport):
     name = "Export Cases, Referrals, & Users"
     slug = "case_export"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField']
-    template_name = "reports/reportdata/case_export_data.html"
+    report_template_path = "reports/reportdata/case_export_data.html"
     icon = "icon-share"
 
-    def calc(self):
+    @property
+    def report_context(self):
         startkey = json.dumps([self.domain, ""])[:-3]
         endkey = "%s{" % startkey
         exports = SavedExportSchema.view("couchexport/saved_export_schemas",
             startkey=startkey, endkey=endkey,
             include_docs=True).all()
         exports = filter(lambda x: x.type == "case", exports)
-        self.context['saved_exports'] = exports
         cases = get_db().view("hqcase/types_by_domain",
             startkey=[self.domain],
             endkey=[self.domain, {}],
             reduce=True,
             group=True,
             group_level=2).all()
-        self.context['case_types'] = [case['key'][1] for case in cases]
-        self.context.update({
-            "get_filter_params": self.request.GET.copy()
-        })
+        return dict(
+            saved_exports=exports,
+            case_types=[case['key'][1] for case in cases],
+            get_filter_params=self.request.GET.copy()
+        )

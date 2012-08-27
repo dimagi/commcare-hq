@@ -114,22 +114,37 @@ def login_or_digest_ex(allow_cc_users=False):
 login_or_digest = login_or_digest_ex()
 
 # For views that are inside a class
+# todo where is this being used? can be replaced with decorator below
 def cls_login_and_domain_required(func):
-    def __outer__(cls, request, *args, **kwargs):
-        domain = kwargs.get('domain')
-        new_kwargs = kwargs.copy()
-        if not domain:
-            try:
-                domain = args[0]
-            except IndexError:
-                pass
-        else:
-            del new_kwargs['domain']
+    def __outer__(cls, request, domain, *args, **kwargs):
         @login_and_domain_required
-        def __inner__(request, domain, *args, **new_kwargs):
-            return func(cls, request, *args, **kwargs)
-        return __inner__(request, domain, *args, **new_kwargs)
+        def __inner__(request, domain, *args, **kwargs):
+            return func(cls, request, domain, *args, **kwargs)
+        return __inner__(request, domain, *args, **kwargs)
     return __outer__
+
+def cls_to_view(additional_decorator=None):
+    def decorator(func):
+        def __outer__(cls, request, *args, **kwargs):
+            domain = kwargs.get('domain')
+            new_kwargs = kwargs.copy()
+            if not domain:
+                try:
+                    domain = args[0]
+                except IndexError:
+                    pass
+            else:
+                del new_kwargs['domain']
+
+            def __inner__(request, domain, *args, **new_kwargs):
+                return func(cls, request, *args, **kwargs)
+
+            if additional_decorator:
+                return additional_decorator(__inner__)(request, domain, *args, **new_kwargs)
+            else:
+                return __inner__(request, domain, *args, **new_kwargs)
+        return __outer__
+    return decorator
 
 # when requiring a specific domain
 def require_domain(domain):

@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.http import HttpResponseNotFound, Http404
 from django.views.generic.base import View
-from corehq.apps.domain.decorators import login_and_domain_required, cls_login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, cls_login_and_domain_required, cls_to_view
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.modules import to_function
 from django.utils.html import escape
@@ -74,6 +74,7 @@ class ReportDispatcher(View):
         return self.report_map
 
     def dispatch(self, request, *args, **kwargs):
+        print "attempting to dispatch"
         if not self.validate_report_map(request, *args, **kwargs):
             return HttpResponseNotFound("Sorry, no reports have been configured yet.")
 
@@ -81,6 +82,7 @@ class ReportDispatcher(View):
         render_as = kwargs.get('render_as', 'view')
 
         reports = self.get_reports(request, *args, **kwargs)
+        print "REPORTS", reports
         for key, report_model_paths in reports.items():
             for model_path in report_model_paths:
                 report_class = to_function(model_path)
@@ -92,8 +94,8 @@ class ReportDispatcher(View):
 
     @classmethod
     def name(cls):
-        prefix = "%s_" % cls.prefix if cls.prefix else ""
-        return "%sreport_dispatcher" % prefix
+        prefix = "%s" % cls.prefix if cls.prefix else ""
+        return "%s_dispatcher" % prefix
 
     @classmethod
     def pattern(cls):
@@ -106,14 +108,12 @@ class ReportDispatcher(View):
     @classmethod
     def args_kwargs_from_context(cls, context):
         args = []
-        print "report slug?", context.get('report',{}).get('slug','')
         kwargs = dict(report_slug=context.get('report',{}).get('slug',''))
         return args, kwargs
 
     @classmethod
     def report_navigation_list(cls, context):
         request = context.get('request')
-        print "request?", request
         report_nav = list()
         dispatcher = cls()
         args, kwargs = dispatcher.args_kwargs_from_context(context)
@@ -126,14 +126,15 @@ class ReportDispatcher(View):
                 if not dispatcher.permissions_check(model, request, *args, **kwargs):
                     continue
                 report = to_function(model)
-                if report.show_in_navigation:
+                if report.show_in_navigation(request, *args, **kwargs):
+                    selected_report = bool(report.slug == current_slug)
                     section.append("""<li class="%(css_class)s"><a href="%(link)s" title="%(link_title)s">
                     %(icon)s%(title)s
                     </a></li>""" % dict(
-                        css_class="active" if report.slug == current_slug else "",
+                        css_class="active" if selected_report else "",
                         link=report.get_url(*args),
                         link_title=report.description,
-                        icon='<i class="icon %s"></i>' % report.icon if report.icon else "",
+                        icon='<i class="icon%s %s"></i> ' % ("-white" if selected_report else "", report.icon) if report.icon else "",
                         title=report.name
                     ))
             if section:
@@ -141,18 +142,18 @@ class ReportDispatcher(View):
                 report_nav.extend(section)
         return "\n".join(report_nav)
 
+cls_to_view_login_and_domain = cls_to_view(additional_decorator=login_and_domain_required)
 
 class ProjectReportDispatcher(ReportDispatcher):
-    prefix = 'project' # string. ex: project, custom, billing, interface, admin
+    prefix = 'project_report' # string. ex: project, custom, billing, interface, admin
     map_name = 'PROJECT_REPORT_MAP'
 
-    @cls_login_and_domain_required
+    @cls_to_view_login_and_domain
     @datespan_default
     def dispatch(self, request, *args, **kwargs):
         return super(ProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
 
     def permissions_check(self, report, request, *args, **kwargs):
-        print "checking permissions"
         domain = kwargs.get('domain')
         if domain is None:
             domain = args[0]
@@ -167,3 +168,11 @@ class ProjectReportDispatcher(ReportDispatcher):
         )
         args = [domain] + args
         return args, kwargs
+
+class CustomProjectReportDispatcher(ProjectReportDispatcher):
+    prefix = 'custom_project_report'
+    map_name = 'CUSTOM_REPORT_MAP'
+
+    def get_reports(self, request, *args, **kwargs):
+        domain = request.domain
+        return self.report_map.get(domain, {})

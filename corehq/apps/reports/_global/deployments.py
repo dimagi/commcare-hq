@@ -11,6 +11,7 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
     """
         Base class for all deployments reports
     """
+    pass
 
 class ApplicationStatusReport(DeploymentsReport):
     name = "Application Status"
