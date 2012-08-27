@@ -115,7 +115,6 @@ DEFAULT_APPS = (
     #'django.contrib.messages', # don't need this for messages and it's causing some error
     'django.contrib.staticfiles', 
     'south',
-    'djcelery.transport',
     'djcelery',    # pip install django-celery
     'djtables',    # pip install djtables
     #'ghettoq',     # pip install ghettoq
