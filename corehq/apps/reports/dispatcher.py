@@ -74,7 +74,6 @@ class ReportDispatcher(View):
         return self.report_map
 
     def dispatch(self, request, *args, **kwargs):
-        print "attempting to dispatch"
         if not self.validate_report_map(request, *args, **kwargs):
             return HttpResponseNotFound("Sorry, no reports have been configured yet.")
 
@@ -82,7 +81,6 @@ class ReportDispatcher(View):
         render_as = kwargs.get('render_as', 'view')
 
         reports = self.get_reports(request, *args, **kwargs)
-        print "REPORTS", reports
         for key, report_model_paths in reports.items():
             for model_path in report_model_paths:
                 report_class = to_function(model_path)

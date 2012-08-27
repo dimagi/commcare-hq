@@ -332,7 +332,7 @@ def create_export_filter(request, domain, export_type='form'):
 def get_possible_reports(domain):
     reports = []
     report_map = []
-    report_map.extend(settings.STANDARD_REPORT_MAP.items())
+    report_map.extend(settings.PROJECT_REPORT_MAP.items())
     report_map.extend(settings.CUSTOM_REPORT_MAP.get(domain, {}).items())
     for heading, models in report_map:
         for model in models:

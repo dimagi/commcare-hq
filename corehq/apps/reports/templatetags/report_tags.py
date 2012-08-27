@@ -257,7 +257,6 @@ def report_list(context, dispatcher):
             dispatcher = to_function(dispatcher)
         except Exception:
             raise ValueError("The ReportDispatcher provided could not be found when generating the Report List.")
-    print dispatcher.map_name
     if not issubclass(dispatcher, ReportDispatcher):
         raise ValueError("The dispatcher provided is not a valid subclass of ReportDispatcher.")
     return dispatcher.report_navigation_list(context)

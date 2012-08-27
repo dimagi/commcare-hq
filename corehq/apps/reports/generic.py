@@ -122,7 +122,6 @@ class GenericReportView(object):
             domain=self.domain,
             layout_flush_content=self.flush_layout
         )
-        print "report initialized"
 
     _url_root = None
     @property
@@ -377,15 +376,12 @@ class GenericReportView(object):
             Intention: Not to be overridden in general.
             Renders the general view of the report template.
         """
-        print "rendering view response"
         self.update_template_context()
         template = self.template_base
-        print "TEMPLATE", template
         if not self.asynchronous:
             self.update_filter_context()
             self.update_report_context()
             template = self.template_report
-        print "TEMPLATE", type(template)
         return render_to_response(self.request, template, self.context)
 
     @property
@@ -413,8 +409,6 @@ class GenericReportView(object):
             rendered_filters = render_to_string(self.template_filters, self.context,
                 context_instance=RequestContext(self.request)
             )
-
-        print "TEMPLATE REPORT", self.template_report
         rendered_report = render_to_string(self.template_report, self.context,
             context_instance=RequestContext(self.request)
         )

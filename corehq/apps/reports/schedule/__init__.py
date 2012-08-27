@@ -70,8 +70,10 @@ class BasicReportSchedule(ReportSchedule):
         return report_data.get('report', '')
 
     def view(self, request, domain):
-        return self.dispatcher.as_view(request=request,
-            domain=domain, report_slug=self._report.slug, render_as='static')
+        return  self.dispatcher.as_view()(request,
+            domain=domain,
+            render_as='static',
+            report_slug=self._report.slug)
 
 class CustomReportSchedule(BasicReportSchedule):
     dispatcher = CustomProjectReportDispatcher

@@ -13,10 +13,11 @@ DATE_FORMAT = "%Y-%m-%d"
 def cache_rows(func):
     def retrieve_cache(*args, **kwargs):
         report = args[0]
-        print report.domain
-        print report.request.META.get('PATH_INFO')
-        print report.request.META.get('QUERY_STRING')
-        print kwargs
+        # todo actually finish this
+#        print report.domain
+#        print report.request.META.get('PATH_INFO')
+#        print report.request.META.get('QUERY_STRING')
+#        print kwargs
         return func(*args, **kwargs)
     return retrieve_cache
 
