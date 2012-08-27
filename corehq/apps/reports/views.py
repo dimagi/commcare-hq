@@ -397,11 +397,13 @@ def case_details(request, domain, case_id):
     return render_to_response(request, "reports/reportdata/case_details.html", {
         "domain": domain,
         "case_id": case_id,
-        "slug": inspect.CaseListReport.slug,
         "form_lookups": form_lookups,
-        "report": {
-            "name": report_name
-        },
+        "slug":inspect.CaseListReport.slug,
+        "report": dict(
+            name=report_name,
+            slug=inspect.CaseListReport.slug,
+            is_async=False,
+        ),
         "layout_flush_content": True,
         "timezone": timezone
     })

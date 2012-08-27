@@ -40,6 +40,7 @@ class ProjectInspectionReport(GenericTabularReport, ProjectReport, ProjectReport
 class SubmitHistory(ProjectInspectionReport):
     name = 'Submit History'
     slug = 'submit_history'
+#    asynchronous = True
 
     @property
     def headers(self):

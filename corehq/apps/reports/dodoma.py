@@ -32,7 +32,7 @@ def household_verification(request, domain):
     return render_to_response(request, 'reports/async/tabular.html', {
         "domain": domain,
         "report": report,
-        "report_base": "reports/report_base.html"
+        "report_base": "reports/base_template.html"
     })
 
 @login_and_domain_required
