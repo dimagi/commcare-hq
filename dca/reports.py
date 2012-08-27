@@ -1,5 +1,5 @@
 from corehq.apps.reports._global import CustomProjectReport
-from corehq.apps.reports.custom import HQReport, ReportField
+from corehq.apps.reports.fields import ReportField
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from dimagi.utils.couch.database import get_db
@@ -17,8 +17,8 @@ class ProjectOfficerReport(GenericTabularReport, CustomProjectReport):
     """
     name = "Project Officer Portfolio"
     slug = "officer_portfolio"
-    fields = ['corehq.apps.reports.custom.MonthField',
-              'corehq.apps.reports.custom.YearField',
+    fields = ['corehq.apps.reports.fields.MonthField',
+              'corehq.apps.reports.fields.YearField',
               'dca.reports.OfficerSelectionField']
     exportable = True
 
@@ -564,8 +564,8 @@ class PortfolioComparisonReport(GenericTabularReport, CustomProjectReport):
     """
     name = "Portfolio Comparison"
     slug = "portfolio_comparison"
-    fields = ['corehq.apps.reports.custom.MonthField',
-              'corehq.apps.reports.custom.YearField',
+    fields = ['corehq.apps.reports.fields.MonthField',
+              'corehq.apps.reports.fields.YearField',
               'corehq.apps.reports.fields.GroupField',
               'dca.reports.CurrencySelectionField']
     exportable = True
@@ -650,8 +650,8 @@ class PerformanceReport(GenericTabularReport, CustomProjectReport):
     slug = "project_performance"
     exportable = True
     use_datatables = False
-    fields = ['corehq.apps.reports.custom.MonthField',
-              'corehq.apps.reports.custom.YearField',
+    fields = ['corehq.apps.reports.fields.MonthField',
+              'corehq.apps.reports.fields.YearField',
               'corehq.apps.reports.fields.GroupField',
               'dca.reports.CurrencySelectionField']
 
@@ -773,8 +773,8 @@ class PerformanceRatiosReport(GenericTabularReport, CustomProjectReport):
 #    template_name = "dca/performance-ratios.html"
     exportable = True
     use_datatables = False
-    fields = ['corehq.apps.reports.custom.MonthField',
-              'corehq.apps.reports.custom.YearField',
+    fields = ['corehq.apps.reports.fields.MonthField',
+              'corehq.apps.reports.fields.YearField',
               'corehq.apps.reports.fields.GroupField',
               'dca.reports.CurrencySelectionField']
 
