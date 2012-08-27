@@ -503,11 +503,11 @@ DATA_INTERFACE_MAP = {
 }
 APPSTORE_INTERFACE_MAP = {
     'App Store' : [
-        'corehq.apps.appstore.interfaces.AppStoreInterface'
+        'corehq.apps.appstore.interfaces.CommCareExchangeAdvanced'
     ]
 }
 
-STANDARD_REPORT_MAP = {
+PROJECT_REPORT_MAP = {
     "Monitor Workers" : [
         'corehq.apps.reports._global.monitoring.CaseActivityReport',
         'corehq.apps.reports._global.monitoring.SubmissionsByFormReport',
@@ -536,18 +536,21 @@ STANDARD_REPORT_MAP = {
 }
 
 CUSTOM_REPORT_MAP = {
+    ## legacy custom reports. do not follow practices followed here
     "pathfinder": {
         'Custom Reports': [
                    'pathfinder.models.PathfinderHBCReport',
                    'pathfinder.models.PathfinderProviderReport',
-                   'pathfinder.models.PathfinderWardSummaryReport']
+                   'pathfinder.models.PathfinderWardSummaryReport'
+                    ]
                 },
     "dca-malawi": {
         'Custom Reports': [
                    'dca.reports.ProjectOfficerReport',
                    'dca.reports.PortfolioComparisonReport',
                    'dca.reports.PerformanceReport',
-                   'dca.reports.PerformanceRatiosReport'],
+                   'dca.reports.PerformanceRatiosReport'
+                   ]
                 },
     "eagles-fahu": {
         'Custom Reports': [
@@ -556,6 +559,7 @@ CUSTOM_REPORT_MAP = {
                    'dca.reports.PerformanceReport',
                    'dca.reports.PerformanceRatiosReport'],
                 },
+    ## end legacy custom reports
     "hsph": {
         'Field Management Reports': [
                     'hsph.reports.field_management.DCOActivityReport',
@@ -581,6 +585,7 @@ CUSTOM_REPORT_MAP = {
                     'pathindia.reports.PathIndiaKrantiReport'
         ]
     },
+    # todo: giovanni, you should fix this report at some point.
     "a5288": {
         "Custom Reports": ["a5288.reports.MissedCallbackReport"]
     },
