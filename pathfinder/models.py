@@ -1,4 +1,5 @@
 from couchdbkit.ext.django.schema import Document
+from corehq.apps.reports._global import CustomProjectReport
 from corehq.apps.reports.custom import HQReport, ReportField
 from datetime import date
 from pathfinder.views import retrieve_patient_group, get_patients_by_provider
@@ -13,18 +14,28 @@ from couchforms.models import XFormInstance
 
 class _(Document): pass
 
-class PathfinderWardSummaryReport(HQReport):
+class PathfinderWardSummaryReport(CustomProjectReport):
+    """
+        Legacy Custom Report
+        This custom report is not structured well.
+        Don't look at this report for best practices. (Check out HSPH reports or something newer)
+    """
     name = "Ward Summary"
     slug = "ward"
-    template_name = "pathfinder-reports/ward_summary.html"
-    fields = ['corehq.apps.reports.custom.MonthField', 'corehq.apps.reports.custom.YearField', 'corehq.apps.reports.fields.GroupField']
+    asynchronous = False
+    report_template_path = "pathfinder-reports/ward_summary.html"
+    fields = ['corehq.apps.reports.custom.MonthField',
+              'corehq.apps.reports.custom.YearField',
+              'corehq.apps.reports.fields.GroupField']
+    flush_layout = True
 
-    def calc(self):
+    @property
+    def report_context(self):
         ward = self.request.GET.get("group", None)
         month = self.request.GET.get("month", None)
         year = self.request.GET.get("year", None)
         if not (ward and month and year):
-            return #raise Http404("Ward, month, or year not set.")
+            return dict()
         ward = Group.get(ward)
         #provs = retrieve_providers(self.domain, ward)
         provs = map(CommCareUser.get, ward.users)
@@ -34,59 +45,82 @@ class PathfinderWardSummaryReport(HQReport):
             x = retrieve_patient_group(get_patients_by_provider(self.domain, p._id), self.domain, year, month)
             prov_p[p.get_id] = x
             refs_p[p.get_id] = sum([a['referrals_completed'] for a in x])
-        self.context['ward'] = ward
-        self.context['year'] = year
-        self.context['month'] = month
-        self.context['provs'] = provs
-        self.context['prov_p'] = prov_p
-        self.context['refs_p'] = refs_p
+        return dict(
+            ward=ward,
+            year=year,
+            month=month,
+            provs=provs,
+            prov_p=prov_p,
+            refs_p=refs_p
+        )
 
-class PathfinderProviderReport(HQReport):
+
+class PathfinderProviderReport(CustomProjectReport):
+    """
+        Legacy Custom Report
+        This custom report is not structured well.
+        Don't look at this report for best practices. (Check out HSPH reports or something newer)
+    """
     name = "Provider"
     slug = "provider"
-    template_name = "pathfinder-reports/provider_summary.html"
-    fields = ['corehq.apps.reports.custom.MonthField', 'corehq.apps.reports.custom.YearField', 'pathfinder.models.ProviderSelect']
+    asynchronous = False
+    report_template_path = "pathfinder-reports/provider_summary.html"
+    fields = ['corehq.apps.reports.custom.MonthField',
+              'corehq.apps.reports.custom.YearField',
+              'pathfinder.models.ProviderSelect']
+    flush_layout = True
 
-
-    def calc(self):
+    @property
+    def report_contect(self):
         name = self.request.GET.get("user", None)
         month = self.request.GET.get("month", None)
         year = self.request.GET.get("year", None)
         if not (name and month and year):
-            return #raise Http404("Ward, month, or year not set.")
-
-
-        self.context['p'] = CommCareUser.get(name)#get_provider_info(self.domain, name)
-        self.context['name'] = name
+            return dict()
         pre = get_patients_by_provider(self.domain, name)
         patients = {}
         for p in pre:
             pd = dict()
             pd.update(p['doc']['form']['patient'])
             pd['case_id'] = p['doc']['form']['case']['case_id']
-
             patients[pd['case_id']] = pd
         g = retrieve_patient_group(pre, self.domain, year,month)
-        self.context['year'] = year
-        self.context['month'] = month
-        self.context['patients'] = g
+        return dict(
+            p=CommCareUser.get(name), #get_provider_info(self.domain, name)
+            name=name,
+            year=year,
+            month=month,
+            patients=g
+        )
 
-class PathfinderHBCReport(HQReport):
+
+class PathfinderHBCReport(CustomProjectReport):
+    """
+        Legacy Custom Report
+        This custom report is not structured well.
+        Don't look at this report for best practices. (Check out HSPH reports or something newer)
+    """
     name = "Home-Based Care"
     slug = "hbc"
-    template_name = "pathfinder-reports/hbc.html"
-    fields = ['corehq.apps.reports.custom.MonthField', 'corehq.apps.reports.custom.YearField', 'corehq.apps.reports.fields.GroupField']
-    def calc(self):
+    asynchronous = False
+    report_template_path = "pathfinder-reports/hbc.html"
+    fields = ['corehq.apps.reports.custom.MonthField',
+              'corehq.apps.reports.custom.YearField',
+              'corehq.apps.reports.fields.GroupField']
+    flush_layout = True
+
+    @property
+    def report_context(self):
         ward = self.request.GET.get("group", None)
         month = self.request.GET.get("month", None)
         year = self.request.GET.get("year", None)
         if not (ward and month and year):
-            return #raise Http404("Ward, month, or year not set.")
+            return dict()
 
         ward = Group.get(ward)
 
-        user_ids = get_db().view('pathfinder/pathfinder_gov_reg_by_username', keys=[[self.domain, w] for w in ward.users], include_docs=True).all()
-        self.context['p'] = retrieve_patient_group(user_ids, self.domain, year, month)
+        user_ids = get_db().view('pathfinder/pathfinder_gov_reg_by_username', keys=[[self.domain, w]
+                                for w in ward.users], include_docs=True).all()
         chws = QueryableList(map(CommCareUser.get, ward.users))
         chws._reported = lambda x: x['reported_this_month']
         for c in chws:
@@ -96,9 +130,12 @@ class PathfinderHBCReport(HQReport):
             ).one()
             c['reported_this_month'] = (r != None)
 
-        self.context['chws'] = chws
-        self.context['ward'] = ward
-        self.context['date'] = date(year=int(year),month=int(month), day=01)
+        return dict(
+            p=retrieve_patient_group(user_ids, self.domain, year, month),
+            chws=chws,
+            ward=ward,
+            date=date(year=int(year),month=int(month), day=01)
+        )
 
 class ProviderSelect(ReportField):
     slug = "provider"
