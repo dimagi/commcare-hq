@@ -1,64 +1,169 @@
+from django.conf import settings
 from django.http import HttpResponseNotFound, Http404
+from django.views.generic.base import View
+from corehq.apps.domain.decorators import login_and_domain_required, cls_login_and_domain_required
+from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.modules import to_function
+from django.utils.html import escape
 
+datespan_default = datespan_in_request(
+    from_param="startdate",
+    to_param="enddate",
+    default_days=7,
+)
 
-class ReportDispatcher(object):
+class ReportDispatcher(View):
     """
-    This is sorta like a poor man's class based view. Added so that multiple
-    modules can easily leverage the reports framework in their views.
-    """
-    
-    def __init__(self, mapping, permissions_check):
-        """
-        mapping should be formatted like:
-        
-        STANDARD_REPORT_MAP = {
-            "Monitor Workers" : [
-                'corehq.apps.reports.standard.CaseActivityReport',
-                'corehq.apps.reports.standard.SubmissionsByFormReport',
-            ],
-            "Inspect Data" : [
-                'corehq.apps.reports.standard.SubmitHistory',
-                'corehq.apps.reports.standard.MapReport',
-            ],
+        The ReportDispatcher is responsible for dispatching the correct reports or interfaces
+        based on a REPORT_MAP or INTERFACE_MAP specified in settings.
+
+        The mapping should be structured as follows.
+
+        REPORT_MAP = {
+            "Section Name" : [
+                'app.path.to.report.ReportClass',
+            ]
         }
-        
-        permissions_check should be a function that takes in a couch_user,
-        domain, and a report model, and returns true if the user is allowed to 
-        view that report / use that model.
 
+        It is intended that you subclass this dispatcher and specify the map_name settings attribute
+        and a unique prefix (like project in project_report_dispatcher).
+
+        It's also intended that you make the appropriate permissions checks in the permissions_check method
+        and decorate the dispatch method with the appropriate permissions decorators.
+
+        ReportDispatcher expects to serve a report that is a subclass of GenericReportView.
+    """
+    prefix = None # string. ex: project, custom, billing, interface, admin
+    map_name = None
+
+    def __init__(self, **kwargs):
+        map_name = kwargs.get('map_name')
+        if map_name:
+            self.map_name = map_name
+        if not self.map_name or not isinstance(self.map_name, str):
+            raise NotImplementedError("Class property 'map_name' must be a string, and not empty.")
+        super(ReportDispatcher, self).__init__(**kwargs)
+
+    _report_map = None
+    @property
+    def report_map(self):
+        if self._report_map is None:
+            self._report_map = getattr(settings, self.map_name, None)
+        return self._report_map
+
+    def validate_report_map(self, request, *args, **kwargs):
+        return bool(isinstance(self.report_map, dict) and self.report_map)
+
+    def permissions_check(self, report, request, *args, **kwargs):
         """
-        self.mapping = mapping
-        self.permissions_check = permissions_check
-        
-    def dispatch(self, request, domain, slug, return_json=False, export=False,
-                 custom=False, async=False, async_filters=False, 
-                 static_only=False):
+            Override this method to check for appropriate permissions based on the report model
+            and other arguments.
         """
-        Dispatch a report. Returns a 404 if permisisons checks fail or the 
-        report is not found. Otherwise returns an HTTP response from the 
-        matching report object.
+        return True
+
+    def get_reports(self, request, *args, **kwargs):
         """
-        if not self.mapping or (custom and not domain in self.mapping):
+            Override this method as necessary for specially constructed report maps.
+            For instance, custom reports are structured like:
+            CUSTOM_REPORT_MAP = {
+                "domain" : {
+                    "Reporting Section Name": ['path.to.custom.report.ReportClass']
+                }
+            }
+        """
+        return self.report_map
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.validate_report_map(request, *args, **kwargs):
             return HttpResponseNotFound("Sorry, no reports have been configured yet.")
-        
-        mapping = self.mapping[domain] if custom else self.mapping
-        for key, models in mapping.items():
-            for model in models:
-                klass = to_function(model)
-                if klass.slug == slug:
-                    k = klass(domain, request)
-                    if not self.permissions_check(request.couch_user, 
-                                                  domain, model):
-                        raise Http404
-                    elif return_json:
-                        return k.as_json()
-                    elif export:
-                        return k.as_export()
-                    elif async:
-                        return k.as_async(static_only=static_only)
-                    elif async_filters:
-                        return k.as_async_filters()
-                    else:
-                        return k.as_view()
+
+        current_slug = kwargs.get('report_slug')
+        render_as = kwargs.get('render_as', 'view')
+
+        reports = self.get_reports(request, *args, **kwargs)
+        for key, report_model_paths in reports.items():
+            for model_path in report_model_paths:
+                report_class = to_function(model_path)
+                if report_class.slug == current_slug:
+                    report = report_class(request, *args, **kwargs)
+                    if self.permissions_check(report, request, *args, **kwargs):
+                        return getattr(report, '%s_response' % (render_as or 'view'))
         raise Http404
+
+    @classmethod
+    def name(cls):
+        prefix = "%s_" % cls.prefix if cls.prefix else ""
+        return "%sreport_dispatcher" % prefix
+
+    @classmethod
+    def pattern(cls):
+        return r'^((?P<render_as>[(json)|(async)|(filters)|(export)|(static)]+)/)?(?P<report_slug>[\w_]+)/$'
+
+    @classmethod
+    def allowed_renderings(cls):
+        return ['json', 'async', 'filters', 'export', 'static']
+
+    @classmethod
+    def args_kwargs_from_context(cls, context):
+        args = []
+        print "report slug?", context.get('report',{}).get('slug','')
+        kwargs = dict(report_slug=context.get('report',{}).get('slug',''))
+        return args, kwargs
+
+    @classmethod
+    def report_navigation_list(cls, context):
+        request = context.get('request')
+        print "request?", request
+        report_nav = list()
+        dispatcher = cls()
+        args, kwargs = dispatcher.args_kwargs_from_context(context)
+        reports = dispatcher.get_reports(request, *args, **kwargs)
+        current_slug = kwargs.get('report_slug')
+        for key, models in reports.items():
+            section = list()
+            section_header = '<li class="nav-header">%s</li>' % escape(key)
+            for model in models:
+                if not dispatcher.permissions_check(model, request, *args, **kwargs):
+                    continue
+                report = to_function(model)
+                if report.show_in_navigation:
+                    section.append("""<li class="%(css_class)s"><a href="%(link)s" title="%(link_title)s">
+                    %(icon)s%(title)s
+                    </a></li>""" % dict(
+                        css_class="active" if report.slug == current_slug else "",
+                        link=report.get_url(*args),
+                        link_title=report.description,
+                        icon='<i class="icon %s"></i>' % report.icon if report.icon else "",
+                        title=report.name
+                    ))
+            if section:
+                report_nav.append(section_header)
+                report_nav.extend(section)
+        return "\n".join(report_nav)
+
+
+class ProjectReportDispatcher(ReportDispatcher):
+    prefix = 'project' # string. ex: project, custom, billing, interface, admin
+    map_name = 'PROJECT_REPORT_MAP'
+
+    @cls_login_and_domain_required
+    @datespan_default
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
+
+    def permissions_check(self, report, request, *args, **kwargs):
+        print "checking permissions"
+        domain = kwargs.get('domain')
+        if domain is None:
+            domain = args[0]
+        return request.couch_user.can_view_report(domain, report)
+
+    @classmethod
+    def args_kwargs_from_context(cls, context):
+        args, kwargs = super(ProjectReportDispatcher, cls).args_kwargs_from_context(context)
+        domain=context.get('domain')
+        kwargs.update(
+            domain=domain
+        )
+        args = [domain] + args
+        return args, kwargs

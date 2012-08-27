@@ -8,85 +8,97 @@ import pytz
 import sys
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports import util
-from corehq.apps.reports._global import CouchCachedReportMixin
+from corehq.apps.reports._global import CouchCachedReportMixin, ProjectReportParametersMixin, \
+    DatespanMixin, ProjectReport, DATE_FORMAT
 from corehq.apps.reports._global.inspect import CaseListReport
 from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.display import xmlns_to_name, FormType
+from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.models import CaseActivityReportCache
-from corehq.apps.reports.standard import StandardTabularHQReport, StandardHQReport, StandardDateHQReport, user_link_template, DATE_FORMAT
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.parsing import json_format_datetime, string_to_datetime
-from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
-from dimagi.utils.web import get_url_base
 
 
-class MonitoringReportMixin(object):
+class WorkerMonitoringReportTable(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     """
-        This generates a link to the user's case list data.
+        #todo doc.
     """
-    def __getattr__(self, item):
-        if item == "domain":
-            return ""
-        raise AttributeError
+    #todo doc
 
     def get_user_link(self, user):
-        user_link = user_link_template % {"link": "%s%s" % (get_url_base(),
-                                                            reverse("report_dispatcher",
-                                                                args=[self.domain, CaseListReport.slug])),
+        user_link_template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
+        # todo real link
+        print self.get_url(self.domain, render_as='async')
+#        "link": "%s%s" % (get_url_base(),
+#                          reverse("report_dispatcher",
+#                              args=[self.domain, CaseListReport.slug])),
+
+        user_link = user_link_template % {"link": "#",
                                           "user_id": user.user_id,
                                           "username": user.username_in_report}
         return util.format_datatables_data(text=user_link, sort_key=user.username_in_report)
 
-class CaseActivityReport(StandardTabularHQReport, MonitoringReportMixin, CouchCachedReportMixin):
+
+class WorkerMonitoringChart(ProjectReport, ProjectReportParametersMixin):
     """
-    User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
-    danny   5 (25%)         10 (50%)        20 (100%)       17                          6
-    (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
+        doc.
+    """
+    #todo doc
+
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.SelectMobileWorkerField']
+    flush_layout = True
+    report_template_path = "reports/async/basic.html"
+
+
+class CaseActivityReport(WorkerMonitoringReportTable, CouchCachedReportMixin):
+    """
+        User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
+        danny   5 (25%)         10 (50%)        20 (100%)       17                          6
+        (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
     """
     name = 'Case Activity'
     slug = 'case_activity'
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.CaseTypeField',
               'corehq.apps.reports.fields.GroupField']
-    all_users = None
-    display_data = ['percent']
 
     _default_landmarks = [30, 60, 90]
+    _landmarks = None
+    @property
+    def landmarks(self):
+        if self._landmarks is None:
+            landmarks_param = self.request_params.get('landmarks')
+            landmarks_param = landmarks_param if isinstance(landmarks_param, list) else []
+            landmarks_param = [param for param in landmarks_param if isinstance(param, int)]
+            if landmarks_param:
+                for landmark in landmarks_param:
+                    if landmark not in self.cached_report.landmark_data:
+                        self.cached_report.update_landmarks(landmarks=landmarks_param)
+                        self.cached_report.save()
+                        break
+            self._landmarks = landmarks_param if landmarks_param else self._default_landmarks
+        return self._landmarks
+
     _default_milestone = 120
-
-    def _fetch_cached_report(self):
-        report = CaseActivityReportCache.get_by_domain(self.domain).first()
-        if not report:
-            domain = Domain.get_by_name(self.domain)
-            report = CaseActivityReportCache.build_report(domain)
-        return report
-
-    def get_parameters(self):
-        landmarks_param = self.request_params.get('landmarks')
-        landmarks_param = landmarks_param if isinstance(landmarks_param, list) else []
-        landmarks_param = [param for param in landmarks_param if isinstance(param, int)]
-        if landmarks_param:
-            for landmark in landmarks_param:
-                if landmark not in self.cached_report.landmark_data:
-                    self.cached_report.update_landmarks(landmarks=landmarks_param)
+    _milestone = None
+    @property
+    def milestone(self):
+        if self._milestone is None:
+            milestone_param = self.request_params.get('milestone')
+            milestone_param = milestone_param if isinstance(milestone_param, int) else None
+            if milestone_param:
+                if milestone_param not in self.cached_report.active_cases or\
+                   milestone_param not in self.cached_report.inactive_cases:
+                    self.cached_report.update_status(milestone=milestone_param)
                     self.cached_report.save()
-                    break
-        milestone_param = self.request_params.get('milestone')
-        milestone_param = milestone_param if isinstance(milestone_param, int) else None
-        if milestone_param:
-            if milestone_param not in self.cached_report.active_cases or \
-                milestone_param not in self.cached_report.inactive_cases:
-                print "UPDATING status"
-                self.cached_report.update_status(milestone=milestone_param)
-                self.cached_report.save()
+            self._milestone = milestone_param if milestone_param else self._default_milestone
+        return self._milestone
 
-        self.landmarks = landmarks_param if landmarks_param else self._default_landmarks
-        self.milestone = milestone_param if milestone_param else self._default_milestone
-
-    def get_headers(self):
+    @property
+    def headers(self):
         headers = DataTablesHeader(DataTablesColumn("User"))
         for landmark in self.landmarks:
             headers.add_column(DataTablesColumn("Last %s Days" % landmark if landmark else "Ever",
@@ -100,7 +112,8 @@ class CaseActivityReport(StandardTabularHQReport, MonitoringReportMixin, CouchCa
             help_text="Number of cases that are open but haven't been touched in the last %s days" % self.milestone))
         return headers
 
-    def get_rows(self):
+    @property
+    def rows(self):
         rows = []
         # TODO: cleanup...case type should be None, but not sure how that affects other rports
         self.case_type = self.case_type if self.case_type else None
@@ -148,91 +161,84 @@ class CaseActivityReport(StandardTabularHQReport, MonitoringReportMixin, CouchCa
 
         return rows
 
+    def fetch_cached_report(self):
+        report = CaseActivityReportCache.get_by_domain(self.domain).first()
+        if not report:
+            domain = Domain.get_by_name(self.domain)
+            report = CaseActivityReportCache.build_report(domain)
+        return report
 
-class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport, MonitoringReportMixin):
+
+class SubmissionsByFormReport(WorkerMonitoringReportTable, DatespanMixin):
     name = "Submissions By Form"
     slug = "submissions_by_form"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.GroupField',
-              'corehq.apps.reports.fields.DatespanField']
+                'corehq.apps.reports.fields.GroupField',
+                'corehq.apps.reports.fields.DatespanField']
     fix_left_col = True
 
-    def get_parameters(self):
-        self.form_types = self.get_relevant_form_types()
+    _form_types = None
+    @property
+    def form_types(self):
+        if self._form_types is None:
+            form_types = self._get_form_types()
+            self._form_types = form_types if form_types else set()
+        return self._form_types
 
-    def get_headers(self):
+    _all_submissions = None
+    @property
+    def all_submissions(self):
+        if self._all_submissions is None:
+            self._all_submissions = XFormInstance.view('reports/all_submissions',
+                startkey=[self.domain, self.datespan.startdate_param_utc],
+                endkey=[self.domain, self.datespan.enddate_param_utc],
+                include_docs=True,
+                reduce=False
+            )
+        return self._all_submissions
+
+    @property
+    def headers(self):
         form_names = [xmlns_to_name(*id_tuple) for id_tuple in self.form_types]
         form_names = [name.replace("/", " / ") if name is not None else '(No name)' for name in form_names]
-
         if self.form_types:
             # this fails if form_names, form_types is [], []
-            form_names, self.form_types = zip(*sorted(zip(form_names, self.form_types)))
+            form_names, self._form_types = zip(*sorted(zip(form_names, self.form_types)))
 
         headers = DataTablesHeader(DataTablesColumn("User", span=3))
         for name in list(form_names):
             headers.add_column(DataTablesColumn(name, sort_type=DTSortType.NUMERIC))
         headers.add_column(DataTablesColumn("All Forms", sort_type=DTSortType.NUMERIC))
-
         return headers
 
-    def get_rows(self):
-        counts = self.get_submissions_by_form_json()
+    @property
+    def rows(self):
+        counts = self._get_form_counts()
         rows = []
         totals_by_form = defaultdict(int)
-
         for user in self.users:
             row = []
             for form_type in self.form_types:
-                userID = user.userID
                 try:
-                    count = counts[userID][form_type]
+                    count = counts[user.user_id][form_type]
                     row.append(count)
                     totals_by_form[form_type] += count
                 except Exception:
                     row.append(0)
             row_sum = sum(row)
-            rows.append([self.get_user_link(user)] + [util.format_datatables_data(row_data, row_data) for row_data in row] + [util.format_datatables_data("<strong>%s</strong>" % row_sum, row_sum)])
+            rows.append([self.get_user_link(user)] + \
+                        [util.format_datatables_data(row_data, row_data) for row_data in row] + \
+                        [util.format_datatables_data("<strong>%s</strong>" % row_sum, row_sum)])
 
         totals_by_form = [totals_by_form[form_type] for form_type in self.form_types]
-        self.total_row = ["All Users"] + ["%s" % t for t in totals_by_form] + ["<strong>%s</strong>" % sum(totals_by_form)]
-
+        self.total_row = ["All Users"] + \
+                         ["%s" % t for t in totals_by_form] + \
+                         ["<strong>%s</strong>" % sum(totals_by_form)]
         return rows
 
-    def get_submissions_by_form_json(self):
-        userIDs = [user.user_id for user in self.users]
-        submissions = XFormInstance.view('reports/all_submissions',
-            startkey=[self.domain, self.datespan.startdate_param_utc],
-            endkey=[self.domain, self.datespan.enddate_param_utc],
-            include_docs=True,
-            reduce=False
-        )
-        counts = defaultdict(lambda: defaultdict(int))
-        for sub in submissions:
-            try:
-                app_id = sub['app_id']
-            except Exception:
-                app_id = None
-            try:
-                userID = sub['form']['meta']['userID']
-            except Exception:
-                # if a form don't even have a userID, don't even bother tryin'
-                pass
-            else:
-                if (userIDs is None) or (userID in userIDs):
-                    counts[userID][FormType(self.domain, sub['xmlns'], app_id).get_id_tuple()] += 1
-        return counts
-
-    def get_relevant_form_types(self):
-        userIDs = [user.user_id for user in self.users]
-        submissions = XFormInstance.view('reports/all_submissions',
-            startkey=[self.domain, self.datespan.startdate_param_utc],
-            endkey=[self.domain, self.datespan.enddate_param_utc],
-            include_docs=True,
-            reduce=False
-        )
+    def _get_form_types(self):
         form_types = set()
-
-        for submission in submissions:
+        for submission in self.all_submissions:
             try:
                 xmlns = submission['xmlns']
             except KeyError:
@@ -243,40 +249,69 @@ class SubmissionsByFormReport(StandardTabularHQReport, StandardDateHQReport, Mon
             except Exception:
                 app_id = None
 
-            if userIDs is not None:
+            if self.user_ids:
                 try:
                     userID = submission['form']['meta']['userID']
                 except Exception:
                     pass
                 else:
-                    if userID in userIDs:
+                    if userID in self.user_ids:
                         form_types.add(FormType(self.domain, xmlns, app_id).get_id_tuple())
             else:
                 form_types.add(FormType(self.domain, xmlns, app_id).get_id_tuple())
 
         return sorted(form_types)
 
+    def _get_form_counts(self):
+        counts = defaultdict(lambda: defaultdict(int))
+        for sub in self.all_submissions:
+            try:
+                app_id = sub['app_id']
+            except Exception:
+                app_id = None
+            try:
+                userID = sub['form']['meta']['userID']
+            except Exception:
+                # if a form don't even have a userID, don't even bother tryin'
+                pass
+            else:
+                if userID in self.user_ids:
+                    counts[userID][FormType(self.domain, sub['xmlns'], app_id).get_id_tuple()] += 1
+        return counts
 
-class DailyReport(StandardDateHQReport, StandardTabularHQReport, MonitoringReportMixin):
-    couch_view = ''
+
+class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
+    # overrides
+    datespan_default_days = 100
     fix_left_col = True
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
+
+    # new class properties
     dates_in_utc = True
+    couch_view = None
 
-    def get_headers(self):
-        self.dates = [self.datespan.startdate]
-        while self.dates[-1] < self.datespan.enddate:
-            self.dates.append(self.dates[-1] + datetime.timedelta(days=1))
+    _dates = None
+    @property
+    def dates(self):
+        if self._dates is None:
+            date_list = [self.datespan.startdate]
+            while date_list[-1] < self.datespan.enddate:
+                date_list.append(date_list[-1] + datetime.timedelta(days=1))
+            self._dates = date_list
+        return self._dates
 
+    @property
+    def headers(self):
         headers = DataTablesHeader(DataTablesColumn("Username", span=3))
         for d in self.dates:
             headers.add_column(DataTablesColumn(d.strftime(DATE_FORMAT), sort_type=DTSortType.NUMERIC))
         headers.add_column(DataTablesColumn("Total", sort_type=DTSortType.NUMERIC))
         return headers
 
-    def get_rows(self):
+    @property
+    def rows(self):
         if self.dates_in_utc:
             _dates = [tz_utils.adjust_datetime_to_timezone(date, self.timezone.zone, pytz.utc.zone) for date in self.dates]
         else:
@@ -321,23 +356,25 @@ class DailyReport(StandardDateHQReport, StandardTabularHQReport, MonitoringRepor
 
         for row in rows:
             row[1:] = [util.format_datatables_data(val, val) for val in row[1:]]
-
         return rows
 
 
 class DailySubmissionsReport(DailyReport):
     name = "Daily Form Submissions"
     slug = "daily_submissions"
+
     couch_view = 'reports/daily_submissions'
+
 
 class DailyFormCompletionsReport(DailyReport):
     name = "Daily Form Completions"
     slug = "daily_completions"
+
     couch_view = 'reports/daily_completions'
     dates_in_utc = False
 
 
-class FormCompletionTrendsReport(StandardTabularHQReport, StandardDateHQReport, MonitoringReportMixin):
+class FormCompletionTrendsReport(WorkerMonitoringReportTable, DatespanMixin):
     name = "Form Completion Trends"
     slug = "completion_times"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
@@ -345,180 +382,68 @@ class FormCompletionTrendsReport(StandardTabularHQReport, StandardDateHQReport, 
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
 
-    def get_headers(self):
+    @property
+    def headers(self):
         return DataTablesHeader(DataTablesColumn("User"),
             DataTablesColumn("Average duration"),
             DataTablesColumn("Shortest"),
             DataTablesColumn("Longest"),
             DataTablesColumn("No. of Forms"))
 
-    def get_rows(self):
+    @property
+    def rows(self):
         form = self.request_params.get('form', '')
         rows = []
+        if not form:
+            return rows
 
-        if form:
-            totalsum = totalcount = 0
-            def to_minutes(val_in_ms, d=None):
-                if val_in_ms is None or d == 0:
-                    return None
-                elif d:
-                    val_in_ms /= d
-                return datetime.timedelta(seconds=int((val_in_ms + 500)/1000))
+        totalsum = totalcount = 0
+        def to_minutes(val_in_ms, d=None):
+            if val_in_ms is None or d == 0:
+                return None
+            elif d:
+                val_in_ms /= d
+            return datetime.timedelta(seconds=int((val_in_ms + 500)/1000))
 
-            globalmin = sys.maxint
-            globalmax = 0
-            for user in self.users:
-                datadict = entrytimes.get_user_data(self.domain, user.user_id, form, self.datespan)
-                rows.append([self.get_user_link(user),
-                             to_minutes(float(datadict["sum"]), float(datadict["count"])),
-                             to_minutes(datadict["min"]),
-                             to_minutes(datadict["max"]),
-                             datadict["count"]
-                ])
-                totalsum = totalsum + datadict["sum"]
-                totalcount = totalcount + datadict["count"]
-                if datadict['min'] is not None:
-                    globalmin = min(globalmin, datadict["min"])
-                if datadict['max'] is not None:
-                    globalmax = max(globalmax, datadict["max"])
-            if totalcount:
-                self.total_row = ["Total",
-                                  to_minutes(float(totalsum), float(totalcount)),
-                                  to_minutes(globalmin),
-                                  to_minutes(globalmax),
-                                  totalcount]
+        globalmin = sys.maxint
+        globalmax = 0
+        for user in self.users:
+            datadict = entrytimes.get_user_data(self.domain, user.user_id, form, self.datespan)
+            rows.append([self.get_user_link(user),
+                         to_minutes(float(datadict["sum"]), float(datadict["count"])),
+                         to_minutes(datadict["min"]),
+                         to_minutes(datadict["max"]),
+                         datadict["count"]
+            ])
+            totalsum = totalsum + datadict["sum"]
+            totalcount = totalcount + datadict["count"]
+            if datadict['min'] is not None:
+                globalmin = min(globalmin, datadict["min"])
+            if datadict['max'] is not None:
+                globalmax = max(globalmax, datadict["max"])
+
+        if totalcount:
+            self.total_row = ["Total",
+                              to_minutes(float(totalsum), float(totalcount)),
+                              to_minutes(globalmin),
+                              to_minutes(globalmax),
+                              totalcount]
         return rows
 
 
-class SubmissionTimesReport(StandardHQReport):
-    name = "Submission Times"
-    slug = "submit_time_punchcard"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectMobileWorkerField']
-    template_name = "reports/async/basic.html"
-    report_partial = "reports/partials/punchcard.html"
-    show_time_notice = True
-
-    def calc(self):
-        data = defaultdict(lambda: 0)
-        for user in self.users:
-            startkey = [self.domain, user.user_id]
-            endkey = [self.domain, user.user_id, {}]
-            view = get_db().view("formtrends/form_time_by_user",
-                startkey=startkey,
-                endkey=endkey,
-                group=True)
-            for row in view:
-                domain, _user, day, hour = row["key"]
-
-                if hour and day:
-                    #adjust to timezone
-                    now = datetime.datetime.utcnow()
-                    hour = int(hour)
-                    day = int(day)
-                    report_time = datetime.datetime(now.year, now.month, now.day, hour, tzinfo=pytz.utc)
-                    report_time = tz_utils.adjust_datetime_to_timezone(report_time, pytz.utc.zone, self.timezone.zone)
-                    hour = report_time.hour
-
-                    data["%d %02d" % (day, hour)] = data["%d %02d" % (day, hour)] + row["value"]
-        self.context["chart_url"] = self.generate_chart(data)
-
-    @classmethod
-    def generate_chart(cls, data, width=950, height=300):
-        """
-        Gets a github style punchcard chart.
-
-        Hat tip: http://github.com/dustin/bindir/blob/master/gitaggregates.py
-        """
-        no_data = not data
-        try:
-            from pygooglechart import ScatterChart
-        except ImportError:
-            raise Exception("""Aw shucks, someone forgot to install the google chart library
-on this machine and the report needs it. To get it, run
-easy_install pygooglechart.  Until you do that this won't work.
-""")
-
-        chart = ScatterChart(width, height, x_range=(-1, 24), y_range=(-1, 7))
-
-        chart.add_data([(h % 24) for h in range(24 * 8)])
-
-        d=[]
-        for i in range(8):
-            d.extend([i] * 24)
-        chart.add_data(d)
-
-        day_names = "Sun Mon Tue Wed Thu Fri Sat".split(" ")
-        days = (0, 6, 5, 4, 3, 2, 1)
-
-        sizes=[]
-        for d in days:
-            sizes.extend([data["%d %02d" % (d, h)] for h in range(24)])
-        sizes.extend([0] * 24)
-        if no_data:
-            # fill in a line out of view so that chart.get_url() doesn't crash
-            sizes.extend([1] * 24)
-        chart.add_data(sizes)
-
-        chart.set_axis_labels('x', [''] + [str(h) for h  in range(24)] + [''])
-        chart.set_axis_labels('y', [''] + [day_names[n] for n in days] + [''])
-
-        chart.add_marker(1, 1.0, 'o', '333333', 25)
-        return chart.get_url() + '&chds=-1,24,-1,7,0,20'
-
-
-class SubmitDistributionReport(StandardHQReport):
-    name = "Submit Distribution"
-    slug = "submit_distribution"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectMobileWorkerField']
-    template_name = "reports/async/basic.html"
-    report_partial = "reports/partials/generic_piechart.html"
-
-    def calc(self):
-        predata = {}
-        data = []
-        for user in self.users:
-            startkey = ["u", self.domain, user.user_id]
-            endkey = ["u", self.domain, user.user_id, {}]
-            view = get_db().view("formtrends/form_type_by_user",
-                startkey=startkey,
-                endkey=endkey,
-                group=True,
-                reduce=True)
-            for row in view:
-                xmlns = row["key"][-1]
-                form_name = xmlns_to_name(self.domain, xmlns, app_id=None)
-                if form_name in predata:
-                    predata[form_name]["value"] = predata[form_name]["value"] + row["value"]
-                    predata[form_name]["description"] = "(%s) submissions of %s" %\
-                                                        (predata[form_name]["value"], form_name)
-                else:
-                    predata[form_name] = {"display": form_name,
-                                          "value": row["value"],
-                                          "description": "(%s) submissions of %s" %\
-                                                         (row["value"], form_name)}
-        for value in predata.values():
-            data.append(value)
-
-        self.context.update({
-            "chart_data": data,
-            "user_id": self.individual,
-            "graph_width": 900,
-            "graph_height": 500
-        })
-
-
-class FormCompletionVsSubmissionTrendsReport(StandardTabularHQReport, StandardDateHQReport, MonitoringReportMixin):
+class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTable, DatespanMixin):
     name = "Form Completion vs. Submission Trends"
     slug = "completion_vs_submission"
+    datespan_default_days = 100
+
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.SelectAllFormField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.SelectMobileWorkerField',
               'corehq.apps.reports.fields.DatespanField']
 
-    def get_headers(self):
+    @property
+    def headers(self):
         return DataTablesHeader(DataTablesColumn("User", span=3),
             DataTablesColumn("Completion Time", span=2),
             DataTablesColumn("Submission Time", span=2),
@@ -526,7 +451,8 @@ class FormCompletionVsSubmissionTrendsReport(StandardTabularHQReport, StandardDa
             DataTablesColumn("Difference", sort_type=DTSortType.NUMERIC, span=3)
         )
 
-    def get_rows(self):
+    @property
+    def rows(self):
         rows = list()
         prefix = ["user"]
         selected_form = self.request_params.get('form')
@@ -546,8 +472,8 @@ class FormCompletionVsSubmissionTrendsReport(StandardTabularHQReport, StandardDa
             for item in data:
                 vals = item.get('value')
                 completion_time = dateutil.parser.parse(vals.get('completion_time')).replace(tzinfo=None)
-                completion_dst = False if self.timezone == pytz.utc else \
-                                    tz_utils.is_timezone_in_dst(self.timezone, completion_time)
+                completion_dst = False if self.timezone == pytz.utc else\
+                tz_utils.is_timezone_in_dst(self.timezone, completion_time)
                 completion_time = self.timezone.localize(completion_time, is_dst=completion_dst)
                 submission_time = dateutil.parser.parse(vals.get('submission_time'))
                 submission_time = submission_time.replace(tzinfo=pytz.utc)
@@ -606,4 +532,124 @@ class FormCompletionVsSubmissionTrendsReport(StandardTabularHQReport, StandardDa
             return ", ".join(status)
 
     def _view_form_link(self, instance_id):
-        return '<a class="btn" href="%s">View Form</a>' % reverse('render_form_data', args=[self.domain, instance_id])
+        return '#'
+        #todo fix
+#        return '<a class="btn" href="%s">View Form</a>' % reverse('render_form_data', args=[self.domain, instance_id])
+
+
+
+class SubmissionTimesReport(WorkerMonitoringChart):
+    name = "Submission Times"
+    slug = "submit_time_punchcard"
+
+    report_partial_path = "reports/partials/punchcard.html"
+    show_time_notice = True
+
+    @property
+    def report_context(self):
+        data = defaultdict(lambda: 0)
+        for user in self.users:
+            startkey = [self.domain, user.user_id]
+            endkey = [self.domain, user.user_id, {}]
+            view = get_db().view("formtrends/form_time_by_user",
+                startkey=startkey,
+                endkey=endkey,
+                group=True)
+            for row in view:
+                domain, _user, day, hour = row["key"]
+
+                if hour and day:
+                    #adjust to timezone
+                    now = datetime.datetime.utcnow()
+                    hour = int(hour)
+                    day = int(day)
+                    report_time = datetime.datetime(now.year, now.month, now.day, hour, tzinfo=pytz.utc)
+                    report_time = tz_utils.adjust_datetime_to_timezone(report_time, pytz.utc.zone, self.timezone.zone)
+                    hour = report_time.hour
+
+                    data["%d %02d" % (day, hour)] = data["%d %02d" % (day, hour)] + row["value"]
+        return dict(
+            chart_url=self.generate_chart(data)
+        )
+
+    @classmethod
+    def generate_chart(cls, data, width=950, height=300):
+        """
+            Gets a github style punchcard chart.
+            Hat tip: http://github.com/dustin/bindir/blob/master/gitaggregates.py
+        """
+        no_data = not data
+        try:
+            from pygooglechart import ScatterChart
+        except ImportError:
+            raise Exception("""Aw shucks, someone forgot to install the google chart library
+on this machine and the report needs it. To get it, run
+easy_install pygooglechart.  Until you do that this won't work.
+""")
+
+        chart = ScatterChart(width, height, x_range=(-1, 24), y_range=(-1, 7))
+
+        chart.add_data([(h % 24) for h in range(24 * 8)])
+
+        d=[]
+        for i in range(8):
+            d.extend([i] * 24)
+        chart.add_data(d)
+
+        day_names = "Sun Mon Tue Wed Thu Fri Sat".split(" ")
+        days = (0, 6, 5, 4, 3, 2, 1)
+
+        sizes=[]
+        for d in days:
+            sizes.extend([data["%d %02d" % (d, h)] for h in range(24)])
+        sizes.extend([0] * 24)
+        if no_data:
+            # fill in a line out of view so that chart.get_url() doesn't crash
+            sizes.extend([1] * 24)
+        chart.add_data(sizes)
+
+        chart.set_axis_labels('x', [''] + [str(h) for h  in range(24)] + [''])
+        chart.set_axis_labels('y', [''] + [day_names[n] for n in days] + [''])
+
+        chart.add_marker(1, 1.0, 'o', '333333', 25)
+        return chart.get_url() + '&chds=-1,24,-1,7,0,20'
+
+
+class SubmitDistributionReport(WorkerMonitoringChart):
+    name = "Submit Distribution"
+    slug = "submit_distribution"
+
+    report_partial_path = "reports/partials/generic_piechart.html"
+
+    @property
+    def report_context(self):
+        predata = {}
+        data = []
+        for user in self.users:
+            startkey = ["u", self.domain, user.user_id]
+            endkey = ["u", self.domain, user.user_id, {}]
+            view = get_db().view("formtrends/form_type_by_user",
+                startkey=startkey,
+                endkey=endkey,
+                group=True,
+                reduce=True)
+            for row in view:
+                xmlns = row["key"][-1]
+                form_name = xmlns_to_name(self.domain, xmlns, app_id=None)
+                if form_name in predata:
+                    predata[form_name]["value"] = predata[form_name]["value"] + row["value"]
+                    predata[form_name]["description"] = "(%s) submissions of %s" %\
+                                                        (predata[form_name]["value"], form_name)
+                else:
+                    predata[form_name] = {"display": form_name,
+                                          "value": row["value"],
+                                          "description": "(%s) submissions of %s" %\
+                                                         (row["value"], form_name)}
+        for value in predata.values():
+            data.append(value)
+        return dict(
+            chart_data=data,
+            user_id=self.individual,
+            graph_width=900,
+            graph_height=500
+        )

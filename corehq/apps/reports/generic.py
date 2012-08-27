@@ -57,7 +57,7 @@ class GenericReportView(object):
     slug = None         # string. the report_slug_in_the_url
     section_name = None # string. ex: "Reports"
     app_slug = None     # string. ex: 'reports' or 'manage'
-    dispatcher = None   # string. example report_dispatcher
+    dispatcher = None   # ReportDispatcher subclass
     # todo: find instances of base_slug and replace with section_slug
 
     # not required
@@ -67,6 +67,8 @@ class GenericReportView(object):
 
     asynchronous = False
     hide_filters = False
+    fields = None
+
     exportable = False
     export_format_override = None
     icon = None
@@ -83,13 +85,25 @@ class GenericReportView(object):
     show_timezone_notice = False
     show_time_notice = False
     is_admin_report = False
+    show_in_navigation = True
 
-    def __init__(self, request, domain=None, base_context=None):
-        if not self.name or not self.section_name or not self.slug or not self.dispatcher:
-            raise NotImplementedError
+    def __init__(self, request, base_context=None, *args, **kwargs):
+        if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
+            raise NotImplementedError("Missing a required parameter: (name: %(name)s, section_name: %(section_name)s,"
+            " slug: %(slug)s, dispatcher: %(dispatcher)s" % dict(
+                name=self.name,
+                section_name=self.section_name,
+                slug=self.slug,
+                dispatcher=self.dispatcher
+            ))
+
+        from corehq.apps.reports.dispatcher import ReportDispatcher
+        if isinstance(self.dispatcher, ReportDispatcher):
+            raise ValueError("Class property dispatcher should point to a subclass of ReportDispatcher.")
+
         self.request = request
         self.request_params = json_request(self.request.GET)
-        self.domain = domain
+        self.domain = kwargs.get('domain')
         self.context = base_context or {}
         self.context.update(
             report=dict(
@@ -99,12 +113,17 @@ class GenericReportView(object):
                 slug=self.slug,
                 url_root=self.url_root,
                 is_async=self.asynchronous,
-                is_admin=self.is_admin_report
+                is_exportable=self.exportable,
+                dispatcher=self.dispatcher,
+                show=self.request.couch_user.can_view_reports or
+                     self.request.couch_user.get_viewable_reports,
+                is_admin=self.is_admin_report # todo is this necessary???
             ),
             show_time_notice=self.show_time_notice,
             domain=self.domain,
-            flush_layout=self.flush_layout
+            layout_flush_content=self.flush_layout
         )
+        print "report initialized"
 
     _url_root = None
     @property
@@ -208,36 +227,27 @@ class GenericReportView(object):
         """
         return None
 
-    _filter_fields = None
-    @property
-    def filter_fields(self):
-        """
-            Don't override.
-        """
-        if self._filter_fields is None:
-            generated_fields = self.generate_fields
-            self._filter_fields = generated_fields if isinstance(generated_fields, list) else []
-        return self._filter_fields
-
-    @property
-    def generate_fields(self):
-        """
-            Override.
-            Returns a list of filter field classes for the report.
-            ex ['corehq.apps.reports.fields.FilterUsersField']
-        """
-        return []
-
     _filter_classes = None
     @property
     def filter_classes(self):
         if self._filter_classes is None:
             filters = []
-            for field in self.filter_fields:
+            fields = self.override_fields
+            if not fields:
+                fields = self.fields
+            for field in fields or []:
                 klass = to_function(field)
                 filters.append(klass(self.request, self.domain, self.timezone))
             self._filter_classes = filters
         return self._filter_classes
+
+    @property
+    def override_fields(self):
+        """
+            Return a list of fields here if you want to override the class property self.fields
+            after this report has already been instantiated.
+        """
+        return None
 
     _export_format = None
     @property
@@ -323,17 +333,24 @@ class GenericReportView(object):
             Intention: This probably does not need to be overridden in general.
             Updates the context with filter information.
         """
-        self.context.update(report_filters=self.filter_classes)
+        self.context.update(report_filters=[dict(
+            field=f.render(),
+            slug=f.slug) for f in self.filter_classes])
 
     def update_template_context(self):
         """
             Intention: This probably does not need to be overridden in general.
             Please override template_context instead.
         """
+        url_args = [] if not self.domain else [self.domain]
         self.context['report'].update(
-            hide_filters=not self.filter_fields or self.hide_filters,
-            breadcrumbs=self.breadcrumbs
+            show_filters=self.fields or not self.hide_filters,
+            breadcrumbs=self.breadcrumbs,
+            default_url=self.default_report_url,
+            url=self.get_url(*url_args)
         )
+        if hasattr(self, 'datespan'):
+            self.context.update(datespan=self.datespan)
         if self.show_timezone_notice:
             self.context.update(timezone=dict(
                     now=datetime.datetime.now(tz=self.timezone),
@@ -355,35 +372,41 @@ class GenericReportView(object):
         )
         self.context.update(self._validate_context_dict(self.report_context))
 
-    def render_view_response(self):
+    @property
+    def view_response(self):
         """
             Intention: Not to be overridden in general.
             Renders the general view of the report template.
         """
+        print "rendering view response"
         self.update_template_context()
         template = self.template_base
+        print "TEMPLATE", template
         if not self.asynchronous:
             self.update_filter_context()
             self.update_report_context()
             template = self.template_report
-        return render_to_response(template, self.context,
-            context_instance=RequestContext(self.request)
-        )
+        print "TEMPLATE", type(template)
+        return render_to_response(self.request, template, self.context)
 
-    def render_async_response(self, static_only=False):
+    @property
+    def static_response(self):
+        """
+            This renders _only_ the static html content of the report. It is intended for
+            use by the report scheduler.
+        """
+        self.context.update(original_template=self.template_report)
+        self._template_report = "reports/async/static_only.html"
+        return self.async_response
+
+    @property
+    def async_response(self):
         """
             Intention: Not to be overridden in general.
             Renders the asynchronous view of the report template, returned as json.
-            Note: static_only is True renders _only_ the static html content of the report. It is intended for
-                    use by the report scheduler.
         """
         self.update_template_context()
         self.update_report_context()
-
-        template = self.template_base
-        if static_only:
-            self.context.update(original_template=template)
-            template = "reports/async/static_only.html"
 
         rendered_filters = None
         if bool(self.request.GET.get('hq_filters')):
@@ -392,7 +415,8 @@ class GenericReportView(object):
                 context_instance=RequestContext(self.request)
             )
 
-        rendered_report = render_to_string(template, self.context,
+        print "TEMPLATE REPORT", self.template_report
+        rendered_report = render_to_string(self.template_report, self.context,
             context_instance=RequestContext(self.request)
         )
 
@@ -404,7 +428,8 @@ class GenericReportView(object):
             url_root=self.url_root
         )))
 
-    def render_filter_only_response(self):
+    @property
+    def filters_response(self):
         """
             Intention: Not to be overridden in general.
             Renders just the filters for the report to be fetched asynchronously.
@@ -419,14 +444,16 @@ class GenericReportView(object):
             url_root=self.url_root
         )))
 
-    def render_json_response(self):
+    @property
+    def json_response(self):
         """
             Intention: Not to be overridden in general.
             Renders the json version for the report, if available.
         """
         return HttpResponse(json.dumps(self.json_dict))
 
-    def render_export_table_response(self):
+    @property
+    def export_response(self):
         """
             Intention: Not to be overridden in general.
             Returns the tabular export of the data, if available.
@@ -437,18 +464,15 @@ class GenericReportView(object):
 
     @classmethod
     def get_url(cls, *args, **kwargs):
-        reverse_args = [args[i] for i in args]
-        dispatcher = cls.dispatcher
-        type = kwargs.get('type')
+        type = kwargs.get('render_as')
+        reverse_args = list(args)
         if type:
-            if not(type == 'json' or type == 'async' or type == 'export'):
-                raise ValueError('The type parameter is not one of the three allowed values: json, async, export.')
-            dispatcher = "%s_%s" % (type, dispatcher)
-        return reverse(dispatcher, args=reverse_args+[cls.slug])
+            if type is not None and type not in cls.dispatcher.allowed_renderings():
+                raise ValueError('The type parameter is not one of the following allowed values: %s' %
+                                 ', '.join(cls.dispatcher.allowed_renderings()))
+            reverse_args.append(type+'/')
+        return reverse(cls.dispatcher.name(), args=reverse_args+[cls.slug])
 
-    @classmethod
-    def show_in_list(cls, **kwargs):
-        return True
 
 class GenericTabularReport(GenericReportView):
     """
@@ -460,6 +484,23 @@ class GenericTabularReport(GenericReportView):
         @property
         rows
             - returns a 2D list of rows.
+
+        ## AJAX pagination
+        If you plan on using ajax pagination, take into consideration
+        the following properties when rendering self.rows:
+        self.pagination.start (skip)
+        self.pagination.count (limit)
+
+        Make sure you also override the following properties as necessary:
+        @property
+        total_records
+            - returns an integer
+            - the total records of what you are paginating over
+
+        @property
+        shared_pagination_GET_params
+            - this is where you select the GET parameters to pass to the paginator
+            - returns a list formatted like [dict(name='group', value=self.group_name)]
     """
     # new class properties
     total_row = None
@@ -499,6 +540,15 @@ class GenericTabularReport(GenericReportView):
         return 0
 
     @property
+    def total_filtered_records(self):
+        """
+            Override for pagination.
+            Returns an integer.
+            return -1 if you want total_filtered_records to equal whatever the value of total_records is.
+        """
+        return -1
+
+    @property
     def shared_pagination_GET_params(self):
         """
             Override.
@@ -511,7 +561,7 @@ class GenericTabularReport(GenericReportView):
     @property
     def pagination_source(self):
         args = [self.domain] if self.domain else []
-        return self.get_url(*args, **dict(type='json'))
+        return self.get_url(*args, **dict(render_as='json'))
 
     _pagination = None
     @property
@@ -530,12 +580,15 @@ class GenericTabularReport(GenericReportView):
         """
         rows = self.rows
         total_records = self.total_records
-        if not isinstance(self.total_records, int):
+        if not isinstance(total_records, int):
             raise ValueError("Property 'total_records' should return an int.")
+        total_filtered_records = self.total_filtered_records
+        if not isinstance(total_filtered_records, int):
+            raise ValueError("Property 'total_filtered_records' should return an int.")
         return dict(
             sEcho=self.pagination.echo,
-            iTotalDisplayRecords=len(rows),
             iTotalRecords=total_records,
+            iTotalDisplayRecords=total_filtered_records if total_filtered_records >= 0 else total_records,
             aaData=rows
         )
 
@@ -615,6 +668,7 @@ class GenericTabularReport(GenericReportView):
             pagination_spec.update(
                 params=shared_params,
                 source=self.pagination_source,
+                filter=False
             )
 
         left_col = dict(is_fixed=self.fix_left_col)

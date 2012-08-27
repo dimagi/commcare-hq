@@ -61,14 +61,17 @@ require_case_export_permission = require_permission(Permissions.view_report, 'co
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
-def default(request, domain, template="reports/report_base.html"):
-    context = {
-        'domain': domain,
-        'slug': None,
-        'report': {'name': "Select a Report to View"},
-        'async_report': True
-    }
-    return render_to_response(request, template, context)
+def default(request, domain, template="reports/base_template.html"):
+    return render_to_response(request, template, dict(
+        domain=domain,
+        report=dict(
+            title="Select a Report to View",
+            show=request.couch_user.can_view_reports or
+                 request.couch_user.get_viewable_reports,
+            slug=None,
+            is_async=True
+        )
+    ))
 
 @login_or_digest
 @require_form_export_permission
@@ -514,18 +517,19 @@ def emailtest(request, domain, report_slug):
 
 @login_and_domain_required
 @datespan_default
-def report_dispatcher(request, domain, report_slug, return_json=False, 
-                      map='STANDARD_REPORT_MAP', export=False, custom=False, 
+def report_dispatcher(request, domain, report_slug, return_json=False,
+                      map='STANDARD_REPORT_MAP', export=False, custom=False,
                       async=False, async_filters=False, static_only=False):
-    
-    def permissions_check(couch_user, domain, model):
-        return couch_user.can_view_report(domain, model)
-    
-    mapping = getattr(settings, map, None)
-    dispatcher = ReportDispatcher(mapping, permissions_check)
-    return dispatcher.dispatch(request, domain, report_slug, return_json, 
-                               export, custom, async, async_filters, 
-                               static_only)
+
+#    def permissions_check(couch_user, domain, model):
+#        return couch_user.can_view_report(domain, model)
+#
+#    mapping = getattr(settings, map, None)
+#    dispatcher = ReportDispatcher(mapping, permissions_check)
+#    return dispatcher.dispatch(request, domain, report_slug, return_json,
+#                               export, custom, async, async_filters,
+#                               static_only)
+    raise Http404
 
 @login_and_domain_required
 @datespan_default

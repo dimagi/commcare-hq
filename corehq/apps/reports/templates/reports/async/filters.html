@@ -1,8 +1,9 @@
 {% load hq_shared_tags %}
-{% if custom_fields %}
+FILTERS {{ report.filters }}
+{% if report_filters %}
     <fieldset>
         <legend>Report Filters</legend>
-        {% for field in custom_fields %}
+        {% for field in report_filters %}
             <fieldset id="fieldset_{{ field.slug }}">
                 <div id="group_{{ field.slug }}" class="control-group">
                     {{ field.field|safe }}

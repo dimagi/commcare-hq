@@ -53,9 +53,9 @@
         </li>
         <li>
             {% ifequal request.GET.type "case" %}
-                <a href="{% url report_dispatcher domain 'case_export' %}">Export Cases, Referrals, and Users</a> <span class="divider">&gt;</span>
+                <a href="{% url project_report_dispatcher domain 'case_export' %}">Export Cases, Referrals, and Users</a> <span class="divider">&gt;</span>
             {% else %}
-            <a href="{% url report_dispatcher domain 'excel_export_data' %}">Export Submissions to Excel</a> <span class="divider">&gt;</span>
+            <a href="{% url project_report_dispatcher domain 'excel_export_data' %}">Export Submissions to Excel</a> <span class="divider">&gt;</span>
             {% endifequal %}
         </li>
         <li class="active">
@@ -134,7 +134,7 @@
         </fieldset>
         <div class="form-actions">
             <button type="submit" class="btn btn-large btn-primary">{% if saved_export.get_id %}Save{% else %}Create{% endif %}</button>
-            <a class="btn btn-large" href="{% ifequal request.GET.type "case" %}{% url report_dispatcher domain 'case_export' %}{% else %}{% url report_dispatcher domain 'excel_export_data' %}{% endifequal %}">{% if saved_export.get_id %}Back{% else %}Cancel{% endif %}</a>
+            <a class="btn btn-large" href="{% ifequal request.GET.type "case" %}{% url project_report_dispatcher domain 'case_export' %}{% else %}{% url project_report_dispatcher domain 'excel_export_data' %}{% endifequal %}">{% if saved_export.get_id %}Back{% else %}Cancel{% endif %}</a>
             {% if saved_export.get_id %}{% with saved_export as export %}
             <a class="btn btn-large btn-danger" style="float: right;"  data-toggle="modal" href="#delete-export-modal-{{ export.get_id }}"><i class="icon-remove icon-white"></i> Delete this Export</a>
             {% endwith %}{% endif %}

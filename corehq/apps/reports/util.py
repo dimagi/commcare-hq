@@ -8,6 +8,7 @@ from couchexport.util import FilterFunction
 from couchforms.filters import instances
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.modules import to_function
 from django.http import Http404
 import pytz
@@ -352,3 +353,15 @@ def format_relative_date(date, tz=pytz.utc):
     else:
         dtext = "%s days ago" % dtime.days
     return format_datatables_data(dtext, dtime.days)
+
+
+def domain_from_args_or_kwargs(*args, **kwargs):
+    domain = kwargs.get('domain')
+    if not domain:
+        for arg in args:
+            if isinstance(arg, str):
+                try:
+                    domain = Domain.get_by_name(arg)
+                except Exception:
+                    pass
+    return domain

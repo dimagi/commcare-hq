@@ -55,7 +55,7 @@ var HQAsyncReport = function (o) {
         self.standardReport.saveDatespanToCookie();
         self.filterRequest = $.ajax({
             url: window.location.pathname.replace(self.standardReport.urlRoot,
-                self.standardReport.urlRoot+'async/filters/')+"?"+form_params,
+                self.standardReport.urlRoot+'filters/')+"?"+form_params,
             dataType: 'json',
             success: loadFilters
         });
@@ -83,7 +83,7 @@ var HQAsyncReport = function (o) {
 
         self.reportRequest = $.ajax({
             url: window.location.pathname.replace(self.standardReport.urlRoot,
-                self.standardReport.urlRoot+'async/')+"?"+process_filters+params,
+                self.standardReport.urlRoot+'async/')+"?"+process_filters+"&"+params,
             dataType: 'json',
             success: function(data) {
                 self.reportRequest = null;

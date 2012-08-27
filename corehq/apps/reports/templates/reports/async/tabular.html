@@ -4,7 +4,7 @@
 {% load i18n %}
 
 {% block reportcontent %}
-    <table class="table table-striped datatable" {% if filter and ajax_source %} data-filter="true"{% endif %}>
+    <table class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
         <thead>
         {%  if report_table.headers.complex %}
             {{ report_table.headers.render_html|safe }}
@@ -57,7 +57,7 @@
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
 
-        {% if report_datatables %}
+        {% if report_table %}
             var reportTables = new HQReportDataTables({
                 defaultRows: {{ report_table.default_rows|default:10 }},
                 startAtRowNum: {{ report_table.start_at_row|default:0 }},

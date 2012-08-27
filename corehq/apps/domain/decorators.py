@@ -115,11 +115,20 @@ login_or_digest = login_or_digest_ex()
 
 # For views that are inside a class
 def cls_login_and_domain_required(func):
-    def __outer__(cls, request, domain, *args, **kwargs):
+    def __outer__(cls, request, *args, **kwargs):
+        domain = kwargs.get('domain')
+        new_kwargs = kwargs.copy()
+        if not domain:
+            try:
+                domain = args[0]
+            except IndexError:
+                pass
+        else:
+            del new_kwargs['domain']
         @login_and_domain_required
-        def __inner__(request, domain, *args, **kwargs):
-            return func(cls, request, domain, *args, **kwargs)
-        return __inner__(request, domain, *args, **kwargs)
+        def __inner__(request, domain, *args, **new_kwargs):
+            return func(cls, request, *args, **kwargs)
+        return __inner__(request, domain, *args, **new_kwargs)
     return __outer__
 
 # when requiring a specific domain

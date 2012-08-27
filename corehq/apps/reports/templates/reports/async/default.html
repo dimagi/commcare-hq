@@ -3,15 +3,15 @@
 {% if show_time_notice %}{% include "hqwebapp/partials/time-notice.html"%}{% endif %}
 
 {% block reportcontent %}
-    {% if request.couch_user.can_view_reports or request.couch_user.get_viewable_reports or is_admin_report %}
-        {% if slug %}
+    {% if report.show %}
+        {% if report.slug %}
             <div class="hq-loading" style="display: none;">
                 <h4>Loading Report</h4>
                 <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
-                <h6>{{ report.name }}</h6>
+                <h6>{{ report.title }}</h6>
             </div>
         {% else %}
-            <h6 style="text-align: center; margin-top: 200px;">{{ report.name }}</h6>
+            <h6 style="text-align: center; margin-top: 200px;">{{ report.title }}</h6>
         {% endif %}
     {% else %}
         <h6 style="text-align: center; margin-top: 100px;">
@@ -54,10 +54,10 @@
     <div class="modal hide fade" id="loadingReportIssueModal">
         <div class="modal-header">
             <a class="close" data-dismiss="modal">&times;</a>
-            <h3>Problem Loading Report "{{ name }}"</h3>
+            <h3>Problem Loading Report "{{ report.title }}"</h3>
         </div>
         <div class="modal-body">
-            <p>There seems to be a problem loading data for the <strong>{{ name }}</strong> report.</p>
+            <p>There seems to be a problem loading data for the <strong>{{ report.title }}</strong> report.</p>
             <p>The report returned the following error:</p>
             <div class="alert alert-error report-error-status"></div>
             <p>If this problem persists, we encourage you to <a href="#reportIssueModal" data-target="#reportIssueModal" data-toggle="modal">Report an Issue</a>.</p>

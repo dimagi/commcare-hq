@@ -1,28 +1,35 @@
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports import util
+from corehq.apps.reports._global import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.fields import SelectApplicationField
+from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import StandardTabularHQReport
 from couchforms.models import XFormInstance
 
-class ApplicationStatusReport(StandardTabularHQReport):
+class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
+    """
+        Base class for all deployments reports
+    """
+
+class ApplicationStatusReport(DeploymentsReport):
     name = "Application Status"
     slug = "app_status"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.SelectApplicationField']
 
-    def get_headers(self):
+    @property
+    def headers(self):
         return DataTablesHeader(DataTablesColumn("Username"),
             DataTablesColumn("Last Seen",sort_type=DTSortType.NUMERIC),
             DataTablesColumn("CommCare Version"),
             DataTablesColumn("Application [Deployed Build]"))
 
-    def get_parameters(self):
-        self.selected_app = self.request_params.get(SelectApplicationField.slug, '')
-
-    def get_rows(self):
+    @property
+    def rows(self):
         rows = []
+        selected_app = self.request_params.get(SelectApplicationField.slug, '')
         for user in self.users:
             last_seen = util.format_datatables_data("Never", -1)
             version = "---"
@@ -54,14 +61,14 @@ class ApplicationStatusReport(StandardTabularHQReport):
                     try:
                         app = Application.get(data.app_id)
                         is_unknown = False
-                        if self.selected_app and self.selected_app != data.app_id:
+                        if selected_app and selected_app != data.app_id:
                             continue
                         version = app.application_version
                         app_name = "%s [%s]" % (app.name, build_id)
                     except Exception:
                         version = "unknown"
                         app_name = "unknown"
-            if is_unknown and self.selected_app:
+            if is_unknown and selected_app:
                 continue
             row = [user.username_in_report, last_seen, version, app_name]
             rows.append(row)

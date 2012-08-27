@@ -37,7 +37,7 @@
             <a href="{% url default_report domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
         </li>
         <li>
-            <a href="{% url report_dispatcher domain 'submit_history' %}">Submit History</a> <span class="divider">&gt;</span>
+            <a href="{% url project_report_dispatcher domain 'submit_history' %}">Submit History</a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
             <a href="#">Form Data for "{{ form_data.name }}"{% if form_data.modified %}&mdash;modified {% utc_to_timezone form_data.modified timezone %}{% endif %}</a>
