@@ -7,40 +7,45 @@ from django.core.urlresolvers import reverse
 from django.utils import html
 import pytz
 from corehq.apps.reports import util
+from corehq.apps.reports._global import DatespanMixin
+from corehq.apps.reports._global.deployments import DeploymentsReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DTSortDirection
 from corehq.apps.reports.fields import DeviceLogTagField, DeviceLogUsersField, DeviceLogDevicesField
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
-from corehq.apps.reports.standard import StandardTabularHQReport, StandardDateHQReport
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request, get_url_base
 
-class FormErrorReport(StandardTabularHQReport, StandardDateHQReport):
+class PhonelogReport(DeploymentsReport, DatespanMixin):
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.GroupField',
+              'corehq.apps.reports.fields.DatespanField']
+
+
+class FormErrorReport(DeploymentsReport, DatespanMixin):
     name = "Errors & Warnings Summary"
     slug = "form_errors"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
 
-    def get_headers(self):
+    @property
+    def headers(self):
         return DataTablesHeader(DataTablesColumn("Username", span=4),
                                 DataTablesColumn("Number of Forms", span=2, sort_type=DTSortType.NUMERIC),
                                 DataTablesColumn("Number of Warnings", span=2, sort_type=DTSortType.NUMERIC),
                                 DataTablesColumn("Number of Errors", span=2, sort_type=DTSortType.NUMERIC))
 
-    def get_parameters(self):
-        usernames = [user.raw_username for user in self.users]
-        # this is really for testing purposes, should probably remove before production
-        for user_type in [HQUserType.DEMO_USER, HQUserType.ADMIN]:
-            if self.user_filter[user_type].show\
-            and not HQUserType.human_readable[user_type] in usernames:
-                temp_user = TempCommCareUser(self.domain, HQUserType.human_readable[user_type], "unknownID")
-                self.users.append(temp_user)
-
-    def get_rows(self):
+    @property
+    def rows(self):
+#        for user_type in [HQUserType.DEMO_USER, HQUserType.ADMIN]:
+#            if self.user_filter[user_type].show\
+#            and not HQUserType.human_readable[user_type] in self.usernames:
+#                temp_user = TempCommCareUser(self.domain, HQUserType.human_readable[user_type], "unknownID")
+#                self._users.append(temp_user)
         rows = []
         query_string = self.request.META['QUERY_STRING']
-        child_report_url = reverse("report_dispatcher", args=[self.domain, DeviceLogDetailsReport.slug])
+        child_report_url = DeviceLogDetailsReport.get_url(self.domain)
         for user in self.users:
             key = [self.domain, "errors_only", user.raw_username]
             data = get_db().view("phonelog/devicelog_data",
@@ -81,7 +86,7 @@ class FormErrorReport(StandardTabularHQReport, StandardDateHQReport):
                          util.format_datatables_data(formatted_error_count, error_count)])
         return rows
 
-class DeviceLogDetailsReport(StandardTabularHQReport, StandardDateHQReport):
+class DeviceLogDetailsReport(PhonelogReport):
     name = "Device Log Details"
     slug = "log_details"
     fields = ['corehq.apps.reports.fields.DatespanField',
@@ -99,8 +104,8 @@ class DeviceLogDetailsReport(StandardTabularHQReport, StandardDateHQReport):
         }
     default_rows = 100
 
-
-    def get_headers(self):
+    @property
+    def headers(self):
         return DataTablesHeader(DataTablesColumn("Date", span=1, sort_direction=[DTSortDirection.DSC,DTSortDirection.ASC]),
                                 DataTablesColumn("Log Type", span=1),
                                 DataTablesColumn("Logged in Username", span=2),
@@ -108,37 +113,80 @@ class DeviceLogDetailsReport(StandardTabularHQReport, StandardDateHQReport):
                                 DataTablesColumn("Message", span=5),
                                 DataTablesColumn("App Version", span=1))
 
-    def get_parameters(self):
-        self.errors_only = self.request.GET.get(DeviceLogTagField.errors_only_slug, False)
-        self.selected_tags = self.request.GET.getlist(DeviceLogTagField.slug)
-        self.usernames = self.request.GET.getlist(DeviceLogUsersField.slug)
-        self.devices = self.request.GET.getlist(DeviceLogDevicesField.slug)
-        self.goto_key = self.request_params.get('goto', None)
-        self.hide_filters = bool(self.goto_key)
-        self.limit = self.request_params.get('limit', 100)
-        self.this_report_url = reverse("report_dispatcher", args=[self.domain, self.slug])
-        breadcrumbs_template = """<li>
-    <a href="%(parent_report_url)s">%(parent_report_title)s</a> <span class="divider">&gt;</span>
-</li>
-<li class="active">
-    <div id="report-title"><a href="#">%(report_name)s</a></div>
-</li>"""
-        if self.errors_only:
-            self.custom_breadcrumbs = breadcrumbs_template % {
-                "parent_report_url": reverse("report_dispatcher", args=[self.domain, FormErrorReport.slug]),
-                "parent_report_title": FormErrorReport.name,
-                "report_name": "Errors &amp; Warnings Log <small>for %s</small>" % ", ".join(self.usernames) if self.usernames
-                else "Errors &amp; Warnings Log"
-            }
-        elif self.goto_key:
-            record_desc = '"%s" at %s' % (self.goto_key[2], tz_utils.string_to_prertty_time(self.goto_key[-1], self.timezone))
-            self.custom_breadcrumbs = breadcrumbs_template % {
-                "parent_report_url": self.this_report_url,
-                "parent_report_title": self.name,
-                "report_name": "Last %s Logs <small>before %s</small>" % (self.limit, record_desc)
-            }
+    _errors_only = None
+    @property
+    def errors_only(self):
+        if self._errors_only is None:
+            self._errors_only = self.request.GET.get(DeviceLogTagField.errors_only_slug, False)
+        return self._errors_only
 
-    def get_rows(self):
+    _device_log_users = None
+    @property
+    def device_log_users(self):
+        if self._device_log_users is None:
+            self._device_log_users = self.request.GET.getlist(DeviceLogUsersField.slug)
+        return self._device_log_users
+
+    _selected_tags = None
+    @property
+    def selected_tags(self):
+        if self._selected_tags is None:
+            self._selected_tags = self.request.GET.getlist(DeviceLogTagField.slug)
+        return self._selected_tags
+
+    _devices = None
+    @property
+    def devices(self):
+        if self._devices is None:
+            self._devices = self.request.GET.getlist(DeviceLogDevicesField.slug)
+        return self._devices
+
+    _goto_key = None
+    @property
+    def goto_key(self):
+        if self._goto_key is None:
+            self._goto_key = self.request_params.get('goto', None)
+        return self._goto_key
+
+    _limit = None
+    @property
+    def limit(self):
+        if self._limit is None:
+            self._limit = self.request_params.get('limit', 100)
+        return self._limit
+
+    @property
+    def breadcrumbs(self):
+        breadcrumbs = None
+        if self.errors_only:
+            breadcrumbs = dict(
+                title=FormErrorReport.name,
+                link=FormErrorReport.get_url(self.domain)
+            )
+        elif self.goto_key:
+            breadcrumbs = dict(
+                title=self.name,
+                link=self.get_url(self.domain)
+            )
+        return breadcrumbs
+
+    @property
+    def render_report_title(self):
+        new_title = self.name
+        if self.errors_only:
+            new_title = "Errors &amp; Warnings Log <small>for %s</small>" % ", ".join(self.device_log_users) \
+                if self.device_log_users else "Errors &amp; Warnings Log"
+        elif self.goto_key:
+            record_desc = '"%s" at %s' % (self.goto_key[2],
+                                          tz_utils.string_to_prertty_time(self.goto_key[-1], self.timezone))
+            new_title = "Last %s Logs <small>before %s</small>" % (self.limit, record_desc)
+        return new_title
+
+#    def get_parameters(self):
+#        self.hide_filters = bool(self.goto_key)
+
+    @property
+    def rows(self):
         rows = []
         view = "phonelog/devicelog_data"
 
@@ -149,30 +197,30 @@ class DeviceLogDetailsReport(StandardTabularHQReport, StandardDateHQReport):
                 reduce=False,
                 descending=True
             ).all()
-            rows.extend(self.create_rows(data, self.goto_key))
+            rows.extend(self._create_rows(data, self.goto_key))
         else:
-            if self.errors_only and self.usernames:
-                key_set = [[self.domain, "errors_only", username] for username in self.usernames]
+            if self.errors_only and self.device_log_users:
+                key_set = [[self.domain, "errors_only", username] for username in self.device_log_users]
             elif self.errors_only:
                 key_set = [[self.domain, "all_errors_only"]]
-            elif self.selected_tags and self.usernames and self.devices:
+            elif self.selected_tags and self.device_log_users and self.devices:
                 key_set = [[self.domain, "tag_username_device", tag, username, device] for tag in self.selected_tags
-                                                                        for username in self.usernames
+                                                                        for username in self.device_log_users
                                                                         for device in self.devices]
-            elif (not self.devices) and self.selected_tags and self.usernames:
+            elif (not self.devices) and self.selected_tags and self.device_log_users:
                 key_set = [[self.domain, "tag_username", tag, username] for tag in self.selected_tags
-                                                                        for username in self.usernames]
-            elif (not self.usernames) and self.selected_tags and self.devices:
+                                                                        for username in self.device_log_users]
+            elif (not self.device_log_users) and self.selected_tags and self.devices:
                 key_set = [[self.domain, "tag_device", tag, device] for tag in self.selected_tags
                                                                     for device in self.devices]
-            elif (not self.selected_tags) and self.usernames and self.devices:
-                key_set = [[self.domain, "username_device", username, device] for username in self.usernames
+            elif (not self.selected_tags) and self.device_log_users and self.devices:
+                key_set = [[self.domain, "username_device", username, device] for username in self.device_log_users
                                                                               for device in self.devices]
-            elif (not self.usernames) and (not self.selected_tags) and self.devices:
+            elif (not self.device_log_users) and (not self.selected_tags) and self.devices:
                 key_set = [[self.domain, "device", device] for device in self.devices]
-            elif (not self.devices) and (not self.selected_tags) and self.usernames:
-                key_set = [[self.domain, "username", username] for username in self.usernames]
-            elif (not self.devices) and (not self.usernames) and self.selected_tags:
+            elif (not self.devices) and (not self.selected_tags) and self.device_log_users:
+                key_set = [[self.domain, "username", username] for username in self.device_log_users]
+            elif (not self.devices) and (not self.device_log_users) and self.selected_tags:
                 key_set = [[self.domain, "tag", tag] for tag in self.selected_tags]
             else:
                 key_set = [[self.domain, "basic"]]
@@ -183,13 +231,13 @@ class DeviceLogDetailsReport(StandardTabularHQReport, StandardDateHQReport):
                     endkey=key+[self.datespan.enddate_param_utc, {}],
                     reduce=False
                 ).all()
-                rows.extend(self.create_rows(data))
+                rows.extend(self._create_rows(data))
         return rows
 
-    def create_rows(self, data, matching_key=None):
+    def _create_rows(self, data, matching_key=None):
         row_set = []
-        user_query = self.filter_query_by_slug(DeviceLogUsersField.slug)
-        device_query = self.filter_query_by_slug(DeviceLogDevicesField.slug)
+        user_query = self._filter_query_by_slug(DeviceLogUsersField.slug)
+        device_query = self._filter_query_by_slug(DeviceLogDevicesField.slug)
         for item in data:
             entry = item['value']
             date = entry['@date']
@@ -197,7 +245,7 @@ class DeviceLogDetailsReport(StandardTabularHQReport, StandardDateHQReport):
 
             username = entry.get('user','unknown')
             username_fmt = '<a href="%(url)s">%(username)s</a>' % {
-                "url": "%s?%s=%s&%s" % (self.this_report_url,
+                "url": "%s?%s=%s&%s" % (self.get_url(self.domain),
                                         DeviceLogUsersField.slug,
                                         username,
                                         user_query),
@@ -213,7 +261,7 @@ class DeviceLogDetailsReport(StandardTabularHQReport, StandardDateHQReport):
             goto_key = [self.domain, "tag_username", log_tag, username, item['key'][-1]]
 
             log_tag_format = '<a href="%(url)s" class="%(classes)s"%(extra_params)s data-datatable-tooltip="right" data-datatable-tooltip-text="%(tooltip)s">%(text)s</a>' % {
-                "url": "%s?goto=%s" % (self.this_report_url, html.escape(json.dumps(goto_key))),
+                "url": "%s?goto=%s" % (self.get_url(self.domain), html.escape(json.dumps(goto_key))),
                 "classes": " ".join(tag_classes),
                 "text": log_tag,
                 "extra_params": ' data-datatable-highlight-closest="tr"' if goto_key == matching_key else '',
@@ -222,7 +270,7 @@ class DeviceLogDetailsReport(StandardTabularHQReport, StandardDateHQReport):
 
             device = entry.get('device_id','')
             device_fmt = '<a href="%(url)s">%(device)s</a>' % {
-                "url": "%s?%s=%s&%s" % (self.this_report_url,
+                "url": "%s?%s=%s&%s" % (self.get_url(self.domain),
                                         DeviceLogDevicesField.slug,
                                         device,
                                         device_query),
@@ -241,6 +289,6 @@ class DeviceLogDetailsReport(StandardTabularHQReport, StandardDateHQReport):
                             util.format_datatables_data(ver_format, version)])
         return row_set
 
-    def filter_query_by_slug(self, slug):
+    def _filter_query_by_slug(self, slug):
         current_query = self.request.META['QUERY_STRING'].split('&')
         return "&".join([query_item for query_item in current_query if not query_item.startswith(slug)])
