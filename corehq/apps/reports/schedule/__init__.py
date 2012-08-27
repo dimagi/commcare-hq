@@ -3,9 +3,9 @@ from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.http import HttpRequest
 import json
+from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.schedule.parsers import ReportParser
 from django.template.loader import render_to_string
-from corehq.apps.reports.views import report_dispatcher, custom_report_dispatcher
 
 class SpoofRequest(HttpRequest):
     def __init__(self, couch_user, domain):
@@ -55,6 +55,7 @@ class BasicReportSchedule(ReportSchedule):
     """
     These are compatibile with the daily_submission views
     """
+    dispatcher = ProjectReportDispatcher
     
     def __init__(self, report):
         self._report = report
@@ -69,11 +70,11 @@ class BasicReportSchedule(ReportSchedule):
         return report_data.get('report', '')
 
     def view(self, request, domain):
-        return report_dispatcher(request, domain, self._report.slug, async=True, static_only=True)
+        return self.dispatcher.as_view(request=request,
+            domain=domain, report_slug=self._report.slug, render_as='static')
 
 class CustomReportSchedule(BasicReportSchedule):
-    def view(self, request, domain):
-        return custom_report_dispatcher(request, domain, self._report.slug, async=True)
+    dispatcher = CustomProjectReportDispatcher
 
     def get_report_data(self, content):
         report_data = json.loads(content)

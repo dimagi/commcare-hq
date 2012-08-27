@@ -19,6 +19,7 @@ from corehq.apps.reports.models import CaseActivityReportCache
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.timezones import utils as tz_utils
+from dimagi.utils.web import get_url_base
 
 
 class WorkerMonitoringReportTable(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -29,13 +30,8 @@ class WorkerMonitoringReportTable(GenericTabularReport, ProjectReport, ProjectRe
 
     def get_user_link(self, user):
         user_link_template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
-        # todo real link
-        print self.get_url(self.domain, render_as='async')
-#        "link": "%s%s" % (get_url_base(),
-#                          reverse("report_dispatcher",
-#                              args=[self.domain, CaseListReport.slug])),
-
-        user_link = user_link_template % {"link": "#",
+        user_link = user_link_template % {"link": "%s%s" % (get_url_base(),
+                                                            CaseListReport.get_url(self.domain)),
                                           "user_id": user.user_id,
                                           "username": user.username_in_report}
         return util.format_datatables_data(text=user_link, sort_key=user.username_in_report)

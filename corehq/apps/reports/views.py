@@ -45,7 +45,6 @@ from util import get_all_users_by_domain
 from corehq.apps.hqsofabed.models import HQFormData
 from StringIO import StringIO
 from corehq.apps.app_manager.util import get_app_id
-from corehq.apps.reports.dispatcher import ReportDispatcher
 from corehq.apps.groups.models import Group
 
 DATE_FORMAT = "%Y-%m-%d"
@@ -125,7 +124,7 @@ def export_data(req, domain):
         messages.error(req, "Sorry, there was no data found for the tag '%s'." % export_tag)
         next = req.GET.get("next", "")
         if not next:
-            next = reverse('report_dispatcher', args=[domain, export.ExcelExportReport.slug])
+            next = export.ExcelExportReport.get_url(domain)
         return HttpResponseRedirect(next)
 
 @require_form_export_permission
@@ -242,7 +241,7 @@ def export_default_or_custom_data(request, domain, export_id=None, bulk_export=F
         return export_object.export_data_async(filter, filename, previous_export_id, format=format)
     else:
         if not next:
-            next = reverse('report_dispatcher', args=[domain, export.ExcelExportReport.slug])
+            next = export.ExcelExportReport.get_url(domain)
         resp = export_object.download_data(format, filter=filter)
         if resp:
             return resp
@@ -295,7 +294,7 @@ def custom_export(req, domain):
         messages.warning(req, "<strong>No data found for that form "
                       "(%s).</strong> Submit some data before creating an export!" % \
                       xmlns_to_name(domain, export_tag[1], app_id=None), extra_tags="html")
-        return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, export.ExcelExportReport.slug]))
+        return HttpResponseRedirect(export.ExcelExportReport.get_url(domain))
 
 @require_form_export_permission
 @login_and_domain_required
@@ -374,9 +373,9 @@ def delete_custom_export(req, domain, export_id):
     saved_export.delete()
     messages.success(req, "Custom export was deleted.")
     if type == "form":
-        return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, export.ExcelExportReport.slug]))
+        return HttpResponseRedirect(export.ExcelExportReport.get_url(domain))
     else:
-        return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, export.CaseExportReport.slug]))
+        return HttpResponseRedirect(export.CaseExportReport.get_url(domain))
 
 @require_can_view_all_reports
 @login_and_domain_required
@@ -388,8 +387,7 @@ def case_details(request, domain, case_id):
         report_name = 'Details for Case "%s"' % case.name
     except ResourceNotFound:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake plase report an issue.")
-        return HttpResponseRedirect(reverse('report_dispatcher', 
-                                            args=[domain, inspect.SubmitHistory.slug]))
+        return HttpResponseRedirect(inspect.SubmitHistory.get_url(domain))
 
 
     form_lookups = dict((form.get_id,
@@ -514,24 +512,3 @@ def emailtest(request, domain, report_slug):
     report = ScheduledReportFactory.get_report(report_slug)
     report.get_response(request.user, domain)
     return HttpResponse(report.get_response(request.user, domain))
-
-@login_and_domain_required
-@datespan_default
-def report_dispatcher(request, domain, report_slug, return_json=False,
-                      map='STANDARD_REPORT_MAP', export=False, custom=False,
-                      async=False, async_filters=False, static_only=False):
-
-#    def permissions_check(couch_user, domain, model):
-#        return couch_user.can_view_report(domain, model)
-#
-#    mapping = getattr(settings, map, None)
-#    dispatcher = ReportDispatcher(mapping, permissions_check)
-#    return dispatcher.dispatch(request, domain, report_slug, return_json,
-#                               export, custom, async, async_filters,
-#                               static_only)
-    raise Http404
-
-@login_and_domain_required
-@datespan_default
-def custom_report_dispatcher(request, domain, report_slug, export=False, async=False, async_filters=False):
-    return report_dispatcher(request, domain, report_slug, export=export, map='CUSTOM_REPORT_MAP', custom=True, async=async, async_filters=async_filters)
