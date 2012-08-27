@@ -18,6 +18,7 @@ Server layout:
 import pdb
 import uuid
 from fabric.context_managers import settings, cd
+from fabric.decorators import hosts
 from fabric.operations import require, local
 
 import os, sys
@@ -269,11 +270,19 @@ def clone_repo():
                 run('git submodule init')
 
 
+@hosts('hqdb.internal.commcarehq.org')
+@task
+def preindex_views():
+    with cd(env.code_root):
+        update_code()
+        #sudo('nohup python manage.py sync_prepare_couchdb > preindex_views.out 2> preindex_views.err', user=env.sudo_user)
+        run('nohup %(virtualenv_root)s/bin/python manage.py sync_prepare_couchdb > preindex_views.out 2> preindex_views.err' % env)
+
 @roles('django_celery','django_app', 'staticfiles')
 @task
 def update_code():
     with cd(env.code_root):
-	run('git pull')
+        run('git pull')
         run('git checkout %(code_branch)s' % env)
         run('git submodule sync')
         run('git submodule update --init --recursive')
@@ -285,7 +294,9 @@ def deploy():
     require('root', provided_by=('staging', 'production'))
     run('echo ping!') #hack/workaround for delayed console response
     if env.environment == 'production':
-        if not console.confirm('Are you sure you want to deploy production?', default=False): utils.abort('Production deployment aborted.')
+        if not console.confirm('Are you sure you want to deploy production?', default=False) or \
+           not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
+            utils.abort('Deployment aborted.')
     with settings(warn_only=True):
         execute(services_stop)
     try:
