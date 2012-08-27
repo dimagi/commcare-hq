@@ -1,4 +1,7 @@
+from corehq.apps.reports._global import CustomProjectReport
 from corehq.apps.reports.custom import HQReport, ReportField
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.reports.generic import GenericTabularReport
 from dimagi.utils.couch.database import get_db
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.models import CommCareUser
@@ -6,49 +9,58 @@ from corehq.apps.groups.models import Group
 from functools import wraps
 from dateutil.parser import parse, tz
 
-class ProjectOfficerReport(HQReport):
+class ProjectOfficerReport(GenericTabularReport, CustomProjectReport):
+    """
+        Legacy Custom Report
+        This custom report is not structured well.
+        Don't look at this report for best practices. (Check out HSPH reports or something newer)
+    """
     name = "Project Officer Portfolio"
     slug = "officer_portfolio"
-    template_name = "dca/officer-portfolio.html"
-    fields = ['corehq.apps.reports.custom.MonthField', 'corehq.apps.reports.custom.YearField', 'dca.reports.OfficerSelectionField']
+    fields = ['corehq.apps.reports.custom.MonthField',
+              'corehq.apps.reports.custom.YearField',
+              'dca.reports.OfficerSelectionField']
     exportable = True
 
-    def calc(self):
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn("Name of Group"),
+            DataTablesColumn("Group #"),
+            DataTablesColumn("Linkage to external savings"),
+            DataTablesColumn("Linkage to external credit"),
+            DataTablesColumn("Date of first training meeting"),
+            DataTablesColumn("Date savings started this cycle"),
+            DataTablesColumn("Group trained by"),
+            DataTablesColumn("Members at start of cycle"),
+            DataTablesColumn("Date of data collection"),
+            DataTablesColumn("Registered members at present"),
+            DataTablesColumn("Registered men at present"),
+            DataTablesColumn("Registered women at present"),
+            DataTablesColumn("No. of members attending meeting"),
+            DataTablesColumn("Dropouts this cycle"),
+            DataTablesColumn("Value of savings this cycle"),
+            DataTablesColumn("No. of loans outstanding"),
+            DataTablesColumn("Value of loans outstanding"),
+            DataTablesColumn("Unpaid balance of late loans"),
+            DataTablesColumn("Write-offs this cycle"),
+            DataTablesColumn("Loan fund cash in box/bank"),
+            DataTablesColumn("Cash in other funds"),
+            DataTablesColumn("Property at start of cycle"),
+            DataTablesColumn("Property now"),
+            DataTablesColumn("Debts"),
+            DataTablesColumn("Interest rate")
+        )
+
+    @property
+    def rows(self):
         officer = self.request.GET.get("officer", None)
         month = self.request.GET.get("month", None)
         year = self.request.GET.get("year", None)
         if not (officer and month and year):
-            return
+            return []
 
         results = get_db().view('dca/dca_collection_forms', key=[officer, int(month), int(year)], include_docs=True).all()
-
-        self.context['headers'] = [
-            "Name of Group",
-            "Group #",
-            "Linkage to external savings",
-            "Linkage to external credit",
-            "Date of first training meeting",
-            "Date savings started this cycle",
-            "Group trained by",
-            "Members at start of cycle",
-            "Date of data collection",
-            "Registered members at present",
-            "Registered men at present",
-            "Registered women at present",
-            "No. of members attending meeting",
-            "Dropouts this cycle",
-            "Value of savings this cycle",
-            "No. of loans outstanding",
-            "Value of loans outstanding",
-            "Unpaid balance of late loans",
-            "Write-offs this cycle",
-            "Loan fund cash in box/bank",
-            "Cash in other funds",
-            "Property at start of cycle",
-            "Property now",
-            "Debts",
-            "Interest rate"
-        ]
 
         selectors = [
             "group_name",
@@ -89,7 +101,7 @@ class ProjectOfficerReport(HQReport):
 
             rows.append(row)
 
-        self.context['rows'] = rows
+        return rows
 
 class OfficerSelectionField(ReportField):
     slug = "officer"
@@ -106,8 +118,6 @@ class CurrencySelectionField(ReportField):
     def update_context(self):
         self.context['curname'] =  self.request.GET.get('curname', "MK")
         self.context['curval'] = self.request.GET.get('curval', 1.0)
-
-
 
 class LendingGroup(object):
     case = None
@@ -545,11 +555,19 @@ class LendingGroupAggregate(object):
     def one_hundred_percent(self):
         return self.pct(1.0,1.0)
 
-class PortfolioComparisonReport(HQReport):
+
+class PortfolioComparisonReport(GenericTabularReport, CustomProjectReport):
+    """
+        Legacy Custom Report
+        This custom report is not structured well.
+        Don't look at this report for best practices. (Check out HSPH reports or something newer)
+    """
     name = "Portfolio Comparison"
     slug = "portfolio_comparison"
-    template_name = "dca/portfolio-comparison.html"
-    fields = ['corehq.apps.reports.custom.MonthField', 'corehq.apps.reports.custom.YearField', 'corehq.apps.reports.fields.GroupField', 'dca.reports.CurrencySelectionField']
+    fields = ['corehq.apps.reports.custom.MonthField',
+              'corehq.apps.reports.custom.YearField',
+              'corehq.apps.reports.fields.GroupField',
+              'dca.reports.CurrencySelectionField']
     exportable = True
 
     columns = [
@@ -572,32 +590,42 @@ class PortfolioComparisonReport(HQReport):
         ('Annualized return on assets', None),
     ]
 
-    def calc(self):
+    @property
+    def headers(self):
+        headers = map(lambda x: x[0], self.columns)
+        dt_header = DataTablesHeader()
+        for header in headers:
+            dt_header.add_column(DataTablesColumn(header))
+        return dt_header
+
+    @property
+    def report_context(self):
+        context = super(PortfolioComparisonReport, self).report_context
+        context.update(
+            curval=float(self.request.GET.get("curval", 1.0)),
+            curname=self.request.GET.get("curname", "MK")
+        )
+        return context
+
+    @property
+    def rows(self):
         group_id = self.request.GET.get("group", None)
         month = self.request.GET.get("month", None)
         year = self.request.GET.get("year", None)
         curval = float(self.request.GET.get("curval", 1.0))
         curname = self.request.GET.get("curname", "MK")
 
-        self.context['curval'] = curval
-        self.context['curname'] = curname
         if not (month and year):
-            return
-
-
-        self.context['headers'] = map(lambda x: x[0], self.columns)
+            return []
 
         rows = []
         if group_id:
             group = Group.get(group_id)
             users = group.users
         else:
-            users = CommCareUser.by_domain(self.domain).all()
+            users = CommCareUser.by_domain(self.domain)
 
-
-
-        for user_id in group.users:
-            user = CommCareUser.get(user_id)
+        for user in users:
             row = []
             lg = LendingGroupAggregate(user.full_name, [user._id], month, year, curval, curname)
             for v in self.columns:
@@ -610,18 +638,27 @@ class PortfolioComparisonReport(HQReport):
                     row.append('-')
             rows.append(row)
 
-        self.context['rows'] = rows
+        return rows
 
-class PerformanceReport(HQReport):
+class PerformanceReport(GenericTabularReport, CustomProjectReport):
+    """
+        Legacy Custom Report
+        This custom report is not structured well.
+        Don't look at this report for best practices. (Check out HSPH reports or something newer)
+    """
     name = "Project Performance"
     slug = "project_performance"
-    template_name = "dca/project-performance.html"
     exportable = True
-    fields = ['corehq.apps.reports.custom.MonthField', 'corehq.apps.reports.custom.YearField', 'corehq.apps.reports.fields.GroupField', 'dca.reports.CurrencySelectionField']
+    use_datatables = False
+    fields = ['corehq.apps.reports.custom.MonthField',
+              'corehq.apps.reports.custom.YearField',
+              'corehq.apps.reports.fields.GroupField',
+              'dca.reports.CurrencySelectionField']
+
 
     # Aggregate, %, Avg
     _rows = [
-        ('<h2>Group Profile</h2>',),
+        ('<h2>Group Profile</h2>','','',''),
         ('Number of groups', 'num_groups', '', ''),
         ('Total number of current members', 'num_members', '', 'avg_members'),
         ('Total men', 'num_men', '', 'avg_women'),
@@ -635,9 +672,9 @@ class PerformanceReport(HQReport):
         ('Number of members belonging to graduated groups', '','',''),
         ('Total number of people assisted by the program', '','',''),
         ('Percent of members with loans outstanding', '', 'pct_loans_outstanding', ''),
-        (),
-        ('<h2>Financial Performance of Groups</h2>',),
-        ('<h3>Composition of assets, liabilities, and equity</h3>',),
+        ('','','',''),
+        ('<h2>Financial Performance of Groups</h2>','','',''),
+        ('<h3>Composition of assets, liabilities, and equity</h3>','','',''),
         ('<b>Assets</b>', 'assets', 'one_hundred_percent', 'avg_assets'),
         ('Loan fund cash on hand', 'loan_fund_cash_in_box_at_bank', 'pct_loan_fund_cash_assets', 'avg_loan_fund_cash_in_box_at_bank'),
         ('Total cash in other funds', 'cash_in_other_funds', 'pct_cash_assets', 'avg_cash_in_other_funds'),
@@ -649,16 +686,16 @@ class PerformanceReport(HQReport):
         ('Cash in other funds', 'cash_in_other_funds', 'pct_cash_liabilities', 'avg_cash_in_other_funds'),
         ('Savings', 'value_of_savings', 'pct_savings_liabilities', 'avg_value_of_savings'),
         ('Retained earnings', 'retained_earnings', 'pct_earnings_liabilities', 'avg_retained_earnings'),
-        (),
+        ('','','',''),
         #------------
-        ('<h3>Savings</h3>',),
+        ('<h3>Savings</h3>','','',''),
         ('Cumulative value of savings this cycle', 'value_of_savings','','avg_value_of_savings'),
         ('Average savings per member', '','','value_of_savings_per_member'),
         ('Retained earnings', 'retained_earnings', '', ''),
         ('Average member equity', '','','avg_equity_per_member'),
-        (),
+        ('','','',''),
         #------------
-        ('<h3>Loan Portfolio</h3>',),
+        ('<h3>Loan Portfolio</h3>','','',''),
         ('Number of loans outstanding', 'loans_outstanding', '', 'avg_loans_outstanding'),
         ('Value of loans outstanding', 'value_of_loans_outstanding', '', 'avg_value_of_loans_outstanding'),
         ('Average outstanding loan size', '', '', 'avg_outstanding_loan_size'),
@@ -667,8 +704,8 @@ class PerformanceReport(HQReport):
         ('Average writeoff per graduated group', '', '', 'avg_writeoffs'),
         ('Writeoffs this cycle', 'writeoffs', '', ''),
         ('Loan fund utilisation rate', '', 'loan_fund_utilization', ''),
-        (),
-        ('<h3>Current yield</h3>',),
+        ('','','',''),
+        ('<h3>Current yield</h3>','','',''),
         ('Average profit per member to date', '','','avg_profits_per_member'),
         ('Return on savings', '','',''),
         ('Return on assets', '','',''),
@@ -676,16 +713,24 @@ class PerformanceReport(HQReport):
 
     ]
 
-    def calc(self):
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn("Statistic"),
+            DataTablesColumn("Aggregate (All Groups)"),
+            DataTablesColumn("%"),
+            DataTablesColumn("Average (Per Group)"),
+        )
+
+    @property
+    def rows(self):
         group_id = self.request.GET.get("group", None)
         month = self.request.GET.get("month", None)
         year = self.request.GET.get("year", None)
         curval = float(self.request.GET.get("curval", 1.0))
         curname = self.request.GET.get("curname", "MK")
         if not (month and year):
-            return
-
-        headers = ["Statistic", "Aggregate (All Groups)", "%", "Average (Per Group)"]
+            return []
 
 
         if group_id:
@@ -693,13 +738,12 @@ class PerformanceReport(HQReport):
             group_name = group.name
             users = group.users
         else:
-            users = map(lambda x: x._id, CommCareUser.by_domain(self.domain).all())
+            users = map(lambda x: x._id, CommCareUser.by_domain(self.domain))
             group_name = "Everybody"
 
         lg = LendingGroupAggregate(group_name, users, month, year, curval, curname)
 
-        self.context['headers'] = headers
-        self.context['rows'] = []
+        rows = []
         for r in self._rows:
             if r:
                 row = [r[0]]
@@ -711,18 +755,28 @@ class PerformanceReport(HQReport):
 
                     return r
                 row.extend(map(_ga, r[1:]))
-                self.context['rows'].append(row)
+                rows.append(row)
             else:
-                self.context['rows'].append(['<hr />'])
+                rows.append(['<hr />'])
+        return rows
 
 
 
-class PerformanceRatiosReport(HQReport):
+class PerformanceRatiosReport(GenericTabularReport, CustomProjectReport):
+    """
+        Legacy Custom Report
+        This custom report is not structured well.
+        Don't look at this report for best practices. (Check out HSPH reports or something newer)
+    """
     name = "Performance Ratios"
     slug = "performance_ratios"
-    template_name = "dca/performance-ratios.html"
+#    template_name = "dca/performance-ratios.html"
     exportable = True
-    fields = ['corehq.apps.reports.custom.MonthField', 'corehq.apps.reports.custom.YearField', 'corehq.apps.reports.fields.GroupField', 'dca.reports.CurrencySelectionField']
+    use_datatables = False
+    fields = ['corehq.apps.reports.custom.MonthField',
+              'corehq.apps.reports.custom.YearField',
+              'corehq.apps.reports.fields.GroupField',
+              'dca.reports.CurrencySelectionField']
 
     _rows = [
         ('Attendance rate','attendance_rate'),
@@ -739,29 +793,34 @@ class PerformanceRatiosReport(HQReport):
         ('Loans outstanding as % of total assets','pct_loans_assets'),
     ]
 
-    def calc(self):
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn("Statistic"),
+            DataTablesColumn("Values")
+        )
+
+    @property
+    def rows(self):
         group_id = self.request.GET.get("group", None)
         month = self.request.GET.get("month", None)
         year = self.request.GET.get("year", None)
         curval = float(self.request.GET.get("curval", 1.0))
         curname = self.request.GET.get("curname", "MK")
         if not (group_id and month and year):
-            return
-
-        headers = ["Statistic", "Values"]
+            return []
 
         if group_id:
             group = Group.get(group_id)
             group_name = group.name
             users = group.users
         else:
-            users = map(lambda x: x._id, CommCareUser.by_domain(self.domain).all())
+            users = map(lambda x: x._id, CommCareUser.by_domain(self.domain))
             group_name = "Everybody"
 
         lg = LendingGroupAggregate(group_name, users, month, year, curval, curname)
 
-        self.context['headers'] = headers
-        self.context['rows'] = []
+        rows = []
         for r in self._rows:
             if r:
                 row = [r[0]]
@@ -773,7 +832,9 @@ class PerformanceRatiosReport(HQReport):
                     except TypeError:
                         return ''
                 row.extend(map(_ga, r[1:]))
-                self.context['rows'].append(row)
+                rows.append(row)
             else:
-                self.context['rows'].append(['<hr />'])
+                rows.append(['<hr />'])
+
+        return rows
         
