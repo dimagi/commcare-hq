@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm
+from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm
 from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST
 from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.web import render_to_response
@@ -242,68 +242,51 @@ def add_survey(request, domain, survey_id=None):
     if request.method == "POST":
         form = SurveyForm(request.POST)
         if form.is_valid():
-            name                = form.cleaned_data.get("name")
-            form_id             = form.cleaned_data.get("form_id")
-            schedule_date       = form.cleaned_data.get("schedule_date")
-            schedule_time       = form.cleaned_data.get("schedule_time")
-            sample_id           = form.cleaned_data.get("sample_id")
-            sample_name         = form.cleaned_data.get("sample_name")
-            sample_contacts     = form.cleaned_data.get("sample_contacts")
-            send_automatically  = form.cleaned_data.get("send_automatically")
-            
-            if sample_id == "--new--":
-                sample = SurveySample (
-                    domain = domain,
-                    name = sample_name,
-                    contacts = sample_contacts
-                )
-                sample.save()
-            else:
-                sample = SurveySample.get(sample_id)
-                sample.name = sample_name
-                sample.contacts = sample_contacts
-                sample.save()
+            name = form.cleaned_data.get("name")
+            waves = form.cleaned_data.get("waves")
+            followups = form.cleaned_data.get("followups")
+            samples = form.cleaned_data.get("samples")
+            send_automatically = form.cleaned_data.get("send_automatically")
+            send_followup = form.cleaned_data.get("send_followup")
             
             if survey is None:
                 survey = Survey (
                     domain = domain,
                     name = name,
-                    form_unique_id = form_id,
-                    sample_id = sample._id,
-                    schedule_date = schedule_date,
-                    schedule_time = schedule_time,
-                    send_automatically = send_automatically
+                    waves = waves,
+                    followups = followups,
+                    samples = samples,
+                    send_automatically = send_automatically,
+                    send_followup = send_followup
                 )
             else:
                 survey.name = name
-                survey.form_unique_id = form_id
-                survey.sample_id = sample._id
-                survey.schedule_date = schedule_date
-                survey.schedule_time = schedule_time
+                survey.waves = waves
+                survey.followups = followups
+                survey.samples = samples
                 survey.send_automatically = send_automatically
+                survey.send_followup = send_followup
             survey.save()
             return HttpResponseRedirect(reverse("survey_list", args=[domain]))
     else:
         initial = {}
         if survey is not None:
-            sample = SurveySample.get(survey.sample_id)
             initial["name"] = survey.name
-            initial["form_id"] = survey.form_unique_id
-            initial["sample_id"] = survey.sample_id
-            initial["schedule_date"] = survey.schedule_date
-            initial["schedule_time"] = survey.schedule_time
-            initial["sample_name"] = sample.name
-            initial["sample_contacts"] = sample.contacts
+            initial["waves"] = survey.waves
+            initial["followups"] = survey.followups
+            initial["samples"] = survey.samples
             initial["send_automatically"] = survey.send_automatically
+            initial["send_followup"] = survey.send_followup
         form = SurveyForm(initial=initial)
     
     form_list = get_form_list(domain)
     form_list.insert(0, {"code":"--choose--", "name":"-- Choose --"})
     sample_list = get_sample_list(domain)
-    sample_list.insert(0, {"code":"--new--", "name":"-- Create New Sample --"})
+    sample_list.insert(0, {"code":"--choose--", "name":"-- Choose --"})
     
     context = {
         "domain" : domain,
+        "survey_id" : survey_id,
         "form" : form,
         "form_list" : form_list,
         "sample_list" : sample_list,
@@ -320,4 +303,48 @@ def survey_list(request, domain):
     }
     return render_to_response(request, "reminders/partial/survey_list.html", context)
 
+@login_and_domain_required
+def add_sample(request, domain, sample_id=None):
+    sample = None
+    if sample_id is not None:
+        sample = SurveySample.get(sample_id)
+    
+    if request.method == "POST":
+        form = SurveySampleForm(request.POST)
+        if form.is_valid():
+            name            = form.cleaned_data.get("name")
+            sample_contacts = form.cleaned_data.get("sample_contacts")
+            
+            if sample is None:
+                sample = SurveySample (
+                    domain = domain,
+                    name = name,
+                    contacts = sample_contacts
+                )
+            else:
+                sample.name = name
+                sample.contacts = sample_contacts
+            sample.save()
+            return HttpResponseRedirect(reverse("sample_list", args=[domain]))
+    else:
+        initial = {}
+        if sample is not None:
+            initial["name"] = sample.name
+            initial["sample_contacts"] = sample.contacts
+        form = SurveySampleForm(initial=initial)
+    
+    context = {
+        "domain" : domain,
+        "form" : form,
+        "sample_id" : sample_id
+    }
+    return render_to_response(request, "reminders/partial/add_sample.html", context)
+
+@login_and_domain_required
+def sample_list(request, domain):
+    context = {
+        "domain" : domain,
+        "samples" : SurveySample.get_all(domain)
+    }
+    return render_to_response(request, "reminders/partial/sample_list.html", context)
 

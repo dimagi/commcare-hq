@@ -1,244 +1,347 @@
 {% extends "reminders/survey_base.html" %}
 
+{% block head %}{{ block.super }}
+
+<style type="text/css">
+    #survey_info {
+        width: auto;
+        margin-left: 0px;
+    }
+    #wave_table {
+        width: auto;
+        margin-left: 0px;
+        background-color: #FFF;
+    }
+    #followup_table {
+        width: auto;
+        margin-left: 0px;
+    }
+    #followup_table td {
+        padding-right: 20px;
+    }
+    #sample_table {
+        width: auto;
+        margin-left: 0px;
+        background-color: #FFF;
+    }
+</style>
+
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
 <script type="text/javascript">
-    function remove_contact_record(ref) {
-        cell_ref = ref.parentNode;
-        row_ref = cell_ref.parentNode;
-        table_ref = row_ref.parentNode;
-        table_ref.removeChild(row_ref);
+    function add_record(element_id, record) {
+        document.getElementById(element_id).appendChild(record);
     }
     
-    function create_contact_record() {
+    function remove_record(ref) {
+        cell_ref = ref.parentNode;
+        row_ref = cell_ref.parentNode;
+        tbody_ref = row_ref.parentNode;
+        tbody_ref.removeChild(row_ref);
+    }
+    
+    function create_wave_record() {
         var tr = document.createElement("TR");
         var td1 = document.createElement("TD");
         var td2 = document.createElement("TD");
         var td3 = document.createElement("TD");
         var td4 = document.createElement("TD");
-        var td5 = document.createElement("TD");
         var input1 = document.createElement("INPUT");
         input1.setAttribute("type", "text");
-        input1.setAttribute("class", "short");
-        input1.setAttribute("name", "sample_contact." + current_sample_contact_num + ".id");
+        input1.setAttribute("name", "wave." + current_wave_num + ".date");
         var input2 = document.createElement("INPUT");
         input2.setAttribute("type", "text");
-        input2.setAttribute("name", "sample_contact." + current_sample_contact_num + ".phone_number");
+        input2.setAttribute("name", "wave." + current_wave_num + ".time");
         var select1 = document.createElement("SELECT");
-        select1.setAttribute("name", "sample_contact." + current_sample_contact_num + ".method");
-        {% for method in method_list %}
+        select1.setAttribute("name", "wave." + current_wave_num + ".form_id");
+        {% for f in form_list %}
         var option = document.createElement("OPTION");
-        option.setAttribute("value", "{{ method }}");
-        option.innerHTML = "{{ method }}";
+        option.setAttribute("value", "{{ f.code }}");
+        option.innerHTML = "{{ f.name }}";
         select1.appendChild(option);
-        {% endfor %}
-        var select2 = document.createElement("SELECT");
-        select2.setAttribute("name", "sample_contact." + current_sample_contact_num + ".cati_operator");
-        {% for user in user_list %}
-        var option = document.createElement("OPTION");
-        option.setAttribute("value", "{{ user.get_id }}");
-        option.innerHTML = "{{ user.raw_username }}";
-        select2.appendChild(option);
         {% endfor %}
         var button = document.createElement("SPAN");
         button.setAttribute("class", "btn btn-danger");
         button.innerHTML = '<i class="icon icon-white icon-remove"></i> Remove';
-        button.onclick = function() { remove_contact_record(this); };
+        button.onclick = function() { remove_record(this); };
         //
-        current_sample_contact_num++;
+        current_wave_num++;
         //
         tr.appendChild(td1);
         tr.appendChild(td2);
         tr.appendChild(td3);
         tr.appendChild(td4);
-        tr.appendChild(td5);
         td1.appendChild(input1);
         td2.appendChild(input2);
         td3.appendChild(select1);
-        td4.appendChild(select2);
-        td5.appendChild(button);
+        td4.appendChild(button);
         //
         return tr;
     }
     
-    function add_contact_record() {
-        document.getElementById("sample").appendChild(create_contact_record());
+    function create_followup_record() {
+        var tr = document.createElement("TR");
+        var td1 = document.createElement("TD");
+        var td2 = document.createElement("TD");
+        var button = document.createElement("SPAN");
+        button.setAttribute("class", "btn btn-danger");
+        button.innerHTML = '<i class="icon icon-white icon-remove"></i> Remove';
+        button.onclick = function() { remove_record(this); };
+        //
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        td1.innerHTML = 'Send follow-up <input type="text" name="followup.' + current_followup_num + '.interval" class="tiny" /> day(s) after next message';
+        td2.appendChild(button);
+        //
+        current_followup_num++;
+        //
+        return tr;
     }
     
-    function sample_changed() {
-        document.getElementById("refresh_sample").setAttribute("value", "1");
-        document.getElementById("loading_message").setAttribute("style", "display: inline;");
-        form = document.getElementById("survey_form");
-        form.setAttribute("action","#load_sample");
-        form.submit();
+    function create_sample_record() {
+        var tr = document.createElement("TR");
+        var td1 = document.createElement("TD");
+        var td2 = document.createElement("TD");
+        var td3 = document.createElement("TD");
+        var td4 = document.createElement("TD");
+        var select1 = document.createElement("SELECT");
+        select1.setAttribute("name", "sample." + current_sample_num + ".sample_id");
+        {% for s in sample_list %}
+        var option = document.createElement("OPTION");
+        option.setAttribute("value", "{{ s.code }}");
+        option.innerHTML = "{{ s.name }}";
+        select1.appendChild(option);
+        {% endfor %}
+        var select2 = document.createElement("SELECT");
+        select2.setAttribute("name", "sample." + current_sample_num + ".method");
+        {% for method in method_list %}
+        var option = document.createElement("OPTION");
+        option.setAttribute("value", "{{ method }}");
+        option.innerHTML = "{{ method }}";
+        select2.appendChild(option);
+        {% endfor %}
+        var select3 = document.createElement("SELECT");
+        select3.setAttribute("name", "sample." + current_sample_num + ".cati_operator");
+        {% for user in user_list %}
+        var option = document.createElement("OPTION");
+        option.setAttribute("value", "{{ user.get_id }}");
+        option.innerHTML = "{{ user.raw_username }}";
+        select3.appendChild(option);
+        {% endfor %}
+        var button = document.createElement("SPAN");
+        button.setAttribute("class", "btn btn-danger");
+        button.innerHTML = '<i class="icon icon-white icon-remove"></i> Remove';
+        button.onclick = function() { remove_record(this); };
+        //
+        current_sample_num++;
+        //
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        tr.appendChild(td3);
+        tr.appendChild(td4);
+        td1.appendChild(select1);
+        td2.appendChild(select2);
+        td3.appendChild(select3);
+        td4.appendChild(button);
+        //
+        return tr;
     }
     
-    {% if form.sample_contacts.value|length == 0 %}
-    var current_sample_contact_num = 1;
+    {% if form.waves.value|length == 0 %}
+    var current_wave_num = 1;
     {% else %}
-    var current_sample_contact_num = {{ form.sample_contacts.value|length }};
+    var current_wave_num = {{ form.waves.value|length }};
+    {% endif %}
+    
+    {% if form.followups.value|length == 0 %}
+    var current_followup_num = 1;
+    {% else %}
+    var current_followup_num = {{ form.followups.value|length }};
+    {% endif %}
+    
+    {% if form.samples.value|length == 0 %}
+    var current_sample_num = 1;
+    {% else %}
+    var current_sample_num = {{ form.samples.value|length }};
     {% endif %}
 </script>
 
 {% endblock %}
 
+{% block survey_nav %}
+<ul class="nav nav-list">
+    {% if survey_id %}
+    <li class="active"><a href="{% url edit_survey domain survey_id %}">{{ form.name.value }}</a></li>
+    {% else %}
+    <li class="active"><a href="{% url add_survey domain %}">New Survey</a></li>
+    {% endif %}
+</ul>
+{% endblock %}
+
 {% block survey_content %}
 <br />
-<form id="survey_form" action="#" method="post">
-    <h2>Survey</h2>
-    <br />
-    <table>
-        {% if form.name.errors %}
-        <tr>
-            <th></th>
-            <td>{{ form.name.errors }}</td>
-        </tr>
-        {% endif %}
-        <tr>
-            <th>Name:</th>
-            <td>{{ form.name }}</td>
-        </tr>
-        {% if form.form_id.errors %}
-        <tr>
-            <th></th>
-            <td>{{ form.form_id.errors }}</td>
-        </tr>
-        {% endif %}
-        <tr>
-            <th>Questionnaire:</th>
-            <td>
-                <select name="form_id">
-                    {% for f in form_list %}
-                        <option value="{{ f.code }}" {% if f.code == form.form_id.value %}selected="selected"{% endif %}>{{ f.name }}</option>
-                    {% endfor %}
-                </select>
-            </td>
-        </tr>
-    </table>
-
-    <h2>Schedule</h2>
-    <br />
-    <table>
-        <tr>
-            <th></th>
-            <td><input type="checkbox" name="send_automatically" {% if form.send_automatically.value %}value="on" checked="checked"{% endif %}/> Send Automatically</td>
-        </tr>
-        {% if form.schedule_date.errors %}
-        <tr>
-            <th></th>
-            <td>{{ form.schedule_date.errors }}</td>
-        </tr>
-        {% endif %}
-        <tr>
-            <th>Date:</th>
-            <td>{{ form.schedule_date }}</td>
-        </tr>
-        {% if form.schedule_time.errors %}
-        <tr>
-            <th></th>
-            <td>{{ form.schedule_time.errors }}</td>
-        </tr>
-        {% endif %}
-        <tr>
-            <th>Time:</th>
-            <td>{{ form.schedule_time }}</td>
-        </tr>
-    </table>
-
-    <a id="load_sample"></a>
-    <h2>Sample</h2>
-    <br />
-    <table>
-        {% if form.sample_id.errors %}
-        <tr>
-            <th></th>
-            <td>{{ form.sample_id.errors }}</td>
-        </tr>
-        {% endif %}
-        <tr>
-            <th>Choose:</th>
-            <td>
-                <select name="sample_id" onChange="sample_changed();">
-                    {% for s in sample_list %}
-                        <option value="{{ s.code }}" {% if s.code == form.sample_id.value %}selected="selected"{% endif %}>{{ s.name }}</option>
-                    {% endfor %}
-                </select>
-                <span id="loading_message" style="display: none;">Loading, please wait...</span>
-            </td>
-        </tr>
-        {% if form.sample_name.errors %}
-        <tr>
-            <th></th>
-            <td>{{ form.sample_name.errors }}</td>
-        </tr>
-        {% endif %}
-        <tr>
-            <th>Name:</th>
-            <td><input name="sample_name" type="text" value="{% if form.refresh_sample.value == "1" %}{{ form.refresh_sample_name }}{% else %}{{ form.sample_name.value|default:"" }}{% endif %}"></td>
-        </tr>
-    </table>
-
-    {% if form.sample_contacts.errors %}
-    <tr>
-        <th></th>
-        <td>{{ form.sample_contacts.errors }}</td>
-    </tr>
-    {% endif %}
-    <table id="sample">
-        <tr>
-            <th>ID</th>
-            <th>Phone Number</th>
-            <th>Method</th>
-            <th>CATI Operator</th>
-            <th></th>
-        </tr>
-        {% if form.refresh_sample.value == "1" %}
-            {% if form.refresh_sample_contacts|length == 0 %}
+<form id="survey_form" action="" method="post">
+    <table id="survey_info">
+        <tbody>
+            {% if form.name.errors %}
             <tr>
-                <td><input name="sample_contact.0.id" type="text" class="short" /></td>
-                <td><input name="sample_contact.0.phone_number" type="text" /></td>
-                <td><select name="sample_contact.0.method">{% for method in method_list %}<option value="{{ method }}">{{ method }}</option>{% endfor %}</select></td>
-                <td><select name="sample_contact.0.cati_operator">{% for user in user_list %}<option value="{{ user.get_id }}">{{ user.raw_username }}</option>{% endfor %}</select></td>
-                <td><span class="btn btn-danger" onClick="remove_contact_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span></td>
+                <th></th>
+                <td>{{ form.name.errors }}</td>
             </tr>
-            {% else %}
-                {% for contact in form.refresh_sample_contacts %}
+            {% endif %}
+            <tr>
+                <th><h4>Name: </h4></th>
+                <td>{{ form.name }}</td>
+            </tr>
+        </tbody>
+    </table>
+    <br />
+    <h4>Questionnaire Waves</h4>
+    <br />
+    <div class="form-block">
+        <input type="checkbox" name="send_automatically" {% if form.send_automatically.value %}value="on" checked="checked"{% endif %}/> Send Automatically
+        <br />
+        <br />
+        <table id="wave_table" class="table table-bordered">
+            <thead>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Questionnaire</th>
+                <th></th>
+            </thead>
+            <tbody id="wave_tbody">
+                {% if form.waves.value|length == 0 %}
                 <tr>
-                    <td><input name="sample_contact.{{ forloop.counter0 }}.id" type="text" class="short" value="{{ contact.id }}" /></td>
-                    <td><input name="sample_contact.{{ forloop.counter0 }}.phone_number" type="text" value="{{ contact.phone_number }}" /></td>
-                    <td><select name="sample_contact.{{ forloop.counter0 }}.method">{% for method in method_list %}<option value="{{ method }}" {% if contact.method == method %}selected="selected"{% endif %}>{{ method }}</option>{% endfor %}</select></td>
-                    <td><select name="sample_contact.{{ forloop.counter0 }}.cati_operator">{% for user in user_list %}<option value="{{ user.get_id }}" {% if contact.cati_operator == user.get_id %}selected="selected"{% endif %}>{{ user.raw_username }}</option>{% endfor %}</select></td>
-                    <td><span class="btn btn-danger" onClick="remove_contact_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span></td>
+                    <td><input type="text" name="wave.0.date" /></td>
+                    <td><input type="text" name="wave.0.time" /></td>
+                    <td>
+                        <select name="wave.0.form_id">
+                            {% for f in form_list %}
+                                <option value="{{ f.code }}">{{ f.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td></td>
+                </tr>
+                {% else %}
+                {% for wave in form.waves.value %}
+                <tr>
+                    <td><input type="text" name="wave.{{ forloop.counter0 }}.date" value="{{ wave.date }}" /></td>
+                    <td><input type="text" name="wave.{{ forloop.counter0 }}.time" value="{{ wave.time }}" /></td>
+                    <td>
+                        <select name="wave.{{ forloop.counter0 }}.form_id">
+                            {% for f in form_list %}
+                                <option value="{{ f.code }}" {% if f.code == wave.form_id %}selected="selected"{% endif %}>{{ f.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>{% if forloop.counter0 > 0 %}<span class="btn btn-danger" onClick="remove_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span>{% endif %}</td>
                 </tr>
                 {% endfor %}
-            {% endif %}
-        {% else %}
-            {% if form.sample_contacts.value|length == 0 %}
-            <tr>
-                <td><input name="sample_contact.0.id" type="text" class="short" /></td>
-                <td><input name="sample_contact.0.phone_number" type="text" /></td>
-                <td><select name="sample_contact.0.method">{% for method in method_list %}<option value="{{ method }}">{{ method }}</option>{% endfor %}</select></td>
-                <td><select name="sample_contact.0.cati_operator">{% for user in user_list %}<option value="{{ user.get_id }}">{{ user.raw_username }}</option>{% endfor %}</select></td>
-                <td><span class="btn btn-danger" onClick="remove_contact_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span></td>
-            </tr>
-            {% else %}
-                {% for contact in form.sample_contacts.value %}
+                {% endif %}
+            </tbody>
+        </table>
+        <span class="btn btn-success" onClick="add_record('wave_tbody', create_wave_record());"><i class="icon icon-white icon-plus"></i> Add Wave</span>
+    </div>
+    <br />
+    <h4>Follow-ups</h4>
+    <br />
+    <div class="form-block">
+        <input type="checkbox" name="send_followup" {% if form.send_followup.value %}value="on" checked="checked"{% endif %}/> Send follow-up(s) for incomplete SMS Questionnaires
+        <br />
+        <br />
+        <table id="followup_table">
+            <tbody id="followup_tbody">
+                {% if form.followups.value|length == 0 %}
                 <tr>
-                    <td><input name="sample_contact.{{ forloop.counter0 }}.id" type="text" class="short" value="{{ contact.id }}" /></td>
-                    <td><input name="sample_contact.{{ forloop.counter0 }}.phone_number" type="text" value="{{ contact.phone_number }}" /></td>
-                    <td><select name="sample_contact.{{ forloop.counter0 }}.method">{% for method in method_list %}<option value="{{ method }}" {% if contact.method == method %}selected="selected"{% endif %}>{{ method }}</option>{% endfor %}</select></td>
-                    <td><select name="sample_contact.{{ forloop.counter0 }}.cati_operator">{% for user in user_list %}<option value="{{ user.get_id }}" {% if contact.cati_operator == user.get_id %}selected="selected"{% endif %}>{{ user.raw_username }}</option>{% endfor %}</select></td>
-                    <td><span class="btn btn-danger" onClick="remove_contact_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span></td>
+                    <td>Send follow-up <input type="text" name="followup.0.interval" class="tiny" /> day(s) after first message</td><td></td>
+                </tr>
+                {% else %}
+                {% for followup in form.followups.value %}
+                <tr>
+                    <td>Send follow-up <input type="text" name="followup.{{ forloop.counter0 }}.interval" class="tiny" value="{{ followup.interval }}" /> day(s) after {% if forloop.counter0 > 0 %}next{% else %}first{% endif %} message</td>
+                    <td>{% if forloop.counter0 > 0 %}<span class="btn btn-danger" onClick="remove_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span>{% endif %}</td>
                 </tr>
                 {% endfor %}
-            {% endif %}
-        {% endif %}
-    </table>
-    <span class="btn btn-success" onClick="add_contact_record();"><i class="icon icon-white icon-plus"></i> Add Contact</span>
+                {% endif %}
+            </tbody>
+        </table>
+        <br />
+        <span class="btn btn-success" onClick="add_record('followup_tbody', create_followup_record());"><i class="icon icon-white icon-plus"></i> Add Follow-up</span>
+    </div>
     <br />
+    <h4>Samples</h4>
     <br />
-    <h2></h2>
+    <div class="form-block">
+        <table id="sample_table" class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Sample</th>
+                    <th>Method of Communication</th>
+                    <th>CATI Operator</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="sample_tbody">
+                {% if form.samples.value|length == 0 %}
+                <tr>
+                    <td>
+                        <select name="sample.0.sample_id">
+                            {% for s in sample_list %}
+                                <option value="{{ s.code }}">{{ s.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <select name="sample.0.method">
+                            {% for method in method_list %}
+                                <option value="{{ method }}">{{ method }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <select name="sample.0.cati_operator">
+                            {% for user in user_list %}
+                                <option value="{{ user.get_id }}">{{ user.raw_username }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td></td>
+                </tr>
+                {% else %}
+                {% for sample in form.samples.value %}
+                <tr>
+                    <td>
+                        <select name="sample.{{ forloop.counter0 }}.sample_id">
+                            {% for s in sample_list %}
+                                <option value="{{ s.code }}" {% if sample.sample_id == s.code %}selected="selected"{% endif %}>{{ s.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <select name="sample.{{ forloop.counter0 }}.method">
+                            {% for method in method_list %}
+                                <option value="{{ method }}" {% if sample.method == method %}selected="selected"{% endif %}>{{ method }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <select name="sample.{{ forloop.counter0 }}.cati_operator">
+                            {% for user in user_list %}
+                                <option value="{{ user.get_id }}" {% if sample.cati_operator == user.get_id %}selected="selected"{% endif %}>{{ user.raw_username }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>{% if forloop.counter0 > 0 %}<span class="btn btn-danger" onClick="remove_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span>{% endif %}</td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+        <span class="btn btn-success" onClick="add_record('sample_tbody', create_sample_record());"><i class="icon icon-white icon-plus"></i> Add Sample</span>
+    </div>
     <br />
-    <input id="refresh_sample" type="hidden" name="refresh_sample" value="0" />
     <input type="submit" class="btn btn-primary" value="Submit" />
 </form>
 

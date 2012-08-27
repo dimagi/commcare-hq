@@ -1,40 +1,35 @@
 {% extends "reminders/survey_base.html" %}
 
 {% block head %}{{ block.super }}
-    <style>
-        table tr td {
-            border: 1px solid #CCC;
-            padding: 5px 10px 5px 10px;
-        }
-        table tr th {
-            border: 1px solid #CCC;
-            background-color: #CCC;
-            padding: 5px 10px 5px 10px;
-        }
-    </style>
+
+<style type="text/css">
+    #survey_list_table {
+        width: auto;
+        margin-left: 0px;
+        min-width: 50%;
+    }
+</style>
+
 {% endblock %}
 
 {% block survey_content %}
-<br />
-<h2>Surveys</h2>
-<br />
-<table>
-    <tr>
-        <th>Name</th>
-        <th>Questionnaire</th>
-        <th>Sample</th>
-        <th></th>
-    </tr>
-    {% for survey in surveys %}
-    <tr>
-        <td>{{ survey.name }}</td>
-        <td>{{ survey.questionnaire_name }}</td>
-        <td>{{ survey.sample.name }}</td>
-        <td><a href="{% url edit_survey domain survey.get_id %}"><span class="btn btn-primary">Edit</span></a></td>
-    </tr>
-    {% endfor %}
+<table id="survey_list_table" class="table table-striped datatable table-bordered">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for survey in surveys %}
+        <tr>
+            <td>{{ survey.name }}</td>
+            <td><a href="{% url edit_survey domain survey.get_id %}"><span class="btn btn-primary">Edit</span></a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
 <br />
-<center><a href="{% url add_survey domain %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i> New Survey</span></a></center>
+<a href="{% url add_survey domain %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i> New Survey</span></a>
 
 {% endblock %}
