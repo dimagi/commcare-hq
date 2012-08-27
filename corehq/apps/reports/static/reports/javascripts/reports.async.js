@@ -1,7 +1,6 @@
 var HQAsyncReport = function (o) {
     'use strict';
     var self = this;
-    self.submitButton = o.submitButton || $('#paramSelectorForm button[type="submit"]');
     self.reportContent = o.reportContent ||  $('#report-content');
     self.filterForm = o.filterForm || $('#paramSelectorForm');
     self.loadingIssueModal = o.loadingIssueModal || $('#loadingReportIssueModal');
@@ -32,12 +31,12 @@ var HQAsyncReport = function (o) {
         self.filterRequest = null;
         $('#hq-report-filters').html(data.filters);
         $('#reportFiltersAccordion').removeClass('hide');
-        self.resetFilterState();
+        self.standardReport.resetFilterState();
     };
 
     self.init = function () {
         self.reportContent.attr('style', 'position: relative;');
-        self.submitButton.addClass('disabled');
+        self.standardReport.filterSubmitButton.addClass('disabled');
 
         self.updateReport(true, window.location.search.substr(1));
 
@@ -61,14 +60,7 @@ var HQAsyncReport = function (o) {
         });
     };
 
-    self.resetFilterState = function () {
-        $('#paramSelectorForm fieldset button, #paramSelectorForm fieldset span[data-dropdown="dropdown"]').click(function() {
-            $('#paramSelectorForm button[type="submit"]').button('reset').addClass('btn-primary');
-        });
-        $('#paramSelectorForm fieldset').change(function () {
-            $('#paramSelectorForm button[type="submit"]').button('reset').addClass('btn-primary');
-        });
-    };
+
 
     self.updateReport = function (initial_load, params) {
         var process_filters = "";
@@ -101,7 +93,7 @@ var HQAsyncReport = function (o) {
                 $('.loading-backdrop').fadeOut();
                 self.hqLoading.fadeOut();
 
-                self.submitButton.removeClass('btn-primary').button('standard');
+                self.standardReport.filterSubmitButton.removeClass('btn-primary').button('standard');
             },
             error: function (data) {
                 self.reportRequest = null;
@@ -120,7 +112,7 @@ var HQAsyncReport = function (o) {
                 }
             },
             beforeSend: function () {
-                self.submitButton.button('loading');
+                self.standardReport.filterSubmitButton.button('loading');
                 $('.loading-backdrop').fadeIn();
                 if (self.hqLoading) {
                     self.hqLoading.attr('style', 'position: absolute; top: 30px; left: 40%;');
