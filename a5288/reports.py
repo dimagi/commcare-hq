@@ -1,5 +1,4 @@
 from corehq.apps.reports._global import CustomProjectReport
-from corehq.apps.reports.custom import HQReport
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from corehq.apps.reports.generic import GenericReportView
