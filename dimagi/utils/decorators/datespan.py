@@ -1,6 +1,7 @@
 from datetime import datetime
 from django.http import HttpRequest, HttpResponseBadRequest
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.django.request import request_from_args_or_kwargs
 
 def datespan_in_request(from_param="from", to_param="to", 
                         format_string="%Y-%m-%d", default_days=30, 
@@ -22,17 +23,8 @@ def datespan_in_request(from_param="from", to_param="to",
     def get_dates(f):
         def wrapped_func(*args, **kwargs):
             # attempt to find the request object from all the argument
-            # values, checking first the args and then the kwargs 
-            req = None
-            for arg in args:
-                if _is_http_request(arg):
-                    req = arg
-                    break
-            if not req:
-                for arg in kwargs.values():
-                    if _is_http_request(arg):
-                        req = arg
-                        break
+            # values, checking first the args and then the kwargs
+            req = request_from_args_or_kwargs(*args, **kwargs)
             if req:
                 dict = req.POST if req.method == "POST" else req.GET
                 def date_or_nothing(param):
@@ -60,6 +52,3 @@ def datespan_in_request(from_param="from", to_param="to",
             # this means it wasn't actually a view.  
             return f 
     return get_dates
-
-def _is_http_request(obj):
-    return obj and isinstance(obj, HttpRequest)
