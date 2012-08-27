@@ -63,10 +63,10 @@
     <nav>
         <ul class="nav nav-list">
             <li class="nav-header">Survey Management</li>
-            <li{% ifequal request.path_info default_url %} class="active"{% endifequal %}><a href="{{ default_url }}">Surveys</a></li>
-            {% block survey_nav %}{% endblock %}
             <li{% is_url_active request sample_list_url %}><a href="{{ sample_list_url }}">Samples</a></li>
             {% block sample_nav %}{% endblock %}
+            <li{% ifequal request.path_info default_url %} class="active"{% endifequal %}><a href="{{ default_url }}">Surveys</a></li>
+            {% block survey_nav %}{% endblock %}
         </ul>
     </nav>
 {% endblock %}
