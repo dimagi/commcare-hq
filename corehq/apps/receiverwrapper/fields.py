@@ -1,5 +1,5 @@
 from corehq.apps.reports.models import HQToggle
-from corehq.apps.reports.custom import ReportField
+from corehq.apps.reports.fields import ReportField
 
 class SubmitToggle(HQToggle):
     

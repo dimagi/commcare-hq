@@ -211,28 +211,6 @@ def appstore_default(request):
     from corehq.apps.appstore.dispatcher import AppstoreDispatcher
     return HttpResponseRedirect(reverse(AppstoreDispatcher.name(), args=['advanced']))
 
-#@require_previewer # remove for production
-#@datespan_default
-#def report_dispatcher(request, slug, return_json=False,
-#                      map='APPSTORE_INTERFACE_MAP', export=False, custom=False,
-#                      async=False, async_filters=False, static_only=False):
-#
-#    def permissions_check(couch_user, domain, model):
-#        return True
-#
-#    dummy = Domain.get_by_name('dumdum')
-#
-#    if not dummy:
-#        dummy = Domain(name='dumdum',
-#            is_active=True,
-#            date_created=datetime.utcnow())
-#        dummy.save()
-#
-#    mapping = getattr(settings, map, None)
-#    dispatcher = ReportDispatcher(mapping, permissions_check)
-#    return dispatcher.dispatch(request, dummy.name, slug, return_json, export,
-#                               custom, async, async_filters)
-
 @require_previewer # remove for production
 def approve_app(request, domain):
     domain = Domain.get_by_name(domain)

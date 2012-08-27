@@ -1,7 +1,10 @@
+import datetime
+from django.template.context import Context
+from django.template.loader import render_to_string
+import pytz
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.orgs.models import Organization
 from corehq.apps.reports import util
-from corehq.apps.reports.custom import ReportField, ReportSelectField
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from dimagi.utils.couch.database import get_db
@@ -14,6 +17,73 @@ datespan_default = datespan_in_request(
             to_param="enddate",
             default_days=7,
         )
+
+class ReportField(object):
+    slug = ""
+    template = ""
+    context = Context()
+
+    def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None):
+        self.request = request
+        self.domain = domain
+        self.timezone = timezone
+        self.parent_report = parent_report
+
+    def render(self):
+        if not self.template: return ""
+        self.context["slug"] = self.slug
+        self.update_context()
+        return render_to_string(self.template, self.context)
+
+    def update_context(self):
+        """
+        If your select field needs some context (for example, to set the default) you can set that up here.
+        """
+        pass
+
+class ReportSelectField(ReportField):
+    slug = "generic_select"
+    template = "reports/fields/select_generic.html"
+    name = "Generic Select"
+    default_option = "Select Something..."
+    options = [dict(val="val", text="text")]
+    cssId = "generic_select_box"
+    cssClasses = "span4"
+    selected = None
+    hide_field = False
+    as_combo = False
+
+    def update_params(self):
+        self.selected = self.request.GET.get(self.slug)
+
+    def update_context(self):
+        self.update_params()
+        self.context['hide_field'] = self.hide_field
+        self.context['select'] = dict(
+            options=self.options,
+            default=self.default_option,
+            cssId=self.cssId,
+            cssClasses=self.cssClasses,
+            label=self.name,
+            selected=self.selected,
+            use_combo_box=self.as_combo
+        )
+
+class MonthField(ReportField):
+    slug = "month"
+    template = "reports/partials/month-select.html"
+
+    def update_context(self):
+        self.context['month'] = self.request.GET.get('month', datetim.datetime.utcnow().month)
+
+class YearField(ReportField):
+    slug = "year"
+    template = "reports/partials/year-select.html"
+
+    def update_context(self):
+        year = getattr(settings, 'START_YEAR', 2008)
+        self.context['years'] = range(year, datetime.datetime.utcnow().year + 1)
+        self.context['year'] = int(self.request.GET.get('year', datetime.datetime.utcnow().year))
 
 class GroupField(ReportSelectField):
     slug = "group"

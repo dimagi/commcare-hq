@@ -1,5 +1,4 @@
 from corehq.apps.data_interfaces.interfaces import DataInterface
-from corehq.apps.reports.custom import HQReport
 
 class ImportCases(DataInterface):
     name = "Import Cases from Excel"

@@ -17,15 +17,7 @@ urlpatterns = patterns('corehq.apps.appstore.views',
     url(r'^filter/(?P<filter_by>[\w]+)/(?P<filter>[^/]+)/$', 'filter_snapshots', name='appstore_filter_snapshots'),
     url(r'^filter/(?P<filter_by>[\w]+)/(?P<filter>[^/]+)/(?P<sort_by>[\w_]+)/$', 'filter_snapshots', name='sorted_appstore_filter_snapshots'),
 
-
     url(r'^(?P<sort_by>[\w_]+)/$', 'appstore', name='sorted_appstore'),
-#
-#    url(r'^async/filters/(?P<slug>[\w_]+)/$', 'report_dispatcher', name="appstore_interface_dispatcher", kwargs={
-#        'async_filters': True
-#    }),
-#    url(r'^async/(?P<slug>[\w_]+)/$', 'report_dispatcher', name="async_report_dispatcher", kwargs={
-#        'async': True
-#    }),
 
     url(r'^(?P<domain>[\w\.-]+)/approve/$', 'approve_app', name='approve_appstore_app'),
     url(r'^(?P<domain>[\w\.-]+)/copyapp/', 'copy_snapshot_app', name='copy_snapshot_app'),

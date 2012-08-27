@@ -2,7 +2,6 @@ from django.core.urlresolvers import reverse
 import pytz
 from corehq.apps.reports._global.deployments import DeploymentsReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.standard import StandardDateHQReport, PaginatedHistoryHQReport
 from dimagi.utils.timezones import utils as tz_utils
 from couchforms.models import XFormError
 from corehq.apps.receiverwrapper.fields import SubmissionErrorType, \

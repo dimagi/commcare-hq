@@ -14,7 +14,6 @@ from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField, CaseTypeField
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.models import HQUserType
-from corehq.apps.reports.standard import PaginatedHistoryHQReport, StandardHQReport
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import CouchFilter, FilteredPaginator

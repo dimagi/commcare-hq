@@ -4,7 +4,6 @@ from corehq.apps.reports._global import ProjectReportParametersMixin, ProjectRep
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.fields import SelectApplicationField
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import StandardTabularHQReport
 from couchforms.models import XFormInstance
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):

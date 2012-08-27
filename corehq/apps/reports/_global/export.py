@@ -5,7 +5,6 @@ from django.http import Http404
 from corehq.apps.reports._global import ProjectReportParametersMixin, ProjectReport, DatespanMixin
 from corehq.apps.reports.models import FormExportSchema,\
     HQGroupExportConfiguration
-from corehq.apps.reports.standard import StandardHQReport, StandardDateHQReport
 from couchexport.models import SavedExportSchema, Format
 from dimagi.utils.couch.database import get_db
 from corehq.apps.app_manager.models import get_app

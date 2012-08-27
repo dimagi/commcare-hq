@@ -1,14 +1,12 @@
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.groups.models import Group
 from corehq.apps.reports._global import DatespanMixin, ProjectReportParametersMixin
-from corehq.apps.reports.custom import HQReport
 from django.core.urlresolvers import reverse
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.models import HQUserType
-from corehq.apps.reports.standard import StandardTabularHQReport, StandardDateHQReport
 from corehq.apps.users.models import WebUser
 from dimagi.utils.couch.database import get_db
 
