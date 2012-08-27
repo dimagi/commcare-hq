@@ -1,4 +1,4 @@
-from corehq.apps.reports.custom import ReportField, ReportSelectField
+from corehq.apps.reports.fields import ReportField, ReportSelectField
 from corehq.apps.reports.fields import SelectMobileWorkerField, SelectFilteredMobileWorkerField
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 

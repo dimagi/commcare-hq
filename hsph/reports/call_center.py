@@ -2,7 +2,6 @@ import datetime
 from corehq.apps.reports._global import DatespanMixin, ProjectReportParametersMixin, CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import StandardTabularHQReport, StandardDateHQReport
 from dimagi.utils.couch.database import get_db
 from hsph.reports import HSPHSiteDataMixin
 

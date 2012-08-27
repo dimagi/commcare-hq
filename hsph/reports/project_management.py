@@ -3,7 +3,6 @@ from corehq.apps.reports import util
 from corehq.apps.reports._global import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import StandardTabularHQReport, StandardDateHQReport
 from dimagi.utils.couch.database import get_db
 from hsph.fields import FacilityStatusField, IHForCHFField, SiteField, NameOfDCTLField
 from hsph.reports import HSPHSiteDataMixin
