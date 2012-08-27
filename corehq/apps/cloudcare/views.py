@@ -21,6 +21,7 @@ from casexml.apps.phone.fixtures import generator
 from casexml.apps.case.xml import V2
 from xml.etree import ElementTree
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
+import HTMLParser
 
 @require_cloudcare_access
 def default(request, domain):
@@ -166,6 +167,8 @@ def filter_cases(request, domain, app_id, module_id):
         if detail.filter_xpath_2():
             xpath_parts.append(detail.filter_xpath_2())
     xpath = "".join(xpath_parts)
+    # touchforms doesn't like this to be escaped
+    xpath = HTMLParser.HTMLParser().unescape(xpath)
     additional_filters = {"properties/case_type": module.case_type }
     result = touchforms_api.filter_cases(domain, request.couch_user, 
                                          xpath, additional_filters, 
