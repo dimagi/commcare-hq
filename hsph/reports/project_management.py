@@ -1,25 +1,50 @@
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
+from corehq.apps.reports._global import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
+from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import StandardTabularHQReport, StandardDateHQReport
 from dimagi.utils.couch.database import get_db
 from hsph.fields import FacilityStatusField, IHForCHFField, SiteField, NameOfDCTLField
-from hsph.reports.common import HSPHSiteDataMixin
+from hsph.reports import HSPHSiteDataMixin
 from dimagi.utils.timezones import utils as tz_utils
 
-class ProjectStatusDashboardReport(StandardDateHQReport):
+class ProjectManagementReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
+    """
+        Base class for this set of reports
+    """
+
+class ProjectStatusDashboardReport(ProjectManagementReport):
     name = "Project Status Dashboard"
     slug = "hsph_project_status"
     fields = ['corehq.apps.reports.fields.DatespanField',
               'hsph.fields.SiteField']
-    template_name = "hsph/reports/project_status.html"
+    report_template_path = "hsph/reports/project_status.html"
+    flush_layout = True
 
-    def get_parameters(self):
-        self.region = self.request.GET.get(SiteField.slugs['region'], None)
-        self.district = self.request.GET.get(SiteField.slugs['district'], None)
-        self.site = self.request.GET.get(SiteField.slugs['site'], None)
+    _region = None
+    @property
+    def region(self):
+        if self._region is None:
+            self._region = self.request.GET.get(SiteField.slugs['region'], None)
+        return self._region
 
-    def calc(self):
+    _district = None
+    @property
+    def district(self):
+        if self._district is None:
+            self._district = self.request.GET.get(SiteField.slugs['district'], None)
+        return self._district
+
+    _site = None
+    @property
+    def site(self):
+        if self._site is None:
+            self._site = self.request.GET.get(SiteField.slugs['site'], None)
+        return self._site
+
+    @property
+    def report_context(self):
         key_prefix = ["all"]
         key_suffix = []
         if self.region and self.district and self.site:
@@ -34,8 +59,8 @@ class ProjectStatusDashboardReport(StandardDateHQReport):
 
         facilities = IHForCHFField.getIHFCHFFacilities()
 
-        ihf_data, ihf_collectors = self.gen_facility_data(key_prefix, key_suffix, facilities['ihf'])
-        chf_data, chf_collectors = self.gen_facility_data(key_prefix, key_suffix, facilities['chf'])
+        ihf_data, ihf_collectors = self._gen_facility_data(key_prefix, key_suffix, facilities['ihf'])
+        chf_data, chf_collectors = self._gen_facility_data(key_prefix, key_suffix, facilities['chf'])
 
         collectors = ihf_collectors.union(chf_collectors)
         dctls = set()
@@ -72,11 +97,12 @@ class ProjectStatusDashboardReport(StandardDateHQReport):
                     total=ihf_data[ind]+chf_data[ind],
                     summary="%.2f%%" % summary[ind].get("stat", lambda x: x)(ihf_data[ind]+chf_data[ind])
                 ))
+        return dict(
+            staff=staff_stats,
+            status_data=data
+        )
 
-        self.context["staff"] = staff_stats
-        self.context["status_data"] = data
-
-    def gen_facility_data(self, key_prefix, key_suffix, facilities):
+    def _gen_facility_data(self, key_prefix, key_suffix, facilities):
         values = ["numAtZero", "numSBR", "numBaseline", "numTrial", u'totalBirthEvents', "numOutcomeData", "numProcessData"]
         summary = dict([(val, 0) for val in values])
         active_collectors = []
@@ -95,7 +121,7 @@ class ProjectStatusDashboardReport(StandardDateHQReport):
             active_collectors.extend(data.get("activeCollectors", []))
         return [item for _, item in summary.items()], set(active_collectors)
 
-class ImplementationStatusDashboardReport(StandardTabularHQReport, StandardDateHQReport, HSPHSiteDataMixin):
+class ImplementationStatusDashboardReport(GenericTabularReport, ProjectManagementReport, HSPHSiteDataMixin):
     name = "Implementation Status Dashboard"
     slug = "hsph_implementation_status"
     fields = ['corehq.apps.reports.fields.DatespanField',
@@ -104,14 +130,22 @@ class ImplementationStatusDashboardReport(StandardTabularHQReport, StandardDateH
               'hsph.fields.NameOfCITLField',
               'hsph.fields.SiteField']
 
-    def get_parameters(self):
-        self.generate_sitemap()
-        if not self.selected_site_map:
-            self.selected_site_map = self.site_map
-        self.facility_status = self.request.GET.get(FacilityStatusField.slug)
-        self.facility_type = self.request.GET.get(IHForCHFField.slug)
+    _facility_status = None
+    @property
+    def facility_status(self):
+        if self._facility_status is None:
+            self._facility_status = self.request.GET.get(FacilityStatusField.slug)
+        return self._facility_status
 
-    def get_headers(self):
+    _facility_type = None
+    @property
+    def facility_type(self):
+        if self._facility_type is None:
+            self._facility_type = self.request.GET.get(IHForCHFField.slug)
+        return self._facility_type
+
+    @property
+    def headers(self):
         return DataTablesHeader(DataTablesColumn("Status", sort_type=DTSortType.NUMERIC),
             DataTablesColumn("Region"),
             DataTablesColumn("District"),
@@ -121,8 +155,11 @@ class ImplementationStatusDashboardReport(StandardTabularHQReport, StandardDateH
             DataTablesColumn("Facility Status"),
             DataTablesColumn("Status last updated on"))
 
-    def get_rows(self):
+    @property
+    def rows(self):
         rows = []
+        if not self.selected_site_map:
+            self._selected_site_map = self.site_map
         site_keys = self.generate_keys()
         facilities = IHForCHFField.getIHFCHFFacilities()
 
@@ -165,8 +202,4 @@ class ImplementationStatusDashboardReport(StandardTabularHQReport, StandardDateH
                             FacilityStatusField.options[fac_stat+1]['text'],
                             tz_utils.string_to_prertty_time(item.get('lastUpdated', "--"), to_tz=self.timezone)
                         ])
-
-
-
-
         return rows

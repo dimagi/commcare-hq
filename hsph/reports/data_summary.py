@@ -1,23 +1,27 @@
 from corehq.apps.reports import util
+from corehq.apps.reports._global import DatespanMixin, ProjectReportParametersMixin, CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesColumnGroup, DataTablesHeader, DTSortType
+from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import StandardTabularHQReport, StandardDateHQReport
 from dimagi.utils.couch.database import get_db
 from hsph.fields import IHForCHFField
-from hsph.reports.common import HSPHSiteDataMixin
+from hsph.reports import HSPHSiteDataMixin
 
-class PrimaryOutcomeReport(StandardTabularHQReport, StandardDateHQReport, HSPHSiteDataMixin):
+class DataSummaryReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
+    """
+        Base class for this section
+    """
+    pass
+
+class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteDataMixin):
     name = "Primary Outcome Report"
     slug = "hsph_priamry_outcome"
     fields = ['corehq.apps.reports.fields.DatespanField',
               'hsph.fields.SiteField']
     show_all_rows_option = True
 
-    def get_parameters(self):
-        self.generate_sitemap()
-        if not self.selected_site_map:
-            self.selected_site_map = self.site_map
-
-    def get_headers(self):
+    @property
+    def headers(self):
         region = DataTablesColumn("Region")
         district = DataTablesColumn("District")
         site = DataTablesColumn("Site")
@@ -65,8 +69,11 @@ class PrimaryOutcomeReport(StandardTabularHQReport, StandardDateHQReport, HSPHSi
             negative_outcome,
             lost)
 
-    def get_rows(self):
+    @property
+    def rows(self):
         rows = []
+        if not self.selected_site_map:
+            self._selected_site_map = self.site_map
         keys = self.generate_keys(["site"])
         for key in keys:
             data = get_db().view('hsph/data_summary',
@@ -116,18 +123,22 @@ class PrimaryOutcomeReport(StandardTabularHQReport, StandardDateHQReport, HSPHSi
         return rows
 
 
-class SecondaryOutcomeReport(StandardDateHQReport):
+class SecondaryOutcomeReport(DataSummaryReport):
     name = "Secondary Outcome Report"
     slug = "hsph_secondary_outcome"
     fields = ['corehq.apps.reports.fields.DatespanField']
-    template_name = 'hsph/reports/comparative_data_summary.html'
+    report_template_path = 'hsph/reports/comparative_data_summary.html'
+    flush_layout = True
 
-    def calc(self):
+    @property
+    def report_context(self):
         facilities = IHForCHFField.getIHFCHFFacilities()
-        self.context['ihf_data'] = self.get_data(facilities['ihf'])
-        self.context['chf_data'] = self.get_data(facilities['chf'])
+        return dict(
+            ihf_data=self._get_data(facilities['ihf']),
+            chf_data=self._get_data(facilities['chf'])
+        )
 
-    def get_data(self, facilities):
+    def _get_data(self, facilities):
         num_births = 0
         birth_events = 0
         maternal_deaths = 0

@@ -1,10 +1,12 @@
 import datetime
+from corehq.apps.reports._global import DatespanMixin, ProjectReportParametersMixin, CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import StandardTabularHQReport, StandardDateHQReport
 from dimagi.utils.couch.database import get_db
-from hsph.reports.common import HSPHSiteDataMixin
+from hsph.reports import HSPHSiteDataMixin
 
-class HSPHCallCenterReport(StandardTabularHQReport, StandardDateHQReport):
+class HSPHCallCenterReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     fields = ['corehq.apps.reports.fields.DatespanField']
 
 
@@ -15,7 +17,8 @@ class DCCActivityReport(HSPHCallCenterReport):
               'corehq.apps.reports.fields.DatespanField',
               'hsph.fields.NameOfDCCField']
 
-    def get_headers(self):
+    @property
+    def headers(self):
         return DataTablesHeader(DataTablesColumn("Name of DCC"),
             DataTablesColumn("Total Number of Births Followed Up"),
             DataTablesColumn("Number of births transferred to field for home visits"),
@@ -24,7 +27,8 @@ class DCCActivityReport(HSPHCallCenterReport):
             DataTablesColumn("Total time for follow up (min)"),
             DataTablesColumn("Average time per follow up call (min)"))
 
-    def get_rows(self):
+    @property
+    def rows(self):
         rows = []
         for user in self.users:
             key = [user.userID]
@@ -62,12 +66,8 @@ class CallCenterFollowUpSummaryReport(HSPHCallCenterReport, HSPHSiteDataMixin):
     fields = ['corehq.apps.reports.fields.DatespanField',
               'hsph.fields.SiteField']
 
-    def get_parameters(self):
-        self.generate_sitemap()
-        if not self.selected_site_map:
-            self.selected_site_map = self.site_map
-
-    def get_headers(self):
+    @property
+    def headers(self):
         return DataTablesHeader(DataTablesColumn("Region"),
             DataTablesColumn("District"),
             DataTablesColumn("Site"),
@@ -79,9 +79,11 @@ class CallCenterFollowUpSummaryReport(HSPHCallCenterReport, HSPHSiteDataMixin):
             DataTablesColumn("Number of cases with contact details transferred to Field management for home Visits"),
             DataTablesColumn("Number of cases where no out comes could be recorded"))
 
-
-    def get_rows(self):
+    @property
+    def rows(self):
         rows = []
+        if not self.selected_site_map:
+            self._selected_site_map = self.site_map
         keys = self.generate_keys()
         for key in keys:
             data = get_db().view("hsph/dcc_followup_summary",

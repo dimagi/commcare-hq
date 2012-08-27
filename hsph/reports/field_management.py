@@ -2,24 +2,36 @@ import datetime
 import dateutil
 import pytz
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
+from corehq.apps.reports._global import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import StandardTabularHQReport, StandardDateHQReport
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from corehq.apps.reports import util
 from hsph.fields import FacilityField, NameOfDCTLField, SiteField, SelectCaseStatusField
-from hsph.reports.common import HSPHSiteDataMixin
+from hsph.reports import HSPHSiteDataMixin
 
-class HSPHFieldManagementReport(StandardTabularHQReport, StandardDateHQReport):
+class HSPHFieldManagementReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.DatespanField',
               'hsph.fields.NameOfDCOField',
               'hsph.fields.NameOfDCTLField']
 
-    def get_parameters(self):
-        self.selected_dctl = self.request.GET.get(NameOfDCTLField.slug, '')
-        self.dctl_fixture = FixtureDataType.by_domain_tag(self.domain, "dctl").first()
-        self.dctl_fixture = self.dctl_fixture.get_id if self.dctl_fixture else None
+    _selected_dctl = None
+    @property
+    def selected_dctl(self):
+        if self._selected_dctl is None:
+            self._selected_dctl = self.request.GET.get(NameOfDCTLField.slug, '')
+        return self._selected_dctl
+
+    _dctl_fixture = None
+    @property
+    def dctl_fixture(self):
+        if self._dctl_fixture is None:
+            fixture = FixtureDataType.by_domain_tag(self.domain, "dctl").first()
+            self._dctl_fixture = fixture.get_id if fixture else ''
+        return self._dctl_fixture
 
     def user_to_dctl(self, user):
         dctl_name = "Unknown DCTL"
@@ -29,14 +41,14 @@ class HSPHFieldManagementReport(StandardTabularHQReport, StandardDateHQReport):
             if item.data_type_id == self.dctl_fixture:
                 dctl_id = item.fields.get('id')
                 dctl_name = item.fields.get('name', dctl_name)
-
         return dctl_id, dctl_name
 
 class DCOActivityReport(HSPHFieldManagementReport):
     name = "DCO Activity Report"
     slug = "hsph_dco_activity"
 
-    def get_headers(self):
+    @property
+    def headers(self):
         return DataTablesHeader(DataTablesColumn("Name of DCO"),
             DataTablesColumn("Name of DCTL"),
             DataTablesColumn("No. Facilities Covered"),
@@ -49,7 +61,8 @@ class DCOActivityReport(HSPHFieldManagementReport):
             DataTablesColumn("No. of Home Visits completed"),
             DataTablesColumn("No. of Home Visits open at 21 days"))
 
-    def get_rows(self):
+    @property
+    def rows(self):
         rows = []
         for user in self.users:
             dctl_id, dctl_name = self.user_to_dctl(user)
@@ -105,8 +118,6 @@ class DCOActivityReport(HSPHFieldManagementReport):
         return rows
 
 
-
-
 class FieldDataCollectionActivityReport(HSPHFieldManagementReport):
     name = "Field Data Collection Activity Report"
     slug = "hsph_field_data"
@@ -116,7 +127,34 @@ class FieldDataCollectionActivityReport(HSPHFieldManagementReport):
               'hsph.fields.NameOfDCTLField',
               'hsph.fields.FacilityField']
 
-    def get_headers(self):
+    _all_facilities = None
+    @property
+    def all_facilities(self):
+        if self._all_facilities is None:
+            self._all_facilities = FacilityField.getFacilties()
+        return self._all_facilities
+
+    _facility_name_map = None
+    @property
+    def facility_name_map(self):
+        if self._facility_name_map is None:
+            self._facility_name_map = dict([(facility.get('val'), facility.get('text'))
+                                            for facility in self.all_facilities])
+        return self._facility_name_map
+
+    _facilities = None
+    @property
+    def facilities(self):
+        if self._facilities is None:
+            selected_fac = self.request.GET.get(FacilityField.slug, '')
+            if selected_fac:
+                self._facilities = [selected_fac]
+            else:
+                self._facilities = [facility.get("val") for facility in self.all_facilities]
+        return self._facilities
+
+    @property
+    def headers(self):
         return DataTablesHeader(DataTablesColumn("Facility Name"),
             DataTablesColumn("Name of DCO"),
             DataTablesColumn("Name of DCTL"),
@@ -124,17 +162,8 @@ class FieldDataCollectionActivityReport(HSPHFieldManagementReport):
             DataTablesColumn("No. of births recorded"),
             DataTablesColumn("No. of births without contact details"))
 
-    def get_parameters(self):
-        super(FieldDataCollectionActivityReport, self).get_parameters()
-        selected_fac = self.request.GET.get(FacilityField.slug, '')
-        available_fac = FacilityField.getFacilties()
-        self.facility_name_map = dict([(facility.get('val'), facility.get('text')) for facility in available_fac])
-        if selected_fac:
-            self.facilities = [selected_fac]
-        else:
-            self.facilities = [facility.get("val") for facility in available_fac]
-
-    def get_rows(self):
+    @property
+    def rows(self):
         rows = []
         for user in self.users:
             for facility in self.facilities:
@@ -174,10 +203,6 @@ class HVFollowUpStatusReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
               'hsph.fields.NameOfDCTLField',
               'hsph.fields.SiteField']
 
-    def get_parameters(self):
-        super(HVFollowUpStatusReport, self).get_parameters()
-        self.generate_sitemap()
-
     def get_data(self, key, reduce=True):
         return get_db().view("hsph/field_follow_up_status",
             reduce=reduce,
@@ -205,7 +230,8 @@ class HVFollowUpStatusReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
                             ).first()
         return data.get('value', 0) if data else 0
 
-    def get_headers(self):
+    @property
+    def headers(self):
         return DataTablesHeader(DataTablesColumn("Region"),
             DataTablesColumn("District"),
             DataTablesColumn("Site"),
@@ -218,11 +244,12 @@ class HVFollowUpStatusReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
             DataTablesColumn("No. patients open for DCC follow up (<14 days)"),
             DataTablesColumn("No. patients open for DCO follow up (>21 days)"))
 
-    def get_rows(self):
+    @property
+    def rows(self):
         rows = []
 
         if not self.selected_site_map:
-            self.selected_site_map = self.site_map
+            self._selected_site_map = self.site_map
 
         for user in self.users:
             dctl_id, dctl_name = self.user_to_dctl(user)
@@ -263,7 +290,15 @@ class HVFollowUpStatusSummaryReport(HVFollowUpStatusReport):
               'hsph.fields.SelectCaseStatusField',
               'hsph.fields.SiteField']
 
-    def get_headers(self):
+    _case_status = None
+    @property
+    def case_status(self):
+        if self._case_status is None:
+            self._case_status = self.request.GET.get(SelectCaseStatusField.slug, None)
+        return self._case_status
+
+    @property
+    def headers(self):
         return DataTablesHeader(DataTablesColumn("Region"),
             DataTablesColumn("District"),
             DataTablesColumn("Site"),
@@ -281,11 +316,8 @@ class HVFollowUpStatusSummaryReport(HVFollowUpStatusReport):
             DataTablesColumn("Duration (min)"),
             DataTablesColumn("Within Allocated Period"))
 
-    def get_parameters(self):
-        super(HVFollowUpStatusSummaryReport, self).get_parameters()
-        self.case_status = self.request.GET.get(SelectCaseStatusField.slug, None)
-
-    def get_rows(self):
+    @property
+    def rows(self):
         rows = []
         data_not_found_text = 'unknown'
         no_data_text = '--'
@@ -369,7 +401,8 @@ class DCOProcessDataReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
     fields = ['corehq.apps.reports.fields.DatespanField',
               'hsph.fields.SiteField']
 
-    def get_headers(self):
+    @property
+    def headers(self):
         return DataTablesHeader(DataTablesColumn("Region"),
             DataTablesColumn("District"),
             DataTablesColumn("Site"),
@@ -377,13 +410,13 @@ class DCOProcessDataReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
             DataTablesColumn("Number of Births Observed"),
             DataTablesColumn("Average Time Per Birth Record"))
 
-    def get_parameters(self):
-        self.generate_sitemap()
-        if not self.selected_site_map:
-            self.selected_site_map = self.site_map
-
-    def get_rows(self):
+    @property
+    def rows(self):
         rows = []
+
+        if not self.selected_site_map:
+            self._selected_site_map = self.site_map
+
         keys = self.generate_keys()
 
         for key in keys:
