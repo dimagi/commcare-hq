@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import json
-from corehq.apps.reports import util, standard
+from corehq.apps.reports import util
 from corehq.apps.reports._global import inspect, export
 from corehq.apps.reports.export import BulkExportHelper, ApplicationBulkExportHelper, CustomBulkExportHelper
 from corehq.apps.reports.models import FormExportSchema,\
