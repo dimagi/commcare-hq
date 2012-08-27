@@ -1,19 +1,26 @@
+from corehq.apps.reports._global import CustomProjectReport
 from corehq.apps.reports.custom import HQReport
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
+from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.sms.models import MessageLog, SMSLog, CallLog, EventLog, INCOMING, OUTGOING, MISSED_EXPECTED_CALLBACK
 from corehq.apps.reminders.models import CaseReminderHandler
 from datetime import datetime, timedelta
 
-
-
-class MissedCallbackReport(HQReport):
+class MissedCallbackReport(CustomProjectReport):
+    #todo hey, Giovanni -- please make this use GenericTabularReport istead of creating the table from scratch.
     name = "Missed Callbacks"
     slug = "missed_callbacks"
     description = "Summarizes two weeks of SMS and Callback interactions for all patients."
-    template_name = "a5288/missed-callbacks.html"
+    report_template_path = "a5288/missed-callbacks.html"
+    hide_filters = True
+    flush_layout = True
 
-    def calc(self):
-        self.context["report_data"] = self.get_missed_callback_report_context(self.domain)
+    @property
+    def report_context(self):
+        return dict(
+            report_data=self.get_missed_callback_report_context(self.domain)
+        )
     
     def get_missed_callback_report_context(self, domain, end_date=None):
         group_id = None

@@ -1,4 +1,4 @@
-{% extends "reports/report_base.html" %}
+{% extends "reports/async/default.html" %}
 {% load i18n %}
 
 {% comment %}
@@ -8,38 +8,48 @@
 {% endcomment %}
 
 {% block reportcontent %}
-    <table style="border: 1px solid black; border-spacing: 0;">
-        <tr>
-            <th style="border: 1px solid black; font-weight: bold; background-color: #CCC; text-align: center; padding: 2px; white-space: nowrap;">Patient ID</th>
-            <th style="border: 1px solid black; font-weight: bold; background-color: #CCC; text-align: center; padding: 2px;">Total No Response</th>
-            <th style="border: 1px solid black; font-weight: bold; background-color: #CCC; text-align: center; padding: 2px;">Total Indicated</th>
-            <th style="border: 1px solid black; font-weight: bold; background-color: #CCC; text-align: center; padding: 2px;">Total Pending</th>
-            {% for date in report_data.date_list %}
-                <th style="border: 1px solid black; font-weight: bold; background-color: #CCC; text-align: center; padding: 2px;">{{ date }}</th>
-            {% endfor %}
-        </tr>
+    <table class="datatable table table-striped">
+        <thead>
+            <tr>
+                <th style="white-space: nowrap;">Patient ID</th>
+                <th>Total No Response</th>
+                <th>Total Indicated</th>
+                <th>Total Pending</th>
+                {% for date in report_data.date_list %}
+                    <th>{{ date }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+        {% if not report_data.data.items %}
+            <tr>
+                <td colspan="4">No Data</td>
+                <td colspan="{{ report_data.date_list|length }}"></td>
+            </tr>
+        {% endif %}
         {% for id, info in report_data.data.items %}
         <tr>
-            <td style="border: 1px solid black; white-space: nowrap; text-align: center; padding: 2px;">{{ info.recipient.name }}</td>
-            <td style="border: 1px solid black; text-align: center; padding: 2px; {% if info.total_no_response > 0 %}background-color: #F33; font-weight: bold;{% endif %}">{{ info.total_no_response }}</td>
-            <td style="border: 1px solid black; text-align: center; padding: 2px;">{{ info.total_indicated }}</td>
-            <td style="border: 1px solid black; text-align: center; padding: 2px;">{{ info.total_pending }}</td>
+            <td style="white-space: nowrap;">{{ info.recipient.name }}</td>
+            <td style="{% if info.total_no_response > 0 %}background-color: #F33; font-weight: bold;{% endif %}">{{ info.total_no_response }}</td>
+            <td >{{ info.total_indicated }}</td>
+            <td >{{ info.total_pending }}</td>
             {% for date in info.dates %}
                 {% if date.not_sent %}
-                    <td style="border: 1px solid black; text-align: center; padding: 2px;">not indicated</td>
+                    <td>not indicated</td>
                 {% else %}
                     {% if date.ok %}
-                        <td style="border: 1px solid black; text-align: center; padding: 2px;">OK</td>
+                        <td>OK</td>
                     {% else %}
                         {% if date.no_response %}
-                            <td style="border: 1px solid black; text-align: center; background-color: #F33; font-weight: bold; padding: 2px;">No Response</td>
+                            <td style="background-color: #F33;">No Response</td>
                         {% else %}
-                            <td style="border: 1px solid black; text-align: center; padding: 2px;">pending</td>
+                            <td>pending</td>
                         {% endif %}
                     {% endif %}
                 {% endif %}
             {% endfor %}
         </tr>
         {% endfor %}
+        </tbody>
     </table>
 {% endblock %}
