@@ -185,7 +185,7 @@ class CaseActivityReportCache(Document):
     @property
     def now(self):
         if not self._now:
-            self._now = datetime.now(tz=pytz.timezone(self.timezone))
+            self._now = datetime.now(tz=pytz.timezone(str(self.timezone)))
             self._now = self._now.replace(hour=23, minute=59, second=59, microsecond=999999)
         return self._now
 
@@ -224,9 +224,9 @@ class CaseActivityReportCache(Document):
         ).all()
         return self._get_user_id_counts(data)
 
-    def _generate_open_key(self, case_type):
+    def _generate_status_key(self, case_type, status="open"):
         prefix = ["status"]
-        key = [self.domain, "open"]
+        key = [self.domain, status]
         if case_type is not None:
             prefix.append("type")
             key.append(case_type)
@@ -239,12 +239,7 @@ class CaseActivityReportCache(Document):
             active: Generates a dict with counts per owner_id of the number of cases that are open
             and have been modified in the last 120 days.
         """
-        prefix = ["status"]
-        key = [self.domain, status]
-        if case_type is not None:
-            prefix.append("type")
-            key.append(case_type)
-        key = self._generate_open_key(case_type)
+        key = self._generate_status_key(case_type, status)
         milestone = self.now - timedelta(days=milestone+1) + (timedelta(microseconds=1) if active else timedelta(seconds=0))
         data = get_db().view(self._couch_view,
             group=True,
@@ -296,7 +291,7 @@ class CaseActivityReportCache(Document):
     def build_report(cls, domain):
         report = cls.get_by_domain(domain.name).first()
         if not report:
-            report = cls(domain=domain.name)
+            report = cls(domain=str(domain.name))
         report.timezone = domain.default_timezone
         report.update_landmarks()
         report.update_status()
