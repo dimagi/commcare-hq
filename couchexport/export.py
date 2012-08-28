@@ -4,8 +4,7 @@ from couchexport.models import ExportSchema, Format
 from dimagi.utils.mixins import UnicodeMixIn
 from couchdbkit.consumer import Consumer
 from dimagi.utils.couch.database import get_db
-from couchexport.writers import Excel2007ExportWriter, CsvExportWriter,\
-    Excel2003ExportWriter, JsonExportWriter, HtmlExportWriter
+from couchexport import writers
 from soil import DownloadBase
 
 class ExportConfiguration(object):
@@ -78,15 +77,15 @@ class UnsupportedExportFormat(Exception):
 
 def get_writer(format):
     if format == Format.CSV:
-        return CsvExportWriter()
+        return writers.CsvExportWriter()
     elif format == Format.HTML:
-        return HtmlExportWriter()
+        return writers.HtmlExportWriter()
     elif format == Format.JSON:
-        return JsonExportWriter()
+        return writers.JsonExportWriter()
     elif format == Format.XLS:
-        return Excel2003ExportWriter()
+        return writers.Excel2003ExportWriter()
     elif format == Format.XLS_2007:
-        return Excel2007ExportWriter()
+        return writers.Excel2007ExportWriter()
     else:
         raise UnsupportedExportFormat("Unsupported export format: %s!" % format)
         
