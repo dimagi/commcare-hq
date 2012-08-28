@@ -6,6 +6,7 @@ import json
 from StringIO import StringIO
 import couchexport
 from couchexport.util import SerializableFunctionProperty
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch.database import get_db
 from soil import DownloadBase
@@ -272,28 +273,35 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     Lets you save an export format with a schema and list of columns
     and display names.
     """
+
     name = StringProperty()
     default_format = StringProperty()
-    index = JsonProperty() # this is stored duplicately in the schema, but is convenient
+
+    # self.index should always match self.schema.index
+    # needs to be here so we can use in couch views
+    index = JsonProperty()
+
+    # id of an ExportSchema for checkpointed schemas
     schema_id = StringProperty()
+
+    # user-defined table configuration
     tables = SchemaListProperty(ExportTable)
+
+    # For us right now, 'form' or 'case'
     type = StringProperty()
-    sheet_name = StringProperty()
 
     def __unicode__(self):
         return "%s (%s)" % (self.name, self.index)
 
-    _schema = None
     @property
+    @memoized
     def schema(self):
-        if self._schema is None:
-            self._schema = ExportSchema.get(self.schema_id)
-        return self._schema
+        return ExportSchema.get(self.schema_id)
 
     @property
     def table_name(self):
         return self.sheet_name if self.sheet_name else "%s" % self._id
-    
+
     @classmethod
     def default(cls, schema, name="", type='form'):
         return cls(name=name, index=schema.index, schema_id=schema.get_id,
@@ -393,6 +401,17 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         from couchexport.shortcuts import export_response
         tmp, _ = self.get_export_files(format, previous_export, filter)
         return export_response(tmp, tmp.format, self.name)
+
+    class sheet_name(object):
+        """replaces: `sheet_name = StringProperty()`: store in tables[0].display instead"""
+
+        @classmethod
+        def __get__(cls, instance, owner):
+            return instance.tables[0].display
+
+        @classmethod
+        def __set__(cls, instance, value):
+            instance.tables[0].display = value
 
 class ExportConfiguration(DocumentSchema):
     """
