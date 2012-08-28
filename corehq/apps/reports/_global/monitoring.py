@@ -146,7 +146,7 @@ class CaseActivityReport(WorkerMonitoringReportTable, CouchCachedReportMixin):
             total_active = active_data.get(user.user_id, 0)
             total_closed = closed_data.get(user.user_id, 0)
             total_inactive = inactive_data.get(user.user_id, 0)
-            total = total_active + total_closed + total_inactive
+            total = total_active + total_closed
             for ld in landmark_data:
                 value = ld.get(user.user_id, 0)
                 row.append(_numeric_val(_format_val(value, total), value))
@@ -158,7 +158,7 @@ class CaseActivityReport(WorkerMonitoringReportTable, CouchCachedReportMixin):
         total_row = ["All Users"]
         for i in range(1, len(self.landmarks)+4):
             total_row.append(sum([row[i].get('sort_key', 0) for row in rows]))
-        grand_total = sum(total_row[-3:])
+        grand_total = sum(total_row[-3:-1])
         for i, val in enumerate(total_row[1:-3]):
             total_row[1+i] = _numeric_val(_format_val(val, grand_total), val)
         self.total_row = total_row
