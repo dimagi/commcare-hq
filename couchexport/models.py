@@ -1,17 +1,13 @@
 import uuid
 from couchdbkit.ext.django.schema import Document, IntegerProperty, DictProperty,\
     Property, DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
-    StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty
+    StringListProperty, DateTimeProperty, SchemaProperty
 import json
 from StringIO import StringIO
-from couchexport import util
 import couchexport
 from couchexport.util import SerializableFunctionProperty
 from dimagi.utils.mixins import UnicodeMixIn
-from dimagi.utils.modules import try_import, to_function
 from dimagi.utils.couch.database import get_db
-from django.core.urlresolvers import reverse
-from django.http import HttpResponse
 from soil import DownloadBase
 
 class Format(object):
