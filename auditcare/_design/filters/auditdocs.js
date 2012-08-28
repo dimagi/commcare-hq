@@ -3,6 +3,6 @@
  */
 function(doc, req)
 {   
-    return (doc["base_type"] == "AudtiEvent");
+    return (doc["base_type"] == "AuditEvent");
 }
 
