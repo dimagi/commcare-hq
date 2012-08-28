@@ -1,4 +1,6 @@
+import datetime
 import dateutil
+from django.core.cache import cache
 from django.core.urlresolvers import reverse
 import pytz
 from corehq.apps.groups.models import Group
@@ -6,19 +8,34 @@ from corehq.apps.reports import util
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.fields import FilterUsersField
 from corehq.apps.reports.generic import GenericReportView
+from corehq.apps.reports.tasks import report_cacher
 from dimagi.utils.dates import DateSpan
 
 DATE_FORMAT = "%Y-%m-%d"
 
-def cache_rows(func):
-    def retrieve_cache(*args, **kwargs):
-        report = args[0]
-        # todo actually finish this
-#        print report.domain
-#        print report.request.META.get('PATH_INFO')
-#        print report.request.META.get('QUERY_STRING')
-#        print kwargs
-        return func(*args, **kwargs)
+def cache_report(func):
+    def retrieve_cache(report):
+        print report.domain
+        path = report.request.META.get('PATH_INFO')
+        query = report.request.META.get('QUERY_STRING')
+        cache_key = "%s_%s" % (path, query)
+
+        cached_data = None
+        try:
+            cached_data = cache.get(cache_key)
+        except Exception as e:
+            print "Errror %s" % e
+        if cached_data is not None and isinstance(cached_data, dict):
+            print "RETRIEVING CONTEXT"
+            report_context = cached_data.get('report_context', dict())
+            print "RETRIEVED", report_context
+            print "SET", cached_data.get('set_on')
+        else:
+            report_context = func(report)
+        report_cacher.delay(report, func, cache_key, current_cache=cached_data)
+
+
+        return report_context
     return retrieve_cache
 
 

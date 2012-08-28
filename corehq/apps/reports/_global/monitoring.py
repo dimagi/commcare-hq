@@ -9,7 +9,7 @@ import sys
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports import util
 from corehq.apps.reports._global import CouchCachedReportMixin, ProjectReportParametersMixin, \
-    DatespanMixin, ProjectReport, DATE_FORMAT
+    DatespanMixin, ProjectReport, DATE_FORMAT, cache_report
 from corehq.apps.reports._global.inspect import CaseListReport
 from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
@@ -35,6 +35,11 @@ class WorkerMonitoringReportTable(GenericTabularReport, ProjectReport, ProjectRe
                                           "user_id": user.user_id,
                                           "username": user.username_in_report}
         return util.format_datatables_data(text=user_link, sort_key=user.username_in_report)
+
+    @property
+    @cache_report
+    def report_context(self):
+        return super(WorkerMonitoringReportTable, self).report_context
 
 
 class WorkerMonitoringChart(ProjectReport, ProjectReportParametersMixin):

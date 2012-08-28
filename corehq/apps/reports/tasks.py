@@ -3,6 +3,7 @@ from smtplib import SMTPRecipientsRefused
 from celery.log import get_task_logger
 from celery.schedules import crontab
 from celery.decorators import periodic_task, task
+from django.core.cache import cache
 from django.http import Http404
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.models import DailyReportNotification,\
@@ -78,3 +79,28 @@ def build_case_activity_report():
     all_domains = Domain.get_all()
     for domain in all_domains:
         CaseActivityReportCache.build_report(domain)
+
+
+@task
+def report_cacher(report, context_func, cache_key, current_cache=None):
+    print report
+    print context_func
+    print cache_key
+    print current_cache
+    last_cached = None
+    if current_cache is not None:
+        last_cached = current_cache.get('set_on')
+        if not isinstance(last_cached, datetime):
+            last_cached = None
+
+    if last_cached is not None:
+        delta = datetime.utcnow() - last_cached
+        print "DIFF", delta
+    else:
+        print "NO DIFF"
+
+    report_context = context_func(report)
+    cache.set(cache_key, dict(
+        set_on=datetime.datetime.utcnow(),
+        report_context=report_context
+    ), 600)
