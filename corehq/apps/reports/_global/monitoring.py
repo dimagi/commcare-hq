@@ -1,5 +1,6 @@
 from _collections import defaultdict
 import datetime
+import logging
 import dateutil
 from django.core.urlresolvers import reverse
 from django.http import Http404
@@ -99,10 +100,13 @@ class CaseActivityReport(WorkerMonitoringReportTable, CouchCachedReportMixin):
         for landmark in self.landmarks:
             headers.add_column(DataTablesColumn("Last %s Days" % landmark if landmark else "Ever",
                 sort_type=DTSortType.NUMERIC,
-                help_text='Number of cases modified (or closed) in the last %s days ' % landmark))
+                help_text='Number of cases modified or closed in the last %s days ' % landmark))
         headers.add_column(DataTablesColumn("Active Cases ",
             sort_type=DTSortType.NUMERIC,
             help_text='Number of cases modified in the last %s days that are still open' % self.milestone))
+        headers.add_column(DataTablesColumn("Closed Cases ",
+            sort_type=DTSortType.NUMERIC,
+            help_text='Number of cases closed in the last %s days' % self.milestone))
         headers.add_column(DataTablesColumn("Inactive Cases ",
             sort_type=DTSortType.NUMERIC,
             help_text="Number of cases that are open but haven't been touched in the last %s days" % self.milestone))
@@ -132,26 +136,30 @@ class CaseActivityReport(WorkerMonitoringReportTable, CouchCachedReportMixin):
                 {}).get(self.cached_report.day_key(landmark), {}) for landmark in self.landmarks]
         active_data = self.cached_report.active_cases.get(case_key,
                 {}).get(self.cached_report.day_key(self.milestone), {})
+        closed_data = self.cached_report.closed_cases.get(case_key,
+                {}).get(self.cached_report.day_key(self.milestone), {})
         inactive_data = self.cached_report.inactive_cases.get(case_key,
                 {}).get(self.cached_report.day_key(self.milestone), {})
 
         for user in self.users:
             row = [self.get_user_link(user)]
             total_active = active_data.get(user.user_id, 0)
+            total_closed = closed_data.get(user.user_id, 0)
             total_inactive = inactive_data.get(user.user_id, 0)
-            total = total_active + total_inactive
+            total = total_active + total_closed + total_inactive
             for ld in landmark_data:
                 value = ld.get(user.user_id, 0)
                 row.append(_numeric_val(_format_val(value, total), value))
             row.append(_numeric_val(total_active))
+            row.append(_numeric_val(total_closed))
             row.append(_numeric_val(total_inactive))
             rows.append(row)
 
         total_row = ["All Users"]
-        for i in range(1, len(self.landmarks)+3):
+        for i in range(1, len(self.landmarks)+4):
             total_row.append(sum([row[i].get('sort_key', 0) for row in rows]))
-        grand_total = sum(total_row[-2:])
-        for i, val in enumerate(total_row[1:-2]):
+        grand_total = sum(total_row[-3:])
+        for i, val in enumerate(total_row[1:-3]):
             total_row[1+i] = _numeric_val(_format_val(val, grand_total), val)
         self.total_row = total_row
 
@@ -160,8 +168,12 @@ class CaseActivityReport(WorkerMonitoringReportTable, CouchCachedReportMixin):
     def fetch_cached_report(self):
         report = CaseActivityReportCache.get_by_domain(self.domain).first()
         if not report:
-            domain = Domain.get_by_name(self.domain)
-            report = CaseActivityReportCache.build_report(domain)
+            logging.info("Building new Case Activity report for project %s" % self.domain)
+            report = CaseActivityReportCache.build_report(self.domain_object)
+        if not hasattr(report, 'closed_cases') or '__DEFAULT__' not in report.closed_cases:
+            # temporary measure
+            logging.info("Rebuilding Case Activity Report for project %s, missing Closed Cases." % self.domain)
+            report = report.build_report(self.domain_object)
         return report
 
 

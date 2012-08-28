@@ -75,6 +75,7 @@ def _run_reports(reps):
 
 @periodic_task(run_every=crontab(hour=range(0,23,3), minute="0"))
 def build_case_activity_report():
+    logging.info("Building Case Activity Reports.")
     all_domains = Domain.get_all()
     for domain in all_domains:
         CaseActivityReportCache.build_report(domain)

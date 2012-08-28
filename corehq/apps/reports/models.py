@@ -160,6 +160,7 @@ class CaseActivityReportCache(Document):
     timezone = StringProperty()
     last_updated = DateTimeProperty()
     active_cases = DictProperty()
+    closed_cases = DictProperty()
     inactive_cases = DictProperty()
     landmark_data = DictProperty()
 
@@ -231,7 +232,7 @@ class CaseActivityReportCache(Document):
             key.append(case_type)
         return [" ".join(prefix)] + key
 
-    def _generate_case_status(self, milestone=120, case_type=None, active=True):
+    def _generate_case_status(self, milestone=120, case_type=None, active=True, status="open"):
         """
             inactive: Generates a dict with counts per owner_id of the number of cases that are open,
             but haven't been modified in the last 120 days.
@@ -239,7 +240,7 @@ class CaseActivityReportCache(Document):
             and have been modified in the last 120 days.
         """
         prefix = ["status"]
-        key = [self.domain, "open"]
+        key = [self.domain, status]
         if case_type is not None:
             prefix.append("type")
             key.append(case_type)
@@ -274,9 +275,14 @@ class CaseActivityReportCache(Document):
                 self.active_cases[case_key] = dict()
             if case_key not in self.inactive_cases:
                 self.inactive_cases[case_key] = dict()
+            if case_key not in self.closed_cases:
+                self.closed_cases[case_key] = dict()
 
             self.active_cases[case_key][self.day_key(milestone)] = self._generate_case_status(milestone, case_type)
-            self.inactive_cases[case_key][self.day_key(milestone)] = self._generate_case_status(milestone, case_type, active=False)
+            self.closed_cases[case_key][self.day_key(milestone)] = self._generate_case_status(milestone,
+                                                                                                case_type, status="closed")
+            self.inactive_cases[case_key][self.day_key(milestone)] = self._generate_case_status(milestone,
+                                                                                                case_type, active=False)
 
     @classmethod
     def get_by_domain(cls, domain, include_docs=True):
