@@ -15,6 +15,7 @@ is_tests = filter(is_test_trace, traces)
 
 urlpatterns = patterns('',
     url(r'^auditor/$', 'auditcare.views.auditAll', name='auditAll'),
+    url(r'^auditor/export/$', 'auditcare.views.export_all', name='export_all_audits'),
     url(r'^auditor/models/$', 'auditcare.views.model_histories', name='model_histories'),
     url(r'^auditor/views/$', 'auditcare.views.audited_views', name='audit_views'),
     url(r'^auditor/models/(?P<model_name>\w+)/$', 'auditcare.views.single_model_history', name='single_model_history'),
