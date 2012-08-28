@@ -207,6 +207,7 @@ def export_default_or_custom_data(request, domain, export_id=None, bulk_export=F
     export_type = request.GET.get("type", "form")
     previous_export_id = request.GET.get("previous_export", None)
     filename = request.GET.get("filename", None)
+    max_column_size = int(request.GET.get("max_column_size", 2000))
 
     filter = util.create_export_filter(request, domain, export_type=export_type)
     if bulk_export:
@@ -238,7 +239,7 @@ def export_default_or_custom_data(request, domain, export_id=None, bulk_export=F
         assert(export_tag[0] == domain)
         export_object = FakeSavedExportSchema(index=export_tag)
     if async:
-        return export_object.export_data_async(filter, filename, previous_export_id, format=format)
+        return export_object.export_data_async(filter, filename, previous_export_id, format=format, max_column_size=max_column_size)
     else:
         if not next:
             next = export.ExcelExportReport.get_url(domain)

@@ -19,8 +19,10 @@ var HQReport = function (options) {
         $(function () {
             checkFilterAccordionToggleState();
 
-            $(self.exportReportButton).click(function () {
+            $(self.exportReportButton).click(function (e) {
                 var params = window.location.search.substr(1);
+                var exportURL;
+                e.preventDefault();
                 if (params.length <= 1) {
                     if (self.loadDatespanFromCookie()) {
                         params = "startdate="+self.datespan.startdate+
@@ -32,7 +34,6 @@ var HQReport = function (options) {
             });
 
             self.resetFilterState();
-
         });
     };
 
