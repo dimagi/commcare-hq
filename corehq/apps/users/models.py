@@ -6,6 +6,7 @@ from __future__ import absolute_import
 from datetime import datetime
 import logging
 import re
+from django.utils import html, safestring
 from restkit.errors import NoMoreData
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
@@ -609,7 +610,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @property
     def full_name(self):
-        return "%s %s" % (self.first_name, self.last_name)
+        return ("%s %s" % (self.first_name, self.last_name)).strip()
 
     formatted_name = full_name
     name = full_name
@@ -940,9 +941,12 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
 
     @property
     def username_in_report(self):
-        if (self.first_name == '' and self.last_name == ''):
-            return self.raw_username
-        return self.full_name
+        def parts():
+            yield u'<span>%s</span>' % html.escape(self.raw_username)
+            if self.full_name:
+                yield u' "%s" ' % html.escape(self.full_name)
+
+        return safestring.mark_safe(''.join(parts()))
 
     @classmethod
     def create_or_update_from_xform(cls, xform):
