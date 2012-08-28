@@ -27,7 +27,7 @@ class WorkerMonitoringReportTable(GenericTabularReport, ProjectReport, ProjectRe
     """
         #todo doc.
     """
-    #todo doc
+    exportable = True
 
     def get_user_link(self, user):
         user_link_template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
@@ -35,7 +35,7 @@ class WorkerMonitoringReportTable(GenericTabularReport, ProjectReport, ProjectRe
                                                             CaseListReport.get_url(self.domain)),
                                           "user_id": user.user_id,
                                           "username": user.username_in_report}
-        return util.format_datatables_data(text=user_link, sort_key=user.username_in_report)
+        return util.format_datatables_data(text=user_link, sort_key=user.raw_username)
 
 
 class WorkerMonitoringChart(ProjectReport, ProjectReportParametersMixin):
