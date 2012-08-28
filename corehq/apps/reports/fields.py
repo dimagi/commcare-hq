@@ -74,7 +74,7 @@ class MonthField(ReportField):
     template = "reports/partials/month-select.html"
 
     def update_context(self):
-        self.context['month'] = self.request.GET.get('month', datetim.datetime.utcnow().month)
+        self.context['month'] = self.request.GET.get('month', datetime.datetime.utcnow().month)
 
 class YearField(ReportField):
     slug = "year"
