@@ -296,7 +296,6 @@ class SubmissionsByFormReport(WorkerMonitoringReportTable, DatespanMixin):
 
 class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
     # overrides
-    datespan_default_days = 100
     fix_left_col = True
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
@@ -448,8 +447,7 @@ class FormCompletionTrendsReport(WorkerMonitoringReportTable, DatespanMixin):
 class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTable, DatespanMixin):
     name = "Form Completion vs. Submission Trends"
     slug = "completion_vs_submission"
-    datespan_default_days = 100
-
+    
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.SelectAllFormField',
               'corehq.apps.reports.fields.GroupField',

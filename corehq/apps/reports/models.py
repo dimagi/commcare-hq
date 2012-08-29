@@ -249,7 +249,7 @@ class CaseActivityReportCache(Document):
         return self._get_user_id_counts(data)
 
     def case_key(self, case_type):
-        return case_type if case_type is not None else self._default_case_key
+        return case_type if case_type else self._default_case_key
 
     def day_key(self, days):
         return "%s_days" % days
