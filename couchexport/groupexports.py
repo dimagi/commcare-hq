@@ -13,7 +13,6 @@ def export_for_group(export_id, output_dir):
         raise Exception("Couldn't find an export with id %s" % export_id)
     
     for export_config in config.full_exports:
-        print "exporting %s to %s" % (export_config.name, output_dir)
         # special case couch storage
         if output_dir == "couch":
             fd, path = tempfile.mkstemp()

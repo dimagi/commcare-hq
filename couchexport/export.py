@@ -372,7 +372,6 @@ class FormattedRow(object):
         """
         Take a list of tuples (name, SINGLE_ROW) or (name, (ROW, ROW, ...))
         """
-        print tables
         ret = []
         for name, rows in tables:
             rows = list(rows)
