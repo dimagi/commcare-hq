@@ -2,41 +2,52 @@ import datetime
 import dateutil
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
+import pickle
 import pytz
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.fields import FilterUsersField
 from corehq.apps.reports.generic import GenericReportView
-from corehq.apps.reports.tasks import report_cacher
 from dimagi.utils.dates import DateSpan
 
 DATE_FORMAT = "%Y-%m-%d"
 
-def cache_report(func):
-    def retrieve_cache(report):
-        print report.domain
-        path = report.request.META.get('PATH_INFO')
-        query = report.request.META.get('QUERY_STRING')
-        cache_key = "%s_%s" % (path, query)
+def cache_report(refresh_stale=1800, cache_timeout=3600):
+#    if not isinstance(cache_timeout, int):
+#        raise ValueError('Cache timeout should be an int. '
+#                        'It is the number of seconds until the cache expires.')
+#    if not isinstance(refresh_stale, int):
+#        raise ValueError('refresh_stale should be an int. '
+#                         'It is the number of seconds to wait until celery regenerates the cache.')
+    def cacher(func):
+        def retrieve_cache(report):
+            if not isinstance(report, GenericReportView):
+                raise ValueError("This decorator is only for reports that are instances of GenericReportView.")
+            if report._caching:
+                print "CACHING"
+                return func(report)
 
-        cached_data = None
-        try:
-            cached_data = cache.get(cache_key)
-        except Exception as e:
-            print "Errror %s" % e
-        if cached_data is not None and isinstance(cached_data, dict):
-            print "RETRIEVING CONTEXT"
-            report_context = cached_data.get('report_context', dict())
-            print "RETRIEVED", report_context
-            print "SET", cached_data.get('set_on')
-        else:
-            report_context = func(report)
-        report_cacher.delay(report, func, cache_key, current_cache=cached_data)
-
-
-        return report_context
-    return retrieve_cache
+            print "ACTIVATE CACHER"
+            path = report.request.META.get('PATH_INFO')
+            query = report.request.META.get('QUERY_STRING')
+            cache_key = "%s_%s" % (path, query)
+            cached_data = None
+            try:
+                cached_data = cache.get(cache_key)
+            except Exception as e:
+                print "ERROR getting cache %s" % e
+            if cached_data is not None and isinstance(cached_data, dict):
+                report_context = cached_data.get('report_context', dict())
+            else:
+                report_context = func(report)
+            from corehq.apps.reports.tasks import report_cacher
+            print "SENDING TO CELERY"
+            report_cacher.delay(report, func.__name__, cache_key,
+                current_cache=cached_data, refresh_stale=refresh_stale, cache_timeout=cache_timeout)
+            return report_context
+        return retrieve_cache
+    return cacher
 
 
 class ProjectReport(GenericReportView):

@@ -1,16 +1,20 @@
 from StringIO import StringIO
 import datetime
+from celery.log import get_task_logger
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.template.context import RequestContext
 import json
 from django.template.loader import render_to_string
+import pickle
 import pytz
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
+from corehq.apps.users.models import CouchUser
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 from dimagi.utils.couch.pagination import DatatablesParams
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import render_to_response, json_request
 
@@ -104,24 +108,87 @@ class GenericReportView(object):
         self.request_params = json_request(self.request.GET)
         self.domain = kwargs.get('domain')
         self.context = base_context or {}
-        self.context.update(
-            report=dict(
-                title=self.name,
-                description=self.description,
-                section_name=self.section_name,
-                slug=self.slug,
-                url_root=self.url_root,
-                is_async=self.asynchronous,
-                is_exportable=self.exportable,
-                dispatcher=self.dispatcher,
-                show=self.request.couch_user.can_view_reports or
-                     self.request.couch_user.get_viewable_reports,
-                is_admin=self.is_admin_report # todo is this necessary???
-            ),
-            show_time_notice=self.show_time_notice,
-            domain=self.domain,
-            layout_flush_content=self.flush_layout
+        self._update_initial_context()
+
+    def __str__(self):
+        return "%(klass)s report named '%(name)s' with slug '%(slug)s' in section '%(section)s'.%(desc)s%(fields)s" % dict(
+            klass=self.__class__.__name__,
+            name=self.name,
+            slug=self.slug,
+            section=self.section_name,
+            desc="\n   Report Description: %s" % self.description if self.description else "",
+            fields="\n   Report Fields: \n     -%s" % "\n     -".join(self.fields) if self.fields else ""
         )
+
+    def __getstate__(self):
+        """
+            For pickling the report when passing it to Celery.
+        """
+        print "ATTEMPTING TO PICKLE REPORT"
+        logging = get_task_logger() # logging lis likely to happen within celery.
+        # pickle only what the report needs from the request object
+        picklable_META = dict()
+        for key, meta in self.request.META.items():
+            if isinstance(meta, str) or isinstance(meta, unicode) or isinstance(meta, int) or isinstance(meta, bool):
+                picklable_META[key] = meta
+
+        request = dict(
+            GET=dict(self.request.GET),
+            META=picklable_META,
+            datespan=None,
+            couch_user=None
+        )
+        try:
+            request.update(datespan=pickle.dumps(self.request.datespan))
+        except Exception as e:
+            logging.error("Could not pickle datespan for report %s. Error: %s" % (self.name, e))
+        try:
+            request.update(couch_user=self.request.couch_user.get_id)
+        except Exception as e:
+            logging.error("Could not pickle the couch_user id from the request object for report %s. Error: %s" %
+                          (self.name, e))
+        return dict(
+            request=request,
+            domain=self.domain,
+            context={}
+        )
+
+    _caching = False
+    def __setstate__(self, state):
+        """
+            For unpickling a pickled report.
+        """
+        print "UNPICKLING REPORT"
+        logging = get_task_logger() # logging lis likely to happen within celery.
+        self.domain = state.get('domain')
+        self.context = state.get('context', {})
+
+        class FakeHttpRequest(object):
+            GET = {}
+            META = {}
+            couch_user = None
+            datespan = None
+
+        request_data = state.get('request')
+        request = FakeHttpRequest()
+        request.GET = request_data.get('GET', {})
+        request.META = request_data.get('META', {})
+        try:
+            datespan = pickle.loads(request_data.get('datespan'))
+            request.datespan = datespan
+        except Exception as e:
+            logging.error("Could not unpickle datespan from request for report %s. Error: %s" %
+                            (self.name, e))
+        try:
+            couch_user = CouchUser.get(request_data.get('couch_user'))
+            request.couch_user = couch_user
+        except Exception as e:
+            logging.error("Could not unpickly couch_user from request for report %s. Error: %s" %
+                            (self.name, e))
+        self.request = request
+        self._caching = True
+        self.request_params = json_request(self.request.GET)
+        self._update_initial_context()
 
     _url_root = None
     @property
@@ -325,6 +392,29 @@ class GenericReportView(object):
         if not isinstance(property, dict):
             raise TypeError("property must return a dict")
         return property
+
+    def _update_initial_context(self):
+        """
+            Intention: Don't override.
+        """
+        self.context.update(
+            report=dict(
+                title=self.name,
+                description=self.description,
+                section_name=self.section_name,
+                slug=self.slug,
+                url_root=self.url_root,
+                is_async=self.asynchronous,
+                is_exportable=self.exportable,
+                dispatcher=self.dispatcher,
+                show=self.request.couch_user.can_view_reports or
+                     self.request.couch_user.get_viewable_reports,
+                is_admin=self.is_admin_report # todo is this necessary???
+            ),
+            show_time_notice=self.show_time_notice,
+            domain=self.domain,
+            layout_flush_content=self.flush_layout
+        )
 
     def update_filter_context(self):
         """

@@ -11,7 +11,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.reports import util
 from corehq.apps.reports._global import CouchCachedReportMixin, ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport, DATE_FORMAT, cache_report
-from corehq.apps.reports._global.inspect import CaseListReport
 from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.display import xmlns_to_name, FormType
@@ -22,6 +21,7 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import get_url_base
 
+monitoring_report_cacher = cache_report(refresh_stale=30, cache_timeout=60)
 
 class WorkerMonitoringReportTable(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     """
@@ -31,6 +31,7 @@ class WorkerMonitoringReportTable(GenericTabularReport, ProjectReport, ProjectRe
 
     def get_user_link(self, user):
         user_link_template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
+        from corehq.apps.reports._global.inspect import CaseListReport
         user_link = user_link_template % {"link": "%s%s" % (get_url_base(),
                                                             CaseListReport.get_url(self.domain)),
                                           "user_id": user.user_id,
@@ -38,7 +39,7 @@ class WorkerMonitoringReportTable(GenericTabularReport, ProjectReport, ProjectRe
         return util.format_datatables_data(text=user_link, sort_key=user.raw_username)
 
     @property
-    @cache_report
+    @monitoring_report_cacher
     def report_context(self):
         return super(WorkerMonitoringReportTable, self).report_context
 

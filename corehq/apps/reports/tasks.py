@@ -83,10 +83,13 @@ def build_case_activity_report():
 
 
 @task
-def report_cacher(report, context_func, cache_key, current_cache=None):
-    print report
+def report_cacher(report, context_func, cache_key,
+                  current_cache=None, refresh_stale=1800, cache_timeout=3600):
+    logging.info("REPORT")
+    logging.info(report)
     print context_func
-    print cache_key
+    celery_context = getattr(report, context_func)
+    print "CONTEXT", celery_context
     print current_cache
     last_cached = None
     if current_cache is not None:
@@ -94,14 +97,19 @@ def report_cacher(report, context_func, cache_key, current_cache=None):
         if not isinstance(last_cached, datetime):
             last_cached = None
 
+    diff = None
     if last_cached is not None:
-        delta = datetime.utcnow() - last_cached
-        print "DIFF", delta
+        td = datetime.utcnow() - last_cached
+        diff = td.seconds + td.days * 24 * 3600
     else:
         print "NO DIFF"
+    print "DIFF", diff
 
-    report_context = context_func(report)
-    cache.set(cache_key, dict(
-        set_on=datetime.datetime.utcnow(),
-        report_context=report_context
-    ), 600)
+
+#    report_context = context_func(report)
+#    if diff is None or diff >= refresh_stale:
+#        print "REGENERATING CACHE"
+#        cache.set(cache_key, dict(
+#            set_on=datetime.utcnow(),
+#            report_context=report_context
+#        ), cache_timeout)
