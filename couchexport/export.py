@@ -130,7 +130,7 @@ def export_raw(headers, data, file, format=Format.XLS_2007,
     writer.open(headers, file, max_column_size=max_column_size)
     
     # do the same for the data
-    data = FormattedRow.wrap_all_rows(headers)
+    data = FormattedRow.wrap_all_rows(data)
     writer.write(data)
     writer.close()
 
@@ -369,10 +369,18 @@ class FormattedRow(object):
 
     @classmethod
     def wrap_all_rows(cls, tables):
+        """
+        Take a list of tuples (name, SINGLE_ROW) or (name, (ROW, ROW, ...))
+        """
+        print tables
         ret = []
         for name, rows in tables:
+            rows = list(rows)
+            if not hasattr(rows[0], '__iter__') or isinstance(rows[0], basestring):
+                # `rows` is actually just a single row, so wrap it
+                rows = [rows]
             ret.append(
-                (name, [cls(row) for row in (rows if hasattr(rows, '__iter__') else [rows])])
+                (name, [cls(row) for row in rows])
             )
         return ret
 
