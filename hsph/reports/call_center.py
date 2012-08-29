@@ -30,7 +30,7 @@ class DCCActivityReport(HSPHCallCenterReport):
     def rows(self):
         rows = []
         for user in self.users:
-            key = [user.userID]
+            key = [user.get('user_id')]
             data = get_db().view("hsph/dcc_activity_report",
                     reduce=True,
                     startkey=key+[self.datespan.startdate_param_utc],
@@ -47,7 +47,7 @@ class DCCActivityReport(HSPHCallCenterReport):
                     avg_reg_time = datetime.datetime.fromtimestamp(avg_reg_time//1000)
                     avg_time = avg_reg_time.strftime("%M:%S")
 
-                rows.append([user.username_in_report,
+                rows.append([user.get('username_in_report'),
                              item.get('totalBirths', 0),
                              item.get('numBirthsTransferred', 0),
                              item.get('numCallsWaitlisted', 0),

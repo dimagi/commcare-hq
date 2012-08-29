@@ -177,7 +177,7 @@ class ImplementationStatusDashboardReport(GenericTabularReport, ProjectManagemen
                 if self.facility_type and self.facility_type != ihf_chf:
                     continue
 
-                key = key_prefix + site + [user.user_id] + key_suffix
+                key = key_prefix + site + [user.get('user_id')] + key_suffix
                 data = get_db().view('hsph/pm_implementation_status',
                         reduce=True,
                         startkey=key+[self.datespan.startdate_param_utc],
@@ -192,11 +192,11 @@ class ImplementationStatusDashboardReport(GenericTabularReport, ProjectManagemen
                         item = item.get('value', {})
                         fac_stat = item.get('facilityStatus', -1)
                         rows.append([
-                            util.format_datatables_data(pb_temp % dict(percent=(fac_stat+2)*25), fac_stat),
+                            self.table_cell(fac_stat, pb_temp % dict(percent=(fac_stat+2)*25)),
                             region,
                             district,
                             ihf_chf,
-                            user.username_in_report,
+                            user.get('username_in_report'),
                             site,
                             FacilityStatusField.options[fac_stat+1]['text'],
                             tz_utils.string_to_prertty_time(item.get('lastUpdated', "--"), to_tz=self.timezone)

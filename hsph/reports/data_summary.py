@@ -96,15 +96,12 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
                 seven_days = []
                 total = []
                 for stat in stat_keys:
-                    discharge.append(util.format_datatables_data('<span class="label">%d</span>' %
-                                                                    discharge_stats.get(stat, 0),
-                                                                    discharge_stats.get(stat, 0)) )
-                    seven_days.append(util.format_datatables_data('<span class="label label-info">%d</span>' %
-                                                                    on7days_stats.get(stat, 0),
-                                                                    on7days_stats.get(stat, 0)))
-                    total.append(util.format_datatables_data('<span class="label label-inverse">%d</span>' %
-                                                                    item.get(stat, 0),
-                                                                    item.get(stat, 0)))
+                    discharge.append(self.table_cell(discharge_stats.get(stat, 0),
+                                                    '<span class="label">%d</span>' %discharge_stats.get(stat, 0)) )
+                    seven_days.append(self.table_cell(on7days_stats.get(stat, 0), '<span class="label label-info">%d</span>' %
+                                                                    on7days_stats.get(stat, 0)) )
+                    total.append(self.table_cell(item.get(stat, 0), '<span class="label label-inverse">%d</span>' %
+                                                                    item.get(stat, 0)) )
 
                 row.extend(discharge)
                 row.extend(seven_days)

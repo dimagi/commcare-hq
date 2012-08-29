@@ -68,7 +68,7 @@ class DCOActivityReport(HSPHFieldManagementReport):
             if self.selected_dctl and (self.selected_dctl != dctl_id):
                 continue
 
-            key = [user.userID]
+            key = [user.get('user_id')]
             num_facilities = 0
             num_fac_visits = 0
             num_fac_visits_lt2 = 0
@@ -102,7 +102,7 @@ class DCOActivityReport(HSPHFieldManagementReport):
                 num_home_completed = data.get('numHomeVisitsCompleted', 0)
                 num_home_21days = data.get('numHomeVisitsOpenAt21', 0)
             rows.append([
-                util.format_datatables_data(user.username_in_report, user.raw_username),
+                self.table_cell(user.get('raw_username'), user.get('username_in_report')),
                 dctl_name,
                 num_facilities,
                 num_fac_visits,
@@ -170,7 +170,7 @@ class FieldDataCollectionActivityReport(HSPHFieldManagementReport):
                 if self.selected_dctl and (self.selected_dctl != dctl_id):
                     continue
 
-                key = [facility, user.userID]
+                key = [facility, user.get('user_id')]
                 data = get_db().view('hsph/field_data_collection_activity',
                         startkey = key + [self.datespan.startdate_param_utc],
                         endkey = key + [self.datespan.enddate_param_utc],
@@ -183,7 +183,7 @@ class FieldDataCollectionActivityReport(HSPHFieldManagementReport):
                     num_births_no_contact = data.get('totalBirthsWithoutContact', 0)
                     rows.append([
                         self.facility_name_map[facility],
-                        util.format_datatables_data(user.username_in_report, user.raw_username),
+                        self.table_cell(user.get('raw_username'), user.get('username_in_report')),
                         dctl_name,
                         num_visits,
                         num_births,
@@ -255,7 +255,7 @@ class HVFollowUpStatusReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
             if self.selected_dctl and (self.selected_dctl != dctl_id):
                 continue
 
-            keys = self.generate_keys(prefix=["by_site", user.userID])
+            keys = self.generate_keys(prefix=["by_site", user.get('user_id')])
             for key in keys:
                 data = self.get_data(key)
                 for item in data:
@@ -266,7 +266,7 @@ class HVFollowUpStatusReport(HSPHFieldManagementReport, HSPHSiteDataMixin):
                             region,
                             district,
                             site,
-                            user.username_in_report,
+                            user.get('username_in_report'),
                             dctl_name,
                             item.get('totalBirths', 0),
                             item.get('totalFollowedUpByCallCenter', 0),
@@ -335,7 +335,7 @@ class HVFollowUpStatusSummaryReport(HVFollowUpStatusReport):
             else:
                 filter_by = "all"
 
-            prefix = [filter_by, user.userID]
+            prefix = [filter_by, user.get('user_id')]
             if self.case_status:
                 prefix.append(self.case_status)
 
@@ -382,7 +382,7 @@ class HVFollowUpStatusSummaryReport(HVFollowUpStatusReport):
                             item.get('nameMother', data_not_found_text),
                             item.get('address', data_not_found_text),
                             dctl_name,
-                            user.username_in_report,
+                            user.get('username_in_report'),
                             start_date.strftime('%d-%b'),
                             end_date.strftime('%d-%b'),
                             visited_date.strftime('%d-%b') if visited_date else no_data_text,
