@@ -80,10 +80,10 @@ class FormErrorReport(DeploymentsReport, DatespanMixin):
                 "raw_username": user.raw_username,
                 "query_string": "%s&" % query_string if query_string else ""
             }
-            rows.append([util.format_datatables_data(username_formatted, user.raw_username),
-                         util.format_datatables_data(form_count,form_count),
-                         util.format_datatables_data(formatted_warning_count, warning_count),
-                         util.format_datatables_data(formatted_error_count, error_count)])
+            rows.append([self.table_cell(user.raw_username, username_formatted),
+                         self.table_cell(form_count),
+                         self.table_cell(warning_count, formatted_warning_count),
+                         self.table_cell(error_count, formatted_error_count)])
         return rows
 
 class DeviceLogDetailsReport(PhonelogReport):
@@ -281,12 +281,12 @@ class DeviceLogDetailsReport(PhonelogReport):
             ver_format = '%s <a href="#" data-datatable-tooltip="left" data-datatable-tooltip-text="%s"><i class="icon icon-info-sign"></i></a>'\
             % (version.split(' ')[0], html.escape(version))
 
-            row_set.append([util.format_datatables_data(date_fmt, date),
-                            util.format_datatables_data(log_tag_format, log_tag),
-                            util.format_datatables_data(username_fmt, username),
-                            util.format_datatables_data(device_fmt, device),
-                            entry.get('msg', ''),
-                            util.format_datatables_data(ver_format, version)])
+            row_set.append([self.table_cell(date, date_fmt),
+                            self.table_cell(log_tag, log_tag_format),
+                            self.table_cell(username, username_fmt),
+                            self.table_cell(device, device_fmt),
+                            self.table_cell(entry.get('msg', '')),
+                            self.table_cell(version, ver_format)])
         return row_set
 
     def _filter_query_by_slug(self, slug):
