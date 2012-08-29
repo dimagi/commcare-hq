@@ -127,7 +127,8 @@ var DetailScreenConfig = (function () {
                 {value: "enum", label: DetailScreenConfig.message.ENUM_FORMAT},
                 {value: "late-flag", label: DetailScreenConfig.message.LATE_FLAG_FORMAT},
                 {value: "invisible", label: DetailScreenConfig.message.INVISIBLE_FORMAT},
-                {value: "filter", label: DetailScreenConfig.message.FILTER_XPATH_FORMAT}
+                {value: "filter", label: DetailScreenConfig.message.FILTER_XPATH_FORMAT},
+                {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT}
             ]).val(this.original.format || null);
 
             (function () {
@@ -629,6 +630,7 @@ var DetailScreenConfig = (function () {
         FILTER_XPATH_FORMAT: 'Filter (Advanced)',
         FILTER_XPATH_EXTRA_LABEL: 'Filter XPath',
         INVISIBLE_FORMAT: 'Search Only',
+        ADDRESS_FORMAT: 'Address (ODK/CloudCare)',
 
         ADD_COLUMN: 'Add to list',
         COPY_COLUMN: 'Duplicate',
