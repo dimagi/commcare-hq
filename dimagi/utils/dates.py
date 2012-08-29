@@ -1,5 +1,7 @@
 from datetime import date, datetime, timedelta, time
 from calendar import month_name
+from celery.log import get_task_logger
+import dateutil
 import pytz
 from dimagi.utils.logging import log_exception
 from dimagi.utils.parsing import string_to_datetime
@@ -93,11 +95,44 @@ class DateSpan(object):
         self.is_default = False
         self.timezone = timezone
 
+    def __getstate__(self):
+        """
+            For pickling the DateSpan object.
+        """
+        return dict(
+            startdate=self.startdate.isoformat(),
+            enddate=self.enddate.isoformat(),
+            format=self.format,
+            inclusive=self.inclusive,
+            is_default=self.is_default,
+            timezone=self.timezone.zone
+        )
+
+    def __setstate__(self, state):
+        """
+            For un-pickling the DateSpan object.
+        """
+        logging = get_task_logger() # logging is likely to happen within celery
+        try:
+            self.startdate = dateutil.parser.parse(state.get('startdate'))
+            self.enddate = dateutil.parser.parse(state.get('enddate'))
+        except Exception as e:
+            logging.error("Could not unpack start and end dates for DateSpan. Error: %s" % e)
+        self.format = state.get('format', DEFAULT_DATE_FORMAT)
+        self.inclusive = state.get('inclusive', True)
+        self.timezone = pytz.utc
+        self.is_default = state.get('is_default', False)
+        try:
+            self.timezone = pytz.timezone(state.get('timezone'))
+        except Exception as e:
+            logging.error("Could not unpack timezone for DateSpan. Error: %s" % e)
+
     def to_dict(self):
         return {
             'startdate': self.startdate,
             'enddate': self.enddate
         }
+
     @classmethod
     def from_dict(cls, data):
         return cls(string_to_datetime(data['startdate'], data['enddate']))
