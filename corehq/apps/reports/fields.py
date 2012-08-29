@@ -153,8 +153,9 @@ class CaseTypeField(ReportSelectField):
         else:
             user_filter, _ = FilterUsersField.get_user_filter(self.request)
 
-        users = util.get_all_users_by_domain(self.domain, group, individual, user_filter)
-        user_ids = [user.user_id for user in users]
+        users = util.get_all_users_by_domain(self.domain, group=group,
+            individual=individual, user_filter=user_filter, simplified=True)
+        user_ids = [user.get('user_id') for user in users]
         
         case_types = self.get_case_types(self.domain, user_ids)
         case_type = self.request.GET.get(self.slug, '')
@@ -366,9 +367,9 @@ class SelectFilteredMobileWorkerField(SelectMobileWorkerField):
 
     @staticmethod
     def users_to_options(user_list):
-        return [dict(val=user.user_id,
-            text=user.raw_username,
-            is_active=user.is_active) for user in user_list]
+        return [dict(val=user.get('user_id'),
+            text=user.get('raw_username'),
+            is_active=user.get('is_active')) for user in user_list]
 
 
 class DatespanField(ReportField):

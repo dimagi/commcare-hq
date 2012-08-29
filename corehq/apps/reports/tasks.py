@@ -5,6 +5,7 @@ from celery.schedules import crontab
 from celery.decorators import periodic_task, task
 from django.core.cache import cache
 from django.http import Http404
+import pickle
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.models import DailyReportNotification,\
     HQGroupExportConfiguration, CaseActivityReportCache
@@ -85,12 +86,19 @@ def build_case_activity_report():
 @task
 def report_cacher(report, context_func, cache_key,
                   current_cache=None, refresh_stale=1800, cache_timeout=3600):
-    logging.info("REPORT")
-    logging.info(report)
-    print context_func
-    celery_context = getattr(report, context_func)
-    print "CONTEXT", celery_context
-    print current_cache
+    data = getattr(report, context_func)
+    _cache_data(data, cache_key, current_cache, refresh_stale, cache_timeout)
+
+@task
+def user_cacher(domain, cache_key,
+                current_cache=None, refresh_stale=1800, cache_timeout=3600, **kwargs):
+    from corehq.apps.reports.util import get_all_users_by_domain
+    data = get_all_users_by_domain(domain, **kwargs)
+    _cache_data(data, cache_key, current_cache, refresh_stale, cache_timeout)
+
+
+def _cache_data(data, cache_key,
+                       current_cache=None, refresh_stale=1800, cache_timeout=3600):
     last_cached = None
     if current_cache is not None:
         last_cached = current_cache.get('set_on')
@@ -101,15 +109,9 @@ def report_cacher(report, context_func, cache_key,
     if last_cached is not None:
         td = datetime.utcnow() - last_cached
         diff = td.seconds + td.days * 24 * 3600
-    else:
-        print "NO DIFF"
-    print "DIFF", diff
 
-
-#    report_context = context_func(report)
-#    if diff is None or diff >= refresh_stale:
-#        print "REGENERATING CACHE"
-#        cache.set(cache_key, dict(
-#            set_on=datetime.utcnow(),
-#            report_context=report_context
-#        ), cache_timeout)
+    if diff is None or diff >= refresh_stale:
+        cache.set(cache_key, dict(
+            set_on=datetime.utcnow(),
+            data=data
+        ), cache_timeout)

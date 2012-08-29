@@ -1,9 +1,5 @@
-import datetime
 import dateutil
-from django.core.cache import cache
 from django.core.urlresolvers import reverse
-import pickle
-import pytz
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
@@ -12,43 +8,6 @@ from corehq.apps.reports.generic import GenericReportView
 from dimagi.utils.dates import DateSpan
 
 DATE_FORMAT = "%Y-%m-%d"
-
-def cache_report(refresh_stale=1800, cache_timeout=3600):
-#    if not isinstance(cache_timeout, int):
-#        raise ValueError('Cache timeout should be an int. '
-#                        'It is the number of seconds until the cache expires.')
-#    if not isinstance(refresh_stale, int):
-#        raise ValueError('refresh_stale should be an int. '
-#                         'It is the number of seconds to wait until celery regenerates the cache.')
-    def cacher(func):
-        def retrieve_cache(report):
-            if not isinstance(report, GenericReportView):
-                raise ValueError("This decorator is only for reports that are instances of GenericReportView.")
-            if report._caching:
-                print "CACHING"
-                return func(report)
-
-            print "ACTIVATE CACHER"
-            path = report.request.META.get('PATH_INFO')
-            query = report.request.META.get('QUERY_STRING')
-            cache_key = "%s_%s" % (path, query)
-            cached_data = None
-            try:
-                cached_data = cache.get(cache_key)
-            except Exception as e:
-                print "ERROR getting cache %s" % e
-            if cached_data is not None and isinstance(cached_data, dict):
-                report_context = cached_data.get('report_context', dict())
-            else:
-                report_context = func(report)
-            from corehq.apps.reports.tasks import report_cacher
-            print "SENDING TO CELERY"
-            report_cacher.delay(report, func.__name__, cache_key,
-                current_cache=cached_data, refresh_stale=refresh_stale, cache_timeout=cache_timeout)
-            return report_context
-        return retrieve_cache
-    return cacher
-
 
 class ProjectReport(GenericReportView):
     # overriding properties from GenericReportView
@@ -99,7 +58,7 @@ class ProjectReportParametersMixin(object):
     def individual(self):
         """
             todo: remember this: if self.individual and self.users:
-            self.name = "%s for %s" % (self.name, self.users[0].raw_username)
+            self.name = "%s for %s" % (self.name, self.users[0].get('raw_username'))
         """
         if self._individual is None:
             self._individual = self.request_params.get('individual', '')
@@ -112,21 +71,22 @@ class ProjectReportParametersMixin(object):
             todo: cache this baby
         """
         if self._users is None:
-            self._users = util.get_all_users_by_domain(self.domain, self.group_name, self.individual, self.user_filter)
+            self._users = util.get_all_users_by_domain(self.domain,
+                group=self.group_name, individual=self.individual, user_filter=self.user_filter, simplified=True)
         return self._users
 
     _user_ids = None
     @property
     def user_ids(self):
         if self._user_ids is None:
-            self._user_ids = [user.user_id for user in self.users]
+            self._user_ids = [user.get('user_id') for user in self.users]
         return self._user_ids
 
     _usernames = None
     @property
     def usernames(self):
         if self._usernames is None:
-            self._usernames = dict([(user.user_id, user.username_in_report) for user in self.users])
+            self._usernames = dict([(user.get('user_id'), user.get('username_in_report')) for user in self.users])
         return self._usernames
 
     _history = None

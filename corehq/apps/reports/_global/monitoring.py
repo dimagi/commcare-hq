@@ -10,9 +10,10 @@ import sys
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports import util
 from corehq.apps.reports._global import CouchCachedReportMixin, ProjectReportParametersMixin, \
-    DatespanMixin, ProjectReport, DATE_FORMAT, cache_report
+    DatespanMixin, ProjectReport, DATE_FORMAT
 from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
+from corehq.apps.reports.decorators import cache_report
 from corehq.apps.reports.display import xmlns_to_name, FormType
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.models import CaseActivityReportCache
@@ -21,11 +22,11 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import get_url_base
 
-monitoring_report_cacher = cache_report(refresh_stale=30, cache_timeout=60)
+monitoring_report_cacher = cache_report()
 
 class WorkerMonitoringReportTable(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     """
-        #todo doc.
+        # todo doc.
     """
     exportable = True
 
@@ -34,22 +35,25 @@ class WorkerMonitoringReportTable(GenericTabularReport, ProjectReport, ProjectRe
         from corehq.apps.reports._global.inspect import CaseListReport
         user_link = user_link_template % {"link": "%s%s" % (get_url_base(),
                                                             CaseListReport.get_url(self.domain)),
-                                          "user_id": user.user_id,
-                                          "username": user.username_in_report}
-        return util.format_datatables_data(text=user_link, sort_key=user.raw_username)
+                                          "user_id": user.get('user_id'),
+                                          "username": user.get('username_in_report')}
+        return self.table_cell(user.get('raw_username'), user_link)
 
     @property
     @monitoring_report_cacher
     def report_context(self):
         return super(WorkerMonitoringReportTable, self).report_context
 
+    @property
+    @monitoring_report_cacher
+    def export_table(self):
+        return super(WorkerMonitoringReportTable, self).export_table
+
 
 class WorkerMonitoringChart(ProjectReport, ProjectReportParametersMixin):
     """
-        doc.
+        #todo doc
     """
-    #todo doc
-
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.SelectMobileWorkerField']
     flush_layout = True
@@ -124,11 +128,6 @@ class CaseActivityReport(WorkerMonitoringReportTable, CouchCachedReportMixin):
         # TODO: cleanup...case type should be None, but not sure how that affects other rports
         self._case_type = self.case_type if self.case_type else None
 
-        def _numeric_val(text, value=None):
-            if value is None:
-                value = int(text)
-            return util.format_datatables_data(text=text, sort_key=value)
-
         def _format_val(value, total):
             try:
                 display = '%d (%d%%)' % (value, value * 100. / total)
@@ -149,16 +148,17 @@ class CaseActivityReport(WorkerMonitoringReportTable, CouchCachedReportMixin):
 
         for user in self.users:
             row = [self.get_user_link(user)]
-            total_active = active_data.get(user.user_id, 0)
-            total_closed = closed_data.get(user.user_id, 0)
-            total_inactive = inactive_data.get(user.user_id, 0)
+            user_id = user.get('user_id')
+            total_active = active_data.get(user_id, 0)
+            total_closed = closed_data.get(user_id, 0)
+            total_inactive = inactive_data.get(user_id, 0)
             total = total_active + total_closed
             for ld in landmark_data:
-                value = ld.get(user.user_id, 0)
-                row.append(_numeric_val(_format_val(value, total), value))
-            row.append(_numeric_val(total_active))
-            row.append(_numeric_val(total_closed))
-            row.append(_numeric_val(total_inactive))
+                value = ld.get(user_id, 0)
+                row.append(self.table_cell(value, _format_val(value, total)))
+            row.append(self.table_cell(total_active))
+            row.append(self.table_cell(total_closed))
+            row.append(self.table_cell(total_inactive))
             rows.append(row)
 
         total_row = ["All Users"]
@@ -166,7 +166,7 @@ class CaseActivityReport(WorkerMonitoringReportTable, CouchCachedReportMixin):
             total_row.append(sum([row[i].get('sort_key', 0) for row in rows]))
         grand_total = sum(total_row[-3:-1])
         for i, val in enumerate(total_row[1:-3]):
-            total_row[1+i] = _numeric_val(_format_val(val, grand_total), val)
+            total_row[1+i] = self.table_cell(val, _format_val(val, grand_total))
         self.total_row = total_row
 
         return rows
@@ -234,15 +234,15 @@ class SubmissionsByFormReport(WorkerMonitoringReportTable, DatespanMixin):
             row = []
             for form_type in self.form_types:
                 try:
-                    count = counts[user.user_id][form_type]
+                    count = counts[user.get('user_id')][form_type]
                     row.append(count)
                     totals_by_form[form_type] += count
                 except Exception:
                     row.append(0)
             row_sum = sum(row)
             rows.append([self.get_user_link(user)] + \
-                        [util.format_datatables_data(row_data, row_data) for row_data in row] + \
-                        [util.format_datatables_data("<strong>%s</strong>" % row_sum, row_sum)])
+                        [self.table_cell(row_data) for row_data in row] + \
+                        [self.table_cell(row_sum, "<strong>%s</strong>" % row_sum)])
 
         totals_by_form = [totals_by_form[form_type] for form_type in self.form_types]
         self.total_row = ["All Users"] + \
@@ -339,8 +339,7 @@ class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
             endkey=key+[self.datespan.enddate_param_utc if self.dates_in_utc else self.datespan.enddate_param]
         ).all()
 
-        user_map = dict([(user.user_id, i) for (i, user) in enumerate(self.users)])
-        userIDs = [user.user_id for user in self.users]
+        user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(self.users)])
         rows = [[0]*(2+len(date_map)) for _ in range(len(self.users))]
         total_row = [0]*(2+len(date_map))
 
@@ -352,7 +351,7 @@ class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
             date = date.isoformat()
             val = result['value']
             user_id = val.get("user_id")
-            if user_id in userIDs:
+            if user_id in self.user_ids:
                 date_key = date_map.get(date[0:10], None)
                 if date_key:
                     rows[user_map[user_id]][date_key] += 1
@@ -368,7 +367,7 @@ class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
         self.total_row = total_row
 
         for row in rows:
-            row[1:] = [util.format_datatables_data(val, val) for val in row[1:]]
+            row[1:] = [self.table_cell(val) for val in row[1:]]
         return rows
 
 
@@ -421,7 +420,7 @@ class FormCompletionTrendsReport(WorkerMonitoringReportTable, DatespanMixin):
         globalmin = sys.maxint
         globalmax = 0
         for user in self.users:
-            datadict = entrytimes.get_user_data(self.domain, user.user_id, form, self.datespan)
+            datadict = entrytimes.get_user_data(self.domain, user.get('user_id'), form, self.datespan)
             rows.append([self.get_user_link(user),
                          to_minutes(float(datadict["sum"]), float(datadict["count"])),
                          to_minutes(datadict["min"]),
@@ -473,7 +472,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTable, Datesp
         total = 0
         total_seconds = 0
         for user in self.users:
-            key = [" ".join(prefix), self.domain, user.userID]
+            key = [" ".join(prefix), self.domain, user.get('user_id')]
             if selected_form:
                 key.append(selected_form)
             data = get_db().view("reports/completion_vs_submission",
@@ -497,7 +496,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTable, Datesp
                     self._format_date(completion_time),
                     self._format_date(submission_time),
                     self._view_form_link(item.get('id', '')),
-                    util.format_datatables_data(text=self._format_td_status(td), sort_key=td_total)
+                    self.table_cell(td_total, self._format_td_status(td))
                 ])
 
                 if td_total >= 0:
@@ -508,9 +507,9 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTable, Datesp
         return rows
 
     def _format_date(self, date, d_format="%d %b %Y, %H:%M"):
-        return util.format_datatables_data(
-            "%s (%s)" % (date.strftime(d_format), date.tzinfo._tzname),
-            date
+        return self.table_cell(
+            date,
+            "%s (%s)" % (date.strftime(d_format), date.tzinfo._tzname)
         )
 
     def _format_td_status(self, td, use_label=True):
@@ -558,11 +557,12 @@ class SubmissionTimesReport(WorkerMonitoringChart):
     show_time_notice = True
 
     @property
+    @monitoring_report_cacher
     def report_context(self):
         data = defaultdict(lambda: 0)
         for user in self.users:
-            startkey = [self.domain, user.user_id]
-            endkey = [self.domain, user.user_id, {}]
+            startkey = [self.domain, user.get('user_id')]
+            endkey = [self.domain, user.get('user_id'), {}]
             view = get_db().view("formtrends/form_time_by_user",
                 startkey=startkey,
                 endkey=endkey,
@@ -634,12 +634,13 @@ class SubmitDistributionReport(WorkerMonitoringChart):
     report_partial_path = "reports/partials/generic_piechart.html"
 
     @property
+    @monitoring_report_cacher
     def report_context(self):
         predata = {}
         data = []
         for user in self.users:
-            startkey = ["u", self.domain, user.user_id]
-            endkey = ["u", self.domain, user.user_id, {}]
+            startkey = ["u", self.domain, user.get('user_id')]
+            endkey = ["u", self.domain, user.get('user_id'), {}]
             view = get_db().view("formtrends/form_type_by_user",
                 startkey=startkey,
                 endkey=endkey,

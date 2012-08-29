@@ -75,7 +75,7 @@ class CaseReassignmentInterface(GenericTabularReport, DataInterface, ProjectRepo
                 case, case_link = self._get_case_info(item)
                 if case:
                     rows.append([checkbox % dict(case_id=case._id, owner=user.userID, owner_type="user"),
-                                 case_link, case.type, user.username_in_report, util.format_relative_date(case.modified_on)])
+                                 case_link, case.type, user.get('username_in_report'), util.format_relative_date(case.modified_on)])
         for group in self.case_sharing_groups:
             data = self._get_data(group._id)
             for item in data:
@@ -110,9 +110,9 @@ class CaseReassignmentInterface(GenericTabularReport, DataInterface, ProjectRepo
     @property
     def report_context(self):
         context = super(CaseReassignmentInterface, self).report_context
-        active_users = util.get_all_users_by_domain(self.domain, filter_users=HQUserType.use_defaults())
+        active_users = util.get_all_users_by_domain(self.domain, user_filter=HQUserType.use_defaults())
         context.update(
-            users=[dict(ownerid=user.userID, name=user.username_in_report, type="user")
+            users=[dict(ownerid=user.userID, name=user.get('username_in_report'), type="user")
                    for user in active_users],
             groups=[dict(ownerid=group.get_id, name=group.name, type="group")
                     for group in self.all_case_sharing_groups]

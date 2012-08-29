@@ -42,6 +42,14 @@ class HQToggle(object):
         self.name = name
         self.show = show
 
+    def __str__(self):
+        return "%(klass)s[%(type)s:%(show)s:%(name)s]" % dict(
+            klass = self.__class__.__name__,
+            type=self.type,
+            name=self.name,
+            show=self.show
+        )
+
 class HQUserToggle(HQToggle):
     
     def __init__(self, type, show):

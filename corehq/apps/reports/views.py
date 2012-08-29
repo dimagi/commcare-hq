@@ -97,7 +97,8 @@ def export_data(req, domain):
     user_filter, _ = FilterUsersField.get_user_filter(req)
 
     if user_filter:
-        users_matching_filter = map(lambda x: x._id, get_all_users_by_domain(domain, filter_users=user_filter))
+        users_matching_filter = map(lambda x: x.get('user_id'), get_all_users_by_domain(domain,
+            user_filter=user_filter, simplified=True))
         def _ufilter(user):
             try:
                 return user['form']['meta']['userID'] in users_matching_filter
@@ -423,7 +424,8 @@ def download_cases(request, domain):
 #    group, users = util.get_group_params(domain, **json_request(request.GET))
     group = request.GET.get('group', None)
     user_filter, _ = FilterUsersField.get_user_filter(request)
-    users = get_all_users_by_domain(domain, group=group, filter_users=user_filter)
+    # todo deal with cached user dict here
+    users = get_all_users_by_domain(domain, group=group, user_filter=user_filter)
     groups = Group.get_case_sharing_groups(domain)
     
 #    if not group:

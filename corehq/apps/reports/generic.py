@@ -124,24 +124,18 @@ class GenericReportView(object):
         """
             For pickling the report when passing it to Celery.
         """
-        print "ATTEMPTING TO PICKLE REPORT"
         logging = get_task_logger() # logging lis likely to happen within celery.
         # pickle only what the report needs from the request object
-        picklable_META = dict()
-        for key, meta in self.request.META.items():
-            if isinstance(meta, str) or isinstance(meta, unicode) or isinstance(meta, int) or isinstance(meta, bool):
-                picklable_META[key] = meta
 
         request = dict(
             GET=dict(self.request.GET),
-            META=picklable_META,
-            datespan=None,
+            META=dict(
+                QUERY_STRING=self.request.META.get('QUERY_STRING')
+            ),
+            datespan=self.request.datespan,
             couch_user=None
         )
-        try:
-            request.update(datespan=pickle.dumps(self.request.datespan))
-        except Exception as e:
-            logging.error("Could not pickle datespan for report %s. Error: %s" % (self.name, e))
+
         try:
             request.update(couch_user=self.request.couch_user.get_id)
         except Exception as e:
@@ -149,6 +143,7 @@ class GenericReportView(object):
                           (self.name, e))
         return dict(
             request=request,
+            request_params=self.request_params,
             domain=self.domain,
             context={}
         )
@@ -158,7 +153,6 @@ class GenericReportView(object):
         """
             For unpickling a pickled report.
         """
-        print "UNPICKLING REPORT"
         logging = get_task_logger() # logging lis likely to happen within celery.
         self.domain = state.get('domain')
         self.context = state.get('context', {})
@@ -173,21 +167,17 @@ class GenericReportView(object):
         request = FakeHttpRequest()
         request.GET = request_data.get('GET', {})
         request.META = request_data.get('META', {})
-        try:
-            datespan = pickle.loads(request_data.get('datespan'))
-            request.datespan = datespan
-        except Exception as e:
-            logging.error("Could not unpickle datespan from request for report %s. Error: %s" %
-                            (self.name, e))
+        request.datespan = request_data.get('datespan')
+
         try:
             couch_user = CouchUser.get(request_data.get('couch_user'))
             request.couch_user = couch_user
         except Exception as e:
-            logging.error("Could not unpickly couch_user from request for report %s. Error: %s" %
+            logging.error("Could not unpickle couch_user from request for report %s. Error: %s" %
                             (self.name, e))
         self.request = request
         self._caching = True
-        self.request_params = json_request(self.request.GET)
+        self.request_params = state.get('request_params')
         self._update_initial_context()
 
     _url_root = None
@@ -778,4 +768,10 @@ class GenericTabularReport(GenericReportView):
                 left_col=left_col,
                 datatables=self.use_datatables,
             )
+        )
+
+    def table_cell(self, value, html=None):
+        return dict(
+            sort_key=value,
+            html="%s" % value if html is None else html
         )

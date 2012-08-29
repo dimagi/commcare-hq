@@ -31,13 +31,13 @@ class ApplicationStatusReport(DeploymentsReport):
         rows = []
         selected_app = self.request_params.get(SelectApplicationField.slug, '')
         for user in self.users:
-            last_seen = util.format_datatables_data("Never", -1)
+            last_seen = self.table_cell(-1, "Never")
             version = "---"
             app_name = "---"
             is_unknown = True
 
-            endkey = [self.domain, user.userID]
-            startkey = [self.domain, user.userID, {}]
+            endkey = [self.domain, user.get('user_id')]
+            startkey = [self.domain, user.get('user_id'), {}]
             data = XFormInstance.view("reports/last_seen_submission",
                 startkey=startkey,
                 endkey=endkey,
@@ -70,6 +70,6 @@ class ApplicationStatusReport(DeploymentsReport):
                         app_name = "unknown"
             if is_unknown and selected_app:
                 continue
-            row = [user.username_in_report, last_seen, version, app_name]
+            row = [user.get('username_in_report'), last_seen, version, app_name]
             rows.append(row)
         return rows
