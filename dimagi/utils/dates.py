@@ -86,13 +86,17 @@ class DateSpan(object):
     """
     A useful class for representing a date span
     """
+    startdate = None
+    enddate = None
+    format = None
+    inclusive = True
+    is_default = False
     
     def __init__(self, startdate, enddate, format=DEFAULT_DATE_FORMAT, inclusive=True, timezone=pytz.utc):
         self.startdate = startdate
         self.enddate = enddate
         self.format = format
         self.inclusive = inclusive
-        self.is_default = False
         self.timezone = timezone
 
     def __getstate__(self):
@@ -126,6 +130,7 @@ class DateSpan(object):
             self.timezone = pytz.timezone(state.get('timezone'))
         except Exception as e:
             logging.error("Could not unpack timezone for DateSpan. Error: %s" % e)
+
 
     def to_dict(self):
         return {
