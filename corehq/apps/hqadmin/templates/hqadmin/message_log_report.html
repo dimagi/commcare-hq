@@ -3,20 +3,19 @@
 {% block reportcontent %}
 <table class="datatable table table-striped">
 <thead>
-    <tr>
-        <th>Domain</th>        
-        <th>Incoming Messages</th>
-        <th>Outgoing Messages</th>
-        <th>Total Messages</th>
-    </tr>
+    {{ headers.render_html|safe }}
 </thead>
 <tbody>
 {% for domain in domains %}
     <tr>
-        <td><a href="{% url default_report domain.name %}">{{ domain.name }}</a></td>
-        <td>{{ domain.sms_incoming }}</td>
-        <td>{{ domain.sms_outgoing }}</td>
-        <td>{{ domain.sms_total }}</td>
+        <td><a href="{% url default_report domain.name %}">{{ domain.display_name }}</a></td>
+        <td>{{ domain.sms_incoming }}
+            <span title="{{ domain.sms_incoming }}"></span>
+            </td>
+        <td>{{ domain.sms_outgoing }}
+            <span title="{{ domain.sms_outgoing }}"></span></td>
+        <td>{{ domain.sms_total }}
+            <span title="{{ domain.sms_total }}"></span></td>
     </tr>
 {% endfor %}
 </tbody>

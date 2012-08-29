@@ -1,173 +1,29 @@
-var generateEditableHandler = function (spec) {
-    return {
-        init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
-            var input = spec.getEdit().appendTo(element);
-            var span = spec.getNonEdit().appendTo(element);
-            var editing = allBindingsAccessor().editing;
-            var inputHandlers = allBindingsAccessor().inputHandlers;
-            spec.editHandler.init(input.get(0), valueAccessor, allBindingsAccessor, viewModel);
-            (spec.nonEditHandler.init || function () {})(span.get(0), valueAccessor, allBindingsAccessor, viewModel);
-            for (var name in inputHandlers) {
-                if (inputHandlers.hasOwnProperty(name)) {
-                    ko.bindingHandlers[name].init(input.get(0), (function (name) {
-                        return function () {
-                            return inputHandlers[name];
-                        };
-                    }(name)), allBindingsAccessor, viewModel);
-                }
-            }
-
-            if (editing) {
-                editing.subscribe(function () {
-                    ko.bindingHandlers.editableString.update(element, valueAccessor, allBindingsAccessor, viewModel);
-                });
-            }
-        },
-        update: function (element, valueAccessor, allBindingsAccessor, viewModel) {
-            var input = spec.getEdit(element);
-            var span = spec.getNonEdit(element);
-            var editing = allBindingsAccessor().editing || function () { return true; };
-            var inputHandlers = allBindingsAccessor().inputHandlers;
-
-            spec.editHandler.update(input.get(0), valueAccessor, allBindingsAccessor, viewModel);
-            spec.nonEditHandler.update(span.get(0), valueAccessor, allBindingsAccessor, viewModel);
-
-            for (var name in inputHandlers) {
-                if (inputHandlers.hasOwnProperty(name)) {
-                    ko.bindingHandlers[name].update(input.get(0), (function (name) {
-                        return function () {
-                            return inputHandlers[name];
-                        };
-                    }(name)), allBindingsAccessor, viewModel);
-                }
-            }
-
-            if (editing()) {
-                input.show();
-                span.hide();
-            } else {
-                input.hide();
-                span.show();
-            }
-        }
-    };
-};
-
-ko.bindingHandlers.staticChecked = {
-    init: function (element) {
-        $('<span class="icon"></span>').appendTo(element);
-    },
-    update: function (element, valueAccessor) {
-        var value = ko.utils.unwrapObservable(valueAccessor());
-        var span = $('span', element);
-        var iconTrue = 'icon-ok', iconFalse = '';
-
-        if (value) {
-            span.removeClass(iconFalse).addClass(iconTrue);
-        } else {
-            span.removeClass(iconTrue).addClass(iconFalse);
-        }
-    }
-};
-
-ko.bindingHandlers.editableString = generateEditableHandler({
-    editHandler: ko.bindingHandlers.value,
-    nonEditHandler: ko.bindingHandlers.text,
-    getEdit: function (element) {
-        if (element) {
-            return $('input', element);
-        } else {
-            return $('<input/>');
-        }
-    },
-    getNonEdit: function (element) {
-        if (element) {
-            return $('span', element);
-        } else {
-            return $('<span/>');
-        }
-    }
-});
-
-ko.bindingHandlers.editableBool = generateEditableHandler({
-    editHandler: ko.bindingHandlers.checked,
-    nonEditHandler: ko.bindingHandlers.staticChecked,
-    getEdit: function (element) {
-        if (element) {
-            return $('input', element);
-        } else {
-            return $('<input type="checkbox"/>');
-        }
-    },
-    getNonEdit: function (element) {
-        if (element) {
-            return $('span', element);
-        } else {
-            return $('<span/>');
-        }
-    }
-});
-
-ko.bindingHandlers.langcode = {
-    init: function (element, valueAccessor, allBindingsAccessor) {
-        ko.bindingHandlers.editableString.init(element, valueAccessor, function () {
-            var b = allBindingsAccessor();
-            b.valueUpdate = b.valueUpdate || [];
-            if (typeof b.valueUpdate === 'string') {
-                b.valueUpdate = [b.valueUpdate];
-            }
-            b.valueUpdate.push('autocompletechange');
-            return b;
-        });
-        $('input', element).addClass('short code').langcodes();
-    },
-    update: ko.bindingHandlers.editableString.update
-};
-ko.bindingHandlers.sortable = {
-    init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        // based on http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
-        var list = valueAccessor();
-        $(element).sortable({
-            handle: '.sortable-handle',
-            update: function(event, ui) {
-                var parent = ui.item.parent();
-                var oldPosition = parseInt(ui.item.data('order'), 10);
-                var newPosition = ko.utils.arrayIndexOf(parent.children(), ui.item.get(0));
-                var item = list()[oldPosition];
-                // this is voodoo to me, but I have to remove the ui item from its new position
-                // and *not replace* it in its original position for all the foreach mechanisms to work correctly
-                // I found this by trial and error
-                ui.item.detach();
-                //remove the item and add it back in the right spot
-                if (newPosition >= 0) {
-                    list.remove(item);
-                    list.splice(newPosition, 0, item);
-                }
-            }
-        });
-        return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
-    },
-    update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-        var ret = ko.bindingHandlers.foreach.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
-        $(element).children().each(function (i) {
-            $(this).data('order', "" + i);
-        });
-        return ret;
-    }
-};
-
-ko.bindingHandlers.saveButton = {
-    init: function (element, getSaveButton) {
-        getSaveButton().ui.appendTo(element);
-    }
-};
-
 var SupportedLanguages = (function () {
     function Language(langcode, deploy) {
         var self = this;
-        this.langcode = ko.observable(langcode);
-        this.originalLangcode = ko.observable(langcode);
+        this.langcode = ko.observable(deploy === undefined ? '' : langcode);
+        this.originalLangcode = ko.observable(deploy === undefined ? '' : langcode);
         this.deploy = ko.observable(deploy === undefined ? true : deploy);
+        this.message_content = ko.observable('');
+        this.show_error = ko.observable();
+        this.message = ko.computed(function () {
+            if (self.message_content() === '') {
+                if (self.langcode()) {
+                    var lang = self.langcode().toLowerCase();
+                    $.getJSON('/langcodes/langs.json', {term: lang}, function(res) {
+                        var index = _.map(res, function(r) { return r.code; }).indexOf(lang);
+                        if (index === -1) {
+                            self.message_content("Warning: unrecognized language");
+                            self.show_error(true);
+                        } else {
+                            self.message_content(res[index].name);
+                            self.show_error(false);
+                        }
+                    });
+                }
+            }
+            return self.message_content();
+        });
     }
     function SupportedLanguages(options) {
         var langs = options.langs;
@@ -245,8 +101,9 @@ var SupportedLanguages = (function () {
         this.removedLanguages = ko.observableArray([]);
         function newLanguage(langcode, deploy) {
             var language = new Language(langcode, deploy);
-            language.langcode.subscribe(changeSaveButton);
+            language.langcode.subscribe(changeSaveButton)
             language.deploy.subscribe(changeSaveButton);
+            language.langcode.subscribe(function () { self.validateLanguage(language); });
             return language;
         }
         this.addLanguage = function () {
@@ -290,12 +147,14 @@ var SupportedLanguages = (function () {
             }
             return message;
         };
+
         this.validateLanguage = function (language) {
             if (!validate) {
+                language.message_content("");
                 return "";
             }
             var message = "";
-            if (!language.langcode()) {
+            if (!language) {
                 message = "Please enter language";
             } else if (!/^[a-z]{2,3}(-[a-z]*)?$/.exec(language.langcode())) {
                 message = "Invalid language code";
@@ -305,12 +164,14 @@ var SupportedLanguages = (function () {
                 self.languages()[i].originalLangcode();
                 if (message || language == self.languages()[i]) {
                     continue;
-                } else if (language.langcode() === self.languages()[i].langcode()) {
+                } else if (language === self.languages()[i].langcode()) {
                     message = "Language appears twice";
-                } else if (language.langcode() === self.languages()[i].originalLangcode()) {
+                } else if (language === self.languages()[i].originalLangcode()) {
                     message = "This conflicts with a current language";
                 }
             }
+            language.message_content(message);
+            language.show_error(message);
             return message;
         };
     }

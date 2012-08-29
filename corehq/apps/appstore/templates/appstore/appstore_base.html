@@ -1,0 +1,294 @@
+{% extends "hqwebapp/two_column.html" %}
+{% load hq_shared_tags %}
+{% load hq_bootstrap_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script type="text/javascript">
+        $(function () {
+            $(".more-sortable-button").click(function() {
+                var e = $(this);
+                var sortable = e.data('sortable');
+                $('.sortable-' + sortable).show();
+                e.hide();
+                return false;
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<style type="text/css">
+
+    #rating_container {
+        margin-right: 120px;
+    }
+    .rating_static > span {
+        display: inline-block;
+        position: relative;
+        width: 1.1em;
+    }
+
+        /* :not(:checked) is a filter, so that browsers that don’t support :checked don’t
+ follow these rules. Every browser that supports :checked also supports :not(), so
+ it doesn’t make the test unnecessarily selective */
+    .rating_static:not(:checked) > input {
+        position:absolute;
+        top:-9999px;
+        clip:rect(0,0,0,0);
+    }
+
+    .rating_static:not(:checked) > label {
+        float:right;
+        width:1em;
+        padding:0 .1em;
+        overflow:hidden;
+        white-space:nowrap;
+        cursor:pointer;
+        font-size:200%;
+        line-height:1.2;
+        color:#ddd;
+        text-shadow:1px 1px #bbb, 2px 2px #666, .1em .1em .2em rgba(0,0,0,.5);
+    }
+
+    .rating_static:not(:checked) > label:before {
+        content: '★ ';
+    }
+
+    .rating_static > input:checked ~ label {
+        color: #f70;
+        text-shadow:1px 1px #c60, 2px 2px #940, .1em .1em .2em rgba(0,0,0,.5);
+    }
+
+    .rating_static > label:active {
+        position:relative;
+        top:2px;
+        left:2px;
+    }
+
+
+
+    .rating > span {
+        display: inline-block;
+        position: relative;
+        width: 1.1em;
+    }
+
+    .rating {
+        float:left;
+    }
+
+        /* :not(:checked) is a filter, so that browsers that don’t support :checked don’t
+ follow these rules. Every browser that supports :checked also supports :not(), so
+ it doesn’t make the test unnecessarily selective */
+    .rating:not(:checked) > input {
+        position:absolute;
+        top:-9999px;
+        clip:rect(0,0,0,0);
+    }
+
+    .rating:not(:checked) > label {
+        float:right;
+        width:1em;
+        padding:0 .1em;
+        overflow:hidden;
+        white-space:nowrap;
+        cursor:pointer;
+        font-size:200%;
+        line-height:1.2;
+        color:#ddd;
+        text-shadow:1px 1px #bbb, 2px 2px #666, .1em .1em .2em rgba(0,0,0,.5);
+    }
+
+    .rating:not(:checked) > label:before {
+        content: '★ ';
+    }
+
+    .rating > input:checked ~ label {
+        color: #f70;
+        text-shadow:1px 1px #c60, 2px 2px #940, .1em .1em .2em rgba(0,0,0,.5);
+    }
+
+    .rating:not(:checked) > label:hover,
+    .rating:not(:checked) > label:hover ~ label {
+        color: gold;
+        text-shadow:1px 1px goldenrod, 2px 2px #B57340, .1em .1em .2em rgba(0,0,0,.5);
+    }
+
+    .rating > input:checked + label:hover,
+    .rating > input:checked + label:hover ~ label,
+    .rating > input:checked ~ label:hover,
+    .rating > input:checked ~ label:hover ~ label,
+    .rating > label:hover ~ input:checked ~ label {
+        color: #ea0;
+        text-shadow:1px 1px goldenrod, 2px 2px #B57340, .1em .1em .2em rgba(0,0,0,.5);
+    }
+
+    .rating > label:active {
+        position:relative;
+        top:2px;
+        left:2px;
+    }
+
+    .scrollable {
+        overflow-x: scroll;
+        overflow-y:hidden;
+        white-space:nowrap;
+        /*max-height: 300px;*/
+    }
+
+    .pager {
+        margin-top: 25px;
+    }
+
+    </style>
+{% endblock %}
+
+
+{% block sidebar %}
+{% include 'appstore/sidebar.html' %}
+{% endblock %}
+
+{% block page-title %}
+<ul class="breadcrumb">
+    <li>
+        <strong><a href="{% url appstore %}">CommCare Exchange</a></strong>
+        {% if search_query or filter_by or domain or project or sort_by %}
+            <span class="divider">&gt;</span>
+        {% endif %}
+    </li>
+    {% block breadcrumb %}
+    {% endblock %}
+    {% if search_query %}
+        <li>
+            Searching for "{{ search_query }}"
+            {% if sort_by %}
+                <span class="divider">&gt;</span>
+            {% endif %}
+        </li>
+    {% endif %}
+    {% if filter_by and filter %}
+        <li>
+            With {{ filter_by }} {{ filter }}
+            {% if sort_by %}
+                <span class="divider">&gt;</span>
+            {% endif %}
+        </li>
+    {% endif %}
+    {% if sort_by  == 'best' %}
+    <li>Highest Rated</li>
+    {% endif %}
+    {% if sort_by == 'hits' %}
+    <li>Most Downloaded</li>
+    {% endif %}
+
+</ul>
+{% endblock %}
+
+{% block main_column %}
+
+<!--{% if search_query or filter_by %}-->
+    <!--<h3>{{ apps|length }} result{{ apps|pluralize }}</h3>-->
+<!--{% endif %}-->
+
+<h1>
+    {% block store-header %}
+    Projects
+    {% endblock %}
+</h1>
+
+<div class="row-fluid">
+    {% block view-tabs %}
+    <div class="tabbable" style="padding-top: 15px;">
+        <ul class="nav nav-pills">
+            {% if filter_by %}
+            <li{% if not sort_by %} class="active"{% endif %}><a href="{% url appstore_filter_snapshots filter_by filter %}">Newest</a></li>
+            <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% url sorted_appstore_filter_snapshots filter_by filter 'best' %}">Highest Rated</a></li>
+            <li{% if sort_by == 'hits' %} class="active"{% endif %}><a href="{% url sorted_appstore_filter_snapshots filter_by filter 'hits' %}">Most Downloaded</a></li>
+            {% endif %}
+
+            {% if not filter_by %}
+            <li{% if not sort_by %} class="active"{% endif %}><a href="{% url appstore %}">Newest</a></li>
+            <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% url sorted_appstore 'best' %}">Highest Rated</a></li>
+            <li{% if sort_by == 'hits' %} class="active"{% endif %}><a href="{% url sorted_appstore 'hits' %}">Most Downloaded</a></li>
+            {% endif %}
+            </ul>
+    </div>
+    {% endblock %}
+</div>
+<div class="row-fluid">
+{% for app in apps %}
+    {% if forloop.counter0|divisibleby:"3" and forloop.counter0 != 0 %}
+        </div><div class="row-fluid">
+    {% endif %}
+    <div class="span3">
+        <div class="well">
+            {% if app.image_path %}
+            <div style="text-align: center;">
+                <img src="{% url appstore_project_image app.name %}" style="max-width: 200px; max-height:200px;" />
+            </div>
+            {% endif %}
+            <h2>
+                {{ app.title }}
+                <br/>
+                <small>By
+                    {% if app.organization %}
+                        {{ app.organization_doc.title }}
+                    {% else %}
+                        {{ app.author }}
+                    {% endif %}
+                </small>
+            </h2>
+                {% if app.project_type %}
+                    <h6>{{ app.project_type }}</h6>
+                {% endif %}
+                {% for rating_name, average_rating in average_ratings %}
+                    {% if rating_name == app.name %}
+                        {% if average_rating %}
+                            <div class="span4">
+                                <div id="rating_container">
+                                    <fieldset class="rating_static" id="stars{{ rating_name }} ">
+                                        <input type="radio" id="star5{{ rating_name }}"  value="5" disabled=True {% if average_rating == 5 %} checked=True {% endif %} /><label for="star5{{ rating_name }}">5 stars</label>
+                                        <input type="radio" id="star4{{ rating_name }}"  value="4" disabled=True {% if average_rating == 4 %} checked=True {% endif %} /><label for="star4{{ rating_name }}">4 stars</label>
+                                        <input type="radio" id="star3{{ rating_name }}"  value="3" disabled=True {% if average_rating == 3 %} checked=True {% endif %} /><label for="star3{{ rating_name }}">3 stars</label>
+                                        <input type="radio" id="star2{{ rating_name }}"  value="2" disabled=True {% if average_rating == 2 %} checked=True {% endif %} /><label for="star2{{ rating_name }}">2 stars</label>
+                                        <input type="radio" id="star1{{ rating_name }}"  value="1" disabled=True {% if average_rating == 1 %} checked=True {% endif %} /><label for="star1{{ rating_name }}">1 star</label>
+                                    </fieldset>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            <br/>
+            <h6>{{ app.copies_of_parent|length }} download{{ app.copies_of_parent|length|pluralize }}</h6>
+        <p>{{ app.description|truncatewords:18 }}</p>
+        <p>Last updated: {{ app.snapshot_time|date:"N j, Y" }}</p>
+        <a class="btn" href="{% url project_info app.name %}">View &raquo;</a>
+        {% if user.is_superuser %}
+            {% if app.is_approved %}
+                <a class="btn btn-danger" href="{% url approve_appstore_app app.name %}?approve=false">Unapprove</a>
+            {% else %}
+                <a class="btn btn-success" href="{% url approve_appstore_app app.name %}?approve=true">Approve</a>
+            {% endif %}
+        {% endif %}
+        </div>
+    </div>
+{% endfor %}
+</div>
+
+<div class="row-fluid">
+    <ul class="pager span10">
+        {% if page > 1 %}
+        <li class="previous">
+            <a href="?page={{ prev_page }}{% if search_query %}&q={{ search_query }}{% endif %}{% if include_unapproved %}&unapproved=true{% endif %}">&larr; Previous</a>
+        </li>
+        {% endif %}
+        {% if more_pages %}
+        <li class="next">
+            <a href="?page={{ next_page }}{% if search_query %}&q={{ search_query }}{% endif %}{% if include_unapproved %}&unapproved=true{% endif %}">Next &rarr;</a>
+        </li>
+        {% endif %}
+    </ul>
+</div>
+
+{% endblock %}

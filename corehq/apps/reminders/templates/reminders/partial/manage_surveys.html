@@ -1,0 +1,34 @@
+{% extends "reminders/reminders_base.html" %}
+
+{% block reminders_content %}
+
+<table>
+    <tr>
+        <th></th>
+        <th>Keyword</th>
+        <th>Form</th>
+        <th></th>
+    </tr>
+    {% for k in keywords %}
+    <tr>
+        <td><a href="{% url edit_keyword domain k.get_id %}">edit</a></td>
+        <td>{{ k.keyword }}</td>
+        <td>{{ k.survey_name }}</td>
+        <td>
+            <form action="{% url delete_keyword domain k.get_id %}" method="post"
+                style="display: inline;"
+                data-title="Delete Keyword?" data-message="Are you sure you want to delete keyword {{ k.keyword }}?">
+                <a href="#" class="confirm-submit">delete</a>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+    <tr>
+        <td><a href="{% url add_keyword domain %}"><div class="ui-icon ui-icon-plusthick"></div>Add Keyword</a></td>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+</table>
+
+{% endblock %}

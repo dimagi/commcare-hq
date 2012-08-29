@@ -2,6 +2,10 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'users/js/key_filters.js' %}"></script>
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function(){
@@ -14,28 +18,7 @@
                 "Case Sharing": "You have selected to use case sharing in your apps. To use basic case sharing, " +
                         "a user must belong to exactly one case sharing group."
             };
-            $('.reset-password-form').submit(function(){
-                $(this).ajaxSubmit({
-                    url: $(this).attr('action'),
-                    type: 'POST',
-                    dataType: 'json',
-                    success: function (response, status, xhr, form) {
-                        if (response.status == "OK") {
-                            form.find('.modal-body').html($('<p />').text('Password changed successfully!'));
-                            form.find('button[type="submit"]').addClass('disabled');
-                            form.find('.modal-footer a').text("Close");
-                            form.parent().on('hidden', function() {
-                                form.find('.modal-body').html(response.formHTML);
-                                form.find('button[type="submit"]').removeClass('disabled');
-                                form.find('.modal-footer a').text("Cancel");
-                            })
-                        }else if (response.formHTML) {
-                            form.find('.modal-body').html(response.formHTML);
-                        }
-                    }
-                });
-                return false;
-            });
+
             $('.help_popover').popover({
                 placement: $(this).data('placement') || 'left',
                 title: function () {
@@ -58,8 +41,17 @@
 
 {% block user-view %}
     <div>
-    <h2>List of {% commcare_user %}s for Project "{{ domain }}"</h2>
-    <p>{% commcare_user %}s can submit forms from phones running the CommCare Application. While {% commcare_user %}s can login to CommCare HQ and view project data, <br />they are bound to a particular project on CommCare HQ and cannot manage the project or create additional projects and users.</p>
+    <h2>
+        List of {% commcare_user %}s for Project "{% if request.project.is_snapshot %}{{ request.project.original_doc_display_name }}{% else %}{{ request.project.display_name }}{% endif %}"
+        {% if cannot_share %}without the correct number of groups{% endif %}
+    </h2>
+    <p>
+        {% if cannot_share %}
+            {% commcare_user %}s that have more or less than one group cannot use forms in applications with case sharing turned on. To allow them to use applications with case sharing turned on, please assign them one (and no more than one) group.
+        {% else %}
+            {% commcare_user %}s can submit forms from phones running the CommCare Application. While {% commcare_user %}s can login to CommCare HQ and view project data, <br />they are bound to a particular project on CommCare HQ and cannot manage the project or create additional projects and users.
+        {% endif %}
+    </p>
     <div class="btn-toolbar">
         {% if not show_inactive %}
         <a class="btn btn-primary pull-right" href="./?show_inactive=true">Show Archived {% commcare_user %}s</a>
@@ -73,20 +65,24 @@
         {% if commcare_users %}
             <thead>
                 <tr>
+                    <th></th>
+                    <th>{% trans "Username" %}</th>
+                    <th>{% trans "Full Name" %}</th>
+                    <th>{% trans "Date Registered" %}</th>
+                    <th>{% trans "Phone" %}</th>
+                    {% if show_more_columns %}
+                    <th>{% trans "Forms" %}</th>
+                    <th>{% trans "Cases" %}</th>
                     {% if show_case_sharing %}
                     <th class="help_popover" data-help-key="Case Sharing" data-placement="right">
                         <div>{% trans "Case Sharing" %} <i class="icon icon-question-sign"></i></div>
                     </th>
                     {% endif %}
-                    <th>{% trans "Username" %}</th>
-                    <th>{% trans "Password" %}</th>
-                    <th>{% trans "Date Registered" %}</th>
-                    <th>{% trans "Forms" %}</th>
-                    <th>{% trans "Cases" %}</th>
-                    <th>{% trans "Phone" %}</th>
+                    {% else %}
+                    <th><a href="?show_more_columns=true">{% trans "More..." %}</a></th>
+                    {% endif %}
                     {% if couch_user.can_edit_commcare_users %}
                     <th class="help_popover" data-help-key="Archive User"><div >{% trans "Archive" %} <i class="icon icon-question-sign"></i></div></th>
-                    <th class="help_popover" data-help-key="Delete User"><div >{% trans "Delete" %} <i class="icon icon-question-sign"></i></div></th>
                     {% endif %}
                 </tr>
             </thead>
@@ -100,48 +96,11 @@
                     {% endif %}
                 {% endifchanged %}
                 <tr class="{% cycle "odd" "even" %}">
-                    {% if show_case_sharing %}
-                    <td>
-                        {% if user.get_case_sharing_groups|length == 1 %}
-                            <i class="icon-ok"></i> {{ user.get_case_sharing_groups.0.name }}
-                        {% else %}
-                            <i class="icon-warning-sign"></i>
-                            {% if user.get_case_sharing_groups %}
-                                <span class="label label-warning">Multiple Groups</span>
-                                <ul>
-                                    {% for group in user.get_case_sharing_groups %}
-                                        <li>{{ group.name }}</li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <span class="label label-warning">No Groups</span>
-                            {% endif %}
-                        {% endif %}
-                    </td>
-                    {% endif %}
-                    <td><a href="{% url user_account domain user.user_id %}">{{ user.raw_username }}</a></td>
-                    <td>
-                        <a href="#reset_password_{{ user.user_id }}" class="btn btn-info" data-toggle="modal">Reset Password</a>
 
-                        <div id="reset_password_{{ user.user_id }}" class="modal hide fade">
-                            <div class="modal-header">
-                                <a class="close" data-dismiss="modal">&times;</a>
-                                <h3>Reset Password for <small>{{ user.html_username|safe }}</small></h3>
-                            </div>
-                            <form class="form form-horizontal reset-password-form" action="{% url change_password domain user.user_id %}" method="post">
-                                <div class="modal-body">
-                                    {% include 'users/partial/reset_password.html' %}
-                                </div>
-                                <div class="modal-footer">
-                                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                                    <button type="submit" class="btn btn-primary">Reset Password</button>
-                                </div>
-                            </form>
-                        </div>
-                    </td>
+                    <td>{{ forloop.counter }}</td>
+                    <td><a href="{% url user_account domain user.user_id %}">{{ user.raw_username }}</a></td>
+                    <td>{{ user.full_name }}</td>
                     <td>{{ user.date_joined.date }}</td>
-                    <td>{{ user.form_count }}</td>
-                    <td>{{ user.case_count }}</td>
                     <td>
                         {% if user.phone_numbers %}
                             +{{ user.phone_numbers.0 }}
@@ -150,6 +109,53 @@
                             {% endif %}
                         {% endif %}
                     </td>
+                    {% if show_more_columns %}
+                    <td>{{ user.form_count }}</td>
+                    <td>{{ user.case_count }}</td>
+                    {% if show_case_sharing %}
+                    <td>
+                        {% if user.get_case_sharing_groups|length == 1 %}
+                        <i class="icon-ok"></i> {{ user.get_case_sharing_groups.0.name }}
+                        {% else %}
+                        <i class="icon-warning-sign"></i>
+                        {% if user.get_case_sharing_groups %}
+                        <span class="label label-warning">Multiple Groups</span>
+                        <ul>
+                            {% for group in user.get_case_sharing_groups %}
+                            <li>{{ group.name }}</li>
+                            {% endfor %}
+                        </ul>
+{#                        <div class="btn-group">#}
+{#                            <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">#}
+{#                            Select only one group#}
+{#                            <span class="caret"></span>#}
+{#                            </a>#}
+{#                            <ul class="dropdown-menu">#}
+{#                                {% for group in user.get_case_sharing_groups %}#}
+{#                                    <li><a href="{% url set_commcare_user_group domain %}?user={{ user.user_id }}&group={{ group.name }}">{{ group.name }}</a></li>#}
+{#                                {% endfor %}#}
+{#                            </ul>#}
+{#                        </div>#}
+                        {% else %}
+                        <span class="label label-warning">No Groups</span>
+{#                            <div class="btn-group">#}
+{#                                <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">#}
+{#                                Add to a group#}
+{#                                <span class="caret"></span>#}
+{#                                </a>#}
+{#                                <ul class="dropdown-menu">#}
+{#                                    {% for group in groups %}#}
+{#                                        <li><a href="{% url set_commcare_user_group domain %}?user={{ user.user_id }}&group={{ group.name }}">{{ group.name }}</a></li>#}
+{#                                    {% endfor %}#}
+{#                                </ul>#}
+{#                            </div>#}
+                        {% endif %}
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                    {% else %}
+                    <td><a href="?show_more_columns=true">...</a></td>
+                    {% endif %}
                     {% if couch_user.can_edit_commcare_users %}
                     <td>
                         {% if user.is_active %}
@@ -161,30 +167,6 @@
                                 <button type="submit" class="btn">Unarchive</button>
                             </form>
                         {% endif %}
-                    </td>
-                    <td>
-                        <a href="#delete_user_{{ user.user_id }}" data-toggle="modal" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Delete</a>
-                        <div id="delete_user_{{ user.user_id }}" class="modal hide fade">
-                            <div class="modal-header">
-                                <a class="close" data-dismiss="modal">&times;</a>
-                                <h3>Delete {% commcare_user %} {{ user.raw_username }}? <small>Permanent Action</small></h3>
-                            </div>
-                            <form class="form form-horizontal" action="{% url delete_commcare_user domain user.user_id %}" method="post">
-                                <div class="modal-body">
-                                    <p>Are you sure you want to permanently delete <strong>{{ user.raw_username }}</strong>?</p>
-                                    <p>This action:</p>
-                                    <ul>
-                                        <li>Will delete <strong>all</strong> of {{ user.raw_username }}'s form submissions.</li>
-                                        <li>Is permanent.</li>
-                                    </ul>
-                                    <p>If you ever want to use {{ user.raw_username }}'s data in the future, we suggest that you use the <strong>Archive User</strong> option.</p>
-                                </div>
-                                <div class="modal-footer">
-                                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                                    <button type="submit" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Delete {% commcare_user %}</button>
-                                </div>
-                            </form>
-                        </div>
                     </td>
                     {% endif %}
                 </tr>

@@ -10,6 +10,7 @@ from couchforms.filters import instances
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.data.deid_generator import DeidGenerator
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import string_to_datetime
 from django.http import Http404
@@ -46,26 +47,26 @@ def report_context(domain,
     }
     if report_partial:
         context.update(report_partial=report_partial)
-    if individual is not None:
+    if individual is not None and domain is not None:
         context.update(
             show_users=True,
             users= user_list(domain),
             individual=individual,
         )
-    if form is not None:
+    if form is not None and domain is not None:
         context.update(
             show_forms=True,
             selected_form=form,
             forms=form_list(domain),
         )
         
-    if group is not None:
+    if group is not None and domain is not None:
         context.update(
             show_groups=True,
             group=group,
             groups=Group.get_reporting_groups(domain),
         )
-    if case_type is not None:
+    if case_type is not None and domain is not None:
         if individual:
             user_ids = [individual]
         elif group is not None:
@@ -106,7 +107,7 @@ def form_list(domain):
                          group=True,
                          group_level=3,
                          reduce=True)
-    return [{"display": xmlns_to_name(domain, r["key"][2]), "xmlns": r["key"][2]} for r in view]
+    return [{"text": xmlns_to_name(domain, r["key"][2], app_id=None), "val": r["key"][2]} for r in view]
 
 def get_case_types(domain, user_ids=None):
     case_types = {}
@@ -153,9 +154,7 @@ def get_group_params(domain, group='', users=None, user_id_only=False, **kwargs)
         users = sorted(users, key=lambda user: user.user_id)
     return group, users
 
-# New HQReport Structure stuff. There's a lot of duplicate code from above, only because I don't want to ruin any old
-# reports until everything is fully refactored....
-
+# todo CLEAN THIS UP Clean up this whole file, too
 def get_all_users_by_domain(domain, group='', individual='', filter_users=None):
     """ Returns a list of CommCare Users based on domain, group, and user filter (demo_user, admin, registered, unknown)
     """
@@ -165,8 +164,11 @@ def get_all_users_by_domain(domain, group='', individual='', filter_users=None):
             group = Group.get(group)
         users =  group.get_users(only_commcare=True)
     elif individual:
-        users = [CommCareUser.get_by_user_id(individual)]
-        if users[0] is None:
+        try:
+            users = [CommCareUser.get_by_user_id(individual)]
+        except Exception:
+            users = []
+        if users and users[0] is None:
             raise Http404()
     else:
         if not filter_users:
@@ -230,19 +232,6 @@ def format_datatables_data(text, sort_key):
     data = {"html": text,
             "sort_key": sort_key}
     return data
-
-SORT_TYPE_NUMERIC = "title-numeric"
-def format_datatables_header(text, sort_type=None, sort_direction=None, css_class=None, help_text=None):
-    header = {"html": text}
-    if sort_type:
-        header["sort_type"] = sort_type
-    if sort_direction:
-        header["sort_direction"] = sort_direction
-    if css_class:
-        header["css_class"] = css_class
-    if help_text:
-        header['help_text'] = help_text
-    return header
 
 def app_export_filter(doc, app_id):
     if app_id:
@@ -346,11 +335,11 @@ def create_export_filter(request, domain, export_type='form'):
 def get_possible_reports(domain):
     reports = []
     report_map = []
-    report_map.extend(settings.STANDARD_REPORT_MAP.items())
+    report_map.extend(settings.PROJECT_REPORT_MAP.items())
     report_map.extend(settings.CUSTOM_REPORT_MAP.get(domain, {}).items())
     for heading, models in report_map:
         for model in models:
-            reports.append((model, to_function(model).name))
+            reports.append({'path': model, 'name': to_function(model).name})
     return reports
 
 def deid_remove(doc, val):
@@ -376,3 +365,27 @@ def deid_map(doc, config):
         if ctx[final_part] == Ellipsis:
             del ctx[final_part]
     return doc_copy
+
+def format_relative_date(date, tz=pytz.utc):
+    now = datetime.now(tz=tz)
+    time = datetime.replace(date, tzinfo=tz)
+    dtime = now - time
+    if dtime.days < 1:
+        dtext = "Today"
+    elif dtime.days < 2:
+        dtext = "Yesterday"
+    else:
+        dtext = "%s days ago" % dtime.days
+    return format_datatables_data(dtext, dtime.days)
+
+
+def domain_from_args_or_kwargs(*args, **kwargs):
+    domain = kwargs.get('domain')
+    if not domain:
+        for arg in args:
+            if isinstance(arg, str):
+                try:
+                    domain = Domain.get_by_name(arg)
+                except Exception:
+                    pass
+    return domain

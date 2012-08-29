@@ -18,6 +18,7 @@ class SubmissionTest(TestCase):
         
     def tearDown(self):
         self.couch_user.delete()
+        self.domain.delete()
         
     def _submit(self, formname):
         file_path = os.path.join(os.path.dirname(__file__), "data", formname)

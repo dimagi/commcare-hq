@@ -1,6 +1,11 @@
 {% extends "users/users_base.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/javascripts/knockout.mapping.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'users/js/roles.js' %}"></script>
+{% endblock %}
 {% block js-inline %}{{ block.super }}
     <script>
         $(function () {
@@ -33,7 +38,25 @@
             });
         });
     </script>
+    <script>
+        $(function () {
+            $('#user-roles-table').userRoles({
+                userRoles: {{ user_roles|JSON }},
+                defaultRole: {{ default_role|JSON }},
+                saveUrl: '{% url post_user_role domain %}',
+                reportOptions: {{ report_list|JSON }},
+                allowEdit: {{ request.couch_user.is_domain_admin|BOOL }}
+            });
+            $('#user-roles-table').show();
+        });
+    </script>
 {% endblock %}
+{% block head %}
+    {{ block.super }}
+    <style>
+    </style>
+{% endblock %}
+
 
 {% block subsection-title %}
     <li class="active">
@@ -44,17 +67,17 @@
 {% block user-view %}
 <div class="row-fluid">
     <div>
-    <h2>List of {% hq_web_user %}s for Project "{{ domain }}"</h2>
+    <h2>List of {% hq_web_user %}s for Project "{% if request.project.is_snapshot %}{{ request.project.original_doc_display_name }}{% else %}{{ request.project.display_name }}{% endif %}"</h2>
     <p>{% hq_web_user %}s can manage and view data on CommCare HQ. However, these users cannot submit forms from phones using the CommCare Application.</p>
     <div class="btn-toolbar">
         <a class="btn btn-success" href="{% url invite_web_user domain %}"><i class="icon icon-white icon-plus"></i> Invite {% hq_web_user %}</a>
     </div>
+
     <table class="table table-striped table-bordered">
         <thead>
             <tr>
                 <th>{% trans "E-mail" %}</th>
                 <th>{% trans "Role" %}</th>
-                <th>{% trans "Can View Reports" %}</th>
                 <th>{% trans "Name" %}</th>
                 <th>{% trans "Phone Numbers" %}</th>
                 <th>{% trans "Remove" %}</th>
@@ -68,18 +91,7 @@
                         {{ user.html_username|safe }}
                     </a>
                 </td>
-                <td>{{ user.role_label }}</td>
-                <td>
-                    {% if user.can_view_reports %}Yes{% else %}
-                    {% for report in user.get_viewable_reports %}
-                        {% if forloop.first %}Only<ul>{% endif %}
-                        <li>{{ report }}</li>
-                        {% if forloop.last %}</ul>{% endif %}
-                    {% empty %}
-                        No
-                    {% endfor %}
-                    {% endif %}
-                </td>
+                <td>{% if user.role_label %}{{ user.role_label }}{% else %}<h6>(No Name)</h6>{% endif %}</td>
                 <td>{{ user.first_name }} {{ user.last_name }}</td>
                 <td>
                     {% if user.phone_numbers %}
@@ -100,6 +112,116 @@
         {% endfor %}
         </tbody>
     </table>
+    <h2>Roles</h2>
+    <div id="user-roles-table" style="display: none;">
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Edit Web Users</th>
+                    <th>Edit {% commcare_user %}s</th>
+                    <th>Edit Data</th>
+                    <th>Edit Apps</th>
+                    <th>View Reports</th>
+                    <th data-bind="visible: allowEdit"></th>
+                </tr>
+            </thead>
+            <tbody data-bind="foreach: userRoles">
+                <tr>
+                    <th>
+                        <span data-bind="visible: name, text: name"></span>
+                        <h6 data-bind="visible: !name()">(No Name)</h6>
+                    </th>
+                    <td><i data-bind="staticChecked: permissions.edit_web_users"></i></td>
+                    <td><i data-bind="staticChecked: permissions.edit_commcare_users"></i></td>
+                    <td><i data-bind="staticChecked: permissions.edit_data"></i></td>
+                    <td><i data-bind="staticChecked: permissions.edit_apps"></i></td>
+                    <td>
+                        <span data-bind="visible: reportPermissions.all(), staticChecked: true"></span>
+                        <div data-bind="visible: !reportPermissions.all() && reportPermissions.filteredSpecific().length">
+                            Only
+                            <ul data-bind="foreach: reportPermissions.specific">
+                                <li data-bind="html: name, visible: value"></li>
+                            </ul>
+                        </div>
+                        <span data-bind="visible: !reportPermissions.all() && !reportPermissions.specific().length, staticChecked: false"></span>
+                    </td>
+                    <td data-bind="visible: $root.allowEdit">
+                        <button class="btn" data-bind="css: {disabled: !$data._id}, click: $data._id ? $root.setRoleBeingEdited : null">
+                            <i class="icon-edit"></i>Edit Role
+                        </button>
+                    </td>
+                    <!--<td>-->
+                        <!--<button class="btn btn-danger" data-bind="visible: $data._id, click: $root.setRoleBeingEdited">-->
+                            <!--<i class="icon-white icon-trash"></i>-->
+                            <!--Delete Role-->
+                        <!--</button>-->
+                    <!--</td>-->
+                </tr>
+            </tbody>
+        </table>
+        <button class="btn btn-primary" data-bind="click: function () {$root.setRoleBeingEdited($root.defaultRole)}">Add Role</button>
+        <div data-bind="modal: roleBeingEdited">
+            <div data-bind="with: roleBeingEdited">
+                <div class="modal-header">
+                    <a class="close" data-bind="click: $root.unsetRoleBeingEdited">×</a>
+                    <h3 data-bind="text: modalTitle"></h3>
+                </div>
+                <div class="modal-body">
+                    <input data-bind="value: name" placeholder="Role Name"/>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th width="33%">Edit Web Users</th>
+                            <td>
+                                <input type="checkbox" data-bind="checked: permissions.edit_web_users"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Edit {% commcare_user %}s</th>
+                            <td>
+                                <input type="checkbox" data-bind="checked: permissions.edit_commcare_users"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Edit Data</th>
+                            <td>
+                                <input type="checkbox" data-bind="checked: permissions.edit_data"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Edit Apps</th>
+                            <td>
+                                <input type="checkbox" data-bind="checked: permissions.edit_apps"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>View All Reports</th>
+                            <td>
+                                <input type="checkbox" data-bind="checked: reportPermissions.all"/>
+                            </td>
+                        </tr>
+                        <tr data-bind="visible: !reportPermissions.all()">
+                            <th>View Specific Reports</th>
+                            <td>
+                                <div data-bind="foreach: reportPermissions.specific, visibleFade: !reportPermissions.all()">
+                                    <div>
+                                        <input type="checkbox" data-bind="checked: value"/>
+                                        <span data-bind="html: name"></span>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" class="btn" data-bind="click: $root.unsetRoleBeingEdited">Cancel</a>
+                    <!-- Couldn't figure out how else to get the space in there... sorry!!!-->
+                    <div style="display: inline-block; width: 5px"></div>
+                    <span data-bind="saveButton2: $root.modalSaveButton.state, saveOptions: $root.modalSaveButton.saveOptions"></span>
+                </div>
+            </div>
+        </div>
+    </div>
     </div>
 </div>
 <div class="row-fluid">

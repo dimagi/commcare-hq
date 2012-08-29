@@ -1,0 +1,107 @@
+{% extends "data_interfaces/data_interfaces_base.html" %}
+{% load report_tags %}
+
+{% block head %}
+    {{ block.super }}
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        $(function() {
+            $('#key_value_columns').change(function() {
+                if ($(this).val() == "yes") {                    
+                    $('#key_column').removeAttr('disabled');
+                    $('#value_column').removeAttr('disabled');
+                } else {
+                	$('#key_column').attr('disabled', 'disabled');
+                    $('#value_column').attr('disabled', 'disabled');
+                } //else
+            });
+
+            $('#key_value_columns').change();
+
+            $('#back_button').click(function() {
+            	history.back();
+                return false;
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block main_column %}
+    <form class="form-horizontal form-report" action="{% url corehq.apps.importer.views.excel_fields domain %}" method="post">
+    <input type="hidden" name="named_columns" value="{{named_columns}}" />
+
+    <fieldset>
+        <legend>Which cases do you want to update?</legend>
+        <div class="control-group">
+            <div class="controls">
+                <label for="case_type">Case type</label>
+                <select name="case_type" id="case_type">
+                    {% for case_type in case_types %}
+                    <option value="{{case_type|escape}}">{{case_type|escape}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </fieldset>
+    
+    <fieldset>
+        <legend>Which column should be used to identify cases?</legend>
+        <div class="control-group">
+            <div class="controls">
+                <label for="search_column">Excel column</label>
+                <select name="search_column" id="search_column">
+                    {% for column in columns %}
+                    <option value="{{column|escape}}">{{column|escape}}</option>
+                    {% endfor %}
+                </select>
+                
+                <label for="search_field">Corresponding case field</label>
+                <select name="search_field" id="search_field">               
+                    <option value="case_id">case_id</option>
+                    <option value="external_id">external_id</option>
+                </select>                
+            </div>
+        </div>
+    </fieldset>
+    
+    <fieldset>
+        <legend>Are there columns in the file that contain key/value fields?</legend>
+        <div class="control-group">
+            <div class="controls">
+                <select class="input-small" name="key_value_columns" id="key_value_columns">
+                    <option selected>no</option>
+                    <option >yes</option>
+                </select> 
+            </div>       
+        </div>
+    </fieldset>    
+    
+    <fieldset>
+        <legend>Which Excel columns correspond to the key/value fields?</legend>
+        <div class="control-group">
+            <div class="controls">
+                <label for="key_column">Key column</label>
+                <select name="key_column" id="key_column">
+                    {% for column in columns %}
+                    <option value="{{column|escape}}">{{column|escape}}</option>
+                    {% endfor %}
+                </select>
+                
+                <label for="value_column">Value column</label>
+                <select name="value_column" id="value_column">
+                    {% for column in columns %}
+                    <option value="{{column|escape}}">{{column|escape}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </fieldset>
+    
+    <div class="form-actions">
+        <button type="button" class="btn btn-primary btn-large" id="back_button"><i class="icon-backward icon-white"></i> Back</button>
+        <button type="submit" class="btn btn-primary btn-large"><i class="icon-forward icon-white"></i> Next step</button>
+    </div>
+    </form>
+{% endblock %}

@@ -2,20 +2,27 @@
 <html lang="en">
     <head>
         <meta charset="utf-8"/>
-        <title>CommCare HQ</title>
+        <title>CommCare HQ{% block title %}{% endblock %}</title>
         <meta name="application-name" content="CommCare HQ">
         <meta http-equiv="content-language" content="en">
 
         <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
 
-        <link rel="stylesheet" media="screen" href="{% static 'hq-bootstrap/css/hq-bootstrap.css' %}?v=2"/>
+        <link rel="stylesheet" media="screen" href="{% static 'hq_bootstrap/css/hq-bootstrap.css' %}"/>
 
         {# this should eventually be moved to the end of the page #}
-        <script src="{% static 'hq-bootstrap/js/jquery-1.7.1.min.js' %}"></script>
+        <script src="{% static 'hq_bootstrap/js/jquery-1.7.1.min.js' %}"></script>
+        {% if DEBUG %}
+            <script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.0.0.js' %}"></script>
+        {% else %}
+            <script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.0.0.debug.js' %}"></script>
+        {% endif %}
+        <script type="text/javascript" src="{% static 'hqwebapp/javascripts/underscore-1.3.1.js' %}"></script>
+        <script type="text/javascript" src="{% static 'hqwebapp/ko/global.handlers.js' %}"></script>
 
         {% block oldstyle_imports %}
             <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
-            <link rel="stylesheet" href="{% static 'hq-bootstrap/css/old/core.css' %}"/>
+            <link rel="stylesheet" href="{% static 'hq_bootstrap/css/old/core.css' %}"/>
             {% include "imports/hq-oldstyle-js.html" %}
         {% endblock %}
 
@@ -31,10 +38,10 @@
         <div class="hq-container-fluid {% block layout_style %}{% endblock %}{% block oldstyle_tag %} old-style{% endblock %}">
             <header class="hq-navbar">
                 <hgroup>
-                    <h1><a href="{% url homepage %}"><img src="{% static 'hq-bootstrap/img/commcare-logo.png' %}" alt="CommCare HQ" /></a></h1>
+                    <h1><a href="{% url homepage %}"><img src="{% static 'hq_bootstrap/img/commcare-logo.png' %}" alt="CommCare HQ" /></a></h1>
                 </hgroup>
                 {% if request.user.is_authenticated %}
-                    <nav>
+                    <nav id="hq-navigation-bar">
                         {% block tabs %}
                         <ul class="nav">
                             {# hide tabs from commcare users #}
@@ -42,25 +49,39 @@
                                 {% get_tabs as tabs %}
                                 {% for tab in tabs %}
                                     {% if tab.visible %}
-                                        {# hack for domain admins only seeing domain tab #}
-                                        {% if tab.caption != "Project Forwarding" or request.couch_user and request.couch_user.is_domain_admin %}
-                                            {# and hack for hiding the users tab from public domains #}
-                                            {% if tab.caption != "Settings & Users" or request.couch_user and request.couch_user.get_id  %}
-                                                <li class="{% if tab.is_active %}active{% endif %}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
-                                            {% endif %}
-                                        {% endif %}
+                                        <li class="{% if tab.is_active %}active{% endif %}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
                                     {% endif %}
                                 {% endfor %}
                             {% endif %}
                         </ul>
                         {% endblock %}
+
+
                         <div class="btn-toolbar secondary-nav">
+                            <div class="btn-group">
+                            {% if request.project.organization %}
+                                <a href="{% url orgs_landing request.project.organization %}" class="btn btn-info">{{ request.project.organization_doc.title }}</a>
+                                {% comment %}TODO: Add a drop-down list of organizations the current user is a member of?{% endcomment %}
+                            {% endif %}
+                            </div>
+
                             {% if request.couch_user and request.couch_user.is_web_user %}
                             <div class="btn-group">
-
                                 <a class="btn btn-project dropdown-toggle" data-toggle="dropdown" href="#">
                                     <i class="icon-hq-white icon-hq-logo"></i>
-                                    {% if domain %}{% ifequal domain 'public' %}CommCare HQ Demo Project{% else %}{{ domain }}{% endifequal %}{% else %}No Domain Selected{% endif %}
+                                    {% if domain %}
+                                        {% ifequal domain 'public' %}
+                                            CommCare HQ Demo Project
+                                        {% else %}
+                                            {% if request.project.is_snapshot %}
+                                                Snapshot of {{ request.project.snapshot_of.display_name }}
+                                            {% else %}
+                                                {{ request.project.display_name }}
+                                            {% endif %}
+                                        {% endifequal %}
+                                    {% else %}
+                                        No Project Selected
+                                    {% endif %}
                                     <span class="caret"></span>
                                 </a>
                                 {% if domain %}
@@ -70,6 +91,7 @@
                                 {% endif %}
                             </div>
                             {% endif %}
+
                             <div class="btn-group">
                                 <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
                                     <i class="icon-hq-white icon-hq-person"></i>
@@ -103,6 +125,19 @@
                 {% endif %}
             </header>
 
+            {% if request.project.original_doc %}
+                <div class="alert alert-info snapshot-alert">
+                    {% if request.project.is_snapshot %}
+                        This is a snapshot of {{ request.project.copied_from.display_name }}
+                    {% else %}
+                        Originally copied from <a href="{% url domain_snapshot_info request.project.original_doc %}">a snapshot of {{ request.project.copied_from.display_name }}</a>
+                    {% endif %}
+                    {% if request.project.copied_from.organization %}
+                        by <a href="{% url orgs_landing request.project.copied_from.organization %}">{{ request.project.copied_from.organization_doc.title }}</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+
             <div class="hq-page-header-container">
                 <div id="unsupported-browser" class="alert alert-error alert-block alert-full" style="display: none">
                     <p><i class="icon icon-warning-sign"></i><strong>CommCare HQ does not work well with Internet Explorer.</strong></p>
@@ -132,7 +167,7 @@
         </div>
 
         <footer>
-            <a href="http://www.dimagi.com/" class="footer-left"><img src="{% static 'hq-bootstrap/img/powered-by-dimagi.png' %}" class="powered" alt="Powered by Diamgi, Inc." /></a>
+            <a href="http://www.dimagi.com/" class="footer-left"><img src="{% static 'hq_bootstrap/img/powered-by-dimagi.png' %}" class="powered" alt="Powered by Diamgi, Inc." /></a>
 
             {% if user.is_authenticated %}
             <div class="footer-right">
@@ -155,62 +190,62 @@
             {% endif %}
         </footer>
         <div id="hq-modal-home">
-        {% block modals %}
-        <div class="modal hide fade" id="reportIssueModal">
-            <div class="modal-header">
-                <a class="close" data-dismiss="modal">&times;</a>
-                <h3>Report an Issue with CommCare HQ</h3>
-            </div>
-            <form id="hqwebapp-bugReportForm" class="form-horizontal" action="{% url bug_report %}" method="post">
-                <input type="hidden" id="bug-report-url" name="url"/>
-                <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
-                <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
-                <input type="hidden" id="bug-report-app_id" name="app_id" value="{{ app.id }}"/>
+            <div class="modal hide fade" id="reportIssueModal">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h3>Report an Issue with CommCare HQ</h3>
+                </div>
+                <form id="hqwebapp-bugReportForm" class="form-horizontal" action="{% url bug_report %}" method="post">
+                    <input type="hidden" id="bug-report-url" name="url"/>
+                    <input type="hidden" id="bug-report-username" name="username" value="{{ user.username }}"/>
+                    <input type="hidden" id="bug-report-domain" name="domain" value="{{ domain }}"/>
+                    <input type="hidden" id="bug-report-app_id" name="app_id" value="{{ app.id }}"/>
 
-                <div class="modal-body">
-                    <fieldset>
-                        <div class="control-group">
-                            <label class="control-label" for="bug-report-subject">Short Description</label>
-                            <div class="controls">
-                                <input type="text" class="input-xlarge" name="subject" id="bug-report-subject">
-                                <p class="help-block">Please summarize the issue in one sentence&mdash;the message field below should contain more detail.</p>
+                    <div class="modal-body">
+                        <fieldset>
+                            <div class="control-group">
+                                <label class="control-label" for="bug-report-subject">Short Description</label>
+                                <div class="controls">
+                                    <input type="text" class="input-xlarge" name="subject" id="bug-report-subject">
+                                    <p class="help-block">Please summarize the issue in one sentence&mdash;the message field below should contain more detail.</p>
+                                </div>
                             </div>
-                        </div>
-                        <div class="control-group">
-                            <label class="control-label" for="bug-report-now">Time of Occurrence</label>
-                            <div class="controls">
-                                <select id="bug-report-now" name="now">
-                                    <option value="true">Just Now</option>
-                                    <option value="false">Earlier</option>
-                                </select>
+                            <div class="control-group">
+                                <label class="control-label" for="bug-report-now">Time of Occurrence</label>
+                                <div class="controls">
+                                    <select id="bug-report-now" name="now">
+                                        <option value="true">Just Now</option>
+                                        <option value="false">Earlier</option>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
-                        <div class="control-group">
-                            <label class="control-label" for="bug-report-when">When</label>
-                            <div class="controls">
-                                <input type="text" class="input-xlarge" name="when" id="bug-report-when">
+                            <div class="control-group">
+                                <label class="control-label" for="bug-report-when">When</label>
+                                <div class="controls">
+                                    <input type="text" class="input-xlarge" name="when" id="bug-report-when">
+                                </div>
                             </div>
-                        </div>
-                        <div class="control-group">
-                            <label class="control-label" for="bug-report-message">Full Description</label>
-                            <div class="controls">
-                                <textarea class="input-xlarge" name="message" id="bug-report-message" rows="3"></textarea>
-                                <p class="help-block">Please try to include as much information as possible.</p>
+                            <div class="control-group">
+                                <label class="control-label" for="bug-report-message">Full Description</label>
+                                <div class="controls">
+                                    <textarea class="input-xlarge" name="message" id="bug-report-message" rows="3"></textarea>
+                                    <p class="help-block">Please try to include as much information as possible.</p>
+                                </div>
                             </div>
-                        </div>
-                    </fieldset>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary" data-loading-text="Submitting Report..." data-complete-text="Report Submitted, Close Window">Submit Report</button>
-                    <button id="bug-report-cancel" class="btn" data-dismiss="modal" data-loading-text="Cancel">Cancel</button>
-                </div>
-            </form>
-        </div>
+                        </fieldset>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary" data-loading-text="Submitting Report..." data-complete-text="Report Submitted, Close Window">Submit Report</button>
+                        <button id="bug-report-cancel" class="btn" data-dismiss="modal" data-loading-text="Cancel">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        {% block modals %}
         {% endblock %}
         </div>
         <!--Begin javascript -->
-        <script src="{% static 'hq-bootstrap/js/bootstrap.min.js' %}?v=2"></script>
-        <script src="{% static 'hq-bootstrap/js/jquery.form.js' %}"></script>
+        <script src="{% static 'hq_bootstrap/js/bootstrap.min.js' %}"></script>
+        <script src="{% static 'hq_bootstrap/js/jquery.form.js' %}"></script>
 
         {% block js %}
         <script src="{% static 'hqwebapp/js-custom/hqhandler.form.bugReport.js' %}"></script>

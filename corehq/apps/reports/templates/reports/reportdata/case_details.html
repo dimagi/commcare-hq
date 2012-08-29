@@ -1,4 +1,4 @@
-{% extends "reports/report_base.html" %}
+{% extends "reports/base_template.html" %}
 {% load case_tags %}
 {% load hq_shared_tags %}
 
@@ -38,7 +38,7 @@
             <a href="{% url default_report domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
         </li>
         <li>
-            <a href="{% url report_dispatcher domain 'case_list' %}">Case List</a> <span class="divider">&gt;</span>
+            <a href="{% url project_report_dispatcher domain 'case_list' %}">Case List</a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
             <a href="#">{{ report.name }}</a>

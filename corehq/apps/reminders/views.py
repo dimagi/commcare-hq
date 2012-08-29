@@ -4,13 +4,15 @@ from django.core.urlresolvers import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm
-from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET
-from corehq.apps.users.models import CouchUser
+from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm
+from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST
+from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.web import render_to_response
 from dimagi.utils.parsing import string_to_datetime
 from tropo import Tropo
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
+from .util import get_form_list, get_sample_list
+from corehq.apps.app_manager.models import get_app, ApplicationBase
 
 @login_and_domain_required
 def default(request, domain):
@@ -119,6 +121,8 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
     else:
         h = None
     
+    form_list = get_form_list(domain)
+    
     if request.method == "POST":
         form = ComplexCaseReminderForm(request.POST)
         if form.is_valid():
@@ -167,9 +171,180 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
         form = ComplexCaseReminderForm(initial=initial)
     
     return render_to_response(request, "reminders/partial/add_complex_reminder.html", {
-        "domain":   domain
-       ,"form":     form
+        "domain":       domain
+       ,"form":         form
+       ,"form_list":    form_list
     })
 
 
+@login_and_domain_required
+def manage_surveys(request, domain):
+    context = {
+        "domain" : domain,
+        "keywords" : SurveyKeyword.get_all(domain)
+    }
+    return render_to_response(request, "reminders/partial/manage_surveys.html", context)
+
+@login_and_domain_required
+def add_keyword(request, domain, keyword_id=None):
+    if keyword_id is None:
+        s = SurveyKeyword(domain = domain)
+    else:
+        s = SurveyKeyword.get(keyword_id)
+    
+    context = {
+        "domain" : domain,
+        "form_list" : get_form_list(domain),
+        "errors" : [],
+        "keyword" : s
+    }
+    
+    if request.method == "GET":
+        return render_to_response(request, "reminders/partial/add_keyword.html", context)
+    else:
+        keyword = request.POST.get("keyword", None)
+        form_unique_id = request.POST.get("survey", None)
+        
+        if keyword is not None:
+            keyword = keyword.strip()
+        
+        s.keyword = keyword
+        s.form_unique_id = form_unique_id
+        
+        errors = []
+        if keyword is None or keyword == "":
+            errors.append("Please enter a keyword.")
+        if form_unique_id is None:
+            errors.append("Please create a form first, and then add a keyword for it.")
+        duplicate_entry = SurveyKeyword.get_keyword(domain, keyword)
+        if duplicate_entry is not None and keyword_id != duplicate_entry._id:
+            errors.append("Keyword already exists.")
+        
+        if len(errors) > 0:
+            context["errors"] = errors
+            return render_to_response(request, "reminders/partial/add_keyword.html", context)
+        else:
+            s.save()
+            return HttpResponseRedirect(reverse("manage_surveys", args=[domain]))
+
+@login_and_domain_required
+def delete_keyword(request, domain, keyword_id):
+    s = SurveyKeyword.get(keyword_id)
+    s.retire()
+    return HttpResponseRedirect(reverse("manage_surveys", args=[domain]))
+
+@login_and_domain_required
+def add_survey(request, domain, survey_id=None):
+    survey = None
+    if survey_id is not None:
+        survey = Survey.get(survey_id)
+    
+    if request.method == "POST":
+        form = SurveyForm(request.POST)
+        if form.is_valid():
+            name = form.cleaned_data.get("name")
+            waves = form.cleaned_data.get("waves")
+            followups = form.cleaned_data.get("followups")
+            samples = form.cleaned_data.get("samples")
+            send_automatically = form.cleaned_data.get("send_automatically")
+            send_followup = form.cleaned_data.get("send_followup")
+            
+            if survey is None:
+                survey = Survey (
+                    domain = domain,
+                    name = name,
+                    waves = waves,
+                    followups = followups,
+                    samples = samples,
+                    send_automatically = send_automatically,
+                    send_followup = send_followup
+                )
+            else:
+                survey.name = name
+                survey.waves = waves
+                survey.followups = followups
+                survey.samples = samples
+                survey.send_automatically = send_automatically
+                survey.send_followup = send_followup
+            survey.save()
+            return HttpResponseRedirect(reverse("survey_list", args=[domain]))
+    else:
+        initial = {}
+        if survey is not None:
+            initial["name"] = survey.name
+            initial["waves"] = survey.waves
+            initial["followups"] = survey.followups
+            initial["samples"] = survey.samples
+            initial["send_automatically"] = survey.send_automatically
+            initial["send_followup"] = survey.send_followup
+        form = SurveyForm(initial=initial)
+    
+    form_list = get_form_list(domain)
+    form_list.insert(0, {"code":"--choose--", "name":"-- Choose --"})
+    sample_list = get_sample_list(domain)
+    sample_list.insert(0, {"code":"--choose--", "name":"-- Choose --"})
+    
+    context = {
+        "domain" : domain,
+        "survey_id" : survey_id,
+        "form" : form,
+        "form_list" : form_list,
+        "sample_list" : sample_list,
+        "method_list" : SURVEY_METHOD_LIST,
+        "user_list" : CommCareUser.by_domain(domain),
+    }
+    return render_to_response(request, "reminders/partial/add_survey.html", context)
+
+@login_and_domain_required
+def survey_list(request, domain):
+    context = {
+        "domain" : domain,
+        "surveys" : Survey.get_all(domain)
+    }
+    return render_to_response(request, "reminders/partial/survey_list.html", context)
+
+@login_and_domain_required
+def add_sample(request, domain, sample_id=None):
+    sample = None
+    if sample_id is not None:
+        sample = SurveySample.get(sample_id)
+    
+    if request.method == "POST":
+        form = SurveySampleForm(request.POST)
+        if form.is_valid():
+            name            = form.cleaned_data.get("name")
+            sample_contacts = form.cleaned_data.get("sample_contacts")
+            
+            if sample is None:
+                sample = SurveySample (
+                    domain = domain,
+                    name = name,
+                    contacts = sample_contacts
+                )
+            else:
+                sample.name = name
+                sample.contacts = sample_contacts
+            sample.save()
+            return HttpResponseRedirect(reverse("sample_list", args=[domain]))
+    else:
+        initial = {}
+        if sample is not None:
+            initial["name"] = sample.name
+            initial["sample_contacts"] = sample.contacts
+        form = SurveySampleForm(initial=initial)
+    
+    context = {
+        "domain" : domain,
+        "form" : form,
+        "sample_id" : sample_id
+    }
+    return render_to_response(request, "reminders/partial/add_sample.html", context)
+
+@login_and_domain_required
+def sample_list(request, domain):
+    context = {
+        "domain" : domain,
+        "samples" : SurveySample.get_all(domain)
+    }
+    return render_to_response(request, "reminders/partial/sample_list.html", context)
 

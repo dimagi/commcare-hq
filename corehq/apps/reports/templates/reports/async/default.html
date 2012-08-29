@@ -1,0 +1,70 @@
+{% load hq_shared_tags %}
+
+{% if show_time_notice %}{% include "hqwebapp/partials/time-notice.html"%}{% endif %}
+
+{% block reportcontent %}
+    {% if report.show %}
+        {% if report.slug %}
+            <div class="hq-loading" style="display: none;">
+                <h4>Loading Report</h4>
+                <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                <h6>{{ report.title }}</h6>
+            </div>
+        {% else %}
+            <h6 style="text-align: center; margin-top: 200px;">{{ report.title }}</h6>
+        {% endif %}
+    {% else %}
+        <h6 style="text-align: center; margin-top: 100px;">
+            <i class="icon-info-sign" id="no-viewable-reports"></i>
+            You are not registered to see reports
+        </h6>
+        <script>
+            $(function () {
+                $('.sidebar').hide();
+                $('.hq-double-col').css({background: 'white'});
+                $('.hq-content').removeClass('span10').addClass('span12').css({margin: 0});
+                $('#no-viewable-reports').popover({
+                    placement: 'top',
+                    title: "We're serious about security",
+                    content: "Your project may contain sensitive personal and medical information, " +
+                            "so we don't show this data to " +
+                            "just anyone. If you think you should have access to your project's reports " +
+                            "please contact your project lead."
+                });
+            });
+        </script>
+    {% endif %}
+    <script type="text/javascript">
+        $(function() {
+            $('.hq-report-time-notice').addClass('hide');
+            $('.hq-loading').fadeIn();
+        });
+    </script>
+{% endblock %}
+
+{% block js %}
+{% endblock %}
+
+{% block js-inline %}
+{% endblock %}
+
+{% block modals %}
+    <div class="loading-backdrop hide"></div>
+
+    <div class="modal hide fade" id="loadingReportIssueModal">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h3>Problem Loading Report "{{ report.title }}"</h3>
+        </div>
+        <div class="modal-body">
+            <p>There seems to be a problem loading data for the <strong>{{ report.title }}</strong> report.</p>
+            <p>The report returned the following error:</p>
+            <div class="alert alert-error report-error-status"></div>
+            <p>If this problem persists, we encourage you to <a href="#reportIssueModal" data-target="#reportIssueModal" data-toggle="modal">Report an Issue</a>.</p>
+        </div>
+        <div class="modal-footer">
+            <a href="#" class="btn btn-primary" onclick="$(this).parent().parent().trigger('reloadHQReport')" data-loading-text="Trying Again..." data-fail-text="Loading Failed. Try Again?">Try Again</a>
+            <a href="#" class="btn" data-dismiss="modal">Cancel</a>
+        </div>
+    </div>
+{% endblock %}

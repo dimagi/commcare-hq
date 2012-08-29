@@ -1,0 +1,16 @@
+{% load hq_shared_tags %}
+<div id="export-download-status" class="modal hide fade">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">×</a>
+        <h3>Downloading Export Data for <span></span></h3>
+    </div>
+    <div class="modal-body downloader">
+        <div class="loading-indicator">
+            <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" /> Processing data, please wait...
+        </div>
+        <div class="loaded-data"></div>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal">Close</a>
+    </div>
+</div>

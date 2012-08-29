@@ -12,3 +12,4 @@ def form_list(request, domain):
 @require_POST
 def post(request, domain, app_id=None):
     return rec_views.post(request)
+

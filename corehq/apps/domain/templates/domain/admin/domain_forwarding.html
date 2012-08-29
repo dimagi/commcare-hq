@@ -10,7 +10,7 @@
 {% block user-view %}
     {% for cls, form_repeaters in repeaters %}
     <div style="padding-bottom:2em;">
-        <h2>Forward {% if cls == "FormRepeater" %}Forms{% else %}Cases{% endif %}:</h2>
+        <h2>Forward {% if cls == "CaseRepeater" %}Cases{% else %}Form{% if cls == "ShortFormRepeater" %} Stub{% endif %}{% endif %}:</h2>
         {% if form_repeaters %}
             <table class="table table-striped table-bordered">
             {% if form_repeaters %}

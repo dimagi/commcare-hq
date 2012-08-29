@@ -32,6 +32,11 @@
                 $(defaultMessage).hide();
             }
         });
+        $('.showAccordionButton').click(function(e) {
+            $($(this).attr('href')).slideDown();
+            $(this).parent().hide();
+            return false;
+        });
     });
 </script>
 {% endblock %}
@@ -47,6 +52,9 @@
     }
     .build.build-latest-release {
         background-color: #EFEFFF;
+    }
+    .nowrap {
+        white-space: nowrap;
     }
 </style>
 {% endblock %}
@@ -166,55 +174,19 @@
                 </form>
                 {% endif %}
             </td>
-            <td>{{ saved_app.version }}</td>
-            <td>{% utc_to_timezone saved_app.built_on timezone "%b %d, %Y" %}</td>
-            <td>{% utc_to_timezone saved_app.built_on timezone "%H:%M %Z" %}</td>
-            <td>
+            <td class="nowrap">{{ saved_app.version }}</td>
+            <td class="nowrap">{% utc_to_timezone saved_app.built_on timezone "%b %d, %Y" %}</td>
+            <td class="nowrap">{% utc_to_timezone saved_app.built_on timezone "%H:%M %Z" %}</td>
+            <td class="nowrap">
                 {% if saved_app.built_with.get_label %}{{ saved_app.built_with.get_label }}{% endif %}
+                <p>{{ saved_app.get_jar_path }}</p>
                 {% if not saved_app.built_with.signed %}<h6>Unsigned Jar</h6>{% endif %}
             </td>
-            <td>
-                <div class="download-dropdown">
-                    <span>Deploy</span>
-                    <ul>
-                        <li>
-                            <a href="{% url emulator domain saved_app.id %}">Preview</a>
-                        </li>
-                        <li>
-                            <a class="dialog_opener" href="">CommCare Files</a>
-                            <div class="dialog jar_download_dialog" title="Install Build {{ saved_app.version }} for J2ME">
-                                <ol>
-                                    <li>
-                                        Download <strong>both</strong> of the following files:
-                                        <p><a href="{% url corehq.apps.app_manager.views.download_jad domain saved_app.id %}">Download CommCare.jad</a></p>
-                                        <p><a href="{% url corehq.apps.app_manager.views.download_jar domain saved_app.id %}">Download CommCare.jar</a></p>
-                                    </li>
-                                    <li>
-                                        For help on how to install, see our <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Set+Up+Mobile+Phone">Set Up Mobile Phone</a>.
-                                    </li>
-                                    <li>
-                                        If you have any issues with the installation, please refer to
-                                        <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Troubleshooting+Phone+Problems">Troubleshooting Phone Problems</a>.
-                                    </li>
-                                </ol>
-
-                            </div>
-                        </li>
-                        <li>
-                            <a class="dialog_opener" href="">Send to Phones by SMS</a>
-                            <div class="dialog send_app_dialog" title="Send Out Version {{ saved_app.version }}">
-                                <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
-                                    <label>Send to: </label>
-                                    <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
-                                    <textarea name="message">Update to CommCare "{{ app.name }}" version {{ saved_app.version }}: {{ saved_app.short_url }}</textarea>
-                                    <input type="submit" value="Send"/>
-                                </form>
-                            </div>
-                        </li>
-                        <li>
-                            <a href="{% url corehq.apps.app_manager.views.odk_install domain saved_app.id %}" class="odk_install">Download to CommCare ODK</a>
-                        </li>
-                    </ul>
+            <td class="nowrap">
+                <div class="btn-group">
+                    <span class="btn btn-primary" data-toggle="modal" data-target="#{{ saved_app.id }}_modal">
+                        Deploy
+                    </span>
                 </div>
             </td>
             {% if edit %}
@@ -255,4 +227,142 @@
         </tr>
         {% endfor %}
     </table>
+{% endblock %}
+
+{% block modals %}
+{{ block.super }}
+    {% for saved_app in saved_apps %}
+        <div id="{{ saved_app.id }}_modal" class="modal hide fade">
+            <div class="modal-header">
+            <a href="#" class="close" data-dismiss="modal">×</a>
+            <h3>Deploying version {{ saved_app.version }}</h3>
+            </div>
+            <div class="modal-body">
+            {% if saved_app.case_sharing and users_cannot_share|length > 0 %}
+                <p>
+                    <span class="label label-important">Warning!</span>
+                    The following users cannot use this case sharing app because they have either more or less than one group. To fix this, please <a href="{% url commcare_users domain %}?cannot_share=true">edit their group settings</a> so that they all belong to exactly one group.
+                </p>
+                <ul>
+                    {% for user in users_cannot_share %}
+                        <li>{{ user.raw_username }}</li>
+                    {% endfor %}
+                </ul>
+                <p>
+                    <a href="{% url commcare_users domain %}?cannot_share=true" class="btn">Edit mobile users</a>
+                    <a href="#{{ saved_app.id }}_accordion" class="btn showAccordionButton">Deploy anyway</a>
+                </p>
+            {% endif %}
+            <div class="accordion{% if saved_app.case_sharing and users_cannot_share|length > 0 %} hide {% endif %}" id="{{ saved_app.id }}_accordion">
+                <div class="accordion-group">
+                  <div class="accordion-heading">
+                    <a class="accordion-toggle"{% if saved_app.cloudcare_enabled %} data-toggle="collapse" data-parent="#{{ saved_app.id }}_accordion" href="#{{ saved_app.id }}_preview"{% else %} href="{% url emulator domain saved_app.id %}"{% endif %}>
+                      Preview
+                      {% if not saved_app.cloudcare_enabled %}
+                        in emulator
+                      {% endif %}
+                    </a>
+                  </div>
+                  <div id="{{ saved_app.id }}_preview" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                      <p>
+                            Preview in <a href="{% url emulator domain saved_app.id %}">the emulator</a> or in <a href="{% url cloudcare_get_app domain saved_app.id %}">CloudCare</a>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="accordion-group">
+                  <div class="accordion-heading">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#{{ saved_app.id }}_accordion" href="#{{ saved_app.id }}_j2me">
+                      Download to J2ME
+                    </a>
+                  </div>
+                  <div id="{{ saved_app.id }}_j2me" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                      <ol>
+                        <li>
+                            Download <strong>both</strong> of the following files:
+                            <p><a href="{% url corehq.apps.app_manager.views.download_jad domain saved_app.id %}">Download CommCare.jad</a></p>
+                            <p><a href="{% url corehq.apps.app_manager.views.download_jar domain saved_app.id %}">Download CommCare.jar</a></p>
+                        </li>
+                        <li>
+                            For help on how to install, see our <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Set+Up+Mobile+Phone">Set Up Mobile Phone</a>.
+                        </li>
+                        <li>
+                            If you have any issues with the installation, please refer to
+                            <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Troubleshooting+Phone+Problems">Troubleshooting Phone Problems</a>.
+                        </li>
+                    </ol>
+                    </div>
+                  </div>
+                </div>
+                <div class="accordion-group">
+                  <div class="accordion-heading">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#{{ saved_app.id }}_accordion" href="#{{ saved_app.id }}_sms">
+                      Send J2ME app to phone via SMS
+                    </a>
+                  </div>
+                  <div id="{{ saved_app.id }}_sms" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                      <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
+                        <label>Send to: </label>
+                        <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
+                        <br />
+                        {% if app.name|length <= 12 %}
+                            <textarea name="message">Update to CommCare: {{ saved_app.short_url }} ("{{ app.name }}" v.{{ saved_app.version }})</textarea>
+                        {% else %}
+                            <textarea name="message">Update to CommCare: {{ saved_app.short_url }} ("{{ app.name|slice:":10" }}.." v.{{ saved_app.version }})</textarea>
+                        {% endif %}
+                        <br />
+                        <input type="submit" class="btn" value="Send"/>
+                    </form>
+                    </div>
+                  </div>
+                </div>
+                <div class="accordion-group">
+                  <div class="accordion-heading">
+                    <a class="accordion-toggle odk_install" href="{% url corehq.apps.app_manager.views.odk_install domain saved_app.id %}">Download to CommCare ODK (Android)</a>
+                  </div>
+                </div>
+                {% ifchanged %}
+                            {% if multimedia %}
+                <div class="accordion-group">
+                  <div class="accordion-heading">
+                    <a class="accordion-toggle" href="{% if multimedia.notice %}#{{ saved_app.id }}_multimedia{% else %}{% url download_multimedia_zip domain app.id %}{% endif %}" {% if multimedia.notice %}data-toggle="collapse" data-target="#{{ saved_app.id }}_multimedia"{% endif %}>Download Multimedia Zip</a>
+                  </div>
+                  <div class="accordion-body collapse" id="{{ saved_app.id }}_multimedia">
+                    <div class="accordion-inner">
+                    {% if multimedia.missing_image_refs > 0 or multimedia.missing_audio_refs > 0 %}
+                        <p>
+                            Your multimedia zip is missing {{ multimedia.missing_image_refs }} image reference{{ multimedia.missing_image_refs|pluralize }} and
+                            {{ multimedia.missing_audio_refs }} audio reference{{ multimedia.missing_audio_refs|pluralize }}. Your app will likely crash unless this
+                            is resolved.
+                        </p>
+                    {% endif %}
+                    {% if multimedia.errors %}
+                        <p>
+                            Your application contains errors, therefore, your multimedia could not properly be assembled. Please fix your errors and any missing
+                            multimedia references that are found afterward before using this file.
+                        </p>
+                    {% endif %}
+                    <a class="btn btn-warning" href="{% url download_multimedia_zip domain app.id %}">Download Anyway</a>
+                    </div>
+                  </div>
+                </div>
+                            {% endif %}
+                        {% endifchanged %}
+                {% if request.user.is_superuser %}
+                <div class="accordion-group">
+                  <div class="accordion-heading">
+                    <a class="accordion-toggle" href="{% url download_index domain saved_app.id %}">View Source Files</a>
+                  </div>
+                </div>
+                {% endif %}
+            </div>
+            </div>
+            <div class="modal-footer">
+            <a href="#" class="btn" data-dismiss="modal">Close</a>
+            </div>
+        </div>
+    {% endfor %}
 {% endblock %}

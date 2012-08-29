@@ -1,7 +1,7 @@
 <div class="row">
     <div class="span8">
         <div class="page-header">
-            <h1>Welcome back to CommCare HQ!<br />
+            <h1>Welcome back to {% if request.GET.domain %}CloudCare{% else %}CommCare HQ{% endif %}!<br />
                 <small>
                 {% if next %}
                     You will be transferred to your original destination after you sign in.
@@ -20,6 +20,9 @@
             {% endfor %}
             {% if next %}
                 <input name="next" type="hidden" value="{{next}}" />
+            {% endif %}
+            {% if request.GET.domain %}
+                <input name="domain" type="hidden" value="{{ request.GET.domain }}"/>
             {% endif %}
             <fieldset>
             {% for field in form.visible_fields %}

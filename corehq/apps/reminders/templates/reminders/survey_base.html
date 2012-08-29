@@ -1,0 +1,78 @@
+{% extends 'hqwebapp/two_column.html' %}
+
+{% load hq_shared_tags %}
+
+{% block head %}
+    {{ block.super }}
+    <style>
+        h1 {
+            font-size: 2em;
+            text-align: center;
+        }
+        table {
+            margin: auto;
+        }
+        #main_container {
+            padding: 10px;
+        }
+        .light {
+            color: #999;
+        }
+        .horizontal li {
+            display: inline;
+            border-left: 1px solid #CCC;
+            padding-left: .5em;
+        }
+        .horizontal li:first-child {
+            border-left: none;
+        }
+        tr.separator {
+            background-color: #EEE;
+            border: 1px solid #CCC;
+        }
+        .center {
+            text-align: center;
+        }
+        h2 {
+            border-bottom: 1px solid #59C;
+            color: #59C;
+        }
+        .errorlist ul {
+            margin: 0;
+            padding: 0;
+        }
+        .errorlist li {
+            background-color: #F88;
+            border: 1px solid #A44;
+            padding: 2px;
+        }
+        input.tiny {
+            width: 20px;
+        }
+        .form-block {
+            border: 1px solid #EAEAFF;
+            background-color: #FAFAFF;
+            padding: 20px;
+        }
+    </style>
+{% endblock %}
+
+{% block sidebar %}
+    {% url survey_list domain as default_url %}
+    {% url sample_list domain as sample_list_url %}
+    <nav>
+        <ul class="nav nav-list">
+            <li class="nav-header">Survey Management</li>
+            <li{% is_url_active request sample_list_url %}><a href="{{ sample_list_url }}">Samples</a></li>
+            {% block sample_nav %}{% endblock %}
+            <li{% ifequal request.path_info default_url %} class="active"{% endifequal %}><a href="{{ default_url }}">Surveys</a></li>
+            {% block survey_nav %}{% endblock %}
+        </ul>
+    </nav>
+{% endblock %}
+
+{% block main_column %}
+    {% block survey_content %}
+    {% endblock %}
+{% endblock %}
+

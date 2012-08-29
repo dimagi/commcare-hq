@@ -5,14 +5,24 @@
 {% load timezone_tags %}
 {% load i18n %}
 
+
+
 {% block head %}{{ block.super }}
-    <link rel="stylesheet" href="{% static 'hq-bootstrap/css/old/app_manager.css' %}"/>
+    <link rel="stylesheet" href="{% static 'hq_bootstrap/css/old/app_manager.css' %}"/>
     {% include "imports/jqmodal.html" %}
     <link href="{% static 'formdesigner/css/chosen.css' %}" rel="stylesheet" />
     <style>
         .hq-oldstyle .nav-pills .active > a {
             color: white;
             background-color: #1557A2;
+        }
+        /* stupid hacks to make bootstrap btns not look bad */
+        .hq-oldstyle a.btn {
+            text-decoration: none;
+            color: black; /* i think this is the wrong color - maybe like #CCC or something is right? */
+        }
+        .hq-oldstyle a.btn-primary, .hq-oldstyle a.btn-info {
+            color: white;
         }
         #release-manager-nav {
             float: right;
@@ -127,12 +137,14 @@
             }
         });
     });
+
+
     </script>
 {% endblock %}
 
 {% block content %}
     <input type="hidden" name="edit_mode" value="{% if edit %}true{% else %}false{% endif %}" />
-    {% include "sms/partials/sms_autocomplete.html" %}
+    {% comment %}{% include "sms/partials/sms_autocomplete.html" %}{% endcomment %}
     <div id="main_container">
 
         {% if app %}
@@ -147,36 +159,39 @@
             <ul>
                 {% if request.couch_user.can_edit_apps %}
                 <li>
-                    <div id="new_app_menu">
-                        <span>New Application</span>
-                        <ul>
-                            <li>
-                                <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
+                    <div>
+                        <div class="btn-group">
+                            <span class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
+                                <i class="icon-hq-white icon-hq-logo"></i>
+                                New Application
+                                <span class="caret"></span>
+                            </span>
+                            <ul class="dropdown-menu">
+                                <li class="form" data-action="{% url corehq.apps.app_manager.views.new_app domain %}" data-method="post">
                                     <input type="hidden" name="type" value="Application" />
                                     <input type="hidden" name="application_version" value="1.0" />
                                     <a href="#" class="submit">{% trans 'Blank Application' %}</a>
-                                </form>
-                            </li>
-                            <li>
-                                <form action="{% url corehq.apps.app_manager.views.import_app domain %}" method="post">
+                                </li>
+                                <li class="form" data-action="{% url corehq.apps.app_manager.views.import_app domain %}" data-method="post">
                                     <input type="hidden" name="app_id" value="example--hello-world"/>
                                     <a href="#" class="submit">{% trans 'From Example: Hello World' %}</a>
-                                </form>
-                            </li>
-                            <li>
-                                <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
+                                </li>
+                                <li class="form" data-action="{% url corehq.apps.app_manager.views.new_app domain %}" data-method="post">
                                     <input type="hidden" name="type" value="Application" />
                                     <input type="hidden" name="application_version" value="2.0" />
                                     <a href="#" class="submit">{% trans 'Blank 2.x Application (Advanced Users Only)' %}</a>
-                                </form>
-                            </li>
-                            <li>
-                                <form action="{% url corehq.apps.app_manager.views.new_app domain %}" method="post">
+                                </li>
+                                <li class="form" data-action="{% url corehq.apps.app_manager.views.new_app domain %}" data-method="post">
                                     <input type="hidden" name="type" value="RemoteApp" />
                                     <a href="#" class="submit">{% trans 'Remote App (Advanced Users Only)' %}</a>
-                                </form>
-                            </li>
-                        </ul>
+                                </li>
+                                {% if request.couch_user.is_previewer %}
+                                <li>
+                                    <a href="{% url appstore %}">{% trans 'Visit CommCare Exchange to copy existing app...' %}</a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
                     </div>
                 </li>
                 {% endif %}
@@ -225,7 +240,7 @@
             </div>
             {% if applications and request.couch_user.can_edit_apps %}
                 <div id="edit">
-                    Switch to: 
+                    Switch to:
                     {% if edit %}
                         <a href="{% urlencode request.path request.GET with "edit" as "false" %}">
                             Read Only
@@ -249,7 +264,10 @@
                 </p>
                 <form action="{% url new_app domain %}">
                     <input type="hidden" name="type" value="Application">
-                    <a href="#" class="submit">Click here to create your first app.</a>
+                    <a href="#" class="submit">Create a blank app</a>
+                    {% if request.couch_user.is_previewer %}
+                        or <a href="{% url appstore %}">copy an existing app from CommCare Exchange</a>.
+                    {% endif %}
                 </form>
             </div>
         {% endif %}

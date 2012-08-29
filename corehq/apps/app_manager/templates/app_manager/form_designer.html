@@ -18,15 +18,57 @@
     <script src="{% static 'formdesigner/js/model.js' %}"></script>
     <script src="{% static 'formdesigner/js/controller.js' %}"></script>
     <script src="{% static 'formdesigner/js/widgets.js' %}"></script>
+{% include 'hqmedia/includes/yui_upload.html' %}
+{#<script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.uploader.js' %}"></script>#}
+<script type="text/javascript" src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'hqwebapp/javascripts/underscore-1.3.1.js' %}"></script>
+{#<script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.multimedia_map.js' %}"></script>#}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script>
+{#        var uploadUrl = "{{ STATIC_URL }}hqmedia/js";#}
+{#        var lookupUrlsUrl = '{% url hqmedia_media_urls domain app.get_id %}';#}
+{##}
+{#        var searchUrl = '{% url hqmedia_search domain app.get_id %}';#}
+{#        var chooseImageUrl = '{% url hqmedia_choose_media domain app.get_id %}';#}
         $(function () {
 
             $("#edit").hide();
 
             $('#breadcrumbs > ul > li:not(:first)').prepend($('<div/>').addClass('ui-icon ui-icon-carat-1-e'));
+
+{#        hqimage_uploader = new HQMediaUploader({#}
+{#            uploadElem: '#hqmedia-upload-Image',#}
+{#            fileFilters: new Array({description:"Images", extensions:"*.jpg;*.png;*.gif"}),#}
+{#            uploadURL: '{% url hqmedia_handle_uploaded domain app.get_id %}',#}
+{#            buttonImage: '{% static 'hqmedia/img/select_image_button.png' %}',#}
+{#                onSuccess: function (event, data) {#}
+{#            console.log(data);#}
+{#        },#}
+{#        singleFileUpload: true,#}
+{#                uploadParams: {},#}
+{#        modalClass: '.hqm-modal-image',#}
+{#                mediaType: 'hquimage_',#}
+{#                swfLocation: '{% static 'hqmedia/yui/uploader/uploader.swf' %}'#}
+{#        });#}
+{#        hqimage_uploader.render();#}
+{##}
+{#        hqaudio_uploader = new HQMediaUploader({#}
+{#            uploadElem: '#hqmedia-upload-Audio',#}
+{#            fileFilters: new Array({description:"Audio", extensions:"*.mp3"}),#}
+{#            uploadURL: '{% url hqmedia_handle_uploaded domain app.get_id %}',#}
+{#            buttonImage: '{% static 'hqmedia/img/select_audio_button.png' %}',#}
+{#                onSuccess: function (event, data) {#}
+{#            console.log(data);#}
+{#        },#}
+{#        singleFileUpload: true,#}
+{#                uploadParams: {},#}
+{#        modalClass: '.hqm-modal-audio',#}
+{#                mediaType: 'hquaudio_',#}
+{#                swfLocation: '{% static 'hqmedia/yui/uploader/uploader.swf' %}'#}
+{#        });#}
+{#        hqaudio_uploader.render();#}
 
             formdesigner.launch({
                 rootElement: $("#formdesigner"),

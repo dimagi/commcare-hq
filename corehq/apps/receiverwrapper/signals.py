@@ -6,6 +6,7 @@ from receiver.signals import form_received, successful_form_received
 import logging
 import re
 import types
+from couchforms.signals import submission_error_received
 
 DOMAIN_RE = re.compile(r'^/a/(\S+)/receiver(/(.*))?/?$')
 APP_ID_RE = re.compile(r'^/a/\S+/receiver/(.*)/$')
@@ -17,6 +18,9 @@ def scrub_meta(sender, xform, **kwargs):
                     "DeviceID": "deviceID",
                     "uid": "instanceID"}
 
+    if not hasattr(xform, "form"):
+        return
+    
     # hack to make sure uppercase meta still ends up in the right place
     found_old = False
     if "Meta" in xform.form:
@@ -55,9 +59,10 @@ def _get_app_id(xform):
         return matches.groups()[0]
 
 def add_domain(sender, xform, **kwargs):
-    domain = _get_domain(xform)
-    if domain: 
-        xform['domain'] = domain
+    xform['domain'] = _get_domain(xform) or ""
+
+def add_export_tag(sender, xform, **kwargs):
+    if _get_domain(xform):
         xform['#export_tag'] = ["domain", "xmlns"]
         xform.save()
 
@@ -77,6 +82,11 @@ def create_case_repeat_records(sender, case, **kwargs):
     from corehq.apps.receiverwrapper.models import CaseRepeater
     create_repeat_records(CaseRepeater, case)
 
+def create_short_form_repeat_records(sender, xform, **kwargs):
+    from corehq.apps.receiverwrapper.models import ShortFormRepeater
+    xform.domain = _get_domain(xform)
+    create_repeat_records(ShortFormRepeater, xform)
+
 def create_repeat_records(repeater_cls, payload):
     domain = payload.domain
     if domain:
@@ -86,6 +96,12 @@ def create_repeat_records(repeater_cls, payload):
 
 form_received.connect(scrub_meta)
 form_received.connect(add_domain)
+form_received.connect(add_export_tag)
 form_received.connect(add_app_id)
+
+submission_error_received.connect(add_domain)
+submission_error_received.connect(add_app_id)
+
 successful_form_received.connect(create_form_repeat_records)
+successful_form_received.connect(create_short_form_repeat_records)
 case_post_save.connect(create_case_repeat_records)

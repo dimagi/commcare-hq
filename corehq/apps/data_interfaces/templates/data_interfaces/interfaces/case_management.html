@@ -1,0 +1,74 @@
+{% extends 'reports/async/tabular.html' %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% block js %} {{ block.super }}
+    <script src="{% static 'case/js/cheapxml.js' %}"></script>
+    <script type="text/javascript" src="{% static 'case/js/casexml.js' %}"></script>
+    <script type="text/javascript" src="{% static 'data_interfaces/ko/case_management.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+<script type="text/javascript">
+
+    var caseManagementModel = new CaseManagement( {
+        users: {{ users|JSON }},
+        groups: {{ groups|JSON }},
+        receiverUrl: '{% url receiver_post domain %}',
+        enddate: '{{ datespan.enddate_param_utc }}',
+        webUserID: '{{ request.couch_user.userID }}'
+    });
+    ko.applyBindings(caseManagementModel, $('#case-management')[0]);
+
+    $(function () {
+        $('#case-management a.select-all').click(function () {
+            $('#case-management input.selected-commcare-case').attr('checked', true).change();
+            return false;
+        });
+
+        $('#case-management a.select-none').click(function() {selectNone(); return false;});
+        $('#case-management .dataTables_paginate a').mouseup(selectNone);
+        $('#case-management .dataTables_length select').change(selectNone);
+
+        function selectNone() {
+            $('#case-management input.selected-commcare-case:checked').attr('checked', false).change();
+            ko.cleanNode($('#case-management table tbody')[0]);
+            ko.applyBindings(caseManagementModel, $('#case-management table tbody')[0]);
+        }
+
+    });
+</script>
+{% endblock %}
+
+{% block reportcontent %}
+<div id="case-management">
+    <div class="row-fluid">
+        <form class="well form-inline" style="margin: 1em; display: none;" data-bind="submit: updateCaseOwners, caseReassignmentForm: selected_cases">
+            <label for="reassign_owner_type_select">Reassign selected cases to</label>
+            <select name="reassign_owner_type" id="reassign_owner_type_select" class="span2" data-bind="options: owner_types, optionsCaption: 'Select Type...', grabUniqueDefault: selected_owner_types, event: {change: updateSelectedOwnerType}"></select>
+            <span data-bind="visible: should_show_owners">
+                <label for="reassign_owner_select">named</label>
+                <select name="reassign_owner" id="reassign_owner_select" data-bind="grabUniqueDefault: selected_owners, options: available_owners, optionsText: 'name', optionsValue: 'ownerid', optionsCaption: 'Select New Owner...', event: {change: updateSelectedOwner}"></select>
+            </span>
+            <button type="submit" data-bind="hqbSubmitReady: enableSubmit" class="btn disabled">Reassign</button>
+        </form>
+    </div>
+    {{ block.super }}
+</div>
+{% endblock %}
+
+{% block modals %} {{ block.super }}
+    <div class="modal hide fade" id="caseManagementStatusModal">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h3>Case Reassignment</h3>
+        </div>
+        <div class="modal-body">
+            --
+        </div>
+        <div class="modal-footer">
+            <button id="bug-report-cancel" class="btn" data-dismiss="modal">Close</button>
+        </div>
+    </div>
+{% endblock %}

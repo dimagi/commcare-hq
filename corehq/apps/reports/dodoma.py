@@ -29,9 +29,10 @@ def household_verification(request, domain):
         raise Http404
     report = call_as_view(_household_verification_json, request.GET, domain=domain)
     report['name'] = "Household Verification"
-    return render_to_response(request, 'reports/generic_report.html', {
+    return render_to_response(request, 'reports/async/tabular.html', {
         "domain": domain,
         "report": report,
+        "report_base": "reports/base_template.html"
     })
 
 @login_and_domain_required

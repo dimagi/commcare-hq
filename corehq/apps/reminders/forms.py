@@ -1,18 +1,20 @@
 import json
 import re
+from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.forms.fields import *
 from django.forms.forms import Form
 from django.forms import Field, Widget, Select, TextInput
 from django.utils.datastructures import DotExpandedDict
-from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_USER, RECIPIENT_CASE, MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET
+from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_USER, RECIPIENT_CASE, MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET, SurveySample
 from dimagi.utils.parsing import string_to_datetime
 
 METHOD_CHOICES = (
     ('sms', 'SMS'),
     #('email', 'Email'),
     #('test', 'Test'),
-    ('callback', 'SMS/Callback')
+    ('survey', 'SMS Survey'),
+    ('callback', 'SMS/Callback'),
 )
 
 RECIPIENT_CHOICES = (
@@ -71,6 +73,8 @@ class CaseReminderForm(Form):
         return message
 
 class EventWidget(Widget):
+    method = None
+    
     def value_from_datadict(self, data, files, name, *args, **kwargs):
         reminder_events_raw = {}
         for key in data:
@@ -82,6 +86,8 @@ class EventWidget(Widget):
         if len(event_dict) > 0:
             for key in sorted(event_dict["reminder_events"].iterkeys()):
                 events.append(event_dict["reminder_events"][key])
+        
+        self.method = data["method"]
         
         return events
 
@@ -117,18 +123,19 @@ class EventListField(Field):
                 raise ValidationError("Time must be in the format HH:MM.")
             
             message = {}
-            for key in e["messages"]:
-                language = e["messages"][key]["language"]
-                text = e["messages"][key]["text"]
-                if len(language.strip()) == 0:
-                    raise ValidationError("Please enter a language code.")
-                if len(text.strip()) == 0:
-                    raise ValidationError("Please enter a message.")
-                if language in message:
-                    raise ValidationError("You have entered the same language twice for the same reminder event.");
-                message[language] = text
+            if self.widget.method == "sms" or self.widget.method == "callback":
+                for key in e["messages"]:
+                    language = e["messages"][key]["language"]
+                    text = e["messages"][key]["text"]
+                    if len(language.strip()) == 0:
+                        raise ValidationError("Please enter a language code.")
+                    if len(text.strip()) == 0:
+                        raise ValidationError("Please enter a message.")
+                    if language in message:
+                        raise ValidationError("You have entered the same language twice for the same reminder event.");
+                    message[language] = text
             
-            if len(e["timeouts"].strip()) == 0:
+            if len(e["timeouts"].strip()) == 0 or self.widget.method != "callback":
                 timeouts_int = []
             else:
                 timeouts_str = e["timeouts"].split(",")
@@ -139,11 +146,18 @@ class EventListField(Field):
                     except Exception:
                         raise ValidationError("Callback timeout intervals must be a list of comma-separated numbers.")
             
+            form_unique_id = None
+            if self.widget.method == "survey":
+                form_unique_id = e.get("survey", None)
+                if form_unique_id is None:
+                    raise ValidationError("Please create a form for the survey first, and then create the reminder definition.")
+            
             events.append(CaseReminderEvent(
                 day_num = day
                ,fire_time = time
                ,message = message
                ,callback_timeout_intervals = timeouts_int
+               ,form_unique_id = form_unique_id
             ))
         
         if len(events) == 0:
@@ -157,7 +171,7 @@ class ComplexCaseReminderForm(Form):
     """
     nickname = CharField(error_messages={"required":"Please enter the name of this reminder definition."})
     case_type = CharField(error_messages={"required":"Please enter the case type."})
-    method = ChoiceField(choices=METHOD_CHOICES)
+    method = ChoiceField(choices=METHOD_CHOICES, widget=Select(attrs={"onchange":"method_changed();"}))
     recipient = ChoiceField(choices=RECIPIENT_CHOICES)
     start_match_type = ChoiceField(choices=MATCH_TYPE_DISPLAY_CHOICES, widget=Select(attrs={"onchange":"start_match_type_changed();"}))
     start_choice = ChoiceField(choices=START_CHOICES, widget=Select(attrs={"onchange":"start_choice_changed();"}))
@@ -222,6 +236,8 @@ class ComplexCaseReminderForm(Form):
                     timeouts_str.append(str(t))
                 ui_event["timeouts"] = ",".join(timeouts_str)
                 
+                ui_event["survey"] = e.form_unique_id
+                
                 events.append(ui_event)
         
         self.initial["events"] = events
@@ -268,5 +284,138 @@ class ComplexCaseReminderForm(Form):
             if value is None or value == "":
                 raise ValidationError("Please enter the name of the case property.")
             return value
+    
+    def clean_default_lang(self):
+        return self.cleaned_data.get("default_lang").strip()
+    
+    def clean(self):
+        cleaned_data = super(ComplexCaseReminderForm, self).clean()
+        
+        # Do validation on schedule length and minimum intraday ticks
+        
+        events = cleaned_data.get("events")
+        iteration_type = cleaned_data.get("iteration_type")
+        max_iteration_count = cleaned_data.get("max_iteration_count")
+        schedule_length = cleaned_data.get("schedule_length")
+        event_interpretation = cleaned_data.get("event_interpretation")
+        
+        if (events is not None) and (iteration_type is not None) and (max_iteration_count is not None) and (schedule_length is not None) and (event_interpretation is not None):
+            if event_interpretation == EVENT_AS_SCHEDULE:
+                if schedule_length < 1:
+                    self._errors["schedule_length"] = self.error_class(["Schedule length must be greater than 0."])
+                    del cleaned_data["schedule_length"]
+            else:
+                if schedule_length < 0:
+                    self._errors["schedule_length"] = self.error_class(["Days to wait cannot be a negative number."])
+                    del cleaned_data["schedule_length"]
+                elif (max_iteration_count != 1) and (schedule_length == 0):
+                    first = True
+                    minimum_tick = None
+                    for e in events:
+                        if first:
+                            minimum_tick = timedelta(days = e.day_num, hours = e.fire_time.hour, minutes = e.fire_time.minute)
+                            first = False
+                        else:
+                            this_tick = timedelta(days = e.day_num, hours = e.fire_time.hour, minutes = e.fire_time.minute)
+                            if this_tick < minimum_tick:
+                                minimum_tick = this_tick
+                    if minimum_tick < timedelta(hours = 1):
+                        self._errors["events"] = self.error_class(["Minimum tick for a schedule repeated multiple times intraday is 1 hour."])
+                        del cleaned_data["events"]
+        
+        # Ensure that there is a translation for the default language
+        
+        default_lang = cleaned_data.get("default_lang")
+        method = cleaned_data.get("method")
+        events = cleaned_data.get("events")
+        
+        if (default_lang is not None) and (method is not None) and (events is not None):
+            if (method == "sms" or method == "callback"):
+                for e in events:
+                    if default_lang not in e.message:
+                        self._errors["events"] = self.error_class(["Every message must contain a translation for the default language."])
+                        del cleaned_data["events"]
+                        break
+        
+        return cleaned_data
+
+
+
+class RecordListWidget(Widget):
+    
+    # When initialized, expects to be passed attrs={"input_name" : < first dot-separated name of all related records in the html form >}
+    
+    def value_from_datadict(self, data, files, name, *args, **kwargs):
+        input_name = self.attrs["input_name"]
+        raw = {}
+        for key in data:
+            if key.startswith(input_name + "."):
+                raw[key] = data[key]
+        
+        data_dict = DotExpandedDict(raw)
+        data_list = []
+        if len(data_dict) > 0:
+            for key in sorted(data_dict[input_name].iterkeys()):
+                data_list.append(data_dict[input_name][key])
+        
+        return data_list
+
+class RecordListField(Field):
+    required = None
+    label = None
+    initial = None
+    widget = None
+    help_text = None
+    
+    # When initialized, expects to be passed kwarg input_name, which is the first dot-separated name of all related records in the html form
+    
+    def __init__(self, required=True, label="", initial=[], widget=None, help_text="", *args, **kwargs):
+        self.required = required
+        self.label = label
+        self.initial = initial
+        self.widget = RecordListWidget(attrs={"input_name" : kwargs["input_name"]})
+        self.help_text = help_text
+    
+    def clean(self, value):
+        return value
+
+class SurveyForm(Form):
+    name = CharField()
+    waves = RecordListField(input_name="wave")
+    followups = RecordListField(input_name="followup")
+    samples = RecordListField(input_name="sample")
+    send_automatically = BooleanField(required=False)
+    send_followup = BooleanField(required=False)
+    
+    def clean_waves(self):
+        value = self.cleaned_data["waves"]
+        return value
+    
+    def clean_followups(self):
+        value = self.cleaned_data["followups"]
+        return value
+    
+    def clean_samples(self):
+        value = self.cleaned_data["samples"]
+        return value
+
+    def clean(self):
+        cleaned_data = super(SurveyForm, self).clean()
+        return cleaned_data
+
+
+class SurveySampleForm(Form):
+    name = CharField()
+    sample_contacts = RecordListField(input_name="sample_contact")
+    
+    def clean_sample_contacts(self):
+        value = self.cleaned_data["sample_contacts"]
+        if len(value) == 0:
+            raise ValidationError("Please add at least one contact.");
+        for contact in value:
+            if contact["id"] == "" or contact["phone_number"] == "":
+                raise ValidationError("Please enter all fields.")
+        return value
+
 
 

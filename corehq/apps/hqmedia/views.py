@@ -1,4 +1,6 @@
+import logging
 import uuid
+from corehq.apps.app_manager.views import require_can_edit_apps
 import magic
 from django.conf import settings
 from couchdbkit.exceptions import ResourceNotFound
@@ -13,26 +15,93 @@ from corehq.apps.hqmedia.forms import HQMediaZipUploadForm, HQMediaFileUploadFor
 from corehq.apps.hqmedia.models import *
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.app_manager.models import Application, get_app
+from corehq.apps.domain.models import Domain
 from dimagi.utils.web import render_to_response
 
 X_PROGRESS_ERROR = 'Server Error: You must provide X-Progress-ID header or query param.'
 
+def get_media_type(media_type):
+    return {
+        'CommCareImage': CommCareImage,
+        'CommCareAudio': CommCareAudio,
+    }[media_type]
+
 def download_media(request, media_type, doc_id):
     try:
-        media = eval(media_type)
+        media = get_media_type(media_type)
         try:
-            media = media.get(doc_id)
+            try:
+                media = media.get(doc_id)
+            except Exception:
+                logging.error("looks like %r.get(%r) failed" % (media, doc_id))
             data, content_type = media.get_display_file()
             response = HttpResponse(mimetype=content_type)
             response.write(data)
             return response
         except ResourceNotFound:
-            pass
-    except NameError:
-        pass
-    return HttpResponseServerError("No Media Found")
+            raise Http404("No Media Found")
+    except KeyError:
+        raise Http404("unknown media type %s" % media_type)
 
-@require_permission('edit-apps')
+
+
+@require_can_edit_apps
+def search_for_media(request, domain, app_id):
+    media_type = request.GET['t']
+    if media_type == 'Image':
+        files = CommCareImage.search(request.GET['q'])
+    elif media_type == 'Audio':
+        files = CommCareAudio.search(request.GET['q'])
+    else:
+        raise Http404()
+    return HttpResponse(simplejson.dumps([
+        {'url': i.url(),
+         'licenses': map(LICENSES.__getitem__, i.licenses.values()),
+         'tags': [tag for tags in i.tags.values() for tag in tags],
+         'm_id': i._id} for i in files]))
+
+@require_can_edit_apps
+def choose_media(request, domain, app_id):
+    # TODO: Add error handling
+    app = get_app(domain, app_id)
+    media_type = request.POST['media_type']
+    media_id = request.POST['id']
+    if media_type == 'Image':
+        file = CommCareImage.get(media_id)
+    elif media_type == 'Audio':
+        file = CommCareImage.get(media_id)
+    else:
+        raise Http404()
+
+    if file is None or not file.is_shared:
+        return HttpResponse(simplejson.dumps({
+            'match_found': False
+        }))
+
+    file.add_domain(domain)
+    app.create_mapping(file, request.POST['path'])
+    if media_type == 'Image':
+        return HttpResponse(simplejson.dumps({
+            'match_found': True,
+            'image': {'m_id': file._id, 'url': file.url()},
+            'file': True
+        }))
+    elif media_type == 'Audio':
+        return HttpResponse(simplejson.dumps({'match_found': True, 'audio': {'m_id': file._id, 'url': file.url()}}))
+    else:
+        raise Http404()
+
+@require_can_edit_apps
+def media_urls(request, domain, app_id):
+    app = get_app(domain, app_id)
+    refs, missing_refs = app.get_template_map(request.GET.getlist('path[]'))
+    pathUrls = {}
+    for ref in refs:
+        pathUrls[ref['path']] = ref
+
+    return HttpResponse(simplejson.dumps(pathUrls))
+
+@require_can_edit_apps
 def media_map(request, domain, app_id):
     app = get_app(domain, app_id)
     sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
@@ -52,7 +121,7 @@ def media_map(request, domain, app_id):
         "missing_audio_refs": missing_audio_refs
     })
 
-@require_permission('edit-apps')
+@require_can_edit_apps
 def upload(request, domain, app_id):
     app = get_app(domain, app_id)
     DNS_name = "http://"+Site.objects.get(id = settings.SITE_ID).domain
@@ -71,7 +140,7 @@ def uploaded(request, domain, app_id):
     else:
         specific_params = {}
 
-    replace_existing = request.POST.get('replace_existing', True);
+    replace_existing = request.POST.get('replace_existing', True)
     try:
         uploaded_file = request.FILES.get('Filedata')
         data = uploaded_file.file.read()
@@ -97,7 +166,8 @@ def uploaded(request, domain, app_id):
                 file_type = "audio"
             else:
                 raise Exception("Unsupported content type.")
-            match_found, match_map, errors = matcher.match_file(uploaded_file, replace_existing_media=replace_existing)
+            tags = [t.strip() for t in request.POST.get('tags', '').split(' ')]
+            match_found, match_map, errors = matcher.match_file(uploaded_file, replace_existing_media=replace_existing, shared=request.POST.get('shared', False), tags=tags, license=Domain.get_by_name(domain).license)
             response = {"match_found": match_found,
                         file_type: match_map,
                         "file": True}

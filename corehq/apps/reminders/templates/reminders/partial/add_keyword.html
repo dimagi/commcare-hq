@@ -1,0 +1,47 @@
+{% extends "reminders/reminders_base.html" %}
+
+{% block head %}{{ block.super }}
+<style type="text/css">
+    .errorlist ul {
+        margin: 0;
+        padding: 0;
+    }
+    .errorlist li {
+        background-color: #F88;
+        border: 1px solid #A44;
+        padding: 2px;
+    }
+</style>
+{% endblock %}
+
+
+{% block reminders_content %}
+
+<br />
+<ul class="errorlist">
+    {% for e in errors %}
+    <li>{{ e }}</li>
+    {% endfor %}
+</ul>
+
+<form action="" method="post">
+    <table>
+        <tr>
+            <th>Keyword:</th>
+            <td><input type="text" name="keyword" value="{{ keyword.keyword|default:'' }}"/></td>
+        </tr>
+        <tr>
+            <th>Survey:</th>
+            <td>
+                <select name="survey">
+                {% for f in form_list %}
+                    <option value="{{ f.code }}" {% if f.code == keyword.form_unique_id %}selected="selected"{% endif %}>{{ f.name }}</option>
+                {% endfor %}
+                </select>
+            </td>
+        </tr>
+    </table>
+    <input type="submit" name="Submit" />
+</form>
+
+{% endblock %}

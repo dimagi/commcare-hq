@@ -1,9 +1,13 @@
 from datetime import datetime, timedelta
 import json
-from corehq.apps.reports import util, standard
-from corehq.apps.reports.models import FormExportSchema
+from corehq.apps.reports import util
+from corehq.apps.reports._global import inspect, export
+from corehq.apps.reports.export import BulkExportHelper, ApplicationBulkExportHelper, CustomBulkExportHelper
+from corehq.apps.reports.models import FormExportSchema,\
+    HQGroupExportConfiguration
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
+from corehq.apps.users.models import Permissions
 import couchexport
 from couchexport.export import UnsupportedExportFormat, export_raw
 from couchexport.util import SerializableFunction
@@ -29,7 +33,7 @@ from casexml.apps.case.export import export_cases_and_referrals
 from corehq.apps.reports.display import xmlns_to_name
 from couchexport.schema import build_latest_schema
 from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
-    ExportTable, Format, FakeSavedExportSchema
+    ExportTable, Format, FakeSavedExportSchema, SavedBasicExport
 from couchexport import views as couchexport_views
 from couchexport.shortcuts import export_data_shared, export_raw_data,\
     export_response
@@ -40,6 +44,8 @@ from fields import FilterUsersField
 from util import get_all_users_by_domain
 from corehq.apps.hqsofabed.models import HQFormData
 from StringIO import StringIO
+from corehq.apps.app_manager.util import get_app_id
+from corehq.apps.groups.models import Group
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -49,16 +55,22 @@ datespan_default = datespan_in_request(
     default_days=7,
 )
 
-require_form_export_permission = require_permission('view-report', 'corehq.apps.reports.standard.ExcelExportReport', login_decorator=None)
-require_case_export_permission = require_permission('view-report', 'corehq.apps.reports.standard.CaseExportReport', login_decorator=None)
+require_form_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports._global.export.ExcelExportReport', login_decorator=None)
+require_case_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports._global.export.CaseExportReport', login_decorator=None)
+require_can_view_all_reports = require_permission(Permissions.view_reports)
+
 @login_and_domain_required
-def default(request, domain, template="reports/report_base.html"):
-    context = {
-        'domain': domain,
-        'slug': None,
-        'report': {'name': "Select a Report to View"}
-    }
-    return render_to_response(request, template, context)
+def default(request, domain, template="reports/base_template.html"):
+    return render_to_response(request, template, dict(
+        domain=domain,
+        report=dict(
+            title="Select a Report to View",
+            show=request.couch_user.can_view_reports or
+                 request.couch_user.get_viewable_reports,
+            slug=None,
+            is_async=True
+        )
+    ))
 
 @login_or_digest
 @require_form_export_permission
@@ -112,7 +124,7 @@ def export_data(req, domain):
         messages.error(req, "Sorry, there was no data found for the tag '%s'." % export_tag)
         next = req.GET.get("next", "")
         if not next:
-            next = reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug])
+            next = export.ExcelExportReport.get_url(domain)
         return HttpResponseRedirect(next)
 
 @require_form_export_permission
@@ -122,13 +134,11 @@ def export_data_async(request, domain):
     """
     Download all data for a couchdbkit model
     """
-
     try:
         export_tag = json.loads(request.GET.get("export_tag", "null") or "null")
         export_type = request.GET.get("type", "form")
     except ValueError:
         return HttpResponseBadRequest()
-
     assert(export_tag[0] == domain)
 
     filter = util.create_export_filter(request, domain, export_type=export_type)
@@ -186,7 +196,7 @@ class CustomExportHelper(object):
 @login_or_digest
 @require_form_export_permission
 @datespan_default
-def export_default_or_custom_data(request, domain, export_id=None):
+def export_default_or_custom_data(request, domain, export_id=None, bulk_export=False):
     """
     Export data from a saved export schema
     """
@@ -216,11 +226,25 @@ def _export_default_or_custom_data(request, domain, export_id=None, deid_functio
     export_type = request.GET.get("type", "form")
     previous_export_id = request.GET.get("previous_export", None)
     filename = request.GET.get("filename", None)
+    max_column_size = int(request.GET.get("max_column_size", 2000))
 
     filter = util.create_export_filter(request, domain, export_type=export_type)
+    if bulk_export:
+        try:
+            is_custom = json.loads(request.GET.get("is_custom", "false"))
+            export_tags = json.loads(request.GET.get("export_tags", "null") or "null")
+        except ValueError:
+            return HttpResponseBadRequest()
 
-    if export_id:
-        export_object = CustomExportHelper(request, domain, export_id).custom_export
+        export_helper = CustomBulkExportHelper() if is_custom else ApplicationBulkExportHelper()
+        return export_helper.prepare_export(export_tags, filter, domain=domain)
+
+    elif export_id:
+        # this is a custom export
+        try:
+            export_object = CustomExportHelper(request, domain, export_id).custom_export
+        except ResourceNotFound:
+            raise Http404()
     else:
         if not async:
             # this function doesn't support synchronous export without a custom export object
@@ -232,17 +256,16 @@ def _export_default_or_custom_data(request, domain, export_id=None, deid_functio
         except ValueError:
             return HttpResponseBadRequest()
         assert(export_tag[0] == domain)
-
         export_object = FakeSavedExportSchema(index=export_tag)
 
     if deid_function:
         export_object.transform = deid_function
 
     if async:
-        return export_object.export_data_async(filter, filename, previous_export_id, format=format)
+        return export_object.export_data_async(filter, filename, previous_export_id, format=format, max_column_size=max_column_size)
     else:
         if not next:
-            next = reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug])
+            next = export.ExcelExportReport.get_url(domain)
         resp = export_object.download_data(format, filter=filter)
         if resp:
             return resp
@@ -288,14 +311,14 @@ def custom_export(req, domain):
             saved_export.app_id = app_id
         return render_to_response(req, "reports/reportdata/customize_export.html",
                                   {"saved_export": saved_export,
-                                   "slug": standard.ExcelExportReport.slug, 
+                                   "slug": export.ExcelExportReport.slug,
                                    "table_config": saved_export.table_configuration[0],
                                    "domain": domain})
     else:
         messages.warning(req, "<strong>No data found for that form "
                       "(%s).</strong> Submit some data before creating an export!" % \
-                      xmlns_to_name(domain, export_tag[1]), extra_tags="html")
-        return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug]))
+                      xmlns_to_name(domain, export_tag[1], app_id=None), extra_tags="html")
+        return HttpResponseRedirect(export.ExcelExportReport.get_url(domain))
 
 @require_form_export_permission
 @login_and_domain_required
@@ -303,7 +326,10 @@ def edit_custom_export(req, domain, export_id):
     """
     Customize an export
     """
-    helper = CustomExportHelper(req, domain, export_id)
+    try:
+        helper = CustomExportHelper(req, domain, export_id)
+    except ResourceNotFound:
+        raise Http404()
     if req.method == "POST":
         helper.update_custom_export()
     
@@ -315,13 +341,25 @@ def edit_custom_export(req, domain, export_id):
         helper.custom_export.save()
     table_config = helper.custom_export.table_configuration[0]
     
-    slug = standard.ExcelExportReport.slug if helper.export_type == "form" \
-            else standard.CaseExportReport.slug
+    slug = export.ExcelExportReport.slug if helper.export_type == "form" \
+            else export.CaseExportReport.slug
     return render_to_response(req, "reports/reportdata/customize_export.html",
                               {"saved_export": helper.custom_export,
                                "table_config": table_config,
                                "slug": slug,
                                "domain": domain})
+
+@login_or_digest
+@require_form_export_permission
+@login_and_domain_required
+def hq_download_saved_export(req, domain, export_id):
+    export = SavedBasicExport.get(export_id)
+    # quasi-security hack: the first key of the index is always assumed 
+    # to be the domain
+    assert domain == export.configuration.index[0]
+    return couchexport_views.download_saved_export(req, export_id)
+    
+@login_or_digest
 @require_form_export_permission
 @login_and_domain_required
 def export_all_form_metadata(req, domain):
@@ -335,7 +373,7 @@ def export_all_form_metadata(req, domain):
                "userID", "xmlns", "version")
     def _form_data_to_row(formdata):
         def _key_to_val(formdata, key):
-            if key == "type":  return xmlns_to_name(domain, formdata.xmlns)
+            if key == "type":  return xmlns_to_name(domain, formdata.xmlns, app_id=None)
             else:              return getattr(formdata, key)
         return [_key_to_val(formdata, key) for key in headers]
     
@@ -351,16 +389,19 @@ def delete_custom_export(req, domain, export_id):
     """
     Delete a custom export
     """
-    saved_export = SavedExportSchema.get(export_id)
+    try:
+        saved_export = SavedExportSchema.get(export_id)
+    except ResourceNotFound:
+        return HttpResponseRedirect(req.META['HTTP_REFERER'])
     type = saved_export.type
     saved_export.delete()
     messages.success(req, "Custom export was deleted.")
     if type == "form":
-        return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.ExcelExportReport.slug]))
+        return HttpResponseRedirect(export.ExcelExportReport.get_url(domain))
     else:
-        return HttpResponseRedirect(reverse('report_dispatcher', args=[domain, standard.CaseExportReport.slug]))
+        return HttpResponseRedirect(export.CaseExportReport.get_url(domain))
 
-@require_permission('view-reports')
+@require_can_view_all_reports
 @login_and_domain_required
 def case_details(request, domain, case_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
@@ -370,21 +411,23 @@ def case_details(request, domain, case_id):
         report_name = 'Details for Case "%s"' % case.name
     except ResourceNotFound:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake plase report an issue.")
-        return HttpResponseRedirect(reverse("submit_history_report", args=[domain]))
+        return HttpResponseRedirect(inspect.SubmitHistory.get_url(domain))
 
 
     form_lookups = dict((form.get_id,
-                         "%s: %s" % (form.received_on.date(), xmlns_to_name(domain, form.xmlns))) \
-                        for form in [XFormInstance.get(id) for id in case.xform_ids] \
-                        if form)
+                         "%s: %s" % (form.received_on.date(), 
+                                     xmlns_to_name(domain, form.xmlns, get_app_id(form)))) \
+                        for form in case.get_forms())
     return render_to_response(request, "reports/reportdata/case_details.html", {
         "domain": domain,
         "case_id": case_id,
-        "slug": standard.CaseListReport.slug,
         "form_lookups": form_lookups,
-        "report": {
-            "name": report_name
-        },
+        "slug":inspect.CaseListReport.slug,
+        "report": dict(
+            name=report_name,
+            slug=inspect.CaseListReport.slug,
+            is_async=False,
+        ),
         "layout_flush_content": True,
         "timezone": timezone
     })
@@ -404,24 +447,26 @@ def download_cases(request, domain):
     group = request.GET.get('group', None)
     user_filter, _ = FilterUsersField.get_user_filter(request)
     users = get_all_users_by_domain(domain, group=group, filter_users=user_filter)
+    groups = Group.get_case_sharing_groups(domain)
+    
 #    if not group:
 #        users.extend(CommCareUser.by_domain(domain, is_active=False))
 
     workbook = WorkBook()
-    export_cases_and_referrals(cases, workbook, users=users)
+    export_cases_and_referrals(cases, workbook, users=users, groups=groups)
     export_users(users, workbook)
     response = HttpResponse(workbook.format(format.slug))
     response['Content-Type'] = "%s" % format.mimetype
     response['Content-Disposition'] = "attachment; filename={domain}_data.{ext}".format(domain=domain, ext=format.extension)
     return response
 
-@require_permission('view-reports')
+@require_can_view_all_reports
 @login_and_domain_required
 def form_data(request, domain, instance_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
     try:
         instance = XFormInstance.get(instance_id)
-    except ResourceNotFound:
+    except Exception:
         raise Http404()
     try:
         assert(domain == instance.domain)
@@ -437,7 +482,7 @@ def form_data(request, domain, instance_id):
                                    instance=instance,
                                    cases=cases,
                                    timezone=timezone,
-                                   slug=standard.SubmitHistory.slug,
+                                   slug=inspect.SubmitHistory.slug,
                                    form_data=dict(name=form_name,
                                                   modified=instance.received_on)))
 @require_form_export_permission
@@ -493,34 +538,3 @@ def emailtest(request, domain, report_slug):
     report = ScheduledReportFactory.get_report(report_slug)
     report.get_response(request.user, domain)
     return HttpResponse(report.get_response(request.user, domain))
-
-
-CUSTOM_REPORT_MAP = 'CUSTOM_REPORT_MAP'
-
-@login_and_domain_required
-@datespan_default
-def report_dispatcher(request, domain, report_slug, return_json=False, map='STANDARD_REPORT_MAP', export=False, custom=False):
-    mapping = getattr(settings, map, None)
-    if not mapping or (custom and not domain in mapping):
-        return HttpResponseNotFound("Sorry, no reports have been configured yet.")
-    if custom:
-        mapping = mapping[domain]
-    for key, models in mapping.items():
-        for model in models:
-            klass = to_function(model)
-            if klass.slug == report_slug:
-                k = klass(domain, request)
-                if not request.couch_user.can_view_report(data=model, domain=domain):
-                     raise Http404
-                elif return_json:
-                    return k.as_json()
-                elif export:
-                    return k.as_export()
-                else:
-                    return k.as_view()
-    raise Http404
-
-@login_and_domain_required
-@datespan_default
-def custom_report_dispatcher(request, domain, report_slug, export=False):
-    return report_dispatcher(request, domain, report_slug, export=export, map='CUSTOM_REPORT_MAP', custom=True)

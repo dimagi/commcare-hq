@@ -127,7 +127,7 @@ class JadJar(object):
         buffer = StringIO(self.jar)
         zipper = ZipFile(buffer, 'a', ZIP_DEFLATED)
         for path in files:
-            zipper.writestr(path, files[path].encode('utf-8'))
+            zipper.writestr(path, files[path])
         zipper.close()
         buffer.flush()
         jar = buffer.getvalue()

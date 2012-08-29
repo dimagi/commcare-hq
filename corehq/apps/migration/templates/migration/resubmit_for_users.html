@@ -1,0 +1,174 @@
+{% extends base_template %}
+{% load hq_shared_tags %}
+{% block head %}{{ block.super }}
+    {% include "imports/bootstrap.google-prettify.html" %}
+{% endblock %}
+{% block js-inline %}{{ block.super }}
+    <script>
+        $(function () {
+            function ResubmitForUsersUI() {
+                var self = this;
+                this.data = {
+                    url_base: ko.observable(''),
+                    users: ko.observable('{}'),
+                    groups: ko.observable('{}'),
+                    app_id: ko.observable(''),
+                    remote_mapping: ko.observable('{}')
+                };
+
+                this.dataJSON = ko.computed({
+                    read: function () {
+                        return JSON.stringify({
+                            url_base: self.data.url_base(),
+                            users: JSON.parse(self.data.users()),
+                            groups: JSON.parse(self.data.groups()),
+                            app_id: self.data.app_id(),
+                            remote_mapping: JSON.parse(self.data.remote_mapping())
+                        });
+                    },
+                    write: function (value) {
+                        value = JSON.parse(value);
+                        self.data.url_base(value.url_base);
+                        self.data.app_id(value.app_id);
+                        self.data.users(JSON.stringify(value.users));
+                        self.data.groups(JSON.stringify(value.groups));
+                        self.data.remote_mapping(JSON.stringify(value.remote_mapping || {}));
+                    }
+                });
+                this.failedForms = ko.observableArray();
+                this.state = ko.observable('none');
+                self.progress = {
+                    current: ko.observable(0),
+                    total: ko.observable(0),
+                    errors: ko.observable(0)
+                };
+                this.submit = function () {
+                    var data = JSON.parse(self.dataJSON());
+                    data['async'] = true;
+                    $.ajax({
+                        url: '',
+                        type: 'post',
+                        dataType: 'json',
+                        data: JSON.stringify(data),
+                        beforeSend: function () {
+                            self.state('pending');
+                        },
+                        success: function (data) {
+                            self.state('started');
+                            self.pollID = window.setInterval(function () {
+                                $.ajax({
+                                    url: "",
+                                    type: 'get',
+                                    data: {task_id: data.task_id},
+                                    dataType: 'json',
+                                    success: function (data) {
+                                        if (data.state === 'SUCCESS') {
+                                            self.state('success');
+                                            clearInterval(self.pollID);
+                                        } else if (data.state === 'FAILURE') {
+                                            self.state('failure');
+                                        } else if (data.info) {
+                                            self.progress.current(data.info.current);
+                                            self.progress.total(data.info.total);
+                                            self.progress.errors(data.info.errors);
+                                        }
+                                    }
+                                });
+                            }, 2000);
+                        },
+                        error: function (jqXHR) {
+                            self.state('error');
+                        }
+                    });
+                };
+                this.post = function (value) {
+                    var data = JSON.parse(self.dataJSON());
+                    data[value] = true;
+                    $.ajax({
+                        url: '',
+                        type: 'post',
+                        dataType: 'json',
+                        data: JSON.stringify(data),
+                        beforeSend: function () {
+                            self.state('pending');
+                            self.failedForms.removeAll();
+                        },
+                        success: function (data) {
+                            self.state('success');
+                            for (var i = 0; i < data.forms.length; i++) {
+                                self.failedForms.push(data.forms[i]);
+                            }
+                            prettyPrint();
+                        },
+                        error: function (jqXHR) {
+                            self.state('error');
+                        }
+                    });
+                };
+                this.check = function () {
+                    return self.post('check');
+                };
+                this.debug = function () {
+                    return self.post('debug');
+                };
+            }
+            ko.applyBindings(new ResubmitForUsersUI());
+        });
+    </script>
+{% endblock %}
+{% block content %}
+    <div class="row-fluid">
+        <table class="span4">
+            <tr>
+                <td><label for="_url_base">Remote URL Base</label></td>
+                <td><input id="_url_base" data-bind="value: data.url_base"/></td>
+            </tr>
+            <tr>
+                <td><label for="_app_id">Remote App ID</label></td>
+                <td><input id="_app_id" data-bind="value: data.app_id"/></td>
+            </tr>
+            <tr>
+                <td><label for="_users">Users Map (JSON)</label></td>
+                <td><textarea id="_users" data-bind="value: data.users"></textarea></td>
+            </tr>
+            <tr>
+                <td><label for="_groups">Groups Map (JSON)</label></td>
+                <td><textarea id="_groups" data-bind="value: data.groups"></textarea></td>
+            </tr>
+            <tr>
+                <td><label for="_remote_mapping">Remote Mapping (JSON)</label></td>
+                <td><textarea id="_remote_mapping" data-bind="value: data.remote_mapping"></textarea></td>
+            </tr>
+        </table>
+        <div class="span1"><h6>OR</h6></div>
+        <div class="span3">
+            <textarea rows="10" cols="10" data-bind="value: dataJSON"></textarea>
+        </div>
+    </div>
+    <button class="btn btn-info" data-bind="visible: state() === 'none', click: debug">Debug</button>
+    <button class="btn btn-primary" data-bind="visible: state() === 'none', click: submit">Resubmit for Users</button>
+    <button class="btn btn-info" data-bind="visible: state() === 'none', click: check">Verify</button>
+
+    <h5 data-bind="visible: state() !== 'none', text: state"></h5>
+    <p data-bind="visible: state() === 'started'">
+        <span data-bind="text: progress.current"></span>/<span data-bind="text: progress.total"></span> with
+        <span data-bind="text: progress.errors"></span> errors
+    </p>
+    <h4 data-bind="visible: failedForms().length, text: failedForms().length"></h4>
+    <table class="table" data-bind="visible: failedForms().length">
+        <thead>
+            <th>id</th>
+            <th>xml</th>
+            <th>new xml</th>
+            <th>would-be new id</th>
+        </thead>
+        <tbody data-bind="foreach: failedForms">
+            <tr>
+                <td data-bind="text: id"></td>
+                <td><pre class="prettyprint linenums"><code class="language-xml" data-bind="text: xml"></code></pre></td>
+                <td><pre class="prettyprint linenums"><code class="language-xml" data-bind="text: new_xml"></code></pre></td>
+                <td data-bind="text: new_id"></td>
+            </tr>
+        </tbody>
+    </table>
+{% endblock %}

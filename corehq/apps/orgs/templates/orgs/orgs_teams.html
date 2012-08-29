@@ -1,0 +1,110 @@
+{% extends "orgs/orgs_landing.html" %}
+{% load i18n %}
+
+{% block head %}{{ block.super }}
+{#    <style>#}
+{#        .next-to-sidebar {#}
+{#            padding: 0;#}
+{#        }#}
+{#        .group-name-input {#}
+{#            width: 100px !important;#}
+{#        }#}
+{#        #group-list {#}
+{#            margin: 0;#}
+{#        }#}
+{#        #group-list > div {#}
+{#            border: 1px solid white;#}
+{#            padding: 5px 10px;#}
+{#        }#}
+
+{#        #group-list > div.selected {#}
+{#            border: 1px solid #BBB;#}
+{#            border-right: 1px solid white;#}
+{#            background: white;#}
+{#            position: relative;#}
+{#            left: 2px;#}
+{#            padding-left: 8px;#}
+{#            padding-right: 12px;#}
+{#        }#}
+{#        #group-list > div.selected a {#}
+{#            color: #000000;#}
+{#        }#}
+{#        #group-layout {#}
+{#            width: 100%;#}
+{#        }#}
+{#        #group-layout > tbody > tr > td {#}
+{#        }#}
+{#        #group-layout > tbody > tr > td:first-child {#}
+{#            padding: 5px 0 5px 5px;#}
+{#        }#}
+{#    </style>#}
+
+        <style type="text/css">
+            .team-header
+            {
+                padding-left: 15px;
+            }
+        </style>
+
+{% endblock %}
+
+{% block page-title %}
+<ul class="breadcrumb">
+    <li>
+        <strong>Organizations</strong> <span class="divider">&gt;</span>
+    </li>
+    <li>
+
+        <a href="{% url orgs_landing org.name %}">{{ org.name }} ({{ org.title }})</a>
+    </li>
+    <li>
+        <span class="divider">&gt;</span><a href="#">Teams</a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block modals %}
+        {% endblock %}
+
+{% block content %}
+        {% block sidebar %}
+        {% endblock %}
+{% block centered-content %}
+{% block team-info %}
+<div class="team-header">
+{% if teams %}
+<h2>Select a team:</h2>
+{% else %}
+<h2>Create your first team:</h2>
+{% endif %}
+        </div>
+{% endblock %}
+<div class="team-header">
+{% block team-header %}
+{% endblock %}
+</div>
+<div class="tabbable tabs-left row-fluid">
+    <ul class="nav nav-tabs span2" style="padding-left: 15px;">
+        {% with team as this_team %}
+        {% for team in teams %}
+        <li {% if this_team.get_id == team.get_id %}class="active"{% endif %}>
+        <a href="{% url orgs_team_members org.name team.get_id %}">{{ team.name }}</a>
+        </li>
+        {% endfor %}
+        {% endwith %}
+    </ul>
+    <div class="tab-content span9">
+        {% block team-view %}
+        {% endblock %}
+    </div>
+</div>
+
+<div class="container">
+<form class="well form-inline" method="post" action="{% url add_team org.name %}" style="margin-left: 150px;">
+    <input type="text" placeholder="Team Name" id="id_team_name" name="team_name" />
+    <button class="btn btn-success" type="submit">Create Team</button>
+</form>
+</div>
+{% endblock %}
+{% endblock %}
+

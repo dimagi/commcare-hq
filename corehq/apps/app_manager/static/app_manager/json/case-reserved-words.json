@@ -1,6 +1,6 @@
 [
     "case_name", "case_type", "case_type_id",
-    "date_opened", "external_id", "status",
+    "date_opened", "status",
     "date-opened", "external-id",
     "date",
     "doc_type",

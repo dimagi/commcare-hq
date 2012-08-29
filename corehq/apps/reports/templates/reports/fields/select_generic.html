@@ -1,9 +1,24 @@
+{% load hq_shared_tags %}
+{% if not hide_field %}
 <label for="{{ select.cssId }}" class="control-label">{{ select.label }}</label>
 <div class="controls">
-    <select id="{{ select.cssId }}" class="{{ select.cssClasses }}" name="{{ slug }}"{% if select.selected %} data-value="{{ select.selected }}"{% endif %}>
-        <option value="">{{ select.default }}</option>
-        {% for opt in select.options %}
-            <option value="{{ opt.val }}">{{ opt.text }}</option>
+    <select id="{{ select.cssId }}" class="{{ select.cssClasses }}" data-bind="{% if not select.use_combo_box %}options: select_params, optionsText: 'text', optionsValue: 'val', optionsCaption: '{{ select.default }}',{% endif %} value: current_selection"  name="{{ slug }}">
+    {% if select.use_combo_box %}
+        <option></option>
+        {% for option in select.options %}
+        <option value="{{ option.val }}">{{ option.text }}</option>
         {% endfor %}
+    {% endif %}
     </select>
 </div>
+<script type="text/javascript">
+    $(function () {
+       ko.applyBindings({select_params: {{ select.options|JSON }}, current_selection: ko.observable('{{ select.selected|default:'' }}')}, $('#{{ select.cssId }}').parent().get(0));
+    });
+    {% if select.use_combo_box %}
+    $('#{{ select.cssId }}').combobox({
+        placeholder: '{{ select.default|safe }}'
+    });
+    {% endif %}
+</script>
+{% endif %}

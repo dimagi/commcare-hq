@@ -1,0 +1,14 @@
+{% load hq_shared_tags %}
+{% if report_filters %}
+    <fieldset>
+        <legend>Report Filters</legend>
+        {% for field in report_filters %}
+            <fieldset id="fieldset_{{ field.slug }}">
+                <div id="group_{{ field.slug }}" class="control-group">
+                    {{ field.field|safe }}
+                </div>
+            </fieldset>
+        {% endfor %}
+    </fieldset>
+{% endif %}
+<script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>

@@ -22,13 +22,19 @@ class SuccessMessage(object):
             self.domain = domain
 
 
-    def render(self):
+    def render(self, quash=True):
         template = Template(self.message)
-        return template.substitute(first_name=self.first_name,
+        try:
+            return template.substitute(first_name=self.first_name,
                                    name=self.name,
                                    today=self.num_forms_today,
                                    week=self.num_forms_this_week,
                                    total=self.num_forms_all_time)
+        except Exception as e:
+            return ''
+
+    def check_message(self):
+        Template(self.message).substitute(first_name='', name='', today='', week='', total='')
         
     @property
     def couch_user(self):

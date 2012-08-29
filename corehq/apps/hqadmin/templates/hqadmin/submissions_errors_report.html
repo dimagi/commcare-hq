@@ -5,22 +5,20 @@
 {% block reportcontent %}
     <table class="datatable table table-striped">
         <thead>
-            <tr>
-                <th>Domain</th>
-                <th>Active Users</th>
-                <th>Forms Submitted</th>
-                <th>Errors</th>
-                <th>Warnings</th>
-            </tr>
+            {{ headers.render_html|safe }}
         </thead>
         <tbody>
         {% for row in rows %}
             <tr>
-                <td><a href="{% url report_dispatcher row.domain 'form_errors' %}?startdate={{ request.datespan.startdate_param }}&enddate={{ request.datespan.enddate_param }}">{{ row.domain }}</a></td>
-                <td>{{ row.active_users }}</td>
-                <td>{{ row.submissions }}</td>
-                <td>{{ row.errors }}</td>
-                <td>{{ row.warnings }}</td>
+                <td><a href="{% url project_report_dispatcher row.domain 'form_errors' %}?startdate={{ request.datespan.startdate_param }}&enddate={{ request.datespan.enddate_param }}">{{ row.domain }}</a></td>
+                <td>{{ row.active_users }}
+                    <span title="{{ row.active_users }}"></span></td>
+                <td>{{ row.submissions }}
+                    <span title="{{ row.submissions }}"></span></td>
+                <td>{{ row.errors }}
+                    <span title="{{ row.errors }}"></span></td>
+                <td>{{ row.warnings }}
+                    <span title="{{ row.warnings }}"></span></td>
             </tr>
         {% endfor %}
         </tbody>

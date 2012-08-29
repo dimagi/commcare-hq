@@ -16,12 +16,13 @@
         </tr>
     </thead>
     <tbody data-bind="sortable: languages">
-        <tr class="row control-group" data-bind="css: {error: $root.validateLanguage($data), light: !deploy()}">
+        <tr class="row control-group" data-bind="css: {error: show_error, light: !deploy()}">
             <td class="span1" data-bind="css: {'sortable-handle': $root.editing}">
                 <i class="icon-move" data-bind="visible: $root.editing"></i>
             </td>
             <td class="span1">
-                <span data-bind="text: $root.languages.indexOf($data) + 1 + '.'"></span>
+                <span data-bind="text: $root.languages.indexOf($data) + 1 + '.', visible: $root.languages()[0] !== $data"></span>
+                <span class="label label-info" data-bind="visible: $root.languages()[0] === $data">1. default</span>
             </td>
             <td class="span1">
                 <span data-bind="editableBool: deploy, editing: $root.editing"></span>
@@ -35,14 +36,14 @@
             <td class="span1">
                 <span class="code" data-bind="text: originalLangcode, visible: originalLangcode() !== langcode()"></span>
             </td>
-            <td class="span4"><p class="help-inline" data-bind="text: $root.validateLanguage($data)"></p></td>
+            <td class="span4"><p class="help-inline" data-bind="text: message"></p></td>
             <td class="span1">
                 <a href="#" data-bind="click: $root.removeLanguage, visible: $root.editing">Delete</a>
             </td>
         </tr>
     </tbody>
 </table>
-<button class="btn" data-bind="click: addLanguage">Add Language</button>
+<button class="btn" data-bind="click: addLanguage, visible: editing">Add Language</button>
 <div data-bind="if: removedLanguages().length">
     <h6>Deleting Languages:</h6>
     <table class="table">

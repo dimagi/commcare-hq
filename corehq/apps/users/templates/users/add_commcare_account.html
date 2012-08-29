@@ -3,6 +3,22 @@
 {% load hq_shared_tags %}
 {% load hq_bootstrap_tags %}
 
+{% block js %}{{ block.super }}
+<script src="{% static 'users/js/key_filters.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(function () {
+            {% if only_numeric %}
+            $('#add_commcare_account_form input[type=password]').keydown(allowNumeric);
+            {% else %}
+            $("#add_commcare_account_form .help-block").hide();
+            {% endif %}
+        });
+    </script>
+{% endblock %}
+
 {% block commcare_users_indicator %}
     <ul class="nav nav-list">
         <li class="active"><a href="#">New {% commcare_user %}</a></li>
@@ -19,10 +35,17 @@
 {% endblock %}
 
 {% block user-view %}
-	<form class="form form-horizontal" method="post">
+	<form class="form form-horizontal" method="post" id="add_commcare_account_form">
         {% bootstrap_form_errors form %}
         <input id="id_domain" name="domain" type="hidden" value="{{ domain }}" />
         {% bootstrap_fieldset form "Create new Mobile Worker account" %}
+        <div class="control-group" id="enable_all_passwords_control">
+            <div class="controls">
+                <p class="help-block">
+                    To enable alphanumeric passwords, go to the applications this user will use, go to CommCare Settings, and change Password Format to Alphanumeric.
+                </p>
+            </div>
+        </div>
         <div class="form-actions"><button type="submit" class="btn btn-primary">Create {% commcare_user %}</button></div>
 	</form>
 {% endblock %}

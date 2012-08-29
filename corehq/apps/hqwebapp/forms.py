@@ -8,8 +8,9 @@ from django.utils.translation import ugettext_lazy as _
 class EmailAuthenticationForm(AuthenticationForm):
     username = forms.EmailField(label=_("E-mail"), max_length=75)
 
-#    def clean_username(self):
-#        user = CouchUser.get_by_username(self.cleaned_data['username'])
-#        if user and user.is_commcare_user():
-#            raise ValidationError("You cannot log in as a phone user")
-#        return self.cleaned_data['username']
+    def clean_username(self):
+        username = self.cleaned_data['username'].lower()
+        return username
+
+class CloudCareAuthenticationForm(EmailAuthenticationForm):
+    username = forms.EmailField(label=_("Username"), max_length=75)

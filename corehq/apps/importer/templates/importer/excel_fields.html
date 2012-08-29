@@ -1,0 +1,121 @@
+{% extends "data_interfaces/data_interfaces_base.html" %}
+{% load report_tags %}
+
+{% block head %}
+    {{ block.super }}
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        $(function() {
+            $('.custom_field').change(function() {
+                selectField = $(this).prev();
+
+                // check if field is valid for xml
+                
+                // TODO: this method seems pretty sketchy, should cleanup
+                var value = $(this).val();
+                var regx = new RegExp(/^xml/i); 
+
+                value = value.replace(/\s/g, "_"); // space to underscore
+                value = value.replace(/[^a-zA-Z0-9_\-]/g, ""); // remove other symbols
+                value = value.replace(regx, ""); // remove xml from beginning of string
+                
+                $(this).val(value);
+                
+                if ($(this).val() != '') {
+                	selectField.val('');
+                	selectField.attr('disabled', 'disabled');
+                } else {
+                	selectField.removeAttr('disabled');
+                } //else
+            });
+
+            $('.custom_field').change();
+
+            $('#field_form').submit(function() {
+            	$('[disabled]').each(function() {
+                    $(this).removeAttr('disabled');
+            	});
+
+            	$(this).find('input[type=checkbox]').each(function () {
+            	    $(this).prev().val($(this).is(':checked') ? '1' : '0');
+                });
+                
+                return true;
+            });
+
+            $('#back_button').click(function() {
+                history.back();
+                return false;
+            });            
+        });
+    </script>
+{% endblock %}
+
+{% block main_column %}
+    <form class="form-horizontal form-report" action="{% url corehq.apps.importer.views.excel_commit domain %}" method="post" id="field_form">
+    <input type="hidden" name="named_columns" value="{{named_columns}}" />
+    <input type="hidden" name="case_type" value="{{case_type}}" />
+    <input type="hidden" name="search_column" value="{{search_column}}" />
+    <input type="hidden" name="search_field" value="{{search_field}}" />
+    <input type="hidden" name="key_column" value="{{key_column}}" />
+    <input type="hidden" name="value_column" value="{{value_column}}" />    
+    
+    <fieldset>
+        <legend>Map columns to case fields</legend>
+        <div class="control-group">
+            <div class="controls">
+
+                <label for="case-type">Excel data label
+                <!-- css this up -->
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp;&nbsp;               
+                Case field name
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                or enter a new field name:
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    
+                &nbsp;      
+                Is this a date field?      
+                </label>
+                
+                {% for i in excel_fields_range %}
+                    <select name="excel_field[]">
+                        <option value=""></option>
+                        {% for excel_field in excel_fields %}
+                        <option value="{{excel_field|escape}}">{{excel_field|escape}}</option>
+                        {% endfor %}
+                    </select>
+                    
+                    <select name="case_field[]">
+                        <option value=""></option>
+                        {% for case_field in case_fields %}
+                        <option value="{{case_field|escape}}">{{case_field|escape}}</option>
+                        {% endfor %}
+                    </select>
+                    
+                    <input type="text" name="custom_field[]" class="custom_field" />
+                    
+                    <input type="hidden" name="date_yesno[]" value="0" />
+                    <input type="checkbox" />
+                    
+                    <br>
+                {% endfor %}
+            </div>
+        </div>
+    </fieldset>
+   
+    <div class="form-actions">
+        <button type="button" class="btn btn-primary btn-large" id="back_button"><i class="icon-backward icon-white"></i> Back</button>
+        <button type="submit" class="btn btn-primary btn-large"><i class="icon-forward icon-white"></i> Confirm import</button>
+    </div>
+    </form>
+{% endblock %}

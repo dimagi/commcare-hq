@@ -1,0 +1,103 @@
+{% extends base_template %}
+{% load hq_shared_tags %}
+{% block js %}
+    <script src="{% static 'case/js/cheapxml.js' %}"></script>
+    <script src="{% static 'case/js/casexml.js' %}"></script>
+{% endblock %}
+{% block js-inline %}
+    <script>
+    $(function () {
+        var results = {{ results|JSON }},
+            webUserID = {{ request.couch_user.user_id|JSON }},
+            domain = {{ domain|JSON }},
+            url = '{% url receiver_post domain %}';
+        var ReassignmentStub = {
+            states: {
+                NONE: 'none',
+                PENDING: 'pending',
+                ERROR: 'error',
+                SUCCESS: 'success'
+            },
+            wrap: function (o) {
+                var self = o;
+                o.state = ko.observable(ReassignmentStub.states.NONE);
+                o.response = ko.observable('');
+                o.createXForm = function () {
+                    return casexml.CaseDelta.wrap({
+                        case_id: self['case'].id,
+                        properties: {owner_id: self.suggested.id}
+                    }).asXFormInstance({
+                                user_id: webUserID
+                            }).serialize();
+                };
+                o.fix = function () {
+                    var xform = self.createXForm();
+                    console.log(xform);
+                    $.ajax({
+                        url: url,
+                        type: 'post',
+                        data: xform,
+                        beforeSend: function () {
+                            self.state(ReassignmentStub.states.PENDING);
+                        },
+                        success: function (data) {
+                            self.state(ReassignmentStub.states.SUCCESS);
+                            self.response(data);
+                        },
+                        error: function (jqXHR) {
+                            self.state(ReassignmentStub.states.ERROR);
+                            self.response(jqXHR.responseText);
+                        }
+                    })
+                };
+                return o;
+            }
+        };
+        function ReassignCasesToCorrectOwner(results) {
+            var i, self = this;
+            this.stubs = [];
+            for (i = 0; i < results.affected.length; i++) {
+                this.stubs.push(ReassignmentStub.wrap(results.affected[i]));
+            }
+            this.fixAll = function () {
+                for (var i = 0; i < self.stubs.length; i++) {
+                    self.stubs[i].fix();
+                }
+            };
+        }
+        ko.applyBindings(new ReassignCasesToCorrectOwner(results));
+    }());
+    </script>
+{% endblock %}
+{% block content %}
+    <button class="btn" data-bind="click: fixAll">Fix All</button>
+    <table>
+        <tr>
+            <th>Date Modified</th>
+            <th>Case</th>
+            <th>User</th>
+            <th>Owner</th>
+            <th>Suggested Group</th>
+        </tr>
+        <tbody data-bind="foreach: stubs">
+            <tr>
+                <td data-bind="text: $data['case'].modified"></td>
+                <!--ko foreach: [$data['case'], user, owner, suggested]-->
+                <td>
+                    <h5 data-bind="text: meta.name"></h5>
+                    <h6 data-bind="if: !meta.name">No Name</h6>
+                    <p style="size: .5em; color: #888;" data-bind="text: id"></p>
+                    <p style="size: .5em; color: #888;" data-bind="text: meta.doc_type"></p>
+                </td>
+                <!--/ko-->
+                <td>
+                    <button class="btn" data-bind="click: fix, visible: state() === 'none'">Fix</button>
+                </td>
+                <td>
+                    <h5 data-bind="text: state, visible: state() !== 'none'"></h5>
+                    <code data-bind="text: response, visible: response()"></code>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "hqadmin/hqadmin_base_report.html" %}
+{% block js-inline %} {{ block.super }}
+    <script>
+            ko.applyBindings({file: ko.observable(null)}, 
+                             $("#domain-upload-form").get(0));
+    </script>
+{% endblock %}
+{% block report-title %}Domain Propeties{% endblock %}
+{% block reportcontent %}
+<table class="datatable table table-striped">
+<thead>
+{{ headers.render_html|safe }}
+</thead>
+<tbody>
+{% for domain in domains %}
+    <tr>
+        <td><a href="{% url default_report domain.name %}">{{ domain.display_name }}</a></td>
+		<td>{{ domain.city|default:"" }}</td>
+		<td>{{ domain.country|default:"" }}</td>
+		<td>{{ domain.region|default:"" }}</td>
+		<td>{{ domain.project_type|default:"" }}</td>
+		<td>{{ domain.customer_type|default:"" }}</td>
+		<td>{{ domain.is_test|yesno }}</td>
+		<td>{{ domain.web_users }}<span title="{{ domain.web_users }}"></span></td>
+        <td>{{ domain.commcare_users }}<span title="{{ domain.commcare_users }}"></span></td>
+        <td>{{ domain.cases }}<span title="{{ domain.cases }}"></span></td>
+        <td>{{ domain.forms }}<span title="{{ domain.forms }}"></span></td>
+		<td>{{ domain.first_submission }}</td>
+		<td>{{ domain.last_submission }}</td>
+        <td><a href="{% url domain_project_settings domain.name %}">edit</a></td>
+    </tr>
+{% endfor %}
+</tbody>
+</table>
+<h2>Bulk Download/Upload </h2>
+<p>
+    <ol>
+        <li>
+            Download the current data: <a href="{% url domain_list_download %}">domains.xlsx</a>.
+        </li>
+        <li>
+            Update it with new information.
+        </li>
+        <li>
+            Use the form below to upload your completed file.
+        </li>
+    </ol>
+</p>
+<p class="alert alert-warning">All domains found in the file will have data overwritten! You are warned.</p>
+<form id="domain-upload-form" class="form form-horizontal" action="" method="post" enctype="multipart/form-data">
+    <fieldset>
+        <legend>Choose a file for upload</legend>
+        <div class="control-group">
+            <label for="bulk_upload_file" class="control-label">Domain File</label>
+            <div class="controls">
+                <input id="bulk_upload_file" type="file" name="file" data-bind="value: file"/>
+            </div>
+        </div>
+    </fieldset>
+    <div class="form-actions"><button type="submit" class="btn btn-primary" data-bind="visible: file()">Update Domains</button></div>
+</form>
+{% endblock %}

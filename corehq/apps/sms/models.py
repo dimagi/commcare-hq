@@ -30,6 +30,9 @@ class MessageLog(Document, UnicodeMixIn):
     direction                   = StringProperty()
     date                        = DateTimeProperty()
     domain                      = StringProperty()
+    backend_api                 = StringProperty() # This must be set to <backend module>.API_ID in order to process billing correctly
+    billed                      = BooleanProperty(default=False)
+    billing_errors              = ListProperty()
 
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
@@ -115,6 +118,16 @@ class MessageLog(Document, UnicodeMixIn):
         if reduced:
             return reduced[0]['value']
         return 0
+    
+    @classmethod
+    def by_domain_date(cls, domain, start_date = None, end_date = {}):
+        if cls.__name__ == "MessageLog":
+            raise NotImplementedError("Log queries not yet implemented for base class")
+        return cls.view("sms/by_domain",
+                    reduce=False,
+                    startkey=[domain, cls.__name__] + [start_date],
+                    endkey=[domain, cls.__name__] + [end_date],
+                    include_docs=True)
 
 class SMSLog(MessageLog):
     text = StringProperty()
@@ -135,22 +148,21 @@ class CallLog(MessageLog):
         return "Call %s %s" % (to_from, self.phone_number)
 
     @classmethod
-    def inbound_call_exists(cls, verified_number, after_timestamp):
+    def inbound_call_exists(cls, caller_doc_type, caller_id, after_timestamp):
         """
-        Checks to see if an inbound call exists for the given number after the given timestamp.
+        Checks to see if an inbound call exists for the given caller.
         
-        verified_number The VerifiedNumber entry for which to check the existence of a call.
+        caller_doc_type The doc_type of the caller (e.g., "CommCareCase").
+        caller_id       The _id of the caller's document.
         after_timestamp The datetime after which to check for the existence of a call.
         
         return          True if a call exists in the CallLog, False if not.
         """
-        if verified_number is None or after_timestamp is None:
-            return False
         start_timestamp = json_format_datetime(after_timestamp)
         end_timestamp = json_format_datetime(datetime.utcnow())
-        reduced = cls.view("sms/by_phone_number_direction_date",
-                    startkey=["CallLog", verified_number.phone_number, INCOMING] + [start_timestamp],
-                    endkey=["CallLog", verified_number.phone_number, INCOMING] + [end_timestamp],
+        reduced = cls.view("sms/by_recipient",
+                    startkey=[caller_doc_type, caller_id, "CallLog", INCOMING] + [start_timestamp],
+                    endkey=[caller_doc_type, caller_id, "CallLog", INCOMING] + [end_timestamp],
                     reduce=True).all()
         if reduced:
             return (reduced[0]['value'] > 0)
@@ -200,7 +212,13 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
         contact_phone_number = self.get_case_property("contact_phone_number")
         contact_phone_number_is_verified = self.get_case_property("contact_phone_number_is_verified")
         contact_backend_id = self.get_case_property("contact_backend_id")
-        if(contact_phone_number is not None and contact_phone_number_is_verified):
+        if (contact_phone_number is None) or (contact_phone_number == "") or (str(contact_phone_number) == "0") or self.closed:
+            try:
+                self.delete_verified_number()
+            except:
+                #TODO: Handle exception
+                pass
+        elif contact_phone_number_is_verified:
             try:
                 self.save_verified_number(self.domain, contact_phone_number, True, contact_backend_id)
             except:
@@ -216,6 +234,10 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
     def get_language_code(self):
         return self.get_case_property("language_code")
     
+    @property
+    def raw_username(self):
+        return self.get_case_property("name")
+    
     class Meta:
         app_label = "sms" # This is necessary otherwise syncdb will confuse the sms app with casexml
 
@@ -226,7 +248,5 @@ def case_changed_receiver(sender, case, **kwargs):
 
 
 case_post_save.connect(case_changed_receiver, CommCareCase)
-
-
 
 

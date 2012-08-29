@@ -1,10 +1,12 @@
 from django.conf.urls.defaults import *
-from corehq.apps.domain.urls import domain_specific as domain_domain_specific
+from corehq.apps.domain.urls import domain_settings
 
 domain_specific = patterns('',
     url(r'^$', 'corehq.apps.settings.views.default', name="settings_default"),
     (r'^users/', include('corehq.apps.users.urls')),
-    (r'^project/', include(domain_domain_specific)),
+    (r'^project/', include(domain_settings)),
+    url(r'^api/id_mapping/$', 'corehq.apps.settings.views.project_id_mapping', name="project_id_mapping")
+
 )
 
 users_redirect = patterns('corehq.apps.settings.views',

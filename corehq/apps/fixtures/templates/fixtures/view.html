@@ -7,8 +7,8 @@
 {% block oldstyle_hack_end %}{% endblock %}
 
 {% block js %}{{ block.super }}
-<script src="{% static 'hqwebapp/javascripts/knockout-2.0.0.debug.js' %}"></script>
 <script src="{% static 'hqwebapp/javascripts/knockout.mapping.js' %}"></script>
+<script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
 <script src="{% static 'fixtures/js/item-lists.js' %}"></script>
 {% endblock %}
 {% block head %}

@@ -26,10 +26,15 @@ function start_datatables(elem){
                     aoData.push({ "name" : 'individual', "value": $(this).data('individual')});
                     aoData.push({ "name" : 'group', "value": $(this).data('group')});
                     aoData.push({ "name" : 'case_type', "value": $(this).data('casetype')});
-                    ufilter = $(this).data('ufilter');
-                    if (ufilter) {
-                        for (var i=0;i<ufilter.length;i++) {
-                            aoData.push({ "name" : 'ufilter', "value": ufilter[i]});
+                    var filterNames = ["ufilter", "submitfilter"];
+                    var name, f, i, j;
+                    for (i = 0; i < filterNames.length; i++) {
+                        name = filterNames[i];
+                        f = $(this).data(name);
+                        if (f) {
+                            for (j = 0; j < f.length; j++) {
+                                aoData.push({ "name" : name, "value": f[j]});
+                            }
                         }
                     }
 

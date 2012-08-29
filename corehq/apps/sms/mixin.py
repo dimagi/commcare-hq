@@ -27,6 +27,19 @@ class VerifiedNumber(Document):
     @property
     def backend(self):
         return MobileBackend.get(self.backend_id)
+    
+    @property
+    def owner(self):
+        if self.owner_doc_type == "CommCareCase":
+            # Circular import
+            from corehq.apps.sms.models import CommConnectCase
+            return CommConnectCase.get(self.owner_id)
+        elif self.owner_doc_type == "CommCareUser":
+            # Circular import
+            from corehq.apps.users.models import CommCareUser
+            return CommCareUser.get(self.owner_id)
+        else:
+            return None
 
 class MobileBackend(Document):
     """
@@ -34,8 +47,6 @@ class MobileBackend(Document):
     """
     domain = ListProperty(StringProperty)   # A list of domains for which this backend is applicable
     description = StringProperty()          # (optional) A description of this backend
-    inbound_module = StringProperty()       # The fully-qualified name of the inbound module to be used (must implement handle() method)
-    inbound_number = StringProperty()       # The number used for receiving inbound sms
     outbound_module = StringProperty()      # The fully-qualified name of the inbound module to be used (must implement send() method)
     outbound_params = DictProperty()        # The parameters which will be the keyword arguments sent to the outbound module's send() method
 
@@ -92,8 +103,7 @@ class CommCareMobileContactMixin(object):
         """
         self.validate_number_format(phone_number)
         v = VerifiedNumber.view("sms/verified_number_by_number",
-            startkey=[phone_number],
-            endkey=[phone_number],
+            key=phone_number,
             include_docs=True
         ).one()
         if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self._id):

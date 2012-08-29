@@ -3,21 +3,21 @@
 {% block reportcontent %}
 <table class="datatable table table-striped">
 <thead>
-    <tr>
-        <th>Domain</th>
-        <th># Web Users</th>
-        <th># CommCare Users</th>
-        <th># Submitted Forms</th>
-        <th>Domain Admins</th>
-    </tr>
+{{ headers.render_html|safe }}
 </thead>
 <tbody>
 {% for domain in domains %}
     <tr>
-        <td><a href="{% url default_report domain.name %}">{{ domain.name }}</a></td>
-        <td>{{ domain.web_users }}</td>
-        <td>{{ domain.commcare_users }}</td>
-        <td>{{ domain.forms }}</td>
+        <td><a href="{% url default_report domain.name %}">{{ domain.display_name }}</a></td>
+        <td>{{ domain.web_users }}
+            <span title="{{ domain.web_users }}"></span>
+        </td>
+        <td>{{ domain.commcare_users }}
+            <span title="{{ domain.commcare_users }}"></span></td>
+        <td>{{ domain.cases }}
+            <span title="{{ domain.cases }}"></span></td>
+        <td>{{ domain.forms }}
+            <span title="{{ domain.forms }}"></span></td>
         <td>{{ domain.admins|join:", " }}</td>
     </tr>
 {% endfor %}

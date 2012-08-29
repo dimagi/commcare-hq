@@ -18,6 +18,10 @@ class FixtureDataType(Document):
     def by_domain(cls, domain):
         return cls.view('fixtures/data_types_by_domain', key=domain, reduce=False, include_docs=True)
 
+    @classmethod
+    def by_domain_tag(cls, domain, tag):
+        return cls.view('fixtures/data_types_by_domain_tag', key=[domain, tag], reduce=False, include_docs=True)
+
 class FixtureDataItem(Document):
     domain = StringProperty()
     data_type_id = StringProperty()
@@ -130,7 +134,7 @@ class FixtureDataItem(Document):
         if isinstance(data_type, basestring):
             data_type_id = data_type
         else:
-            data_type_id = data_type.get_id
+            data_type_id = data_type.get_id if data_type else None
         return cls.view('fixtures/data_items_by_domain_type', key=[domain, data_type], reduce=False, include_docs=True)
 
 class FixtureOwnership(Document):

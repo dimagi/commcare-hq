@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
+from dimagi.utils.modules import to_function
 
 from django import template
 from django.conf import settings
@@ -72,9 +73,17 @@ class Tab(object):
     def caption(self):
         return self._caption or self._auto_caption()
 
-    def has_permission(self, user):
-        if self._permission:    return user.has_perm(self._permission)
-        else:                   return True
+    def has_permission(self, request):
+        if self._permission:
+            if isinstance(self._permission, basestring):
+                return request.user.has_perm(self._permission)
+            else:
+                try:
+                    return self._permission(request)
+                except Exception:
+                    return False
+        else:
+            return True
 
 # adapted from ubernostrum's django-template-utils. it didn't seem
 # substantial enough to add a dependency, so i've just pasted it.
@@ -89,7 +98,7 @@ class TabsNode(template.Node):
         tabs = [Tab(*args, domain=domain) for args in settings.TABS]
         for tab in tabs:
             tab.is_active = request.get_full_path().startswith(tab.url)
-            tab.visible = tab.has_permission(request.user)                    
+            tab.visible = tab.has_permission(request)
         context[self.varname] = tabs
         return ""
 

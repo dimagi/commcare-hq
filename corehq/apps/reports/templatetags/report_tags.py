@@ -6,7 +6,9 @@ from django.template.loader import render_to_string
 import json
 import calendar
 from django.conf import settings
-from corehq.apps.reports.standard import ExcelExportReport, CaseExportReport
+from django.utils.html import escape
+from corehq.apps.reports._global.export import ExcelExportReport, CaseExportReport
+from corehq.apps.reports.dispatcher import ReportDispatcher
 from dimagi.utils.modules import to_function
 #from bhoma.apps.locations.models import Location
 
@@ -244,58 +246,17 @@ def attribute_lookup(obj, attr):
     if (hasattr(obj, attr)):
         return getattr(obj, attr)
 
-@register.simple_tag
-def standard_report_list(user, domain, current_slug=""):
-    mapping = getattr(settings, 'STANDARD_REPORT_MAP', None)
-    if not mapping: return ""
-    lst = []
-    for key, models in mapping.iteritems():
-        sublist = []
-        nav_header = '<li class="nav-header">%s</li>' % key
-        for model in models:
-            if not user.can_view_report(model):
-                continue
-            klass = to_function(model)
-            sublist.append('<li%s><a href="%s" title="%s">' %\
-                       ((' class="active"' if klass.slug == current_slug else ""),
-                        reverse('report_dispatcher', args=(domain, klass.slug)),
-                        klass.description))
-            if klass.slug == ExcelExportReport.slug:
-                sublist.append('<i class="icon-list-alt"></i> ')
-            elif klass.slug == CaseExportReport.slug:
-                sublist.append('<i class="icon-share"></i> ')
-            sublist.append('%s</a></li>' % klass.name)
-        if sublist:
-            lst.append(nav_header)
-            lst.extend(sublist)
-    return "\n".join(lst)
-
-@register.simple_tag
-def custom_reports_exist(domain):
-    mapping = getattr(settings, 'CUSTOM_REPORT_MAP', None)
-    if not mapping: return False
-    if not domain in mapping: return False
-    return True
-
-@register.simple_tag
-def custom_report_list(user, domain, current_slug=""):
-    mapping = getattr(settings, 'CUSTOM_REPORT_MAP', None)
-    if not mapping: return ""
-    if not domain in mapping: return ""
-    lst = []
-    for key, models in mapping[domain].items():
-        sublist = []
-        nav_header = '<li class="nav-header">%s</li>' % key
-        for model in models:
-            if not user.can_view_report(model):
-                continue
-            klass = to_function(model)
-            sublist.append('<li%s><a href="%s" title="%s">%s</a></li>' % \
-                       ((' class="active"' if klass.slug == current_slug else ""),
-                        reverse('custom_report_dispatcher', args=(domain, klass.slug)),
-                        klass.description,
-                        klass.name))
-        if sublist:
-            lst.append(nav_header)
-            lst.extend(sublist)
-    return "\n".join(lst)
+@register.simple_tag(takes_context=True)
+def report_list(context, dispatcher):
+    """
+        This requires a valid ReportDispatcher subclass or path.to.ReportDispatcherSubclass
+        to generate a Report List.
+    """
+    if isinstance(dispatcher, str) or isinstance(dispatcher, unicode):
+        try:
+            dispatcher = to_function(dispatcher)
+        except Exception:
+            raise ValueError("The ReportDispatcher provided could not be found when generating the Report List.")
+    if not issubclass(dispatcher, ReportDispatcher):
+        raise ValueError("The dispatcher provided is not a valid subclass of ReportDispatcher.")
+    return dispatcher.report_navigation_list(context)

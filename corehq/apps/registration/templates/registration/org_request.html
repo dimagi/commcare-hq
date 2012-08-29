@@ -1,0 +1,73 @@
+{% extends "registration/base.html" %}
+{% load i18n %}
+
+{% block title %}New Organization{% endblock title %}
+{% block js-inline  %}{{ block.super }}
+<script type="text/javascript">
+    $(function() {
+        $("#termsOfServiceDomainModal").on("show", function() {
+            $(this).find(".modal-body").load("{% url tos %}");
+        });
+    });
+</script>
+{% endblock %}
+
+{% block breadcrumbs %}
+{% endblock %}
+
+{% block step-title %}
+Create a New Organization
+{% endblock %}
+
+{% block registration-content %}
+    <div class="span8">
+        <form class="form-horizontal" method="post" action="{{ request.get_full_path }}" enctype="multipart/form-data">
+            <fieldset>
+                <legend>Create an Organization</legend>
+                {% for global_error in form.non_field_errors %}
+                <div class="alert alert-error">
+                    {{ global_error }}
+                </div>
+                {% endfor %}
+
+                {% for field in form.visible_fields %}
+                <div class="control-group{% if field.errors %} error{% endif %}">
+                    <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
+                    <div class="controls">
+                        {% ifnotequal field.name 'tos_confirmed' %}
+                        {{ field }}
+                        {% else %}
+                        <label class="checkbox">{{ field }} I have read and agree to the <a data-toggle="modal" data-target="#termsOfServiceDomainModal" href="#termsOfServiceDomainModal">CommCare HQ Terms of Service</a>.</label>
+                        {% endifnotequal %}
+                        <span class="help-inline"></span>
+                        {% for error in field.errors %}
+                        <span class="help-inline">{{ error }}</span>
+                        {% endfor %}
+                        {% if field.help_text %}
+                        <p class="help-block">
+                            {{ field.help_text }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </fieldset>
+            <div class="form-actions"style="margin-top:24px; padding-top:18px;"><button type="submit" class="btn btn-primary btn-large">Create Organization</button></div>
+        </form>
+    </div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+<div class="modal hide fade" id="termsOfServiceDomainModal">
+    <div class="modal-header">
+        <a class="close" data-dismiss="modal">&times;</a>
+        <h3>CommCare HQ Terms of Service</h3>
+    </div>
+    <div class="modal-body">
+        Loading Terms of Service...
+    </div>
+    <div class="modal-footer">
+        <a href="#" data-dismiss="modal" class="btn">Close</a>
+    </div>
+</div>
+{% endblock %}

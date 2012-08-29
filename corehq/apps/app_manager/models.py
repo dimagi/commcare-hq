@@ -1,6 +1,8 @@
 # coding=utf-8
 from collections import defaultdict
 from datetime import datetime
+from django.utils.encoding import force_unicode
+from django.utils.safestring import mark_safe
 import re
 from corehq.apps.app_manager.const import APP_V1, APP_V2
 from couchdbkit.exceptions import BadValueError
@@ -12,7 +14,7 @@ from django.http import Http404
 from restkit.errors import ResourceError
 import commcare_translations
 from corehq.apps.app_manager import fixtures
-from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError
+from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError, WrappedNode
 from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
@@ -22,7 +24,7 @@ import current_builds
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.web import get_url_base, parse_int
 from copy import deepcopy
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, cached_property
 import hashlib
 from django.template.loader import render_to_string
 from urllib2 import urlopen, URLError
@@ -98,6 +100,14 @@ def put_xform(form_unique_id, source):
     form.source = source
     app.save()
 
+def partial_escape(xpath):
+    """
+    Copied from http://stackoverflow.com/questions/275174/how-do-i-perform-html-decoding-encoding-using-python-django
+    but without replacing the single quote
+
+    """
+    return mark_safe(force_unicode(xpath).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;'))
+
 class IndexedSchema(DocumentSchema):
     """
     Abstract class.
@@ -160,6 +170,10 @@ class OpenCaseAction(FormAction):
     name_path   = StringProperty()
     external_id = StringProperty()
 
+class OpenSubCaseAction(FormAction):
+    case_type = StringProperty()
+    case_name = StringProperty()
+    case_properties = DictProperty()
 
 class FormActions(DocumentSchema):
     open_case       = SchemaProperty(OpenCaseAction)
@@ -172,6 +186,7 @@ class FormActions(DocumentSchema):
     case_preload    = SchemaProperty(PreloadAction)
     referral_preload= SchemaProperty(PreloadAction)
 
+    subcases        = SchemaListProperty(OpenSubCaseAction)
 
 class FormSource(object):
     def __get__(self, form, form_cls):
@@ -284,16 +299,26 @@ class FormBase(DocumentSchema):
         actions = {}
         for action_type in types:
             a = getattr(self.actions, action_type)
-            if a.is_active():
+            if isinstance(a, list):
+                if a:
+                    actions[action_type] = a
+            elif a.is_active():
                 actions[action_type] = a
         return actions
 
     def active_actions(self):
-        return self._get_active_actions((
-            'open_case', 'update_case', 'close_case',
-            'open_referral', 'update_referral', 'close_referral',
-            'case_preload', 'referral_preload'
-        ))
+        if self.get_app().application_version == '1.0':
+            action_types = (
+                'open_case', 'update_case', 'close_case',
+                'open_referral', 'update_referral', 'close_referral',
+                'case_preload', 'referral_preload'
+            )
+        else:
+            action_types = (
+                'open_case', 'update_case', 'close_case',
+                'case_preload', 'subcases',
+            )
+        return self._get_active_actions(action_types)
 
     def active_non_preloader_actions(self):
         return self._get_active_actions((
@@ -309,6 +334,10 @@ class FormBase(DocumentSchema):
         return json.dumps(source) if dump_json else source
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
+        try:
+            self.rename_xform_language(old_lang, new_lang)
+        except XFormError:
+            pass
 
     def rename_xform_language(self, old_code, new_code):
         source = XForm(self.source)
@@ -319,7 +348,7 @@ class FormBase(DocumentSchema):
     def check_actions(self):
         errors = []
         # reserved_words are hard-coded in three different places! Very lame of me
-        # Here, casexml.js, and module_view.html
+        # Here, case-config-ui-*.js, and module_view.html
         reserved_words = load_case_reserved_words()
         for key in self.actions['update_case'].update:
             if key in reserved_words:
@@ -332,21 +361,31 @@ class FormBase(DocumentSchema):
             errors.append({'type': 'invalid xml', 'message': unicode(e)})
         else:
             paths = set()
-            for _, action in self.active_actions().items():
-                if action.condition.type == 'if':
-                    paths.add(action.condition.question)
-                if hasattr(action, 'name_path'):
-                    paths.add(action.name_path)
-                if hasattr(action, 'external_id') and action.external_id:
-                    paths.add(action.external_id)
-
-            if self.actions.update_case.is_active():
-                for _, path in self.actions.update_case.update.items():
-                    paths.add(path)
-            if self.actions.case_preload.is_active():
-                for path, _ in self.actions.case_preload.preload.items():
-                    paths.add(path)
-
+            def generate_paths():
+                for _, action in self.active_actions().items():
+                    if isinstance(action, list):
+                        actions = action
+                    else:
+                        actions = [action]
+                    for action in actions:
+                        if action.condition.type == 'if':
+                            yield action.condition.question
+                        if hasattr(action, 'name_path'):
+                            yield action.name_path
+                        if hasattr(action, 'case_name'):
+                            yield action.case_name
+                        if hasattr(action, 'external_id') and action.external_id:
+                            yield action.external_id
+                        if hasattr(action, 'update'):
+                            for _, path in self.actions.update_case.update.items():
+                                yield path
+                        if hasattr(action, 'case_properties'):
+                            for _, path in self.actions.update_case.update.items():
+                                yield path
+                        if hasattr(action, 'preload'):
+                            for path, _ in self.actions.case_preload.preload.items():
+                                yield path
+            paths.update(generate_paths())
             for path in paths:
                 if path not in valid_paths:
                     errors.append({'type': 'path error', 'path': path})
@@ -401,6 +440,7 @@ class Form(FormBase, IndexedSchema, NavMenuItemMediaMixin):
 
     def get_app(self):
         return self._parent._parent
+
     def get_module(self):
         return self._parent
 
@@ -498,12 +538,15 @@ class Detail(DocumentSchema):
     def display(self):
         return "short" if self.type.endswith('short') else 'long'
 
+
     def filter_xpath(self):
+
         filters = []
         for i,column in enumerate(self.columns):
             if column.format == 'filter':
                 filters.append("(%s)" % column.filter_xpath.replace('.', '%s_%s_%s' % (column.model, column.field, i + 1)))
-        return ' && '.join(filters)
+        xpath = ' && '.join(filters)
+        return partial_escape(xpath)
 
     def filter_xpath_2(self):
         filters = []
@@ -511,9 +554,10 @@ class Detail(DocumentSchema):
             if column.format == 'filter':
                 filters.append("(%s)" % column.filter_xpath.replace('.', column.xpath))
         if filters:
-            return '[%s]' % (' && '.join(filters))
+            xpath = '[%s]' % (' && '.join(filters))
         else:
-            return ''
+            xpath = ''
+        return partial_escape(xpath)
 
 class CaseList(IndexedSchema):
     label = DictProperty()
@@ -541,7 +585,7 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
-        for form in self.forms:
+        for form in self.get_forms():
             form.rename_lang(old_lang, new_lang)
         for detail in self.details:
             detail.rename_lang(old_lang, new_lang)
@@ -616,6 +660,7 @@ class VersionedDoc(Document):
             if 'update' not in response_json:
                 response_json['update'] = {}
             response_json['update']['app-version'] = self.version
+
     def save_copy(self):
         cls = self.__class__
         copies = cls.view('app_manager/applications', key=[self.domain, self._id, self.version], include_docs=True).all()
@@ -634,7 +679,7 @@ class VersionedDoc(Document):
             copy = cls.wrap(copy)
             copy['copy_of'] = self._id
             copy.save(increment_version=False)
-            copy.copy_attachments(self, r'.*\.xml')
+            copy.copy_attachments(self, r'[^/]*\.xml')
         return copy
 
     def copy_attachments(self, other, regexp=None):
@@ -662,15 +707,14 @@ class VersionedDoc(Document):
         cls = self.__class__
         app = cls.wrap(app)
         app.save()
-        app.copy_attachments(copy)
-        app.delete_attachment('CommCare.jar')
-        app.delete_attachment('CommCare.jad')
+        app.copy_attachments(copy, r'[^/]*\.xml')
         return app
 
     def delete_copy(self, copy):
         if copy.copy_of != self._id:
             raise VersioningError("%s is not a copy of %s" % (copy, self))
-        copy.delete()
+        copy.delete_app()
+        copy.save(increment_version=False)
 
     def scrub_source(self, source):
         """
@@ -730,6 +774,7 @@ class ApplicationBase(VersionedDoc):
 
     # this is the supported way of specifying which commcare build to use
     build_spec = SchemaProperty(BuildSpec)
+    platform = StringProperty(choices=["nokia/s40", "nokia/s60", "winmo", "generic"], default="nokia/s40")
     text_input = StringProperty(choices=['roman', 'native', 'custom-keys'], default="roman")
     success_message = DictProperty()
 
@@ -753,6 +798,17 @@ class ApplicationBase(VersionedDoc):
     langs = StringListProperty()
     # only the languages that go in the build
     build_langs = StringListProperty()
+
+    # exchange properties
+    cached_properties = DictProperty()
+    description = StringProperty()
+    deployment_date = DateTimeProperty()
+    phone_model = StringProperty()
+    user_type = StringProperty()
+    attribution_notes = StringProperty()
+
+    # always false for RemoteApp
+    case_sharing = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -783,6 +839,35 @@ class ApplicationBase(VersionedDoc):
 
     def is_remote_app(self):
         return False
+
+    def get_latest_app(self):
+        return get_app(self.domain, self.get_id, latest=True)
+
+    def get_latest_saved(self):
+        if not hasattr(self, '_latest_saved'):
+            released = self.__class__.view('app_manager/applications',
+                startkey=['^ReleasedApplications', self.domain, self._id, {}],
+                endkey=['^ReleasedApplications', self.domain, self._id],
+                limit=1,
+                descending=True,
+                include_docs=True
+            )
+            if len(released) > 0:
+                self._latest_saved = released.all()[0]
+                print self._latest_saved.is_released
+            else:
+                saved = self.__class__.view('app_manager/saved_app',
+                    startkey=[self.domain, self._id, {}],
+                    endkey=[self.domain, self._id],
+                    descending=True,
+                    limit=1,
+                    include_docs=True
+                )
+                if len(saved) > 0:
+                    self._latest_saved = saved.all()[0]
+                else:
+                    self._latest_saved = None # do not return this app!
+        return self._latest_saved
 
     def set_admin_password(self, raw_password):
         import random
@@ -838,52 +923,85 @@ class ApplicationBase(VersionedDoc):
                 return item['label']
         return self.build_spec.get_label()
 
+
+    @property
+    def url_base(self):
+        return get_url_base()
+
     @property
     def post_url(self):
         return "%s%s" % (
-            get_url_base(),
-            reverse('corehq.apps.receiverwrapper.views.post', args=[self.domain])
+            self.url_base,
+            reverse('receiver_post_with_app_id', args=[self.domain, self.copy_of or self.get_id])
         )
+
     @property
     def ota_restore_url(self):
         return "%s%s" % (
-            get_url_base(),
+            self.url_base,
             reverse('corehq.apps.ota.views.restore', args=[self.domain])
         )
+
     @property
     def profile_url(self):
+        return self.hq_profile_url
+
+    @property
+    def hq_profile_url(self):
         return "%s%s?latest=true" % (
-            get_url_base(),
+            self.url_base,
             reverse('download_profile', args=[self.domain, self._id])
         )
     @property
     def profile_loc(self):
         return "jr://resource/profile.xml"
+
     @property
     def jar_url(self):
         return "%s%s" % (
-            get_url_base(),
+            self.url_base,
             reverse('corehq.apps.app_manager.views.download_jar', args=[self.domain, self._id]),
         )
-    
-    def get_jadjar(self):
+
+    @classmethod
+    def platform_options(cls):
+        return [
+            {'label': 'Nokia S40 (default)', 'value': 'nokia/s40'},
+            {'label': 'Nokia S60', 'value': 'nokia/s60'},
+            {'label': 'WinMo', 'value': 'winmo'},
+            {'label': 'Generic', 'value': 'generic'},
+        ]
+    def get_jar_path(self):
         build = self.get_build()
         if self.text_input == 'custom-keys' and build.minor_release() < (1,3):
             raise AppError("Custom Keys not supported in CommCare versions before 1.3. (Using %s.%s)" % build.minor_release())
 
         spec = {
-            ('native',): 'Nokia/S40-native-input',
-            ('roman',): 'Nokia/S40-generic',
-            ('custom-keys',):  'Nokia/S40-custom-keys',
-        }[(self.text_input,)]
-        return self.get_build().get_jadjar(spec)
+            'nokia/s40': 'Nokia/S40',
+            'nokia/s60': 'Nokia/S60',
+            'generic': 'Generic/Default',
+            'winmo': 'Native/WinMo'
+        }[self.platform]
 
-    def create_jadjar(self):
+        if self.platform in ('nokia/s40', 'nokia/s60'):
+            spec += {
+                ('native',): '-native-input',
+                ('roman',): '-generic',
+                ('custom-keys',):  '-custom-keys',
+            }[(self.text_input,)]
+
+        return spec
+
+    def get_jadjar(self):
+        return self.get_build().get_jadjar(self.get_jar_path())
+
+    def create_jadjar(self, save=False):
         try:
             return self.fetch_attachment('CommCare.jad'), self.fetch_attachment('CommCare.jar')
         except ResourceError:
             built_on = datetime.utcnow()
-            jadjar = self.get_jadjar().pack(self.create_all_files(), {
+            all_files = self.create_all_files()
+            jadjar = self.get_jadjar().pack(all_files, {
                 'JavaRosa-Admin-Password': self.admin_password,
                 'Profile': self.profile_loc,
                 'MIDlet-Jar-URL': self.jar_url,
@@ -893,16 +1011,21 @@ class ApplicationBase(VersionedDoc):
                 'CommCare-Release': "true",
                 'Build-Number': self.version,
             })
-            self.put_attachment(jadjar.jad, 'CommCare.jad')
-            self.put_attachment(jadjar.jar, 'CommCare.jar')
-            self.built_on = built_on
-            self.built_with = BuildRecord(
-                version=jadjar.version,
-                build_number=jadjar.build_number,
-                signed=jadjar.signed,
-                datetime=built_on,
-            )
-            self.save(increment_version=False)
+            if save:
+                self.built_on = built_on
+                self.built_with = BuildRecord(
+                    version=jadjar.version,
+                    build_number=jadjar.build_number,
+                    signed=jadjar.signed,
+                    datetime=built_on,
+                )
+                self.save(increment_version=False)
+
+                self.put_attachment(jadjar.jad, 'CommCare.jad')
+                self.put_attachment(jadjar.jar, 'CommCare.jar')
+                for filepath in all_files:
+                    self.put_attachment(all_files[filepath], 'files/%s' % filepath)
+
             return jadjar.jad, jadjar.jar
 
     def validate_app(self):
@@ -915,6 +1038,8 @@ class ApplicationBase(VersionedDoc):
         except (AppError, XFormValidationError, XFormError) as e:
             errors.append({'type': 'error', 'message': unicode(e)})
         except Exception as e:
+            if settings.DEBUG:
+                raise
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
@@ -961,7 +1086,7 @@ class ApplicationBase(VersionedDoc):
     def save_copy(self, comment=None):
         copy = super(ApplicationBase, self).save_copy()
 
-        copy.create_jadjar()
+        copy.create_jadjar(save=True)
 
         try:
             copy.short_url = bitly.shorten(
@@ -1007,7 +1132,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_custom_suite = BooleanProperty(default=False)
     force_http = BooleanProperty(default=False)
     cloudcare_enabled = BooleanProperty(default=False)
-    case_sharing = BooleanProperty(default=False)
     
     @classmethod
     def wrap(cls, data):
@@ -1057,19 +1181,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return get_url_base()
 
     @property
-    def post_url(self):
-        return "%s%s" % (
-            self.url_base,
-            reverse('receiver_post_with_app_id', args=[self.domain, self.copy_of or self.get_id])
-        )
-    @property
-    def ota_restore_url(self):
-        return "%s%s" % (
-            self.url_base,
-            reverse('corehq.apps.ota.views.restore', args=[self.domain])
-        )
-
-    @property
     def suite_url(self):
         return "%s%s" % (
             self.url_base,
@@ -1086,7 +1197,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 #        )
     def fetch_xform(self, module_id, form_id):
         form = self.get_module(module_id).get_form(form_id)
-        return form.validate_form().render_xform()
+        return form.validate_form().render_xform().encode('utf-8')
 
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
         def non_empty_only(dct):
@@ -1116,9 +1227,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for lc in reversed(self.langs):
                 if lc == "default": continue
                 messages.update(
-                    commcare_translations.loads(self.create_app_strings(lc).encode('utf-8'))
+                    commcare_translations.loads(self.create_app_strings(lc))
                 )
-        return commcare_translations.dumps(messages)
+        return commcare_translations.dumps(messages).encode('utf-8')
 
 
     def create_profile(self, is_odk=False, template='app_manager/profile.xml'):
@@ -1133,6 +1244,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if property['id'] not in app_profile[type]:
                 if property.has_key('commcare_default') and property['commcare_default'] != property['default']:
                     app_profile[type][property['id']] = property['default']
+
+        if self.case_sharing:
+            app_profile['properties']['server-tether'] = 'sync'
 
         return render_to_string(template, {
             'is_odk': is_odk,
@@ -1171,7 +1285,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             "suite.xml": self.create_suite(),
         }
         if self.show_user_registration:
-            files["user_registration.xml"] = self.get_user_registration().validate_form().render_xform()
+            files["user_registration.xml"] = self.get_user_registration().validate_form().render_xform().encode('utf-8')
         for lang in ['default'] + self.build_langs:
             files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)
         for module in self.get_modules():
@@ -1296,7 +1410,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for i,lang in enumerate(self.langs):
             if lang == old_lang:
                 self.langs[i] = new_lang
-        for module in self.modules:
+        for module in self.get_modules():
             module.rename_lang(old_lang, new_lang)
         _rename_key(self.translations, old_lang, new_lang)
 
@@ -1332,6 +1446,16 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for f,form in enumerate(module['forms']):
                 change_unique_id(source['modules'][m]['forms'][f])
 
+    @cached_property
+    def has_case_management(self):
+        for module in self.get_modules():
+            for form in module.get_forms():
+                if len(form.active_actions()) > 0:
+                    return True
+        return False
+
+    def has_media(self):
+        return len(self.multimedia_map) > 0
 
     def get_xmlns_map(self):
         map = defaultdict(list)
@@ -1417,7 +1541,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         if not errors:
             errors = super(Application, self).validate_app()
-        print errors
         return errors
 
     @classmethod
@@ -1436,6 +1559,7 @@ class RemoteApp(ApplicationBase):
     """
     profile_url = StringProperty(default="http://")
     name = StringProperty()
+    manage_urls = BooleanProperty(default=False)
 
     # @property
     #     def suite_loc(self):
@@ -1457,32 +1581,76 @@ class RemoteApp(ApplicationBase):
     def create_profile(self, is_odk=False):
         # we don't do odk for now anyway
         try:
-            return urlopen(self.profile_url).read()
+            profile = urlopen(self.profile_url).read()
         except Exception:
             raise AppError('Unable to access profile url: "%s"' % self.profile_url)
 
-    def fetch_file(self, location):
+        if self.manage_urls or self.build_langs:
+            profile_xml = WrappedNode(profile)
+
+            def set_property(key, value):
+                profile_xml.find('property[@key="%s"]' % key).attrib['value'] = value
+
+            def set_attribute(key, value):
+                profile_xml.attrib[key] = value
+
+            def reset_suite_remote_url():
+                suite_local_text = profile_xml.findtext('suite/resource/location[@authority="local"]')
+                suite_remote = profile_xml.find('suite/resource/location[@authority="remote"]')
+                suite_name = self.strip_location(suite_local_text)
+                suite_remote.xml.text = self.url_base + urljoin(reverse('download_index', args=[self.domain, self.get_id]), suite_name)
+
+            if self.manage_urls:
+                set_attribute('update', self.hq_profile_url)
+                set_property("ota-restore-url", self.ota_restore_url)
+                set_property("PostURL", self.post_url)
+                set_property("cc_user_domain", cc_user_domain(self.domain))
+                reset_suite_remote_url()
+
+            if self.build_langs:
+                set_property("cur_locale", self.build_langs[0])
+
+            profile = profile_xml.render()
+        return profile
+
+    def strip_location(self, location):
         base = '/'.join(self.profile_url.split('/')[:-1]) + '/'
-        if location.startswith('./'):
-            location = location.lstrip('./')
-        elif location.startswith(base):
-            location = location.lstrip(base)
-        elif location.startswith('jr://resource/'):
-            location = location.lstrip('jr://resource/')
+
+        def strip_left(prefix):
+            string = location
+            if string.startswith(prefix):
+                return string[len(prefix):]
+
+        return strip_left('./') or strip_left(base) or strip_left('jr://resource/') or location
+
+    def fetch_file(self, location):
+        location = self.strip_location(location)
         url = urljoin(self.profile_url, location)
+
         try:
-            return location, urlopen(url).read().decode('utf-8')
+            content = urlopen(url).read()
         except Exception:
             raise AppError('Unable to access resource url: "%s"' % url)
+
+        return location, content
 
     def create_all_files(self):
         files = {
             'profile.xml': self.create_profile(),
         }
         tree = _parse_xml(files['profile.xml'])
-        suite_loc = tree.find('suite/resource/location[@authority="local"]').text
-        suite_loc, suite = self.fetch_file(suite_loc)
-        files[suite_loc] = suite
+        def add_file_from_path(path):
+            try:
+                loc = tree.find(path).text
+            except (TypeError, AttributeError):
+                return
+            loc, file = self.fetch_file(loc)
+            files[loc] = file
+            return loc, file
+
+        add_file_from_path('features/users/logo')
+        _, suite = add_file_from_path('suite/resource/location[@authority="local"]')
+
         suite_xml = _parse_xml(suite)
 
         locations = []
@@ -1538,7 +1706,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
         parent_app_id = original_app.get('copy_of') or original_app['_id']
         latest_app = get_db().view('app_manager/applications',
             startkey=['^ReleasedApplications', domain, parent_app_id, {}],
-            endkey=['^ReleasedApplications', domain, parent_app_id],
+            endkey=['^ReleasedApplications', domain, parent_app_id, original_app['version']],
             limit=1,
             descending=True,
             include_docs=True
@@ -1621,7 +1789,7 @@ class DeleteApplicationRecord(DeleteRecord):
     def undo(self):
         app = ApplicationBase.get(self.app_id)
         app.doc_type = app.get_doc_type()
-        app.save()
+        app.save(increment_version=False)
 
 class DeleteModuleRecord(DeleteRecord):
     app_id = StringProperty()

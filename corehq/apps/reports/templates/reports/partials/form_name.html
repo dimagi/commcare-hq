@@ -1,1 +1,1 @@
-{% load xforms_extras %}{% if form.is_user_registration %}User Registration{% else %}{% if form.has_app %}{{ form.form.name|trans:form.app.langs }}{% else %}{{ form.xmlns }}{% endif %}{% endif %}
+{% load xforms_extras %}{% if form.is_user_registration %}User Registration{% else %}{% if form.has_app and form.form %}{{ form.form.name|trans:form.app.langs }}{% else %}{{ form.xmlns }}{% endif %}{% endif %}

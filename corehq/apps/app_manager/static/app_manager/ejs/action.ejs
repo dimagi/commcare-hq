@@ -1,5 +1,5 @@
 [% if(casexml.edit) { %]
-    <li class="action">
+    <li class="action" id="[%= id %]-action">
         <input type="checkbox" class="action-checkbox" id="[%= id %]" [%= casexml.renderChecked(casexml.actions[action_type]) %]><label for="[%= id %]">[%= label %]</label>
         <div class="config">[%= action_body %]</div>
 

@@ -4,3 +4,4 @@ localsettings.*
 /data
 corehq/apps/releasemanager/DimagiKeyStore
 corehq/apps/hq-bootstrap/static
+corehq/apps/hq_bootstrap/static

@@ -34,3 +34,23 @@ def users_for_phone(phone):
     view_results = get_db().view("sms/phones_to_domains", key=phone)
     user_ids = set([row["id"] for row in view_results])
     return [CouchUser.get(id) for id in user_ids]
+
+
+def format_message_list(message_list):
+    """
+    question = message_list[-1]
+    if len(question) > 160:
+        return question[0:157] + "..."
+    else:
+        extra_space = 160 - len(question)
+        message_start = ""
+        if extra_space > 3:
+            for msg in message_list[0:-1]:
+                message_start += msg + ". "
+            if len(message_start) > extra_space:
+                message_start = message_start[0:extra_space-3] + "..."
+        return message_start + question
+    """
+    # Some gateways (yo) allow a longer message to be sent and handle splitting it up on their end, so for now just join all messages together
+    return " ".join(message_list)
+

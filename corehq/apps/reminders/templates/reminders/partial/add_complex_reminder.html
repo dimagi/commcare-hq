@@ -41,6 +41,22 @@
         return node;
     }
     
+    function create_survey_select_td() {
+        var td = document.createElement("TD");
+        td.setAttribute("name", "for_survey");
+        var div = document.createElement("DIV");
+        var select = document.createElement("SELECT");
+        {% for f in form_list %}
+        var option = document.createElement("OPTION");
+        option.setAttribute("value", "{{ f.code }}");
+        option.innerHTML = "{{ f.name }}";
+        select.appendChild(option);
+        {% endfor %}
+        div.appendChild(select);
+        td.appendChild(div);
+        return td;
+    }
+    
     function create_new_row() {
         var tr = document.createElement("TR");
         
@@ -66,7 +82,10 @@
         td5.appendChild(span3);
         
         var td6 = document.createElement("TD");
+        td6.setAttribute("name", "for_sms");
         td6.appendChild(create_message());
+        
+        var td6a = create_survey_select_td();
         
         var td7 = document.createElement("TD");
         var span4 = document.createElement("SPAN");
@@ -74,6 +93,7 @@
         td7.appendChild(span4);
         
         var td8 = document.createElement("TD");
+        td8.setAttribute("name","for_callbacks");
         td8.appendChild(create_text_input("short"));
         
         var td9 = document.createElement("TD");
@@ -96,6 +116,7 @@
         tr.appendChild(td4);
         tr.appendChild(td5);
         tr.appendChild(td6);
+        tr.appendChild(td6a);
         tr.appendChild(td7);
         tr.appendChild(td8);
         tr.appendChild(td9);
@@ -116,6 +137,7 @@
         }
         order_rows(table_ref);
         event_interpretation_changed();
+        method_changed();
     }
     
     function delete_row(cell_ref) {
@@ -163,7 +185,12 @@
                             }
                         }
                     }
-                } else if(col_num == 8) {
+                } else if(col_num == 7) {
+                    div = element.getElementsByTagName("DIV");
+                    select = div[0].getElementsByTagName("SELECT");
+                    select = select[0];
+                    select.setAttribute("name", "reminder_events." + row_num + ".survey");
+                } else if(col_num == 9) {
                     inputs[0].setAttribute("name","reminder_events." + row_num + ".timeouts");
                 }
             }
@@ -206,6 +233,44 @@
         } else {
             td_ref.removeChild(div_ref);
             order_rows(td_ref.parentNode.parentNode);
+        }
+    }
+    
+    //show_type should be "block", "inline", or "none"
+    function show_elements_by_name(name, show_type) {
+        elements = document.getElementsByName(name);
+        for(i = 0; i < elements.length; i++) {
+            elements[i].style.display = show_type;
+        }
+    }
+    
+    function change_inner_html(name, inner_html) {
+        elements = document.getElementsByName(name);
+        for(i = 0; i < elements.length; i++) {
+            elements[i].innerHTML = inner_html;
+        }
+    }
+    
+    function method_changed() {
+        e = document.getElementById("id_method");
+        if(e.value == "survey") {
+            show_elements_by_name("for_callbacks", "none");
+            show_elements_by_name("for_sms", "none");
+            show_elements_by_name("for_survey", "block");
+            change_inner_html("event_label3","(hh:mm), send survey");
+            change_inner_html("event_label4","");
+        } else if(e.value == "callback") {
+            show_elements_by_name("for_callbacks", "block");
+            show_elements_by_name("for_sms", "block");
+            show_elements_by_name("for_survey", "none");
+            change_inner_html("event_label3","(hh:mm), send message");
+            change_inner_html("event_label4","with callback intervals");
+        } else {
+            show_elements_by_name("for_callbacks", "none");
+            show_elements_by_name("for_sms", "block");
+            show_elements_by_name("for_survey", "none");
+            change_inner_html("event_label3","(hh:mm), send message");
+            change_inner_html("event_label4","");
         }
     }
     
@@ -266,14 +331,6 @@
             document.getElementById("schedule_length_label1").innerHTML = "After the last event, wait";
             document.getElementById("schedule_length_label2").innerHTML = "day(s) before restarting the cycle.";
         }
-        elements = document.getElementsByName("event_label3");
-        for(i = 0; i < elements.length; i++) {
-            elements[i].innerHTML = "(hh:ss), send message";
-        }
-        elements = document.getElementsByName("event_label4");
-        for(i = 0; i < elements.length; i++) {
-            elements[i].innerHTML = "with callback intervals";
-        }
     }
 </script>
 {% endblock %}
@@ -293,13 +350,13 @@
     {{ form.case_type.errors }}<br />
     For cases of type {{ form.case_type }}, start the below {{ form.method }} schedule, sending to {{ form.recipient }}.<br /><br />
     {{ form.start_property.errors }}{{ form.start_value.errors }}
-    Start when case property {{ form.start_property }} {{ form.start_match_type }} <input type="text" name="start_value" id="id_start_value" value="{{ form.start_value.value|default:"" }}" {%if form.start_match_type.value == "ANY_VALUE" %}style="display: none;"{% endif %}/>.<br /><br />
+    Start when case property {{ form.start_property }} {{ form.start_match_type }} <input type="text" name="start_value" id="id_start_value" value="{{ form.start_value.value|default:"" }}" {% if form.start_match_type.value == "ANY_VALUE" %}style="display: none;"{% endif %}/>.<br /><br />
     {{ form.start_date.errors }}{{ form.start_offset.errors }}
-    Once this happens, start sending {{ form.start_choice }} <input type="text" name="start_date" id="id_start_date" value="{{ form.start_date.value|default:"" }}" {%if form.start_choice.value == "IMMEDIATELY" %}style="display: none;"{% endif %}/> plus {{ form.start_offset }} day(s).<br /><br />
+    Once this happens, start sending {{ form.start_choice }} <input type="text" name="start_date" id="id_start_date" value="{{ form.start_date.value|default:"" }}" {% if form.start_choice.value == "IMMEDIATELY" %}style="display: none;"{% endif %}/> plus {{ form.start_offset }} day(s).<br /><br />
     {{ form.until.errors }}{{ form.max_iteration_count.errors }}
     Stop sending {{ form.iteration_type }} :
-    <input type="text" name="until" id="id_until" value="{{ form.until.value|default:"" }}" {%if form.iteration_type.value == "FIXED" %}style="display: none;"{% endif %}/>
-    <input type="text" name="max_iteration_count_input" id="id_max_iteration_count_input" value="{{ form.max_iteration_count_input.value|default:"" }}" {%if form.iteration_type.value != "FIXED" %}style="display: none;"{% endif %}/>.
+    <input type="text" name="until" id="id_until" value="{{ form.until.value|default:"" }}" {% if form.iteration_type.value == "FIXED" %}style="display: none;"{% endif %}/>
+    <input type="text" name="max_iteration_count_input" id="id_max_iteration_count_input" value="{{ form.max_iteration_count_input.value|default:"" }}" {% if form.iteration_type.value != "FIXED" %}style="display: none;"{% endif %}/>.
     <br /><br />
     <h2>Schedule</h2>
     <br />
@@ -312,10 +369,11 @@
             <th></th>
             <th></th>
             <th></th>
+            <th name="for_sms" {% if form.method.value == "survey" %}style="display: none;"{% endif %}></th>
+            <th name="for_survey" {% if form.method.value != "survey" %}style="display: none;"{% endif %}></th>
             <th></th>
             <th></th>
-            <th></th>
-            <th></th>
+            <th name="for_callbacks" {% if form.method.value != "callback" %}style="display: none;"{% endif %}></th>
             <th></th>
             <th onClick="add_row(this);"><div class="clickable">[+]</div></th>
         </tr>
@@ -325,16 +383,29 @@
             <td><input type="text" class="short" name="reminder_events.{{ forloop.counter }}.day" value="{{ e.day }}" /></td>
             <td><span name="event_label2">{% if form.event_interpretation.value == "SCHEDULE" %}, at{% else %}day(s) and{% endif %}</span></td>
             <td><input type="text" class="short" name="reminder_events.{{ forloop.counter }}.time" value="{{ e.time }}" /></td>
-            <td><span name="event_label3">(hh:ss), send message</span></td>
-            <td>
+            <td><span name="event_label3">(hh:mm), send {% if form.method.value == "survey" %}survey{% else %}message{% endif %}</span></td>
+            <td name="for_sms" {% if form.method.value == "survey" %}style="display: none;"{% endif %}>
                 {% for message_num, message in e.messages.items %}
                 <div>
                     <input type="text" class="tiny" name="reminder_events.{{ forloop.parentloop.counter }}.messages.{{ forloop.counter }}.language" value="{{ message.language }}" /><input type="text" name="reminder_events.{{ forloop.parentloop.counter }}.messages.{{ forloop.counter }}.text" value="{{ message.text }}" /><span class="clickable" onClick="delete_message(this);">[-]</span><span class="clickable" onClick="add_message(this);">[+]</span>
                 </div>
+                {% empty %}
+                <div>
+                    <input type="text" class="tiny" name="reminder_events.{{ forloop.counter }}.messages.1.language" value="" /><input type="text" name="reminder_events.{{ forloop.counter }}.messages.1.text" value="" /><span class="clickable" onClick="delete_message(this);">[-]</span><span class="clickable" onClick="add_message(this);">[+]</span>
+                </div>
                 {% endfor %}
             </td>
-            <td><span name="event_label4">with callback intervals</span></td>
-            <td><input type="text" class="short" name="reminder_events.{{ forloop.counter }}.timeouts" value="{{ e.timeouts }}" /></td>
+            <td name="for_survey" {% if form.method.value != "survey" %}style="display: none;"{% endif %}>
+                <div>
+                    <select name="reminder_events.{{ forloop.counter }}.survey">
+                    {% for f in form_list %}
+                        <option value="{{ f.code }}" {% if f.code == e.survey %}selected="selected"{% endif %}>{{ f.name }}</option>
+                    {% endfor %}
+                    </select>
+                </div>
+            </td>
+            <td><span name="event_label4">{% if form.method.value == "callback" %}with callback intervals{% endif %}</span></td>
+            <td name="for_callbacks" {% if form.method.value != "callback" %}style="display: none;"{% endif %}><input type="text" class="short" name="reminder_events.{{ forloop.counter }}.timeouts" value="{{ e.timeouts }}" /></td>
             <td onClick="delete_row(this);"><div class="clickable">[-]</div></td>
             <td onClick="add_row(this);"><div class="clickable">[+]</div></td>
         </tr>
@@ -344,14 +415,23 @@
             <td><input type="text" class="short" name="reminder_events.1.day" /></td>
             <td><span name="event_label2">{% if form.event_interpretation.value == "SCHEDULE" %}, at{% else %}day(s) and{% endif %}</span></td>
             <td><input type="text" class="short" name="reminder_events.1.time" /></td>
-            <td><span name="event_label3">(hh:ss), send message</span></td>
-            <td>
+            <td><span name="event_label3">(hh:mm), send {% if form.method.value == "survey" %}survey{% else %}message{% endif %}</span></td>
+            <td name="for_sms" {% if form.method.value == "survey" %}style="display: none;"{% endif %}>
                 <div>
                     <input type="text" class="tiny" name="reminder_events.1.messages.1.language" /><input type="text" name="reminder_events.1.messages.1.text" /><span class="clickable" onClick="delete_message(this);">[-]</span><span class="clickable" onClick="add_message(this);">[+]</span>
                 </div>
             </td>
-            <td><span name="event_label4">with callback intervals</span></td>
-            <td><input type="text" class="short" name="reminder_events.1.timeouts" /></td>
+            <td name="for_survey" {% if form.method.value != "survey" %}style="display: none;"{% endif %}>
+                <div>
+                    <select name="reminder_events.1.survey">
+                    {% for f in form_list %}
+                        <option value="{{ f.code }}" {% if f.code == e.survey %}selected="selected"{% endif %}>{{ f.name }}</option>
+                    {% endfor %}
+                    </select>
+                </div>
+            </td>
+            <td><span name="event_label4">{% if form.method.value == "callback" %}with callback intervals{% endif %}</span></td>
+            <td name="for_callbacks" {% if form.method.value != "callback" %}style="display: none;"{% endif %}><input type="text" class="short" name="reminder_events.1.timeouts" /></td>
             <td onClick="delete_row(this);"><div class="clickable">[-]</div></td>
             <td onClick="add_row(this);"><div class="clickable">[+]</div></td>
         </tr>
@@ -360,7 +440,7 @@
     <div>
         {{ form.schedule_length.errors }}
         <label id="schedule_length_label1">
-        {%if form.event_interpretation.value != "SCHEDULE" %}
+        {% if form.event_interpretation.value != "SCHEDULE" %}
         After the last event, wait
         {% else %}
         A single schedule cycle lasts
@@ -368,7 +448,7 @@
         </label>
         {{ form.schedule_length }}
         <label id="schedule_length_label2">
-        {%if form.event_interpretation.value != "SCHEDULE" %}
+        {% if form.event_interpretation.value != "SCHEDULE" %}
         day(s) before restarting the cycle.
         {% else %}
         day(s).

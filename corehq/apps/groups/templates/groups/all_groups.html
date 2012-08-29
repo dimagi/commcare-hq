@@ -82,7 +82,7 @@
         <button class="btn btn-success" type="submit">Create Group</button>
     </form>
 {% endblock %}
-{% block js-inline %}
+{% block js-inline %}{{ block.super }}
 <script>
     $(function () {
         $('.reporting-group-icon').popover({

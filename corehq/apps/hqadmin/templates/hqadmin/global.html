@@ -142,14 +142,35 @@
     </style>{% endblock %}
 {% block report-title %}CommCare HQ Global Statistics{% endblock %}
 {% block reportcontent %}
-
-    <label for="cumulative">Cumulative: </label><input type="checkbox" id="cumulative" />
-
-    <div style="clear:both;display:block;width:500px;">
-        <div style="float:left;">Zoom: </div>
-        <div id="overview" style="display:block;float:right; margin-left:50px;margin-top:0px;width:400px;height:150px"></div>
-        <div style="clear:both;">&nbsp;</div>
-    </div>
+    
+    <fieldset class="form-horizontal">
+        <legend>Report Options</legend>
+        <div class="control-group">
+            <label for="cumulative" class="control-label">Cumulative</label>
+            <div class="controls">
+                <input type="checkbox" id="cumulative" />
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label" for="overview">
+                Zoom
+            </label>
+            <div class="controls">
+                <div id="overview" style="display:block; margin-top:0px;width:400px;height:150px"></div>
+            </div>
+        </div>
+        <div class="control-group">
+            <div class="control-label" for="export-data">
+                Export Data
+            </div>
+            <div class="controls">
+                <div id="export-data" class="btn-group">
+                    <a href="{% url export_global_report %}" class="btn">as .xls</a>
+                    <a href="{% url export_global_report %}?format=csv" class="btn">as .csv</a>
+                </div>
+            </div>
+        </div>
+    </fieldset>
 
 
     <h2>New Cases</h2>

@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    {% include "imports/datatables.bootstrap.html" %}
+    {% include "imports/datatables.html" %}
     <script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
@@ -16,7 +16,9 @@
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
         $(function() {
-                var reportTables = new HQReportDataTables({});
+                var reportTables = new HQReportDataTables({
+                    {% if aoColumns %}aoColumns: {{ aoColumns|JSON }}{% endif %}
+                });
                 reportTables.render();
         });
     </script>

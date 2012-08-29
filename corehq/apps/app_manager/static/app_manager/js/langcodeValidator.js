@@ -1,5 +1,6 @@
 var LangcodeValidator = (function () {
     'use strict';
+    var validateURL;
     function LangcodeValidator(options) {
         var i,
             that = this,
@@ -7,6 +8,7 @@ var LangcodeValidator = (function () {
         this.$home = $("#" + options.home);
         this.langcodes = options.langcodes;
         this.renameURL = options.renameURL;
+        validateURL = options.validateURL;
         this.edit = options.edit;
         this.validation = {
             isValid: {},
@@ -30,7 +32,6 @@ var LangcodeValidator = (function () {
         }
     }
     LangcodeValidator.validate = function (langcode, callback) {
-        var validateURL = "/langcodes/validate.json";
         $.get(validateURL, {"term": langcode}, function (data) {
             data = JSON.parse(data);
             callback(langcode, data.match, data.suggestions);

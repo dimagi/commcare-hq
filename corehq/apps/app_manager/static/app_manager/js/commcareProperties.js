@@ -1,5 +1,7 @@
 /*globals $, console, JSON, COMMCAREHQ, eventize */
 
+
+
 var CommcareProperty = {
     wrap: function (json, initialValue, $home, settings, edit) {
         'use strict';
@@ -13,7 +15,7 @@ var CommcareProperty = {
             needsToBeSaved = false,
             parseCondition = function (condition) {
                 var parts = condition ? condition.split('&&') : [],
-                    parse_part = /\{(\w+)\.([\w\-]+)\}='([\w\-]*)'/,
+                    parse_part = /\{([\$\w]+)\.([\w\-]+)\}='([\w\-]*)'/,
                     result,
                     type,
                     variable,
@@ -49,6 +51,7 @@ var CommcareProperty = {
                 };
 
             },
+
             getDefault = function () {
                 var i = 0,
                     contingent_default = that.contingent_default || [];
@@ -134,11 +137,10 @@ var CommcareProperty = {
                     v,
                     v_name,
                     i;
-                $("<th></th>").text(that.name + " ").append(
-                    $("<span></span>").addClass('help-link').attr('data-help-key', that.id)
-                ).append(
-                    $("<div />").addClass('help-text').attr('data-help-key', that.id).text(that.description)
-                ).appendTo($tr);
+                $("<th></th>").text(that.name + " ")
+                .append(
+                    $("<span></span>").append($("<i></i>").addClass('icon icon-question-sign').popover({title:that.name, content:that.description})
+                )).appendTo($tr);
                 if (edit) {
                     if (that.values === undefined) {
                         $input = $("<input type='text' />");
@@ -250,6 +252,19 @@ var CommcareSettings = {
                 $homes = $();
                 that.properties = {};
                 that.features = {};
+                that.$parent = {'case_sharing': (function () {
+                    var el = $('#case-sharing-select'),
+                        that = {
+                            val: function () {
+                                return el.val()
+                            }
+                        };
+                    eventize(that);
+                    el.change(function () {
+                        that.fire('change');
+                    });
+                    return that;
+                }())};
 
                 for (i = 0; i < that.length; i += 1) {
                     p = that[i];

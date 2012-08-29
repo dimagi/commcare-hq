@@ -9,13 +9,14 @@
     <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.uploader.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqwebapp/javascripts/underscore-1.3.1.js' %}"></script>
-    <script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.0.0.js' %}"></script>
     <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.multimedia_map.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
         var loadedData = {{ multimedia|JSON }};
+        var searchUrl = '{% url hqmedia_search domain app.get_id %}';
+        var chooseImageUrl = '{% url hqmedia_choose_media domain app.get_id %}';
         ko.applyBindings(new MultimediaMap(loadedData, "{{ STATIC_URL }}hqmedia/js"));
 
         var hqimage_uploader = new HQMediaUploader({
@@ -114,6 +115,36 @@
                                                 <div class="controls"></div>
                                             </div>
                                             <div class="upload-form-placeholder"></div>
+                                            <div>
+                                                <form data-bind="submit: searchForImages">
+                                                    <div class="control-group">
+                                                        <input type="text" name="q" placeholder="Search..." data-bind="value: query" />
+                                                        <button type="submit" class="btn">Search for shared images</button>
+                                                    </div>
+                                                </form>
+                                                <!-- ko if: searched -->
+                                                <div class="well">
+                                                    <div data-bind="if: searching() > 0" style="text-align: center;">
+                                                        <img src="/static/formdesigner/images/ajax-loader.gif" />
+                                                    </div>
+                                                    <div data-bind="if: searching() == 0">
+                                                        <ul data-bind="foreach: imageOptions" class="thumbnails">
+                                                        <li class="span3">
+                                                            <div class="thumbnail">
+                                                                <img data-bind="attr: {src: url}" />
+                                                                <div data-bind="foreach: tags">
+                                                                    <span class="label label-info" data-bind="text: $data"></span>
+                                                                </div>
+                                                                <h6 data-bind="text: license">
+                                                                </h6>
+                                                                <a href="#" class="btn" data-bind="click: choose">Use this image</a>
+                                                            </div>
+                                                        </li>
+                                                    </ul>
+                                                    </div>
+                                                </div>
+                                                <!-- /ko -->
+                                            </div>
                                         </div>
                                         <div class="modal-footer">
                                             <a href="#" data-dismiss="modal" class="btn">Close</a>
@@ -162,6 +193,35 @@
 {#                                            <div class="controls"></div>#}
 {#                                        </div>#}
                                         <div class="upload-form-placeholder"></div>
+                                        <div>
+                                            <form data-bind="submit: searchForAudio">
+                                                <div class="control-group">
+                                                    <input type="text" name="q" placeholder="Search..." data-bind="value: query" />
+                                                    <button type="submit" class="btn">Search for shared audio</button>
+                                                </div>
+                                            </form>
+                                            <!-- ko if: searched -->
+                                            <div class="well">
+                                                <div data-bind="if: searching() > 0" style="text-align: center;">
+                                                    <img src="/static/formdesigner/images/ajax-loader.gif" />
+                                                </div>
+                                                <div data-bind="if: searching() == 0">
+                                                    <ul data-bind="foreach: audioOptions" class="thumbnails">
+                                                        <li class="span3">
+                                                            <div class="thumbnail">
+                                                                <div data-bind="previewHQAudioButton: url, HQAudioIsPlaying: $root.is_audio_playing, previewHQAudioParams: {uid: uid}"></div>
+                                                                <div data-bind="foreach: tags">
+                                                                    <span class="label label-info" data-bind="text: $data"></span>
+                                                                </div>
+                                                                <h6 data-bind="text: license"></h6>
+                                                                <a href="#" class="btn" data-bind="click: choose">Use this audio</a>
+                                                            </div>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <!-- /ko -->
+                                        </div>
                                     </div>
                                     <div class="modal-footer">
                                         <a href="#" data-dismiss="modal" class="btn">Close</a>
@@ -176,10 +236,7 @@
                 </div>
             </div>
         </div>
-
     </div>
-
-
 
     <div id="hqmedia-upload-Image" class="hide">
         <div class="control-group" style="margin-bottom: 0;">
@@ -192,7 +249,12 @@
             <div class="controls hqm-upload-list"></div>
         </div>
         <div class="controls" style="margin-top: 0;">
-            <a class="hqm-upload-button btn btn-primary hide" onclick="return false;">Upload Image</a>
+            <div class="hide hqm-upload-hidden">
+                <label for="shareImage"><input id="shareImage" class="hqm-share-media" type="checkbox" checked="checked" /> Share this media with other CommCareHQ users</label>
+                <input id="imageTags" class="hqm-media-tags" type="text" placeholder="Enter space-separated tags for the image" />
+                By clicking "Upload," you are confirming that you have a right to use this image, and if you chose to share the image, you have the right to share it.
+            </div>
+            <a class="hqm-upload-button hqm-upload-hidden btn btn-primary hide" onclick="return false;">Upload Image</a>
             <a class="hqm-cancel btn btn-warning hide" href="#"><i class="icon icon-white icon-remove"></i> Cancel Upload</a>
         </div>
     </div>
@@ -208,7 +270,11 @@
             <div class="controls hqm-upload-list"></div>
         </div>
         <div class="controls" style="margin-top: 0;">
-            <a class="hqm-upload-button btn btn-primary hide" onclick="return false;">Upload Audio</a>
+            <div class="hide hqm-upload-hidden">
+                <label for="shareAudio"><input id="shareAudio" class="hqm-share-media" type="checkbox" checked="checked" /> Share this media with other CommCareHQ users</label>
+                <input id="audioTags" class="hqm-media-tags" type="text" placeholder="Enter space-separated tags for the image" />
+            </div>
+            <a class="hqm-upload-button hqm-upload-hidden btn btn-primary hide" onclick="return false;">Upload Audio</a>
             <a class="hqm-cancel btn btn-warning hide" href="#"><i class="icon icon-white icon-remove"></i> Cancel Upload</a>
         </div>
     </div>

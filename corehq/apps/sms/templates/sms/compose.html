@@ -1,0 +1,97 @@
+{% extends 'sms/default.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load timezone_tags %}
+
+{% block sms-js %}
+    {% include "imports/checklist.html" %}
+{% endblock %}
+
+{% block sms-js-inline %}
+    <script type="text/javascript">
+
+        $(function(){
+            $('.checklist').toChecklist({
+                addSearchBox : true,
+                showSelectedItems : true
+            });
+
+            $("#sms-message").bind('keyup', function () {
+                var max_char = 160,
+                        current_count = $(this).val().length,
+                        cc_message = "";
+                var chars_remaining = max_char - current_count;
+                var $char_count = $("#character-count");
+                if(chars_remaining < 0)
+                    $char_count.addClass("alert-danger").removeClass('alert-info');
+                else
+                    $char_count.removeClass("alert-danger").addClass('alert-info');
+                cc_message = current_count + " character";
+                if(current_count != 1)
+                    cc_message = cc_message + "s";
+                cc_message = cc_message + " (" + max_char + " max)";
+                $char_count.text(cc_message);
+            });
+
+            function split( val ) {
+                return val.split( /,\s*/ );
+            }
+            function extractLast( term ) {
+                return split( term ).pop();
+            }
+
+            $('.sms-typeahead').typeahead({
+                source:{{ sms_contacts|JSON }},
+                matcher: function(item) {
+                    return ~item.toLowerCase().indexOf(extractLast(this.query).toLowerCase());
+                },
+                select: function () {
+                    var val = this.$menu.find('.active').attr('data-value'),
+                            current_val = this.$element.val();
+                    current_val = current_val.substring(0, current_val.lastIndexOf(',')+1);
+                    if(current_val)
+                        current_val = current_val + ' ';
+                    this.$element
+                            .val(current_val+this.updater(val)+", ")
+                            .change();
+                    this.$element.focus();
+                    return this.hide();
+                }
+            }).focus();
+
+        });
+    </script>
+{% endblock %}
+
+{% block page-subtitle %}
+    <a href="{% url sms_compose_message domain %}">Compose SMS Message</a>
+{% endblock %}
+
+{% block main_column %}
+    {% include "hqwebapp/partials/time-notice.html" %}
+    <form class="form form-horizontal" action="{% url corehq.apps.sms.views.send_to_recipients domain %}" method="post">
+        <fieldset>
+            <legend>Send SMS Message</legend>
+            <div class="control-group">
+                <label class="control-label" for="sms-recipients">Recipients:</label>
+                <div class="controls">
+                    <div class="row-fluid">
+                        <textarea id="sms-recipients" name="recipients" class="sms-typeahead span12"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="sms-message">Message:</label>
+                <div class="controls">
+                    <div class="row-fluid">
+                        <textarea id="sms-message" name="message" class="span12"></textarea>
+                    </div>
+                    <p class="alert alert-info help-block" id="character-count">0 characters (160 max)</p>
+                </div>
+            </div>
+        </fieldset>
+        <div class="form-actions">
+            <button type="submit" name="send_sms_button" class="btn btn-primary">Send Message</button>
+        </div>
+    </form>
+{% endblock %}

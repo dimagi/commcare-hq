@@ -1,17 +1,76 @@
 {% extends "app_manager/managed_app.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
+{% load i18n %}
 
 {% block js %}{{ block.super }}
     {% if app.get_doc_type == "Application" %}
         <script src="{% static 'app_manager/js/commcareProperties.js' %}"></script>
         <script src="{% static 'translations/js/translations.js' %}"></script>
     {% endif %}
-    <script src="{% static 'hqwebapp/javascripts/knockout-2.0.0.debug.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
     <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
+    <script type="text/javascript">
+        $(function(){
+            var help_text = {
+                "Success Message": "You can optionally specify a template for the message that your CHWs receive upon successful submission of a form."
+                + "  In the template, you have access to the following variables gathered real-time from the server:" +
+                        "  $first_name, $name, $week, $today. Example: " +
+                        " Thanks $first_name! You have submitted $today forms today and $week forms since Monday."
+             };
+            $('.help_popover').popover({
+                placement: $(this).data('placement') || 'left',
+                title: function () {
+                    return $(this).attr('data-help-key');
+                },
+                content: function () {
+                    return help_text[$(this).attr('data-help-key')];
+                }
+            });
+
+            var version_function = function () {
+                var i;
+                var options = {{ commcare_build_options|JSON }};
+                var app_version = $(this).val();
+                var version = options[app_version];
+                var commcare_versions = version['options'];
+                var commcare_version_val = $('#commcare_version').val() || {{ app_build_spec_string|JSON }};
+
+                var commcare_version_label = $('#commcare_version option:selected').text() || {{ app_build_spec_label|JSON }};
+                var superuser = {{ user.is_superuser|BOOL }};
+                $('#commcare_version').find('option').remove().end().find('optgroup').remove().end();
+                for (i = 0; i < commcare_versions.length; i++) {
+                    var option = commcare_versions[i];
+                    var superuser_option = option['superuser_only'];
+                    if (superuser || !(superuser_option)) {
+                        var option_val = version["builds"][i];
+                        var option_label = version["labels"][i];
+                        $('#commcare_version').append('<option value="' + option_val + '">' + option_label + '</option>');
+                    }
+                }
+                var standard_build = false;
+                for (i = 0; i < commcare_versions.length; i++) {
+                    if (commcare_version_val === version["builds"][i]) {
+                        standard_build = true;
+                    }
+                }
+                if (!standard_build && commcare_version_val != null) {
+                    $('#commcare_version').append(
+                        $('<optgroup label="Custom">').append('<option value="' + commcare_version_val + '">' + commcare_version_label + '</option>')
+                    );
+                }
+                $('#commcare_version').val(commcare_version_val);
+
+            };
+
+            $('#app_version').change(version_function);
+            $('#app_version').each(version_function);
+
+        });
+    </script>
     {% if app %}
     <script>
         $(function () {
@@ -352,12 +411,11 @@
                         {% endif %}
                     </td>
                 </tr>
-                {% if show_secret_settings %}
                 <tr>
                     <th>App Version</th>
                     <td>
                         {% if edit %}
-                            <select name="application_version" data-value="{{ app.application_version }}">
+                            <select name="application_version" data-value="{{ app.application_version }}" id="app_version">
                                 <option value="1.0">1.x</option>
                                 <option value="2.0">2.x</option>
                             </select>
@@ -366,30 +424,68 @@
                         {% endif %}
                     </td>
                 </tr>
-                {% endif %}
                 <tr>
                     <th>CommCare Version</th>
                     <td>
                         {% if edit %}
-                            <select name="build_spec" data-value="{{ app.build_spec.to_string }}">
-                                {% for option in commcare_build_options %}
-                                    {% if user.is_superuser or not option.superuser_only %}
-                                    <option value='{{ option.build.to_string }}'>
-                                        {{ option.label }}
-                                    </option>
-                                    {% endif %}
-                                {% endfor %}
-                                {% if not is_standard_build %}
-                                    <optgroup label="Custom">
-                                        <option value='{{ app.build_spec.to_string }}'>
-                                            {{ app.build_spec.get_label }}
-                                        </option>
-                                    </optgroup>
-                                {% endif %}
+                            <select name="build_spec" data-value="{{ app.build_spec.to_string }}" id="commcare_version">
                             </select>
                         {% else %}
                             {{ app.get_build_label }}
                         {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Platform</th>
+                    <td>
+                        {% if edit %}
+                            <select name="platform" data-value="{{ app.platform }}">
+                                {% for option in app.platform_options %}
+                                    <option value="{{ option.value }}">{{ option.label }}</option>
+                                {% endfor %}
+                            </select>
+                        {% else %}
+                            {{ app.platform }}
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Text Input</th>
+                    <td>
+                        {% if edit %}
+                            <select name="text_input" data-value="{{ app.text_input }}">
+                                <option value="roman">* Default (Roman)</option>
+                                <option value="native">Native (International)</option>
+                                <option value="custom-keys">Custom Keys [requires CommCare 1.3 or above]</option>
+                            </select>
+                        {% else %}
+                            {% if app.text_input == "native"%}
+                                Native (International)
+                                {% else %}{% if app.text_input == "custom-keys" %}
+                                    Custom Keys
+                                {% else %}
+                                    Default (Roman)
+                                {% endif %}{% endif %}
+                        {% endif %}
+                        <aside id="custom-keys-help">
+                            <span class="ui-icon ui-icon-arrowthick-1-e"></span>
+                            <p>Customize through <a href="#custom-keys-example">User Interface Translations</a>.</p>
+                            <div id="custom-keys-example">
+                                <h2>Example:</h2>
+                                <ul>
+                                    <li><span>polish.TextField.charactersKey1</span><span>.,</span><li>
+                                    <li><span>polish.TextField.charactersKey2</span><span>abc2</span><li>
+                                    <li><span>polish.TextField.charactersKey3</span><span>def3</span><li>
+                                    <li><span>polish.TextField.charactersKey4</span><span>ghi4</span><li>
+                                    <li><span>polish.TextField.charactersKey5</span><span>jkl5</span><li>
+                                    <li><span>polish.TextField.charactersKey6</span><span>mno6</span><li>
+                                    <li><span>polish.TextField.charactersKey7</span><span>pqrs7</span><li>
+                                    <li><span>polish.TextField.charactersKey8</span><span>tuv8</span><li>
+                                    <li><span>polish.TextField.charactersKey9</span><span>wxyz9</span><li>
+                                    <li><span>polish.TextField.charactersKey0</span><span> 0</span><li>
+                                </ul>
+                            </div>
+                        </aside>
                     </td>
                 </tr>
                 <tr>
@@ -410,6 +506,19 @@
                             <input type="text" class="code wide" name="profile_url" value="{{ app.profile_url }}"/>
                         {% else %}
                             {{ app.profile_url }}
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Auto-manage URLs</th>
+                    <td>
+                        {% if edit %}
+                        <select name="manage_urls" data-value="{{ app.manage_urls|JSON }}">
+                            <option value="false">* Off</option>
+                            <option value="true">On</option>
+                        </select>
+                        {% else %}
+                        {% if app.manage_urls %}On{% else %}Off{% endif %}
                         {% endif %}
                     </td>
                 </tr>
@@ -442,6 +551,19 @@
                         {% endif %}
                     </td>
                 </tr>
+                <tr>
+                     <th><label for="cloudcare-enabled-select">CloudCare Enabled?</label></th>
+                     <td>
+                         {% if edit %}
+                             <select id="cloudcare-enabled-select" name="cloudcare_enabled" data-value="{{ app.cloudcare_enabled|JSON }}">
+                                 <option value="false">No</option>
+                                 <option value="true">Yes</option>
+                             </select>
+                         {% else %}
+                             {% if app.cloudcare_enabled %}Yes{% else %}No{% endif %}
+                         {% endif %}
+                     </td>
+                 </tr>
                 {% endif %}
                 {% if user.is_superuser %}
                 <tbody class="superuser-only">
@@ -470,66 +592,14 @@
                         </td>
                     </tr>
                     {% endif %}
-                    <tr>
-                        <th><label for="cloudcare-enabled-select">CloudCare Enabled?</label></th>
-                        <td>
-                            {% if edit %}
-                                <select id="cloudcare-enabled-select" name="cloudcare_enabled" data-value="{{ app.cloudcare_enabled|JSON }}">
-                                    <option value="false">No</option>
-                                    <option value="true">Yes</option>
-                                </select>
-                            {% else %}
-                                {% if app.cloudcare_enabled %}Yes{% else %}No{% endif %}
-                            {% endif %}
-                        </td>
-                    </tr>
+                    
                 </tbody>
                 {% endif %}
             {% endif %}
                 <tr>
-                    <th>Text Input</th>
-                    <td>
-                        {% if edit %}
-                            <select name="text_input" data-value="{{ app.text_input }}">
-                                <option value="roman">* Default (Roman)</option>
-                                <option value="native">Native (International)</option>
-                                <option value="custom-keys">Custom Keys [requires CommCare 1.3 or above]</option>
-                            </select>
-                        {% else %}
-                            {% if app.text_input == "native"%}
-                                Native (International)
-                            {% else %}{% if app.text_input == "custom-keys" %}
-                                Custom Keys
-                            {% else %}
-                                Default (Roman)
-                            {% endif %}{% endif %}
-                        {% endif %}
-                        <aside id="custom-keys-help">
-                            <span class="ui-icon ui-icon-arrowthick-1-e"></span>
-                            <p>Customize through <a href="#custom-keys-example">User Interface Translations</a>.</p>
-                            <div id="custom-keys-example">
-                                <h2>Example:</h2>
-                                <ul>
-                                    <li><span>polish.TextField.charactersKey1</span><span>.,</span><li>
-                                    <li><span>polish.TextField.charactersKey2</span><span>abc2</span><li>
-                                    <li><span>polish.TextField.charactersKey3</span><span>def3</span><li>
-                                    <li><span>polish.TextField.charactersKey4</span><span>ghi4</span><li>
-                                    <li><span>polish.TextField.charactersKey5</span><span>jkl5</span><li>
-                                    <li><span>polish.TextField.charactersKey6</span><span>mno6</span><li>
-                                    <li><span>polish.TextField.charactersKey7</span><span>pqrs7</span><li>
-                                    <li><span>polish.TextField.charactersKey8</span><span>tuv8</span><li>
-                                    <li><span>polish.TextField.charactersKey9</span><span>wxyz9</span><li>
-                                    <li><span>polish.TextField.charactersKey0</span><span> 0</span><li>
-                                </ul>
-                            </div>
-                        </aside>
-                    </td>
-                </tr>
-                <tr>
                     <th>
                         Success Message
-                        <span class="help-link" data-help-key="app_manager/success_message"></span>
-                        <div class="help-text" data-help-key="app_manager/success_message"></div>
+                        <span class="help_popover" data-help-key="Success Message"><span> <i class="icon icon-question-sign"></i></span></span>
                     </th>
                     <td>
                         {% if edit %}
@@ -547,14 +617,17 @@
             {% include "app_manager/partials/supported-languages.html" %}
         </div>
     {% if app.get_doc_type == "Application" %}
+        <h4><a href="{% url app_summary domain app.id %}" class="btn btn-primary">Application Summary</a></h4>
 
         <div class="scary-settings-toggle">
             <a href="#"><span class="ui-icon"></span>Multimedia</a>
         </div>
         {% if multimedia %}
         <div class="scary-settings multimedia">
-            <h2>View, manage, upload, and download files using the Multimedia Map.</h2>
-            <p><a target="_blank" class="btn btn-primary" style="color: #ffffff; text-decoration: none;" href="{% url hqmedia_references domain app.get_id %}">Multimedia Reference Checker</a> (opens in a new window)</p>
+            {% if edit %}
+                <h2>View, manage, upload, and download files using the Multimedia Map.</h2>
+                <p><a target="_blank" class="btn btn-primary" style="color: #ffffff; text-decoration: none;" href="{% url hqmedia_references domain app.get_id %}">Multimedia Reference Checker</a> (opens in a new window)</p>
+            {% endif %}
             <h2>Download a ZIP file of all your multimedia</h2>
             {% include "hqmedia/partials/multimedia_zip_notice.html" %}
         </div>
@@ -595,7 +668,7 @@
     <div>
         <form method="get" action='{% url import_app domain %}' style="font-size: .8em; text-align: right;">
             <input type="hidden" name="app" value="{{ app.id }}"/>
-            Copy this app to domain: <input type="text" name="domain" />
+            Copy this app to project: <input type="text" name="domain" />
             <input type="submit" value="Copy" />
         </form>
     </div>

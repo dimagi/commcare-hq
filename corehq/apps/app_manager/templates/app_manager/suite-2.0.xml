@@ -39,30 +39,33 @@
      {% for d in detail.columns %}
         {% if d.format != 'filter' %}
         <field{% if forloop.first %} sort="default"{% endif %}>
-            <header{% if d.format == "late-flag" or d.format == "invisible" %}{% if detail.display == "short" %} width="0"{% endif %}{% endif %}>
+            <header{% if d.format == "late-flag" or d.format == "invisible" or d.format == "address" %}{% if detail.display == "short" %} width="0"{% endif %}{% endif %}>
                 <text><locale id="m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.counter }}.header"/></text>
             </header>
          {% if d.format == "plain" or d.format == "phone" and detail.type == "case_short" or d.format == "phone" and detail.type == "ref_short" %}
             <template><text><xpath function="{{ d.xpath }}"/></text></template>
          {% else %}{% ifequal d.format "date" %}
-{#            <template><text><xpath function="format_date({{ d.xpath }}, 'short')"/></text></template>#}
-            <template><text><xpath function="if({{ d.xpath }} = '', '', format_date(date(if({{ d.xpath }} = '', 0, {{ d.xpath }})),'short'))"/></text></template>
+             {% if detail.display == 'short' %}
+             <template width="0"><text><xpath function="{{ d.xpath }}"/></text></template>
+             {% else %}
+             <template><text><xpath function="if({{ d.xpath }} = '', '', format_date(date(if({{ d.xpath }} = '', 0, {{ d.xpath }})),'short'))"/></text></template>
+             {% endif %}
          {% else %}{% ifequal d.format "advanced" %}
             <template><text><xpath function="{{ d.model }}_{{ d.field }}_{{ forloop.counter }}"/></text></template>
          {% else %}{% if d.format == "enum" or d.format == "enum-image"%}
              <template{% if d.format == "enum-image" %} form="image"{% endif %}><text>
                  <xpath function="
                   {% for key, val in d.enum.items %}
-                     if({{ d.xpath }} = '{{ key }}', ${{ key }},
+                     if({{ d.xpath }} = '{{ key }}', $k{{ key }},
                   {% endfor %}
-                     '?'
+                     ''
                   {% for _ in d.enum %}
                      )
                   {% endfor %}
                  ">
                   {% for key, val in d.enum.items %}
-                     <variable name="{{ key }}">
-                         <locale id="m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.parentloop.counter }}.enum.{{ key }}{% if d.format == "enum-image" %}.image{% endif %}"/>
+                     <variable name="k{{ key }}">
+                         <locale id="m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.parentloop.counter }}.enum.k{{ key }}{% if d.format == "enum-image" %}.image{% endif %}"/>
                      </variable>
                   {% endfor %}
                  </xpath>
@@ -77,9 +80,18 @@
              <template form="phone"><text><xpath function="{{ d.xpath }}" /></text></template>
          {% else %}{% if d.format == "invisible" %}
              <template{% if detail.display == "short" %} width="0"{% endif %}><text><xpath function="{{ d.xpath }}" /></text></template>
-         {% endif %}{% endifequal %}{% endifequal %}{% endifequal %}{% endifequal %}{% endif %}{% endifequal %}{% endifequal %}{% endif %}
-
+         {% else %}{% if d.format == "address" %}
+             <template width="0" form="address"><text><xpath function="{{ d.xpath }}"/></text></template>
+         {% endif %}{% endif %}{% endifequal %}{% endifequal %}{% endifequal %}{% endifequal %}{% endif %}{% endifequal %}{% endifequal %}{% endif %}
         </field>
+
+        {% if d.format == 'date' and detail.display == "short" %}
+        <field>
+            <header width="0"><text/></header>
+            <template><text><xpath function="if({{ d.xpath }} = '', '', format_date(date(if({{ d.xpath }} = '', 0, {{ d.xpath }})),'short'))"/></text></template>
+        </field>
+        {% endif %}
+
         {% endif %}
      {% endfor %}
     </detail>
@@ -135,4 +147,13 @@
 {% else %}
     {{ app.custom_suite|safe }}
 {% endif %}
+    {% if app.case_sharing %}
+    <fixture id="user-groups" user_id="demo_user">
+        <groups>
+            <group id="demo_user_group_id">
+                <name>Demo Group</name>
+            </group>
+        </groups>
+    </fixture>
+    {% endif %}
 </suite>

@@ -1,0 +1,26 @@
+<label for="individual_select" class="control-label">{{ field_name }}</label>
+<div class="controls">
+    <select id="individual_select" name="individual" data-bind="value: selected_individual">
+        <option></option>
+        {% for group in groups %}
+            <option value="{{ group.group_id }}">{{ group.name }} (Group)</option>
+        {% endfor %}
+        {% for user in users %}
+            {% ifchanged user.is_active %}
+                {% if not user.is_active %}<optgroup label="Inactive">{% endif %}
+            {% endifchanged %}
+            <option value="{{ user.user_id }}">{{ user.username_in_report }}</option>
+            {% ifchanged user.is_active %}
+                {% if not user.is_active %}</optgroup>{% endif %}
+            {% endifchanged %}
+        {% endfor %}
+    </select>
+</div>
+<script type="text/javascript">
+    $(function() {
+        ko.applyBindings({selected_individual: ko.observable('{{ individual|default:'' }}')}, $('#individual_select').parent().get(0));
+        $('#individual_select').combobox({
+            placeholder: '{{ default_option|safe }}'
+        });
+    });
+</script>

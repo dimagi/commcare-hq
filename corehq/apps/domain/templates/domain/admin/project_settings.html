@@ -1,0 +1,101 @@
+{% extends "users/users_base.html" %}
+{% load hq_bootstrap_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+<script type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
+{% endblock %}
+
+{% block head %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+<script type="text/javascript">
+    $(function(){
+        {% for field in autocomplete_fields %}
+            $("#id_{{ field }}").focus(function() {
+                if (!$("#id_{{ field }}").data('loaded')) {
+                    $("#id_{{ field }}").data('loaded', 'true');
+                    $.getJSON('{% url domain_autocomplete_fields field %}', function(results) {
+                        $("#id_{{ field }}").typeahead({ source: results,
+                            items: 8
+                        }).
+                                attr("autocomplete", "off");
+                    });
+                }
+            });
+        {% endfor %}
+        $('#id_deployment_date').datepicker({
+            changeMonth: true,
+            changeYear: true,
+            showButtonPanel: true,
+            dateFormat: 'yy-mm-dd',
+            maxDate: '0',
+            numberOfMonths: 2
+        });
+    });
+</script>
+{% endblock %}
+
+{% block subsection-title %}
+    <li class="active">
+        <a href="#">Project Settings</a>
+    </li>
+{% endblock %}
+
+{% block user-view %}
+    <ul class="nav nav-tabs" id="project-settings-tabs">
+        <li><a href="#overall-settings" data-toggle="tab">Project Information</a></li>
+        {% if billing_enabled %}<li><a href="#billing-info" data-toggle="tab">Billing Information</a></li>{% endif %}
+    </ul>
+    <div class="tab-content" id="settings">
+        <section class="tab-pane" id="overall-settings">
+            <form class="form-horizontal" method="post">
+                {% bootstrap_form_errors form %}
+                {% bootstrap_fieldset form "Project Settings" %}
+                <script type="text/javascript">
+                    $(function() {
+                        $('#id_default_timezone').combobox({
+                            placeholder: 'Select a Timezone...'
+                        });
+                    });
+                </script>
+                <div class="form-actions"><button type="submit" class="btn btn-primary">Update Project Settings</button></div>
+                <fieldset>
+                    {% if languages|length > 0 %}
+                        {% if applications|length > 0 %}
+                            <legend>Project Overview</legend>
+                        {% endif %}
+                        <div class="control-group">
+                            <label class="control-label">{% trans 'Languages' %}</label>
+                            <div class="controls">
+                                <p class="help-block">{{ languages }}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% if applications|length > 0 %}
+                        <div class="control-group">
+                            <label class="control-label">{% trans 'Applications' %}</label>
+                            <div class="controls">
+                                <ul class="nav nav-pills nav-stacked">
+                                    {% for app in applications %}
+                                        <li><a href="{% url corehq.apps.app_manager.views.view_app domain app.id %}">{{ app.name }}</a></li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    {% endif %}
+                </fieldset>
+            </form>
+        </section>
+        {% if billing_enabled %}
+        <section class="tab-pane" id="billing-info">
+            {% include billing_info_partial|default:'hq_bootstrap/forms/basic_fieldset.html' %}
+        </section>
+        {% endif %}
+    </div>
+
+{% endblock %}>

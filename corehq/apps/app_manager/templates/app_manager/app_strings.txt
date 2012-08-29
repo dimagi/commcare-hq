@@ -1,3 +1,4 @@
+{% autoescape off %}
     {% load xforms_extras %}
 homescreen.title={{ app.name }}
     {% for module in app.get_modules %}
@@ -8,7 +9,7 @@ m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.counte
 
                 {% if d.format == "enum" %}
                     {% for key, val in d.enum.items %}
-m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.parentloop.counter }}.enum.{{ key }}={{ val|clean_trans:langs }}
+m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.parentloop.counter }}.enum.k{{ key }}={{ val|clean_trans:langs }}
                     {% endfor %}
                 {% endif %}
             {% endfor %}
@@ -18,7 +19,7 @@ m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.parent
     {% for module in app.get_modules %}
 modules.m{{ module.id }}={{ module.name|clean_trans:langs }}
         {% if module.case_list.show %}
-case_lists.m{{ module.id }}={{ module.case_list.label|clean_trans:langs }}
+case_lists.m{{ module.id }}={{ module.case_list.label|clean_trans:langs|default:"Case List" }}
         {% endif %}
         {% if module.referral_list.show %}
 referral_lists.m{{ module.id }}={{ module.referral_list.label|clean_trans:langs }}
@@ -40,3 +41,4 @@ m{{ module.id }}.ref_long.title={{ module.referral_label|clean_trans:langs }}
 {{ key }}={{ trans|clean_trans:langs }}
     {% endfor %}
 {% endcomment %}
+{% endautoescape %}

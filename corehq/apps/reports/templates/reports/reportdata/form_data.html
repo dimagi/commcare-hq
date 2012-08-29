@@ -1,11 +1,12 @@
-{% extends "reports/report_base.html" %}
+{% extends "reports/base_template.html" %}
 {% load xform_tags %}
 {% load case_tags %}
 {% load timezone_tags %}
+{% load hq_shared_tags %}
 
 {% block head %}{{ block.super }}
     {% include "imports/bootstrap.google-prettify.html" %}
-    <script type="text/javascript" src="{{ STATIC_URL }}hq-bootstrap/js/jquery.selectText.js"></script>
+    <script type="text/javascript" src="{% static 'hq_bootstrap/js/jquery.selectText.js' %}"></script>
     <script type="text/javascript">
         $(function() {
             var $codeBlock = $("#formatted-form-xml"),
@@ -36,7 +37,7 @@
             <a href="{% url default_report domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
         </li>
         <li>
-            <a href="{% url report_dispatcher domain 'submit_history' %}">Submit History</a> <span class="divider">&gt;</span>
+            <a href="{% url project_report_dispatcher domain 'submit_history' %}">Submit History</a> <span class="divider">&gt;</span>
         </li>
         <li class="active">
             <a href="#">Form Data for "{{ form_data.name }}"{% if form_data.modified %}&mdash;modified {% utc_to_timezone form_data.modified timezone %}{% endif %}</a>

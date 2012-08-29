@@ -1,6 +1,4 @@
 from django.core.management.base import LabelCommand, CommandError
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import WebUser
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -10,6 +8,8 @@ class Command(LabelCommand):
     label = ""
      
     def handle(self, *args, **options):
+        from corehq.apps.users.models import WebUser
+        from corehq.apps.domain.shortcuts import create_domain
         if len(args) != 3:
             raise CommandError('Usage: manage.py bootstrap <domain> <email> <password>')
         domain_name, username, passwd = args

@@ -117,7 +117,7 @@ class CommCareBuild(Document):
         ).one()
 
         if not self:
-            raise KeyError("Can't find build {label}.".format(label=BuildSpec(
+            raise KeyError("Can't find build {label}. For instructions on how to add it, see https://github.com/dimagi/core-hq/blob/master/corehq/apps/builds/README.md".format(label=BuildSpec(
                 version=version,
                 build_number=build_number,
                 latest=latest

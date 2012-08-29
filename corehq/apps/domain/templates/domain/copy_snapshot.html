@@ -1,0 +1,28 @@
+{% extends "users/users_base.html" %}
+{% load hq_bootstrap_tags %}
+{% load i18n %}
+
+{% block subsection-title %}
+<li class="active">
+    <a href="#">Copy From Snapshot</a>
+</li>
+{% endblock %}
+
+{% block user-view %}
+<form class="form-horizontal" method="post">
+    <fieldset>
+        <legend>Create new project from snapshot</legend>
+        <div class="control-group{% if error_message %} error{% endif %}">
+            <label class="control-label" for="new_domain_name">{% trans 'New project name' %}</label>
+            <div class="controls">
+                <input type="text" class="span3" id="new_domain_name"
+                       name="new_domain_name" value="{{ new_domain_name }}">
+                {% if error_message %}
+                    <span class="help-inline">{{ error_message }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Create New Project</button></div>
+    </fieldset>
+</form>
+{% endblock %}>

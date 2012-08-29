@@ -26,7 +26,7 @@ def get_owned_cases(domain, user_id):
     except AttributeError:
         owner_ids = [user_id]
     keys = [[owner_id, False] for owner_id in owner_ids]
-    cases = CommCareCase.view('case/by_owner', keys=keys, include_docs=True)
+    cases = CommCareCase.view('case/by_owner', keys=keys, include_docs=True, reduce=False)
     return [case.get_json() for case in cases]
 
 def get_cloudcare_apps(domain):
@@ -38,4 +38,5 @@ def get_app(domain, app_id):
     app = Application.get(app_id)
     assert(app.domain == domain)
     return app._doc
-    
+
+

@@ -1,0 +1,284 @@
+{% extends "hqwebapp/centered.html" %}
+{% load hq_shared_tags %}
+{% load hq_bootstrap_tags %}
+{% load i18n %}
+
+{% block js-inline %}{{ block.super }}
+<script xmlns="http://www.w3.org/1999/html">
+        $(function(){
+        if (!{{ reg_form_empty|JSON }}) {
+            $('#create_project_modal').modal({show:true});
+        }
+        if (!{{ update_form_empty|JSON }}) {
+            $('#update_info_modal').modal({show:true});
+        }
+        if (!{{ add_form_empty|JSON }}) {
+            $('#add_project_modal').modal({show:true});
+        }
+        if (!{{ add_member_form_empty|JSON }}) {
+            $('#add_member_modal').modal({show:true});
+        }
+        if (!{{ add_team_form_empty|JSON }}) {
+            $('#add_team_modal').modal({show:true});
+        }
+        $("#openTOS").click(function(e) {
+            $("#tosBox").slideDown();
+            return false;
+        })
+
+        $("#add_project_btn").tooltip({title:"Add Existing Project", placement:"top"});
+        $("#create_project_btn").tooltip({title:"Create New Project", placement:"top"});
+        $("#add_team_btn").tooltip({title:"Create New Team", placement:"top"});
+        $("#add_member_btn").tooltip({title:"Add New Member", placement:"top"});
+
+        $('#load_data').click(function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: $(this).attr('href'),
+                data: '',
+                dataType: 'json',
+                success: function(data) {
+//                    console.log(data)
+                    $('#data-container').html(JSON.stringify(data))
+                }
+
+            });
+        });
+
+
+
+        });
+    </script>
+{% endblock %}
+
+<!--{% block sidebar %}-->
+    <!--<ul class="nav nav-list">-->
+        <!--<li></li>-->
+
+        <!--<li><a href="#create_project_modal" data-toggle="modal"><i class="icon-pencil"></i> Create New Project</a></li>-->
+        <!--<li></li>-->
+        <!--<li></li>-->
+        <!--<li></li>-->
+    <!--</ul>-->
+<!--{% endblock %}-->
+{% block page-title %}
+        <div class="container">
+<ul class="breadcrumb">
+    <li>
+        <strong>Organizations</strong> <span class="divider">&gt;</span>
+    </li>
+    <li>
+
+        <a href="{% url orgs_landing org.name %}">{{ org.name }} ({{ org.title }})</a>
+    </li>
+</ul>
+        </div>
+{% endblock %}
+
+{% block centered-content %}
+    <section>
+        <div class="row-fluid">
+            <div class="span2">
+                {% if org.logo_filename %}
+                <p><img src="{% url orgs_logo org.name %}" alt="Logo" height="90" width="90" style="padding-left: 35px"/></p>
+                {% endif %}
+            </div>
+        <div class="span3">
+            <p>Email: {% if org.email %}<a href="mailto:{{ org.email }}">{{ org.email }}</a>{% else %} None{% endif %}</p>
+            <!-- possibly bad to add http to front of url.  How else to make link absolute? -->
+            <p>URL: {% if org.url %}<a href="http://{{ org.url }}" target="_blank">{{ org.url }}</a>{% else %} None{% endif %}</p>
+            <p>Location: {{ org.location }}</p>
+            <a href="#update_info_modal" class="btn" data-toggle="modal">Update Info</a>
+        </div>
+                <div class="span7" style="padding-top:30px">
+
+                    <div class="span2">
+                        <h1>{{ domains|length }} <small>Projects</small></h1>
+                    </div>
+                    <div class="span2">
+                        <h1>{{ teams|length }} <small>Teams</small></h1>
+                    </div>
+                    <div class="span2">
+                    <h1>{{ org.members|length }} <small>Members</small></h1>
+                    </div>
+                </div>
+        </div>
+    </section>
+    <section>
+        <div class="row-fluid">
+            <hr/></div>
+        <div class="row-fluid">
+            <div class="span4">
+                <ul class="nav nav-list">
+                    <li class="nav-header"><h2>Projects <a href="#add_project_modal" id="add_project_btn" class="btn btn-success" data-toggle="modal"><i class="icon-plus"></i></a> <a href="#create_project_modal" id="create_project_btn" class="btn btn-success" data-toggle="modal"><i class="icon-pencil"></i></a></h2></li>
+                    {% for domain in domains %}
+                    <li><a href="{% url domain_homepage domain %}"><h3>{{ domain.display_name }}</h3></a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="span3">
+                <div class="nav nav-list">
+                    <li class="nav-header">
+                        <h2>Teams <a href="#add_team_modal" id="add_team_btn" class="btn btn-success" data-toggle="modal"><i class="icon-plus"></i></a></h2>
+                    </li>
+                    {% for team in teams %}
+                    <li><a href="{% url orgs_team_members org.name team.get_id %}"><h3>{{ team.name }}</h3></a></li>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="span5">
+                <ul class="nav nav-list">
+                    <li class="nav-header">
+                        <h2>Members <a href="#add_member_modal" id="add_member_btn" class="btn btn-success" data-toggle="modal"><i class="icon-plus"></i></a></h2>
+                    </li>
+                    {% for member in members %}
+                    <li><h3>{{ member.username }}{% if member.first_name and member.last_name %} <small>({{ member.full_name }})</small>{% endif %}</h3></li>
+                    {% endfor %}
+                </ul>
+
+            </div>
+
+        </div>
+        <div class="row-fluid">
+        </div>
+    </section>
+
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    {% if user.is_superuser %}
+        <div id="create_project_modal" class="modal hide fade">
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal">&times;</a>
+                <h3>Create new Project for {{ org.title }}</h3>
+            </div>
+            <form class="form-horizontal" action="{% url orgs_new_project org.name %}" method="post">
+                <div class="modal-body">
+                    <fieldset>
+                        <legend>Create a new project within this organization</legend>
+                        {% for global_error in reg_form.non_field_errors %}
+                        <div class="alert alert-error">
+                            {{ global_error }}
+                        </div>
+                        {% endfor %}
+                        {% for field in reg_form.visible_fields %}
+                        <div class="control-group{% if field.errors %} error{% endif %}">
+                            <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
+                            <div class="controls">
+                                {% ifnotequal field.name 'tos_confirmed' %}
+                                {{ field }}
+                                {% else %}
+                                <label class="checkbox">{{ field }} I have read and agree to the <a href="#" id="openTOS">CommCare HQ Terms of Service</a>.</label>
+                                <div id="tosBox" class="hide">
+                                    The software is provided "AS IS", without warranty of any kind, express or implied,
+                                    INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+                                    FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. In no event shall the authors or
+                                    copyright holders be liable for any claim, damages or other liability whether in an action of
+                                    contract, tort or otherwise, arising from, out of or in connection with the software or the use
+                                    or other dealings in the software.
+                                </div>
+                                {% endifnotequal %}
+                                <span class="help-inline"></span>
+                                {% for error in field.errors %}
+                                <span class="help-inline">{{ error }}</span>
+                                {% endfor %}
+                                {% if field.help_text %}
+                                <p class="help-block">
+                                    {{ field.help_text }}
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </fieldset>
+                    <input type="hidden" name="next" value="{% url orgs_landing org.name %}">
+                    <input type="hidden" name="org" value="{{ org.name }}">
+                </div>
+
+                <div class="modal-footer">
+                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Create New Project</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="update_info_modal" class="modal hide fade">
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal">&times;</a>
+                <h3>Update Info For {{ org.title }}</h3>
+            </div>
+            <form class="form-horizontal" method="post" action="{% url orgs_update_info org.name %}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <fieldset>
+                        {% bootstrap_form_errors update_form %}
+                        {% bootstrap_fieldset update_form %}
+                    </fieldset>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="add_project_modal" class="modal hide fade">
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal">&times;</a>
+                <h3>Create new Project for {{ org.title }}</h3>
+            </div>
+            <form class="form-horizontal" method="post" action="{% url orgs_add_project org.name %}">
+                <div class="modal-body">
+                    <fieldset>
+                        {% bootstrap_form_errors add_form %}
+                        {% bootstrap_fieldset add_form "Add an existing project to this organization" %}
+                    </fieldset>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Add Project</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="add_member_modal" class="modal hide fade">
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal">&times;</a>
+                <h3>Add a new member to {{ org.title }}</h3>
+            </div>
+            <form class="form-horizontal" method="post" action="{% url orgs_add_member org.name %}">
+                <div class="modal-body">
+                    <fieldset>
+                        {% bootstrap_form_errors add_member_form %}
+                        {% bootstrap_fieldset add_member_form %}
+                    </fieldset>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Add Member</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="add_team_modal" class="modal hide fade">
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal">&times;</a>
+                <h3>Add a new team to {{ org.title }}</h3>
+            </div>
+            <form class="form-horizontal" method="post" action="{% url orgs_add_team org.name %}">
+                <div class="modal-body">
+                    <fieldset>
+                        {% bootstrap_form_errors add_team_form %}
+                        {% bootstrap_fieldset add_team_form %}
+                    </fieldset>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Add Team</button>
+                </div>
+            </form>
+        </div>
+
+    {% endif %}
+{% endblock %}

@@ -2,10 +2,39 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 
+{% block js-inline %}{{ block.super }}
+<script type="text/javascript">
+    $(function(){
+        var help_text = {
+            "Cases and Referrals":"Cases and referrals are a way of preserving information across multiple interactions with CommCare on the mobile phone.",
+            "Child Cases": ("Child Cases let you open other types of cases for use in other modules. " +
+                "When possible, they'll be linked to the current case so you'll always know where they came from. " +
+                "A great use of Child Cases is for tracking a newborn separately from its mother.")
+        };
+        $('.help_popover').popover({
+            placement: $(this).data('placement') || 'right',
+            title: function () {
+                return $(this).attr('data-help-key');
+            },
+            content: function () {
+                return help_text[$(this).attr('data-help-key')];
+            }
+        });
+    });
+</script>
+{% endblock %}
 {% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/javascripts/knockout.mapping.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+
     <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
-    <script src="{% static 'app_manager/js/casexml.js' %}"></script>
+    {% if app.application_version == '2.0' %}
+        <script src="{% static 'app_manager/js/case-config-ui-2.js' %}"></script>
+    {% else %}
+        <script src="{% static 'app_manager/js/case-config-ui-1.js' %}"></script>
+    {% endif %}
     <script src="{% static 'app_manager/js/langcodeValidator.js' %}"></script>
+    <script src="{% static 'cloudcare/js/util.js' %}"></script>
 
     <script>
         $(function(){
@@ -61,6 +90,7 @@
                 langcodes: {{ xform_languages|JSON }},
                 edit: edit,
                 renameURL: "{% url corehq.apps.app_manager.views.rename_language app.domain form.unique_id %}",
+                validateURL: "{% url corehq.apps.app_manager.views.validate_language app.domain app.id %}"
             });
             var form_empty = {% if form.source %}false{% else %}true{% endif %};
         {% if is_user_registration %}
@@ -151,9 +181,16 @@
                     save_url: "{% url corehq.apps.app_manager.views.edit_form_actions app.domain app.id module.id nav_form.id %}",
                     requires: "{{ form.requires }}",
 {#                    save_requires_url: "{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'requires' %}",#}
-                    reserved_words: {{ case_reserved_words_json|JSON }}
+                    reserved_words: {{ case_reserved_words_json|JSON }},
+                    moduleCaseTypes: {{ module_case_types|JSON }},
+                    caseType: {{ form.get_case_type|JSON }}
                 });
                 casexml.init();
+
+                // tag the 'preview in cloudcare' button with the right url
+                // unfortunately, has to be done in javascript
+                var cloudCareUrl = getCloudCareUrl("{% url cloudcare_app_list domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
+                $("#cloudcare-preview-url").attr("href", cloudCareUrl);
             }
         {% endif %}
         });
@@ -212,6 +249,26 @@
             color: #888;
         }
     </style>
+    {% if app.application_version == '2.0' %}
+    <style>
+        #open-referral-action,
+        #update-referral-action,
+        #close-referral-action,
+        #referral-preload-action {
+            display: none;
+        }
+        .indent {
+            margin-left: 15px;
+        }
+        .ko-no-edit-select {
+            font-weight: bold;
+            color: #444;
+        }
+        .code.ko-no-edit {
+            font-weight: normal;
+        }
+    </style>
+    {% endif %}
 {% endblock %}
 {% block form-view %}
     {% if edit and not is_user_registration %}
@@ -255,7 +312,7 @@
     {% endif %}
 
     {% if edit %}
-        <h4>XForm</h4>
+        <h4>Form Questions (XForm)</h4>
         <div class="config" id="xform-links">
             <ul>
                 <li>
@@ -303,6 +360,12 @@
                             href="{% url get_xform_source domain app.id module.id form.id %}?download=true"
                         {% endif %}><span class="ui-icon ui-icon-arrowthick-1-s"></span>Download</a>
                 </li>
+{% if app.application_version == '2.0' %}
+                <li><a {% if not form.source or is_user_registration %}class="disabled"{% endif %}
+                            id="cloudcare-preview-url" href="#"
+                        ><span class="ui-icon ui-icon-play"></span>Try in CloudCare</a>
+                </li>
+{% endif %}
             </ul>
         </div>
     {% endif %}
@@ -320,10 +383,128 @@
             <h4>User Registration Properties</h4>
             <div id="user_reg_home" class="config"></div>
         {% else %}
-            <h4>Cases and Referrals <span class="help-link" data-help-key="app_manager/casexml_overview"></span></h4>
-            <div class="help-text" data-help-key="app_manager/casexml_overview"></div>
-            <div class="casexml config" id="casexml_home">
-            </div>
+            {% if app.application_version == '1.0' %}
+                <h4>Cases and Referrals
+                    <span class="help_popover" data-help-key="Cases and Referrals"><span> <i class="icon icon-question-sign"></i></span></span></h4>
+                <div class="casexml config" id="casexml_home">
+                </div>
+            {% else %}
+                <h4>Case Configuration
+                    <span class="help_popover" data-help-key="Cases and Referrals"><span> <i class="icon icon-question-sign"></i></span></span></h4>
+                <span class="label label-info indent">The app builder for 2.0 apps currently doesn't support referrals</span>
+                <div class="casexml config" id="casexml_home">
+                    <script type="text/html" id="remove-subcase-modal-template">
+                        <div class="modal-header">
+                            <a href="#" class="close" data-dismiss="modal">×</a>
+                            <h3>Remove Subcase?</h3>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to remove this subcase?</p>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="#" class="btn" data-dismiss="modal">Cancel</a>
+                            <a class="btn btn-danger" href="#" data-bind="click: $root.removeSubCase" data-dismiss="modal">Remove Subcase</a>
+                        </div>
+                    </script>
+                    <div id="case-config-ko">
+                        <hr/>
+                        <h4>CommCare 2.0 Child Cases <sup>beta</sup> <span class="help_popover" data-help-key="Child Cases"><span> <i class="icon icon-question-sign"></i></span></span></h4>
+                        <div data-bind="foreach: subcases" class="indent form">
+                            <div>
+                                <i class="icon-ok"></i>
+                                Opens a case for a different case list:
+                                <span class="control-group" data-bind="css: {warning: !case_type()}">
+                                    <select data-bind="
+                                        options: $root.caseTypes,
+                                        optionsText: $root.getCaseTypeLabel,
+                                        value: case_type,
+                                        optionsCaption: 'Choose a Module...',
+                                        edit: $root.edit"></select>
+                                    <span class="help-inline" data-bind="visible: !case_type()">Required</span>
+                                </span>
+                                <a href="#" data-bind="openModal: 'remove-subcase-modal-template', visible: $root.edit" style="float: right"><i class="icon-trash"></i>Remove subcase</a>
+                            </div>
+                            <div data-bind="visible: condition.type() === 'always' && $root.edit" class="indent">
+                                <a href="#" data-bind="click: function () {condition.type('if')}"><i class="icon-plus"></i> Use condition...</a>
+                            </div>
+                            <div data-bind="visible: condition.type() === 'if'" class="indent">
+                                <a href="#" data-bind="click: function () {condition.type('always')}, visible: $root.edit"><i class="icon-remove"></i></a>
+                                If the answer to
+                                <select data-bind="
+                                    optstr: $root.utils.getQuestions('select1'),
+                                    value: condition.question,
+                                    optionsCaption: ' ',
+                                    edit: $root.edit"></select>
+                                is
+                                    <span data-bind="if: $root.utils.getAnswers({question: condition.question()}).length">
+                                        <select data-bind="
+                                            optstr: $root.utils.getAnswers({question: condition.question()}),
+                                            value: condition.answer,
+                                            edit: $root.edit"></select>
+                                    </span>
+                                    <span data-bind="if: !$root.utils.getAnswers({question: condition.question()}).length">
+                                        <input class="code" data-bind="value: condition.answer, edit: $root.edit"/>
+                                    </span>
+                            </div>
+                            <div class="well" style="margin: 10px">
+                                <table>
+                                    <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>Question</th>
+                                        <th>Case Property</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="control-group" data-bind="css: {warning: !case_name()}">
+                                            <td></td>
+                                            <td>
+                                                <div><select data-bind="
+                                                    optstr: $root.utils.getQuestions('all'),
+                                                    optstrText: function (question) { return $root.getLabel(question)},
+                                                    value: case_name,
+                                                    optionsCaption: ' ',
+                                                    edit: $root.edit"></select></div>
+                                                <p class="help-inline" data-bind="visible: !case_name()">Required</p>
+                                            </td>
+                                            <td>
+                                                <span class="label label-inverse">Name</span> <code>case_name</code>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+
+                                    <tbody data-bind="foreach: case_properties">
+                                    <tr class="control-group" data-bind="css: {error: validate}">
+                                        <td>
+                                            <a href="#" data-bind="click: $parent.removeProperty, visible: $root.edit"><i class="icon-remove"></i></a>
+                                        </td>
+                                        <td>
+                                            <select data-bind="
+                                                optstr: $root.utils.getQuestions('all'),
+                                                optstrText: function (question) { return $root.getLabel(question)},
+                                                value: path,
+                                                optionsCaption: ' ',
+                                                edit: $root.edit"></select>
+                                        </td>
+                                        <td>
+                                            <input class="code" data-bind="value: key, attr: {placeholder: defaultKey}, edit: $root.edit"/>
+                                            <p class="help-inline" data-bind="text: validate"></p>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                                <a href="#" data-bind="click: addProperty, visible: $root.edit">Add property</a>
+                            </div>
+                        </div>
+                        <div class="indent">
+                            <a href="#" data-bind="click: addSubCase, visible: $root.edit">
+                                <i class="icon-plus"></i>
+                                Opens a case for a different case list...
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         {% endif %}
     {% endif %}
 
