@@ -14,7 +14,7 @@ class PathIndiaKrantiReport(CustomProjectReport, ProjectReportParametersMixin, D
     def report_context(self):
         report_data = dict()
         for user in self.users:
-            key = [user.userID]
+            key = [user.get('user_id')]
             data = get_db().view("pathindia/kranti_report",
                 reduce=True,
                 startkey = key+[self.datespan.startdate_param_utc],
