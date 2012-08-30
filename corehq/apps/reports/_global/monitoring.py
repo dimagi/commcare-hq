@@ -128,7 +128,6 @@ class CaseActivityReport(WorkerMonitoringReportTable, CouchCachedReportMixin):
         # TODO: cleanup...case type should be None, but not sure how that affects other rports
 
         case_type = self.case_type if (self.case_type is not None and self.case_type != "") else None
-        print "CASE TYPE", case_type
 
         def _format_val(value, total):
             try:
@@ -138,8 +137,6 @@ class CaseActivityReport(WorkerMonitoringReportTable, CouchCachedReportMixin):
             return display
 
         case_key =  self.cached_report.case_key(case_type)
-        print "CASE KEY", case_key
-
 
         landmark_data = [self.cached_report.landmark_data.get(case_key,
                 {}).get(self.cached_report.day_key(landmark), {}) for landmark in self.landmarks]
@@ -177,13 +174,10 @@ class CaseActivityReport(WorkerMonitoringReportTable, CouchCachedReportMixin):
 
     def fetch_cached_report(self):
         report = CaseActivityReportCache.get_by_domain(self.domain).first()
-        if not report:
+        recreate = self.request.GET.get('recreate')
+        if not report or recreate == 'yes':
             logging.info("Building new Case Activity report for project %s" % self.domain)
             report = CaseActivityReportCache.build_report(self.domain_object)
-        if not hasattr(report, 'closed_cases') or '__DEFAULT__' not in report.closed_cases:
-            # temporary measure
-            logging.info("Rebuilding Case Activity Report for project %s, missing Closed Cases." % self.domain)
-            report = report.build_report(self.domain_object)
         return report
 
 
