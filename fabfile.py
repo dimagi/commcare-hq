@@ -287,7 +287,7 @@ def update_code():
         run('git submodule sync')
         run('git submodule update --init --recursive')
 
-@roles('django_celery','django_app', 'staticfiles')
+#@roles('django_celery','django_app', 'staticfiles')
 @task
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
@@ -304,7 +304,6 @@ def deploy():
         execute(update_services)
         execute(migrate)
         execute(collectstatic)
-        #execute(touch_apache)
     finally:
         # hopefully bring the server back to life if anything goes wrong
         execute(services_stop)
@@ -350,12 +349,12 @@ def touch_supervisor():
 def update_services():
     """ upload changes to services such as nginx """
     with settings(warn_only=True):
-        execute(services_stop)
+        services_stop()
     #remove old confs from directory first
     services_dir =  posixpath.join(env.services, u'supervisor', 'supervisor_*.conf')
     run('rm -f %s' % services_dir)
-    execute(upload_and_set_supervisor_config)
-    execute(services_start)
+    upload_and_set_supervisor_config()
+    services_start()
     netstat_plnt()
 
 @roles('lb')
@@ -477,6 +476,8 @@ def _upload_supervisor_conf_file(filename):
 @roles('django_celery')
 def upload_celery_supervisorconf():
     _upload_supervisor_conf_file('supervisor_celery.conf')
+    _upload_supervisor_conf_file('supervisor_celerybeat.conf')
+    _upload_supervisor_conf_file('supervisor_celerymon.conf')
 
 @roles('django_celery')
 def upload_sofabed_supervisorconf():
