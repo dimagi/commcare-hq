@@ -98,14 +98,10 @@ def cache_report(refresh_stale=1800, cache_timeout=3600):
                 logging.error("Could not fetch cache for report %s due to error: %s" % (report.name, e))
 
             context = None
-            print "CACHED_DATA", cached_data
             if isinstance(cached_data, dict):
                 data_key = report.queried_path
-                print "KEY", data_key
                 context = cached_data.get(data_key)
-                print "CONTEXT", context
             if context is None:
-                print "Directly loading report %s." % report.name
                 context = func(report)
 
             try:
@@ -147,8 +143,6 @@ def cache_users(refresh_stale=1800, cache_timeout=3600):
                 individual=individual,
                 filters=".".join(["%s" % f.type for f in user_filter if f.show])
             )
-            print ["%s%s" % (f.type, f.show) for f in user_filter if f.show]
-            print "User list cache key: %s" % cache_key
 
             cached_data = None
             try:
@@ -158,11 +152,9 @@ def cache_users(refresh_stale=1800, cache_timeout=3600):
 
             user_list = None
             if isinstance(cached_data, dict):
-                print "Trying to load user list for project %s from cache." % domain
                 user_list = cached_data.get('data')
 
             if user_list is None:
-                print "Fetching user list for project %s." % domain
                 user_list = func(domain, **kwargs)
 
             try:

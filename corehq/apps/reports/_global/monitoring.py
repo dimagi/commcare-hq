@@ -40,7 +40,7 @@ class WorkerMonitoringReportTable(GenericTabularReport, ProjectReport, ProjectRe
         return self.table_cell(user.get('raw_username'), user_link)
 
     @property
-    @monitoring_report_cacher
+#    @monitoring_report_cacher
     def report_context(self):
         return super(WorkerMonitoringReportTable, self).report_context
 
@@ -127,7 +127,7 @@ class CaseActivityReport(WorkerMonitoringReportTable, CouchCachedReportMixin):
         rows = []
         # TODO: cleanup...case type should be None, but not sure how that affects other rports
 
-        case_type = self.case_type if (self.case_type is not None and self.case_type != "") else None
+        case_type = self.case_type if self.case_type else None
 
         def _format_val(value, total):
             try:
