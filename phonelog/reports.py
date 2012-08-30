@@ -47,7 +47,7 @@ class FormErrorReport(DeploymentsReport, DatespanMixin):
         query_string = self.request.META['QUERY_STRING']
         child_report_url = DeviceLogDetailsReport.get_url(self.domain)
         for user in self.users:
-            key = [self.domain, "errors_only", user.raw_username]
+            key = [self.domain, "errors_only", user.get('raw_username')]
             data = get_db().view("phonelog/devicelog_data",
                     reduce=True,
                     startkey=key+[self.datespan.startdate_param_utc],
@@ -65,7 +65,7 @@ class FormErrorReport(DeploymentsReport, DatespanMixin):
             formatted_error_count = '<span class="label label-important">%d</span>' % error_count if error_count > 0\
                                         else '<span class="label">%d</span>' % error_count
 
-            key = [self.domain, user.userID]
+            key = [self.domain, user.get('user_id')]
             data = get_db().view("reports/submit_history",
                 startkey=key + [self.datespan.startdate_param_utc],
                 endkey=key + [self.datespan.enddate_param_utc, {}],
@@ -76,11 +76,11 @@ class FormErrorReport(DeploymentsReport, DatespanMixin):
                 "url": child_report_url,
                 "error_slug": DeviceLogTagField.errors_only_slug,
                 "username_slug": DeviceLogUsersField.slug,
-                "username": user.username_in_report,
-                "raw_username": user.raw_username,
+                "username": user.get('username_in_report'),
+                "raw_username": user.get('raw_username'),
                 "query_string": "%s&" % query_string if query_string else ""
             }
-            rows.append([self.table_cell(user.raw_username, username_formatted),
+            rows.append([self.table_cell(user.get('raw_username'), username_formatted),
                          self.table_cell(form_count),
                          self.table_cell(warning_count, formatted_warning_count),
                          self.table_cell(error_count, formatted_error_count)])
