@@ -70,11 +70,11 @@ class CaseReassignmentInterface(GenericTabularReport, DataInterface, ProjectRepo
         rows = list()
         checkbox = '<input type="checkbox" class="selected-commcare-case" data-bind="event: {change: updateCaseSelection}" data-caseid="%(case_id)s" data-owner="%(owner)s" data-ownertype="%(owner_type)s" />'
         for user in self.users:
-            data = self._get_data(user.userID)
+            data = self._get_data(user.get('user_id'))
             for item in data:
                 case, case_link = self._get_case_info(item)
                 if case:
-                    rows.append([checkbox % dict(case_id=case._id, owner=user.userID, owner_type="user"),
+                    rows.append([checkbox % dict(case_id=case._id, owner=user.get('user_id'), owner_type="user"),
                                  case_link, case.type, user.get('username_in_report'), util.format_relative_date(case.modified_on)])
         for group in self.case_sharing_groups:
             data = self._get_data(group._id)
@@ -112,7 +112,7 @@ class CaseReassignmentInterface(GenericTabularReport, DataInterface, ProjectRepo
         context = super(CaseReassignmentInterface, self).report_context
         active_users = util.get_all_users_by_domain(self.domain, user_filter=HQUserType.use_defaults())
         context.update(
-            users=[dict(ownerid=user.userID, name=user.get('username_in_report'), type="user")
+            users=[dict(ownerid=user.get('user_id'), name=user.get('username_in_report'), type="user")
                    for user in active_users],
             groups=[dict(ownerid=group.get_id, name=group.name, type="group")
                     for group in self.all_case_sharing_groups]
