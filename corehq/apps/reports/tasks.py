@@ -86,19 +86,26 @@ def build_case_activity_report():
 @task
 def report_cacher(report, context_func, cache_key,
                   current_cache=None, refresh_stale=1800, cache_timeout=3600):
+    data_key = report.queried_path
+    print "DATA KEY", data_key
     data = getattr(report, context_func)
-    _cache_data(data, cache_key, current_cache, refresh_stale, cache_timeout)
+    _cache_data(data, cache_key,
+        current_cache=current_cache, refresh_stale=refresh_stale,
+        cache_timeout=cache_timeout, data_key=data_key)
 
 @task
 def user_cacher(domain, cache_key,
                 current_cache=None, refresh_stale=1800, cache_timeout=3600, **kwargs):
     from corehq.apps.reports.util import get_all_users_by_domain
     data = get_all_users_by_domain(domain, **kwargs)
-    _cache_data(data, cache_key, current_cache, refresh_stale, cache_timeout)
+    _cache_data(data, cache_key,
+        current_cache=current_cache,
+        refresh_stale=refresh_stale,
+        cache_timeout=cache_timeout)
 
 
 def _cache_data(data, cache_key,
-                       current_cache=None, refresh_stale=1800, cache_timeout=3600):
+                       current_cache=None, refresh_stale=1800, cache_timeout=3600, data_key="data"):
     last_cached = None
     if current_cache is not None:
         last_cached = current_cache.get('set_on')
@@ -111,7 +118,7 @@ def _cache_data(data, cache_key,
         diff = td.seconds + td.days * 24 * 3600
 
     if diff is None or diff >= refresh_stale:
-        cache.set(cache_key, dict(
-            set_on=datetime.utcnow(),
-            data=data
-        ), cache_timeout)
+        current_cache = current_cache.copy() or {}
+        current_cache['set_on'] = datetime.utcnow()
+        current_cache[data_key] = data
+        cache.set(cache_key, current_cache, cache_timeout)

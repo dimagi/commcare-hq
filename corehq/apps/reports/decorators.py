@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from datetime import datetime, timedelta
+from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpRequest
 
@@ -74,15 +75,21 @@ def cache_report(refresh_stale=1800, cache_timeout=3600):
     _validate_timeouts(refresh_stale, cache_timeout)
     def cacher(func):
         def retrieve_cache(report):
+            if hasattr(settings, 'REPORT_CACHING'):
+                use_cache = settings.REPORT_CACHING
+            else:
+                use_cache = True
+
             from corehq.apps.reports.generic import GenericReportView
             if not isinstance(report, GenericReportView):
                 raise ValueError("The decorator 'cache_report' is only for reports that are instances of GenericReportView.")
-            if report._caching:
+
+            if report._caching or use_cache is False:
+                if use_cache is False:
+                    logging.info("Not caching report %s." % report.name)
                 return func(report)
 
-            path = report.request.META.get('PATH_INFO')
-            query = report.request.META.get('QUERY_STRING')
-            cache_key = "%s:%s:%s:%s" % (report.__class__.__name__, func.__name__, path, query)
+            cache_key = report.generate_cache_key(func.__name__)
 
             cached_data = None
             try:
@@ -90,9 +97,15 @@ def cache_report(refresh_stale=1800, cache_timeout=3600):
             except Exception as e:
                 logging.error("Could not fetch cache for report %s due to error: %s" % (report.name, e))
 
+            context = None
+            print "CACHED_DATA", cached_data
             if isinstance(cached_data, dict):
-                context = cached_data.get('data', dict())
-            else:
+                data_key = report.queried_path
+                print "KEY", data_key
+                context = cached_data.get(data_key)
+                print "CONTEXT", context
+            if context is None:
+                print "Directly loading report %s." % report.name
                 context = func(report)
 
             try:
@@ -111,9 +124,17 @@ def cache_users(refresh_stale=1800, cache_timeout=3600):
     _validate_timeouts(refresh_stale, cache_timeout)
     def cacher(func):
         def retrieve_cache(domain, **kwargs):
+            if hasattr(settings, 'REPORT_CACHING'):
+                use_cache = settings.REPORT_CACHING
+            else:
+                use_cache = True
+
             caching = kwargs.get('caching', False)
             simplified = kwargs.get('simplified', False)
-            if caching or not simplified:
+
+            if caching or not simplified or use_cache is False:
+                if use_cache is False:
+                    logging.info("Not caching users.")
                 return func(domain, **kwargs)
 
             individual = kwargs.get('individual')
@@ -124,8 +145,10 @@ def cache_users(refresh_stale=1800, cache_timeout=3600):
                 domain=domain,
                 group=group,
                 individual=individual,
-                filters=".".join(["%s" % f.type for f in user_filter])
+                filters=".".join(["%s" % f.type for f in user_filter if f.show])
             )
+            print ["%s%s" % (f.type, f.show) for f in user_filter if f.show]
+            print "User list cache key: %s" % cache_key
 
             cached_data = None
             try:
@@ -133,9 +156,13 @@ def cache_users(refresh_stale=1800, cache_timeout=3600):
             except Exception as e:
                 logging.error('Could not fetch cached users list for domain %s due to error: %s' % (domain, e))
 
+            user_list = None
             if isinstance(cached_data, dict):
-                user_list = cached_data.get('data', [])
-            else:
+                print "Trying to load user list for project %s from cache." % domain
+                user_list = cached_data.get('data')
+
+            if user_list is None:
+                print "Fetching user list for project %s." % domain
                 user_list = func(domain, **kwargs)
 
             try:

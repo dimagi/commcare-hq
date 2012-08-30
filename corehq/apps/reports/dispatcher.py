@@ -97,11 +97,11 @@ class ReportDispatcher(View):
 
     @classmethod
     def pattern(cls):
-        return r'^((?P<render_as>[(json)|(async)|(filters)|(export)|(static)]+)/)?(?P<report_slug>[\w_]+)/$'
+        return r'^((?P<render_as>[(json)|(async)|(filters)|(export)|(static)|(clear_cache)]+)/)?(?P<report_slug>[\w_]+)/$'
 
     @classmethod
     def allowed_renderings(cls):
-        return ['json', 'async', 'filters', 'export', 'static']
+        return ['json', 'async', 'filters', 'export', 'static', 'clear_cache']
 
     @classmethod
     def args_kwargs_from_context(cls, context):

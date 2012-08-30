@@ -126,7 +126,9 @@ class CaseActivityReport(WorkerMonitoringReportTable, CouchCachedReportMixin):
     def rows(self):
         rows = []
         # TODO: cleanup...case type should be None, but not sure how that affects other rports
-        self._case_type = self.case_type if self.case_type else None
+
+        case_type = self.case_type if (self.case_type is not None and self.case_type != "") else None
+        print "CASE TYPE", case_type
 
         def _format_val(value, total):
             try:
@@ -135,7 +137,9 @@ class CaseActivityReport(WorkerMonitoringReportTable, CouchCachedReportMixin):
                 display = '%d' % value
             return display
 
-        case_key =  self.cached_report.case_key(self.case_type)
+        case_key =  self.cached_report.case_key(case_type)
+        print "CASE KEY", case_key
+
 
         landmark_data = [self.cached_report.landmark_data.get(case_key,
                 {}).get(self.cached_report.day_key(landmark), {}) for landmark in self.landmarks]

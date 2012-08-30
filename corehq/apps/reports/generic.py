@@ -128,9 +128,10 @@ class GenericReportView(object):
         # pickle only what the report needs from the request object
 
         request = dict(
-            GET=dict(self.request.GET),
+            GET=self.request.GET,
             META=dict(
-                QUERY_STRING=self.request.META.get('QUERY_STRING')
+                QUERY_STRING=self.request.META.get('QUERY_STRING'),
+                PATH_INFO=self.request.META.get('PATH_INFO')
             ),
             datespan=self.request.datespan,
             couch_user=None
@@ -191,6 +192,12 @@ class GenericReportView(object):
                 root = None
             self._url_root = root
         return self._url_root
+
+    @property
+    def queried_path(self):
+        path = self.request.META.get('PATH_INFO')
+        query = self.request.META.get('QUERY_STRING')
+        return "%s:%s" % (path, query)
 
     _domain_object = None
     @property
@@ -450,6 +457,10 @@ class GenericReportView(object):
         )
         self.context.update(self._validate_context_dict(self.report_context))
 
+    def generate_cache_key(self, func_name):
+        print "GENERATING KEY"
+        return "%s:%s" % (self.__class__.__name__, func_name)
+
     @property
     def view_response(self):
         """
@@ -534,6 +545,19 @@ class GenericReportView(object):
         temp = StringIO()
         export_from_tables(self.export_table, temp, self.export_format)
         return export_response(temp, self.export_format, self.export_name)
+
+    @property
+    def clear_cache_response(self):
+        renderings = self.dispatcher.allowed_renderings()
+        try:
+            del renderings[renderings.index('clear_cache')]
+        except Exception:
+            pass
+        print renderings
+        for render in renderings:
+            cache_key = self.generate_cache_key("%s_response" % render)
+            print cache_key
+        return HttpResponse("Clearing cache")
 
     @classmethod
     def get_url(cls, *args, **kwargs):

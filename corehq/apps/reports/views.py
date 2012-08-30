@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import json
+from django.core.cache import cache
 from corehq.apps.reports import util
 from corehq.apps.reports._global import inspect, export
 from corehq.apps.reports.export import BulkExportHelper, ApplicationBulkExportHelper, CustomBulkExportHelper
@@ -517,3 +518,11 @@ def emailtest(request, domain, report_slug):
     report = ScheduledReportFactory.get_report(report_slug)
     report.get_response(request.user, domain)
     return HttpResponse(report.get_response(request.user, domain))
+
+
+@login_and_domain_required
+@permission_required("is_superuser")
+def clear_report_caches(request, domain):
+    print "CLEARING CACHE FOR DOMAIN", domain
+    print "ALL CACHES", cache.all()
+    return HttpResponse("TESTING")

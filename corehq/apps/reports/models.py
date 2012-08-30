@@ -209,10 +209,11 @@ class CaseActivityReportCache(Document):
         for item in data:
             count = item.get('value', 0)
             user_id = item.get('key',[])[-1]
-            if not user_id in result:
-                result[user_id] = count
-            else:
-                result[user_id] += count
+            if user_id:
+                if not user_id in result:
+                    result[user_id] = count
+                else:
+                    result[user_id] += count
         return result
 
     def _generate_landmark(self, landmark, case_type=None):
@@ -220,10 +221,11 @@ class CaseActivityReportCache(Document):
             Generates a dict with counts per owner_id of the # cases modified or closed in
             the last <landmark> days.
         """
-        prefix = [] if case_type is None else ["type"]
-        key = [" ".join(prefix), self.domain]
+        prefix = "" if case_type is None else "type"
+        key = [prefix, self.domain]
         if case_type is not None:
             key.append(case_type)
+        print "LANDMARK KEY", key
         past = self.now - timedelta(days=landmark+1)
         data = get_db().view(self._couch_view,
             group=True,
@@ -248,6 +250,7 @@ class CaseActivityReportCache(Document):
             and have been modified in the last 120 days.
         """
         key = self._generate_status_key(case_type, status)
+        print "STATUS KEY", key
         milestone = self.now - timedelta(days=milestone+1) + (timedelta(microseconds=1) if active else timedelta(seconds=0))
         data = get_db().view(self._couch_view,
             group=True,
