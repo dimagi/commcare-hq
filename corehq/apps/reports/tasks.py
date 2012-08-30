@@ -117,7 +117,10 @@ def _cache_data(data, cache_key,
         diff = td.seconds + td.days * 24 * 3600
 
     if diff is None or diff >= refresh_stale:
-        current_cache = current_cache.copy() or {}
-        current_cache['set_on'] = datetime.utcnow()
-        current_cache[data_key] = data
-        cache.set(cache_key, current_cache, cache_timeout)
+        if isinstance(current_cache, dict):
+            new_cache = current_cache.copy()
+        else:
+            new_cache = dict()
+        new_cache['set_on'] = datetime.utcnow()
+        new_cache[data_key] = data
+        cache.set(cache_key, new_cache, cache_timeout)
