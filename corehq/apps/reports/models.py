@@ -225,7 +225,6 @@ class CaseActivityReportCache(Document):
         key = [prefix, self.domain]
         if case_type is not None:
             key.append(case_type)
-        print "LANDMARK KEY", key
         past = self.now - timedelta(days=landmark+1)
         data = get_db().view(self._couch_view,
             group=True,
@@ -250,7 +249,6 @@ class CaseActivityReportCache(Document):
             and have been modified in the last 120 days.
         """
         key = self._generate_status_key(case_type, status)
-        print "STATUS KEY", key
         milestone = self.now - timedelta(days=milestone+1) + (timedelta(microseconds=1) if active else timedelta(seconds=0))
         data = get_db().view(self._couch_view,
             group=True,

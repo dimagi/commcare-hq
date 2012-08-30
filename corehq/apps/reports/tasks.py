@@ -87,7 +87,6 @@ def build_case_activity_report():
 def report_cacher(report, context_func, cache_key,
                   current_cache=None, refresh_stale=1800, cache_timeout=3600):
     data_key = report.queried_path
-    print "DATA KEY", data_key
     data = getattr(report, context_func)
     _cache_data(data, cache_key,
         current_cache=current_cache, refresh_stale=refresh_stale,
