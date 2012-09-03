@@ -25,7 +25,12 @@ def export_data_async(request, filter=None, **kwargs):
     export_tag = _export_tag_or_bust(request)
     export_object = FakeSavedExportSchema(index=export_tag)
 
-    return export_object.export_data_async(filter, filename, previous_export_id, format=format)
+    return export_object.export_data_async(
+        filter=filter,
+        filename=filename,
+        previous_export_id=previous_export_id,
+        format=format
+    )
 
 def export_data(request, **kwargs):
     """
