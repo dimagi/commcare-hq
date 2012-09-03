@@ -243,6 +243,7 @@ def create_export_filter(request, domain, export_type='form'):
         if user_filters and use_user_filters:
             users_matching_filter = map(lambda x: x.get('user_id'), get_all_users_by_domain(domain,
                 user_filter=user_filters, simplified=True))
+            filter = SerializableFunction(case_users_filter, users=users_matching_filter)
         else:
             filter = SerializableFunction(case_group_filter, group=group)
     else:
