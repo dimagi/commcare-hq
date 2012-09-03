@@ -342,30 +342,6 @@ def get_possible_reports(domain):
             reports.append({'path': model, 'name': to_function(model).name})
     return reports
 
-def deid_remove(doc, val):
-    return Ellipsis
-
-def deid_ID(doc, val):
-    return "%s-%s" % (doc.get('domain', 'DANNY'), DeidGenerator(val, 'id').random_hash())
-
-def deid_date(doc, val):
-    offset = DeidGenerator(doc['_id'], 'date').random_number(-31, 32)
-    return (string_to_datetime(val) + timedelta(days=offset)).date()
-
-def deid_map(doc, config):
-    doc_copy = doc.copy()
-    for key in config:
-        parts = key.split('/')
-        final_part = parts.pop()
-        ctx = doc_copy
-        for part in parts:
-            ctx = ctx[part]
-        if config[key]:
-            ctx[final_part] = config[key](doc, ctx[final_part])
-        if ctx[final_part] == Ellipsis:
-            del ctx[final_part]
-    return doc_copy
-
 def format_relative_date(date, tz=pytz.utc):
     now = datetime.now(tz=tz)
     time = datetime.replace(date, tzinfo=tz)
