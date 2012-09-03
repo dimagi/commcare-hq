@@ -1,16 +1,19 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.decorators import cache_users
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import user_id_to_username
-from couchexport.util import FilterFunction
+from couchdbkit.schema.properties import DictProperty
+from couchexport.util import SerializableFunction
 from couchforms.filters import instances
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.data.deid_generator import DeidGenerator
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.modules import to_function
+from dimagi.utils.parsing import string_to_datetime
 from django.http import Http404
 import pytz
 from corehq.apps.domain.models import Domain
@@ -240,18 +243,17 @@ def create_export_filter(request, domain, export_type='form'):
         if user_filters and use_user_filters:
             users_matching_filter = map(lambda x: x.get('user_id'), get_all_users_by_domain(domain,
                 user_filter=user_filters, simplified=True))
-            filter = FilterFunction(case_users_filter, users=users_matching_filter)
         else:
-            filter = FilterFunction(case_group_filter, group=group)
+            filter = SerializableFunction(case_group_filter, group=group)
     else:
-        filter = FilterFunction(instances) & FilterFunction(app_export_filter, app_id=app_id)
-        filter &= FilterFunction(datespan_export_filter, datespan=request.datespan)
+        filter = SerializableFunction(instances) & SerializableFunction(app_export_filter, app_id=app_id)
+        filter &= SerializableFunction(datespan_export_filter, datespan=request.datespan)
         if user_filters and use_user_filters:
             users_matching_filter = map(lambda x: x.get('user_id'), get_all_users_by_domain(domain,
                 user_filter=user_filters, simplified=True))
-            filter &= FilterFunction(users_filter, users=users_matching_filter)
+            filter &= SerializableFunction(users_filter, users=users_matching_filter)
         else:
-            filter &= FilterFunction(group_filter, group=group)
+            filter &= SerializableFunction(group_filter, group=group)
     return filter
 
 def get_possible_reports(domain):

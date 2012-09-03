@@ -3,6 +3,7 @@ import json
 from django.core.cache import cache
 from corehq.apps.reports import util
 from corehq.apps.reports._global import inspect, export
+from corehq.apps.reports._global.export import DeidExportReport
 from corehq.apps.reports.export import BulkExportHelper, ApplicationBulkExportHelper, CustomBulkExportHelper
 from corehq.apps.reports.models import FormExportSchema,\
     HQGroupExportConfiguration
@@ -11,7 +12,7 @@ from corehq.apps.users.export import export_users
 from corehq.apps.users.models import Permissions
 import couchexport
 from couchexport.export import UnsupportedExportFormat, export_raw
-from couchexport.util import FilterFunction
+from couchexport.util import SerializableFunction
 from couchexport.views import _export_tag_or_bust
 import couchforms
 from couchforms.models import XFormInstance
@@ -21,7 +22,7 @@ from dimagi.utils.web import json_request, render_to_response
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.modules import to_function
 from django.conf import settings
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, HttpResponseNotFound
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, HttpResponseNotFound, HttpResponseForbidden
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 import couchforms.views as couchforms_views
@@ -66,8 +67,7 @@ def default(request, domain, template="reports/base_template.html"):
         domain=domain,
         report=dict(
             title="Select a Report to View",
-            show=request.couch_user.can_view_reports or
-                 request.couch_user.get_viewable_reports,
+            show=request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
             slug=None,
             is_async=True
         )
@@ -107,11 +107,11 @@ def export_data(req, domain):
                 return False
         filter = _ufilter
     else:
-        filter = FilterFunction(util.group_filter, group=group)
+        filter = SerializableFunction(util.group_filter, group=group)
 
     errors_filter = instances if not include_errors else None
 
-    kwargs['filter'] = couchexport.util.intersect_filters(filter, errors_filter)
+    kwargs['filter'] = couchexport.util.intersect_functions(filter, errors_filter)
 
     if kwargs['format'] == 'raw':
         resp = export_raw_data([domain, export_tag], filename=export_tag)
@@ -150,6 +150,13 @@ def export_data_async(request, domain):
 
 class CustomExportHelper(object):
 
+    class DEID(object):
+        options = (
+            ('', ''),
+            ('Sensitive ID', 'couchexport.deid.deid_ID'),
+            ('Sensitive Date', 'couchexport.deid.deid_date'),
+        )
+
     def __init__(self, request, domain, export_id=None):
         self.request = request
         self.domain = domain
@@ -175,10 +182,26 @@ class CustomExportHelper(object):
         self.custom_export.schema_id = self.request.POST["schema"]
         self.custom_export.name = self.request.POST["name"]
         self.custom_export.default_format = self.request.POST["format"] or Format.XLS_2007
+        self.custom_export.is_safe = bool(self.request.POST.get('is_safe'))
 
         table = self.request.POST["table"]
         cols = self.request.POST['order'].strip().split()
-        export_cols = [ExportColumn(index=col, display=self.request.POST["%s_display" % col]) for col in cols]
+
+
+        unroll = lambda f: list(f())
+
+        @unroll
+        def export_cols():
+            for col in cols:
+                transform = self.request.POST.get('%s transform' % col) or None
+                if transform:
+                    transform = SerializableFunction.loads(transform)
+                yield ExportColumn(
+                    index=col,
+                    display=self.request.POST["%s display" % col],
+                    transform=transform
+                )
+
         export_table = ExportTable(index=table, display=self.request.POST["name"], columns=export_cols)
         self.custom_export.tables = [export_table]
         self.custom_export.order = cols
@@ -195,14 +218,49 @@ class CustomExportHelper(object):
             self.custom_export.include_errors = bool(self.request.POST.get("include-errors"))
             self.custom_export.app_id = self.request.POST.get('app_id')
 
+    def get_response(self):
+        table_config = self.custom_export.table_configuration[0]
+        slug = export.ExcelExportReport.slug if self.export_type == "form" else export.CaseExportReport.slug
+
+        def show_deid_column():
+            for col in table_config['column_configuration']:
+                if col['transform']:
+                    return True
+            return False
+
+        return render_to_response(self.request, "reports/reportdata/customize_export.html", {
+            "saved_export": self.custom_export,
+            "saved_export": self.custom_export,
+            "deid_options": CustomExportHelper.DEID.options,
+            "DeidExportReport_name": DeidExportReport.name,
+            "table_config": table_config,
+            "slug": slug,
+            "domain": self.domain,
+            "show_deid_column": show_deid_column()
+        })
+
 @login_or_digest
-@require_form_export_permission
 @datespan_default
 def export_default_or_custom_data(request, domain, export_id=None, bulk_export=False):
     """
     Export data from a saved export schema
     """
 
+    deid = request.GET.get('deid') == 'true'
+    if deid:
+        return _export_deid(request, domain, export_id, bulk_export=bulk_export)
+    else:
+        return _export_no_deid(request, domain, export_id, bulk_export=bulk_export)
+
+@require_permission('view_report', 'corehq.apps.reports._global.export.DeidExportReport', login_decorator=None)
+def _export_deid(request, domain, export_id=None, bulk_export=False):
+    return _export_default_or_custom_data(request, domain, export_id, bulk_export=bulk_export, safe_only=True)
+
+@require_form_export_permission
+def _export_no_deid(request, domain, export_id=None, bulk_export=False):
+    return _export_default_or_custom_data(request, domain, export_id, bulk_export=bulk_export)
+
+def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=False, safe_only=False):
     async = request.GET.get('async') == 'true'
     next = request.GET.get("next", "")
     format = request.GET.get("format", "")
@@ -219,15 +277,24 @@ def export_default_or_custom_data(request, domain, export_id=None, bulk_export=F
         except ValueError:
             return HttpResponseBadRequest()
 
-        export_helper = CustomBulkExportHelper() if is_custom else ApplicationBulkExportHelper()
-        return export_helper.prepare_export(export_tags, filter, domain=domain)
+
+        export_helper = (CustomBulkExportHelper if is_custom else ApplicationBulkExportHelper)(
+            domain=domain,
+            safe_only=safe_only
+        )
+
+        return export_helper.prepare_export(export_tags, filter)
 
     elif export_id:
         # this is a custom export
         try:
             export_object = CustomExportHelper(request, domain, export_id).custom_export
+            if safe_only and not export_object.is_safe:
+                return HttpResponseForbidden()
         except ResourceNotFound:
             raise Http404()
+    elif safe_only:
+        return HttpResponseForbidden()
     else:
         if not async:
             # this function doesn't support synchronous export without a custom export object
@@ -240,8 +307,15 @@ def export_default_or_custom_data(request, domain, export_id=None, bulk_export=F
             return HttpResponseBadRequest()
         assert(export_tag[0] == domain)
         export_object = FakeSavedExportSchema(index=export_tag)
+
     if async:
-        return export_object.export_data_async(filter, filename, previous_export_id, format=format, max_column_size=max_column_size)
+        return export_object.export_data_async(
+            filter=filter,
+            filename=filename,
+            previous_export_id=previous_export_id,
+            format=format,
+            max_column_size=max_column_size,
+        )
     else:
         if not next:
             next = export.ExcelExportReport.get_url(domain)
@@ -262,7 +336,6 @@ def custom_export(req, domain):
         export_tag = [domain, json.loads(req.GET.get("export_tag", "null") or "null")]
     except ValueError:
         return HttpResponseBadRequest()
-    export_type = req.GET.get("type", "form")
 
     helper = CustomExportHelper(req, domain)
 
@@ -271,28 +344,24 @@ def custom_export(req, domain):
         helper.custom_export.save()
         messages.success(req, "Custom export created! You can continue editing here.")
         return HttpResponseRedirect("%s?type=%s" % (reverse("edit_custom_export",
-                                            args=[domain, helper.custom_export.get_id]), export_type))
+                                            args=[domain, helper.custom_export.get_id]), helper.export_type))
 
     schema = build_latest_schema(export_tag)
-    
+
     if schema:
         app_id = req.GET.get('app_id')
-        saved_export = helper.ExportSchemaClass.default(
+        helper.custom_export = helper.ExportSchemaClass.default(
             schema=schema,
             name="%s: %s" % (
-                xmlns_to_name(domain, export_tag[1], app_id=app_id) if export_type == "form" else export_tag[1],
+                xmlns_to_name(domain, export_tag[1], app_id=app_id) if helper.export_type == "form" else export_tag[1],
                 datetime.utcnow().strftime("%Y-%m-%d")
             ),
-            type=export_type
+            type=helper.export_type
         )
-        
-        if export_type == 'form':
-            saved_export.app_id = app_id
-        return render_to_response(req, "reports/reportdata/customize_export.html",
-                                  {"saved_export": saved_export,
-                                   "slug": export.ExcelExportReport.slug,
-                                   "table_config": saved_export.table_configuration[0],
-                                   "domain": domain})
+
+        if helper.export_type == 'form':
+            helper.custom_export.app_id = app_id
+        return helper.get_response()
     else:
         messages.warning(req, "<strong>No data found for that form "
                       "(%s).</strong> Submit some data before creating an export!" % \
@@ -311,22 +380,8 @@ def edit_custom_export(req, domain, export_id):
         raise Http404()
     if req.method == "POST":
         helper.update_custom_export()
-    
-    # not yet used, but will be when we support child table export
-#    table_index = req.GET.get("table_id", None)
-#    if table_index:
-#        table_config = saved_export.get_table_configuration(table_index)
-#    else:
         helper.custom_export.save()
-    table_config = helper.custom_export.table_configuration[0]
-    
-    slug = export.ExcelExportReport.slug if helper.export_type == "form" \
-            else export.CaseExportReport.slug
-    return render_to_response(req, "reports/reportdata/customize_export.html",
-                              {"saved_export": helper.custom_export,
-                               "table_config": table_config,
-                               "slug": slug,
-                               "domain": domain})
+    return helper.get_response()
 
 @login_or_digest
 @require_form_export_permission

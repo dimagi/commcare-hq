@@ -86,7 +86,7 @@ class ReportDispatcher(View):
                 report_class = to_function(model_path)
                 if report_class.slug == current_slug:
                     report = report_class(request, *args, **kwargs)
-                    if self.permissions_check(report, request, *args, **kwargs):
+                    if self.permissions_check(model_path, request, *args, **kwargs):
                         return getattr(report, '%s_response' % (render_as or 'view'))
         raise Http404
 
@@ -131,7 +131,7 @@ class ReportDispatcher(View):
                     </a></li>""" % dict(
                         css_class="active" if selected_report else "",
                         link=report.get_url(*args),
-                        link_title=report.description,
+                        link_title=report.description or "",
                         icon='<i class="icon%s %s"></i> ' % ("-white" if selected_report else "", report.icon) if report.icon else "",
                         title=report.name
                     ))

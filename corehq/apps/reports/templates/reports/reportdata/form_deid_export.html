@@ -1,0 +1,24 @@
+{% extends "reports/reportdata/excel_export_data.html" %}
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+
+{% block reportcontent %}
+    <div class="hq-generic-report">
+{#    {% include 'reports/partials/bulk_export_notice.html' %}#}
+{#    {% include "reports/partials/saved_custom_exports.html" with deid="true" %}#}
+{#    #}
+        <section id="custom-form-export">
+            <h2>De-Identified Exports</h2>
+            {% if saved_exports %}
+                {% include 'reports/partials/bulk_export_notice.html' %}
+                {% include "reports/partials/saved_custom_exports.html" with deid="true" %}
+            {% else %}
+                <div class="alert alert-info">
+                    <strong>No De-Identified Exports yet!</strong> Navigate to {{ ExcelExportReport_name }}
+                    and mark a Saved Custom Export as safe.
+                </div>
+            {% endif %}
+        </section>
+
+    </div>
+{% endblock %}

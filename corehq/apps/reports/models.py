@@ -4,7 +4,7 @@ from corehq.apps import reports
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
-from couchexport.util import FilterFunction
+from couchexport.util import SerializableFunction
 import couchforms
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.mixins import UnicodeMixIn
@@ -132,7 +132,7 @@ class FormExportSchema(SavedExportSchema):
 
     @property
     def filter(self):
-        f = FilterFunction()
+        f = SerializableFunction()
 
         if self.app_id is not None:
             f.add(reports.util.app_export_filter, app_id=self.app_id)
@@ -151,6 +151,16 @@ class FormExportSchema(SavedExportSchema):
     @property
     def formname(self):
         return xmlns_to_name(self.domain, self.xmlns, app_id=self.app_id)
+
+class FormDeidExportSchema(FormExportSchema):
+
+    @property
+    def transform(self):
+        return SerializableFunction()
+
+    @classmethod
+    def get_case(cls, doc, case_id):
+        pass
     
 class HQGroupExportConfiguration(GroupExportConfiguration):
     """
@@ -309,5 +319,3 @@ class CaseActivityReportCache(Document):
         report.last_updated = datetime.utcnow()
         report.save()
         return report
-
-
