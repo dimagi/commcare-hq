@@ -404,7 +404,7 @@ class GenericReportView(object):
                 is_async=self.asynchronous,
                 is_exportable=self.exportable,
                 dispatcher=self.dispatcher,
-                show=request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
+                show=self.request.couch_user.can_view_reports() or self.request.couch_user.get_viewable_reports(),
                 is_admin=self.is_admin_report # todo is this necessary???
             ),
             show_time_notice=self.show_time_notice,
