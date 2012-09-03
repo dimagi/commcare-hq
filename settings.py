@@ -526,6 +526,7 @@ PROJECT_REPORT_MAP = {
     "Raw Data" : [
         'corehq.apps.reports._global.export.ExcelExportReport',
         'corehq.apps.reports._global.export.CaseExportReport',
+        'corehq.apps.reports._global.export.DeidExportReport',
     ],
     "Manage Deployments" : [
         'corehq.apps.reports._global.deployments.ApplicationStatusReport',
@@ -592,9 +593,6 @@ CUSTOM_REPORT_MAP = {
     "a5288-test": {
         "Custom Reports": ["a5288.reports.MissedCallbackReport"]
     }
-#    "test": [
-#        'corehq.apps.reports.deid.FormDeidExport',
-#    ]
 }
 
 BILLING_REPORT_MAP = {
