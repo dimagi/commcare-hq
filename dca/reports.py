@@ -1,4 +1,4 @@
-from corehq.apps.reports._global import CustomProjectReport
+from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.fields import ReportField
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
