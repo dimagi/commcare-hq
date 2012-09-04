@@ -1,5 +1,5 @@
 from couchdbkit.ext.django.schema import Document
-from corehq.apps.reports._global import CustomProjectReport
+from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.fields import ReportField
 from datetime import date
 from pathfinder.views import retrieve_patient_group, get_patients_by_provider
