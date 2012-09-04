@@ -612,6 +612,12 @@ BILLING_REPORT_MAP = {
     ]
 }
 
+ADM_PROJECT_REPORT_MAP - {
+    "Supervisor Report": [
+        'corehq.apps.adm.reports.supervisor.WorkerRankTable'
+    ]
+}
+
 MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
     messages.DEBUG: '',
