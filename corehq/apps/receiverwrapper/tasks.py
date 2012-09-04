@@ -1,12 +1,9 @@
 from celery.log import get_task_logger
-from celery.schedules import crontab
 from celery.decorators import periodic_task
-from celery.task import task
 from datetime import datetime, timedelta
 from corehq.apps.receiverwrapper.models import RepeatRecord, FormRepeater
 from couchdbkit.exceptions import ResourceConflict
 from couchforms.models import XFormInstance
-from couchdbkit.resource import ResourceNotFound
 from dimagi.utils.parsing import json_format_datetime, ISO_MIN
 
 logging = get_task_logger()
