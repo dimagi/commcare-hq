@@ -509,27 +509,27 @@ APPSTORE_INTERFACE_MAP = {
 
 PROJECT_REPORT_MAP = {
     "Monitor Workers" : [
-        'corehq.apps.reports._global.monitoring.CaseActivityReport',
-        'corehq.apps.reports._global.monitoring.SubmissionsByFormReport',
-        'corehq.apps.reports._global.monitoring.DailySubmissionsReport',
-        'corehq.apps.reports._global.monitoring.DailyFormCompletionsReport',
-        'corehq.apps.reports._global.monitoring.FormCompletionTrendsReport',
-        'corehq.apps.reports._global.monitoring.FormCompletionVsSubmissionTrendsReport',
-        'corehq.apps.reports._global.monitoring.SubmissionTimesReport',
-        'corehq.apps.reports._global.monitoring.SubmitDistributionReport',
+        'corehq.apps.reports.standard.monitoring.CaseActivityReport',
+        'corehq.apps.reports.standard.monitoring.SubmissionsByFormReport',
+        'corehq.apps.reports.standard.monitoring.DailySubmissionsReport',
+        'corehq.apps.reports.standard.monitoring.DailyFormCompletionsReport',
+        'corehq.apps.reports.standard.monitoring.FormCompletionTrendsReport',
+        'corehq.apps.reports.standard.monitoring.FormCompletionVsSubmissionTrendsReport',
+        'corehq.apps.reports.standard.monitoring.SubmissionTimesReport',
+        'corehq.apps.reports.standard.monitoring.SubmitDistributionReport',
     ],
     "Inspect Data" : [
-        'corehq.apps.reports._global.inspect.SubmitHistory',
-        'corehq.apps.reports._global.inspect.CaseListReport',
-        'corehq.apps.reports._global.inspect.MapReport',
+        'corehq.apps.reports.standard.inspect.SubmitHistory',
+        'corehq.apps.reports.standard.inspect.CaseListReport',
+        'corehq.apps.reports.standard.inspect.MapReport',
     ],
     "Raw Data" : [
-        'corehq.apps.reports._global.export.ExcelExportReport',
-        'corehq.apps.reports._global.export.CaseExportReport',
-        'corehq.apps.reports._global.export.DeidExportReport',
+        'corehq.apps.reports.standard.export.ExcelExportReport',
+        'corehq.apps.reports.standard.export.CaseExportReport',
+        'corehq.apps.reports.standard.export.DeidExportReport',
     ],
     "Manage Deployments" : [
-        'corehq.apps.reports._global.deployments.ApplicationStatusReport',
+        'corehq.apps.reports.standard.deployments.ApplicationStatusReport',
         'corehq.apps.receiverwrapper.reports.SubmissionErrorReport',
         'phonelog.reports.FormErrorReport',
         'phonelog.reports.DeviceLogDetailsReport'
