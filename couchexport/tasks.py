@@ -1,6 +1,6 @@
 from celery.log import get_task_logger
 from unidecode import unidecode
-from celery.decorators import task
+from celery.task import task
 from django.core.cache import cache
 import uuid
 import zipfile
