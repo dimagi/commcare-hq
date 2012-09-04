@@ -9,7 +9,7 @@ import pytz
 import sys
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports import util
-from corehq.apps.reports._global import CouchCachedReportMixin, ProjectReportParametersMixin, \
+from corehq.apps.reports.standard import CouchCachedReportMixin, ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport, DATE_FORMAT
 from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
@@ -34,7 +34,7 @@ class WorkerMonitoringReportTable(GenericTabularReport, ProjectReport, ProjectRe
 
     def get_user_link(self, user):
         user_link_template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
-        from corehq.apps.reports._global.inspect import CaseListReport
+        from corehq.apps.reports.standard.inspect import CaseListReport
         user_link = user_link_template % {"link": "%s%s" % (get_url_base(),
                                                             CaseListReport.get_url(self.domain)),
                                           "user_id": user.get('user_id'),

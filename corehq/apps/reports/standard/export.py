@@ -2,7 +2,7 @@ from collections import defaultdict
 import json
 import logging
 from django.http import Http404
-from corehq.apps.reports._global import ProjectReportParametersMixin, ProjectReport, DatespanMixin
+from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport, DatespanMixin
 from corehq.apps.reports.models import FormExportSchema,\
     HQGroupExportConfiguration
 from couchexport.models import SavedExportSchema, Format

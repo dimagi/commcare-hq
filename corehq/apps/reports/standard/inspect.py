@@ -8,7 +8,7 @@ from django.conf import settings
 from django.template.defaultfilters import yesno
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqsofabed.models import HQFormData
-from corehq.apps.reports._global import ProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField, CaseTypeField

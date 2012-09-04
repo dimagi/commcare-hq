@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 import json
 from django.core.cache import cache
 from corehq.apps.reports import util
-from corehq.apps.reports._global import inspect, export
-from corehq.apps.reports._global.export import DeidExportReport
+from corehq.apps.reports.standard import inspect, export
+from corehq.apps.reports.standard.export import DeidExportReport
 from corehq.apps.reports.export import BulkExportHelper, ApplicationBulkExportHelper, CustomBulkExportHelper
 from corehq.apps.reports.models import FormExportSchema,\
     HQGroupExportConfiguration
@@ -57,8 +57,8 @@ datespan_default = datespan_in_request(
     default_days=7,
 )
 
-require_form_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports._global.export.ExcelExportReport', login_decorator=None)
-require_case_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports._global.export.CaseExportReport', login_decorator=None)
+require_form_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.export.ExcelExportReport', login_decorator=None)
+require_case_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.export.CaseExportReport', login_decorator=None)
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
@@ -252,7 +252,7 @@ def export_default_or_custom_data(request, domain, export_id=None, bulk_export=F
     else:
         return _export_no_deid(request, domain, export_id, bulk_export=bulk_export)
 
-@require_permission('view_report', 'corehq.apps.reports._global.export.DeidExportReport', login_decorator=None)
+@require_permission('view_report', 'corehq.apps.reports.standard.export.DeidExportReport', login_decorator=None)
 def _export_deid(request, domain, export_id=None, bulk_export=False):
     return _export_default_or_custom_data(request, domain, export_id, bulk_export=bulk_export, safe_only=True)
 
