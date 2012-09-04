@@ -1,6 +1,8 @@
+from functools import wraps
 from celery.log import get_task_logger
 from celery.task import periodic_task
 from datetime import datetime, timedelta
+from django.core.cache import cache
 from corehq.apps.receiverwrapper.models import RepeatRecord, FormRepeater
 from couchdbkit.exceptions import ResourceConflict
 from couchforms.models import XFormInstance
@@ -8,7 +10,22 @@ from dimagi.utils.parsing import json_format_datetime, ISO_MIN
 
 logging = get_task_logger()
 
+def run_only_once(fn):
+    """If this function is running (in any thread) then don't run"""
+    key = fn.__module__ + '.' + fn.__name__ + '_is_running'
+
+    @wraps(fn)
+    def _fn(*args, **kwargs):
+        if not cache.get(key):
+            cache.set(key, True, 10*60)
+            try:
+                fn(*args, **kwargs)
+            finally:
+                cache.set(key, False)
+    return _fn
+
 @periodic_task(run_every=timedelta(minutes=1))
+@run_only_once
 def check_repeaters():
     now = datetime.utcnow()
 
