@@ -7,8 +7,8 @@ from django.core.urlresolvers import reverse
 from django.utils import html
 import pytz
 from corehq.apps.reports import util
-from corehq.apps.reports._global import DatespanMixin
-from corehq.apps.reports._global.deployments import DeploymentsReport
+from corehq.apps.reports.standard import DatespanMixin
+from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DTSortDirection
 from corehq.apps.reports.fields import DeviceLogTagField, DeviceLogUsersField, DeviceLogDevicesField
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
