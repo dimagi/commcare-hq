@@ -2,7 +2,7 @@ import datetime
 import dateutil
 import pytz
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
-from corehq.apps.reports._global import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
+from corehq.apps.reports.standard import ProjectReportParametersMixin, DatespanMixin, CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from couchforms.models import XFormInstance

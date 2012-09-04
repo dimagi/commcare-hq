@@ -1,5 +1,5 @@
 from corehq.apps.reports import util
-from corehq.apps.reports._global import DatespanMixin, ProjectReportParametersMixin, CustomProjectReport
+from corehq.apps.reports.standard import DatespanMixin, ProjectReportParametersMixin, CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesColumnGroup, DataTablesHeader, DTSortType
 from corehq.apps.reports.generic import GenericTabularReport
 from dimagi.utils.couch.database import get_db
