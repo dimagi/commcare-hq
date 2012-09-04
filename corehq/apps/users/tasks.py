@@ -1,4 +1,4 @@
-from celery.decorators import task
+from celery.task import task
 from django.core.cache import cache
 import uuid
 from soil import CachedDownload

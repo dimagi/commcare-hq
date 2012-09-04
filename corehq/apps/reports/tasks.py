@@ -2,7 +2,7 @@ from datetime import datetime
 from smtplib import SMTPRecipientsRefused
 from celery.log import get_task_logger
 from celery.schedules import crontab
-from celery.decorators import periodic_task, task
+from celery.task import periodic_task, task
 from django.core.cache import cache
 from django.http import Http404
 import pickle
