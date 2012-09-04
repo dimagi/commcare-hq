@@ -526,7 +526,7 @@ PROJECT_REPORT_MAP = {
     "Raw Data" : [
         'corehq.apps.reports._global.export.ExcelExportReport',
         'corehq.apps.reports._global.export.CaseExportReport',
-#        'corehq.apps.reports._global.export.DeidExportReport',
+        'corehq.apps.reports._global.export.DeidExportReport',
     ],
     "Manage Deployments" : [
         'corehq.apps.reports._global.deployments.ApplicationStatusReport',
