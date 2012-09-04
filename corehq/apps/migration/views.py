@@ -1,6 +1,5 @@
 from copy import copy
 import json
-from celery.task.base import Task
 from django.views.decorators.http import require_POST
 import re
 from django.http import HttpResponse
@@ -107,6 +106,7 @@ def resubmit_for_users(request, domain):
     url-base: "https://india.commcarehq.org/a/care-bihar"
 
     """
+    from celery.task.base import Task
     if request.method == 'POST':
         data = json.loads(request.raw_post_data)
         async = data.get('async', False)
