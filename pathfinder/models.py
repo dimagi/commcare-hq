@@ -145,5 +145,5 @@ class ProviderSelect(ReportField):
         results = CommCareUser.by_domain('pathfinder')
         self.context['names'] = {}
         for result in results:
-            self.context['names'].update({result.user_data['full_name']: result.get_id})
+            self.context['names'].update({result.username_in_report: result.get_id})
         self.context['provider'] = self.request.GET.get('user', None)
