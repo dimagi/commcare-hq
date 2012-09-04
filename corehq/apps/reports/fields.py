@@ -367,9 +367,9 @@ class SelectFilteredMobileWorkerField(SelectMobileWorkerField):
 
     @staticmethod
     def users_to_options(user_list):
-        return [dict(val=user.get('user_id'),
-            text=user.get('raw_username'),
-            is_active=user.get('is_active')) for user in user_list]
+        return [dict(val=user.user_id,
+            text=user.raw_username,
+            is_active=user.is_active) for user in user_list]
 
 
 class DatespanField(ReportField):
