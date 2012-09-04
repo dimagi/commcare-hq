@@ -40,7 +40,7 @@ class WorkerMonitoringReportTable(GenericTabularReport, ProjectReport, ProjectRe
         return self.table_cell(user.get('raw_username'), user_link)
 
     @property
-#    @monitoring_report_cacher
+    @monitoring_report_cacher
     def report_context(self):
         return super(WorkerMonitoringReportTable, self).report_context
 
@@ -541,9 +541,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTable, Datesp
             return ", ".join(status)
 
     def _view_form_link(self, instance_id):
-        return '#'
-        #todo fix
-#        return '<a class="btn" href="%s">View Form</a>' % reverse('render_form_data', args=[self.domain, instance_id])
+        return '<a class="btn" href="%s">View Form</a>' % reverse('render_form_data', args=[self.domain, instance_id])
 
 
 
