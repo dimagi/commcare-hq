@@ -1,4 +1,4 @@
-from corehq.apps.reports._global import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
+from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from dimagi.utils.couch.database import get_db
 
 class PathIndiaKrantiReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
