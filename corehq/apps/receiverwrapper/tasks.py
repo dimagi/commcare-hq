@@ -1,5 +1,5 @@
 from celery.log import get_task_logger
-from celery.decorators import periodic_task
+from celery.task import periodic_task
 from datetime import datetime, timedelta
 from corehq.apps.receiverwrapper.models import RepeatRecord, FormRepeater
 from couchdbkit.exceptions import ResourceConflict
