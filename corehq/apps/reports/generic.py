@@ -457,7 +457,6 @@ class GenericReportView(object):
         self.context.update(self._validate_context_dict(self.report_context))
 
     def generate_cache_key(self, func_name):
-        print "GENERATING KEY"
         return "%s:%s" % (self.__class__.__name__, func_name)
 
     @property

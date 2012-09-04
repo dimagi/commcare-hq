@@ -75,7 +75,10 @@ def cache_report(refresh_stale=1800, cache_timeout=3600):
     _validate_timeouts(refresh_stale, cache_timeout)
     def cacher(func):
         def retrieve_cache(report):
-            if hasattr(settings, 'REPORT_CACHING'):
+            # cache_overrides
+            if report.request.GET.get('cache') == 'no':
+                use_cache = False
+            elif hasattr(settings, 'REPORT_CACHING'):
                 use_cache = settings.REPORT_CACHING
             else:
                 use_cache = True
@@ -86,9 +89,9 @@ def cache_report(refresh_stale=1800, cache_timeout=3600):
 
             if report._caching or use_cache is False:
                 if use_cache is False:
-                    logging.info("Not caching report %s." % report.name)
-                return func(report)
+                    logging.info("Not using old cache for report %s." % report.name)
 
+            context = None
             cache_key = report.generate_cache_key(func.__name__)
 
             cached_data = None
@@ -97,10 +100,10 @@ def cache_report(refresh_stale=1800, cache_timeout=3600):
             except Exception as e:
                 logging.error("Could not fetch cache for report %s due to error: %s" % (report.name, e))
 
-            context = None
-            if isinstance(cached_data, dict):
+            if isinstance(cached_data, dict) and use_cache is not False:
                 data_key = report.queried_path
                 context = cached_data.get(data_key)
+
             if context is None:
                 context = func(report)
 
