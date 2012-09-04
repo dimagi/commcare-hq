@@ -19,6 +19,8 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.models import CaseActivityReportCache
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import get_url_base
 
@@ -60,14 +62,194 @@ class WorkerMonitoringChart(ProjectReport, ProjectReportParametersMixin):
     report_template_path = "reports/async/basic.html"
 
 
-class CaseActivityReport(WorkerMonitoringReportTable, CouchCachedReportMixin):
+class CaseActivityReport(WorkerMonitoringReportTable):
+    """
+    todo move this to the cached version when ready
+    User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
+    danny   5 (25%)         10 (50%)        20 (100%)       17                          6
+    (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
+    """
+    name = 'Case Activity'
+    slug = 'case_activity'
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.CaseTypeField',
+              'corehq.apps.reports.fields.GroupField']
+    all_users = None
+    display_data = ['percent']
+
+
+    class Row(object):
+        def __init__(self, report, user):
+            self.report = report
+            self.user = user
+
+        def active_count(self):
+            """Open clients seen in the last 120 days"""
+            return self.report.get_number_cases(
+                user_id=self.user.get('user_id'),
+                modified_after=self.report.utc_now - self.report.milestone,
+                modified_before=self.report.utc_now,
+                closed=False,
+            )
+
+        def inactive_count(self):
+            """Open clients not seen in the last 120 days"""
+            return self.report.get_number_cases(
+                user_id=self.user.get('user_id'),
+                modified_before=self.report.utc_now - self.report.milestone,
+                closed=False,
+            )
+
+        def modified_count(self, startdate=None, enddate=None):
+            enddate = enddate or self.report.utc_now
+            return self.report.get_number_cases(
+                user_id=self.user.get('user_id'),
+                modified_after=startdate,
+                modified_before=enddate,
+            )
+
+        def closed_count(self, startdate=None, enddate=None):
+            enddate = enddate or self.report.utc_now
+            return self.report.get_number_cases(
+                user_id=self.user.get('user_id'),
+                modified_after=startdate,
+                modified_before=enddate,
+                closed=True
+            )
+
+        def header(self):
+            return self.report.get_user_link(self.user)
+
+    class TotalRow(object):
+        def __init__(self, rows, header):
+            self.rows = rows
+            self._header = header
+
+        def active_count(self):
+            return sum([row.active_count() for row in self.rows])
+
+        def inactive_count(self):
+            return sum([row.inactive_count() for row in self.rows])
+
+        def modified_count(self, startdate=None, enddate=None):
+            return sum([row.modified_count(startdate, enddate) for row in self.rows])
+
+        def closed_count(self, startdate=None, enddate=None):
+            return sum([row.closed_count(startdate, enddate) for row in self.rows])
+
+        def header(self):
+            return self._header
+
+    _default_landmarks = [30, 60, 90]
+    _landmarks = None
+    @property
+    def landmarks(self):
+        if self._landmarks is None:
+            landmarks_param = self.request_params.get('landmarks')
+            landmarks_param = landmarks_param if isinstance(landmarks_param, list) else []
+            landmarks_param = [param for param in landmarks_param if isinstance(param, int)]
+            if landmarks_param:
+                for landmark in landmarks_param:
+                    if landmark not in self.cached_report.landmark_data:
+                        self.cached_report.update_landmarks(landmarks=landmarks_param)
+                        self.cached_report.save()
+                        break
+            self._landmarks = landmarks_param if landmarks_param else self._default_landmarks
+            self._landmarks = [datetime.timedelta(days=l) for l in self._landmarks]
+        return self._landmarks
+
+    _default_milestone = 120
+    _milestone = None
+    @property
+    def milestone(self):
+        if self._milestone is None:
+            milestone_param = self.request_params.get('milestone')
+            milestone_param = milestone_param if isinstance(milestone_param, int) else None
+            if milestone_param:
+                if milestone_param not in self.cached_report.active_cases or\
+                   milestone_param not in self.cached_report.inactive_cases:
+                    self.cached_report.update_status(milestone=milestone_param)
+                    self.cached_report.save()
+            self._milestone = milestone_param if milestone_param else self._default_milestone
+            self._milestone = datetime.timedelta(days=self._milestone)
+        return self._milestone
+
+    @property
+    @memoized
+    def utc_now(self):
+        return tz_utils.adjust_datetime_to_timezone(datetime.datetime.utcnow(), self.timezone.zone, pytz.utc.zone)
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(DataTablesColumn("Users"))
+        for landmark in self.landmarks:
+            headers.add_column(DataTablesColumn("Last %s Days" % landmark.days if landmark else "Ever",
+                sort_type=DTSortType.NUMERIC,
+                help_text='Number of cases modified (or closed) in the last %s days' % landmark.days))
+        headers.add_column(DataTablesColumn("Active Cases",
+            sort_type=DTSortType.NUMERIC,
+            help_text='Number of cases modified in the last %s days that are still open' % self.milestone.days))
+        headers.add_column(DataTablesColumn("Inactive Cases",
+            sort_type=DTSortType.NUMERIC,
+            help_text="Number of cases that are open but haven't been touched in the last %s days" % self.milestone.days))
+        return headers
+
+    @property
+    def rows(self):
+        rows = [self.Row(self, user) for user in self.users]
+        total_row = self.TotalRow(rows, "All Users")
+
+        def format_row(row):
+            cells = [row.header()]
+            def add_numeric_cell(text, value=None):
+                if value is None:
+                    value = int(text)
+                cells.append(util.format_datatables_data(text=text, sort_key=value))
+            for landmark in self.landmarks:
+                value = row.modified_count(self.utc_now - landmark)
+                total = row.active_count() + row.closed_count(self.utc_now - landmark)
+
+                try:
+                    display = '%d (%d%%)' % (value, value * 100. / total)
+                except ZeroDivisionError:
+                    display = '%d' % value
+                add_numeric_cell(display, value)
+            add_numeric_cell(row.active_count())
+            add_numeric_cell(row.inactive_count())
+            return cells
+        self.total_row = format_row(total_row)
+        return map(format_row, rows)
+
+    def get_number_cases(self, user_id, modified_after=None, modified_before=None, closed=None):
+        key = [self.domain, {} if closed is None else closed, self.case_type or {}, user_id]
+
+        if modified_after is None:
+            start = ""
+        else:
+            start = json_format_datetime(modified_after)
+
+        if modified_before is None:
+            end = {}
+        else:
+            end = json_format_datetime(modified_before)
+
+        return get_db().view('case/by_date_modified',
+            startkey=key + [start],
+            endkey=key + [end],
+            group=True,
+            group_level=0,
+            wrapper=lambda row: row['value']
+        ).one() or 0
+
+
+class CaseActivityReportCahed(WorkerMonitoringReportTable, CouchCachedReportMixin):
     """
         User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
         danny   5 (25%)         10 (50%)        20 (100%)       17                          6
         (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
     """
     name = 'Case Activity'
-    slug = 'case_activity'
+    slug = 'case_activity_cached' #change to case_activity when ready to deploy
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.CaseTypeField',
               'corehq.apps.reports.fields.GroupField']
