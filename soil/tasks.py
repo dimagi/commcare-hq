@@ -1,4 +1,4 @@
-from celery.decorators import task, periodic_task
+from celery.task import task, periodic_task
 import time
 from django.core.cache import cache
 from soil import CachedDownload
