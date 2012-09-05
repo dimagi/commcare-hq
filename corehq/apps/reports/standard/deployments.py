@@ -1,6 +1,6 @@
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports import util
-from corehq.apps.reports._global import ProjectReportParametersMixin, ProjectReport
+from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.fields import SelectApplicationField
 from corehq.apps.reports.generic import GenericTabularReport

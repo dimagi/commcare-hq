@@ -155,7 +155,7 @@ def search_snapshots(request, filter_by='', filter='', template="appstore/appsto
     try:
         snapshots, total_rows = Domain.snapshot_search(query, page=page, per_page=PER_PAGE)
     except RequestFailed:
-        notify_exception("Domain snapshot_search RequestFailed")
+        notify_exception(request, "Domain snapshot_search RequestFailed")
         messages.error(request, "Oops! Our search backend is experiencing problems. Please try again later.")
         return redirect('appstore')
     else:

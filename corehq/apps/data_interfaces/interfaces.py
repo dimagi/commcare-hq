@@ -1,6 +1,6 @@
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.groups.models import Group
-from corehq.apps.reports._global import DatespanMixin, ProjectReportParametersMixin
+from corehq.apps.reports.standard import DatespanMixin, ProjectReportParametersMixin
 from django.core.urlresolvers import reverse
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports import util

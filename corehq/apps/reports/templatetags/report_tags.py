@@ -7,7 +7,7 @@ import json
 import calendar
 from django.conf import settings
 from django.utils.html import escape
-from corehq.apps.reports._global.export import ExcelExportReport, CaseExportReport
+from corehq.apps.reports.standard.export import ExcelExportReport, CaseExportReport
 from corehq.apps.reports.dispatcher import ReportDispatcher
 from dimagi.utils.modules import to_function
 #from bhoma.apps.locations.models import Location

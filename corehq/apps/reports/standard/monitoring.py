@@ -9,7 +9,7 @@ import pytz
 import sys
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports import util
-from corehq.apps.reports._global import CouchCachedReportMixin, ProjectReportParametersMixin, \
+from corehq.apps.reports.standard import CouchCachedReportMixin, ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport, DATE_FORMAT
 from corehq.apps.reports.calc import entrytimes
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
@@ -34,7 +34,7 @@ class WorkerMonitoringReportTable(GenericTabularReport, ProjectReport, ProjectRe
 
     def get_user_link(self, user):
         user_link_template = '<a href="%(link)s?individual=%(user_id)s">%(username)s</a>'
-        from corehq.apps.reports._global.inspect import CaseListReport
+        from corehq.apps.reports.standard.inspect import CaseListReport
         user_link = user_link_template % {"link": "%s%s" % (get_url_base(),
                                                             CaseListReport.get_url(self.domain)),
                                           "user_id": user.get('user_id'),
@@ -668,6 +668,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTable, Datesp
                 completion_time = self.timezone.localize(completion_time, is_dst=completion_dst)
                 submission_time = dateutil.parser.parse(vals.get('submission_time'))
                 submission_time = submission_time.replace(tzinfo=pytz.utc)
+                submission_time = tz_utils.adjust_datetime_to_timezone(submission_time, pytz.utc.zone, self.timezone.zone)
                 td = submission_time-completion_time
 
                 td_total = (td.seconds + td.days * 24 * 3600)
@@ -686,7 +687,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTable, Datesp
         self.total_row = ["Average", "-", "-", "-", self._format_td_status(int(total_seconds/total), False) if total > 0 else "--"]
         return rows
 
-    def _format_date(self, date, d_format="%d %b %Y, %H:%M"):
+    def _format_date(self, date, d_format="%d %b %Y, %H:%M:%S"):
         return self.table_cell(
             date,
             "%s (%s)" % (date.strftime(d_format), date.tzinfo._tzname)

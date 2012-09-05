@@ -1,6 +1,6 @@
 from corehq.apps.reports.schedule import BasicReportSchedule, ReportSchedule, CustomReportSchedule
 from corehq.apps.hqadmin.views import domain_list
-from corehq.apps.reports._global.monitoring import CaseActivityReport, SubmissionsByFormReport, DailySubmissionsReport, DailyFormCompletionsReport
+from corehq.apps.reports.standard.monitoring import CaseActivityReport, SubmissionsByFormReport, DailySubmissionsReport, DailyFormCompletionsReport
 from django.conf import settings
 from dimagi.utils.modules import to_function
 
