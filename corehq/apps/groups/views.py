@@ -11,6 +11,7 @@ from dimagi.utils.couch.resource_conflict import repeat
 
 require_can_edit_groups = require_permission(Permissions.edit_commcare_users)
 
+@require_POST
 @require_can_edit_groups
 def add_group(request, domain):
     group_name = request.POST['group_name']
