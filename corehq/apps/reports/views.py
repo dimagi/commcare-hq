@@ -17,6 +17,7 @@ from couchexport.views import _export_tag_or_bust
 import couchforms
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
+from dimagi.utils.decorators import inline
 from dimagi.utils.export import WorkBook
 from dimagi.utils.web import json_request, render_to_response
 from dimagi.utils.couch.database import get_db
@@ -187,10 +188,8 @@ class CustomExportHelper(object):
         table = self.request.POST["table"]
         cols = self.request.POST['order'].strip().split()
 
-
-        unroll = lambda f: list(f())
-
-        @unroll
+        @list
+        @inline
         def export_cols():
             for col in cols:
                 transform = self.request.POST.get('%s transform' % col) or None

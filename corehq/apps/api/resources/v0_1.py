@@ -65,7 +65,10 @@ class CommCareUserResource(Resource):
     def obj_get(self, request, **kwargs):
         domain = kwargs['domain']
         pk = kwargs['pk']
-        user = CommCareUser.get_by_user_id(pk, domain)
+        try:
+            user = CommCareUser.get_by_user_id(pk, domain)
+        except KeyError:
+            user = None
         return user
 
     def obj_get_list(self, request, **kwargs):
