@@ -300,6 +300,14 @@
 
                 <div class="accordion-group">
                   <div class="accordion-heading">
+                    <a class="accordion-toggle odk_install" href="{% url corehq.apps.app_manager.views.odk_install domain saved_app.id %}">
+                        Download to CommCare ODK (Android)
+                    </a>
+                  </div>
+                </div>
+
+                <div class="accordion-group">
+                  <div class="accordion-heading">
                     <a class="accordion-toggle" data-toggle="collapse" data-parent="#{{ saved_app.id }}_accordion" href="#{{ saved_app.id }}_sms">
                       Send to phone via SMS
                     </a>
@@ -314,11 +322,12 @@
                                 <a href="#{{ saved_app.id }}_sms_j2me" data-toggle="tab">Send J2ME app</a>
                               </li>
                               <li>
-                                <a href="#{{ saved_app.id }}_sms_odk" data-toggle="tab">Send ODK app (Android)</a>
+                                <a href="#{{ saved_app.id }}_sms_odk" data-toggle="tab">Send CommCare ODK app (Android)</a>
                               </li>
                             </ul>
                             <div class="tab-content">
                               <div id="{{ saved_app.id }}_sms_j2me" class="tab-pane active">
+                              {% if saved_app.short_url %}
                                 <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
                                   <label>Send to: </label>
                                   <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
@@ -327,8 +336,15 @@
                                   <br />
                                   <input type="submit" class="btn" value="Send"/>
                                 </form>
+                              {% else %}
+                                <span class="label label-important">
+                                  No URL was found for this app, try rebuilding. 
+                                </span>
+                              {% endif %}
                               </div>
+
                               <div id="{{ saved_app.id }}_sms_odk" class="tab-pane">
+                              {% if saved_app.short_odk_url %}
                                 <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
                                   <label>Send to: </label>
                                   <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
@@ -337,18 +353,15 @@
                                   <br />
                                   <input type="submit" class="btn" value="Send"/>
                                 </form>
+                              {% else %}
+                                <span class="label label-important">
+                                  No URL was found for this app, try rebuilding.
+                                </span>
+                              {% endif %}
                               </div>
                             </div>
                           </div>
                     </div>
-                  </div>
-                </div>
-
-                <div class="accordion-group">
-                  <div class="accordion-heading">
-                    <a class="accordion-toggle odk_install" href="{% url corehq.apps.app_manager.views.odk_install domain saved_app.id %}">
-                        Download to CommCare ODK (Android)
-                    </a>
                   </div>
                 </div>
 
