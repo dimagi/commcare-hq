@@ -1,3 +1,4 @@
+import itertools
 from couchexport.schema import get_schema_new
 from django.conf import settings
 from couchexport.models import ExportSchema, Format
@@ -210,6 +211,7 @@ LIST_NEVER_WAS = settings.COUCHEXPORT_LIST_NEVER_WAS \
 
 scalar_never_was = Constant(SCALAR_NEVER_WAS)
 list_never_was = Constant(LIST_NEVER_WAS)
+transform_error_constant = Constant("---ERR---")
 
 def render_never_was(schema):
     if isinstance(schema, dict):
@@ -358,14 +360,16 @@ class FormattedRow(object):
         return self.separator.join(map(unicode, self.id))
     
     def get_data(self):
-        for i, val in enumerate(self.data):
-            if self.has_id() and i == self.id_index:
-                yield self.formatted_id
-            yield val
-        # if the ID is last the condition never gets triggerred
-        # during the loop, so do it here
-        if self.has_id() and self.id_index >= len(self.data):
-            yield self.formatted_id
+        if self.has_id():
+            # tl;dr:
+            # return self.data[:self.id_index] + [self.formatted_id] + data[self.id_index:]
+            return itertools.chain(
+                itertools.islice(self.data, None, self.id_index),
+                [self.formatted_id],
+                itertools.islice(self.data, self.id_index, None)
+            )
+        else:
+            return iter(self.data)
 
     @classmethod
     def wrap_all_rows(cls, tables):

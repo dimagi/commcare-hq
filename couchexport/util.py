@@ -52,7 +52,16 @@ class SerializableFunction(object):
         else:
             return True
 
+    def dumps_simple(self):
+        (f, kwargs), = self.functions
+        assert not kwargs
+        return self.to_path(f)
+
     def dumps(self):
+        try:
+            return self.dumps_simple()
+        except Exception:
+            pass
         functions = []
         for f, kwargs in self.functions:
             for key in kwargs:
@@ -61,7 +70,7 @@ class SerializableFunction(object):
                 except (AttributeError, TypeError):
                     pass
             functions.append({
-                'function': '%s.%s' % (f.__module__, f.__name__),
+                'function': self.to_path(f),
                 'kwargs': kwargs
             })
         def handler(obj):
@@ -81,7 +90,11 @@ class SerializableFunction(object):
                 return cls.loads(d['dump'])
             else:
                 return d
-        functions = json.loads(data, object_hook=object_hook)
+        try:
+            functions = json.loads(data, object_hook=object_hook)
+        except Exception:
+            # then it's just a simple path
+            return cls(to_function(data))
         self = cls()
         for o in functions:
             f, kwargs = o['function'], o['kwargs']
@@ -89,6 +102,12 @@ class SerializableFunction(object):
             self.add(f, **kwargs)
         return self
 
+    @classmethod
+    def to_path(cls, f):
+        if isinstance(f, SerializableFunction):
+            f.dumps_simple()
+        else:
+            return '%s.%s' % (f.__module__, f.__name__)
 # deprecated name
 FilterFunction = SerializableFunction
 

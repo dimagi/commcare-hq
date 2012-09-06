@@ -1,11 +1,12 @@
+from itertools import islice
 import uuid
 from couchdbkit.ext.django.schema import Document, IntegerProperty, DictProperty,\
     Property, DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
-    StringListProperty, DateTimeProperty, SchemaProperty
+    StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty
 import json
 from StringIO import StringIO
 import couchexport
-from couchexport.util import SerializableFunctionProperty
+from couchexport.util import SerializableFunctionProperty, SerializableFunction
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch.database import get_db
@@ -109,6 +110,16 @@ class ExportColumn(DocumentSchema):
     """
     index = StringProperty()
     display = StringProperty()
+    # signature: transform(val, doc) -> val
+    transform = SerializableFunctionProperty(default=None)
+
+    def to_config_format(self, selected=True):
+        return {
+            "index": self.index,
+            "display": self.display,
+            "transform": self.transform.dumps() if self.transform else None,
+            "selected": selected,
+        }
 
 class ExportTable(DocumentSchema):
     """
@@ -124,54 +135,77 @@ class ExportTable(DocumentSchema):
         return cls(index=index, display="", columns=[])
         
     @property
-    def col_dict(self):
-        if not hasattr(self, "_col_dict"):
-            self._col_dict = dict([c.index, c.display] for c in self.columns)
-        return self._col_dict
+    @memoized
+    def displays_by_index(self):
+        return dict((c.index, c.display + (" [sensitive]" if c.transform else '')) for c in self.columns)
     
     def get_column_configuration(self, schema):
         all_cols = schema.top_level_nodes
-        cols = []
+        selected_cols = set()
         for c in self.columns:
-            cols.append({"index": c.index, "display": c.display, "selected": True})
-            all_cols = filter(lambda x: x != c.index, all_cols) # exclude
-        cols.extend([{"index": c,
-                 "display": self.col_dict[c] if c in self.col_dict else c,
-                 "selected": c in self.col_dict} for c in all_cols])
-        #cols.sort(key=lambda x: not x["selected"])
-        return cols
-    
+            selected_cols.add(c.index)
+            yield c.to_config_format()
+
+        for c in all_cols:
+            if c not in selected_cols:
+                column = ExportColumn(index=c)
+                column.display = self.displays_by_index[c] if self.displays_by_index.has_key(c) else c
+                yield column.to_config_format(selected=False)
+
     def get_headers_row(self):
         from couchexport.export import FormattedRow
-        return FormattedRow([self.col_dict[col] for col in map(lambda x: x.index, self.columns)])
-    
-    def trim(self, data):
-        from couchexport.export import FormattedRow
+        return FormattedRow([self.displays_by_index[col.index] for col in self.columns])
 
-        headers = data[0]
-        if not hasattr(self, "header_to_index_map"):
-            self._header_to_index_map = dict([(h, i) \
-                                    for i, h in enumerate(headers.get_data()) \
-                                    if h in self.col_dict])
-        if not hasattr(self, "_cols"):
-            self._cols = map(lambda x: x.index, self.columns)
-        
-        data = data[1:]
-        ret = []
+    @property
+    @memoized
+    def row_positions_by_index(self):
+        return dict((h, i) for i, h in enumerate(self._headers) if self.displays_by_index.has_key(h))
+
+    @property
+    @memoized
+    def id_index(self):
+        for i, column in enumerate(self.columns):
+            if column.index == 'id':
+                return i
+
+    def get_items_in_order(self, row):
+        row_data = list(row.get_data())
+        for column in self.columns:
+            i = self.row_positions_by_index[column.index]
+            val = row_data[i]
+            yield column, val
+
+    def trim(self, data, doc, apply_transforms):
+        from couchexport.export import FormattedRow, Constant, transform_error_constant
+        if not hasattr(self, '_headers'):
+            self._headers = tuple(data[0].get_data())
+
+        # skip first element without copying
+        data = islice(data, 1, None)
+
         for row in data:
-            row_data = list(row.get_data())
-            id = row_data[self._header_to_index_map["id"]] if "id" in self._cols else None
-            ret.append(FormattedRow([row_data[self._header_to_index_map[col]] \
-                                              for col in self._cols if col != "id"], 
-                                    id, id_index=self._cols.index("id") if id else 0))
-
-        return ret
+            id = None
+            cells = []
+            for column, val in self.get_items_in_order(row):
+                # DEID TRANSFORM BABY!
+                if apply_transforms and column.transform and not isinstance(val, Constant):
+                    try:
+                        val = column.transform(val, doc)
+                    except Exception:
+                        val = transform_error_constant
+                if column.index == 'id':
+                    id = val
+                else:
+                    cells.append(val)
+            id_index = self.id_index if id else 0
+            yield FormattedRow(cells, id, id_index=id_index)
 
 class BaseSavedExportSchema(Document):
     # signature: filter(doc)
     filter_function = SerializableFunctionProperty()
-    # signature: transform(doc)
-    transform = SerializableFunctionProperty(default=None)
+
+    def transform(self, doc):
+        return doc
 
     @property
     def filter(self):
@@ -181,17 +215,14 @@ class BaseSavedExportSchema(Document):
     def is_bulk(self):
         return False
 
-    def export_data_async(self, filter, filename, previous_export_id, format, max_column_size=None):
+    def export_data_async(self, format=None, **kwargs):
         format = format or Format.XLS_2007
         download = DownloadBase()
         download.set_task(couchexport.tasks.export_async.delay(
             self,
             download.download_id,
             format=format,
-            filename=filename,
-            previous_export_id=previous_export_id,
-            filter=filter,
-            max_column_size=max_column_size
+            **kwargs
         ))
         return download.get_start_response()
 
@@ -206,7 +237,7 @@ class BaseSavedExportSchema(Document):
         return headers
 
     def parse_tables(self, tables):
-        first_row = tables[0][1]
+        first_row = list(list(tables)[0])[1]
         return [(self.table_name, first_row)]
 
 class FakeSavedExportSchema(BaseSavedExportSchema):
@@ -228,8 +259,8 @@ class FakeSavedExportSchema(BaseSavedExportSchema):
         from couchexport.export import get_export_components
         return get_export_components(self.index, previous_export_id, filter)
 
-    def get_export_files(self, format=None, previous_export_id=None, filter=None,
-                         use_cache=True, max_column_size=2000, separator='|', process=None):
+    def get_export_files(self, format='', previous_export_id=None, filter=None,
+                         use_cache=True, max_column_size=2000, separator='|', process=None, **kwargs):
         # the APIs of how these methods are broken down suck, but at least
         # it's DRY
         from couchexport.export import export
@@ -277,6 +308,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     name = StringProperty()
     default_format = StringProperty()
 
+    is_safe = BooleanProperty(default=False)
     # self.index should always match self.schema.index
     # needs to be here so we can use in couch views
     index = JsonProperty()
@@ -293,6 +325,9 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     def __unicode__(self):
         return "%s (%s)" % (self.name, self.index)
 
+    def transform(self, doc):
+        return doc
+
     @property
     @memoized
     def schema(self):
@@ -306,36 +341,44 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     def default(cls, schema, name="", type='form'):
         return cls(name=name, index=schema.index, schema_id=schema.get_id,
                    tables=[ExportTable.default(schema.tables[0][0])], type=type)
-        
+
+    @property
+    @memoized
+    def tables_by_index(self):
+        return dict([t.index, t] for t in self.tables)
+
     def get_table_configuration(self, index):
-        table_dict = dict([t.index, t] for t in self.tables)
-        return {"index": index, 
-                "display": table_dict[index].display if index in table_dict else index,
-                "column_configuration": table_dict[index].get_column_configuration(self.schema) \
-                                            if index in table_dict else \
-                                            [{"index": c, "display": c, 
-                                              "selected": False} for c in self.schema.get_columns(index)],
-                 "selected": index in table_dict} 
+        def column_configuration():
+            if self.tables_by_index.has_key(index):
+                return list(self.tables_by_index[index].get_column_configuration(self.schema))
+            else:
+                return [ExportColumn(index=c, display=c).to_config_format(selected=False) for c in self.schema.get_columns(index)]
+
+        def display():
+            if self.tables_by_index.has_key(index):
+                return self.tables_by_index[index].display
+            else:
+                return index
+
+        return {
+            "index": index,
+            "display": display(),
+            "column_configuration": column_configuration(),
+            "selected": index in self.tables_by_index
+        }
     
     def get_table_headers(self, override_name=False):
         return ((self.table_name if override_name and i==0 else t.index, [t.get_headers_row()]) for i, t in enumerate(self.tables))
         
     @property
     def table_configuration(self):
-        return [self.get_table_configuration(index) \
-                for index, cols in self.schema.tables]
+        return [self.get_table_configuration(index) for index, cols in self.schema.tables]
 
-    def trim(self, document_table):
-        if not hasattr(self, "_table_dict"):
-            self._table_dict = dict([t.index, t] for t in self.tables)
-        
-        trimmed_tables = []
+    def trim(self, document_table, doc, apply_transforms=True):
         for table_index, data in document_table:
-            if table_index in self._table_dict:
-                trimmed_tables.append((# self._table_dict[table_index].display,
-                                       table_index, # TODO: figure out a way to separate index from display 
-                                       self._table_dict[table_index].trim(data)))
-        return trimmed_tables
+            if self.tables_by_index.has_key(table_index):
+                # todo: currently (index, rows) instead of (display, rows); where best to convert to display?
+                yield (table_index, self.tables_by_index[table_index].trim(data, doc, apply_transforms))
 
     def get_export_components(self, previous_export_id=None, filter=None):
         from couchexport.export import get_schema_new
@@ -356,7 +399,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
 
         return config, updated_schema, export_schema_checkpoint
     
-    def get_export_files(self, format="", previous_export=None, filter=None, process=None, max_column_size=None):
+    def get_export_files(self, format=None, previous_export=None, filter=None, process=None, max_column_size=None, apply_transforms=True, **kwargs):
         from couchexport.export import get_writer, format_tables, create_intermediate_tables
 
         if not format:
@@ -376,13 +419,15 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         if process:
             DownloadBase.set_progress(process, 0, total_docs)
         for i, doc in config.enum_docs():
-            if self.transform:
+            if self.transform and apply_transforms:
                 doc = self.transform(doc)
             formatted_tables = self.trim(
                 format_tables(
                     create_intermediate_tables(doc, updated_schema),
                     separator="."
-                )
+                ),
+                doc,
+                apply_transforms=apply_transforms
             )
             writer.write(formatted_tables)
             if process:
