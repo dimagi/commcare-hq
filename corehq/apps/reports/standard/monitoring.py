@@ -242,7 +242,7 @@ class CaseActivityReport(WorkerMonitoringReportTable):
         ).one() or 0
 
 
-class CaseActivityReportCached(WorkerMonitoringReportTable, CouchCachedReportMixin):
+class CaseActivityReportCahed(WorkerMonitoringReportTable, CouchCachedReportMixin):
     """
         User    Last 30 Days    Last 60 Days    Last 90 Days   Active Clients              Inactive Clients
         danny   5 (25%)         10 (50%)        20 (100%)       17                          6
