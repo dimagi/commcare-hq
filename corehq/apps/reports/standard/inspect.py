@@ -17,6 +17,7 @@ from corehq.apps.reports.models import HQUserType
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import CouchFilter, FilteredPaginator
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.groups.models import Group
 
@@ -142,17 +143,15 @@ class CaseListReport(ProjectInspectionReport):
                     'corehq.apps.reports.fields.SelectOpenCloseField']
         return super(CaseListReport, self).override_fields
 
-    _case_sharing_groups = None
     @property
+    @memoized
     def case_sharing_groups(self):
-        if self._case_sharing_groups is None:
-            try:
-                user = CommCareUser.get_by_user_id(self.individual)
-                user = user if user.username_in_report else None
-                self._case_sharing_groups = user.get_case_sharing_groups() if user else []
-            except Exception:
-                self._case_sharing_groups = []
-        return self._case_sharing_groups
+        try:
+            user = CommCareUser.get_by_user_id(self.individual)
+            user = user if user.username_in_report else None
+            return user.get_case_sharing_groups()
+        except Exception:
+            return []
 
     @property
     def user_filter(self):
@@ -191,77 +190,66 @@ class CaseListReport(ProjectInspectionReport):
             self.name = "%s for %s" % (self.name, SelectMobileWorkerField.get_default_text(self.user_filter))
         if not self.case_type:
             headers.prepend_column(DataTablesColumn("Case Type"))
-        open, all = CaseTypeField.get_case_counts(self.domain, self.case_type, self.user_ids)
-        if all > 0:
-            self.name = "%s (%s/%s open)" % (self.name, open, all)
-        else:
-            self.name = "%s (empty)" % self.name
         return headers
 
-    _paginator_results = None
     @property
+    @memoized
     def paginator_results(self):
-        if self._paginator_results is None:
-            def _compare_cases(x, y):
-                x = x.get('key', [])
-                y = y.get('key', [])
-                try:
-                    x = x[-1]
-                    y = y[-1]
-                except Exception:
-                    x = ""
-                    y = ""
-                return cmp(x, y)
-            is_open = self.request.GET.get(SelectOpenCloseField.slug)
-            filters = [CaseListFilter(self.domain, case_owner, case_type=self.case_type, open_case=is_open)
-                       for case_owner in self.case_owners]
-            paginator = FilteredPaginator(filters, _compare_cases)
-            self._paginator_results = paginator
-        return self._paginator_results
+        def _compare_cases(x, y):
+            x = x.get('key', [])
+            y = y.get('key', [])
+            try:
+                x = x[-1]
+                y = y[-1]
+            except Exception:
+                x = ""
+                y = ""
+            return cmp(x, y)
+        is_open = self.request.GET.get(SelectOpenCloseField.slug)
+        filters = [CaseListFilter(self.domain, case_owner, case_type=self.case_type, open_case=is_open)
+                   for case_owner in self.case_owners]
+        paginator = FilteredPaginator(filters, _compare_cases)
+        return paginator
 
-    _case_results = None
+
     @property
+    @memoized
     def case_results(self):
-        if self._case_results is None:
-            if self.no_lucene:
-                # Paginated Non-Lucene Results
-                results = self.paginator_results.get(self.pagination.start, self.pagination.count)
-            else:
-                # Lucene Results
-                # todo fix this
-                search_key = self.request_params.get("sSearch", "")
-                query = "domain:(%s)" % self.domain
-                query = "%s AND owner_id:(%s)" % (query, " OR ".join(self.case_owners))
-                if self.case_type:
-                    query = "%s AND type:%s" % (query, self.case_type)
-                if search_key:
-                    query = "(%s) AND %s" % (search_key, query)
-                results = get_db().search("case/search",
-                    q=query,
-                    handler="_fti/_design",
-                    limit=self.pagination.start,
-                    skip=self.pagination.count,
-                    sort="\sort_modified"
-                )
-            self._case_results = results
-        return self._case_results
+        if self.no_lucene:
+            # Paginated Non-Lucene Results
+            results = self.paginator_results.get(self.pagination.start, self.pagination.count)
+        else:
+            # Lucene Results
+            # todo fix this
+            search_key = self.request_params.get("sSearch", "")
+            query = "domain:(%s)" % self.domain
+            query = "%s AND owner_id:(%s)" % (query, " OR ".join(self.case_owners))
+            if self.case_type:
+                query = "%s AND type:%s" % (query, self.case_type)
+            if search_key:
+                query = "(%s) AND %s" % (search_key, query)
+            results = get_db().search("case/search",
+                q=query,
+                handler="_fti/_design",
+                limit=self.pagination.start,
+                skip=self.pagination.count,
+                sort="\sort_modified"
+            )
+        return results
 
     @property
     def total_records(self):
         return self.paginator_results.total if self.no_lucene else self.case_results.total_rows
 
-    _case_owners = None
     @property
+    @memoized
     def case_owners(self):
-        if self._case_owners is None:
-            if self.no_lucene:
-                case_owners = [self.individual]+[group._id for group in self.case_sharing_groups]
-            else:
-                group_owners = self.case_sharing_groups if self.individual else Group.get_case_sharing_groups(self.domain)
-                group_owners = [group._id for group in group_owners]
-                case_owners = self.userIDs + group_owners
-            self._case_owners = case_owners
-        return self._case_owners
+        if self.no_lucene:
+            return [self.individual]+[group._id for group in self.case_sharing_groups]
+        else:
+            group_owners = self.case_sharing_groups if self.individual else Group.get_case_sharing_groups(self.domain)
+            group_owners = [group._id for group in group_owners]
+            return self.userIDs + group_owners
 
 
     @property
