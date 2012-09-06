@@ -19,7 +19,7 @@ import pdb
 import uuid
 from fabric.context_managers import settings, cd
 from fabric.decorators import hosts
-from fabric.operations import require, local
+from fabric.operations import require, local, prompt
 
 import os, sys
 
@@ -79,9 +79,9 @@ def setup_apache_dirs():
 @roles('django_celery', 'django_app')
 def setup_dirs():
     """ create (if necessary) and make writable uploaded media, log, etc. directories """
-    run('mkdir -p %(log_dir)s' % env)
-    run('chmod a+w %(log_dir)s' % env)
-    run('mkdir -p %(services)s/supervisor' % env)
+    sudo('mkdir -p %(log_dir)s' % env, user=env.sudo_user)
+    sudo('chmod a+w %(log_dir)s' % env, user=env.sudo_user)
+    sudo('mkdir -p %(services)s/supervisor' % env, user=env.sudo_user)
     #execute(setup_apache_dirs)
 
 @task
@@ -239,7 +239,7 @@ def create_db():
 def bootstrap():
     """Initialize remote host environment (virtualenv, deploy, update) """
     require('root', provided_by=('staging', 'production'))
-    run('mkdir -p %(root)s' % env, shell=False)
+    sudo('mkdir -p %(root)s' % env, shell=False, user=env.sudo_user)
     execute(clone_repo)
     execute(update_code)
     execute(create_virtualenv)
@@ -254,9 +254,9 @@ def create_virtualenv():
     """ setup virtualenv on remote host """
     require('virtualenv_root', provided_by=('staging', 'production'))
     with settings(warn_only=True):
-        run('rm -rf %(virtualenv_root)s' % env)
+        sudo('rm -rf %(virtualenv_root)s' % env, user=env.sudo_user)
     args = '--clear --distribute --no-site-packages'
-    run('virtualenv %s %s' % (args, env.virtualenv_root))
+    sudo('virtualenv %s %s' % (args, env.virtualenv_root), user=env.sudo_user)
 
 
 @roles('django_celery', 'django_app')
@@ -265,9 +265,9 @@ def clone_repo():
     with settings(warn_only=True):
         with cd(env.root):
             if not files.exists(env.code_root):
-                run('git clone %(code_repo)s %(code_root)s' % env)
+                sudo('git clone %(code_repo)s %(code_root)s' % env, user=env.sudo_user)
             with cd(env.code_root):
-                run('git submodule init')
+                sudo('git submodule init', user=env.sudo_user)
 
 
 @hosts('hqdb.internal.commcarehq.org')
@@ -276,16 +276,16 @@ def preindex_views():
     with cd(env.code_root):
         update_code()
         #sudo('nohup python manage.py sync_prepare_couchdb > preindex_views.out 2> preindex_views.err', user=env.sudo_user)
-        run('nohup %(virtualenv_root)s/bin/python manage.py sync_prepare_couchdb > preindex_views.out 2> preindex_views.err' % env)
+        sudo('nohup %(virtualenv_root)s/bin/python manage.py sync_prepare_couchdb > preindex_views.out 2> preindex_views.err' % env, user=env.sudo_user)
 
 @roles('django_celery','django_app', 'staticfiles')
 @task
 def update_code():
     with cd(env.code_root):
-        run('git pull')
-        run('git checkout %(code_branch)s' % env)
-        run('git submodule sync')
-        run('git submodule update --init --recursive')
+        sudo('git pull', user=env.sudo_user)
+        sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
+        sudo('git submodule sync', user=env.sudo_user)
+        sudo('git submodule update --init --recursive', user=env.sudo_user)
 
 #@roles('django_celery','django_app', 'staticfiles')
 @task
@@ -323,7 +323,7 @@ def update_requirements():
         cmd += ['--requirement %s' % posixpath.join(requirements, 'prod-requirements.txt')]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'requirements.txt')]
         print ' '.join(cmd)
-        run(' '.join(cmd), shell=False, pty=False)
+        sudo(' '.join(cmd), shell=False, pty=False, user=env.sudo_user)
 
 
 @roles('lb')
@@ -352,7 +352,7 @@ def update_services():
         services_stop()
     #remove old confs from directory first
     services_dir =  posixpath.join(env.services, u'supervisor', 'supervisor_*.conf')
-    run('rm -f %s' % services_dir)
+    sudo('rm -f %s' % services_dir, user=env.sudo_user)
     upload_and_set_supervisor_config()
     services_start()
     netstat_plnt()
@@ -361,7 +361,7 @@ def update_services():
 def configtest():
     """ test Apache configuration """
     require('root', provided_by=('staging', 'production'))
-    run('apache2ctl configtest')
+    sudo('apache2ctl configtest')
 
 @roles('lb')
 def apache_reload():
@@ -409,8 +409,8 @@ def migrate():
     """ run south migration on remote environment """
     require('code_root', provided_by=('production', 'demo', 'staging'))
     with cd(env.code_root):
-        run('%(virtualenv_root)s/bin/python manage.py syncdb --noinput' % env)
-        run('%(virtualenv_root)s/bin/python manage.py migrate --noinput' % env)
+        sudo('%(virtualenv_root)s/bin/python manage.py syncdb --noinput' % env, user=env.sudo_user)
+        sudo('%(virtualenv_root)s/bin/python manage.py migrate --noinput' % env, user=env.sudo_user)
 
 
 @roles('staticfiles',)
@@ -420,8 +420,8 @@ def collectstatic():
     require('code_root', provided_by=('production', 'demo', 'staging'))
     update_code() #not wrapped in execute because we only want the staticfiles machine to run it
     with cd(env.code_root):
-        run('%(virtualenv_root)s/bin/python manage.py make_bootstrap' % env)
-        run('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env)
+        sudo('%(virtualenv_root)s/bin/python manage.py make_bootstrap' % env, user=env.sudo_user)
+        sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env, user=env.sudo_user)
 
 @task
 def reset_local_db():
@@ -447,17 +447,17 @@ def fix_locale_perms():
     require('root', provided_by=('staging', 'production'))
     _set_apache_user()
     locale_dir = '%s/commcare-hq/locale/' % env.code_root
-    run('chown -R %s %s' % (env.sudo_user, locale_dir))
-    sudo('chgrp -R %s %s' % (env.apache_user, locale_dir), user='root')
-    run('chmod -R g+w %s' % (locale_dir))
+    sudo('chown -R %s %s' % (env.sudo_user, locale_dir), user=env.sudo_user)
+    sudo('chgrp -R %s %s' % (env.apache_user, locale_dir), user=env.sudo_user)
+    sudo('chmod -R g+w %s' % (locale_dir), user=env.sudo_user)
 
 @task
 def commit_locale_changes():
     """ Commit locale changes on the remote server and pull them in locally """
     fix_locale_perms()
     with cd(env.code_root):
-        run('-H -u %s git add commcare-hq/locale' % env.sudo_user)
-        run('-H -u %s git commit -m "updating translation"' % env.sudo_user)
+        sudo('-H -u %s git add commcare-hq/locale' % env.sudo_user, user=env.sudo_user)
+        sudo('-H -u %s git commit -m "updating translation"' % env.sudo_user, user=env.sudo_user)
     local('git pull ssh://%s%s' % (env.host, env.code_root))
 
 def _upload_supervisor_conf_file(filename):
@@ -550,4 +550,4 @@ def _supervisor_command(command):
         cmd_exec = "/usr/bin/supervisorctl"
     elif what_os() == 'ubuntu':
         cmd_exec = "/usr/local/bin/supervisorctl"
-    run('sudo %s %s' % (cmd_exec, command))
+    sudo('sudo %s %s' % (cmd_exec, command), user=env.sudo_user)
