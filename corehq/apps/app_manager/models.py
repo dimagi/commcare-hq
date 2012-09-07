@@ -1060,6 +1060,10 @@ class ApplicationBase(VersionedDoc):
             reverse('corehq.apps.app_manager.views.download_odk_profile', args=[self.domain, self._id]),
         )
 
+    @property
+    def odk_profile_display_url(self):
+        return self.short_odk_url or self.odk_profile_url
+
     def get_odk_qr_code(self):
         """Returns a QR code, as a PNG to install on CC-ODK"""
         try:

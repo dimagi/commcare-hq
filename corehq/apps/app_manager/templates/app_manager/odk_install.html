@@ -9,7 +9,7 @@
 <p style="text-align:center;">
 <img src="{% url corehq.apps.app_manager.views.odk_qr_code domain app.get_id %}" width=250 alt="Download" >
 </p> 
-<p>You can also visit: <a href="{{app.odk_profile_url}}">{{ app.odk_profile_url }}</a> in your mobile browser.</p>
+<p>You can also visit: <a href="{{app.odk_profile_display_url}}">{{ app.odk_profile_display_url }}</a> in your mobile browser.</p>
 <p>For more about CommCare ODK, visit <a href="https://confluence.dimagi.com/display/commcarepublic/Installing+CommCareODK">Installing CommCare ODK</a></p>
 </div>
 </body> 
