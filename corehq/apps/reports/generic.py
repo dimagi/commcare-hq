@@ -62,7 +62,6 @@ class GenericReportView(object):
     section_name = None # string. ex: "Reports"
     app_slug = None     # string. ex: 'reports' or 'manage'
     dispatcher = None   # ReportDispatcher subclass
-    # todo: find instances of base_slug and replace with section_slug
 
     # not required
     description = None  # string. description of the report. Currently not being used.

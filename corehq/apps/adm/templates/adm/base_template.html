@@ -1,0 +1,10 @@
+{% extends 'reports/base_template.html' %}
+{% load report_tags %}
+
+{% block sidebar %}
+    <nav>
+        <ul class="nav nav-list">
+            {% report_list 'corehq.apps.adm.dispatcher.ADMAdminInterfaceDispatcher' %}
+        </ul>
+    </nav>
+{% endblock %}

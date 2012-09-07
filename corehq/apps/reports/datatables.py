@@ -108,6 +108,11 @@ class DataTablesHeader(object):
         self.span += column.css_span
         self.check_auto_width()
 
+    def insert_column(self, column, index):
+        self.span += column.css_span
+        self.header = self.header[:index] + [column] + self.header[index:]
+        self.check_auto_width()
+
     def check_auto_width(self):
         self.auto_width = bool(0 < self.span <= 12)
 
