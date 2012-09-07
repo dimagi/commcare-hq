@@ -172,6 +172,7 @@ HQ_APPS = (
     'corehq.apps.unicel',
     'corehq.apps.reports',
     'corehq.apps.data_interfaces',
+    'corehq.apps.adm',
     'corehq.apps.hq_bootstrap',
     'corehq.apps.builds',
     'corehq.apps.orgs',
@@ -332,15 +333,9 @@ AUDIT_VIEWS = [
     'corehq.apps.domain.views.registration_confirm',
     'corehq.apps.domain.views.password_change',
     'corehq.apps.domain.views.password_change_done',
-    'corehq.apps.reports.views.submit_history',
-    'corehq.apps.reports.views.active_cases',
-    'corehq.apps.reports.views.submit_history',
-    'corehq.apps.reports.views.default',
-    'corehq.apps.reports.views.submission_log',
     'corehq.apps.reports.views.form_data',
     'corehq.apps.reports.views.export_data',
     'corehq.apps.reports.views.excel_report_data',
-    'corehq.apps.reports.views.daily_submissions',
 ]
 
 # Don't use google analytics unless overridden in localsettings
@@ -383,6 +378,7 @@ COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
 
 COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
+        'adm',
         'api',
         'app_manager',
         'appstore',
@@ -612,9 +608,16 @@ BILLING_REPORT_MAP = {
     ]
 }
 
-ADM_PROJECT_REPORT_MAP - {
+ADM_PROJECT_REPORT_MAP = {
     "Supervisor Report": [
         'corehq.apps.adm.reports.supervisor.WorkerRankTable'
+    ]
+}
+
+ADM_ADMIN_INTERFACE_MAP = {
+    "ADM Default Columns": [
+        'corehq.apps.adm.admin.columns.ReducedADMColumnInterface',
+        'corehq.apps.adm.admin.columns.DaysSinceADMColumnInterface'
     ]
 }
 
