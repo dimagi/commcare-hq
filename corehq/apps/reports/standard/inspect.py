@@ -1,19 +1,19 @@
-import logging
+from couchdbkit.exceptions import ResourceNotFound
 from couchdbkit.resource import RequestFailed
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.template.defaultfilters import yesno
 import json
+from django.utils import html
 import pytz
 from django.conf import settings
-from django.template.defaultfilters import yesno
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.hqcase.paginator import CasePaginator
 from corehq.apps.hqsofabed.models import HQFormData
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField, CaseTypeField
+from corehq.apps.reports.fields import SelectOpenCloseField, SelectMobileWorkerField
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.models import HQUserType
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.pagination import CouchFilter, FilteredPaginator
@@ -122,26 +122,130 @@ class CaseListFilter(CouchFilter):
             **self._kwargs).all()
 
 
-class CaseListReport(ProjectInspectionReport):
-    name = 'Case List'
-    slug = 'case_list'
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectCaseOwnerField',
-              'corehq.apps.reports.fields.CaseTypeField']
-
-    disable_lucene = True
+class CaseListMixin(GenericTabularReport, ProjectReportParametersMixin):
 
     @property
-    def no_lucene(self):
-        return not settings.LUCENE_ENABLED or self.disable_lucene
+    def CaseDisplay(self):
+        """
+        This property returns a class
+
+        Done this way so that self.CaseDisplay uses a closure to
+        return a class that has self (the report) in its context
+
+        (A little iffy/not-intuitive, but was the best way I could think of.
+        Acceptable alternative if this causes problems would be to pass in the report as a param)
+
+        """
+        report = self
+        class CaseDisplay(object):
+            def __init__(self, case):
+                self.case = case
+
+            @property
+            def owner_display(self):
+                username = report.usernames.get(self.user_id, "Unknown [%s]" % self.user_id)
+                if self.owning_group and self.owning_group.name:
+                    return '<span class="label label-inverse">%s</span>' % self.owning_group.name
+                else:
+                    return username
+
+            @property
+            def closed_display(self):
+                return yesno(self.case.closed, "closed,open")
+
+            @property
+            def case_link(self):
+                case_id, case_name = self.case.case_id, self.case.name
+                try:
+                    return "<a class='ajax_dialog' href='%s'>%s</a>" % (
+                        html.escape(reverse('case_details', args=[report.domain, case_id])),
+                        html.escape(case_name),
+                    )
+                except NoReverseMatch:
+                    return "%s (bad ID format)" % case_name
+
+            @property
+            def case_type(self):
+                return self.case.type
+
+            @property
+            def opened_on(self):
+                return report.date_to_json(self.case.opened_on)
+
+            @property
+            def modified_on(self):
+                return report.date_to_json(self.case.modified_on)
+
+            @property
+            def owner_id(self):
+                return self.case.owner_id if self.case.owner_id else self.case.user_id
+
+            @property
+            @memoized
+            def owner_doc(self):
+                try:
+                    doc = get_db().get(self.owner_id)
+                except ResourceNotFound:
+                    return None, None
+                else:
+                    return {
+                        'CommCareUser': CommCareUser,
+                        'Group': Group,
+                    }.get(doc['doc_type']), doc
+
+            @property
+            def owner_type(self):
+                owner_class, _ = self.owner_doc
+                if owner_class == CommCareUser:
+                    return 'user'
+                elif owner_class == Group:
+                    return 'group'
+                else:
+                    return None
+
+            @property
+            def owner(self):
+                klass, doc = self.owner_doc
+                if klass:
+                    return klass.wrap(doc)
+
+            @property
+            def owning_group(self):
+                try:
+                    return Group.get(self.owner_id)
+                except Exception:
+                    return None
+
+            @property
+            def user_id(self):
+                return report.individual or self.owner_id
+
+        return CaseDisplay
 
     @property
-    def override_fields(self):
-        if self.no_lucene:
-            return ['corehq.apps.reports.fields.SelectCaseOwnerField',
-                    'corehq.apps.reports.fields.CaseTypeField',
-                    'corehq.apps.reports.fields.SelectOpenCloseField']
-        return super(CaseListReport, self).override_fields
+    @memoized
+    def case_results(self):
+        return CasePaginator(
+            domain=self.domain,
+            params=self.pagination,
+            case_type=self.case_type,
+            owner_ids=self.case_owners,
+            user_ids=self.user_ids
+        ).results()
+
+    @property
+    def total_records(self):
+        return self.case_results.total_rows
+
+    @property
+    @memoized
+    def case_owners(self):
+        if self.individual:
+            group_owners = self.case_sharing_groups
+        else:
+            group_owners = Group.get_case_sharing_groups(self.domain)
+        group_owners = [group._id for group in group_owners]
+        return self.user_ids + group_owners
 
     @property
     @memoized
@@ -151,12 +255,46 @@ class CaseListReport(ProjectInspectionReport):
             user = user if user.username_in_report else None
             return user.get_case_sharing_groups()
         except Exception:
-            return []
+            try:
+                group = Group.get(self.individual)
+                assert(group.doc_type == 'Group')
+                return [group]
+            except Exception:
+                return []
+
+    def get_case(self, row):
+        if "doc" in row:
+            case = CommCareCase.wrap(row["doc"])
+        elif "id" in row:
+            case = CommCareCase.get(row["id"])
+        else:
+            raise ValueError("Can't construct case object from row result %s" % row)
+
+        if case.domain != self.domain:
+            raise Exception("case.domain != self.domain; %r and %r, respectively" % (case.domain, self.domain))
+
+        return case
+
+
+    @property
+    def shared_pagination_GET_params(self):
+        shared_params = super(CaseListReport, self).shared_pagination_GET_params
+        shared_params.append(dict(
+            name=SelectOpenCloseField.slug,
+            value=self.request.GET.get(SelectOpenCloseField.slug, '')
+        ))
+        return shared_params
+
+
+class CaseListReport(ProjectInspectionReport, CaseListMixin):
+    name = 'Case List'
+    slug = 'case_list'
+    fields = ['corehq.apps.reports.fields.FilterUsersField',
+              'corehq.apps.reports.fields.SelectCaseOwnerField',
+              'corehq.apps.reports.fields.CaseTypeField']
 
     @property
     def user_filter(self):
-        if self.no_lucene:
-            self._user_filter = HQUserType.use_defaults(show_all=True)
         return super(CaseListReport, self).user_filter
 
     @property
@@ -168,33 +306,25 @@ class CaseListReport(ProjectInspectionReport):
         return rep_context
 
     @property
-    def shared_pagination_GET_params(self):
-        shared_params = super(CaseListReport, self).shared_pagination_GET_params
-        shared_params.append(dict(
-            name=SelectOpenCloseField.slug,
-            value=self.request.GET.get(SelectOpenCloseField.slug, '')
-        ))
-        if self.disable_lucene:
-            shared_params.append(dict(name='no_lucene', value=self.disable_lucene))
-        return shared_params
-
-    @property
     def headers(self):
-        headers = DataTablesHeader(DataTablesColumn("Name"),
-            DataTablesColumn("User"),
+        headers = DataTablesHeader(
+            DataTablesColumn("Case Type"),
+            DataTablesColumn("Name"),
+            DataTablesColumn("Owner"),
             DataTablesColumn("Created Date"),
             DataTablesColumn("Modified Date"),
-            DataTablesColumn("Status"))
+            DataTablesColumn("Status")
+        )
         headers.no_sort = True
         if not self.individual:
             self.name = "%s for %s" % (self.name, SelectMobileWorkerField.get_default_text(self.user_filter))
-        if not self.case_type:
-            headers.prepend_column(DataTablesColumn("Case Type"))
+
         return headers
 
     @property
     @memoized
     def paginator_results(self):
+        """This is no longer called by anything"""
         def _compare_cases(x, y):
             x = x.get('key', [])
             y = y.get('key', [])
@@ -211,87 +341,20 @@ class CaseListReport(ProjectInspectionReport):
         paginator = FilteredPaginator(filters, _compare_cases)
         return paginator
 
-
-    @property
-    @memoized
-    def case_results(self):
-        if self.no_lucene:
-            # Paginated Non-Lucene Results
-            results = self.paginator_results.get(self.pagination.start, self.pagination.count)
-        else:
-            # Lucene Results
-            # todo fix this
-            search_key = self.request_params.get("sSearch", "")
-            query = "domain:(%s)" % self.domain
-            query = "%s AND owner_id:(%s)" % (query, " OR ".join(self.case_owners))
-            if self.case_type:
-                query = "%s AND type:%s" % (query, self.case_type)
-            if search_key:
-                query = "(%s) AND %s" % (search_key, query)
-            results = get_db().search("case/search",
-                q=query,
-                handler="_fti/_design",
-                limit=self.pagination.start,
-                skip=self.pagination.count,
-                sort="\sort_modified"
-            )
-        return results
-
-    @property
-    def total_records(self):
-        return self.paginator_results.total if self.no_lucene else self.case_results.total_rows
-
-    @property
-    @memoized
-    def case_owners(self):
-        if self.no_lucene:
-            return [self.individual]+[group._id for group in self.case_sharing_groups]
-        else:
-            group_owners = self.case_sharing_groups if self.individual else Group.get_case_sharing_groups(self.domain)
-            group_owners = [group._id for group in group_owners]
-            return self.userIDs + group_owners
-
-
     @property
     def rows(self):
         rows = []
-
         def _format_row(row):
-            if "doc" in row:
-                case = CommCareCase.wrap(row["doc"])
-            elif "id" in row:
-                case = CommCareCase.get(row["id"])
-            else:
-                raise ValueError("Can't construct case object from row result %s" % row)
+            case = self.get_case(row)
+            display = self.CaseDisplay(case)
 
-            if case.domain != self.domain:
-                logging.error("case.domain != self.domain; %r and %r, respectively" % (case.domain, self.domain))
-
-            assert(case.domain == self.domain)
-
-            owner_id = case.owner_id if case.owner_id else case.user_id
-            owning_group = None
-            try:
-                owning_group = Group.get(owner_id)
-            except Exception:
-                pass
-
-            user_id = self.individual if self.individual else owner_id
-            case_owner = self.usernames.get(user_id, "Unknown [%s]" % user_id)
-
-            if owning_group and owning_group.name:
-                if self.individual:
-                    case_owner = '%s <span class="label label-inverse">%s</span>' % (case_owner, owning_group.name)
-                else:
-                    case_owner = '%s <span class="label label-inverse">Group</span>' % owning_group.name
-
-
-            return ([] if self.case_type else [case.type]) + [
-                self.case_data_link(row['id'], case.name),
-                case_owner,
-                self.date_to_json(case.opened_on),
-                self.date_to_json(case.modified_on),
-                yesno(case.closed, "closed,open")
+            return [
+                display.case_type,
+                display.case_link,
+                display.owner_display,
+                display.opened_on,
+                display.modified_on,
+                display.closed_display
             ]
 
         try:
@@ -308,15 +371,6 @@ class CaseListReport(ProjectInspectionReport):
         return tz_utils.adjust_datetime_to_timezone\
             (date, pytz.utc.zone, self.timezone.zone).strftime\
             ('%Y-%m-%d %H:%M:%S') if date else ""
-
-    def case_data_link(self, case_id, case_name):
-        try:
-            return "<a class='ajax_dialog' href='%s'>%s</a>" %\
-                   (reverse('case_details', args=[self.domain, case_id]),
-                    case_name)
-        except NoReverseMatch:
-            return "%s (bad ID format)" % case_name
-
 
 class MapReport(ProjectReport, ProjectReportParametersMixin):
     """
