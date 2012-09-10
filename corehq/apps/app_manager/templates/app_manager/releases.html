@@ -271,6 +271,7 @@
                     </div>
                   </div>
                 </div>
+
                 <div class="accordion-group">
                   <div class="accordion-heading">
                     <a class="accordion-toggle" data-toggle="collapse" data-parent="#{{ saved_app.id }}_accordion" href="#{{ saved_app.id }}_j2me">
@@ -296,36 +297,76 @@
                     </div>
                   </div>
                 </div>
+
+                <div class="accordion-group">
+                  <div class="accordion-heading">
+                    <a class="accordion-toggle odk_install" href="{% url corehq.apps.app_manager.views.odk_install domain saved_app.id %}">
+                        Download to CommCare ODK (Android)
+                    </a>
+                  </div>
+                </div>
+
                 <div class="accordion-group">
                   <div class="accordion-heading">
                     <a class="accordion-toggle" data-toggle="collapse" data-parent="#{{ saved_app.id }}_accordion" href="#{{ saved_app.id }}_sms">
-                      Send J2ME app to phone via SMS
+                      Send to phone via SMS
                     </a>
                   </div>
+
                   <div id="{{ saved_app.id }}_sms" class="accordion-body collapse">
                     <div class="accordion-inner">
-                      <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
-                        <label>Send to: </label>
-                        <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
-                        <br />
-                        {% if app.name|length <= 12 %}
-                            <textarea name="message">Update to CommCare: {{ saved_app.short_url }} ("{{ app.name }}" v.{{ saved_app.version }})</textarea>
-                        {% else %}
-                            <textarea name="message">Update to CommCare: {{ saved_app.short_url }} ("{{ app.name|slice:":10" }}.." v.{{ saved_app.version }})</textarea>
-                        {% endif %}
-                        <br />
-                        <input type="submit" class="btn" value="Send"/>
-                    </form>
+                      <div class="tab-pane" id="pills-basic">
+                          <div class="tabbable">
+                            <ul class="nav nav-pills">
+                              <li class="active">
+                                <a href="#{{ saved_app.id }}_sms_j2me" data-toggle="tab">Send J2ME app</a>
+                              </li>
+                              <li>
+                                <a href="#{{ saved_app.id }}_sms_odk" data-toggle="tab">Send CommCare ODK app (Android)</a>
+                              </li>
+                            </ul>
+                            <div class="tab-content">
+                              <div id="{{ saved_app.id }}_sms_j2me" class="tab-pane active">
+                              {% if saved_app.short_url %}
+                                <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
+                                  <label>Send to: </label>
+                                  <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
+                                  <br />
+                                  <textarea name="message">Update to CommCare: {{ saved_app.short_url }} ("{{ app.short_name }}" v.{{ saved_app.version }})</textarea>
+                                  <br />
+                                  <input type="submit" class="btn" value="Send"/>
+                                </form>
+                              {% else %}
+                                <span class="label label-important">
+                                  No URL was found for this app, try rebuilding. 
+                                </span>
+                              {% endif %}
+                              </div>
+
+                              <div id="{{ saved_app.id }}_sms_odk" class="tab-pane">
+                              {% if saved_app.short_odk_url %}
+                                <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
+                                  <label>Send to: </label>
+                                  <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
+                                  <br />
+                                  <textarea name="message">Update to CommCare: {{ saved_app.short_odk_url }} ("{{ app.short_name }}" v.{{ saved_app.version }})</textarea>
+                                  <br />
+                                  <input type="submit" class="btn" value="Send"/>
+                                </form>
+                              {% else %}
+                                <span class="label label-important">
+                                  No URL was found for this app, try rebuilding.
+                                </span>
+                              {% endif %}
+                              </div>
+                            </div>
+                          </div>
                     </div>
                   </div>
                 </div>
-                <div class="accordion-group">
-                  <div class="accordion-heading">
-                    <a class="accordion-toggle odk_install" href="{% url corehq.apps.app_manager.views.odk_install domain saved_app.id %}">Download to CommCare ODK (Android)</a>
-                  </div>
-                </div>
+
                 {% ifchanged %}
-                            {% if multimedia %}
+                {% if multimedia %}
                 <div class="accordion-group">
                   <div class="accordion-heading">
                     <a class="accordion-toggle" href="{% if multimedia.notice %}#{{ saved_app.id }}_multimedia{% else %}{% url download_multimedia_zip domain app.id %}{% endif %}" {% if multimedia.notice %}data-toggle="collapse" data-target="#{{ saved_app.id }}_multimedia"{% endif %}>Download Multimedia Zip</a>
@@ -349,8 +390,9 @@
                     </div>
                   </div>
                 </div>
-                            {% endif %}
-                        {% endifchanged %}
+                {% endif %}
+                {% endifchanged %}
+
                 {% if request.user.is_superuser %}
                 <div class="accordion-group">
                   <div class="accordion-heading">

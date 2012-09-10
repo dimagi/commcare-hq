@@ -27,7 +27,7 @@ from copy import deepcopy
 from corehq.apps.domain.models import Domain, cached_property
 import hashlib
 from django.template.loader import render_to_string
-from urllib2 import urlopen, URLError
+from urllib2 import urlopen
 from urlparse import urljoin
 from corehq.apps.domain.decorators import login_and_domain_required
 import langcodes
@@ -490,6 +490,8 @@ class DetailColumn(IndexedSchema):
             'status': '@status',
             'name': 'case_name',
         }.get(self.field, self.field)
+
+
 class Detail(DocumentSchema):
     """
     Full configuration for a case selection screen
@@ -645,8 +647,9 @@ class VersionedDoc(Document):
     copy_of = StringProperty()
     version = IntegerProperty()
     short_url = StringProperty()
+    short_odk_url = StringProperty()
 
-    _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version', 'short_url']
+    _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version', 'short_url', 'short_odk_url']
 
     @property
     def id(self):
@@ -672,6 +675,8 @@ class VersionedDoc(Document):
             del copy['_rev']
             if 'short_url' in copy:
                 del copy['short_url']
+            if 'short_odk_url' in copy:
+                del copy['short_odk_url']
             if "recipients" in copy:
                 del copy['recipients']
             if '_attachments' in copy:
@@ -923,6 +928,9 @@ class ApplicationBase(VersionedDoc):
                 return item['label']
         return self.build_spec.get_label()
 
+    @property
+    def short_name(self):
+        return self.name if len(self.name) <= 12 else '%s..' % self.name[:10]
 
     @property
     def url_base(self):
@@ -971,6 +979,7 @@ class ApplicationBase(VersionedDoc):
             {'label': 'WinMo', 'value': 'winmo'},
             {'label': 'Generic', 'value': 'generic'},
         ]
+
     def get_jar_path(self):
         build = self.get_build()
         if self.text_input == 'custom-keys' and build.minor_release() < (1,3):
@@ -1051,6 +1060,10 @@ class ApplicationBase(VersionedDoc):
             reverse('corehq.apps.app_manager.views.download_odk_profile', args=[self.domain, self._id]),
         )
 
+    @property
+    def odk_profile_display_url(self):
+        return self.short_odk_url or self.odk_profile_url
+
     def get_odk_qr_code(self):
         """Returns a QR code, as a PNG to install on CC-ODK"""
         try:
@@ -1092,10 +1105,15 @@ class ApplicationBase(VersionedDoc):
             copy.short_url = bitly.shorten(
                 get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
             )
-        except (URLError, Exception):
+            copy.short_odk_url = bitly.shorten(
+                get_url_base() + reverse('corehq.apps.app_manager.views.odk_install', args=[copy.domain, copy._id])
+            )
+        except:        # URLError, BitlyError
             # for offline only
             logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
             copy.short_url = None
+            copy.short_odk_url = None
+
         copy.build_comment = comment
         copy.save(increment_version=False)
 
