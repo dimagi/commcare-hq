@@ -69,6 +69,13 @@ function HQReportDataTables(options) {
                 sZeroRecords: self.emptyText
             };
 
+            params.fnDrawCallback = function (a,b,c) {
+                /* be able to set fnDrawCallback from outside here later */
+                if (self.fnDrawCallback) {
+                    self.fnDrawCallback(a,b,c);
+                }
+            };
+
             if(self.aoColumns)
                 params.aoColumns = self.aoColumns;
 

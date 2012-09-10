@@ -52,7 +52,8 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface, DatespanMixin):
             DataTablesColumn("Owner", span=2),
             DataTablesColumn("Last Modified", span=3, sort_type=DTSortType.NUMERIC)
         )
-        headers.custom_sort = [[1, 'asc']]
+#        headers.custom_sort = [[1, 'asc']]
+        headers.no_sort = True
         return headers
 
     @property

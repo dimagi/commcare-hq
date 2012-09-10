@@ -11,6 +11,7 @@
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
+    (function () {
         var OPTIONS = {
             users: {{ users|JSON }},
             groups: {{ groups|JSON }},
@@ -18,42 +19,41 @@
             enddate: '{{ datespan.enddate_param_utc }}',
             webUserID: '{{ request.couch_user.userID }}'
         };
+
         function reapplyBindings() {
             var caseManagementModel = new CaseManagement(OPTIONS);
-            var element = $('#case-management')[0];
-            ko.cleanNode(element);
+            var $caseManagement = $('#case-management');
+            var element = $caseManagement[0];
             ko.applyBindings(caseManagementModel, element);
 
-            (function () {
-                $('#case-management a.select-all').click(function () {
-                    $('#case-management input.selected-commcare-case').attr('checked', true).change();
-                    return false;
-                });
-
-                $('#case-management a.select-none').click(function() {selectNone(); return false;});
-                $('#case-management .dataTables_paginate a').mouseup(selectNone);
-                $('#case-management .dataTables_length select').change(selectNone);
-
-                function selectNone() {
-                    $('#case-management input.selected-commcare-case:checked').attr('checked', false).change();
-                    ko.cleanNode($('#case-management table tbody')[0]);
-                    ko.applyBindings(caseManagementModel, $('#case-management table tbody')[0]);
-                }
-
-            }());
-        }
-
-        $(function () {
-            $('#reapply-button').click(function () {
-                reapplyBindings();
+            $caseManagement.find('a.select-all').click(function () {
+                $caseManagement.find('input.selected-commcare-case').attr('checked', true).change();
+                return false;
             });
-        });
+
+            $caseManagement.find('a.select-none').click(function() {selectNone(); return false;});
+            $caseManagement.find('.dataTables_paginate a').mouseup(selectNone);
+            $caseManagement.find('.dataTables_length select').change(selectNone);
+
+            function selectNone() {
+                $caseManagement.find('input.selected-commcare-case:checked').attr('checked', false).change();
+                ko.cleanNode($caseManagement.find('table tbody')[0]);
+                ko.applyBindings(caseManagementModel, $caseManagement.find('table tbody')[0]);
+            }
+        }
+        var keepTrying = setInterval(function () {
+            if (window.reportTables !== undefined) {
+                clearInterval(keepTrying);
+                reapplyBindings();
+                window.reportTables.fnDrawCallback = reapplyBindings;
+            }
+        }, 1000);
+    }());
     </script>
 {% endblock %}
 
 {% block reportcontent %}
     <div id="case-management">
-        <button id="reapply-button">Reapply</button>
         <div class="row-fluid">
             <form class="well form-inline" style="margin: 1em; display: none;" data-bind="submit: updateCaseOwners, caseReassignmentForm: selected_cases">
                 <label for="reassign_owner_type_select">Reassign selected cases to</label>
@@ -67,11 +67,6 @@
         </div>
         {{ block.super }}
     </div>
-    <ul>
-        {% for user_id in user_ids %}
-            <li>{{ user_id }}</li>
-        {% endfor %}
-    </ul>
 {% endblock %}
 
 {% block modals %} {{ block.super }}

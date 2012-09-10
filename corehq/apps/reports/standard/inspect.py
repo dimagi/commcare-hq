@@ -21,7 +21,25 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.groups.models import Group
 
-class ProjectInspectionReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
+
+class ProjectInspectionReportParamsMixin(object):
+    @property
+    def shared_pagination_GET_params(self):
+        """
+        Dear Next Person Who Reads This,
+
+        Is this the right place for this???????
+        I moved it from ProjectInspectionReport so that it could be shared with reassign_case interface
+
+        Sincerely,
+        Danny
+        """
+        return [dict(name='individual', value=self.individual),
+                dict(name='group', value=self.group_name),
+                dict(name='case_type', value=self.case_type),
+                dict(name='ufilter', value=[f.type for f in self.user_filter if f.show])]
+
+class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     """
         Base class for this reporting section
     """
@@ -31,12 +49,6 @@ class ProjectInspectionReport(GenericTabularReport, ProjectReport, ProjectReport
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.SelectMobileWorkerField']
 
-    @property
-    def shared_pagination_GET_params(self):
-        return [dict(name='individual', value=self.individual),
-                dict(name='group', value=self.group_name),
-                dict(name='case_type', value=self.case_type),
-                dict(name='ufilter', value=[f.type for f in self.user_filter if f.show])]
 
 class SubmitHistory(ProjectInspectionReport):
     name = 'Submit History'
@@ -122,7 +134,7 @@ class CaseListFilter(CouchFilter):
             **self._kwargs).all()
 
 
-class CaseListMixin(GenericTabularReport, ProjectReportParametersMixin):
+class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReportParametersMixin):
 
     @property
     def CaseDisplay(self):
@@ -278,7 +290,7 @@ class CaseListMixin(GenericTabularReport, ProjectReportParametersMixin):
 
     @property
     def shared_pagination_GET_params(self):
-        shared_params = super(CaseListReport, self).shared_pagination_GET_params
+        shared_params = super(CaseListMixin, self).shared_pagination_GET_params
         shared_params.append(dict(
             name=SelectOpenCloseField.slug,
             value=self.request.GET.get(SelectOpenCloseField.slug, '')
@@ -299,6 +311,7 @@ class CaseListReport(ProjectInspectionReport, CaseListMixin):
 
     @property
     def report_context(self):
+        shared_params = super(CaseListReport, self).shared_pagination_GET_params
         rep_context = super(CaseListReport, self).report_context
         rep_context.update(
             filter=settings.LUCENE_ENABLED
