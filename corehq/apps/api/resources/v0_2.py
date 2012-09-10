@@ -22,6 +22,9 @@ class CommCareCaseResource(Resource):
     closed = fields.BooleanField(attribute='closed')
     date_closed = fields.CharField(attribute='date_closed', null=True)
 
+    server_date_modified = fields.CharField(attribute='server_date_modified')
+    server_date_opened = fields.CharField(attribute='server_date_opened')
+
     xform_ids = fields.ListField(attribute='xform_ids')
 
     properties = fields.DictField('properties')
