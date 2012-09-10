@@ -441,12 +441,14 @@ def case_details(request, domain, case_id):
 
     try:
         case = CommCareCase.get(case_id)
-        report_name = 'Details for Case "%s"' % case.name
     except ResourceNotFound:
+        case = None
+    
+    if case == None or case.doc_type != "CommCareCase" or case.domain != domain:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake plase report an issue.")
-        return HttpResponseRedirect(inspect.SubmitHistory.get_url(domain))
+        return HttpResponseRedirect(inspect.CaseListReport.get_url(domain))
 
-
+    report_name = 'Details for Case "%s"' % case.name
     form_lookups = dict((form.get_id,
                          "%s: %s" % (form.received_on.date(), 
                                      xmlns_to_name(domain, form.xmlns, get_app_id(form)))) \

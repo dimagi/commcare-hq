@@ -24,9 +24,7 @@ def get_all_cases(domain, include_closed=False, case_type=None):
         include_docs=True,
         reduce=False,
     ).all()
-    print view_name, key
 
-    print len(cases)
     return [case.get_json() for case in cases]
 
 
@@ -65,7 +63,7 @@ def get_filtered_cases(domain, user_id=None, filters=None):
         """pre-filter cases based on user_id and (if possible) closed"""
         closed = json.loads(filters.get('closed', 'null'))
         case_type = filters.get('properties/case_type')
-        print domain, user_id, closed, case_type
+
         if user_id:
             return get_owned_cases(domain, user_id, closed=closed)
         else:
