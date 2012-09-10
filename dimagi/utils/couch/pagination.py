@@ -63,11 +63,12 @@ class FilteredPaginator(object):
 
 class DatatablesParams(object):
     
-    def __init__(self, count, start, desc, echo):
+    def __init__(self, count, start, desc, echo, search=None):
         self.count = count
         self.start = start
         self.desc = desc
         self.echo = echo
+        self.search = search
         
     @classmethod
     def from_request_dict(cls, query):
@@ -81,7 +82,10 @@ class DatatablesParams(object):
         desc = desc_str == "desc"
         
         echo = query.get("sEcho", DEFAULT_ECHO)
-        return DatatablesParams(count, start, desc, echo)
+
+        search = query.get("sSearch", "")
+
+        return DatatablesParams(count, start, desc, echo, search)
         
         
 
