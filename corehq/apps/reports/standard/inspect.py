@@ -129,106 +129,94 @@ class CaseListFilter(CouchFilter):
             limit=count,
             **self._kwargs).all()
 
+class CaseDisplay(object):
+    def __init__(self, report, case):
+        self.case = case
+        self.report = report
+
+    @property
+    def owner_display(self):
+        username = self.report.usernames.get(self.user_id, "Unknown [%s]" % self.user_id)
+        if self.owning_group and self.owning_group.name:
+            return '<span class="label label-inverse">%s</span>' % self.owning_group.name
+        else:
+            return username
+
+    @property
+    def closed_display(self):
+        return yesno(self.case.closed, "closed,open")
+
+    @property
+    def case_link(self):
+        case_id, case_name = self.case.case_id, self.case.name
+        try:
+            return "<a class='ajax_dialog' href='%s'>%s</a>" % (
+                html.escape(reverse('case_details', args=[self.report.domain, case_id])),
+                html.escape(case_name),
+                )
+        except NoReverseMatch:
+            return "%s (bad ID format)" % case_name
+
+    @property
+    def case_type(self):
+        return self.case.type
+
+    @property
+    def opened_on(self):
+        return self.report.date_to_json(self.case.opened_on)
+
+    @property
+    def modified_on(self):
+        return self.report.date_to_json(self.case.modified_on)
+
+    @property
+    def owner_id(self):
+        return self.case.owner_id if self.case.owner_id else self.case.user_id
+
+    @property
+    @memoized
+    def owner_doc(self):
+        try:
+            doc = get_db().get(self.owner_id)
+        except ResourceNotFound:
+            return None, None
+        else:
+            return {
+                'CommCareUser': CommCareUser,
+                'Group': Group,
+            }.get(doc['doc_type']), doc
+
+    @property
+    def owner_type(self):
+        owner_class, _ = self.owner_doc
+        if owner_class == CommCareUser:
+            return 'user'
+        elif owner_class == Group:
+            return 'group'
+        else:
+            return None
+
+    @property
+    def owner(self):
+        klass, doc = self.owner_doc
+        if klass:
+            return klass.wrap(doc)
+
+    @property
+    def owning_group(self):
+        try:
+            return Group.get(self.owner_id)
+        except Exception:
+            return None
+
+    @property
+    def user_id(self):
+        return self.report.individual or self.owner_id
 
 class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReportParametersMixin):
 
-    @property
-    def CaseDisplay(self):
-        """
-        This property returns a class
-
-        Done this way so that self.CaseDisplay uses a closure to
-        return a class that has self (the report) in its context
-
-        (A little iffy/not-intuitive, but was the best way I could think of.
-        Acceptable alternative if this causes problems would be to pass in the report as a param)
-
-        """
-        report = self
-        class CaseDisplay(object):
-            def __init__(self, case):
-                self.case = case
-
-            @property
-            def owner_display(self):
-                username = report.usernames.get(self.user_id, "Unknown [%s]" % self.user_id)
-                if self.owning_group and self.owning_group.name:
-                    return '<span class="label label-inverse">%s</span>' % self.owning_group.name
-                else:
-                    return username
-
-            @property
-            def closed_display(self):
-                return yesno(self.case.closed, "closed,open")
-
-            @property
-            def case_link(self):
-                case_id, case_name = self.case.case_id, self.case.name
-                try:
-                    return "<a class='ajax_dialog' href='%s'>%s</a>" % (
-                        html.escape(reverse('case_details', args=[report.domain, case_id])),
-                        html.escape(case_name),
-                    )
-                except NoReverseMatch:
-                    return "%s (bad ID format)" % case_name
-
-            @property
-            def case_type(self):
-                return self.case.type
-
-            @property
-            def opened_on(self):
-                return report.date_to_json(self.case.opened_on)
-
-            @property
-            def modified_on(self):
-                return report.date_to_json(self.case.modified_on)
-
-            @property
-            def owner_id(self):
-                return self.case.owner_id if self.case.owner_id else self.case.user_id
-
-            @property
-            @memoized
-            def owner_doc(self):
-                try:
-                    doc = get_db().get(self.owner_id)
-                except ResourceNotFound:
-                    return None, None
-                else:
-                    return {
-                        'CommCareUser': CommCareUser,
-                        'Group': Group,
-                    }.get(doc['doc_type']), doc
-
-            @property
-            def owner_type(self):
-                owner_class, _ = self.owner_doc
-                if owner_class == CommCareUser:
-                    return 'user'
-                elif owner_class == Group:
-                    return 'group'
-                else:
-                    return None
-
-            @property
-            def owner(self):
-                klass, doc = self.owner_doc
-                if klass:
-                    return klass.wrap(doc)
-
-            @property
-            def owning_group(self):
-                try:
-                    return Group.get(self.owner_id)
-                except Exception:
-                    return None
-
-            @property
-            def user_id(self):
-                return report.individual or self.owner_id
-
-        return CaseDisplay
+    def CaseDisplay(self, case):
+        return CaseDisplay(self, case)
 
     @property
     @memoized
