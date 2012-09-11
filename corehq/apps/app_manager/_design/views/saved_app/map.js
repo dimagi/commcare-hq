@@ -3,6 +3,7 @@ function(doc){
         emit([doc.domain, doc.copy_of, doc.version], {
             doc_type: doc.doc_type,
             short_url: doc.short_url,
+            short_odk_url: doc.short_odk_url,
             version: doc.version,
             _id: doc._id,
             name: doc.name,

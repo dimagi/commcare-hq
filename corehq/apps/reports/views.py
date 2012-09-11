@@ -17,6 +17,7 @@ from couchexport.views import _export_tag_or_bust
 import couchforms
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
+from dimagi.utils.decorators import inline
 from dimagi.utils.export import WorkBook
 from dimagi.utils.web import json_request, render_to_response
 from dimagi.utils.couch.database import get_db
@@ -187,10 +188,8 @@ class CustomExportHelper(object):
         table = self.request.POST["table"]
         cols = self.request.POST['order'].strip().split()
 
-
-        unroll = lambda f: list(f())
-
-        @unroll
+        @list
+        @inline
         def export_cols():
             for col in cols:
                 transform = self.request.POST.get('%s transform' % col) or None
@@ -442,12 +441,14 @@ def case_details(request, domain, case_id):
 
     try:
         case = CommCareCase.get(case_id)
-        report_name = 'Details for Case "%s"' % case.name
     except ResourceNotFound:
+        case = None
+    
+    if case == None or case.doc_type != "CommCareCase" or case.domain != domain:
         messages.info(request, "Sorry, we couldn't find that case. If you think this is a mistake plase report an issue.")
-        return HttpResponseRedirect(inspect.SubmitHistory.get_url(domain))
+        return HttpResponseRedirect(inspect.CaseListReport.get_url(domain))
 
-
+    report_name = 'Details for Case "%s"' % case.name
     form_lookups = dict((form.get_id,
                          "%s: %s" % (form.received_on.date(), 
                                      xmlns_to_name(domain, form.xmlns, get_app_id(form)))) \
