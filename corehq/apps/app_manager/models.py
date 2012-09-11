@@ -790,6 +790,12 @@ class ApplicationBase(VersionedDoc):
     built_on = DateTimeProperty(required=False)
     build_comment = StringProperty()
 
+    # watch out for a past bug:
+    # when reverting to a build that happens to be released
+    # that got copied into into the new app doc, and when new releases were made,
+    # they were automatically starred
+    # AFAIK this is fixed in code, but my rear its ugly head in an as-yet-not-understood
+    # way for apps that already had this problem. Just keep an eye out
     is_released = BooleanProperty(default=False)
 
     # django-style salted hash of the admin password
@@ -859,7 +865,6 @@ class ApplicationBase(VersionedDoc):
             )
             if len(released) > 0:
                 self._latest_saved = released.all()[0]
-                print self._latest_saved.is_released
             else:
                 saved = self.__class__.view('app_manager/saved_app',
                     startkey=[self.domain, self._id, {}],
@@ -1115,6 +1120,7 @@ class ApplicationBase(VersionedDoc):
             copy.short_odk_url = None
 
         copy.build_comment = comment
+        copy.is_released = False
         copy.save(increment_version=False)
 
         return copy
