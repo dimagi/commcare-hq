@@ -124,7 +124,7 @@ def production():
     env.environment = 'production'
     env.server_port = '9010'
 
-    #env.hosts = []
+    #env.hosts = None
     env.roledefs = {
         'couch': ['hqdb.internal.commcarehq.org'],
         'pg': ['hqdb.internal.commcarehq.org'],
@@ -137,14 +137,11 @@ def production():
         'staticfiles': ['hqproxy0.internal.commcarehq.org'],
     }
 
-    if env.roles == []:
-        env.roles = env.roledefs.keys()
-        #if the command line is set for the role in question, do nothing
+
     env.server_name = 'commcare-hq-production'
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
     env.db = '%s_%s' % (env.project, env.environment)
-
 
     env.jython_home = '/usr/local/lib/jython'
     _setup_path()
@@ -241,11 +238,11 @@ def bootstrap():
     require('root', provided_by=('staging', 'production'))
     sudo('mkdir -p %(root)s' % env, shell=False, user=env.sudo_user)
     execute(clone_repo)
-    execute(update_code)
+    update_code()
     execute(create_virtualenv)
     execute(update_requirements)
     execute(setup_dirs)
-    execute(update_services)
+    update_services()
     execute(fix_locale_perms)
 
 
@@ -287,7 +284,7 @@ def update_code():
         sudo('git submodule sync', user=env.sudo_user)
         sudo('git submodule update --init --recursive', user=env.sudo_user)
 
-#@roles('django_celery','django_app', 'staticfiles')
+@roles('django_celery','django_app', 'staticfiles')
 @task
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
@@ -310,8 +307,8 @@ def deploy():
         execute(services_start)
 
 
-@task
 @roles('django_celery', 'django_app','staticfiles')
+@task
 def update_requirements():
     """ update external dependencies on remote host """
     require('code_root', provided_by=('staging', 'production'))
@@ -344,7 +341,6 @@ def touch_supervisor():
     _supervisor_command('update')
 
 
-@roles('django_celery', 'django_app', 'formsplayer')
 @task
 def update_services():
     """ upload changes to services such as nginx """
@@ -385,24 +381,58 @@ def netstat_plnt():
     require('hosts', provided_by=('production', 'staging'))
     sudo('netstat -plnt')
 
-@roles('django_app', 'django_celery')
+
+############################################################3
+#Start service functions
+
+@roles('django_app')
+def _services_start_django():
+    _supervisor_command('start  %(project)s-%(environment)s-django' % env)
+
+@roles('django_celery')
+def _services_start_celery():
+    _supervisor_command('start  %(project)s-%(environment)s-celeryd' % env)
+    #_supervisor_command('start  %(project)s-%(environment)s-celerybeat' % env)
+
+@roles('formsplayer')
+def _services_start_formsplayer():
+    _supervisor_command('start  %(project)s-%(environment)s-formsplayer' % env)
+
+
 def services_start():
     ''' Start the gunicorn servers '''
     require('environment', provided_by=('staging', 'demo', 'production'))
     _supervisor_command('update')
-    _supervisor_command('start  %(project)s-%(environment)s*' % env)
+    _supervisor_command('reload')
+    execute(_services_start_django)
+    execute(_services_start_celery)
+    execute(_services_start_formsplayer)
+    #_supervisor_command('start  %(project)s-%(environment)s*' % env)
+######################################################
 
-@roles('django_app', 'django_celery')
+########################################################
+#Stop service Functions
+
+@roles('django_app')
+def _services_stop_django():
+    _supervisor_command('stop  %(project)s-%(environment)s-django' % env)
+
+@roles('django_celery')
+def _services_stop_celery():
+    _supervisor_command('stop  %(project)s-%(environment)s-celeryd' % env)
+    _supervisor_command('stop  %(project)s-%(environment)s-celerybeat' % env)
+
+@roles('formsplayer')
+def _services_stop_formsplayer():
+    _supervisor_command('stop  %(project)s-%(environment)s-formsplayer' % env)
+
 def services_stop():
     ''' Stop the gunicorn servers '''
     require('environment', provided_by=('staging', 'demo', 'production'))
-    _supervisor_command('stop  %(project)s-%(environment)s*' % env)
-
-@roles('django_app', 'django_celery')
-def services_restart():
-    ''' Start the gunicorn servers '''
-    require('environment', provided_by=('staging', 'demo', 'production'))
-    _supervisor_command('restart  %(project)s-%(environment)s:%(project)s-%(environment)s-server' % env)
+    execute(_services_stop_celery)
+    execute(_services_stop_django)
+    execute(_services_stop_formsplayer)
+###########################################################
 
 @roles('django_app')
 def migrate():
