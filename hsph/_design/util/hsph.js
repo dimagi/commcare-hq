@@ -59,6 +59,20 @@ function calcHSPHBirthDatespan(doc) {
     return null;
 }
 
+function HSPHCaseEntry(doc) {
+    var self = this;
+    self.doc = doc;
+    self.data = {};
+
+    self.getBirthStats = function() {
+        self.data.birthEvent = false;
+        if (self.doc.mother_delivered_or_referred === 'delivered') {
+            self.data.birthEvent = true;
+            
+        }
+    }
+}
+
 function HSPHEntry(doc) {
     var self = this;
     self.doc = doc;
@@ -79,6 +93,8 @@ function HSPHEntry(doc) {
             self.data.dateBirth = self.form.case_date_delivery;
             self.data.birthDataFromCase = true;
         }
+
+        self.data.referredInBirth = (self.form.referred_in === 'yes');
 
         self.data.contactProvided = !!(self.form.phone_mother === 'yes' ||
                                         self.form.phone_husband === 'yes' ||

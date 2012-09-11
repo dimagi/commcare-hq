@@ -3,7 +3,7 @@ from corehq.apps.reports.standard import DatespanMixin, ProjectReportParametersM
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesColumnGroup, DataTablesHeader, DTSortType
 from corehq.apps.reports.generic import GenericTabularReport
 from dimagi.utils.couch.database import get_db
-from hsph.fields import IHForCHFField
+from hsph.fields import IHForCHFField, SelectReferredInStatusField
 from hsph.reports import HSPHSiteDataMixin
 
 class DataSummaryReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
@@ -16,6 +16,7 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
     name = "Primary Outcome Report"
     slug = "hsph_priamry_outcome"
     fields = ['corehq.apps.reports.fields.DatespanField',
+              'hsph.fields.SelectReferredInStatusField',
               'hsph.fields.SiteField']
     show_all_rows_option = True
 
@@ -25,6 +26,7 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
         district = DataTablesColumn("District")
         site = DataTablesColumn("Site")
         num_births = DataTablesColumn("No. Birth Events Recorded")
+        num_referred_in_births = DataTablesColumn("No. Referred In Births")
 
         maternal_deaths = DataTablesColumn("Maternal Deaths", sort_type=DTSortType.NUMERIC)
         maternal_near_miss = DataTablesColumn("Maternal Near Miss", sort_type=DTSortType.NUMERIC)
@@ -61,6 +63,7 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
             district,
             site,
             num_births,
+            num_referred_in_births,
             outcomes_on_discharge,
             outcomes_on_7days,
             positive_outcomes,
@@ -74,6 +77,9 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
         if not self.selected_site_map:
             self._selected_site_map = self.site_map
         keys = self.generate_keys(["site"])
+
+        referred_in = self.request_params.get(SelectReferredInStatusField.slug)
+
         for key in keys:
             data = get_db().view('hsph/data_summary',
                 reduce=True,
@@ -84,11 +90,13 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
                 item = item.get('value', {})
                 region, district, site = self.get_site_table_values(key[1:4])
                 stat_keys = ['maternalDeaths', 'maternalNearMisses', 'stillBirthEvents', 'neonatalMortalityEvents']
-                birth_events = item.get('totalBirthEventsOnRegistration', 0)
+                birth_events = item.get('totalBirthRegistrationEvents', 0)
+                referred_in_birth_events = item.get('totalReferredInBirths', 0)
                 row = [region,
                         district,
                         site,
-                        birth_events]
+                        birth_events,
+                        referred_in_birth_events]
 
                 discharge_stats = item.get('atDischarge',{})
                 on7days_stats = item.get('on7Days', {})

@@ -73,21 +73,27 @@ var HSPHBirthCounter = function () {
         totalBirthsWithoutContact: 0,
         totalBirthsWithContact: 0,
         totalBirthEvents: 0,
-        totalBirthEventsOnRegistration: 0
+        totalBirthRegistrationEvents: 0,
+        totalBirthEventsOnRegistration: 0,
+        totalReferredInBirths: 0
     };
 
     self.rereduce = function (agEntry) {
         self.calc.totalBirths += agEntry.totalBirths;
         self.calc.totalBirthEvents += agEntry.totalBirthEvents;
+        self.calc.totalBirthRegistrationEvents += agEntry.totalBirthRegistrationEvents;
         self.calc.totalBirthsWithoutContact += agEntry.totalBirthsWithoutContact;
         self.calc.totalBirthsWithContact += agEntry.totalBirthsWithContact;
         self.calc.totalBirthEventsOnRegistration += agEntry.totalBirthEventsOnRegistration;
+        self.calc.totalReferredInBirths += agEntry.totalReferredInBirths;
     };
 
     self.reduce = function (curEntry) {
         self.calc.totalBirths += curEntry.numBirths;
         self.calc.totalBirthEvents += (curEntry.numBirths > 0) ? 1 : 0;
         self.calc.totalBirthEventsOnRegistration += (curEntry.birthRegistration && (curEntry.numBirths > 0)) ? 1 : 0;
+        self.calc.totalBirthRegistrationEvents += (curEntry.birthRegistration) ? 1 : 0;
+        self.calc.referredInBirths += (curEntry.referredInBirth) ? 1 : 0;
         if (curEntry.contactProvided)
             self.calc.totalBirthsWithContact += curEntry.numBirths;
         else

@@ -76,7 +76,13 @@ class NameOfDCTLField(ReportSelectField):
             dctls[item.fields.get("id")] = item.get_users(wrap=False)
         return dctls
 
-
+class SelectReferredInStatusField(ReportSelectField):
+    slug = "referred_in_status"
+    name = "Show"
+    cssId = "hsph_referred_in_status"
+    cssClasses = "span2"
+    options = [dict(val="Only Referred In Births", text="referred")]
+    default_option = "All Birth Data"
 
 class SelectCaseStatusField(ReportSelectField):
     slug = "case_status"
