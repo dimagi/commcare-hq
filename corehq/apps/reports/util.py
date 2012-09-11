@@ -11,6 +11,7 @@ from couchforms.filters import instances
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.data.deid_generator import DeidGenerator
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.decorators import inline
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import string_to_datetime
@@ -58,8 +59,8 @@ def get_group_params(domain, group='', users=None, user_id_only=False, **kwargs)
     return group, users
 
 
-cache_uers_by_domain = cache_users()
-@cache_uers_by_domain
+cache_users_by_domain = cache_users()
+@cache_users_by_domain
 def get_all_users_by_domain(domain, **kwargs):
     """
         WHEN THERE ARE A LOT OF USERS, THIS IS AN EXPENSIVE OPERATION.
@@ -123,6 +124,15 @@ def get_all_userids_submitted(domain):
         reduce=True
     ).all()
     return [ user['key'][1] for user in submitted]
+
+def get_all_owner_ids_submitted(domain):
+    key = ["all owner", domain]
+    submitted = get_db().view('case/all_cases',
+        group_level=3,
+        startkey=key,
+        endkey=key + [{}],
+    ).all()
+    return set([row['key'][2] for row in submitted])
 
 def get_username_from_forms(domain, user_id):
     user_info = get_db().view(
