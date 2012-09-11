@@ -11,7 +11,12 @@ class CasePaginator():
         self.user_ids = user_ids
 
     def results(self):
-        # Lucene Results
+        """Lucene Results"""
+
+        # there's no point doing filters that are like owner_id:(x1 OR x2 OR ... OR x612)
+        # so past a certain number just exclude
+        MAX_IDS = 50
+
         def join_None(string):
             def _inner(things):
                 return string.join([thing or '""' for thing in things])
@@ -25,14 +30,14 @@ class CasePaginator():
             if self.params.search:
                 yield "(%s)" % self.params.search
 
-            yield "domain:(%s)" % self.domain
+            yield "exactDomain:(exact%sexact)" % self.domain
 
             @list
             @inline
             def user_filters():
-                if self.owner_ids:
+                if self.owner_ids and len(self.owner_ids) < MAX_IDS:
                     yield "owner_id:(%s)" % (OR(self.owner_ids))
-                if self.user_ids:
+                if self.user_ids and len(self.user_ids) < MAX_IDS:
                     yield "user_id:(%s)" % (OR(self.user_ids))
 
             if user_filters:
