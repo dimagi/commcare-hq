@@ -25,15 +25,11 @@ from corehq.apps.groups.models import Group
 class ProjectInspectionReportParamsMixin(object):
     @property
     def shared_pagination_GET_params(self):
-        """
-        Dear Next Person Who Reads This,
+        # This was moved from ProjectInspectionReport so that it could be included in CaseReassignmentInterface too
+        # I tried a number of other inheritance schemes, but none of them worked because of the already
+        # complicated multiple-inheritance chain
+        # todo: group this kind of stuff with the field object in a comprehensive field refactor
 
-        Is this the right place for this???????
-        I moved it from ProjectInspectionReport so that it could be shared with reassign_case interface
-
-        Sincerely,
-        Danny
-        """
         return [dict(name='individual', value=self.individual),
                 dict(name='group', value=self.group_name),
                 dict(name='case_type', value=self.case_type),
