@@ -4,4 +4,4 @@ guppy
 werkzeug
 line_profiler
 git+git://github.com/dimagi/couchdbkit-debugpanel.git
-Fabric
+Fabric>=1.4.3
