@@ -9,6 +9,7 @@ function(doc) {
             ret.add(doc.modified_on, {"field": "modified"});
             ret.add(doc.modified_on, {"field": "sort_modified", "index": "not_analyzed", "store": "yes"});
             ret.add(doc.domain, {"field": "domain"});
+            ret.add("exact" + doc.domain + "exact", {"field": "exactDomain"});
             ret.add(doc.user_id, {"field": "user_id"});
             ret.add(doc.type, {"field": "type"});
             if (doc.closed) {
