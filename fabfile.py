@@ -478,6 +478,7 @@ def upload_celery_supervisorconf():
     _upload_supervisor_conf_file('supervisor_celery.conf')
     _upload_supervisor_conf_file('supervisor_celerybeat.conf')
     _upload_supervisor_conf_file('supervisor_celerymon.conf')
+    _upload_supervisor_conf_file('supervisor_couchdb_lucene.conf')
 
 @roles('django_celery')
 def upload_sofabed_supervisorconf():
