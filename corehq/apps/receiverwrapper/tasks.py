@@ -7,6 +7,7 @@ from corehq.apps.receiverwrapper.models import RepeatRecord, FormRepeater
 from couchdbkit.exceptions import ResourceConflict
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime, ISO_MIN
+from dimagi.utils.logging import notify_exception
 
 logging = get_task_logger()
 
@@ -32,7 +33,12 @@ def check_repeaters():
     repeat_records = RepeatRecord.all(due_before=now)
 
     for repeat_record in repeat_records:
-        repeat_record.fire()
+        try:
+            repeat_record.fire()
+        except AttributeError:
+            logging.exception("Error firing repeat record %s" % repeat_record.get_id)
+            raise
+
         try:
             repeat_record.save()
         except ResourceConflict:
