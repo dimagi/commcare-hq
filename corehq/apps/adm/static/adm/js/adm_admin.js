@@ -1,12 +1,27 @@
 var ADMAdminControl = function(options) {
     var self = this;
     self.actionButton = $('<a href="#addADMItemModal" class="btn btn-primary" data-toggle="modal" style="margin-left:2px" />').html('<i class="icon-white icon-plus"/> ').append("Add New "+options.itemType);
-    self.formSubmitURL = options.formSubmitURL;
+    self.formSubmitPath = options.formSubmitPath;
+    self.formType = options.formType;
+    self.formSubmitURL = self.formSubmitPath+self.formType+'/';
     self.newFormSubmitURL = self.formSubmitURL+'new/';
     self.updateFormSubmitURL = self.formSubmitURL+'update/';
+    self.overrideNewFormType = null;
+    self.overrideNewFormDiv = null;
 
-    var refreshForm = function(modal, data) {
-            modal.find('form .modal-body').html(data.form_update);
+    var refreshForm = function(modal, data, formBodyDiv) {
+            var prepend = "";
+            if (!formBodyDiv) {
+                formBodyDiv = modal.find('form .modal-body');
+                if(self.currentItemFormType)
+                    prepend = '<div class="control-group">' +
+                        '<label class="control-label">Column Type</label>' +
+                        '<div class="controls"><span class="label label-inverse">'+
+                        self.currentItemFormType.replace('Form','')+
+                        '</span></div></div>';
+            }
+            console.log(prepend);
+            formBodyDiv.html(data.form_update).prepend(prepend);
             modal.find('form button[type="submit"]').button('reset');
             if (data.success)
                 modal.modal('hide');
@@ -17,6 +32,12 @@ var ADMAdminControl = function(options) {
                 $(this).html(rowData[ind]);
             });
             $(rowElem).addClass('active');
+        },
+        overrideFormTypeInUrl = function (url, form_type) {
+            console.log(form_type);
+            if (form_type)
+                url = url.replace(self.formType, form_type);
+            return url;
         };
 
     self.init = function () {
@@ -25,21 +46,18 @@ var ADMAdminControl = function(options) {
             self.addADMItemModal = $('#addADMItemModal');
             self.updateADMItemModal = $('#updateADMItemModal');
 
-            $.ajax({
-                dataType: 'json',
-                url: self.newFormSubmitURL,
-                method: 'GET',
-                success: refreshAddADMItemForm
-            });
+            self.init_new_form();
 
             self.addADMItemModal.find('form').submit(function () {
-                $(this).find('button[type="submit"]').button('loading');
-                $(this).ajaxSubmit({
-                    method: 'POST',
-                    url: self.newFormSubmitURL,
-                    success: refreshAddADMItemForm,
-                    dataType: 'json'
-                });
+                if (! $(this).find('button[type="submit"]').hasClass('disabled')) {
+                    $(this).find('button[type="submit"]').button('loading');
+                    $(this).ajaxSubmit({
+                        method: 'POST',
+                        url: overrideFormTypeInUrl(self.newFormSubmitURL, self.overrideNewFormType),
+                        success: self.refreshAddADMItemForm,
+                        dataType: 'json'
+                    });
+                }
                 return false;
             });
 
@@ -51,8 +69,8 @@ var ADMAdminControl = function(options) {
 
                 self.updateADMItemModal.find('form').ajaxSubmit({
                     dataType: 'json',
-                    url: submit_url+self.currentItemID+'/',
-                    success: refreshUpdateADMItemForm
+                    url: overrideFormTypeInUrl(submit_url, self.currentItemFormType)+self.currentItemID+'/',
+                    success: self.refreshUpdateADMItemForm
                 });
                 return false;
             });
@@ -60,33 +78,45 @@ var ADMAdminControl = function(options) {
         });
     };
 
+    self.init_new_form = function () {
+        console.log(self.overrideNewFormType);
+        $.ajax({
+            dataType: 'json',
+            url: overrideFormTypeInUrl(self.newFormSubmitURL, self.overrideNewFormType),
+            method: 'GET',
+            success: self.refreshAddADMItemForm
+        });
+    };
+
     self.update_item = function(button) {
         console.log(button);
         self.currentItemID = $(button).data('item_id');
-        console.log(self.currentItemID);
+        self.currentItemFormType = $(button).data('form_class');
+
+        console.log(self.currentItemFormType);
         $.ajax({
             dataType: 'json',
-            url: self.updateFormSubmitURL+self.currentItemID+'/',
+            url: overrideFormTypeInUrl(self.updateFormSubmitURL, self.currentItemFormType)+self.currentItemID+'/',
             method: 'GET',
-            success: refreshUpdateADMItemForm
+            success: self.refreshUpdateADMItemForm
         })
     };
 
-    var refreshAddADMItemForm = function(data) {
-            console.log(data);
-            refreshForm(self.addADMItemModal, data);
-            reportTables.datatable.fnAddData(data.rows);
+    self.refreshAddADMItemForm = function(data) {
+        console.log(self.overrideNewFormDiv);
+        refreshForm(self.addADMItemModal, data, self.overrideNewFormDiv);
+        reportTables.datatable.fnAddData(data.rows);
 
-        },
-        refreshUpdateADMItemForm = function(data) {
-            console.log(data);
-            var row = $('[data-item_id="'+self.currentItemID+'"]').parent().parent()[0];
-            if (data.deleted)
-                reportTables.datatable.fnDeleteRow(reportTables.datatable.fnGetPosition(row));
-            if (data.success && !data.deleted && data.rows)
-                updateRow(row, data.rows[0]);
+    };
+    self.refreshUpdateADMItemForm = function(data) {
+        console.log(data);
+        var row = $('[data-item_id="'+self.currentItemID+'"]').parent().parent()[0];
+        if (data.deleted)
+            reportTables.datatable.fnDeleteRow(reportTables.datatable.fnGetPosition(row));
+        if (data.success && !data.deleted && data.rows)
+            updateRow(row, data.rows[0]);
 
-            refreshForm(self.updateADMItemModal, data);
-        };
+        refreshForm(self.updateADMItemModal, data, null);
+    };
 
 };

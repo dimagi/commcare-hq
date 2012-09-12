@@ -4,7 +4,11 @@
 {% block sidebar %}
     <nav>
         <ul class="nav nav-list">
-            {% report_list 'corehq.apps.adm.dispatcher.ADMAdminInterfaceDispatcher' %}
+            {% if adm_admin %}
+                {% report_list 'corehq.apps.adm.dispatcher.ADMAdminInterfaceDispatcher' %}
+            {% else %}
+                {% report_list 'corehq.apps.adm.dispatcher.ADMSectionDispatcher' %}
+            {% endif %}
         </ul>
     </nav>
 {% endblock %}

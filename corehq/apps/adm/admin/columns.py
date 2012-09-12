@@ -1,8 +1,9 @@
 from corehq.apps.adm.admin import ADMAdminInterface
-from corehq.apps.adm.forms import UpdateADMColumnForm, UpdateReducedADMColumnForm, DaysSinceADMColumnForm
+from corehq.apps.adm.forms import UpdateADMColumnForm, UpdateReducedADMColumnForm, DaysSinceADMColumnForm, ConfigurableADMColumnForm
 from corehq.apps.adm.models import ReducedADMColumn, DaysSinceADMColumn, ConfigurableADMColumn
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.modules import to_function
 
 class ADMColumnEditIterface(ADMAdminInterface):
     adm_item_type = "ADM Column"
@@ -21,6 +22,12 @@ class ADMColumnEditIterface(ADMAdminInterface):
     @property
     def rows(self):
         rows = []
+        for item in self.columns:
+            rows.append(item.as_row)
+        return rows
+
+    @property
+    def columns(self):
         key = ["all", self.property_class.__name__]
         data = self.property_class.view('adm/all_default_columns',
             reduce=False,
@@ -28,9 +35,7 @@ class ADMColumnEditIterface(ADMAdminInterface):
             startkey=key,
             endkey=key+[{}]
         ).all()
-        for item in data:
-            rows.append(item.as_row)
-        return rows
+        return data
 
 
 class ReducedADMColumnInterface(ADMColumnEditIterface):
@@ -74,9 +79,21 @@ class DaysSinceADMColumnInterface(ADMColumnEditIterface):
 
 
 class ConfigurableADMColumnInterface(ADMColumnEditIterface):
-    name = "User-Configurable ADM Columns"
-    description = "Default definitions for user-configurable ADM Columns"
+    name = "Configurable ADM Columns"
+    description = "Default definitions for vonfigurable ADM Columns"
     slug = "config_column"
     property_class = ConfigurableADMColumn
+    form_class = ConfigurableADMColumnForm
 
     adm_item_type = "User-Configurable ADM Column"
+
+    @property
+    def headers(self):
+        header = super(ConfigurableADMColumnInterface, self).headers
+        header.insert_column(DataTablesColumn("Directly Configurable"), -1)
+        header.insert_column(DataTablesColumn("Default Configurable Properties"), -1)
+        return header
+
+    @property
+    def columns(self):
+        return self.property_class.all_configurable_columns()

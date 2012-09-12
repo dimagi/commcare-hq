@@ -49,6 +49,7 @@ from corehq.apps.hqsofabed.models import HQFormData
 from StringIO import StringIO
 from corehq.apps.app_manager.util import get_app_id
 from corehq.apps.groups.models import Group
+from corehq.apps.adm import utils as adm_utils
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -64,15 +65,18 @@ require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
 def default(request, domain, template="reports/base_template.html"):
-    return render_to_response(request, template, dict(
+    context = dict(
         domain=domain,
         report=dict(
             title="Select a Report to View",
             show=request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
             slug=None,
-            is_async=True
+            is_async=True,
+            section_name="Project Reports",
         )
-    ))
+    )
+    context["report"].update(show_subsection_navigation=adm_utils.show_adm_nav(domain, context))
+    return render_to_response(request, template, context)
 
 @login_or_digest
 @require_form_export_permission

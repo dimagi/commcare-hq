@@ -8,3 +8,7 @@ adm_admin_interface_urls = patterns('corehq.apps.adm.views',
         name=ADMAdminInterfaceDispatcher.name()
     )
 )
+
+domain_specific_urls = patterns('corehq.apps.adm.views',
+    url(r'$', 'default_adm_report', name="default_adm_report")
+)

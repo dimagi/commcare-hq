@@ -2,9 +2,25 @@ import json
 from django.http import HttpResponse, HttpResponseBadRequest
 import inspect
 from django.template.loader import render_to_string
-from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.domain.decorators import require_superuser, require_previewer
 from dimagi.utils.data.editable_items import InterfaceEditableItemForm
 from dimagi.utils.modules import to_function
+
+@require_previewer
+def default_adm_report(request, domain, template="reports/base_template.html, **kwargs):
+    context = dict(
+        domain=domain,
+        report=dict(
+            title="Select a Report to View",
+            show=request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
+            slug=None,
+            is_async=True,
+            section_name="Project Reports",
+        )
+    )
+    context["report"].update(show_subsection_navigation=adm_utils.show_adm_nav(domain, context))
+    return render_to_response(request, template, context)
+
 
 @require_superuser
 def adm_item_form(request, template="adm/forms/admin_adm_item.html", **kwargs):
@@ -21,6 +37,13 @@ def adm_item_form(request, template="adm/forms/admin_adm_item.html", **kwargs):
         return HttpResponseBadRequest("'%s' should be a class name in corehq.apps.adm.forms" % form_type)
     if not issubclass(form_class, InterfaceEditableItemForm):
         return HttpResponseBadRequest("'%s' should be a subclass of InterfaceEditableItemForm" % form_type)
+
+    from corehq.apps.adm.forms import ConfigurableADMColumnForm
+    if form_class == ConfigurableADMColumnForm:
+        template = "adm/forms/configurable_admin_adm_item.html"
+
+    print "FORM CLASS", form_class
+    print "POST", request.POST
 
     success = False
     delete_item = bool(action == 'delete')

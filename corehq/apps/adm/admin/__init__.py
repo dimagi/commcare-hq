@@ -30,6 +30,12 @@ class ADMAdminInterface(GenericTabularReport):
         super(ADMAdminInterface, self).__init__(request, base_context, *args, **kwargs)
 
     @property
+    def template_context(self):
+        context = super(ADMAdminInterface, self).template_context
+        context.update(adm_admin=True)
+        return context
+
+    @property
     def report_context(self):
         context = super(ADMAdminInterface, self).report_context
         context.update(

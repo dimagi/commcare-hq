@@ -9,7 +9,8 @@
 <script type="text/javascript">
     var adm_interface = new ADMAdminControl({
         itemType: '{{ adm_item.type }}',
-        formSubmitURL: '/adm/form/{{ adm_item.form }}/'
+        formSubmitPath: '/adm/form/',
+        formType: '{{ adm_item.form }}'
     });
     adm_interface.init();
 </script>
@@ -53,7 +54,7 @@
             <div class="modal-footer">
                 <button type="submit" class="btn btn-primary" data-loading-text="Updating..."><i class="icon-white icon-arrow-up"></i> Update {{ adm_item.type }}</button>
                 <button class="btn" data-dismiss="modal">Close</button>
-                <button class="btn btn-danger pull-left" type="submit" data-loading-text="Deleting..."><i class="icon-white icon-remove"></i> Delete Rate Item</button>
+                <button class="btn btn-danger pull-left" type="submit" data-loading-text="Deleting..."><i class="icon-white icon-remove"></i> Delete</button>
             </div>
         </form>
     </div>
