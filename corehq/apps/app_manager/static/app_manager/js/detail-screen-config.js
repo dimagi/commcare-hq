@@ -224,6 +224,8 @@ var DetailScreenConfig = (function () {
                     if (grip) {
                         this.$grip = $('<div class="grip ui-icon"/>').addClass(COMMCAREHQ.icons.GRIP).css({
                             cursor: 'move'
+                        }).mousedown(function () {
+                            $(':focus').blur();
                         });
                     } else {
                         this.$grip = $('<span class="sort-disabled"></span>');
