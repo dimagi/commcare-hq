@@ -24,6 +24,12 @@ from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import get_url_base
 
+def cache_report():
+    """do nothing until the real cache_report is fixed"""
+    def _fn(fn):
+        return fn
+    return _fn
+
 monitoring_report_cacher = cache_report()
 
 class WorkerMonitoringReportTable(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
