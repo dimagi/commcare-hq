@@ -93,7 +93,7 @@ Please click this link:
 {activation_link}
 to activate your new domain.  You will not be able to use your domain until you have confirmed this email address.
 
-Domain name: "{domain}"
+Project name: "{domain}"
 
 Username:  "{username}"
 
@@ -113,8 +113,8 @@ The CommCareHQ Team
 
     message_html = """
 <h1>Welcome to CommCare HQ!</h1>
-<p>Please <a href="{activation_link}">go here to activate your new domain</a>.  You will not be able to use your domain until you have confirmed this email address.</p>
-<p><strong>Domain name:</strong> {domain}</p>
+<p>Please <a href="{activation_link}">go here to activate your new project</a>.  You will not be able to use your project until you have confirmed this email address.</p>
+<p><strong>Project name:</strong> {domain}</p>
 <p><strong>Username:</strong> {username}</p>
 <p>For help getting started, you can visit the <a href="{wiki_link}">CommCare Wiki</a>, the home of all CommCare documentation.</p>
 <p>We also encourage you to join the <a href="{users_link}">commcare-users google group</a>, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list.</p>
@@ -145,9 +145,9 @@ def send_global_domain_registration_email(requesting_user, domain_name):
     message_plaintext = """
 Hello {name},
 
-You have successfully created and activated the domain "{domain}" for the CommCare HQ user "{username}".
+You have successfully created and activated the project "{domain}" for the CommCare HQ user "{username}".
 
-You may access your domain by following this link: {domain_link}
+You may access your project by following this link: {domain_link}
 
 Please remember, if you need help you can visit the CommCare Wiki, the home of all CommCare documentation.  Click this link to go directly to the guide to CommCare HQ:
 {wiki_link}
@@ -164,9 +164,9 @@ The CommCareHQ Team
 """
 
     message_html = """
-<h1>New domain "{domain}" created!</h1>
+<h1>New project "{domain}" created!</h1>
 <p>Hello {name},</p>
-<p>You may now  <a href="{domain_link}">visit your newly created domain</a> with the CommCare HQ User <strong>{username}</strong>.</p>
+<p>You may now  <a href="{domain_link}">visit your newly created project</a> with the CommCare HQ User <strong>{username}</strong>.</p>
 
 <p>Please remember, if you need help you can visit the <a href="{wiki_link}">CommCare Wiki</a>, the home of all CommCare documentation.</p>
 <p>We also encourage you to join the <a href="{users_link}">commcare-users google group</a>, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list.</p>
@@ -180,7 +180,7 @@ The CommCareHQ Team
     message_plaintext = message_plaintext.format(**params)
     message_html = message_html.format(**params)
 
-    subject = 'CommCare HQ: New domain created!'.format(**locals())
+    subject = 'CommCare HQ: New project created!'.format(**locals())
 
     try:
         send_HTML_email(subject, requesting_user.email, message_plaintext, message_html)
@@ -201,13 +201,13 @@ Details include...
 Username: %s
 IP Address: %s
 
-You can view the domain here: %s""" % (
+You can view the project here: %s""" % (
         message,
         user.username,
         requesting_ip,
         get_url_base() + "/a/%s/" % domain_name)
     try:
         recipients = settings.NEW_DOMAIN_RECIPIENTS
-        send_mail("New Domain: %s" % domain_name, message, settings.EMAIL_LOGIN, recipients)
+        send_mail("New Project: %s" % domain_name, message, settings.EMAIL_LOGIN, recipients)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message)
