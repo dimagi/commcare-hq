@@ -32,7 +32,12 @@ def check_repeaters():
     repeat_records = RepeatRecord.all(due_before=now)
 
     for repeat_record in repeat_records:
-        repeat_record.fire()
+        try:
+            repeat_record.fire()
+        except AttributeError:
+            logging.exception("Error firing repeat record %s" % repeat_record.get_id)
+            raise
+
         try:
             repeat_record.save()
         except ResourceConflict:
