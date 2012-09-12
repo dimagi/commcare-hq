@@ -60,7 +60,7 @@ def get_group_params(domain, group='', users=None, user_id_only=False, **kwargs)
 
 
 cache_users_by_domain = cache_users()
-@cache_users_by_domain
+#@cache_users_by_domain
 def get_all_users_by_domain(domain, **kwargs):
     """
         WHEN THERE ARE A LOT OF USERS, THIS IS AN EXPENSIVE OPERATION.
