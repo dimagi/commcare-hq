@@ -430,13 +430,33 @@ create a couch doc as such:
     asynchronous = False
     flush_layout = True
 
+    @classmethod
+    @memoized
+    def get_config(cls, domain):
+        try:
+            config = get_db().view('reports/maps_config', key=[domain], include_docs=True).one()
+            if config:
+                config = config['doc']['config']
+        except Exception:
+            config = None
+        return config
+
+    @property
+    def config(self):
+        return self.get_config(self.domain)
+
     @property
     def report_context(self):
-        config = get_db().view('reports/maps_config', key=[self.domain], include_docs=True).one()
-        if config:
-            config = config['doc']['config']
         return dict(
             maps_api_key=settings.GMAPS_API_KEY,
             case_api_url=reverse('cloudcare_get_cases', kwargs={'domain': self.domain}),
-            config=json.dumps(config)
+            config=json.dumps(self.config)
         )
+
+    @classmethod
+    def show_in_navigation(cls, request, *args, **kwargs):
+        domain = kwargs.get('domain')
+        if cls.get_config(domain):
+            return True
+        else:
+            return False
