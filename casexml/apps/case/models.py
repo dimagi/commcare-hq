@@ -454,6 +454,6 @@ class CommCareCase(CaseBase, IndexHoldingMixIn):
     @classmethod
     def get_by_xform_id(cls, xform_id):
         return cls.view("case/by_xform_id", reduce=False, include_docs=True, 
-                        key=xform_id).one()
+                        key=xform_id)
 
 import casexml.apps.case.signals
