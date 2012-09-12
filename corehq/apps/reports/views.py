@@ -173,6 +173,9 @@ class CustomExportHelper(object):
 
         if export_id:
             self.custom_export = self.ExportSchemaClass.get(export_id)
+            # also update the schema to include potential new stuff
+            self.custom_export.update_schema()
+            
             assert(self.custom_export.doc_type == 'SavedExportSchema')
             assert(self.custom_export.type == self.export_type)
             assert(self.custom_export.index[0] == domain)
@@ -180,7 +183,7 @@ class CustomExportHelper(object):
             self.custom_export = self.ExportSchemaClass(type=self.export_type)
             if self.export_type == 'form':
                 self.custom_export.app_id = request.GET.get('app_id')
-
+        
     def update_custom_export(self):
         schema = ExportSchema.get(self.request.POST["schema"])
         self.custom_export.index = schema.index
@@ -224,7 +227,7 @@ class CustomExportHelper(object):
     def get_response(self):
         table_config = self.custom_export.table_configuration[0]
         slug = export.ExcelExportReport.slug if self.export_type == "form" else export.CaseExportReport.slug
-
+        
         def show_deid_column():
             for col in table_config['column_configuration']:
                 if col['transform']:
@@ -232,7 +235,6 @@ class CustomExportHelper(object):
             return False
 
         return render_to_response(self.request, "reports/reportdata/customize_export.html", {
-            "saved_export": self.custom_export,
             "saved_export": self.custom_export,
             "deid_options": CustomExportHelper.DEID.options,
             "DeidExportReport_name": DeidExportReport.name,

@@ -942,7 +942,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
     @property
     def username_in_report(self):
         def parts():
-            yield u'<span>%s</span>' % html.escape(self.raw_username)
+            yield u'%s' % html.escape(self.raw_username)
             if self.full_name:
                 yield u' "%s" ' % html.escape(self.full_name)
 

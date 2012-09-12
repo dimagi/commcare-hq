@@ -1,3 +1,4 @@
+from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.standard import DatespanMixin, ProjectReportParametersMixin
@@ -7,8 +8,11 @@ from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.models import HQUserType
-from corehq.apps.users.models import WebUser
+from corehq.apps.reports.standard.inspect import CaseListMixin
+from corehq.apps.users.models import WebUser, CouchUser, CommCareUser
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.decorators import inline
+from dimagi.utils.decorators.memoized import memoized
 
 class DataInterface(GenericReportView):
     # overriding properties from GenericReportView
@@ -22,7 +26,7 @@ class DataInterface(GenericReportView):
     def default_report_url(self):
         return reverse('data_interfaces_default', args=[self.request.project])
 
-class CaseReassignmentInterface(GenericTabularReport, DataInterface, ProjectReportParametersMixin, DatespanMixin):
+class CaseReassignmentInterface(CaseListMixin, DataInterface, DatespanMixin):
     name = "Reassign Cases"
     slug = "reassign_cases"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
@@ -31,27 +35,13 @@ class CaseReassignmentInterface(GenericTabularReport, DataInterface, ProjectRepo
               'corehq.apps.reports.fields.SelectReportingGroupField']
     report_template_path = 'data_interfaces/interfaces/case_management.html'
 
-    _all_case_sharing_groups = None
-    @property
-    def all_case_sharing_groups(self):
-        if self._all_case_sharing_groups is None:
-            self._all_case_sharing_groups = Group.get_case_sharing_groups(self.domain)
-        return self._all_case_sharing_groups
+    asynchronous = False
+    ajax_pagination = True
 
-    _case_sharing_groups = None
     @property
-    def case_sharing_groups(self):
-        if self._case_sharing_groups is None:
-            self._case_sharing_groups = self.all_case_sharing_groups
-            if self.individual:
-                try:
-                    group = Group.get(self.individual)
-                except Exception:
-                    group = None
-                if group:
-                    self._users = []
-                    self._case_sharing_groups = [group]
-        return self._case_sharing_groups
+    @memoized
+    def all_case_sharing_groups(self):
+        return Group.get_case_sharing_groups(self.domain)
 
     @property
     def headers(self):
@@ -62,50 +52,23 @@ class CaseReassignmentInterface(GenericTabularReport, DataInterface, ProjectRepo
             DataTablesColumn("Owner", span=2),
             DataTablesColumn("Last Modified", span=3, sort_type=DTSortType.NUMERIC)
         )
-        headers.custom_sort = [[1, 'asc']]
+#        headers.custom_sort = [[1, 'asc']]
+        headers.no_sort = True
         return headers
 
     @property
     def rows(self):
-        rows = list()
         checkbox = '<input type="checkbox" class="selected-commcare-case" data-bind="event: {change: updateCaseSelection}" data-caseid="%(case_id)s" data-owner="%(owner)s" data-ownertype="%(owner_type)s" />'
-        for user in self.users:
-            data = self._get_data(user.get('user_id'))
-            for item in data:
-                case, case_link = self._get_case_info(item)
-                if case:
-                    rows.append([checkbox % dict(case_id=case._id, owner=user.get('user_id'), owner_type="user"),
-                                 case_link, case.type, user.get('username_in_report'), util.format_relative_date(case.modified_on)])
-        for group in self.case_sharing_groups:
-            data = self._get_data(group._id)
-            for item in data:
-                case, case_link = self._get_case_info(item)
-                if case:
-                    rows.append([checkbox % dict(case_id=case._id, owner=group.get_id, owner_type="group"),
-                                 case_link, case.type, '%s <span class="label label-inverse" title="%s">group</span>' % (group.name, group.name),
-                                 util.format_relative_date(case.modified_on)])
-        return rows
-
-    def _get_data(self, owner_id):
-        key = [self.domain, "open", {}, owner_id ]
-        return get_db().view('case/by_date_modified_owner',
-                startkey=key+[self.datespan.startdate_param_utc],
-                endkey=key+[self.datespan.enddate_param_utc],
-                reduce=False,
-                include_docs=True
-            ).all()
-
-    def _get_case_info(self, data):
-        case =  None
-        case_link = ""
-        if "doc" in data:
-            case = CommCareCase.wrap(data["doc"])
-        elif "id" in data:
-            case = CommCareCase.get(data["id"])
-        if case:
-            case_link = '<a href="%s">%s</a>' %\
-                        (reverse('case_details', args=[self.domain, case._id]), case.name)
-        return case, case_link
+        for row in self.case_results:
+            case = self.get_case(row)
+            display = self.CaseDisplay(case)
+            yield [
+                checkbox % dict(case_id=case._id, owner=display.owner_id, owner_type=display.owner_type),
+                display.case_link,
+                display.case_type,
+                display.owner_display,
+                util.format_relative_date(case.modified_on)['html'],
+            ]
 
     @property
     def report_context(self):
@@ -115,6 +78,7 @@ class CaseReassignmentInterface(GenericTabularReport, DataInterface, ProjectRepo
             users=[dict(ownerid=user.get('user_id'), name=user.get('username_in_report'), type="user")
                    for user in active_users],
             groups=[dict(ownerid=group.get_id, name=group.name, type="group")
-                    for group in self.all_case_sharing_groups]
+                    for group in self.all_case_sharing_groups],
+            user_ids=self.user_ids,
         )
         return context

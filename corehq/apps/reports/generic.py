@@ -627,6 +627,10 @@ class GenericTabularReport(GenericReportView):
     report_template_path = "reports/async/tabular.html"
     flush_layout = True
 
+#    @property
+#    def searchable(self):
+#        return not self.ajax_pagination
+
     @property
     def headers(self):
         """
@@ -691,7 +695,7 @@ class GenericTabularReport(GenericReportView):
             self.pagination.start (skip)
             self.pagination.count (limit)
         """
-        rows = self.rows
+        rows = list(self.rows)
         total_records = self.total_records
         if not isinstance(total_records, int):
             raise ValueError("Property 'total_records' should return an int.")
@@ -765,8 +769,10 @@ class GenericTabularReport(GenericReportView):
 
         if not self.ajax_pagination:
             rows = self.rows
-            if not isinstance(rows, list):
-                raise ValueError("Property 'rows' should return a list.")
+            try:
+                rows = list(rows)
+            except TypeError:
+                raise ValueError("Property 'rows' should return a list or iterable.")
         else:
             rows = []
 

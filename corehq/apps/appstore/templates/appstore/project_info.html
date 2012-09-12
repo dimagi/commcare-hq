@@ -227,7 +227,7 @@
             <div class="span6">
         <h4>{{ review.title }}</h4>
         <div>
-            <p><small> on {{ review.date_published }}</small></p>
+            <p><small>{{ review.user }} on {{ review.date_published }}</small></p>
             <fieldset class="rating_static" id="stars{{ review.get_id }}">
                 <input type="radio" id="star5{{ review.get_id }}" value="5" disabled=True {% if review.rating == 5 %} checked=True {% endif %}/><label for="star5{{ review.get_id }}">5 stars</label>
                 <input type="radio" id="star4{{ review.get_id }}" value="4" disabled=True {% if review.rating == 4 %} checked=True {% endif %}/><label for="star4{{ review.get_id }}">4 stars</label>
