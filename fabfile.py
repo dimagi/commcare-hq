@@ -242,7 +242,7 @@ def bootstrap():
     execute(clone_repo)
     update_code()
     execute(create_virtualenv)
-    execute(update_requirements)
+    execute(update_env)
     execute(setup_dirs)
     update_services()
     execute(fix_locale_perms)
@@ -313,19 +313,17 @@ def deploy():
 
 @roles('django_celery', 'django_app','staticfiles')
 @task
-def update_requirements():
+def update_env():
     """ update external dependencies on remote host """
     require('code_root', provided_by=('staging', 'production'))
     update_code()
     requirements = posixpath.join(env.code_root, 'requirements')
     #with cd(requirements):
     with cd(env.code_root):
-        cmd = ['%(virtualenv_root)s/bin/pip install -U ' % env]
+        cmd = ['%(virtualenv_root)s/bin/pip install' % env]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'prod-requirements.txt')]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'requirements.txt')]
-        print ' '.join(cmd)
         sudo(' '.join(cmd), shell=False, pty=False, user=env.sudo_user)
-
 
 @roles('lb')
 def touch_apache():
@@ -461,6 +459,7 @@ def migrate():
     """ run south migration on remote environment """
     require('code_root', provided_by=('production', 'demo', 'staging'))
     with cd(env.code_root):
+        sudo('%(virtualenv_root)s/bin/python manage.py sync_finish_couchdb' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py syncdb --noinput' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py migrate --noinput' % env, user=env.sudo_user)
 
@@ -474,6 +473,7 @@ def _do_collectstatic():
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py make_bootstrap' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env, user=env.sudo_user)
+        sudo('rm -f tmp.sh resource_versions.py; python manage.py printstatic > tmp.sh; bash tmp.sh > resource_versions.py', user=env.sudo_user)
 
 @roles('staticfiles',)
 @task

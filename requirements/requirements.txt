@@ -30,3 +30,4 @@ requests
 simplejson
 poster
 git+git://github.com/daviddrysdale/python-phonenumbers.git
+gitpython
