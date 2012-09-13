@@ -29,7 +29,7 @@ class InterfaceEditableItemMixin(object):
         for key in self.row_columns:
             property = getattr(self, key)
             row.append(self.format_property(key, property))
-        row.append(mark_safe(self.editable_item_button))
+        row.append(self.editable_item_button)
         return row
 
     def format_property(self, key, property):
