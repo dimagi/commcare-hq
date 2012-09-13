@@ -39,6 +39,7 @@ from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.django.database import get_unique_value
+import json
 
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
@@ -1192,6 +1193,10 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
         from corehq.apps.groups.models import Group
         return Group.by_user(self, wrap=False)
 
+    @property
+    def user_data_json(self):
+        return json.dumps(self.user_data)
+    
     def get_time_zone(self):
         try:
             time_zone = self.user_data["time_zone"]
