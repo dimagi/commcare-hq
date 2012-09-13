@@ -13,6 +13,10 @@ from tropo import Tropo
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
 from .util import get_form_list, get_sample_list
 from corehq.apps.app_manager.models import get_app, ApplicationBase
+from corehq.apps.sms.mixin import VerifiedNumber
+from corehq.apps.sms.util import register_sms_contact
+from corehq.apps.domain.models import DomainCounter
+from casexml.apps.case.models import CommCareCase
 
 @login_and_domain_required
 def default(request, domain):
@@ -318,19 +322,46 @@ def add_sample(request, domain, sample_id=None):
             if sample is None:
                 sample = SurveySample (
                     domain = domain,
-                    name = name,
-                    contacts = sample_contacts
+                    name = name
                 )
             else:
                 sample.name = name
-                sample.contacts = sample_contacts
+            
+            phone_numbers = []
+            for contact in sample_contacts:
+                phone_numbers.append(contact["phone_number"])
+            
+            existing_number_entries = VerifiedNumber.view('sms/verified_number_by_number',
+                                            keys=phone_numbers,
+                                            include_docs=True
+                                       ).all()
+            
+            existing_numbers = [v.phone_number for v in existing_number_entries]
+            nonexisting_numbers = list(set(phone_numbers).difference(existing_numbers))
+            
+            id_range = DomainCounter.increment(domain, "survey_contact_id", len(nonexisting_numbers))
+            ids = iter(range(id_range[0], id_range[1] + 1))
+            for phone_number in nonexisting_numbers:
+                register_sms_contact(domain, "participant", str(ids.next()), request.couch_user.get_id, phone_number, contact_phone_number_is_verified="1", contact_backend_id="MOBILE_BACKEND_TEST", language_code="en", time_zone="America/New_York")
+            
+            newly_registered_entries = VerifiedNumber.view('sms/verified_number_by_number',
+                                            keys=nonexisting_numbers,
+                                            include_docs=True
+                                       ).all()
+            
+            sample.contacts = [v.owner_id for v in existing_number_entries] + [v.owner_id for v in newly_registered_entries]
+            
             sample.save()
             return HttpResponseRedirect(reverse("sample_list", args=[domain]))
     else:
         initial = {}
         if sample is not None:
             initial["name"] = sample.name
-            initial["sample_contacts"] = sample.contacts
+            contact_info = []
+            for case_id in sample.contacts:
+                case = CommCareCase.get(case_id)
+                contact_info.append({"id":case.name, "phone_number":case.contact_phone_number})
+            initial["sample_contacts"] = contact_info
         form = SurveySampleForm(initial=initial)
     
     context = {

@@ -759,7 +759,7 @@ class SurveyKeyword(Document):
 class SurveySample(Document):
     domain = StringProperty()
     name = StringProperty()
-    contacts = ListProperty(DictProperty)
+    contacts = ListProperty(StringProperty)
     
     @classmethod
     def get_all(cls, domain):
