@@ -385,17 +385,22 @@ class ADMCompareColumn(ConfigurableADMColumn):
 
     def clean_value(self, value):
         d = value.get('denominator', 0)
-        if d <= 0:
-            return d
         n = value.get('numerator', 0)
-        return float(n)/float(d)
+        try:
+            return float(n)/float(d)
+        except Exception:
+            return 0
 
     def html_value(self, value):
+        default_value = "--"
         d = value.get('denominator', 0)
         if d<= 0:
-            return "--"
+            return default_value
         n = value.get('numerator', 0)
-        return "%d/%d (%.f%%)" % (n, d, float(n)/float(d)*100)
+        try:
+            return "%d/%d (%.f%%)" % (n, d, float(n)/float(d)*100)
+        except Exception:
+            return default_value
 
 
     @classmethod
