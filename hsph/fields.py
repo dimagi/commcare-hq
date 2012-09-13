@@ -82,9 +82,8 @@ class SelectReferredInStatusField(ReportSelectField):
     name = "Referred In Status"
     cssId = "hsph_referred_in_status"
     cssClasses = "span3"
-    options = [dict(val="all", text="All Birth Data"),
-               dict(val="referred", text="Only Referred In Births")]
-    default_option = "Select Referred In Status"
+    options = [dict(val="referred", text="Only Referred In Births")]
+    default_option = "All Birth Data"
 
 class SelectCaseStatusField(ReportSelectField):
     slug = "case_status"
