@@ -2,23 +2,27 @@ import json
 from django.http import HttpResponse, HttpResponseBadRequest
 import inspect
 from django.template.loader import render_to_string
-from corehq.apps.domain.decorators import require_superuser, require_previewer
+from corehq.apps.domain.decorators import require_superuser, require_previewer, login_and_domain_required
 from dimagi.utils.data.editable_items import InterfaceEditableItemForm
 from dimagi.utils.modules import to_function
+from dimagi.utils.web import render_to_response
 
 @require_previewer
-def default_adm_report(request, domain, template="reports/base_template.html, **kwargs):
+@login_and_domain_required
+def default_adm_report(request, domain, template="adm/base_template.html", **kwargs):
+    from corehq.apps.adm.reports import ADMSectionView
     context = dict(
         domain=domain,
+        project=domain,
         report=dict(
             title="Select a Report to View",
-            show=request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
+            show=True,
             slug=None,
             is_async=True,
-            section_name="Project Reports",
+            section_name=ADMSectionView.section_name,
         )
     )
-    context["report"].update(show_subsection_navigation=adm_utils.show_adm_nav(domain, context))
+    context["report"].update(show_subsection_navigation=True)
     return render_to_response(request, template, context)
 
 

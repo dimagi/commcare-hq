@@ -23,7 +23,7 @@ class DataTablesColumn(object):
         sort_icon = '<i class="icon-hq-white icon-hq-doublechevron"></i>' if self.sortable else ''
         rowspan = ' rowspan="%d"' % self.rowspan if self.rowspan > 1 else ''
         css_class = ' class="span%d"' % self.css_span if self.css_span > 0 else ''
-        help_text = '<i class="icon-white icon-question-sign header-tooltip" title="%s"></i>' % self.help_text \
+        help_text = ' <i class="icon-white icon-question-sign header-tooltip" title="%s"></i>' % self.help_text \
                     if self.help_text else ''
         return template % dict(title=self.html, sort_icon=sort_icon,
             rowspan=rowspan, css_class=css_class, help_text=help_text)

@@ -11,7 +11,7 @@ class ADMSectionDispatcher(ProjectReportDispatcher):
 
     @classmethod
     def pattern(cls):
-        return r'^((?P<render_as>[(json)|(async)|(filters)|(export)|(static)|(clear_cache)]+)/)?(?P<report_slug>[\w_]+)/(?P<subreport_slug>[\w_]+)/$'
+        return r'^((?P<render_as>[(json)|(async)|(filters)|(export)|(static)|(clear_cache)]+)/)?(?P<report_slug>[\w_]+)/((?P<subreport_slug>[\w_]+)/)?$'
 
 class ADMAdminInterfaceDispatcher(ReportDispatcher):
     prefix = 'adm_admin_interface'

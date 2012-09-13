@@ -65,6 +65,7 @@ require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
 def default(request, domain, template="reports/base_template.html"):
+    from corehq.apps.reports.standard import ProjectReport
     context = dict(
         domain=domain,
         report=dict(
@@ -72,7 +73,7 @@ def default(request, domain, template="reports/base_template.html"):
             show=request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
             slug=None,
             is_async=True,
-            section_name="Project Reports",
+            section_name=ProjectReport.section_name,
         )
     )
     context["report"].update(show_subsection_navigation=adm_utils.show_adm_nav(domain, context))

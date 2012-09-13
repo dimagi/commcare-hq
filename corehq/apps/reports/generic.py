@@ -441,7 +441,8 @@ class GenericReportView(object):
             show_filters=self.fields or not self.hide_filters,
             breadcrumbs=self.breadcrumbs,
             default_url=self.default_report_url,
-            url=self.get_url(*url_args)
+            url=self.get_url(*url_args),
+            title=self.name
         )
         if hasattr(self, 'datespan'):
             self.context.update(datespan=self.datespan)

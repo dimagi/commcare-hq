@@ -94,7 +94,7 @@ class ADMReportForm(UpdateADMItemForm):
     reporting_section = forms.CharField(label="Reporting Section",
         widget=forms.Select(choices=REPORT_SECTION_OPTIONS)
     )
-    columns = forms.CharField(label="Column IDs",
+    column_list = forms.CharField(label="Column IDs",
         help_text="A comma separated list of column ids for the report.",
         required=False,
         widget=Textarea(attrs=dict(style="height:80px;width:340px;"))
@@ -108,14 +108,14 @@ class ADMReportForm(UpdateADMItemForm):
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
                  initial=None, error_class=ErrorList, label_suffix=':',
                  empty_permitted=False, item_id=None):
-        if data and "columns" not in data:
+        if data and "column_list" not in data:
             copied_data = data.copy()
             cols = data.get("column_ids", [])
-            copied_data["columns"] = ",".join(cols)
+            copied_data["column_list"] = ",".join(cols)
             data = copied_data
         super(ADMReportForm, self).__init__(data, files, auto_id, prefix, initial, error_class,
             label_suffix, empty_permitted, item_id)
 
-    def clean_columns(self):
-        cols = self.cleaned_data["columns"]
+    def clean_column_list(self):
+        cols = self.cleaned_data["column_list"]
         return [c.strip() for c in cols.split(',')] if cols else []

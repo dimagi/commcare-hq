@@ -1,13 +1,11 @@
-from corehq.apps.adm.reports import ADMSectionView
-from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.adm.reports import DefaultReportADMSectionView
 
-class SupervisorADMSectionView(ADMSectionView):
-    """
-        In the hopes that this section of ADM will extend to more than just reports...
-    """
+class SupervisorReportsADMSection(DefaultReportADMSectionView):
+    name = "Supervisor Reports"
+    slug = "supervisor"
+    asynchronous = True
+
     adm_slug = "supervisor"
 
-class SupervisorReportsADMSection(GenericTabularReport, ADMSectionView):
-    name = "Supervisor Reports"
-    slug = "supervisor_reports"
+
 
