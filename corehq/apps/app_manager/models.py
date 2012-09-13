@@ -473,7 +473,7 @@ class DetailColumn(IndexedSchema):
     enum        = DictProperty()
     late_flag   = IntegerProperty(default=30)
     advanced    = StringProperty(default="")
-    ago_interval = FloatProperty(default=365.25)
+    time_ago_interval = FloatProperty(default=365.25)
 
     def rename_lang(self, old_lang, new_lang):
         for dct in (self.header, self.enum):
