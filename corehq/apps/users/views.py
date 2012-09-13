@@ -381,6 +381,18 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     context.update(_handle_user_form(request, domain, couch_user))
     return render_to_response(request, template, context)
 
+@require_can_edit_commcare_users
+@require_POST
+def update_user_data(request, domain, couch_user_id):
+    updated_data = json.loads(request.POST["user-data"])
+    user = CommCareUser.get(couch_user_id)
+    assert user.doc_type == "CommCareUser"
+    assert user.domain == domain
+    user.user_data = updated_data
+    user.save()
+    messages.success(request, "User data updated!")
+    return HttpResponseRedirect(reverse('user_account', args=[domain, couch_user_id]))
+
 @require_permission_to_edit_user
 def delete_phone_number(request, domain, couch_user_id):
     """

@@ -1,6 +1,4 @@
-<dl class="dl-horizontal">
-{% for key, val in couch_user.user_data.items %}
-    <dt>{{ key }}</dt>
-    <dd>{{ val }}</dd>
-{% endfor %}
-</dl>
+<form id="user-data-form" class="form form-horizontal" name="user-data-form" method="post" action="{% url update_user_data domain couch_user.user_id %}">
+    <input name="user-data" id="user-data" type="hidden" value='{{ couch_user.user_data_json|safe }}'></input>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Update Information</button></div>
+</form>
