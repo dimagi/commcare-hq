@@ -347,6 +347,17 @@ class GenericReportView(object):
         return None
 
     @property
+    def show_subsection_navigation(self):
+        """
+            Override this to show subsection navigation directly under the top navigation bar.
+            Use the subsection-navigation block in the template to specify what the subsection navigation should
+            look like.
+
+            First use of this is to separate ADM and Project Reports in the Reports tab.
+        """
+        return False
+
+    @property
     def template_context(self):
         """
             Intention: Override if necessary.
@@ -430,7 +441,8 @@ class GenericReportView(object):
             show_filters=self.fields or not self.hide_filters,
             breadcrumbs=self.breadcrumbs,
             default_url=self.default_report_url,
-            url=self.get_url(*url_args)
+            url=self.get_url(*url_args),
+            title=self.name
         )
         if hasattr(self, 'datespan'):
             self.context.update(datespan=self.datespan)
@@ -440,6 +452,9 @@ class GenericReportView(object):
                     zone=self.timezone.zone
                 ))
         self.context.update(self._validate_context_dict(self.template_context))
+        self.context['report'].update(
+            show_subsection_navigation=self.show_subsection_navigation
+        )
 
     def update_report_context(self):
         """

@@ -125,16 +125,19 @@ class ReportDispatcher(View):
                     continue
                 report = to_function(model)
                 if report.show_in_navigation(request, *args, **kwargs):
-                    selected_report = bool(report.slug == current_slug)
-                    section.append("""<li class="%(css_class)s"><a href="%(link)s" title="%(link_title)s">
-                    %(icon)s%(title)s
-                    </a></li>""" % dict(
-                        css_class="active" if selected_report else "",
-                        link=report.get_url(*args),
-                        link_title=report.description or "",
-                        icon='<i class="icon%s %s"></i> ' % ("-white" if selected_report else "", report.icon) if report.icon else "",
-                        title=report.name
-                    ))
+                    if hasattr(report, 'override_navigation_list'):
+                        section.extend(report.override_navigation_list(context))
+                    else:
+                        selected_report = bool(report.slug == current_slug)
+                        section.append("""<li class="%(css_class)s"><a href="%(link)s" title="%(link_title)s">
+                        %(icon)s%(title)s
+                        </a></li>""" % dict(
+                            css_class="active" if selected_report else "",
+                            link=report.get_url(*args),
+                            link_title=report.description or "",
+                            icon='<i class="icon%s %s"></i> ' % ("-white" if selected_report else "", report.icon) if report.icon else "",
+                            title=report.name
+                        ))
             if section:
                 report_nav.append(section_header)
                 report_nav.extend(section)
