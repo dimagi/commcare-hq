@@ -473,10 +473,25 @@ class DetailColumn(IndexedSchema):
     enum        = DictProperty()
     late_flag   = IntegerProperty(default=30)
     advanced    = StringProperty(default="")
+    time_ago_interval = FloatProperty(default=365.25)
 
     def rename_lang(self, old_lang, new_lang):
         for dct in (self.header, self.enum):
             _rename_key(dct, old_lang, new_lang)
+
+    class TimeAgoInterval(object):
+        map = {
+            'day': 1.0,
+            'week': 7.0,
+            'month': 30.4375,
+            'year': 365.25
+        }
+        @classmethod
+        def get_from_old_format(cls, format):
+            if format == 'years-ago':
+                return cls.map['year']
+            elif format == 'months-ago':
+                return cls.map['month']
 
     @property
     def xpath(self):
@@ -490,6 +505,14 @@ class DetailColumn(IndexedSchema):
             'status': '@status',
             'name': 'case_name',
         }.get(self.field, self.field)
+
+
+    @classmethod
+    def wrap(cls, data):
+        if data.get('format') in ('months-ago', 'years-ago'):
+            data['time_ago_interval'] = cls.TimeAgoInterval.get_from_old_format(data['format'])
+            data['format'] = 'time-ago'
+        return super(DetailColumn, cls).wrap(data)
 
 
 class Detail(DocumentSchema):
