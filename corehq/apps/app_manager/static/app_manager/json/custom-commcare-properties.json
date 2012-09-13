@@ -1,6 +1,6 @@
 [{
     "name": "Auto Update Frequency",
-    "description": "How often the application should attempt to check for updates.",
+    "description": "How often the application should attempt to check for form updates. Note that this does not apply to the CommCare binary: if you want to update from CommCare 2.0 to 2.1 you will have to reinstall the application from scratch.",
     "id": "cc-autoup-freq",
     "values": ["freq-never", "freq-daily", "freq-weekly"],
     "value_names": ["Never", "Daily", "Weekly"],
