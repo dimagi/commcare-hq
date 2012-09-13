@@ -76,7 +76,7 @@ def default(request, domain, template="reports/base_template.html"):
             section_name=ProjectReport.section_name,
         )
     )
-    context["report"].update(show_subsection_navigation=adm_utils.show_adm_nav(domain, context))
+    context["report"].update(show_subsection_navigation=adm_utils.show_adm_nav(domain, request))
     return render_to_response(request, template, context)
 
 @login_or_digest
