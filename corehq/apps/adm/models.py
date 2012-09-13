@@ -265,13 +265,13 @@ class ConfigurableADMColumn(ADMColumn):
         Use this for columns that will be end-user configurable.
         Default versions of this column, which are only superuser configurable, will have project = ""
     """
-    project = StringProperty()
+    domain = StringProperty()
     directly_configurable = BooleanProperty(default=False)
     config_doc = "ConfigurableADMColumn"
 
     @property
     def row_columns(self):
-        return ["name", "description", "couch_view", "key_format", "directly_configurable", "project"]
+        return ["name", "description", "couch_view", "key_format", "directly_configurable", "domain"]
 
     @property
     def default_properties(self):
@@ -395,7 +395,7 @@ class ADMCompareColumn(ConfigurableADMColumn):
         if d<= 0:
             return "--"
         n = value.get('numerator', 0)
-        return "%d/%d (%.2f%%)" % (n, d, float(n)/float(d)*100)
+        return "%d/%d (%.f%%)" % (n, d, float(n)/float(d)*100)
 
 
     @classmethod
@@ -422,7 +422,7 @@ class InactiveADMColumn(ConfigurableADMColumn):
 
     """
     returns_numerical = True
-    inactivity_milestone = IntegerProperty()
+    inactivity_milestone = IntegerProperty(default=0)
 
     @property
     def default_properties(self):
@@ -435,8 +435,25 @@ class InactiveADMColumn(ConfigurableADMColumn):
 
     def get_data(self, key, datespan=None):
         default_value = None
+        milestone_days_ago = tz_utils.adjust_datetime_to_timezone(datespan.enddate,
+            from_tz=datespan.timezone, to_tz=pytz.utc) - datetime.timedelta(days=self.inactivity_milestone)
+        data = self.get_view_results(
+            reduce=True,
+            startkey=key,
+            endkey=key+[milestone_days_ago.isoformat()]
+        )
+        if not data:
+            return default_value
+        data = data.first()
+        if not data:
+            return default_value
+        return data.get('value', 0)
 
-        return 0
+    def clean_value(self, value):
+        return value if value is not None else 0
+
+    def html_value(self, value):
+        return value if value is not None else "--"
 
 
 class ADMReport(Document, ADMEditableItemMixin):
@@ -446,7 +463,7 @@ class ADMReport(Document, ADMEditableItemMixin):
     reporting_section = StringProperty(default="supervisor")
     column_ids = ListProperty() # list of column ids
     key_type = StringProperty(default="user_id")
-    project = StringProperty()
+    domain = StringProperty()
 
     @property
     def row_columns(self):

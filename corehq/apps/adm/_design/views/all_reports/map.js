@@ -7,6 +7,6 @@ function (doc) {
         if (!doc.project)
             emit(["defaults", doc.reporting_section, doc.slug, doc._id], entry);
         else
-            emit(["projects", doc.project, doc.reporting_section, doc.slug, doc._id], entry);
+            emit(["projects", doc.domain, doc.reporting_section, doc.slug, doc._id], entry);
     }
 }

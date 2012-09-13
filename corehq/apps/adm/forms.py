@@ -53,7 +53,7 @@ class ConfigurableADMColumnForm(InterfaceEditableItemForm):
     def update(self, item):
         pass
 
-    
+
 DIRECT_CONFIG_FIELD = forms.BooleanField(label="Directly Configurable",
     initial=True,
     required=False,
