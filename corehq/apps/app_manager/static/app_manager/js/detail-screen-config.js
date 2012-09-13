@@ -89,6 +89,7 @@ var DetailScreenConfig = (function () {
             this.original['enum'] = this.original['enum'] || {};
             this.original.late_flag = this.original.late_flag || 30;
             this.original.filter_xpath = this.original.filter_xpath || "";
+            this.original.time_ago_interval = this.original.time_ago_interval || DetailScreenConfig.TIME_AGO.year;
 
             this.screen = screen;
             this.lang = screen.lang;
@@ -121,8 +122,7 @@ var DetailScreenConfig = (function () {
             this.format = uiElement.select([
                 {value: "plain", label: DetailScreenConfig.message.PLAIN_FORMAT},
                 {value: "date", label: DetailScreenConfig.message.DATE_FORMAT},
-                {value: "years-ago", label: DetailScreenConfig.message.YEARS_AGO_FORMAT},
-                {value: "months-ago", label: DetailScreenConfig.message.MONTHS_AGO_FORMAT},
+                {value: "time-ago", label: DetailScreenConfig.message.TIME_AGO_FORMAT},
                 {value: "phone", label: DetailScreenConfig.message.PHONE_FORMAT},
                 {value: "enum", label: DetailScreenConfig.message.ENUM_FORMAT},
                 {value: "late-flag", label: DetailScreenConfig.message.LATE_FLAG_FORMAT},
@@ -143,6 +143,14 @@ var DetailScreenConfig = (function () {
             this.filter_xpath_extra = uiElement.input().val(this.original.filter_xpath.toString());
             this.filter_xpath_extra.ui.prepend($('<span/>').text(DetailScreenConfig.message.FILTER_XPATH_EXTRA_LABEL));
 
+            this.time_ago_extra = uiElement.select([
+                {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.YEARS, value: DetailScreenConfig.TIME_AGO.year},
+                {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.MONTHS, value: DetailScreenConfig.TIME_AGO.month},
+                {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.WEEKS, value: DetailScreenConfig.TIME_AGO.week},
+                {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.DAYS, value: DetailScreenConfig.TIME_AGO.day},
+            ]).val(this.original.time_ago_interval.toString());
+            this.time_ago_extra.ui.prepend($('<span/>').text(DetailScreenConfig.message.TIME_AGO_EXTRA_LABEL));
+
             elements = [
                 'includeInShort',
                 'includeInLong',
@@ -152,7 +160,8 @@ var DetailScreenConfig = (function () {
                 'format',
                 'enum_extra',
                 'late_flag_extra',
-                'filter_xpath_extra'
+                'filter_xpath_extra',
+                'time_ago_extra'
             ];
 
             function fireChange() {
@@ -174,6 +183,8 @@ var DetailScreenConfig = (function () {
                     that.$extra.append(that.late_flag_extra.ui);
                 } else if (this.val() === 'filter') {
                     that.$extra.append(that.filter_xpath_extra.ui);
+                } else if (this.val() === 'time-ago') {
+                    that.$extra.append(that.time_ago_extra.ui);
                 }
             }).fire('change');
 
@@ -208,6 +219,7 @@ var DetailScreenConfig = (function () {
                 column.format = this.format.val();
                 column['enum'] = unformatEnum(this.enum_extra.$formatted_view.val(), this.lang, column['enum']);
                 column.late_flag = parseInt(this.late_flag_extra.val(), 10);
+                column.time_ago_interval = parseFloat(this.time_ago_extra.val());
                 column.filter_xpath = this.filter_xpath_extra.val();
                 if (!keepShortLong) {
                     delete column.includeInShort;
@@ -267,6 +279,7 @@ var DetailScreenConfig = (function () {
                 column.enum_extra.setEdit(that.edit);
                 column.late_flag_extra.setEdit(that.edit);
                 column.filter_xpath_extra.setEdit(that.edit);
+                column.time_ago_extra.setEdit(that.edit);
                 column.setGrip(true);
                 column.on('change', fireChange);
                 return column;
@@ -282,6 +295,7 @@ var DetailScreenConfig = (function () {
                 column.enum_extra.setEdit(false);
                 column.late_flag_extra.setEdit(false);
                 column.filter_xpath_extra.setEdit(false);
+                column.time_ago_extra.setEdit(false);
                 column.setGrip(false);
                 return column;
             }
@@ -622,8 +636,14 @@ var DetailScreenConfig = (function () {
 
         PLAIN_FORMAT: 'Plain',
         DATE_FORMAT: 'Date',
-        YEARS_AGO_FORMAT: 'Years Ago',
-        MONTHS_AGO_FORMAT: 'Months Ago',
+        TIME_AGO_FORMAT: 'Time Since Date',
+        TIME_AGO_EXTRA_LABEL: ' in ',
+        TIME_AGO_INTERVAL: {
+            YEARS: 'Years',
+            MONTHS: 'Months',
+            WEEKS: 'Weeks',
+            DAYS: 'Days'
+        },
         PHONE_FORMAT: 'Phone Number',
         ENUM_FORMAT: 'ID Mapping',
         ENUM_EXTRA_LABEL: 'Mapping: ',
@@ -639,6 +659,13 @@ var DetailScreenConfig = (function () {
         DELETE_COLUMN: 'Delete',
 
         UNSAVED_MESSAGE: 'You have unsaved detail screen configurations.'
+    };
+
+    DetailScreenConfig.TIME_AGO = {
+        year: 365.25,
+        month: 365.25 / 12,
+        week: 7,
+        day: 1
     };
 
     return DetailScreenConfig;

@@ -150,10 +150,10 @@ class CaseDisplay(object):
     def case_link(self):
         case_id, case_name = self.case.case_id, self.case.name
         try:
-            return "<a class='ajax_dialog' href='%s'>%s</a>" % (
+            return html.mark_safe("<a class='ajax_dialog' href='%s'>%s</a>" % (
                 html.escape(reverse('case_details', args=[self.report.domain, case_id])),
                 html.escape(case_name),
-                )
+            ))
         except NoReverseMatch:
             return "%s (bad ID format)" % case_name
 
