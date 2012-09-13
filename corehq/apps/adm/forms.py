@@ -47,25 +47,21 @@ class ConfigurableADMColumnForm(InterfaceEditableItemForm):
 
     _item_class = ConfigurableADMColumn
 
-    def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
-                 initial=None, error_class=ErrorList, label_suffix=':',
-                 empty_permitted=False, item_id=None):
-
-        super(ConfigurableADMColumnForm, self).__init__(data, files, auto_id, prefix, initial, error_class,
-            label_suffix, empty_permitted, item_id)
-
     def save(self):
         pass
 
     def update(self, item):
         pass
 
+    
+DIRECT_CONFIG_FIELD = forms.BooleanField(label="Directly Configurable",
+    initial=True,
+    required=False,
+    help_text="This column can be directly configured by the user."
+)
+
 class InactiveADMColumnForm(UpdateADMColumnForm):
-    directly_configurable = forms.BooleanField(label="Directly Configurable",
-        initial=True,
-        required=False,
-        help_text="This column can be directly configured by the user."
-    )
+    directly_configurable = DIRECT_CONFIG_FIELD
     inactivity_milestone = forms.IntegerField(label="Inactivity Milestone", initial=0,
         help_text="The number of days that must pass for a case to be marked as inactive."
     )
@@ -74,19 +70,21 @@ class InactiveADMColumnForm(UpdateADMColumnForm):
 
 
 class ADMCompareColumnForm(UpdateADMItemForm):
-    directly_configurable = forms.BooleanField(label="Directly Configurable",
-        initial=False,
-        required=False,
-        help_text="This column can be directly configured by the user."
-    ) #yeah, sorry. I got lazy.
-    numerator_id = forms.CharField(label="Numerator",
-        widget=forms.Select(choices=ADMCompareColumn.numerical_column_options())
-    )
-    denominator_id = forms.CharField(label="Denominator",
-        widget=forms.Select(choices=ADMCompareColumn.numerical_column_options())
-    )
+    directly_configurable = DIRECT_CONFIG_FIELD
+    numerator_id = forms.CharField(label="Numerator")
+    denominator_id = forms.CharField(label="Denominator")
 
     _item_class = ADMCompareColumn
+
+    def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
+                 initial=None, error_class=ErrorList, label_suffix=':',
+                 empty_permitted=False, item_id=None):
+        super(ADMCompareColumnForm, self).__init__(data, files, auto_id, prefix, initial, error_class,
+            label_suffix, empty_permitted, item_id)
+
+        self.fields['numerator_id'].widget = forms.Select(choices=ADMCompareColumn.numerical_column_options())
+        self.fields['denominator_id'].widget = forms.Select(choices=ADMCompareColumn.numerical_column_options())
+        self.fields['directly_configurable'].initial = False
 
 
 class ADMReportForm(UpdateADMItemForm):
