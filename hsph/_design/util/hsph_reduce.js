@@ -93,7 +93,7 @@ var HSPHBirthCounter = function () {
         self.calc.totalBirthEvents += (curEntry.numBirths > 0) ? 1 : 0;
         self.calc.totalBirthEventsOnRegistration += (curEntry.birthRegistration && (curEntry.numBirths > 0)) ? 1 : 0;
         self.calc.totalBirthRegistrationEvents += (curEntry.birthRegistration) ? 1 : 0;
-        self.calc.referredInBirths += (curEntry.referredInBirth) ? 1 : 0;
+        self.calc.totalReferredInBirths += (curEntry.referredInBirth) ? 1 : 0;
         if (curEntry.contactProvided)
             self.calc.totalBirthsWithContact += curEntry.numBirths;
         else

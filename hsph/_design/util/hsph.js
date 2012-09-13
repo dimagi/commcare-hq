@@ -127,7 +127,10 @@ function HSPHEntry(doc) {
 
         self.data.followupComplete = self.form.result_follow_up === "1";
         self.data.followupTransferred = self.form.result_field_management === "1";
-        self.data.followupWaitlisted = self.form.result_wait_list === "1";
+        self.data.followupWaitlisted = (self.form.follow_up_type === 'lost_to_follow_up' ||
+                                        // old
+                                        self.form.follow_up_type === 'unknown' ||
+                                        self.form.result_wait_list === "1")
         if (self.form.meta) {
             var dateAdmitted = (self.form.date_admission) ? new Date(self.form.date_admission) : new Date(self.form.meta.timeEnd);
             var timeEnd = new Date(self.form.meta.timeEnd);
@@ -164,9 +167,13 @@ function HSPHEntry(doc) {
 
     self.getOutcomeStats = function () {
         var follow_up = (self.form.follow_up) ? self.form.follow_up : self.form;
+
         self.data.maternalDeath = follow_up.maternal_death === 'dead';
         if (! self.data.maternalDeath) {
-            self.data.maternalNearMiss = (follow_up.icu === 'yes' ||
+            self.data.maternalNearMiss = (follow_up.maternal_near_miss === 'yes' ||
+                                          // old:
+                                            follow_up.icu === 'yes' ||
+                                            follow_up.cpr === 'yes' ||
                                             follow_up.fever === 'yes' ||
                                             follow_up.hysterectomy === 'yes' ||
                                             follow_up.transfusion === 'yes' ||
@@ -176,13 +183,21 @@ function HSPHEntry(doc) {
 
         self.data.numStillBirths = 0;
         for (var s=1; s<= 5; s++) {
-            self.data.numStillBirths += (follow_up['baby_'+s+'_birth_or_stillbirth'] === 'fresh_stillbirth' ||
-                                        follow_up['baby_'+s+'_birth_or_stillbirth'] === 'macerated_stillbirth') ? 1 : 0;
+            var val = follow_up['baby_'+s+'_birth_or_stillbirth'];
+            if (typeof val === "undefined") {
+                val = self.form['reg_baby_'+s+'_birth_or_stillbirth'];
+            }
+
+            self.data.numStillBirths += (val === 'fresh_stillbirth' || val === 'macerated_stillbirth') ? 1 : 0;
         }
 
         self.data.numNeonatalMortality = 0;
         for (var b=1; b <= 5; b++) {
-            self.data.numNeonatalMortality += (follow_up['baby_'+b+'_death'] === 'death') ? 1 : 0;
+            var val = follow_up['baby_'+b+'_death'];
+            if (typeof val === "undefined") {
+                val = self.form['reg_baby_'+b+'_death'];
+            }
+            self.data.numNeonatalMortality += (val === 'dead') ? 1 : 0;
         }
 
     }

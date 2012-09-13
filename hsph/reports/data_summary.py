@@ -14,10 +14,11 @@ class DataSummaryReport(CustomProjectReport, ProjectReportParametersMixin, Dates
 
 class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteDataMixin):
     name = "Primary Outcome Report"
-    slug = "hsph_priamry_outcome"
+    slug = "hsph_primary_outcome"
     fields = ['corehq.apps.reports.fields.DatespanField',
               'hsph.fields.SelectReferredInStatusField',
               'hsph.fields.SiteField']
+
     show_all_rows_option = True
 
     @property
@@ -76,9 +77,11 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
         rows = []
         if not self.selected_site_map:
             self._selected_site_map = self.site_map
-        keys = self.generate_keys(["site"])
 
-        referred_in = self.request_params.get(SelectReferredInStatusField.slug)
+        if self.request_params.get(SelectReferredInStatusField.slug) == 'referred':
+            keys = self.generate_keys(["site referred_in"])
+        else:
+            keys = self.generate_keys(["site"])
 
         for key in keys:
             data = get_db().view('hsph/data_summary',
@@ -87,6 +90,7 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
                 endkey=key+[self.datespan.enddate_param_utc]
             ).all()
             for item in data:
+
                 item = item.get('value', {})
                 region, district, site = self.get_site_table_values(key[1:4])
                 stat_keys = ['maternalDeaths', 'maternalNearMisses', 'stillBirthEvents', 'neonatalMortalityEvents']
