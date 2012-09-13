@@ -40,7 +40,7 @@ class ADMAdminInterface(GenericTabularReport):
     def report_context(self):
         context = super(ADMAdminInterface, self).report_context
         context.update(
-            detailed_description=mark_safe(self.detailed_description),
+            detailed_description=self.detailed_description,
             adm_item = dict(
                 type=self.adm_item_type,
                 form=self.form_class.__name__

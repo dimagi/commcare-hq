@@ -1,3 +1,4 @@
+from django.utils.safestring import mark_safe
 from corehq.apps.adm.admin import ADMAdminInterface
 from corehq.apps.adm.forms import UpdateADMColumnForm, UpdateReducedADMColumnForm, DaysSinceADMColumnForm, ConfigurableADMColumnForm
 from corehq.apps.adm.models import ReducedADMColumn, DaysSinceADMColumn, ConfigurableADMColumn
@@ -46,9 +47,9 @@ class ReducedADMColumnInterface(ADMColumnEditIterface):
     form_class = UpdateReducedADMColumnForm
 
     adm_item_type = "Reduced ADM Column"
-    detailed_description = """<p>This column returns the reduced value of the couch_view specified. This assumes that
+    detailed_description = mark_safe("""<p>This column returns the reduced value of the couch_view specified. This assumes that
     the reduced view returns a numerical value.</p>
-    <p><strong>Example Usage:</strong> Columns that display a count, like # Cases or # Submissions.</p>"""
+    <p><strong>Example Usage:</strong> Columns that display a count, like # Cases or # Submissions.</p>""")
 
     @property
     def headers(self):
@@ -66,9 +67,9 @@ class DaysSinceADMColumnInterface(ADMColumnEditIterface):
     form_class = DaysSinceADMColumnForm
 
     adm_item_type = "Days Since ADM Column"
-    detailed_description = """<p>Returns the number of days between the date of
+    detailed_description = mark_safe("""<p>Returns the number of days between the date of
     <span class="label">property_name</span> of the first item in the view and the
-    startdate or enddate of the datespan.</p>"""
+    startdate or enddate of the datespan.</p>""")
 
     @property
     def headers(self):

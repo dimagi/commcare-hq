@@ -29,11 +29,11 @@ class ADMEditableItemMixin(InterfaceEditableItemMixin):
 
     @property
     def editable_item_button(self):
-        return """<a href="#updateADMItemModal"
+        return mark_safe("""<a href="#updateADMItemModal"
         class="btn"
         data-item_id="%s"
         onclick="adm_interface.update_item(this)"
-        data-toggle="modal"><i class="icon icon-pencil"></i> Edit</a>""" % self.get_id
+        data-toggle="modal"><i class="icon icon-pencil"></i> Edit</a>""" % self.get_id)
 
     def _boolean_label(self, value, yes_text="Yes", no_text="No"):
         return mark_safe('<span class="label label-%s">%s</span>' %
@@ -166,26 +166,26 @@ class ReducedADMColumn(ADMColumn):
         Returns the value of the reduced view of whatever couch_view is specified.
         Generally used to retrieve countable items.
 
-        duration_of_project:
-        True -> do not pay attention to startdate and enddate when grabbing the reduced view.
-        False -> return reduced view between startdate and enddate
+        ignore_datespan:
+        True -> do not filter view by the stardate and enddate
+        False -> filter the view by the startdate and enddate
     """
     returns_numerical = BooleanProperty(default=False)
-    duration_of_project = BooleanProperty(default=False)
+    ignore_datespan = BooleanProperty(default=False)
 
     @property
     def row_columns(self):
         cols = super(ReducedADMColumn, self).row_columns
         cols.append("returns_numerical")
-        cols.append("duration_of_project")
+        cols.append("ignore_datespan")
         return cols
 
     def update_item(self, overwrite=True, **kwargs):
-        self.duration_of_project = kwargs.get('duration_of_project', False)
+        self.ignore_datespan = kwargs.get('ignore_datespan', False)
         super(ReducedADMColumn, self).update_item(overwrite, **kwargs)
 
     def get_data(self, key, datespan=None):
-        if self.duration_of_project:
+        if self.ignore_datespan:
             datespan = None
         start_end = self.standard_start_end(key, datespan)
         value = 0 if self.returns_numerical else None
@@ -279,13 +279,13 @@ class ConfigurableADMColumn(ADMColumn):
 
     @property
     def editable_item_button(self):
-        return """<a href="#updateADMItemModal"
+        return mark_safe("""<a href="#updateADMItemModal"
         class="btn"
         data-item_id="%s"
         data-form_class="%s"
         onclick="adm_interface.update_item(this)"
         data-toggle="modal"><i class="icon icon-pencil"></i> Edit</a>""" % \
-               (self.get_id, "%sForm" % self.__class__.__name__)
+               (self.get_id, "%sForm" % self.__class__.__name__))
 
     @property
     def default_properties_in_row(self):
@@ -301,8 +301,8 @@ class ConfigurableADMColumn(ADMColumn):
         if key == 'domain':
             return self.default_properties_in_row
         if key == "name":
-            return '%s <br />[%s] <span class="label label-inverse">%s</span>' % \
-                   (self.name, self.get_id, self.__class__.__name__)
+            return mark_safe('%s <br />[%s] <span class="label label-inverse">%s</span>' % \
+                   (self.name, self.get_id, self.__class__.__name__))
         return super(ConfigurableADMColumn, self).format_property(key, property)
 
     def format_key(self, key):

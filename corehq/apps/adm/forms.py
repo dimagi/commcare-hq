@@ -22,7 +22,7 @@ class UpdateADMColumnForm(UpdateADMItemForm):
 class UpdateReducedADMColumnForm(UpdateADMColumnForm):
     returns_numerical = forms.BooleanField(label="Returns a Number", initial=False, required=False,
         help_text="This view returns a number.")
-    duration_of_project = forms.BooleanField(label="Return All Records", initial=False, required=False,
+    ignore_datespan = forms.BooleanField(label="Ignore Datespan and Return All Records", initial=False, required=False,
         help_text="If unchecked, the records returned will be between the startdate and enddate of the datespan.")
 
     _item_class = ReducedADMColumn
