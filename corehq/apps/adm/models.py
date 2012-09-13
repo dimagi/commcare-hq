@@ -14,8 +14,8 @@ from dimagi.utils.modules import to_function
 from dimagi.utils.timezones import utils as tz_utils
 
 
-FORM_KEY_TYPES = (('user_id', 'form.meta.user_id'))
-CASE_KEY_TYPES = (('case_type', 'type'), ('project', 'domain'), ('user_id', 'user_id'))
+#FORM_KEY_TYPES = (('user_id', 'form.meta.user_id'))
+#CASE_KEY_TYPES = (('case_type', 'type'), ('project', 'domain'), ('user_id', 'user_id'))
 KEY_TYPE_OPTIONS = [('user_id', "User"), ("case_type", "Case Type")]
 
 REPORT_SECTION_OPTIONS = [("supervisor", "Supervisor Report")]
@@ -298,7 +298,7 @@ class ConfigurableADMColumn(ADMColumn):
         return mark_safe("\n".join(properties))
 
     def format_property(self, key, property):
-        if key == 'project':
+        if key == 'domain':
             return self.default_properties_in_row
         if key == "name":
             return '%s <br />[%s] <span class="label label-inverse">%s</span>' % \
