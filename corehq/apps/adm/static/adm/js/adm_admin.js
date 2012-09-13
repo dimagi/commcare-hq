@@ -36,6 +36,9 @@ var ADMAdminControl = function(options) {
             if (form_type)
                 url = url.replace(self.formType, form_type);
             return url;
+        },
+        resetSubmitButton = function (data) {
+            $('button[type="submit"]').button('reset');
         };
 
     self.init = function () {
@@ -53,6 +56,7 @@ var ADMAdminControl = function(options) {
                         method: 'POST',
                         url: overrideFormTypeInUrl(self.newFormSubmitURL, self.overrideNewFormType),
                         success: self.refreshAddADMItemForm,
+                        error: resetSubmitButton,
                         dataType: 'json'
                     });
                 }
@@ -68,7 +72,8 @@ var ADMAdminControl = function(options) {
                 self.updateADMItemModal.find('form').ajaxSubmit({
                     dataType: 'json',
                     url: overrideFormTypeInUrl(submit_url, self.currentItemFormType)+self.currentItemID+'/',
-                    success: self.refreshUpdateADMItemForm
+                    success: self.refreshUpdateADMItemForm,
+                    error: resetSubmitButton
                 });
                 return false;
             });
@@ -81,7 +86,8 @@ var ADMAdminControl = function(options) {
             dataType: 'json',
             url: overrideFormTypeInUrl(self.newFormSubmitURL, self.overrideNewFormType),
             method: 'GET',
-            success: self.refreshAddADMItemForm
+            success: self.refreshAddADMItemForm,
+            error: resetSubmitButton
         });
     };
 
@@ -92,7 +98,8 @@ var ADMAdminControl = function(options) {
             dataType: 'json',
             url: overrideFormTypeInUrl(self.updateFormSubmitURL, self.currentItemFormType)+self.currentItemID+'/',
             method: 'GET',
-            success: self.refreshUpdateADMItemForm
+            success: self.refreshUpdateADMItemForm,
+            error: resetSubmitButton
         })
     };
 
