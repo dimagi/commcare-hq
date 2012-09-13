@@ -608,16 +608,20 @@ BILLING_REPORT_MAP = {
     ]
 }
 
-ADM_PROJECT_REPORT_MAP = {
+ADM_SECTION_MAP = {
     "Supervisor Report": [
-        'corehq.apps.adm.reports.supervisor.WorkerRankTable'
-    ]
+        'corehq.apps.adm.reports.supervisor.SupervisorReportsADMSection',
+    ],
 }
 
 ADM_ADMIN_INTERFACE_MAP = {
     "ADM Default Columns": [
         'corehq.apps.adm.admin.columns.ReducedADMColumnInterface',
-        'corehq.apps.adm.admin.columns.DaysSinceADMColumnInterface'
+        'corehq.apps.adm.admin.columns.DaysSinceADMColumnInterface',
+        'corehq.apps.adm.admin.columns.ConfigurableADMColumnInterface'
+    ],
+    "ADM Default Reports": [
+        'corehq.apps.adm.admin.reports.ADMReportEditIterface',
     ]
 }
 
