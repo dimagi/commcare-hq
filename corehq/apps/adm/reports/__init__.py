@@ -141,7 +141,9 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
             subreport_list = subreport_list.all()
 
         if not subreport_list:
-            return ["""<li><span class="label"><i class="icon-white icon-info-sign"></i> No ADM Reports Configured</span></li>"""]
+            return ["""<li><span class="label">
+            <i class="icon-white icon-info-sign"></i> No ADM Reports Configured</span>
+            </li>"""]
 
         for report in subreport_list:
             key = report.get("key", [])
