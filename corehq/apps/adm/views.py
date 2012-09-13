@@ -1,5 +1,5 @@
 import json
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 import inspect
 from django.template.loader import render_to_string
 from corehq.apps.domain.decorators import require_superuser, require_previewer, login_and_domain_required
@@ -25,6 +25,10 @@ def default_adm_report(request, domain, template="adm/base_template.html", **kwa
     context["report"].update(show_subsection_navigation=True)
     return render_to_response(request, template, context)
 
+@require_superuser
+def default_adm_admin(request):
+    from corehq.apps.adm.admin.reports import ADMReportEditIterface
+    return HttpResponseRedirect(ADMReportEditIterface.get_url())
 
 @require_superuser
 def adm_item_form(request, template="adm/forms/admin_adm_item.html", **kwargs):
@@ -45,9 +49,6 @@ def adm_item_form(request, template="adm/forms/admin_adm_item.html", **kwargs):
     from corehq.apps.adm.forms import ConfigurableADMColumnForm
     if form_class == ConfigurableADMColumnForm:
         template = "adm/forms/configurable_admin_adm_item.html"
-
-    print "FORM CLASS", form_class
-    print "POST", request.POST
 
     success = False
     delete_item = bool(action == 'delete')
@@ -77,7 +78,6 @@ def adm_item_form(request, template="adm/forms/admin_adm_item.html", **kwargs):
         if form.is_valid():
             success = True
             item_result = form.update(adm_item) if adm_item else form.save()
-            print item_result
 
     if request.method == 'GET' or success:
         if adm_item and not delete_item:

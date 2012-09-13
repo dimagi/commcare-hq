@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from corehq.apps.adm.dispatcher import ADMAdminInterfaceDispatcher
 from corehq.apps.adm.models import ADMColumn
@@ -46,3 +47,7 @@ class ADMAdminInterface(GenericTabularReport):
             )
         )
         return context
+
+    @property
+    def default_report_url(self):
+        return reverse("default_adm_admin_interface")

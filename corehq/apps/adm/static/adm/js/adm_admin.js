@@ -20,7 +20,6 @@ var ADMAdminControl = function(options) {
                         self.currentItemFormType.replace('Form','')+
                         '</span></div></div>';
             }
-            console.log(prepend);
             formBodyDiv.html(data.form_update).prepend(prepend);
             modal.find('form button[type="submit"]').button('reset');
             if (data.success)
@@ -34,7 +33,6 @@ var ADMAdminControl = function(options) {
             $(rowElem).addClass('active');
         },
         overrideFormTypeInUrl = function (url, form_type) {
-            console.log(form_type);
             if (form_type)
                 url = url.replace(self.formType, form_type);
             return url;
@@ -79,7 +77,6 @@ var ADMAdminControl = function(options) {
     };
 
     self.init_new_form = function () {
-        console.log(self.overrideNewFormType);
         $.ajax({
             dataType: 'json',
             url: overrideFormTypeInUrl(self.newFormSubmitURL, self.overrideNewFormType),
@@ -89,11 +86,8 @@ var ADMAdminControl = function(options) {
     };
 
     self.update_item = function(button) {
-        console.log(button);
         self.currentItemID = $(button).data('item_id');
         self.currentItemFormType = $(button).data('form_class');
-
-        console.log(self.currentItemFormType);
         $.ajax({
             dataType: 'json',
             url: overrideFormTypeInUrl(self.updateFormSubmitURL, self.currentItemFormType)+self.currentItemID+'/',
@@ -103,13 +97,11 @@ var ADMAdminControl = function(options) {
     };
 
     self.refreshAddADMItemForm = function(data) {
-        console.log(self.overrideNewFormDiv);
         refreshForm(self.addADMItemModal, data, self.overrideNewFormDiv);
         reportTables.datatable.fnAddData(data.rows);
 
     };
     self.refreshUpdateADMItemForm = function(data) {
-        console.log(data);
         var row = $('[data-item_id="'+self.currentItemID+'"]').parent().parent()[0];
         if (data.deleted)
             reportTables.datatable.fnDeleteRow(reportTables.datatable.fnGetPosition(row));

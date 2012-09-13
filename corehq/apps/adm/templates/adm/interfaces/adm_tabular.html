@@ -17,6 +17,7 @@
 {% endblock %}
 
 {% block reportcontent %}
+    {% if detailed_description %}
     <div class="row-fluid">
         <div class="span12">
             <div class="well" style="margin:1em;">
@@ -25,6 +26,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
     {{ block.super }}
 {% endblock %}
 

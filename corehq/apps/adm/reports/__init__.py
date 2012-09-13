@@ -47,8 +47,6 @@ class ADMSectionView(GenericReportView):
     def default_report_url(self):
         return reverse('default_adm_report', args=[self.request.project])
 
-
-
     @classmethod
     def get_url(cls, *args, **kwargs):
         subreport = kwargs.get('subreport')
@@ -138,7 +136,13 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
             reduce=False,
             startkey=key,
             endkey=key+[{}]
-        ).all()
+        )
+        if subreport_list:
+            subreport_list = subreport_list.all()
+
+        if not subreport_list:
+            return ["""<li><span class="label"><i class="icon-white icon-info-sign"></i> No ADM Reports Configured</span></li>"""]
+
         for report in subreport_list:
             key = report.get("key", [])
             entry = report.get("value", {})
