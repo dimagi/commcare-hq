@@ -205,6 +205,7 @@ def what_os():
             env.host_os_map[env.host_string] = remote_os
         return env.host_os_map[env.host_string]
 
+@parallel
 @roles('pg','django_celery','django_app')
 @task
 def setup_server():
@@ -248,7 +249,8 @@ def bootstrap():
     execute(fix_locale_perms)
 
 
-@roles('django_celery', 'django_app')
+@parallel
+@roles('django_celery', 'django_app', 'staticfiles')
 def create_virtualenv():
     """ setup virtualenv on remote host """
     require('virtualenv_root', provided_by=('staging', 'production'))
@@ -258,7 +260,8 @@ def create_virtualenv():
     sudo('virtualenv %s %s' % (args, env.virtualenv_root), user=env.sudo_user)
 
 
-@roles('django_celery', 'django_app')
+@parallel
+@roles('django_celery', 'django_app', 'staticfiles')
 def clone_repo():
     """ clone a new copy of the git repository """
     with settings(warn_only=True):
@@ -275,7 +278,7 @@ def preindex_views():
     with cd(env.code_root):
         update_code()
         #sudo('nohup python manage.py sync_prepare_couchdb > preindex_views.out 2> preindex_views.err', user=env.sudo_user)
-        sudo('nohup %(virtualenv_root)s/bin/python manage.py sync_prepare_couchdb > preindex_views.out 2> preindex_views.err' % env, user=env.sudo_user)
+        sudo('nohup %(virtualenv_root)s/bin/python manage.py sync_prepare_couchdb_multi 8 dmyung &' % env, user=env.sudo_user)
 
 @parallel
 @roles('django_celery','django_app', 'staticfiles')
@@ -302,6 +305,7 @@ def deploy():
         execute(services_stop)
     try:
         execute(update_code)
+        execute(update_env)
         execute(_do_update_services)
         execute(migrate)
         execute(_do_collectstatic)
@@ -311,6 +315,7 @@ def deploy():
         execute(services_start)
 
 
+@parallel
 @roles('django_celery', 'django_app','staticfiles')
 @task
 def update_env():
@@ -318,7 +323,6 @@ def update_env():
     require('code_root', provided_by=('staging', 'production'))
     update_code()
     requirements = posixpath.join(env.code_root, 'requirements')
-    #with cd(requirements):
     with cd(env.code_root):
         cmd = ['%(virtualenv_root)s/bin/pip install' % env]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'prod-requirements.txt')]
