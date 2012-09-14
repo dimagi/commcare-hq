@@ -47,6 +47,7 @@ class Command(BaseCommand):
         while True:
             try:
                 #keep trying all the preindexes until they all complete satisfactorily.
+                print "Try to preindex views (%d/%d)..." % (len(completed), len(app_ids))
                 pool_set = pool.map(do_sync, app_ids.difference(completed))
                 completed.update(pool_set)
                 if len(completed) == len(apps):
@@ -81,8 +82,8 @@ class Command(BaseCommand):
         message += "Total time: %d seconds" % delta.seconds
         print message
 
-        #send_mail('Preindex Complete', message, 'hq-noreply@dimagi.com', ['commcarehq-dev@dimagi.com'], fail_silently=True)
-        #send_mail('Preindex Complete', message, 'hq-noreply@dimagi.com', ['dmyung@dimagi.com'], fail_silently=True)
+        #todo: customize this more for other users
+        send_mail('[commcare-hq] Preindex Complete', message, 'hq-noreply@dimagi.com', ['commcarehq-dev@dimagi.com'], fail_silently=True)
 
 
 
