@@ -69,7 +69,7 @@ var CaseManagement = function (o) {
 
     self.updateSelectedOwner = function (data, event) {
         var $selectOwner = $(event.currentTarget);
-        if ($selectOwner.val() == "") {
+        if ($selectOwner.val() == "" || $selectOwner.data('combobox').$element.val() == "") {
             self.enableSubmit(false);
         } else {
             self.enableSubmit(true);
@@ -99,6 +99,10 @@ var CaseManagement = function (o) {
             self.selected_owner_types.splice(self.selected_owner_types().indexOf(ownerType), 1);
             self.selected_owners.splice(self.selected_owners().indexOf(ownerID), 1);
         }
+    };
+
+    self.clearCaseSelection = function () {
+        self.selected_cases.removeAll();
     };
 
     self.updateCaseOwners = function (form, event) {
@@ -159,15 +163,32 @@ ko.bindingHandlers.grabUniqueDefault = {
 
 ko.bindingHandlers.comboboxOptions = {
     init: function (element, _, allBindingsAccessor) {
+        if ($(element).data('combobox')) {
+            return;
+        }
         $(element).combobox({
             placeholder: allBindingsAccessor()['comboboxCaption']
-        })
-            /* Shouldn't have to take up it's own line */
-            .data('combobox').$container.css({display: 'inline-block'});
+        });
+
+        var combobox = $(element).data('combobox');
+        combobox.$container.css({display: 'inline-block'});
+        combobox.$button.click(function () {
+            if (combobox.$element.val() === '') {
+                $(element).val(null).change();
+            }
+        });
+        $(element).change(function () {
+            if ($(this).val() === '') {
+                combobox.$element.val('');
+            }
+        });
     },
     update: function (element, valueAccessor, allBindingsAccessor) {
         ko.bindingHandlers.options.update(element, valueAccessor, allBindingsAccessor);
         var value = ko.utils.unwrapObservable(valueAccessor());
+        if (!$(element).find([value=""]).size()) {
+            $(element).append('<option value=""></option>');
+        }
         $(element).data('combobox').refresh();
     }
 };
