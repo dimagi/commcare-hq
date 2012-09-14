@@ -43,16 +43,16 @@ class Command(BaseCommand):
 
         apps = get_apps()
         completed = set()
+        app_ids = set(range(len(apps)))
         while True:
             try:
                 #keep trying all the preindexes until they all complete satisfactorily.
-                pool_set = pool.map(do_sync, range(len(apps)))
+                pool_set = pool.map(do_sync, app_ids.difference(completed))
                 completed.update(pool_set)
                 if len(completed) == len(apps):
                     break
             except Exception, ex:
                 print "Ran into an error doing preindex, restarting: %s" % ex
-                #logging.error("Error running preindex. Suppressing but logging: %s" % ex)
 
         #Git info
         message = "Preindex results:\n"
