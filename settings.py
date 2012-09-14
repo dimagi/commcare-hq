@@ -173,6 +173,7 @@ HQ_APPS = (
     'corehq.apps.unicel',
     'corehq.apps.reports',
     'corehq.apps.data_interfaces',
+    'corehq.apps.adm',
     'corehq.apps.hq_bootstrap',
     'corehq.apps.builds',
     'corehq.apps.orgs',
@@ -357,6 +358,7 @@ TOUCHFORMS_API_PASSWORD = "changeme"
 # import local settings if we find them
 LOCAL_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
+
 try:
     #try to see if there's an environmental variable set for local_settings
     if os.environ.has_key('CUSTOMSETTINGS') and os.environ['CUSTOMSETTINGS'] == "demo":
@@ -383,7 +385,9 @@ COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 # other urls that depend on the server
 XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
 
+
 COUCHDB_APPS = [
+        'adm',
         'api',
         'app_manager',
         'appstore',
@@ -615,6 +619,23 @@ BILLING_REPORT_MAP = {
     "Billing Tools": [
         "hqbilling.reports.tools.BillableCurrencyReport",
         "hqbilling.reports.tools.TaxRateReport"
+    ]
+}
+
+ADM_SECTION_MAP = {
+    "Supervisor Report": [
+        'corehq.apps.adm.reports.supervisor.SupervisorReportsADMSection',
+    ],
+}
+
+ADM_ADMIN_INTERFACE_MAP = {
+    "ADM Default Columns": [
+        'corehq.apps.adm.admin.columns.ReducedADMColumnInterface',
+        'corehq.apps.adm.admin.columns.DaysSinceADMColumnInterface',
+        'corehq.apps.adm.admin.columns.ConfigurableADMColumnInterface'
+    ],
+    "ADM Default Reports": [
+        'corehq.apps.adm.admin.reports.ADMReportEditIterface',
     ]
 }
 

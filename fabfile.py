@@ -110,7 +110,7 @@ def india():
     env.log_root   = _join(root, 'log')
     env.code_branch = 'master'
     env.sudo_user = 'commcarehq'
-    env.hosts = ['220.226.209.83']
+    env.hosts = ['220.226.209.82']
     env.environment = 'india'
     env.user = prompt("Username: ", default=env.user)
     env.service_manager = "supervisor"

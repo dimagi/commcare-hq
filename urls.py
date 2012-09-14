@@ -18,6 +18,7 @@ from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specifi
 from corehq.apps.settings.urls import domain_specific as settings_domain_specific
 from corehq.apps.settings.urls import users_redirect, domain_redirect
 from corehq.apps.domain.urls import domain_specific as domain_domain_specific
+from corehq.apps.adm.urls import adm_admin_interface_urls
 
 
 domain_specific = patterns('',
@@ -34,6 +35,7 @@ domain_specific = patterns('',
     (r'^phone/', include('corehq.apps.ota.urls')),
     (r'^sms/', include('corehq.apps.sms.urls')),
     (r'^reminders/', include('corehq.apps.reminders.urls')),
+    (r'^reports/adm/', include('corehq.apps.adm.urls')),
     (r'^reports/', include('corehq.apps.reports.urls')),
     (r'^data/', include('corehq.apps.data_interfaces.urls')),
     (r'^', include(hqwebapp_domain_specific)),
@@ -62,6 +64,7 @@ urlpatterns = patterns('',
     (r'^webforms/', include('touchforms.formplayer.urls')),
     (r'', include('corehq.apps.hqwebapp.urls')),
     (r'', include('corehq.apps.domain.urls')),
+    (r'^adm/', include(adm_admin_interface_urls)),
     (r'^hq/billing/', include('hqbilling.urls')),
     (r'^hq/multimedia/', include('corehq.apps.hqmedia.urls')),
     (r'^hq/admin/', include('corehq.apps.hqadmin.urls')),
