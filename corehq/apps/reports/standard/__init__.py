@@ -113,6 +113,13 @@ class ProjectReportParametersMixin(object):
             self._case_type = self.request_params.get('case_type', '')
         return self._case_type
 
+    _case_status = None
+    @property
+    def case_status(self):
+        if self._case_status is None:
+            from corehq.apps.reports.fields import SelectOpenCloseField
+            self._case_status = self.request_params.get(SelectOpenCloseField.slug, '')
+        return self._case_status
 
 
 class CouchCachedReportMixin(object):
