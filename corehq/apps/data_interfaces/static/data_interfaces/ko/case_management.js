@@ -115,11 +115,11 @@ var CaseManagement = function (o) {
             var case_id = self.selected_cases()[i],
                 xform;
             xform = casexml.CaseDelta.wrap({
-                    case_id: case_id,
-                    properties: {owner_id: new_owner}
-                }).asXFormInstance({
-                        user_id: self.webUserID
-                    }).serialize();
+                case_id: case_id,
+                properties: {owner_id: new_owner}
+            }).asXFormInstance({
+                user_id: self.webUserID
+            }).serialize();
 
             $.ajax({
                 url: self.receiverUrl,
@@ -154,5 +154,20 @@ ko.bindingHandlers.grabUniqueDefault = {
             $(element).val("");
         }
         $(element).change();
+    }
+};
+
+ko.bindingHandlers.comboboxOptions = {
+    init: function (element, _, allBindingsAccessor) {
+        $(element).combobox({
+            placeholder: allBindingsAccessor()['comboboxCaption']
+        })
+            /* Shouldn't have to take up it's own line */
+            .data('combobox').$container.css({display: 'inline-block'});
+    },
+    update: function (element, valueAccessor, allBindingsAccessor) {
+        ko.bindingHandlers.options.update(element, valueAccessor, allBindingsAccessor);
+        var value = ko.utils.unwrapObservable(valueAccessor());
+        $(element).data('combobox').refresh();
     }
 };
