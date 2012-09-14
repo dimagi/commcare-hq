@@ -1,17 +1,11 @@
-from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.standard import DatespanMixin, ProjectReportParametersMixin
 from django.core.urlresolvers import reverse
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
-from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
+from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard.inspect import CaseListMixin
-from corehq.apps.users.models import WebUser, CouchUser, CommCareUser
-from dimagi.utils.couch.database import get_db
-from dimagi.utils.decorators import inline
 from dimagi.utils.decorators.memoized import memoized
 
 class DataInterface(GenericReportView):
@@ -26,13 +20,10 @@ class DataInterface(GenericReportView):
     def default_report_url(self):
         return reverse('data_interfaces_default', args=[self.request.project])
 
-class CaseReassignmentInterface(CaseListMixin, DataInterface, DatespanMixin):
+class CaseReassignmentInterface(CaseListMixin, DataInterface):
     name = "Reassign Cases"
     slug = "reassign_cases"
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.DatespanField',
-              'corehq.apps.reports.fields.SelectCaseOwnerField',
-              'corehq.apps.reports.fields.SelectReportingGroupField']
+
     report_template_path = 'data_interfaces/interfaces/case_management.html'
 
     asynchronous = False

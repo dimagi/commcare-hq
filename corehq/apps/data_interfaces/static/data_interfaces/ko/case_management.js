@@ -69,7 +69,7 @@ var CaseManagement = function (o) {
 
     self.updateSelectedOwner = function (data, event) {
         var $selectOwner = $(event.currentTarget);
-        if ($selectOwner.val() == "") {
+        if ($selectOwner.val() == "" || $selectOwner.data('combobox').$element.val() == "") {
             self.enableSubmit(false);
         } else {
             self.enableSubmit(true);
@@ -101,6 +101,10 @@ var CaseManagement = function (o) {
         }
     };
 
+    self.clearCaseSelection = function () {
+        self.selected_cases.removeAll();
+    };
+
     self.updateCaseOwners = function (form, event) {
         var new_owner = $(form).find('#reassign_owner_select').val(),
             owner_type = $(form).find('#reassign_owner_type_select').val(),
@@ -115,11 +119,11 @@ var CaseManagement = function (o) {
             var case_id = self.selected_cases()[i],
                 xform;
             xform = casexml.CaseDelta.wrap({
-                    case_id: case_id,
-                    properties: {owner_id: new_owner}
-                }).asXFormInstance({
-                        user_id: self.webUserID
-                    }).serialize();
+                case_id: case_id,
+                properties: {owner_id: new_owner}
+            }).asXFormInstance({
+                user_id: self.webUserID
+            }).serialize();
 
             $.ajax({
                 url: self.receiverUrl,
@@ -154,5 +158,37 @@ ko.bindingHandlers.grabUniqueDefault = {
             $(element).val("");
         }
         $(element).change();
+    }
+};
+
+ko.bindingHandlers.comboboxOptions = {
+    init: function (element, _, allBindingsAccessor) {
+        if ($(element).data('combobox')) {
+            return;
+        }
+        $(element).combobox({
+            placeholder: allBindingsAccessor()['comboboxCaption']
+        });
+
+        var combobox = $(element).data('combobox');
+        combobox.$container.css({display: 'inline-block'});
+        combobox.$button.click(function () {
+            if (combobox.$element.val() === '') {
+                $(element).val(null).change();
+            }
+        });
+        $(element).change(function () {
+            if ($(this).val() === '') {
+                combobox.$element.val('');
+            }
+        });
+    },
+    update: function (element, valueAccessor, allBindingsAccessor) {
+        ko.bindingHandlers.options.update(element, valueAccessor, allBindingsAccessor);
+        var value = ko.utils.unwrapObservable(valueAccessor());
+        if (!$(element).find([value=""]).size()) {
+            $(element).append('<option value=""></option>');
+        }
+        $(element).data('combobox').refresh();
     }
 };

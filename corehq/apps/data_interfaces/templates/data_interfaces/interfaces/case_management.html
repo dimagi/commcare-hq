@@ -60,9 +60,9 @@
                 <select name="reassign_owner_type" id="reassign_owner_type_select" class="span2" data-bind="options: owner_types, optionsCaption: 'Select Type...', grabUniqueDefault: selected_owner_types, event: {change: updateSelectedOwnerType}"></select>
             <span data-bind="visible: should_show_owners">
                 <label for="reassign_owner_select">named</label>
-                <select name="reassign_owner" id="reassign_owner_select" data-bind="grabUniqueDefault: selected_owners, options: available_owners, optionsText: 'name', optionsValue: 'ownerid', optionsCaption: 'Select New Owner...', event: {change: updateSelectedOwner}"></select>
+                <select name="reassign_owner" id="reassign_owner_select" data-bind="grabUniqueDefault: selected_owners, comboboxOptions: available_owners, optionsText: 'name', optionsValue: 'ownerid', comboboxCaption: 'Select New Owner...', event: {change: updateSelectedOwner}, combobox: true"></select>
             </span>
-                <button type="submit" data-bind="hqbSubmitReady: enableSubmit" class="btn disabled">Reassign</button>
+                <button type="submit" data-bind="hqbSubmitReady: enableSubmit, disabled: enableSubmit" class="btn disabled">Reassign</button>
             </form>
         </div>
         {{ block.super }}

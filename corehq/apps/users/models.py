@@ -945,7 +945,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
         def parts():
             yield u'%s' % html.escape(self.raw_username)
             if self.full_name:
-                yield u' "%s" ' % html.escape(self.full_name)
+                yield u' "%s"' % html.escape(self.full_name)
 
         return safestring.mark_safe(''.join(parts()))
 
