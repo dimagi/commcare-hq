@@ -23,7 +23,7 @@ class CommCareCaseResource(Resource):
     date_closed = fields.CharField(attribute='date_closed', null=True)
 
     server_date_modified = fields.CharField(attribute='server_date_modified')
-    server_date_opened = fields.CharField(attribute='server_date_opened')
+    server_date_opened = fields.CharField(attribute='server_date_opened', null=True)
 
     xform_ids = fields.ListField(attribute='xform_ids')
 
