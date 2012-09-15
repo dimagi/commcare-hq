@@ -1,9 +1,10 @@
 from django.db.models import get_apps
 from django.core.management.base import BaseCommand
 from couchdbkit.ext.django.loading import couchdbkit_handler
-from multiprocessing import Pool
 from django.core.mail import send_mail
 from datetime import datetime
+
+from gevent.pool import Pool
 import logging
 
 try:
@@ -19,14 +20,20 @@ def do_sync(app_index):
     Get the app for the given index.
     For multiprocessing can't pass a complex object hence the call here...again
     """
-    app = get_apps()[app_index]
-    couchdbkit_handler.sync(app, verbosity=2, temp='tmp')
+    try:
+        app = get_apps()[app_index]
+        couchdbkit_handler.sync(app, verbosity=2, temp='tmp')
+    except Exception, ex:
+        logging.error("Exception running sync, but ignoring.\n\tapp=%s\n\t%s" % (app, ex))
+        print "Exception running sync, but ignoring.\n\tapp=%s\n\t%s" % (app, ex)
+        return None
     return app_index
 
 class Command(BaseCommand):
     help = 'Sync design docs to temporary ids...but multithreaded'
 
     def handle(self, *args, **options):
+        from gevent import monkey; monkey.patch_socket()
         start = datetime.utcnow()
         if len(args) == 0:
             num_pool = 4
@@ -39,21 +46,19 @@ class Command(BaseCommand):
             username = 'unknown'
 
         pool = Pool(num_pool)
-        counter = 0
 
         apps = get_apps()
         completed = set()
         app_ids = set(range(len(apps)))
-        while True:
-            try:
-                #keep trying all the preindexes until they all complete satisfactorily.
-                print "Try to preindex views (%d/%d)..." % (len(completed), len(app_ids))
-                pool_set = pool.map(do_sync, app_ids.difference(completed))
-                completed.update(pool_set)
-                if len(completed) == len(apps):
-                    break
-            except Exception, ex:
-                print "Ran into an error doing preindex, restarting: %s" % ex
+        for app_id in app_ids.difference(completed):
+            #keep trying all the preindexes until they all complete satisfactorily.
+            print "Pool count: %d" % pool.free_count()
+            print "Trying to preindex view (%d/%d) %s" % (app_id, len(apps), apps[app_id])
+            g = pool.spawn(do_sync, app_id)
+            if g.get() is not None:
+                completed.add(g.value)
+            else:
+                print "\tSync failed for %s, trying again" % (apps[app_id])
 
         #Git info
         message = "Preindex results:\n"
