@@ -276,9 +276,10 @@ def clone_repo():
 @task
 def preindex_views():
     with cd(env.code_root):
-        update_code()
+        #update_code()
+        update_env()
         #sudo('nohup python manage.py sync_prepare_couchdb > preindex_views.out 2> preindex_views.err', user=env.sudo_user)
-        sudo('nohup %(virtualenv_root)s/bin/python manage.py sync_prepare_couchdb_multi 8 dmyung &' % env, user=env.sudo_user)
+        sudo('nohup %(virtualenv_root)s/bin/python %(code_root)s/manage.py sync_prepare_couchdb_multi 8 %(user)s &' % env, user=env.sudo_user)
 
 @parallel
 @roles('django_celery','django_app', 'staticfiles')
@@ -315,9 +316,9 @@ def deploy():
         execute(services_start)
 
 
-@parallel
-@roles('django_celery', 'django_app','staticfiles')
+
 @task
+@roles('django_celery', 'django_app','staticfiles')
 def update_env():
     """ update external dependencies on remote host """
     require('code_root', provided_by=('staging', 'production'))
@@ -327,7 +328,8 @@ def update_env():
         cmd = ['%(virtualenv_root)s/bin/pip install' % env]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'prod-requirements.txt')]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'requirements.txt')]
-        sudo(' '.join(cmd), shell=False, pty=False, user=env.sudo_user)
+        sudo(' '.join(cmd), user=env.sudo_user)
+
 
 @roles('lb')
 def touch_apache():
