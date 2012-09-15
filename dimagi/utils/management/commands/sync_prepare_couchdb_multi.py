@@ -33,7 +33,7 @@ class Command(BaseCommand):
     help = 'Sync design docs to temporary ids...but multithreaded'
 
     def handle(self, *args, **options):
-        from gevent import monkey; monkey.patch_socket()
+        from gevent import monkey; monkey.patch_all(thread=False)
         start = datetime.utcnow()
         if len(args) == 0:
             num_pool = 4
@@ -52,16 +52,20 @@ class Command(BaseCommand):
         app_ids = set(range(len(apps)))
         for app_id in app_ids.difference(completed):
             #keep trying all the preindexes until they all complete satisfactorily.
-            print "Pool count: %d" % pool.free_count()
             print "Trying to preindex view (%d/%d) %s" % (app_id, len(apps), apps[app_id])
             g = pool.spawn(do_sync, app_id)
-            if g.get() is not None:
-                completed.add(g.value)
-            else:
-                print "\tSync failed for %s, trying again" % (apps[app_id])
+            if g.ready():
+                if g.get() is not None:
+                    completed.add(g.value)
+                else:
+                    print "\tSync failed for %s, trying again" % (apps[app_id])
+        print "All apps loaded into jobs, waiting..."
+        pool.join()
+        print "All apps reported complete."
 
         #Git info
         message = "Preindex results:\n"
+        message += "\tInitiated by: %s" % username
         if has_git:
             import settings
             repo = git.Repo(settings.filepath)
