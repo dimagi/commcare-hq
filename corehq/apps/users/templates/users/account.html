@@ -107,7 +107,7 @@
 {% block user-view %}
     <ul class="nav nav-tabs" id="project-settings-tabs">
         <li><a href="#basic-info" data-toggle="tab">Basic</a></li>
-    {% if couch_user.is_commcare_user and couch_user.user_data %}
+    {% if couch_user.is_commcare_user %}
         <li><a href="#user-data" data-toggle="tab">Custom Registration Data</a></li>
     {% endif %}
     {% if couch_user.user_id == request.couch_user.user_id and couch_user.is_commcare_user %}
