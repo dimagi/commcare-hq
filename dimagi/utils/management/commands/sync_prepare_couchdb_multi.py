@@ -50,7 +50,7 @@ class Command(BaseCommand):
         apps = get_apps()
         completed = set()
         app_ids = set(range(len(apps)))
-        for app_id in app_ids.difference(completed):
+        for app_id in sorted(app_ids.difference(completed)):
             #keep trying all the preindexes until they all complete satisfactorily.
             print "Trying to preindex view (%d/%d) %s" % (app_id, len(apps), apps[app_id])
             g = pool.spawn(do_sync, app_id)
