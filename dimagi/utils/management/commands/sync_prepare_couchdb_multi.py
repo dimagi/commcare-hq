@@ -3,9 +3,10 @@ from django.core.management.base import BaseCommand
 from couchdbkit.ext.django.loading import couchdbkit_handler
 from django.core.mail import send_mail
 from datetime import datetime
-
+from dimagi.utils.couch.database import get_db
 from gevent.pool import Pool
 import logging
+import time
 
 try:
     import git
@@ -14,12 +15,14 @@ except ImportError:
     has_git = False
 
 
-
 def do_sync(app_index):
     """
     Get the app for the given index.
     For multiprocessing can't pass a complex object hence the call here...again
     """
+
+    #sanity check:
+
     try:
         app = get_apps()[app_index]
         couchdbkit_handler.sync(app, verbosity=2, temp='tmp')
@@ -59,6 +62,10 @@ class Command(BaseCommand):
                     completed.add(g.value)
                 else:
                     print "\tSync failed for %s, trying again" % (apps[app_id])
+            while len(get_db().server.active_tasks()) > num_pool:
+                print "number of server active tasks exceeds pool size, waiting 30 seconds..."
+                time.sleep(30)
+
         print "All apps loaded into jobs, waiting..."
         pool.join()
         print "All apps reported complete."
