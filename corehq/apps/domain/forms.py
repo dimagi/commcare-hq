@@ -16,8 +16,8 @@ import datetime
 #
 # From http://www.peterbe.com/plog/automatically-strip-whitespace-in-django-forms
 #
-# I'll put this in each app, so they can be standalone, but it should really go in some centralized 
-# part of the distro. 
+# I'll put this in each app, so they can be standalone, but it should really go in some centralized
+# part of the distro.
 #
 # Need to remember to call:
 #
@@ -46,19 +46,19 @@ class DomainModelChoiceField(forms.ModelChoiceField):
 
 class DomainBoundModelChoiceField(forms.ModelChoiceField):
     """A model choice field for an object that is restricted by domain"""
-    
+
     _domain = None
-    
+
     def _get_domain(self):
         return self._domain
-    
+
     def _set_domain(self, domain):
         _domain = domain
         self.queryset = self.queryset.model.objects.filter(domain_membership__domain=domain)
-    
+
     domain = property(_get_domain, _set_domain)
 
-    
+
 ########################################################################################################
 
 class DomainSelectionForm(forms.Form):
@@ -71,13 +71,13 @@ class DomainSelectionForm(forms.Form):
         if domain_list is not None:
             self.fields['domain_list'].queryset = domain_list
 
-    def save( self, 
-              request, 
-              selected_domain_key = _SESSION_KEY_SELECTED_DOMAIN ):            
+    def save( self,
+              request,
+              selected_domain_key = _SESSION_KEY_SELECTED_DOMAIN ):
         d = Domain(id = self.cleaned_data['domain_list'].id,
                    name = self.cleaned_data['domain_list'].name )
         request.session[selected_domain_key] = d
-        request.user.selected_domain = d                                                          
+        request.user.selected_domain = d
         return True
 
 ########################################################################################################
@@ -93,8 +93,11 @@ class SnapshotSettingsMixin(forms.Form):
 class SnapshotApplicationForm(forms.Form):
     publish = BooleanField(label="Publish?", required=False)
     name = CharField(label="Name", required=True)
-    description = CharField(label="Description", required=False, widget=forms.Textarea,
-                            help_text="A technical description of the app design")
+    short_description = CharField(label="Short Description", required=False,
+        max_length=200, widget=forms.Textarea,
+        help_text="A brief description of the application (max. 200 characters)")
+    long_description = CharField(label="Long Description", required=False, widget=forms.Textarea,
+        help_text="A detailed technical description of the app design")
     deployment_date = CharField(label="Deployment date", required=False)
     phone_model = CharField(label="Phone model", required=False)
     user_type = CharField(label="User type", required=False,
@@ -102,23 +105,43 @@ class SnapshotApplicationForm(forms.Form):
     attribution_notes = CharField(label="Attribution notes", required=False,
         help_text="Enter any special instructions to users here. This will be shown just before users copy your project.", widget=forms.Textarea)
 
+    def __init__(self, *args, **kwargs):
+        super(SnapshotApplicationForm, self).__init__(*args, **kwargs)
+        self.fields.keyOrder = [
+            'publish',
+            'name',
+            'short_description',
+            'long_description',
+            'deployment_date',
+            'phone_model',
+            'user_type',
+            'attribution_notes'
+        ]
+
 class SnapshotSettingsForm(SnapshotSettingsMixin):
     title = CharField(label="Title", required=True)
     author = CharField(label="Author name", required=True)
     project_type = CharField(label="Project Category", required=True,
         help_text="e.g. MCH, HIV, etc.")
-    license = ChoiceField(label='License', required=False, choices=LICENSES.items(), help_text=render_to_string('domain/partials/license_explanations.html'))
-    description = CharField(label="Description", required=False, widget=forms.Textarea,
-                            help_text="A high-level overview of your project as a whole")
-    share_multimedia = BooleanField(label="Share all multimedia?", required=False, help_text="This will allow any user to see and use all multimedia in this project")
-    image = forms.ImageField(label="Exchange image", required=False, help_text="An optional image to show other users your logo or what your app looks like")
+    license = ChoiceField(label='License', required=False, choices=LICENSES.items(),
+        help_text=render_to_string('domain/partials/license_explanations.html'))
+    long_description = CharField(label="Long Description", required=False, widget=forms.Textarea,
+        help_text="A high-level overview of your project as a whole")
+    short_description = CharField(label="Short Description", required=False,
+        max_length=200, widget=forms.Textarea,
+        help_text="A brief description of your project (max. 200 characters)")
+    share_multimedia = BooleanField(label="Share all multimedia?", required=False,
+        help_text="This will allow any user to see and use all multimedia in this project")
+    image = forms.ImageField(label="Exchange image", required=False,
+        help_text="An optional image to show other users your logo or what your app looks like")
 
     def __init__(self, *args, **kw):
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
         self.fields.keyOrder = [
             'title',
             'author',
-            'description',
+            'short_description',
+            'long_description',
             'license',
             'city',
             'country',
@@ -132,7 +155,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
 class DomainGlobalSettingsForm(forms.Form):
     default_timezone = TimeZoneChoiceField(label="Default Timezone", initial="UTC")
     case_sharing = ChoiceField(label='Case Sharing', choices=(('false', 'Off'), ('true', 'On')))
-    
+
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
         timezone_field = TimeZoneField()
@@ -156,7 +179,7 @@ class DomainGlobalSettingsForm(forms.Form):
             return False
 
 class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
-    customer_type = ChoiceField(label='Customer Type', 
+    customer_type = ChoiceField(label='Customer Type',
                                 choices=(('basic', 'Basic'), ('plus', 'Plus'), ('full', 'Full')))
     is_test = ChoiceField(label='Test Project', choices=(('false', 'Real'), ('true', 'Test')))
 
@@ -198,7 +221,7 @@ class UpdateSelfForm(_BaseForm, forms.Form):
     last_name   =  forms.CharField(label='Last (family) name', max_length=User._meta.get_field('last_name').max_length)
     email       =  forms.EmailField(label ='Email address', max_length=User._meta.get_field('email').max_length)
 
-########################################################################################################                                   
+########################################################################################################
 
 class UpdateSelfTable(tables.Table):
     property = tables.Column(verbose_name="Property")

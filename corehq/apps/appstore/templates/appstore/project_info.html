@@ -48,10 +48,18 @@
     </div>
 </div>
 <dl class="dl-horizontal">
-    <dt>{% trans 'Description' %}</dt>
+    <dt>{% trans 'Short Description' %}</dt>
     <dd>
-        {% if project.description %}
-            {{ project.description }}
+        {% if project.short_description %}
+            {{ project.short_description }}
+        {% else %}
+            <h6>None</h6>
+        {% endif %}
+    </dd>
+    <dt>{% trans 'Long Description' %}</dt>
+    <dd>
+        {% if project.long_description %}
+            {{ project.long_description }}
         {% else %}
             <h6>None</h6>
         {% endif %}
@@ -130,10 +138,16 @@
                                 <dt>Deployment date</dt>
                                 <dd>{{ app.deployment_date.date }}</dd>
                             {% endif %}
-                            {% if app.description %}
-                                <dt>{% trans 'Description' %}</dt>
+                            {% if app.short_description %}
+                                <dt>{% trans 'Short Description' %}</dt>
                                 <dd>
-                                    {{ project.description }}
+                                    {{ app.short_description }}
+                                </dd>
+                            {% endif %}
+                            {% if app.long_description %}
+                                <dt>{% trans 'Long Description' %}</dt>
+                                <dd>
+                                    {{ app.long_description }}
                                 </dd>
                             {% endif %}
                             <dd><a href="{% url app_summary project app.id %}">Application summary</a></dd>

@@ -126,7 +126,7 @@ class Domain(Document, HQBillingDomainMixin):
     case_sharing = BooleanProperty(default=False)
     organization = StringProperty()
     slug = StringProperty() # the slug for this project namespaced within an organization
-    
+
     # domain metadata
     city = StringProperty()
     country = StringProperty()
@@ -134,7 +134,8 @@ class Domain(Document, HQBillingDomainMixin):
     project_type = StringProperty() # e.g. MCH, HIV
     customer_type = StringProperty() # plus, full, etc.
     is_test = BooleanProperty(default=False)
-    description = StringProperty()
+    long_description = StringProperty()
+    short_description = StringProperty()
     is_shared = BooleanProperty(default=False)
 
     # exchange/domain copying stuff
@@ -583,15 +584,15 @@ class Domain(Document, HQBillingDomainMixin):
 ##############################################################################################################
 #
 # Originally had my own hacky global storage of content type, but it turns out that contenttype.models
-# wisely caches content types! No hit to the db beyond the first call - no need for us to do our own 
+# wisely caches content types! No hit to the db beyond the first call - no need for us to do our own
 # custom caching.
 #
 # See ContentType.get_for_model() code for details.
 
 class OldDomain(models.Model):
     """Domain is the highest level collection of people/stuff
-       in the system.  Pretty much everything happens at the 
-       domain-level, including user membership, permission to 
+       in the system.  Pretty much everything happens at the
+       domain-level, including user membership, permission to
        see data, reports, charts, etc."""
 
     name  = models.CharField(max_length = 64, unique=True)
@@ -602,10 +603,10 @@ class OldDomain(models.Model):
 
     class Meta():
         db_table = "domain_domain"
-    
-    # Utility function - gets active domains in which user has an active membership 
+
+    # Utility function - gets active domains in which user has an active membership
     # Note that User.is_active is not checked here - we're only concerned about usable
-    # domains in which the user can theoretically participate, not whether the user 
+    # domains in which the user can theoretically participate, not whether the user
     # is cleared to login.
 
     @staticmethod
@@ -633,7 +634,7 @@ class OldDomain(models.Model):
             return OldDomain.objects.filter(name__in=domain_names)
         else:
             return OldDomain.objects.none()
-    
+
     def add(self, model_instance, is_active=True):
         """
         Add something to this domain, through the generic relation.
@@ -643,7 +644,7 @@ class OldDomain(models.Model):
         couch_user = model_instance.get_profile().get_couch_user()
         couch_user.add_domain_membership(self.name)
         couch_user.save()
-        
+
     def __unicode__(self):
         return self.name
 
