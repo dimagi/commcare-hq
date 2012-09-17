@@ -177,6 +177,7 @@ HQ_APPS = (
     'corehq.apps.builds',
     'corehq.apps.orgs',
     'corehq.apps.api',
+    'corehq.apps.indicators',
     'corehq.couchapps',
     'sofabed.forms',
     'soil',
@@ -189,6 +190,7 @@ HQ_APPS = (
     'loadtest',
     'hsph',
     'pathindia',
+    'mvp',
     'hqbilling',
     'a5288'
 )
@@ -399,6 +401,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'hqcase',
         'hqmedia',
         'importer',
+        'indicators',
         'migration',
         'phone',
         'receiverwrapper',
@@ -417,6 +420,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'dca',
         'hsph',
         'pathindia',
+        'mvp',
         'hqbilling',
 
     ]
