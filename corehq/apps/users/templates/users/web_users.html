@@ -112,6 +112,35 @@
         {% endfor %}
         </tbody>
     </table>
+    
+    {% if invitations %}
+    <h2>Pending Invitations</h2>
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>{% trans "E-mail" %}</th>
+                <th>{% trans "Role" %}</th>
+                <th>{% trans "Date" %} (UTC)</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for invitation in invitations %}
+            <tr>
+                <td>
+                    {{ invitation.email }}
+                </td>
+                <td>
+                    {{ invitation.role_label }}
+                </td>
+                <td>
+                    {{ invitation.invited_on }}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
     <h2>Roles</h2>
     <div id="user-roles-table" style="display: none;">
         <table class="table table-striped table-bordered">
