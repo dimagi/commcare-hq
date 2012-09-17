@@ -1750,10 +1750,16 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
             except Exception:
                 raise Http404
 
-        parent_app_id = original_app.get('copy_of') or original_app['_id']
+        if original_app.get('copy_of'):
+            parent_app_id = original_app.get('copy_of')
+            min_version = original_app['version']
+        else:
+            parent_app_id = original_app['_id']
+            min_version = -1
+
         latest_app = get_db().view('app_manager/applications',
             startkey=['^ReleasedApplications', domain, parent_app_id, {}],
-            endkey=['^ReleasedApplications', domain, parent_app_id, original_app['version']],
+            endkey=['^ReleasedApplications', domain, parent_app_id, min_version],
             limit=1,
             descending=True,
             include_docs=True
