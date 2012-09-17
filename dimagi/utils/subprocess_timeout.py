@@ -27,10 +27,15 @@ class Subprocess(object):
         thread.start()
 
         thread.join(timeout)
-        if thread.is_alive():
+        if thread.is_alive() and self.process:
             self.process.terminate()
             thread.join()
             raise ProcessTimedOut("Process `%s` timed out after %s seconds" % (
+                ' '.join(self.args[0] if self.args else self.kwargs.get('args')),
+                timeout
+            ))
+        elif self.process is None:
+            raise ProcessTimedOut("Process `%s` timed out after %s seconds before even getting a chance to start" % (
                 ' '.join(self.args[0] if self.args else self.kwargs.get('args')),
                 timeout
             ))
