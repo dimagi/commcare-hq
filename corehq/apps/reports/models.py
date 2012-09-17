@@ -99,6 +99,10 @@ class TempCommCareUser(object):
     def raw_username(self):
         return self.username
 
+    @property
+    def full_name(self):
+        return ""
+
 class ReportNotification(Document, UnicodeMixIn):
     domain = StringProperty()
     user_ids = StringListProperty()
