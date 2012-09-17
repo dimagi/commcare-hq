@@ -105,7 +105,7 @@ class IHForCHFField(ReportSelectField):
     default_option = "Select IHF/CHF..."
 
     @classmethod
-    def getIHFCHFFacilities(cls):
+    def _get_facilities(cls):
         facilities = dict(ihf=[], chf=[])
         data_type = FixtureDataType.by_domain_tag(cls.domain, 'site').first()
         data_items = FixtureDataItem.by_data_type(cls.domain, data_type.get_id)
@@ -117,6 +117,33 @@ class IHForCHFField(ReportSelectField):
             facilities[ihf_chf].append(item.fields)
 
         return facilities
+
+    @classmethod
+    def get_facilities(cls):
+        return dict([(ihf_chf, map(lambda f: f['site_id'], facilities))
+                     for (ihf_chf, facilities)
+                     in cls._get_facilities().items()])
+
+    @classmethod
+    def get_selected_facilities(cls, site_map):
+        def filter_by_sitefield(facilities):
+            for f in facilities:
+                region_id = f['region_id']
+                if region_id not in site_map:
+                    continue
+
+                district_id = f['district_id']
+                districts = site_map[region_id]['districts']
+                if district_id not in districts:
+                    continue
+
+                site_number = f['site_number']
+                if site_number in districts[district_id]['sites']:
+                    yield f['site_id']
+
+        return dict([(ihf_chf, filter_by_sitefield(facilities))
+                     for (ihf_chf, facilities)
+                     in cls._get_facilities().items()])
 
 
 class FacilityStatusField(ReportSelectField):

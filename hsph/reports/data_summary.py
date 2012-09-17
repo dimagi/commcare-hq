@@ -137,26 +137,9 @@ class SecondaryOutcomeReport(DataSummaryReport, HSPHSiteDataMixin):
 
     @property
     def report_context(self):
+
         site_map = self.selected_site_map or self.site_map
-
-        def filter_by_sitefield(facilities):
-            for f in facilities:
-                region_id = f['region_id']
-                if region_id not in site_map:
-                    continue
-
-                district_id = f['district_id']
-                districts = site_map[region_id]['districts']
-                if district_id not in districts:
-                    continue
-
-                site_number = f['site_number']
-                if site_number in districts[district_id]['sites']:
-                    yield f['site_id']
-
-        facilities = dict([(ihf_chf, filter_by_sitefield(facilities))
-                           for (ihf_chf, facilities)
-                           in IHForCHFField.getIHFCHFFacilities().items()])
+        facilities = IHForCHFField.get_selected_facilities(site_map)
 
         return dict(
             ihf_data=self._get_data(facilities['ihf']),
