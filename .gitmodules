@@ -85,3 +85,6 @@
 [submodule "submodules/a5288-reports"]
 	path = submodules/a5288-reports
 	url = git://github.com/dimagi/a5288-reports.git
+[submodule "submodules/mvp"]
+	path = submodules/mvp
+	url = git://github.com/dimagi/mvp.git
