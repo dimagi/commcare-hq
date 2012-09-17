@@ -57,6 +57,8 @@ class ProjectStatusDashboardReport(ProjectManagementReport):
             key_suffix = [self.region]
 
         facilities = IHForCHFField.getIHFCHFFacilities()
+        for fac in facilities:
+            facilities[fac] = map(lambda f: f['site_id'], facilities[fac])
 
         ihf_data, ihf_collectors = self._gen_facility_data(key_prefix, key_suffix, facilities['ihf'])
         chf_data, chf_collectors = self._gen_facility_data(key_prefix, key_suffix, facilities['chf'])
@@ -161,6 +163,8 @@ class ImplementationStatusDashboardReport(GenericTabularReport, ProjectManagemen
             self._selected_site_map = self.site_map
         site_keys = self.generate_keys()
         facilities = IHForCHFField.getIHFCHFFacilities()
+        for fac in facilities:
+            facilities[fac] = map(lambda f: f['site_id'], facilities[fac])
 
         key_prefix = ["status"] if self.facility_status else ["all"]
         key_suffix = [self.facility_status] if self.facility_status else []

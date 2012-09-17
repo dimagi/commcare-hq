@@ -110,7 +110,12 @@ class IHForCHFField(ReportSelectField):
         data_type = FixtureDataType.by_domain_tag(cls.domain, 'site').first()
         data_items = FixtureDataItem.by_data_type(cls.domain, data_type.get_id)
         for item in data_items:
-            facilities.get(item.fields.get("ihf_chf", "").lower(), []).append(item.fields.get("site_id"))
+            ihf_chf = item.fields.get("ihf_chf", "").lower()
+            if ihf_chf == 'ifh':  # typo in some test data
+                ihf_chf = 'ihf'
+
+            facilities[ihf_chf].append(item.fields)
+
         return facilities
 
 
@@ -126,7 +131,6 @@ class FacilityStatusField(ReportSelectField):
     default_option = "Select Status..."
 
 
-
 class FacilityField(ReportSelectField):
     slug = "facility"
     domain = 'hsph'
@@ -137,10 +141,10 @@ class FacilityField(ReportSelectField):
 
     def update_params(self):
         super(FacilityField, self).update_params()
-        self.options = self.getFacilties()
+        self.options = self.getFacilities()
 
     @classmethod
-    def getFacilties(cls):
+    def getFacilities(cls):
         data_type = FixtureDataType.by_domain_tag(cls.domain, 'site').first()
         data_items = FixtureDataItem.by_data_type(cls.domain, data_type.get_id)
         return [dict(text=item.fields.get("site_name"), val=item.fields.get("site_id")) for item in data_items]

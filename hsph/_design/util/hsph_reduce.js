@@ -253,15 +253,19 @@ var HSPHOutcomesCounter = function () {
         maternalDeaths: 0,
         maternalNearMisses: 0,
         stillBirthEvents: 0,
-        neonatalMortalityEvents: 0
+        neonatalMortalityEvents: 0,
+        positiveOutcomes: 0,
+        positiveOutcomeEvents: 0,
+        negativeOutcomeEvents: 0,
+        liveBirthEvents: 0,
+        lostToFollowUp: 0,
+        followedUp: 0,
+        combinedMortalityOutcomes: 0
     };
 
     self.calc = extend({}, stats);
     self.calc.atDischarge = extend({}, stats);
     self.calc.on7Days = extend({}, stats);
-    self.calc.lostToFollowUp = 0;
-    self.calc.totalOutcomes = 0;
-    self.calc.totalPositiveOutcomes = 0;
 
     self.rereduce = function (agEntry) {
         for (var key in stats)  {
@@ -269,9 +273,6 @@ var HSPHOutcomesCounter = function () {
             self.calc.atDischarge[key] += agEntry.atDischarge[key];
             self.calc.on7Days[key] += agEntry.on7Days[key];
         }
-        self.calc.totalOutcomes += agEntry.totalOutcomes;
-        self.calc.lostToFollowUp += agEntry.lostToFollowUp;
-        self.calc.totalPositiveOutcomes += agEntry.totalPositiveOutcomes;
     };
 
     self.reduce = function (curEntry) {
@@ -279,6 +280,17 @@ var HSPHOutcomesCounter = function () {
         stats.maternalNearMisses = (curEntry.maternalNearMiss) ? 1 : 0;
         stats.stillBirthEvents = (curEntry.numStillBirths > 0) ? 1 : 0;
         stats.neonatalMortalityEvents = (curEntry.numNeonatalMortality > 0) ? 1 : 0;
+        stats.positiveOutcomes = (stats.maternalDeaths + stats.maternalNearMisses +
+                                  stats.stillBirthEvents + stats.neonatalMortalityEvents);
+        stats.positiveOutcomeEvents = stats.positiveOutcomes > 0 ? 1 : 0;
+        stats.negativeOutcomeEvents = 1 - stats.positiveOutcomeEvents;
+        stats.combinedMortalityOutcomes = stats.maternalDeaths + stats.stillBirthEvents + stats.neonatalMortalityEvents;
+        stats.liveBirthEvents = (curEntry.numBirths > curEntry.numStillBirths) ? 1 : 0;
+
+        if (curEntry.lostToFollowUp)
+            stats.lostToFollowUp = 1;
+        else if (curEntry.followupComplete)
+            stats.followedUp = 1;
 
         for (var key in stats) {
             if (curEntry.outcomeOnDischarge)
@@ -286,14 +298,7 @@ var HSPHOutcomesCounter = function () {
             else if (curEntry.outcomeOn7Days)
                 self.calc.on7Days[key] += stats[key];
             self.calc[key] += stats[key];
-            self.calc.totalPositiveOutcomes += stats[key];
         }
-
-        if (curEntry.followupWaitlisted)
-            self.calc.lostToFollowUp += 1;
-        else if (curEntry.followupComplete)
-            self.calc.totalOutcomes += 1;
-
     };
 
     self.getResult = function () {
