@@ -1,22 +1,25 @@
-def get_server_url(server_root, username, password):
+def get_server_url(http_method, server_root, username, password):
     if username and password:
-        return "http://%(user)s:%(pass)s@%(server)s" % \
-            {"user": username,
+        return "%(http_method)s://%(user)s:%(pass)s@%(server)s" % \
+            {
+                "http_method": http_method,
+                "user": username,
              "pass": password, 
              "server": server_root }
     else:
-        return "http://%(server)s" % {"server": server_root }
+        return "%(http_method)s://%(server)s" % {"http_method": http_method, "server": server_root }
 
-def get_dynamic_db_settings(server_root, username, password, dbname, installed_apps):
+def get_dynamic_db_settings(server_root, username, password, dbname, installed_apps, use_https=False):
     """
     Get dynamic database settings.  Other apps can use this if they want to change
     settings
     """
-    
-    server = get_server_url(server_root, username, password)
-    database = "%(server)s/%(database)s" % {"server": server, "database": dbname}
+
+    http_method = "https" if use_https else "http"
+    server_url = get_server_url(http_method, server_root, username, password)
+    database = "%(server)s/%(database)s" % {"server": server_url, "database": dbname}
     posturl = "http://%s/%s/_design/couchforms/_update/xform/" % (server_root, dbname)
-    return {"COUCH_SERVER":  server,
+    return {"COUCH_SERVER":  server_url,
             "COUCH_DATABASE": database,
             "XFORMS_POST_URL": posturl }
             
