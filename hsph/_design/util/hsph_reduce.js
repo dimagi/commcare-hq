@@ -283,14 +283,13 @@ var HSPHOutcomesCounter = function () {
         stats.positiveOutcomes = (stats.maternalDeaths + stats.maternalNearMisses +
                                   stats.stillBirthEvents + stats.neonatalMortalityEvents);
         stats.positiveOutcomeEvents = stats.positiveOutcomes > 0 ? 1 : 0;
-        stats.negativeOutcomeEvents = 1 - stats.positiveOutcomeEvents;
         stats.combinedMortalityOutcomes = stats.maternalDeaths + stats.stillBirthEvents + stats.neonatalMortalityEvents;
         stats.liveBirthEvents = (curEntry.numBirths > curEntry.numStillBirths) ? 1 : 0;
-
-        if (curEntry.lostToFollowUp)
-            stats.lostToFollowUp = 1;
-        else if (curEntry.followupComplete)
-            stats.followedUp = 1;
+        
+        stats.lostToFollowUp = (curEntry.lostToFollowUp) ? 1 : 0;
+        stats.followedUp = (curEntry.followupComplete) ? 1 : 0;
+        
+        stats.negativeOutcomeEvents = 1 - stats.positiveOutcomeEvents - stats.lostToFollowUp;
 
         for (var key in stats) {
             if (curEntry.outcomeOnDischarge)
