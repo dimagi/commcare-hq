@@ -308,7 +308,7 @@ def create_snapshot(request, domain):
                 'title': published_snapshot.title,
                 'author': published_snapshot.author,
                 'share_multimedia': True,
-                'long_description': published_snapshot.long_description,
+                'description': published_snapshot.description,
                 'short_description': published_snapshot.short_description
             })
             for app in published_snapshot.full_applications():
@@ -324,7 +324,7 @@ def create_snapshot(request, domain):
                 app_forms.append((app, SnapshotApplicationForm(initial={
                     'publish': True,
                     'name': original.name,
-                    'long_description': original.long_description,
+                    'description': original.description,
                     'short_description': original.short_description,
                     'deployment_date': original.deployment_date,
                     'user_type': original.user_type,
@@ -375,7 +375,7 @@ def create_snapshot(request, domain):
         new_domain = domain.save_snapshot()
         if request.POST['license'] in LICENSES.keys():
             new_domain.license = request.POST['license']
-        new_domain.long_description = request.POST['long_description']
+        new_domain.description = request.POST['description']
         new_domain.short_description = request.POST['short_description']
         new_domain.project_type = request.POST['project_type']
         new_domain.region = request.POST['region']
@@ -411,7 +411,7 @@ def create_snapshot(request, domain):
             original_id = application.original_doc
             if request.POST.get("%s-publish" % original_id, False):
                 application.name = request.POST["%s-name" % original_id]
-                application.long_description = request.POST["%s-long_description" % original_id]
+                application.description = request.POST["%s-description" % original_id]
                 application.short_description = request.POST["%s-short_description" % original_id]
                 date_picked = request.POST["%s-deployment_date" % original_id].split('-')
                 if len(date_picked) > 1:
@@ -470,7 +470,7 @@ def snapshot_info(request, domain):
             'customer_type': domain.customer_type,
             'is_test': json.dumps(domain.is_test),
             'short_description': domain.short_description,
-            'long_description': domain.long_description,
+            'description': domain.description,
             'is_shared': domain.is_shared,
             'license': domain.license
         })

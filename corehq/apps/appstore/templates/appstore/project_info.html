@@ -58,8 +58,8 @@
     </dd>
     <dt>{% trans 'Long Description' %}</dt>
     <dd>
-        {% if project.long_description %}
-            {{ project.long_description }}
+        {% if project.description %}
+            {{ project.description }}
         {% else %}
             <h6>None</h6>
         {% endif %}
@@ -144,10 +144,10 @@
                                     {{ app.short_description }}
                                 </dd>
                             {% endif %}
-                            {% if app.long_description %}
+                            {% if app.description %}
                                 <dt>{% trans 'Long Description' %}</dt>
                                 <dd>
-                                    {{ app.long_description }}
+                                    {{ app.description }}
                                 </dd>
                             {% endif %}
                             <dd><a href="{% url app_summary project app.id %}">Application summary</a></dd>

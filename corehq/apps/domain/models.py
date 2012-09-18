@@ -134,7 +134,7 @@ class Domain(Document, HQBillingDomainMixin):
     project_type = StringProperty() # e.g. MCH, HIV
     customer_type = StringProperty() # plus, full, etc.
     is_test = BooleanProperty(default=False)
-    long_description = StringProperty()
+    description = StringProperty()
     short_description = StringProperty()
     is_shared = BooleanProperty(default=False)
 

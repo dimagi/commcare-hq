@@ -96,7 +96,7 @@ class SnapshotApplicationForm(forms.Form):
     short_description = CharField(label="Short Description", required=False,
         max_length=200, widget=forms.Textarea,
         help_text="A brief description of the application (max. 200 characters)")
-    long_description = CharField(label="Long Description", required=False, widget=forms.Textarea,
+    description = CharField(label="Long Description", required=False, widget=forms.Textarea,
         help_text="A detailed technical description of the app design")
     deployment_date = CharField(label="Deployment date", required=False)
     phone_model = CharField(label="Phone model", required=False)
@@ -111,7 +111,7 @@ class SnapshotApplicationForm(forms.Form):
             'publish',
             'name',
             'short_description',
-            'long_description',
+            'description',
             'deployment_date',
             'phone_model',
             'user_type',
@@ -125,7 +125,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         help_text="e.g. MCH, HIV, etc.")
     license = ChoiceField(label='License', required=False, choices=LICENSES.items(),
         help_text=render_to_string('domain/partials/license_explanations.html'))
-    long_description = CharField(label="Long Description", required=False, widget=forms.Textarea,
+    description = CharField(label="Long Description", required=False, widget=forms.Textarea,
         help_text="A high-level overview of your project as a whole")
     short_description = CharField(label="Short Description", required=False,
         max_length=200, widget=forms.Textarea,
@@ -141,7 +141,7 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             'title',
             'author',
             'short_description',
-            'long_description',
+            'description',
             'license',
             'city',
             'country',
