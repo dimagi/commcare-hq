@@ -256,7 +256,6 @@ var HSPHOutcomesCounter = function () {
         neonatalMortalityEvents: 0,
         positiveOutcomes: 0,
         positiveOutcomeEvents: 0,
-        negativeOutcomeEvents: 0,
         liveBirthEvents: 0,
         lostToFollowUp: 0,
         followedUp: 0,
@@ -288,8 +287,6 @@ var HSPHOutcomesCounter = function () {
         
         stats.lostToFollowUp = (curEntry.lostToFollowUp) ? 1 : 0;
         stats.followedUp = (curEntry.followupComplete) ? 1 : 0;
-        
-        stats.negativeOutcomeEvents = 1 - stats.positiveOutcomeEvents - stats.lostToFollowUp;
 
         for (var key in stats) {
             if (curEntry.outcomeOnDischarge)

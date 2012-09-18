@@ -119,8 +119,12 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
                 row.extend(seven_days)
                 row.extend(total)
 
+                negative_outcomes = item['totalBirthRegistrationEvents'] - \
+                                    item['positiveOutcomeEvents'] - \
+                                    item['lostToFollowUp']
+
                 row.extend([item['positiveOutcomeEvents'],
-                            item['negativeOutcomeEvents'],
+                            negative_outcomes,
                             item['lostToFollowUp']])
 
                 rows.append(row)
