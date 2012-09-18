@@ -17,6 +17,7 @@ from corehq.apps.app_manager import fixtures
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError, WrappedNode
 from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
+from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
@@ -1164,6 +1165,18 @@ class ApplicationBase(VersionedDoc):
 def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
         raise ValueError("Invalid Language")
+
+class SavedAppBuild(ApplicationBase):
+    def to_saved_build_json(self, timezone):
+        data = super(SavedAppBuild, self).to_json()
+        data.update({
+            'id': self.id,
+            'built_on_date': utc_to_timezone(data['built_on'], timezone, "%b %d, %Y"),
+            'built_on_time': utc_to_timezone(data['built_on'], timezone, "%H:%M %Z"),
+            'build_label': self.built_with.get_label(),
+            'jar_path': self.get_jar_path(),
+        })
+        return data
 
 class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     """

@@ -7,9 +7,11 @@ import zipfile
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.success_message import SuccessMessage
 from corehq.apps.domain.models import Domain
+from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
 from couchexport.export import FormattedRow
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
+from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.resource_conflict import repeat, retry_resource
 from django.utils import simplejson
 from django.utils.http import urlencode as django_urlencode
@@ -23,7 +25,7 @@ from unidecode import unidecode
 from corehq.apps.hqmedia import utils
 from corehq.apps.app_manager.xform import XFormError, XFormValidationError, CaseError,\
     XForm, parse_xml
-from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
+from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec, BuildRecord
 from corehq.apps.hqmedia import upload
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.translations.models import TranslationMixin
@@ -42,7 +44,7 @@ from corehq.apps.domain.decorators import login_and_domain_required, login_or_di
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, resolve, get_resolver, RegexURLResolver
 from corehq.apps.app_manager.models import RemoteApp, Application, VersionedDoc, get_app, DetailColumn, Form, FormAction, FormActionCondition, FormActions,\
-    BuildErrors, AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang
+    BuildErrors, AppError, load_case_reserved_words, ApplicationBase, DeleteFormRecord, DeleteModuleRecord, DeleteApplicationRecord, EXAMPLE_DOMAIN, str_to_cls, validate_lang, SavedAppBuild
 
 from corehq.apps.app_manager.models import DETAIL_TYPES, import_app as import_app_util
 from django.utils.http import urlencode
@@ -405,12 +407,16 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     app = get_app(domain, app_id)
     latest_release = get_app(domain, app_id, latest=True)
     context = get_apps_base_context(request, domain, app)
-    saved_apps = ApplicationBase.view('app_manager/saved_app',
+    timezone = context['timezone']
+
+    saved_apps = get_db().view('app_manager/saved_app',
         startkey=[domain, app.id, {}],
         endkey=[domain, app.id],
         include_doc=True,
-        descending=True
+        descending=True,
+        wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
+
     users_cannot_share = CommCareUser.cannot_share(domain)
     context.update({
         'release_manager': True,
@@ -433,13 +439,19 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
 
+@require_POST
+@require_can_edit_apps
 def release_build(request, domain, app_id, saved_app_id, is_released=True):
+    ajax = request.POST.get('ajax') == 'true'
     saved_app = get_app(domain, saved_app_id)
     if saved_app.copy_of != app_id:
         raise Http404
     saved_app.is_released = is_released
     saved_app.save(increment_version=False)
-    return HttpResponseRedirect(reverse('release_manager', args=[domain, app_id]))
+    if ajax:
+        return json_response({'is_released': is_released})
+    else:
+        return HttpResponseRedirect(reverse('release_manager', args=[domain, app_id]))
 
 @retry_resource(3)
 def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user_registration=False):
