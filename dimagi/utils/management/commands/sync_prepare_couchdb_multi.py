@@ -7,6 +7,7 @@ from dimagi.utils.couch.database import get_db
 from gevent.pool import Pool
 import logging
 import time
+from django.conf import settings
 
 try:
     import git
@@ -14,6 +15,9 @@ try:
 except ImportError:
     has_git = False
 
+
+POOL_SIZE = getattr(settings, 'PREINDEX_POOL_SIZE', 4)
+POOL_WAIT = getattr(settings, 'PREINDEX_POOL_WAIT', 10)
 
 def do_sync(app_index):
     """
@@ -39,7 +43,7 @@ class Command(BaseCommand):
         from gevent import monkey; monkey.patch_all(thread=False)
         start = datetime.utcnow()
         if len(args) == 0:
-            num_pool = 4
+            num_pool = POOL_SIZE
         else:
             num_pool = int(args[0])
 
@@ -63,8 +67,8 @@ class Command(BaseCommand):
                 else:
                     print "\tSync failed for %s, trying again" % (apps[app_id])
             while len(get_db().server.active_tasks()) > num_pool:
-                print "number of server active tasks exceeds pool size, waiting 30 seconds..."
-                time.sleep(30)
+                print "number of server active tasks exceeds pool size, waiting %d seconds..." % POOL_WAIT
+                time.sleep(POOL_WAIT)
 
         print "All apps loaded into jobs, waiting..."
         pool.join()
@@ -74,7 +78,6 @@ class Command(BaseCommand):
         message = "Preindex results:\n"
         message += "\tInitiated by: %s" % username
         if has_git:
-            import settings
             repo = git.Repo(settings.filepath)
             logs = repo.head.log()
 
