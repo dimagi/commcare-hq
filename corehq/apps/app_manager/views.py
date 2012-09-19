@@ -796,7 +796,12 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     lang = req.COOKIES.get('lang', app.langs[0])
     resp = {'update': {}}
     if should_edit("case_type"):
-        module["case_type"] = req.POST.get("case_type", None)
+        case_type = req.POST.get("case_type", None)
+        if re.match(r'^\w+$', case_type):
+            # todo: something better than nothing when invalid
+            module["case_type"] = case_type
+        else:
+            resp['update'].update({'#module-settings [name="case_type"]': module['case_type']})
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(req.POST.get("put_in_root"))
     for attribute in ("name", "case_label", "referral_label"):
