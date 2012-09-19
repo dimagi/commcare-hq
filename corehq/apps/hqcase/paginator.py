@@ -46,7 +46,7 @@ class CasePaginator():
                 yield "(%s)" % OR(user_filters)
 
             if self.case_type:
-                yield "type:(%s)" % self.case_type
+                yield 'type:"%s"' % self.case_type
 
             if self.status:
                 yield "is:(%s)" % self.status

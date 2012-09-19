@@ -496,7 +496,7 @@ class Domain(Document, HQBillingDomainMixin):
         if page:
             skip = (page - 1) * per_page
             limit = per_page
-        results = get_db().search('domain/snapshot_search', q=json.dumps(query), limit=limit, skip=skip)
+        results = get_db().search('domain/snapshot_search', q=json.dumps(query), limit=limit, skip=skip, stale=ok)
         return map(cls.get, [r['id'] for r in results]), results.total_rows
 
     def organization_doc(self):
