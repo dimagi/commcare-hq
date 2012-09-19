@@ -261,7 +261,7 @@
                 {% endfor %}
             <br/>
             <h6>{{ app.copies_of_parent|length }} download{{ app.copies_of_parent|length|pluralize }}</h6>
-        <p>{{ app.description|truncatewords:18 }}</p>
+        <p>{{ app.short_description }}</p>
         <p>Last updated: {{ app.snapshot_time|date:"N j, Y" }}</p>
         <a class="btn" href="{% url project_info app.name %}">View &raquo;</a>
         {% if user.is_superuser %}
