@@ -3,7 +3,7 @@ function(doc) {
     {
         var submit_time = new Date(doc.received_on);
         if (submit_time) {
-            emit([submit_time.getFullYear(), submit_time.getMonth()+1, submit_time.getDate()], 1);
+            emit([submit_time.getUTCFullYear(), submit_time.getUTCMonth()+1, submit_time.getUTCDate()], 1);
         }
     }
 }
