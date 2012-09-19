@@ -1,3 +1,4 @@
+import pdb
 import unittest
 import time
 from auditcare.inspect import history_for_doc
@@ -17,7 +18,7 @@ class modelEventTestCaseo(unittest.TestCase):
         self._createUser()
 
     def _createUser(self):
-        model_count = ModelActionAudit.view("auditcare/model_actions").count()
+        model_count = ModelActionAudit.view("auditcare/model_actions_by_id", include_docs=True, reduce=False).count()
         total_count = AuditEvent.view("auditcare/all_events").count()
 
         usr = User()
@@ -30,7 +31,7 @@ class modelEventTestCaseo(unittest.TestCase):
 
         self.user = usr
 
-        model_count2 = ModelActionAudit.view("auditcare/model_actions").count()
+        model_count2 = ModelActionAudit.view("auditcare/model_actions_by_id", include_docs=True, reduce=False).count()
         total_count2 = AuditEvent.view("auditcare/all_events").count()
 
         self.assertEqual(model_count+1, model_count2)
@@ -42,13 +43,14 @@ class modelEventTestCaseo(unittest.TestCase):
         """
         Test that django model events do change.  A single change
         """
-        model_count = ModelActionAudit.view("auditcare/model_actions").count()
+        model_count = ModelActionAudit.view("auditcare/model_actions_by_id", include_docs=True, reduce=False).count()
 
         self.user.email='foo@foo.com'
         time.sleep(1)
         self.user.save()
+        time.sleep(1)
 
-        model_count2 = ModelActionAudit.view("auditcare/model_actions").count()
+        model_count2 = ModelActionAudit.view("auditcare/model_actions_by_id", include_docs=True, reduce=False).count()
         self.assertEqual(model_count+1, model_count2)
 
 

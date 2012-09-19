@@ -57,6 +57,11 @@ To your MIDDLEWARE_CLASSES, add 'auditcare.middleware.AuditMiddleware', to the E
 
 Add an array, AUDIT_VIEWS = [].  The elements of this list should be the fully qualified viewnames of the views you want to log and audit.
 
+Alternatively, AUDIT_ALL_VIEWS is another settings parameter you can set to explicitly audit ALL views.  This skips staticfiles (if used in development) as well as the debug toolbar for local development.
+
+The setting for AUDIT_ALL_VIEWS if missing defaults to False.  You must set it to True for all views to be overridden.
+
+
 Login/Logout Events
 ===================
 

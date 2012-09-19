@@ -1,7 +1,11 @@
 #modified version of django-axes axes/decorator.py
 #for more information see: http://code.google.com/p/django-axes/
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.contenttypes.models import ContentType
+from django.http import HttpResponse
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_protect
+from dimagi.utils import csv 
 from auditcare.decorators.login import lockout_response
 from auditcare.decorators.login import log_request
 from auditcare.inspect import history_for_doc
@@ -26,6 +30,7 @@ LOCKOUT_URL = getattr(settings, 'AXES_LOCKOUT_URL', None)
 VERBOSE = getattr(settings, 'AXES_VERBOSE', True)
 
 @login_required
+@user_passes_test(lambda u: u.is_superuser)
 def auditAll(request, template="auditcare/index.html"):
     auditEvents = AccessAudit.view("auditcare/by_date_access_events", descending=True, include_docs=True).all()
     realEvents = [{'user': a.user, 
@@ -36,8 +41,20 @@ def auditAll(request, template="auditcare/index.html"):
                               {"audit_table": AuditLogTable(realEvents, request=request)}, 
                               context_instance=RequestContext(request))
 
+def export_all(request):
+    auditEvents = AccessAudit.view("auditcare/by_date_access_events", descending=True, include_docs=True).all()
+    response = HttpResponse()
+    response['Content-Disposition'] = 'attachment; filename=AuditAll.xls'
+    writer = csv.UnicodeWriter(response)
+    writer.writerow(['User', 'Access Type', 'Date'])
+    for a in auditEvents:
+        writer.writerow([a.user, a.access_type, a.event_date])
+    return response
+
 from django.contrib.auth import views as auth_views
 
+@csrf_protect
+@never_cache
 def audited_login(request, *args, **kwargs):
     func = auth_views.login
     kwargs['template_name'] = settings.LOGIN_TEMPLATE
@@ -57,6 +74,16 @@ def audited_login(request, *args, **kwargs):
             return lockout_response(request)
     return response
 
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def audited_views(request, *args, **kwargs):
+    db = AccessAudit.get_db()
+    views = db.view('auditcare/urlpath_by_user_date', reduce=False).all()
+    template = "auditcare/audit_views.html"
+    return render_to_response(template,
+            {"audit_views": views},
+        context_instance=RequestContext(request))
 
 def audited_logout (request, *args, **kwargs):
     # share some useful information
@@ -86,6 +113,7 @@ def audited_logout (request, *args, **kwargs):
     return response
 
 @login_required()
+@user_passes_test(lambda u: u.is_superuser)
 def model_instance_history(request, model_name, model_uuid, *args, **kwargs):
     #it's for a particular model
     context=RequestContext(request)
@@ -105,6 +133,7 @@ def model_instance_history(request, model_name, model_uuid, *args, **kwargs):
     return render_to_response('auditcare/model_instance_history.html', context)
 
 @login_required()
+@user_passes_test(lambda u: u.is_superuser)
 def single_model_history(request, model_name, *args, **kwargs):
     #it's for a particular model
     context=RequestContext(request)
@@ -116,6 +145,7 @@ def single_model_history(request, model_name, *args, **kwargs):
     return render_to_response('auditcare/single_model_changes.html', context)
 
 @login_required()
+@user_passes_test(lambda u: u.is_superuser)
 def model_histories(request, *args, **kwargs):
     """
     Looks at all the audit model histories and shows for a given model

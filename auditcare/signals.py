@@ -1,3 +1,4 @@
+import pdb
 from django.db.models.signals import  post_save
 from couchdbkit.ext.django.schema import Document
 from django.db import models
@@ -37,17 +38,17 @@ def django_audit_save(sender, instance, created, **kwargs):
     from auditcare.models import AuditEvent
     AuditEvent.audit_django_save(sender, instance, instance_json, usr)
 
-def couch_audit_save(self, *args, **kwargs):
+def couch_audit_save(instance, *args, **kwargs):
+    instance.__orig_save(*args, **kwargs)
+    instance_json = instance.to_json()
     from auditcare.models import AuditEvent
-    self.__orig_save(*args, **kwargs)
-    instance_json = self.to_json()
     usr = get_current_user()
     if usr != None:
         try:
             User.objects.get(id=usr.id)
         except:
             usr = None
-    AuditEvent.audit_couch_save(self.__class__, self, instance_json, usr)
+    AuditEvent.audit_couch_save(instance.__class__, instance, instance_json, usr)
 
 
 if not hasattr(settings, 'AUDIT_MODEL_SAVE'):
