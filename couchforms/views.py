@@ -53,11 +53,6 @@ def post(request, callback=None, error_callback=None,
         if error_callback:
             return error_callback(e.error_log)
         return HttpResponseServerError("FAIL")
-    except NoMoreData:
-        raise
-    except Exception, e:
-        raise Exception("Problem receiving submission to %s. %s" % \
-                        (request.path, str(e)))
         
 def download_form(request, instance_id):
     instance = XFormInstance.get(instance_id) 
