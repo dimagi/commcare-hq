@@ -744,7 +744,7 @@ class SubmissionTimesReport(WorkerMonitoringChart):
     @property
     @monitoring_report_cacher
     def report_context(self):
-        data = defaultdict(lambda: 0)
+        data = defaultdict(int)
         for user in self.users:
             startkey = [self.domain, user.get('user_id')]
             endkey = [self.domain, user.get('user_id'), {}]
@@ -752,21 +752,22 @@ class SubmissionTimesReport(WorkerMonitoringChart):
                 startkey=startkey,
                 endkey=endkey,
                 group=True)
-            for row in view:
-                domain, _user, day, hour = row["key"]
 
-                if hour and day:
+            for row in view:
+                _, _, day, hour = row["key"]
+
+                if hour is not None and day is not None:
                     #adjust to timezone
                     now = datetime.datetime.utcnow()
-                    hour = int(hour)
-                    day = int(day)
                     report_time = datetime.datetime(now.year, now.month, now.day, hour, tzinfo=pytz.utc)
                     report_time = tz_utils.adjust_datetime_to_timezone(report_time, pytz.utc.zone, self.timezone.zone)
                     hour = report_time.hour
+                    day += report_time.day - now.day
 
-                    data["%d %02d" % (day, hour)] = data["%d %02d" % (day, hour)] + row["value"]
+                    data[(day, hour)] += row["value"]
         return dict(
-            chart_url=self.generate_chart(data)
+            chart_url=self.generate_chart(data),
+            timezone=self.timezone,
         )
 
     @classmethod
@@ -793,12 +794,15 @@ easy_install pygooglechart.  Until you do that this won't work.
             d.extend([i] * 24)
         chart.add_data(d)
 
+        # mapping between numbers 0..6 and its day of the week label
         day_names = "Sun Mon Tue Wed Thu Fri Sat".split(" ")
+        # the order, bottom-to-top, in which the days should appear
+        # i.e. Sun, Sat, Fri, Thu, etc
         days = (0, 6, 5, 4, 3, 2, 1)
 
         sizes=[]
         for d in days:
-            sizes.extend([data["%d %02d" % (d, h)] for h in range(24)])
+            sizes.extend([data[(d, h)] for h in range(24)])
         sizes.extend([0] * 24)
         if no_data:
             # fill in a line out of view so that chart.get_url() doesn't crash
