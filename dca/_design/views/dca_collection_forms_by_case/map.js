@@ -5,6 +5,6 @@ function(doc) {
         var u = doc.form.meta;
         var d = new Date(doc.form.meta.timeStart);
 
-        emit([doc.form.case.case_id, d.getFullYear(), d.getMonth(), d], null);
+        emit([doc.form.case.case_id, d.getUTCFullYear(), d.getUTCMonth(), d], null);
     }
 }

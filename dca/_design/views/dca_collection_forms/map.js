@@ -5,6 +5,6 @@ function(doc) {
         var u = doc.form.meta;
         var d = new Date(doc.form.meta.timeStart);
 
-        emit([u.username, d.getMonth(), d.getFullYear()], null);
+        emit([u.username, d.getUTCMonth(), d.getUTCFullYear()], null);
     }
 }
