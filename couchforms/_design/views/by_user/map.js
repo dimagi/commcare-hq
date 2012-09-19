@@ -12,6 +12,6 @@ function(doc) {
         if (!date) {
             date = Date();
         }
-        emit([get_user_id(doc), date.getFullYear(), date.getMonth(), date.getDate(), doc.xmlns], 1);
+        emit([get_user_id(doc), date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), doc.xmlns], 1);
     } 
 }
