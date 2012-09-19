@@ -4,6 +4,6 @@ function(doc) {
         && doc.xmlns == 'http://dev.commcarehq.org/Pathfinder/pathfinder_cc_followup')
 {
   var d = new Date(doc.form.meta.timeStart);
-  emit([doc.domain, doc.form.case.case_id, d.getFullYear(), d.getMonth()+1]);
+  emit([doc.domain, doc.form.case.case_id, d.getUTCFullYear(), d.getUTCMonth()+1]);
 }
 }
