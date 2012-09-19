@@ -374,6 +374,24 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     def table_configuration(self):
         return [self.get_table_configuration(index) for index, cols in self.schema.tables]
 
+    def update_schema(self):
+        """
+        Update the schema for this object to include the latest columns from 
+        any relevant docs.
+        
+        Does NOT save the doc, just updates the in-memory object.
+        """
+        from couchexport.schema import build_latest_schema
+        self.set_schema(build_latest_schema(self.index))
+        
+    def set_schema(self, schema):
+        """
+        Set the schema for this object.
+        
+        Does NOT save the doc, just updates the in-memory object.
+        """
+        self.schema_id = schema.get_id
+    
     def trim(self, document_table, doc, apply_transforms=True):
         for table_index, data in document_table:
             if self.tables_by_index.has_key(table_index):
