@@ -90,8 +90,15 @@ def get_filtered_cases(domain, user_id=None, filters=None):
         cases = filter(_filter, cases)
     return cases
 
-def get_filters_from_request(request):
+def get_filters_from_request(request, limit_top_level=None):
+    """
+    limit_top_level lets you specify a whitelist of top-level properties you can include in the filters,
+    properties with a / in them are always included in the filters
+    """
     filters = dict(request.REQUEST.items())
+    if limit_top_level is not None:
+        filters = dict([(key, val) for key, val in filters.items() if '/' in key or key in limit_top_level])
+
     filters.update({
         'user_id': None,
         'closed': ({

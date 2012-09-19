@@ -42,7 +42,7 @@ class CommCareCaseResource(Resource):
     def obj_get_list(self, request, domain, **kwargs):
         """"""
         user_id = request.GET.get('user_id')
-        filters = get_filters_from_request(request)
+        filters = get_filters_from_request(request, limit_top_level=self.fields)
         return map(dict_object, get_filtered_cases(domain, user_id=user_id, filters=filters))
 
     class Meta(CustomResourceMeta):
