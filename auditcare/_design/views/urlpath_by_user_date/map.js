@@ -8,7 +8,8 @@ function (doc) {
         if (doc.doc_type == "NavigationEventAudit") {
             var event_date = parse_date(doc.event_date);
             //user event dates, emit to the class
-            emit([doc.user, event_date.getFullYear(), event_date.getMonth() + 1, event_date.getDate(), event_date.getHours(), event_date.getMinutes(), event_date.getSeconds()], {"request_path": doc.request_path, "status_code": doc.status_code});
+            emit([doc.user, event_date.getUTCFullYear(), event_date.getUTCMonth() + 1, event_date.getUTCDate(), event_date.getUTCHours(), event_date.getUTCMinutes(), event_date.getUTCSeconds()], doc.request_path);
+            emit([doc.user, event_date.getUTCFullYear(), event_date.getUTCMonth() + 1, event_date.getUTCDate(), event_date.getUTCHours(), event_date.getUTCMinutes(), event_date.getUTCSeconds()], {"request_path": doc.request_path, "status_code": doc.status_code});
         }
     }
 }
