@@ -58,10 +58,11 @@ def get_owned_cases(domain, user_id, closed=False):
 
 
 def get_filtered_cases(domain, user_id=None, filters=None):
+
     @inline
     def cases():
         """pre-filter cases based on user_id and (if possible) closed"""
-        closed = json.loads(filters.get('closed', 'null'))
+        closed = json.loads(filters.get('closed') or 'null')
         case_type = filters.get('properties/case_type')
 
         if user_id:
@@ -72,7 +73,11 @@ def get_filtered_cases(domain, user_id=None, filters=None):
     if filters:
         def _filter(case):
             for path, val in filters.items():
+                if val is None:
+                    continue
+
                 actual_val = safe_index(case, path.split("/"))
+
                 if actual_val != val:
                     # closed=false => case.closed == False
                     if val in ('null', 'true', 'false'):
@@ -84,6 +89,19 @@ def get_filtered_cases(domain, user_id=None, filters=None):
             return True
         cases = filter(_filter, cases)
     return cases
+
+def get_filters_from_request(request):
+    filters = dict(request.REQUEST.items())
+    filters.update({
+        'user_id': None,
+        'closed': ({
+            'any': None,
+            'true': 'true',
+            'false': 'false',
+        }.get(filters.get('closed'), 'false')),
+        'format': None
+    })
+    return filters
 
 def get_cloudcare_apps(domain):
     return map(lambda app: app._doc, 

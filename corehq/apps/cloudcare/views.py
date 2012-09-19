@@ -10,7 +10,7 @@ from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseBadRequest, Http404
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
-from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_cloudcare_apps, get_filtered_cases
+from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_cloudcare_apps, get_filtered_cases, get_filters_from_request
 from dimagi.utils.parsing import string_to_boolean
 from django.conf import settings
 from corehq.apps.cloudcare import touchforms_api 
@@ -142,17 +142,7 @@ def get_cases(request, domain):
     if not user_id and not request.couch_user.is_web_user():
         return HttpResponseBadRequest("Must specify user_id!")
 
-    @dict
-    @inline
-    def filters():
-        """copy request.REQUEST but exclude user_id"""
-        for path, val in request.REQUEST.items():
-            if path == 'user_id':
-                continue
-            elif path == 'closed' and val == 'any':
-                continue
-            else:
-                yield (path, val)
+    filters = get_filters_from_request(request)
 
     cases = get_filtered_cases(domain, user_id=user_id, filters=filters)
     return json_response(cases)
