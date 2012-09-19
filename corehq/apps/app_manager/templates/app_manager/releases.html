@@ -291,19 +291,6 @@
             <td>{% if saved_app.build_comment %}{{ saved_app.build_comment }}{% else %}<h6>(No Comment)</h6>{% endif %}</td>
             <td class="build-is-released">
                 <div data-is-released="{{ saved_app.is_released|BOOL }}" data-saved-app-id="{{ saved_app.id }}"></div>
-{#                {% if saved_app.is_released %}#}
-{#                    {% if edit %}#}
-{#                    <a href="{% url unrelease_build domain app.id saved_app.id %}" class="unrelease-build-link"></a>#}
-{#                    {% else %}#}
-{#                        <img src="{% static 'app_manager/img/star-filled.svg' %}"/>#}
-{#                    {% endif %}#}
-{#                {% else %}#}
-{#                    {% if edit %}#}
-{#                    <a href="{% url release_build domain app.id saved_app.id %}" class="release-build-link"></a>#}
-{#                    {% else %}#}
-{#                        <img src="{% static 'app_manager/img/star-empty.svg' %}"/>#}
-{#                    {% endif %}#}
-{#                {% endif %}#}
             </td>
         </tr>
         {% endfor %}
