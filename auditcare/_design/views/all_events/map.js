@@ -5,12 +5,12 @@ function(doc) {
     if(doc.base_type == 'AuditEvent') {
         var date = parse_date(doc.event_date);
         //a raw event feed
-        emit([date.getFullYear(),
-            date.getMonth() + 1,
-            date.getDate(),
-            date.getHours(),
-            date.getMinutes(),
-            date.getSeconds(),
+        emit([date.getUTCFullYear(),
+            date.getUTCMonth() + 1,
+            date.getUTCDate(),
+            date.getUTCHours(),
+            date.getUTCMinutes(),
+            date.getUTCSeconds(),
             doc.doc_type,
             doc.user ],
                 null);
