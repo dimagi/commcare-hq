@@ -147,7 +147,11 @@ def get_cases(request, domain):
     def filters():
         """copy request.REQUEST but exclude user_id"""
         for path, val in request.REQUEST.items():
-            if path != 'user_id':
+            if path == 'user_id':
+                continue
+            elif path == 'closed' and val == 'any':
+                continue
+            else:
                 yield (path, val)
 
     cases = get_filtered_cases(domain, user_id=user_id, filters=filters)
