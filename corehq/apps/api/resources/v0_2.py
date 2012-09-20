@@ -3,7 +3,7 @@ from tastypie.resources import Resource
 from tastypie import fields
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta
-from corehq.apps.cloudcare.api import get_filtered_cases
+from corehq.apps.cloudcare.api import get_filtered_cases, get_filters_from_request
 from dimagi.utils.decorators import inline
 
 class dict_object(object):
@@ -42,17 +42,7 @@ class CommCareCaseResource(Resource):
     def obj_get_list(self, request, domain, **kwargs):
         """"""
         user_id = request.GET.get('user_id')
-        @dict
-        @inline
-        def filters():
-            for path, val in request.REQUEST.items():
-                if path == 'user_id':
-                    continue
-                if path == 'closed' and val == 'any':
-                    continue
-                if '/' in path or path in self.fields:
-                    yield path, val
-
+        filters = get_filters_from_request(request, limit_top_level=self.fields)
         return map(dict_object, get_filtered_cases(domain, user_id=user_id, filters=filters))
 
     class Meta(CustomResourceMeta):
