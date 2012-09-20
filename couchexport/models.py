@@ -17,12 +17,16 @@ class Format(object):
     Supported formats go here.
     """
     CSV = "csv"
+    ZIP = "zip"
     XLS = "xls"
     XLS_2007 = "xlsx"
     HTML = "html"
     JSON = "json"
     
     FORMAT_DICT = {CSV: {"mimetype": "application/zip",
+                         "extension": "zip",
+                         "download": True},
+                   ZIP: {"mimetype": "application/zip",
                          "extension": "zip",
                          "download": True},
                    XLS: {"mimetype": "application/vnd.ms-excel",
@@ -520,10 +524,3 @@ class SavedBasicExport(Document):
     @property
     def size(self):
         return self._attachments[self.configuration.filename]["length"]
-
-
-
-class FakeCheckpoint(object):
-    @property
-    def get_id(self):
-        return uuid.uuid4().hex
