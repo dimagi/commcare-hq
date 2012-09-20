@@ -276,7 +276,7 @@ def clone_repo():
 @task
 def preindex_views():
     with cd(env.code_root):
-        #update_code()
+        update_code()
         update_env()
         #sudo('nohup python manage.py sync_prepare_couchdb > preindex_views.out 2> preindex_views.err', user=env.sudo_user)
         sudo('nohup %(virtualenv_root)s/bin/python %(code_root)s/manage.py sync_prepare_couchdb_multi 8 %(user)s &' % env, user=env.sudo_user)
@@ -320,9 +320,8 @@ def deploy():
 @task
 @roles('django_celery', 'django_app','staticfiles')
 def update_env():
-    """ update external dependencies on remote host """
+    """ update external dependencies on remote host assumes you've done a code update"""
     require('code_root', provided_by=('staging', 'production'))
-    update_code()
     requirements = posixpath.join(env.code_root, 'requirements')
     with cd(env.code_root):
         cmd = ['%(virtualenv_root)s/bin/pip install' % env]
@@ -470,7 +469,6 @@ def migrate():
         sudo('%(virtualenv_root)s/bin/python manage.py migrate --noinput' % env, user=env.sudo_user)
 
 
-@parallel
 @roles('staticfiles')
 def _do_collectstatic():
     """
