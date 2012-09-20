@@ -9,7 +9,7 @@ from couchdbkit.ext.django.schema import *
 from casexml.apps.case import const
 from dimagi.utils import parsing
 import logging
-from dimagi.utils.indicators import IndicatorDocumentMixin
+from dimagi.utils.indicators import ComputedDocumentMixin
 from receiver.util import spoof_submission
 from couchforms.models import XFormInstance
 from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex
@@ -147,7 +147,7 @@ class Referral(CaseBase):
         
         return ref_list
 
-class CommCareCase(CaseBase, IndexHoldingMixIn, IndicatorDocumentMixin):
+class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     """
     A case, taken from casexml.  This represents the latest
     representation of the case - the result of playing all
