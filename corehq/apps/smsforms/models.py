@@ -8,7 +8,7 @@ class XFormsSession(Document):
     """
     # generic properties
     connection_id = StringProperty()
-    session_id = IntegerProperty()
+    session_id = StringProperty()
     form_xmlns = StringProperty()
     start_time = DateTimeProperty()
     modified_time = DateTimeProperty()
