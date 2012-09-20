@@ -1,6 +1,7 @@
 # coding=utf-8
 from collections import defaultdict
 from datetime import datetime
+from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 import re
@@ -219,6 +220,15 @@ class FormSource(object):
         app.register_pre_save(pre_save)
         app.register_post_save(post_save)
 
+class CachedStringProperty(object):
+    def __init__(self, key):
+        self.get_key = key
+
+    def __get__(self, instance, owner):
+        return cache.get(self.get_key(instance))
+
+    def __set__(self, instance, value):
+        cache.set(self.get_key(instance), value, 12*60*60)
 
 class FormBase(DocumentSchema):
     """
@@ -233,9 +243,13 @@ class FormBase(DocumentSchema):
     actions     = SchemaProperty(FormActions)
     show_count  = BooleanProperty(default=False)
     xmlns       = StringProperty()
-#    contents    = StringProperty()
     source      = FormSource()
-    validation_cache = StringProperty(required=False)
+    validation_cache = CachedStringProperty(lambda self: "%s-validation" % self.unique_id)
+
+    @classmethod
+    def wrap(cls, data):
+        data.pop('validation_cache', '')
+        return super(FormBase, cls).wrap(data)
 
     @classmethod
     def generate_id(cls):
@@ -263,10 +277,10 @@ class FormBase(DocumentSchema):
                 self.validation_cache = unicode(e)
             else:
                 self.validation_cache = ""
-            self.get_app().save(increment_version=False)
         if self.validation_cache:
             raise XFormValidationError(self.validation_cache)
         return self
+
     def get_unique_id(self):
         """
         Return unique_id if it exists, otherwise initialize it
