@@ -184,7 +184,7 @@ def json_handler(obj):
 def json_response(obj, **kwargs):
     if not kwargs.has_key('default'):
         kwargs['default'] = json_handler
-    return HttpResponse(json.dumps(obj, **kwargs))
+    return HttpResponse(json.dumps(obj, **kwargs), mimetype="application/json")
 
 def json_request(params, lenient=True):
     d = {}
