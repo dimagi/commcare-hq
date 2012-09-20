@@ -122,7 +122,7 @@ def web_users(request, domain, template="users/web_users.html"):
 
     invitations = Invitation.by_domain(domain)
     for invitation in invitations:
-        invitation.role_label = role_labels[invitation.role]
+        invitation.role_label = role_labels.get(invitation.role, "")
 
     context.update({
         'user_roles': user_roles,
