@@ -1,4 +1,5 @@
-from django.http import HttpResponseBadRequest, HttpResponse
+from couchdbkit import ResourceNotFound
+from django.http import HttpResponseBadRequest, HttpResponse, Http404
 from django.views.decorators.http import require_GET
 from corehq.apps.api.models import require_api_user
 from corehq.apps.builds.models import CommCareBuild
@@ -27,7 +28,10 @@ def post(request):
 @require_GET
 def get(request, version, build_number, path):
     build = CommCareBuild.get_build(version, build_number)
-    file = build.fetch_file(path)
+    try:
+        file = build.fetch_file(path)
+    except ResourceNotFound:
+        raise Http404()
 
     response = HttpResponse(file)
     response['Content-Disposition'] = "attachment; filename=%s" % path.split("/")[-1]
