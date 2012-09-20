@@ -1,6 +1,7 @@
 from couchdbkit.ext.django.schema import DocumentSchema, DictProperty, DateTimeProperty
+import datetime
 
-class IndicatorDocumentMixin(DocumentSchema):
+class ComputedDocumentMixin(DocumentSchema):
     """
         Use this mixin for things like CommCareCase or XFormInstance documents that take advantage
         of indicator definitions.
@@ -15,5 +16,16 @@ class IndicatorDocumentMixin(DocumentSchema):
             }
         }
     """
-    _computed = DictProperty()
-    _computed_modified_on = DateTimeProperty()
+    computed_ = DictProperty()
+    computed_modified_on_ = DateTimeProperty()
+
+    def set_definition(self, definition):
+        current_namespace = self.computed_.get(definition.namespace, {})
+        current_namespace[definition.slug] = dict(
+            version=definition.version,
+            value=definition.get_clean_value(self),
+            muti_value=definition._returns_multiple,
+            type=definition.doc_type
+        )
+        self.computed_[definition.namespace] = current_namespace
+        self.computed_modified_on_ = datetime.datetime.utcnow()
