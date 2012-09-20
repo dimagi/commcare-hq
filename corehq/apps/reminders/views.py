@@ -318,14 +318,17 @@ def add_sample(request, domain, sample_id=None):
         if form.is_valid():
             name            = form.cleaned_data.get("name")
             sample_contacts = form.cleaned_data.get("sample_contacts")
+            time_zone       = form.cleaned_data.get("time_zone")
             
             if sample is None:
                 sample = SurveySample (
                     domain = domain,
-                    name = name
+                    name = name,
+                    time_zone = time_zone.zone
                 )
             else:
                 sample.name = name
+                sample.time_zone = time_zone.zone
             
             phone_numbers = []
             for contact in sample_contacts:
@@ -342,7 +345,7 @@ def add_sample(request, domain, sample_id=None):
             id_range = DomainCounter.increment(domain, "survey_contact_id", len(nonexisting_numbers))
             ids = iter(range(id_range[0], id_range[1] + 1))
             for phone_number in nonexisting_numbers:
-                register_sms_contact(domain, "participant", str(ids.next()), request.couch_user.get_id, phone_number, contact_phone_number_is_verified="1", contact_backend_id="MOBILE_BACKEND_TEST", language_code="en", time_zone="America/New_York")
+                register_sms_contact(domain, "participant", str(ids.next()), request.couch_user.get_id, phone_number, contact_phone_number_is_verified="1", contact_backend_id="MOBILE_BACKEND_TEST", language_code="en", time_zone=time_zone.zone)
             
             newly_registered_entries = VerifiedNumber.view('sms/verified_number_by_number',
                                             keys=nonexisting_numbers,
@@ -357,6 +360,7 @@ def add_sample(request, domain, sample_id=None):
         initial = {}
         if sample is not None:
             initial["name"] = sample.name
+            initial["time_zone"] = sample.time_zone
             contact_info = []
             for case_id in sample.contacts:
                 case = CommCareCase.get(case_id)

@@ -8,6 +8,7 @@ from django.forms import Field, Widget, Select, TextInput
 from django.utils.datastructures import DotExpandedDict
 from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_USER, RECIPIENT_CASE, MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET, SurveySample
 from dimagi.utils.parsing import string_to_datetime
+from dimagi.utils.timezones.forms import TimeZoneChoiceField
 
 METHOD_CHOICES = (
     ('sms', 'SMS'),
@@ -407,6 +408,7 @@ class SurveyForm(Form):
 class SurveySampleForm(Form):
     name = CharField()
     sample_contacts = RecordListField(input_name="sample_contact")
+    time_zone = TimeZoneChoiceField()
     
     def clean_sample_contacts(self):
         value = self.cleaned_data["sample_contacts"]
