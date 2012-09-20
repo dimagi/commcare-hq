@@ -72,6 +72,33 @@ def bulk_export_async(bulk_export_helper, download_id,
             expiry=expiry
         )
 
+def Temp(tmp):
+    cls = PathTemp if isinstance(tmp, basestring) else StringIOTemp
+    return cls(tmp)
+
+class PathTemp(object):
+    def __init__(self, path):
+        self.path = path
+
+    @property
+    def payload(self):
+        return open(self.path, 'rb').read()
+
+class StringIOTemp(object):
+    def __init__(self, buffer):
+        self.buffer = buffer
+
+    @property
+    def payload(self):
+        return self.buffer.getvalue()
+
+    @property
+    def path(self):
+        fd, path = tempfile.mkstemp()
+        with os.fdopen(fd, 'wb') as file:
+            file.write(self.buffer.getvalue())
+        return path
+
 def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=None, expiry=10*60*60):
     """
     tmp can be either either a path to a tempfile or a StringIO
@@ -84,23 +111,7 @@ def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=
         except Exception: 
             pass
 
-        tmp_type = 'filepath' if isinstance(tmp, basestring) else 'stringio'
-
-        def get_tmp_payload():
-
-            if tmp_type == 'filepath':
-                return open(tmp, 'rb').read()
-            else:
-                return tmp.getvalue()
-
-        def get_tmp_path():
-            if tmp_type == 'filepath':
-                return tmp
-            else:
-                fd, path = tempfile.mkstemp()
-                with os.fdopen(fd, 'wb') as file:
-                    file.write(tmp.getvalue())
-                return path
+        tmp = Temp(tmp)
 
         def expose_download(cls, key):
             cls(
@@ -113,11 +124,11 @@ def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=
 
         if EXPORT_METHOD == "cached":
             download_stream = "%s_stream" % download_id
-            payload = get_tmp_payload()
+            payload = tmp.payload
             cache.set(download_stream, payload)
             expose_download(CachedDownload, download_stream)
         elif EXPORT_METHOD == 'tmpfile':
-            path = get_tmp_path()
+            path = tmp.path
             # make file globally read/writeable in case celery runs as root
             os.chmod(path, GLOBAL_RW)
             expose_download(FileDownload, path)
