@@ -56,12 +56,13 @@ function(doc) {
             for (var p in definition.case_pregnancy.value) {
                 var p_info = definition.case_pregnancy.value[p];
                 var preg_end = p_info.case_closed;
+
                 if (!preg_end && p_info.case_opened) {
                     var estimated_end = new Date(preg_end);
-                    estimated_end.setTime(estimated_end.setTime() + 42*7*ms_day);
+                    estimated_end.setTime(estimated_end.getTime() + 42*7*ms_day);
                     preg_end = estimated_end.toISOString();
                 }
-                if (preg_end && preg_end.case_opened)
+                if (preg_end && p_info.case_opened)
                     pregnancies.push({
                         case_id: p_info.case_id,
                         case_closed: preg_end,
