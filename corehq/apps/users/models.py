@@ -27,7 +27,6 @@ from casexml.apps.phone.models import User as CaseXMLUser
 
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name
-from corehq.apps.reports.models import ReportNotification, HQUserType
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username, cc_user_domain
 from corehq.apps.users.xml import group_fixture
 from corehq.apps.sms.mixin import CommCareMobileContactMixin
@@ -622,6 +621,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         self.last_name = ' '.join(data)
 
     def get_scheduled_reports(self):
+        from corehq.apps.reports.models import ReportNotification
         return ReportNotification.view("reports/user_notifications", key=self.user_id, include_docs=True).all()
 
     def delete(self):
@@ -938,6 +938,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
 
     @property
     def filter_flag(self):
+        from corehq.apps.reports.models import HQUserType
         return HQUserType.REGISTERED
 
     @property
