@@ -132,7 +132,7 @@ class IndicatorDefinition(Document):
                 doc_class = to_function(doc.get('value', "%s.%s" % (cls._class_path, cls.__name__)))
                 all_indicators.append(doc_class.get(doc.get('id')))
             except Exception as e:
-                print "Error", e
+                logging.error("Could not fetch indicator: %s" % e)
         return all_indicators
 
 
