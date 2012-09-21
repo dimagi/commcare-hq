@@ -30,15 +30,27 @@
     {% endif %}
     {% include 'app_manager/partials/release-manager-nav.html' %}
 </div>
+<div style="padding: 20px">
 <h3>{{ app.name }} summary</h3>
 <ol>
     {% for module in modules %}
         <li>
-            {{ module.name }}
+            <h4>{{ module.name }}</h4>
             <ol>
                 {% for form in module.forms %}
                     <li>
-                        {{ form.name }}
+                        <h5>{{ form.name }}</h5>
+                        {% if form.messages %}
+                            {% for type, m_list in form.messages.items %}
+                                <div class="alert alert-{{ type }}" style="display: inline-block;">
+                                    <ul>
+                                    {% for m in m_list %}
+                                        <li>{{ m }}</li>
+                                    {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
                         <ol>
                             {% for question in form.questions %}
                                 <li>
@@ -59,4 +71,5 @@
         </li>
     {% endfor %}
 </ol>
+</div>
 {% endblock %}

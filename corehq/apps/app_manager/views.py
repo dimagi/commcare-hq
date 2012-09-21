@@ -269,7 +269,7 @@ def default(req, domain):
     """
     return view_app(req, domain)
 
-def get_form_view_context(request, form, langs, is_user_registration):
+def get_form_view_context(request, form, langs, is_user_registration, messages=messages):
     xform_questions = []
     xform = None
     try:
@@ -1768,43 +1768,24 @@ def formdefs(request, domain, app_id):
         return json_response(formdefs)
 
 def _questions_for_form(request, form, langs):
-    # copied from get_form_view_context
-    xform_questions = []
-    xform = None
-    xform = form.wrapped_xform()
-    try:
-        xform = form.wrapped_xform()
-    except XFormError as e:
-        messages.error(request, "Error in form: %s" % e)
-    except Exception as e:
-        logging.exception(e)
-        messages.error(request, "Unexpected error in form: %s" % e)
+    class FakeMessages(object):
+        def __init__(self):
+            self.messages = defaultdict(list)
 
-    if xform and xform.exists():
-        form.validate_form()
-        xform_questions = xform.get_questions(langs)
-        try:
-            form.validate_form()
-            xform_questions = xform.get_questions(langs)
-        except XMLSyntaxError as e:
-            messages.error(request, "Syntax Error: %s" % e)
-        except AppError as e:
-            messages.error(request, "Error in application: %s" % e)
-        except XFormValidationError as e:
-            message = unicode(e)
-            # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
-            messages.error(request, "Validation Error:\n")
-            for msg in message.split("\n")[2:]:
-                messages.error(request, "%s" % msg)
-        except XFormError as e:
-            messages.error(request, "Error in form: %s" % e)
-        # any other kind of error should fail hard, but for now there are too many for that to be practical
-        except Exception as e:
-            if settings.DEBUG:
-                raise
-            logging.exception(e)
-            messages.error(request, "Unexpected System Error: %s" % e)
-    return xform_questions
+        def add_message(self, type, message):
+            self.messages[type].append(message)
+
+        def error(self, request, message):
+            self.add_message('error', message)
+
+        def warning(self, request, message):
+            self.add_message('warning', message)
+
+    m = FakeMessages()
+
+    context = get_form_view_context(request, form, langs, None, messages=m)
+    xform_questions = context['xform_questions']
+    return xform_questions, m.messages
 
 def _find_name(names, langs):
     name = None
@@ -1828,8 +1809,10 @@ def summary(request, domain, app_id):
     for module in app.get_modules():
         forms = []
         for form in module.get_forms():
+            questions, messages = _questions_for_form(request, form, langs)
             forms.append({'name': _find_name(form.name, langs),
-                          'questions': _questions_for_form(request, form, langs)})
+                          'questions': questions,
+                          'messages': dict(messages)})
 
         modules.append({'name': _find_name(module.name, langs), 'forms': forms})
 
