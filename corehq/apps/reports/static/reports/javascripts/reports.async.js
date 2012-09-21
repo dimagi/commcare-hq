@@ -36,18 +36,20 @@ var HQAsyncReport = function (o) {
 
     self.init = function () {
         self.reportContent.attr('style', 'position: relative;');
-        self.standardReport.filterSubmitButton.addClass('disabled');
-
+        
         self.updateReport(true, window.location.search.substr(1));
-
-        self.filterForm.submit(function () {
-            var params = $(this).serialize();
-            History.pushState(null,window.location.title,window.location.pathname+"?"+params);
-            self.updateFilters(params);
-            self.updateReport(false, params);
-            return false;
-        });
-
+        
+        // only update the report if there are actually filters set
+        if (!self.standardReport.needsFilters) {
+            self.standardReport.filterSubmitButton.addClass('disabled');
+	        self.filterForm.submit(function () {
+	            var params = $(this).serialize();
+	            History.pushState(null,window.location.title,window.location.pathname+"?"+params);
+	            self.updateFilters(params);
+	            self.updateReport(false, params);
+	            return false;
+	        });
+        } 
     };
 
     self.updateFilters = function (form_params) {
@@ -60,8 +62,6 @@ var HQAsyncReport = function (o) {
         });
     };
 
-
-
     self.updateReport = function (initial_load, params) {
         var process_filters = "";
         if (initial_load) {
@@ -72,7 +72,7 @@ var HQAsyncReport = function (o) {
                     "&enddate="+self.standardReport.datespan.enddate;
             }
         }
-
+        process_filters = process_filters + "&filterSet=" + self.standardReport.filterSet;
         self.reportRequest = $.ajax({
             url: window.location.pathname.replace(self.standardReport.urlRoot,
                 self.standardReport.urlRoot+'async/')+"?"+process_filters+"&"+params,
@@ -87,13 +87,17 @@ var HQAsyncReport = function (o) {
                 self.reportContent.html(data.report);
                 self.reportContent.append(self.hqLoading);
                 self.hqLoading.removeClass('hide');
-
+		
                 $('.hq-report-time-notice').removeClass('hide');
-
+		
                 $('.loading-backdrop').fadeOut();
                 self.hqLoading.fadeOut();
-
-                self.standardReport.filterSubmitButton.removeClass('btn-primary').button('standard');
+		                
+                if (!initial_load || !self.standardReport.needsFilters) {
+                    self.standardReport.filterSubmitButton.removeClass('btn-primary').button('standard');
+                } else {
+                    self.standardReport.filterSubmitButton.button('reset').addClass('btn-primary');
+                }
             },
             error: function (data) {
                 self.reportRequest = null;

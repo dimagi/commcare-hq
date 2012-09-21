@@ -156,7 +156,15 @@ class CommCareMultimedia(Document):
     def is_shared(self):
         return len(self.shared_by) > 0
 
+    @classmethod
+    def search(cls, query, limit=10):
+        results = get_db().search(cls.Config.search_view, q=query, limit=limit, stale='ok')
+        return map(cls.get, [r['id'] for r in results])
+
 class CommCareImage(CommCareMultimedia):
+
+    class Config(object):
+        search_view = 'hqmedia/image_search'
 
     def attach_data(self, data, upload_path=None, username=None, attachment_id=None, media_meta=None, replace_attachment=False):
         image = Image.open(StringIO(data))
@@ -174,22 +182,17 @@ class CommCareImage(CommCareMultimedia):
     def validate_content_type(cls, content_type):
         return content_type in ['image/jpeg', 'image/png', 'image/gif', 'image/bmp']
 
-    @classmethod
-    def search(cls, query, limit=10):
-        results = get_db().search('hqmedia/image_search', q=query, limit=limit)
-        return map(cls.get, [r['id'] for r in results])
-
         
 class CommCareAudio(CommCareMultimedia):
+
+    class Config(object):
+        search_view = 'hqmedia/audio_search'
 
     @classmethod
     def validate_content_type(cls, content_type):
         return content_type in ['audio/mpeg', 'audio/mp3']
 
-    @classmethod
-    def search(cls, query, limit=10):
-        results = get_db().search('hqmedia/audio_search', q=query, limit=limit)
-        return map(cls.get, [r['id'] for r in results])
+
 
 class HQMediaMapItem(DocumentSchema):
 

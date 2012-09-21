@@ -215,6 +215,13 @@ class CaseDisplay(object):
 
 class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReportParametersMixin):
 
+    fields = [
+        'corehq.apps.reports.fields.FilterUsersField',
+        'corehq.apps.reports.fields.SelectCaseOwnerField',
+        'corehq.apps.reports.fields.CaseTypeField',
+        'corehq.apps.reports.fields.SelectOpenCloseField',
+    ]
+
     def CaseDisplay(self, case):
         return CaseDisplay(self, case)
 
@@ -226,7 +233,8 @@ class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, Pr
             params=self.pagination,
             case_type=self.case_type,
             owner_ids=self.case_owners,
-            user_ids=self.user_ids
+            user_ids=self.user_ids,
+            status=self.case_status
         ).results()
 
     @property
@@ -282,12 +290,9 @@ class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, Pr
         return shared_params
 
 
-class CaseListReport(ProjectInspectionReport, CaseListMixin):
+class CaseListReport(CaseListMixin, ProjectInspectionReport):
     name = 'Case List'
     slug = 'case_list'
-    fields = ['corehq.apps.reports.fields.FilterUsersField',
-              'corehq.apps.reports.fields.SelectCaseOwnerField',
-              'corehq.apps.reports.fields.CaseTypeField']
 
     @property
     def user_filter(self):

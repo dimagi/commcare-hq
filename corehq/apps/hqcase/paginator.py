@@ -3,12 +3,14 @@ from dimagi.utils.decorators import inline
 
 class CasePaginator():
 
-    def __init__(self, domain, params, case_type=None, owner_ids=None, user_ids=None, search_key=None):
+    def __init__(self, domain, params, case_type=None, owner_ids=None, user_ids=None, status=None):
         self.domain = domain
         self.params = params
         self.case_type = case_type
         self.owner_ids = owner_ids
         self.user_ids = user_ids
+        self.status = status or None
+        assert self.status in ('open', 'closed', None)
 
     def results(self):
         """Lucene Results"""
@@ -44,13 +46,17 @@ class CasePaginator():
                 yield "(%s)" % OR(user_filters)
 
             if self.case_type:
-                yield "type:(%s)" % self.case_type
+                yield 'type:"%s"' % self.case_type
+
+            if self.status:
+                yield "is:(%s)" % self.status
 
         results = get_db().search("case/search",
             q=query,
             handler="_fti/_design",
             skip=self.params.start,
             limit=self.params.count,
-            sort="\sort_modified"
+            sort="\sort_modified",
+            stale='ok',
         )
         return results

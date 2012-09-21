@@ -3,7 +3,8 @@ var HQReport = function (options) {
     var self = this;
     self.domain = options.domain;
     self.datespan = options.datespan;
-
+    self.filterSet = options.filterSet || false;
+    self.needsFilters = options.needsFilters || false;
     self.filterAccordion = options.filterAccordion || "#reportFilters";
     self.filterSubmitButton = options.filterSubmitButton || $('#paramSelectorForm button[type="submit"]');
     self.toggleFiltersButton = options.toggleFiltersButton || "#toggle-report-filters";
@@ -34,6 +35,9 @@ var HQReport = function (options) {
             });
 
             self.resetFilterState();
+            if (self.needsFilters) {
+                self.filterSubmitButton.button('reset').addClass('btn-primary');
+            }
         });
     };
 

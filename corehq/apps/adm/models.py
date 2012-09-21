@@ -1,5 +1,3 @@
-import logging
-import re
 from couchdbkit.ext.django.schema import Document, StringProperty, ListProperty,\
     DocumentSchema, BooleanProperty, DictProperty, IntegerProperty, DateTimeProperty
 import datetime
@@ -10,8 +8,9 @@ import pytz
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.data.editable_items import InterfaceEditableItemMixin
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.modules import to_function
 from dimagi.utils.timezones import utils as tz_utils
+from corehq.apps.users.models import CommCareUser
+from copy import copy
 
 
 #FORM_KEY_TYPES = (('user_id', 'form.meta.user_id'))
@@ -72,7 +71,7 @@ class ADMColumn(Document, ADMEditableItemMixin):
     couch_view = StringProperty(default="")
     key_format = StringProperty(default="<domain>, <user_id>, <datespan>")
     base_doc = "ADMColumn"
-
+    
     @property
     def row_columns(self):
         return ["name", "description", "couch_view", "key_format"]
@@ -149,6 +148,26 @@ class ADMColumn(Document, ADMEditableItemMixin):
             endkey=key+endkey_suffix
         )
 
+    @property
+    def is_user_column(self):
+        # a bit of a hack - used for determining if this refers to users
+        return "<user_id>" in self.key_format
+        
+    def _expand_user_key(self, key):
+        # given a formatted key, expand it by including all the 
+        # owner ids
+        index = self.couch_key.index("<user_id>")
+        user_id = key[index]
+        
+        def _repl(k, index, id):
+            ret = copy(k)
+            ret[index] = id
+            return ret
+        
+        return [_repl(key, index, id) for id in CommCareUser.get(user_id).get_owner_ids()]
+        
+        
+    
     @classmethod
     def get_col(cls, col_id):
         try:
@@ -180,6 +199,10 @@ class ReducedADMColumn(ADMColumn):
         cols.append("ignore_datespan")
         return cols
 
+    def aggregate(self, values):
+        return reduce(lambda x, y: x+ y, values) if self.returns_numerical \
+            else ', '.join(values)
+    
     def update_item(self, overwrite=True, **kwargs):
         self.ignore_datespan = kwargs.get('ignore_datespan', False)
         super(ReducedADMColumn, self).update_item(overwrite, **kwargs)
@@ -187,13 +210,19 @@ class ReducedADMColumn(ADMColumn):
     def get_data(self, key, datespan=None):
         if self.ignore_datespan:
             datespan = None
-        start_end = self.standard_start_end(key, datespan)
-        value = 0 if self.returns_numerical else None
-        data = self.get_view_results(reduce=True, **start_end).first()
-        if data:
-            value = data.get('value', 0)
-        return value
-
+        # for now, if you're working with users assume you use all
+        # their owner ids in your query
+        
+        keys = [key] if not self.is_user_column else self._expand_user_key(key)
+        
+        def _val(key, datespan): 
+            start_end = self.standard_start_end(key, datespan)
+            data = self.get_view_results(reduce=True, **start_end).first()
+            value = data.get('value', 0) if data \
+                else 0 if self.returns_numerical else None
+            return value
+        
+        return self.aggregate(_val(k, datespan) for k in keys)
 
 class DaysSinceADMColumn(ADMColumn):
     """

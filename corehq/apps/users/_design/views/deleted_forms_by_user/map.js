@@ -13,6 +13,6 @@ function(doc) {
 
     if (doc.doc_type == "XFormInstance-Deleted" && get_user_id(doc) !== null) {
         var date = parse_date(doc.received_on);
-        emit([get_user_id(doc), date.getFullYear(), date.getMonth(), date.getDate(), doc.xmlns], 1);
+        emit([get_user_id(doc), date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), doc.xmlns], 1);
     }
 }

@@ -1,6 +1,7 @@
 # coding=utf-8
 from collections import defaultdict
 from datetime import datetime
+from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 import re
@@ -17,6 +18,7 @@ from corehq.apps.app_manager import fixtures
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError, WrappedNode
 from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
+from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
@@ -218,6 +220,15 @@ class FormSource(object):
         app.register_pre_save(pre_save)
         app.register_post_save(post_save)
 
+class CachedStringProperty(object):
+    def __init__(self, key):
+        self.get_key = key
+
+    def __get__(self, instance, owner):
+        return cache.get(self.get_key(instance))
+
+    def __set__(self, instance, value):
+        cache.set(self.get_key(instance), value, 12*60*60)
 
 class FormBase(DocumentSchema):
     """
@@ -232,9 +243,13 @@ class FormBase(DocumentSchema):
     actions     = SchemaProperty(FormActions)
     show_count  = BooleanProperty(default=False)
     xmlns       = StringProperty()
-#    contents    = StringProperty()
     source      = FormSource()
-    validation_cache = StringProperty(required=False)
+    validation_cache = CachedStringProperty(lambda self: "%s-validation" % self.unique_id)
+
+    @classmethod
+    def wrap(cls, data):
+        data.pop('validation_cache', '')
+        return super(FormBase, cls).wrap(data)
 
     @classmethod
     def generate_id(cls):
@@ -262,10 +277,10 @@ class FormBase(DocumentSchema):
                 self.validation_cache = unicode(e)
             else:
                 self.validation_cache = ""
-            self.get_app().save(increment_version=False)
         if self.validation_cache:
             raise XFormValidationError(self.validation_cache)
         return self
+
     def get_unique_id(self):
         """
         Return unique_id if it exists, otherwise initialize it
@@ -1165,6 +1180,18 @@ def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
         raise ValueError("Invalid Language")
 
+class SavedAppBuild(ApplicationBase):
+    def to_saved_build_json(self, timezone):
+        data = super(SavedAppBuild, self).to_json()
+        data.update({
+            'id': self.id,
+            'built_on_date': utc_to_timezone(data['built_on'], timezone, "%b %d, %Y"),
+            'built_on_time': utc_to_timezone(data['built_on'], timezone, "%H:%M %Z"),
+            'build_label': self.built_with.get_label(),
+            'jar_path': self.get_jar_path(),
+        })
+        return data
+
 class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     """
     A Managed Application that can be created entirely through the online interface, except for writing the
@@ -1750,10 +1777,16 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
             except Exception:
                 raise Http404
 
-        parent_app_id = original_app.get('copy_of') or original_app['_id']
+        if original_app.get('copy_of'):
+            parent_app_id = original_app.get('copy_of')
+            min_version = original_app['version']
+        else:
+            parent_app_id = original_app['_id']
+            min_version = -1
+
         latest_app = get_db().view('app_manager/applications',
             startkey=['^ReleasedApplications', domain, parent_app_id, {}],
-            endkey=['^ReleasedApplications', domain, parent_app_id, original_app['version']],
+            endkey=['^ReleasedApplications', domain, parent_app_id, min_version],
             limit=1,
             descending=True,
             include_docs=True
