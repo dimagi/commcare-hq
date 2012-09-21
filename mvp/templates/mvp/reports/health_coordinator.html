@@ -3,8 +3,13 @@
 {% load report_tags %}
 {% load i18n %}
 
+
 {% block reportcontent %}
     <table class="table table-bordered table-striped datatable">
+        <colgroup span="1" class="definition_columns"></colgroup>
+        <colgroup span="12" class="past_columns"></colgroup>
+        <colgroup span="1" class="current_month_column"></colgroup>
+        <colgroup span="3" class="summary"></colgroup>
         <thead>
             <tr>
                 <th class="span2"></th>
@@ -41,7 +46,7 @@
                 {% endfor %}
                 <td>{{ indicator.average.d }}</td>
                 <td>{{ indicator.median.d }}</td>
-                <td>{{ indicator.std_dev.d }}</td>
+                <td class="summary">{{ indicator.std_dev.d }}</td>
             </tr>
             <tr>
                 <td colspan="17"></td>
