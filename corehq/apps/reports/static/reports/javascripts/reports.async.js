@@ -62,10 +62,6 @@ var HQAsyncReport = function (o) {
         });
     };
 
-    self.clearLoading = function () {
-        
-    };
-
     self.updateReport = function (initial_load, params) {
         var process_filters = "";
         if (initial_load) {
