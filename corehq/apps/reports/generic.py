@@ -17,6 +17,7 @@ from dimagi.utils.couch.pagination import DatatablesParams
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import render_to_response, json_request
+from dimagi.utils.parsing import string_to_boolean
 
 class GenericReportView(object):
     """
@@ -62,7 +63,7 @@ class GenericReportView(object):
     section_name = None # string. ex: "Reports"
     app_slug = None     # string. ex: 'reports' or 'manage'
     dispatcher = None   # ReportDispatcher subclass
-
+    
     # not required
     description = None  # string. description of the report. Currently not being used.
     report_template_path = None
@@ -88,7 +89,8 @@ class GenericReportView(object):
     show_timezone_notice = False
     show_time_notice = False
     is_admin_report = False
-
+    
+    
     def __init__(self, request, base_context=None, *args, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
             raise NotImplementedError("Missing a required parameter: (name: %(name)s, section_name: %(section_name)s,"
@@ -123,7 +125,7 @@ class GenericReportView(object):
         """
             For pickling the report when passing it to Celery.
         """
-        logging = get_task_logger() # logging lis likely to happen within celery.
+        logging = get_task_logger() # logging is likely to happen within celery.
         # pickle only what the report needs from the request object
 
         request = dict(
@@ -395,11 +397,30 @@ class GenericReportView(object):
         """
         return [ ['table_or_sheet_name', [['header'] ,['row']] ] ]
 
+    
+    @property
+    def filter_set(self):
+        """
+        Whether a report has any filters set. Based on whether or not there 
+        is a query string. This gets carried to additional asynchronous calls
+        """
+        return string_to_boolean(self.request.GET.get("filterSet")) \
+            if "filterSet" in self.request.GET else bool(self.request.META.get('QUERY_STRING'))
+        
+    
+    @property
+    def needs_filters(self):
+        """
+        Whether a report needs filters. A shortcut for hide_filters is false and 
+        filter_set is false.
+        """
+        return not self.hide_filters and not self.filter_set
+    
     def _validate_context_dict(self, property):
         if not isinstance(property, dict):
             raise TypeError("property must return a dict")
         return property
-
+    
     def _update_initial_context(self):
         """
             Intention: Don't override.
@@ -414,6 +435,8 @@ class GenericReportView(object):
                 is_async=self.asynchronous,
                 is_exportable=self.exportable,
                 dispatcher=self.dispatcher,
+                filter_set=self.filter_set,
+                needs_filters=self.needs_filters,
                 show=self.request.couch_user.can_view_reports() or self.request.couch_user.get_viewable_reports(),
                 is_admin=self.is_admin_report # todo is this necessary???
             ),
@@ -565,10 +588,8 @@ class GenericReportView(object):
             del renderings[renderings.index('clear_cache')]
         except Exception:
             pass
-        print renderings
         for render in renderings:
             cache_key = self.generate_cache_key("%s_response" % render)
-            print cache_key
         return HttpResponse("Clearing cache")
 
     @classmethod
@@ -623,7 +644,7 @@ class GenericTabularReport(GenericReportView):
     fix_left_col = False
     ajax_pagination = False
     use_datatables = True
-
+    
     # override old class properties
     report_template_path = "reports/async/tabular.html"
     flush_layout = True
@@ -768,7 +789,7 @@ class GenericTabularReport(GenericReportView):
         if isinstance(headers, list):
             raise DeprecationWarning("Property 'headers' should return a DataTablesHeader object, not a list.")
 
-        if not self.ajax_pagination:
+        if not self.ajax_pagination and not self.needs_filters:
             rows = self.rows
             try:
                 rows = list(rows)
