@@ -4,6 +4,7 @@ import datetime
 from django.conf import settings
 from couchdbkit.ext.django.schema import *
 import couchforms.const as const
+from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.parsing import string_to_datetime
 from couchdbkit.schema.properties_proxy import SchemaListProperty
 from couchforms.safe_index import safe_index
@@ -43,7 +44,7 @@ class Metadata(DocumentSchema):
     deprecatedID = StringProperty()
     username = StringProperty()
     
-class XFormInstance(Document, UnicodeMixIn):
+class XFormInstance(Document, UnicodeMixIn, ComputedDocumentMixin):
     """An XForms instance."""
     xmlns = StringProperty()
     received_on = DateTimeProperty()
