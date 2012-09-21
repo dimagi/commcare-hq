@@ -7,6 +7,6 @@ function(doc) {
         if (!date) {
             date = Date();
         }
-        emit([doc.xmlns, date.getFullYear(), date.getMonth(), date.getDate()], 1);
+        emit([doc.xmlns, date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()], 1);
     } 
 }
