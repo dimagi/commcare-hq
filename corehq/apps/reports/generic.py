@@ -588,10 +588,8 @@ class GenericReportView(object):
             del renderings[renderings.index('clear_cache')]
         except Exception:
             pass
-        print renderings
         for render in renderings:
             cache_key = self.generate_cache_key("%s_response" % render)
-            print cache_key
         return HttpResponse("Clearing cache")
 
     @classmethod
