@@ -1,6 +1,6 @@
 from django.core.management.base import LabelCommand, CommandError
-from corehq.apps.indicators.models import IndicatorDefinition, BooleanFormDataCaseIndicatorDefinition
-from mvp.models import MVPLessThanAgeIndicatorDefinition, MVP, MVPDangerSignIndicatorDefinition
+from corehq.apps.indicators.models import IndicatorDefinition, CaseDataInFormIndicatorDefinition
+from mvp.models import MVP, MVPRelatedCaseDataInFormIndicatorDefinition, MVPRelatedCaseDataInCaseIndicatorDefinition
 
 class Command(LabelCommand):
     help = "Create the indicator definitions necessary to compute MVP Indicators."
@@ -21,61 +21,68 @@ class Command(LabelCommand):
             shared_kwargs = dict(
                 namespace=MVP.NAMESPACE,
                 domain=domain,
-                version=2
+                version=1
             )
 
-            under_five = MVPLessThanAgeIndicatorDefinition.update_or_create_unique(
-                slug="under_five",
-                case_type="child",
-                related_case_types=["household"],
-                age_in_months=5*12,
-                **shared_kwargs
-            )
-            under_five.save()
-
-            neonate_newborn = MVPLessThanAgeIndicatorDefinition.update_or_create_unique(
-                slug="neonate_newborn",
-                case_type="child",
-                related_case_types=["household"],
-                age_in_months=31,
-                **shared_kwargs
-            )
-            neonate_newborn.save()
-
-            rdt_received = BooleanFormDataCaseIndicatorDefinition.update_or_create_unique(
-                slug="rdt_received",
-                case_type="child",
+            child_dob = CaseDataInFormIndicatorDefinition.update_or_create_unique(
+                slug="child_dob",
                 xmlns="http://openrosa.org/formdesigner/B9CEFDCD-8068-425F-BA67-7DC897030A5A",
-                compared_property="patient_available.referral_follow_on.referral_and_rdt",
-                expression="'%(value)s' == 'yes'",
+                case_property="dob_calc",
                 **shared_kwargs
             )
-            rdt_received.save()
+            child_dob.save()
 
-            rdt_positive = BooleanFormDataCaseIndicatorDefinition.update_or_create_unique(
-                slug="rdt_positive",
-                case_type="child",
-                xmlns="http://openrosa.org/formdesigner/B9CEFDCD-8068-425F-BA67-7DC897030A5A",
-                compared_property="patient_available.referral_follow_on.rdt_result",
-                expression="'%(value)s' == 'positive'",
+            household_child_dob = MVPRelatedCaseDataInFormIndicatorDefinition.update_or_create_unique(
+                slug="household_child_dob",
+                xmlns="http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B",
+                case_property="dob_calc",
+                related_case_type = "child",
                 **shared_kwargs
             )
-            rdt_positive.save()
+            household_child_dob.save()
 
-            antimalarial_received = BooleanFormDataCaseIndicatorDefinition.update_or_create_unique(
-                slug="antimalarial_received",
-                case_type="child",
-                xmlns="http://openrosa.org/formdesigner/B9CEFDCD-8068-425F-BA67-7DC897030A5A",
-                compared_property="cur_meds_given",
-                expression="'anti_malarial' in '%(value)s'",
+            household_child_close_reason = MVPRelatedCaseDataInFormIndicatorDefinition.update_or_create_unique(
+                slug="household_child_close_reason",
+                xmlns="http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B",
+                case_property="close_reason",
+                related_case_type = "child",
                 **shared_kwargs
             )
-            antimalarial_received.save()
+            household_child_close_reason.save()
 
-            danger_signs = MVPDangerSignIndicatorDefinition.update_or_create_unique(
-                slug="danger_signs",
-                case_type="child",
-                xmlns="http://openrosa.org/formdesigner/B9CEFDCD-8068-425F-BA67-7DC897030A5A",
+            household_pregnancy_visit = MVPRelatedCaseDataInFormIndicatorDefinition.update_or_create_unique(
+                slug="household_pregnancy_visit",
+                xmlns="http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B",
+                case_property="dob_calc",
+                related_case_type = "pregnancy",
                 **shared_kwargs
             )
-            danger_signs.save()
+            household_pregnancy_visit.save()
+
+            case_pregnancy = MVPRelatedCaseDataInCaseIndicatorDefinition.update_or_create_unique(
+                slug="case_pregnancy",
+                case_type="household",
+                related_case_property="dob_calc",
+                related_case_type = "pregnancy",
+                **shared_kwargs
+            )
+            case_pregnancy.save()
+
+            case_child_dob = MVPRelatedCaseDataInCaseIndicatorDefinition.update_or_create_unique(
+                slug="case_child_dob",
+                case_type="household",
+                related_case_property="dob_calc",
+                related_case_type = "child",
+                **shared_kwargs
+            )
+            case_child_dob.save()
+
+            case_child_close_reason = MVPRelatedCaseDataInCaseIndicatorDefinition.update_or_create_unique(
+                slug="case_child_close_reason",
+                case_type="household",
+                related_case_property="close_reason",
+                related_case_type = "child",
+                **shared_kwargs
+            )
+            case_child_close_reason.save()
+

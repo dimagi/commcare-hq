@@ -4,7 +4,7 @@ from couchdbkit.schema.properties import LazyDict
 import dateutil
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.indicators.models import CaseIndicatorDefinition, FormDataInCaseIndicatorDefinition,\
-    PopulateRelatedCasesWithIndicatorDefinitionMixin
+    PopulateRelatedCasesWithIndicatorDefinitionMixin, CaseDataInFormIndicatorDefinition
 from couchforms.models import XFormInstance
 
 class MVP(object):
@@ -13,93 +13,68 @@ class MVP(object):
 
 CLASS_PATH = "mvp.models"
 
-class MVPCaseRelatedToHouseholdIndicatorDefinition(CaseIndicatorDefinition,
-    PopulateRelatedCasesWithIndicatorDefinitionMixin):
+class MVPCannotFetchCaseError(Exception):
+    pass
 
+
+class MVPRelatedCaseMixin(DocumentSchema):
+    related_case_type = StringProperty()
+
+    def get_related_cases(self, original_case):
+        if hasattr(original_case, 'household_head_health_id'):
+            household_id = original_case.household_head_health_id
+        elif hasattr(original_case, 'household_head_id'):
+            household_id = original_case.household_head_id
+        else:
+            raise MVPCannotFetchCaseError("Cannot fetch appropriate case from %s." % original_case.get_id)
+        key = [original_case.domain, self.related_case_type, household_id]
+        cases = CommCareCase.view("mvp/cases_by_household",
+            reduce=False,
+            include_docs=True,
+            startkey=key,
+            endkey=key+[{}]
+        ).all()
+        return cases
+
+
+class MVPRelatedCaseDataInFormIndicatorDefinition(CaseDataInFormIndicatorDefinition, MVPRelatedCaseMixin):
     _class_path = CLASS_PATH
-
-    def set_related_cases(self, case):
-        get_household_id_attr = 'household_head_id' if hasattr(case, 'household_head_id') \
-                                                    else 'household_head_health_id'
-        household_id = getattr(case, get_household_id_attr)
-        related_cases = list()
-        for case_type in self.related_case_types:
-            key = [case.domain, case_type, household_id]
-            related_cases.extend(CommCareCase.view("mvp/cases_by_household",
-                reduce=False,
-                include_docs=True,
-                startkey=key,
-                endkey=key+[{}]
-            ).all())
-        print "RELATED CASES", [c.get_id for c in related_cases]
-        self._related_cases = related_cases
-
-    def get_clean_value(self, doc):
-        value = super(MVPCaseRelatedToHouseholdIndicatorDefinition, self).get_clean_value(doc)
-        self.set_related_cases(doc)
-        self.populate_with_value(value)
-        return value
-
-
-class MVPLessThanAgeIndicatorDefinition(MVPCaseRelatedToHouseholdIndicatorDefinition):
-        """
-            Create a case-based indicator for the MVP child case that sets
-            under_five = True if the child is under 5 _years_ of age.
-        """
-        age_in_months = IntegerProperty()
-
-        def get_value(self, doc):
-            if hasattr(doc, 'age') and hasattr(doc, 'months_or_years'):
-                multiplier = 12 if (doc.months_or_years == 'years') else 1
-                age_in_months = int(doc.age) * int(multiplier)
-            elif hasattr(doc, 'dob'):
-                age_in_months = self.age_from_dob(doc)
-            else:
-                raise ValueError("Cannot grab the age from this case. No 'age' or 'dob' available.")
-            return int(age_in_months) < int(self.age_in_months)
-
-        def age_from_dob(self, doc):
-            dob = doc.dob_calc
-            today = doc.modified_on.date()
-            if isinstance(dob, str):
-                dob = dateutil.parser.parse(dob)
-            td = today-dob
-            return int(round((float(td.days)/365)*12))
-
-
-class MVPPregnantWomanInHouseholdIndicatorDefinition(MVPCaseRelatedToHouseholdIndicatorDefinition):
+    _returns_multiple = True
 
     def get_value(self, doc):
-        #todo finish this
-        currently_pregnant = bool(doc.closed == 'no')
-        pregnancy_info = dict(currently_pregnant=currently_pregnant)
-        if not currently_pregnant:
-            pass
+        values = list()
+        form_data = doc.get_form
+        related_case_id = form_data.get('case', {}).get('@case_id')
+        if related_case_id:
+            case = CommCareCase.get(related_case_id)
+            if isinstance(case, CommCareCase):
+                related_cases = self.get_related_cases(case)
+                for rc in related_cases:
+                    if hasattr(rc, str(self.case_property)):
+                        values.append(dict(
+                            case_id=rc.get_id,
+                            case_opened=rc.opened_on,
+                            case_closed=rc.closed_on,
+                            value=getattr(rc, str(self.case_property))
+                        ))
+        return values
 
 
-        return False
-
-
-class MVPDangerSignIndicatorDefinition(FormDataInCaseIndicatorDefinition):
-    """
-        Case-based form data indicator for keeping track of danger signs.
-    """
+class MVPRelatedCaseDataInCaseIndicatorDefinition(CaseIndicatorDefinition, MVPRelatedCaseMixin):
+    related_case_property = StringProperty()
 
     _class_path = CLASS_PATH
+    _returns_multiple = True
 
-    def get_value_for_form(self, form_data):
-        danger_keys = ["patient_available.immediate_danger_sign",
-                       "patient_available.emergency_danger_sign",
-                       "curr_danger_type"]
-        return list(self.get_signs_for_keys(form_data, danger_keys))
-
-    def get_signs_for_keys(self, form_data, keys):
-        all_signs = list()
-        for key in keys:
-            signs = self.get_from_form(form_data, key.split('.')).strip()
-            signs = [s for s in signs.split(' ') if s]
-            all_signs.extend(signs)
-        return set(all_signs)
-
-
-
+    def get_value(self, case):
+        values = list()
+        related_cases = self.get_related_cases(case)
+        for rc in related_cases:
+            if hasattr(rc, str(self.related_case_property)):
+                values.append(dict(
+                    case_id=rc.get_id,
+                    case_opened=rc.opened_on,
+                    case_closed=rc.closed_on,
+                    value=getattr(rc, str(self.related_case_property))
+                ))
+        return values
