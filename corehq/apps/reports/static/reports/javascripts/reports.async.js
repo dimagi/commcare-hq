@@ -40,7 +40,7 @@ var HQAsyncReport = function (o) {
         self.updateReport(true, window.location.search.substr(1));
         
         // only update the report if there are actually filters set
-        if (self.standardReport.filterSet) {
+        if (!self.standardReport.needsFilters) {
             self.standardReport.filterSubmitButton.addClass('disabled');
 	        self.filterForm.submit(function () {
 	            var params = $(this).serialize();
@@ -97,7 +97,7 @@ var HQAsyncReport = function (o) {
                 $('.loading-backdrop').fadeOut();
                 self.hqLoading.fadeOut();
 		                
-                if (!initial_load || self.standardReport.filterSet) {
+                if (!initial_load || !self.standardReport.needsFilters) {
                     self.standardReport.filterSubmitButton.removeClass('btn-primary').button('standard');
                 } else {
                     self.standardReport.filterSubmitButton.button('reset').addClass('btn-primary');

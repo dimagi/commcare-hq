@@ -4,7 +4,7 @@
 {% load i18n %}
 
 {% block reportcontent %}
-{% if not report.filter_set %}
+{% if report.needs_filters %}
     <p>Please choose your filters to see report data.</p>
 {% else %}        
     <table class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>

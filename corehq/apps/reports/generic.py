@@ -408,6 +408,14 @@ class GenericReportView(object):
             if "filterSet" in self.request.GET else bool(self.request.META.get('QUERY_STRING'))
         
     
+    @property
+    def needs_filters(self):
+        """
+        Whether a report needs filters. A shortcut for hide_filters is false and 
+        filter_set is false.
+        """
+        return not self.hide_filters and not self.filter_set
+    
     def _validate_context_dict(self, property):
         if not isinstance(property, dict):
             raise TypeError("property must return a dict")
@@ -428,6 +436,7 @@ class GenericReportView(object):
                 is_exportable=self.exportable,
                 dispatcher=self.dispatcher,
                 filter_set=self.filter_set,
+                needs_filters=self.needs_filters,
                 show=self.request.couch_user.can_view_reports() or self.request.couch_user.get_viewable_reports(),
                 is_admin=self.is_admin_report # todo is this necessary???
             ),
@@ -782,7 +791,7 @@ class GenericTabularReport(GenericReportView):
         if isinstance(headers, list):
             raise DeprecationWarning("Property 'headers' should return a DataTablesHeader object, not a list.")
 
-        if not self.ajax_pagination and self.filter_set:
+        if not self.ajax_pagination and not self.needs_filters:
             rows = self.rows
             try:
                 rows = list(rows)

@@ -21,6 +21,7 @@
                 enddate: '{{ datespan.enddate|date:"Y-m-d" }}'
             },{% endif %}
             filterSet: {{ report.filter_set|JSON }},
+            needsFilters: {{ report.needs_filters|JSON }},
         });
         standardHQReport.init();
 

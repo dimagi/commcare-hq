@@ -13,10 +13,11 @@ class ADMSectionView(GenericReportView):
     section_name = "Active Data Management"
     app_slug = "adm"
     dispatcher = ADMSectionDispatcher
+    hide_filters = True
 
     # adm-specific stuff
     adm_slug = None
-
+    
     def __init__(self, request, base_context=None, *args, **kwargs):
         self.adm_sections = dict(REPORT_SECTION_OPTIONS)
         if self.adm_slug not in self.adm_sections:
