@@ -35,6 +35,9 @@ var HQReport = function (options) {
             });
 
             self.resetFilterState();
+            if (self.needsFilters) {
+                self.filterSubmitButton.button('reset').addClass('btn-primary');
+            }
         });
     };
 
