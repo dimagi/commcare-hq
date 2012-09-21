@@ -43,7 +43,7 @@ class CommCareCaseAction(DocumentSchema):
     An atomic action on a case. Either a create, update, or close block in
     the xml.
     """
-    action_type = StringProperty()
+    action_type = StringProperty(choices=list(const.CASE_ACTIONS))
     date = DateTimeProperty()
     server_date = DateTimeProperty()
     xform_id = StringProperty()
@@ -160,26 +160,36 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
     external_id = StringProperty()
     user_id = StringProperty()
     owner_id = StringProperty()
-    
+
     referrals = SchemaListProperty(Referral)
     actions = SchemaListProperty(CommCareCaseAction)
     name = StringProperty()
     version = StringProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
-    
+
     server_modified_on = DateTimeProperty()
-    
+
     class Meta:
         app_label = 'case'
-        
+
     def __unicode__(self):
         return "CommCareCase: %s (%s)" % (self.case_id, self.get_id)
-    
-    
+
+
     def __get_case_id(self):        return self._id
     def __set_case_id(self, id):    self._id = id
     case_id = property(__get_case_id, __set_case_id)
-    
+
+    @property
+    def server_opened_on(self):
+        try:
+            open_action = self.actions[0]
+            #assert open_action.action_type == const.CASE_ACTION_CREATE
+            return open_action.server_date
+        except Exception:
+            pass
+
+
     @property
     def reverse_indices(self):
         def wrap_row(row):
@@ -212,7 +222,7 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
             # renamed
             "server_date_modified": self.server_modified_on,
             # renamed
-            "server_date_opened": self.server_modified_on,
+            "server_date_opened": self.server_opened_on,
             "properties": dict(self.dynamic_case_properties() + {
                 "external_id": self.external_id,
                 "owner_id": self.owner_id,
