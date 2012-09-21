@@ -100,6 +100,9 @@ class TempCommCareUser(CommCareUser):
     def raw_username(self):
         return self.username
 
+    class Meta:
+        app_label = 'reports'
+
 
 class ReportNotification(Document, UnicodeMixIn):
     domain = StringProperty()
