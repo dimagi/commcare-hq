@@ -228,6 +228,7 @@ domain_admin_required = domain_admin_required_ex()
 ########################################################################################################
     
 require_superuser = permission_required("is_superuser")
+cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
 
 def require_previewer(view_func):
     def shim(request, *args, **kwargs):
@@ -236,3 +237,5 @@ def require_previewer(view_func):
         else:
             return view_func(request, *args, **kwargs)
     return shim
+
+cls_require_previewer = cls_to_view(additional_decorator=require_previewer)

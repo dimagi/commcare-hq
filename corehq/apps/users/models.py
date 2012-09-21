@@ -6,6 +6,7 @@ from __future__ import absolute_import
 from datetime import datetime
 import logging
 import re
+from django.utils import html, safestring
 from restkit.errors import NoMoreData
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
@@ -38,6 +39,7 @@ from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.django.database import get_unique_value
+import json
 
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
@@ -216,7 +218,7 @@ class UserRole(Document):
     @classmethod
     def role_choices(cls, domain):
         return [(role.get_qualified_id(), role.name or '(No Name)') for role in [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
-    
+
     @classmethod
     def commcareuser_role_choices(cls, domain):
         return [('none','(none)')] + [(role.get_qualified_id(), role.name or '(No Name)') for role in list(cls.by_domain(domain))]
@@ -609,7 +611,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @property
     def full_name(self):
-        return "%s %s" % (self.first_name, self.last_name)
+        return ("%s %s" % (self.first_name, self.last_name)).strip()
 
     formatted_name = full_name
     name = full_name
@@ -873,7 +875,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
                     models = role.permissions.view_report_list
             else:
                 models = self.get_domain_membership(domain).viewable_reports()
-            
+
             if name:
                 return [to_function(m).name for m in models]
             else:
@@ -940,9 +942,12 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
 
     @property
     def username_in_report(self):
-        if (self.first_name == '' and self.last_name == ''):
-            return self.raw_username
-        return self.full_name
+        def parts():
+            yield u'%s' % html.escape(self.raw_username)
+            if self.full_name:
+                yield u' "%s"' % html.escape(self.full_name)
+
+        return safestring.mark_safe(''.join(parts()))
 
     @classmethod
     def create_or_update_from_xform(cls, xform):
@@ -1188,6 +1193,10 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
         from corehq.apps.groups.models import Group
         return Group.by_user(self, wrap=False)
 
+    @property
+    def user_data_json(self):
+        return json.dumps(self.user_data)
+
     def get_time_zone(self):
         try:
             time_zone = self.user_data["time_zone"]
@@ -1213,7 +1222,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
                 return role.permissions.has(permission, data)
             else:
                 return False
-    
+
     def get_role(self, domain=None):
         """
         Get the role object for this user
@@ -1221,14 +1230,14 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
         if domain is None:
             # default to current_domain for django templates
             domain = self.current_domain
-        
+
         if domain != self.domain:
             return None
         elif self.role_id is None:
             return None
         else:
             return UserRole.get(self.role_id)
-    
+
     def set_role(self, domain, role_qualified_id):
         """
         role_qualified_id is either 'none' 'admin' 'user-role:[id]'
@@ -1375,8 +1384,8 @@ class FakeUser(WebUser):
     """
     def save(self, **kwargs):
         raise NotImplementedError("You aren't allowed to do that!")
-        
-    
+
+
 class PublicUser(FakeUser):
     """
     Public users have read-only access to certain domains
@@ -1400,10 +1409,10 @@ class InvalidUser(FakeUser):
     """
     Public users have read-only access to certain domains
     """
-    
+
     def is_member_of(self, domain_qs):
         return False
-    
+
 #
 # Django  models go here
 #
@@ -1438,6 +1447,18 @@ class Invitation(Document):
         html_content = render_to_string("domain/email/domain_invite.html", params)
         subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name
         send_HTML_email(subject, self.email, text_content, html_content)
+
+    @classmethod
+    def by_domain(cls, domain, is_active=True):
+        key = [domain]
+
+        return cls.view("users/open_invitations_by_domain",
+            reduce=False,
+            startkey=key,
+            endkey=key + [{}],
+            include_docs=True,
+        ).all()
+
 
 class RemoveWebUserRecord(DeleteRecord):
     user_id = StringProperty()

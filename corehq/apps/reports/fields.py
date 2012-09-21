@@ -74,7 +74,7 @@ class MonthField(ReportField):
     template = "reports/partials/month-select.html"
 
     def update_context(self):
-        self.context['month'] = self.request.GET.get('month', datetim.datetime.utcnow().month)
+        self.context['month'] = self.request.GET.get('month', datetime.datetime.utcnow().month)
 
 class YearField(ReportField):
     slug = "year"
@@ -146,39 +146,25 @@ class CaseTypeField(ReportSelectField):
     cssId = "case_type_select"
 
     def update_params(self):
-        individual = self.request.GET.get('individual', '')
-        group = self.request.GET.get('group', '')
-        if not individual and not settings.LUCENE_ENABLED:
-            user_filter = HQUserType.use_filter(['0','1','2','3'])
-        else:
-            user_filter, _ = FilterUsersField.get_user_filter(self.request)
-
-        users = util.get_all_users_by_domain(self.domain, group, individual, user_filter)
-        user_ids = [user.user_id for user in users]
-        
-        case_types = self.get_case_types(self.domain, user_ids)
+        case_types = self.get_case_types(self.domain)
         case_type = self.request.GET.get(self.slug, '')
 
-        open_count, all_count = self.get_case_counts(self.domain, user_ids=user_ids)
         self.selected = case_type
-        self.options = [dict(val=case, text="%s (%d/%d open)" % (case, data.get("open", 0), data.get("all", 0)))
-                        for case, data in case_types.items()]
-        self.default_option = "All Case Types (%d/%d open)" % (open_count, all_count)
+        self.options = [dict(val=case, text="%s" % case) for case in case_types]
+        self.default_option = "All Case Types"
 
     @classmethod
-    def get_case_types(cls, domain, user_ids=None):
-        case_types = {}
+    def get_case_types(cls, domain):
+
         key = [domain]
         for r in get_db().view('hqcase/all_cases',
             startkey=key,
             endkey=key + [{}],
             group_level=2
         ).all():
-            case_type = r['key'][1]
+            _, case_type = r['key']
             if case_type:
-                open_count, all_count = cls.get_case_counts(domain, case_type, user_ids)
-                case_types[case_type] = {'open': open_count, 'all': all_count}
-        return case_types
+                yield case_type
 
     @classmethod
     def get_case_counts(cls, domain, case_type=None, user_ids=None):

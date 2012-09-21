@@ -1,16 +1,20 @@
 from StringIO import StringIO
 import datetime
+from celery.log import get_task_logger
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.template.context import RequestContext
 import json
 from django.template.loader import render_to_string
+import pickle
 import pytz
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
+from corehq.apps.users.models import CouchUser
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 from dimagi.utils.couch.pagination import DatatablesParams
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import render_to_response, json_request
 
@@ -58,7 +62,6 @@ class GenericReportView(object):
     section_name = None # string. ex: "Reports"
     app_slug = None     # string. ex: 'reports' or 'manage'
     dispatcher = None   # ReportDispatcher subclass
-    # todo: find instances of base_slug and replace with section_slug
 
     # not required
     description = None  # string. description of the report. Currently not being used.
@@ -104,24 +107,78 @@ class GenericReportView(object):
         self.request_params = json_request(self.request.GET)
         self.domain = kwargs.get('domain')
         self.context = base_context or {}
-        self.context.update(
-            report=dict(
-                title=self.name,
-                description=self.description,
-                section_name=self.section_name,
-                slug=self.slug,
-                url_root=self.url_root,
-                is_async=self.asynchronous,
-                is_exportable=self.exportable,
-                dispatcher=self.dispatcher,
-                show=self.request.couch_user.can_view_reports or
-                     self.request.couch_user.get_viewable_reports,
-                is_admin=self.is_admin_report # todo is this necessary???
-            ),
-            show_time_notice=self.show_time_notice,
-            domain=self.domain,
-            layout_flush_content=self.flush_layout
+        self._update_initial_context()
+
+    def __str__(self):
+        return "%(klass)s report named '%(name)s' with slug '%(slug)s' in section '%(section)s'.%(desc)s%(fields)s" % dict(
+            klass=self.__class__.__name__,
+            name=self.name,
+            slug=self.slug,
+            section=self.section_name,
+            desc="\n   Report Description: %s" % self.description if self.description else "",
+            fields="\n   Report Fields: \n     -%s" % "\n     -".join(self.fields) if self.fields else ""
         )
+
+    def __getstate__(self):
+        """
+            For pickling the report when passing it to Celery.
+        """
+        logging = get_task_logger() # logging lis likely to happen within celery.
+        # pickle only what the report needs from the request object
+
+        request = dict(
+            GET=self.request.GET,
+            META=dict(
+                QUERY_STRING=self.request.META.get('QUERY_STRING'),
+                PATH_INFO=self.request.META.get('PATH_INFO')
+            ),
+            datespan=self.request.datespan,
+            couch_user=None
+        )
+
+        try:
+            request.update(couch_user=self.request.couch_user.get_id)
+        except Exception as e:
+            logging.error("Could not pickle the couch_user id from the request object for report %s. Error: %s" %
+                          (self.name, e))
+        return dict(
+            request=request,
+            request_params=self.request_params,
+            domain=self.domain,
+            context={}
+        )
+
+    _caching = False
+    def __setstate__(self, state):
+        """
+            For unpickling a pickled report.
+        """
+        logging = get_task_logger() # logging lis likely to happen within celery.
+        self.domain = state.get('domain')
+        self.context = state.get('context', {})
+
+        class FakeHttpRequest(object):
+            GET = {}
+            META = {}
+            couch_user = None
+            datespan = None
+
+        request_data = state.get('request')
+        request = FakeHttpRequest()
+        request.GET = request_data.get('GET', {})
+        request.META = request_data.get('META', {})
+        request.datespan = request_data.get('datespan')
+
+        try:
+            couch_user = CouchUser.get(request_data.get('couch_user'))
+            request.couch_user = couch_user
+        except Exception as e:
+            logging.error("Could not unpickle couch_user from request for report %s. Error: %s" %
+                            (self.name, e))
+        self.request = request
+        self._caching = True
+        self.request_params = state.get('request_params')
+        self._update_initial_context()
 
     _url_root = None
     @property
@@ -134,6 +191,12 @@ class GenericReportView(object):
                 root = None
             self._url_root = root
         return self._url_root
+
+    @property
+    def queried_path(self):
+        path = self.request.META.get('PATH_INFO')
+        query = self.request.META.get('QUERY_STRING')
+        return "%s:%s" % (path, query)
 
     _domain_object = None
     @property
@@ -284,6 +347,17 @@ class GenericReportView(object):
         return None
 
     @property
+    def show_subsection_navigation(self):
+        """
+            Override this to show subsection navigation directly under the top navigation bar.
+            Use the subsection-navigation block in the template to specify what the subsection navigation should
+            look like.
+
+            First use of this is to separate ADM and Project Reports in the Reports tab.
+        """
+        return False
+
+    @property
     def template_context(self):
         """
             Intention: Override if necessary.
@@ -326,6 +400,28 @@ class GenericReportView(object):
             raise TypeError("property must return a dict")
         return property
 
+    def _update_initial_context(self):
+        """
+            Intention: Don't override.
+        """
+        self.context.update(
+            report=dict(
+                title=self.name,
+                description=self.description,
+                section_name=self.section_name,
+                slug=self.slug,
+                url_root=self.url_root,
+                is_async=self.asynchronous,
+                is_exportable=self.exportable,
+                dispatcher=self.dispatcher,
+                show=self.request.couch_user.can_view_reports() or self.request.couch_user.get_viewable_reports(),
+                is_admin=self.is_admin_report # todo is this necessary???
+            ),
+            show_time_notice=self.show_time_notice,
+            domain=self.domain,
+            layout_flush_content=self.flush_layout
+        )
+
     def update_filter_context(self):
         """
             Intention: This probably does not need to be overridden in general.
@@ -345,7 +441,8 @@ class GenericReportView(object):
             show_filters=self.fields or not self.hide_filters,
             breadcrumbs=self.breadcrumbs,
             default_url=self.default_report_url,
-            url=self.get_url(*url_args)
+            url=self.get_url(*url_args),
+            title=self.name
         )
         if hasattr(self, 'datespan'):
             self.context.update(datespan=self.datespan)
@@ -355,6 +452,9 @@ class GenericReportView(object):
                     zone=self.timezone.zone
                 ))
         self.context.update(self._validate_context_dict(self.template_context))
+        self.context['report'].update(
+            show_subsection_navigation=self.show_subsection_navigation
+        )
 
     def update_report_context(self):
         """
@@ -369,6 +469,9 @@ class GenericReportView(object):
             title=self.rendered_report_title    # overriding the default title
         )
         self.context.update(self._validate_context_dict(self.report_context))
+
+    def generate_cache_key(self, func_name):
+        return "%s:%s" % (self.__class__.__name__, func_name)
 
     @property
     def view_response(self):
@@ -455,6 +558,19 @@ class GenericReportView(object):
         export_from_tables(self.export_table, temp, self.export_format)
         return export_response(temp, self.export_format, self.export_name)
 
+    @property
+    def clear_cache_response(self):
+        renderings = self.dispatcher.allowed_renderings()
+        try:
+            del renderings[renderings.index('clear_cache')]
+        except Exception:
+            pass
+        print renderings
+        for render in renderings:
+            cache_key = self.generate_cache_key("%s_response" % render)
+            print cache_key
+        return HttpResponse("Clearing cache")
+
     @classmethod
     def get_url(cls, *args, **kwargs):
         type = kwargs.get('render_as')
@@ -511,6 +627,10 @@ class GenericTabularReport(GenericReportView):
     # override old class properties
     report_template_path = "reports/async/tabular.html"
     flush_layout = True
+
+#    @property
+#    def searchable(self):
+#        return not self.ajax_pagination
 
     @property
     def headers(self):
@@ -576,7 +696,7 @@ class GenericTabularReport(GenericReportView):
             self.pagination.start (skip)
             self.pagination.count (limit)
         """
-        rows = self.rows
+        rows = list(self.rows)
         total_records = self.total_records
         if not isinstance(total_records, int):
             raise ValueError("Property 'total_records' should return an int.")
@@ -650,8 +770,10 @@ class GenericTabularReport(GenericReportView):
 
         if not self.ajax_pagination:
             rows = self.rows
-            if not isinstance(rows, list):
-                raise ValueError("Property 'rows' should return a list.")
+            try:
+                rows = list(rows)
+            except TypeError:
+                raise ValueError("Property 'rows' should return a list or iterable.")
         else:
             rows = []
 
@@ -688,4 +810,10 @@ class GenericTabularReport(GenericReportView):
                 left_col=left_col,
                 datatables=self.use_datatables,
             )
+        )
+
+    def table_cell(self, value, html=None):
+        return dict(
+            sort_key=value,
+            html="%s" % value if html is None else html
         )

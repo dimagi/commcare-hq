@@ -1,4 +1,5 @@
 {% extends "reports/base_template.html" %}
+{% load hq_shared_tags %}
 
 {% block js-inline %}{{ block.super }}
     <script src="{{ STATIC_URL }}reports/javascripts/jquery.tablednd_0_5.js"></script>
@@ -40,6 +41,36 @@
             });
             update_order_input();
         });
+
+        $(function () {
+            var showDeidColumn = {{ show_deid_column|JSON }};
+            var showDeidButton = $('#show_deid_button');
+            var deidColumn = {
+                el: $('.deid-column'),
+                show: function () {
+                    this.el.fadeIn();
+                    showDeidButton.hide();
+                },
+                hide: function () {
+                    this.el.hide();
+                    showDeidButton.show();
+                }
+            };
+
+            showDeidButton.click(function (e) {
+                e.preventDefault();
+                $('html, body').animate({
+                    scrollTop: $('#field-select').offset().top + 'px'
+                }, 'slow', undefined, function () {
+                    deidColumn.show();
+                });
+            });
+            if (!showDeidColumn) {
+                deidColumn.hide();
+            } else {
+                deidColumn.show();
+            }
+        })
     </script>
 {% endblock %}
 {% block js %}{{ block.super }}
@@ -117,14 +148,24 @@
                                 <a href="#" class="btn btn-mini" id="select_all">Select All</a> <a href="#" class="btn btn-mini btn-inverse" id="select_none">Select None</a></th>
                             <th>Field</th>
                             <th>Display</th>
+                            <th class="deid-column">Sensitivity</th>
                         </tr>
                         </thead>
                         <tbody>
                         {% for columndef in table_config.column_configuration %}
                             <tr id="{{ columndef.index }}">
-                                <td><input type="checkbox" class="field-include" name="{{ columndef.index }}_val" {% if columndef.selected %}checked="yes"{% endif %}></input></td>
+                                <td><input type="checkbox" class="field-include" name="{{ columndef.index }} val" {% if columndef.selected %}checked="yes"{% endif %}></input></td>
                                 <td>{{ columndef.index }}</td>
-                                <td><input name="{{ columndef.index }}_display" type="text" value="{{ columndef.display }}" selected="selected" checked="true"></input></td>
+                                <td><input name="{{ columndef.index }} display" type="text" value="{{ columndef.display }}" selected="selected" checked="true"></input></td>
+                                <td class="deid-column">
+                                    {% if columndef.index != 'id' or columndef.transform %}
+                                    <select name="{{ columndef.index }} transform" data-value="{{ columndef.transform|default:'' }}">
+                                        {% for name, value in deid_options %}
+                                            <option value="{{ value }}">{{ name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    {% endif %}
+                                </td>
                             </tr>
                         {% endfor %}
                         </tbody>
@@ -132,6 +173,22 @@
                 </div>
             </div>
         </fieldset>
+        {% if saved_export.type == 'form' %}
+        <fieldset>
+            <legend>Privacy Settings</legend>
+            <div class="control-group">
+                <label for="is_safe" class="control-label"></label>
+                <div class="controls deid-column">
+                    <label class="checkbox">
+                        <input type="checkbox" name="is_safe" id="is_safe" value="is_safe" {% if saved_export.is_safe %}checked="yes"{% endif %}/>
+                        Publish in {{ DeidExportReport_name }}
+                    </label>
+                    <span class="help-inline">Check only if this export has been fully and safely de-identified.</span>
+                </div>
+                <button class="btn" id="show_deid_button">Allow me to mark sensitive data</button>
+            </div>
+        </fieldset>
+        {% endif %}
         <div class="form-actions">
             <button type="submit" class="btn btn-large btn-primary">{% if saved_export.get_id %}Save{% else %}Create{% endif %}</button>
             <a class="btn btn-large" href="{% ifequal request.GET.type "case" %}{% url project_report_dispatcher domain 'case_export' %}{% else %}{% url project_report_dispatcher domain 'excel_export_data' %}{% endifequal %}">{% if saved_export.get_id %}Back{% else %}Cancel{% endif %}</a>

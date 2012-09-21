@@ -1,0 +1,220 @@
+
+
+<suite version="1">
+
+
+
+<!-- Parse and cache the XForm -->
+<xform>
+    <resource id="9473e9dee517a6387fbb5698a3cfdd3a669d17c9" version="1">
+        <location authority="local">./modules-0/forms-0.xml</location>
+        <location authority="remote">./modules-0/forms-0.xml</location>
+    </resource>
+</xform>
+
+
+
+
+<!-- Read and locally store the translation strings-->
+<locale language="default">
+    <resource id="app_default_strings" version="1">
+        <location authority="local">./default/app_strings.txt</location>
+        <location authority="remote">./default/app_strings.txt</location>
+    </resource>
+</locale>
+
+<!-- Read and locally store the translation strings-->
+<locale language="en">
+    <resource id="app_en_strings" version="1">
+        <location authority="local">./en/app_strings.txt</location>
+        <location authority="remote">./en/app_strings.txt</location>
+    </resource>
+</locale>
+
+
+
+
+
+
+<detail id="m0_case_short">
+    <title><text><locale id="m0.case_short.title"/></text></title>
+
+
+    <field sort="default">
+        <header>
+            <text><locale id="m0.case_short.case_dob_1.header"/></text>
+        </header>
+
+        <template><text><xpath function="if(dob = '', '', string(int((today() - date(dob)) div 365.25)))"/></text></template>
+
+    </field>
+
+
+
+
+
+
+    <field>
+        <header>
+            <text><locale id="m0.case_short.case_last_checkup_2.header"/></text>
+        </header>
+
+        <template><text><xpath function="if(last_checkup = '', '', string(int((today() - date(last_checkup)) div 30.4375)))"/></text></template>
+
+    </field>
+
+
+
+
+
+
+    <field>
+        <header>
+            <text><locale id="m0.case_short.case_last_party_3.header"/></text>
+        </header>
+
+
+        <template width="0"><text><xpath function="last_party"/></text></template>
+
+
+    </field>
+
+
+    <field>
+        <header width="0"><text/></header>
+        <template><text><xpath function="if(last_party = '', '', format_date(date(if(last_party = '', 0, last_party)),'short'))"/></text></template>
+    </field>
+
+
+
+
+
+    <field>
+        <header>
+            <text><locale id="m0.case_short.case_last_beer_4.header"/></text>
+        </header>
+
+
+        <template width="0"><text><xpath function="last_beer"/></text></template>
+
+
+    </field>
+
+
+    <field>
+        <header width="0"><text/></header>
+        <template><text><xpath function="if(last_beer = '', '', format_date(date(if(last_beer = '', 0, last_beer)),'short'))"/></text></template>
+    </field>
+
+
+
+
+</detail>
+
+
+
+
+
+<detail id="m0_case_long">
+    <title><text><locale id="m0.case_long.title"/></text></title>
+
+
+    <field sort="default">
+        <header>
+            <text><locale id="m0.case_long.case_dob_1.header"/></text>
+        </header>
+
+        <template><text><xpath function="if(dob = '', '', string(int((today() - date(dob)) div 365.25)))"/></text></template>
+
+    </field>
+
+
+
+
+
+
+    <field>
+        <header>
+            <text><locale id="m0.case_long.case_last_checkup_2.header"/></text>
+        </header>
+
+        <template><text><xpath function="if(last_checkup = '', '', string(int((today() - date(last_checkup)) div 30.4375)))"/></text></template>
+
+    </field>
+
+
+
+
+
+
+    <field>
+        <header>
+            <text><locale id="m0.case_long.case_last_party_3.header"/></text>
+        </header>
+
+
+        <template><text><xpath function="if(last_party = '', '', format_date(date(if(last_party = '', 0, last_party)),'short'))"/></text></template>
+
+
+    </field>
+
+
+
+
+
+
+    <field>
+        <header>
+            <text><locale id="m0.case_long.case_last_beer_4.header"/></text>
+        </header>
+
+
+        <template><text><xpath function="if(last_beer = '', '', format_date(date(if(last_beer = '', 0, last_beer)),'short'))"/></text></template>
+
+
+    </field>
+
+
+
+
+
+</detail>
+
+
+
+
+
+
+
+
+
+
+<entry>
+    <form>http://openrosa.org/formdesigner/F51B2D57-00B7-45C4-81C1-01C71FE1F55B</form>
+    <command id="m0-f0">
+
+        <text><locale id="forms.m0f0"/></text>
+
+    </command>
+
+</entry>
+
+
+
+
+
+<menu id="m0">
+
+
+    <text><locale id="modules.m0"/></text>
+
+
+    <command id="m0-f0"/>
+
+
+
+</menu>
+
+
+
+</suite>

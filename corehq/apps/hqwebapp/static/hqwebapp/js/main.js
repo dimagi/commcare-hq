@@ -214,7 +214,7 @@ var COMMCAREHQ = (function () {
             var key;
             for (key in update) {
                 if (update.hasOwnProperty(key)) {
-                    $(key).text(update[key]);
+                    $(key).text(update[key]).val(update[key]);
                 }
             }
         },

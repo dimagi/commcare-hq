@@ -9,6 +9,7 @@ function(doc) {
         entry.user_id = doc.user_id;
         entry.type = case_type;
         emit(["", doc.domain, date, user], entry);
+        emit(["user_first", doc.domain, user, date], entry);
         emit(["type", doc.domain, case_type, date, user], entry);
         emit(["status", doc.domain, status, date, user], entry);
         emit(["status type", doc.domain, status, case_type, date, user], entry);

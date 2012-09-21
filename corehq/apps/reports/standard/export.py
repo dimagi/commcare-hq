@@ -2,7 +2,7 @@ from collections import defaultdict
 import json
 import logging
 from django.http import Http404
-from corehq.apps.reports._global import ProjectReportParametersMixin, ProjectReport, DatespanMixin
+from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport, DatespanMixin
 from corehq.apps.reports.models import FormExportSchema,\
     HQGroupExportConfiguration
 from couchexport.models import SavedExportSchema, Format
@@ -16,19 +16,37 @@ class ExportReport(ProjectReport, ProjectReportParametersMixin):
     """
     flush_layout = True
 
-class ExcelExportReport(ExportReport, DatespanMixin):
-    name = "Export Submissions to Excel"
-    slug = "excel_export_data"
+    @property
+    def custom_bulk_export_format(self):
+        return Format.XLS_2007
+
+    @property
+    def report_context(self):
+        return dict(
+            custom_bulk_export_format=self.custom_bulk_export_format,
+            saved_exports=self.get_saved_exports(),
+            get_filter_params=self.get_filter_params(),
+        )
+
+class FormExportReportBase(ExportReport, DatespanMixin):
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
-    report_template_path = "reports/reportdata/excel_export_data.html"
-    icon = "icon-list-alt"
+    def get_saved_exports(self):
+        # add saved exports. because of the way in which the key is stored
+        # (serialized json) this is a little bit hacky, but works.
+        startkey = json.dumps([self.domain, ""])[:-3]
+        endkey = "%s{" % startkey
+        exports = FormExportSchema.view("couchexport/saved_export_schemas",
+            startkey=startkey, endkey=endkey,
+            include_docs=True)
 
+        exports = filter(lambda x: x.type == "form", exports)
+        return exports
 
     @property
     def default_datespan(self):
-        datespan = super(ExcelExportReport, self).default_datespan
+        datespan = super(FormExportReportBase, self).default_datespan
         def extract_date(x):
             try:
                 def clip_timezone(datestring):
@@ -48,6 +66,18 @@ class ExcelExportReport(ExportReport, DatespanMixin):
         if startdate:
             datespan.startdate = startdate
         return datespan
+
+    def get_filter_params(self):
+        params = self.request.GET.copy()
+        params['startdate'] = self.datespan.startdate_display
+        params['enddate'] = self.datespan.enddate_display
+        return params
+
+class ExcelExportReport(FormExportReportBase):
+    name = "Export Submissions to Excel"
+    slug = "excel_export_data"
+    report_template_path = "reports/reportdata/excel_export_data.html"
+    icon = "icon-list-alt"
 
     @property
     def report_context(self):
@@ -151,16 +181,6 @@ class ExcelExportReport(ExportReport, DatespanMixin):
                     else:
                         form['no_suggestions'] = True
 
-        # add saved exports. because of the way in which the key is stored
-        # (serialized json) this is a little bit hacky, but works.
-        startkey = json.dumps([self.domain, ""])[:-3]
-        endkey = "%s{" % startkey
-        exports = FormExportSchema.view("couchexport/saved_export_schemas",
-            startkey=startkey, endkey=endkey,
-            include_docs=True)
-
-        exports = filter(lambda x: x.type == "form", exports)
-
         forms = sorted(forms, key=lambda form:\
         (0 if not form.get('app_deleted') else 1,
          form['app']['name'],
@@ -172,20 +192,13 @@ class ExcelExportReport(ExportReport, DatespanMixin):
 
         # if there is a custom group export defined grab it here
         groups = HQGroupExportConfiguration.by_domain(self.domain)
-        return dict(
+        context = super(ExcelExportReport, self).report_context
+        context.update(
             forms=forms,
-            saved_exports=exports,
             edit=self.request.GET.get('edit') == 'true',
-            get_filter_params=self.get_filter_params(),
-            custom_bulk_export_format=Format.XLS_2007,
             group_exports=groups
         )
-
-    def get_filter_params(self):
-        params = self.request.GET.copy()
-        params['startdate'] = self.datespan.startdate_display
-        params['enddate'] = self.datespan.enddate_display
-        return params
+        return context
 
 
 class CaseExportReport(ExportReport):
@@ -196,22 +209,60 @@ class CaseExportReport(ExportReport):
     report_template_path = "reports/reportdata/case_export_data.html"
     icon = "icon-share"
 
-    @property
-    def report_context(self):
+    def get_filter_params(self):
+        return self.request.GET.copy()
+
+    def get_saved_exports(self):
         startkey = json.dumps([self.domain, ""])[:-3]
         endkey = "%s{" % startkey
         exports = SavedExportSchema.view("couchexport/saved_export_schemas",
             startkey=startkey, endkey=endkey,
             include_docs=True).all()
         exports = filter(lambda x: x.type == "case", exports)
+        return exports
+
+    @property
+    def report_context(self):
         cases = get_db().view("hqcase/types_by_domain",
             startkey=[self.domain],
             endkey=[self.domain, {}],
             reduce=True,
             group=True,
             group_level=2).all()
-        return dict(
-            saved_exports=exports,
+        context = super(CaseExportReport, self).report_context
+        context.update(
             case_types=[case['key'][1] for case in cases],
-            get_filter_params=self.request.GET.copy()
         )
+        return context
+
+class DeidExportReport(FormExportReportBase):
+    slug = 'deid_export'
+    name = "De-Identified Export"
+    report_template_path = 'reports/reportdata/form_deid_export.html'
+
+    @classmethod
+    def show_in_navigation(cls, request, *args, **kwargs):
+        domain = kwargs.get('domain')
+        startkey = json.dumps([domain, ""])[:-3]
+        return SavedExportSchema.view("couchexport/saved_export_schemas",
+            startkey=startkey,
+            limit=1,
+            include_docs=False
+        ).all() > 0
+
+
+    def get_saved_exports(self):
+        return filter(lambda export: export.is_safe, super(DeidExportReport, self).get_saved_exports())
+
+    @property
+    def report_context(self):
+        context = super(DeidExportReport, self).report_context
+        context.update(
+            ExcelExportReport_name=ExcelExportReport.name
+        )
+        return context
+
+    def get_filter_params(self):
+        params = super(DeidExportReport, self).get_filter_params()
+        params['deid'] = 'true'
+        return params

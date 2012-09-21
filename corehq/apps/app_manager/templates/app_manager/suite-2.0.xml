@@ -39,7 +39,7 @@
      {% for d in detail.columns %}
         {% if d.format != 'filter' %}
         <field{% if forloop.first %} sort="default"{% endif %}>
-            <header{% if d.format == "late-flag" or d.format == "invisible" %}{% if detail.display == "short" %} width="0"{% endif %}{% endif %}>
+            <header{% if d.format == "late-flag" or d.format == "invisible" or d.format == "address" %}{% if detail.display == "short" %} width="0"{% endif %}{% endif %}>
                 <text><locale id="m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.counter }}.header"/></text>
             </header>
          {% if d.format == "plain" or d.format == "phone" and detail.type == "case_short" or d.format == "phone" and detail.type == "ref_short" %}
@@ -70,17 +70,17 @@
                   {% endfor %}
                  </xpath>
              </text></template>
-         {% else %}{% ifequal d.format "years-ago" %}
-             <template><text><xpath function="if({{ d.xpath }} = '', '', string(int((today() - date({{ d.xpath }})) div 365.25)))"/></text></template>
-         {% else %}{% ifequal d.format "months-ago" %}
-             <template><text><xpath function="if({{ d.xpath }} = '', '', string(int((today() - date({{ d.xpath }})) div 30.4375)))"/></text></template>
+         {% else %}{% ifequal d.format "time-ago" %}
+             <template><text><xpath function="if({{ d.xpath }} = '', '', string(int((today() - date({{ d.xpath }})) div {{ d.time_ago_interval }})))"/></text></template>
          {% else %}{% ifequal d.format "late-flag"%}
              <template width="10%"><text><xpath function="if({{ d.xpath }} = '', '*', if(today() - date({{ d.xpath }}) &gt; {{ d.late_flag }}, '*', ''))"/></text></template>
          {% else %}{% ifequal d.format "phone" %}
              <template form="phone"><text><xpath function="{{ d.xpath }}" /></text></template>
          {% else %}{% if d.format == "invisible" %}
              <template{% if detail.display == "short" %} width="0"{% endif %}><text><xpath function="{{ d.xpath }}" /></text></template>
-         {% endif %}{% endifequal %}{% endifequal %}{% endifequal %}{% endifequal %}{% endif %}{% endifequal %}{% endifequal %}{% endif %}
+         {% else %}{% if d.format == "address" %}
+             <template width="0" form="address"><text><xpath function="{{ d.xpath }}"/></text></template>
+         {% endif %}{% endif %}{% endifequal %}{% endifequal %}{% endifequal %}{% endif %}{% endifequal %}{% endifequal %}{% endif %}
         </field>
 
         {% if d.format == 'date' and detail.display == "short" %}

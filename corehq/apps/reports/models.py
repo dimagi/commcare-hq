@@ -4,7 +4,7 @@ from corehq.apps import reports
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
-from couchexport.util import FilterFunction
+from couchexport.util import SerializableFunction
 import couchforms
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.mixins import UnicodeMixIn
@@ -41,6 +41,14 @@ class HQToggle(object):
         self.type = type
         self.name = name
         self.show = show
+
+    def __str__(self):
+        return "%(klass)s[%(type)s:%(show)s:%(name)s]" % dict(
+            klass = self.__class__.__name__,
+            type=self.type,
+            name=self.name,
+            show=self.show
+        )
 
 class HQUserToggle(HQToggle):
     
@@ -91,6 +99,10 @@ class TempCommCareUser(object):
     def raw_username(self):
         return self.username
 
+    @property
+    def full_name(self):
+        return ""
+
 class ReportNotification(Document, UnicodeMixIn):
     domain = StringProperty()
     user_ids = StringListProperty()
@@ -124,7 +136,7 @@ class FormExportSchema(SavedExportSchema):
 
     @property
     def filter(self):
-        f = FilterFunction()
+        f = SerializableFunction()
 
         if self.app_id is not None:
             f.add(reports.util.app_export_filter, app_id=self.app_id)
@@ -143,6 +155,16 @@ class FormExportSchema(SavedExportSchema):
     @property
     def formname(self):
         return xmlns_to_name(self.domain, self.xmlns, app_id=self.app_id)
+
+class FormDeidExportSchema(FormExportSchema):
+
+    @property
+    def transform(self):
+        return SerializableFunction()
+
+    @classmethod
+    def get_case(cls, doc, case_id):
+        pass
     
 class HQGroupExportConfiguration(GroupExportConfiguration):
     """
@@ -160,6 +182,7 @@ class CaseActivityReportCache(Document):
     timezone = StringProperty()
     last_updated = DateTimeProperty()
     active_cases = DictProperty()
+    closed_cases = DictProperty()
     inactive_cases = DictProperty()
     landmark_data = DictProperty()
 
@@ -184,7 +207,7 @@ class CaseActivityReportCache(Document):
     @property
     def now(self):
         if not self._now:
-            self._now = datetime.now(tz=pytz.timezone(self.timezone))
+            self._now = datetime.now(tz=pytz.timezone(str(self.timezone)))
             self._now = self._now.replace(hour=23, minute=59, second=59, microsecond=999999)
         return self._now
 
@@ -200,10 +223,11 @@ class CaseActivityReportCache(Document):
         for item in data:
             count = item.get('value', 0)
             user_id = item.get('key',[])[-1]
-            if not user_id in result:
-                result[user_id] = count
-            else:
-                result[user_id] += count
+            if user_id:
+                if not user_id in result:
+                    result[user_id] = count
+                else:
+                    result[user_id] += count
         return result
 
     def _generate_landmark(self, landmark, case_type=None):
@@ -211,10 +235,12 @@ class CaseActivityReportCache(Document):
             Generates a dict with counts per owner_id of the # cases modified or closed in
             the last <landmark> days.
         """
-        prefix = [] if case_type is None else ["type"]
-        key = [" ".join(prefix), self.domain]
+        prefix = "" if case_type is None else "type"
+        key = [prefix, self.domain]
         if case_type is not None:
             key.append(case_type)
+
+
         past = self.now - timedelta(days=landmark+1)
         data = get_db().view(self._couch_view,
             group=True,
@@ -223,27 +249,22 @@ class CaseActivityReportCache(Document):
         ).all()
         return self._get_user_id_counts(data)
 
-    def _generate_open_key(self, case_type):
+    def _generate_status_key(self, case_type, status="open"):
         prefix = ["status"]
-        key = [self.domain, "open"]
+        key = [self.domain, status]
         if case_type is not None:
             prefix.append("type")
             key.append(case_type)
         return [" ".join(prefix)] + key
 
-    def _generate_case_status(self, milestone=120, case_type=None, active=True):
+    def _generate_case_status(self, milestone=120, case_type=None, active=True, status="open"):
         """
             inactive: Generates a dict with counts per owner_id of the number of cases that are open,
             but haven't been modified in the last 120 days.
             active: Generates a dict with counts per owner_id of the number of cases that are open
             and have been modified in the last 120 days.
         """
-        prefix = ["status"]
-        key = [self.domain, "open"]
-        if case_type is not None:
-            prefix.append("type")
-            key.append(case_type)
-        key = self._generate_open_key(case_type)
+        key = self._generate_status_key(case_type, status)
         milestone = self.now - timedelta(days=milestone+1) + (timedelta(microseconds=1) if active else timedelta(seconds=0))
         data = get_db().view(self._couch_view,
             group=True,
@@ -274,9 +295,14 @@ class CaseActivityReportCache(Document):
                 self.active_cases[case_key] = dict()
             if case_key not in self.inactive_cases:
                 self.inactive_cases[case_key] = dict()
+            if case_key not in self.closed_cases:
+                self.closed_cases[case_key] = dict()
 
             self.active_cases[case_key][self.day_key(milestone)] = self._generate_case_status(milestone, case_type)
-            self.inactive_cases[case_key][self.day_key(milestone)] = self._generate_case_status(milestone, case_type, active=False)
+            self.closed_cases[case_key][self.day_key(milestone)] = self._generate_case_status(milestone,
+                                                                                                case_type, status="closed")
+            self.inactive_cases[case_key][self.day_key(milestone)] = self._generate_case_status(milestone,
+                                                                                                case_type, active=False)
 
     @classmethod
     def get_by_domain(cls, domain, include_docs=True):
@@ -290,12 +316,10 @@ class CaseActivityReportCache(Document):
     def build_report(cls, domain):
         report = cls.get_by_domain(domain.name).first()
         if not report:
-            report = cls(domain=domain.name)
+            report = cls(domain=str(domain.name))
         report.timezone = domain.default_timezone
         report.update_landmarks()
         report.update_status()
         report.last_updated = datetime.utcnow()
         report.save()
         return report
-
-

@@ -114,12 +114,20 @@ class FixtureDataItem(Document):
         return self.get_users(wrap=wrap, include_groups=True)
 
     @classmethod
-    def by_user(cls, user, wrap=True):
+    def by_user(cls, user, wrap=True, domain=None):
         group_ids = Group.by_user(user, wrap=False)
+
+
+        if isinstance(user, dict):
+            user_id = user.get('user_id')
+            user_domain = domain
+        else:
+            user_id = user.user_id
+            user_domain = user.domain
 
         fixture_ids = set(
             get_db().view('fixtures/ownership',
-                keys=[['data_item by user', user.domain, user.user_id]] + [['data_item by group', user.domain, group_id] for group_id in group_ids],
+                keys=[['data_item by user', user_domain, user_id]] + [['data_item by group', user_domain, group_id] for group_id in group_ids],
                 reduce=False,
                 wrapper=lambda r: r['value'],
             )

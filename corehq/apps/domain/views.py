@@ -30,25 +30,25 @@ from PIL import Image
 from lib.django_user_registration.models import RegistrationProfile
 
 @login_required_late_eval_of_LOGIN_URL
-def select( request, 
+def select( request,
             redirect_field_name = REDIRECT_FIELD_NAME,
             domain_select_template = 'domain/select.html' ):
-    
+
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
         return redirect('registration_domain')
-    
-    redirect_to = request.REQUEST.get(redirect_field_name, '')    
-    if request.method == 'POST': # If the form has been submitted...        
+
+    redirect_to = request.REQUEST.get(redirect_field_name, '')
+    if request.method == 'POST': # If the form has been submitted...
         form = DomainSelectionForm(domain_list=domains_for_user,
                                    data=request.POST) # A form bound to the POST data
-                     
+
         if form.is_valid():
             # We've just checked the submitted data against a freshly-retrieved set of domains
             # associated with the user. It's safe to set the domain in the sesssion (and we'll
             # check again on views validated with the domain-checking decorator)
             form.save(request) # Needs request because it saves domain in session
-    
+
             #  Weak attempt to give user a good UX - make sure redirect_to isn't garbage.
             domain = form.cleaned_data['domain_list'].name
             if not redirect_to or '//' in redirect_to or ' ' in redirect_to:
@@ -56,7 +56,7 @@ def select( request,
             return HttpResponseRedirect(redirect_to) # Redirect after POST
     else:
         # An unbound form
-        form = DomainSelectionForm( domain_list=domains_for_user ) 
+        form = DomainSelectionForm( domain_list=domains_for_user )
 
     vals = dict( next = redirect_to,
                  form = form )
@@ -66,7 +66,7 @@ def select( request,
 ########################################################################################################
 
 ########################################################################################################
-        
+
 class UserTable(tables.Table):
     id = tables.Column(verbose_name="Id")
     username = tables.Column(verbose_name="Username")
@@ -76,9 +76,9 @@ class UserTable(tables.Table):
     is_active_member = tables.Column(verbose_name="Active in domain")
     is_domain_admin = tables.Column(verbose_name="Domain admin")
     last_login = tables.Column(verbose_name="Most recent login")
-    invite_status = tables.Column(verbose_name="Invite status")    
-        
-########################################################################################################        
+    invite_status = tables.Column(verbose_name="Invite status")
+
+########################################################################################################
 
 ########################################################################################################
 
@@ -92,20 +92,20 @@ def _dict_for_one_user( user, domain ):
                    username = user.username,
                    first_name = user.first_name,
                    last_name = user.last_name,
-                   is_active_auth = _bool_to_yes_no(user.is_active),          
-                   last_login = user.last_login )                   
-    
+                   is_active_auth = _bool_to_yes_no(user.is_active),
+                   last_login = user.last_login )
+
     is_active_member = user.domain_membership.filter(domain = domain)[0].is_active
     retval['is_active_member'] = _bool_to_yes_no(is_active_member)
 
-    # TODO: update this to use new couch user permissions scheme 
-    # ct = ContentType.objects.get_for_model(Domain) 
-    # is_domain_admin = user.permission_set.filter(content_type = ct, 
-    #                                             object_id = domain.id, 
+    # TODO: update this to use new couch user permissions scheme
+    # ct = ContentType.objects.get_for_model(Domain)
+    # is_domain_admin = user.permission_set.filter(content_type = ct,
+    #                                             object_id = domain.id,
     #                                             name=Permissions.ADMINISTRATOR)
     # retval['is_domain_admin'] = _bool_to_yes_no(is_domain_admin)
     retval['is_domain_admin'] = False
-    
+
     # user is a unique get in the registrationprofile table; there can be at most
     # one invite per user, so if there is any invite at all, it's safe to just grab
     # the zero-th one
@@ -119,8 +119,8 @@ def _dict_for_one_user( user, domain ):
         val = 'Admin added'
     retval['invite_status'] = val
 
-    return retval                     
-           
+    return retval
+
 @require_can_edit_web_users
 def domain_forwarding(request, domain):
     form_repeaters = FormRepeater.by_domain(domain)
@@ -142,7 +142,7 @@ def drop_repeater(request, domain, repeater_id):
     rep.retire()
     messages.success(request, "Form forwarding stopped!")
     return HttpResponseRedirect(reverse("corehq.apps.domain.views.domain_forwarding", args=[domain]))
-    
+
 @require_POST
 @require_can_edit_web_users
 def test_repeater(request, domain):
@@ -153,25 +153,25 @@ def test_repeater(request, domain):
         # now we fake a post
         fake_post = "<?xml version='1.0' ?><data id='test'><TestString>Test post from CommCareHQ on %s</TestString></data>" \
                     % (datetime.datetime.utcnow())
-        
+
         try:
             resp = simple_post(fake_post, url)
             if 200 <= resp.status < 300:
-                return HttpResponse(json.dumps({"success": True, 
-                                                "response": resp.read(), 
+                return HttpResponse(json.dumps({"success": True,
+                                                "response": resp.read(),
                                                 "status": resp.status}))
             else:
-                return HttpResponse(json.dumps({"success": False, 
-                                                "response": resp.read(), 
+                return HttpResponse(json.dumps({"success": False,
+                                                "response": resp.read(),
                                                 "status": resp.status}))
-                
+
         except Exception, e:
-            errors = str(e)        
+            errors = str(e)
         return HttpResponse(json.dumps({"success": False, "response": errors}))
     else:
         return HttpResponse(json.dumps({"success": False, "response": "Please enter a valid url."}))
-    
-    
+
+
 @require_can_edit_web_users
 def add_repeater(request, domain, repeater_type):
     if request.method == "POST":
@@ -308,7 +308,8 @@ def create_snapshot(request, domain):
                 'title': published_snapshot.title,
                 'author': published_snapshot.author,
                 'share_multimedia': True,
-                'description': published_snapshot.description
+                'description': published_snapshot.description,
+                'short_description': published_snapshot.short_description
             })
             for app in published_snapshot.full_applications():
                 if domain == published_snapshot:
@@ -324,6 +325,7 @@ def create_snapshot(request, domain):
                     'publish': True,
                     'name': original.name,
                     'description': original.description,
+                    'short_description': original.short_description,
                     'deployment_date': original.deployment_date,
                     'user_type': original.user_type,
                     'attribution_notes': original.attribution_notes,
@@ -353,7 +355,7 @@ def create_snapshot(request, domain):
                  'form': form,
                  'app_forms': app_forms,
                  'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
-        
+
         if not form.is_valid():
             return render_to_response(request, 'domain/create_snapshot.html',
                     {'domain': domain.name,
@@ -374,6 +376,7 @@ def create_snapshot(request, domain):
         if request.POST['license'] in LICENSES.keys():
             new_domain.license = request.POST['license']
         new_domain.description = request.POST['description']
+        new_domain.short_description = request.POST['short_description']
         new_domain.project_type = request.POST['project_type']
         new_domain.region = request.POST['region']
         new_domain.city = request.POST['city']
@@ -409,6 +412,7 @@ def create_snapshot(request, domain):
             if request.POST.get("%s-publish" % original_id, False):
                 application.name = request.POST["%s-name" % original_id]
                 application.description = request.POST["%s-description" % original_id]
+                application.short_description = request.POST["%s-short_description" % original_id]
                 date_picked = request.POST["%s-deployment_date" % original_id].split('-')
                 if len(date_picked) > 1:
                     if int(date_picked[0]) > 2009 and date_picked[1] and date_picked[2]:
@@ -465,6 +469,7 @@ def snapshot_info(request, domain):
             'project_type': domain.project_type,
             'customer_type': domain.customer_type,
             'is_test': json.dumps(domain.is_test),
+            'short_description': domain.short_description,
             'description': domain.description,
             'is_shared': domain.is_shared,
             'license': domain.license

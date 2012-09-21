@@ -8,23 +8,92 @@
 {% block js-inline %}{{ block.super }}
 <script>
     $(function () {
-        $('.release-build-link').popover({
-            placement: 'left',
-            title: 'Release Build',
-            content: (
-                "Once you've fully tested an application, you can star it to mark it as released. " +
-                "When a CommCare application searches for updates, only starred builds will be considered."
-            )
+        {% if edit %}
+        var URLS = {
+            set_is_released: function (saved_app_id, is_released) {
+                return(
+                    is_released
+                    ? '{% url unrelease_build domain app.id "__saved_app_id__" %}'
+                    : '{% url release_build domain app.id "__saved_app_id__" %}'
+                ).replace("__saved_app_id__", saved_app_id);
+            }
+        };
+        function setIsReleased(element, is_released) {
+            if (is_released === undefined) {
+                is_released = $(element).data('is-released');
+            } else {
+                $(element).data('is-released', is_released);
+                $(element).attr('data-is-released', is_released);
+            }
+            function destroyPopover(element) {
+                var p = $(element).data('popover');
+                if (p) {
+                    if (p.$tip) {
+                        p.$tip.remove();
+                    }
+                    $(element).data('popover', null);
+                }
+            }
+            destroyPopover(element);
+            var row = $(element).parents('tr');
+            if (is_released === true) {
+                $(element).popover({
+                    placement: 'left',
+                    title: 'Retract Build',
+                    content: (
+                            "We recommend caution when retracting a build. Although " +
+                                    "this build will no longer be considered when a CommCare application searches for updates, " +
+                                    "it will not be purged from phones onto which it has already been downloaded."
+                            )
+                });
+                row.removeClass('build-unreleased');
+                row.addClass('build-released');
+            } else if (is_released === false) {
+                $(element).popover({
+                    placement: 'left',
+                    title: 'Release Build',
+                    content: (
+                            "Once you've fully tested an application, you can star it to mark it as released. " +
+                                    "When a CommCare application searches for updates, only starred builds will be considered."
+                            )
+                });
+                row.removeClass('build-released');
+                row.addClass('build-unreleased');
+            }
+            var LATEST = 'build-latest-release';
+            $('.' + LATEST).removeClass(LATEST);
+            $('.build-is-released [data-is-released="true"]').first().each(function () {
+                var row = $(this).parents('tr');
+                row.addClass(LATEST);
+            });
+        }
+        $('.build-is-released [data-is-released]').each(function () {
+            setIsReleased(this);
+        }).click(function (e) {
+            e.preventDefault();
+            var is_released = $(this).data('is-released');
+            var saved_app_id = $(this).data('saved-app-id');
+            if (is_released !== 'pending') {
+                var url = URLS.set_is_released(saved_app_id, is_released);
+                var that = this;
+                $.ajax({
+                    url: url,
+                    type: 'post',
+                    dataType: 'json',
+                    data: {ajax: true},
+                    beforeSend: function () {
+                        setIsReleased(that, 'pending');
+                    },
+                    success: function (data) {
+                        setIsReleased(that, data.is_released);
+                    },
+                    error: function () {
+                        setIsReleased(that, 'error');
+                    }
+                });
+            }
         });
-        $('.unrelease-build-link').popover({
-            placement: 'left',
-            title: 'Retract Build',
-            content: (
-                "We recommend caution when retracting a build. Although " +
-                "this build will no longer be considered when a CommCare application searches for updates, " +
-                "it will not be purged from phones onto which it has already been downloaded."
-            )
-        });
+        {% endif %}
         $('#build-errors').each(function () {
             var specialMessage = $('span', this)[0];
             var defaultMessage = $('span', this)[1];
@@ -53,8 +122,25 @@
     .build.build-latest-release {
         background-color: #EFEFFF;
     }
+    .build.build-latest-release .build-is-released:after{
+        content: "Latest";
+    }
     .nowrap {
         white-space: nowrap;
+    }
+    .build-is-released [data-is-released]{
+        min-width: 20px;
+        min-height: 20px;
+        background-repeat: no-repeat;
+    }
+    .build-is-released [data-is-released="true"] {
+        background-image: url("{% static 'app_manager/img/star-filled.svg' %}");
+    }
+    .build-is-released [data-is-released="false"] {
+        background-image: url("{% static 'app_manager/img/star-empty.svg' %}");
+    }
+    .build-is-released [data-is-released="error"]:after {
+        content: "Error";
     }
 </style>
 {% endblock %}
@@ -161,7 +247,7 @@
 
         </tr>
         {% for saved_app in saved_apps %}
-        <tr class="build build-{% if saved_app.is_released %}released{% else %}unreleased{% endif %} {% if saved_app.id == latest_release.id %}build-latest-release{% endif %}">
+        <tr data-is_released="{{ saved_app.is_released|BOOL }}" class="build build-{% if saved_app.is_released %}released{% else %}unreleased{% endif %} {% if saved_app.id == latest_release.id %}build-latest-release{% endif %}">
             <td>
                 {% if edit %}
                 <form action="{% url corehq.apps.app_manager.views.delete_copy domain app.id %}"
@@ -175,11 +261,11 @@
                 {% endif %}
             </td>
             <td class="nowrap">{{ saved_app.version }}</td>
-            <td class="nowrap">{% utc_to_timezone saved_app.built_on timezone "%b %d, %Y" %}</td>
-            <td class="nowrap">{% utc_to_timezone saved_app.built_on timezone "%H:%M %Z" %}</td>
+            <td class="nowrap">{{ saved_app.built_on_date }}</td>
+            <td class="nowrap">{{ saved_app.built_on_time }}</td>
             <td class="nowrap">
-                {% if saved_app.built_with.get_label %}{{ saved_app.built_with.get_label }}{% endif %}
-                <p>{{ saved_app.get_jar_path }}</p>
+                {% if saved_app.build_label %}{{ saved_app.build_label }}{% endif %}
+                <p>{{ saved_app.jar_path }}</p>
                 {% if not saved_app.built_with.signed %}<h6>Unsigned Jar</h6>{% endif %}
             </td>
             <td class="nowrap">
@@ -203,26 +289,8 @@
             </td>
             {% endif %}
             <td>{% if saved_app.build_comment %}{{ saved_app.build_comment }}{% else %}<h6>(No Comment)</h6>{% endif %}</td>
-            <td>
-                {% if saved_app.is_released %}
-                    {% if edit %}
-                    <a href="{% url unrelease_build domain app.id saved_app.id %}" class="unrelease-build-link">
-                        <img src="{% static 'app_manager/img/star-filled.svg' %}"/><!--
-                        no whitespace
-                    --></a>
-                    {% else %}
-                        <img src="{% static 'app_manager/img/star-filled.svg' %}"/>
-                    {% endif %}
-                    {% if saved_app.id == latest_release.id %}Latest{% endif %}
-                {% else %}
-                    {% if edit %}
-                    <a href="{% url release_build domain app.id saved_app.id %}" class="release-build-link">
-                        <img src="{% static 'app_manager/img/star-empty.svg' %}"/>
-                    </a>
-                    {% else %}
-                        <img src="{% static 'app_manager/img/star-empty.svg' %}"/>
-                    {% endif %}
-                {% endif %}
+            <td class="build-is-released">
+                <div data-is-released="{{ saved_app.is_released|BOOL }}" data-saved-app-id="{{ saved_app.id }}"></div>
             </td>
         </tr>
         {% endfor %}
@@ -271,6 +339,7 @@
                     </div>
                   </div>
                 </div>
+
                 <div class="accordion-group">
                   <div class="accordion-heading">
                     <a class="accordion-toggle" data-toggle="collapse" data-parent="#{{ saved_app.id }}_accordion" href="#{{ saved_app.id }}_j2me">
@@ -296,36 +365,77 @@
                     </div>
                   </div>
                 </div>
+
+                <div class="accordion-group">
+                  <div class="accordion-heading">
+                    <a class="accordion-toggle odk_install" href="{% url corehq.apps.app_manager.views.odk_install domain saved_app.id %}">
+                        Download to CommCare ODK (Android)
+                    </a>
+                  </div>
+                </div>
+
                 <div class="accordion-group">
                   <div class="accordion-heading">
                     <a class="accordion-toggle" data-toggle="collapse" data-parent="#{{ saved_app.id }}_accordion" href="#{{ saved_app.id }}_sms">
-                      Send J2ME app to phone via SMS
+                      Send to phone via SMS
                     </a>
                   </div>
+
                   <div id="{{ saved_app.id }}_sms" class="accordion-body collapse">
                     <div class="accordion-inner">
-                      <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
-                        <label>Send to: </label>
-                        <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
-                        <br />
-                        {% if app.name|length <= 12 %}
-                            <textarea name="message">Update to CommCare: {{ saved_app.short_url }} ("{{ app.name }}" v.{{ saved_app.version }})</textarea>
-                        {% else %}
-                            <textarea name="message">Update to CommCare: {{ saved_app.short_url }} ("{{ app.name|slice:":10" }}.." v.{{ saved_app.version }})</textarea>
-                        {% endif %}
-                        <br />
-                        <input type="submit" class="btn" value="Send"/>
-                    </form>
+                      <div class="tab-pane" id="pills-basic">
+                          <div class="tabbable">
+                            <ul class="nav nav-pills">
+                              <li class="active">
+                                <a href="#{{ saved_app.id }}_sms_j2me" data-toggle="tab">Send J2ME app</a>
+                              </li>
+                              <li>
+                                <a href="#{{ saved_app.id }}_sms_odk" data-toggle="tab">Send CommCare ODK app (Android)</a>
+                              </li>
+                            </ul>
+                            <div class="tab-content">
+                              <div id="{{ saved_app.id }}_sms_j2me" class="tab-pane active">
+                              {% if saved_app.short_url %}
+                                <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
+                                  <label>Send to: </label>
+                                  <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
+                                  <br />
+                                  <textarea name="message">Update to CommCare: {{ saved_app.short_url }} ("{{ app.short_name }}" v.{{ saved_app.version }})</textarea>
+                                  <br />
+                                  <input type="submit" class="btn" value="Send"/>
+                                </form>
+                              {% else %}
+                                <span class="label label-important">
+                                  No URL was found for this app, try rebuilding. 
+                                </span>
+                              {% endif %}
+                              </div>
+
+                              <div id="{{ saved_app.id }}_sms_odk" class="tab-pane">
+                              {% if saved_app.short_odk_url %}
+                                <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
+                                  <label>Send to: </label>
+                                  <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
+                                  <br />
+                                  <textarea name="message">Update to CommCare: {{ saved_app.short_odk_url }} ("{{ app.short_name }}" v.{{ saved_app.version }})</textarea>
+                                  <br />
+                                  <input type="submit" class="btn" value="Send"/>
+                                </form>
+                              {% else %}
+                                <span class="label label-important">
+                                  No URL was found for this app, try rebuilding.
+                                </span>
+                              {% endif %}
+                              </div>
+                            </div>
+                          </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div class="accordion-group">
-                  <div class="accordion-heading">
-                    <a class="accordion-toggle odk_install" href="{% url corehq.apps.app_manager.views.odk_install domain saved_app.id %}">Download to CommCare ODK (Android)</a>
-                  </div>
-                </div>
+
                 {% ifchanged %}
-                            {% if multimedia %}
+                {% if multimedia %}
                 <div class="accordion-group">
                   <div class="accordion-heading">
                     <a class="accordion-toggle" href="{% if multimedia.notice %}#{{ saved_app.id }}_multimedia{% else %}{% url download_multimedia_zip domain app.id %}{% endif %}" {% if multimedia.notice %}data-toggle="collapse" data-target="#{{ saved_app.id }}_multimedia"{% endif %}>Download Multimedia Zip</a>
@@ -349,8 +459,9 @@
                     </div>
                   </div>
                 </div>
-                            {% endif %}
-                        {% endifchanged %}
+                {% endif %}
+                {% endifchanged %}
+
                 {% if request.user.is_superuser %}
                 <div class="accordion-group">
                   <div class="accordion-heading">

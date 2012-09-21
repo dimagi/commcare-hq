@@ -4,14 +4,13 @@ from corehq.apps.domain.decorators import login_and_domain_required,\
     login_or_digest_ex
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
+from dimagi.utils.decorators import inline
 from dimagi.utils.web import render_to_response, json_response, json_handler
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseBadRequest, Http404
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
-from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_cloudcare_apps,\
-    get_all_cases
-from dimagi.utils.couch import safe_index
+from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_cloudcare_apps, get_filtered_cases, get_filters_from_request
 from dimagi.utils.parsing import string_to_boolean
 from django.conf import settings
 from corehq.apps.cloudcare import touchforms_api 
@@ -134,26 +133,18 @@ def get_groups(request, domain, user_id):
 
 @cloudcare_api
 def get_cases(request, domain):
-    user_id = request.couch_user.get_id if request.couch_user.is_commcare_user() \
-              else request.REQUEST.get("user_id", "")
-    
-    if user_id:
-        cases = get_owned_cases(domain, user_id)
+
+    if request.couch_user.is_commcare_user():
+        user_id = request.couch_user.get_id
     else:
-        if request.couch_user.is_web_user():
-            # allow web users to query the entire case db
-            cases = get_all_cases(domain)
-        else:
-            return HttpResponseBadRequest("Must specify user_id!")
-    
-    if request.REQUEST:
-        def _filter(case):
-            for path, val in request.REQUEST.items():
-                if safe_index(case, path.split("/")) != val:
-                    return False
-            return True
-        cases = filter(_filter, cases)
-        
+        user_id = request.REQUEST.get("user_id", "")
+
+    if not user_id and not request.couch_user.is_web_user():
+        return HttpResponseBadRequest("Must specify user_id!")
+
+    filters = get_filters_from_request(request)
+
+    cases = get_filtered_cases(domain, user_id=user_id, filters=filters)
     return json_response(cases)
 
 @cloudcare_api

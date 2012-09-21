@@ -246,8 +246,8 @@ var uiElement;
                             pairs[key] = mapVal.toString();
                         }
                     }
-                    that.fire('change');
                     that.val(pairs);
+                    that.fire('change');
                 });
 
                 $('#'+this.modal_id+' a').click(function() {

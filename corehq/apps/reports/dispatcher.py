@@ -86,7 +86,7 @@ class ReportDispatcher(View):
                 report_class = to_function(model_path)
                 if report_class.slug == current_slug:
                     report = report_class(request, *args, **kwargs)
-                    if self.permissions_check(report, request, *args, **kwargs):
+                    if self.permissions_check(model_path, request, *args, **kwargs):
                         return getattr(report, '%s_response' % (render_as or 'view'))
         raise Http404
 
@@ -97,11 +97,11 @@ class ReportDispatcher(View):
 
     @classmethod
     def pattern(cls):
-        return r'^((?P<render_as>[(json)|(async)|(filters)|(export)|(static)]+)/)?(?P<report_slug>[\w_]+)/$'
+        return r'^((?P<render_as>[(json)|(async)|(filters)|(export)|(static)|(clear_cache)]+)/)?(?P<report_slug>[\w_]+)/$'
 
     @classmethod
     def allowed_renderings(cls):
-        return ['json', 'async', 'filters', 'export', 'static']
+        return ['json', 'async', 'filters', 'export', 'static', 'clear_cache']
 
     @classmethod
     def args_kwargs_from_context(cls, context):
@@ -125,16 +125,19 @@ class ReportDispatcher(View):
                     continue
                 report = to_function(model)
                 if report.show_in_navigation(request, *args, **kwargs):
-                    selected_report = bool(report.slug == current_slug)
-                    section.append("""<li class="%(css_class)s"><a href="%(link)s" title="%(link_title)s">
-                    %(icon)s%(title)s
-                    </a></li>""" % dict(
-                        css_class="active" if selected_report else "",
-                        link=report.get_url(*args),
-                        link_title=report.description,
-                        icon='<i class="icon%s %s"></i> ' % ("-white" if selected_report else "", report.icon) if report.icon else "",
-                        title=report.name
-                    ))
+                    if hasattr(report, 'override_navigation_list'):
+                        section.extend(report.override_navigation_list(context))
+                    else:
+                        selected_report = bool(report.slug == current_slug)
+                        section.append("""<li class="%(css_class)s"><a href="%(link)s" title="%(link_title)s">
+                        %(icon)s%(title)s
+                        </a></li>""" % dict(
+                            css_class="active" if selected_report else "",
+                            link=report.get_url(*args),
+                            link_title=report.description or "",
+                            icon='<i class="icon%s %s"></i> ' % ("-white" if selected_report else "", report.icon) if report.icon else "",
+                            title=report.name
+                        ))
             if section:
                 report_nav.append(section_header)
                 report_nav.extend(section)

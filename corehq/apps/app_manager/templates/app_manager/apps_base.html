@@ -169,17 +169,8 @@
                             <ul class="dropdown-menu">
                                 <li class="form" data-action="{% url corehq.apps.app_manager.views.new_app domain %}" data-method="post">
                                     <input type="hidden" name="type" value="Application" />
-                                    <input type="hidden" name="application_version" value="1.0" />
-                                    <a href="#" class="submit">{% trans 'Blank Application' %}</a>
-                                </li>
-                                <li class="form" data-action="{% url corehq.apps.app_manager.views.import_app domain %}" data-method="post">
-                                    <input type="hidden" name="app_id" value="example--hello-world"/>
-                                    <a href="#" class="submit">{% trans 'From Example: Hello World' %}</a>
-                                </li>
-                                <li class="form" data-action="{% url corehq.apps.app_manager.views.new_app domain %}" data-method="post">
-                                    <input type="hidden" name="type" value="Application" />
                                     <input type="hidden" name="application_version" value="2.0" />
-                                    <a href="#" class="submit">{% trans 'Blank 2.x Application (Advanced Users Only)' %}</a>
+                                    <a href="#" class="submit">{% trans 'Blank Application' %}</a>
                                 </li>
                                 <li class="form" data-action="{% url corehq.apps.app_manager.views.new_app domain %}" data-method="post">
                                     <input type="hidden" name="type" value="RemoteApp" />
@@ -264,6 +255,7 @@
                 </p>
                 <form action="{% url new_app domain %}">
                     <input type="hidden" name="type" value="Application">
+                    <input type="hidden" name="application_version" value="2.0" />
                     <a href="#" class="submit">Create a blank app</a>
                     {% if request.couch_user.is_previewer %}
                         or <a href="{% url appstore %}">copy an existing app from CommCare Exchange</a>.

@@ -1,6 +1,7 @@
 # coding=utf-8
 from collections import defaultdict
 from datetime import datetime
+from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 import re
@@ -17,6 +18,7 @@ from corehq.apps.app_manager import fixtures
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError, WrappedNode
 from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
+from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
@@ -27,7 +29,7 @@ from copy import deepcopy
 from corehq.apps.domain.models import Domain, cached_property
 import hashlib
 from django.template.loader import render_to_string
-from urllib2 import urlopen, URLError
+from urllib2 import urlopen
 from urlparse import urljoin
 from corehq.apps.domain.decorators import login_and_domain_required
 import langcodes
@@ -218,6 +220,15 @@ class FormSource(object):
         app.register_pre_save(pre_save)
         app.register_post_save(post_save)
 
+class CachedStringProperty(object):
+    def __init__(self, key):
+        self.get_key = key
+
+    def __get__(self, instance, owner):
+        return cache.get(self.get_key(instance))
+
+    def __set__(self, instance, value):
+        cache.set(self.get_key(instance), value, 12*60*60)
 
 class FormBase(DocumentSchema):
     """
@@ -232,9 +243,13 @@ class FormBase(DocumentSchema):
     actions     = SchemaProperty(FormActions)
     show_count  = BooleanProperty(default=False)
     xmlns       = StringProperty()
-#    contents    = StringProperty()
     source      = FormSource()
-    validation_cache = StringProperty(required=False)
+    validation_cache = CachedStringProperty(lambda self: "%s-validation" % self.unique_id)
+
+    @classmethod
+    def wrap(cls, data):
+        data.pop('validation_cache', '')
+        return super(FormBase, cls).wrap(data)
 
     @classmethod
     def generate_id(cls):
@@ -262,10 +277,10 @@ class FormBase(DocumentSchema):
                 self.validation_cache = unicode(e)
             else:
                 self.validation_cache = ""
-            self.get_app().save(increment_version=False)
         if self.validation_cache:
             raise XFormValidationError(self.validation_cache)
         return self
+
     def get_unique_id(self):
         """
         Return unique_id if it exists, otherwise initialize it
@@ -473,10 +488,25 @@ class DetailColumn(IndexedSchema):
     enum        = DictProperty()
     late_flag   = IntegerProperty(default=30)
     advanced    = StringProperty(default="")
+    time_ago_interval = FloatProperty(default=365.25)
 
     def rename_lang(self, old_lang, new_lang):
         for dct in (self.header, self.enum):
             _rename_key(dct, old_lang, new_lang)
+
+    class TimeAgoInterval(object):
+        map = {
+            'day': 1.0,
+            'week': 7.0,
+            'month': 30.4375,
+            'year': 365.25
+        }
+        @classmethod
+        def get_from_old_format(cls, format):
+            if format == 'years-ago':
+                return cls.map['year']
+            elif format == 'months-ago':
+                return cls.map['month']
 
     @property
     def xpath(self):
@@ -490,6 +520,16 @@ class DetailColumn(IndexedSchema):
             'status': '@status',
             'name': 'case_name',
         }.get(self.field, self.field)
+
+
+    @classmethod
+    def wrap(cls, data):
+        if data.get('format') in ('months-ago', 'years-ago'):
+            data['time_ago_interval'] = cls.TimeAgoInterval.get_from_old_format(data['format'])
+            data['format'] = 'time-ago'
+        return super(DetailColumn, cls).wrap(data)
+
+
 class Detail(DocumentSchema):
     """
     Full configuration for a case selection screen
@@ -645,8 +685,9 @@ class VersionedDoc(Document):
     copy_of = StringProperty()
     version = IntegerProperty()
     short_url = StringProperty()
+    short_odk_url = StringProperty()
 
-    _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version', 'short_url']
+    _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version', 'short_url', 'short_odk_url']
 
     @property
     def id(self):
@@ -672,6 +713,8 @@ class VersionedDoc(Document):
             del copy['_rev']
             if 'short_url' in copy:
                 del copy['short_url']
+            if 'short_odk_url' in copy:
+                del copy['short_odk_url']
             if "recipients" in copy:
                 del copy['recipients']
             if '_attachments' in copy:
@@ -785,6 +828,12 @@ class ApplicationBase(VersionedDoc):
     built_on = DateTimeProperty(required=False)
     build_comment = StringProperty()
 
+    # watch out for a past bug:
+    # when reverting to a build that happens to be released
+    # that got copied into into the new app doc, and when new releases were made,
+    # they were automatically starred
+    # AFAIK this is fixed in code, but my rear its ugly head in an as-yet-not-understood
+    # way for apps that already had this problem. Just keep an eye out
     is_released = BooleanProperty(default=False)
 
     # django-style salted hash of the admin password
@@ -854,7 +903,6 @@ class ApplicationBase(VersionedDoc):
             )
             if len(released) > 0:
                 self._latest_saved = released.all()[0]
-                print self._latest_saved.is_released
             else:
                 saved = self.__class__.view('app_manager/saved_app',
                     startkey=[self.domain, self._id, {}],
@@ -923,6 +971,9 @@ class ApplicationBase(VersionedDoc):
                 return item['label']
         return self.build_spec.get_label()
 
+    @property
+    def short_name(self):
+        return self.name if len(self.name) <= 12 else '%s..' % self.name[:10]
 
     @property
     def url_base(self):
@@ -971,6 +1022,7 @@ class ApplicationBase(VersionedDoc):
             {'label': 'WinMo', 'value': 'winmo'},
             {'label': 'Generic', 'value': 'generic'},
         ]
+
     def get_jar_path(self):
         build = self.get_build()
         if self.text_input == 'custom-keys' and build.minor_release() < (1,3):
@@ -1051,6 +1103,10 @@ class ApplicationBase(VersionedDoc):
             reverse('corehq.apps.app_manager.views.download_odk_profile', args=[self.domain, self._id]),
         )
 
+    @property
+    def odk_profile_display_url(self):
+        return self.short_odk_url or self.odk_profile_url
+
     def get_odk_qr_code(self):
         """Returns a QR code, as a PNG to install on CC-ODK"""
         try:
@@ -1092,11 +1148,17 @@ class ApplicationBase(VersionedDoc):
             copy.short_url = bitly.shorten(
                 get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
             )
-        except (URLError, Exception):
+            copy.short_odk_url = bitly.shorten(
+                get_url_base() + reverse('corehq.apps.app_manager.views.odk_install', args=[copy.domain, copy._id])
+            )
+        except:        # URLError, BitlyError
             # for offline only
             logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
             copy.short_url = None
+            copy.short_odk_url = None
+
         copy.build_comment = comment
+        copy.is_released = False
         copy.save(increment_version=False)
 
         return copy
@@ -1117,6 +1179,18 @@ class ApplicationBase(VersionedDoc):
 def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
         raise ValueError("Invalid Language")
+
+class SavedAppBuild(ApplicationBase):
+    def to_saved_build_json(self, timezone):
+        data = super(SavedAppBuild, self).to_json()
+        data.update({
+            'id': self.id,
+            'built_on_date': utc_to_timezone(data['built_on'], timezone, "%b %d, %Y"),
+            'built_on_time': utc_to_timezone(data['built_on'], timezone, "%H:%M %Z"),
+            'build_label': self.built_with.get_label(),
+            'jar_path': self.get_jar_path(),
+        })
+        return data
 
 class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     """
@@ -1703,10 +1777,16 @@ def get_app(domain, app_id, wrap_cls=None, latest=False):
             except Exception:
                 raise Http404
 
-        parent_app_id = original_app.get('copy_of') or original_app['_id']
+        if original_app.get('copy_of'):
+            parent_app_id = original_app.get('copy_of')
+            min_version = original_app['version']
+        else:
+            parent_app_id = original_app['_id']
+            min_version = -1
+
         latest_app = get_db().view('app_manager/applications',
             startkey=['^ReleasedApplications', domain, parent_app_id, {}],
-            endkey=['^ReleasedApplications', domain, parent_app_id, original_app['version']],
+            endkey=['^ReleasedApplications', domain, parent_app_id, min_version],
             limit=1,
             descending=True,
             include_docs=True

@@ -114,10 +114,21 @@ def web_users(request, domain, template="users/web_users.html"):
     context = _users_context(request, domain)
     user_roles = [AdminUserRole(domain=domain)]
     user_roles.extend(sorted(UserRole.by_domain(domain), key=lambda role: role.name if role.name else u'\uFFFF'))
+
+    role_labels = {}
+    for r in user_roles:
+        key = 'user-role:%s' % r.get_id if r.get_id else r.get_qualified_id()
+        role_labels[key] = r.name
+
+    invitations = Invitation.by_domain(domain)
+    for invitation in invitations:
+        invitation.role_label = role_labels.get(invitation.role, "")
+
     context.update({
         'user_roles': user_roles,
         'default_role': UserRole.get_default(),
         'report_list': get_possible_reports(domain),
+        'invitations': invitations
     })
     return render_to_response(request, template, context)
 
@@ -380,6 +391,18 @@ def account(request, domain, couch_user_id, template="users/account.html"):
     # for basic tab
     context.update(_handle_user_form(request, domain, couch_user))
     return render_to_response(request, template, context)
+
+@require_can_edit_commcare_users
+@require_POST
+def update_user_data(request, domain, couch_user_id):
+    updated_data = json.loads(request.POST["user-data"])
+    user = CommCareUser.get(couch_user_id)
+    assert user.doc_type == "CommCareUser"
+    assert user.domain == domain
+    user.user_data = updated_data
+    user.save()
+    messages.success(request, "User data updated!")
+    return HttpResponseRedirect(reverse('user_account', args=[domain, couch_user_id]))
 
 @require_permission_to_edit_user
 def delete_phone_number(request, domain, couch_user_id):
@@ -772,7 +795,7 @@ class UploadCommCareUsers(TemplateView):
             bulk_upload_async.delay(download_id, self.domain,
                                     list(self.user_specs),
                                     list(self.group_specs))
-            messages.success(request, 
+            messages.success(request,
                 'Your upload is in progress. You can check the progress at "%s%s".' %  \
                 (get_url_base(), reverse('retrieve_download', kwargs={'download_id': download_id})),
                 extra_tags="html")
@@ -780,7 +803,7 @@ class UploadCommCareUsers(TemplateView):
             ret = create_or_update_users_and_groups(self.domain, self.user_specs, self.group_specs)
             for error in ret["errors"]:
                 messages.error(request, error)
-            
+
             for row in ret["rows"]:
                 response_writer.writerow(row)
                 response_rows.append(row)
@@ -804,7 +827,7 @@ class UploadCommCareUsers(TemplateView):
         else:
             return response
 
-    
+
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, domain, *args, **kwargs):
         self.domain = domain

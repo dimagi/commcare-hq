@@ -39,7 +39,21 @@
 
 {% block title %} - Report: {{ report.title|default:"Project Reports"|safe }}{% endblock %}
 
+{% block header-section %} {{ block.super }}
+{% if report.show_subsection_navigation %}
+    {% block subsection-navigation %}
+    <nav class="hq-subsection-navbar">
+        <ul class="nav">
+            <li {% ifequal report.section_name 'Project Reports' %}class="active"{% endifequal %}><a href="{% url default_report domain %}">Project Reports</a> <div class="arrow"></div></li>
+            <li {% ifequal report.section_name 'Active Data Management' %}class="active"{% endifequal %}><a href="{% url default_adm_report domain %}">Active Data Management</a> <div class="arrow"></div></li>
+        </ul>
+    </nav>
+    {% endblock %}
+{% endif %}
+{% endblock %}
+
 {% block page-title %}
+
     <ul class="breadcrumb">
         <li>
             <a href="{{ report.default_url }}"><strong>{{ report.section_name|default:"Reports" }}</strong></a> <span class="divider">&gt;</span>

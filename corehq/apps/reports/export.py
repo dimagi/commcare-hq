@@ -24,9 +24,10 @@ class BulkExport(object):
     def separator(self):
         return "."
 
-    def create(self, export_tags, export_filter, format=Format.XLS_2007):
+    def create(self, export_tags, export_filter, format=Format.XLS_2007, safe_only=False):
         self.export_filter = export_filter
-        self.format=format
+        self.format = format
+        self.safe_only = safe_only
         self.generate_export_objects(export_tags)
 
     def generate_export_objects(self, export_tags):
@@ -61,7 +62,7 @@ class BulkExport(object):
                 table = format_tables(create_intermediate_tables(doc, schemas[i]),
                                     include_headers=isinstance(self, CustomBulkExport), separator=self.separator)
                 if isinstance(self, CustomBulkExport):
-                    table = self.export_objects[i].trim(table)
+                    table = self.export_objects[i].trim(table, doc)
                 table = self.export_objects[i].parse_tables(table)
                 writer.write(table)
 
@@ -96,7 +97,8 @@ class CustomBulkExport(BulkExport):
             if export_id:
                 export_object = ExportSchemaClass.get(export_id)
                 export_object.sheet_name = sheet_name
-                self.export_objects.append(export_object)
+                if not self.safe_only or export_object.is_safe:
+                    self.export_objects.append(export_object)
 
     def generate_table_headers(self, schemas, checkpoints):
         headers = []
@@ -124,6 +126,8 @@ class ApplicationBulkExport(BulkExport):
         return "|"
 
     def generate_export_objects(self, export_tags):
+        if self.safe_only:
+            return []
         self.export_objects = []
         for schema_index in export_tags:
             self.export_objects.append(FakeSavedExportSchema(index=schema_index))
@@ -143,12 +147,15 @@ class ApplicationBulkExport(BulkExport):
 
 class BulkExportHelper(object):
 
+    def __init__(self, domain=None, safe_only=False):
+        self.domain = domain
+        self.safe_only = safe_only
+
     @property
     def zip_export(self):
         return True
 
-    def prepare_export(self, export_tags, export_filter, domain=None):
-        self.domain = domain
+    def prepare_export(self, export_tags, export_filter):
         self.generate_bulk_files(export_tags, export_filter)
 
         download = DownloadBase()
@@ -185,6 +192,6 @@ class CustomBulkExportHelper(BulkExportHelper):
 
     def generate_bulk_files(self, export_tags, export_filter):
         bulk_export = CustomBulkExport()
-        bulk_export.create(export_tags, export_filter)
+        bulk_export.create(export_tags, export_filter, safe_only=self.safe_only)
         bulk_export.domain = self.domain
         self.bulk_files = [bulk_export]

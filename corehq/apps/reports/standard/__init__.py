@@ -1,8 +1,8 @@
 import dateutil
 from django.core.urlresolvers import reverse
-import pytz
 from corehq.apps.groups.models import Group
 from corehq.apps.reports import util
+from corehq.apps.adm import utils as adm_utils
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.fields import FilterUsersField
 from corehq.apps.reports.generic import GenericReportView
@@ -10,21 +10,9 @@ from dimagi.utils.dates import DateSpan
 
 DATE_FORMAT = "%Y-%m-%d"
 
-def cache_rows(func):
-    def retrieve_cache(*args, **kwargs):
-        report = args[0]
-        # todo actually finish this
-#        print report.domain
-#        print report.request.META.get('PATH_INFO')
-#        print report.request.META.get('QUERY_STRING')
-#        print kwargs
-        return func(*args, **kwargs)
-    return retrieve_cache
-
-
 class ProjectReport(GenericReportView):
     # overriding properties from GenericReportView
-    section_name = "Reports"
+    section_name = "Project Reports"
     app_slug = 'reports'
     dispatcher = ProjectReportDispatcher
     asynchronous = True
@@ -32,6 +20,10 @@ class ProjectReport(GenericReportView):
     @property
     def default_report_url(self):
         return reverse('default_report', args=[self.request.project])
+
+    @property
+    def show_subsection_navigation(self):
+        return adm_utils.show_adm_nav(self.domain, self.request)
 
 class CustomProjectReport(ProjectReport):
     dispatcher = CustomProjectReportDispatcher
@@ -71,7 +63,7 @@ class ProjectReportParametersMixin(object):
     def individual(self):
         """
             todo: remember this: if self.individual and self.users:
-            self.name = "%s for %s" % (self.name, self.users[0].raw_username)
+            self.name = "%s for %s" % (self.name, self.users[0].get('raw_username'))
         """
         if self._individual is None:
             self._individual = self.request_params.get('individual', '')
@@ -84,21 +76,22 @@ class ProjectReportParametersMixin(object):
             todo: cache this baby
         """
         if self._users is None:
-            self._users = util.get_all_users_by_domain(self.domain, self.group_name, self.individual, self.user_filter)
+            self._users = util.get_all_users_by_domain(self.domain,
+                group=self.group_name, individual=self.individual, user_filter=self.user_filter, simplified=True)
         return self._users
 
     _user_ids = None
     @property
     def user_ids(self):
         if self._user_ids is None:
-            self._user_ids = [user.user_id for user in self.users]
+            self._user_ids = [user.get('user_id') for user in self.users]
         return self._user_ids
 
     _usernames = None
     @property
     def usernames(self):
         if self._usernames is None:
-            self._usernames = dict([(user.user_id, user.username_in_report) for user in self.users])
+            self._usernames = dict([(user.get('user_id'), user.get('username_in_report')) for user in self.users])
         return self._usernames
 
     _history = None
@@ -119,6 +112,14 @@ class ProjectReportParametersMixin(object):
         if self._case_type is None:
             self._case_type = self.request_params.get('case_type', '')
         return self._case_type
+
+    _case_status = None
+    @property
+    def case_status(self):
+        if self._case_status is None:
+            from corehq.apps.reports.fields import SelectOpenCloseField
+            self._case_status = self.request_params.get(SelectOpenCloseField.slug, '')
+        return self._case_status
 
 
 class CouchCachedReportMixin(object):

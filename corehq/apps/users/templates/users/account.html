@@ -4,6 +4,7 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/javascripts/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'users/js/key_filters.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
 {% endblock %}
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
@@ -50,12 +51,20 @@
             });
             return false;
         });
-    </script>
-    <script>
         $(function () {
             if ($('#delete_user_{{ couch_user.user_id }}').get(0))
                 ko.applyBindings({signOff: ko.observable('')}, $('#delete_user_{{ couch_user.user_id }}').get(0));
         });
+{% if couch_user.is_commcare_user %}
+        $(function () {
+            var customDataEditor = uiElement.map_list('{{ couch_user.user_id }}', 'User Data');
+            customDataEditor.val({{ couch_user.user_data_json|safe }});
+            customDataEditor.on("change", function () {
+                $("input#user-data").val(JSON.stringify(this.val()));
+            });
+            $("#user-data-form").prepend(customDataEditor.ui);
+        });
+{% endif %}
     </script>
 {% endblock %}
 
@@ -98,7 +107,7 @@
 {% block user-view %}
     <ul class="nav nav-tabs" id="project-settings-tabs">
         <li><a href="#basic-info" data-toggle="tab">Basic</a></li>
-    {% if couch_user.is_commcare_user and couch_user.user_data %}
+    {% if couch_user.is_commcare_user %}
         <li><a href="#user-data" data-toggle="tab">Custom Registration Data</a></li>
     {% endif %}
     {% if couch_user.user_id == request.couch_user.user_id and couch_user.is_commcare_user %}
@@ -180,7 +189,7 @@
                 <div class="form-actions"><button type="submit" class="btn btn-primary">Add Number</button></div>
             </form>
         </div>
-        {% if couch_user.is_commcare_user and couch_user.user_data %}
+        {% if couch_user.is_commcare_user %}
         <div class="tab-pane" id="user-data">
             {% include "users/partial/user_data.html" %}
         </div>
