@@ -9,7 +9,7 @@ from couchforms.models import XFormInstance
 
 class MVP(object):
     NAMESPACE = "mvp_indicators"
-    DOMAINS = ["mvp-sauri"]
+    DOMAINS = ["mvp-sauri", "mvp-potou"]
 
 CLASS_PATH = "mvp.models"
 

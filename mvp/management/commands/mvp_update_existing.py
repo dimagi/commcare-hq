@@ -2,7 +2,7 @@ import logging
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.management.base import LabelCommand
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.indicators.models import CaseIndicatorDefinition, FormIndicatorDefinition, DocumentMistmatchError
+from corehq.apps.indicators.models import CaseIndicatorDefinition, FormIndicatorDefinition, DocumentMistmatchError, DocumentNotInDomainError
 from couchforms.models import XFormInstance
 from mvp.models import MVP, MVPCannotFetchCaseError
 
@@ -36,6 +36,8 @@ class Command(LabelCommand):
                     except DocumentMistmatchError:
                         pass
                     except MVPCannotFetchCaseError:
+                        pass
+                    except DocumentNotInDomainError:
                         pass
 
         for domain in MVP.DOMAINS:
