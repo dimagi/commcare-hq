@@ -5,20 +5,20 @@
 
 
 {% block reportcontent %}
-    <table class="table table-bordered table-striped datatable">
+    <table class="table table-bordered table-striped datatable mvp-table">
         <colgroup span="1" class="definition_columns"></colgroup>
         <colgroup span="12" class="past_columns"></colgroup>
         <colgroup span="1" class="current_month_column"></colgroup>
-        <colgroup span="3" class="summary"></colgroup>
+        <colgroup span="3"></colgroup>
         <thead>
             <tr>
                 <th class="span2"></th>
                 {% for header in headers %}
-                <th>{{ header }}</th>
+                <th{% ifequal forloop.counter 13 %} class="current_month"{% endifequal %}>{{ header }}</th>
                 {% endfor %}
-                <th>Average</th>
-                <th>Median</th>
-                <th>Std. Dev.</th>
+                <th class="summary">Average</th>
+                <th class="summary">Median</th>
+                <th class="summary">Std. Dev.</th>
             </tr>
         </thead>
         <tbody>
@@ -26,26 +26,26 @@
             <tr>
                 <th rowspan="3">{{ indicator.title }}</th>
                 {% for val in indicator.values %}
-                    <td>{{ val.value.text }}</td>
+                    <td{% ifequal forloop.counter 13 %} class="current_month"{% endifequal %}>{{ val.value.text }}</td>
                 {% endfor %}
-                <td>{{ indicator.average.text }}</td>
-                <td>{{ indicator.median.text }}</td>
-                <td>{{ indicator.std_dev.text }}</td>
+                <td class="summary">{{ indicator.average.text }}</td>
+                <td class="summary">{{ indicator.median.text }}</td>
+                <td class="summary">{{ indicator.std_dev.text }}</td>
             </tr>
             <tr>
                 {% for val in indicator.values %}
-                    <td>{{ val.value.n }}</td>
+                    <td{% ifequal forloop.counter 13 %} class="current_month"{% endifequal %}>{{ val.value.n }}</td>
                 {% endfor %}
-                <td>{{ indicator.average.n }}</td>
-                <td>{{ indicator.median.n }}</td>
-                <td>{{ indicator.std_dev.n }}</td>
+                <td class="summary">{{ indicator.average.n }}</td>
+                <td class="summary">{{ indicator.median.n }}</td>
+                <td class="summary">{{ indicator.std_dev.n }}</td>
             </tr>
             <tr>
                 {% for val in indicator.values %}
-                    <td>{{ val.value.d }}</td>
+                    <td{% ifequal forloop.counter 13 %} class="current_month"{% endifequal %}>{{ val.value.d }}</td>
                 {% endfor %}
-                <td>{{ indicator.average.d }}</td>
-                <td>{{ indicator.median.d }}</td>
+                <td class="summary">{{ indicator.average.d }}</td>
+                <td class="summary">{{ indicator.median.d }}</td>
                 <td class="summary">{{ indicator.std_dev.d }}</td>
             </tr>
             <tr>
