@@ -3,6 +3,15 @@
 {% load report_tags %}
 {% load i18n %}
 
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(function(){
+            $('#mvp-table-head').affix({
+                offset: 197
+            });
+        });
+    </script>
+{% endblock %}
 
 {% block reportcontent %}
     <table class="table table-bordered table-striped datatable mvp-table">
@@ -11,7 +20,7 @@
         <colgroup span="1" class="current_month_column"></colgroup>
         <colgroup span="3"></colgroup>
         <thead>
-            <tr>
+            <tr id="mvp-table-head" data-spy="affix" data-offset-top="197">
                 <th class="span2"></th>
                 {% for header in headers %}
                 <th{% ifequal forloop.counter 13 %} class="current_month"{% endifequal %}>{{ header }}</th>
@@ -54,6 +63,5 @@
             {% endfor %}
         </tbody>
     </table>
-
 
 {% endblock %}
