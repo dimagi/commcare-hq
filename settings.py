@@ -591,6 +591,11 @@ CUSTOM_REPORT_MAP = {
                     'mvp.reports.MVISHealthCoordinatorReport'
         ]
     },
+    "mvp-potou": {
+        "Custom Reports": [
+                    'mvp.reports.MVISHealthCoordinatorReport'
+        ]
+    },
     # todo: giovanni, you should fix this report at some point.
     "a5288": {
         "Custom Reports": ["a5288.reports.MissedCallbackReport"]
