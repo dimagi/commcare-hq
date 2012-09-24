@@ -61,13 +61,15 @@ class HQUserToggle(HQToggle):
 
 
 class TempCommCareUser(CommCareUser):
-    filter_flag = HQUserType.UNKNOWN
+    filter_flag = IntegerProperty()
 
     def __init__(self, domain, username, uuid):
         if username == HQUserType.human_readable[HQUserType.DEMO_USER]:
-            self.filter_flag = HQUserType.DEMO_USER
+            filter_flag = HQUserType.DEMO_USER
         elif username == HQUserType.human_readable[HQUserType.ADMIN]:
-            self.filter_flag = HQUserType.ADMIN
+            filter_flag = HQUserType.ADMIN
+        else:
+            filter_flag = HQUserType.UNKNOWN
         super(TempCommCareUser, self).__init__(
             domain=domain,
             username=username,
@@ -77,6 +79,7 @@ class TempCommCareUser(CommCareUser):
             user_data={},
             first_name='',
             last_name='',
+            filter_flag=filter_flag
         )
 
     def save(self, **params):
