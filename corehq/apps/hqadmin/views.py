@@ -255,7 +255,7 @@ def _cacheable_domain_activity_report(request):
     for landmark in landmarks:
         dates.append(now - timedelta(days=landmark))
 
-    domains = [{'name': domain.name} for domain in Domain.get_all()]
+    domains = [{'name': domain.name, 'display_name': domain.display_name()} for domain in Domain.get_all()]
 
     for domain in domains:
         domain['users'] = dict([(user.user_id, {'raw_username': user.raw_username}) for user in CommCareUser.by_domain(domain['name'])])
