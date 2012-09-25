@@ -17,6 +17,8 @@ from corehq.apps.app_manager.models import get_app, Form
 from corehq.apps.sms.util import format_message_list
 from corehq.apps.reminders.util import get_form_name
 
+METHOD_CHOICES = ["sms", "email", "test", "callback", "callback_test", "survey"]
+
 REPEAT_SCHEDULE_INDEFINITELY = -1
 
 EVENT_AS_SCHEDULE = "SCHEDULE"
@@ -91,8 +93,6 @@ class Message(object):
         if isinstance(template, str):
             template = unicode(template, encoding='utf-8')
         return unicode(cls(template, **params))
-    
-METHOD_CHOICES = ["sms", "email", "test", "callback", "callback_test", "survey"]
 
 class CaseReminderEvent(DocumentSchema):
     """
@@ -841,10 +841,16 @@ class SurveySample(Document):
             include_docs=True
         ).all()
 
+class SurveyWave(DocumentSchema):
+    date = DateProperty()
+    time = TimeProperty()
+    form_id = StringProperty()
+    reminder_definitions = DictProperty() # Dictionary of SurveySample._id : CaseReminderHandler._id
+
 class Survey(Document):
     domain = StringProperty()
     name = StringProperty()
-    waves = ListProperty(DictProperty)
+    waves = SchemaListProperty(SurveyWave)
     followups = ListProperty(DictProperty)
     samples = ListProperty(DictProperty)
     send_automatically = BooleanProperty()

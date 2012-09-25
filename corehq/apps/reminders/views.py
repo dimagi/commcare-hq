@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm
-from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST
+from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, EVENT_AS_SCHEDULE, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST, SurveyWave, ON_DATETIME, RECIPIENT_SURVEY_SAMPLE
 from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.web import render_to_response
 from dimagi.utils.parsing import string_to_datetime
@@ -17,6 +17,7 @@ from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import register_sms_contact
 from corehq.apps.domain.models import DomainCounter
 from casexml.apps.case.models import CommCareCase
+from dateutil.parser import parse
 
 @login_and_domain_required
 def default(request, domain):
@@ -254,29 +255,127 @@ def add_survey(request, domain, survey_id=None):
             send_followup = form.cleaned_data.get("send_followup")
             
             if survey is None:
+                wave_list = []
+                for wave in waves:
+                    wave_list.append(SurveyWave(date=parse(wave["date"]).date(), time=parse(wave["time"]).time(), form_id=wave["form_id"], reminder_definitions={}))
+                
+                if send_automatically:
+                    for wave in wave_list:
+                        for sample in samples:
+                            if sample["method"] == "SMS":
+                                handler = CaseReminderHandler(
+                                    domain = domain,
+                                    nickname = "",
+                                    default_lang = "en",
+                                    method = "survey",
+                                    recipient = RECIPIENT_SURVEY_SAMPLE,
+                                    start_condition_type = ON_DATETIME,
+                                    start_datetime = datetime.combine(wave.date, time(0,0)),
+                                    start_offset = 0,
+                                    events = [CaseReminderEvent(
+                                        day_num = 0,
+                                        fire_time = wave.time,
+                                        form_unique_id = wave.form_id
+                                    )],
+                                    schedule_length = 1,
+                                    event_interpretation = EVENT_AS_SCHEDULE,
+                                    max_iteration_count = 1,
+                                    sample_id = sample["sample_id"]
+                                )
+                                handler.save()
+                                wave.reminder_definitions[sample["sample_id"]] = handler._id
+                
                 survey = Survey (
                     domain = domain,
                     name = name,
-                    waves = waves,
+                    waves = wave_list,
                     followups = followups,
                     samples = samples,
                     send_automatically = send_automatically,
                     send_followup = send_followup
                 )
             else:
+                # Set date, time, and form_id for all waves
+                i = 0
+                for wave_json in waves:
+                    if len(survey.waves) > i:
+                        survey.waves[i].date = parse(wave_json["date"]).date()
+                        survey.waves[i].time = parse(wave_json["time"]).time()
+                        survey.waves[i].form_id = wave_json["form_id"]
+                    else:
+                        survey.waves.append(SurveyWave(date=parse(wave_json["date"]).date(), time=parse(wave_json["time"]).time(), form_id=wave_json["form_id"], reminder_definitions={}))
+                    i += 1
+                
+                # Retire reminder definitions that are no longer needed
+                if send_automatically:
+                    new_sample_ids = [sample_json["sample_id"] for sample_json in samples]
+                else:
+                    new_sample_ids = []
+                
+                for wave in survey.waves:
+                    for sample_id, handler_id in wave.reminder_definitions.items():
+                        if sample_id not in new_sample_ids:
+                            handler = CaseReminderHandler.get(wave.reminder_definitions[sample_id])
+                            handler.retire()
+                            del wave.reminder_definitions[sample_id]
+                
+                # Create additional reminder definitions as necessary
+                for wave in survey.waves:
+                    for sample_id in new_sample_ids:
+                        if sample_id not in wave.reminder_definitions:
+                            handler = CaseReminderHandler(
+                                domain = domain,
+                                nickname = "",
+                                default_lang = "en",
+                                method = "survey",
+                                recipient = RECIPIENT_SURVEY_SAMPLE,
+                                start_condition_type = ON_DATETIME,
+                                start_datetime = datetime.combine(wave.date, time(0,0)),
+                                start_offset = 0,
+                                events = [CaseReminderEvent(
+                                    day_num = 0,
+                                    fire_time = wave.time,
+                                    form_unique_id = wave.form_id
+                                )],
+                                schedule_length = 1,
+                                event_interpretation = EVENT_AS_SCHEDULE,
+                                max_iteration_count = 1,
+                                sample_id = sample_id
+                            )
+                            handler.save()
+                            wave.reminder_definitions[sample_id] = handler._id
+                
+                # Update reminder definitions as necessary
+                for wave in survey.waves:
+                    for sample_id, handler_id in wave.reminder_definitions.items():
+                        handler = CaseReminderHandler.get(handler_id)
+                        if handler.start_datetime != datetime.combine(wave.date, time(0,0)) or handler.events[0].fire_time != wave.time or handler.events[0].form_unique_id != wave.form_id:
+                            handler.start_datetime = datetime.combine(wave.date, time(0,0))
+                            handler.events[0].fire_time = wave.time
+                            handler.events[0].form_unique_id = wave.form_id
+                            handler.save()
+                
+                # Set the rest of the survey info
                 survey.name = name
-                survey.waves = waves
                 survey.followups = followups
                 survey.samples = samples
                 survey.send_automatically = send_automatically
                 survey.send_followup = send_followup
+            
             survey.save()
             return HttpResponseRedirect(reverse("survey_list", args=[domain]))
     else:
         initial = {}
         if survey is not None:
+            waves = []
+            for wave in survey.waves:
+                waves.append({
+                    "date" : str(wave.date),
+                    "form_id" : wave.form_id,
+                    "time" : str(wave.time)
+                })
             initial["name"] = survey.name
-            initial["waves"] = survey.waves
+            initial["waves"] = waves
             initial["followups"] = survey.followups
             initial["samples"] = survey.samples
             initial["send_automatically"] = survey.send_automatically
