@@ -119,17 +119,7 @@ var DetailScreenConfig = (function () {
                 that.header = uiElement.input().val(invisibleVal);
                 that.header.setVisibleValue(visibleVal);
             }());
-            this.format = uiElement.select([
-                {value: "plain", label: DetailScreenConfig.message.PLAIN_FORMAT},
-                {value: "date", label: DetailScreenConfig.message.DATE_FORMAT},
-                {value: "time-ago", label: DetailScreenConfig.message.TIME_AGO_FORMAT},
-                {value: "phone", label: DetailScreenConfig.message.PHONE_FORMAT},
-                {value: "enum", label: DetailScreenConfig.message.ENUM_FORMAT},
-                {value: "late-flag", label: DetailScreenConfig.message.LATE_FLAG_FORMAT},
-                {value: "invisible", label: DetailScreenConfig.message.INVISIBLE_FORMAT},
-                {value: "filter", label: DetailScreenConfig.message.FILTER_XPATH_FORMAT},
-                {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT}
-            ]).val(this.original.format || null);
+            this.format = uiElement.select(DetailScreenConfig.MENU_OPTIONS).val(this.original.format || null);
 
             (function () {
                 var f = formatEnum(that.original['enum'], that.lang, that.screen.langs);
@@ -667,6 +657,18 @@ var DetailScreenConfig = (function () {
         week: 7,
         day: 1
     };
+
+    DetailScreenConfig.MENU_OPTIONS = [
+        {value: "plain", label: DetailScreenConfig.message.PLAIN_FORMAT},
+        {value: "date", label: DetailScreenConfig.message.DATE_FORMAT},
+        {value: "time-ago", label: DetailScreenConfig.message.TIME_AGO_FORMAT},
+        {value: "phone", label: DetailScreenConfig.message.PHONE_FORMAT},
+        {value: "enum", label: DetailScreenConfig.message.ENUM_FORMAT},
+        {value: "late-flag", label: DetailScreenConfig.message.LATE_FLAG_FORMAT},
+        {value: "invisible", label: DetailScreenConfig.message.INVISIBLE_FORMAT},
+        {value: "filter", label: DetailScreenConfig.message.FILTER_XPATH_FORMAT},
+        {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT}
+    ];
 
     return DetailScreenConfig;
 }());
