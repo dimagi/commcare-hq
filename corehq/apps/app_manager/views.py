@@ -623,13 +623,26 @@ def user_registration_source(req, domain, app_id):
 
 @login_and_domain_required
 def form_designer(req, domain, app_id, module_id=None, form_id=None, is_user_registration=False):
+    def bail(not_found=""):
+        if not_found:
+            messages.error(req, 'Oops! We could not find that %s. Please try again' % not_found)
+        else:
+            messages.error(req, 'Oops! We could not complete your request. Please try again')
+        return back_to_main(req, domain, app_id)
+
     app = get_app(domain, app_id)
 
     if is_user_registration:
         form = app.get_user_registration()
     else:
-        module = app.get_module(module_id)
-        form = module.get_form(form_id)
+        try:
+            module = app.get_module(module_id)
+        except IndexError:
+            return bail("module")
+        try:
+            form = module.get_form(form_id)
+        except IndexError:
+            return bail("form")
 
 
 
