@@ -14,14 +14,19 @@
         </thead>
         <tbody>
             <tr>
-                <th>Number of Births Recorded</th>
-                <td>{{ ihf_data.numBirths }}</td>
-                <td>{{ chf_data.numBirths }}</td>
+                <th>Number of Birth Events Recorded</th>
+                <td>{{ ihf_data.totalBirthEvents }}</td>
+                <td>{{ chf_data.totalBirthEvents }}</td>
             </tr>
             <tr>
-                <th>Number of Birth Events</th>
-                <td>{{ ihf_data.numBirthEvents }}</td>
-                <td>{{ chf_data.numBirthEvents }}</td>
+                <th>Number of Birth Events Followed Up</th>
+                <td>{{ ihf_data.followedUp }}</td>
+                <td>{{ chf_data.followedUp }}</td>
+            </tr>
+            <tr>
+                <th>Number of Birth Events Lost to Follow Up</th>
+                <td>{{ ihf_data.lostToFollowUp }}</td>
+                <td>{{ chf_data.lostToFollowUp }}</td>
             </tr>
             <tr>
                 <td colspan="3"></td>
@@ -33,36 +38,41 @@
             </tr>
             <tr>
                 <th>Maternal Near Miss</th>
-                <td>{{ ihf_data.maternalNearMiss }}</td>
-                <td>{{ chf_data.maternalNearMiss }}</td>
+                <td>{{ ihf_data.maternalNearMisses }}</td>
+                <td>{{ chf_data.maternalNearMisses }}</td>
             </tr>
             <tr>
                 <th>Still Births</th>
-                <td>{{ ihf_data.stillBirths }}</td>
-                <td>{{ chf_data.stillBirths }}</td>
+                <td>{{ ihf_data.stillBirthEvents }}</td>
+                <td>{{ chf_data.stillBirthEvents }}</td>
             </tr>
             <tr>
-                <th>Neonatal Mortality</th>
-                <td>{{ ihf_data.neonatalMortality }}</td>
-                <td>{{ chf_data.neonatalMortality }}</td>
+                <th>Neonatal Mortality at 7 Days</th>
+                <td>{{ ihf_data.neonatalMortalityEvents }}</td>
+                <td>{{ chf_data.neonatalMortalityEvents }}</td>
+            </tr>
+            <tr>
+                <th>Number of Live Birth Events</th>
+                <td>{{ ihf_data.liveBirthEvents }}</td>
+                <td>{{ chf_data.liveBirthEvents }}</td>
             </tr>
             <tr>
                 <td colspan="3"></td>
             </tr>
             <tr>
-                <th>Total Child birth events with Positve Primary Outcome</th>
-                <td>{{ ihf_data.positive }}</td>
-                <td>{{ chf_data.positive }}</td>
+                <th>Total Child birth events with Positive Primary Outcome</th>
+                <td>{{ ihf_data.positiveOutcomeEvents }}</td>
+                <td>{{ chf_data.positiveOutcomeEvents }}</td>
             </tr>
             <tr>
                 <th>Total Child birth events with Negative Primary Outcome</th>
-                <td>{{ ihf_data.negative }}</td>
-                <td>{{ chf_data.negative }}</td>
+                <td>{{ ihf_data.negativeOutcomeEvents }}</td>
+                <td>{{ chf_data.negativeOutcomeEvents }}</td>
             </tr>
             <tr>
-                <th>Total Lost to Followup</th>
-                <td>{{ ihf_data.lost }}</td>
-                <td>{{ chf_data.lost }}</td>
+                <th>Combined Mortality Outcomes</th>
+                <td>{{ ihf_data.combinedMortalityOutcomes }}</td>
+                <td>{{ chf_data.combinedMortalityOutcomes }}</td>
             </tr>
         </tbody>
     </table>

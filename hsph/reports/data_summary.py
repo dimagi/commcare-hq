@@ -1,9 +1,8 @@
-from corehq.apps.reports import util
 from corehq.apps.reports.standard import DatespanMixin, ProjectReportParametersMixin, CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesColumnGroup, DataTablesHeader, DTSortType
 from corehq.apps.reports.generic import GenericTabularReport
 from dimagi.utils.couch.database import get_db
-from hsph.fields import IHForCHFField
+from hsph.fields import IHForCHFField, SelectReferredInStatusField
 from hsph.reports import HSPHSiteDataMixin
 
 class DataSummaryReport(CustomProjectReport, ProjectReportParametersMixin, DatespanMixin):
@@ -14,9 +13,11 @@ class DataSummaryReport(CustomProjectReport, ProjectReportParametersMixin, Dates
 
 class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteDataMixin):
     name = "Primary Outcome Report"
-    slug = "hsph_priamry_outcome"
+    slug = "hsph_primary_outcome"
     fields = ['corehq.apps.reports.fields.DatespanField',
+              'hsph.fields.SelectReferredInStatusField',
               'hsph.fields.SiteField']
+
     show_all_rows_option = True
 
     @property
@@ -25,6 +26,7 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
         district = DataTablesColumn("District")
         site = DataTablesColumn("Site")
         num_births = DataTablesColumn("No. Birth Events Recorded")
+        num_referred_in_births = DataTablesColumn("No. Referred In Births")
 
         maternal_deaths = DataTablesColumn("Maternal Deaths", sort_type=DTSortType.NUMERIC)
         maternal_near_miss = DataTablesColumn("Maternal Near Miss", sort_type=DTSortType.NUMERIC)
@@ -52,7 +54,6 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
             neonatal_mortality)
         positive_outcomes.css_span = 2
 
-
         primary_outcome = DataTablesColumn("Primary Outcome Yes")
         negative_outcome = DataTablesColumn("Primary Outcome No")
         lost = DataTablesColumn("Lost to Followup")
@@ -61,6 +62,7 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
             district,
             site,
             num_births,
+            num_referred_in_births,
             outcomes_on_discharge,
             outcomes_on_7days,
             positive_outcomes,
@@ -73,103 +75,115 @@ class PrimaryOutcomeReport(GenericTabularReport, DataSummaryReport, HSPHSiteData
         rows = []
         if not self.selected_site_map:
             self._selected_site_map = self.site_map
-        keys = self.generate_keys(["site"])
+
+        if self.request_params.get(SelectReferredInStatusField.slug) == 'referred':
+            keys = self.generate_keys(["site referred_in"])
+        else:
+            keys = self.generate_keys(["site"])
+
         for key in keys:
             data = get_db().view('hsph/data_summary',
                 reduce=True,
                 startkey=key+[self.datespan.startdate_param_utc],
                 endkey=key+[self.datespan.enddate_param_utc]
             ).all()
+
             for item in data:
-                item = item.get('value', {})
+
+                item = item['value']
                 region, district, site = self.get_site_table_values(key[1:4])
-                stat_keys = ['maternalDeaths', 'maternalNearMisses', 'stillBirthEvents', 'neonatalMortalityEvents']
-                birth_events = item.get('totalBirthEventsOnRegistration', 0)
+                birth_events = item['totalBirthRegistrationEvents']
+                referred_in_birth_events = item['totalReferredInBirths']
                 row = [region,
                         district,
                         site,
-                        birth_events]
+                        birth_events,
+                        referred_in_birth_events]
 
-                discharge_stats = item.get('atDischarge',{})
-                on7days_stats = item.get('on7Days', {})
+                discharge_stats = item['atDischarge']
+                on7days_stats = item['on7Days']
                 discharge = []
                 seven_days = []
                 total = []
+
+                stat_keys = ['maternalDeaths', 'maternalNearMisses', 'stillBirthEvents', 'neonatalMortalityEvents']
                 for stat in stat_keys:
-                    discharge.append(self.table_cell(discharge_stats.get(stat, 0),
-                                                    '<span class="label">%d</span>' %discharge_stats.get(stat, 0)) )
-                    seven_days.append(self.table_cell(on7days_stats.get(stat, 0), '<span class="label label-info">%d</span>' %
-                                                                    on7days_stats.get(stat, 0)) )
-                    total.append(self.table_cell(item.get(stat, 0), '<span class="label label-inverse">%d</span>' %
-                                                                    item.get(stat, 0)) )
+                    discharge.append(self.table_cell(discharge_stats[stat],
+                                                     '<span class="label">%d</span>' % discharge_stats[stat]))
+                    seven_days.append(self.table_cell(on7days_stats[stat],
+                                                      '<span class="label label-info">%d</span>' % on7days_stats[stat]))
+                    total.append(self.table_cell(item[stat],
+                                                 '<span class="label label-inverse">%d</span>' % item[stat]))
 
                 row.extend(discharge)
                 row.extend(seven_days)
                 row.extend(total)
 
-                positive_outcomes = item.get('totalPositiveOutcomes', 0)
-                lost_to_followup = item.get('lostToFollowUp', 0)
-                negative_outcomes = max(birth_events - positive_outcomes - lost_to_followup, 0)
+                negative_outcomes = item['totalBirthRegistrationEvents'] - \
+                                    item['positiveOutcomeEvents'] - \
+                                    item['lostToFollowUp']
 
-                row.extend([item.get('totalPositiveOutcomes', 0),
+                row.extend([item['positiveOutcomeEvents'],
                             negative_outcomes,
-                            item.get('lostToFollowUp', 0)])
+                            item['lostToFollowUp']])
 
                 rows.append(row)
         return rows
 
 
-class SecondaryOutcomeReport(DataSummaryReport):
+class SecondaryOutcomeReport(DataSummaryReport, HSPHSiteDataMixin):
     name = "Secondary Outcome Report"
     slug = "hsph_secondary_outcome"
-    fields = ['corehq.apps.reports.fields.DatespanField']
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'hsph.fields.SiteField']
     report_template_path = 'hsph/reports/comparative_data_summary.html'
     flush_layout = True
 
     @property
     def report_context(self):
-        facilities = IHForCHFField.getIHFCHFFacilities()
+
+        site_map = self.selected_site_map or self.site_map
+        facilities = IHForCHFField.get_selected_facilities(site_map)
+
         return dict(
             ihf_data=self._get_data(facilities['ihf']),
             chf_data=self._get_data(facilities['chf'])
         )
 
     def _get_data(self, facilities):
-        num_births = 0
-        birth_events = 0
-        maternal_deaths = 0
-        maternal_near_miss = 0
-        still_births = 0
-        neonatal_mortality = 0
-        positive_outcomes = 0
-        lost_to_followup = 0
+        fields = [
+            'totalBirths',
+            'totalBirthEvents',
+            'followedUp',
+            'lostToFollowUp',
+            'maternalDeaths',
+            'maternalNearMisses',
+            'stillBirthEvents',
+            'neonatalMortalityEvents',
+            'liveBirthEvents',
+            'positiveOutcomeEvents',
+            'negativeOutcomeEvents',
+            'combinedMortalityOutcomes'
+        ]
+
+        data = dict([(f, 0) for f in fields])
+        db = get_db()
+
         for facility in facilities:
             key = ["site_id", facility]
-            data = get_db().view('hsph/data_summary',
-                    reduce=True,
-                    startkey=key+[self.datespan.startdate_param_utc],
-                    endkey=key+[self.datespan.enddate_param_utc]
+
+            result = db.view('hsph/data_summary',
+                reduce=True,
+                startkey=key + [self.datespan.startdate_param_utc],
+                endkey=key + [self.datespan.enddate_param_utc]
             ).first()
-            if not data:
-                data = {}
-            data = data.get('value', {})
-            num_births += data.get('totalBirths', 0)
-            birth_events += data.get('totalBirthEvents', 0)
-            maternal_deaths += data.get('maternalDeaths', 0)
-            maternal_near_miss += data.get('maternalNearMisses', 0)
-            still_births += data.get('stillBirthEvents', 0)
-            neonatal_mortality += data.get('neonatalMortalityEvents', 0)
-            positive_outcomes += data.get('totalPositiveOutcomes', 0)
-            lost_to_followup += data.get('lostToFollowUp', 0)
-        negative_outcomes = max(birth_events - positive_outcomes - lost_to_followup, 0)
-        return {
-            "numBirths": num_births,
-            "numBirthEvents": birth_events,
-            "maternalDeaths": maternal_deaths,
-            "maternalNearMiss": maternal_near_miss,
-            "stillBirths": still_births,
-            "neonatalMortality": neonatal_mortality,
-            "positive": positive_outcomes,
-            "negative": negative_outcomes,
-            "lost": lost_to_followup
-        }
+
+            if not result:
+                continue
+
+            result = result['value']
+
+            for field in data:
+                data[field] += result[field]
+
+        return data

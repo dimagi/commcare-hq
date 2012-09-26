@@ -59,6 +59,20 @@ function calcHSPHBirthDatespan(doc) {
     return null;
 }
 
+function HSPHCaseEntry(doc) {
+    var self = this;
+    self.doc = doc;
+    self.data = {};
+
+    self.getBirthStats = function() {
+        self.data.birthEvent = false;
+        if (self.doc.mother_delivered_or_referred === 'delivered') {
+            self.data.birthEvent = true;
+            
+        }
+    }
+}
+
 function HSPHEntry(doc) {
     var self = this;
     self.doc = doc;
@@ -79,6 +93,8 @@ function HSPHEntry(doc) {
             self.data.dateBirth = self.form.case_date_delivery;
             self.data.birthDataFromCase = true;
         }
+
+        self.data.referredInBirth = (self.form.referred_in === 'yes');
 
         self.data.contactProvided = !!(self.form.phone_mother === 'yes' ||
                                         self.form.phone_husband === 'yes' ||
@@ -112,6 +128,9 @@ function HSPHEntry(doc) {
         self.data.followupComplete = self.form.result_follow_up === "1";
         self.data.followupTransferred = self.form.result_field_management === "1";
         self.data.followupWaitlisted = self.form.result_wait_list === "1";
+        self.data.lostToFollowUp = (self.form.follow_up_type === 'lost_to_follow_up' ||
+                                    // old
+                                    self.form.follow_up_type === 'unknown');
         if (self.form.meta) {
             var dateAdmitted = (self.form.date_admission) ? new Date(self.form.date_admission) : new Date(self.form.meta.timeEnd);
             var timeEnd = new Date(self.form.meta.timeEnd);
@@ -148,9 +167,13 @@ function HSPHEntry(doc) {
 
     self.getOutcomeStats = function () {
         var follow_up = (self.form.follow_up) ? self.form.follow_up : self.form;
+
         self.data.maternalDeath = follow_up.maternal_death === 'dead';
         if (! self.data.maternalDeath) {
-            self.data.maternalNearMiss = (follow_up.icu === 'yes' ||
+            self.data.maternalNearMiss = (follow_up.maternal_near_miss === 'yes' ||
+                                          // old:
+                                            follow_up.icu === 'yes' ||
+                                            follow_up.cpr === 'yes' ||
                                             follow_up.fever === 'yes' ||
                                             follow_up.hysterectomy === 'yes' ||
                                             follow_up.transfusion === 'yes' ||
@@ -160,13 +183,14 @@ function HSPHEntry(doc) {
 
         self.data.numStillBirths = 0;
         for (var s=1; s<= 5; s++) {
-            self.data.numStillBirths += (follow_up['baby_'+s+'_birth_or_stillbirth'] === 'fresh_stillbirth' ||
-                                        follow_up['baby_'+s+'_birth_or_stillbirth'] === 'macerated_stillbirth') ? 1 : 0;
+            var val = follow_up['baby_'+s+'_birth_or_stillbirth'];
+            self.data.numStillBirths += (val === 'fresh_stillbirth' || val === 'macerated_stillbirth') ? 1 : 0;
         }
 
         self.data.numNeonatalMortality = 0;
         for (var b=1; b <= 5; b++) {
-            self.data.numNeonatalMortality += (follow_up['baby_'+b+'_death'] === 'death') ? 1 : 0;
+            var val = follow_up['baby_'+b+'_death'];
+            self.data.numNeonatalMortality += (val === 'dead') ? 1 : 0;
         }
 
     }

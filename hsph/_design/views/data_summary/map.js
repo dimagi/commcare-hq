@@ -16,8 +16,16 @@ function(doc) {
         entry.getBirthStats();
         entry.getOutcomeStats();
 
+
+        if (entry.data.referredInBirth) {
+            if (entry.data.region)
+                emit(["site referred_in", entry.data.region, entry.data.district, entry.data.siteNum, info.timeEnd], entry.data);
+            emit(["site_id referred_in", entry.data.siteId, info.timeEnd], entry.data);
+        }
+
         if (entry.data.region)
             emit(["site", entry.data.region, entry.data.district, entry.data.siteNum, info.timeEnd], entry.data);
         emit(["site_id", entry.data.siteId, info.timeEnd], entry.data);
+
     }
 }

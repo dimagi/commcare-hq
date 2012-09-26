@@ -130,7 +130,7 @@ class FieldDataCollectionActivityReport(HSPHFieldManagementReport):
     @property
     def all_facilities(self):
         if self._all_facilities is None:
-            self._all_facilities = FacilityField.getFacilties()
+            self._all_facilities = FacilityField.getFacilities()
         return self._all_facilities
 
     _facility_name_map = None
@@ -345,7 +345,6 @@ class HVFollowUpStatusSummaryReport(HVFollowUpStatusReport):
                 keys = [prefix]
 
             for key in keys:
-                print key
                 data = self.get_data(key, reduce=False)
                 for item in data:
                     item = item.get('value', [])

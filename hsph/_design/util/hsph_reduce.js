@@ -73,21 +73,27 @@ var HSPHBirthCounter = function () {
         totalBirthsWithoutContact: 0,
         totalBirthsWithContact: 0,
         totalBirthEvents: 0,
-        totalBirthEventsOnRegistration: 0
+        totalBirthRegistrationEvents: 0,
+        totalBirthEventsOnRegistration: 0,
+        totalReferredInBirths: 0
     };
 
     self.rereduce = function (agEntry) {
         self.calc.totalBirths += agEntry.totalBirths;
         self.calc.totalBirthEvents += agEntry.totalBirthEvents;
+        self.calc.totalBirthRegistrationEvents += agEntry.totalBirthRegistrationEvents;
         self.calc.totalBirthsWithoutContact += agEntry.totalBirthsWithoutContact;
         self.calc.totalBirthsWithContact += agEntry.totalBirthsWithContact;
         self.calc.totalBirthEventsOnRegistration += agEntry.totalBirthEventsOnRegistration;
+        self.calc.totalReferredInBirths += agEntry.totalReferredInBirths;
     };
 
     self.reduce = function (curEntry) {
         self.calc.totalBirths += curEntry.numBirths;
         self.calc.totalBirthEvents += (curEntry.numBirths > 0) ? 1 : 0;
         self.calc.totalBirthEventsOnRegistration += (curEntry.birthRegistration && (curEntry.numBirths > 0)) ? 1 : 0;
+        self.calc.totalBirthRegistrationEvents += (curEntry.birthRegistration) ? 1 : 0;
+        self.calc.totalReferredInBirths += (curEntry.referredInBirth) ? 1 : 0;
         if (curEntry.contactProvided)
             self.calc.totalBirthsWithContact += curEntry.numBirths;
         else
@@ -247,15 +253,18 @@ var HSPHOutcomesCounter = function () {
         maternalDeaths: 0,
         maternalNearMisses: 0,
         stillBirthEvents: 0,
-        neonatalMortalityEvents: 0
+        neonatalMortalityEvents: 0,
+        positiveOutcomes: 0,
+        positiveOutcomeEvents: 0,
+        liveBirthEvents: 0,
+        lostToFollowUp: 0,
+        followedUp: 0,
+        combinedMortalityOutcomes: 0
     };
 
     self.calc = extend({}, stats);
     self.calc.atDischarge = extend({}, stats);
     self.calc.on7Days = extend({}, stats);
-    self.calc.lostToFollowUp = 0;
-    self.calc.totalOutcomes = 0;
-    self.calc.totalPositiveOutcomes = 0;
 
     self.rereduce = function (agEntry) {
         for (var key in stats)  {
@@ -263,9 +272,6 @@ var HSPHOutcomesCounter = function () {
             self.calc.atDischarge[key] += agEntry.atDischarge[key];
             self.calc.on7Days[key] += agEntry.on7Days[key];
         }
-        self.calc.totalOutcomes += agEntry.totalOutcomes;
-        self.calc.lostToFollowUp += agEntry.lostToFollowUp;
-        self.calc.totalPositiveOutcomes += agEntry.totalPositiveOutcomes;
     };
 
     self.reduce = function (curEntry) {
@@ -273,6 +279,14 @@ var HSPHOutcomesCounter = function () {
         stats.maternalNearMisses = (curEntry.maternalNearMiss) ? 1 : 0;
         stats.stillBirthEvents = (curEntry.numStillBirths > 0) ? 1 : 0;
         stats.neonatalMortalityEvents = (curEntry.numNeonatalMortality > 0) ? 1 : 0;
+        stats.positiveOutcomes = (stats.maternalDeaths + stats.maternalNearMisses +
+                                  stats.stillBirthEvents + stats.neonatalMortalityEvents);
+        stats.positiveOutcomeEvents = stats.positiveOutcomes > 0 ? 1 : 0;
+        stats.combinedMortalityOutcomes = stats.maternalDeaths + stats.stillBirthEvents + stats.neonatalMortalityEvents;
+        stats.liveBirthEvents = (curEntry.numBirths > curEntry.numStillBirths) ? 1 : 0;
+        
+        stats.lostToFollowUp = (curEntry.lostToFollowUp) ? 1 : 0;
+        stats.followedUp = (curEntry.followupComplete) ? 1 : 0;
 
         for (var key in stats) {
             if (curEntry.outcomeOnDischarge)
@@ -280,14 +294,7 @@ var HSPHOutcomesCounter = function () {
             else if (curEntry.outcomeOn7Days)
                 self.calc.on7Days[key] += stats[key];
             self.calc[key] += stats[key];
-            self.calc.totalPositiveOutcomes += stats[key];
         }
-
-        if (curEntry.followupWaitlisted)
-            self.calc.lostToFollowUp += 1;
-        else if (curEntry.followupComplete)
-            self.calc.totalOutcomes += 1;
-
     };
 
     self.getResult = function () {
