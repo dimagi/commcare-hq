@@ -44,6 +44,10 @@ class ReportSchedule(object):
 
     def get_response(self, user, domain):
         request = SpoofRequest(user, domain)
+        # this magically tells the report not to show the 'please set filters' 
+        # bit instead of the data. this is pretty awful, but a better workaround
+        # would be quite a bit more complicated
+        request.GET["filterSet"] = "true"
         response = self.view(request, domain)
         DNS_name = "http://"+Site.objects.get(id = settings.SITE_ID).domain
         return render_to_string("reports/report_email.html", { "report_body": self.get_report_data(response.content),

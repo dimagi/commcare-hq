@@ -256,7 +256,11 @@
                 <form action="{% url new_app domain %}">
                     <input type="hidden" name="type" value="Application">
                     <input type="hidden" name="application_version" value="2.0" />
+                    {% if request.couch_user.can_edit_apps %}
                     <a href="#" class="submit">Create a blank app</a>
+                    {% else %}
+                    There are no applications at this time
+                    {% endif %}
                     {% if request.couch_user.is_previewer %}
                         or <a href="{% url appstore %}">copy an existing app from CommCare Exchange</a>.
                     {% endif %}
