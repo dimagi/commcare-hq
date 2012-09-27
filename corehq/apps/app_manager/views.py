@@ -128,6 +128,13 @@ def back_to_main(req, domain, app_id=None, module_id=None, form_id=None, unique_
         "?%s" % urlencode(params) if params else ""
         ))
 
+def bail(req, domain, app_id, not_found=""):
+    if not_found:
+        messages.error(req, 'Oops! We could not find that %s. Please try again' % not_found)
+    else:
+        messages.error(req, 'Oops! We could not complete your request. Please try again')
+    return back_to_main(req, domain, app_id)
+
 def _get_xform_source(request, app, form, filename="form.xml"):
     download = json.loads(request.GET.get('download', 'false'))
     lang = request.COOKIES.get('lang', app.langs[0])
@@ -459,15 +466,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     This is the main view for the app. All other views redirect to here.
 
     """
-
-    def bail():
-        module_id=None
-        form_id=None
-        messages.error(req, 'Oops! We could not complete your request. Please try again')
-        return back_to_main(req, domain, app_id)
-
     if form_id and not module_id:
-        return bail()
+        return bail(req, domain, app_id)
 
     app = module = form = None
     try:
@@ -480,7 +480,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         if form_id:
             form = module.get_form(form_id)
     except IndexError:
-        return bail()
+        return bail(req, domain, app_id)
 
     base_context = get_apps_base_context(req, domain, app)
     edit = base_context['edit']
@@ -628,8 +628,14 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None, is_user_reg
     if is_user_registration:
         form = app.get_user_registration()
     else:
-        module = app.get_module(module_id)
-        form = module.get_form(form_id)
+        try:
+            module = app.get_module(module_id)
+        except IndexError:
+            return bail(req, domain, app_id, not_found="module")
+        try:
+            form = module.get_form(form_id)
+        except IndexError:
+            return bail(req, domain, app_id, not_found="form")
 
 
 
