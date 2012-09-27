@@ -272,14 +272,13 @@ def clone_repo():
                 sudo('git submodule init', user=env.sudo_user)
 
 
-@hosts('hqdb.internal.commcarehq.org')
 @task
+@hosts('hqdb.internal.commcarehq.org')
 def preindex_views():
     with cd(env.code_root):
         update_code()
         update_env()
-        #sudo('nohup python manage.py sync_prepare_couchdb > preindex_views.out 2> preindex_views.err', user=env.sudo_user)
-        sudo('nohup %(virtualenv_root)s/bin/python %(code_root)s/manage.py sync_prepare_couchdb_multi 8 %(user)s &' % env, user=env.sudo_user)
+        sudo('echo "%(virtualenv_root)s/bin/python %(code_root)s/manage.py sync_prepare_couchdb_multi 8 %(user)s" | at -t `date -d "5 seconds" +%%m%%d%%H%%M.%%S`' % env, user=env.sudo_user)
 
 @parallel
 @roles('django_celery','django_app', 'staticfiles')
@@ -308,7 +307,7 @@ def deploy():
         execute(update_code)
         execute(update_env)
         execute(_do_update_services)
-        execute(migrate)
+        migrate()
         execute(_do_collectstatic)
     finally:
         # hopefully bring the server back to life if anything goes wrong
@@ -458,8 +457,6 @@ def services_stop():
     execute(_services_stop_formsplayer)
 ###########################################################
 
-@parallel
-@hosts('hqdjango1.internal.commcarehq.org')
 def migrate():
     """ run south migration on remote environment """
     require('code_root', provided_by=('production', 'demo', 'staging'))
