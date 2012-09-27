@@ -178,6 +178,7 @@ HQ_APPS = (
     'corehq.apps.builds',
     'corehq.apps.orgs',
     'corehq.apps.api',
+    'corehq.apps.indicators',
     'corehq.couchapps',
     'sofabed.forms',
     'soil',
@@ -190,6 +191,7 @@ HQ_APPS = (
     'loadtest',
     'hsph',
     'pathindia',
+    'mvp',
     'hqbilling',
     'a5288'
 )
@@ -408,6 +410,7 @@ COUCHDB_APPS = [
         'hqcase',
         'hqmedia',
         'importer',
+        'indicators',
         'migration',
         'phone',
         'receiverwrapper',
@@ -428,6 +431,7 @@ COUCHDB_APPS = [
         'couchlog',
 
         'pathindia',
+        'mvp',
         'hqbilling',
 ]
 
@@ -591,6 +595,16 @@ CUSTOM_REPORT_MAP = {
     "pathindia": {
         'Custom Reports': [
                     'pathindia.reports.PathIndiaKrantiReport'
+        ]
+    },
+    "mvp-sauri": {
+        "Custom Reports": [
+                    'mvp.reports.MVISHealthCoordinatorReport'
+        ]
+    },
+    "mvp-potou": {
+        "Custom Reports": [
+                    'mvp.reports.MVISHealthCoordinatorReport'
         ]
     },
     # todo: giovanni, you should fix this report at some point.
