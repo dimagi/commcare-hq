@@ -488,6 +488,7 @@ class DetailColumn(IndexedSchema):
     enum        = DictProperty()
     late_flag   = IntegerProperty(default=30)
     advanced    = StringProperty(default="")
+    filter_xpath = StringProperty(default="")
     time_ago_interval = FloatProperty(default=365.25)
 
     def rename_lang(self, old_lang, new_lang):
@@ -1149,8 +1150,9 @@ class ApplicationBase(VersionedDoc):
                 get_url_base() + reverse('corehq.apps.app_manager.views.download_jad', args=[copy.domain, copy._id])
             )
             copy.short_odk_url = bitly.shorten(
-                get_url_base() + reverse('corehq.apps.app_manager.views.odk_install', args=[copy.domain, copy._id])
+                get_url_base() + reverse('corehq.apps.app_manager.views.download_odk_profile', args=[copy.domain, copy._id])
             )
+
         except:        # URLError, BitlyError
             # for offline only
             logging.exception("Problem creating bitly url for app %s. Do you have network?" % self.get_id)
