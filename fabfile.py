@@ -130,9 +130,9 @@ def production():
         'couch': ['hqdb.internal.commcarehq.org'],
         'pg': ['hqdb.internal.commcarehq.org'],
         'rabbitmq': ['hqdb.internal.commcarehq.org'],
-        #'sofabed': ['hqdb.internal.commcarehq.org'], #todo, right now group it with celery
+        'sofabed': ['hqdb.internal.commcarehq.org'], #todo, right now group it with celery
         'django_celery': ['hqdb.internal.commcarehq.org'],
-        'django_app': ['hqdjango1.internal.commcarehq.org', 'hqdjango0.internal.commcarehq.org'],
+        'django_app': ['hqdjango0.internal.commcarehq.org', 'hqdjango2.internal.commcarehq.org'],
         'django_public': ['hqdjango1.internal.commcarehq.org',],
         'formsplayer': ['hqdjango0.internal.commcarehq.org'],
         'lb': [], #todo on apache level config
@@ -459,7 +459,7 @@ def services_stop():
 ###########################################################
 
 @parallel
-@hosts('hqdb.internal.commcarehq.org')
+@hosts('hqdjango1.internal.commcarehq.org')
 def migrate():
     """ run south migration on remote environment """
     require('code_root', provided_by=('production', 'demo', 'staging'))
@@ -623,4 +623,4 @@ def _supervisor_command(command):
         cmd_exec = "/usr/bin/supervisorctl"
     elif what_os() == 'ubuntu':
         cmd_exec = "/usr/local/bin/supervisorctl"
-    sudo('sudo %s %s' % (cmd_exec, command), user=env.sudo_user)
+    sudo('sudo %s %s' % (cmd_exec, command))
