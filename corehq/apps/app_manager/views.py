@@ -412,7 +412,6 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     saved_apps = get_db().view('app_manager/saved_app',
         startkey=[domain, app.id, {}],
         endkey=[domain, app.id],
-        include_doc=True,
         descending=True,
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
@@ -1457,9 +1456,10 @@ def save_copy(req, domain, app_id):
         url = url._replace(query=urllib.urlencode(q, doseq=True))
         next = urlparse.urlunparse(url)
         return next
+
     if not errors:
         try:
-            app.save_copy(comment=comment)
+            app.save_copy(comment=comment, user_id=str(req.couch_user['_doc']['_id']))
         except Exception as e:
             if settings.DEBUG:
                 raise

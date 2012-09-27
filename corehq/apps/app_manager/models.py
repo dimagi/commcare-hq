@@ -828,6 +828,7 @@ class ApplicationBase(VersionedDoc):
     build_signed = BooleanProperty(default=True)
     built_on = DateTimeProperty(required=False)
     build_comment = StringProperty()
+    comment_from = StringProperty()
 
     # watch out for a past bug:
     # when reverting to a build that happens to be released
@@ -1140,7 +1141,7 @@ class ApplicationBase(VersionedDoc):
         jadjar = jadjar.pack(self.create_all_files())
         return jadjar.jar
 
-    def save_copy(self, comment=None):
+    def save_copy(self, comment=None, user_id=None):
         copy = super(ApplicationBase, self).save_copy()
 
         copy.create_jadjar(save=True)
@@ -1160,6 +1161,7 @@ class ApplicationBase(VersionedDoc):
             copy.short_odk_url = None
 
         copy.build_comment = comment
+        copy.comment_from = user_id
         copy.is_released = False
         copy.save(increment_version=False)
 
@@ -1192,6 +1194,9 @@ class SavedAppBuild(ApplicationBase):
             'build_label': self.built_with.get_label(),
             'jar_path': self.get_jar_path(),
         })
+        if data['comment_from']:
+            data['comment_user'] = get_db().get(data['comment_from'])
+
         return data
 
 class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
