@@ -152,6 +152,7 @@ class SecondaryOutcomeReport(DataSummaryReport, HSPHSiteDataMixin):
 
     def _get_data(self, facilities):
         fields = [
+            'totalBirthRegistrationEvents',
             'totalBirths',
             'totalBirthEvents',
             'followedUp',
@@ -160,9 +161,7 @@ class SecondaryOutcomeReport(DataSummaryReport, HSPHSiteDataMixin):
             'maternalNearMisses',
             'stillBirthEvents',
             'neonatalMortalityEvents',
-            'liveBirthEvents',
             'positiveOutcomeEvents',
-            'negativeOutcomeEvents',
             'combinedMortalityOutcomes'
         ]
 
@@ -186,4 +185,7 @@ class SecondaryOutcomeReport(DataSummaryReport, HSPHSiteDataMixin):
             for field in data:
                 data[field] += result[field]
 
+        data['negativeOutcomeEvents'] = data['totalBirthRegistrationEvents'] - \
+                                        data['positiveOutcomeEvents'] - \
+                                        data['lostToFollowUp']
         return data
