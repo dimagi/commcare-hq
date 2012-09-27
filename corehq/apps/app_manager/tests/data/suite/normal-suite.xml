@@ -1,10 +1,16 @@
-<?xml version="1.0"?>
 <suite version="1">
 <!-- Parse and cache the XForm -->
 <xform>
-    <resource id="b66830565d19ace26921439dc4743d507b60bd" version="1">
+    <resource id="18a9fb5f97a467ace9c523e2f1199169b2134290" version="1">
         <location authority="local">./modules-0/forms-0.xml</location>
         <location authority="remote">./modules-0/forms-0.xml</location>
+    </resource>
+</xform>
+<!-- Parse and cache the XForm -->
+<xform>
+    <resource id="1496209be7dca714fb2306204b7042b16979099f" version="1">
+        <location authority="local">./modules-0/forms-1.xml</location>
+        <location authority="remote">./modules-0/forms-1.xml</location>
     </resource>
 </xform>
 <!-- Read and locally store the translation strings-->
@@ -259,10 +265,23 @@
         </text>
     </command>
 </entry>
+<entry>
+    <form>http://openrosa.org/formdesigner/BC66AA7E-7CB8-4D98-8FAA-68B60E52285D</form>
+    <command id="m0-f1">
+        <text>
+            <locale id="forms.m0f1"/>
+        </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <session>
+        <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='suite_test'][@status='open'][(filter = 'danny')]" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+    </session>
+</entry>
 <menu id="m0">
     <text>
         <locale id="modules.m0"/>
     </text>
     <command id="m0-f0"/>
+    <command id="m0-f1"/>
 </menu>
 </suite>
