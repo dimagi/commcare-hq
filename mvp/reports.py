@@ -118,44 +118,44 @@ class MVISHealthCoordinatorReport(CustomProjectReport):
                 text="%.f%%" % percent
             )
 
-        if self.domain == 'mvp-sauri':
-            self.child_indicators[0]['values'][0]['value'] = dict(
-                text="100%",
-                percent=100,
-                d=14,
-                n=14
-            )
-            self.child_indicators[1]['values'][0]['value'] = dict(
-                text="93%",
-                percent=93,
-                d=14,
-                n=13
-            )
-            self.child_indicators[2]['values'][0]['value'] = dict(
-                text="%.f%%" % ((12.0/13.0)*100),
-                percent=(12.0/13.0)*100,
-                d=13,
-                n=12
-            )
-        elif self.domain == 'mvp-potou':
-            self.child_indicators[0]['values'][0]['value'] = dict(
-                text="100%",
-                percent=100,
-                d=5,
-                n=5
-            )
-            self.child_indicators[1]['values'][0]['value'] = dict(
-                text="%.f%%" % ((4.0/5.0)*100),
-                percent=((4.0/5.0)*100),
-                d=5,
-                n=4
-            )
-            self.child_indicators[2]['values'][0]['value'] = dict(
-                text="%.f%%" % ((2.0/4.0)*100),
-                percent=(2.0/4.0)*100,
-                d=4,
-                n=2
-            )
+#        if self.domain == 'mvp-sauri':
+#            self.child_indicators[0]['values'][0]['value'] = dict(
+#                text="100%",
+#                percent=100,
+#                d=14,
+#                n=14
+#            )
+#            self.child_indicators[1]['values'][0]['value'] = dict(
+#                text="93%",
+#                percent=93,
+#                d=14,
+#                n=13
+#            )
+#            self.child_indicators[2]['values'][0]['value'] = dict(
+#                text="%.f%%" % ((12.0/13.0)*100),
+#                percent=(12.0/13.0)*100,
+#                d=13,
+#                n=12
+#            )
+#        elif self.domain == 'mvp-potou':
+#            self.child_indicators[0]['values'][0]['value'] = dict(
+#                text="100%",
+#                percent=100,
+#                d=5,
+#                n=5
+#            )
+#            self.child_indicators[1]['values'][0]['value'] = dict(
+#                text="%.f%%" % ((4.0/5.0)*100),
+#                percent=((4.0/5.0)*100),
+#                d=5,
+#                n=4
+#            )
+#            self.child_indicators[2]['values'][0]['value'] = dict(
+#                text="%.f%%" % ((2.0/4.0)*100),
+#                percent=(2.0/4.0)*100,
+#                d=4,
+#                n=2
+#            )
 
         all_indicators = self.child_indicators + self.general_indicators
         for indicator in all_indicators:
@@ -208,10 +208,9 @@ class MVISHealthCoordinatorReport(CustomProjectReport):
         """
             Number of unique households who have received a CHW visit in the past N Days
         """
-        key_by = ["visit"]
-        if special:
-            key_by.append(special)
-        couch_key = [self.domain, " ".join(key_by)]
+        key_by = special if special else "visit"
+
+        couch_key = [self.domain, key_by]
         if three_month:
             startdate = startdate-datetime.timedelta(days=90)
             startdate = startdate.replace(day=1)
@@ -339,19 +338,19 @@ class MVISHealthCoordinatorReport(CustomProjectReport):
     def child_indicator_parts(self):
         if self._child_indicator_parts is None:
             parts = dict(
-                D_28=dict(key="under5 uncomplicated_fever",
-                    couch_view='mvp/child_health'),
-                N_28=dict(key="under5 uncomplicated_fever rdt_received",
-                    couch_view='mvp/child_health'),
-                N_29=dict(key="under5 uncomplicated_fever rdt_received rdt_positive",
-                    couch_view='mvp/child_health'),
-                N_20=dict(key="under5 uncomplicated_fever rdt_received rdt_positive antimalarial_received",
-                    couch_view='mvp/child_health'),
-                N_48=dict(key="under5 uncomplicated_fever rdt_not_available",
-                    couch_view='mvp/child_health')
+                D_28=dict(key="under5_fever",
+                    couch_view='mvp/under5_child_health'),
+                N_28=dict(key="under5_fever rdt_test_received",
+                    couch_view='mvp/under5_child_health'),
+                N_29=dict(key="under5_fever rdt_test_received rdt_test_positive",
+                    couch_view='mvp/under5_child_health'),
+                N_20=dict(key="under5_fever rdt_test_received rdt_test_positive anti_malarial",
+                    couch_view='mvp/under5_child_health'),
+                N_48=dict(key="under5_fever rdt_not_available",
+                    couch_view='mvp/under5_child_health')
             )
             for key, val in parts.items():
-                couch_key = [self.domain, "mvp_indicators", val.get('key', "")]
+                couch_key = [self.domain, val.get('key', "")]
                 data = get_db().view(val.get('couch_view', ""),
                     reduce=True,
                     startkey=couch_key+[self._startdate.isoformat()],

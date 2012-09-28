@@ -1,6 +1,8 @@
 from django.core.management.base import LabelCommand, CommandError
-from corehq.apps.indicators.models import IndicatorDefinition, CaseDataInFormIndicatorDefinition
+from corehq.apps.indicators.models import IndicatorDefinition, CaseDataInFormIndicatorDefinition, FormDataAliasIndicatorDefinition
 from mvp.models import MVP, MVPRelatedCaseDataInFormIndicatorDefinition, MVPRelatedCaseDataInCaseIndicatorDefinition
+
+
 
 class Command(LabelCommand):
     help = "Create the indicator definitions necessary to compute MVP Indicators."
@@ -24,9 +26,21 @@ class Command(LabelCommand):
                 version=1
             )
 
+            for indicator_slug, ids_per_domain in MVP.FORM_QUESTION_IDS.items():
+                # Question ID Aliases
+                question_id = ids_per_domain.get(domain)
+                if question_id:
+                    form_question = FormDataAliasIndicatorDefinition.update_or_create_unique(
+                        slug=indicator_slug,
+                        xmlns=MVP.FORMS.get('child_visit'),
+                        question_id=question_id,
+                        **shared_kwargs
+                    )
+                    form_question.save()
+
             child_dob = CaseDataInFormIndicatorDefinition.update_or_create_unique(
                 slug="child_dob",
-                xmlns="http://openrosa.org/formdesigner/B9CEFDCD-8068-425F-BA67-7DC897030A5A",
+                xmlns=MVP.FORMS.get('child_visit'),
                 case_property="dob_calc",
                 **shared_kwargs
             )
@@ -34,7 +48,7 @@ class Command(LabelCommand):
 
             household_child_dob = MVPRelatedCaseDataInFormIndicatorDefinition.update_or_create_unique(
                 slug="household_child_dob",
-                xmlns="http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B",
+                xmlns=MVP.FORMS.get('household_visit'),
                 case_property="dob_calc",
                 related_case_type = "child",
                 **shared_kwargs
@@ -43,7 +57,7 @@ class Command(LabelCommand):
 
             household_child_close_reason = MVPRelatedCaseDataInFormIndicatorDefinition.update_or_create_unique(
                 slug="household_child_close_reason",
-                xmlns="http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B",
+                xmlns=MVP.FORMS.get('household_visit'),
                 case_property="close_reason",
                 related_case_type = "child",
                 **shared_kwargs
@@ -52,7 +66,7 @@ class Command(LabelCommand):
 
             household_pregnancy_visit = MVPRelatedCaseDataInFormIndicatorDefinition.update_or_create_unique(
                 slug="household_pregnancy_visit",
-                xmlns="http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B",
+                xmlns=MVP.FORMS.get('household_visit'),
                 case_property="dob_calc",
                 related_case_type = "pregnancy",
                 **shared_kwargs

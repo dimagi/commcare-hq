@@ -10,6 +10,25 @@ from couchforms.models import XFormInstance
 class MVP(object):
     NAMESPACE = "mvp_indicators"
     DOMAINS = ["mvp-sauri", "mvp-potou"]
+    FORM_QUESTION_IDS = dict(
+        immediate_danger_sign={
+            'mvp-sauri': 'patient_available.immediate_danger_sign',
+            'mvp-potou': 'patient_available.immediate_danger_sign'
+        },
+        rdt_result={
+            'mvp-sauri': 'patient_available.referral_follow_on.rdt_result',
+            'mvp-potou': 'patient_available.referral_follow_on.rdt_result'
+        },
+        fever_medication={
+            'mvp-sauri': 'patient_available.fever_medication',
+            'mvp-potou': 'patient_available.medication_type'
+        }
+    )
+    FORMS = dict(
+        pregnancy_visit='http://openrosa.org/formdesigner/185A7E63-0ECD-4D9A-8357-6FD770B6F065',
+        child_visit='http://openrosa.org/formdesigner/B9CEFDCD-8068-425F-BA67-7DC897030A5A',
+        household_visit='http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B'
+    )
 
 CLASS_PATH = "mvp.models"
 
