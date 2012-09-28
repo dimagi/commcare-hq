@@ -379,7 +379,7 @@ class FormattedRow(object):
         ret = []
         for name, rows in tables:
             rows = list(rows)
-            if rows and not hasattr(rows[0], '__iter__') or isinstance(rows[0], basestring):
+            if rows and (not hasattr(rows[0], '__iter__') or isinstance(rows[0], basestring)):
                 # `rows` is actually just a single row, so wrap it
                 rows = [rows]
             ret.append(
