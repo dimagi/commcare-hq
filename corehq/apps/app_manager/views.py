@@ -1459,7 +1459,7 @@ def save_copy(req, domain, app_id):
 
     if not errors:
         try:
-            app.save_copy(comment=comment, user_id=str(req.couch_user['_doc']['_id']))
+            app.save_copy(comment=comment, user_id=req.couch_user.get_id)
         except Exception as e:
             if settings.DEBUG:
                 raise

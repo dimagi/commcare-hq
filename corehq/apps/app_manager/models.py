@@ -1195,7 +1195,8 @@ class SavedAppBuild(ApplicationBase):
             'jar_path': self.get_jar_path(),
         })
         if data['comment_from']:
-            data['comment_user'] = get_db().get(data['comment_from'])
+            comment_user = get_db().get(data['comment_from'])
+            data['comment_user_name'] = (comment_user['first_name'] + " " + comment_user['last_name']).rstrip()
 
         return data
 

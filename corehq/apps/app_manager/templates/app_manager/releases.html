@@ -290,7 +290,7 @@
             {% endif %}
             <td>
                 {% if saved_app.build_comment %}
-                    {% if saved_app.comment_user %}<b>{{ saved_app.comment_user.first_name }} {{ saved_app.comment_user.last_name }}:</b>{% endif %}
+                    {% if saved_app.comment_user_name %}<b>{{ saved_app.comment_user_name }}:</b>{% endif %}
                     {{ saved_app.build_comment }}
                 {% else %}<h6>(No Comment)</h6>
                 {% endif %}
