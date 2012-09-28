@@ -679,7 +679,6 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
                 break
         return ret
 
-
 class VersioningError(Exception):
     """For errors that violate the principals of versioning in VersionedDoc"""
     pass
