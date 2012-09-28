@@ -179,13 +179,9 @@ class Domain(Document, HQBillingDomainMixin):
         couch_user = CouchUser.from_django_user(user)
         if couch_user:
             domain_names = couch_user.get_domains()
-            def log(json):
-                doc = json['doc']
-                return Domain.wrap(doc)
             return Domain.view("domain/by_status",
                                     keys=[[is_active, d] for d in domain_names],
                                     reduce=False,
-                                    wrapper=log,
                                     include_docs=True).all()
         else:
             return []

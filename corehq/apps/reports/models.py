@@ -1,8 +1,11 @@
 from datetime import datetime, timedelta
+from django.utils import html
+from django.utils.safestring import mark_safe
 import pytz
 from corehq.apps import reports
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
+from corehq.apps.users.models import CommCareUser
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
 from couchexport.util import SerializableFunction
 import couchforms
@@ -57,29 +60,30 @@ class HQUserToggle(HQToggle):
         super(HQUserToggle, self).__init__(type, show, name)
 
 
-class TempCommCareUser(object):
-    filter_flag = HQUserType.UNKNOWN
+class TempCommCareUser(CommCareUser):
+    filter_flag = IntegerProperty()
 
     def __init__(self, domain, username, uuid):
-        self.domain = domain
-        self.username = username
-        self._id = uuid
-        self.date_joined = datetime.utcnow()
-        self.is_active = False
-        self.user_data = {}
-
         if username == HQUserType.human_readable[HQUserType.DEMO_USER]:
-            self.filter_flag = HQUserType.DEMO_USER
+            filter_flag = HQUserType.DEMO_USER
         elif username == HQUserType.human_readable[HQUserType.ADMIN]:
-            self.filter_flag = HQUserType.ADMIN
+            filter_flag = HQUserType.ADMIN
+        else:
+            filter_flag = HQUserType.UNKNOWN
+        super(TempCommCareUser, self).__init__(
+            domain=domain,
+            username=username,
+            _id=uuid,
+            date_joined=datetime.utcnow(),
+            is_active=False,
+            user_data={},
+            first_name='',
+            last_name='',
+            filter_flag=filter_flag
+        )
 
-    @property
-    def get_id(self):
-        return self._id
-    
-    @property
-    def user_id(self):
-        return self._id
+    def save(self, **params):
+        raise NotImplementedError
 
     @property
     def userID(self):
@@ -88,20 +92,20 @@ class TempCommCareUser(object):
     @property
     def username_in_report(self):
         if self.filter_flag == HQUserType.UNKNOWN:
-            final = '%s <strong>[unregistered]</strong>' % self.username
+            final = mark_safe('%s <strong>[unregistered]</strong>' % html.escape(self.username))
         elif self.filter_flag == HQUserType.DEMO_USER:
-            final = '<strong>%s</strong>' % self.username
+            final = mark_safe('<strong>%s</strong>' % html.escape(self.username))
         else:
-            final = '<strong>%s</strong> (%s)' % (self.username, self.user_id)
+            final = mark_safe('<strong>%s</strong> (%s)' % tuple(map(html.escape, [self.username, self.user_id])))
         return final
 
     @property
     def raw_username(self):
         return self.username
 
-    @property
-    def full_name(self):
-        return ""
+    class Meta:
+        app_label = 'reports'
+
 
 class ReportNotification(Document, UnicodeMixIn):
     domain = StringProperty()

@@ -13,6 +13,7 @@ class Command(BaseCommand):
                   "old/core",
                   "old/app_manager"]
     js_bootstrap = ["bootstrap-transition",
+                    "bootstrap-affix",
                     "bootstrap-alert",
                     "bootstrap-button",
                     "bootstrap-carousel",

@@ -128,6 +128,13 @@ def back_to_main(req, domain, app_id=None, module_id=None, form_id=None, unique_
         "?%s" % urlencode(params) if params else ""
         ))
 
+def bail(req, domain, app_id, not_found=""):
+    if not_found:
+        messages.error(req, 'Oops! We could not find that %s. Please try again' % not_found)
+    else:
+        messages.error(req, 'Oops! We could not complete your request. Please try again')
+    return back_to_main(req, domain, app_id)
+
 def _get_xform_source(request, app, form, filename="form.xml"):
     download = json.loads(request.GET.get('download', 'false'))
     lang = request.COOKIES.get('lang', app.langs[0])
@@ -269,7 +276,7 @@ def default(req, domain):
     """
     return view_app(req, domain)
 
-def get_form_view_context(request, form, langs, is_user_registration):
+def get_form_view_context(request, form, langs, is_user_registration, messages=messages):
     xform_questions = []
     xform = None
     try:
@@ -459,15 +466,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     This is the main view for the app. All other views redirect to here.
 
     """
-
-    def bail():
-        module_id=None
-        form_id=None
-        messages.error(req, 'Oops! We could not complete your request. Please try again')
-        return back_to_main(req, domain, app_id)
-
     if form_id and not module_id:
-        return bail()
+        return bail(req, domain, app_id)
 
     app = module = form = None
     try:
@@ -480,7 +480,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         if form_id:
             form = module.get_form(form_id)
     except IndexError:
-        return bail()
+        return bail(req, domain, app_id)
 
     base_context = get_apps_base_context(req, domain, app)
     edit = base_context['edit']
@@ -628,8 +628,14 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None, is_user_reg
     if is_user_registration:
         form = app.get_user_registration()
     else:
-        module = app.get_module(module_id)
-        form = module.get_form(form_id)
+        try:
+            module = app.get_module(module_id)
+        except IndexError:
+            return bail(req, domain, app_id, not_found="module")
+        try:
+            form = module.get_form(form_id)
+        except IndexError:
+            return bail(req, domain, app_id, not_found="form")
 
 
 
@@ -1768,43 +1774,24 @@ def formdefs(request, domain, app_id):
         return json_response(formdefs)
 
 def _questions_for_form(request, form, langs):
-    # copied from get_form_view_context
-    xform_questions = []
-    xform = None
-    xform = form.wrapped_xform()
-    try:
-        xform = form.wrapped_xform()
-    except XFormError as e:
-        messages.error(request, "Error in form: %s" % e)
-    except Exception as e:
-        logging.exception(e)
-        messages.error(request, "Unexpected error in form: %s" % e)
+    class FakeMessages(object):
+        def __init__(self):
+            self.messages = defaultdict(list)
 
-    if xform and xform.exists():
-        form.validate_form()
-        xform_questions = xform.get_questions(langs)
-        try:
-            form.validate_form()
-            xform_questions = xform.get_questions(langs)
-        except XMLSyntaxError as e:
-            messages.error(request, "Syntax Error: %s" % e)
-        except AppError as e:
-            messages.error(request, "Error in application: %s" % e)
-        except XFormValidationError as e:
-            message = unicode(e)
-            # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
-            messages.error(request, "Validation Error:\n")
-            for msg in message.split("\n")[2:]:
-                messages.error(request, "%s" % msg)
-        except XFormError as e:
-            messages.error(request, "Error in form: %s" % e)
-        # any other kind of error should fail hard, but for now there are too many for that to be practical
-        except Exception as e:
-            if settings.DEBUG:
-                raise
-            logging.exception(e)
-            messages.error(request, "Unexpected System Error: %s" % e)
-    return xform_questions
+        def add_message(self, type, message):
+            self.messages[type].append(message)
+
+        def error(self, request, message):
+            self.add_message('error', message)
+
+        def warning(self, request, message):
+            self.add_message('warning', message)
+
+    m = FakeMessages()
+
+    context = get_form_view_context(request, form, langs, None, messages=m)
+    xform_questions = context['xform_questions']
+    return xform_questions, m.messages
 
 def _find_name(names, langs):
     name = None
@@ -1828,8 +1815,10 @@ def summary(request, domain, app_id):
     for module in app.get_modules():
         forms = []
         for form in module.get_forms():
+            questions, messages = _questions_for_form(request, form, langs)
             forms.append({'name': _find_name(form.name, langs),
-                          'questions': _questions_for_form(request, form, langs)})
+                          'questions': questions,
+                          'messages': dict(messages)})
 
         modules.append({'name': _find_name(module.name, langs), 'forms': forms})
 

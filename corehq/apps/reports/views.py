@@ -579,8 +579,7 @@ def emailtest(request, domain, report_slug):
     # circular import
     from corehq.apps.reports.schedule.config import ScheduledReportFactory
     report = ScheduledReportFactory.get_report(report_slug)
-    report.get_response(request.user, domain)
-    return HttpResponse(report.get_response(request.user, domain))
+    return HttpResponse(report.get_response(request.couch_user, domain))
 
 
 @login_and_domain_required
