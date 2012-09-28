@@ -20,6 +20,7 @@ from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildCon
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
 from corehq.apps.translations.models import TranslationMixin
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
 import current_builds
@@ -1195,8 +1196,8 @@ class SavedAppBuild(ApplicationBase):
             'jar_path': self.get_jar_path(),
         })
         if data['comment_from']:
-            comment_user = get_db().get(data['comment_from'])
-            data['comment_user_name'] = (comment_user['first_name'] + " " + comment_user['last_name']).rstrip()
+            comment_user = CouchUser.get(data['comment_from'])
+            data['comment_user_name'] = comment_user.full_name
 
         return data
 
