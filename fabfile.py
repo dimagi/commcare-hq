@@ -174,6 +174,8 @@ def install_packages():
 
 
 @task
+@roles('django_app','django_celery','staticfiles')
+@parallel
 def upgrade_packages():
     """
     Bring all the installed packages up to date.
@@ -183,8 +185,8 @@ def upgrade_packages():
     """
     require('environment', provided_by=('staging', 'production'))
     if what_os() == 'ubuntu':
-        sudo("apt-get update -y")
-        sudo("apt-get upgrade -y")
+        sudo("apt-get update", shell=False)
+        sudo("apt-get upgrade -y", shell=False)
     else:
         return #disabled for RedHat (see docstring)
 
