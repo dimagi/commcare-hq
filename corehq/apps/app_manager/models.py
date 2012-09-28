@@ -671,6 +671,13 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
             "case": ["case_short", "case_long"],
             "none": []
         }[self.requires()]
+    def requires_case_details(self):
+        ret = False
+        for form in self.get_forms():
+            if form.requires_case():
+                ret = True
+                break
+        return ret
 
 class VersioningError(Exception):
     """For errors that violate the principals of versioning in VersionedDoc"""
