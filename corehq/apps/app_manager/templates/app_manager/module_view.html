@@ -5,7 +5,7 @@
     <script src="{% static 'hqwebapp/javascripts/underscore-1.3.1.js' %}"></script>
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'app_manager/js/lcs-merge.js' %}"></script>
-    <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
+    {% if module.requires_case_details %}<script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>{% endif %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -42,6 +42,7 @@
 </script>
 {% endblock %}
 {% block head %}{{ block.super }}
+    {% if module.requires_case_details %}
     <link rel="stylesheet" href="{% static 'app_manager/css/detail-screen-config.css' %}"/>
     <script>
         $(function () {
@@ -65,6 +66,7 @@
             });
         });
     </script>
+    {% endif %}
 
 {% endblock %}
 
@@ -215,5 +217,5 @@
     {% endcomment %}
 
 
-    <div id="detail-screen-config"></div>
+    {% if module.requires_case_details %}<div id="detail-screen-config"></div>{% endif %}
 {% endblock %}
