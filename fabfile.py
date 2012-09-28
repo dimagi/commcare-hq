@@ -77,7 +77,7 @@ def _set_apache_user():
 def setup_apache_dirs():
     sudo('mkdir -p %(services)s/apache' % env, user=env.sudo_user)
 
-@roles('django_celery', 'django_app')
+@roles('django_celery', 'django_app', 'staticfiles') #'django_public','formsplayer','staticfiles'
 def setup_dirs():
     """ create (if necessary) and make writable uploaded media, log, etc. directories """
     sudo('mkdir -p %(log_dir)s' % env, user=env.sudo_user)
@@ -144,9 +144,13 @@ def production():
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
     env.db = '%s_%s' % (env.project, env.environment)
+    env.roles = ['django_app', ]
 
     env.jython_home = '/usr/local/lib/jython'
     _setup_path()
+    if not console.confirm('Are you sure you want to deploy production?', default=False) or \
+       not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
+        utils.abort('Deployment aborted.')
 
 
 
@@ -205,8 +209,8 @@ def what_os():
             env.host_os_map[env.host_string] = remote_os
         return env.host_os_map[env.host_string]
 
-@parallel
-@roles('pg','django_celery','django_app')
+#@parallel
+@roles('pg','django_celery','django_app','staticfiles')
 @task
 def setup_server():
     """Set up a server for the first time in preparation for deployments."""
@@ -245,12 +249,13 @@ def bootstrap():
     execute(create_virtualenv)
     execute(update_env)
     execute(setup_dirs)
+    execute(generate_supervisorconf_file)
     update_services()
     execute(fix_locale_perms)
 
 
-@parallel
-@roles('django_celery', 'django_app', 'staticfiles')
+#@parallel
+@roles('django_celery', 'django_app', 'staticfiles') #'django_public','formsplayer'
 def create_virtualenv():
     """ setup virtualenv on remote host """
     require('virtualenv_root', provided_by=('staging', 'production'))
@@ -260,8 +265,8 @@ def create_virtualenv():
     sudo('virtualenv %s %s' % (args, env.virtualenv_root), user=env.sudo_user)
 
 
-@parallel
-@roles('django_celery', 'django_app', 'staticfiles')
+#@parallel
+@roles('django_celery', 'django_app', 'staticfiles') #'django_public', 'formsplayer'
 def clone_repo():
     """ clone a new copy of the git repository """
     with settings(warn_only=True):
@@ -273,15 +278,15 @@ def clone_repo():
 
 
 @task
-@hosts('hqdb.internal.commcarehq.org')
+@roles('pg')
 def preindex_views():
     with cd(env.code_root):
         update_code()
         update_env()
         sudo('echo "%(virtualenv_root)s/bin/python %(code_root)s/manage.py sync_prepare_couchdb_multi 8 %(user)s" | at -t `date -d "5 seconds" +%%m%%d%%H%%M.%%S`' % env, user=env.sudo_user)
 
+#@roles('django_app','django_celery', 'staticfiles') #'django_public','formsplayer'
 @parallel
-@roles('django_celery','django_app', 'staticfiles')
 def update_code():
     with cd(env.code_root):
         sudo('git pull', user=env.sudo_user)
@@ -289,35 +294,38 @@ def update_code():
         sudo('git submodule sync', user=env.sudo_user)
         sudo('git submodule update --init --recursive', user=env.sudo_user)
 
+
+
 @task
-@hosts('hqdb.internal.commcarehq.org')
-#@roles('django_celery','django_app', 'staticfiles')
-#this run just once, fan out from subtasks.
+@roles('django_app', 'django_celery', 'staticfiles') #'django_public','formsplayer'
+@parallel
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
+    print "#### enter deploy"
     require('root', provided_by=('staging', 'production'))
     run('echo ping!') #hack/workaround for delayed console response
-    if env.environment == 'production':
-        if not console.confirm('Are you sure you want to deploy production?', default=False) or \
-           not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
-            utils.abort('Deployment aborted.')
+
     with settings(warn_only=True):
         execute(services_stop)
     try:
-        execute(update_code)
-        execute(update_env)
-        execute(_do_update_services)
-        migrate()
+        print "deploying!"
+        update_code()
+        update_env()
+        _do_update_services()
+        execute(migrate)
         execute(_do_collectstatic)
     finally:
         # hopefully bring the server back to life if anything goes wrong
         execute(services_stop)
         execute(services_start)
+    print "finished deploying!"
+
 
 
 
 @task
-@roles('django_celery', 'django_app','staticfiles')
+#@roles('django_app','django_celery','staticfiles') #'formsplayer','django_public'
+@parallel
 def update_env():
     """ update external dependencies on remote host assumes you've done a code update"""
     require('code_root', provided_by=('staging', 'production'))
@@ -414,17 +422,12 @@ def _services_start_formsplayer():
     _supervisor_command('start  %(project)s-%(environment)s-formsplayer' % env)
 
 
-@parallel
 def services_start():
     ''' Start the gunicorn servers '''
     require('environment', provided_by=('staging', 'demo', 'production'))
-    execute(_supervisor_command, 'update')
-    execute(_supervisor_command, 'reload')
-    execute(_services_start_django)
-    execute(_services_start_django_public)
-    execute(_services_start_celery)
-    execute(_services_start_formsplayer)
-    #_supervisor_command('start  %(project)s-%(environment)s*' % env)
+    _supervisor_command('update')
+    _supervisor_command('reload')
+    _supervisor_command('start  all')
 ######################################################
 
 ########################################################
@@ -448,15 +451,14 @@ def _services_stop_celery():
 def _services_stop_formsplayer():
     _supervisor_command('stop  %(project)s-%(environment)s-formsplayer' % env)
 
-@parallel
+@roles('django_app', 'django_celery',) # 'django_public', 'formsplayer'
 def services_stop():
     ''' Stop the gunicorn servers '''
     require('environment', provided_by=('staging', 'demo', 'production'))
-    execute(_services_stop_celery)
-    execute(_services_stop_django)
-    execute(_services_stop_formsplayer)
+    _supervisor_command('stop all')
 ###########################################################
 
+@roles('django_celery',)
 def migrate():
     """ run south migration on remote environment """
     require('code_root', provided_by=('production', 'demo', 'staging'))
@@ -474,10 +476,10 @@ def _do_collectstatic():
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py make_bootstrap' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env, user=env.sudo_user)
-        sudo('rm -f tmp.sh resource_versions.py; python manage.py printstatic > tmp.sh; bash tmp.sh > resource_versions.py', user=env.sudo_user)
+        sudo('rm -f tmp.sh resource_versions.py; %(virtualenv_root)s/bin/python manage.py printstatic > tmp.sh; bash tmp.sh > resource_versions.py' % env, user=env.sudo_user)
 
-@roles('staticfiles',)
 @task
+@roles('staticfiles',)
 def collectstatic():
     """ run collectstatic on remote environment """
     require('code_root', provided_by=('production', 'demo', 'staging'))
@@ -525,15 +527,15 @@ def commit_locale_changes():
 def _upload_supervisor_conf_file(filename):
     upload_dict = {}
     upload_dict["template"] = posixpath.join(os.path.dirname(__file__), 'services', 'templates', filename)
-    upload_dict["destination"] = '/var/tmp/%s.blah' % filename
+    upload_dict["destination"] = '/tmp/%s.blah' % filename
     upload_dict["enabled"] =  posixpath.join(env.services, u'supervisor/%s' % filename)
     upload_dict["main_supervisor_conf_dir"] = '/etc'
 
-    files.upload_template(upload_dict["template"], upload_dict["destination"], context=env, use_sudo=True)
-    sudo('chown -R %s %s' % (env.sudo_user, upload_dict["destination"]))
+    files.upload_template(upload_dict["template"], upload_dict["destination"], context=env, use_sudo=False)
+    sudo('chown -R %s %s' % (env.sudo_user, upload_dict["destination"]), shell=False)
     #sudo('chgrp -R %s %s' % (env.apache_user, upload_dict["destination"]))
-    sudo('chmod -R g+w %(destination)s' % upload_dict)
-    sudo('mv -f %(destination)s %(enabled)s' % upload_dict)
+    sudo('chmod -R g+w %(destination)s' % upload_dict, shell=False)
+    sudo('mv -f %(destination)s %(enabled)s' % upload_dict, shell=False)
 
 @roles('django_celery')
 def upload_celery_supervisorconf():
@@ -555,7 +557,6 @@ def upload_django_public_supervisorconf():
     _upload_supervisor_conf_file('supervisor_django_public.conf')
     _upload_supervisor_conf_file('supervisor_sync_domains.conf')
 
-
 @roles('formsplayer')
 def upload_formsplayer_supervisorconf():
     _upload_supervisor_conf_file('supervisor_formsplayer.conf')
@@ -563,18 +564,19 @@ def upload_formsplayer_supervisorconf():
 def upload_and_set_supervisor_config():
     """Upload and link Supervisor configuration from the template."""
     require('environment', provided_by=('staging', 'demo', 'production'))
-    _set_apache_user()
     execute(upload_celery_supervisorconf)
     execute(upload_sofabed_supervisorconf)
     execute(upload_djangoapp_supervisorconf)
     execute(upload_django_public_supervisorconf)
     execute(upload_formsplayer_supervisorconf)
+    _supervisor_command('reload')
 
+def generate_supervisorconf_file():
     #regenerate a brand new supervisor conf file from scratch.
     #Set the line in the supervisord config file that points to our project's supervisor directory with conf files
     replace_dict = {}
     replace_dict["main_supervisor_conf_dir"] = '/etc'
-    replace_dict["tmp"] = posixpath.join('/','var','tmp', "supervisord_%s.tmp" % uuid.uuid4().hex)
+    replace_dict["tmp"] = posixpath.join('/','tmp', "supervisord_%s.tmp" % uuid.uuid4().hex)
 
     #create brand new one
     sudo("echo_supervisord_conf > %(tmp)s" % replace_dict)
@@ -582,38 +584,7 @@ def upload_and_set_supervisor_config():
     files.sed(replace_dict["tmp"], ";files = relative/directory/\*\.ini", "files = %s/supervisor/*.conf" % env.services, use_sudo=True)
     #sudo('mv -f %(tmp)s %(main_supervisor_conf_dir)s/supervisord.conf' % replace_dict)
     sudo('cp -f %(tmp)s %(main_supervisor_conf_dir)s/supervisord.conf' % replace_dict)
-    _supervisor_command('update')
 
-@roles('lb')
-def upload_apache_conf():
-    """Upload and link Supervisor configuration from the template."""
-    require('environment', provided_by=('staging', 'demo', 'production'))
-    _set_apache_user()
-    template = posixpath.join(os.path.dirname(__file__), 'services', 'templates', 'apache.conf')
-    destination = '/var/tmp/apache.conf.temp'
-    files.upload_template(template, destination, context=env, use_sudo=True)
-    enabled =  posixpath.join(env.services, u'apache/%(environment)s.conf' % env)
-    sudo('chown -R %s %s' % (env.sudo_user, destination))
-    sudo('chgrp -R %s %s' % (env.apache_user, destination))
-    sudo('chmod -R g+w %s' % destination)
-    sudo('mv -f %s %s' % (destination, enabled))
-    if what_os() == 'ubuntu':
-        sudo('a2enmod proxy')  #loaded by default in redhat
-        sudo('a2enmod proxy_http') #loaded by default in redhat
-
-    sites_enabled_dirfile = ''
-    if what_os() == 'ubuntu':
-        sites_enabled_dirfile = '/etc/apache2/sites-enabled/%(project)s.conf' % env
-    elif what_os() == 'redhat':
-        sites_enabled_dirfile = '/etc/httpd/conf.d/%(project)s.conf' % env
-    with settings(warn_only=True):
-        if files.exists(sites_enabled_dirfile):
-            sudo('rm %s' % sites_enabled_dirfile)
-
-    sudo('ln -s %s/apache/%s.conf %s' % (env.services, env.environment, sites_enabled_dirfile))
-    apache_reload()
-
-@roles('django_celery', 'django_app', 'django_public')
 def _supervisor_command(command):
     require('hosts', provided_by=('staging', 'production'))
     if what_os() == 'redhat':
