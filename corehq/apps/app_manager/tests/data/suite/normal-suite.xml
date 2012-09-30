@@ -13,6 +13,12 @@
         <location authority="remote">./modules-0/forms-1.xml</location>
     </resource>
 </xform>
+<xform>
+    <resource id="b8a611e9ddbaba25131574b235d66eeb02ba3f41" version="1">
+        <location authority="local">./user_registration.xml</location>
+        <location authority="remote">./user_registration.xml</location>
+    </resource>
+</xform>
 <!-- Read and locally store the translation strings-->
 <locale language="default">
     <resource id="app_default_strings" version="1">
