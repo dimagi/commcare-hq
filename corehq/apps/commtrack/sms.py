@@ -38,11 +38,6 @@ def parse_stock_report(text, location=None):
     CS = report_syntax_config['single_action']
     CM = report_syntax_config.get('multiple_action')
 
-    frags = text.split()
-    transactions = []
-
-    def mk_transaction(product, action, value):
-        return locals()
     def keyword_action_map(*args):
         """mapping of sms keywords back to the corresponding action"""
         master_map = dict(CS['keywords'])
@@ -50,71 +45,83 @@ def parse_stock_report(text, location=None):
             master_map.update(map)
         return dict((v, k) for k, v in master_map.iteritems())
 
-    if frags[0] in CS['keywords'].values():
+    args = text.split()
+
+    if args[0] in CS['keywords'].values():
         # single action sms
-        action = keyword_action_map()[frags[0]]
-        frags = frags[1:]
+        action = keyword_action_map()[args[0]]
+        args = args[1:]
 
         if not location:
-            location = location_from_code(frags[0])
-            frags = frags[1:]
+            location = location_from_code(args[0])
+            args = args[1:]
         
-        def looks_like_prod_code(code):
-            try:
-                int(code)
-                return False
-            except:
-                return True
+        _tx = single_action_transactions(action, args)
 
-        # special case to handle immediate stock-out reports
-        special_case = False
-        if action == 'stockout' and all(looks_like_prod_code(f) for f in frags):
-            transactions.extend(mk_transaction(product_from_code(prod_code), action, 0) for prod_code in frags)
-            special_case = True
-
-        # normal parsing
-        if not special_case:
-            grouping_allowed = (action == 'stockout')
-
-            products = []
-            for f in frags:
-                if looks_like_prod_code(f):
-                    products.append(product_from_code(f))
-                else:
-                    value = int(f)
-                    if not products:
-                        raise RuntimeError('no product specified')
-                    if len(products) > 1 and not grouping_allowed:
-                        raise RuntimeError('missing a value')
-                    for p in products:
-                        transactions.append(mk_transaction(p, action, value))
-                    products = []
-            if products:
-                raise RuntimeError('missing a value')
-
-    elif CM and frags[0] == (CM['keyword'] or frags[0]):
+    elif CM and args[0] == (CM['keyword'] or args[0]):
         # multiple action sms
         if CM['keyword']:
-            frags = frags[1:]
-        action_map = keyword_action_map(CM.get('action_keywords', {}))
+            args = args[1:]
 
         if not location:
-            location = location_from_code(frags[0])
-            frags = frags[1:]
+            location = location_from_code(args[0])
+            args = args[1:]
 
-        for i in range(0, len(frags), 2):
-            prod_code, keyword = frags[i].split(CM['delimeter'])
-            value = int(frags[i + 1])
-
-            product = product_from_code(prod_code)
-            action = action_map[keyword]
-
-            transactions.append(mk_transaction(product, action, value))
+        action_map = keyword_action_map(CM.get('action_keywords', {}))
+        _tx = multiple_action_transactions(CM, action_map, args)
 
     return {
         'location': location,
-        'transactions': transactions,
+        'transactions': list(_tx),
     }
+
+
+def single_action_transactions(action, args):
+    # special case to handle immediate stock-out reports
+    if action == 'stockout' and all(looks_like_prod_code(arg) for arg in args):
+        for prod_code in args:
+            yield mk_tx(product_from_code(prod_code), action, 0)
+        return
+
+    grouping_allowed = (action == 'stockout')
+
+    products = []
+    for arg in args:
+        if looks_like_prod_code(arg):
+            products.append(product_from_code(arg))
+        else:
+            if not products:
+                raise RuntimeError('no product specified')
+            if len(products) > 1 and not grouping_allowed:
+                raise RuntimeError('missing a value')
+
+            value = int(arg)
+            for p in products:
+                yield mk_tx(p, action, value)
+            products = []
+    if products:
+        raise RuntimeError('missing a value')
+
+def multiple_action_transactions(C, action_map, args):
+    for i in range(0, len(args), 2):
+        prod_code, keyword = args[i].split(C['delimeter'])
+        value = int(args[i + 1])
+
+        product = product_from_code(prod_code)
+        action = action_map[keyword]
+
+        yield mk_tx(product, action, value)
+
+def mk_tx(product, action, value):
+    return locals()
+
+def looks_like_prod_code(code):
+    try:
+        int(code)
+        return False
+    except:
+        return True
+
 
 def location_from_code(loc_code):
     # TODO fetch a real object
