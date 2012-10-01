@@ -276,9 +276,6 @@ class SuiteGenerator(object):
                             id=self.id_strings.detail(module, detail),
                             title=Text(locale_id=self.id_strings.detail_title_locale(module, detail))
                         )
-                        if module.task_mode:
-                            # todo: i don't think this actually works
-                            d.variables.node.append(DetailVariable(name='parent_id', id='index/parent').node)
                         for column in detail_columns:
                             fields = get_column_generator(self.app, module, detail, column).fields
                             d.fields.extend(fields)

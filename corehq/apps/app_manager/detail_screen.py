@@ -62,11 +62,7 @@ class FormattedDetailColumn(object):
 
     @property
     def xpath(self):
-        property = self.column.xpath
-        if self.module.task_mode:
-            return xform.CaseIDXPath('$parent_id').case().property(property)
-        else:
-            return property
+        return self.column.xpath
 
     XPATH_FUNCTION = u"{xpath}"
 
