@@ -15,7 +15,7 @@ logging = get_task_logger()
 
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
 
-EXPORT_METHOD = getattr(settings, 'COUCHEXPORT_METHOD', 'cached')
+EXPORT_METHOD = getattr(settings, 'COUCHEXPORT_METHOD', 'tmpfile')
 
 _EXPORT_METHOD_OPTIONS = ('cached', 'tmpfile')
 if EXPORT_METHOD not in _EXPORT_METHOD_OPTIONS:
