@@ -38,6 +38,7 @@ The following are necessary for the basic function of CommCare HQ.
 + `memcached`
 + **postgres** - [Download postgres here](http://www.enterprisedb.com/products-services-training/pgdownload)
 + **couchdb** - Version 1.0 or greater required - [View installation instructions here](http://wiki.apache.org/couchdb/Installation)
++ **couchdb-lucene** - Instructrions [here](https://github.com/rnewson/couchdb-lucene). Follow instructions "For CouchDB versions prior to 1.1" when applicable, even if you're on a later version of couchdb.
 
 Note on couchdb installation: Using aptitude or apt-get may not install the latest version. See other installation options if version < 1.0 is installed by using this method.
 
