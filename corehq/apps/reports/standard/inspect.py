@@ -213,6 +213,16 @@ class CaseDisplay(object):
     def user_id(self):
         return self.report.individual or self.owner_id
 
+    @property
+    def creating_user(self):
+        owner_id = ""
+        for action in self.case.actions:
+            if action['action_type'] == 'create':
+                owner_id = action['updated_known_properties']['owner_id']
+        if not owner_id:
+            return "No data"
+        return self.report.usernames.get(owner_id, "Unknown [%s]" % owner_id)
+
 class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReportParametersMixin):
 
     fields = [
@@ -314,6 +324,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
             DataTablesColumn("Name"),
             DataTablesColumn("Owner"),
             DataTablesColumn("Created Date"),
+            DataTablesColumn("Created By"),
             DataTablesColumn("Modified Date"),
             DataTablesColumn("Status")
         )
@@ -355,6 +366,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
                 display.case_link,
                 display.owner_display,
                 display.opened_on,
+                display.creating_user,
                 display.modified_on,
                 display.closed_display
             ]
