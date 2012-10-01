@@ -1,3 +1,4 @@
+from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField, StringListField
 
 class IdNode(XmlObject):
@@ -92,6 +93,10 @@ class Instance(IdNode):
     ROOT_NAME = 'instance'
 
     src = StringField('@src')
+
+    def __init__(self, id=None, src=None, **kwargs):
+        super(Instance, self).__init__(id=id, **kwargs)
+        self.src = src
 
 class SessionDatum(IdNode):
     ROOT_NAME = 'datum'
@@ -373,7 +378,18 @@ class SuiteGenerator(object):
 
     @property
     def fixtures(self):
-        return []
+        if self.app.case_sharing:
+            f = Fixture(id='user-groups')
+            f.user_id = 'demo_user'
+            groups = etree.fromstring("""
+                <groups>
+                    <group id="demo_user_group_id">
+                        <name>Demo Group</name>
+                    </group>
+                </groups>
+            """)
+            f.set_content(groups)
+            yield f
 
     def __call__(self, *args, **kwargs):
         suite = Suite()
