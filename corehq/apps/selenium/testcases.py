@@ -1,5 +1,7 @@
 from dimagi.utils.django.test import SeleniumTestCase
 from django.conf import settings
+import random
+import string
 
 
 class HQSeleniumTestCase(SeleniumTestCase):
@@ -21,7 +23,7 @@ class HQSeleniumTestCase(SeleniumTestCase):
 
         super(HQSeleniumTestCase, cls).setUpClass()
 
-        cls.get('/')
+        cls.driver.get('/')
         cls.driver.find_element_by_link_text("Sign In").click()
 
         user = cls.driver.find_element_by_name('username')
@@ -32,6 +34,11 @@ class HQSeleniumTestCase(SeleniumTestCase):
 
         # todo: figure out what common denominator about the post-login HQ html
         # to assert here
+
+    @classmethod
+    def random_string(cls, length=16):
+        return ''.join([random.choice(string.ascii_uppercase + string.digits)
+                        for i in range(length)])
 
 
 class AdminUserTestCase(HQSeleniumTestCase):
@@ -51,4 +58,3 @@ class MobileWorkerTestCase(HQSeleniumTestCase):
     username = settings.TEST_MOBILE_WORKER_USERNAME
     password = settings.TEST_MOBILE_WORKER_PASSWORD
     base_url = settings.TEST_BASE_URL
-

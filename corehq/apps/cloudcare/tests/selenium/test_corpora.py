@@ -1,40 +1,20 @@
+"""
+Tests for applications in the 'corpora' domain.
+
+"""
+
 from testcases import CloudCareTestCase
-from selenium.common.exceptions import NoSuchElementException
-import random
-import string
 
 
-def random_string(length=16):
-    return ''.join([random.choice(string.ascii_uppercase + string.digits)
-                    for i in range(length)])
-
-
-class BasicTestAppTestCase(CloudCareTestCase):
-    """
-    Tests for the 'Basic Test' application on the corpora domain.
-    
-    """
+class BasicTestTestCase(CloudCareTestCase):
     app_name = 'Basic Test'
-    
+    module_name = 'Basic Test'
     case_list_forms = ['Update Case', 'Close Case']
-
-    def setUp(self):
-        super(BasicTestAppTestCase, self).setUp()
-        
-        try:
-            self.find_element_by_xpath("//nav[@id='form-list']/ul")
-            # module has already been clicked on
-        except NoSuchElementException:
-            # click on the module, after waiting for the app to load
-            self.wait_until(
-                lambda driver: len(driver.find_elements_by_link_text(self.app_name)) > 1
-            )
-        
-            self.find_elements_by_link_text(self.app_name)[1].click()
+    teardown_close_case_form = 'Close Case'
 
     def create_case(self):
         self.open_form('New Case')
-        name = random_string()
+        name = self.random_string()
         self.find_element_by_id('textfield').send_keys(name)
         self.submit_form()
 
@@ -43,7 +23,7 @@ class BasicTestAppTestCase(CloudCareTestCase):
     def test_first_form(self):
         self.open_form('First Form')
 
-        name = random_string()
+        name = self.random_string()
         self.find_element_by_id('textfield').send_keys(name)
         self.submit_form()
         
@@ -67,19 +47,14 @@ class BasicTestAppTestCase(CloudCareTestCase):
         self.click_case(name)
         self.find_element_by_link_text('Enter Update Case').click()
 
-        self.find_element_by_xpath("//span[.='Blue']").click()
+        self.find_element_by_xpath("//span[text()='Blue']").click()
         self.submit_form()
 
         self.open_form('Update Case')
-        tds = self.find_elements_by_xpath("//section[@id='case-details']//td")
-        flag = False
-        for td in tds:
-            if td.text == name:
-                self.assertEqual('blue', td.text)
-                flag = True
-                break
-
-        self.assertTrue(flag)
+        self.click_case(name)
+        self.find_element_by_xpath(
+            "//section[@id='case-details']//td[text()='blue']"
+        )
 
     def test_close_case(self):
         name = self.create_case()
@@ -90,4 +65,24 @@ class BasicTestAppTestCase(CloudCareTestCase):
         self.submit_form()
         self.open_form('Update Case')
         self.assertNotIn(name, self.page_source)
+
+
+#class BasicFormTestsTestCase(CloudCareTestCase):
+    #app_name = 'Coverage'
+    #module_name = 'Basic Form Tests'
+
+    #def test_datatypes(self):
+        #pass
+
+    #def test_groups(self):
+        #pass
+
+    #def test_constraints(self):
+        #pass
+
+    #def test_other(self):
+        #pass
+
+    #def test_repeats(self):
+        #pass
 

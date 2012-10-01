@@ -1,6 +1,8 @@
-from testrunner import HqTestSuiteRunner
 from django.core.management.commands import test
 from south.management.commands import patch_for_test_db_setup
+from testrunner import HqTestSuiteRunner
+from pyvirtualdisplay import Display
+from django.conf import settings
 import sys
 
 SELENIUM_TEST_MODULE = 'tests.selenium'
@@ -32,6 +34,11 @@ class Command(test.Command):
         failfast = options.get('failfast', False)
 
         patch_for_test_db_setup()
+
+        if settings.SELENIUM_XVFB:
+            print "starting X Virtual Framebuffer display"
+            Display(backend='xvfb',
+                    size=settings.SELENIUM_XVFB_DISPLAY_SIZE).start()
 
         test_runner = TestSuiteRunner(verbosity=verbosity,
                                       interactive=interactive,
