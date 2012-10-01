@@ -130,21 +130,7 @@ class HideShortColumn(HideShortHeaderColumn):
     def template_width(self):
         if self.detail.display == 'short':
             return 0
-"""
-{value: "plain", label: DetailScreenConfig.message.PLAIN_FORMAT},
-{value: "date", label: DetailScreenConfig.message.DATE_FORMAT},
-{value: "time-ago", label: DetailScreenConfig.message.TIME_AGO_FORMAT},
-{value: "phone", label: DetailScreenConfig.message.PHONE_FORMAT},
-{value: "enum", label: DetailScreenConfig.message.ENUM_FORMAT},
-{value: "late-flag", label: DetailScreenConfig.message.LATE_FLAG_FORMAT},
-{value: "invisible", label: DetailScreenConfig.message.INVISIBLE_FORMAT},
-{value: "filter", label: DetailScreenConfig.message.FILTER_XPATH_FORMAT},
-{value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT}
 
-Format types not supported in the UI:
-advanced
-enum-image
-"""
 
 @register_format_type('plain')
 class Plain(FormattedDetailColumn):
