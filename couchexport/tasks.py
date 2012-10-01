@@ -44,14 +44,17 @@ def bulk_export_async(bulk_export_helper, download_id,
     if bulk_export_helper.zip_export:
         filename = "%s_%s"% (domain, filename) if domain else filename
         _, path = tempfile.mkstemp()
+        os.close(_) 
         zf = zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED)
-        for file in bulk_export_helper.bulk_files:
-            try:
-                bulk = file.generate_bulk_file()
-                zf.writestr("%s/%s" %(filename, file.filename), bulk.getvalue())
-            except Exception as e:
-                logging.error("FAILED to add file to bulk export archive. %s" % e)
-        zf.close()
+        try: 
+            for file in bulk_export_helper.bulk_files:
+                try:
+                    bulk = file.generate_bulk_file()
+                    zf.writestr("%s/%s" %(filename, file.filename), bulk.getvalue())
+                except Exception as e:
+                    logging.error("FAILED to add file to bulk export archive. %s" % e)
+        finally:
+            zf.close()
 
         return cache_file_to_be_served(
             tmp=path,
@@ -82,7 +85,8 @@ class PathTemp(object):
 
     @property
     def payload(self):
-        return open(self.path, 'rb').read()
+        with open(self.path, 'rb') as f:
+            return f.read()
 
 class StringIOTemp(object):
     def __init__(self, buffer):
