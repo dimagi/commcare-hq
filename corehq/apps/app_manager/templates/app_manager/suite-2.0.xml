@@ -1,9 +1,7 @@
   {% load xforms_extras %}
 <suite version="{{ app.version }}">
-
  {% for module in app.get_modules %}
   {% for  form in module.get_forms %}
-    <!-- Parse and cache the XForm -->
     <xform>
         <resource id="{{ form.unique_id }}" version="{{ app.version }}">
            <location authority="local">./modules-{{ module.id }}/forms-{{ form.id }}.xml</location>
@@ -21,7 +19,6 @@
     </xform>
  {% endif %}
  {% for lang in langs %}
-    <!-- Read and locally store the translation strings-->
     <locale language="{{ lang }}">
         <resource id="app_{{ lang }}_strings" version="{{ app.version }}">
            <location authority="local">./{{ lang }}/app_strings.txt</location>
