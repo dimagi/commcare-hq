@@ -178,7 +178,7 @@ def form_casexml(req, domain, form_unique_id):
     if domain != app.domain: raise Http404
     return HttpResponse(form.create_casexml())
 
-@login_and_domain_required
+@login_or_digest
 def app_source(req, domain, app_id):
     app = get_app(domain, app_id)
     return HttpResponse(app.export_json())
