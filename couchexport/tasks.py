@@ -125,7 +125,7 @@ def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=
         if EXPORT_METHOD == "cached":
             download_stream = "%s_stream" % download_id
             payload = tmp.payload
-            cache.set(download_stream, payload)
+            cache.set(download_stream, payload, expiry)
             expose_download(CachedDownload, download_stream)
         elif EXPORT_METHOD == 'tmpfile':
             path = tmp.path
