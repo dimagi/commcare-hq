@@ -134,9 +134,12 @@ class CaseDisplay(object):
         self.case = case
         self.report = report
 
+    def user_not_found_display(self, user_id):
+        return "Unknown [%s]" % user_id
+
     @property
     def owner_display(self):
-        username = self.report.usernames.get(self.user_id, "Unknown [%s]" % self.user_id)
+        username = self.report.usernames.get(self.user_id, self.user_not_found_display(self.user_id))
         if self.owning_group and self.owning_group.name:
             return '<span class="label label-inverse">%s</span>' % self.owning_group.name
         else:
@@ -221,7 +224,7 @@ class CaseDisplay(object):
                 owner_id = action['updated_known_properties']['owner_id']
         if not owner_id:
             return "No data"
-        return self.report.usernames.get(owner_id, "Unknown [%s]" % owner_id)
+        return self.report.usernames.get(owner_id, self.user_not_found_display(owner_id))
 
 class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReportParametersMixin):
 
