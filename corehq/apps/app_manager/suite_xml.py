@@ -64,7 +64,7 @@ class LocaleResource(AbstractResource):
     language = StringField('@language')
 
 class Display(XmlObject):
-
+    ROOT_NAME = 'display'
     text = NodeField('text', Text)
     media_image = StringField('media/@image')
     media_audio = StringField('media/@audio')
