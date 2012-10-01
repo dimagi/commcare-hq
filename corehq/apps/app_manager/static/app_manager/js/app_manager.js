@@ -65,10 +65,14 @@
         //
         function resetMakeNewBuild() {
             var $button = $("#make-new-build");
+            var $button_submit = $button.children("[type=submit]");
             if (lastAppVersion < appVersion) {
                 $button.show();
+                $button_submit.removeAttr('disabled')
+                $button_submit.removeClass('disabled')
             } else {
-                $button.hide();
+                $button_submit.attr('disabled', 'disabled');
+                $button_submit.addClass('disabled');
             }
         }
         resetMakeNewBuild();
