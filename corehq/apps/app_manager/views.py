@@ -128,6 +128,13 @@ def back_to_main(req, domain, app_id=None, module_id=None, form_id=None, unique_
         "?%s" % urlencode(params) if params else ""
         ))
 
+def bail(req, domain, app_id, not_found=""):
+    if not_found:
+        messages.error(req, 'Oops! We could not find that %s. Please try again' % not_found)
+    else:
+        messages.error(req, 'Oops! We could not complete your request. Please try again')
+    return back_to_main(req, domain, app_id)
+
 def _get_xform_source(request, app, form, filename="form.xml"):
     download = json.loads(request.GET.get('download', 'false'))
     lang = request.COOKIES.get('lang', app.langs[0])
@@ -412,7 +419,6 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
     saved_apps = get_db().view('app_manager/saved_app',
         startkey=[domain, app.id, {}],
         endkey=[domain, app.id],
-        include_doc=True,
         descending=True,
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
@@ -459,15 +465,8 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
     This is the main view for the app. All other views redirect to here.
 
     """
-
-    def bail():
-        module_id=None
-        form_id=None
-        messages.error(req, 'Oops! We could not complete your request. Please try again')
-        return back_to_main(req, domain, app_id)
-
     if form_id and not module_id:
-        return bail()
+        return bail(req, domain, app_id)
 
     app = module = form = None
     try:
@@ -480,7 +479,7 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         if form_id:
             form = module.get_form(form_id)
     except IndexError:
-        return bail()
+        return bail(req, domain, app_id)
 
     base_context = get_apps_base_context(req, domain, app)
     edit = base_context['edit']
@@ -628,8 +627,14 @@ def form_designer(req, domain, app_id, module_id=None, form_id=None, is_user_reg
     if is_user_registration:
         form = app.get_user_registration()
     else:
-        module = app.get_module(module_id)
-        form = module.get_form(form_id)
+        try:
+            module = app.get_module(module_id)
+        except IndexError:
+            return bail(req, domain, app_id, not_found="module")
+        try:
+            form = module.get_form(form_id)
+        except IndexError:
+            return bail(req, domain, app_id, not_found="form")
 
 
 
@@ -1457,9 +1462,10 @@ def save_copy(req, domain, app_id):
         url = url._replace(query=urllib.urlencode(q, doseq=True))
         next = urlparse.urlunparse(url)
         return next
+
     if not errors:
         try:
-            app.save_copy(comment=comment)
+            app.save_copy(comment=comment, user_id=req.couch_user.get_id)
         except Exception as e:
             if settings.DEBUG:
                 raise

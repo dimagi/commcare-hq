@@ -288,7 +288,13 @@
                 {% endif %}
             </td>
             {% endif %}
-            <td>{% if saved_app.build_comment %}{{ saved_app.build_comment }}{% else %}<h6>(No Comment)</h6>{% endif %}</td>
+            <td>
+                {% if saved_app.build_comment %}
+                    {% if saved_app.comment_user_name %}<b>{{ saved_app.comment_user_name }}:</b>{% endif %}
+                    {{ saved_app.build_comment }}
+                {% else %}<h6>(No Comment)</h6>
+                {% endif %}
+            </td>
             <td class="build-is-released">
                 <div data-is-released="{{ saved_app.is_released|BOOL }}" data-saved-app-id="{{ saved_app.id }}"></div>
             </td>
