@@ -31,7 +31,6 @@ class Command(BaseCommand):
 
         for slug in app_slugs:
             source_path = os.path.join(path, 'src', '%s.json' % slug)
-            print source_path
             with open(source_path) as f:
                 app = Application.wrap(json.load(f))
             app.version = 1
