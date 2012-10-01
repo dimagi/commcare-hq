@@ -9,11 +9,8 @@ from functools import wraps
 import time
 
 
-class SeleniumTestCase(TestCase):
+class SeleniumWrapper(object):
     """
-    A test class that sets up a WebDriver and lets you access webdriver
-    attributes directly on the class.
-
     Unlike after page loads, selenium doesn't wait for events to finish
     firing after interactions with the page.  This can make test code quite
     verbose, with many explicit waits after clicks.
@@ -30,30 +27,22 @@ class SeleniumTestCase(TestCase):
 
     """
 
-    base_url = ''
+    def __init__(self, base_url=''):
+        self.base_url = base_url
+        self.driver = getattr(webdriver, settings.SELENIUM_DRIVER)()
 
-    @classmethod
-    def setUpClass(cls):
-        super(SeleniumTestCase, cls).setUpClass()
-        cls.driver = getattr(webdriver, settings.SELENIUM_DRIVER)()
+    def get(self, path):
+        return self.driver.get(self.base_url + path)
 
-    @classmethod
-    def tearDownClass(cls):
-        super(SeleniumTestCase, cls).tearDownClass()
-        cls.driver.quit()
-
-    @classmethod
-    def get(cls, path):
-        return cls.driver.get(cls.base_url + path)
-
-    @classmethod
-    def wait_until(cls, fn, time=10):
+    def wait_until(self, fn, time=10):
         # todo: allow wrapper usage within function
-        return WebDriverWait(cls.driver, time).until(fn)
+        return WebDriverWait(self.driver, time).until(fn)
 
-    @classmethod
-    def wait_until_not(cls, fn, time=10):
-        return WebDriverWait(cls.driver, time).until_not(fn)
+    def wait_until_not(self, fn, time=10):
+        return WebDriverWait(self.driver, time).until_not(fn)
+
+    def sleep(self, duration):
+        return time.sleep(duration)
 
     def __getattr__(self, name):
         val = getattr(self.driver, name)
@@ -92,3 +81,27 @@ class SeleniumTestCase(TestCase):
                         duration -= interval
 
         return wrapped
+
+
+class SeleniumTestCase(TestCase):
+    """
+    A test class that sets up a WebDriver and lets you access webdriver
+    attributes directly on the class.
+
+    """
+
+    base_url = ''
+
+    def __getattr__(self, name):
+        return getattr(self.driver, name)
+
+    @classmethod
+    def setUpClass(cls):
+        cls.driver = SeleniumWrapper(base_url=cls.base_url)
+        super(SeleniumTestCase, cls).setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(SeleniumTestCase, cls).tearDownClass()
+        cls.driver.quit()
+
