@@ -5,21 +5,32 @@ import dateutil
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 import pytz
+from casexml.apps.case.models import CommCareCase
+from corehq.apps.adm import utils
+from corehq.apps.groups.models import Group
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.data.editable_items import InterfaceEditableItemMixin
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.modules import to_function
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.users.models import CommCareUser
 from copy import copy
 
 
-#FORM_KEY_TYPES = (('user_id', 'form.meta.user_id'))
-#CASE_KEY_TYPES = (('case_type', 'type'), ('project', 'domain'), ('user_id', 'user_id'))
 KEY_TYPE_OPTIONS = [('user_id', "User"), ("case_type", "Case Type")]
-
 REPORT_SECTION_OPTIONS = [("supervisor", "Supervisor Report")]
-
 COLUMN_TYPES = ('form', 'case')
+CASE_FILTER_OPTIONS = [
+    ('', "Use all case types"),
+    ('in', 'Use only the case types specified below'),
+    ('ex', 'Use all case types except for those specified below')
+]
+CASE_STATUS_OPTIONS = [
+    ('', 'All Cases'),
+    ('open', 'Open Cases'),
+    ('closed', 'Closed Cases')
+]
+
 
 class ADMEditableItemMixin(InterfaceEditableItemMixin):
 
@@ -62,19 +73,116 @@ class ADMEditableItemMixin(InterfaceEditableItemMixin):
 class ADMColumn(Document, ADMEditableItemMixin):
     """
         The basic ADM Column.
-        Eventually, name and description will be user configurable.
-        name, description, and couch_view are admin configurable
     """
-    date_modified = DateTimeProperty()
     name = StringProperty(default="Untitled Column")
     description = StringProperty(default="")
+    slug = StringProperty(default="")
+
+    date_modified = DateTimeProperty()
+    base_doc = "ADMColumn"
+
+    _report_datespan = None
+    @property
+    def report_datespan(self):
+        """
+            The value for the datespan filter from the report accessing this ADMColumn. This should either return
+            None if a datespan was not set by the report (odd) or a DateSpan object.
+            You care about:
+            - datespan.startdate
+            - datespan.enddate
+        """
+        return self._report_datespan
+
+    _report_domain = None
+    @property
+    def report_domain(self):
+        """
+            The name of the domain accessing this ADM report.
+
+            NOTE:
+            If you are using a ConfigurableADMColumn subclass, do not confuse this with 'domain'!
+            ConfigurableADMColumn.domain refers to the domain that that column definition
+            applies to. A default ADMColumn that applies to all domains will have domain == ''.
+            When a user modifies a property for that ConfigurableADMColumn then that saved modified column
+            definition will have the domain set.
+        """
+        return self._report_domain
+
+    @property
+    def row_columns(self):
+        return ["slug", "name", "description"]
+
+    def set_report_values(self, **kwargs):
+        """
+            This is called when rendering ADM report. Insert any relevant filters here.
+        """
+        datespan = kwargs.get('datespan')
+        self._report_datespan = datespan if isinstance(datespan, DateSpan) else None
+        domain = kwargs.get('domain')
+        self._report_domain = domain
+
+    def format_property(self, key, property):
+        if key == "name":
+            return "%s" % property
+        return super(ADMColumn, self).format_property(key, property)
+
+    def raw_value(self, **kwargs):
+        raise NotImplementedError
+
+    def clean_value(self, value):
+        return value
+
+    def html_value(self, value):
+        return value
+
+    @classmethod
+    def get_col(cls, col_id):
+        try:
+            column_doc = get_db().get(col_id)
+            column_class = column_doc.get('doc_type')
+            column = to_function('corehq.apps.adm.%s' % column_class)
+            column = column.wrap(column_doc)
+            return column
+        except Exception as e:
+            return None
+
+    @classmethod
+    def default_by_slug(cls, slug, domain=None):
+        key = [domain, slug]
+        couch_view = 'adm/all_default_columns'
+        column = None
+
+        if domain:
+            prefix = ["defaults domain slug"]
+            column = get_db().view(couch_view,
+                startkey=prefix+key,
+                endkey=prefix+key+[{}],
+                reduce=False
+            ).first()
+
+        if not column:
+            prefix = ["defaults global slug"]
+            column = get_db().view(couch_view,
+                startkey=prefix+key,
+                endkey=prefix+key+[{}],
+                reduce=False
+            ).first()
+        if column:
+            return cls.get_col(column.get('id'))
+        return None
+
+
+class CouchViewADMColumn(ADMColumn):
+    """
+        Use this for generic columns that pull data straight from specific couch views.
+    """
     couch_view = StringProperty(default="")
     key_format = StringProperty(default="<domain>, <user_id>, <datespan>")
-    base_doc = "ADMColumn"
     
     @property
     def row_columns(self):
-        return ["name", "description", "couch_view", "key_format"]
+        return super(CouchViewADMColumn, self).row_columns + \
+               ["couch_view", "key_format"]
 
     _couch_key = None
     @property
@@ -88,24 +196,24 @@ class ADMColumn(Document, ADMEditableItemMixin):
             self._couch_key = key_vals
         return self._couch_key
 
-    _key_kwargs = dict()
+    _key_kwargs = None
     @property
     def key_kwargs(self):
+        if self._key_kwargs is None:
+            self._key_kwargs = {u'{}': {}}
         return self._key_kwargs
+
+    def set_report_values(self, **kwargs):
+        super(CouchViewADMColumn, self).set_report_values(**kwargs)
+        self.key_kwargs.update(self._format_keywords_in_kwargs(**kwargs))
 
     def _format_keywords_in_kwargs(self, **kwargs):
         return dict([("<%s>" % k, v) for k, v in kwargs.items()])
 
-    def set_key_kwargs(self, **kwargs):
-        self._key_kwargs = {u'{}': {}}
-        self._key_kwargs.update(self._format_keywords_in_kwargs(**kwargs))
-
     def format_property(self, key, property):
         if key == 'key_format':
             return '[%s]' % escape(property)
-        if key == "name":
-            return "%s [%s]" % (property, self.get_id)
-        return super(ADMColumn, self).format_property(key, property)
+        return super(CouchViewADMColumn, self).format_property(key, property)
 
     def raw_value(self, **kwargs):
         kwargs = self._format_keywords_in_kwargs(**kwargs)
@@ -118,19 +226,13 @@ class ADMColumn(Document, ADMEditableItemMixin):
                 cleaned_key.append(kwargs.get(key, key))
             else:
                 cleaned_key.append(key)
-        return self.get_data(cleaned_key, datespan)
+        return self.get_couch_view_data(cleaned_key, datespan)
 
-    def clean_value(self, value):
-        return value
-
-    def html_value(self, value):
-        return value
-
-    def get_data(self, key, datespan=None):
-        data = self.get_view_results(**self.standard_start_end(key, datespan))
+    def get_couch_view_data(self, key, datespan=None):
+        data = self.view_results(**utils.standard_start_end_key(key, datespan))
         return data.all() if data else None
 
-    def get_view_results(self, reduce=False, **kwargs):
+    def view_results(self, reduce=False, **kwargs):
         try:
             data = get_db().view(self.couch_view,
                 reduce=reduce,
@@ -139,14 +241,6 @@ class ADMColumn(Document, ADMEditableItemMixin):
         except Exception as e:
             data = None
         return data
-
-    def standard_start_end(self, key, datespan=None):
-        startkey_suffix = [datespan.startdate_param_utc] if datespan else []
-        endkey_suffix = [datespan.enddate_param_utc] if datespan else [{}]
-        return dict(
-            startkey=key+startkey_suffix,
-            endkey=key+endkey_suffix
-        )
 
     @property
     def is_user_column(self):
@@ -158,29 +252,14 @@ class ADMColumn(Document, ADMEditableItemMixin):
         # owner ids
         index = self.couch_key.index("<user_id>")
         user_id = key[index]
-        
         def _repl(k, index, id):
             ret = copy(k)
             ret[index] = id
             return ret
-        
         return [_repl(key, index, id) for id in CommCareUser.get(user_id).get_owner_ids()]
-        
-        
-    
-    @classmethod
-    def get_col(cls, col_id):
-        try:
-            column_doc = get_db().get(col_id)
-            column_class = column_doc.get('doc_type')
-            column = eval(column_class)
-            column = column.wrap(column_doc)
-            return column
-        except Exception as e:
-            return None
 
 
-class ReducedADMColumn(ADMColumn):
+class ReducedADMColumn(CouchViewADMColumn):
     """
         Returns the value of the reduced view of whatever couch_view is specified.
         Generally used to retrieve countable items.
@@ -207,24 +286,22 @@ class ReducedADMColumn(ADMColumn):
         self.ignore_datespan = kwargs.get('ignore_datespan', False)
         super(ReducedADMColumn, self).update_item(overwrite, **kwargs)
 
-    def get_data(self, key, datespan=None):
+    def get_couch_view_data(self, key, datespan=None):
         if self.ignore_datespan:
             datespan = None
         # for now, if you're working with users assume you use all
         # their owner ids in your query
-        
         keys = [key] if not self.is_user_column else self._expand_user_key(key)
-        
         def _val(key, datespan): 
-            start_end = self.standard_start_end(key, datespan)
-            data = self.get_view_results(reduce=True, **start_end).first()
+            start_end = utils.standard_start_end_key(key, datespan)
+            data = self.view_results(reduce=True, **start_end).first()
             value = data.get('value', 0) if data \
                 else 0 if self.returns_numerical else None
             return value
-        
         return self.aggregate(_val(k, datespan) for k in keys)
 
-class DaysSinceADMColumn(ADMColumn):
+
+class DaysSinceADMColumn(CouchViewADMColumn):
     """
         The number of days since enddate <property_name>'s date.
         property_name should be a datetime.
@@ -252,14 +329,14 @@ class DaysSinceADMColumn(ADMColumn):
             return "%s and %s" % (self.property_name, choices.get(property, "--"))
         return super(DaysSinceADMColumn, self).format_property(key, property)
 
-    def get_data(self, key, datespan=None):
+    def get_couch_view_data(self, key, datespan=None):
         default_value = None
         try:
             now = tz_utils.adjust_datetime_to_timezone(getattr(datespan, self.start_or_end or "enddate"),
                 from_tz=datespan.timezone, to_tz=pytz.utc)
         except Exception:
             now = datetime.datetime.now(tz=pytz.utc)
-        data = self.get_view_results(
+        data = self.view_results(
             endkey=key,
             startkey=key+[getattr(datespan, "%s_param_utc" % self.start_or_end)] if datespan else [{}],
             descending=True,
@@ -292,15 +369,17 @@ class DaysSinceADMColumn(ADMColumn):
 class ConfigurableADMColumn(ADMColumn):
     """
         Use this for columns that will be end-user configurable.
-        Default versions of this column, which are only superuser configurable, will have project = ""
     """
+    is_default = BooleanProperty(default=True)
     domain = StringProperty()
     directly_configurable = BooleanProperty(default=False)
+    based_on_column = StringProperty()
     config_doc = "ConfigurableADMColumn"
 
     @property
     def row_columns(self):
-        return ["name", "description", "couch_view", "key_format", "directly_configurable", "domain"]
+        return super(ConfigurableADMColumn, self).row_columns + \
+               ["domain", "directly_configurable", "is_default"]
 
     @property
     def default_properties(self):
@@ -328,18 +407,20 @@ class ConfigurableADMColumn(ADMColumn):
 
     def format_property(self, key, property):
         if key == 'domain':
+            return property if property else "For All Projects"
+        if key == 'is_default':
             return self.default_properties_in_row
         if key == "name":
-            return mark_safe('%s <br />[%s] <span class="label label-inverse">%s</span>' % \
-                   (self.name, self.get_id, self.__class__.__name__))
+            return mark_safe('%s<br /><span class="label label-inverse">%s</span>' % \
+                   (self.name, self.__class__.__name__))
         return super(ConfigurableADMColumn, self).format_property(key, property)
 
     def format_key(self, key):
         return key.replace("_", " ").title()
 
     @classmethod
-    def all_configurable_columns(cls):
-        couch_key = ["defaults"]
+    def all_admin_configurable_columns(cls):
+        couch_key = ["defaults all type"]
         data = get_db().view('adm/configurable_columns',
             reduce=False,
             startkey=couch_key,
@@ -348,11 +429,12 @@ class ConfigurableADMColumn(ADMColumn):
         wrapped_data = []
         for item in data:
             key = item.get('key', [])
+            value = item.get('value', {})
             try:
-                item_class = eval(key[1])
+                item_class = to_function("corehq.apps.adm.models.%s" % value.get('type', 'ADMColumn'))
                 wrapped_data.append(item_class.get(key[-1]))
-            except Exception:
-                pass
+            except Exception as e:
+                print "EXCEPTION", e
         return wrapped_data
 
 
@@ -381,12 +463,12 @@ class ADMCompareColumn(ConfigurableADMColumn):
             self._denominator = ADMColumn.get_col(self.denominator_id)
         return self._denominator
 
-    def set_key_kwargs(self, **kwargs):
-        super(ADMCompareColumn, self).set_key_kwargs(**kwargs)
+    def set_report_values(self, **kwargs):
+        super(ADMCompareColumn, self).set_report_values(**kwargs)
         if self.numerator:
-            self.numerator.set_key_kwargs(**kwargs)
+            self.numerator.set_report_values(**kwargs)
         if self.denominator:
-            self.denominator.set_key_kwargs(**kwargs)
+            self.denominator.set_report_values(**kwargs)
 
     def format_key(self, key):
         if key == "numerator_id" or key == "denominator_id":
@@ -394,12 +476,10 @@ class ADMCompareColumn(ConfigurableADMColumn):
         return super(ADMCompareColumn, self).format_key(key)
 
     def format_property(self, key, property):
-        if key == "couch_view" or key == "key_format":
-            return "N/A"
         if key == "numerator_id" or key == "denominator_id":
             try:
                 col = ADMColumn.get(property)
-                return col.name
+                return "%s (%s)" % (col.name, col.domain if hasattr(col, 'domain') and col.domain else 'Any Project')
             except Exception:
                 return "Untitled Column"
         return super(ADMCompareColumn, self).format_property(key, property)
@@ -431,7 +511,6 @@ class ADMCompareColumn(ConfigurableADMColumn):
         except Exception:
             return default_value
 
-
     @classmethod
     def numerical_column_options(cls):
         key = ["numerical"]
@@ -440,48 +519,141 @@ class ADMCompareColumn(ConfigurableADMColumn):
             startkey=key,
             endkey=key+[{}]
         ).all()
-
         return [("", "Select a Column")] + \
-               [(item.get("key", [])[-1], item.get("value", {}).get("name", "Untitled"))
+               [(item.get("key", [])[-1],
+                 "%s (%s)" % (item.get("value", {}).get("name", "Untitled"),
+                              item.get("value", {}).get("domain", "Any Project"))
+                   )
                         for item in data]
 
 
-class InactiveADMColumn(ConfigurableADMColumn):
+class CaseFilterADMColumnMixin(DocumentSchema):
+    """
+        Use this mixin when you want to filter the results by case_types.
+        Assumes that the result returned will be a list of CommCareCases.
+    """
+    filter_option = StringProperty(default='', choices=[f[0] for f in CASE_FILTER_OPTIONS])
+    case_types = ListProperty()
+    case_status = StringProperty(default='', choices=[s[0] for s in CASE_STATUS_OPTIONS])
+
+    def format_case_filter_properties(self, key, property):
+        if key == 'filter_option':
+            filter_options = dict(CASE_FILTER_OPTIONS)
+            return filter_options[property or '']
+        if key == 'case_types':
+            return ", ".join(property) if property else 'N/A'
+        return None
+
+    def get_filtered_cases(self, domain, user_id, include_groups=True, status=None, include_docs=False, datespan_keys=None):
+        if not datespan_keys:
+            datespan_keys = [[], [{}]]
+
+        owner_ids = [user_id]
+        if include_groups:
+            groups = Group.by_user(user_id, wrap=False)
+            owner_ids.extend(groups)
+
+        pass_filter_types = self.case_types if self.filter_option == CASE_FILTER_OPTIONS[1][0] else [None]
+
+        all_cases = list()
+        for case_type in pass_filter_types:
+            for owner in owner_ids:
+                data = self._cases_by_type(domain, owner, case_type, status=status,
+                    include_docs=include_docs, datespan_keys=datespan_keys)
+                all_cases.extend(data)
+        if self.filter_option == CASE_FILTER_OPTIONS[2][0]:
+            filtered_cases = list()
+            for case in all_cases:
+                case_type = case.type if include_docs else case.get('value', {}).get('type')
+                print "CASE TYPE", case_type
+                if case_type in self.case_types:
+                    filtered_cases.append(case)
+            all_cases = filtered_cases
+        return all_cases
+
+    def _cases_by_type(self, domain, owner_id, case_type, status=None, include_docs=False, datespan_keys=None):
+        couch_key = [domain, {}, {}, owner_id]
+        if case_type:
+            couch_key[2] = case_type
+        if status:
+            couch_key[1] = status
+        return CommCareCase.view('case/by_date_modified_owner',
+            reduce=False,
+            startkey=couch_key+datespan_keys[0],
+            endkey=couch_key+datespan_keys[1],
+            include_docs=include_docs
+        ).all()
+
+
+class CaseCountADMColumn(ConfigurableADMColumn, CaseFilterADMColumnMixin):
     """
         Cases that are still open but date_modified is older than <inactivity_milestone> days from the
         enddate of the report.
 
-        Returns the reduced value of whatever couch_view is specified, and keys from:
-        [domain, key_type_id] to [domain, key_type_id, enddate-<inactivity_milestone> days]
-
     """
     returns_numerical = True
     inactivity_milestone = IntegerProperty(default=0)
+    ignore_datespan = BooleanProperty(default=True)
 
     @property
     def default_properties(self):
-        return ["inactivity_milestone"]
+        return ["case_status", "filter_option", "case_types", "inactivity_milestone", "ignore_datespan"]
 
     def format_property(self, key, property):
         if key == 'inactivity_milestone':
             return "%s days" % property
-        return super(InactiveADMColumn, self).format_property(key, property)
+        case_filter_props = self.format_case_filter_properties(key, property)
+        if case_filter_props is not None:
+            return case_filter_props
+        return super(CaseCountADMColumn, self).format_property(key, property)
 
-    def get_data(self, key, datespan=None):
-        default_value = None
-        milestone_days_ago = tz_utils.adjust_datetime_to_timezone(datespan.enddate,
-            from_tz=datespan.timezone, to_tz=pytz.utc) - datetime.timedelta(days=self.inactivity_milestone)
-        data = self.get_view_results(
-            reduce=True,
-            startkey=key,
-            endkey=key+[milestone_days_ago.isoformat()]
-        )
-        if not data:
-            return default_value
-        data = data.first()
-        if not data:
-            return default_value
-        return data.get('value', 0)
+    def raw_value(self, **kwargs):
+        user_id = kwargs.get('user_id')
+        print "USER ID", user_id
+        datespan_keys = None
+        if self.inactivity_milestone > 0:
+            milestone_days_ago = tz_utils.adjust_datetime_to_timezone(self.report_datespan.enddate,
+                from_tz=self.report_datespan.timezone, to_tz=pytz.utc) - datetime.timedelta(days=self.inactivity_milestone)
+            datespan_keys = [[], [milestone_days_ago.isoformat()]]
+        elif not self.ignore_datespan:
+            datespan_keys = [[self.report_datespan.startdate_param_utc], [self.report_datespan.enddate_param_utc]]
+        status = self.case_status if self.case_status else None
+        cases = self.get_filtered_cases(self.report_domain, user_id, status=status, datespan_keys=datespan_keys)
+        return len(cases) if isinstance(cases, list) else None
+
+    def clean_value(self, value):
+        return value if value is not None else 0
+
+    def html_value(self, value):
+        return value if value is not None else "--"
+
+
+class CaseCountADMColumn(ConfigurableADMColumn, CaseFilterADMColumnMixin):
+    """
+        Count of all cases.
+    """
+    returns_numerical = True
+
+    @property
+    def default_properties(self):
+        return ["ignore_datespan", "filter_option", "case_types"]
+
+    def format_property(self, key, property):
+        case_filter_props = self.format_case_filter_properties(key, property)
+        if case_filter_props is not None:
+            return case_filter_props
+        return super(CaseCountADMColumn, self).format_property(key, property)
+
+    def raw_value(self, **kwargs):
+        user_id = kwargs.get('user_id')
+        datespan_keys = None if self.ignore_datespan else \
+                    [[self.report_datespan.startdate_param_utc], [self.report_datespan.enddate_param_utc]]
+        cases = self.get_filtered_cases(self.report_domain, user_id, datespan_keys=datespan_keys)
+        return len(cases) if isinstance(cases, list) else None
+
+#    def update_item(self, overwrite=True, **kwargs):
+#        kwargs['case_types'] = kwargs.get('case_types', [])
+#        super(CaseCountADMColumn, self).update_item(overwrite, **kwargs)
 
     def clean_value(self, value):
         return value if value is not None else 0
@@ -494,45 +666,47 @@ class ADMReport(Document, ADMEditableItemMixin):
     name = StringProperty(default="Untitled Report")
     description = StringProperty(default="")
     slug = StringProperty(default="untitled")
+
     reporting_section = StringProperty(default="supervisor")
-    column_ids = ListProperty() # list of column ids
+    column_slugs = ListProperty() # list of column ids
     key_type = StringProperty(default="user_id")
+    is_default = BooleanProperty(default=True)
     domain = StringProperty()
+    based_on_report = StringProperty()
 
     @property
     def row_columns(self):
-        return ["reporting_section", "name", "description", "slug", "column_list", "key_type"]
-
-    @property
-    def column_list(self):
-        return ",".join(self.column_ids)
+        return ["reporting_section", "name", "description", "slug", "column_slugs", "key_type"]
 
     _columns = None
     @property
     def columns(self):
         if self._columns is None:
             cols = []
-            for col_id in self.column_ids:
-                column = ADMColumn.get_col(col_id)
+            for slug in self.column_slugs:
+                column = ADMColumn.default_by_slug(slug, self.viewing_domain)
                 if column:
                     cols.append(column)
             self._columns = cols
         return self._columns
 
-    def update_item(self, overwrite=True, **kwargs):
-        kwargs['column_ids'] = kwargs.get('column_list', [])
-        super(ADMReport, self). update_item(overwrite, **kwargs)
+    _viewing_domain = None
+    @property
+    def viewing_domain(self):
+        """
+            The domain that is viewing this report.
+        """
+        if _viewing_domain is None:
+            self._viewing_domain = self.domain
+        return self._viewing_domain
+
+    def set_domain_specific_values(self, **kwargs):
+        domain = kwargs.get('domain')
+        self._viewing_domain = domain
 
     def format_property(self, key, property):
-        if key == 'column_list':
-            col_names = []
-            for col_id in self.column_ids:
-                try:
-                    col = ADMColumn.get(col_id)
-                    col_names.append(col.name)
-                except Exception:
-                    col_names.append(col_id)
-            return "[%s]" % ", ".join(col_names)
+        if key == 'column_slugs':
+            return  ", ".join(property)
         if key == 'reporting_section':
             sections = dict(REPORT_SECTION_OPTIONS)
             return sections.get(property, "Unknown")

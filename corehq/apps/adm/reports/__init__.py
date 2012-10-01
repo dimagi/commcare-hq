@@ -99,12 +99,11 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
     def adm_columns(self):
         if self._adm_columns is None:
             if self.adm_report:
+                column_config = self.report_column_config
+                if not isinstance(column_config, dict):
+                    ValueError('report_column_config should return a dict')
                 for col in self.adm_report.columns:
-                    col.set_key_kwargs(
-                        project=self.domain,
-                        domain=self.domain,
-                        datespan=self.datespan
-                    )
+                    col.set_report_values(**column_config)
                 self._adm_columns = self.adm_report.columns
         return self._adm_columns
 
@@ -127,6 +126,16 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
                     col.html_value(val)))
             rows.append(row)
         return rows
+
+    @property
+    def report_column_config(self):
+        """
+            Should return a dict of values important for rendering the ADMColumns in this report.
+        """
+        return dict(
+            domain=self.domain,
+            datespan=self.datespan
+        )
 
     @classmethod
     def override_navigation_list(cls, context):

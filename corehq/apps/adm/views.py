@@ -46,8 +46,8 @@ def adm_item_form(request, template="adm/forms/admin_adm_item.html", **kwargs):
     if not issubclass(form_class, InterfaceEditableItemForm):
         return HttpResponseBadRequest("'%s' should be a subclass of InterfaceEditableItemForm" % form_type)
 
-    from corehq.apps.adm.forms import ConfigurableADMColumnForm
-    if form_class == ConfigurableADMColumnForm:
+    from corehq.apps.adm.forms import ConfigurableADMColumnChoiceForm
+    if form_class == ConfigurableADMColumnChoiceForm:
         template = "adm/forms/configurable_admin_adm_item.html"
 
     success = False
