@@ -1,6 +1,7 @@
 # coding=utf-8
 from collections import defaultdict
 from datetime import datetime
+import types
 from django.core.cache import cache
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
@@ -14,7 +15,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from restkit.errors import ResourceError
 import commcare_translations
-from corehq.apps.app_manager import fixtures
+from corehq.apps.app_manager import fixtures, xform, suite_xml
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError, WrappedNode
 from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
@@ -126,6 +127,20 @@ class IndexedSchema(DocumentSchema):
         return self._i
     def __eq__(self, other):
         return other and (self.id == other.id) and (self._parent == other._parent)
+
+    class Getter(object):
+        def __init__(self, attr):
+            self.attr = attr
+        def __call__(self, instance):
+            items = getattr(instance, self.attr)
+            l = len(items)
+            for i,item in enumerate(items):
+                yield item.with_id(i%l, instance)
+        def __get__(self, instance, owner):
+            # thanks, http://metapython.blogspot.com/2010/11/python-instance-methods-how-are-they.html
+            # this makes Getter('foo') act like a bound method
+            return types.MethodType(self, instance, owner)
+
 
 class FormActionCondition(DocumentSchema):
     """
@@ -530,7 +545,7 @@ class DetailColumn(IndexedSchema):
         return super(DetailColumn, cls).wrap(data)
 
 
-class Detail(DocumentSchema):
+class Detail(IndexedSchema):
     """
     Full configuration for a case selection screen
 
@@ -538,11 +553,7 @@ class Detail(DocumentSchema):
     type = StringProperty(choices=DETAIL_TYPES)
     columns = SchemaListProperty(DetailColumn)
 
-
-    def get_columns(self):
-        l = len(self.columns)
-        for i, column in enumerate(self.columns):
-            yield column.with_id(i%l, self)
+    get_columns = IndexedSchema.Getter('columns')
     @parse_int([1])
     def get_column(self, i):
         return self.columns[i].with_id(i%len(self.columns), self)
@@ -588,17 +599,6 @@ class Detail(DocumentSchema):
         xpath = ' && '.join(filters)
         return partial_escape(xpath)
 
-    def filter_xpath_2(self):
-        filters = []
-        for i,column in enumerate(self.columns):
-            if column.format == 'filter':
-                filters.append("(%s)" % column.filter_xpath.replace('.', column.xpath))
-        if filters:
-            xpath = '[%s]' % (' && '.join(filters))
-        else:
-            xpath = ''
-        return partial_escape(xpath)
-
 class CaseList(IndexedSchema):
     label = DictProperty()
     show = BooleanProperty(default=False)
@@ -632,18 +632,16 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
         for case_list in (self.case_list, self.referral_list):
             case_list.rename_lang(old_lang, new_lang)
 
-    def get_forms(self):
-        self__forms = self.forms
-        l = len(self__forms)
-        for i, form in enumerate(self__forms):
-            yield form.with_id(i%l, self)
+    get_forms = IndexedSchema.Getter('forms')
     @parse_int([1])
     def get_form(self, i):
         self__forms = self.forms
         return self__forms[i].with_id(i%len(self.forms), self)
 
+    get_details = IndexedSchema.Getter('details')
+
     def get_detail(self, detail_type):
-        for detail in self.details:
+        for detail in self.get_details():
             if detail.type == detail_type:
                 return detail
         raise Exception("Module %s has no detail type %s" % (self, detail_type))
@@ -1347,12 +1345,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         self.put_attachment(value, 'custom_suite.xml')
 
     def create_suite(self):
-        template='app_manager/suite-%s.xml' % self.application_version
-
-        return render_to_string(template, {
-            'app': self,
-            'langs': ["default"] + self.build_langs
-        })
+        if self.application_version == '1.0':
+            template='app_manager/suite-%s.xml' % self.application_version
+            return render_to_string(template, {
+                'app': self,
+                'langs': ["default"] + self.build_langs
+            })
+        else:
+            return suite_xml.generate_suite(self)
 
     def create_all_files(self):
         files = {
@@ -1367,12 +1367,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for form in module.get_forms():
                 files["modules-%s/forms-%s.xml" % (module.id, form.id)] = self.fetch_xform(module.id, form.id)
         return files
-
-    def get_modules(self):
-        self__modules = self.modules
-        l = len(self__modules)
-        for i,module in enumerate(self__modules):
-            yield module.with_id(i%l, self)
+    get_modules = IndexedSchema.Getter('modules')
 
     @parse_int([1])
     def get_module(self, i):
