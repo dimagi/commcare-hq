@@ -31,3 +31,4 @@ mock==0.8.0
 requests
 poster
 git+git://github.com/daviddrysdale/python-phonenumbers.git
+eulxml
