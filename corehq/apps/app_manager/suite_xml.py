@@ -70,6 +70,11 @@ class Display(XmlObject):
     media_image = StringField('media/@image')
     media_audio = StringField('media/@audio')
 
+    def __init__(self, text=None, media_image=None, media_audio=None, **kwargs):
+        super(Display, self).__init__(text=text, **kwargs)
+        self.media_image = media_image
+        self.media_audio = media_audio
+
 class DisplayNode(XmlObject):
     """Any node that has the awkward text-or-display subnode, like Command or Menu"""
     text = NodeField('text', Text)
