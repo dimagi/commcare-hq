@@ -1,5 +1,6 @@
 import subprocess
 import threading
+import time
 
 class ProcessTimedOut(Exception):
     pass
@@ -18,26 +19,32 @@ class Subprocess(object):
         self.kwargs = kwargs
         self.process = None
 
+    @property
+    def command_display(self):
+        return ' '.join(self.args[0] if self.args else self.kwargs.get('args'))
+
     def run(self, timeout=None):
         def target(*args, **kwargs):
+            self.process = 'started'
             self.process = subprocess.Popen(*args, **kwargs)
             self.process.communicate()
-
         thread = threading.Thread(target=target, args=self.args, kwargs=self.kwargs)
         thread.start()
-
+        start = time.time()
         thread.join(timeout)
-        if thread.is_alive() and self.process:
+        if thread.is_alive():
             self.process.terminate()
             thread.join()
             raise ProcessTimedOut("Process `%s` timed out after %s seconds" % (
-                ' '.join(self.args[0] if self.args else self.kwargs.get('args')),
+                self.command_display,
                 timeout
             ))
-        elif self.process is None:
-            raise ProcessTimedOut("Process `%s` timed out after %s seconds before even getting a chance to start" % (
-                ' '.join(self.args[0] if self.args else self.kwargs.get('args')),
-                timeout
-            ))
+        elif self.process == 'started':
+            raise ProcessTimedOut("Still don't know what's going on here. Process `%s` 'timed out' after %s seconds "
+                "(not %s) with the value 'started'",
+                self.command_display,
+                time.time() - start,
+                timeout,
+            )
         else:
             return self.process.returncode
