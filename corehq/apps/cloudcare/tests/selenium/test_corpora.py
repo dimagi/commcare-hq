@@ -65,24 +65,3 @@ class BasicTestTestCase(CloudCareTestCase):
         self.submit_form()
         self.open_form('Update Case')
         self.assertNotIn(name, self.page_source)
-
-
-#class BasicFormTestsTestCase(CloudCareTestCase):
-    #app_name = 'Coverage'
-    #module_name = 'Basic Form Tests'
-
-    #def test_datatypes(self):
-        #pass
-
-    #def test_groups(self):
-        #pass
-
-    #def test_constraints(self):
-        #pass
-
-    #def test_other(self):
-        #pass
-
-    #def test_repeats(self):
-        #pass
-
