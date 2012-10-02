@@ -1,30 +1,30 @@
 function(doc) {
-    if(doc.doc_type === "CommCareCase"
-        && doc.type === 'household' ) {
-        var definition = doc.computed_.mvp_indicators;
+    // !code util/mvp.js
+    if (isHouseholdCase(doc)) {
+        var indicators = get_indicators(doc);
+
         var dobs = new Array(),
             deaths = new Array(),
             death_ids = new Array(),
             pregnancies = new Array();
 
-        if (definition.case_child_close_reason.value) {
-            for (var d in definition.case_child_close_reason.value) {
-                var close_reason = definition.case_child_close_reason.value[d].value;
+        if (indicators.case_child_close_reason.value) {
+            for (var d in indicators.case_child_close_reason.value) {
+                var close_reason = indicators.case_child_close_reason.value[d].value;
                 if (close_reason === 'death') {
-                    deaths.push(definition.case_child_close_reason.value[d]);
-                    death_ids.push(definition.case_child_close_reason.value[d].case_id);
+                    deaths.push(indicators.case_child_close_reason.value[d]);
+                    death_ids.push(indicators.case_child_close_reason.value[d].case_id);
                 }
 
             }
         }
 
-        var ms_day = 24*60*60*1000;
-        var ms_five_years = 5*365*ms_day,
-            ms_31_days = 31*ms_day;
+        var ms_five_years = 5*365*MS_IN_DAY,
+            ms_31_days = 31*MS_IN_DAY;
 
-        if (definition.case_child_dob.value) {
-            for (var c in definition.case_child_dob.value) {
-                var dob_info = definition.case_child_dob.value[c];
+        if (indicators.case_child_dob.value) {
+            for (var c in indicators.case_child_dob.value) {
+                var dob_info = indicators.case_child_dob.value[c];
                 var dob = dob_info.value;
                 if (dob) {
                     var dob_string = dob;
@@ -52,14 +52,14 @@ function(doc) {
             }
         }
 
-        if (definition.case_pregnancy.value) {
-            for (var p in definition.case_pregnancy.value) {
-                var p_info = definition.case_pregnancy.value[p];
+        if (indicators.case_pregnancy.value) {
+            for (var p in indicators.case_pregnancy.value) {
+                var p_info = indicators.case_pregnancy.value[p];
                 var preg_end = p_info.case_closed;
 
                 if (!preg_end && p_info.case_opened) {
                     var estimated_end = new Date(preg_end);
-                    estimated_end.setTime(estimated_end.getTime() + 42*7*ms_day);
+                    estimated_end.setTime(estimated_end.getTime() + 42*7*MS_IN_DAY);
                     preg_end = estimated_end.toISOString();
                 }
                 if (preg_end && p_info.case_opened)

@@ -6,8 +6,19 @@
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
         $(function(){
+            var recalc_thead_width = function () {
+                var th_width = $('.mvp-table tbody td').width();
+                var indicator_width = $('.mvp-table tbody th').width();
+                $('.mvp-table thead th, .mvp-table tbody td').width(th_width);
+                $('.mvp-table thead th:first-child, .mvp-table tbody th').width(indicator_width);
+            };
+            recalc_thead_width();
+
             $('#mvp-table-head').affix({
                 offset: 197
+            });
+            $(window).resize(function () {
+                recalc_thead_width();
             });
         });
     </script>
@@ -15,13 +26,9 @@
 
 {% block reportcontent %}
     <table class="table table-bordered table-striped datatable mvp-table">
-        <colgroup span="1" class="definition_columns"></colgroup>
-        <colgroup span="12" class="past_columns"></colgroup>
-        <colgroup span="1" class="current_month_column"></colgroup>
-        <colgroup span="3"></colgroup>
-        <thead>
-            <tr id="mvp-table-head" data-spy="affix" data-offset-top="197">
-                <th class="span2"></th>
+        <thead id="mvp-table-head" data-spy="affix" data-offset-top="197">
+            <tr>
+                <th class="indicator-def">&nbsp;</th>
                 {% for header in headers %}
                 <th{% ifequal forloop.counter 13 %} class="current_month"{% endifequal %}>{{ header }}</th>
                 {% endfor %}
