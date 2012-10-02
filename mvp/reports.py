@@ -118,45 +118,6 @@ class MVISHealthCoordinatorReport(CustomProjectReport):
                 text="%.f%%" % percent
             )
 
-#        if self.domain == 'mvp-sauri':
-#            self.child_indicators[0]['values'][0]['value'] = dict(
-#                text="100%",
-#                percent=100,
-#                d=14,
-#                n=14
-#            )
-#            self.child_indicators[1]['values'][0]['value'] = dict(
-#                text="93%",
-#                percent=93,
-#                d=14,
-#                n=13
-#            )
-#            self.child_indicators[2]['values'][0]['value'] = dict(
-#                text="%.f%%" % ((12.0/13.0)*100),
-#                percent=(12.0/13.0)*100,
-#                d=13,
-#                n=12
-#            )
-#        elif self.domain == 'mvp-potou':
-#            self.child_indicators[0]['values'][0]['value'] = dict(
-#                text="100%",
-#                percent=100,
-#                d=5,
-#                n=5
-#            )
-#            self.child_indicators[1]['values'][0]['value'] = dict(
-#                text="%.f%%" % ((4.0/5.0)*100),
-#                percent=((4.0/5.0)*100),
-#                d=5,
-#                n=4
-#            )
-#            self.child_indicators[2]['values'][0]['value'] = dict(
-#                text="%.f%%" % ((2.0/4.0)*100),
-#                percent=(2.0/4.0)*100,
-#                d=4,
-#                n=2
-#            )
-
         all_indicators = self.child_indicators + self.general_indicators
         for indicator in all_indicators:
             indicator['values'].reverse()
