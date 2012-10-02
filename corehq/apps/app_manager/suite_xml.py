@@ -289,8 +289,13 @@ class SuiteGenerator(object):
                         for column in detail_columns:
                             fields = get_column_generator(self.app, module, detail, column).fields
                             d.fields.extend(fields)
-                        d.fields[0].sort = 'default'
-                        yield d
+                        try:
+                            d.fields[0].sort = 'default'
+                        except IndexError:
+                            pass
+                        else:
+                            # only yield the Detail if it has Fields
+                            yield d
 
     def get_filter_xpath(self, module):
         from corehq.apps.app_manager.detail_screen import Filter

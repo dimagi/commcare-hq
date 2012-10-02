@@ -163,7 +163,7 @@ class Enum(FormattedDetailColumn):
     @property
     def xpath_function(self):
         parts = []
-        for key in self.column.enum:
+        for key in sorted(self.column.enum.keys()):
             parts.append(
                 u"if({xpath} = '{key}', $k{key}, ".format(key=key, xpath=self.xpath)
             )
