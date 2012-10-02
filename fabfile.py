@@ -110,7 +110,7 @@ def india():
     env.log_root   = _join(root, 'log')
     env.code_branch = 'master'
     env.sudo_user = 'commcarehq'
-    env.hosts = ['220.226.209.82']
+    onv.hosts = ['220.226.209.82']
     env.environment = 'india'
     env.user = prompt("Username: ", default=env.user)
     env.service_manager = "supervisor"
@@ -137,6 +137,7 @@ def production():
         'formsplayer': ['hqdjango0.internal.commcarehq.org'],
         'lb': [], #todo on apache level config
         'staticfiles': ['hqproxy0.internal.commcarehq.org'],
+        'deploy': ['hqdb.internal.commcarehq.org'], #this is a stub becuaue we don't want to be prompted for a host or run deploy too many times
     }
 
 
@@ -144,7 +145,7 @@ def production():
     env.settings = '%(project)s.localsettings' % env
     env.host_os_map = None # e.g. 'ubuntu' or 'redhat'.  Gets autopopulated by what_os() if you don't know what it is or don't want to specify.
     env.db = '%s_%s' % (env.project, env.environment)
-    env.roles = ['django_app', ]
+    env.roles = ['deploy', ]
 
     env.jython_home = '/usr/local/lib/jython'
     _setup_path()
@@ -287,7 +288,7 @@ def preindex_views():
         update_env()
         sudo('echo "%(virtualenv_root)s/bin/python %(code_root)s/manage.py sync_prepare_couchdb_multi 8 %(user)s" | at -t `date -d "5 seconds" +%%m%%d%%H%%M.%%S`' % env, user=env.sudo_user)
 
-#@roles('django_app','django_celery', 'staticfiles') #'django_public','formsplayer'
+@roles('django_app','django_celery', 'staticfiles', 'django_public')#,'formsplayer')
 @parallel
 def update_code():
     with cd(env.code_root):
@@ -297,32 +298,36 @@ def update_code():
         sudo('git submodule update --init --recursive', user=env.sudo_user)
 
 
+def do_deploy():
+    print "foo"
 
 @task
-@roles('django_app', 'django_celery', 'staticfiles') #'django_public','formsplayer'
-@parallel
+#@roles('django_app', 'django_celery', 'staticfiles') #'django_public','formsplayer'
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
     print "#### enter deploy"
     require('root', provided_by=('staging', 'production'))
-    #run('echo ping!') #hack/workaround for delayed console response
+    run('echo ping!') #hack/workaround for delayed console response
 
     try:
-        update_code()
-        update_env()
-        _do_update_services()
+        execute(update_code)
+        execute(update_env)
+        execute(clear_services_dir)
+        upload_and_set_supervisor_config()
         execute(migrate)
         execute(_do_collectstatic)
     finally:
         # hopefully bring the server back to life if anything goes wrong
         execute(services_stop)
         execute(services_start)
+        pass
+
 
 
 
 
 @task
-#@roles('django_app','django_celery','staticfiles') #'formsplayer','django_public'
+@roles('django_app','django_celery','staticfiles', 'django_public')#,'formsplayer')
 @parallel
 def update_env():
     """ update external dependencies on remote host assumes you've done a code update"""
@@ -358,16 +363,16 @@ def update_services():
     """ upload changes to services such as nginx """
     with settings(warn_only=True):
         services_stop()
-    _do_update_services()
+    clear_services_dir()
     services_start()
     netstat_plnt()
 
+@roles('django_app', 'django_celery', 'django_public',)# 'formsplayer')
 @parallel
-def _do_update_services():
+def clear_services_dir():
     #remove old confs from directory first
     services_dir =  posixpath.join(env.services, u'supervisor', 'supervisor_*.conf')
     sudo('rm -f %s' % services_dir, user=env.sudo_user)
-    upload_and_set_supervisor_config()
 
 @roles('lb')
 def configtest():
@@ -420,7 +425,7 @@ def _services_start_formsplayer():
     _supervisor_command('start  %(project)s-%(environment)s-formsplayer' % env)
 
 
-@roles('django_app', 'django_celery',) # 'django_public', 'formsplayer'
+@roles('django_app', 'django_celery','django_public',)# 'formsplayer'
 def services_start():
     ''' Start the gunicorn servers '''
     require('environment', provided_by=('staging', 'demo', 'production'))
@@ -450,7 +455,7 @@ def _services_stop_celery():
 def _services_stop_formsplayer():
     _supervisor_command('stop  %(project)s-%(environment)s-formsplayer' % env)
 
-@roles('django_app', 'django_celery',) # 'django_public', 'formsplayer'
+@roles('django_app', 'django_celery','django_public')#, 'formsplayer')
 def services_stop():
     ''' Stop the gunicorn servers '''
     require('environment', provided_by=('staging', 'demo', 'production'))
@@ -502,7 +507,7 @@ def reset_local_db():
     with settings(warn_only=True):
         local('dropdb %s' % local_db)
     local('createdb %s' % local_db)
-    host = '%s@%s' % (env.user, env.hosts[0])
+    host = '%s@%s' % (env.user, env.oosts[0])
     local('ssh -C %s sudo -u commcare-hq pg_dump -Ox %s | psql %s' % (host, remote_db, local_db))
 @task
 def fix_locale_perms():
