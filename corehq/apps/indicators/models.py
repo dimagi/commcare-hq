@@ -137,16 +137,30 @@ class IndicatorDefinition(Document):
 
 
 class FormDataIndicatorDefinitionMixin(DocumentSchema):
+    """
+        Use this mixin whenever you plan on dealing with forms in indicator definitions.
+    """
     xmlns = StringProperty()
 
-    def get_from_form(self, form_data, prop_ref):
-        if len(prop_ref) > 0 and form_data:
-            return self.get_from_form(form_data.get(prop_ref[0]), prop_ref[1:])
+    def get_from_form(self, form_data, question_id):
+        """
+            question_id must be formatted like: path.to.question_id
+        """
+        if isinstance(question_id, str) or isinstance(question_id, unicode):
+            question_id = question_id.split('.')
+        if len(question_id) > 0 and form_data:
+            return self.get_from_form(form_data.get(question_id[0]), question_id[1:])
+        if form_data and ('#text' in form_data):
+            print "FOUND #text", form_data
         result = form_data.get('#text') if form_data and ('#text' in form_data) else form_data
         return result
 
 
 class FormIndicatorDefinition(IndicatorDefinition, FormDataIndicatorDefinitionMixin):
+    """
+        This Indicator Definition defines an indicator that will live in the computed_ property of an XFormInstance
+        document. The 'doc' passed through get_value and get_clean_value should be an XFormInstance.
+    """
     base_doc = "FormIndicatorDefinition"
 
     def get_clean_value(self, doc):
@@ -161,7 +175,44 @@ class FormIndicatorDefinition(IndicatorDefinition, FormDataIndicatorDefinitionMi
         return ["namespace", "domain", "xmlns", "slug"]
 
 
+class FormDataAliasIndicatorDefinition(FormIndicatorDefinition):
+    """
+        This Indicator Definition is targeted for the scenarios where you have an indicator report across multiple
+        domains and each domain's application doesn't necessarily have standardized question IDs. This provides a way
+        of aliasing question_ids on a per-domain basis so that you can reference the same data in a standardized way
+        as a computed_ indicator.
+    """
+    question_id = StringProperty()
+
+    def get_value(self, doc):
+        form_data = doc.get_form
+        return self.get_from_form(form_data, self.question_id)
+
+
+class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
+    """
+        Use this indicator when you want to pull the value from a case property of a case related to a form
+        and include it as an indicator for that form.
+        This currently assumes the pre-2.0 model of CommCareCases and that there is only one related case per form.
+        This should probably get rewritten to handle forms that update more than one type of case or for sub-cases.
+    """
+    case_property = StringProperty()
+
+    def get_value(self, doc):
+        form_data = doc.get_form
+        related_case_id = form_data.get('case', {}).get('@case_id')
+        if related_case_id:
+            case = CommCareCase.get(related_case_id)
+            if isinstance(case, CommCareCase) and hasattr(case, str(self.case_property)):
+                return getattr(case, str(self.case_property))
+        return None
+
+
 class CaseIndicatorDefinition(IndicatorDefinition):
+    """
+        This Indicator Definition defines an indicator that will live in the computed_ property of a CommCareCase
+        document. The 'doc' passed through get_value and get_clean_value should be a CommCareCase.
+    """
     case_type = StringProperty()
     base_doc = "CaseIndicatorDefinition"
 
@@ -177,20 +228,11 @@ class CaseIndicatorDefinition(IndicatorDefinition):
         return ["namespace", "domain", "case_type", "slug"]
 
 
-class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
-    case_property = StringProperty()
-
-    def get_value(self, doc):
-        form_data = doc.get_form
-        related_case_id = form_data.get('case', {}).get('@case_id')
-        if related_case_id:
-            case = CommCareCase.get(related_case_id)
-            if isinstance(case, CommCareCase) and hasattr(case, str(self.case_property)):
-                return getattr(case, str(self.case_property))
-        return None
-
-
 class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicatorDefinitionMixin):
+    """
+        Use this for when you want to grab all forms with the relevant xmlns in a case's xform_ids property and
+        include a property from those forms as an indicator for this case.
+    """
     _returns_multiple = True
 
     def get_related_forms(self, case):
@@ -207,7 +249,6 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
     def get_value(self, doc):
         existing_value = self.get_existing_value(doc)
         if not (isinstance(existing_value, dict) or isinstance(existing_value, LazyDict)):
-            print "existing value is of type", type(existing_value)
             existing_value = dict()
         forms = self.get_related_forms(doc)
         for form in forms:
@@ -223,7 +264,7 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
     def get_value_for_form(self, form_data):
         raise NotImplementedError
 
-
+# This is here to remind Biyeun to implement this potentially useful indicator definition with less sketch. todo
 #class BooleanIndicatorDefinitionMixin(DocumentSchema):
 #    compared_property = StringProperty()
 #    expression = StringProperty() # example: '%(value)s' not in 'foo bar'
