@@ -17,9 +17,6 @@ class TestSuiteRunner(HqTestSuiteRunner):
         try:
             return super(TestSuiteRunner, self).build_suite(test_labels,
                                                             *args, **kwargs)
-        except:
-            raise
-
         finally:
             django.test.simple.TEST_MODULE = orig_test_module
 
