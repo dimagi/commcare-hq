@@ -42,7 +42,6 @@ class Command(BaseCommand):
     def create_files(self, app, path):
         files = app.create_all_files()
         for filename, payload in files.items():
-            print "  %s" % filename
             filepath = os.path.join(path, filename)
             dirpath, filename = os.path.split(filepath)
             try:
