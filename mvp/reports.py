@@ -2,6 +2,7 @@ import calendar
 import datetime
 import math
 import dateutil
+from django.utils.safestring import mark_safe
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport
 from dimagi.utils.couch.database import get_db
@@ -23,17 +24,19 @@ class MVISHealthCoordinatorReport(CustomProjectReport):
     def report_context(self):
         context = super(MVISHealthCoordinatorReport, self).report_context
 
+        date_format = "%b %Y"
+
         date_ranges = list()
         now = datetime.datetime.utcnow()
         last_start = datetime.datetime(now.year, now.month, 1, hour=0, minute=0, second=0, microsecond=0)
         current_range = self._date_range(last_start, 0)
-        date_ranges.append(dict(label="Current Month", range=current_range))
+        date_ranges.append(dict(label=mark_safe("%s<br />(Current)" % now.strftime(date_format)), range=current_range))
         last_start = current_range.get('start')
 
         for i in range(1,13):
             date_range = self._date_range(last_start)
             last_start = date_range.get('start')
-            date_ranges.append(dict(label="Month (-%d)" % i, range=date_range))
+            date_ranges.append(dict(label=mark_safe("%s<br />(-%d)" % (last_start.strftime(date_format), i)), range=date_range))
 
         dr_first = date_ranges[0].get('range',{})
         self.get_household_cases_for_range(dr_first.get('start'), dr_first.get('end'))
