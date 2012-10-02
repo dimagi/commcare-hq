@@ -48,14 +48,12 @@ class AbstractResource(XmlObject):
     version = IntegerField('resource/@version')
     id = StringField('resource/@id')
 
-    @classmethod
-    def make(cls, id=None, version=None, local=None, remote=None, **kwargs):
-        self = cls(**kwargs)
+    def __init__(self, id=None, version=None, local=None, remote=None, **kwargs):
+        super(AbstractResource, self).__init__(**kwargs)
         self.id = id
         self.version = version
         self.local = local
         self.remote = remote
-        return self
 
 class XFormResource(AbstractResource):
     ROOT_NAME = 'xform'
@@ -80,17 +78,19 @@ class DisplayNode(XmlObject):
     text = NodeField('text', Text)
     display = NodeField('display', Display)
 
-    @classmethod
-    def make(cls, locale_id=None, media_image=None, media_audio=None, **kwargs):
-        self = cls(**kwargs)
-        text = Text(locale_id=locale_id)
+    def __init__(self, locale_id=None, media_image=None, media_audio=None, **kwargs):
+        super(DisplayNode, self).__init__(**kwargs)
+        if locale_id is None:
+            text = None
+        else:
+            text = Text(locale_id=locale_id)
+            
         if media_image or media_audio:
             self.display = Display(text=text, media_image=media_image, media_audio=media_audio)
         else:
             self.text = text
-        return self
 
-class Command(IdNode, DisplayNode):
+class Command(DisplayNode, IdNode):
     ROOT_NAME = 'command'
 
 
@@ -121,7 +121,7 @@ class Entry(XmlObject):
     datums = NodeListField('session/datum', SessionDatum)
     datum = NodeField('session/datum', SessionDatum)
 
-class Menu(IdNode, DisplayNode):
+class Menu(DisplayNode, IdNode):
     ROOT_NAME = 'menu'
 
     commands = NodeListField('command', Command)
@@ -251,7 +251,7 @@ class SuiteGenerator(object):
             else:
                 path = './user_registration.xml'
                 this_list = last
-            this_list.append(XFormResource.make(
+            this_list.append(XFormResource(
                 id=self.id_strings.xform_resource(form_stuff['form']),
                 version=self.app.version,
                 local=path,
@@ -266,7 +266,7 @@ class SuiteGenerator(object):
     def locale_resources(self):
         for lang in ["default"] + self.app.build_langs:
             path = './{lang}/app_strings.txt'.format(lang=lang)
-            yield LocaleResource.make(
+            yield LocaleResource(
                 language=lang,
                 id=self.id_strings.locale_resource(lang),
                 version=self.app.version,
@@ -347,7 +347,7 @@ class SuiteGenerator(object):
             for form in module.get_forms():
                 e = Entry()
                 e.form = form.xmlns
-                e.command=Command.make(
+                e.command=Command(
                     id=form.get_command_id(),
                     locale_id=form.get_locale_id(),
                     media_image=form.media_image,
@@ -358,7 +358,7 @@ class SuiteGenerator(object):
                 yield e
             if module.case_list.show:
                 e = Entry(
-                    command=Command.make(
+                    command=Command(
                         id=module.get_case_list_command_id(),
                         locale_id=module.get_case_list_locale_id(),
                     )
@@ -368,7 +368,7 @@ class SuiteGenerator(object):
     @property
     def menus(self):
         for module in self.app.get_modules():
-            menu = Menu.make(
+            menu = Menu(
                 id='root' if module.put_in_root else self.id_strings.menu(module),
                 locale_id=module.get_locale_id(),
                 media_image=module.media_image,
