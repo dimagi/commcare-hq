@@ -14,7 +14,7 @@
  {% endfor %}
  {% if app.show_user_registration %}
     <xform>
-        <resource id="{{ form.unique_id }}" version="{{ app.version }}">
+        <resource id="{{ app.user_registration.unique_id }}" version="{{ app.version }}">
            <location authority="local">./user_registration.xml</location>
            <location authority="remote">./user_registration.xml</location>
         </resource>

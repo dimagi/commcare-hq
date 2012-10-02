@@ -20,6 +20,7 @@ from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildCon
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
 from corehq.apps.translations.models import TranslationMixin
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
 from corehq.util import bitly
 import current_builds
@@ -197,7 +198,9 @@ class FormSource(object):
         if source is None:
             app = form.get_app()
             filename = "%s.xml" % unique_id
-            if app._attachments and filename in app._attachments and app._attachments[filename]["length"] > 0:
+            if app._attachments and filename in app._attachments and isinstance(app._attachments[filename], basestring):
+                source = app._attachments[filename]
+            elif app._attachments and filename in app._attachments and app._attachments[filename]["length"] > 0:
                 source = form.get_app().fetch_attachment(filename)
             else:
                 source = ''
@@ -671,6 +674,13 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
             "case": ["case_short", "case_long"],
             "none": []
         }[self.requires()]
+    def requires_case_details(self):
+        ret = False
+        for form in self.get_forms():
+            if form.requires_case():
+                ret = True
+                break
+        return ret
 
 class VersioningError(Exception):
     """For errors that violate the principals of versioning in VersionedDoc"""
@@ -828,6 +838,7 @@ class ApplicationBase(VersionedDoc):
     build_signed = BooleanProperty(default=True)
     built_on = DateTimeProperty(required=False)
     build_comment = StringProperty()
+    comment_from = StringProperty()
 
     # watch out for a past bug:
     # when reverting to a build that happens to be released
@@ -1140,7 +1151,7 @@ class ApplicationBase(VersionedDoc):
         jadjar = jadjar.pack(self.create_all_files())
         return jadjar.jar
 
-    def save_copy(self, comment=None):
+    def save_copy(self, comment=None, user_id=None):
         copy = super(ApplicationBase, self).save_copy()
 
         copy.create_jadjar(save=True)
@@ -1160,6 +1171,7 @@ class ApplicationBase(VersionedDoc):
             copy.short_odk_url = None
 
         copy.build_comment = comment
+        copy.comment_from = user_id
         copy.is_released = False
         copy.save(increment_version=False)
 
@@ -1192,6 +1204,10 @@ class SavedAppBuild(ApplicationBase):
             'build_label': self.built_with.get_label(),
             'jar_path': self.get_jar_path(),
         })
+        if data['comment_from']:
+            comment_user = CouchUser.get(data['comment_from'])
+            data['comment_user_name'] = comment_user.full_name
+
         return data
 
 class Application(ApplicationBase, TranslationMixin, HQMediaMixin):

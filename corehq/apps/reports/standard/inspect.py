@@ -134,9 +134,12 @@ class CaseDisplay(object):
         self.case = case
         self.report = report
 
+    def user_not_found_display(self, user_id):
+        return "Unknown [%s]" % user_id
+
     @property
     def owner_display(self):
-        username = self.report.usernames.get(self.user_id, "Unknown [%s]" % self.user_id)
+        username = self.report.usernames.get(self.user_id, self.user_not_found_display(self.user_id))
         if self.owning_group and self.owning_group.name:
             return '<span class="label label-inverse">%s</span>' % self.owning_group.name
         else:
@@ -212,6 +215,16 @@ class CaseDisplay(object):
     @property
     def user_id(self):
         return self.report.individual or self.owner_id
+
+    @property
+    def creating_user(self):
+        owner_id = ""
+        for action in self.case.actions:
+            if action['action_type'] == 'create':
+                owner_id = action['updated_known_properties']['owner_id']
+        if not owner_id:
+            return "No data"
+        return self.report.usernames.get(owner_id, self.user_not_found_display(owner_id))
 
 class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReportParametersMixin):
 
@@ -314,6 +327,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
             DataTablesColumn("Name"),
             DataTablesColumn("Owner"),
             DataTablesColumn("Created Date"),
+            DataTablesColumn("Created By"),
             DataTablesColumn("Modified Date"),
             DataTablesColumn("Status")
         )
@@ -355,6 +369,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
                 display.case_link,
                 display.owner_display,
                 display.opened_on,
+                display.creating_user,
                 display.modified_on,
                 display.closed_display
             ]
