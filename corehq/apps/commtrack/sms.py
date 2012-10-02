@@ -1,5 +1,5 @@
 from corehq.apps.domain.models import Domain
-
+from corehq.apps.commtrack.models import Product
 
 
 def handle(v, text):
@@ -8,7 +8,7 @@ def handle(v, text):
         return False
 
     # TODO error handling
-    print parse_stock_report(text)
+    print StockReport(domain, report_syntax_config).parse(text)
 
     # TODO: if message doesn't parse, don't handle it and fallback
     # to a catch-all error handler?
@@ -34,83 +34,97 @@ report_syntax_config = {
     }
 }
 
-def parse_stock_report(text, location=None):
-    CS = report_syntax_config['single_action']
-    CM = report_syntax_config.get('multiple_action')
+class StockReport(object):
+    def __init__(self, domain, config): # config should probably be pulled from domain automatically?
+        self.domain = domain
+        self.CS = config['single_action']
+        self.CM = config.get('multiple_action')
 
-    def keyword_action_map(*args):
+    def parse(self, text, location=None):
+        args = text.split()
+
+        if args[0] in self.CS['keywords'].values():
+            # single action sms
+            action = self.keyword_action_map()[args[0]]
+            args = args[1:]
+
+            if not location:
+                location = self.location_from_code(args[0])
+                args = args[1:]
+        
+            _tx = self.single_action_transactions(action, args)
+
+        elif self.CM and args[0] == (self.CM['keyword'] or args[0]):
+            # multiple action sms
+            if self.CM['keyword']:
+                args = args[1:]
+
+            if not location:
+                location = self.location_from_code(args[0])
+                args = args[1:]
+
+            _tx = self.multiple_action_transactions(args)
+
+        return {
+            'location': location,
+            'transactions': list(_tx),
+        }
+
+    def keyword_action_map(self, *args):
         """mapping of sms keywords back to the corresponding action"""
-        master_map = dict(CS['keywords'])
+        master_map = dict(self.CS['keywords'])
         for map in args:
             master_map.update(map)
         return dict((v, k) for k, v in master_map.iteritems())
 
-    args = text.split()
+    def single_action_transactions(self, action, args):
+        # special case to handle immediate stock-out reports
+        if action == 'stockout' and all(looks_like_prod_code(arg) for arg in args):
+            for prod_code in args:
+                yield mk_tx(self.product_from_code(prod_code), action, 0)
+            return
+            
+        grouping_allowed = (action == 'stockout')
 
-    if args[0] in CS['keywords'].values():
-        # single action sms
-        action = keyword_action_map()[args[0]]
-        args = args[1:]
+        products = []
+        for arg in args:
+            if looks_like_prod_code(arg):
+                products.append(self.product_from_code(arg))
+            else:
+                if not products:
+                    raise RuntimeError('no product specified')
+                if len(products) > 1 and not grouping_allowed:
+                    raise RuntimeError('missing a value')
 
-        if not location:
-            location = location_from_code(args[0])
-            args = args[1:]
-        
-        _tx = single_action_transactions(action, args)
+                value = int(arg)
+                for p in products:
+                    yield mk_tx(p, action, value)
+                products = []
+        if products:
+            raise RuntimeError('missing a value')
 
-    elif CM and args[0] == (CM['keyword'] or args[0]):
-        # multiple action sms
-        if CM['keyword']:
-            args = args[1:]
+    def multiple_action_transactions(self, args):
+        action_map = self.keyword_action_map(self.CM.get('action_keywords', {}))
 
-        if not location:
-            location = location_from_code(args[0])
-            args = args[1:]
+        for i in range(0, len(args), 2):
+            prod_code, keyword = args[i].split(self.CM['delimeter'])
+            value = int(args[i + 1])
 
-        action_map = keyword_action_map(CM.get('action_keywords', {}))
-        _tx = multiple_action_transactions(CM, action_map, args)
+            product = self.product_from_code(prod_code)
+            action = action_map[keyword]
 
-    return {
-        'location': location,
-        'transactions': list(_tx),
-    }
+            yield mk_tx(product, action, value)
+            
+    def location_from_code(self, loc_code):
+        # TODO fetch a real object
+        return loc_code
 
+    def product_from_code(self, prod_code):
+        p = Product.get_by_code(self.domain.name, prod_code)
+        if p is None:
+            raise RuntimeError('invalid product code')
+        return p
 
-def single_action_transactions(action, args):
-    # special case to handle immediate stock-out reports
-    if action == 'stockout' and all(looks_like_prod_code(arg) for arg in args):
-        for prod_code in args:
-            yield mk_tx(product_from_code(prod_code), action, 0)
-        return
-
-    grouping_allowed = (action == 'stockout')
-
-    products = []
-    for arg in args:
-        if looks_like_prod_code(arg):
-            products.append(product_from_code(arg))
-        else:
-            if not products:
-                raise RuntimeError('no product specified')
-            if len(products) > 1 and not grouping_allowed:
-                raise RuntimeError('missing a value')
-
-            value = int(arg)
-            for p in products:
-                yield mk_tx(p, action, value)
-            products = []
-    if products:
-        raise RuntimeError('missing a value')
-
-def multiple_action_transactions(C, action_map, args):
-    for i in range(0, len(args), 2):
-        prod_code, keyword = args[i].split(C['delimeter'])
-        value = int(args[i + 1])
-
-        product = product_from_code(prod_code)
-        action = action_map[keyword]
-
-        yield mk_tx(product, action, value)
 
 def mk_tx(product, action, value):
     return locals()
@@ -123,10 +137,3 @@ def looks_like_prod_code(code):
         return True
 
 
-def location_from_code(loc_code):
-    # TODO fetch a real object
-    return loc_code
-
-def product_from_code(prod_code):
-    # TODO fetch a real object
-    return prod_code
