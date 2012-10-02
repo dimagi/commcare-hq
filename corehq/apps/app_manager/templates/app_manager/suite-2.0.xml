@@ -1,4 +1,5 @@
   {% load xforms_extras %}
+  {% load hq_shared_tags %}
 <suite version="{{ app.version }}">
  {% for module in app.get_modules %}
   {% for  form in module.get_forms %}
@@ -51,8 +52,8 @@
             <template><text><xpath function="{{ d.model }}_{{ d.field }}_{{ forloop.counter }}"/></text></template>
          {% else %}{% if d.format == "enum" or d.format == "enum-image"%}
              <template{% if d.format == "enum-image" %} form="image"{% endif %}><text>
-                 <xpath function="{% for key, val in d.enum.items %}if({{ d.xpath }} = '{{ key }}', $k{{ key }}, {% endfor %}''{% for _ in d.enum %}){% endfor %}">
-                  {% for key, val in d.enum.items %}
+                 <xpath function="{% for key, val in d.enum.items|sort %}if({{ d.xpath }} = '{{ key }}', $k{{ key }}, {% endfor %}''{% for _ in d.enum %}){% endfor %}">
+                  {% for key, val in d.enum.items|sort %}
                      <variable name="k{{ key }}">
                          <locale id="m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.parentloop.counter }}.enum.k{{ key }}{% if d.format == "enum-image" %}.image{% endif %}"/>
                      </variable>
