@@ -1377,8 +1377,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             "profile.xml": self.create_profile(),
             "suite.xml": self.create_suite(),
         }
+
         if self.show_user_registration:
-            files["user_registration.xml"] = self.fetch_xform(self.get_user_registration())
+            files["user_registration.xml"] = self.fetch_xform(form=self.get_user_registration())
         for lang in ['default'] + self.build_langs:
             files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)
         for module in self.get_modules():
