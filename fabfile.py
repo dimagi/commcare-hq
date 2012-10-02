@@ -507,7 +507,7 @@ def reset_local_db():
     with settings(warn_only=True):
         local('dropdb %s' % local_db)
     local('createdb %s' % local_db)
-    host = '%s@%s' % (env.user, env.oosts[0])
+    host = '%s@%s' % (env.user, env.hosts[0])
     local('ssh -C %s sudo -u commcare-hq pg_dump -Ox %s | psql %s' % (host, remote_db, local_db))
 @task
 def fix_locale_perms():
