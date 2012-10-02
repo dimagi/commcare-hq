@@ -305,12 +305,9 @@ def deploy():
     """ deploy code to remote host by checking out the latest via git """
     print "#### enter deploy"
     require('root', provided_by=('staging', 'production'))
-    run('echo ping!') #hack/workaround for delayed console response
+    #run('echo ping!') #hack/workaround for delayed console response
 
-    with settings(warn_only=True):
-        execute(services_stop)
     try:
-        print "deploying!"
         update_code()
         update_env()
         _do_update_services()
@@ -320,7 +317,6 @@ def deploy():
         # hopefully bring the server back to life if anything goes wrong
         execute(services_stop)
         execute(services_start)
-    print "finished deploying!"
 
 
 
@@ -572,7 +568,6 @@ def upload_and_set_supervisor_config():
     execute(upload_djangoapp_supervisorconf)
     execute(upload_django_public_supervisorconf)
     execute(upload_formsplayer_supervisorconf)
-    _supervisor_command('reload')
 
 def generate_supervisorconf_file():
     #regenerate a brand new supervisor conf file from scratch.
@@ -590,8 +585,8 @@ def generate_supervisorconf_file():
 
 def _supervisor_command(command):
     require('hosts', provided_by=('staging', 'production'))
-    if what_os() == 'redhat':
-        cmd_exec = "/usr/bin/supervisorctl"
-    elif what_os() == 'ubuntu':
-        cmd_exec = "/usr/local/bin/supervisorctl"
-    sudo('sudo %s %s' % (cmd_exec, command))
+    #if what_os() == 'redhat':
+        #cmd_exec = "/usr/bin/supervisorctl"
+    #elif what_os() == 'ubuntu':
+        #cmd_exec = "/usr/local/bin/supervisorctl"
+    sudo('supervisorctl %s' % (command), shell=False)
