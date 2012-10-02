@@ -144,10 +144,10 @@ class FormDataIndicatorDefinitionMixin(DocumentSchema):
 
     def get_from_form(self, form_data, question_id):
         """
-            question_id must be formatted like: path.to.question_id or path/to/question_id
+            question_id must be formatted like: path.to.question_id
         """
         if isinstance(question_id, str) or isinstance(question_id, unicode):
-            question_id = question_id.split('/') if '/' in question_id else question_id.split('.')
+            question_id = question_id.split('.')
         if len(question_id) > 0 and form_data:
             return self.get_from_form(form_data.get(question_id[0]), question_id[1:])
         if form_data and ('#text' in form_data):
