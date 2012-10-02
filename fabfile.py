@@ -318,9 +318,7 @@ def deploy():
         execute(_do_collectstatic)
     finally:
         # hopefully bring the server back to life if anything goes wrong
-        execute(services_stop)
-        execute(services_start)
-        pass
+        execute(services_restart)
 
 
 
@@ -357,15 +355,6 @@ def touch_supervisor():
     sudo('touch %s' % supervisor_path, user=env.sudo_user)
     _supervisor_command('update')
 
-
-@task
-def update_services():
-    """ upload changes to services such as nginx """
-    with settings(warn_only=True):
-        services_stop()
-    clear_services_dir()
-    services_start()
-    netstat_plnt()
 
 @roles('django_app', 'django_celery', 'django_public',)# 'formsplayer')
 @parallel
@@ -462,6 +451,16 @@ def services_stop():
     _supervisor_command('stop all')
 ###########################################################
 
+@roles('django_app', 'django_celery','django_public')#, 'formsplayer')
+def services_restart():
+    ''' Stop and restart all supervisord services'''
+    require('environment', provided_by=('staging', 'demo', 'production'))
+    _supervisor_command('stop all')
+
+    _supervisor_command('update')
+    _supervisor_command('reload')
+    _supervisor_command('start  all')
+#
 @roles('django_celery',)
 def migrate():
     """ run south migration on remote environment """
