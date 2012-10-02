@@ -78,20 +78,29 @@ var HQReport = function (options) {
     };
 
     var checkFilterAccordionToggleState = function () {
+        var _setShowFilterCookie = function (show) {
+            var showStr = show ? 'in' : '';
+            $.cookie(self.toggleFiltersCookie, showStr, {path: self.urlRoot, expires: 1});
+        };
+        
+        if ($.cookie(self.toggleFiltersCookie) === null) {
+            // default to showing filters
+            _setShowFilterCookie(true);
+        }
         $(self.filterAccordion).addClass($.cookie(self.toggleFiltersCookie));
-
+        
         if ($.cookie(self.toggleFiltersCookie) == 'in')
             $(self.toggleFiltersButton).button('hide');
         else
             $(self.toggleFiltersButton).button('show');
 
         $(self.filterAccordion).on('hidden', function () {
-            $.cookie(self.toggleFiltersCookie, '', {path: self.urlRoot, expires: 1});
+            _setShowFilterCookie(false);
             $(self.toggleFiltersButton).button('show');
         });
 
         $(self.filterAccordion).on('show', function () {
-            $.cookie(self.toggleFiltersCookie, 'in', {path: self.urlRoot, expires: 1});
+            _setShowFilterCookie(true);
             $(self.toggleFiltersButton).button('hide');
         });
 
