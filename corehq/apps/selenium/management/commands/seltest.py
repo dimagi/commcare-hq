@@ -30,6 +30,8 @@ class Command(test.Command):
         interactive = options.get('interactive', True)
         failfast = options.get('failfast', False)
 
+        # Apply south migrations, as South does in its test command that
+        # replaces django's default test command 
         patch_for_test_db_setup()
 
         if settings.SELENIUM_XVFB:
