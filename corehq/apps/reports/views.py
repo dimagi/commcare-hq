@@ -50,6 +50,8 @@ from StringIO import StringIO
 from corehq.apps.app_manager.util import get_app_id
 from corehq.apps.groups.models import Group
 from corehq.apps.adm import utils as adm_utils
+from soil import DownloadBase
+from celery.task import task
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -474,26 +476,17 @@ def case_details(request, domain, case_id):
         "timezone": timezone
     })
 
-@login_or_digest
-@require_case_export_permission
-@login_and_domain_required
-def download_cases(request, domain):
-    include_closed = json.loads(request.GET.get('include_closed', 'false'))
-    format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
-
+@task
+def _download_cases(domain, include_closed, format, group, user_filter):
     view_name = 'hqcase/all_cases' if include_closed else 'hqcase/open_cases'
-
     key = [domain, {}, {}]
     cases = CommCareCase.view(view_name, startkey=key, endkey=key + [{}], reduce=False, include_docs=True)
-#    group, users = util.get_group_params(domain, **json_request(request.GET))
-    group = request.GET.get('group', None)
-    user_filter, _ = FilterUsersField.get_user_filter(request)
     # todo deal with cached user dict here
     users = get_all_users_by_domain(domain, group=group, user_filter=user_filter)
     groups = Group.get_case_sharing_groups(domain)
-    
-#    if not group:
-#        users.extend(CommCareUser.by_domain(domain, is_active=False))
+
+    #    if not group:
+    #        users.extend(CommCareUser.by_domain(domain, is_active=False))
 
     workbook = WorkBook()
     export_cases_and_referrals(cases, workbook, users=users, groups=groups)
@@ -502,6 +495,36 @@ def download_cases(request, domain):
     response['Content-Type'] = "%s" % format.mimetype
     response['Content-Disposition'] = "attachment; filename={domain}_data.{ext}".format(domain=domain, ext=format.extension)
     return response
+
+@login_or_digest
+@require_case_export_permission
+@login_and_domain_required
+def download_cases(request, domain):
+    include_closed = json.loads(request.GET.get('include_closed', 'false'))
+    format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
+    view_name = 'hqcase/all_cases' if include_closed else 'hqcase/open_cases'
+    group = request.GET.get('group', None)
+    user_filter, _ = FilterUsersField.get_user_filter(request)
+
+    async = request.GET.get('async') == 'true'
+    if async:
+        download = DownloadBase()
+        a_task = _download_cases.delay(domain, include_closed, format, group, user_filter)
+        download.set_task(a_task)
+        return download.get_start_response()
+    else:
+        return _download_cases(domain, include_closed, format, group, user_filter)
+
+
+#@login_or_digest
+#@require_case_export_permission
+#@login_and_domain_required
+#def download_cases(request, domain):
+#    async = request.GET.get('async') == 'true'
+#    if async:
+#        download = DownloadBase()
+#        download.set_task(_download_cases.delay(request, domain))
+#        return download.get_start_response()
 
 @require_can_view_all_reports
 @login_and_domain_required
