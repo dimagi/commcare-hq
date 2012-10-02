@@ -348,7 +348,7 @@ def touch_apache():
 
 
 
-@roles('django_celery', 'django_app','staticfiles')
+@roles('django_celery', 'django_app',)
 def touch_supervisor():
     """ touch apache and supervisor conf files to trigger reload. Also calls supervisorctl update to load latest supervisor.conf """
     require('code_root', provided_by=('staging', 'production'))
@@ -424,6 +424,7 @@ def _services_start_formsplayer():
     _supervisor_command('start  %(project)s-%(environment)s-formsplayer' % env)
 
 
+@roles('django_app', 'django_celery',) # 'django_public', 'formsplayer'
 def services_start():
     ''' Start the gunicorn servers '''
     require('environment', provided_by=('staging', 'demo', 'production'))
