@@ -102,6 +102,12 @@ DOMAIN_SYNCS = {
 }
 DOMAIN_SYNC_APP_NAME_MAP = { "app_name": "new_app_name" }
 
+####### Touchforms config #######
+
+XFORMS_PLAYER_URL = 'http://127.0.0.1:4444'
+
+TOUCHFORMS_API_USER = 'admin@example.com'
+TOUCHFORMS_API_PASSWORD = 'password'
 
 ####### Misc / HQ-specific Config ########
 
