@@ -30,7 +30,6 @@ class Text(XmlObject):
 
     ROOT_NAME = 'text'
 
-    xpaths = NodeListField('xpath', Xpath)
     xpath = NodeField('xpath', Xpath)
     xpath_function = StringField('xpath/@function')
 
