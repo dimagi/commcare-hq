@@ -4,16 +4,24 @@ from celery.log import get_task_logger
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from django.core.cache import cache
-from django.http import Http404
+from django.http import Http404, HttpResponse
 import pickle
+from casexml.apps.case.export import export_cases_and_referrals
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.models import DailyReportNotification,\
     HQGroupExportConfiguration, CaseActivityReportCache
+from corehq.apps.reports.util import get_all_users_by_domain
+from corehq.apps.users.export import export_users
 from corehq.apps.users.models import CouchUser
 from corehq.apps.reports.schedule.html2text import html2text
 from dimagi.utils.django.email import send_HTML_email
 from corehq.apps.reports.schedule.config import ScheduledReportFactory
 from couchexport.groupexports import export_for_group
+from corehq.apps.groups.models import Group
+from dimagi.utils.export import WorkBook
+from soil import CachedDownload
+
 
 logging = get_task_logger()
 
@@ -124,3 +132,37 @@ def _cache_data(data, cache_key,
         new_cache['set_on'] = datetime.utcnow()
         new_cache[data_key] = data
         cache.set(cache_key, new_cache, cache_timeout)
+
+@task
+def download_cases(domain, include_closed, format, group, user_filter, download_id=None, async=True):
+    expiry=10*60*60
+    view_name = 'hqcase/all_cases' if include_closed else 'hqcase/open_cases'
+    key = [domain, {}, {}]
+    cases = CommCareCase.view(view_name, startkey=key, endkey=key + [{}], reduce=False, include_docs=True)
+    # todo deal with cached user dict here
+    users = get_all_users_by_domain(domain, group=group, user_filter=user_filter)
+    groups = Group.get_case_sharing_groups(domain)
+
+    #    if not group:
+    #        users.extend(CommCareUser.by_domain(domain, is_active=False))
+
+    workbook = WorkBook()
+    export_cases_and_referrals(cases, workbook, users=users, groups=groups)
+    export_users(users, workbook)
+    payload = workbook.format(format.slug)
+
+    if not async:
+        response = HttpResponse(payload)
+        response['Content-Type'] = "%s" % format.mimetype
+        response['Content-Disposition'] = "attachment; filename={domain}_data.{ext}".format(domain=domain, ext=format.extension)
+        return response
+
+    download_stream = "%s_stream" % download_id
+    cache.set(download_stream, payload, expiry)
+    CachedDownload(
+        download_stream,
+        mimetype=format.mimetype,
+        content_disposition="attachment; filename={domain}_data.{ext}".format(domain=domain, ext=format.extension),
+#        extras={'X-CommCareHQ-Export-Token': checkpoint.get_id},
+        download_id=download_id
+    ).save(expiry)
