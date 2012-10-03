@@ -302,7 +302,6 @@ def do_deploy():
     print "foo"
 
 @task
-#@roles('django_app', 'django_celery', 'staticfiles') #'django_public','formsplayer'
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
     print "#### enter deploy"
