@@ -16,9 +16,6 @@ logging = get_task_logger()
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
 
 EXPORT_METHOD = getattr(settings, 'COUCHEXPORT_METHOD', 'tmpfile')
-EXPORT_CACHE_ID = getattr(settings, 'COUCHEXPORT_CACHE', 'default')
-cache = cache.get_cache(EXPORT_CACHE_ID)
-
 _EXPORT_METHOD_OPTIONS = ('cached', 'tmpfile')
 if EXPORT_METHOD not in _EXPORT_METHOD_OPTIONS:
     raise ValueError("EXPORT_METHOD %r not recognized; must be one of %r" % (
@@ -26,6 +23,9 @@ if EXPORT_METHOD not in _EXPORT_METHOD_OPTIONS:
         ', '.join([repr(o) for o in _EXPORT_METHOD_OPTIONS])
     ))
 
+#EXPORT_CACHE_ID must be a key in the settings.CACHES dictionary - for files > 1MB, use redis
+EXPORT_CACHE_ID = getattr(settings, 'COUCHEXPORT_CACHE', 'default')
+cache = cache.get_cache(EXPORT_CACHE_ID)
 
 @task
 def export_async(custom_export, download_id, format=None, filename=None, **kwargs):
