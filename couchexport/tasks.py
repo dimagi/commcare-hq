@@ -25,6 +25,7 @@ if EXPORT_METHOD not in _EXPORT_METHOD_OPTIONS:
 
 #EXPORT_CACHE_ID must be a key in the settings.CACHES dictionary - for files > 1MB, use redis
 EXPORT_CACHE_ID = getattr(settings, 'COUCHEXPORT_CACHE', 'default')
+assert(EXPORT_CACHE_ID in settings.CACHES)
 cache = cache.get_cache(EXPORT_CACHE_ID)
 
 @task
