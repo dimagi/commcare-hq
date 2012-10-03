@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import re
+from django.core.cache import cache
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
@@ -71,6 +72,20 @@ class CommCareCaseAction(DocumentSchema):
         if hasattr(xformdoc, "last_sync_token"):
             ret.sync_log_id = xformdoc.last_sync_token
         return ret
+
+    @property
+    def xform(self):
+        xform = XFormInstance.get(self.xform_id)
+
+    @property
+    def user_id(self):
+        key = 'xform-%s-user_id' % self.xform_id
+        id = cache.get(key)
+        if not id:
+            xform = self.xform
+            id = xform.metadata.userID
+            cache.set(key, id, 12*60*60)
+        return id
     
         
     class Meta:
