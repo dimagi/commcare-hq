@@ -1,7 +1,6 @@
 from celery.log import get_task_logger
 from unidecode import unidecode
 from celery.task import task
-from django.core.cache import cache
 import uuid
 import zipfile
 from soil import CachedDownload, FileDownload
@@ -16,6 +15,15 @@ logging = get_task_logger()
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
 
 EXPORT_METHOD = getattr(settings, 'COUCHEXPORT_METHOD', 'tmpfile')
+if hasattr(settings, 'CACHES') and settings.CACHES.has_key('redis'):
+    #if we know we have redis configured, this automatically assumes we're doing all cached
+    EXPORT_METHOD = 'cached'
+    from django.core import cache
+    cache = cache.get_cache('redis')
+else:
+    #the default backend - whether in CACHED or CACHE_BACKEND
+    from django.core.cache import cache
+print EXPORT_METHOD
 
 _EXPORT_METHOD_OPTIONS = ('cached', 'tmpfile')
 if EXPORT_METHOD not in _EXPORT_METHOD_OPTIONS:
@@ -117,20 +125,21 @@ def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=
 
         tmp = Temp(tmp)
 
-        def expose_download(cls, key):
+        def expose_download(cls, key, backend='default'):
             cls(
                 key,
                 mimetype=format.mimetype,
                 content_disposition='attachment; filename=%s.%s' % (filename, format.extension),
                 extras={'X-CommCareHQ-Export-Token': checkpoint.get_id},
-                download_id=download_id
+                download_id=download_id,
+                cache_backend=backend,
             ).save(expiry)
 
         if EXPORT_METHOD == "cached":
             download_stream = "%s_stream" % download_id
             payload = tmp.payload
             cache.set(download_stream, payload, expiry)
-            expose_download(CachedDownload, download_stream)
+            expose_download(CachedDownload, download_stream, backend='redis')
         elif EXPORT_METHOD == 'tmpfile':
             path = tmp.path
             # make file globally read/writeable in case celery runs as root
