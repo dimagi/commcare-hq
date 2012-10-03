@@ -180,6 +180,7 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.couchapps',
+    'corehq.apps.selenium',
     'sofabed.forms',
     'soil',
     'corehq.apps.hqsofabed',
