@@ -1320,7 +1320,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 yield id_strings.form_locale(form), trans(form.name) + ('${0}' if form.show_count else '')
 
 
-    @method_decorator(profile_decorator('create_app_strings.prof'))
     def create_app_strings(self, lang):
         def non_empty_only(dct):
             return dict([(key, value) for key, value in dct.items() if value])

@@ -1,6 +1,5 @@
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField, StringListField
-from dimagi.utils.decorators.profile import profile
 
 class IdNode(XmlObject):
     id = StringField('@id')
@@ -424,7 +423,6 @@ class SuiteGenerator(object):
         ])
         return suite.serializeDocument()
 
-@profile('generate_suite.prof')
 def generate_suite(app):
     g = SuiteGenerator(app)
     return g()
