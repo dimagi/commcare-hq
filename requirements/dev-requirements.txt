@@ -5,3 +5,4 @@ werkzeug
 line_profiler
 git+git://github.com/dimagi/couchdbkit-debugpanel.git
 Fabric>=1.4.3
+django-redis
