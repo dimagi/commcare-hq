@@ -221,7 +221,8 @@ class CaseDisplay(object):
         owner_id = ""
         for action in self.case.actions:
             if action['action_type'] == 'create':
-                owner_id = action['updated_known_properties']['owner_id']
+#                print(type(action))
+                owner_id = action.user_id
         if not owner_id:
             return "No data"
         return self.report.usernames.get(owner_id, self.user_not_found_display(owner_id))
