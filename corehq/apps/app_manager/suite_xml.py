@@ -1,5 +1,6 @@
 from lxml import etree
 from eulxml.xmlmap import StringField, XmlObject, IntegerField, NodeListField, NodeField, StringListField
+from dimagi.utils.decorators.profile import profile
 
 class IdNode(XmlObject):
     id = StringField('@id')
@@ -203,6 +204,9 @@ class Suite(XmlObject):
 
 class IdStrings(object):
 
+    def homescreen_title(self):
+        return 'homescreen.title'
+
     def xform_resource(self, form):
         return form.unique_id
 
@@ -235,9 +239,34 @@ class IdStrings(object):
     def menu(self, module):
         return u"m{module.id}".format(module=module)
 
+    def module_locale(self, module):
+        return module.get_locale_id()
+
+    def form_locale(self, form):
+        return form.get_locale_id()
+
+    def form_command(self, form):
+        return form.get_command_id()
+
+    def case_list_command(self, module):
+        return module.get_case_list_command_id()
+
+    def case_list_locale(self, module):
+        return module.get_case_list_locale_id()
+
+    def referral_list_command(self, module):
+        """1.0 holdover"""
+        return module.get_referral_list_command_id()
+
+    def referral_list_locale(self, module):
+        """1.0 holdover"""
+        return module.get_referral_list_locale_id()
+
 class SuiteGenerator(object):
     def __init__(self, app):
         self.app = app
+        # this is actually so slow it's worth caching
+        self.modules = list(self.app.get_modules())
         self.id_strings = IdStrings()
 
     @property
@@ -278,7 +307,7 @@ class SuiteGenerator(object):
     def details(self):
         from corehq.apps.app_manager.detail_screen import get_column_generator
         if not self.app.use_custom_suite:
-            for module in self.app.get_modules():
+            for module in self.modules:
                 for detail in module.get_details():
                     detail_columns = detail.get_columns()
                     if detail_columns and detail.type in ('case_short', 'case_long'):
@@ -312,24 +341,6 @@ class SuiteGenerator(object):
 
     @property
     def entries(self):
-        """
-        {% for module in app.get_modules %}
-          {% for form in module.get_forms %}
-            ---
-          {% endfor %}
-          {% if module.case_list.show %}
-            <entry>
-                <command id="m{{ module.id }}-case-list">
-                    <text><locale id="case_lists.m{{ module.id }}"/></text>
-                </command>
-                <instance id="casedb" src="jr://instance/casedb"/>
-                <session>
-                    <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='{{ module.case_type }}'][@status='open']" value="./@case_id" detail-select="m{{ module.id }}_case_short" detail-confirm="m{{ module.id }}_case_long"/>
-                </session>
-            </entry>
-          {% endif %}
-         {% endfor %}
-        """
         def add_case_stuff(module, e, use_filter=False):
             e.instance = Instance(id='casedb', src='jr://instance/casedb')
             # I'm setting things individually instead of in the constructor so they appear in the correct order
@@ -343,13 +354,13 @@ class SuiteGenerator(object):
             e.datum.detail_select=self.id_strings.detail(module=module, detail=module.get_detail('case_short'))
             e.datum.detail_confirm=self.id_strings.detail(module=module, detail=module.get_detail('case_long'))
 
-        for module in self.app.get_modules():
+        for module in self.modules:
             for form in module.get_forms():
                 e = Entry()
                 e.form = form.xmlns
                 e.command=Command(
-                    id=form.get_command_id(),
-                    locale_id=form.get_locale_id(),
+                    id=self.id_strings.form_command(form),
+                    locale_id=self.id_strings.form_locale(form),
                     media_image=form.media_image,
                     media_audio=form.media_audio,
                 )
@@ -359,28 +370,28 @@ class SuiteGenerator(object):
             if module.case_list.show:
                 e = Entry(
                     command=Command(
-                        id=module.get_case_list_command_id(),
-                        locale_id=module.get_case_list_locale_id(),
+                        id=self.id_strings.case_list_command(module),
+                        locale_id=self.id_strings.case_list_locale(module),
                     )
                 )
                 add_case_stuff(module, e, use_filter=False)
                 yield e
     @property
     def menus(self):
-        for module in self.app.get_modules():
+        for module in self.modules:
             menu = Menu(
                 id='root' if module.put_in_root else self.id_strings.menu(module),
-                locale_id=module.get_locale_id(),
+                locale_id=self.id_strings.module_locale(module),
                 media_image=module.media_image,
                 media_audio=module.media_audio,
             )
 
             def get_commands():
                 for form in module.get_forms():
-                    yield Command(id=form.get_command_id())
+                    yield Command(id=self.id_strings.form_command(form))
 
                 if module.case_list.show:
-                    yield Command(id=module.get_case_list_command_id())
+                    yield Command(id=self.id_strings.case_list_command(module))
 
             menu.commands.extend(get_commands())
 
@@ -416,6 +427,7 @@ class SuiteGenerator(object):
         ])
         return suite.serializeDocument()
 
+@profile('generate_suite.prof')
 def generate_suite(app):
     g = SuiteGenerator(app)
     return g()

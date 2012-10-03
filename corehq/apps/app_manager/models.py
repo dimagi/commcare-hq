@@ -3,6 +3,7 @@ from collections import defaultdict
 from datetime import datetime
 import types
 from django.core.cache import cache
+from django.utils.decorators import method_decorator
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 import re
@@ -16,6 +17,8 @@ from django.http import Http404
 from restkit.errors import ResourceError
 import commcare_translations
 from corehq.apps.app_manager import fixtures, xform, suite_xml
+from corehq.apps.app_manager.suite_xml import IdStrings
+from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError, WrappedNode
 from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
@@ -1290,17 +1293,41 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             form = self.get_module(module_id).get_form(form_id)
         return form.validate_form().render_xform().encode('utf-8')
 
+    def _create_custom_app_strings(self, lang):
+        def trans(d):
+            return clean_trans(d, langs).strip()
+        id_strings = IdStrings()
+        langs = [lang] + self.langs
+        yield id_strings.homescreen_title(), self.name
+        for module in self.get_modules():
+            for detail in module.get_details():
+                if detail.type.startswith('case'):
+                    label = trans(module.case_label)
+                else:
+                    label = trans(module.referral_label)
+                yield id_strings.detail_title_locale(module, detail), label
+                for column in detail.get_columns():
+                    yield id_strings.detail_column_header_locale(module, detail, column), trans(column.header)
+                    if column.format == 'enum':
+                        for key, val in column.enum.items():
+                            yield id_strings.detail_column_enum_variable(module, detail, column, key), trans(val)
+            yield id_strings.module_locale(module), trans(module.name)
+            if module.case_list.show:
+                yield id_strings.case_list_locale(module), trans(module.case_list.label) or "Case List"
+            if module.referral_list.show:
+                yield id_strings.referral_list_locale(module), trans(module.referral_list.label)
+            for form in module.get_forms():
+                yield id_strings.form_locale(form), trans(form.name) + ('${0}' if form.show_count else '')
+
+
+    @method_decorator(profile_decorator('create_app_strings.prof'))
     def create_app_strings(self, lang, template='app_manager/app_strings.txt'):
         def non_empty_only(dct):
             return dict([(key, value) for key, value in dct.items() if value])
         if lang != "default":
             messages = {"cchq.case": "Case", "cchq.referral": "Referral"}
 
-            custom = render_to_string(template, {
-                'app': self,
-                'langs': [lang] + self.langs,
-            })
-            custom = commcare_translations.loads(custom)
+            custom = dict(filter(lambda key_val: key_val[1], self._create_custom_app_strings(lang)))
             messages.update(non_empty_only(custom))
 
             # include language code names
