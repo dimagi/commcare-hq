@@ -515,17 +515,6 @@ def download_cases(request, domain):
     else:
         return _download_cases(domain, include_closed, format, group, user_filter)
 
-
-#@login_or_digest
-#@require_case_export_permission
-#@login_and_domain_required
-#def download_cases(request, domain):
-#    async = request.GET.get('async') == 'true'
-#    if async:
-#        download = DownloadBase()
-#        download.set_task(_download_cases.delay(request, domain))
-#        return download.get_start_response()
-
 @require_can_view_all_reports
 @login_and_domain_required
 def form_data(request, domain, instance_id):
