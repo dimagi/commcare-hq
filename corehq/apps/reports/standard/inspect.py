@@ -221,7 +221,6 @@ class CaseDisplay(object):
         owner_id = ""
         for action in self.case.actions:
             if action['action_type'] == 'create':
-#                print(type(action))
                 owner_id = action.user_id
         if not owner_id:
             return "No data"
