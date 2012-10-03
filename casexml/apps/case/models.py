@@ -76,6 +76,7 @@ class CommCareCaseAction(DocumentSchema):
     @property
     def xform(self):
         xform = XFormInstance.get(self.xform_id)
+        return xform
 
     @property
     def user_id(self):
