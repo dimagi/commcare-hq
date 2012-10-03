@@ -9,7 +9,6 @@ class XpathVariable(XmlObject):
     ROOT_NAME = 'variable'
     name = StringField('@name')
 
-    locale_ids = StringListField('locale/@id')
     locale_id = StringField('locale/@id')
 
 class Xpath(XmlObject):
@@ -32,11 +31,9 @@ class Text(XmlObject):
 
     ROOT_NAME = 'text'
 
-    xpaths = NodeListField('xpath', Xpath)
     xpath = NodeField('xpath', Xpath)
     xpath_function = StringField('xpath/@function')
 
-    locale_ids = StringListField('locale/@id')
     locale_id = StringField('locale/@id')
 
 class AbstractResource(XmlObject):
