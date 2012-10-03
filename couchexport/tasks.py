@@ -23,10 +23,14 @@ if EXPORT_METHOD not in _EXPORT_METHOD_OPTIONS:
         ', '.join([repr(o) for o in _EXPORT_METHOD_OPTIONS])
     ))
 
-#EXPORT_CACHE_ID must be a key in the settings.CACHES dictionary - for files > 1MB, use redis
+#EXPORT_CACHE_ID must be a key in the settings.CACHES dictionary - for files > 1MB, use redis as your backend.
 EXPORT_CACHE_ID = getattr(settings, 'COUCHEXPORT_CACHE', 'default')
-assert(EXPORT_CACHE_ID in settings.CACHES)
-cache = cache.get_cache(EXPORT_CACHE_ID)
+if hasattr(settings, 'CACHES'): #legacy pre django 1.3 check for CACHE_BACKEND settings var
+    assert(EXPORT_CACHE_ID in settings.CACHES), "If you're using django 1.3, please use the 1.3 caching convention and create a settings.CACHES dict"
+    cache = cache.get_cache(EXPORT_CACHE_ID)
+else:
+    #django 1.2 compatability, just use default cache backend
+    cache= cache.cache
 
 @task
 def export_async(custom_export, download_id, format=None, filename=None, **kwargs):
