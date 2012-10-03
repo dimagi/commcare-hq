@@ -136,7 +136,7 @@ class EventListField(Field):
                         raise ValidationError("You have entered the same language twice for the same reminder event.");
                     message[language] = text
             
-            if len(e["timeouts"].strip()) == 0 or self.widget.method != "callback":
+            if len(e["timeouts"].strip()) == 0 or self.widget.method not in ["callback", "survey"]:
                 timeouts_int = []
             else:
                 timeouts_str = e["timeouts"].split(",")
@@ -145,7 +145,7 @@ class EventListField(Field):
                     try:
                         timeouts_int.append(int(t))
                     except Exception:
-                        raise ValidationError("Callback timeout intervals must be a list of comma-separated numbers.")
+                        raise ValidationError("Timeout intervals must be a list of comma-separated numbers.")
             
             form_unique_id = None
             if self.widget.method == "survey":

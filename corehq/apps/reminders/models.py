@@ -16,6 +16,8 @@ from corehq.apps.smsforms.app import start_session
 from corehq.apps.app_manager.models import get_app, Form
 from corehq.apps.sms.util import format_message_list
 from corehq.apps.reminders.util import get_form_name
+from touchforms.formplayer.api import current_question
+from corehq.apps.sms.mixin import VerifiedNumber
 
 METHOD_CHOICES = ["sms", "email", "test", "callback", "callback_test", "survey"]
 
@@ -318,7 +320,8 @@ class CaseReminderHandler(Document):
             current_event_sequence_num=0,
             callback_try_count=0,
             callback_received=False,
-            sample_id=sample_id
+            sample_id=sample_id,
+            xforms_session_ids=[],
         )
         # Set the first fire time appropriately
         if self.event_interpretation == EVENT_AS_OFFSET:
@@ -385,6 +388,7 @@ class CaseReminderHandler(Document):
         reminder.current_event_sequence_num += 1
         reminder.callback_try_count = 0
         reminder.callback_received = False
+        reminder.xforms_session_ids = []
         if reminder.current_event_sequence_num >= len(self.events):
             reminder.current_event_sequence_num = 0
             reminder.schedule_iteration_num += 1
@@ -407,7 +411,8 @@ class CaseReminderHandler(Document):
         """
         while now >= reminder.next_fire and reminder.active:
             # If it is a callback reminder, check the callback_timeout_intervals
-            if (reminder.method == "callback" or reminder.method == "callback_test") and len(reminder.current_event.callback_timeout_intervals) > 0:
+            if (reminder.method in ["callback", "callback_test", "survey"]) and len(reminder.current_event.callback_timeout_intervals) > 0:
+                #reminder.callback_received is always False for surveys, so it only has an effect for callbacks
                 if reminder.callback_received or reminder.callback_try_count >= len(reminder.current_event.callback_timeout_intervals):
                     pass
                 else:
@@ -459,41 +464,60 @@ class CaseReminderHandler(Document):
             lang = None
         
         if reminder.method == "survey":
-            recipients = []
-            if self.recipient == RECIPIENT_CASE:
-                recipients = [reminder.recipient]
-            elif self.recipient == RECIPIENT_SURVEY_SAMPLE:
-                recipients = [CommConnectCase.get(case_id) for case_id in reminder.recipient.contacts]
-            
-            for recipient in recipients:
-                # Close all currently open sessions
-                sessions = XFormsSession.view("smsforms/open_sessions_by_connection",
-                                             key=[reminder.domain, recipient.get_id],
-                                             include_docs=True).all()
-                for session in sessions:
-                    session.end(False)
-                    session.save()
+            if reminder.callback_try_count > 0:
+                for session_id in reminder.xforms_session_ids:
+                    session = XFormsSession.get(session_id)
+                    if session.end_time is None:
+                        vn = VerifiedNumber.view("sms/verified_number_by_owner_id",
+                                                  key=session.connection_id,
+                                                  include_docs=True).one()
+                        if vn is not None:
+                            resp = current_question(session_id)
+                            send_sms_to_verified_number(vn, resp.event.text_prompt)
+            else:
+                recipients = []
+                if self.recipient == RECIPIENT_CASE:
+                    recipients = [reminder.recipient]
+                elif self.recipient == RECIPIENT_SURVEY_SAMPLE:
+                    recipients = [CommConnectCase.get(case_id) for case_id in reminder.recipient.contacts]
                 
-                # Start the new session
-                try:
-                    form_unique_id = reminder.current_event.form_unique_id
-                    form = Form.get_form(form_unique_id)
-                    app = form.get_app()
-                    module = form.get_module()
-                except Exception as e:
-                    print e
-                    print "ERROR: Could not load survey form for handler " + reminder.handler_id + ", event " + str(reminder.current_event_sequence_num)
-                    return False
-                session, responses = start_session(reminder.domain, recipient, app, module, form, recipient.get_id)
+                reminder.xforms_session_ids = []
                 
-                # Send out first message
-                if len(responses) > 0:
-                    message = format_message_list(responses)
-                    verified_number = recipient.get_verified_number()
-                    if verified_number is not None:
-                        return send_sms_to_verified_number(verified_number, message)
-                    else:
-                        return True
+                for recipient in recipients:
+                    # Close all currently open sessions
+                    sessions = XFormsSession.view("smsforms/open_sessions_by_connection",
+                                                 key=[reminder.domain, recipient.get_id],
+                                                 include_docs=True).all()
+                    for session in sessions:
+                        session.end(False)
+                        session.save()
+                    
+                    # Start the new session
+                    try:
+                        form_unique_id = reminder.current_event.form_unique_id
+                        form = Form.get_form(form_unique_id)
+                        app = form.get_app()
+                        module = form.get_module()
+                    except Exception as e:
+                        print e
+                        print "ERROR: Could not load survey form for handler " + reminder.handler_id + ", event " + str(reminder.current_event_sequence_num)
+                        return False
+                    session, responses = start_session(reminder.domain, recipient, app, module, form, recipient.get_id)
+                    reminder.xforms_session_ids.append(session.session_id)
+                    
+                    # Send out first message
+                    if len(responses) > 0:
+                        message = format_message_list(responses)
+                        verified_number = recipient.get_verified_number()
+                        if len(recipients) == 1:
+                            if verified_number is not None:
+                                return send_sms_to_verified_number(verified_number, message)
+                            else:
+                                return True
+                        else:
+                            send_sms_to_verified_number(verified_number, message)
+                    
+                return True
         else:
             # If it is a callback reminder and the callback has been received, skip sending the next timeout message
             if (reminder.method == "callback" or reminder.method == "callback_test") and len(reminder.current_event.callback_timeout_intervals) > 0 and (reminder.callback_try_count > 0):
@@ -753,6 +777,7 @@ class CaseReminder(Document):
     callback_received = BooleanProperty()           # True if the expected callback was received since the last SMS was sent, False if not
     start_condition_datetime = DateTimeProperty()   # The date and time matching the case property specified by the CaseReminderHandler.start_condition
     sample_id = StringProperty()
+    xforms_session_ids = ListProperty(StringProperty)
     
     @property
     def handler(self):
