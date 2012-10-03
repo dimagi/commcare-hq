@@ -2,3 +2,5 @@ cherrypy
 git+git://github.com/dimagi/django-cpserver.git
 celerymon
 gunicorn
+django-redis
+
