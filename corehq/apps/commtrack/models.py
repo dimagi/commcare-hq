@@ -16,4 +16,3 @@ class Product(Document):
                           include_docs=True).first()
         return result
 
-

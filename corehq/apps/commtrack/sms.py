@@ -1,6 +1,9 @@
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.models import Product
-
+from casexml.apps.case.models import CommCareCase
+from dimagi.utils.couch.database import get_db
+from lxml import etree
+from lxml.builder import ElementMaker
 
 def handle(v, text):
     domain = Domain.get_by_name(v.domain)
@@ -8,13 +11,21 @@ def handle(v, text):
         return False
 
     # TODO error handling
-    print StockReport(domain, report_syntax_config).parse(text)
+    data = StockReport(domain, report_syntax_config).parse(text)
+    print data
+    inst_xml = to_instance(v, data)
+    print inst_xml
+
+    # next:
+    # clean data here (fetch existing case and do computations)
+    # generate instance
+    # submit against case via casexml
 
     # TODO: if message doesn't parse, don't handle it and fallback
     # to a catch-all error handler?
     return True
 
-
+# todo, this will be pulled from domain somehow
 report_syntax_config = {
     'single_action': {
         'keywords': {
@@ -116,15 +127,18 @@ class StockReport(object):
             yield mk_tx(product, action, value)
             
     def location_from_code(self, loc_code):
-        # TODO fetch a real object
-        return loc_code
+        loc = get_db().view('commtrack/locations_by_code',
+                            key=[self.domain.name, loc_code],
+                            include_docs=True).first()
+        if loc is None:
+            raise RuntimeError('invalid location code')
+        return CommCareCase.get(loc['id'])
 
     def product_from_code(self, prod_code):
         p = Product.get_by_code(self.domain.name, prod_code)
         if p is None:
             raise RuntimeError('invalid product code')
         return p
-
 
 def mk_tx(product, action, value):
     return locals()
@@ -137,3 +151,23 @@ def looks_like_prod_code(code):
         return True
 
 
+def to_instance(v, data):
+    E = ElementMaker(namespace='http://openrosa.org/commtrack/stock_report')
+
+    # find all stock product sub-cases linked to the supply point case, and build a mapping
+    # of the general Product doc id to the site-specific product sub-case
+    product_subcase_uuids = [ix.referenced_id for ix in data['location'].reverse_indices if ix.identifier == 'parent']
+    product_subcases = CommCareCase.view('_all_docs', keys=product_subcase_uuids, include_docs=True)
+    product_subcase_mapping = dict((subcase.dynamic_properties().get('product'), subcase._id) for subcase in product_subcases)
+
+    def mk_xml_tx(tx):
+        return E.transaction(
+            E.product_entry(product_subcase_mapping[tx['product']._id]),
+            E.action(tx['action']),
+            E.value(str(tx['value']))
+        )
+
+    # TODO: add <meta>, user_id, etc.?
+    root = E.stock_report(*(mk_xml_tx(tx) for tx in data['transactions']))
+
+    return etree.tostring(root, encoding='utf-8', pretty_print=True)
