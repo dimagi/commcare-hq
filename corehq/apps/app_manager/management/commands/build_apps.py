@@ -30,11 +30,13 @@ class Command(BaseCommand):
                 app_slugs.append(name[:-len(_JSON)])
 
         for slug in app_slugs:
+            print 'Fetching %s...' % slug
             source_path = os.path.join(path, 'src', '%s.json' % slug)
             with open(source_path) as f:
                 app = Application.wrap(json.load(f))
             app.version = 1
             build_path = os.path.join(path, build_slug, slug)
+            print ' Creating files...'
             self.create_files(app, build_path)
 
     def create_files(self, app, path):

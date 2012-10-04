@@ -147,3 +147,21 @@ def is_url_active(request, matching_string=""):
 def mod(value, arg):
     return value % arg
 
+
+# This is taken verbatim from https://code.djangoproject.com/ticket/15583
+@register.filter(name='sort')
+def listsort(value):
+    if isinstance(value,dict):
+        new_dict = SortedDict()
+        key_list = value.keys()
+        key_list.sort()
+        for key in key_list:
+            new_dict[key] = value[key]
+        return new_dict
+    elif isinstance(value, list):
+        new_list = list(value)
+        new_list.sort()
+        return new_list
+    else:
+        return value
+listsort.is_safe = True
