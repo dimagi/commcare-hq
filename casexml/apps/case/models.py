@@ -53,7 +53,7 @@ class CommCareCaseAction(DocumentSchema):
     updated_known_properties = DictProperty()
     updated_unknown_properties = DictProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
-    
+
     @classmethod
     def from_parsed_action(cls, action_type, date, xformdoc, action):
         if not action_type in const.CASE_ACTIONS:
@@ -78,8 +78,7 @@ class CommCareCaseAction(DocumentSchema):
         xform = XFormInstance.get(self.xform_id)
         return xform
 
-    @property
-    def user_id(self):
+    def get_user_id(self):
         key = 'xform-%s-user_id' % self.xform_id
         id = cache.get(key)
         if not id:
@@ -87,8 +86,8 @@ class CommCareCaseAction(DocumentSchema):
             id = xform.metadata.userID
             cache.set(key, id, 12*60*60)
         return id
-    
-        
+
+
     class Meta:
         app_label = 'case'
 
