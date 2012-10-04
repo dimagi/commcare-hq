@@ -15,40 +15,34 @@ def run():
     print audit_db
     print log_db
 
+    print "Migrating Audit Logs by bulk"
+    chunk = 20
 
-    print "Migrating Audit Logs"
 
-    chunk = 500
-    start = 0
-    seen_audits = 0
-    while True:
-        audit_iter = old_db.view('auditcare/all_events')#, skip=start, limit=chunk)
-        if audit_iter.count() == 0:
-            break
+    def do_bulk_delete(view_name, destination_db):
+        start = 0
+        print "Doing bulk delete on %s" % view_name
+        print "have destionation: %s" % destination_db
+        print "have old: %s" % old_db
+        while True:
+            old_iter = old_db.view(view_name, skip=start, limit=chunk)
+            if old_iter.count() == 0:
+                break
 
-        for x in audit_iter.iterator():
-            doc_id = x['id']
-            doc = old_db.open_doc(doc_id)
-            audit_db.save_doc(doc)
-            old_db.delete_doc(doc_id)
-            seen_audits += 1
-        start += chunk
+            delete_doc_bunch = []
 
-    print "completed %d audit migrations" % seen_audits
+            for x in old_iter.iterator():
+                doc_id = x['id']
+                doc = old_db.open_doc(doc_id)
+                #destination_db.save_doc(doc)
+                delete_doc_bunch.append(doc)
+
+            print "deleting %d docs from old db" % len(delete_doc_bunch)
+            #old_db.delete_docs(delete_doc_bunch)
+            start += len(delete_doc_bunch)
+
+    print "Migrating Audits"
+    do_bulk_delete('auditcare/all_events', audit_db)
 
     print "Migrating couchlogs"
-    start = 0
-    seen_logs = 0
-    while True:
-        log_iter = old_db.view('couchlog/all_by_date')#, skip=start, limit=chunk)
-        if log_iter.count() == 0:
-            break
-        for x in log_iter.iterator():
-            doc_id = x['id']
-            doc = old_db.open_doc(doc_id)
-            log_db.save_doc(doc)
-            old_db.delete_doc(doc_id)
-            seen_logs += 1
-        start += chunk
-
-    print "completed %d log migrations" % seen_logs
+    do_bulk_delete('couchlog/all_by_date', log_db)
