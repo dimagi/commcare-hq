@@ -53,37 +53,26 @@ def adm_item_form(request, template="adm/forms/admin_adm_item.html", **kwargs):
     success = False
     delete_item = bool(action == 'delete')
     form = None
-    adm_item = None
     errors = []
     item_result = []
 
-    if action == 'update' or delete_item:
-        if not item_id:
-            return HttpResponseBadRequest("an item_id is required in order to update")
+    if (action == 'update' or delete_item) and not item_id:
+        return HttpResponseBadRequest("an item_id is required in order to update")
+
+    if delete_item:
         try:
             adm_item = form_class._item_class.get(item_id)
+            adm_item.delete()
+            success = True
         except Exception as e:
-            return HttpResponseBadRequest("There was an issue retrieving the item with doc_id %s. Error: %s" %
-                (item_id, e)
-            )
-        if delete_item:
-            try:
-                success = True
-                adm_item.delete()
-            except Exception as e:
-                errors.append("Could not delete item %s due to error: %s" % (item_id, e))
-
-    if request.method == 'POST' and not delete_item:
+            errors.append("Could not delete item %s due to error: %s" % (item_id, e))
+    elif request.method == 'POST':
         form = form_class(request.POST, item_id=item_id)
         if form.is_valid():
+            item_result = form.save()
             success = True
-            item_result = form.update(adm_item) if adm_item else form.save()
-
-    if request.method == 'GET' or success:
-        if adm_item and not delete_item:
-            form = form_class(adm_item._doc, item_id=item_id)
-        else:
-            form = form_class()
+    elif request.method == 'GET' or success:
+        form = form_class(item_id=item_id)
 
     context = dict(form=form)
     return HttpResponse(json.dumps(dict(

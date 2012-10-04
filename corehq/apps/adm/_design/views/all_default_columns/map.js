@@ -1,6 +1,6 @@
 function (doc) {
     if (doc.base_doc === "ADMColumn"
-        && (doc.is_default || doc.config_doc !== "ConfigurableADMColumn")) {
+        && (!doc.domain || (doc.domain && doc.is_default) )) {
             var emit_entry = {
                 name: doc.name,
                 description: doc.description

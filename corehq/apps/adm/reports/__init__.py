@@ -8,6 +8,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin, ProjectReportParametersMixin
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.decorators.memoized import memoized
 
 class ADMSectionView(GenericReportView):
     section_name = "Active Data Management"
@@ -33,12 +34,9 @@ class ADMSectionView(GenericReportView):
                         (self.subreport_data.get('value', {}).get('name'),
                          self.adm_sections.get(self.adm_slug, "ADM Report")))
 
-    _subreport_data = None
     @property
     def subreport_data(self):
-        if self._subreport_data is None:
-            self._subreport_data = dict()
-        return self._subreport_data
+        raise NotImplementedError
 
     @property
     def show_subsection_navigation(self):
@@ -70,42 +68,37 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
     adm_slug = None
 
     @property
+    @memoized
     def subreport_data(self):
-        if self._subreport_data is None:
-            self._subreport_data = dict()
-            if self.subreport_slug:
-                key = ["defaults", self.adm_slug, self.subreport_slug]
-                data = get_db().view("adm/all_reports",
-                    reduce=False,
-                    startkey=key,
-                    endkey=key+[{}]
-                ).first()
-                if data:
-                    self._subreport_data = data
-        return self._subreport_data
+        default_subreport = ADMReport.get_default(self.subreport_slug, domain=self.domain,
+                section=self.adm_slug, wrap=False)
+        if default_subreport is None:
+            return dict()
+        return default_subreport
 
-    _adm_report = None
     @property
+    @memoized
     def adm_report(self):
-        if self._adm_report is None and self.subreport_data:
+        if self.subreport_data:
             try:
-                self._adm_report = ADMReport.get(self.subreport_data.get('key')[-1])
+                adm_report = ADMReport.get_correct_wrap(self.subreport_data.get('key')[-1])
+                adm_report.set_domain_specific_values(self.domain)
+                return adm_report
             except Exception as e:
                 logging.error("Could not fetch ADM Report: %s" % e)
-        return self._adm_report
+        return None
 
-    _adm_columns = None
     @property
+    @memoized
     def adm_columns(self):
-        if self._adm_columns is None:
-            if self.adm_report:
-                column_config = self.report_column_config
-                if not isinstance(column_config, dict):
-                    ValueError('report_column_config should return a dict')
-                for col in self.adm_report.columns:
-                    col.set_report_values(**column_config)
-                self._adm_columns = self.adm_report.columns
-        return self._adm_columns
+        if self.adm_report:
+            column_config = self.report_column_config
+            if not isinstance(column_config, dict):
+                ValueError('report_column_config should return a dict')
+            for col in self.adm_report.columns:
+                col.set_report_values(**column_config)
+            return self.adm_report.columns
+        return []
 
     @property
     def headers(self):
@@ -142,27 +135,20 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
         current_slug = context.get('report', {}).get('sub_slug')
         domain = context.get('domain')
 
-        subreports = []
-        key = ["defaults", cls.adm_slug]
-        subreport_list = get_db().view("adm/all_reports",
-            reduce=False,
-            startkey=key,
-            endkey=key+[{}]
-        )
-        if subreport_list:
-            subreport_list = subreport_list.all()
+        subreport_nav = list()
+        subreports = ADMReport.get_default_subreports(domain, cls.adm_slug)
 
-        if not subreport_list:
+        if not subreports:
             return ["""<li><span class="label">
             <i class="icon-white icon-info-sign"></i> No ADM Reports Configured</span>
             </li>"""]
 
-        for report in subreport_list:
+        for report in subreports:
             key = report.get("key", [])
             entry = report.get("value", {})
             report_slug = key[-2]
             if cls.show_subreport_in_navigation(report_slug):
-                subreports.append("""<li%(active_class)s>
+                subreport_nav.append("""<li%(active_class)s>
                 <a href="%(url)s" title="%(description)s">%(name)s</a>
                 </li>""" % dict(
                     active_class=' class="active"' if current_slug == report_slug else "",
@@ -170,9 +156,9 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
                     description=entry.get('description', ''),
                     name=entry.get('name', 'Untitled Report')
                 ))
-        return subreports
+        return subreport_nav
 
     @classmethod
-    def show_subreport_in_navigation(cls, report_slug):
+    def show_subreport_in_navigation(cls, subreport_slug):
         return True
 

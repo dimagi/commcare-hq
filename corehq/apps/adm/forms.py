@@ -1,8 +1,9 @@
 from django import forms
 from django.forms.util import ErrorList
 from django.forms.widgets import Textarea
-from corehq.apps.adm.models import ADMColumn, ReducedADMColumn, DaysSinceADMColumn, ConfigurableADMColumn, \
-    ADMCompareColumn, ADMReport, KEY_TYPE_OPTIONS, REPORT_SECTION_OPTIONS, \
+from django.utils.safestring import mark_safe
+from corehq.apps.adm.models import ADMColumn, ReducedADMColumn, DaysSinceADMColumn, ConfigurableADMColumn,\
+    CompareADMColumn, ADMReport, KEY_TYPE_OPTIONS, REPORT_SECTION_OPTIONS, \
     CASE_FILTER_OPTIONS, CASE_STATUS_OPTIONS, CaseCountADMColumn
 from corehq.apps.hq_bootstrap.forms import fields as hq_fields
 from dimagi.utils.data.editable_items import InterfaceEditableItemForm
@@ -14,10 +15,11 @@ IGNORE_DATESPAN_FIELD = forms.BooleanField(label="Ignore Datespan and Return All
 
 
 class UpdateADMItemForm(InterfaceEditableItemForm):
+    slug = forms.SlugField(label="Slug")
+    domain = forms.CharField(label="Project Name (blank applies to all projects)", required=False)
     name = forms.CharField(label="Name")
     description = forms.CharField(label="Description", required=False,
         widget=Textarea(attrs=dict(style="height:80px;width:340px;")))
-    slug = forms.SlugField(label="Slug")
 
 
 class UpdateCouchViewADMColumnForm(UpdateADMItemForm):
@@ -53,12 +55,19 @@ class ConfigurableADMColumnChoiceForm(InterfaceEditableItemForm):
     """
         This form provides a way to choose which configurable column type you want to edit.
     """
-    column_type = forms.CharField(label="Column Type",
-        widget=forms.Select(choices=[("", "Select a column type...")]+[(c.__name__, c.__name__)
-        for c in ConfigurableADMColumn.__subclasses__()])
-    )
+    column_choice = forms.CharField(label="Column Type")
 
     _item_class = ConfigurableADMColumn
+
+    def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
+                 initial=None, error_class=ErrorList, label_suffix=':',
+                 empty_permitted=False, item_id=None):
+        super(ConfigurableADMColumnChoiceForm, self).__init__(data, files, auto_id, prefix, initial, error_class,
+            label_suffix, empty_permitted, item_id)
+        self.fields['column_choice'].widget = forms.Select(
+                choices=[("", "Select a column type...")]+[(c.__name__, c.column_type())
+                        for c in ConfigurableADMColumn.__subclasses__()]
+            )
 
     def save(self):
         pass
@@ -68,11 +77,10 @@ class ConfigurableADMColumnChoiceForm(InterfaceEditableItemForm):
 
 
 class ConfigurableADMColumnForm(UpdateADMItemForm):
-    domain = forms.CharField(required=False, label="Project Name (blank applies to all projects)")
-    directly_configurable = forms.BooleanField(label="Directly Configurable",
+    is_configurable = forms.BooleanField(label="Configurable",
         initial=True,
         required=False,
-        help_text="This column can be directly configured by the user."
+        help_text="This column can be directly configured by a user."
     )
 
 
@@ -90,54 +98,62 @@ class CaseFilterADMColumnFormMixin(forms.Form):
 
 class CaseCountADMColumnForm(ConfigurableADMColumnForm, CaseFilterADMColumnFormMixin):
     inactivity_milestone = forms.IntegerField(label="Inactivity Milestone", initial=0,
-        help_text="The number of days that must pass for a case to be marked as inactive.",
+        help_text=mark_safe("The number of days that must pass for a case to be marked as inactive. <br />"
+                            "In general, if this option is > 0, this column will return a count of cases "
+                            "in the date span of [beginning of time] to [enddate - inactivity_milestone(days)]"),
         required=False
     )
     ignore_datespan = forms.BooleanField(label="Ignore Datespan",
         initial=True,
         required=False,
-        help_text="If inactivity milestone is > 0 days, this option is is not used. " \
-            "If this option is checked, this will return a count of cases over all time.")
+        help_text=mark_safe("If this option is checked, this will return a count of cases over all time. "
+                            "(Cases are sorted by date_modified) <br />"
+                            "Note: If inactivity milestone is > 0 days, this option is is not used."))
 
     _item_class = CaseCountADMColumn
-
-    def clean_filter_option(self):
-        case_types = self.cleaned_data['case_types']
-        filter_option = self.cleaned_data['filter_option']
-        if filter_option == '' and len(case_types) > 0:
-            raise forms.ValidationError('You specified a list of case types, but you did not choose how to filter them.')
-        return filter_option
-
-    def clean_case_types(self):
-        case_types = self.cleaned_data['case_types']
-        filter_option = self.cleaned_data['filter_option']
-        if filter_option == 'in' and len(case_types) == 0:
-            raise forms.ValidationError('You did not specify any case types to filter by. No cases will be counted.')
-        return case_types
-
-
-class ADMCompareColumnForm(ConfigurableADMColumnForm):
-    numerator_id = forms.CharField(label="Numerator")
-    denominator_id = forms.CharField(label="Denominator")
-
-    _item_class = ADMCompareColumn
 
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
                  initial=None, error_class=ErrorList, label_suffix=':',
                  empty_permitted=False, item_id=None):
-        super(ADMCompareColumnForm, self).__init__(data, files, auto_id, prefix, initial, error_class,
+        super(CaseCountADMColumnForm, self).__init__(data, files, auto_id, prefix, initial, error_class,
+            label_suffix, empty_permitted, item_id)
+        self.fields['case_status'].help_text = "If you use 'Inactivity Milestone' below, you likely " \
+                                                "want to select only 'Open Cases'."
+
+
+    def clean(self):
+        cleaned_data = super(CaseCountADMColumnForm, self).clean()
+        case_types = cleaned_data.get('case_types', [])
+        filter_option = cleaned_data.get('filter_option', '')
+        if filter_option == '' and len(case_types) > 0 and case_types[0]:
+            raise forms.ValidationError('You specified a list of case types, but you did not choose how to filter them.')
+        if filter_option == 'in' and len(case_types) == 0:
+            raise forms.ValidationError('You did not specify any case types to filter by. No cases will be counted.')
+        return cleaned_data
+
+
+class CompareADMColumnForm(ConfigurableADMColumnForm):
+    numerator_ref = forms.CharField(label="Numerator")
+    denominator_ref = forms.CharField(label="Denominator")
+
+    _item_class = CompareADMColumn
+
+    def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
+                 initial=None, error_class=ErrorList, label_suffix=':',
+                 empty_permitted=False, item_id=None):
+        super(CompareADMColumnForm, self).__init__(data, files, auto_id, prefix, initial, error_class,
             label_suffix, empty_permitted, item_id)
 
-        self.fields['numerator_id'].widget = forms.Select(choices=ADMCompareColumn.numerical_column_options())
-        self.fields['denominator_id'].widget = forms.Select(choices=ADMCompareColumn.numerical_column_options())
-        self.fields['directly_configurable'].initial = False
+        self.fields['numerator_ref'].widget = forms.Select(choices=CompareADMColumn.default_numerical_column_options())
+        self.fields['denominator_ref'].widget = forms.Select(choices=CompareADMColumn.default_numerical_column_options())
+        self.fields['is_configurable'].initial = False
 
 
 class ADMReportForm(UpdateADMItemForm):
     reporting_section = forms.CharField(label="Reporting Section",
         widget=forms.Select(choices=REPORT_SECTION_OPTIONS)
     )
-    column_slugs = hq_fields.CSVListField(label="Column Slugs",
+    column_refs = hq_fields.CSVListField(label="Column Slugs",
         help_text="A comma separated list of column slugs for the report.",
         required=False,
         widget=Textarea(attrs=dict(style="height:80px;width:340px;"))

@@ -37,7 +37,7 @@
             <h3><span class="label label-success">Create New</span> {{ adm_item.type }}</h3>
         </div>
         <form class="form-horizontal" action="" method="post">
-            <div class="modal-body" style="overflow-y: visible; max-height: 600px;">
+            <div class="modal-body" style="overflow-y: scroll; max-height: 500px;">
             </div>
             <div class="modal-footer">
                 <button type="submit" class="btn btn-primary" data-loading-text="Submitting..."><i class="icon-white icon-plus"></i> Create {{ adm_item.type }}</button>
@@ -45,13 +45,13 @@
             </div>
         </form>
     </div>
-    <div class="modal hide fade" id="updateADMItemModal" style="top: 10px;">
+    <div class="modal hide fade" id="updateADMItemModal">
         <div class="modal-header">
             <a class="close" data-dismiss="modal">&times;</a>
             <h3><span class="label label-info">Update</span> {{ adm_item.type }}</h3>
         </div>
-        <form class="form-horizontal" action="" method="post" style="overflow-y: scroll; max-height: 500px;">
-            <div class="modal-body">
+        <form class="form-horizontal" action="" method="post">
+            <div class="modal-body" style="overflow-y: scroll; max-height: 500px;">
             </div>
             <div class="modal-footer">
                 <button type="submit" class="btn btn-primary" data-loading-text="Updating..."><i class="icon-white icon-arrow-up"></i> Update {{ adm_item.type }}</button>

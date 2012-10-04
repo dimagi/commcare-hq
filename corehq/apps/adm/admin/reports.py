@@ -16,9 +16,10 @@ class ADMReportEditIterface(ADMAdminInterface):
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn("Reporting Section"),
+            DataTablesColumn("Slug"),
+            DataTablesColumn("Domain"),
             DataTablesColumn("Report Name"),
             DataTablesColumn("Description"),
-            DataTablesColumn("Slug"),
             DataTablesColumn("Columns"),
             DataTablesColumn("Key Type"),
             DataTablesColumn("Edit"),
@@ -27,8 +28,8 @@ class ADMReportEditIterface(ADMAdminInterface):
     @property
     def rows(self):
         rows = []
-        key = ["defaults"]
-        data = self.property_class.view('adm/all_reports',
+        key = ["defaults all slug"]
+        data = self.property_class.view('adm/all_default_reports',
             reduce=False,
             include_docs=True,
             startkey=key,

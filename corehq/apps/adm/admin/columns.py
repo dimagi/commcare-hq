@@ -15,6 +15,7 @@ class ADMColumnAdminInterface(ADMAdminInterface):
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn("Slug"),
+            DataTablesColumn("Project"),
             DataTablesColumn("Column Name"),
             DataTablesColumn("Description"),
             DataTablesColumn("Edit"),
@@ -103,7 +104,7 @@ class ConfigurableADMColumnInterface(ADMColumnAdminInterface):
     @property
     def headers(self):
         header = super(ConfigurableADMColumnInterface, self).headers
-        header.insert_column(DataTablesColumn("Project"), -1)
+        header.insert_column(DataTablesColumn("Type"), 0)
         header.insert_column(DataTablesColumn("Directly Configurable"), -1)
         header.insert_column(DataTablesColumn("Default Configurable Properties"), -1)
         return header
