@@ -29,7 +29,7 @@ def run():
         'pathindia/kranti_report',
         'phone/cases_sent_to_chws',
         'phonelog/devicelog_data',
-        'pathfinder/pathfinder_gov_chw',
+        'pathfinder/pathfinder_all_wards',
         'prescriptions/all',
         'receiverwrapper/all_submissions_by_domain',
         'registration/requests_by_username',
@@ -41,14 +41,23 @@ def run():
     ]
 
     def do_prime(view_name):
-        db = XFormInstance.get_db()
-        db.view(view_name, limit=2).all()
+        print "priming %s" % view_name
+        try:
+            db = XFormInstance.get_db()
+            db.view(view_name, limit=2).all()
+        except:
+            print "Got an exception but ignoring"
 
     from gevent import monkey; monkey.patch_all(thread=False)
     from gevent.pool import Pool
+    import time
     pool = Pool(12)
-    for view in views:
-        g = pool.spawn(do_prime, view)
-    pool.join()
+    while True:
+        for view in views:
+            g = pool.spawn(do_prime, view)
+        pool.join()
+        print "Finished priming views, waiting 30 seconds"
+        time.sleep(30)
+
     print "done!"
 
