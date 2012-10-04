@@ -7,6 +7,7 @@ from lxml import etree
 from lxml.builder import ElementMaker
 
 def handle(v, text):
+    """top-level handler for incoming stock report messages"""
     domain = Domain.get_by_name(v.domain)
     if not domain.commtrack_enabled:
         return False
@@ -44,12 +45,15 @@ report_syntax_config = {
 }
 
 class StockReport(object):
+    """a helper object for parsing raw stock report texts"""
+
     def __init__(self, domain, config): # config should probably be pulled from domain automatically?
         self.domain = domain
         self.CS = config['single_action']
         self.CM = config.get('multiple_action')
 
     def parse(self, text, location=None):
+        """take in a text and return the parsed stock transactions"""
         args = text.split()
 
         if args[0] in self.CS['keywords'].values():

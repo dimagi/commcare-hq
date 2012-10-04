@@ -9,6 +9,7 @@ from corehq.apps.receiverwrapper.util import get_submit_url
 XMLNS = 'http://openrosa.org/commtrack/stock_report'
 
 def process(domain, instance):
+    """process an incoming commtrack stock report instance"""
     root = etree.fromstring(instance)
 
     def _(tag, ns=XMLNS):
@@ -31,6 +32,14 @@ def process(domain, instance):
     spoof_submission(get_submit_url(domain), submission)
 
 def process_transaction(tx, case):
+    """process an individual stock datapoint (action + value) from a stock report
+
+    * examine the new data
+    * reconcile it with the current stock info
+    * encode the necessary data updates as case-xml blocks and annotate the
+      original instance
+    * submit the annotated instance to HQ for processing
+    """
     action, value = tx
 
     prop = lambda k, default: case.dynamic_properties().get(k, default)
@@ -55,8 +64,13 @@ def process_transaction(tx, case):
 
     return case_update
 
-# business logic to reconcile stock reports lives HERE
 def update_stock_info(s, action, value):
+    """given the current stock state for a product at a location, update
+    with the incoming datapoint
+
+    fancy business logic to reconcile stock reports lives HERE
+    """
+
     s['current_stock'] = int(s['current_stock'])
     #if s['stocked_out_since']:
     #    s['stocked_out_since'] = datetime.strptime(s['stocked_out_since'], '%Y-%m-%d').date()
