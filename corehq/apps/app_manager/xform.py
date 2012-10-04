@@ -207,12 +207,18 @@ class XForm(WrappedNode):
             search_tag += '[@form="%s"]' % form
         value_node = text_node.find(search_tag)
 
-        text = " ____ ".join([t for t in map(str.strip, value_node.itertext()) if t]) or None
+        text_parts = list(value_node.itertext())
+        if len(text_parts) > 1:
+            text = " ____ ".join([t for t in map(str.strip, text_parts) if t])
+        else:
+            text = value_node.text
 
-        if not text:
+        if text:
+            text = text.strip()
+        else:
             raise XFormError('<translation lang="%s"><text id="%s"> node has no <value>' % (
                 trans_node.attrib.get('lang'), id
-            ))
+                ))
         return text
 
     def get_label_text(self, prompt, langs, form=None):
