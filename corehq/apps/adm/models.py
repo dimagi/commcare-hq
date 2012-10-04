@@ -64,10 +64,6 @@ class ADMEditableItemMixin(InterfaceEditableItemMixin):
         This sets up how the ADM Columns can be edited through the very basic ADM admin interface.
     """
 
-    def __getattr__(self, item):
-        # for referencing self.get_id in the editable_item
-        return super(ADMEditableItemMixin, self).__getattribute__(item)
-
     @property
     def editable_item_button(self):
         return mark_safe("""<a href="#updateADMItemModal"
