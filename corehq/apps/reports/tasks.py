@@ -4,16 +4,22 @@ from celery.log import get_task_logger
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from django.core.cache import cache
-from django.http import Http404
+from django.http import Http404, HttpResponse
 import pickle
+from casexml.apps.case.export import export_cases_and_referrals
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.models import DailyReportNotification,\
     HQGroupExportConfiguration, CaseActivityReportCache
+from corehq.apps.reports.util import get_all_users_by_domain
+from corehq.apps.users.export import export_users
 from corehq.apps.users.models import CouchUser
 from corehq.apps.reports.schedule.html2text import html2text
 from dimagi.utils.django.email import send_HTML_email
 from corehq.apps.reports.schedule.config import ScheduledReportFactory
 from couchexport.groupexports import export_for_group
+from soil import CachedDownload
+
 
 logging = get_task_logger()
 
@@ -124,3 +130,19 @@ def _cache_data(data, cache_key,
         new_cache['set_on'] = datetime.utcnow()
         new_cache[data_key] = data
         cache.set(cache_key, new_cache, cache_timeout)
+
+@task
+def prepare_download(download_id, payload_func, content_disposition, mimetype, expiry=10*60*60):
+    """
+    payload_func should be an instance of SerializableFunction
+    """
+    payload = payload_func()
+    download_stream = "%s_stream" % download_id
+    cache.set(download_stream, payload, expiry)
+    CachedDownload(
+        download_stream,
+        mimetype=mimetype,
+        content_disposition= content_disposition,
+#        extras={'X-CommCareHQ-Export-Token': checkpoint.get_id},
+        download_id=download_id
+    ).save(expiry)
