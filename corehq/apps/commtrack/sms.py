@@ -17,7 +17,7 @@ def handle(v, text):
     inst_xml = to_instance(v, data)
     print inst_xml
     
-    stockreport.process(inst_xml)
+    stockreport.process(v.domain, inst_xml)
 
     # TODO: if message doesn't parse, don't handle it and fallback
     # to a catch-all error handler?
