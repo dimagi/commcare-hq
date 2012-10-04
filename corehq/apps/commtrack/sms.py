@@ -1,6 +1,7 @@
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.models import Product
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.commtrack import stockreport
 from dimagi.utils.couch.database import get_db
 from lxml import etree
 from lxml.builder import ElementMaker
@@ -15,11 +16,8 @@ def handle(v, text):
     print data
     inst_xml = to_instance(v, data)
     print inst_xml
-
-    # next:
-    # clean data here (fetch existing case and do computations)
-    # generate instance
-    # submit against case via casexml
+    
+    stockreport.process(inst_xml)
 
     # TODO: if message doesn't parse, don't handle it and fallback
     # to a catch-all error handler?
@@ -152,7 +150,9 @@ def looks_like_prod_code(code):
 
 
 def to_instance(v, data):
-    E = ElementMaker(namespace='http://openrosa.org/commtrack/stock_report')
+    """convert the parsed sms stock report into an instance like what would be
+    submitted from a commcare phone"""
+    E = ElementMaker(namespace=stockreport.XMLNS)
 
     # find all stock product sub-cases linked to the supply point case, and build a mapping
     # of the general Product doc id to the site-specific product sub-case
