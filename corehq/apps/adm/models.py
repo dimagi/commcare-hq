@@ -59,61 +59,27 @@ class IgnoreDatespanADMColumnMixin(DocumentSchema):
     ignore_datespan = BooleanProperty(default=True)
 
 
-class ADMEditableItemMixin(InterfaceEditableItemMixin):
-    """
-        This sets up how the ADM Columns can be edited through the very basic ADM admin interface.
-    """
-
-    @property
-    def editable_item_button(self):
-        return mark_safe("""<a href="#updateADMItemModal"
-        class="btn"
-        data-item_id="%s"
-        onclick="adm_interface.update_item(this)"
-        data-toggle="modal"><i class="icon icon-pencil"></i> Edit</a>""" % self.get_id)
-
-    def _boolean_label(self, value, yes_text="Yes", no_text="No"):
-        return mark_safe('<span class="label label-%s">%s</span>' %
-                         ("success" if value else "warning", yes_text if value else no_text))
-
-    def editable_item_format_displayed_property(self, key, property):
-        if isinstance(property, bool):
-            return self._boolean_label(property)
-        return super(ADMEditableItemMixin, self).editable_item_format_displayed_property(key, property)
-
-    def editable_item_update(self, overwrite=True, **kwargs):
-        for key, item in kwargs.items():
-            try:
-                setattr(self, key, item)
-            except AttributeError:
-                pass
-        self.save()
-
-    @classmethod
-    def editable_item_create(cls, overwrite=True, **kwargs):
-        item = cls()
-        item.editable_item_update(**kwargs)
-        return item
-
-
-class ADMDocument(Document, ADMEditableItemMixin):
+class ADMDocumentBase(Document, InterfaceEditableItemMixin):
     """
         For all things ADM.
         The important thing is that default versions of ADM items (reports and columns) are unique for domain + slug
         pairings.
         ---
         slug
-            - human-readable identifier for this ADMDocument.
-            - global defaults are unique by domain='' + slug
-            - domain-specific defaults / overrides are unique by domain='<domain_name>' + slug + is_default=True
+            - human-readable identifier
+            - global defaults have no domain specified and are identified by their slug
+            - domain-specific defaults / overrides have a domain specified and are identified by
+                the domain, slug, and is_default=True
         domain
-            - '' means that this document will be used as the default for all domains
-            - when the domain is specified and is_default=True, this document will override any global default documents
-                with the same slug when that domain is viewed. Alternatively, if no default document is specified, then
-                this document will only show up in that domain and no others.
+            - when no domain name is specified, the ADMColumn or ADMReport will be the default for all domains
+                that access it.
+            - this default can be overridden when you have an ADMColumn or an ADMReport with the same slug
+                but the domain name is not empty. When a domain tries to access that ADMColumn or ADMReport,
+                then it will default to that domain-specific column / report definition---otherwise it will default
+                to the global default with no domain specified (if that exists).
         is_default
             - relevant when the domain is specified
-            - see domain for usage.
+            - all reports/columns with no domain specified have is_default=True always.
     """
     slug = StringProperty(default="")
     domain = StringProperty()
@@ -124,8 +90,37 @@ class ADMDocument(Document, ADMEditableItemMixin):
     date_modified = DateTimeProperty()
 
     @property
+    def editable_item_button(self):
+        return mark_safe("""<a href="#updateADMItemModal"
+        class="btn"
+        data-item_id="%s"
+        onclick="adm_interface.update_item(this)"
+        data-toggle="modal"><i class="icon icon-pencil"></i> Edit</a>""" % self.get_id)
+
+    @property
     def editable_item_display_columns(self):
         return ["slug", "domain", "name", "description"]
+
+    def _boolean_label(self, value, yes_text="Yes", no_text="No"):
+        return mark_safe('<span class="label label-%s">%s</span>' %
+                         ("success" if value else "warning", yes_text if value else no_text))
+
+    def editable_item_update(self, overwrite=True, **kwargs):
+        for key, item in kwargs.items():
+            try:
+                setattr(self, key, item)
+            except AttributeError:
+                pass
+        self.date_modified = datetime.datetime.utcnow()
+        self.save()
+
+    def editable_item_format_displayed_property(self, key, property):
+        if isinstance(property, bool):
+            return self._boolean_label(property)
+        if key == 'domain':
+            return mark_safe('<span class="label label-inverse">%s</span>' % property)\
+            if property else "Global Default"
+        return super(ADMDocumentBase, self).editable_item_format_displayed_property(key, property)
 
     @classmethod
     def is_editable_item_valid(cls, existing_item=None, **kwargs):
@@ -136,15 +131,11 @@ class ADMDocument(Document, ADMEditableItemMixin):
             return existing_item.slug == slug or not existing_doc
         return not existing_doc
 
-    def editable_item_update(self, overwrite=True, **kwargs):
-        self.date_modified = datetime.datetime.utcnow()
-        super(ADMDocument, self).editable_item_update(overwrite, **kwargs)
-
-    def editable_item_format_displayed_property(self, key, property):
-        if key == 'domain':
-            return mark_safe('<span class="label label-inverse">%s</span>' % property)\
-            if property else "Global Default"
-        return super(ADMDocument, self).editable_item_format_displayed_property(key, property)
+    @classmethod
+    def editable_item_create(cls, overwrite=True, **kwargs):
+        item = cls()
+        item.editable_item_update(**kwargs)
+        return item
 
     @classmethod
     def defaults_couch_view(cls):
@@ -186,12 +177,12 @@ class ADMDocument(Document, ADMEditableItemMixin):
         return data
 
 
-class ADMColumn(ADMDocument):
+class ADMColumn(ADMDocumentBase):
     """
         The basic ADM Column.
         ADM columns are unique by slug.
         ---
-        Usages of ADMDocument properties:
+        Usages of ADMDocumentBase properties:
             name
                 - text in the column's header in an ADM Report
             description
@@ -718,7 +709,7 @@ class CaseCountADMColumn(ConfigurableADMColumn, CaseFilterADMColumnMixin,
         return value if value is not None else "--"
 
 
-class ADMReport(ADMDocument):
+class ADMReport(ADMDocumentBase):
     """
         An ADMReport describes how to display a group of ADMColumns and in what
         section or domain to display them.
