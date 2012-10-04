@@ -27,8 +27,8 @@ def default_adm_report(request, domain, template="adm/base_template.html", **kwa
 
 @require_superuser
 def default_adm_admin(request):
-    from corehq.apps.adm.admin.reports import ADMReportEditIterface
-    return HttpResponseRedirect(ADMReportEditIterface.get_url())
+    from corehq.apps.adm.admin.reports import ADMReportEditInterface
+    return HttpResponseRedirect(ADMReportEditInterface.get_url())
 
 @require_superuser
 def adm_item_form(request, template="adm/forms/admin_adm_item.html", **kwargs):

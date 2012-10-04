@@ -3,7 +3,7 @@ from corehq.apps.adm.forms import ADMReportForm
 from corehq.apps.adm.models import ADMReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 
-class ADMReportEditIterface(ADMAdminInterface):
+class ADMReportEditInterface(ADMAdminInterface):
     name = "Default ADM Reports"
     description = "The report that shows up by default for each domain"
     slug = "default_adm_reports"

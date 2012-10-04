@@ -40,19 +40,19 @@ class ADMColumnAdminInterface(ADMAdminInterface):
         return data
 
 
-class CouchViewADMColumnAdminIterface(ADMColumnAdminInterface):
+class CouchViewADMColumnAdminInterface(ADMColumnAdminInterface):
     adm_item_type = "Couch View ADMCol"
     form_class = UpdateCouchViewADMColumnForm
 
     @property
     def headers(self):
-        header = super(CouchViewADMColumnAdminIterface, self).headers
+        header = super(CouchViewADMColumnAdminInterface, self).headers
         header.insert_column(DataTablesColumn("Couch View"), -1)
         header.insert_column(DataTablesColumn("Key Format"), -1)
         return header
 
 
-class ReducedADMColumnInterface(CouchViewADMColumnAdminIterface):
+class ReducedADMColumnInterface(CouchViewADMColumnAdminInterface):
     name = "Reduced & Unfiltered ADMCol"
     description = "Typically used for ADM Columns displaying a count (No. Cases or No. Submissions)."
     slug = "reduced_column"
@@ -72,7 +72,7 @@ class ReducedADMColumnInterface(CouchViewADMColumnAdminIterface):
         return header
 
 
-class DaysSinceADMColumnInterface(CouchViewADMColumnAdminIterface):
+class DaysSinceADMColumnInterface(CouchViewADMColumnAdminInterface):
     name = "Days Since ADM Column"
     description = "Columns that return the number of days since the specified datetime property occurred."
     slug = "days_since_column"
