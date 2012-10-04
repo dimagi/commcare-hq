@@ -636,7 +636,7 @@ ADM_ADMIN_INTERFACE_MAP = {
         'corehq.apps.adm.admin.columns.ConfigurableADMColumnInterface'
     ],
     "ADM Default Reports": [
-        'corehq.apps.adm.admin.reports.ADMReportEditIterface',
+        'corehq.apps.adm.admin.reports.ADMReportEditInterface',
     ]
 }
 
