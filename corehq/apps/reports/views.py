@@ -476,6 +476,23 @@ def case_details(request, domain, case_id):
         "timezone": timezone
     })
 
+def generate_case_export_payload(domain, include_closed, format, group, user_filter):
+    view_name = 'hqcase/all_cases' if include_closed else 'hqcase/open_cases'
+    key = [domain, {}, {}]
+    cases = CommCareCase.view(view_name, startkey=key, endkey=key + [{}], reduce=False, include_docs=True)
+    # todo deal with cached user dict here
+    users = get_all_users_by_domain(domain, group=group, user_filter=user_filter)
+    groups = Group.get_case_sharing_groups(domain)
+
+    #    if not group:
+    #        users.extend(CommCareUser.by_domain(domain, is_active=False))
+
+    workbook = WorkBook()
+    export_cases_and_referrals(cases, workbook, users=users, groups=groups)
+    export_users(users, workbook)
+    payload = workbook.format(format.slug)
+    return payload
+
 @login_or_digest
 @require_case_export_permission
 @login_and_domain_required
@@ -487,13 +504,33 @@ def download_cases(request, domain):
     user_filter, _ = FilterUsersField.get_user_filter(request)
 
     async = request.GET.get('async') == 'true'
-    if async:
-        download = DownloadBase()
-        a_task = tasks.download_cases.delay(domain, include_closed, format, group, user_filter, download_id=download.download_id)
-        download.set_task(a_task)
-        return download.get_start_response()
-    else:
-        return tasks.download_cases(domain, include_closed, format, group, user_filter, async=False)
+
+    kwargs = {
+        'domain': domain,
+        'include_closed': include_closed,
+        'format': format,
+        'group': group,
+        'user_filter': user_filter,
+    }
+    payload_func = SerializableFunction(generate_case_export_payload, **kwargs)
+    content_disposition = "attachment; filename={domain}_data.{ext}".format(domain=domain, ext=format.extension)
+    mimetype = "%s" % format.mimetype
+
+    def generate_payload(payload_func):
+        if async:
+            download = DownloadBase()
+            a_task = tasks.prepare_download.delay(download.download_id, payload_func, content_disposition, mimetype)
+            download.set_task(a_task)
+            return download.get_start_response()
+        else:
+            payload = payload_func()
+            response = HttpResponse(payload)
+            response['Content-Type'] = mimetype
+            response['Content-Disposition'] = content_disposition
+            return response
+
+    return generate_payload(payload_func)
+
 
 @require_can_view_all_reports
 @login_and_domain_required
