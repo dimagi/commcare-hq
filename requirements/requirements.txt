@@ -19,8 +19,6 @@ python-dateutil==1.5
 python-magic
 python-memcached==1.47
 pytz==2011b
-PyVirtualDisplay==0.1.0
-selenium==2.25.0
 south==0.7.3
 sorl-thumbnail
 tropo-webapi-python==0.1.3
