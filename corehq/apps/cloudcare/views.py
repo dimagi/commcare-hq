@@ -1,4 +1,5 @@
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.app_manager.suite_xml import SuiteGenerator
 from corehq.apps.cloudcare.models import CaseSpec
 from corehq.apps.domain.decorators import login_and_domain_required,\
     login_or_digest_ex
@@ -152,12 +153,9 @@ def filter_cases(request, domain, app_id, module_id):
     app = Application.get(app_id)
     module = app.get_module(module_id)
     auth_cookie = request.COOKIES.get('sessionid')
-    details = module.details
-    xpath_parts = []
-    for detail in details:
-        if detail.filter_xpath_2():
-            xpath_parts.append(detail.filter_xpath_2())
-    xpath = "".join(xpath_parts)
+
+    xpath = SuiteGenerator(app).get_filter_xpath(module)
+
     # touchforms doesn't like this to be escaped
     xpath = HTMLParser.HTMLParser().unescape(xpath)
     additional_filters = {"properties/case_type": module.case_type }
