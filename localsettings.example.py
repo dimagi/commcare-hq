@@ -102,6 +102,25 @@ DOMAIN_SYNCS = {
 }
 DOMAIN_SYNC_APP_NAME_MAP = { "app_name": "new_app_name" }
 
+####### Touchforms config #######
+
+XFORMS_PLAYER_URL = 'http://127.0.0.1:4444'
+
+TOUCHFORMS_API_USER = 'admin@example.com'
+TOUCHFORMS_API_PASSWORD = 'password'
+
+####### Selenium tests config ########
+
+TEST_ADMIN_USERNAME = 'admin@example.com'
+TEST_ADMIN_PASSWORD = 'password'
+TEST_BASE_URL = 'http://localhost:8000'
+TEST_ADMIN_PROJECT = 'project'
+
+TEST_MOBILE_WORKER_USERNAME = 'user@project.commcarehq.org'
+TEST_MOBILE_WORKER_PASSWORD = 'password'
+SELENIUM_DRIVER = 'Chrome'
+SELENIUM_XVFB = False
+SELENIUM_XVFB_DISPLAY_SIZE = (1024, 768)
 
 ####### Misc / HQ-specific Config ########
 
