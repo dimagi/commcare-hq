@@ -147,7 +147,7 @@ class CRUDFormRequestManager(object):
         ))
 
     def _get_form(self):
-        if self.request.method == 'POST':
+        if self.request.method == 'POST' and not self.success:
             return self.form_class(self.request.POST, doc_id=self.doc_id)
         return self.form_class(doc_id=self.doc_id)
 
@@ -165,6 +165,7 @@ class CRUDFormRequestManager(object):
             doc = self.form_class.doc_class.get(self.doc_id)
             doc.delete()
             self.success = True
+            self.doc_id = None
         except Exception as e:
             self.errors.append("Could not delete document with id %s due to error: %s" % (self.doc_id, e))
         return self._get_form(), []
