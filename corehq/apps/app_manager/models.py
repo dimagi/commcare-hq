@@ -861,6 +861,7 @@ class ApplicationBase(VersionedDoc):
     # exchange properties
     cached_properties = DictProperty()
     description = StringProperty()
+    short_description = StringProperty()
     deployment_date = DateTimeProperty()
     phone_model = StringProperty()
     user_type = StringProperty()
