@@ -53,7 +53,7 @@ class ADMAdminCRUDManager(TabularCRUDManager):
 
     def create(self, **kwargs):
         self.document_instance = self.document_class()
-        self.update(self, **kwargs)
+        self.update(**kwargs)
 
 
 class ColumnAdminCRUDManager(ADMAdminCRUDManager):
