@@ -1,36 +1,13 @@
 from celery.log import get_task_logger
 from unidecode import unidecode
 from celery.task import task
-import uuid
 import zipfile
-from soil import CachedDownload, FileDownload
 from couchexport.models import Format
 import tempfile
 import os
-import stat
-from django.conf import settings
-from django.core import cache
+from soil.util import expose_download
 
 logging = get_task_logger()
-
-GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
-
-EXPORT_METHOD = getattr(settings, 'COUCHEXPORT_METHOD', 'tmpfile')
-_EXPORT_METHOD_OPTIONS = ('cached', 'tmpfile')
-if EXPORT_METHOD not in _EXPORT_METHOD_OPTIONS:
-    raise ValueError("EXPORT_METHOD %r not recognized; must be one of %r" % (
-        EXPORT_METHOD,
-        ', '.join([repr(o) for o in _EXPORT_METHOD_OPTIONS])
-    ))
-
-#EXPORT_CACHE_ID must be a key in the settings.CACHES dictionary - for files > 1MB, use redis as your backend.
-EXPORT_CACHE_ID = getattr(settings, 'COUCHEXPORT_CACHE', 'default')
-if hasattr(settings, 'CACHES'): #legacy pre django 1.3 check for CACHE_BACKEND settings var
-    assert(EXPORT_CACHE_ID in settings.CACHES), "If you're using django 1.3, please use the 1.3 caching convention and create a settings.CACHES dict"
-    cache = cache.get_cache(EXPORT_CACHE_ID)
-else:
-    #django 1.2 compatability, just use default cache backend
-    cache= cache.cache
 
 @task
 def export_async(custom_export, download_id, format=None, filename=None, **kwargs):
@@ -123,33 +100,17 @@ def cache_file_to_be_served(tmp, checkpoint, download_id, format=None, filename=
             pass
 
         tmp = Temp(tmp)
-
-        def expose_download(cls, key):
-            cls(
-                key,
-                mimetype=format.mimetype,
-                content_disposition='attachment; filename=%s.%s' % (filename, format.extension),
-                extras={'X-CommCareHQ-Export-Token': checkpoint.get_id},
-                download_id=download_id,
-                cache_backend=EXPORT_CACHE_ID,
-            ).save(expiry)
-
-        if EXPORT_METHOD == "cached":
-            download_stream = "%s_stream" % download_id
-            payload = tmp.payload
-            cache.set(download_stream, payload, expiry)
-            expose_download(CachedDownload, download_stream)
-        elif EXPORT_METHOD == 'tmpfile':
-            path = tmp.path
-            # make file globally read/writeable in case celery runs as root
-            os.chmod(path, GLOBAL_RW)
-            expose_download(FileDownload, path)
+        payload = tmp.payload
+        expose_download(payload, expiry,
+                        mimetype=format.mimetype,
+                        content_disposition='attachment; filename=%s.%s' % (filename, format.extension),
+                        extras={'X-CommCareHQ-Export-Token': checkpoint.get_id},
+                        download_id=download_id)
+        
     else:
-        temp_id = uuid.uuid4().hex
-        cache.set(temp_id, "Sorry, there wasn't any data.", expiry)
-        CachedDownload(temp_id,
-            content_disposition="",
-            mimetype="text/html",
-            download_id=download_id
-        ).save(expiry)
-
+        # this just gives you a link saying there wasn't anything there
+        expose_download("Sorry, there wasn't any data.", expiry, 
+                        content_disposition="",
+                        mimetype="text/html",
+                        download_id=download_id).save(expiry)
+        
