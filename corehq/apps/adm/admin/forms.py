@@ -29,7 +29,7 @@ class BaseADMDocumentForm(BaseCRUDForm):
     def crud_manager(self):
         if self.existing_object:
             return self.existing_object.admin_crud
-        return self.doc_class.AdminCRUD
+        return self.doc_class.get_admin_crud()
 
 
 class CouchViewADMColumnForm(BaseADMDocumentForm):

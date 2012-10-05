@@ -92,9 +92,8 @@ class BaseADMDocument(Document):
     def admin_crud(self):
         return self._admin_crud_class(self.__class__, self)
 
-    @classproperty
     @classmethod
-    def AdminCRUD(cls):
+    def get_admin_crud(cls):
         return cls._admin_crud_class(cls)
 
     @classmethod
