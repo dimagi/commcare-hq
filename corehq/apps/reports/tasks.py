@@ -19,6 +19,7 @@ from dimagi.utils.django.email import send_HTML_email
 from corehq.apps.reports.schedule.config import ScheduledReportFactory
 from couchexport.groupexports import export_for_group
 from soil import CachedDownload
+from soil.util import expose_download
 
 
 logging = get_task_logger()
@@ -131,18 +132,3 @@ def _cache_data(data, cache_key,
         new_cache[data_key] = data
         cache.set(cache_key, new_cache, cache_timeout)
 
-@task
-def prepare_download(download_id, payload_func, content_disposition, mimetype, expiry=10*60*60):
-    """
-    payload_func should be an instance of SerializableFunction
-    """
-    payload = payload_func()
-    download_stream = "%s_stream" % download_id
-    cache.set(download_stream, payload, expiry)
-    CachedDownload(
-        download_stream,
-        mimetype=mimetype,
-        content_disposition= content_disposition,
-#        extras={'X-CommCareHQ-Export-Token': checkpoint.get_id},
-        download_id=download_id
-    ).save(expiry)
