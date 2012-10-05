@@ -31,7 +31,7 @@ class Command(test.Command):
         failfast = options.get('failfast', False)
 
         # Apply south migrations, as South does in its test command that
-        # replaces django's default test command 
+        # replaces django's default test command
         patch_for_test_db_setup()
 
         if settings.SELENIUM_XVFB:

@@ -1,9 +1,12 @@
-from corehq.apps.selenium.testcases import AdminUserTestCase
+from corehq.apps.selenium.testcases import WebUserTestCase
 from selenium.common.exceptions import NoSuchElementException
+from django.conf import settings
 import re
 
 
-class ReportsTestCase(AdminUserTestCase):
+class ReportsTestCase(WebUserTestCase):
+
+    max_load_time = settings.TEST_REPORT_MAX_LOAD_TIME
 
     @classmethod
     def setUpClass(cls):
@@ -41,7 +44,7 @@ class ReportsTestCase(AdminUserTestCase):
                 "//div[@class='form-actions']/button"
             ).click()
 
-            self.wait_until_not(loading_report)
+            self.wait_until_not(loading_report, time=self.max_load_time)
 
         return test
 

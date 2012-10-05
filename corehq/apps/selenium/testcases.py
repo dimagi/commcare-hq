@@ -41,20 +41,40 @@ class HQSeleniumTestCase(SeleniumTestCase):
                         for i in range(length)])
 
 
-class AdminUserTestCase(HQSeleniumTestCase):
-    username = settings.TEST_ADMIN_USERNAME
-    password = settings.TEST_ADMIN_PASSWORD
-    base_url = settings.TEST_BASE_URL
-    test_project = settings.TEST_ADMIN_PROJECT
+class _WebUserTestCase(HQSeleniumTestCase):
+    project = None
+    is_superuser = None
 
     @classmethod
     def setUpClass(cls):
-        super(AdminUserTestCase, cls).setUpClass()
-        assert 'Projects' in cls.driver.page_source
-        cls.driver.find_element_by_link_text(cls.test_project).click()
+        super(_WebUserTestCase, cls).setUpClass()
+
+        if cls.is_superuser:
+            assert ('Projects' in cls.driver.page_source or
+                    'Create a New Project' in cls.driver.page_source)
+            cls.driver.get('/a/' + cls.project)
+        else:
+            assert 'Projects' in cls.driver.page_source
+            cls.driver.find_element_by_link_text(cls.project).click()
+
+
+class AdminUserTestCase(_WebUserTestCase):
+    username = settings.TEST_ADMIN_USERNAME
+    password = settings.TEST_ADMIN_PASSWORD
+    base_url = settings.TEST_ADMIN_URL
+    project = settings.TEST_ADMIN_PROJECT
+    is_superuser = settings.TEST_ADMIN_IS_SUPERUSER
+
+
+class WebUserTestCase(_WebUserTestCase):
+    username = settings.TEST_WEB_USER_USERNAME
+    password = settings.TEST_WEB_USER_PASSWORD
+    base_url = settings.TEST_WEB_USER_URL
+    project = settings.TEST_WEB_USER_PROJECT
+    is_superuser = settings.TEST_WEB_USER_IS_SUPERUSER
 
 
 class MobileWorkerTestCase(HQSeleniumTestCase):
     username = settings.TEST_MOBILE_WORKER_USERNAME
     password = settings.TEST_MOBILE_WORKER_PASSWORD
-    base_url = settings.TEST_BASE_URL
+    base_url = settings.TEST_MOBILE_WORKER_URL
