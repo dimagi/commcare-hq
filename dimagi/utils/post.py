@@ -99,7 +99,7 @@ def post_data(data, url, curl_command="curl", use_curl=False,
             else:
                 if not is_odk:
                     params.append('--header')
-                    params.append('"Content-length:%s"' % len(data))
+                    params.append('Content-length:%s' % len(data))
 
             params.append(url)
             
