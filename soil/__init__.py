@@ -5,9 +5,16 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 import uuid
 from django.conf import settings
+import tempfile
+import os
+import stat
 
+GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
 
-
+SOIL_DEFAULT_CACHE = getattr(settings, 'SOIL_DEFAULT_CACHE', 'default')
+if SOIL_DEFAULT_CACHE != 'default':
+    assert SOIL_DEFAULT_CACHE in settings.CACHES, \
+        "%s not found in settings.CACHES. Check you SOIL_DEFAULT_CACHE setting." % SOIL_DEFAULT_CACHE
 
 
 class DownloadBase(object):
@@ -17,7 +24,8 @@ class DownloadBase(object):
     
     def __init__(self, mimetype="text/plain", 
                  content_disposition="attachment; filename=download.txt", 
-                 transfer_encoding=None, extras=None, download_id=None, cache_backend='default'):
+                 transfer_encoding=None, extras=None, download_id=None, 
+                 cache_backend=SOIL_DEFAULT_CACHE):
         self.mimetype = mimetype
         self.content_disposition = content_disposition
         self.transfer_encoding = transfer_encoding
@@ -109,6 +117,14 @@ class DownloadBase(object):
                 task.update_state(state='PROGRESS', meta={'current': current, 'total': total})
         except (TypeError, NotImplementedError):
             pass
+    
+    @classmethod
+    def create(cls, payload, **kwargs):
+        """
+        Create a Download object from a payload, plus any additional arguments 
+        to pass through to the constructor.
+        """
+        raise NotImplementedError("This should be overridden by subclasses!")
 
 class CachedDownload(DownloadBase):
     """
@@ -117,13 +133,21 @@ class CachedDownload(DownloadBase):
     
     def __init__(self, cacheindex, mimetype="text/plain", 
                  content_disposition="attachment; filename=download.txt", 
-                 transfer_encoding=None, extras=None, download_id=None, cache_backend='redis'):
+                 transfer_encoding=None, extras=None, download_id=None, 
+                 cache_backend=SOIL_DEFAULT_CACHE):
         super(CachedDownload, self).__init__(mimetype, content_disposition, 
                                              transfer_encoding, extras, download_id, cache_backend)
         self.cacheindex = cacheindex
 
     def get_content(self):
         return self.get_cache().get(self.cacheindex, None)
+    
+    @classmethod
+    def create(cls, payload, expiry, **kwargs):
+        download_id = uuid.uuid4().hex
+        ret = cls(download_id, **kwargs)
+        cache.get_cache(ret.cache_backend).set(download_id, payload, expiry)
+        return ret
 
 class FileDownload(DownloadBase):
     """
@@ -136,8 +160,19 @@ class FileDownload(DownloadBase):
         super(FileDownload, self).__init__(mimetype, content_disposition, 
                                              transfer_encoding, extras, download_id, cache_backend)
         self.filename = filename
-        
+    
     def get_content(self):
         with open(self.filename, 'rb') as f:
             return f.read()
         
+    @classmethod
+    def create(cls, payload, expiry, **kwargs):
+        """
+        Create a FileDownload object from a payload, plus any 
+        additional arguments to pass through to the constructor.
+        """
+        fd, path = tempfile.mkstemp()
+        os.chmod(path, GLOBAL_RW)
+        with os.fdopen(fd, "wb") as f:
+            f.write(payload)
+        return cls(filename=path, **kwargs)
