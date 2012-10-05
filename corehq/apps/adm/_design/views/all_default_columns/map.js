@@ -1,9 +1,28 @@
 function (doc) {
-    if (doc.base_doc === "ADMColumn") {
-        if (!(doc.config_doc === "ConfigurableADMColumn" && doc.domain)) {
-            emit(["all", doc.doc_type, doc._id], 1);
-            if (doc.returns_numerical)
-                emit(["numerical", doc.doc_type, doc._id], {name: doc.name});
-        }
+    if (doc.base_doc === "ADMColumn"
+        && (!doc.domain || (doc.domain && doc.is_default) )) {
+            var emit_entry = {
+                name: doc.name,
+                description: doc.description
+            };
+            if (doc.domain) {
+                emit_entry['domain'] = doc.domain;
+            }
+
+            emit(["defaults all slug", doc.slug, doc._id], emit_entry);
+            emit(["defaults all type", doc.doc_type, doc._id], emit_entry);
+
+            if (doc.domain) {
+                emit(["defaults domain slug", doc.domain, doc.slug, doc._id], emit_entry);
+                emit(["defaults domain type ", doc.domain, doc.doc_type, doc._id], emit_entry);
+            } else {
+                emit(["defaults global slug", doc.slug, doc._id], emit_entry);
+                emit(["defaults global type", doc.doc_type, doc._id], emit_entry);
+            }
+
+            if (doc.returns_numerical) {
+                emit(["numerical slug", doc.slug, doc._id], emit_entry);
+                emit(["numerical type", doc.doc_type, doc._id], emit_entry);
+            }
     }
 }
