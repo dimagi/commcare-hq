@@ -1,9 +1,7 @@
-import json
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 import inspect
-from django.template.loader import render_to_string
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from corehq.apps.domain.decorators import require_superuser, require_previewer, login_and_domain_required
-from dimagi.utils.data.editable_items import InterfaceEditableItemForm
+from dimagi.utils.data.crud import CRUDFormRequestManager, CRUDActionError
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import render_to_response
 
@@ -37,48 +35,20 @@ def adm_item_form(request, template="adm/forms/admin_adm_item.html", **kwargs):
     item_id = kwargs.get("item_id")
 
     try:
-        form_class = to_function("corehq.apps.adm.forms.%s" % form_type)
+        form_class = to_function("corehq.apps.adm.admin.forms.%s" % form_type)
     except Exception:
         form_class = None
 
     if not inspect.isclass(form_class):
-        return HttpResponseBadRequest("'%s' should be a class name in corehq.apps.adm.forms" % form_type)
-    if not issubclass(form_class, InterfaceEditableItemForm):
-        return HttpResponseBadRequest("'%s' should be a subclass of InterfaceEditableItemForm" % form_type)
+        return HttpResponseBadRequest("'%s' should be a class name in corehq.apps.adm.admin.forms" % form_type)
 
-    from corehq.apps.adm.forms import ConfigurableADMColumnChoiceForm
+    from corehq.apps.adm.admin.forms import ConfigurableADMColumnChoiceForm
     if form_class == ConfigurableADMColumnChoiceForm:
         template = "adm/forms/configurable_admin_adm_item.html"
 
-    success = False
-    delete_item = bool(action == 'delete')
-    form = None
-    errors = []
-    item_result = []
-
-    if (action == 'update' or delete_item) and not item_id:
-        return HttpResponseBadRequest("an item_id is required in order to update")
-
-    if delete_item:
-        try:
-            adm_item = form_class._item_class.get(item_id)
-            adm_item.delete()
-            success = True
-        except Exception as e:
-            errors.append("Could not delete item %s due to error: %s" % (item_id, e))
-    elif request.method == 'POST':
-        form = form_class(request.POST, item_id=item_id)
-        if form.is_valid():
-            item_result = form.save()
-            success = True
-    elif request.method == 'GET' or success:
-        form = form_class(item_id=item_id)
-
-    context = dict(form=form)
-    return HttpResponse(json.dumps(dict(
-        success=success,
-        deleted=delete_item,
-        form_update=render_to_string(template, context) if form else "",
-        rows=item_result,
-        errors=errors
-    )))
+    try:
+        form_manager = CRUDFormRequestManager(request, form_class, template,
+            doc_id=item_id, delete=bool(action == 'delete'))
+        return HttpResponse(form_manager.json_response)
+    except CRUDActionError as e:
+        return HttpResponseBadRequest(e)

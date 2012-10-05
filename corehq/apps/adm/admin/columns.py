@@ -1,15 +1,12 @@
 from django.utils.safestring import mark_safe
-from corehq.apps.adm.admin import ADMAdminInterface
-from corehq.apps.adm.forms import UpdateCouchViewADMColumnForm, UpdateReducedADMColumnForm, \
-    DaysSinceADMColumnForm, ConfigurableADMColumnChoiceForm, UpdateADMItemForm
+from corehq.apps.adm.admin import BaseADMAdminInterface
+from corehq.apps.adm.admin.forms import CouchViewADMColumnForm, ReducedADMColumnForm, \
+    DaysSinceADMColumnForm, ConfigurableADMColumnChoiceForm
 from corehq.apps.adm.models import ReducedADMColumn, DaysSinceADMColumn, ConfigurableADMColumn
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from dimagi.utils.couch.database import get_db
-from dimagi.utils.modules import to_function
 
-class ADMColumnAdminInterface(ADMAdminInterface):
-    adm_item_type = "ADM Column"
-    form_class = UpdateADMItemForm
+class BaseADMColumnAdminInterface(BaseADMAdminInterface):
+    adm_item_type = "Column"
 
     @property
     def headers(self):
@@ -25,7 +22,7 @@ class ADMColumnAdminInterface(ADMAdminInterface):
     def rows(self):
         rows = []
         for item in self.columns:
-            rows.append(item.as_row)
+            rows.append(item.admin_crud.row)
         return rows
 
     @property
@@ -40,9 +37,9 @@ class ADMColumnAdminInterface(ADMAdminInterface):
         return data
 
 
-class CouchViewADMColumnAdminInterface(ADMColumnAdminInterface):
-    adm_item_type = "Couch View ADMCol"
-    form_class = UpdateCouchViewADMColumnForm
+class CouchViewADMColumnAdminInterface(BaseADMColumnAdminInterface):
+    adm_item_type = "Couch View Column"
+    form_class = CouchViewADMColumnForm
 
     @property
     def headers(self):
@@ -57,7 +54,7 @@ class ReducedADMColumnInterface(CouchViewADMColumnAdminInterface):
     description = "Typically used for ADM Columns displaying a count (No. Cases or No. Submissions)."
     slug = "reduced_column"
     property_class = ReducedADMColumn
-    form_class = UpdateReducedADMColumnForm
+    form_class = ReducedADMColumnForm
 
     adm_item_type = "Reduced ADM Column"
     detailed_description = mark_safe("""<p>This column returns the reduced value of the couch_view specified. This assumes that
@@ -92,7 +89,7 @@ class DaysSinceADMColumnInterface(CouchViewADMColumnAdminInterface):
         return header
 
 
-class ConfigurableADMColumnInterface(ADMColumnAdminInterface):
+class ConfigurableADMColumnInterface(BaseADMColumnAdminInterface):
     name = "Configurable ADM Columns"
     description = "Default definitions for vonfigurable ADM Columns"
     slug = "config_column"

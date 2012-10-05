@@ -5,17 +5,6 @@
 </div>
 <script type="text/javascript">
     $(function() {
-        var check_modal_height = function (modal) {
-            var win_height = $(window).height();
-            modal.css('top', '10px').css('margin-top', '0px');
-            modal.find('.modal-body').css('max-height', win_height-180+"px");
-        };
-        adm_interface.addADMItemModal.on('show', function () {
-            check_modal_height($(this));
-        });
-        adm_interface.updateADMItemModal.on('show', function () {
-            check_modal_height($(this));
-        });
         var resetSubmitButton = function (item_type) {
             var $submitButton = adm_interface.addADMItemModal.find('button[type="submit"]');
             if (!item_type) {

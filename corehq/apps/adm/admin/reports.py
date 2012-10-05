@@ -1,9 +1,9 @@
-from corehq.apps.adm.admin import ADMAdminInterface
-from corehq.apps.adm.forms import ADMReportForm
+from corehq.apps.adm.admin import BaseADMAdminInterface
+from corehq.apps.adm.admin.forms import ADMReportForm
 from corehq.apps.adm.models import ADMReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 
-class ADMReportEditInterface(ADMAdminInterface):
+class ADMReportAdminInterface(BaseADMAdminInterface):
     name = "Default ADM Reports"
     description = "The report that shows up by default for each domain"
     slug = "default_adm_reports"
@@ -36,5 +36,5 @@ class ADMReportEditInterface(ADMAdminInterface):
             endkey=key+[{}]
         ).all()
         for item in data:
-            rows.append(item.as_row)
+            rows.append(item.admin_crud.row)
         return rows

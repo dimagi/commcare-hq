@@ -1,18 +1,14 @@
 import logging
-from new import instancemethod
-from couchdbkit.ext.django.schema import Document, StringProperty, ListProperty,\
-    DocumentSchema, BooleanProperty, DictProperty, IntegerProperty, DateTimeProperty
-import datetime
-import dateutil
-from django.utils.html import escape
-from django.utils.safestring import mark_safe
 import pytz
+import dateutil
+from couchdbkit.ext.django.schema import *
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.adm import utils
+from corehq.apps.adm.admin.crud import *
 from corehq.apps.groups.models import Group
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.data.editable_items import InterfaceEditableItemMixin
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.decorators.classproperty import classproperty
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
 from dimagi.utils.timezones import utils as tz_utils
@@ -59,7 +55,7 @@ class IgnoreDatespanADMColumnMixin(DocumentSchema):
     ignore_datespan = BooleanProperty(default=True)
 
 
-class ADMDocumentBase(Document, InterfaceEditableItemMixin):
+class BaseADMDocument(Document):
     """
         For all things ADM.
         The important thing is that default versions of ADM items (reports and columns) are unique for domain + slug
@@ -89,53 +85,17 @@ class ADMDocumentBase(Document, InterfaceEditableItemMixin):
     description = StringProperty(default="")
     date_modified = DateTimeProperty()
 
-    @property
-    def editable_item_button(self):
-        return mark_safe("""<a href="#updateADMItemModal"
-        class="btn"
-        data-item_id="%s"
-        onclick="adm_interface.update_item(this)"
-        data-toggle="modal"><i class="icon icon-pencil"></i> Edit</a>""" % self.get_id)
+    _admin_crud_class = ADMAdminCRUDManager
 
     @property
-    def editable_item_display_columns(self):
-        return ["slug", "domain", "name", "description"]
+    @memoized
+    def admin_crud(self):
+        return self._admin_crud_class(self.__class__, self)
 
-    def _boolean_label(self, value, yes_text="Yes", no_text="No"):
-        return mark_safe('<span class="label label-%s">%s</span>' %
-                         ("success" if value else "warning", yes_text if value else no_text))
-
-    def editable_item_update(self, overwrite=True, **kwargs):
-        for key, item in kwargs.items():
-            try:
-                setattr(self, key, item)
-            except AttributeError:
-                pass
-        self.date_modified = datetime.datetime.utcnow()
-        self.save()
-
-    def editable_item_format_displayed_property(self, key, property):
-        if isinstance(property, bool):
-            return self._boolean_label(property)
-        if key == 'domain':
-            return mark_safe('<span class="label label-inverse">%s</span>' % property)\
-            if property else "Global Default"
-        return super(ADMDocumentBase, self).editable_item_format_displayed_property(key, property)
-
+    @classproperty
     @classmethod
-    def is_editable_item_valid(cls, existing_item=None, **kwargs):
-        slug = kwargs.get('slug')
-        domain = kwargs.get('domain')
-        existing_doc = cls.get_default(slug, domain=domain, wrap=False)
-        if existing_item:
-            return existing_item.slug == slug or not existing_doc
-        return not existing_doc
-
-    @classmethod
-    def editable_item_create(cls, overwrite=True, **kwargs):
-        item = cls()
-        item.editable_item_update(**kwargs)
-        return item
+    def AdminCRUD(cls):
+        return cls._admin_crud_class(cls)
 
     @classmethod
     def defaults_couch_view(cls):
@@ -177,12 +137,12 @@ class ADMDocumentBase(Document, InterfaceEditableItemMixin):
         return data
 
 
-class ADMColumn(ADMDocumentBase):
+class BaseADMColumn(BaseADMDocument):
     """
         The basic ADM Column.
         ADM columns are unique by slug.
         ---
-        Usages of ADMDocumentBase properties:
+        Usages of BaseADMDocument properties:
             name
                 - text in the column's header in an ADM Report
             description
@@ -190,6 +150,8 @@ class ADMColumn(ADMDocumentBase):
                     in the column's header
     """
     base_doc = "ADMColumn"
+
+    _admin_crud_class = ColumnAdminCRUDManager
 
     _report_datespan = None
     @property
@@ -218,11 +180,6 @@ class ADMColumn(ADMDocumentBase):
         """
         return self._report_domain
 
-    def editable_item_format_displayed_property(self, key, property):
-        if key == "name":
-            return "%s" % property
-        return super(ADMColumn, self).editable_item_format_displayed_property(key, property)
-
     def set_report_values(self, **kwargs):
         """
             This is called when rendering ADM report. Insert any relevant filters here.
@@ -250,21 +207,18 @@ class ADMColumn(ADMDocumentBase):
         return cls.__name__
 
 
-class CouchViewADMColumn(ADMColumn):
+class CouchViewADMColumn(BaseADMColumn):
     """
         Use this for generic columns that pull data straight from specific couch views.
     """
     couch_view = StringProperty(default="")
     key_format = StringProperty(default="<domain>, <user_id>, <datespan>")
 
+    _admin_crud_class = CouchViewColumnAdminCRUDManager
+
     def __init__(self, _d=None, **kwargs):
         super(CouchViewADMColumn, self).__init__(_d, **kwargs)
         self.key_kwargs = {u'{}': {}}
-    
-    @property
-    def editable_item_display_columns(self):
-        return super(CouchViewADMColumn, self).editable_item_display_columns + \
-               ["couch_view", "key_format"]
 
     @property
     @memoized
@@ -299,11 +253,6 @@ class CouchViewADMColumn(ADMColumn):
         super(CouchViewADMColumn, self).set_report_values(**kwargs)
         self.key_kwargs.update(self._format_keywords_in_kwargs(**kwargs))
 
-    def editable_item_format_displayed_property(self, key, property):
-        if key == 'key_format':
-            return '[%s]' % escape(property)
-        return super(CouchViewADMColumn, self).editable_item_format_displayed_property(key, property)
-
     def get_couch_view_data(self, key, datespan=None):
         data = self.view_results(**utils.standard_start_end_key(key, datespan))
         return data.all() if data else None
@@ -337,17 +286,11 @@ class ReducedADMColumn(CouchViewADMColumn, NumericalADMColumnMixin, IgnoreDatesp
         Returns the value of the reduced view of whatever couch_view is specified.
         Generally used to retrieve countable items.
     """
-    @property
-    def editable_item_display_columns(self):
-        return super(ReducedADMColumn, self).editable_item_display_columns + ["returns_numerical", "ignore_datespan"]
+    _admin_crud_class = ReducedColumnAdminCRUDManager
 
     def aggregate(self, values):
         return reduce(lambda x, y: x+ y, values) if self.returns_numerical \
             else ', '.join(values)
-    
-    def editable_item_update(self, overwrite=True, **kwargs):
-        self.ignore_datespan = kwargs.get('ignore_datespan', False)
-        super(ReducedADMColumn, self).editable_item_update(overwrite, **kwargs)
 
     def get_couch_view_data(self, key, datespan=None):
         if self.ignore_datespan:
@@ -372,21 +315,16 @@ class DaysSinceADMColumn(CouchViewADMColumn, NumericalADMColumnMixin):
     property_name = StringProperty(default="")
     start_or_end = StringProperty(default="enddate")
 
-    @property
-    def editable_item_display_columns(self):
-        return super(DaysSinceADMColumn, self).editable_item_display_columns + ["property_name", "start_or_end"]
+    _admin_crud_class = DaysSinceColumnAdminCRUDManager
 
     def _get_property_from_doc(self, doc, property):
+        """
+            Hmmm...I think I did something similar to this wtih MVP Indicators.
+            todo: check that.
+        """
         if isinstance(doc, dict) and len(property) > 0:
             return self._get_property_from_doc(doc.get(property[0]), property[1:-1])
         return doc
-
-    def editable_item_format_displayed_property(self, key, property):
-        if key == "start_or_end":
-            from corehq.apps.adm.forms import DATESPAN_CHOICES
-            choices = dict(DATESPAN_CHOICES)
-            return "%s and %s" % (self.property_name, choices.get(property, "--"))
-        return super(DaysSinceADMColumn, self).editable_item_format_displayed_property(key, property)
 
     def get_couch_view_data(self, key, datespan=None):
         default_value = None
@@ -425,7 +363,7 @@ class DaysSinceADMColumn(CouchViewADMColumn, NumericalADMColumnMixin):
         return "%s" % value if value is not None else "--"
 
 
-class ConfigurableADMColumn(ADMColumn):
+class ConfigurableADMColumn(BaseADMColumn):
     """
         Use this for columns that can have end-user configurable properties.
         ---
@@ -436,43 +374,11 @@ class ConfigurableADMColumn(ADMColumn):
     is_configurable = BooleanProperty(default=False)
     config_doc = "ConfigurableADMColumn"
 
-    @property
-    def editable_item_display_columns(self):
-        return ["column_type"] + super(ConfigurableADMColumn, self).editable_item_display_columns + \
-               ["is_configurable", "configurable_properties_in_row"]
-
-    @property
-    def editable_item_button(self):
-        return mark_safe("""<a href="#updateADMItemModal"
-        class="btn"
-        data-item_id="%s"
-        data-form_class="%s"
-        onclick="adm_interface.update_item(this)"
-        data-toggle="modal"><i class="icon icon-pencil"></i> Edit</a>""" %\
-                         (self.get_id, "%sForm" % self.__class__.__name__))
+    _admin_crud_class = ConfigurableColumnAdminCRUDManager
 
     @property
     def configurable_properties(self):
         return []
-
-    @property
-    @memoized
-    def configurable_properties_in_row(self):
-        properties = ['<dl class="dl-horizontal" style="margin:0;padding:0;">']
-        for key in self.configurable_properties:
-            property = getattr(self, key)
-            properties.append("<dt>%s</dt>" % self.format_key(key))
-            properties.append("<dd>%s</dd>" % self.editable_item_format_displayed_property(key, property))
-        properties.append("</dl>")
-        return mark_safe("\n".join(properties))
-
-    def editable_item_format_displayed_property(self, key, property):
-        if isinstance(property, instancemethod):
-            return property()
-        return super(ConfigurableADMColumn, self).editable_item_format_displayed_property(key, property)
-
-    def format_key(self, key):
-        return key.replace("_", " ").title()
 
     @classmethod
     def all_admin_configurable_columns(cls):
@@ -494,10 +400,6 @@ class ConfigurableADMColumn(ADMColumn):
                         (key[-1], e))
         return wrapped_data
 
-    @classmethod
-    def column_type(cls):
-        return "Case Count"
-
 
 class CompareADMColumn(ConfigurableADMColumn):
     """
@@ -515,6 +417,8 @@ class CompareADMColumn(ConfigurableADMColumn):
     numerator_ref = StringProperty(default="")
     denominator_ref = StringProperty(default="")
 
+    _admin_crud_class = CompareColumnAdminCRUDManager
+
     @property
     def configurable_properties(self):
         return ["numerator_ref", "denominator_ref"]
@@ -523,15 +427,15 @@ class CompareADMColumn(ConfigurableADMColumn):
     @memoized
     def numerator(self):
         if self.is_default:
-            return ADMColumn.get_default(self.numerator_ref, domain=self.report_domain)
-        return ADMColumn.get_correct_wrap(self.numerator_ref)
+            return ConfigurableADMColumn.get_default(self.numerator_ref, domain=self.report_domain)
+        return ConfigurableADMColumn.get_correct_wrap(self.numerator_ref)
 
     @property
     @memoized
     def denominator(self):
         if self.is_default:
-            return ADMColumn.get_default(self.denominator_ref, domain=self.report_domain)
-        return ADMColumn.get_correct_wrap(self.denominator_ref)
+            return ConfigurableADMColumn.get_default(self.denominator_ref, domain=self.report_domain)
+        return ConfigurableADMColumn.get_correct_wrap(self.denominator_ref)
 
     def set_report_values(self, **kwargs):
         super(CompareADMColumn, self).set_report_values(**kwargs)
@@ -539,22 +443,6 @@ class CompareADMColumn(ConfigurableADMColumn):
             self.numerator.set_report_values(**kwargs)
         if self.denominator:
             self.denominator.set_report_values(**kwargs)
-
-    def format_key(self, key):
-        if key == "numerator_ref" or key == "denominator_ref":
-            return key.replace("_ref", "").title()
-        return super(CompareADMColumn, self).format_key(key)
-
-    def editable_item_format_displayed_property(self, key, property):
-        if key == "numerator_ref" or key == 'denominator_ref':
-            try:
-                col = getattr(self, key.replace('_ref', ''))
-                configurable = '<span class="label label-success">Configurable</span><br />'
-                return mark_safe('%s %s(%s)' % \
-                       (col.name, configurable if col.is_configurable else '', property))
-            except Exception:
-                return "Ref Not Found (%s)" % property
-        return super(CompareADMColumn, self).editable_item_format_displayed_property(key, property)
 
     def raw_value(self, **kwargs):
         numerator_raw = self.numerator.raw_value(**kwargs)
@@ -608,17 +496,6 @@ class CaseFilterADMColumnMixin(DocumentSchema):
     case_types = ListProperty()
     case_status = StringProperty(default='', choices=[s[0] for s in CASE_STATUS_OPTIONS])
 
-    def format_case_filter_properties(self, key, property):
-        if key == 'filter_option':
-            filter_options = dict(CASE_FILTER_OPTIONS)
-            return filter_options[property or '']
-        if key == 'case_types':
-            return ", ".join(property) if property and property[0] else 'N/A'
-        if key == 'case_status':
-            case_status_options = dict(CASE_STATUS_OPTIONS)
-            return case_status_options[property or '']
-        return None
-
     def get_filtered_cases(self, domain, user_id, include_groups=True, status=None, include_docs=False, datespan_keys=None):
         if not datespan_keys:
             datespan_keys = [[], [{}]]
@@ -668,25 +545,16 @@ class CaseFilterADMColumnMixin(DocumentSchema):
 class CaseCountADMColumn(ConfigurableADMColumn, CaseFilterADMColumnMixin,
     NumericalADMColumnMixin, IgnoreDatespanADMColumnMixin):
     """
-        Cases that are still open but date_modified is older than <inactivity_milestone> days from the
-        enddate of the report.
-
+        Returns the count of the number of cases specified by the filters in CaseFilterADMColumnMixin and
+        inactivity_milestone.
     """
     inactivity_milestone = IntegerProperty(default=0)
+
+    _admin_crud_class = CaseCountColumnCRUDManager
 
     @property
     def configurable_properties(self):
         return ["case_status", "filter_option", "case_types", "inactivity_milestone", "ignore_datespan"]
-
-    def editable_item_format_displayed_property(self, key, property):
-        if key == 'inactivity_milestone':
-            return "%s days" % property if property else "N/A"
-        if key == 'ignore_datespan' and self.inactivity_milestone > 0:
-            return 'N/A'
-        case_filter_props = self.format_case_filter_properties(key, property)
-        if case_filter_props is not None:
-            return case_filter_props
-        return super(CaseCountADMColumn, self).editable_item_format_displayed_property(key, property)
 
     def raw_value(self, **kwargs):
         user_id = kwargs.get('user_id')
@@ -708,8 +576,12 @@ class CaseCountADMColumn(ConfigurableADMColumn, CaseFilterADMColumnMixin,
     def html_value(self, value):
         return value if value is not None else "--"
 
+    @classmethod
+    def column_type(cls):
+        return "Case Count"
 
-class ADMReport(ADMDocumentBase):
+
+class ADMReport(BaseADMDocument):
     """
         An ADMReport describes how to display a group of ADMColumns and in what
         section or domain to display them.
@@ -740,13 +612,7 @@ class ADMReport(ADMDocumentBase):
 
     base_doc = "ADMReport"
 
-    @property
-    def editable_item_display_columns(self):
-        """
-            Not to be confused with ADM Columns (self.columns)
-        """
-        original = super(ADMReport, self).editable_item_display_columns
-        return ["reporting_section"] + original + ["column_refs", "key_type"]
+    _admin_crud_class = ADMReportCRUDManager
 
     @property
     @memoized
@@ -754,9 +620,9 @@ class ADMReport(ADMDocumentBase):
         cols = []
         for ref in self.column_refs:
             if self.is_default:
-                column = ADMColumn.get_default(ref, domain=self.viewing_domain)
+                column = BaseADMColumn.get_default(ref, domain=self.viewing_domain)
             else:
-                column = ADMColumn.get_correct_wrap(ref)
+                column = BaseADMColumn.get_correct_wrap(ref)
             if column:
                 cols.append(column)
         return cols
@@ -775,22 +641,6 @@ class ADMReport(ADMDocumentBase):
     def set_domain_specific_values(self, domain):
         self._viewing_domain = domain
 
-    def editable_item_format_displayed_property(self, key, property):
-        if key == 'column_refs':
-            ol = ['<ol>']
-            for ref in property:
-                if self.is_default:
-                    col = ADMColumn.get_default(ref)
-                else:
-                    col = ADMColumn.get_correct_wrap(ref)
-                ol.append('<li>%s <span class="label label-info">%s</span></li>' % (col.name, col.slug))
-            ol.append('</ol>')
-            return  mark_safe("\n".join(ol))
-        if key == 'reporting_section':
-            sections = dict(REPORT_SECTION_OPTIONS)
-            return sections.get(property, "Unknown")
-        return super(ADMReport, self).editable_item_format_displayed_property(key, property)
-
     @classmethod
     def defaults_couch_view(cls):
         return "adm/all_default_reports"
@@ -798,7 +648,6 @@ class ADMReport(ADMDocumentBase):
     @classmethod
     def get_active_slugs(cls, domain, section):
         all_slugs = list()
-
         key = ["defaults domain slug", domain, section]
         domain_defaults = get_db().view(cls.defaults_couch_view(),
             group=True,
@@ -807,7 +656,6 @@ class ADMReport(ADMDocumentBase):
             endkey=key+[{}]
         ).all()
         all_slugs.extend([item.get('key', [])[-1] for item in domain_defaults])
-
         key = ["defaults global slug", section]
         global_defaults = get_db().view(cls.defaults_couch_view(),
             group=True,
@@ -816,9 +664,7 @@ class ADMReport(ADMDocumentBase):
             endkey=key+[{}]
         ).all()
         all_slugs.extend([item.get('key', [])[-1] for item in global_defaults])
-
         return list(set(all_slugs))
-
 
     @classmethod
     def get_default_subreports(cls, domain, section, wrap=False):

@@ -2,45 +2,54 @@ from django import forms
 from django.forms.util import ErrorList
 from django.forms.widgets import Textarea
 from django.utils.safestring import mark_safe
-from corehq.apps.adm.models import ADMColumn, ReducedADMColumn, DaysSinceADMColumn, ConfigurableADMColumn,\
+from corehq.apps.adm.models import BaseADMColumn, ReducedADMColumn, DaysSinceADMColumn, ConfigurableADMColumn,\
     CompareADMColumn, ADMReport, KEY_TYPE_OPTIONS, REPORT_SECTION_OPTIONS, \
-    CASE_FILTER_OPTIONS, CASE_STATUS_OPTIONS, CaseCountADMColumn
+    CASE_FILTER_OPTIONS, CASE_STATUS_OPTIONS, CaseCountADMColumn, ConfigurableADMColumn, CouchViewADMColumn
 from corehq.apps.hq_bootstrap.forms import fields as hq_fields
-from dimagi.utils.data.editable_items import InterfaceEditableItemForm
+from dimagi.utils.data.crud import BaseCRUDForm
+from dimagi.utils.decorators.memoized import memoized
 
 DATESPAN_CHOICES = [("startdate", "Start of Datespan"), ("enddate", "End of Datespan")]
+IGNORE_DATESPAN_FIELD = forms.BooleanField(
+    label="Ignore Datespan and Return All Records",
+    initial=False,
+    required=False,
+    help_text="If unchecked, the records returned will be between the startdate and enddate of the datespan."
+)
 
-IGNORE_DATESPAN_FIELD = forms.BooleanField(label="Ignore Datespan and Return All Records", initial=False, required=False,
-    help_text="If unchecked, the records returned will be between the startdate and enddate of the datespan.")
-
-
-class UpdateADMItemForm(InterfaceEditableItemForm):
+class BaseADMDocumentForm(BaseCRUDForm):
     slug = forms.SlugField(label="Slug")
     domain = forms.CharField(label="Project Name (blank applies to all projects)", required=False)
     name = forms.CharField(label="Name")
     description = forms.CharField(label="Description", required=False,
         widget=Textarea(attrs=dict(style="height:80px;width:340px;")))
 
+    @property
+    @memoized
+    def crud_manager(self):
+        if self.existing_object:
+            return self.existing_object.admin_crud
+        return self.doc_class.AdminCRUD
 
-class UpdateCouchViewADMColumnForm(UpdateADMItemForm):
+
+class CouchViewADMColumnForm(BaseADMDocumentForm):
+    doc_class = CouchViewADMColumn
     couch_view = forms.CharField(label="Couch View")
     key_format = forms.CharField(label="Key Format",
         help_text="keywords are <domain>, <user_id>, and <datespan>",
         widget=forms.TextInput(attrs=dict(placeholder="ex: <domain>, <user_id>, <datespan>"))
     )
 
-    _item_class = ADMColumn
 
-
-class UpdateReducedADMColumnForm(UpdateCouchViewADMColumnForm):
+class ReducedADMColumnForm(CouchViewADMColumnForm):
+    doc_class = ReducedADMColumn
     returns_numerical = forms.BooleanField(label="Returns a Number", initial=False, required=False,
         help_text="This view returns a number.")
     ignore_datespan = IGNORE_DATESPAN_FIELD
 
-    _item_class = ReducedADMColumn
 
-
-class DaysSinceADMColumnForm(UpdateCouchViewADMColumnForm):
+class DaysSinceADMColumnForm(CouchViewADMColumnForm):
+    doc_class = DaysSinceADMColumn
     property_name = forms.CharField(label="Property Name",
         help_text="Must be a property of type datetime."
     )
@@ -48,22 +57,19 @@ class DaysSinceADMColumnForm(UpdateCouchViewADMColumnForm):
         widget=forms.Select(choices=DATESPAN_CHOICES)
     )
 
-    _item_class = DaysSinceADMColumn
 
-
-class ConfigurableADMColumnChoiceForm(InterfaceEditableItemForm):
+class ConfigurableADMColumnChoiceForm(BaseCRUDForm):
     """
         This form provides a way to choose which configurable column type you want to edit.
     """
     column_choice = forms.CharField(label="Column Type")
-
-    _item_class = ConfigurableADMColumn
+    doc_class = ConfigurableADMColumn
 
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
                  initial=None, error_class=ErrorList, label_suffix=':',
-                 empty_permitted=False, item_id=None):
+                 empty_permitted=False, doc_id=None):
         super(ConfigurableADMColumnChoiceForm, self).__init__(data, files, auto_id, prefix, initial, error_class,
-            label_suffix, empty_permitted, item_id)
+            label_suffix, empty_permitted, doc_id)
         self.fields['column_choice'].widget = forms.Select(
                 choices=[("", "Select a column type...")]+[(c.__name__, c.column_type())
                         for c in ConfigurableADMColumn.__subclasses__()]
@@ -72,11 +78,8 @@ class ConfigurableADMColumnChoiceForm(InterfaceEditableItemForm):
     def save(self):
         pass
 
-    def update(self, item):
-        pass
 
-
-class ConfigurableADMColumnForm(UpdateADMItemForm):
+class ConfigurableADMColumnForm(BaseADMDocumentForm):
     is_configurable = forms.BooleanField(label="Configurable",
         initial=True,
         required=False,
@@ -84,7 +87,7 @@ class ConfigurableADMColumnForm(UpdateADMItemForm):
     )
 
 
-class CaseFilterADMColumnFormMixin(forms.Form):
+class CaseFilterFormMixin(forms.Form):
     filter_option = forms.CharField("Filter Option",
         required=False,
         widget=forms.Select(choices=CASE_FILTER_OPTIONS))
@@ -96,7 +99,8 @@ class CaseFilterADMColumnFormMixin(forms.Form):
         widget=forms.Select(choices=CASE_STATUS_OPTIONS))
 
 
-class CaseCountADMColumnForm(ConfigurableADMColumnForm, CaseFilterADMColumnFormMixin):
+class CaseCountADMColumnForm(ConfigurableADMColumnForm, CaseFilterFormMixin):
+    doc_class = CaseCountADMColumn
     inactivity_milestone = forms.IntegerField(label="Inactivity Milestone", initial=0,
         help_text=mark_safe("The number of days that must pass for a case to be marked as inactive. <br />"
                             "In general, if this option is > 0, this column will return a count of cases "
@@ -110,13 +114,11 @@ class CaseCountADMColumnForm(ConfigurableADMColumnForm, CaseFilterADMColumnFormM
                             "(Cases are sorted by date_modified) <br />"
                             "Note: If inactivity milestone is > 0 days, this option is is not used."))
 
-    _item_class = CaseCountADMColumn
-
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
                  initial=None, error_class=ErrorList, label_suffix=':',
-                 empty_permitted=False, item_id=None):
+                 empty_permitted=False, doc_id=None):
         super(CaseCountADMColumnForm, self).__init__(data, files, auto_id, prefix, initial, error_class,
-            label_suffix, empty_permitted, item_id)
+            label_suffix, empty_permitted, doc_id)
         self.fields['case_status'].help_text = "If you use 'Inactivity Milestone' below, you likely " \
                                                 "want to select only 'Open Cases'."
 
@@ -133,23 +135,22 @@ class CaseCountADMColumnForm(ConfigurableADMColumnForm, CaseFilterADMColumnFormM
 
 
 class CompareADMColumnForm(ConfigurableADMColumnForm):
+    doc_class = CompareADMColumn
     numerator_ref = forms.CharField(label="Numerator")
     denominator_ref = forms.CharField(label="Denominator")
 
-    _item_class = CompareADMColumn
-
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
                  initial=None, error_class=ErrorList, label_suffix=':',
-                 empty_permitted=False, item_id=None):
+                 empty_permitted=False, doc_id=None):
         super(CompareADMColumnForm, self).__init__(data, files, auto_id, prefix, initial, error_class,
-            label_suffix, empty_permitted, item_id)
-
+            label_suffix, empty_permitted, doc_id)
         self.fields['numerator_ref'].widget = forms.Select(choices=CompareADMColumn.default_numerical_column_options())
         self.fields['denominator_ref'].widget = forms.Select(choices=CompareADMColumn.default_numerical_column_options())
         self.fields['is_configurable'].initial = False
 
 
-class ADMReportForm(UpdateADMItemForm):
+class ADMReportForm(BaseADMDocumentForm):
+    doc_class = ADMReport
     reporting_section = forms.CharField(label="Reporting Section",
         widget=forms.Select(choices=REPORT_SECTION_OPTIONS)
     )
@@ -161,5 +162,3 @@ class ADMReportForm(UpdateADMItemForm):
     key_type = forms.CharField(label="Key By",
         widget=forms.Select(choices=KEY_TYPE_OPTIONS)
     )
-
-    _item_class = ADMReport
