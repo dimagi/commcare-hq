@@ -52,9 +52,9 @@ domain_specific = patterns('',
 
 urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
+    (r'^auditcare/', include('auditcare.urls')),
     (r'^admin/', include(admin.site.urls)),
     (r'^register/', include('corehq.apps.registration.urls')),
-    (r'^auditcare/', include('auditcare.urls')),
     (r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     (r'^o/', include('corehq.apps.orgs.urls')),
     url(r'^organizations/$', 'corehq.apps.orgs.views.orgs_base', name='orgs_base'),
