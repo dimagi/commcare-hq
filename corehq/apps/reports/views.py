@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import json
 from django.core.cache import cache
-from corehq.apps.reports import util, tasks
+from corehq.apps.reports import util
 from corehq.apps.reports.standard import inspect, export
 from corehq.apps.reports.standard.export import DeidExportReport
 from corehq.apps.reports.export import BulkExportHelper, ApplicationBulkExportHelper, CustomBulkExportHelper
@@ -52,6 +52,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.adm import utils as adm_utils
 from soil import DownloadBase
 from celery.task import task
+from soil.tasks import prepare_download
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -519,7 +520,8 @@ def download_cases(request, domain):
     def generate_payload(payload_func):
         if async:
             download = DownloadBase()
-            a_task = tasks.prepare_download.delay(download.download_id, payload_func, content_disposition, mimetype)
+            a_task = prepare_download.delay(download.download_id, payload_func,
+                                            content_disposition, mimetype)
             download.set_task(a_task)
             return download.get_start_response()
         else:

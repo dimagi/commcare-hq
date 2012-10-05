@@ -132,12 +132,3 @@ def _cache_data(data, cache_key,
         new_cache[data_key] = data
         cache.set(cache_key, new_cache, cache_timeout)
 
-@task
-def prepare_download(download_id, payload_func, content_disposition, mimetype, expiry=10*60*60):
-    """
-    payload_func should be an instance of SerializableFunction
-    """
-    payload = payload_func()
-    expose_download(payload, expiry, mimetype=mimetype,
-                    content_disposition= content_disposition,
-                    download_id=download_id)    
