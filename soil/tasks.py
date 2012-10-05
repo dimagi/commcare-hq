@@ -5,6 +5,7 @@ from soil import CachedDownload
 import uuid
 from celery.schedules import crontab
 from soil.heartbeat import write_file_heartbeat, write_cache_heartbeat
+from soil.util import expose_download
 
 @task
 def demo_sleep(download_id, howlong=5, expiry=1*60*60):
@@ -16,6 +17,17 @@ def demo_sleep(download_id, howlong=5, expiry=1*60*60):
     cache.set(temp_id, "It works!", expiry)
     cache.set(download_id, CachedDownload(temp_id), expiry)
 
+@task
+def prepare_download(download_id, payload_func, content_disposition, mimetype, expiry=10*60*60):
+    """
+    payload_func should be an instance of SerializableFunction.
+    """
+    payload = payload_func()
+    expose_download(payload, expiry, mimetype=mimetype,
+                    content_disposition= content_disposition,
+                    download_id=download_id)
+    
+
 @periodic_task(run_every=crontab(hour="*", minute="*", day_of_week="*"))
 def heartbeat():
     """
@@ -26,3 +38,4 @@ def heartbeat():
     write_file_heartbeat()
     write_cache_heartbeat()
         
+    
