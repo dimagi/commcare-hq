@@ -15,13 +15,14 @@
         };
         resetSubmitButton(null);
         adm_interface.addADMItemModal.find('button[type=submit]').button('loading');
-        $('#id_column_type').change(function (data) {
+        $('#id_column_choice').change(function (data) {
             var item_type = $(this).val();
+            var item_text = $(this).find('option:selected').text();
             adm_interface.overrideNewFormType = item_type+"Form";
             adm_interface.overrideNewFormDiv = $("#adm_form_extension");
             resetSubmitButton(item_type);
             if (item_type) {
-                $('#adm_form_extension').text("Loading form for "+item_type+"...");
+                $('#adm_form_extension').text("Loading form for "+item_text+" Column...");
                 adm_interface.init_new_form();
             } else {
                 $('#adm_form_extension').empty();
