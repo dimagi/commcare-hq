@@ -2,8 +2,6 @@
 Logic about chws phones and cases go here.
 """
 import logging
-import pdb
-from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case import const
