@@ -143,9 +143,10 @@ def get_cases(request, domain):
     if not user_id and not request.couch_user.is_web_user():
         return HttpResponseBadRequest("Must specify user_id!")
 
+    footprint = string_to_boolean(request.REQUEST.get("footprint", "false"))
     filters = get_filters_from_request(request)
-
-    cases = get_filtered_cases(domain, user_id=user_id, filters=filters)
+    cases = get_filtered_cases(domain, user_id=user_id, filters=filters, 
+                               footprint=footprint)
     return json_response(cases)
 
 @cloudcare_api
@@ -158,7 +159,8 @@ def filter_cases(request, domain, app_id, module_id):
 
     # touchforms doesn't like this to be escaped
     xpath = HTMLParser.HTMLParser().unescape(xpath)
-    additional_filters = {"properties/case_type": module.case_type }
+    additional_filters = {"properties/case_type": module.case_type,
+                          "footprint": True }
     result = touchforms_api.filter_cases(domain, request.couch_user, 
                                          xpath, additional_filters, 
                                          auth=DjangoAuth(auth_cookie))
@@ -178,6 +180,7 @@ def get_app_api(request, domain, app_id):
 @cloudcare_api
 def get_fixtures(request, domain, user_id, fixture_id=None):
     user = CommCareUser.get_by_user_id(user_id)
+    
     if not user:
         raise Http404
 

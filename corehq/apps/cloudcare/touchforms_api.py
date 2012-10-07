@@ -53,6 +53,8 @@ def get_full_context(domain, user, app, module, form, case_id=None):
     """
     session_data = get_session_data(domain, user, case_id, 
                                     app.application_version)
+    # always tell touchforms to include footprinted cases in it's case db
+    session_data["additional_filters"] = {"footprint": True}
     return {"form_content": form.render_xform(),
             "session_data": session_data, 
             "xform_url": reverse("xform_player_proxy")}
