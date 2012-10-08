@@ -36,23 +36,24 @@ def server_error(request, template_name='500.html'):
 
 
     # hat tip: http://www.arthurkoziel.com/2009/01/15/passing-mediaurl-djangos-500-error-view/
-    t = loader.get_template(template_name) 
-    return HttpResponseServerError(t.render(RequestContext(request, 
-                                                           {'MEDIA_URL': settings.MEDIA_URL,
-                                                            'STATIC_URL': settings.STATIC_URL,
-                                                            'domain': domain
-                                                            })))
-    
+    t = loader.get_template(template_name)
+    return HttpResponseServerError(t.render(RequestContext(request,
+        {'MEDIA_URL': settings.MEDIA_URL,
+         'STATIC_URL': settings.STATIC_URL,
+         'domain': domain
+        })))
+
+
 def not_found(request, template_name='404.html'):
     """
     404 error handler.
     """
-    t = loader.get_template(template_name) 
-    return HttpResponseNotFound(t.render(RequestContext(request, 
-                                                        {'MEDIA_URL': settings.MEDIA_URL,
-                                                         'STATIC_URL': settings.STATIC_URL
-                                                        })))
-    
+    t = loader.get_template(template_name)
+    return HttpResponseNotFound(t.render(RequestContext(request,
+        {'MEDIA_URL': settings.MEDIA_URL,
+         'STATIC_URL': settings.STATIC_URL
+        })))
+
 
 def redirect_to_default(req, domain=None):
     if not req.user.is_authenticated():
@@ -91,6 +92,7 @@ def landing_page(req, template_name="home.html"):
     req.base_template = settings.BASE_TEMPLATE
     return django_login(req, template_name=template_name, authentication_form=EmailAuthenticationForm)
 
+
 def yui_crossdomain(req):
     x_domain = """<?xml version="1.0"?>
 <!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">
@@ -98,9 +100,10 @@ def yui_crossdomain(req):
     <allow-access-from domain="yui.yahooapis.com"/>
     <allow-access-from domain="%s"/>
     <site-control permitted-cross-domain-policies="master-only"/>
-</cross-domain-policy>""" % Site.objects.get(id = settings.SITE_ID).domain
+</cross-domain-policy>""" % Site.objects.get(id=settings.SITE_ID).domain
     return HttpResponse(x_domain, mimetype="application/xml")
-    
+
+
 @login_required()
 def password_change(req):
     user_to_edit = User.objects.get(id=req.user.id)
@@ -111,8 +114,9 @@ def password_change(req):
             return HttpResponseRedirect('/')
     else:
         password_form = AdminPasswordChangeForm(user_to_edit)
-    template_name="password_change.html"
-    return render_to_response(req, template_name, {"form" : password_form})
+    template_name = "password_change.html"
+    return render_to_response(req, template_name, {"form": password_form})
+
 
 def server_up(req):
     '''View that just returns "success", which can be hooked into server
@@ -123,13 +127,15 @@ def server_up(req):
     except:
         hb = False
 
-    #in reality when things go wrong with couch and postgres (as of this writing) - it's far from graceful, so this will likely never be reached because
-    #another exception will fire first - but for completeness sake, this check is done here to verify our calls will work, and if other error handling allows
-    #the request to get this far.
+    #in reality when things go wrong with couch and postgres (as of this
+    # writing) - it's far from graceful, so this will # likely never be
+    # reached because another exception will fire first - but for
+    # completeness  sake, this check is done  here to verify our calls will
+    # work, and if other error handling allows the request to get this far.
 
     ## check django db
     try:
-        user_count = User.objects.all().count()
+        user_count = User.objects.count()
     except:
         user_count = None
 
@@ -151,8 +157,10 @@ def server_up(req):
             message.append(' * couch has issues')
         return HttpResponse('\n'.join(message), status=500)
 
+
 def no_permissions(request):
     return redirect('registration_domain')
+
 
 def login(req, template_name="login_and_password/login.html"):
     # this view, and the one below, is overridden because
@@ -167,20 +175,25 @@ def login(req, template_name="login_and_password/login.html"):
         req.POST._mutable = False
 
     req.base_template = settings.BASE_TEMPLATE
-    return django_login(req, template_name=template_name, authentication_form=EmailAuthenticationForm if not req.GET.get('domain') else CloudCareAuthenticationForm)
+    return django_login(req, template_name=template_name,
+        authentication_form=EmailAuthenticationForm if not req.GET.get('domain') else CloudCareAuthenticationForm)
+
 
 def logout(req, template_name="hqwebapp/loggedout.html"):
     req.base_template = settings.BASE_TEMPLATE
-    response = django_logout(req, **{"template_name" : template_name})
+    response = django_logout(req, **{"template_name": template_name})
     return HttpResponseRedirect(reverse('login'))
+
 
 @require_superuser
 def debug_notify(request):
     try:
-        0/0
+        0 / 0
     except ZeroDivisionError:
-        notify_exception(request, "If you want to achieve a 500-style email-out but don't want the user to see a 500, use notify_exception(request[, message])")
+        notify_exception(request,
+            "If you want to achieve a 500-style email-out but don't want the user to see a 500, use notify_exception(request[, message])")
     return HttpResponse("Email should have been sent")
+
 
 def bug_report(req):
     report = dict([(key, req.POST.get(key, '')) for key in (
@@ -192,7 +205,7 @@ def bug_report(req):
         'when',
         'message',
         'app_id',
-    )])
+        )])
 
     report['datetime'] = datetime.utcnow()
 
@@ -213,7 +226,7 @@ def bug_report(req):
         u"error occured: {time_description}\n"
         u"Message:\n\n"
         u"{message}\n"
-    ).format(**report)
+        ).format(**report)
 
     from django.core.mail.message import EmailMessage
     from django.core.mail import send_mail
@@ -225,13 +238,13 @@ def bug_report(req):
         message,
         report['username'],
         settings.BUG_REPORT_RECIPIENTS,
-        headers = {'Reply-To': report['username']}
+        headers={'Reply-To': report['username']}
     )
     email.send(fail_silently=False)
 
-
     if req.POST.get('five-hundred-report'):
-        messages.success(req, "Your CommCare HQ Issue Report has been sent. We are working quickly to resolve this problem.")
+        messages.success(req,
+            "Your CommCare HQ Issue Report has been sent. We are working quickly to resolve this problem.")
         return HttpResponseRedirect(reverse('homepage'))
 
     return HttpResponse()
