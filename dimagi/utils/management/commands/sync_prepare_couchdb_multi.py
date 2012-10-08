@@ -40,7 +40,7 @@ class Command(BaseCommand):
     help = 'Sync design docs to temporary ids...but multithreaded'
 
     def handle(self, *args, **options):
-        from gevent import monkey; monkey.patch_all(thread=False)
+        from gevent import monkey; monkey.patch_all()
         start = datetime.utcnow()
         if len(args) == 0:
             num_pool = POOL_SIZE
