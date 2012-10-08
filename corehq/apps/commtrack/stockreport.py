@@ -7,21 +7,20 @@ from receiver.util import spoof_submission
 from corehq.apps.receiverwrapper.util import get_submit_url
 
 XMLNS = 'http://openrosa.org/commtrack/stock_report'
+def _(tag, ns=XMLNS):
+    return '{%s}%s' % (ns, tag)
 
 def process(domain, instance):
     """process an incoming commtrack stock report instance"""
     root = etree.fromstring(instance)
 
-    def _(tag, ns=XMLNS):
-        return '{%s}%s' % (ns, tag)
-
-    # what order should stuff be processed in? if both a stock-on-hand and
-    # receipts come in, the order in which applied matters
-
     case_ids = [e.text for e in root.findall('.//%s' % _('product_entry'))]
     cases = dict((c._id, c) for c in CommCareCase.view('_all_docs', keys=case_ids, include_docs=True))
 
-    for tx in root.findall(_('transaction')):
+    # ensure transaction types are processed in the correct order
+    transactions = sorted(root.findall(_('transaction')), key=transaction_order)
+
+    for tx in transactions:
         case_id = tx.find(_('product_entry')).text
         tx_data = (
             tx.find(_('action')).text,
@@ -33,6 +32,12 @@ def process(domain, instance):
     submission = etree.tostring(root)
     print 'submitting:', submission
     spoof_submission(get_submit_url(domain), submission)
+
+def transaction_order(tx):
+    action_order = ['receipts', 'consumption', 'stockonhand', 'stockout']
+
+    action = tx.find(_('action')).text
+    return action_order.index(action)
 
 def process_transaction(tx, case):
     """process an individual stock datapoint (action + value) from a stock report
