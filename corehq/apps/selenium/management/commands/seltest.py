@@ -33,7 +33,7 @@ class Command(test.Command):
         args = list(args)
         
         # Modify selenium settings in-place. Not the worst hack ever.
-        if args and args[0].capitalize() in webdriver.__dict__:
+        if args and hasattr(webdriver, args[0].capitalize()):
             settings.SELENIUM_BROWSER = args.pop(0)
             if args and args[0].startswith('http'):
                 settings.SELENIUM_BROWSER = 'Remote'
