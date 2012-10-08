@@ -415,8 +415,10 @@ class SurveySampleForm(Form):
         if len(value) == 0:
             raise ValidationError("Please add at least one contact.");
         for contact in value:
-            if contact["id"] == "" or contact["phone_number"] == "":
-                raise ValidationError("Please enter all fields.")
+            try:
+                contact["phone_number"] = str(int(contact["phone_number"]))
+            except ValueError:
+                raise ValidationError("Phone numbers must consist only of numbers and must be in international format.")
         return value
 
 
