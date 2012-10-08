@@ -308,7 +308,9 @@ def preindex_views():
     with cd(env.code_root):
         update_code()
         update_env()
-        sudo('echo "%(virtualenv_root)s/bin/python %(code_root)s/manage.py sync_prepare_couchdb_multi 8 %(user)s" | at -t `date -d "5 seconds" +%%m%%d%%H%%M.%%S`' % env, user=env.sudo_user)
+        sudo('echo "%(virtualenv_root)s/bin/python %(code_root)s/manage.py \
+             sync_prepare_couchdb_multi 8 %(user)s" | at -t `date -d "5 seconds" \
+             +%%m%%d%%H%%M.%%S`' % env, user=env.sudo_user)
 
 @roles('django_app','django_celery', 'staticfiles', 'django_public', 'django_monolith')#,'formsplayer')
 @parallel
@@ -361,7 +363,8 @@ def update_env():
 
 @roles('lb')
 def touch_apache():
-    """ touch apache and supervisor conf files to trigger reload. Also calls supervisorctl update to load latest supervisor.conf """
+    """Touch apache and supervisor conf files to trigger reload. Also calls supervisorctl update
+    to load latest supervisor.conf """
     require('code_root', provided_by=('staging', 'production'))
     apache_path = posixpath.join(posixpath.join(env.services, 'apache'), 'apache.conf')
     sudo('touch %s' % apache_path, user=env.sudo_user)
@@ -370,7 +373,8 @@ def touch_apache():
 
 @roles('django_celery', 'django_app', 'django_monolith')
 def touch_supervisor():
-    """ touch apache and supervisor conf files to trigger reload. Also calls supervisorctl update to load latest supervisor.conf """
+    """ touch apache and supervisor conf files to trigger reload. Also calls supervisorctl update
+     to load latest supervisor.conf """
     require('code_root', provided_by=('staging', 'production'))
     supervisor_path = posixpath.join(posixpath.join(env.services, 'supervisor'), 'supervisor.conf')
     sudo('touch %s' % supervisor_path, user=env.sudo_user)
@@ -416,25 +420,6 @@ def netstat_plnt():
 ############################################################3
 #Start service functions
 
-@roles('django_app')
-def _services_start_django():
-    _supervisor_command('start  %(project)s-%(environment)s-django' % env)
-
-@roles('django_celery')
-def _services_start_celery():
-    _supervisor_command('start  %(project)s-%(environment)s-celeryd' % env)
-    #_supervisor_command('start  %(project)s-%(environment)s-celerybeat' % env)
-
-@roles('django_public')
-def _services_start_django_public():
-    _supervisor_command('start  %(project)s-%(environment)s-django_public' % env)
-    _supervisor_command('start  %(project)s-%(environment)s-sync_domains' % env)
-
-@roles('formsplayer')
-def _services_start_formsplayer():
-    _supervisor_command('start  %(project)s-%(environment)s-formsplayer' % env)
-
-
 @roles('django_app', 'django_celery','django_public','django_monolith')# 'formsplayer'
 def services_start():
     ''' Start the gunicorn servers '''
@@ -446,24 +431,6 @@ def services_start():
 
 ########################################################
 #Stop service Functions
-
-@roles('django_app')
-def _services_stop_django():
-    _supervisor_command('stop  %(project)s-%(environment)s-django' % env)
-
-@roles('django_public')
-def _services_stop_django_public():
-    _supervisor_command('stop  %(project)s-%(environment)s-django_public' % env)
-    _supervisor_command('stop  %(project)s-%(environment)s-sync_domains' % env)
-
-@roles('django_celery')
-def _services_stop_celery():
-    _supervisor_command('stop  %(project)s-%(environment)s-celeryd' % env)
-    _supervisor_command('stop  %(project)s-%(environment)s-celerybeat' % env)
-
-@roles('formsplayer')
-def _services_stop_formsplayer():
-    _supervisor_command('stop  %(project)s-%(environment)s-formsplayer' % env)
 
 @roles('django_app', 'django_celery','django_public', 'django_monolith')#, 'formsplayer')
 def services_stop():
@@ -500,7 +467,8 @@ def _do_collectstatic():
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py make_bootstrap' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env, user=env.sudo_user)
-        sudo('rm -f tmp.sh resource_versions.py; %(virtualenv_root)s/bin/python manage.py printstatic > tmp.sh; bash tmp.sh > resource_versions.py' % env, user=env.sudo_user)
+        sudo('rm -f tmp.sh resource_versions.py; %(virtualenv_root)s/bin/python manage.py   \
+             printstatic > tmp.sh; bash tmp.sh > resource_versions.py' % env, user=env.sudo_user)
 
 @task
 @roles('staticfiles',)
