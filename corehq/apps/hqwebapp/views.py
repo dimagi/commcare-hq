@@ -23,7 +23,9 @@ from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
 from django.template import loader
 from django.template.context import RequestContext
-import re
+from couchforms.models import XFormInstance
+from soil import heartbeat
+import os
 
 def server_error(request, template_name='500.html'):
     """
@@ -114,8 +116,40 @@ def password_change(req):
 
 def server_up(req):
     '''View that just returns "success", which can be hooked into server
-       monitoring tools like: http://uptime.openacs.org/uptime/'''
-    return HttpResponse("success")
+       monitoring tools like: pingdom'''
+
+    try:
+        hb = heartbeat.is_alive()
+    except:
+        hb = False
+
+    #in reality when things go wrong with couch and postgres (as of this writing) - it's far from graceful, so this will likely never be reached because
+    #another exception will fire first - but for completeness sake, this check is done here to verify our calls will work, and if other error handling allows
+    #the request to get this far.
+
+    ## check django db
+    try:
+        user_count = User.objects.all().count()
+    except:
+        user_count = None
+
+    ## check couch
+    try:
+        xforms = XFormInstance.view('couchforms/by_user', limit=1).all()
+    except:
+        xforms = None
+
+    if hb and isinstance(user_count, int) and isinstance(xforms, list):
+        return HttpResponse("success")
+    else:
+        message = ['Problems with HQ (%s):' % os.uname()[1]]
+        if not hb:
+            message.append(' * Celery and or celerybeat is down')
+        if user_count is None:
+            message.append(' * postgres has issues')
+        if xforms is None:
+            message.append(' * couch has issues')
+        return HttpResponse('\n'.join(message), status=500)
 
 def no_permissions(request):
     return redirect('registration_domain')
