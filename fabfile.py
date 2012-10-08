@@ -44,15 +44,21 @@ env.home = "/home/cchq"
 
 
 env.roledefs = {
-        'couch': [],
-        'pg': [],
-        'rabbitmq': [],
         'django_celery': [],
         'django_app': [],
         'django_public': [],
         'formsplayer': [],
-        'lb': [],
         'staticfiles': [],
+        'django_monolith': [], # all of the above config - use this ONLY for single server config, lest deploy() will run multiple times in parallel causing bad contentions
+
+        #package level configs that are not quite config'ed yet in this fabfile
+        'couch': [],
+        'pg': [],
+        'rabbitmq': [],
+        'lb': [],
+
+        'deploy': [], #a placeholder to ensure deploy only runs once on a bogus, non functioning task, to split out the real tasks in the execute() block
+
     }
 
 @task
@@ -101,21 +107,38 @@ def staging():
     env.user = prompt("Username: ", default='dimagivm')
     env.make_bootstrap_command = 'python manage.py make_bootstrap direct-lessc'
 
+@task
 def india():
     """Our production server in India."""
+    env.home = '/home/commcarehq/'
     env.root = root = '/home/commcarehq'
-    env.virtualenv_root = _join(root, '.virtualenvs/commcarehq')
-    env.code_root       = _join(root, 'src/commcare-hq')
-    env.pre_code_root   = _join(root, 'src/_commcare-hq')
-    env.log_root   = _join(root, 'log')
+    env.environment = 'india'
+    env.log_root   = posixpath.join(root, 'log')
     env.code_branch = 'master'
     env.sudo_user = 'commcarehq'
-    onv.hosts = ['220.226.209.82']
-    env.environment = 'india'
+    env.hosts = ['220.226.209.82']
     env.user = prompt("Username: ", default=env.user)
     env.service_manager = "supervisor"
     env.make_bootstrap_command = 'python manage.py make_bootstrap'
+    env.server_port = '8001'
 
+    _setup_path()
+    env.virtualenv_root = posixpath.join(root, '.virtualenvs/commcarehq')
+
+    env.roledefs = {
+        'couch': [],
+        'pg': [],
+        'rabbitmq': [],
+        'sofabed': [],
+        'django_celery': [],
+        'django_app': [],
+        'django_public': [],
+        'formsplayer': [],
+        'lb': [],
+        'staticfiles': [],
+        'deploy': [],
+        'django_monolith': ['220.226.209.82'],
+    }
 
 @task
 def production():
@@ -213,11 +236,11 @@ def what_os():
         return env.host_os_map[env.host_string]
 
 #@parallel
-@roles('pg','django_celery','django_app','staticfiles')
+@roles('pg','django_celery','django_app','staticfiles', 'django_monolith')
 @task
 def setup_server():
     """Set up a server for the first time in preparation for deployments."""
-    require('environment', provided_by=('staging', 'production'))
+    require('environment', provided_by=('staging', 'production', 'india'))
     # Install required system packages for deployment, plus some extras
     # Install pip, and use it to install virtualenv
     install_packages()
@@ -253,15 +276,14 @@ def bootstrap():
     execute(update_env)
     execute(setup_dirs)
     execute(generate_supervisorconf_file)
-    update_services()
     execute(fix_locale_perms)
 
 
 #@parallel
-@roles('django_celery', 'django_app', 'staticfiles') #'django_public','formsplayer'
+@roles('django_celery', 'django_app', 'staticfiles', 'django_monolith') #'django_public','formsplayer'
 def create_virtualenv():
     """ setup virtualenv on remote host """
-    require('virtualenv_root', provided_by=('staging', 'production'))
+    require('virtualenv_root', provided_by=('staging', 'production', 'india'))
     with settings(warn_only=True):
         sudo('rm -rf %(virtualenv_root)s' % env, user=env.sudo_user)
     args = '--clear --distribute --no-site-packages'
@@ -269,7 +291,7 @@ def create_virtualenv():
 
 
 #@parallel
-@roles('django_celery', 'django_app', 'staticfiles') #'django_public', 'formsplayer'
+@roles('django_celery', 'django_app', 'staticfiles', 'django_monolith') #'django_public', 'formsplayer'
 def clone_repo():
     """ clone a new copy of the git repository """
     with settings(warn_only=True):
@@ -286,9 +308,11 @@ def preindex_views():
     with cd(env.code_root):
         update_code()
         update_env()
-        sudo('echo "%(virtualenv_root)s/bin/python %(code_root)s/manage.py sync_prepare_couchdb_multi 8 %(user)s" | at -t `date -d "5 seconds" +%%m%%d%%H%%M.%%S`' % env, user=env.sudo_user)
+        sudo('echo "%(virtualenv_root)s/bin/python %(code_root)s/manage.py \
+             sync_prepare_couchdb_multi 8 %(user)s" | at -t `date -d "5 seconds" \
+             +%%m%%d%%H%%M.%%S`' % env, user=env.sudo_user)
 
-@roles('django_app','django_celery', 'staticfiles', 'django_public')#,'formsplayer')
+@roles('django_app','django_celery', 'staticfiles', 'django_public', 'django_monolith')#,'formsplayer')
 @parallel
 def update_code():
     with cd(env.code_root):
@@ -298,14 +322,14 @@ def update_code():
         sudo('git submodule update --init --recursive', user=env.sudo_user)
 
 
-def do_deploy():
-    print "foo"
-
 @task
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
-    print "#### enter deploy"
-    require('root', provided_by=('staging', 'production'))
+    if not console.confirm('Are you sure you want to deploy production?', default=False) or \
+       not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
+        utils.abort('Deployment aborted.')
+
+    require('root', provided_by=('staging', 'production', 'india'))
     run('echo ping!') #hack/workaround for delayed console response
 
     try:
@@ -324,11 +348,11 @@ def deploy():
 
 
 @task
-@roles('django_app','django_celery','staticfiles', 'django_public')#,'formsplayer')
+@roles('django_app','django_celery','staticfiles', 'django_public', 'django_monolith')#,'formsplayer')
 @parallel
 def update_env():
     """ update external dependencies on remote host assumes you've done a code update"""
-    require('code_root', provided_by=('staging', 'production'))
+    require('code_root', provided_by=('staging', 'production', 'india'))
     requirements = posixpath.join(env.code_root, 'requirements')
     with cd(env.code_root):
         cmd = ['%(virtualenv_root)s/bin/pip install' % env]
@@ -339,23 +363,25 @@ def update_env():
 
 @roles('lb')
 def touch_apache():
-    """ touch apache and supervisor conf files to trigger reload. Also calls supervisorctl update to load latest supervisor.conf """
+    """Touch apache and supervisor conf files to trigger reload. Also calls supervisorctl update
+    to load latest supervisor.conf """
     require('code_root', provided_by=('staging', 'production'))
     apache_path = posixpath.join(posixpath.join(env.services, 'apache'), 'apache.conf')
     sudo('touch %s' % apache_path, user=env.sudo_user)
 
 
 
-@roles('django_celery', 'django_app',)
+@roles('django_celery', 'django_app', 'django_monolith')
 def touch_supervisor():
-    """ touch apache and supervisor conf files to trigger reload. Also calls supervisorctl update to load latest supervisor.conf """
+    """ touch apache and supervisor conf files to trigger reload. Also calls supervisorctl update
+     to load latest supervisor.conf """
     require('code_root', provided_by=('staging', 'production'))
     supervisor_path = posixpath.join(posixpath.join(env.services, 'supervisor'), 'supervisor.conf')
     sudo('touch %s' % supervisor_path, user=env.sudo_user)
     _supervisor_command('update')
 
 
-@roles('django_app', 'django_celery', 'django_public',)# 'formsplayer')
+@roles('django_app', 'django_celery', 'django_public', 'django_monolith')# 'formsplayer')
 @parallel
 def clear_services_dir():
     #remove old confs from directory first
@@ -394,26 +420,7 @@ def netstat_plnt():
 ############################################################3
 #Start service functions
 
-@roles('django_app')
-def _services_start_django():
-    _supervisor_command('start  %(project)s-%(environment)s-django' % env)
-
-@roles('django_celery')
-def _services_start_celery():
-    _supervisor_command('start  %(project)s-%(environment)s-celeryd' % env)
-    #_supervisor_command('start  %(project)s-%(environment)s-celerybeat' % env)
-
-@roles('django_public')
-def _services_start_django_public():
-    _supervisor_command('start  %(project)s-%(environment)s-django_public' % env)
-    _supervisor_command('start  %(project)s-%(environment)s-sync_domains' % env)
-
-@roles('formsplayer')
-def _services_start_formsplayer():
-    _supervisor_command('start  %(project)s-%(environment)s-formsplayer' % env)
-
-
-@roles('django_app', 'django_celery','django_public',)# 'formsplayer'
+@roles('django_app', 'django_celery','django_public','django_monolith')# 'formsplayer'
 def services_start():
     ''' Start the gunicorn servers '''
     require('environment', provided_by=('staging', 'demo', 'production'))
@@ -425,52 +432,34 @@ def services_start():
 ########################################################
 #Stop service Functions
 
-@roles('django_app')
-def _services_stop_django():
-    _supervisor_command('stop  %(project)s-%(environment)s-django' % env)
-
-@roles('django_public')
-def _services_stop_django_public():
-    _supervisor_command('stop  %(project)s-%(environment)s-django_public' % env)
-    _supervisor_command('stop  %(project)s-%(environment)s-sync_domains' % env)
-
-@roles('django_celery')
-def _services_stop_celery():
-    _supervisor_command('stop  %(project)s-%(environment)s-celeryd' % env)
-    _supervisor_command('stop  %(project)s-%(environment)s-celerybeat' % env)
-
-@roles('formsplayer')
-def _services_stop_formsplayer():
-    _supervisor_command('stop  %(project)s-%(environment)s-formsplayer' % env)
-
-@roles('django_app', 'django_celery','django_public')#, 'formsplayer')
+@roles('django_app', 'django_celery','django_public', 'django_monolith')#, 'formsplayer')
 def services_stop():
     ''' Stop the gunicorn servers '''
     require('environment', provided_by=('staging', 'demo', 'production'))
     _supervisor_command('stop all')
 ###########################################################
 
-@roles('django_app', 'django_celery','django_public')#, 'formsplayer')
+@roles('django_app', 'django_celery','django_public', 'django_monolith')#, 'formsplayer')
 def services_restart():
     ''' Stop and restart all supervisord services'''
-    require('environment', provided_by=('staging', 'demo', 'production'))
+    require('environment', provided_by=('staging', 'demo', 'production', 'india'))
     _supervisor_command('stop all')
 
     _supervisor_command('update')
     _supervisor_command('reload')
     _supervisor_command('start  all')
 #
-@roles('django_celery',)
+@roles('django_celery','django_monolith')
 def migrate():
     """ run south migration on remote environment """
-    require('code_root', provided_by=('production', 'demo', 'staging'))
+    require('code_root', provided_by=('production', 'demo', 'staging', "india"))
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py sync_finish_couchdb' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py syncdb --noinput' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py migrate --noinput' % env, user=env.sudo_user)
 
 
-@roles('staticfiles')
+@roles('staticfiles', 'django_monolith')
 def _do_collectstatic():
     """
     Collect static after a code update
@@ -478,7 +467,8 @@ def _do_collectstatic():
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py make_bootstrap' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env, user=env.sudo_user)
-        sudo('rm -f tmp.sh resource_versions.py; %(virtualenv_root)s/bin/python manage.py printstatic > tmp.sh; bash tmp.sh > resource_versions.py' % env, user=env.sudo_user)
+        sudo('rm -f tmp.sh resource_versions.py; %(virtualenv_root)s/bin/python manage.py   \
+             printstatic > tmp.sh; bash tmp.sh > resource_versions.py' % env, user=env.sudo_user)
 
 @task
 @roles('staticfiles',)
@@ -539,18 +529,18 @@ def _upload_supervisor_conf_file(filename):
     sudo('chmod -R g+w %(destination)s' % upload_dict, shell=False)
     sudo('mv -f %(destination)s %(enabled)s' % upload_dict, shell=False)
 
-@roles('django_celery')
+@roles('django_celery', 'django_monolith')
 def upload_celery_supervisorconf():
     _upload_supervisor_conf_file('supervisor_celery.conf')
     _upload_supervisor_conf_file('supervisor_celerybeat.conf')
     _upload_supervisor_conf_file('supervisor_celerymon.conf')
     _upload_supervisor_conf_file('supervisor_couchdb_lucene.conf')
 
-@roles('django_celery')
+@roles('django_celery', 'django_monolith')
 def upload_sofabed_supervisorconf():
     _upload_supervisor_conf_file('supervisor_sofabed.conf')
 
-@roles('django_app')
+@roles('django_app', 'django_monolith')
 def upload_djangoapp_supervisorconf():
     _upload_supervisor_conf_file('supervisor_django.conf')
 
@@ -559,18 +549,19 @@ def upload_django_public_supervisorconf():
     _upload_supervisor_conf_file('supervisor_django_public.conf')
     _upload_supervisor_conf_file('supervisor_sync_domains.conf')
 
-@roles('formsplayer')
+@roles('formsplayer', 'django_monolith')
 def upload_formsplayer_supervisorconf():
     _upload_supervisor_conf_file('supervisor_formsplayer.conf')
 
 def upload_and_set_supervisor_config():
     """Upload and link Supervisor configuration from the template."""
-    require('environment', provided_by=('staging', 'demo', 'production'))
+    require('environment', provided_by=('staging', 'demo', 'production', 'india'))
     execute(upload_celery_supervisorconf)
     execute(upload_sofabed_supervisorconf)
     execute(upload_djangoapp_supervisorconf)
     execute(upload_django_public_supervisorconf)
     execute(upload_formsplayer_supervisorconf)
+    #generate_supervisorconf_file()
 
 def generate_supervisorconf_file():
     #regenerate a brand new supervisor conf file from scratch.
