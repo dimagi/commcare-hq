@@ -1,11 +1,12 @@
-from couchdbkit.ext.django.schema import StringProperty, IntegerProperty, ListProperty, SetProperty, DocumentSchema
+from couchdbkit.ext.django.schema import StringProperty, IntegerProperty, ListProperty, SetProperty, DocumentSchema, Document
 import datetime
 from couchdbkit.schema.properties import LazyDict
 import dateutil
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.indicators.models import CaseIndicatorDefinition, FormDataInCaseIndicatorDefinition,\
-    PopulateRelatedCasesWithIndicatorDefinitionMixin, CaseDataInFormIndicatorDefinition
+    PopulateRelatedCasesWithIndicatorDefinitionMixin, CaseDataInFormIndicatorDefinition, IndicatorHandler
 from couchforms.models import XFormInstance
+from dimagi.utils.couch.database import get_db
 
 class MVP(object):
     NAMESPACE = "mvp_indicators"
@@ -97,3 +98,22 @@ class MVPRelatedCaseDataInCaseIndicatorDefinition(CaseIndicatorDefinition, MVPRe
                     value=getattr(rc, str(self.related_case_property))
                 ))
         return values
+
+
+class MVPUnder5IndicatorHandler(IndicatorHandler):
+    couch_prefix = StringProperty()
+
+    def get_value(self, domain, startdate, enddate, user_id=None):
+        if isinstance(startdate, datetime.datetime):
+            startdate = startdate.isoformat()
+        if isinstance(enddate, datetime.datetime):
+            enddate = enddate.isoformat()
+        couch_key = ["user", domain, user_id, self.couch_prefix]
+        data = get_db().view('mvp/under5_child_health',
+            reduce=True,
+            startkey=couch_key+[startdate],
+            endkey=couch_key+[enddate]
+        ).first()
+        if not data:
+            return 0
+        return data.get('value', 0)
