@@ -111,16 +111,36 @@ TOUCHFORMS_API_PASSWORD = 'password'
 
 ####### Selenium tests config ########
 
+# Firefox, Chrome, Ie, etc.
+SELENIUM_BROWSER = 'Chrome'
+
+# Necessary if using Remote selenium driver
+SELENIUM_REMOTE_URL = None  # 'http://127.0.0.1:4444/wd/hub'
+
+# If not using Remote, allows you to open browsers in a hidden virtual X Server
+SELENIUM_XVFB = False
+SELENIUM_XVFB_DISPLAY_SIZE = (1024, 768)
+
+TEST_REPORT_MAX_LOAD_TIME = 30
+
 TEST_ADMIN_USERNAME = 'admin@example.com'
 TEST_ADMIN_PASSWORD = 'password'
-TEST_BASE_URL = 'http://localhost:8000'
+TEST_ADMIN_URL = 'http://localhost:8000'
 TEST_ADMIN_PROJECT = 'project'
+TEST_ADMIN_IS_SUPERUSER = True
+
+# User for tests that don't require write privileges
+TEST_WEB_USER_USERNAME = 'admin@example.com'
+TEST_WEB_USER_PASSWORD = 'password'
+TEST_WEB_USER_URL = 'http://localhost:8000'
+TEST_WEB_USER_PROJECT = 'project'
+TEST_WEB_USER_IS_SUPERUSER = True
 
 TEST_MOBILE_WORKER_USERNAME = 'user@project.commcarehq.org'
 TEST_MOBILE_WORKER_PASSWORD = 'password'
-SELENIUM_DRIVER = 'Chrome'
-SELENIUM_XVFB = False
-SELENIUM_XVFB_DISPLAY_SIZE = (1024, 768)
+TEST_MOBILE_WORKER_URL = 'http://localhost:8000'
+
+
 
 ####### Misc / HQ-specific Config ########
 
