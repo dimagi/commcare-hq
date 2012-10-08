@@ -1,4 +1,5 @@
 from selenium import webdriver
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import (NoSuchElementException,
@@ -7,7 +8,6 @@ from django.test import TestCase
 from django.conf import settings
 from functools import wraps
 import time
-
 
 class SeleniumWrapper(object):
     """
@@ -27,9 +27,10 @@ class SeleniumWrapper(object):
 
     """
 
-    def __init__(self, base_url=''):
+    def __init__(self, browser_name, base_url, *args, **kwargs):
         self.base_url = base_url
-        self.driver = getattr(webdriver, settings.SELENIUM_DRIVER)()
+        self.browser_name = browser_name.capitalize()
+        self.driver = getattr(webdriver, self.browser_name)(*args, **kwargs)
 
     def get(self, path):
         return self.driver.get(self.base_url + path)
@@ -97,11 +98,24 @@ class SeleniumTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.driver = SeleniumWrapper(base_url=cls.base_url)
+        kwargs = {
+            'browser_name': settings.SELENIUM_BROWSER,
+            'base_url': cls.base_url
+        }
+
+        if settings.SELENIUM_REMOTE_URL:
+            kwargs.update({
+                'browser_name': 'Remote',
+                'command_executor': settings.SELENIUM_REMOTE_URL,
+                'desired_capabilities': getattr(DesiredCapabilities,
+                                                settings.SELENIUM_BROWSER.upper())
+            })
+
+        cls.driver = SeleniumWrapper(**kwargs)
+
         super(SeleniumTestCase, cls).setUpClass()
 
     @classmethod
     def tearDownClass(cls):
         super(SeleniumTestCase, cls).tearDownClass()
         cls.driver.quit()
-
