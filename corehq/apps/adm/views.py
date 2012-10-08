@@ -1,12 +1,11 @@
 import inspect
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
-from corehq.apps.domain.decorators import require_superuser, require_previewer, login_and_domain_required
+from corehq.apps.domain.decorators import require_superuser, domain_admin_required
 from dimagi.utils.data.crud import CRUDFormRequestManager, CRUDActionError
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import render_to_response
 
-@require_previewer
-@login_and_domain_required
+@domain_admin_required
 def default_adm_report(request, domain, template="adm/base_template.html", **kwargs):
     from corehq.apps.adm.reports import ADMSectionView
     context = dict(
