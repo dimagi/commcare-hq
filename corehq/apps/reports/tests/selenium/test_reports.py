@@ -6,6 +6,7 @@ import re
 
 class ReportsTestCase(WebUserTestCase):
 
+    max_preload_time = settings.TEST_REPORT_MAX_PRELOAD_TIME
     max_load_time = settings.TEST_REPORT_MAX_LOAD_TIME
 
     @classmethod
@@ -34,11 +35,12 @@ class ReportsTestCase(WebUserTestCase):
         def test(self):
             self.find_element_by_link_text(report_name).click()
 
-            try:
-                self.find_element_by_link_text("Hide Filter Options",
-                                               duration=2)
-            except NoSuchElementException:
-                self.find_element_by_link_text("Show Filter Options").click()
+            elem = self.find_element_by_xpath(
+                "//*[text()='Hide Filter Options'] | //*[text()='Show Filter Options']",
+                duration=self.max_preload_time
+            )
+            if elem.text == 'Show Filter Options':
+                elem.click()
 
             self.find_element_by_xpath(
                 "//div[@class='form-actions']/button"
