@@ -19,10 +19,6 @@
 
 {% block js-inline %}{{ block.super }}
 <style type="text/css">
-
-    #rating_container {
-        margin-right: 120px;
-    }
     .rating_static > span {
         display: inline-block;
         position: relative;
@@ -39,14 +35,13 @@
     }
 
     .rating_static:not(:checked) > label {
-        float:right;
-        width:1em;
+        float:left;
         padding:0 .1em;
         overflow:hidden;
         white-space:nowrap;
         cursor:pointer;
         font-size:200%;
-        line-height:1.2;
+        line-height:1.1;
         color:#ddd;
         text-shadow:1px 1px #bbb, 2px 2px #666, .1em .1em .2em rgba(0,0,0,.5);
     }
@@ -55,7 +50,7 @@
         content: '★ ';
     }
 
-    .rating_static > input:checked ~ label {
+    .rating_static > input.filled + label {
         color: #f70;
         text-shadow:1px 1px #c60, 2px 2px #940, .1em .1em .2em rgba(0,0,0,.5);
     }
@@ -245,17 +240,15 @@
                 {% for rating_name, average_rating in average_ratings %}
                     {% if rating_name == app.name %}
                         {% if average_rating %}
-                            <div class="span4">
-                                <div id="rating_container">
-                                    <fieldset class="rating_static" id="stars{{ rating_name }} ">
-                                        <input type="radio" id="star5{{ rating_name }}"  value="5" disabled=True {% if average_rating == 5 %} checked=True {% endif %} /><label for="star5{{ rating_name }}">5 stars</label>
-                                        <input type="radio" id="star4{{ rating_name }}"  value="4" disabled=True {% if average_rating == 4 %} checked=True {% endif %} /><label for="star4{{ rating_name }}">4 stars</label>
-                                        <input type="radio" id="star3{{ rating_name }}"  value="3" disabled=True {% if average_rating == 3 %} checked=True {% endif %} /><label for="star3{{ rating_name }}">3 stars</label>
-                                        <input type="radio" id="star2{{ rating_name }}"  value="2" disabled=True {% if average_rating == 2 %} checked=True {% endif %} /><label for="star2{{ rating_name }}">2 stars</label>
-                                        <input type="radio" id="star1{{ rating_name }}"  value="1" disabled=True {% if average_rating == 1 %} checked=True {% endif %} /><label for="star1{{ rating_name }}">1 star</label>
-                                    </fieldset>
-                                </div>
-                            </div>
+                            <span id="rating_container">
+                                <fieldset class="rating_static" id="stars{{ rating_name }} ">
+                                    <input type="radio" id="star1{{ rating_name }}"  value="1" disabled=True {% if average_rating >= 1 %} class="filled" {% endif %} /><label for="star1{{ rating_name }}"></label>
+                                    <input type="radio" id="star2{{ rating_name }}"  value="2" disabled=True {% if average_rating >= 2 %} class="filled" {% endif %} /><label for="star2{{ rating_name }}"></label>
+                                    <input type="radio" id="star3{{ rating_name }}"  value="3" disabled=True {% if average_rating >= 3 %} class="filled" {% endif %} /><label for="star3{{ rating_name }}"></label>
+                                    <input type="radio" id="star4{{ rating_name }}"  value="4" disabled=True {% if average_rating >= 4 %} class="filled" {% endif %} /><label for="star4{{ rating_name }}"></label>
+                                    <input type="radio" id="star5{{ rating_name }}"  value="5" disabled=True {% if average_rating >= 5 %} class="filled" {% endif %} /><label for="star5{{ rating_name }}"></label>
+                                </fieldset>
+                            </span>
                         {% endif %}
                     {% endif %}
                 {% endfor %}
