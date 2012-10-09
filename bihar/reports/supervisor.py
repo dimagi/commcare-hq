@@ -28,10 +28,6 @@ class MockTablularReport(ConvenientBaseMixIn, GenericTabularReport, CustomProjec
         raise NotImplementedError("Override this!")
     
     @property
-    def report_context(self):
-        return super(MockTablularReport, self).report_context
-    
-    @property
     def rows(self):
         return [self._row(i) for i in range(self.row_count)]
 
