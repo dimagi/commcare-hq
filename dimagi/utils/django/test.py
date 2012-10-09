@@ -20,7 +20,6 @@ class SeleniumWrapper(object):
     the same methods.  This behavior can be determined using keyword arguments
     to the webdriver methods:
 
-        retry -- boolean (default: True) - whether to retry
         duration -- seconds to wait for success before rethrowing (default: 10)
         interval -- seconds between retries (default: min(.5, duration))
         ensure_displayed -- retry if element is not visible (default: True)
@@ -60,7 +59,6 @@ class SeleniumWrapper(object):
             if 'interval' in kwargs and 'duration' not in kwargs:
                 raise Exception("Invalid wrapped webdriver method call")
 
-            retry = kwargs.pop('retry', True)
             duration = kwargs.pop('duration', 10)
             interval = kwargs.pop('interval', min(.5, duration))
             ensure_displayed = kwargs.pop('ensure_displayed', True)
@@ -75,7 +73,7 @@ class SeleniumWrapper(object):
 
                     return retval
                 except (NoSuchElementException, ElementNotVisibleException):
-                    if duration < 0.00000001 or not retry:
+                    if duration < 0.00000001:
                         raise
                     else:
                         time.sleep(interval)
