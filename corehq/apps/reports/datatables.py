@@ -165,9 +165,9 @@ class DataTablesHeader(object):
                 aoColumns.append(column.render_aoColumns)
         return aoColumns
 
-
-
-
+    def __iter__(self):
+        for column in self.header:
+            yield column
 
 
 

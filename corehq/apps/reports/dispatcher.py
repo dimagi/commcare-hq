@@ -78,16 +78,16 @@ class ReportDispatcher(View):
             return HttpResponseNotFound("Sorry, no reports have been configured yet.")
 
         current_slug = kwargs.get('report_slug')
-        render_as = kwargs.get('render_as', 'view')
-
+        render_as = kwargs.get('render_as') or 'view'
         reports = self.get_reports(request, *args, **kwargs)
         for key, report_model_paths in reports.items():
             for model_path in report_model_paths:
                 report_class = to_function(model_path)
                 if report_class.slug == current_slug:
                     report = report_class(request, *args, **kwargs)
+                    report.rendered_as = render_as
                     if self.permissions_check(model_path, request, *args, **kwargs):
-                        return getattr(report, '%s_response' % (render_as or 'view'))
+                        return getattr(report, '%s_response' % render_as)
         raise Http404
 
     @classmethod
@@ -97,11 +97,11 @@ class ReportDispatcher(View):
 
     @classmethod
     def pattern(cls):
-        return r'^((?P<render_as>[(json)|(async)|(filters)|(export)|(static)|(clear_cache)]+)/)?(?P<report_slug>[\w_]+)/$'
+        return r'^((?P<render_as>[(json)|(async)|(filters)|(export)|(mobile)|(static)|(clear_cache)]+)/)?(?P<report_slug>[\w_]+)/$'
 
     @classmethod
     def allowed_renderings(cls):
-        return ['json', 'async', 'filters', 'export', 'static', 'clear_cache']
+        return ['json', 'async', 'filters', 'export', 'mobile', 'static', 'clear_cache']
 
     @classmethod
     def args_kwargs_from_context(cls, context):
