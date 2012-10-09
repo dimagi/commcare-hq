@@ -1008,10 +1008,6 @@ class ApplicationBase(VersionedDoc):
         )
 
     @property
-    def profile_url(self):
-        return self.hq_profile_url
-
-    @property
     def hq_profile_url(self):
         return "%s%s?latest=true" % (
             self.url_base,
@@ -1266,6 +1262,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 post_save()
 
             del self._POST_SAVE
+
+    @property
+    def profile_url(self):
+        return self.hq_profile_url
 
     @property
     def url_base(self):
