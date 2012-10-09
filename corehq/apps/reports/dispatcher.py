@@ -78,7 +78,7 @@ class ReportDispatcher(View):
             return HttpResponseNotFound("Sorry, no reports have been configured yet.")
 
         current_slug = kwargs.get('report_slug')
-        render_as = kwargs.get('render_as', 'view') or 'view'
+        render_as = kwargs.get('render_as') or 'view'
         reports = self.get_reports(request, *args, **kwargs)
         for key, report_model_paths in reports.items():
             for model_path in report_model_paths:
