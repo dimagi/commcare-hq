@@ -34,13 +34,7 @@
             Ratings: <span class="badge badge-info">{{ num_ratings }}</span>
         </h3>
             {% if average_rating %}
-                <fieldset class="rating_static" id="stars{{ average_rating }} ">
-                    <input type="radio" id="star1{{ average_rating }}"  value="1" disabled=True {% if average_rating >= 1 %} class="filled" {% endif %} /><label for="star1{{ average_rating }}"></label>
-                    <input type="radio" id="star2{{ average_rating }}"  value="2" disabled=True {% if average_rating >= 2 %} class="filled" {% endif %} /><label for="star2{{ average_rating }}"></label>
-                    <input type="radio" id="star3{{ average_rating }}"  value="3" disabled=True {% if average_rating >= 3 %} class="filled" {% endif %} /><label for="star3{{ average_rating }}"></label>
-                    <input type="radio" id="star4{{ average_rating }}"  value="4" disabled=True {% if average_rating >= 4 %} class="filled" {% endif %} /><label for="star4{{ average_rating }}"></label>
-                    <input type="radio" id="star5{{ average_rating }}"  value="5" disabled=True {% if average_rating >= 5 %} class="filled" {% endif %} /><label for="star5{{ average_rating }}"></label>
-                </fieldset>
+                {% include "partials/five_stars.html" with rating_name=average_rating rating=average_rating %}
             {% endif %}
     <br/>
     </div>
@@ -240,14 +234,7 @@
         <h4>{{ review.title }}</h4>
         <div>
             <p><small>{{ review.user }} on {{ review.date_published }}</small></p>
-            <fieldset class="rating_static" id="stars{{ review.get_id }}">
-                <input type="radio" id="star1{{ review.get_id }}" value="1" disabled=True {% if review.rating >= 1 %} class="filled"{% endif %}/><label for="star1{{ review.get_id }}"></label>
-                <input type="radio" id="star2{{ review.get_id }}" value="2" disabled=True {% if review.rating >= 2 %} class="filled" {% endif %}/><label for="star2{{ review.get_id }}"></label>
-                <input type="radio" id="star3{{ review.get_id }}" value="3" disabled=True {% if review.rating >= 3 %} class="filled" {% endif %}/><label for="star3{{ review.get_id }}"></label>
-                <input type="radio" id="star4{{ review.get_id }}" value="4" disabled=True {% if review.rating >= 4 %} class="filled" {% endif %}/><label for="star4{{ review.get_id }}"></label>
-                <input type="radio" id="star5{{ review.get_id }}" value="5" disabled=True {% if review.rating >= 5 %} class="filled" {% endif %}/><label for="star5{{ review.get_id }}"></label>
-            </fieldset>
-
+            {% include "partials/five_stars.html" with rating_name=review.get_id rating=review.rating %}
         </div>
         <div>{{ review.info }}</div>
             </div>

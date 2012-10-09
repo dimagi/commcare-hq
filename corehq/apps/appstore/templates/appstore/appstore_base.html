@@ -241,13 +241,7 @@
                     {% if rating_name == app.name %}
                         {% if average_rating %}
                             <span id="rating_container">
-                                <fieldset class="rating_static" id="stars{{ rating_name }} ">
-                                    <input type="radio" id="star1{{ rating_name }}"  value="1" disabled=True {% if average_rating >= 1 %} class="filled" {% endif %} /><label for="star1{{ rating_name }}"></label>
-                                    <input type="radio" id="star2{{ rating_name }}"  value="2" disabled=True {% if average_rating >= 2 %} class="filled" {% endif %} /><label for="star2{{ rating_name }}"></label>
-                                    <input type="radio" id="star3{{ rating_name }}"  value="3" disabled=True {% if average_rating >= 3 %} class="filled" {% endif %} /><label for="star3{{ rating_name }}"></label>
-                                    <input type="radio" id="star4{{ rating_name }}"  value="4" disabled=True {% if average_rating >= 4 %} class="filled" {% endif %} /><label for="star4{{ rating_name }}"></label>
-                                    <input type="radio" id="star5{{ rating_name }}"  value="5" disabled=True {% if average_rating >= 5 %} class="filled" {% endif %} /><label for="star5{{ rating_name }}"></label>
-                                </fieldset>
+                                {% include "partials/five_stars.html" with rating_name=rating_name rating=average_rating %}
                             </span>
                         {% endif %}
                     {% endif %}
