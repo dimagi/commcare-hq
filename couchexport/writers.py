@@ -162,12 +162,11 @@ class Excel2007ExportWriter(ExportWriter):
     
     def _write_row(self, sheet_index, row):
         sheet = self.tables[sheet_index]
-        row_idx = len(sheet.row_dimensions)
+        # NOTE: don't touch this. changing anything like formatting in the
+        # row by referencing the cells will cause huge memory issues.
+        # see: http://packages.python.org/openpyxl/optimized.html
         sheet.append([unicode(v) for v in row.get_data()])
-        for i, _ in enumerate(row.get_data()):
-            sheet.cell(row=row_idx, column=i).style.number_format.format_code = style.NumberFormat.FORMAT_TEXT
-
-    
+        
     def _close(self):
         """
         Close any open file references, do any cleanup.
