@@ -151,6 +151,9 @@ def deploy():
     if env.restart_server:
         service_restart()
 
+    if env.post_deploy_url:
+        sudo("curl %(post_deploy_url)s" % env)
+
 def service_restart():
     """
     Restart cchq services on remote host.
