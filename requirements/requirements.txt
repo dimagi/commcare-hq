@@ -9,6 +9,7 @@ django-kombu==0.9.1
 django-digest
 django-tastypie
 djtables==0.1.1
+egenix-mx-base
 eulxml
 lxml==2.3
 mock==0.8.0
