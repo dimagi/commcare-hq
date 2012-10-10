@@ -413,10 +413,13 @@ def create_snapshot(request, domain):
                 application.name = request.POST["%s-name" % original_id]
                 application.description = request.POST["%s-description" % original_id]
                 application.short_description = request.POST["%s-short_description" % original_id]
-                date_picked = request.POST["%s-deployment_date" % original_id].split()[0].split('-')
-                if len(date_picked) > 1:
-                    if int(date_picked[0]) > 2009 and date_picked[1] and date_picked[2]:
-                        application.deployment_date = datetime.datetime(int(date_picked[0]), int(date_picked[1]), int(date_picked[2]))
+                date_picked = request.POST["%s-deployment_date" % original_id]
+                try:
+                    date_picked = datetime.datetime.strptime(date_picked,'%Y-%m-%d')
+                    if date_picked.year > 2009:
+                        application.deployment_date = date_picked
+                except Exception:
+                    pass
                 #if request.POST.get("%s-name" % original_id):
                 application.phone_model = request.POST["%s-phone_model" % original_id]
                 application.attribution_notes = request.POST["%s-attribution_notes" % original_id]
