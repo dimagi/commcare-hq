@@ -28,6 +28,7 @@ from django.contrib import messages
 from dimagi.utils import gitinfo
 from django.conf import settings
 from restkit import Resource
+import os
 
 @require_superuser
 def default(request):
@@ -507,6 +508,9 @@ def domain_list_download(request):
 
 @require_superuser
 def system_ajax(request):
+    """
+    Utility ajax functions for polling couch and celerymon
+    """
     type = request.GET.get('api', None)
     task_limit = getattr(settings, 'CELERYMON_TASK_LIMIT', 5)
     celerymon_url = getattr(settings, 'CELERYMON_URL', '')
@@ -552,9 +556,8 @@ def system_ajax(request):
 
     return HttpResponse('{}', mimetype = 'application/json')
 
-#@require_superuser
+@require_superuser
 def system_info(request):
-    import os
     context = get_hqadmin_base_context(request)
     context['hide_filters'] = True
     context['current_system'] = os.uname()[1]
