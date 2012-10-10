@@ -4,10 +4,18 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import (NoSuchElementException,
     ElementNotVisibleException)
-from django.test import TestCase
-from django.conf import settings
 from functools import wraps
 import time
+
+try:
+    from unittest2 import TestCase
+except ImportError:
+    import sys
+    if sys.version_info >= (2.7):
+        from unittest import TestCase
+    else:
+        from django.utils.unittest import TestCase
+
 
 class SeleniumWrapper(object):
     """
@@ -91,22 +99,25 @@ class SeleniumTestCase(TestCase):
 
     base_url = ''
 
+    browser = None
+    remote_url = None
+
     def __getattr__(self, name):
         return getattr(self.driver, name)
 
     @classmethod
     def setUpClass(cls):
         kwargs = {
-            'browser_name': settings.SELENIUM_BROWSER,
+            'browser_name': cls.browser,
             'base_url': cls.base_url
         }
 
-        if settings.SELENIUM_REMOTE_URL:
+        if cls.remote_url:
             kwargs.update({
                 'browser_name': 'Remote',
-                'command_executor': settings.SELENIUM_REMOTE_URL,
+                'command_executor': cls.remote_url,
                 'desired_capabilities': getattr(DesiredCapabilities,
-                                                settings.SELENIUM_BROWSER.upper())
+                                                cls.browser.upper())
             })
 
         cls.driver = SeleniumWrapper(**kwargs)
