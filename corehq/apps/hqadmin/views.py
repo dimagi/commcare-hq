@@ -517,8 +517,9 @@ def system_ajax(request):
     db = XFormInstance.get_db()
     ret = {}
     if type == "_active_tasks":
-        #tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
-        tasks = [{'type': 'indexer', 'pid': 'foo', 'database': 'mock', 'design_document': 'mockymock', 'progress': random.randint(0,100), 'started_on': 1349906040.723517, 'updated_on': 1349905800.679458}]
+        tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
+        #tasks = [{'type': 'indexer', 'pid': 'foo', 'database': 'mock',
+        # 'design_document': 'mockymock', 'progress': random.randint(0,100), 'started_on': 1349906040.723517, 'updated_on': 1349905800.679458}]
         return HttpResponse(json.dumps(tasks), mimetype='application/json')
     elif type == "_stats":
         return HttpResponse(json.dumps({}), mimetype = 'application/json')
