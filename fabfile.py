@@ -461,7 +461,6 @@ def migrate():
 
 @roles('staticfiles', 'django_monolith')
 def _do_collectstatic():
->>>>>>> ada19423e5ea53b7d1f9cf0583764019f4b3c605
     """
     Collect static after a code update
     """
