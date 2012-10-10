@@ -111,37 +111,53 @@ TOUCHFORMS_API_PASSWORD = 'password'
 
 ####### Selenium tests config ########
 
-# Firefox, Chrome, Ie, etc.
-SELENIUM_BROWSER = 'Chrome'
+SELENIUM_SETUP = {
+    # apps (or app-qualified testcase classes or methods) to skip testing
+    'EXCLUDE_APPS': [],
 
-# Necessary if using Remote selenium driver
-SELENIUM_REMOTE_URL = None  # 'http://127.0.0.1:4444/wd/hub'
+    # Firefox, Chrome, Ie, or Remote
+    'BROWSER': 'Chrome',
+    
+    # Necessary if using Remote selenium driver
+    'REMOTE_URL': None,
+    
+    # If not using Remote, allows you to open browsers in a hidden virtual X Server
+    'USE_XVFB': True,
+    'XVFB_DISPLAY_SIZE': (1024, 768),
+}
 
-# If not using Remote, allows you to open browsers in a hidden virtual X Server
-SELENIUM_XVFB = False
-SELENIUM_XVFB_DISPLAY_SIZE = (1024, 768)
+SELENIUM_USERS = {
+    # 'WEB_USER' is optional; if not set, some tests that want a web user will
+    # try to use ADMIN instead
+    'ADMIN': {
+        'USERNAME': 'foo@example.com',
+        'PASSWORD': 'password',
+        'URL': 'http://localhost:8000',
+        'PROJECT': 'project_name',
+        'IS_SUPERUSER': False
+    },
 
-TEST_REPORT_MAX_PRELOAD_TIME = 20
-TEST_REPORT_MAX_LOAD_TIME = 30
+    'WEB_USER': {
+        'USERNAME': 'foo@example.com',
+        'PASSWORD': 'password',
+        'URL': 'http://localhost:8000',
+        'PROJECT': 'mike',
+        'IS_SUPERUSER': False
+    },
 
-TEST_ADMIN_USERNAME = 'admin@example.com'
-TEST_ADMIN_PASSWORD = 'password'
-TEST_ADMIN_URL = 'http://localhost:8000'
-TEST_ADMIN_PROJECT = 'project'
-TEST_ADMIN_IS_SUPERUSER = True
+    'MOBILE_WORKER': {
+        'USERNAME': 'user@project_name.commcarehq.org',
+        'PASSWORD': 'password',
+        'URL': 'http://localhost:8000'
+    }
+}
 
-# User for tests that don't require write privileges
-TEST_WEB_USER_USERNAME = 'admin@example.com'
-TEST_WEB_USER_PASSWORD = 'password'
-TEST_WEB_USER_URL = 'http://localhost:8000'
-TEST_WEB_USER_PROJECT = 'project'
-TEST_WEB_USER_IS_SUPERUSER = True
-
-TEST_MOBILE_WORKER_USERNAME = 'user@project.commcarehq.org'
-TEST_MOBILE_WORKER_PASSWORD = 'password'
-TEST_MOBILE_WORKER_URL = 'http://localhost:8000'
-
-
+SELENIUM_APP_SETTINGS = {
+    'reports': {
+        'MAX_PRELOAD_TIME': 20,
+        'MAX_LOAD_TIME': 30,
+    },
+}
 
 ####### Misc / HQ-specific Config ########
 
