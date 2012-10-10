@@ -185,16 +185,19 @@ HQ_APPS = (
     'soil',
     'corehq.apps.hqsofabed',
     'touchforms.formplayer',
-    'phonelog',
-    'pathfinder',
-    'hutch',
-    'dca',
-    'loadtest',
-    'hsph',
-    'pathindia',
-    'mvp',
     'hqbilling',
-    'a5288'
+    'phonelog',
+    'hutch',
+    'loadtest',
+    
+    # custom reports
+    'a5288',
+    'bihar',
+    'dca',
+    'hsph',
+    'mvp',
+    'pathfinder',
+    'pathindia',
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
@@ -614,6 +617,15 @@ CUSTOM_REPORT_MAP = {
     },
     "a5288-test": {
         "Custom Reports": ["a5288.reports.MissedCallbackReport"]
+    },
+    "care-bihar": {
+        "Custom Reports": ["bihar.reports.supervisor.FamilyPlanningReport",
+                           "bihar.reports.supervisor.TeamDetailsReport",
+                           "bihar.reports.supervisor.TeamNavReport",
+                           "bihar.reports.supervisor.MotherListReport",
+                           "bihar.reports.supervisor.PregnanciesRegistered",
+                           "bihar.reports.supervisor.NoBPCounseling",
+                           "bihar.reports.supervisor.RecentDeliveries",]
     }
 #    "test": [
 #        'corehq.apps.reports.deid.FormDeidExport',
