@@ -43,7 +43,7 @@ STATIC_ROOT = ''
 MEDIA_URL = '/media/'
 STATIC_URL = '/static/'
 
-filepath = os.path.abspath(os.path.dirname(__file__))
+FILEPATH = os.path.abspath(os.path.dirname(__file__))
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -51,10 +51,10 @@ STATICFILES_FINDERS = (
 )
 
 STATICFILES_DIRS = (
-    ('formdesigner', os.path.join(filepath,'submodules', 'formdesigner')),
+    ('formdesigner', os.path.join(FILEPATH,'submodules', 'formdesigner')),
 )
 
-DJANGO_LOG_FILE = "%s/%s" % (filepath, "commcarehq.django.log")
+DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
