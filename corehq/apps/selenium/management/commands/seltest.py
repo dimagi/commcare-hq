@@ -48,6 +48,7 @@ class TestSuiteRunner(HqTestSuiteRunner):
         django.test.simple.TEST_MODULE = SELENIUM_TEST_MODULE
 
         try:
+            # copied from django TestSuiteRunner
             suite = unittest.TestSuite()
 
             if test_labels:
