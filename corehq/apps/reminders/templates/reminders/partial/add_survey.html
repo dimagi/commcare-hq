@@ -259,6 +259,7 @@
     <br />
     <h4>Follow-ups</h4>
     <br />
+    {{ form.followups.errors }}
     <div class="form-block">
         <input type="checkbox" name="send_followup" {% if form.send_followup.value %}value="on" checked="checked"{% endif %}/> Send follow-up(s) for incomplete SMS Questionnaires
         <br />

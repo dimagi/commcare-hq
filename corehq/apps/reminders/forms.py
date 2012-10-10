@@ -405,10 +405,22 @@ class SurveyForm(Form):
             if datetimes.get(dt, False):
                 raise ValidationError("Two waves cannot be scheduled at the same date and time.")
             datetimes[dt] = True
+            
+            if wave_json["form_id"] == "--choose--":
+                raise ValidationError("Please choose a questionnaire.")
         return value
     
     def clean_followups(self):
         value = self.cleaned_data["followups"]
+        for followup in value:
+            try:
+                interval = int(followup["interval"])
+            except ValueError:
+                raise ValidationError("Follow-up intervals must be positive integers.")
+            
+            if interval <= 0:
+                raise ValidationError("Follow-up intervals must be positive integers.")
+            
         return value
     
     def clean_samples(self):

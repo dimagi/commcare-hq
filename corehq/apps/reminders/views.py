@@ -254,6 +254,11 @@ def add_survey(request, domain, survey_id=None):
             send_automatically = form.cleaned_data.get("send_automatically")
             send_followup = form.cleaned_data.get("send_followup")
             
+            if send_followup:
+                timeout_intervals = [int(followup["interval"]) * 1440 for followup in followups]
+            else:
+                timeout_intervals = []
+            
             if survey is None:
                 wave_list = []
                 for wave in waves:
@@ -275,7 +280,8 @@ def add_survey(request, domain, survey_id=None):
                                     events = [CaseReminderEvent(
                                         day_num = 0,
                                         fire_time = wave.time,
-                                        form_unique_id = wave.form_id
+                                        form_unique_id = wave.form_id,
+                                        callback_timeout_intervals = timeout_intervals
                                     )],
                                     schedule_length = 1,
                                     event_interpretation = EVENT_AS_SCHEDULE,
@@ -336,6 +342,13 @@ def add_survey(request, domain, survey_id=None):
                             handler.retire()
                             del wave.reminder_definitions[sample_id]
                 
+                # Update existing reminder definitions
+                for wave in survey.waves:
+                    for sample_id, handler_id in wave.reminder_definitions.items():
+                        handler = CaseReminderHandler.get(handler_id)
+                        handler.events[0].callback_timeout_intervals = timeout_intervals
+                        handler.save()
+                
                 # Create additional reminder definitions as necessary
                 for wave in survey.waves:
                     for sample_id in new_sample_ids:
@@ -352,7 +365,8 @@ def add_survey(request, domain, survey_id=None):
                                 events = [CaseReminderEvent(
                                     day_num = 0,
                                     fire_time = wave.time,
-                                    form_unique_id = wave.form_id
+                                    form_unique_id = wave.form_id,
+                                    callback_timeout_intervals = timeout_intervals
                                 )],
                                 schedule_length = 1,
                                 event_interpretation = EVENT_AS_SCHEDULE,
