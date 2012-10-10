@@ -433,7 +433,7 @@ COUCHDB_APPS = [
         'couchlog',
         
         # custom reports
-        'bihar'
+        'bihar',
         'dca',
         'hsph',
         'mvp',
