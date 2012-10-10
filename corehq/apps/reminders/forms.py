@@ -9,6 +9,7 @@ from django.utils.datastructures import DotExpandedDict
 from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_USER, RECIPIENT_CASE, MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET, SurveySample
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
+from dateutil.parser import parse
 
 METHOD_CHOICES = (
     ('sms', 'SMS'),
@@ -390,6 +391,20 @@ class SurveyForm(Form):
     
     def clean_waves(self):
         value = self.cleaned_data["waves"]
+        datetimes = {}
+        date_regex = re.compile("^\d\d\d\d-\d\d-\d\d$")
+        time_regex = re.compile("^\d{1,2}:\d\d(:\d\d){0,1}$")
+        for wave_json in value:
+            if date_regex.match(wave_json["date"]) is None:
+                raise ValidationError("Dates must be in yyyy-mm-dd format.")
+            
+            if time_regex.match(wave_json["time"]) is None:
+                raise ValidationError("Times must be in hh:mm format.")
+            
+            dt = str(parse(wave_json["date"]).date()) + " " + str(parse(wave_json["time"]).time())
+            if datetimes.get(dt, False):
+                raise ValidationError("Two waves cannot be scheduled at the same date and time.")
+            datetimes[dt] = True
         return value
     
     def clean_followups(self):

@@ -295,27 +295,44 @@ def add_survey(request, domain, survey_id=None):
                     send_followup = send_followup
                 )
             else:
-                # Set date, time, and form_id for all waves
-                i = 0
+                current_waves = survey.waves
+                survey.waves = []
+                unchanged_wave_json = []
+                
+                # Keep any waves that didn't change in case the surveys are in progress
+                for wave in current_waves:
+                    for wave_json in waves:
+                        if parse(wave_json["date"]).date() == wave.date and parse(wave_json["time"]).time() == wave.time and wave_json["form_id"] == wave.form_id:
+                            survey.waves.append(wave)
+                            unchanged_wave_json.append(wave_json)
+                            continue
+                
+                for wave in survey.waves:
+                    current_waves.remove(wave)
+                
+                for wave_json in unchanged_wave_json:
+                    waves.remove(wave_json)
+                
+                # Retire reminder definitions for old waves
+                for wave in current_waves:
+                    for sample_id, handler_id in wave.reminder_definitions.items():
+                        handler = CaseReminderHandler.get(handler_id)
+                        handler.retire()
+                
+                # Add in new waves
                 for wave_json in waves:
-                    if len(survey.waves) > i:
-                        survey.waves[i].date = parse(wave_json["date"]).date()
-                        survey.waves[i].time = parse(wave_json["time"]).time()
-                        survey.waves[i].form_id = wave_json["form_id"]
-                    else:
-                        survey.waves.append(SurveyWave(date=parse(wave_json["date"]).date(), time=parse(wave_json["time"]).time(), form_id=wave_json["form_id"], reminder_definitions={}))
-                    i += 1
+                    survey.waves.append(SurveyWave(date=parse(wave_json["date"]).date(), time=parse(wave_json["time"]).time(), form_id=wave_json["form_id"], reminder_definitions={}))
                 
                 # Retire reminder definitions that are no longer needed
                 if send_automatically:
-                    new_sample_ids = [sample_json["sample_id"] for sample_json in samples]
+                    new_sample_ids = [sample_json["sample_id"] for sample_json in samples if sample_json["method"] == "SMS"]
                 else:
                     new_sample_ids = []
                 
                 for wave in survey.waves:
                     for sample_id, handler_id in wave.reminder_definitions.items():
                         if sample_id not in new_sample_ids:
-                            handler = CaseReminderHandler.get(wave.reminder_definitions[sample_id])
+                            handler = CaseReminderHandler.get(handler_id)
                             handler.retire()
                             del wave.reminder_definitions[sample_id]
                 
@@ -344,16 +361,6 @@ def add_survey(request, domain, survey_id=None):
                             )
                             handler.save()
                             wave.reminder_definitions[sample_id] = handler._id
-                
-                # Update reminder definitions as necessary
-                for wave in survey.waves:
-                    for sample_id, handler_id in wave.reminder_definitions.items():
-                        handler = CaseReminderHandler.get(handler_id)
-                        if handler.start_datetime != datetime.combine(wave.date, time(0,0)) or handler.events[0].fire_time != wave.time or handler.events[0].form_unique_id != wave.form_id:
-                            handler.start_datetime = datetime.combine(wave.date, time(0,0))
-                            handler.events[0].fire_time = wave.time
-                            handler.events[0].form_unique_id = wave.form_id
-                            handler.save()
                 
                 # Set the rest of the survey info
                 survey.name = name
