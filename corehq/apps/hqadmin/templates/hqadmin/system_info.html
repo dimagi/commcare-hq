@@ -1,0 +1,247 @@
+{% extends "hqadmin/hqadmin_base_report.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block report-title %}System Info{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        function date_parse(datestring) {
+            var date = new Date(datestring * 1000);
+            // hours part from the timestamp
+            var hours = date.getHours();
+            // minutes part from the timestamp
+            var minutes = date.getMinutes();
+            // seconds part from the timestamp
+            var seconds = date.getSeconds();
+            if (seconds < 10) {
+                var second_str = "0"+ seconds;
+            } else {
+                var second_str = seconds;
+            }
+
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+
+            return  year + '/' + month + '/' + day + ' ' + hours + ':' + minutes + ':' +  second_str;
+
+        }
+
+        function number_fix(num) {
+            if (num != undefined) {
+                if (num.toFixed) {
+                    return num.toFixed(2)
+                }
+                if (num.toPrecision) {
+                    return num.toPrecision(2);
+                }
+                return num;
+            }
+
+
+        }
+
+        function ActiveTaskModel(data) {
+
+            this.pid = ko.observable(data.pid);
+            this.type = ko.observable(data.type);
+            this.database = ko.observable(data.database);
+            this.progress = ko.observable(data.progress + "%");
+            this.design_document = ko.observable(data.design_document);
+            this.started_on = ko.observable(date_parse(data.started_on));
+            this.updated_on = ko.observable(date_parse(data.updated_on));
+            this.total_changes = ko.observable(data.total_changes);
+        }
+        function ActiveTaskListViewModel() {
+            // Data
+            var self = this;
+
+            self.getTasks = function () {
+                $.getJSON("{% url system_ajax %}?api=_active_tasks", function (allData) {
+                            var mappedTasks = $.map(allData, function (item) {
+                                return new ActiveTaskModel(item)
+                            });
+                            self.couch_tasks(mappedTasks);
+                        }
+                );
+            };
+            self.couch_tasks = ko.observableArray(self.getTasks());
+            self.refresh = function () {
+                self.getTasks();
+            }
+        }
+
+        //CELERY model declarations
+        function CeleryTaskModel(data) {
+            this.name = ko.observable(data.name);
+            this.uuid = ko.observable(data.uuid);
+            this.state = ko.observable(data.state);
+            this.received = ko.observable(date_parse(data.received));
+            this.started = ko.observable(date_parse(data.started));
+            this.timestamp = ko.observable(date_parse(data.timestamp));
+            this.succeeded = ko.observable(date_parse(data.succeeded));
+            this.retries = ko.observable(data.retries);
+            this.args = ko.observable(data.args);
+            this.kwargs = ko.observable(data.kwargs);
+            this.runtime = ko.observable(number_fix(data.runtime));
+        }
+        function CeleryTaskListViewModel() {
+            // Data
+            var self = this;
+
+            self.getCeleryTasks = function () {
+                $.getJSON("{% url system_ajax %}?api=celerymon_poll", function (allData) {
+                            var mappedTasks = $.map(allData, function (item) {
+                                console.log(item)
+                                return new CeleryTaskModel(item)
+                            });
+                            self.celery_tasks(mappedTasks);
+                        }
+                );
+            };
+            self.celery_tasks = ko.observableArray(self.getCeleryTasks());
+            self.refresh = function () {
+                self.getCeleryTasks();
+            }
+        }
+
+        var celeryViewModel = new CeleryTaskListViewModel();
+        var couchViewModel = new ActiveTaskListViewModel();
+        $(function () {
+            ko.applyBindings(celeryViewModel, $("#celeryblock")[0]);
+            ko.applyBindings(couchViewModel, $("#couchblock")[0]);
+            setInterval("celeryViewModel.refresh()", 10000);
+            setInterval("couchViewModel.refresh()", 5000);
+        });
+    </script>
+
+
+{% endblock js-inline %}
+{% block reportcontent %}
+    <div class="row-fluid">
+        <h2>Current Worker</h2>
+        <div class="well"> {{ current_system }} </div>
+    </div>
+    <div class="row-fluid" id="couchblock">
+        <h2>Couch Tasks</h2>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>PID</th>
+                <th>Type</th>
+                <th>DB</th>
+                <th>Design Doc</th>
+                <th>Started</th>
+                <th>Updated</th>
+                <th class="span2">Progress</th>
+            </tr>
+            </thead>
+            <tbody data-bind="foreach: couch_tasks">
+            <tr>
+                <td data-bind="text: pid"></td>
+                <td data-bind="text: name"></td>
+                <td data-bind="text: database"></td>
+                <td data-bind="text: design_document"></td>
+                <td data-bind="text: started_on"></td>
+                <td data-bind="text: updated_on"></td>
+                <td>
+                    <div class="progress progress-striped active">
+                        <div class="bar" data-bind="style: {width: progress()}"></div>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="row-fluid" id="celeryblock">
+        <h2>Celery Monitor</h2>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Task Name</th>
+                <th>State</th>
+                <th>Retries</th>
+                <th>Received</th>
+                <th>Started</th>
+                <th>Succeeded</th>
+                <th>Runtime</th>
+                <th>Args</th>
+            </tr>
+            </thead>
+            <tbody data-bind="foreach: celery_tasks">
+            <tr>
+                <td data-bind="text: name"></td>
+                <td data-bind="text: state"></td>
+                <td data-bind="text: retries"></td>
+                <td data-bind="text: received"></td>
+                <td data-bind="text: started"></td>
+                <td data-bind="text: succeeded"></td>
+                <td data-bind="text: runtime"></td>
+                <td>
+                    args: <pre><span data-bind="text: args"></span></pre><br>
+                    kwargs:<pre><span data-bind="text: kwargs"></span></pre>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="row-fluid">
+    <h2>Couch _log</h2>
+    <small>Last 2000 bytes</small>
+    <pre>{{ couch_log }}</pre>
+    </div>
+
+    <div class="row-fluid">
+        <h2>Current Build</h2>
+
+        <div class="well">
+            <h5>Active Branch</h5>
+            {{ current_ref.repo.active_branch.name }}
+        </div>
+        <div>
+            <h4>Last Commits</h4>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Author</th>
+                    <th>Message</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for commit in current_ref.last_commits %}
+                    {% if forloop.first %}
+                        <tr class="success">
+                            {% else %}
+                        <tr>
+                    {% endif %}
+
+                <td>{{ commit.date|date:"m/d/Y H:i T" }}<br>
+                    <small>
+                        <a href="{{ commit.commit_url }}">View</a> | <a
+                            href="{{ commit.compare_url }}">Compare</a>
+                    </small>
+                </td>
+                <td> {{ commit.author }}</td>
+                <td>
+                    <pre>{{ commit.message }}</pre>
+                </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+            <h4>Submodules</h4>
+            {% for sub in current_ref.submodules %}
+                <h5>{{ sub.name }}
+                    <small><a href="{{ sub.commit_url }}">Commit</a> | <a href=
+                                                                                  "{{ sub.compare_url }}">Compare</a>
+                    </small>
+                </h5>
+                <pre>{{ sub.info }}</pre>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
