@@ -1,13 +1,14 @@
 from corehq.apps.selenium.testcases import WebUserTestCase
+from corehq.apps import selenium
 from selenium.common.exceptions import NoSuchElementException
-from django.conf import settings
 import re
 
 
 class ReportsTestCase(WebUserTestCase):
-
-    max_preload_time = settings.TEST_REPORT_MAX_PRELOAD_TIME
-    max_load_time = settings.TEST_REPORT_MAX_LOAD_TIME
+    
+    app = selenium.get_app('reports')
+    max_preload_time = app.MAX_PRELOAD_TIME
+    max_load_time = app.MAX_LOAD_TIME
 
     @classmethod
     def setUpClass(cls):

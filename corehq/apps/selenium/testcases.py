@@ -1,7 +1,10 @@
 from dimagi.utils.django.test import SeleniumTestCase
 from django.conf import settings
+from corehq.apps import selenium
 import random
 import string
+
+DEFAULT_BROWSER = 'Chrome'
 
 
 class HQSeleniumTestCase(SeleniumTestCase):
@@ -10,6 +13,9 @@ class HQSeleniumTestCase(SeleniumTestCase):
     interface.
 
     """
+    browser = settings.SELENIUM_SETUP.get('BROWSER', DEFAULT_BROWSER)
+    remote_url = settings.SELENIUM_SETUP.get('REMOTE_URL', None)
+
     username = None
     password = None
     base_url = None
@@ -59,22 +65,42 @@ class _WebUserTestCase(HQSeleniumTestCase):
 
 
 class AdminUserTestCase(_WebUserTestCase):
-    username = settings.TEST_ADMIN_USERNAME
-    password = settings.TEST_ADMIN_PASSWORD
-    base_url = settings.TEST_ADMIN_URL
-    project = settings.TEST_ADMIN_PROJECT
-    is_superuser = settings.TEST_ADMIN_IS_SUPERUSER
+
+    @classmethod
+    def setUpClass(cls):
+        user = selenium.get_user('ADMIN')
+        cls.username = user.USERNAME
+        cls.password = user.PASSWORD
+        cls.base_url = user.URL
+        cls.project = user.PROJECT
+        cls.is_superuser = user.IS_SUPERUSER
+
+        super(AdminUserTestCase, cls).setUpClass()
 
 
 class WebUserTestCase(_WebUserTestCase):
-    username = settings.TEST_WEB_USER_USERNAME
-    password = settings.TEST_WEB_USER_PASSWORD
-    base_url = settings.TEST_WEB_USER_URL
-    project = settings.TEST_WEB_USER_PROJECT
-    is_superuser = settings.TEST_WEB_USER_IS_SUPERUSER
+    
+    force_non_admin_user = False
+
+    @classmethod
+    def setUpClass(cls):
+        user = selenium.get_user('WEB_USER', exact=cls.force_non_admin_user)
+        cls.username = user.USERNAME
+        cls.password = user.PASSWORD
+        cls.base_url = user.URL
+        cls.project = user.PROJECT
+        cls.is_superuser = user.IS_SUPERUSER
+
+        super(WebUserTestCase, cls).setUpClass()
 
 
 class MobileWorkerTestCase(HQSeleniumTestCase):
-    username = settings.TEST_MOBILE_WORKER_USERNAME
-    password = settings.TEST_MOBILE_WORKER_PASSWORD
-    base_url = settings.TEST_MOBILE_WORKER_URL
+
+    @classmethod
+    def setUpClass(cls):
+        user = selenium.get_user('MOBILE_WORKER')
+        cls.username = user.USERNAME
+        cls.password = user.PASSWORD
+        cls.base_url = user.URL
+
+        super(MobileWorkerTestCase, cls).setUpClass()
