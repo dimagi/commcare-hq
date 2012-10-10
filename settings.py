@@ -427,16 +427,18 @@ COUCHDB_APPS = [
         'users',
         'formplayer',
         'phonelog',
-        'pathfinder',
         'registration',
         'hutch',
+        'hqbilling',
+        'couchlog',
+        
+        # custom reports
+        'bihar'
         'dca',
         'hsph',
-        'couchlog',
-
-        'pathindia',
         'mvp',
-        'hqbilling',
+        'pathfinder',
+        'pathindia',
 ]
 
 
