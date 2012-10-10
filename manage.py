@@ -40,6 +40,7 @@ sys.path.append(os.path.join(filedir,'submodules','hutch-src'))
 sys.path.append(os.path.join(filedir,'submodules','cchq-load-testing'))
 sys.path.append(os.path.join(filedir,'submodules','a5288-reports'))
 sys.path.append(os.path.join(filedir,'submodules','mvp-reports'))
+sys.path.append(os.path.join(filedir,'submodules','bihar-reports'))
 
 try:
     import settings # Assumed to be in the same directory.
