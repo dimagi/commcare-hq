@@ -1,4 +1,5 @@
 import datetime
+import dateutil
 from corehq.apps import receiverwrapper
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
@@ -415,7 +416,7 @@ def create_snapshot(request, domain):
                 application.short_description = request.POST["%s-short_description" % original_id]
                 date_picked = request.POST["%s-deployment_date" % original_id]
                 try:
-                    date_picked = datetime.datetime.strptime(date_picked,'%Y-%m-%d')
+                    date_picked = dateutil.parser.parse(date_picked)
                     if date_picked.year > 2009:
                         application.deployment_date = date_picked
                 except Exception:
