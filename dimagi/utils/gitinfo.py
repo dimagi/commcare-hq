@@ -37,7 +37,7 @@ def submodule_info_hack(repo):
         subm = {}
         subm['sha'] = s.hexsha
         subm['commit_url'] = get_commit_url(s.url, s.hexsha)
-        subm['compare_url'] = get_commit_url(s.url, s.hexsha, compare=True)
+        subm['compare_url'] = get_compare_url(s.url, s.hexsha)
         subm['name'] = s.name.replace('submodules/', '')
         p = Popen(['git', '--git-dir', git_dir, 'log', '-1'], stdout=PIPE, stderr=PIPE)
         gitout = p.stdout.read().strip()
@@ -59,15 +59,19 @@ def split_repo_url(repo_url):
 
 def get_commit_url(repo_url, hexsha, compare=False):
     chunks = split_repo_url(repo_url)
-    if compare:
-        url = "https://github.com/%s/%s/compare/%s...master" % (chunks[0],
-                                                                chunks[1].replace('.git',''), hexsha)
-    else:
-        url = "https://github.com/%s/%s/commit/%s" % (chunks[0], chunks[1].replace('.git',''), hexsha)
+    url = "https://github.com/%s/%s/commit/%s" % (chunks[0], chunks[1].replace('.git',''), hexsha)
+    return url
+def get_compare_url(repo_url, hexsha):
+    chunks = split_repo_url(repo_url)
+    url = "https://github.com/%s/%s/compare/%s...master" % (chunks[0], chunks[1].replace('.git',''), hexsha)
     return url
 
-def get_commit_url_from_commit(commit, compare=False):
-    return get_commit_url(commit.repo.remote().url, commit.hexsha, compare=compare)
+def split_commit_info(commit):
+    """
+    helper function to get the relevant commit repo url and commit hexsha
+    commit is a Gitpython commit object
+    """
+    return commit.repo.remote().url, commit.hexsha
 
 def commit_info(commit):
     """
@@ -79,6 +83,6 @@ def commit_info(commit):
     ret['date'] = datetime.fromtimestamp(commit.committed_date, tz=pytz.utc)
     ret['message'] = commit.message.strip()
     ret['sha'] = commit.hexsha
-    ret['commit_url'] = get_commit_url_from_commit(commit)
-    ret['compare_url'] = get_commit_url_from_commit(commit, compare=True)
+    ret['commit_url'] = get_commit_url(*split_commit_info(commit))
+    ret['compare_url'] = get_compare_url(*split_commit_info(commit))
     return ret
