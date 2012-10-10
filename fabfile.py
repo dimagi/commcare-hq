@@ -143,7 +143,7 @@ def india():
 @task
 def production():
     """ use production environment on remote host"""
-    env.code_branch = 'newprod'
+    env.code_branch = 'master'
     env.sudo_user = 'cchq'
     env.environment = 'production'
     env.server_port = '9010'
