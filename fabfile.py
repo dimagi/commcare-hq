@@ -139,6 +139,8 @@ def india():
         'deploy': [],
         'django_monolith': ['220.226.209.82'],
     }
+    env.jython_home = '/usr/local/lib/jython'
+    env.roles = ['django_monolith']
 
 @task
 def production():
@@ -303,7 +305,7 @@ def clone_repo():
 
 
 @task
-@roles('pg')
+@roles('pg', 'django_monolith')
 def preindex_views():
     with cd(env.code_root):
         update_code()
