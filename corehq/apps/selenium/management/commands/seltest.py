@@ -1,6 +1,5 @@
 from django.core.management.commands import test
-from south.management.commands import patch_for_test_db_setup
-from testrunner import HqTestSuiteRunner
+from django.test.simple import DjangoTestSuiteRunner
 from selenium import webdriver
 from pyvirtualdisplay import Display
 from django.conf import settings
@@ -9,13 +8,19 @@ import sys
 SELENIUM_TEST_MODULE = 'tests.selenium'
 
 
-class TestSuiteRunner(HqTestSuiteRunner):
+class TestSuiteRunner(DjangoTestSuiteRunner):
+
+    def setup_databases(self, *args, **kwargs):
+        pass
+
+    def teardown_databases(self, *args, **kwargs):
+        pass
 
     def build_suite(self, test_labels, *args, **kwargs):
         """
-        Override the default test suite builder to use 'tests.selenium' as the
-        test module path, allow excluding the tests of any apps contained in
-        settings.SELENIUM_EXCLUDE_APPS, and exclude doctests.
+        Override the default test suite builder to exclude doctests, use
+        'tests.selenium' as the test module path, allow excluding the tests of
+        any apps contained in settings.SELENIUM['EXCLUDE_APPS'].
 
         """
         from django.test.simple import (unittest, build_test, get_app,
@@ -39,7 +44,7 @@ class TestSuiteRunner(HqTestSuiteRunner):
             suite = _build_suite(*args, **kwargs)
             return _filter_suite(suite)
 
-        exclude_apps = getattr(settings, 'SELENIUM_EXCLUDE_APPS', [])
+        exclude_apps = settings.SELENIUM_SETUP.get('EXCLUDE_APPS', [])
         test_labels = [l for l in test_labels
                        if all(not l.startswith(app) for app in exclude_apps)]
 
@@ -81,20 +86,18 @@ class Command(test.Command):
         args = list(args)
         
         # Modify selenium settings in-place. Not the worst hack ever.
+        SELENIUM_SETUP = settings.SELENIUM_SETUP
         if args and hasattr(webdriver, args[0].capitalize()):
-            settings.SELENIUM_BROWSER = args.pop(0)
+            SELENIUM_SETUP['BROWSER'] = args.pop(0)
             if args and args[0].startswith('http'):
-                settings.SELENIUM_BROWSER = 'Remote'
-                settings.SELENIUM_REMOTE_URL = args.pop(0)
+                SELENIUM_SETUP['BROWSER'] = 'Remote'
+                SELENIUM_SETUP['REMOTE_URL'] = args.pop(0)
+        settings.SELENIUM_SETUP = SELENIUM_SETUP
 
-        # Apply south migrations, as South does in its test command that
-        # replaces django's default test command
-        patch_for_test_db_setup()
-
-        if settings.SELENIUM_XVFB:
+        if settings.SELENIUM_SETUP['USE_XVFB']:
             print "starting X Virtual Framebuffer display"
             Display(backend='xvfb',
-                    size=settings.SELENIUM_XVFB_DISPLAY_SIZE).start()
+                    size=settings.SELENIUM_SETUP['XVFB_DISPLAY_SIZE']).start()
 
         test_runner = TestSuiteRunner(verbosity=verbosity,
                                       interactive=interactive,
