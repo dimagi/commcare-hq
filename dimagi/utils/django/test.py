@@ -1,12 +1,20 @@
 from selenium import webdriver
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import (NoSuchElementException,
     ElementNotVisibleException)
-from django.test import TestCase
-from django.conf import settings
 from functools import wraps
 import time
+
+try:
+    from unittest2 import TestCase
+except ImportError:
+    import sys
+    if sys.version_info >= (2.7):
+        from unittest import TestCase
+    else:
+        from django.utils.unittest import TestCase
 
 
 class SeleniumWrapper(object):
@@ -20,16 +28,16 @@ class SeleniumWrapper(object):
     the same methods.  This behavior can be determined using keyword arguments
     to the webdriver methods:
 
-        retry -- boolean (default: True) - whether to retry
         duration -- seconds to wait for success before rethrowing (default: 10)
         interval -- seconds between retries (default: min(.5, duration))
         ensure_displayed -- retry if element is not visible (default: True)
 
     """
 
-    def __init__(self, base_url=''):
+    def __init__(self, browser_name, base_url, *args, **kwargs):
         self.base_url = base_url
-        self.driver = getattr(webdriver, settings.SELENIUM_DRIVER)()
+        self.browser_name = browser_name.capitalize()
+        self.driver = getattr(webdriver, self.browser_name)(*args, **kwargs)
 
     def get(self, path):
         return self.driver.get(self.base_url + path)
@@ -59,7 +67,6 @@ class SeleniumWrapper(object):
             if 'interval' in kwargs and 'duration' not in kwargs:
                 raise Exception("Invalid wrapped webdriver method call")
 
-            retry = kwargs.pop('retry', True)
             duration = kwargs.pop('duration', 10)
             interval = kwargs.pop('interval', min(.5, duration))
             ensure_displayed = kwargs.pop('ensure_displayed', True)
@@ -74,7 +81,7 @@ class SeleniumWrapper(object):
 
                     return retval
                 except (NoSuchElementException, ElementNotVisibleException):
-                    if duration < 0.00000001 or not retry:
+                    if duration < 0.00000001:
                         raise
                     else:
                         time.sleep(interval)
@@ -92,16 +99,32 @@ class SeleniumTestCase(TestCase):
 
     base_url = ''
 
+    browser = None
+    remote_url = None
+
     def __getattr__(self, name):
         return getattr(self.driver, name)
 
     @classmethod
     def setUpClass(cls):
-        cls.driver = SeleniumWrapper(base_url=cls.base_url)
+        kwargs = {
+            'browser_name': cls.browser,
+            'base_url': cls.base_url
+        }
+
+        if cls.remote_url:
+            kwargs.update({
+                'browser_name': 'Remote',
+                'command_executor': cls.remote_url,
+                'desired_capabilities': getattr(DesiredCapabilities,
+                                                cls.browser.upper())
+            })
+
+        cls.driver = SeleniumWrapper(**kwargs)
+
         super(SeleniumTestCase, cls).setUpClass()
 
     @classmethod
     def tearDownClass(cls):
         super(SeleniumTestCase, cls).tearDownClass()
         cls.driver.quit()
-
