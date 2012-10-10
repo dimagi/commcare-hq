@@ -8,16 +8,64 @@ import sys
 
 SELENIUM_TEST_MODULE = 'tests.selenium'
 
+
 class TestSuiteRunner(HqTestSuiteRunner):
 
     def build_suite(self, test_labels, *args, **kwargs):
+        """
+        Override the default test suite builder to use 'tests.selenium' as the
+        test module path, allow excluding the tests of any apps contained in
+        settings.SELENIUM_EXCLUDE_APPS, and exclude doctests.
+
+        """
+        from django.test.simple import (unittest, build_test, get_app,
+                get_apps, reorder_suite, TestCase, doctest,
+                build_suite as _build_suite)
+
+        # Hack to remove doctests from test suite without reimplementing
+        # build_suite
+        def _filter_suite(suite):
+            tests = []
+            for test in suite._tests:
+                if isinstance(test, unittest.TestSuite):
+                    tests.append(_filter_suite(test))
+                elif not isinstance(test, doctest.DocTestCase):
+                    tests.append(test)
+
+            suite._tests = tests
+            return suite
+
+        def build_suite(*args, **kwargs):
+            suite = _build_suite(*args, **kwargs)
+            return _filter_suite(suite)
+
+        exclude_apps = getattr(settings, 'SELENIUM_EXCLUDE_APPS', [])
+        test_labels = [l for l in test_labels
+                       if all(not l.startswith(app) for app in exclude_apps)]
+
         import django.test.simple
         orig_test_module = django.test.simple.TEST_MODULE
         django.test.simple.TEST_MODULE = SELENIUM_TEST_MODULE
 
         try:
-            return super(TestSuiteRunner, self).build_suite(test_labels,
-                                                            *args, **kwargs)
+            # copied from django TestSuiteRunner
+            suite = unittest.TestSuite()
+
+            if test_labels:
+                for label in test_labels:
+                    if '.' in label:
+                        suite.addTest(build_test(label))
+                    else:
+                        app = get_app(label)
+                        suite.addTest(build_suite(app))
+            else:
+                for app in get_apps():
+                    name = app.__name__
+                    if all(('.%s' % a) not in name for a in exclude_apps):
+                        suite.addTest(build_suite(app))
+
+            return reorder_suite(suite, (TestCase,))
+
         finally:
             django.test.simple.TEST_MODULE = orig_test_module
 
