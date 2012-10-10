@@ -6,6 +6,14 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from datetime import datetime, timedelta
 
 class ConvenientBaseMixIn(object):
+    # this is everything that's shared amongst the Bihar reports
+    # this class is an amalgamation of random behavior and is just 
+    # for convenience
+    
+    hide_filters = True
+    flush_layout = True
+    mobile_enabled = True
+    
     # for the lazy
     _headers = []  # override
     @property
@@ -15,12 +23,13 @@ class ConvenientBaseMixIn(object):
     @property
     def render_next(self):
         return None if self.rendered_as == "async" else self.rendered_as
-            
+       
+    @classmethod
+    def show_in_navigation(cls, request, *args, **kwargs):
+        return False
+     
     
 class MockTablularReport(ConvenientBaseMixIn, GenericTabularReport, CustomProjectReport):
-    hide_filters = True
-    flush_layout = True
-    mobile_enabled = True
     
     row_count = 20 # override if needed
     def _row(self, i):
@@ -32,9 +41,6 @@ class MockTablularReport(ConvenientBaseMixIn, GenericTabularReport, CustomProjec
         return [self._row(i) for i in range(self.row_count)]
 
 class MockSummaryReport(ConvenientBaseMixIn, SummaryTablularReport, CustomProjectReport):
-    hide_filters = True
-    flush_layout = True
-    mobile_enabled = True
     
     def fake_done_due(self, i=20):
         # highly customized for gates
@@ -82,6 +88,16 @@ class SubCenterSelectionReport(MockTablularReport):
                 "%s / %s" % (random.randint(0, i), i)] \
                 
         
+class FamilyPlanningReport(SubCenterSelectionReport):
+    name = "Family Planning (DEMO)"
+    slug = "familyplanning"
+    description = "Family planning"
+    
+    @classmethod
+    def show_in_navigation(cls, request, *args, **kwargs):
+        return True
+     
+    
 class TeamDetailsReport(MockSummaryReport):
     name = "Team Details"
     slug = "teamdetails"
