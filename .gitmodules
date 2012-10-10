@@ -55,9 +55,6 @@
 [submodule "submodules/pathfinder-reports"]
 	path = submodules/pathfinder-reports
 	url = git://github.com/dimagi/pathfinder-reports.git
-[submodule "submodules/couchdbkit-debugpanel-src"]
-	path = submodules/couchdbkit-debugpanel-src
-	url = git://github.com/dimagi/couchdbkit-debugpanel.git
 [submodule "submodules/django-soil-src"]
 	path = submodules/django-soil-src
 	url = git://github.com/dimagi/django-soil.git
@@ -88,3 +85,6 @@
 [submodule "submodules/mvp-reports"]
 	path = submodules/mvp-reports
 	url = git://github.com/dimagi/mvp-reports.git
+[submodule "submodules/bihar-reports"]
+	path = submodules/bihar-reports
+	url = git://github.com/dimagi/bihar-reports.git

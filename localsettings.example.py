@@ -163,3 +163,7 @@ FORMTRANSLATE_TIMEOUT = 5
 
 # list of domains to enable ADM reporting on
 ADM_ENABLED_PROJECTS = []
+
+# prod settings
+SOIL_DEFAULT_CACHE = "redis"
+SOIL_BACKEND = "soil.CachedDownload"
