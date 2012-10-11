@@ -679,3 +679,16 @@ MESSAGE_TAGS = {
 COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
 DEFAULT_CURRENCY = "USD"
+
+SELENIUM_APP_SETTING_DEFAULTS = {
+    'cloudcare': {
+        # over-generous defaults for now
+        'OPEN_FORM_WAIT_TIME': 20,
+        'SUBMIT_FORM_WAIT_TIME': 20
+    },
+
+    'reports': {
+        'MAX_PRELOAD_TIME': 20,
+        'MAX_LOAD_TIME': 30,
+    },
+}
