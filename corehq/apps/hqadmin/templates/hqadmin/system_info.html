@@ -5,7 +5,8 @@
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
-        function date_parse(datestring) {
+        function format_date(datestring) {
+            //parse nad format the date timestamps - seconds since epoch into date object
             var date = new Date(datestring * 1000);
             // hours part from the timestamp
             var hours = date.getHours();
@@ -48,8 +49,8 @@
             this.database = ko.observable(data.database);
             this.progress = ko.observable(data.progress + "%");
             this.design_document = ko.observable(data.design_document);
-            this.started_on = ko.observable(date_parse(data.started_on));
-            this.updated_on = ko.observable(date_parse(data.updated_on));
+            this.started_on = ko.observable(format_date(data.started_on));
+            this.updated_on = ko.observable(format_date(data.updated_on));
             this.total_changes = ko.observable(data.total_changes);
         }
         function ActiveTaskListViewModel() {
@@ -76,10 +77,10 @@
             this.name = ko.observable(data.name);
             this.uuid = ko.observable(data.uuid);
             this.state = ko.observable(data.state);
-            this.received = ko.observable(date_parse(data.received));
-            this.started = ko.observable(date_parse(data.started));
-            this.timestamp = ko.observable(date_parse(data.timestamp));
-            this.succeeded = ko.observable(date_parse(data.succeeded));
+            this.received = ko.observable(format_date(data.received));
+            this.started = ko.observable(format_date(data.started));
+            this.timestamp = ko.observable(format_date(data.timestamp));
+            this.succeeded = ko.observable(format_date(data.succeeded));
             this.retries = ko.observable(data.retries);
             this.args = ko.observable(data.args);
             this.kwargs = ko.observable(data.kwargs);
