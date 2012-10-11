@@ -1,20 +1,18 @@
 from datetime import timedelta, datetime
+import random
 import json
 from copy import deepcopy
-from django.core.files import temp
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
-from django.contrib.auth.decorators import permission_required
-from django.template.context import RequestContext
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.sms.models import SMSLog
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import  CommCareUser
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from collections import defaultdict
-from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
+from corehq.apps.domain.decorators import  require_superuser
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response, render_to_response
@@ -27,6 +25,10 @@ from django.template.defaultfilters import yesno
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
 from django.contrib import messages
+from dimagi.utils import gitinfo
+from django.conf import settings
+from restkit import Resource
+import os
 
 @require_superuser
 def default(request):
@@ -502,3 +504,70 @@ def domain_list_download(request):
     data = (("domains", (_row(domain) for domain in domains)),)
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "domains")
+
+
+@require_superuser
+def system_ajax(request):
+    """
+    Utility ajax functions for polling couch and celerymon
+    """
+    type = request.GET.get('api', None)
+    task_limit = getattr(settings, 'CELERYMON_TASK_LIMIT', 5)
+    celerymon_url = getattr(settings, 'CELERYMON_URL', '')
+    db = XFormInstance.get_db()
+    ret = {}
+    if type == "_active_tasks":
+        tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
+        #tasks = [{'type': 'indexer', 'pid': 'foo', 'database': 'mock',
+        # 'design_document': 'mockymock', 'progress': random.randint(0,100), 'started_on': 1349906040.723517, 'updated_on': 1349905800.679458}]
+        return HttpResponse(json.dumps(tasks), mimetype='application/json')
+    elif type == "_stats":
+        return HttpResponse(json.dumps({}), mimetype = 'application/json')
+    elif type == "_logs":
+        pass
+
+    if celerymon_url != '':
+        cresource = Resource(celerymon_url)
+        if type == "celerymon_poll":
+            #inefficient way to just get everything in one fell swoop
+            #first, get all task types:
+            t = cresource.get("api/task/name/").body_string()
+            task_names = json.loads(t)
+            ret = []
+            for tname in task_names:
+                taskinfo_raw = json.loads(cresource.get('api/task/name/%s' % (tname))
+                .body_string(), params_dict={'limit': task_limit})
+                for traw in taskinfo_raw:
+                    # it's an array of arrays - looping through [<id>, {task_info_dict}]
+                    tinfo = traw[1]
+                    tinfo['name'] = '.'.join(tinfo['name'].split('.')[-2:])
+                    ret.append(tinfo)
+            ret = sorted(ret, key=lambda x: x['succeeded'], reverse=True)
+            return HttpResponse(json.dumps(ret), mimetype = 'application/json')
+
+#        if type=="celerymon_tasks_types":
+#            #call CELERYMON_URL/api/task/name/ to get seen task types
+#            t = cresource.get("api/task/name/")
+#            return HttpResponse(t.body_string(), mimetype = 'application/json')
+#        elif type == "celerymon_tasks_by_type":
+#            #call CELERYMON_URL/api/task/name/ to get seen task types
+#            task_name = request.GET.get('task_name', '')
+#            if task_name != '':
+#                t = cresource.get("/api/task/name/%s/?limit=%d" % (task_name, task_limit))
+#                return HttpResponse(t.body_string(), mimetype = 'application/json')
+
+    return HttpResponse('{}', mimetype = 'application/json')
+
+@require_superuser
+def system_info(request):
+    context = get_hqadmin_base_context(request)
+    context['hide_filters'] = True
+    context['current_system'] = os.uname()[1]
+    context['current_ref'] = gitinfo.get_project_info()
+    if settings.COUCH_USERNAME == '' and settings.COUCH_PASSWORD == '':
+       couchlog_resource = Resource("http://%s/" % (settings.COUCH_SERVER_ROOT))
+    else:
+        couchlog_resource = Resource("http://%s:%s@%s/" % (settings.COUCH_USERNAME, settings.COUCH_PASSWORD, settings.COUCH_SERVER_ROOT))
+    context['couch_log'] = couchlog_resource.get('_log', params_dict={'bytes': 2000 }).body_string()
+    return render_to_response(request, "hqadmin/system_info.html", context)
+
