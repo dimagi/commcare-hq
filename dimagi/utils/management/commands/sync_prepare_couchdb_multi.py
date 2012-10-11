@@ -10,7 +10,7 @@ import time
 from django.conf import settings
 
 try:
-    import git
+    import gitinfo
     has_git = True
 except ImportError:
     has_git = False
@@ -78,7 +78,7 @@ class Command(BaseCommand):
         message = "Preindex results:\n"
         message += "\tInitiated by: %s" % username
         if has_git:
-            repo = git.Repo(settings.filepath)
+            repo = gitinfo.Repo(settings.FILEPATH)
             logs = repo.head.log()
 
             repo_url = repo.remote().url
