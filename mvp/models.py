@@ -11,7 +11,7 @@ from dimagi.utils.couch.database import get_db
 class MVP(object):
     NAMESPACE = "mvp_indicators"
     DOMAINS = ["mvp-sauri", "mvp-potou"]
-    FORM_QUESTION_IDS = dict(
+    CHILD_VISIT_QUESTION_IDS = dict(
         immediate_danger_sign={
             'mvp-sauri': 'patient_available.immediate_danger_sign',
             'mvp-potou': 'patient_available.immediate_danger_sign'
@@ -21,11 +21,49 @@ class MVP(object):
             'mvp-potou': 'patient_available.referral_follow_on.rdt_result'
         },
         fever_medication={
-            'mvp-sauri': 'patient_available.fever_medication',
-            'mvp-potou': 'patient_available.medication_type'
+            'mvp-sauri': 'patient_available.medication_type',
+            'mvp-potou': 'patient_available.fever_medication'
+        },
+        diarrhea_medication={
+            'mvp-sauri': 'patient_available.medication_type',
+            'mvp-potou': 'patient_available.diarrhea_medication'
+        },
+        referral_type={
+            'mvp-sauri': 'group_referral_dangersign.referral_type',
+            'mvp-potou': 'patient_available.referral_type'
+        },
+        muac={
+            'mvp-sauri': 'patient_available.muac',
+            'mvp-potou': 'patient_available.muac'
         }
     )
-    FORMS = dict(
+    PREGNANCY_VISIT_QUESTION_IDS = dict(
+        prev_num_anc={
+            'mvp-sauri': 'group_counseling.prev_num_anc',
+            'mvp-potou': 'prev_cur_num_anc'
+        },
+        num_anc={
+            'mvp-sauri': 'group_counseling.num_anc',
+            'mvp-potou': 'group_counseling.num_anc',
+        },
+        last_anc_date={
+            'mvp-sauri': 'group_counseling.last_anc_date',
+        },
+        last_anc_weeks={
+            'mvp-potou': 'last_anc_weeks'
+        }
+    )
+    HOUSEHOLD_VISIT_QUESTION_IDS = dict(
+        num_using_fp={
+            'mvp-sauri': 'num_using_fp',
+            'mvp-potou': 'num_using_fp'
+        },
+        num_ec={
+            'mvp-sauri': 'num_ec',
+            'mvp-potou': 'num_ec'
+        }
+    )
+    VISIT_FORMS = dict(
         pregnancy_visit='http://openrosa.org/formdesigner/185A7E63-0ECD-4D9A-8357-6FD770B6F065',
         child_visit='http://openrosa.org/formdesigner/B9CEFDCD-8068-425F-BA67-7DC897030A5A',
         household_visit='http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B'

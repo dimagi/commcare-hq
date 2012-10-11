@@ -1,5 +1,5 @@
 from django.core.management.base import LabelCommand, CommandError
-from corehq.apps.indicators.models import IndicatorDefinition, CaseDataInFormIndicatorDefinition, FormDataAliasIndicatorDefinition
+from corehq.apps.indicators.models import IndicatorDefinition, CaseDataInFormIndicatorDefinition, FormDataAliasIndicatorDefinition, FormDataInCaseIndicatorDefinition
 from mvp.models import MVP, MVPRelatedCaseDataInFormIndicatorDefinition, MVPRelatedCaseDataInCaseIndicatorDefinition
 
 
@@ -26,21 +26,77 @@ class Command(LabelCommand):
                 version=1
             )
 
-            for indicator_slug, ids_per_domain in MVP.FORM_QUESTION_IDS.items():
-                # Question ID Aliases
+            for indicator_slug, ids_per_domain in MVP.CHILD_VISIT_QUESTION_IDS.items():
+                # Question ID Aliases for child_vist forms
                 question_id = ids_per_domain.get(domain)
                 if question_id:
                     form_question = FormDataAliasIndicatorDefinition.update_or_create_unique(
                         slug=indicator_slug,
-                        xmlns=MVP.FORMS.get('child_visit'),
+                        xmlns=MVP.VISIT_FORMS.get('child_visit'),
                         question_id=question_id,
                         **shared_kwargs
                     )
                     form_question.save()
 
+            referral_type_question_id = MVP.CHILD_VISIT_QUESTION_IDS.get('referral_type', {}).get(domain)
+            if referral_type_question_id:
+                alias_referral_type_preg = FormDataAliasIndicatorDefinition.update_or_create_unique(
+                    slug="referral_type",
+                    xmlns=MVP.VISIT_FORMS.get('pregnancy_visit'),
+                    question_id=referral_type_question_id,
+                    **shared_kwargs
+                )
+                alias_referral_type_preg.save()
+
+                preg_referral_type = FormDataInCaseIndicatorDefinition.update_or_create_unique(
+                    slug="referral_type",
+                    case_type='pregnancy',
+                    xmlns=MVP.VISIT_FORMS.get('pregnancy_visit'),
+                    question_id=referral_type_question_id,
+                    **shared_kwargs
+                )
+                preg_referral_type.save()
+
+                child_referral_type = FormDataInCaseIndicatorDefinition.update_or_create_unique(
+                    slug="referral_type",
+                    case_type='child',
+                    xmlns=MVP.VISIT_FORMS.get('chiild_visit'),
+                    question_id=referral_type_question_id,
+                    **shared_kwargs
+                )
+                child_referral_type.save()
+
+            for indicator_slug, ids_per_domain in MVP.PREGNANCY_VISIT_QUESTION_IDS.items():
+                # Form Data in Pregnancy Case
+                question_id = ids_per_domain.get(domain)
+                if question_id:
+                    form_data_in_case = FormDataInCaseIndicatorDefinition.update_or_create_unique(
+                        slug=indicator_slug,
+                        case_type='pregnancy',
+                        xmlns=MVP.VISIT_FORMS.get('pregnancy_visit'),
+                        question_id=question_id
+                        **shared_kwargs
+                    )
+                    form_data_in_case.save()
+
+            for indicator_slug, ids_per_domain in MVP.HOUSEHOLD_VISIT_QUESTION_IDS.items():
+                question_id = ids_per_domain.get(domain)
+                if question_id:
+                    form_data_in_case = FormDataInCaseIndicatorDefinition.update_or_create_unique(
+                        slug=indicator_slug,
+                        case_type='household',
+                        xmlns=MVP.VISIT_FORMS.get('household_visit'),
+                        question_id=question_id,
+                        **shared_kwargs
+                    )
+                    form_data_in_case.save()
+
+
+
+
             child_dob = CaseDataInFormIndicatorDefinition.update_or_create_unique(
                 slug="child_dob",
-                xmlns=MVP.FORMS.get('child_visit'),
+                xmlns=MVP.VISIT_FORMS.get('child_visit'),
                 case_property="dob_calc",
                 **shared_kwargs
             )
@@ -48,7 +104,7 @@ class Command(LabelCommand):
 
             household_child_dob = MVPRelatedCaseDataInFormIndicatorDefinition.update_or_create_unique(
                 slug="household_child_dob",
-                xmlns=MVP.FORMS.get('household_visit'),
+                xmlns=MVP.VISIT_FORMS.get('household_visit'),
                 case_property="dob_calc",
                 related_case_type = "child",
                 **shared_kwargs
@@ -57,7 +113,7 @@ class Command(LabelCommand):
 
             household_child_close_reason = MVPRelatedCaseDataInFormIndicatorDefinition.update_or_create_unique(
                 slug="household_child_close_reason",
-                xmlns=MVP.FORMS.get('household_visit'),
+                xmlns=MVP.VISIT_FORMS.get('household_visit'),
                 case_property="close_reason",
                 related_case_type = "child",
                 **shared_kwargs
@@ -66,7 +122,7 @@ class Command(LabelCommand):
 
             household_pregnancy_visit = MVPRelatedCaseDataInFormIndicatorDefinition.update_or_create_unique(
                 slug="household_pregnancy_visit",
-                xmlns=MVP.FORMS.get('household_visit'),
+                xmlns=MVP.VISIT_FORMS.get('household_visit'),
                 case_property="dob_calc",
                 related_case_type = "pregnancy",
                 **shared_kwargs
