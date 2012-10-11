@@ -564,8 +564,10 @@ def system_info(request):
     context['hide_filters'] = True
     context['current_system'] = os.uname()[1]
     context['current_ref'] = gitinfo.get_project_info()
-    couchlog_resource = Resource("http://%s:%s@%s/" % (settings.COUCH_USERNAME,
-                                                      settings.COUCH_PASSWORD, settings .COUCH_SERVER_ROOT))
+    if settings.COUCH_USERNAME == '' and settings.COUCH_PASSWORD == '':
+       couchlog_resource = Resource("http://%s/" % (settings.COUCH_SERVER_ROOT))
+    else:
+        couchlog_resource = Resource("http://%s:%s@%s/" % (settings.COUCH_USERNAME, settings.COUCH_PASSWORD, settings.COUCH_SERVER_ROOT))
     context['couch_log'] = couchlog_resource.get('_log', params_dict={'bytes': 2000 }).body_string()
     return render_to_response(request, "hqadmin/system_info.html", context)
 
