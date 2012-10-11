@@ -535,8 +535,9 @@ def system_ajax(request):
             task_names = json.loads(t)
             ret = []
             for tname in task_names:
-                taskinfo_raw = json.loads(cresource.get('api/task/name/%s' % (tname)).body_string())
-                for traw in taskinfo_raw[:task_limit]:
+                taskinfo_raw = json.loads(cresource.get('api/task/name/%s' % (tname))
+                .body_string(), params_dict={'limit': task_limit})
+                for traw in taskinfo_raw:
                     # it's an array of arrays - looping through [<id>, {task_info_dict}]
                     tinfo = traw[1]
                     tinfo['name'] = '.'.join(tinfo['name'].split('.')[-2:])
