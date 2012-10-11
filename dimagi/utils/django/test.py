@@ -11,7 +11,7 @@ try:
     from unittest2 import TestCase
 except ImportError:
     import sys
-    if sys.version_info >= (2.7):
+    if sys.version_info >= (2.7,):
         from unittest import TestCase
     else:
         from django.utils.unittest import TestCase
