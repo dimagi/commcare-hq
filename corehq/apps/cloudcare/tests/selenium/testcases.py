@@ -1,11 +1,18 @@
 from corehq.apps.selenium.testcases import MobileWorkerTestCase
 from selenium.common.exceptions import NoSuchElementException
+from corehq.apps import selenium
 
-OPEN_FORM_WAIT_TIME = 10
-SUBMIT_FORM_WAIT_TIME = 5
+DEFAULT_OPEN_FORM_WAIT_TIME = 10
+DEFAULT_SUBMIT_FORM_WAIT_TIME = 5
 
 
 class CloudCareTestCase(MobileWorkerTestCase):
+    app = selenium.get_app('cloudcare')
+    open_form_wait_time = app.get('OPEN_FORM_WAIT_TIME',
+                                  DEFAULT_OPEN_FORM_WAIT_TIME)
+    submit_form_wait_time = app.get('SUBMIT_FORM_WAIT_TIME',
+                                    DEFAULT_SUBMIT_FORM_WAIT_TIME)
+
     app_name = None
     module_name = None
 
@@ -43,7 +50,7 @@ class CloudCareTestCase(MobileWorkerTestCase):
             xpath = "//section//div[@id='form']"
 
         find_form = lambda: cls.driver.find_element_by_xpath(xpath,
-                                        duration=OPEN_FORM_WAIT_TIME)
+                                        duration=cls.open_form_wait_time)
 
         # click the form
         cls.driver.find_element_by_link_text(name).click()
@@ -70,7 +77,7 @@ class CloudCareTestCase(MobileWorkerTestCase):
 
         if expect_success:
             cls.driver.find_element_by_xpath(success,
-                                             duration=SUBMIT_FORM_WAIT_TIME)
+                                             duration=cls.submit_form_wait_time)
 
     @classmethod
     def click_case(cls, name):
