@@ -41,7 +41,7 @@ RSYNC_EXCLUDE = (
 env.project = 'commcare-hq'
 env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
 env.home = "/home/cchq"
-
+env.selenium_url = 'http://jenkins.dimagi.com/job/commcare-hq-post-deploy/buildWithParameters?token=%(token)s&TARGET=%(environment)s'
 
 env.roledefs = {
         'django_celery': [],
@@ -346,9 +346,6 @@ def deploy():
         execute(services_restart)
 
 
-
-
-
 @task
 @roles('django_app','django_celery','staticfiles', 'django_public', 'django_monolith')#,'formsplayer')
 @parallel
@@ -586,3 +583,16 @@ def _supervisor_command(command):
     #elif what_os() == 'ubuntu':
         #cmd_exec = "/usr/local/bin/supervisorctl"
     sudo('supervisorctl %s' % (command), shell=False)
+
+
+# tests
+
+@task
+def selenium_test():
+    require('environment', provided_by=('staging', 'demo', 'production', 'india'))
+    prompt("Jenkins username:", key="jenkins_user", default="selenium")
+    prompt("Jenkins password:", key="jenkins_password")
+    url = env.selenium_url % {"token": "foobar", "environment": env.environment}
+    local("curl --user %(user)s:%(pass)s '%(url)s'" % \
+          {'user': env.jenkins_user, 'pass': env.jenkins_password, 'url': url})
+    
