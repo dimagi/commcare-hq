@@ -208,6 +208,10 @@ class BaseSavedExportSchema(Document):
     # signature: filter(doc)
     filter_function = SerializableFunctionProperty()
 
+    @property
+    def default_format(self):
+        return Format.XLS_2007
+
     def transform(self, doc):
         return doc
 
@@ -220,7 +224,7 @@ class BaseSavedExportSchema(Document):
         return False
 
     def export_data_async(self, format=None, **kwargs):
-        format = format or Format.XLS_2007
+        format = format or self.default_format
         download = DownloadBase()
         download.set_task(couchexport.tasks.export_async.delay(
             self,
