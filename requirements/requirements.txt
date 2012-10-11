@@ -33,4 +33,5 @@ xlutils==1.4.1
 xlrd==0.7.3
 simplejson
 gitpython
+gitdb
 gevent
