@@ -2,54 +2,73 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import CaseBlock
 from casexml.apps.case.xml import V2
 from lxml import etree
+from lxml.builder import ElementMaker
 from datetime import datetime, date, timedelta
 from receiver.util import spoof_submission
 from corehq.apps.receiverwrapper.util import get_submit_url
 from corehq.apps.commtrack.models import *
+from dimagi.utils.couch.loosechange import map_reduce
 
 XMLNS = 'http://openrosa.org/commtrack/stock_report'
 def _(tag, ns=XMLNS):
     return '{%s}%s' % (ns, tag)
+def XML(ns=XMLNS):
+    return ElementMaker(namespace=ns)
 
 def process(domain, instance):
     """process an incoming commtrack stock report instance"""
     root = etree.fromstring(instance)
+    transactions = unpack_transactions(root)
 
-    case_ids = [e.text for e in root.findall('.//%s' % _('product_entry'))]
+    case_ids = [tx['case_id'] for tx in transactions]
     cases = dict((c._id, c) for c in CommCareCase.view('_all_docs', keys=case_ids, include_docs=True))
 
     # ensure transaction types are processed in the correct order
-    transactions = sorted(root.findall(_('transaction')), key=transaction_order)
+    transactions.sort(key=transaction_order)
+    # apply all transactions to each product case in bulk
+    transactions_by_product = map_reduce(lambda tx: [(tx['case_id'],)], data=transactions, include_docs=True)
 
-    for tx in transactions:
-        case_id = tx.find(_('product_entry')).text
-        tx_data = (
-            tx.find(_('action')).text,
-            int(tx.find(_('value')).text),
-        )
-        case_block = process_transaction(tx_data, cases[case_id])
+    for product_id, txs in transactions_by_product.iteritems():
+        product_case = cases[product_id]
+        case_block = process_product_transactions(product_case, txs)
         root.append(case_block)
 
     submission = etree.tostring(root)
     print 'submitting:', submission
     spoof_submission(get_submit_url(domain), submission)
 
+def tx_from_xml(tx):
+    return {
+        'case_id': tx.find(_('product_entry')).text,
+        'action': tx.find(_('action')).text,
+        'value': int(tx.find(_('value')).text),
+    }
+
+def tx_to_xml(tx, E=None):
+    if not E:
+        E = XML()
+        
+    return E.transaction(
+        E.product_entry(tx['case_id']),
+        E.action(tx['action']),
+        E.value(str(tx['value']))
+    )
+
+def unpack_transactions(root):
+    return [tx_from_xml(tx) for tx in root.findall(_('transaction'))]
+
 def transaction_order(tx):
-    action = tx.find(_('action')).text
-    return ACTION_TYPES.index(action)
+    return ACTION_TYPES.index(tx['action'])
 
-def process_transaction(tx, case):
-    """process an individual stock datapoint (action + value) from a stock report
-
-    * examine the new data
-    * reconcile it with the current stock info
-    * encode the necessary data updates as case-xml blocks and annotate the
-      original instance
-    * submit the annotated instance to HQ for processing
+def process_product_transactions(case, txs):
+    """process all the transactions from a stock report for an individual
+    product. we have to apply them in bulk because each one may update
+    the case state that the next one works off of. therefore we have to
+    keep track of the updated case state ourselves
     """
-    action, value = tx
     current_state = StockState(case)
-    current_state.update(action, value)
+    for tx in txs:
+        current_state.update(tx['action'], tx['value'])
     return current_state.to_case_block()
 
 class StockState(object):
@@ -60,26 +79,28 @@ class StockState(object):
         self.stocked_out_since = props.get('stocked_out_since') # date
         # worry about consumption rates later
         
-    # todo: create 'inferred' transactions here? i.e., consumption if soh and
-    # receipts only are reported
     def update(self, action, value):
         """given the current stock state for a product at a location, update
         with the incoming datapoint
         
         fancy business logic to reconcile stock reports lives HERE
         """
-        if action == 'stockout':
+        if action in ('stockout', 'stockedoutfor'):
             self.current_stock = 0
-            self.stocked_out_since = date.today() - timedelta(days=value)
+            days_stocked_out = value if action == 'stockedoutfor' else 0
+            self.stocked_out_since = date.today() - timedelta(days=days_stocked_out)
         else:
 
-            if action == 'stockonhand':
+            if action in ('stockonhand', 'prevstockonhand'):
                 self.current_stock = value
+                # generate inferred transactions
+                # TODO
             elif action == 'receipts':
                 self.current_stock += value
             elif action == 'consumption':
                 self.current_stock -= value
 
+            # data normalization
             if self.current_stock > 0:
                 self.stocked_out_since = None
             else:

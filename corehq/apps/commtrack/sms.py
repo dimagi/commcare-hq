@@ -4,7 +4,6 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack import stockreport
 from dimagi.utils.couch.database import get_db
 from lxml import etree
-from lxml.builder import ElementMaker
 
 def handle(v, text):
     """top-level handler for incoming stock report messages"""
@@ -168,7 +167,7 @@ def looks_like_prod_code(code):
 def to_instance(v, data):
     """convert the parsed sms stock report into an instance like what would be
     submitted from a commcare phone"""
-    E = ElementMaker(namespace=stockreport.XMLNS)
+    E = stockreport.XML()
 
     # find all stock product sub-cases linked to the supply point case, and build a mapping
     # of the general Product doc id to the site-specific product sub-case
@@ -177,11 +176,8 @@ def to_instance(v, data):
     product_subcase_mapping = dict((subcase.dynamic_properties().get('product'), subcase._id) for subcase in product_subcases)
 
     def mk_xml_tx(tx):
-        return E.transaction(
-            E.product_entry(product_subcase_mapping[tx['product']._id]),
-            E.action(tx['action']),
-            E.value(str(tx['value']))
-        )
+        tx['case_id'] = product_subcase_mapping[tx['product']._id]
+        return stockreport.tx_to_xml(tx, E)
 
     # TODO: add <meta>, user_id, etc.?
     root = E.stock_report(*(mk_xml_tx(tx) for tx in data['transactions']))
