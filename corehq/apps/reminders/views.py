@@ -383,6 +383,9 @@ def add_survey(request, domain, survey_id=None):
                 survey.send_automatically = send_automatically
                 survey.send_followup = send_followup
             
+            # Sort the questionnaire waves by date and time (for display purposes only)
+            survey.waves = sorted(survey.waves, key = lambda wave : datetime.combine(wave.date, wave.time))
+            
             survey.save()
             return HttpResponseRedirect(reverse("survey_list", args=[domain]))
     else:
