@@ -60,7 +60,6 @@ class CasePaginator():
             if self.status:
                 yield "is:(%s)" % self.status
         
-        print query
         results = get_db().search("case/search",
             q=query,
             handler="_fti/_design",
