@@ -50,8 +50,8 @@ class Command(LabelCommand):
     def generate_output(url, parts, dir_version=False):
         filepath = '/'.join(parts[:-1]) + '/'
         filename = parts[-1] if not dir_version else "."
-        print r'filepath="%s"; filename="%s"; url="%s"' % (filepath, filename, url)
-        print r"""cd $filepath; git log -n 1 --format=format:"    \"$url\": \"%h\"," $filename; echo"""
+        print r'FILEPATH="%s"; filename="%s"; url="%s"' % (filepath, filename, url)
+        print r"""cd $FILEPATH; git log -n 1 --format=format:"    \"$url\": \"%h\"," $filename; echo"""
 
 
     def generate_output_for_dir(self, directory, prefix):
