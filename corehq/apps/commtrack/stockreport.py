@@ -5,6 +5,7 @@ from lxml import etree
 from datetime import datetime, date, timedelta
 from receiver.util import spoof_submission
 from corehq.apps.receiverwrapper.util import get_submit_url
+from corehq.apps.commtrack.models import *
 
 XMLNS = 'http://openrosa.org/commtrack/stock_report'
 def _(tag, ns=XMLNS):
@@ -34,10 +35,8 @@ def process(domain, instance):
     spoof_submission(get_submit_url(domain), submission)
 
 def transaction_order(tx):
-    action_order = ['receipts', 'consumption', 'stockonhand', 'stockout']
-
     action = tx.find(_('action')).text
-    return action_order.index(action)
+    return ACTION_TYPES.index(action)
 
 def process_transaction(tx, case):
     """process an individual stock datapoint (action + value) from a stock report
@@ -61,6 +60,8 @@ class StockState(object):
         self.stocked_out_since = props.get('stocked_out_since') # date
         # worry about consumption rates later
         
+    # todo: create 'inferred' transactions here? i.e., consumption if soh and
+    # receipts only are reported
     def update(self, action, value):
         """given the current stock state for a product at a location, update
         with the incoming datapoint

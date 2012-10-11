@@ -27,11 +27,10 @@ def handle(v, text):
 # todo, this will be pulled from domain somehow
 report_syntax_config = {
     'single_action': {
-        'keywords': {
-            'stockonhand': 'soh',
+        'keywords': { # only action types listed here are supported for this domain
+            'prevstockonhand': 'soh',
             'receipts': 'r',
-            'consumption': 'c',
-            'stockout': 'so',
+            'stockedoutfor': 'so',
         }
     },
     'multiple_action': {
@@ -39,7 +38,7 @@ report_syntax_config = {
         'delimeter': '.',
         'action_keywords': {
             # action types not listed default to their single-action keywords
-            'stockonhand': 'st',
+            'prevstockonhand': 'st',
         }
     }
 }
@@ -92,12 +91,15 @@ class StockReport(object):
 
     def single_action_transactions(self, action, args):
         # special case to handle immediate stock-out reports
-        if action == 'stockout' and all(looks_like_prod_code(arg) for arg in args):
-            for prod_code in args:
-                yield mk_tx(self.product_from_code(prod_code), action, 0)
-            return
+        if action == 'stockout':
+            if all(looks_like_prod_code(arg) for arg in args):
+                for prod_code in args:
+                    yield mk_tx(self.product_from_code(prod_code), action, 0)
+                return
+            else:
+                raise RuntimeError('value not allowed')
             
-        grouping_allowed = (action == 'stockout')
+        grouping_allowed = (action == 'stockedoutfor')
 
         products = []
         for arg in args:
@@ -119,12 +121,22 @@ class StockReport(object):
     def multiple_action_transactions(self, args):
         action_map = self.keyword_action_map(self.CM.get('action_keywords', {}))
 
-        for i in range(0, len(args), 2):
-            prod_code, keyword = args[i].split(self.CM['delimeter'])
-            value = int(args[i + 1])
+        _args = iter(args)
+        while True:
+            try:
+                op = _args.next()
+            except StopIteration:
+                # this is the only valid place for the arg list to end
+                break
 
+            prod_code, keyword = op.split(self.CM['delimeter'])
             product = self.product_from_code(prod_code)
             action = action_map[keyword]
+
+            if action == 'stockout':
+                value = 0
+            else:
+                value = int(_args.next())
 
             yield mk_tx(product, action, value)
             
