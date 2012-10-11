@@ -34,6 +34,12 @@ class CasePaginator():
 
             yield "exactDomain:(exact%sexact)" % self.domain
 
+            if self.case_type:
+                yield 'type:"%s"' % self.case_type
+
+            if self.status:
+                yield "is:(%s)" % self.status
+            
             @list
             @inline
             def user_filters():
@@ -50,16 +56,10 @@ class CasePaginator():
                 for val in _qterm("user_id", self.user_ids):
                     yield val
                 
-
             if user_filters:
                 yield "%s" % OR(user_filters)
 
-            if self.case_type:
-                yield 'type:"%s"' % self.case_type
-
-            if self.status:
-                yield "is:(%s)" % self.status
-        
+            
         results = get_db().search("case/search",
             q=query,
             handler="_fti/_design",
