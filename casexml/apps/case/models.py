@@ -75,15 +75,14 @@ class CommCareCaseAction(DocumentSchema):
 
     @property
     def xform(self):
-        xform = XFormInstance.get(self.xform_id)
-        return xform
-
+        return XFormInstance.get(self.xform_id) if self.xform_id else None
+        
     def get_user_id(self):
         key = 'xform-%s-user_id' % self.xform_id
         id = cache.get(key)
         if not id:
             xform = self.xform
-            id = xform.metadata.userID
+            id = xform.metadata.userID if xform else None
             cache.set(key, id, 12*60*60)
         return id
 
