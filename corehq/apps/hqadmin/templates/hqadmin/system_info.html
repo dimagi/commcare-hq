@@ -29,7 +29,7 @@
         }
 
         function number_fix(num) {
-            if (num != undefined) {
+            if (num !== undefined) {
                 if (num.toFixed) {
                     return num.toFixed(2)
                 }
@@ -38,8 +38,6 @@
                 }
                 return num;
             }
-
-
         }
 
         function ActiveTaskModel(data) {
