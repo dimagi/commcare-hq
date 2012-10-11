@@ -40,7 +40,7 @@ from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
 from couchexport import views as couchexport_views
 from couchexport.shortcuts import export_data_shared, export_raw_data,\
     export_response
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from couchforms.filters import instances
 from couchdbkit.exceptions import ResourceNotFound
 from fields import FilterUsersField
@@ -85,6 +85,7 @@ def default(request, domain, template="reports/base_template.html"):
 @login_or_digest
 @require_form_export_permission
 @datespan_default
+@require_GET
 def export_data(req, domain):
     """
     Download all data for a couchdbkit model
@@ -141,6 +142,7 @@ def export_data(req, domain):
 @require_form_export_permission
 @login_and_domain_required
 @datespan_default
+@require_GET
 def export_data_async(request, domain):
     """
     Download all data for a couchdbkit model
@@ -250,6 +252,7 @@ class CustomExportHelper(object):
 
 @login_or_digest
 @datespan_default
+@require_GET
 def export_default_or_custom_data(request, domain, export_id=None, bulk_export=False):
     """
     Export data from a saved export schema
@@ -337,6 +340,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
 
 @require_form_export_permission
 @login_and_domain_required
+@require_GET
 def custom_export(req, domain):
     """
     Customize an export
@@ -395,6 +399,7 @@ def edit_custom_export(req, domain, export_id):
 @login_or_digest
 @require_form_export_permission
 @login_and_domain_required
+@require_GET
 def hq_download_saved_export(req, domain, export_id):
     export = SavedBasicExport.get(export_id)
     # quasi-security hack: the first key of the index is always assumed 
@@ -405,6 +410,7 @@ def hq_download_saved_export(req, domain, export_id):
 @login_or_digest
 @require_form_export_permission
 @login_and_domain_required
+@require_GET
 def export_all_form_metadata(req, domain):
     """
     Export metadata for _all_ forms in a domain.
@@ -446,6 +452,7 @@ def delete_custom_export(req, domain, export_id):
 
 @require_can_view_all_reports
 @login_and_domain_required
+@require_GET
 def case_details(request, domain, case_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
 
@@ -497,6 +504,7 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
 @login_or_digest
 @require_case_export_permission
 @login_and_domain_required
+@require_GET
 def download_cases(request, domain):
     include_closed = json.loads(request.GET.get('include_closed', 'false'))
     format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
@@ -536,6 +544,7 @@ def download_cases(request, domain):
 
 @require_can_view_all_reports
 @login_and_domain_required
+@require_GET
 def form_data(request, domain, instance_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
     try:
@@ -561,6 +570,7 @@ def form_data(request, domain, instance_id):
                                                   modified=instance.received_on)))
 @require_form_export_permission
 @login_and_domain_required
+@require_GET
 def download_form(request, domain, instance_id):
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)
@@ -568,6 +578,7 @@ def download_form(request, domain, instance_id):
 
 @require_form_export_permission
 @login_and_domain_required
+@require_GET
 def download_attachment(request, domain, instance_id, attachment):
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)
