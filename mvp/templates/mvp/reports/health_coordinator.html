@@ -29,8 +29,8 @@
         <thead id="mvp-table-head" data-spy="affix" data-offset-top="197">
             <tr>
                 <th class="indicator-def">&nbsp;</th>
-                {% for header in headers %}
-                <th{% ifequal forloop.counter 13 %} class="current_month"{% endifequal %}>{{ header }}</th>
+                {% for month in months %}
+                <th{% ifequal forloop.counter 13 %} class="current_month"{% endifequal %}>{{ month }}</th>
                 {% endfor %}
                 <th class="summary">Average</th>
                 <th class="summary">Median</th>
@@ -38,31 +38,22 @@
             </tr>
         </thead>
         <tbody>
-            {% for indicator in indicators %}
+            {% for indicator in report %}
             <tr>
                 <th rowspan="3">{{ indicator.title }}</th>
-                {% for val in indicator.values %}
-                    <td{% ifequal forloop.counter 13 %} class="current_month"{% endifequal %}>{{ val.value.text }}</td>
+                {% for p in indicator.table.percentages %}
+                    <td{% if p.css %} class="{{ p.css }}"{% endif %}>{{ p.text }}</td>
                 {% endfor %}
-                <td class="summary">{{ indicator.average.text }}</td>
-                <td class="summary">{{ indicator.median.text }}</td>
-                <td class="summary">{{ indicator.std_dev.text }}</td>
             </tr>
             <tr>
-                {% for val in indicator.values %}
-                    <td{% ifequal forloop.counter 13 %} class="current_month"{% endifequal %}>{{ val.value.n }}</td>
+                {% for n in indicator.table.numerators %}
+                    <td{% if n.css %} class="{{ n.css }}"{% endif %}>{{ n.text }}</td>
                 {% endfor %}
-                <td class="summary">{{ indicator.average.n }}</td>
-                <td class="summary">{{ indicator.median.n }}</td>
-                <td class="summary">{{ indicator.std_dev.n }}</td>
             </tr>
             <tr>
-                {% for val in indicator.values %}
-                    <td{% ifequal forloop.counter 13 %} class="current_month"{% endifequal %}>{{ val.value.d }}</td>
+                {% for d in indicator.table.denominators %}
+                    <td{% if d.css %} class="{{ d.css }}"{% endif %}>{{ d.text }}</td>
                 {% endfor %}
-                <td class="summary">{{ indicator.average.d }}</td>
-                <td class="summary">{{ indicator.median.d }}</td>
-                <td class="summary">{{ indicator.std_dev.d }}</td>
             </tr>
             <tr>
                 <td colspan="17"></td>
