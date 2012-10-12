@@ -42,10 +42,10 @@ CELERY_SEND_TASK_ERROR_EMAILS = True
 
 ####### Static files ########
 
-filepath = os.path.abspath(os.path.dirname(__file__))
+FILEPATH = os.path.abspath(os.path.dirname(__file__))
 # media for user uploaded media.  in general this won't be used at all.
-MEDIA_ROOT = os.path.join(filepath,'mediafiles') 
-STATIC_ROOT = os.path.join(filepath,'staticfiles')
+MEDIA_ROOT = os.path.join(FILEPATH,'mediafiles')
+STATIC_ROOT = os.path.join(FILEPATH,'staticfiles')
 
 
 ####### Bitly ########
