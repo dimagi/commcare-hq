@@ -180,6 +180,9 @@ def to_instance(v, data):
         return stockreport.tx_to_xml(tx, E)
 
     # TODO: add <meta>, user_id, etc.?
-    root = E.stock_report(*(mk_xml_tx(tx) for tx in data['transactions']))
+    root = E.stock_report(
+        E.location(data['location']._id),
+        *(mk_xml_tx(tx) for tx in data['transactions'])
+    )
 
     return etree.tostring(root, encoding='utf-8', pretty_print=True)
