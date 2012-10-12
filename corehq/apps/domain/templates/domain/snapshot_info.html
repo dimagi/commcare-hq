@@ -9,7 +9,7 @@
 
 {% block content %}
 <div class="container">
-    <div class="page-header"><h2>Snapshot of {{ request.project.original_doc }}</h2></div>
+    <div class="page-header"><h2>Snapshot of {{ request.project.copied_from.name }}</h2></div>
     <dl>
         {% if applications|length > 0 %}
             <dt>{% trans 'Applications' %}</dt>
