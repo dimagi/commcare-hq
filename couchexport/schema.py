@@ -47,6 +47,10 @@ def build_latest_schema(schema_index):
     db = Database(settings.COUCH_DATABASE)
     current_seq = db.info()["update_seq"]
     previous_export = ExportSchema.last(schema_index)
+    if previous_export and previous_export.seq > current_seq:
+        # something weird happened (like the couch database changing)
+        # better rebuild from scratch
+        previous_export = None
     config = ExportConfiguration(get_db(), schema_index, 
                                  previous_export=previous_export)
     schema = get_schema_new(config)
