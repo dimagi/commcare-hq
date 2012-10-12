@@ -338,6 +338,7 @@ def deploy():
         upload_and_set_supervisor_config()
         execute(migrate)
         execute(_do_collectstatic)
+        execute(version_static)
     finally:
         # hopefully bring the server back to life if anything goes wrong
         execute(services_restart)
@@ -463,8 +464,20 @@ def _do_collectstatic():
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py make_bootstrap' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env, user=env.sudo_user)
+
+@roles('django_app', 'django_monolith')
+@parallel
+def version_static():
+    """
+    Put refs on all static references to prevent stale browser cache hits when things change.
+    This needs to be run on the WEB WORKER since the web worker governs the actual static
+    reference.
+    """
+    with cd(env.code_root):
         sudo('rm -f tmp.sh resource_versions.py; %(virtualenv_root)s/bin/python manage.py   \
              printstatic > tmp.sh; bash tmp.sh > resource_versions.py' % env, user=env.sudo_user)
+
+
 
 @task
 @roles('staticfiles',)
