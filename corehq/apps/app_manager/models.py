@@ -58,6 +58,16 @@ easy_install pygooglechart.  Until you do that this won't work.
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
+CASE_PROPERTY_MAP = {
+    # IMPORTANT: if you edit this you probably want to also edit
+    # the corresponding map in cloudcare 
+    # (corehq.apps.cloudcare.static.cloudcare.js.backbone.cases.js)
+    'external-id': 'external_id',
+    'date-opened': 'date_opened',
+    'status': '@status',
+    'name': 'case_name',
+}
+
 def _dsstr(self):
     return ", ".join(json.dumps(self.to_json()), self.schema)
 #DocumentSchema.__repr__ = _dsstr
@@ -536,13 +546,7 @@ class DetailColumn(IndexedSchema):
         Convert special names like date-opened to their casedb xpath equivalent (e.g. @date_opened).
         Only ever called by 2.0 apps.
         """
-        return {
-            'external-id': 'external_id',
-            'date-opened': 'date_opened',
-            'status': '@status',
-            'name': 'case_name',
-        }.get(self.field, self.field)
-
+        return CASE_PROPERTY_MAP.get(self.field, self.field)
 
     @classmethod
     def wrap(cls, data):
