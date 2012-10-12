@@ -3,19 +3,41 @@ if (typeof cloudCare === 'undefined') {
     var cloudCare = {};
 }
 
+cloudCare.CASE_PROPERTY_MAP = {
+    // IMPORTANT: if you edit this you probably want to also edit
+    // the corresponding map in the app_manager
+    // (corehq/apps/app_manager/models.py)
+    'external-id': 'external_id',
+    'date-opened': 'date_opened',
+    'status': '@status', // must map to corresponding function on the Case model
+    'name': 'case_name',
+};
+
 cloudCare.Case = Backbone.Model.extend({
     
     initialize: function() {
-        _.bindAll(this, 'getProperty'); 
+        _.bindAll(this, 'getProperty', 'status'); 
     },
     idAttribute: "case_id",
     
     getProperty: function (property) {
-        if (property === "name") {
-            return this.get("properties").case_name;
+        if (cloudCare.CASE_PROPERTY_MAP[property] !== undefined) {
+            property = cloudCare.CASE_PROPERTY_MAP[property];
+        }
+        if (property.indexOf("@") == 0) {
+            // we use @ signs to denote function references, since the phone
+            // does some magic with them that we need to reproduce here.
+            var f = this[property.substring(1)];
+            if (f !== undefined) {
+                return f();
+            }
         }
         var root = this.get(property);
         return root ? root : this.get("properties")[property];
+    },
+    
+    status: function () {
+        return this.get("closed") ? "closed" : "open";
     }
 });
 
@@ -23,7 +45,10 @@ cloudCare.Details = Backbone.Model.extend({
     // nothing here yet
 });
     
-    
+
+// Though this is called the CaseView, it actually displays the case 
+// summary as a line in the CaseListView. Not to be confused with the
+// CaseDetailsView
 cloudCare.CaseView = Selectable.extend({
     tagName: 'tr', // name of (orphan) root tag in this.el
     initialize: function() {
