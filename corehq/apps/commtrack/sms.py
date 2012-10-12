@@ -176,6 +176,7 @@ def to_instance(v, data):
     product_subcase_mapping = dict((subcase.dynamic_properties().get('product'), subcase._id) for subcase in product_subcases)
 
     def mk_xml_tx(tx):
+        tx['product_id'] = tx['product']._id
         tx['case_id'] = product_subcase_mapping[tx['product']._id]
         return stockreport.tx_to_xml(tx, E)
 

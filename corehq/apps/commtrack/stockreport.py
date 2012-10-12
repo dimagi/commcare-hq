@@ -43,6 +43,7 @@ def process(domain, instance):
 
 def tx_from_xml(tx):
     return {
+        'product_id': tx.find(_('product')).text,
         'case_id': tx.find(_('product_entry')).text,
         'action': tx.find(_('action')).text,
         'value': int(tx.find(_('value')).text),
@@ -57,6 +58,7 @@ def tx_to_xml(tx, E=None):
     if tx.get('inferred'):
         attr['inferred'] = 'true'
     return E.transaction(
+        E.product(tx['product_id']),
         E.product_entry(tx['case_id']),
         E.action(tx['action']),
         E.value(str(tx['value'])),
@@ -100,6 +102,7 @@ class StockState(object):
         reconciliation_transaction = None
         def mk_reconciliation(diff):
             return {
+                'product_id': self.case.product,
                 'case_id': self.case._id,
                 'action': 'receipts' if diff > 0 else 'consumption',
                 'value': abs(diff),
