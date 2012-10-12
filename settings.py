@@ -144,6 +144,7 @@ HQ_APPS = (
     'corehq.apps.hqwebapp',
     'corehq.apps.docs',
     'corehq.apps.hqmedia',
+    'corehq.apps.commtrack',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -390,6 +391,7 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'case',
         'cleanup',
         'cloudcare',
+        'commtrack',
         'couch', # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
         'couchforms',
         'couchexport',
@@ -533,7 +535,11 @@ PROJECT_REPORT_MAP = {
         'corehq.apps.receiverwrapper.reports.SubmissionErrorReport',
         'phonelog.reports.FormErrorReport',
         'phonelog.reports.DeviceLogDetailsReport'
-    ]
+    ],
+    "Commtrack": [
+        'corehq.apps.reports.commtrack.psi_prototype.VisitReport',
+        'corehq.apps.reports.commtrack.psi_prototype.SalesAndConsumptionReport',
+    ],
 }
 
 CUSTOM_REPORT_MAP = {
@@ -652,3 +658,7 @@ WEB_USER_TERM = "Web User"
 
 DEFAULT_CURRENCY = "USD"
 
+SMS_HANDLERS = [
+    'corehq.apps.commtrack.sms.handle',
+    'corehq.apps.sms.api.form_session_handler',
+]
