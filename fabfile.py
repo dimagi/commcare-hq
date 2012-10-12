@@ -163,6 +163,7 @@ def production():
         'lb': [], #todo on apache level config
         'staticfiles': ['hqproxy0.internal.commcarehq.org'],
         'deploy': ['hqdb.internal.commcarehq.org'], #this is a stub becuaue we don't want to be prompted for a host or run deploy too many times
+        'django_monolith': [] # fab complains if this doesn't exist
     }
 
 
@@ -174,11 +175,7 @@ def production():
 
     env.jython_home = '/usr/local/lib/jython'
     _setup_path()
-    if not console.confirm('Are you sure you want to deploy production?', default=False) or \
-       not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
-        utils.abort('Deployment aborted.')
-
-
+    
 
 @task
 def install_packages():
@@ -318,8 +315,8 @@ def preindex_views():
 @parallel
 def update_code():
     with cd(env.code_root):
-        sudo('git pull', user=env.sudo_user)
         sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
+        sudo('git pull', user=env.sudo_user)
         sudo('git submodule sync', user=env.sudo_user)
         sudo('git submodule update --init --recursive', user=env.sudo_user)
 
@@ -327,7 +324,7 @@ def update_code():
 @task
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
-    if not console.confirm('Are you sure you want to deploy production?', default=False) or \
+    if not console.confirm('Are you sure you want to deploy {env.environment}?'.format(env=env), default=False) or \
        not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
         utils.abort('Deployment aborted.')
 
