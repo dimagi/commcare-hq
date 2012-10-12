@@ -30,28 +30,37 @@ def process(domain, instance):
 
     for product_id, txs in transactions_by_product.iteritems():
         product_case = cases[product_id]
-        case_block = process_product_transactions(product_case, txs)
+        case_block, reconciliations = process_product_transactions(product_case, txs)
+        for recon in reconciliations:
+            root.append(recon)
         root.append(case_block)
 
     submission = etree.tostring(root)
     print 'submitting:', submission
     spoof_submission(get_submit_url(domain), submission)
 
+# TODO: make a transaction class
+
 def tx_from_xml(tx):
     return {
         'case_id': tx.find(_('product_entry')).text,
         'action': tx.find(_('action')).text,
         'value': int(tx.find(_('value')).text),
+        'inferred': tx.attrib.get('inferred') == 'true',
     }
 
 def tx_to_xml(tx, E=None):
     if not E:
         E = XML()
         
+    attr = {}
+    if tx.get('inferred'):
+        attr['inferred'] = 'true'
     return E.transaction(
         E.product_entry(tx['case_id']),
         E.action(tx['action']),
-        E.value(str(tx['value']))
+        E.value(str(tx['value'])),
+        **attr
     )
 
 def unpack_transactions(root):
@@ -67,9 +76,12 @@ def process_product_transactions(case, txs):
     keep track of the updated case state ourselves
     """
     current_state = StockState(case)
+    reconciliations = []
     for tx in txs:
-        current_state.update(tx['action'], tx['value'])
-    return current_state.to_case_block()
+        recon = current_state.update(tx['action'], tx['value'])
+        if recon:
+            reconciliations.append(tx_to_xml(recon))
+    return current_state.to_case_block(), reconciliations
 
 class StockState(object):
     def __init__(self, case):
@@ -85,6 +97,15 @@ class StockState(object):
         
         fancy business logic to reconcile stock reports lives HERE
         """
+        reconciliation_transaction = None
+        def mk_reconciliation(diff):
+            return {
+                'case_id': self.case._id,
+                'action': 'receipts' if diff > 0 else 'consumption',
+                'value': abs(diff),
+                'inferred': True,
+            }
+
         if action in ('stockout', 'stockedoutfor'):
             self.current_stock = 0
             days_stocked_out = value if action == 'stockedoutfor' else 0
@@ -92,9 +113,9 @@ class StockState(object):
         else:
 
             if action in ('stockonhand', 'prevstockonhand'):
+                if self.current_stock != value:
+                    reconciliation_transaction = mk_reconciliation(value - self.current_stock)
                 self.current_stock = value
-                # generate inferred transactions
-                # TODO
             elif action == 'receipts':
                 self.current_stock += value
             elif action == 'consumption':
@@ -107,6 +128,8 @@ class StockState(object):
                 self.current_stock = 0 # handle if negative
                 if not self.stocked_out_since: # handle if stocked out date already set
                     self.stocked_out_since = date.today()
+
+        return reconciliation_transaction
 
     def to_case_block(self, user=None):
         def convert_prop(val):
