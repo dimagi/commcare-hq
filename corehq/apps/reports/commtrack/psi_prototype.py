@@ -3,6 +3,8 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.loosechange import map_reduce
+import itertools
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
     @classmethod
@@ -10,11 +12,6 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
         domain = Domain.get_by_name(kwargs['domain'])
         return domain.commtrack_enabled
     
-class VisitReport(GenericTabularReport, CommtrackReportMixin):
-    name = 'Visit Report'
-    slug = 'visits'
-    fields = []
-
     @property
     def products(self):
         query = get_db().view('commtrack/products', start_key=[self.domain], end_key=[self.domain, {}], include_docs=True)
@@ -26,6 +23,25 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin):
         from corehq.apps.commtrack.sms import report_syntax_config as config
         return sorted(config['single_action']['keywords'].keys())
 
+def get_transactions(form_doc):
+    from collections import Sequence
+    txs = form_doc['form']['transaction']
+    if not isinstance(txs, Sequence):
+        txs = [txs]
+    return txs
+
+def get_stock_reports(domain):
+    query = get_db().view('commtrack/stock_reports',
+                          start_key=[domain, '2012-10-12T23:08:30Z'], # DEBUG time filter to hide incompatible instances
+                          end_key=[domain, {}],
+                          include_docs=True)
+    return [e['doc'] for e in query]
+
+class VisitReport(GenericTabularReport, CommtrackReportMixin):
+    name = 'Visit Report'
+    slug = 'visits'
+    fields = ['corehq.apps.reports.fields.FilterUsersField']
+
     @property
     def headers(self):
         cols = [
@@ -34,8 +50,8 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin):
             DataTablesColumn('Date'),
             #DataTablesColumn('Reporter'),
         ]
-        for a in self.actions:
-            for p in self.products:
+        for p in self.products:
+            for a in self.actions:
                 cols.append(DataTablesColumn('%s (%s)' % (a, p['name'])))
         
         return DataTablesHeader(*cols)
@@ -44,32 +60,64 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin):
     def rows(self):
         products = self.products
         actions = self.actions
-
-        reports = get_db().view('commtrack/stock_reports',
-                                start_key=[self.domain, '2012-10-12T23:08:30Z'], # DEBUG time filter to hide incompatible instances
-                                end_key=[self.domain, {}],
-                                include_docs=True)
+        reports = get_stock_reports(self.domain)
 
         def row(doc):
-            from collections import Sequence
-            txs = doc['form']['transaction']
-            if not isinstance(txs, Sequence):
-                txs = [txs]
-            transactions = dict(((tx['action'], tx['product']), tx['value']) for tx in txs)
+            transactions = dict(((tx['action'], tx['product']), tx['value']) for tx in get_transactions(doc))
 
             data = [
-                doc['form'].get('location'),
+                doc['form']['location'],
                 doc['received_on'],
             ]
-            for a in actions:
-                for p in products:
+            for p in products:
+                for a in actions:
                     data.append(transactions.get((a, p['_id']), ''))
 
             return data
 
-        return [row(e['doc']) for e in reports]
+        return [row(r) for r in reports]
 
 class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin):
     name = 'Sales and Consumption Report'
     slug = 'sales_consumption'
+    fields = ['corehq.apps.reports.fields.FilterUsersField']
 
+    @property
+    def headers(self):
+        cols = [
+            DataTablesColumn('Outlet'),
+            # TODO lots of static outlet info
+        ]
+        for p in self.products:
+            cols.append(DataTablesColumn('Stock on Hand (%s)' % p['name'])) # latest value + date of latest report
+            cols.append(DataTablesColumn('Total Sales (%s)' % p['name']))
+            cols.append(DataTablesColumn('Total Consumption (%s)' % p['name']))
+        # total 'combined' stock-out days (ugh)
+
+        return DataTablesHeader(*cols)
+
+    @property
+    def rows(self):
+        products = self.products
+        reports = get_stock_reports(self.domain)
+        reports_by_loc = map_reduce(lambda e: [(e['form']['location'],)], data=reports, include_docs=True)
+
+        locs = sorted(reports_by_loc.keys()) # todo: pull from location hierarchy
+
+        def summary_row(site, reports):
+            all_transactions = list(itertools.chain(*(get_transactions(r) for r in reports)))
+            tx_by_product = map_reduce(lambda tx: [(tx['product'],)], data=all_transactions, include_docs=True)
+
+            data = [
+                site,
+            ]
+            for p in products:
+                tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
+
+                data.append('')
+                data.append(sum(tx_by_action.get('receipts', [])))
+                data.append(sum(tx_by_action.get('consumption', [])))
+
+            return data
+
+        return [summary_row(site, reports_by_loc.get(site, [])) for site in locs]
