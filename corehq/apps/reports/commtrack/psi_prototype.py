@@ -5,6 +5,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
 import itertools
+from datetime import datetime, date, timedelta
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
     @classmethod
@@ -92,7 +93,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin):
             cols.append(DataTablesColumn('Stock on Hand (%s)' % p['name'])) # latest value + date of latest report
             cols.append(DataTablesColumn('Total Sales (%s)' % p['name']))
             cols.append(DataTablesColumn('Total Consumption (%s)' % p['name']))
-        # total 'combined' stock-out days (ugh)
+        cols.append(DataTablesColumn('Stock-out days (all products combined)'))
 
         return DataTablesHeader(*cols)
 
@@ -111,6 +112,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin):
             data = [
                 site,
             ]
+            stockouts = {}
             for p in products:
                 tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
 
@@ -124,9 +126,25 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin):
                     stock = latest_state['updated_unknown_properties']['current_stock']
                     as_of = latest_state['server_date']
 
+                stockout_dates = set()
+                for state in product_states:
+                    doc = state['value']
+                    stocked_out_since = doc['updated_unknown_properties']['stocked_out_since']
+                    if stocked_out_since:
+                        so_start = datetime.strptime(stocked_out_since, '%Y-%m-%d').date() # todo: clip to start of time filter
+                        so_end = datetime.strptime(doc['server_date'], '%Y-%m-%dT%H:%M:%SZ').date() # time zone issues
+                        dt = so_start
+                        while dt < so_end:
+                            stockout_dates.add(dt)
+                            dt += timedelta(days=1)
+                stockouts[p['_id']] = stockout_dates
+
                 data.append('%s (%s)' % (stock, as_of) if latest_state else '')
                 data.append(sum(tx_by_action.get('receipts', [])))
                 data.append(sum(tx_by_action.get('consumption', [])))
+
+            combined_stockout_days = len(reduce(lambda a, b: a.intersection(b), stockouts.values()))
+            data.append(combined_stockout_days)
 
             return data
 
