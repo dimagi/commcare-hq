@@ -114,7 +114,17 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin):
             for p in products:
                 tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
 
-                data.append('')
+                # TODO: add date filter
+                start_key = [str(self.domain), site, p['_id']]
+                end_key = list(itertools.chain(start_key, [{}]))
+                # list() is necessary or else get a weird error
+                product_states = list(get_db().view('commtrack/stock_product_state', start_key=start_key, end_key=end_key))
+                latest_state = product_states[-1]['value'] if product_states else None
+                if latest_state:
+                    stock = latest_state['updated_unknown_properties']['current_stock']
+                    as_of = latest_state['server_date']
+
+                data.append('%s (%s)' % (stock, as_of) if latest_state else '')
                 data.append(sum(tx_by_action.get('receipts', [])))
                 data.append(sum(tx_by_action.get('consumption', [])))
 
