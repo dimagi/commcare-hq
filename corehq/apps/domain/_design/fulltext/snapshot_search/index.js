@@ -3,7 +3,7 @@ function(doc) {
         if (doc.doc_type == "Domain" && doc.is_snapshot && doc.published && doc.is_approved)
         {
             var ret = new Document();
-            ret.add(doc.original_doc);
+//            ret.add(doc.original_doc);
             ret.add(doc.description);
             ret.add(doc.organization);
             ret.add(doc.region);

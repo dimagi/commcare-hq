@@ -61,57 +61,70 @@ class IndicatorDefinition(Document):
         return "indicators/indicator_definitions"
 
     @classmethod
-    def update_or_create_unique(cls, **kwargs):
-        """
-            key_options should be formatted as an option list:
-            [(key, val), ...]
-        """
+    def _generate_couch_key(cls, version=None, **kwargs):
         key = list()
         key_prefix = list()
-        version = kwargs.get('version')
-
         for p in cls.key_params_order():
             k = kwargs.get(p)
             if k is not None:
                 key_prefix.append(p)
                 key.append(k)
-
         key = [" ".join(key_prefix)] + key
-        query_options = dict(startkey=key, endkey=key+[{}]) if version is None else dict(key=key+[version])
+        return dict(startkey=key, endkey=key+[{}]) if version is None else dict(key=key+[version])
+
+    @classmethod
+    def update_or_create_unique(cls, namespace, domain, slug=None, version=None, **kwargs):
+        """
+            key_options should be formatted as an option list:
+            [(key, val), ...]
+        """
+        couch_key = cls._generate_couch_key(
+            version=version,
+            namespace=namespace,
+            domain=domain,
+            slug=slug,
+            **kwargs
+        )
         unique_indicator = cls.view(cls.couch_view(),
             reduce=False,
             include_docs=True,
-            **query_options
+            **couch_key
         ).first()
         if not unique_indicator:
-            unique_indicator = cls(**kwargs)
+            unique_indicator = cls(
+                version=version,
+                namespace=namespace,
+                domain=domain,
+                slug=slug,
+                **kwargs
+            )
         else:
+            unique_indicator.namespace = namespace
+            unique_indicator.domain = domain
+            unique_indicator.slug = slug
+            unique_indicator.version = version
             for key, val in kwargs.items():
                 setattr(unique_indicator, key, val)
         return unique_indicator
 
     @classmethod
-    def get_current(cls, **kwargs):
-        namespace = kwargs.get('namespace')
-        domain = kwargs.get('domain')
-        slug = kwargs.get('slug')
-        version = kwargs.get('version')
-        include_docs = kwargs.get('include_docs', True)
-
-        startkey_suffix = [version] if version else [{}]
-        key=["namespace domain slug", namespace, domain, slug]
+    def get_current(cls, namespace, domain, slug, include_docs=True, version=None, **kwargs):
+        couch_key = cls._generate_couch_key(
+            namespace=namespace,
+            domain=domain,
+            slug=slug,
+            version=version,
+            **kwargs
+        )
         return cls.view('indicators/indicator_definitions',
             reduce=False,
             include_docs=include_docs,
-            startkey=key+startkey_suffix,
-            endkey=key,
-            descending=True
+            descending=True,
+            **couch_key
         ).first()
 
     @classmethod
-    def all_slugs(cls, **kwargs):
-        namespace = kwargs.get('namespace')
-        domain = kwargs.get('domain')
+    def all_slugs(cls, namespace, domain):
         key = [" ".join(cls.key_params_order()), namespace, domain]
         data = cls.view("indicators/indicator_definitions",
             group=True,
@@ -123,11 +136,11 @@ class IndicatorDefinition(Document):
         return [item.get('key',[])[-1] for item in data]
 
     @classmethod
-    def get_all(cls, **kwargs):
-        all_slugs = cls.all_slugs(**kwargs)
+    def get_all(cls, namespace, domain, version=None, **kwargs):
+        all_slugs = cls.all_slugs(namespace, domain)
         all_indicators = list()
         for slug in all_slugs:
-            doc = cls.get_current(include_docs=False, slug=slug, **kwargs)
+            doc = cls.get_current(namespace, domain, slug, include_docs=False, version=version, **kwargs)
             try:
                 doc_class = to_function(doc.get('value', "%s.%s" % (cls._class_path, cls.__name__)))
                 all_indicators.append(doc_class.get(doc.get('id')))
@@ -263,21 +276,6 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
 
     def get_value_for_form(self, form_data):
         raise NotImplementedError
-
-# This is here to remind Biyeun to implement this potentially useful indicator definition with less sketch. todo
-#class BooleanIndicatorDefinitionMixin(DocumentSchema):
-#    compared_property = StringProperty()
-#    expression = StringProperty() # example: '%(value)s' not in 'foo bar'
-#
-#    _compared_property_value = None
-#    def evaluate_expression(self):
-#        print self.expression % dict(value=self._compared_property_value)
-#        try:
-#            return eval(self.expression % dict(value=self._compared_property_value))
-#        except Exception:
-#            return False
-#
-#
 
 
 class PopulateRelatedCasesWithIndicatorDefinitionMixin(DocumentSchema):

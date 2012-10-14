@@ -217,7 +217,7 @@
                 <small><a href="?current={{ current_link }}" class="btn btn-primary">{% if versioned %} View reviews for all versions {% else %} Only show reviews from current version{% endif %}</a></small>
             </h3>
             <br/>
-            {% if project.original_doc not in request.couch_user.get_domains %}
+            {% if project.copied_from.name not in request.couch_user.get_domains %}
             <div>
                 <a href="#add_review_modal" data-toggle="modal" class="btn btn-inverse">Write a Review</a>
             </div>
@@ -249,7 +249,7 @@
 
 
 
-{% if project.original_doc not in request.couch_user.get_domains %}
+{% if project.copied_from.name not in request.couch_user.get_domains %}
 {% block modals %}{{ block.super }}
 <div id="add_review_modal" class="modal hide fade">
     <div class="modal-header">

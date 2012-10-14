@@ -380,7 +380,7 @@ cloudCare.AppView = Backbone.View.extend({
 		            });
 		        };
 		        data["onerror"] = function (resp) {
-		            showError(resp.message, $("#cloudcare-main"), 10000);
+		            showError(resp.message, $("#cloudcare-main"));
 		        };
 		        var sess = new WebFormSession(data);
                 // TODO: probably shouldn't hard code these divs
