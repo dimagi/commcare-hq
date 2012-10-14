@@ -67,7 +67,7 @@
 {% block user-view %}
 <div class="row-fluid">
     <div>
-    <h2>List of {% hq_web_user %}s for Project "{% if request.project.is_snapshot %}{{ request.project.original_doc_display_name }}{% else %}{{ request.project.display_name }}{% endif %}"</h2>
+    <h2>List of {% hq_web_user %}s for Project "{{ request.project.display_name }}"</h2>
     <p>{% hq_web_user %}s can manage and view data on CommCare HQ. However, these users cannot submit forms from phones using the CommCare Application.</p>
     <div class="btn-toolbar">
         <a class="btn btn-success" href="{% url invite_web_user domain %}"><i class="icon icon-white icon-plus"></i> Invite {% hq_web_user %}</a>
