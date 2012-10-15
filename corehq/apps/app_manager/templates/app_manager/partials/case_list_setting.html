@@ -1,0 +1,36 @@
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+<tr {% if edit %}class="form editable"{% endif %}>
+    <th>
+        {{ LABEL }}
+        <span class="help_popover" data-help-key="{{ LABEL }}"><span> <i class="icon icon-question-sign"></i></span></span>
+    </th>
+    {% if edit %}
+        <td>
+            <select class="code" type="text" name="{{ SLUG }}-show" data-value="{% if case_list.show %}true{% else %}false{% endif %}">
+                <option value="false">Don't Show</option>
+                <option value="true">Show</option>
+            </select>
+            <span id="{{ SLUG }}-label">
+                with label: {{ case_list.label|input_trans:langs|safe }}
+            </span>
+            <script>
+                $(function () {
+                    function updateCaseListLabel() {
+                        $(this).next()[$(this).val() === 'true' ? 'show' : 'hide']();
+                    }
+                    $('#{{ SLUG }}-label input').attr('name', '{{ SLUG }}-label').removeClass('wide');
+                    $('[name="{{ SLUG }}-show"]').change(updateCaseListLabel).each(updateCaseListLabel);
+                });
+            </script>
+        </td>
+    {% else %}
+        <td>
+            {% if not case_list.show %}
+                Don't Show
+            {% else %}
+                Show with label: {{ case_list.label|trans:langs }}
+            {% endif %}
+        </td>
+    {% endif %}
+</tr>

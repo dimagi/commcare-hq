@@ -634,6 +634,7 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
+    task_list = SchemaProperty(CaseList)
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)

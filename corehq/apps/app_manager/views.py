@@ -782,6 +782,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
         "name": None, "case_label": None, "referral_label": None,
         'media_image': None, 'media_audio': None,
         "case_list": ('case_list-show', 'case_list-label'),
+        "task_list": ('task_list-show', 'task_list-label'),
         }
 
     if attr not in attributes:
@@ -818,9 +819,10 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
             module[attribute][lang] = name
             if should_edit("name"):
                 resp['update'].update({'.variable-module_name': module.name[lang]})
-    if should_edit("case_list"):
-        module["case_list"].show = json.loads(req.POST['case_list-show'])
-        module["case_list"].label[lang] = req.POST['case_list-label']
+    for SLUG in ('case_list', 'task_list'):
+        if should_edit(SLUG):
+            module[SLUG].show = json.loads(req.POST['{SLUG}-show'.format(SLUG=SLUG)])
+            module[SLUG].label[lang] = req.POST['{SLUG}-label'.format(SLUG=SLUG)]
 
     _handle_media_edits(req, module, should_edit, resp)
 
