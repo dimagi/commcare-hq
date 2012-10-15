@@ -2,9 +2,9 @@
 <div class="row-fluid">
 	<table class="table table-striped table-bordered span5">
         <thead>
-            <tr>
-                <th>{% trans "Project Name" %}</th>
-                <td class="span3"> Action</td>
+            <tr class="row-fluid">
+                <th class="span6">{% trans "Project Name" %}</th>
+                <th class="span6">{% trans "Action" %}</th>
             </tr>
         </thead>
         <tbody>
@@ -13,19 +13,20 @@
                 <td colspan="2">You are currently not an administrator of any projects.</td>
             </tr>
         {% endif %}
-        {% for dom in domains %}
-            <tr>
-                <td><a href="{% url domain_homepage dom %}">{{ dom }}</a></td>
-                <td style="text-align: center;">
-                    <a class="btn btn-danger" data-toggle="modal" href="#delete_domain_{{ dom }}"><i class="icon icon-white icon-remove"></i> Remove Membership</a>
-                    <div style="text-align: left" id="delete_domain_{{ dom }}" class="modal hide fade">
+        {% for project in request.couch_user.projects %}
+            {# domain refers to the current domain and is used within this loop #}
+            <tr class="row-fluid">
+                <td class="span6"><a href="{% url domain_homepage project.name %}">{{ project.long_display_name }}</a></td>
+                <td class="span6">
+                    <a class="btn btn-danger" data-toggle="modal" href="#delete_domain_{{ project.name }}"><i class="icon icon-white icon-remove"></i> Remove Membership</a>
+                    <div id="delete_domain_{{ project.name }}" class="modal hide fade">
                         <div class="modal-header">
                             <a class="close" data-dismiss="modal">&times;</a>
                             <h3>Remove Project Membership?</h3>
                         </div>
-                        <form class="form form-horizontal" name="delete_domain_membership" action="{% url delete_domain_membership domain couch_user.couch_id domain %}" method="post">
+                        <form class="form form-horizontal" name="delete_domain_membership" action="{% url delete_domain_membership domain couch_user.couch_id project.name %}" method="post">
                             <div class="modal-body">
-                                <p>Are you sure you want to remove {{ couch_user.html_username|safe }} from the project "{{ dom }}"?</p>
+                                <p>Are you sure you want to remove {{ couch_user.html_username|safe }} from the project <strong>{{ project.long_display_name }}</strong>?</p>
                             </div>
                             <div class="modal-footer">
                                 <a href="#" data-dismiss="modal" class="btn">Cancel</a>
