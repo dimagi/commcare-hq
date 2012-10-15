@@ -4,6 +4,8 @@ from corehq.apps.reports.generic import GenericTabularReport,\
 import random
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from datetime import datetime, timedelta
+from copy import copy
+from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 
 class ConvenientBaseMixIn(object):
     # this is everything that's shared amongst the Bihar reports
@@ -28,7 +30,25 @@ class ConvenientBaseMixIn(object):
     def show_in_navigation(cls, request, *args, **kwargs):
         return False
      
+
+
+class TeamHoldingMixIn(object):
+    @property
+    def team(self):
+        return self.request_params.get('team')
     
+class ReportReferenceMixIn(object):
+    # allow a report to reference another report
+    
+    @property
+    def next_report_slug(self):
+        return self.request_params.get("next_report")
+    
+    @property
+    def next_report_class(self):
+        return CustomProjectReportDispatcher().get_report(self.domain, self.next_report_slug)
+    
+
 class MockTablularReport(ConvenientBaseMixIn, GenericTabularReport, CustomProjectReport):
     
     row_count = 20 # override if needed
@@ -51,6 +71,9 @@ class MockSummaryReport(ConvenientBaseMixIn, SummaryTablularReport, CustomProjec
 class MockNavReport(MockSummaryReport):
     # this is a bit of a bastardization of the summary report
     # but it is quite DRY
+    
+    preserve_url_params = False
+    
     @property
     def reports(self):
         # override
@@ -63,75 +86,77 @@ class MockNavReport(MockSummaryReport):
     @property
     def data(self):
         def _nav_link(report_cls):
-            return '<a href="%(details)s?facility=%(val)s">%(val)s</a>' % \
+            url = report_cls.get_url(self.domain, 
+                                     render_as=self.render_next)
+            if self.preserve_url_params:
+                url = url_and_params(url, self.request_params)
+            return '<a href="%(details)s">%(val)s</a>' % \
                 {"val": report_cls.name, 
-                 "details": report_cls.get_url(self.domain, 
-                                               render_as=self.render_next)}
+                 "details": url}
         return [_nav_link(report_cls) for report_cls in self.reports]
         
 
+class MockEmptyReport(MockSummaryReport):
+    """
+    A stub empty report
+    """
+    _headers = ["Whoops, this report isn't done! Sorry this is still a prototype."]
+    data = [""]
+    
         
-class SubCenterSelectionReport(MockTablularReport):
+class SubCenterSelectionReport(MockTablularReport, ReportReferenceMixIn):
     name = "Select Subcenter"
     slug = "subcenter"
     description = "Subcenter selection report"
     
     _headers = ["AWCC", "Team Name", "Rank"]
+    
+    def __init__(self, *args, **kwargs):
+        super(SubCenterSelectionReport, self).__init__(*args, **kwargs)
+    
     def _row(self, i):
         
         def _link(val):
-            return '<a href="%(details)s?facility=%(val)s">%(val)s</a>' % \
+            params = copy(self.request_params)
+            params["team"] = val
+            return '<a href="%(details)s">%(val)s</a>' % \
                 {"val": val,
-                 "details": TeamDetailsReport.get_url(self.domain, 
-                                                      render_as=self.render_next)}
+                 "details": url_and_params(self.next_report_class.get_url(self.domain,
+                                                                           render_as=self.render_next),
+                                            params)}
         return ["009", _link("Khajuri Team %s" % i), 
                 "%s / %s" % (random.randint(0, i), i)] \
-                
-        
-class FamilyPlanningReport(SubCenterSelectionReport):
-    name = "Family Planning (DEMO)"
-    slug = "familyplanning"
-    description = "Family planning"
+            
+
+class MainNavReport(MockNavReport):
+    name = "Main Menu"
+    slug = "mainnav"
+    description = "Main navigation"
     
     @classmethod
     def show_in_navigation(cls, request, *args, **kwargs):
         return True
-     
-    
-class TeamDetailsReport(MockSummaryReport):
-    name = "Team Details"
-    slug = "teamdetails"
-    description = "Team details report"
-    
-    _headers = ["Team Name", 
-                "BP (2nd Tri) Visits Due and Visits Done in last 30 days", 
-                "BP (3rd Tri) Visits Due and Visits Done in last 30 days", 
-                "Deliveries Visited in 24 hours of Birth at Home Due and Done in last 30 days", 
-                "Deliveries Visited in 24 hours of Birth at Institution Due and Done in last 30 days", 
-                "PNC Visits Due and Visits Done in last 30 days", 
-                "EBF Visits Due and Visits Done in last 30 days", 
-                "CF Visits Due and Visits Done in last 30 days"] 
-
-    @property
-    def data(self):
-        def _link(val):
-            return '<a href="%(details)s?facility=%(val)s">%(val)s</a>' % \
-                {"val": val, 
-                 "details": TeamNavReport.get_url(self.domain, 
-                                                  render_as=self.render_next)}
-        
-        return [_link("Khajuri Team 1")] + \
-                [self.fake_done_due(i) for i in range(len(self._headers) - 1)]
-
-class TeamNavReport(MockNavReport):
-    name = "Team Navigation List"
-    slug = "teamnav"
-    description = "Team navigation"
     
     @property
     def reports(self):
-        return [PregnanciesRegistered, NoBPCounseling, RecentDeliveries]
-    
+        from bihar.reports.indicators.reports import IndicatorSelectNav
+        return [IndicatorSelectNav, WorkerRankReport, 
+                DueListReport, ToolsReport]
+
+
+# TODO
+class WorkerRankReport(MockEmptyReport):
+    name = "Worker Rank"
+    slug = "workerranks"
+
+class DueListReport(MockEmptyReport):
+    name = "Due List"
+    slug = "duelist"
+
+class ToolsReport(MockEmptyReport):
+    name = "Tools"
+    slug = "tools"
+
 class MotherListReport(MockTablularReport):
     name = "Mother List"
     slug = "motherlist"
@@ -144,16 +169,8 @@ class MotherListReport(MockTablularReport):
             return (datetime.now() + timedelta(days=random.randint(0, 9 * 28))).strftime("%Y-%m-%d" )
         return ["Mother %s" % i, _random_edd()]
         
-class PregnanciesRegistered(MotherListReport):
-    name = "Pregnancies Registered"
-    slug = "pregreg"
-    
-class NoBPCounseling(MotherListReport):
-    name = "Mothers Not Given BP Counseling"
-    slug = "nobp"
-    
-class RecentDeliveries(MotherListReport):
-    name = "Recent Deliveries"
-    slug = "recentdeliveries"
-    
-    
+def url_and_params(urlbase, params):
+    assert "?" not in urlbase
+    return "{url}?{params}".format(url=urlbase, 
+                                   params="&".join(["{k}={v}".format(k=k, v=v) \
+                                                    for k, v in params.items()]))
