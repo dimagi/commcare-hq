@@ -1,5 +1,5 @@
 from corehq.apps.domain.models import Domain
-from corehq.apps.commtrack.models import Product
+from corehq.apps.commtrack.models import *
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack import stockreport
 from dimagi.utils.couch.database import get_db
@@ -12,7 +12,7 @@ def handle(v, text):
         return False
 
     # TODO error handling
-    data = StockReport(domain, report_syntax_config).parse(text)
+    data = StockReport(domain).parse(text)
     print data
     inst_xml = to_instance(v, data)
     print inst_xml
@@ -23,40 +23,20 @@ def handle(v, text):
     # to a catch-all error handler?
     return True
 
-# todo, this will be pulled from domain somehow
-report_syntax_config = {
-    'single_action': {
-        'keywords': { # only action types listed here are supported for this domain
-            'prevstockonhand': 'soh',
-            'receipts': 'r',
-            'stockedoutfor': 'so',
-        }
-    },
-    'multiple_action': {
-        'keyword': 'psi', # if None, treat all other smses as multiple-action
-        'delimeter': '.',
-        'action_keywords': {
-            # action types not listed default to their single-action keywords
-            'prevstockonhand': 'st',
-        }
-    }
-}
-
 class StockReport(object):
     """a helper object for parsing raw stock report texts"""
 
-    def __init__(self, domain, config): # config should probably be pulled from domain automatically?
+    def __init__(self, domain):
         self.domain = domain
-        self.CS = config['single_action']
-        self.CM = config.get('multiple_action')
+        self.C = CommtrackConfig.for_domain(domain)
 
     def parse(self, text, location=None):
         """take in a text and return the parsed stock transactions"""
         args = text.split()
 
-        if args[0] in self.CS['keywords'].values():
+        if args[0] in self.C.keywords().values():
             # single action sms
-            action = self.keyword_action_map()[args[0]]
+            action = self.C.keywords()[args[0]]
             args = args[1:]
 
             if not location:
@@ -65,9 +45,9 @@ class StockReport(object):
         
             _tx = self.single_action_transactions(action, args)
 
-        elif self.CM and args[0] == (self.CM['keyword'] or args[0]):
+        elif self.C.multiaction_enabled and (args[0] == self.C.multiaction_keyword or self.C.multiaction_keyword is None):
             # multiple action sms
-            if self.CM['keyword']:
+            if self.C.multiaction_keyword:
                 args = args[1:]
 
             if not location:
@@ -80,13 +60,6 @@ class StockReport(object):
             'location': location,
             'transactions': list(_tx),
         }
-
-    def keyword_action_map(self, *args):
-        """mapping of sms keywords back to the corresponding action"""
-        master_map = dict(self.CS['keywords'])
-        for map in args:
-            master_map.update(map)
-        return dict((v, k) for k, v in master_map.iteritems())
 
     def single_action_transactions(self, action, args):
         # special case to handle immediate stock-out reports
@@ -118,8 +91,6 @@ class StockReport(object):
             raise RuntimeError('missing a value')
 
     def multiple_action_transactions(self, args):
-        action_map = self.keyword_action_map(self.CM.get('action_keywords', {}))
-
         _args = iter(args)
         while True:
             try:
@@ -128,9 +99,9 @@ class StockReport(object):
                 # this is the only valid place for the arg list to end
                 break
 
-            prod_code, keyword = op.split(self.CM['delimeter'])
+            prod_code, keyword = op.split(self.C.multiaction_delimiter)
             product = self.product_from_code(prod_code)
-            action = action_map[keyword]
+            action = self.C.keywords(multi=True)[keyword]
 
             if action == 'stockout':
                 value = 0

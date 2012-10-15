@@ -1,6 +1,7 @@
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.domain.models import Domain
+from corehq.apps.commtrack.models import *
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
@@ -21,8 +22,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
     @property
     def actions(self):
-        from corehq.apps.commtrack.sms import report_syntax_config as config
-        return sorted(config['single_action']['keywords'].keys())
+        return sorted(CommtrackConfig.for_domain(self.domain).actions.keys())
 
 def get_transactions(form_doc):
     from collections import Sequence

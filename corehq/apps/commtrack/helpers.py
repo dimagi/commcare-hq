@@ -2,7 +2,7 @@
 from corehq.apps.users.models import CommCareUser
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from corehq.apps.commtrack.models import Product
+from corehq.apps.commtrack.models import *
 from corehq.apps.sms import test_backend
 from dimagi.utils.couch.database import get_db
 
@@ -44,3 +44,30 @@ def make_supply_point(domain, code, all_products=True):
         pc.save()
 
     return c
+
+def make_psi_config():
+    c = CommtrackConfig(
+        domain='test',
+        multiaction_enabled=True,
+        multiaction_keyword='psi',
+        multiaction_delimiter='.',
+        actions = {
+            'prevstockonhand': CommtrackActionConfig(
+                keyword='soh',
+                multiaction_keyword='st',
+                caption='Stock on Hand'
+            ),
+            'receipts': CommtrackActionConfig(
+                keyword='s',
+                caption='Sales'
+            ),
+            'stockedoutfor': CommtrackActionConfig(
+                keyword='so',
+                caption='Stock-out Days'
+            ),
+        }
+    )
+    c.save()
+    return c
+
+    
