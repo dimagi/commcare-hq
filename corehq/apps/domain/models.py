@@ -8,6 +8,7 @@ from couchdbkit.ext.django.schema import Document, StringProperty,\
     BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty, DictProperty, ListProperty
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import fields as tz_fields
 from dimagi.utils.couch.database import get_db
 from itertools import chain
@@ -498,6 +499,29 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         else:
             return ''
 
+    def create_deployment(self):
+        class DeploymentError(Exception):
+            def __init__(self, msg):
+                self.msg = msg
+            def __str__(self):
+                return "Create Deployment Error: %s" % self.msg
+
+        if self.deployment:
+            raise DeploymentError("A deployment already exists for this domain")
+
+        if self.is_snapshot:
+            raise DeploymentError("Can't create deployment of a snapshot")
+
+        dep = Deployment(domain_id=self._id)
+        if self.deployment_date:
+            dep.deployment_date = self.deployment_date
+        dep.save()
+        return dep
+
+    @property
+    def deployment(self):
+        return Deployment.view('domain/deployments', key=self._id, include_docs=True).one()
+
     def display_name(self):
         if self.is_snapshot:
             return "Snapshot of %s" % self.copied_from.display_name()
@@ -636,3 +660,11 @@ class OldDomain(models.Model):
     def __unicode__(self):
         return self.name
 
+class Deployment(Document):
+    domain_id = StringProperty()
+    deployment_date = DateTimeProperty()
+
+    @property
+    @memoized
+    def domain(self):
+        return Domain.get(self.domain_id)
