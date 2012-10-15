@@ -19,7 +19,9 @@
                     "will be organized by case type. Perhaps you will have one case called \"pregnant_mother\", and " +
                     "another called \"routine_patient\", etc.",
             "Case List": "Whether to have an item in the module's menu that lets you browse the case list without " +
-                    "moving on to fill out a form."
+                    "moving on to fill out a form.",
+            "Task List": "Whether to have an item in the module's menu that lets you see all of your delegated tasks. " +
+                    "Only makes sense if you're using a delegation workflow."
 
         };
         $('.help_popover').popover({
@@ -29,7 +31,8 @@
             },
             content: function () {
                 return help_text[$(this).attr('data-help-key')];
-            }
+            },
+            trigger: 'hover'
         });
     });
 </script>
@@ -172,7 +175,9 @@
                     </tr>
                 {% endif %}
                 {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List" SLUG="case_list" case_list=module.case_list %}
-                {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" SLUG="task_list" case_list=module.task_list %}
+                {% if app.application_version != '1.0' %}
+                    {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" SLUG="task_list" case_list=module.task_list %}
+                {% endif %}
             </table>
         </form>
     </div>
