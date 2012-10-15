@@ -4,7 +4,7 @@ from django.core.cache import cache
 from corehq.apps.reports import util
 from corehq.apps.reports.standard import inspect, export
 from corehq.apps.reports.standard.export import DeidExportReport
-from corehq.apps.reports.export import BulkExportHelper, ApplicationBulkExportHelper, CustomBulkExportHelper
+from corehq.apps.reports.export import ApplicationBulkExportHelper, CustomBulkExportHelper
 from corehq.apps.reports.models import FormExportSchema,\
     HQGroupExportConfiguration
 from corehq.apps.users.decorators import require_permission
@@ -13,17 +13,12 @@ from corehq.apps.users.models import Permissions
 import couchexport
 from couchexport.export import UnsupportedExportFormat, export_raw
 from couchexport.util import SerializableFunction
-from couchexport.views import _export_tag_or_bust
-import couchforms
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators import inline
 from dimagi.utils.export import WorkBook
 from dimagi.utils.web import json_request, render_to_response
-from dimagi.utils.couch.database import get_db
-from dimagi.utils.modules import to_function
-from django.conf import settings
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, HttpResponseNotFound, HttpResponseForbidden
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, HttpResponseForbidden
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 import couchforms.views as couchforms_views
@@ -51,7 +46,6 @@ from corehq.apps.app_manager.util import get_app_id
 from corehq.apps.groups.models import Group
 from corehq.apps.adm import utils as adm_utils
 from soil import DownloadBase
-from celery.task import task
 from soil.tasks import prepare_download
 
 DATE_FORMAT = "%Y-%m-%d"
@@ -568,6 +562,7 @@ def form_data(request, domain, instance_id):
                                    slug=inspect.SubmitHistory.slug,
                                    form_data=dict(name=form_name,
                                                   modified=instance.received_on)))
+
 @require_form_export_permission
 @login_and_domain_required
 @require_GET
