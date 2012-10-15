@@ -1,6 +1,7 @@
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.commtrack.models import *
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from dimagi.utils.couch.database import get_db
@@ -37,7 +38,7 @@ def get_transactions(form_doc):
 
 def get_stock_reports(domain):
     query = get_db().view('commtrack/stock_reports',
-                          start_key=[domain, '2012-10-12T23:08:30Z'], # DEBUG time filter to hide incompatible instances
+                          start_key=[domain, '2012-10-15T22:30:00Z'], # DEBUG time filter to hide incompatible instances
                           end_key=[domain, {}],
                           include_docs=True)
     return [e['doc'] for e in query]
@@ -56,7 +57,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin):
             DataTablesColumn('Outlet'),
             # TODO lots of static outlet info
             DataTablesColumn('Date'),
-            #DataTablesColumn('Reporter'),
+            DataTablesColumn('Reporter'),
         ]
         cfg = self.config
         for p in self.products:
@@ -77,6 +78,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin):
             data = [
                 doc['form']['location'],
                 parse_iso(doc['received_on']).strftime('%Y-%m-%d'),
+                CommCareUser.get(doc['form']['meta']['userID']).username_in_report,
             ]
             for p in products:
                 for a in actions:

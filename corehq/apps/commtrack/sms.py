@@ -4,6 +4,9 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack import stockreport
 from dimagi.utils.couch.database import get_db
 from lxml import etree
+import logging
+
+logger = logging.getLogger('commtrack.sms')
 
 def handle(v, text):
     """top-level handler for incoming stock report messages"""
@@ -13,9 +16,9 @@ def handle(v, text):
 
     # TODO error handling
     data = StockReport(domain).parse(text)
-    print data
+    logger.debug(data)
     inst_xml = to_instance(v, data)
-    print inst_xml
+    logger.debug(inst_xml)
     
     stockreport.process(v.domain, inst_xml)
 
@@ -28,7 +31,7 @@ class StockReport(object):
 
     def __init__(self, domain):
         self.domain = domain
-        self.C = CommtrackConfig.for_domain(domain)
+        self.C = CommtrackConfig.for_domain(domain.name)
 
     def parse(self, text, location=None):
         """take in a text and return the parsed stock transactions"""
@@ -139,6 +142,8 @@ def to_instance(v, data):
     """convert the parsed sms stock report into an instance like what would be
     submitted from a commcare phone"""
     E = stockreport.XML()
+    from lxml.builder import ElementMaker
+    M = ElementMaker(namespace='http://openrosa.org/jr/xforms', nsmap={'jrm': 'http://openrosa.org/jr/xforms'})
 
     # find all stock product sub-cases linked to the supply point case, and build a mapping
     # of the general Product doc id to the site-specific product sub-case
@@ -151,8 +156,11 @@ def to_instance(v, data):
         tx['case_id'] = product_subcase_mapping[tx['product']._id]
         return stockreport.tx_to_xml(tx, E)
 
-    # TODO: add <meta>, user_id, etc.?
     root = E.stock_report(
+        M.meta(
+            M.userID(v.owner._id),
+            M.deviceID('sms:%s' % v.phone_number)
+        ),
         E.location(data['location']._id),
         *(mk_xml_tx(tx) for tx in data['transactions'])
     )

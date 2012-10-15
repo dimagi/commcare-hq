@@ -8,6 +8,9 @@ from receiver.util import spoof_submission
 from corehq.apps.receiverwrapper.util import get_submit_url
 from corehq.apps.commtrack.models import *
 from dimagi.utils.couch.loosechange import map_reduce
+import logging
+
+logger = logging.getLogger('commtrack.incoming')
 
 XMLNS = 'http://openrosa.org/commtrack/stock_report'
 def _(tag, ns=XMLNS):
@@ -36,7 +39,7 @@ def process(domain, instance):
         root.append(case_block)
 
     submission = etree.tostring(root)
-    print 'submitting:', submission
+    logger.debug('submitting: %s' % submission)
     spoof_submission(get_submit_url(domain), submission)
 
 # TODO: make a transaction class
