@@ -392,8 +392,6 @@ class CaseReminderHandler(Document):
         if reminder.current_event_sequence_num >= len(self.events):
             reminder.current_event_sequence_num = 0
             reminder.schedule_iteration_num += 1
-            if (self.max_iteration_count != REPEAT_SCHEDULE_INDEFINITELY) and (reminder.schedule_iteration_num > self.max_iteration_count):
-                reminder.active = False
 
     def set_next_fire(self, reminder, now):
         """
@@ -409,6 +407,7 @@ class CaseReminderHandler(Document):
         
         return      void
         """
+        case = reminder.case
         while now >= reminder.next_fire and reminder.active:
             # If it is a callback reminder, check the callback_timeout_intervals
             if (reminder.method in ["callback", "callback_test", "survey"]) and len(reminder.current_event.callback_timeout_intervals) > 0:
@@ -419,24 +418,32 @@ class CaseReminderHandler(Document):
                     reminder.next_fire = reminder.next_fire + timedelta(minutes = reminder.current_event.callback_timeout_intervals[reminder.callback_try_count])
                     reminder.callback_try_count += 1
                     continue
-            # Move to the next event in the cycle and set the next fire if it is still active
+            
+            # Move to the next event in the cycle
             self.move_to_next_event(reminder)
-            if reminder.active:
-                if self.event_interpretation == EVENT_AS_OFFSET:
-                    # EVENT_AS_OFFSET
-                    next_event = reminder.current_event
-                    day_offset = next_event.day_num
-                    if reminder.current_event_sequence_num == 0:
-                        day_offset += self.schedule_length
-                    time_offset = next_event.fire_time
-                    reminder.next_fire += timedelta(days=day_offset, hours=time_offset.hour, minutes=time_offset.minute, seconds=time_offset.second)
-                else:
-                    # EVENT_AS_SCHEDULE
-                    next_event = reminder.current_event
-                    day_offset = self.start_offset + (self.schedule_length * (reminder.schedule_iteration_num - 1)) + next_event.day_num
-                    reminder_datetime = datetime.combine(reminder.start_date, next_event.fire_time) + timedelta(days = day_offset)
-                    reminder.next_fire = CaseReminderHandler.timestamp_to_utc(reminder.recipient, reminder_datetime)
-
+            
+            # Set the next fire time
+            if self.event_interpretation == EVENT_AS_OFFSET:
+                # EVENT_AS_OFFSET
+                next_event = reminder.current_event
+                day_offset = next_event.day_num
+                if reminder.current_event_sequence_num == 0:
+                    day_offset += self.schedule_length
+                time_offset = next_event.fire_time
+                reminder.next_fire += timedelta(days=day_offset, hours=time_offset.hour, minutes=time_offset.minute, seconds=time_offset.second)
+            else:
+                # EVENT_AS_SCHEDULE
+                next_event = reminder.current_event
+                day_offset = self.start_offset + (self.schedule_length * (reminder.schedule_iteration_num - 1)) + next_event.day_num
+                reminder_datetime = datetime.combine(reminder.start_date, next_event.fire_time) + timedelta(days = day_offset)
+                reminder.next_fire = CaseReminderHandler.timestamp_to_utc(reminder.recipient, reminder_datetime)
+            
+            # Set whether or not the reminder should still be active
+            reminder.active = self.get_active(reminder, now, case)
+    
+    def get_active(self, reminder, now, case):
+        return (not self.condition_reached(case, self.until, now)) and not (self.max_iteration_count != REPEAT_SCHEDULE_INDEFINITELY and reminder.schedule_iteration_num > self.max_iteration_count)
+    
     def should_fire(self, reminder, now):
         return now > reminder.next_fire
 
@@ -575,7 +582,7 @@ class CaseReminderHandler(Document):
         except Exception:
             pass
 
-        if (isinstance(condition, datetime) and condition > now) or is_true_value(condition):
+        if (isinstance(condition, datetime) and now > condition) or is_true_value(condition):
             return True
         else:
             return False
@@ -651,19 +658,22 @@ class CaseReminderHandler(Document):
                     reminder.retire()
                     reminder = None
             
+            # Spawn a reminder if need be
             if reminder is None:
                 if start_condition_reached:
                     reminder = self.spawn_reminder(case, start)
                     reminder.start_condition_datetime = start_condition_datetime
                     self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
-            else:
-                active = (not self.condition_reached(case, self.until, now)) and not (reminder.handler.max_iteration_count != REPEAT_SCHEDULE_INDEFINITELY and reminder.schedule_iteration_num > reminder.handler.max_iteration_count)
+            
+            # Check to see if the reminder should still be active
+            if reminder is not None:
+                active = self.get_active(reminder, now, case)
                 if active and not reminder.active:
                     reminder.active = True
                     self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
                 else:
                     reminder.active = active
-            if reminder:
+                
                 reminder.save()
     
     def datetime_definition_changed(self):
@@ -789,7 +799,10 @@ class CaseReminder(Document):
 
     @property
     def case(self):
-        return CommCareCase.get(self.case_id)
+        if self.case_id is not None:
+            return CommCareCase.get(self.case_id)
+        else:
+            return None
 
     @property
     def user(self):
