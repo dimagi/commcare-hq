@@ -38,6 +38,9 @@ def get_stock_reports(domain):
                           include_docs=True)
     return [e['doc'] for e in query]
 
+def parse_iso(dt):
+    return datetime.strptime(dt, '%Y-%m-%dT%H:%M:%SZ')
+
 class VisitReport(GenericTabularReport, CommtrackReportMixin):
     name = 'Visit Report'
     slug = 'visits'
@@ -68,7 +71,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin):
 
             data = [
                 doc['form']['location'],
-                doc['received_on'],
+                parse_iso(doc['received_on']).strftime('%Y-%m-%d'),
             ]
             for p in products:
                 for a in actions:
@@ -90,7 +93,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin):
             # TODO lots of static outlet info
         ]
         for p in self.products:
-            cols.append(DataTablesColumn('Stock on Hand (%s)' % p['name'])) # latest value + date of latest report
+            cols.append(DataTablesColumn('Stock on Hand (%s)' % p['name']))
             cols.append(DataTablesColumn('Total Sales (%s)' % p['name']))
             cols.append(DataTablesColumn('Total Consumption (%s)' % p['name']))
         cols.append(DataTablesColumn('Stock-out days (all products combined)'))
@@ -124,7 +127,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin):
                 latest_state = product_states[-1]['value'] if product_states else None
                 if latest_state:
                     stock = latest_state['updated_unknown_properties']['current_stock']
-                    as_of = latest_state['server_date']
+                    as_of = parse_iso(latest_state['server_date']).strftime('%Y-%m-%d')
 
                 stockout_dates = set()
                 for state in product_states:
@@ -132,7 +135,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin):
                     stocked_out_since = doc['updated_unknown_properties']['stocked_out_since']
                     if stocked_out_since:
                         so_start = datetime.strptime(stocked_out_since, '%Y-%m-%d').date() # todo: clip to start of time filter
-                        so_end = datetime.strptime(doc['server_date'], '%Y-%m-%dT%H:%M:%SZ').date() # time zone issues
+                        so_end = parse_iso(doc['server_date']).date() # time zone issues
                         dt = so_start
                         while dt < so_end:
                             stockout_dates.add(dt)
