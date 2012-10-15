@@ -10,6 +10,7 @@ from couchdbkit.ext.django.schema import *
 from casexml.apps.case import const
 from dimagi.utils import parsing
 import logging
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.indicators import ComputedDocumentMixin
 from receiver.util import spoof_submission
 from couchforms.models import XFormInstance
@@ -249,22 +250,19 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                 # all custom properties go here
             }.items()),
             #reorganized
-            "indices": dict([
-                # all indexes are stored in the following form
-                (index.identifier, {
-                    "case_type": index.referenced_type,
-                    "case_id": index.referenced_id
-                }) for index in self.indices
-            ]),
-            "reverse_indices": dict([
-                # all indexes are stored in the following form
-                (index.identifier, {
-                    "case_type": index.referenced_type,
-                    "case_id": index.referenced_id
-                }) for index in self.reverse_indices
-            ]),
+            "indices": self.get_index_map(),
+            "reverse_indices": self.get_index_map(True)
         }
-    
+
+    @memoized
+    def get_index_map(self, reversed=False):
+        return dict([
+            (index.identifier, {
+                "case_type": index.referenced_type,
+                "case_id": index.referenced_id
+            }) for index in (self.indices if not reversed else self.reverse_indices)
+        ])
+
     def get_preloader_dict(self):
         """
         Gets the case as a dictionary for use in touchforms preloader framework
