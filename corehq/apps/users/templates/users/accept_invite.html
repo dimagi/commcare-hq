@@ -4,7 +4,7 @@
     <div class="row">
         {% if request.user.is_authenticated %}
             <div class="page-header">
-                <h1>Project Invitation <small>You've been invited to join "{{ domain }}".</small></h1>
+                <h1>Project Invitation <small>You've been invited to join <strong>{{ domain }}</strong>.</small></h1>
             </div>
             <div class="span8">
                 <form name="form" method="post" action="" class="form-horizontal">

@@ -20,6 +20,7 @@ from corehq.apps.app_manager import fixtures, xform, suite_xml
 from corehq.apps.app_manager.suite_xml import IdStrings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError, WrappedNode
+from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
@@ -822,7 +823,7 @@ class VersionedDoc(Document):
             return self.doc_type
 
 
-class ApplicationBase(VersionedDoc):
+class ApplicationBase(VersionedDoc, SnapshotMixin):
     """
     Abstract base class for Application and RemoteApp.
     Contains methods for generating the various files and zipping them into CommCare.jar
@@ -896,9 +897,17 @@ class ApplicationBase(VersionedDoc):
                 data['text_input'] = 'native' if data['native_input'] else 'roman'
             del data['native_input']
 
+        should_save = False
+        if data.has_key('original_doc'):
+            data['copy_history'] = [data.pop('original_doc')]
+            should_save = True
+
         self = super(ApplicationBase, cls).wrap(data)
         if not self.build_spec or self.build_spec.is_null():
             self.build_spec = CommCareBuildConfig.fetch().get_default(self.application_version)
+
+        if should_save:
+            self.save()
         return self
 
     def rename_lang(self, old_lang, new_lang):
