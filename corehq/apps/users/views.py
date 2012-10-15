@@ -455,12 +455,7 @@ def domain_accounts(request, domain, couch_user_id, template="users/domain_accou
         couch_user.add_domain_membership(domain)
         couch_user.save()
         messages.success(request,'Domain added')
-    my_domains = couch_user.get_domains()
-    all_domains = Domain.get_all()
-    context['other_domains'] = [d.name for d in all_domains if d.name not in my_domains]
-    context.update({"user": request.user,
-                    "domains": couch_user.get_domains(),
-                    })
+    context.update({"user": request.user})
     return render_to_response(request, template, context)
 
 @require_POST

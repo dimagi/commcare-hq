@@ -8,6 +8,7 @@ from couchdbkit.ext.django.schema import Document, StringProperty,\
     BooleanProperty, DateTimeProperty, IntegerProperty, DocumentSchema, SchemaProperty, DictProperty, ListProperty
 from django.utils.safestring import mark_safe
 from corehq.apps.appstore.models import Review, SnapshotMixin
+from dimagi.utils.html import format_html
 from dimagi.utils.timezones import fields as tz_fields
 from dimagi.utils.couch.database import get_db
 from itertools import chain
@@ -506,15 +507,23 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         else:
             return self.name
 
-    __str__ = display_name
-
     def long_display_name(self):
         if self.is_snapshot:
-            return "Snapshot of %s &gt; %s" % (self.organization_doc().title, self.copied_from.display_name())
+            return format_html(
+                "Snapshot of {0} &gt; {1}",
+                self.organization_doc().title,
+                self.copied_from.display_name()
+            )
         if self.organization:
-            return '%s &gt; %s' % (self.organization_doc().title, self.slug)
+            return format_html(
+                '{0} &gt; {1}',
+                self.organization_doc().title,
+                self.slug
+            )
         else:
             return self.name
+
+    __str__ = long_display_name
 
     def get_license_display(self):
         return LICENSES.get(self.license)
