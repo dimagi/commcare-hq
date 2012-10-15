@@ -1,4 +1,4 @@
-from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
@@ -36,20 +36,29 @@ def get_transactions(form_doc):
         txs = [txs]
     return txs
 
-def get_stock_reports(domain):
-    query = get_db().view('commtrack/stock_reports',
-                          start_key=[domain, '2012-10-15T22:30:00Z'], # DEBUG time filter to hide incompatible instances
-                          end_key=[domain, {}],
-                          include_docs=True)
+def get_stock_reports(domain, datespan):
+    timestamp_start = to_iso(datespan.startdate)
+    timestamp_end =  to_iso(datespan.end_of_end_day)
+
+    # for debugging; add a threshold to hide incompatible instances
+    timestamp_start = min(max(timestamp_start, '2012-10-15T22:30:00Z'), timestamp_end)
+
+    start_key = [domain, timestamp_start]
+    end_key = [domain, timestamp_end]
+
+    query = get_db().view('commtrack/stock_reports', start_key=start_key, end_key=end_key, include_docs=True)
     return [e['doc'] for e in query]
 
 def parse_iso(dt):
     return datetime.strptime(dt, '%Y-%m-%dT%H:%M:%SZ')
 
-class VisitReport(GenericTabularReport, CommtrackReportMixin):
+def to_iso(dt):
+    return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Visit Report'
     slug = 'visits'
-    fields = ['corehq.apps.reports.fields.FilterUsersField']
+    fields = ['corehq.apps.reports.fields.DatespanField']
 
     @property
     def headers(self):
@@ -70,7 +79,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin):
     def rows(self):
         products = self.products
         actions = self.actions
-        reports = get_stock_reports(self.domain)
+        reports = get_stock_reports(self.domain, self.datespan)
 
         def row(doc):
             transactions = dict(((tx['action'], tx['product']), tx['value']) for tx in get_transactions(doc))
@@ -88,10 +97,10 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin):
 
         return [row(r) for r in reports]
 
-class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin):
+class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Sales and Consumption Report'
     slug = 'sales_consumption'
-    fields = ['corehq.apps.reports.fields.FilterUsersField']
+    fields = ['corehq.apps.reports.fields.DatespanField']
 
     @property
     def headers(self):
@@ -110,7 +119,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def rows(self):
         products = self.products
-        reports = get_stock_reports(self.domain)
+        reports = get_stock_reports(self.domain, self.datespan)
         reports_by_loc = map_reduce(lambda e: [(e['form']['location'],)], data=reports, include_docs=True)
 
         locs = sorted(reports_by_loc.keys()) # todo: pull from location hierarchy
@@ -126,9 +135,8 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin):
             for p in products:
                 tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
 
-                # TODO: add date filter
-                start_key = [str(self.domain), site, p['_id']]
-                end_key = list(itertools.chain(start_key, [{}]))
+                start_key = [str(self.domain), site, p['_id'], to_iso(self.datespan.startdate)]
+                end_key =   [str(self.domain), site, p['_id'], to_iso(self.datespan.end_of_end_day)]
                 # list() is necessary or else get a weird error
                 product_states = list(get_db().view('commtrack/stock_product_state', start_key=start_key, end_key=end_key))
                 latest_state = product_states[-1]['value'] if product_states else None
@@ -141,7 +149,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin):
                     doc = state['value']
                     stocked_out_since = doc['updated_unknown_properties']['stocked_out_since']
                     if stocked_out_since:
-                        so_start = datetime.strptime(stocked_out_since, '%Y-%m-%d').date() # todo: clip to start of time filter
+                        so_start = max(datetime.strptime(stocked_out_since, '%Y-%m-%d').date(), self.datespan.startdate.date())
                         so_end = parse_iso(doc['server_date']).date() # time zone issues
                         dt = so_start
                         while dt < so_end:
