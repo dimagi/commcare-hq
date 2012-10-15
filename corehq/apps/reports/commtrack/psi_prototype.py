@@ -15,6 +15,10 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
         return domain.commtrack_enabled
     
     @property
+    def config(self):
+        return CommtrackConfig.for_domain(self.domain)
+
+    @property
     def products(self):
         query = get_db().view('commtrack/products', start_key=[self.domain], end_key=[self.domain, {}], include_docs=True)
         prods = [e['doc'] for e in query]
@@ -22,7 +26,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
     @property
     def actions(self):
-        return sorted(CommtrackConfig.for_domain(self.domain).actions.keys())
+        return sorted(self.config.actions.keys())
 
 def get_transactions(form_doc):
     from collections import Sequence
@@ -54,9 +58,10 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin):
             DataTablesColumn('Date'),
             #DataTablesColumn('Reporter'),
         ]
+        cfg = self.config
         for p in self.products:
             for a in self.actions:
-                cols.append(DataTablesColumn('%s (%s)' % (a, p['name'])))
+                cols.append(DataTablesColumn('%s (%s)' % (cfg.actions[a].caption, p['name'])))
         
         return DataTablesHeader(*cols)
 
