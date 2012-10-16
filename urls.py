@@ -17,7 +17,6 @@ handler404 = 'corehq.apps.hqwebapp.views.not_found'
 from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specific
 from corehq.apps.settings.urls import domain_specific as settings_domain_specific
 from corehq.apps.settings.urls import users_redirect, domain_redirect
-from corehq.apps.domain.urls import domain_specific as domain_domain_specific
 from corehq.apps.adm.urls import adm_admin_interface_urls
 
 
@@ -39,7 +38,6 @@ domain_specific = patterns('',
     (r'^reports/', include('corehq.apps.reports.urls')),
     (r'^data/', include('corehq.apps.data_interfaces.urls')),
     (r'^', include(hqwebapp_domain_specific)),
-    (r'^', include(domain_domain_specific)),
     (r'^', include('django_user_registration.urls')),
     (r'^case/', include('corehq.apps.hqcase.urls')),
     (r'^submitlist/', include('corehq.apps.hqsofabed.urls')),
