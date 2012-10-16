@@ -6,6 +6,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from datetime import datetime, timedelta
 from copy import copy
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
+import urllib
 
 class ConvenientBaseMixIn(object):
     # this is everything that's shared amongst the Bihar reports
@@ -172,5 +173,4 @@ class MotherListReport(MockTablularReport):
 def url_and_params(urlbase, params):
     assert "?" not in urlbase
     return "{url}?{params}".format(url=urlbase, 
-                                   params="&".join(["{k}={v}".format(k=k, v=v) \
-                                                    for k, v in params.items()]))
+                                   params=urllib.urlencode(params))
