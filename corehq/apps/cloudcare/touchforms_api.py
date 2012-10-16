@@ -24,8 +24,9 @@ class SessionDataHelper(object):
         return self.case.type
 
     @property
-    def case_parent_id(self):
-        return self.case.get_index_map()['parent']
+    def _case_parent_id(self):
+        """Only makes sense if the case is a delegation stub"""
+        return self.case.get_index_map().get('parent')
 
     @property
     def delegation_mode(self):
@@ -46,7 +47,7 @@ class SessionDataHelper(object):
         if self.case_id:
             if self.delegation_mode:
                 session_data["delegation_id"] = self.case_id
-                session_data["case_id"] = self.case_parent_id
+                session_data["case_id"] = self._case_parent_id
             else:
                 session_data["case_id"] = self.case_id
 
