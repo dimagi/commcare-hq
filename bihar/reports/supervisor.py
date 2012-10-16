@@ -121,7 +121,7 @@ class SubCenterSelectionReport(MockTablularReport, ReportReferenceMixIn):
         def _link(val):
             params = copy(self.request_params)
             params["team"] = val
-            return format_html('<a href="{details}">{val}s</a>',
+            return format_html('<a href="{details}">{val}</a>',
                 val=val,
                 details=url_and_params(self.next_report_class.get_url(self.domain,
                                                                       render_as=self.render_next),
