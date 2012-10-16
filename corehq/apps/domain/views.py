@@ -460,48 +460,6 @@ def set_published_snapshot(request, domain, snapshot_name=''):
             published_snapshot.save()
     return redirect('domain_snapshot_settings', domain.name)
 
-@require_previewer # remove for production
-@login_and_domain_required
-def snapshot_info(request, domain):
-    domain = Domain.get_by_name(domain)
-    user_sees_meta = request.couch_user.is_previewer()
-    if user_sees_meta:
-        form = DomainMetadataForm(initial={
-            'default_timezone': domain.default_timezone,
-            'case_sharing': json.dumps(domain.case_sharing),
-            'city': domain.city,
-            'country': domain.country,
-            'region': domain.region,
-            'project_type': domain.project_type,
-            'customer_type': domain.customer_type,
-            'is_test': json.dumps(domain.is_test),
-            'short_description': domain.short_description,
-            'description': domain.description,
-            'is_shared': domain.is_shared,
-            'license': domain.license
-        })
-    else:
-        form = DomainGlobalSettingsForm(initial={
-            'default_timezone': domain.default_timezone,
-            'case_sharing': json.dumps(domain.case_sharing),
-
-            })
-    fields = []
-    for field in form.visible_fields():
-        value = field.value()
-        if value:
-            if value == 'false':
-                value = False
-            if value == 'true':
-                value = True
-            if isinstance(value, bool):
-                value = 'Yes' if value else 'No'
-            fields.append({'label': field.label, 'value': value})
-    return render_to_response(request, 'domain/snapshot_info.html', {'domain': domain.name,
-                                                                     'fields': fields,
-                                                                     "languages": request.project.readable_languages(),
-                                                                     "applications": request.project.applications()})
-
 @domain_admin_required
 def manage_multimedia(request, domain):
     media = request.project.all_media()
