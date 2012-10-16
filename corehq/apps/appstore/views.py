@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 import logging
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
@@ -19,6 +20,7 @@ from corehq.apps.reports.views import datespan_default
 from corehq.apps.hqmedia import utils
 from corehq.apps.app_manager.models import Application
 from django.shortcuts import redirect
+import rawes
 
 PER_PAGE = 9
 
@@ -174,7 +176,10 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
     filter = filter.replace('+', ' ')
     #query = '%s:"%s"' % (filter_by, filter)
 
-    results = Domain.get_by_field(FILTERS[filter_by], filter)
+#    results = Domain.get_by_field(FILTERS[filter_by], filter)
+    results = es_snapshot_search({FILTERS[filter_by]: filter})
+    results = [Domain.wrap(res['_source']) for res in results['hits']['hits']]
+
     total_rows = len(results)
 
     if not sort_by:
@@ -203,6 +208,33 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
                                   sort_by=sort_by,
                                   average_ratings=average_ratings))
     return render_to_response(request, template, vals)
+
+@require_previewer # remove for production
+def snapshot_search(request):
+    params = {}
+    for attr in request.GET.iterlists():
+        params[attr[0]] = attr[1][0] if len(attr[1]) < 2 else attr[1]
+    results = es_snapshot_search(params)
+    return HttpResponse(json.dumps(results), mimetype="application/json")
+
+def es_snapshot_search(params):
+    q = {"query": {"bool": {"must":
+                            [{"match": {'doc_type': "Domain"}},
+                             {"term": {"is_approved": params.get('is_approved', None) or True}},
+                             {"term": {"published": True}},
+                             {"term": {"is_snapshot": True}}]}}}
+
+    terms = ['is_approved']
+    for attr in params:
+        if attr not in terms:
+            attr_val = [params[attr].lower()] if isinstance(params[attr], basestring) else [p.lower() for p in params[attr]]
+            q["query"]["bool"]["must"].append({"terms": {attr: attr_val}})
+
+    es_url = "commcarehq/commcarehq/_search"
+    es = rawes.Elastic('localhost:9200')
+    ret_data = es.get(es_url, data=q)
+
+    return ret_data
 
 @require_previewer
 def appstore_default(request):
