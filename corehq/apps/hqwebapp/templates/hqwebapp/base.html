@@ -134,7 +134,7 @@
                     {% if request.project.is_snapshot %}
                         This is a snapshot of {{ request.project.copied_from.display_name }}
                     {% else %}
-                        Originally copied from <a href="{% url domain_snapshot_info request.project.copied_from.name %}">a {{ request.project.copied_from.display_name }}</a>
+                        Originally copied from <a href="{% url project_info request.project.copied_from.name %}">a {{ request.project.copied_from.display_name }}</a>
                     {% endif %}
                     {% if request.project.copied_from.organization %}
                         by <a href="{% url orgs_landing request.project.copied_from.organization %}">{{ request.project.copied_from.organization_doc.title }}</a>

@@ -126,6 +126,7 @@
                                 <input type="text" name="case_label" value="{{ module.case_label|trans:langs }}" />
                         </td>
                     </tr>
+                    {% if app.application_version == '1.0' %}
                     <tr class="form editable">
                         <th>
                             Label for Referrals
@@ -134,6 +135,7 @@
                             <input type="text" name="referral_label" value="{{ module.referral_label|trans:langs }}" />
                         </td>
                     </tr>
+                    {% endif %}
                 {% else %}
                     <tr>
                         <th>Module Name</th>
@@ -167,12 +169,14 @@
                             {{ module.case_label|trans:langs }}
                         </td>
                     </tr>
+                    {% if app.application_version == '1.0' %}
                     <tr>
                         <th>Label for Referrals</th>
                         <td>
                             {{ module.referral_label|trans:langs }}
                         </td>
                     </tr>
+                    {% endif %}
                 {% endif %}
                 {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List" SLUG="case_list" case_list=module.case_list %}
                 {% if app.application_version != '1.0' %}
