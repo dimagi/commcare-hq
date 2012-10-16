@@ -371,6 +371,14 @@ class DatespanField(ReportField):
         self.context['timezone'] = self.timezone.zone
         self.context['datespan'] = self.datespan
 
+class LocationField(ReportField):
+    name = "Location"
+    slug = "location"
+    template = "reports/fields/location.html"
+
+    def update_context(self):
+        self.context['control_name'] = self.name
+        self.context['control_slug'] = self.slug
 
 class DeviceLogTagField(ReportField):
     slug = "logtag"
