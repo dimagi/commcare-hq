@@ -10,6 +10,8 @@ import itertools
 from datetime import datetime, date, timedelta
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
+    location = None
+
     @classmethod
     def show_in_navigation(cls, request, *args, **kwargs):
         domain = Domain.get_by_name(kwargs['domain'])
@@ -36,15 +38,16 @@ def get_transactions(form_doc):
         txs = [txs]
     return txs
 
-def get_stock_reports(domain, datespan):
+def get_stock_reports(domain, location, datespan):
     timestamp_start = to_iso(datespan.startdate)
     timestamp_end =  to_iso(datespan.end_of_end_day)
+    loc_id = location._id if location else None
 
     # for debugging; add a threshold to hide incompatible instances
     timestamp_start = min(max(timestamp_start, '2012-10-15T22:30:00Z'), timestamp_end)
 
-    start_key = [domain, timestamp_start]
-    end_key = [domain, timestamp_end]
+    start_key = [domain, loc_id, timestamp_start]
+    end_key = [domain, loc_id, timestamp_end]
 
     query = get_db().view('commtrack/stock_reports', start_key=start_key, end_key=end_key, include_docs=True)
     return [e['doc'] for e in query]
@@ -79,7 +82,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     def rows(self):
         products = self.products
         actions = self.actions
-        reports = get_stock_reports(self.domain, self.datespan)
+        reports = get_stock_reports(self.domain, self.location, self.datespan)
 
         def row(doc):
             transactions = dict(((tx['action'], tx['product']), tx['value']) for tx in get_transactions(doc))
@@ -119,7 +122,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
     @property
     def rows(self):
         products = self.products
-        reports = get_stock_reports(self.domain, self.datespan)
+        reports = get_stock_reports(self.domain, self.location, self.datespan)
         reports_by_loc = map_reduce(lambda e: [(e['form']['location'],)], data=reports, include_docs=True)
 
         locs = sorted(reports_by_loc.keys()) # todo: pull from location hierarchy
