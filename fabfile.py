@@ -50,6 +50,7 @@ env.roledefs = {
         'formsplayer': [],
         'staticfiles': [],
         'django_monolith': [], # all of the above config - use this ONLY for single server config, lest deploy() will run multiple times in parallel causing bad contentions
+        'remote_es': [], #remote elasticsearch ssh tunnel config
 
         #package level configs that are not quite config'ed yet in this fabfile
         'couch': [],
@@ -135,6 +136,7 @@ def india():
         'django_public': [],
         'formsplayer': [],
         'lb': [],
+        'remote_es': [],
         'staticfiles': [],
         'deploy': [],
         'django_monolith': ['220.226.209.82'],
@@ -159,6 +161,8 @@ def production():
         'django_celery': ['hqdb.internal.commcarehq.org'],
         'django_app': ['hqdjango0.internal.commcarehq.org', 'hqdjango2.internal.commcarehq.org'],
         'django_public': ['hqdjango1.internal.commcarehq.org',],
+        'remote_es': ['hqdb.internal.commcarehq.org', 'hqdjango0.internal.commcarehq.org',
+                      'hqdjango1.internal.commcarehq.org', 'hqdjango2.internal.commcarehq.org'],
         'formsplayer': ['hqdjango0.internal.commcarehq.org'],
         'lb': [], #todo on apache level config
         'staticfiles': ['hqproxy0.internal.commcarehq.org'],
@@ -553,6 +557,11 @@ def upload_sofabed_supervisorconf():
 def upload_djangoapp_supervisorconf():
     _upload_supervisor_conf_file('supervisor_django.conf')
 
+
+@roles('remote_es')
+def upload_elasticsearch_supervisorconf():
+    _upload_supervisor_conf_file('supervisor_elasticsearch.conf')
+
 @roles('django_public')
 def upload_django_public_supervisorconf():
     _upload_supervisor_conf_file('supervisor_django_public.conf')
@@ -568,6 +577,7 @@ def upload_and_set_supervisor_config():
     execute(upload_celery_supervisorconf)
     execute(upload_sofabed_supervisorconf)
     execute(upload_djangoapp_supervisorconf)
+    execute(upload_elasticsearch_supervisorconf)
     execute(upload_django_public_supervisorconf)
     execute(upload_formsplayer_supervisorconf)
     #generate_supervisorconf_file()
