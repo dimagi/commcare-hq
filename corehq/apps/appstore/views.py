@@ -218,32 +218,39 @@ def snapshot_search(request):
             facets = attr[1][0].split()
             continue
         params[attr[0]] = attr[1][0] if len(attr[1]) < 2 else attr[1]
-    results = es_snapshot_search(params, facets)
+    results = es_snapshot_filter(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
-def es_snapshot_search(params, facets=[]):
-    q = {"query": {"bool": {"must":
-                            [{"match": {'doc_type': "Domain"}},
-                             {"term": {"is_approved": params.get('is_approved', None) or True}},
-                             {"term": {"published": True}},
-                             {"term": {"is_snapshot": True}}]}}}
+def es_snapshot_filter(params, facets=[]):
+    q = {"query":   {"bool": {"must":
+                                  [{"match": {'doc_type': "Domain"}},
+                                   {"term": {"published": True}},
+                                   {"term": {"is_snapshot": True}}]}},
+         "filter":  {"and": [{"term": {"is_approved": params.get('is_approved', None) or True}}]}}
 
     terms = ['is_approved']
     for attr in params:
         if attr not in terms:
             attr_val = [params[attr].lower()] if isinstance(params[attr], basestring) else [p.lower() for p in params[attr]]
-            q["query"]["bool"]["must"].append({"terms": {attr: attr_val}})
+            q["filter"]["and"].append({"terms": {attr: attr_val}})
+
+    def facet_filter(facet):
+        ff = {"facet_filter": {}}
+        ff["facet_filter"]["and"] = [clause for clause in q["filter"]["and"] if facet not in clause.get("terms", [])]
+        return ff
 
     if facets:
         q["facets"] = {}
         for facet in facets:
             q["facets"][facet] = {"terms": {"field": facet}}
+            q["facets"][facet].update(facet_filter(facet))
 
     es_url = "commcarehq/commcarehq/_search"
     es = rawes.Elastic('localhost:9200')
     ret_data = es.get(es_url, data=q)
 
     return ret_data
+
 
 @require_previewer
 def appstore_default(request):
