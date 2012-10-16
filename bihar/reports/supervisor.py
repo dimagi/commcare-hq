@@ -92,9 +92,9 @@ class MockNavReport(MockSummaryReport):
                                      render_as=self.render_next)
             if self.preserve_url_params:
                 url = url_and_params(url, self.request_params)
-            return format_html('<a href="%(details)s">%(val)s</a>' % \
-                               {"val": report_cls.name, 
-                                "details": url})
+            return format_html('<a href="{details}">{val}</a>',
+                                val=report_cls.name, 
+                                details=url)
         return [_nav_link(report_cls) for report_cls in self.reports]
         
 
@@ -121,11 +121,11 @@ class SubCenterSelectionReport(MockTablularReport, ReportReferenceMixIn):
         def _link(val):
             params = copy(self.request_params)
             params["team"] = val
-            return format_html('<a href="%(details)s">%(val)s</a>' % \
-                {"val": val,
-                 "details": url_and_params(self.next_report_class.get_url(self.domain,
-                                                                           render_as=self.render_next),
-                                            params)})
+            return format_html('<a href="{details}">{val}s</a>',
+                val=val,
+                details=url_and_params(self.next_report_class.get_url(self.domain,
+                                                                      render_as=self.render_next),
+                                       params))
         return ["009", _link("Khajuri Team %s" % i), 
                 "%s / %s" % (random.randint(0, i), i)] \
             

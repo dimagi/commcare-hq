@@ -2,6 +2,7 @@ from bihar.reports.supervisor import MockNavReport, MockEmptyReport,\
     url_and_params, SubCenterSelectionReport, TeamHoldingMixIn
 from bihar.reports.indicators import INDICATOR_SETS, IndicatorConfig
 from copy import copy
+from dimagi.utils.html import format_html
 
 class IndicatorConfigMixIn(object):
     @property
@@ -44,13 +45,13 @@ class IndicatorSelectNav(MockEmptyReport, IndicatorConfigMixIn):
             params = copy(self.request_params)
             params["indicators"] = indicator_set.slug
             params["next_report"] = IndicatorSummaryReport.slug
-            return '<a href="%(next)s">%(val)s</a>' % \
-                {"val": indicator_set.name,
-                 "next": url_and_params(
+            return format_html('<a href="{next}">{val}</a>',
+                val=indicator_set.name,
+                next=url_and_params(
                     SubCenterSelectionReport.get_url(self.domain, 
                                                      render_as=self.render_next),
                     params
-                )}
+                ))
         return [_nav_link(iset) for iset in self.indicator_config.indicator_sets]
 
     
