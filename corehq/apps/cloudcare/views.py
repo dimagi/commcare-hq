@@ -1,4 +1,5 @@
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.app_manager.suite_xml import SuiteGenerator
 from corehq.apps.cloudcare.models import CaseSpec
 from corehq.apps.domain.decorators import login_and_domain_required,\
     login_or_digest_ex
@@ -29,7 +30,6 @@ def default(request, domain):
 @login_and_domain_required
 def app_list(request, domain, urlPath):
     preview = string_to_boolean(request.REQUEST.get("preview", "false"))
-    language = request.couch_user.language or "en"
     
     def _app_latest_build_json(app_id):
         build = ApplicationBase.view('app_manager/saved_app',
@@ -50,6 +50,18 @@ def app_list(request, domain, urlPath):
     
     # trim out empty apps
     apps = filter(lambda app: app, apps)
+    
+    
+    def _default_lang():
+        if apps:
+            # unfortunately we have to go back to the DB to find this
+            return Application.get(apps[0]["_id"]).build_langs[0]
+        else:
+            return "en"
+    
+    # default language to user's preference, followed by 
+    # first app's default, followed by english
+    language = request.couch_user.language or _default_lang()
     return render_to_response(request, "cloudcare/cloudcare_home.html", 
                               {"domain": domain,
                                "language": language,
@@ -142,9 +154,10 @@ def get_cases(request, domain):
     if not user_id and not request.couch_user.is_web_user():
         return HttpResponseBadRequest("Must specify user_id!")
 
+    footprint = string_to_boolean(request.REQUEST.get("footprint", "false"))
     filters = get_filters_from_request(request)
-
-    cases = get_filtered_cases(domain, user_id=user_id, filters=filters)
+    cases = get_filtered_cases(domain, user_id=user_id, filters=filters, 
+                               footprint=footprint)
     return json_response(cases)
 
 @cloudcare_api
@@ -152,15 +165,13 @@ def filter_cases(request, domain, app_id, module_id):
     app = Application.get(app_id)
     module = app.get_module(module_id)
     auth_cookie = request.COOKIES.get('sessionid')
-    details = module.details
-    xpath_parts = []
-    for detail in details:
-        if detail.filter_xpath_2():
-            xpath_parts.append(detail.filter_xpath_2())
-    xpath = "".join(xpath_parts)
+
+    xpath = SuiteGenerator(app).get_filter_xpath(module)
+
     # touchforms doesn't like this to be escaped
     xpath = HTMLParser.HTMLParser().unescape(xpath)
-    additional_filters = {"properties/case_type": module.case_type }
+    additional_filters = {"properties/case_type": module.case_type,
+                          "footprint": True }
     result = touchforms_api.filter_cases(domain, request.couch_user, 
                                          xpath, additional_filters, 
                                          auth=DjangoAuth(auth_cookie))
@@ -180,6 +191,7 @@ def get_app_api(request, domain, app_id):
 @cloudcare_api
 def get_fixtures(request, domain, user_id, fixture_id=None):
     user = CommCareUser.get_by_user_id(user_id)
+    
     if not user:
         raise Http404
 

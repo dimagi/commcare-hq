@@ -61,57 +61,70 @@ class IndicatorDefinition(Document):
         return "indicators/indicator_definitions"
 
     @classmethod
-    def update_or_create_unique(cls, **kwargs):
-        """
-            key_options should be formatted as an option list:
-            [(key, val), ...]
-        """
+    def _generate_couch_key(cls, version=None, **kwargs):
         key = list()
         key_prefix = list()
-        version = kwargs.get('version')
-
         for p in cls.key_params_order():
             k = kwargs.get(p)
             if k is not None:
                 key_prefix.append(p)
                 key.append(k)
-
         key = [" ".join(key_prefix)] + key
-        query_options = dict(startkey=key, endkey=key+[{}]) if version is None else dict(key=key+[version])
+        return dict(startkey=key, endkey=key+[{}]) if version is None else dict(key=key+[version])
+
+    @classmethod
+    def update_or_create_unique(cls, namespace, domain, slug=None, version=None, **kwargs):
+        """
+            key_options should be formatted as an option list:
+            [(key, val), ...]
+        """
+        couch_key = cls._generate_couch_key(
+            version=version,
+            namespace=namespace,
+            domain=domain,
+            slug=slug,
+            **kwargs
+        )
         unique_indicator = cls.view(cls.couch_view(),
             reduce=False,
             include_docs=True,
-            **query_options
+            **couch_key
         ).first()
         if not unique_indicator:
-            unique_indicator = cls(**kwargs)
+            unique_indicator = cls(
+                version=version,
+                namespace=namespace,
+                domain=domain,
+                slug=slug,
+                **kwargs
+            )
         else:
+            unique_indicator.namespace = namespace
+            unique_indicator.domain = domain
+            unique_indicator.slug = slug
+            unique_indicator.version = version
             for key, val in kwargs.items():
                 setattr(unique_indicator, key, val)
         return unique_indicator
 
     @classmethod
-    def get_current(cls, **kwargs):
-        namespace = kwargs.get('namespace')
-        domain = kwargs.get('domain')
-        slug = kwargs.get('slug')
-        version = kwargs.get('version')
-        include_docs = kwargs.get('include_docs', True)
-
-        startkey_suffix = [version] if version else [{}]
-        key=["namespace domain slug", namespace, domain, slug]
+    def get_current(cls, namespace, domain, slug, include_docs=True, version=None, **kwargs):
+        couch_key = cls._generate_couch_key(
+            namespace=namespace,
+            domain=domain,
+            slug=slug,
+            version=version,
+            **kwargs
+        )
         return cls.view('indicators/indicator_definitions',
             reduce=False,
             include_docs=include_docs,
-            startkey=key+startkey_suffix,
-            endkey=key,
-            descending=True
+            descending=True,
+            **couch_key
         ).first()
 
     @classmethod
-    def all_slugs(cls, **kwargs):
-        namespace = kwargs.get('namespace')
-        domain = kwargs.get('domain')
+    def all_slugs(cls, namespace, domain):
         key = [" ".join(cls.key_params_order()), namespace, domain]
         data = cls.view("indicators/indicator_definitions",
             group=True,
@@ -123,11 +136,11 @@ class IndicatorDefinition(Document):
         return [item.get('key',[])[-1] for item in data]
 
     @classmethod
-    def get_all(cls, **kwargs):
-        all_slugs = cls.all_slugs(**kwargs)
+    def get_all(cls, namespace, domain, version=None, **kwargs):
+        all_slugs = cls.all_slugs(namespace, domain)
         all_indicators = list()
         for slug in all_slugs:
-            doc = cls.get_current(include_docs=False, slug=slug, **kwargs)
+            doc = cls.get_current(namespace, domain, slug, include_docs=False, version=version, **kwargs)
             try:
                 doc_class = to_function(doc.get('value', "%s.%s" % (cls._class_path, cls.__name__)))
                 all_indicators.append(doc_class.get(doc.get('id')))
@@ -137,16 +150,30 @@ class IndicatorDefinition(Document):
 
 
 class FormDataIndicatorDefinitionMixin(DocumentSchema):
+    """
+        Use this mixin whenever you plan on dealing with forms in indicator definitions.
+    """
     xmlns = StringProperty()
 
-    def get_from_form(self, form_data, prop_ref):
-        if len(prop_ref) > 0 and form_data:
-            return self.get_from_form(form_data.get(prop_ref[0]), prop_ref[1:])
+    def get_from_form(self, form_data, question_id):
+        """
+            question_id must be formatted like: path.to.question_id
+        """
+        if isinstance(question_id, str) or isinstance(question_id, unicode):
+            question_id = question_id.split('.')
+        if len(question_id) > 0 and form_data:
+            return self.get_from_form(form_data.get(question_id[0]), question_id[1:])
+        if form_data and ('#text' in form_data):
+            print "FOUND #text", form_data
         result = form_data.get('#text') if form_data and ('#text' in form_data) else form_data
         return result
 
 
 class FormIndicatorDefinition(IndicatorDefinition, FormDataIndicatorDefinitionMixin):
+    """
+        This Indicator Definition defines an indicator that will live in the computed_ property of an XFormInstance
+        document. The 'doc' passed through get_value and get_clean_value should be an XFormInstance.
+    """
     base_doc = "FormIndicatorDefinition"
 
     def get_clean_value(self, doc):
@@ -161,7 +188,44 @@ class FormIndicatorDefinition(IndicatorDefinition, FormDataIndicatorDefinitionMi
         return ["namespace", "domain", "xmlns", "slug"]
 
 
+class FormDataAliasIndicatorDefinition(FormIndicatorDefinition):
+    """
+        This Indicator Definition is targeted for the scenarios where you have an indicator report across multiple
+        domains and each domain's application doesn't necessarily have standardized question IDs. This provides a way
+        of aliasing question_ids on a per-domain basis so that you can reference the same data in a standardized way
+        as a computed_ indicator.
+    """
+    question_id = StringProperty()
+
+    def get_value(self, doc):
+        form_data = doc.get_form
+        return self.get_from_form(form_data, self.question_id)
+
+
+class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
+    """
+        Use this indicator when you want to pull the value from a case property of a case related to a form
+        and include it as an indicator for that form.
+        This currently assumes the pre-2.0 model of CommCareCases and that there is only one related case per form.
+        This should probably get rewritten to handle forms that update more than one type of case or for sub-cases.
+    """
+    case_property = StringProperty()
+
+    def get_value(self, doc):
+        form_data = doc.get_form
+        related_case_id = form_data.get('case', {}).get('@case_id')
+        if related_case_id:
+            case = CommCareCase.get(related_case_id)
+            if isinstance(case, CommCareCase) and hasattr(case, str(self.case_property)):
+                return getattr(case, str(self.case_property))
+        return None
+
+
 class CaseIndicatorDefinition(IndicatorDefinition):
+    """
+        This Indicator Definition defines an indicator that will live in the computed_ property of a CommCareCase
+        document. The 'doc' passed through get_value and get_clean_value should be a CommCareCase.
+    """
     case_type = StringProperty()
     base_doc = "CaseIndicatorDefinition"
 
@@ -177,20 +241,11 @@ class CaseIndicatorDefinition(IndicatorDefinition):
         return ["namespace", "domain", "case_type", "slug"]
 
 
-class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
-    case_property = StringProperty()
-
-    def get_value(self, doc):
-        form_data = doc.get_form
-        related_case_id = form_data.get('case', {}).get('@case_id')
-        if related_case_id:
-            case = CommCareCase.get(related_case_id)
-            if isinstance(case, CommCareCase) and hasattr(case, str(self.case_property)):
-                return getattr(case, str(self.case_property))
-        return None
-
-
 class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicatorDefinitionMixin):
+    """
+        Use this for when you want to grab all forms with the relevant xmlns in a case's xform_ids property and
+        include a property from those forms as an indicator for this case.
+    """
     _returns_multiple = True
 
     def get_related_forms(self, case):
@@ -207,7 +262,6 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
     def get_value(self, doc):
         existing_value = self.get_existing_value(doc)
         if not (isinstance(existing_value, dict) or isinstance(existing_value, LazyDict)):
-            print "existing value is of type", type(existing_value)
             existing_value = dict()
         forms = self.get_related_forms(doc)
         for form in forms:
@@ -222,21 +276,6 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
 
     def get_value_for_form(self, form_data):
         raise NotImplementedError
-
-
-#class BooleanIndicatorDefinitionMixin(DocumentSchema):
-#    compared_property = StringProperty()
-#    expression = StringProperty() # example: '%(value)s' not in 'foo bar'
-#
-#    _compared_property_value = None
-#    def evaluate_expression(self):
-#        print self.expression % dict(value=self._compared_property_value)
-#        try:
-#            return eval(self.expression % dict(value=self._compared_property_value))
-#        except Exception:
-#            return False
-#
-#
 
 
 class PopulateRelatedCasesWithIndicatorDefinitionMixin(DocumentSchema):

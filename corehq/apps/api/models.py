@@ -31,8 +31,8 @@ class ApiUser(Document):
         To create a new ApiUser on the server:
         ./manage.py shell
 
-        >>> from corehq.apps.api.models import *
-        >>> ApiUser.create('buildserver', 'RANDOM').save()
+        $ from corehq.apps.api.models import *
+        $ ApiUser.create('buildserver', 'RANDOM').save()
         
         """
         self = cls()

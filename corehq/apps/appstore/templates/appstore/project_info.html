@@ -10,6 +10,7 @@
 
 {% block main_column %}
 
+<div class="container-fluid">
 <div class="page-header row-fluid">
 <div class="span2" style="text-align: center;">
     {% if project.image_path %}
@@ -27,25 +28,15 @@
                 {% endif %}
             </small>
         </h1>
-    <h3>
-        <a class="btn" href="{% url corehq.apps.app_manager.views.default project.name %}">Preview this project</a>
-    </h3>
         <h3>
             Ratings: <span class="badge badge-info">{{ num_ratings }}</span>
         </h3>
             {% if average_rating %}
-            <div class="span3">
-                <fieldset class="rating_static" id="stars{{ average_rating }} ">
-                    <input type="radio" id="star5{{ average_rating }}"  value="5" disabled=True {% if average_rating == 5 %} checked=True {% endif %} /><label for="star5{{ average_rating }}">5 stars</label>
-                    <input type="radio" id="star4{{ average_rating }}"  value="4" disabled=True {% if average_rating == 4 %} checked=True {% endif %} /><label for="star4{{ average_rating }}">4 stars</label>
-                    <input type="radio" id="star3{{ average_rating }}"  value="3" disabled=True {% if average_rating == 3 %} checked=True {% endif %} /><label for="star3{{ average_rating }}">3 stars</label>
-                    <input type="radio" id="star2{{ average_rating }}"  value="2" disabled=True {% if average_rating == 2 %} checked=True {% endif %} /><label for="star2{{ average_rating }}">2 stars</label>
-                    <input type="radio" id="star1{{ average_rating }}"  value="1" disabled=True {% if average_rating == 1 %} checked=True {% endif %} /><label for="star1{{ average_rating }}">1 star</label>
-                </fieldset>
-            </div>
+                {% include "partials/five_stars.html" with rating_name=average_rating rating=average_rating %}
             {% endif %}
     <br/>
     </div>
+</div>
 </div>
 <dl class="dl-horizontal">
     <dt>{% trans 'Short Description' %}</dt>
@@ -223,7 +214,7 @@
                 <small><a href="?current={{ current_link }}" class="btn btn-primary">{% if versioned %} View reviews for all versions {% else %} Only show reviews from current version{% endif %}</a></small>
             </h3>
             <br/>
-            {% if project.original_doc not in request.couch_user.get_domains %}
+            {% if project.copied_from.name not in request.couch_user.get_domains %}
             <div>
                 <a href="#add_review_modal" data-toggle="modal" class="btn btn-inverse">Write a Review</a>
             </div>
@@ -242,14 +233,7 @@
         <h4>{{ review.title }}</h4>
         <div>
             <p><small>{{ review.user }} on {{ review.date_published }}</small></p>
-            <fieldset class="rating_static" id="stars{{ review.get_id }}">
-                <input type="radio" id="star5{{ review.get_id }}" value="5" disabled=True {% if review.rating == 5 %} checked=True {% endif %}/><label for="star5{{ review.get_id }}">5 stars</label>
-                <input type="radio" id="star4{{ review.get_id }}" value="4" disabled=True {% if review.rating == 4 %} checked=True {% endif %}/><label for="star4{{ review.get_id }}">4 stars</label>
-                <input type="radio" id="star3{{ review.get_id }}" value="3" disabled=True {% if review.rating == 3 %} checked=True {% endif %}/><label for="star3{{ review.get_id }}">3 stars</label>
-                <input type="radio" id="star2{{ review.get_id }}" value="2" disabled=True {% if review.rating == 2 %} checked=True {% endif %}/><label for="star2{{ review.get_id }}">2 stars</label>
-                <input type="radio" id="star1{{ review.get_id }}" value="1" disabled=True {% if review.rating == 1 %} checked=True {% endif %}/><label for="star1{{ review.get_id }}">1 stars</label>
-            </fieldset>
-
+            {% include "partials/five_stars.html" with rating_name=review.get_id rating=review.rating %}
         </div>
         <div>{{ review.info }}</div>
             </div>
@@ -262,7 +246,7 @@
 
 
 
-{% if project.original_doc not in request.couch_user.get_domains %}
+{% if project.copied_from.name not in request.couch_user.get_domains %}
 {% block modals %}{{ block.super }}
 <div id="add_review_modal" class="modal hide fade">
     <div class="modal-header">

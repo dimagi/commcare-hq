@@ -224,6 +224,7 @@ def domain_admin_required_ex( redirect_page_name = None ):
 
 # Parallel to what we did with login_and_domain_required, above
 domain_admin_required = domain_admin_required_ex()
+cls_domain_admin_required = cls_to_view(additional_decorator=domain_admin_required)
 
 ########################################################################################################
     

@@ -59,10 +59,6 @@ urlpatterns =\
     )
 
 
-domain_specific = patterns('corehq.apps.domain.views',
-                           url(r'^info/$', 'snapshot_info', name='domain_snapshot_info'),
-)
-
 domain_settings = patterns('corehq.apps.domain.views',
                            url(r'^$', 'project_settings', name="domain_project_settings"),
                            url(r'^forwarding/$', 'domain_forwarding', name='domain_forwarding'),

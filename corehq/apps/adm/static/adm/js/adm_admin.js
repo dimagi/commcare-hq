@@ -39,13 +39,25 @@ var ADMAdminControl = function(options) {
         },
         resetSubmitButton = function (data) {
             $('button[type="submit"]').button('reset');
-        };
+        },
+        check_modal_height = function (modal) {
+            var win_height = $(window).height();
+            modal.css('top', '10px').css('margin-top', '0px');
+            modal.find('.modal-body').css('max-height', win_height-180+"px");
+    };
 
     self.init = function () {
         $(function() {
             $('#reportFiltersAccordion .accordion-actions').append(self.actionButton);
             self.addADMItemModal = $('#addADMItemModal');
             self.updateADMItemModal = $('#updateADMItemModal');
+
+            self.addADMItemModal.on('show', function () {
+                check_modal_height($(this));
+            });
+            self.updateADMItemModal.on('show', function () {
+                check_modal_height($(this));
+            });
 
             self.init_new_form();
 

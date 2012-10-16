@@ -79,7 +79,7 @@ ko.bindingHandlers.editableString = generateEditableHandler({
         if (element) {
             return $('input', element);
         } else {
-            return $('<input/>');
+            return $('<input type="text"/>');
         }
     },
     getNonEdit: function (element) {

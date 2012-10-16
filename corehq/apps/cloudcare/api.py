@@ -1,10 +1,10 @@
 import json
-import itertools
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.models import ApplicationBase, Application
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.decorators import inline
+from casexml.apps.phone.caselogic import get_footprint
 
 # todo: Make these api functions use generators for streaming
 # so that a limit call won't fetch more docs than it needs to
@@ -28,7 +28,7 @@ def get_all_cases(domain, include_closed=False, case_type=None):
     return [case.get_json() for case in cases]
 
 
-def get_owned_cases(domain, user_id, closed=False):
+def get_owned_cases(domain, user_id, closed=False, footprint=False):
     """
     Get all cases in a domain owned by a particular user.
     """
@@ -53,11 +53,13 @@ def get_owned_cases(domain, user_id, closed=False):
                 yield [owner_id, closed]
 
     cases = CommCareCase.view('case/by_owner', keys=keys, include_docs=True, reduce=False)
+    if footprint:
+        cases = get_footprint(cases).values()
     # demo_user cases!
     return [case.get_json() for case in cases if case.domain == domain]
 
 
-def get_filtered_cases(domain, user_id=None, filters=None):
+def get_filtered_cases(domain, user_id=None, filters=None, footprint=False):
 
     @inline
     def cases():
@@ -66,7 +68,8 @@ def get_filtered_cases(domain, user_id=None, filters=None):
         case_type = filters.get('properties/case_type')
 
         if user_id:
-            return get_owned_cases(domain, user_id, closed=closed)
+            return get_owned_cases(domain, user_id, closed=closed, 
+                                   footprint=footprint)
         else:
             return get_all_cases(domain, include_closed=closed in (True, None), case_type=case_type)
 
@@ -106,7 +109,8 @@ def get_filters_from_request(request, limit_top_level=None):
             'true': 'true',
             'false': 'false',
         }.get(filters.get('closed'), 'false')),
-        'format': None
+        'format': None,
+        'footprint': None
     })
     return filters
 

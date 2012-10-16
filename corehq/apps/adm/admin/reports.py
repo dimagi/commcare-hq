@@ -1,9 +1,9 @@
-from corehq.apps.adm.admin import ADMAdminInterface
-from corehq.apps.adm.forms import ADMReportForm
+from corehq.apps.adm.admin import BaseADMAdminInterface
+from corehq.apps.adm.admin.forms import ADMReportForm
 from corehq.apps.adm.models import ADMReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 
-class ADMReportEditIterface(ADMAdminInterface):
+class ADMReportAdminInterface(BaseADMAdminInterface):
     name = "Default ADM Reports"
     description = "The report that shows up by default for each domain"
     slug = "default_adm_reports"
@@ -16,9 +16,10 @@ class ADMReportEditIterface(ADMAdminInterface):
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn("Reporting Section"),
+            DataTablesColumn("Slug"),
+            DataTablesColumn("Domain"),
             DataTablesColumn("Report Name"),
             DataTablesColumn("Description"),
-            DataTablesColumn("Slug"),
             DataTablesColumn("Columns"),
             DataTablesColumn("Key Type"),
             DataTablesColumn("Edit"),
@@ -27,13 +28,13 @@ class ADMReportEditIterface(ADMAdminInterface):
     @property
     def rows(self):
         rows = []
-        key = ["defaults"]
-        data = self.property_class.view('adm/all_reports',
+        key = ["defaults all slug"]
+        data = self.property_class.view('adm/all_default_reports',
             reduce=False,
             include_docs=True,
             startkey=key,
             endkey=key+[{}]
         ).all()
         for item in data:
-            rows.append(item.as_row)
+            rows.append(item.admin_crud.row)
         return rows

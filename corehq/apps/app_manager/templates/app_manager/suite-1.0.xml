@@ -1,4 +1,5 @@
   {% load xforms_extras %}
+  {% load hq_shared_tags %}
 <suite version="{{ app.version }}">
 
  {% for module in app.get_modules %}
@@ -14,7 +15,7 @@
  {% endfor %}
  {% if app.show_user_registration %}
     <xform>
-        <resource id="{{ form.unique_id }}" version="{{ app.version }}">
+        <resource id="{{ app.user_registration.unique_id }}" version="{{ app.version }}">
            <location authority="local">./user_registration.xml</location>
            <location authority="remote">./user_registration.xml</location>
         </resource>
@@ -64,7 +65,7 @@
          {% else %}{% if d.format == "enum" or d.format == "enum-image"%}
              <template{% if d.format == "enum-image" %} form="image"{% endif %}><text>
                  <xpath function="
-                  {% for key, val in d.enum.items %}
+                  {% for key, val in d.enum.items|sort %}
                      if(/data/{{ d.model }}_{{ d.field }}_{{ forloop.parentloop.counter }} = '{{ key }}', $k{{ key }},
                   {% endfor %}
                      '?'
@@ -72,7 +73,7 @@
                      )
                   {% endfor %}
                  ">
-                  {% for key, val in d.enum.items %}
+                  {% for key, val in d.enum.items|sort %}
                      <variable name="k{{ key }}">
                          <locale id="m{{ module.id }}.{{ detail.type }}.{{ d.model }}_{{ d.field }}_{{ forloop.parentloop.counter }}.enum.k{{ key }}{% if d.format == "enum-image" %}.image{% endif %}"/>
                      </variable>

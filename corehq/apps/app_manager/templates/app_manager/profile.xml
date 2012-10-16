@@ -18,7 +18,7 @@
     <!-- end -->
 
     <features>
-        <checkoff active="false"/>
+        <checkoff active="{% if is_odk %}true{% else %}false{% endif %}"/>
         <reminders active="false">
             <time>0</time>
         </reminders>

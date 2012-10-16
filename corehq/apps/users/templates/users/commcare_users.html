@@ -42,7 +42,7 @@
 {% block user-view %}
     <div>
     <h2>
-        List of {% commcare_user %}s for Project "{% if request.project.is_snapshot %}{{ request.project.original_doc_display_name }}{% else %}{{ request.project.display_name }}{% endif %}"
+        {% commcare_user %}s
         {% if cannot_share %}without the correct number of groups{% endif %}
     </h2>
     <p>

@@ -1290,7 +1290,7 @@ class WebUser(CouchUser, AuthorizableMixin):
 
     @property
     def projects(self):
-        return map(Domain.get_by_name, self.domains)
+        return map(Domain.get_by_name, self.get_domains())
 
     def get_domains(self):
         from corehq.apps.orgs.models import Team
