@@ -42,10 +42,10 @@ CELERY_SEND_TASK_ERROR_EMAILS = True
 
 ####### Static files ########
 
-filepath = os.path.abspath(os.path.dirname(__file__))
+FILEPATH = os.path.abspath(os.path.dirname(__file__))
 # media for user uploaded media.  in general this won't be used at all.
-MEDIA_ROOT = os.path.join(filepath,'mediafiles') 
-STATIC_ROOT = os.path.join(filepath,'staticfiles')
+MEDIA_ROOT = os.path.join(FILEPATH,'mediafiles')
+STATIC_ROOT = os.path.join(FILEPATH,'staticfiles')
 
 
 ####### Bitly ########
@@ -102,6 +102,62 @@ DOMAIN_SYNCS = {
 }
 DOMAIN_SYNC_APP_NAME_MAP = { "app_name": "new_app_name" }
 
+####### Touchforms config #######
+
+XFORMS_PLAYER_URL = 'http://127.0.0.1:4444'
+
+TOUCHFORMS_API_USER = 'admin@example.com'
+TOUCHFORMS_API_PASSWORD = 'password'
+
+####### Selenium tests config ########
+
+SELENIUM_SETUP = {
+    # apps (or app-qualified testcase classes or methods) to skip testing
+    'EXCLUDE_APPS': [],
+
+    # Firefox, Chrome, Ie, or Remote
+    'BROWSER': 'Chrome',
+    
+    # Necessary if using Remote selenium driver
+    'REMOTE_URL': None,
+    
+    # If not using Remote, allows you to open browsers in a hidden virtual X Server
+    'USE_XVFB': True,
+    'XVFB_DISPLAY_SIZE': (1024, 768),
+}
+
+SELENIUM_USERS = {
+    # 'WEB_USER' is optional; if not set, some tests that want a web user will
+    # try to use ADMIN instead
+    'ADMIN': {
+        'USERNAME': 'foo@example.com',
+        'PASSWORD': 'password',
+        'URL': 'http://localhost:8000',
+        'PROJECT': 'project_name',
+        'IS_SUPERUSER': False
+    },
+
+    'WEB_USER': {
+        'USERNAME': 'foo@example.com',
+        'PASSWORD': 'password',
+        'URL': 'http://localhost:8000',
+        'PROJECT': 'mike',
+        'IS_SUPERUSER': False
+    },
+
+    'MOBILE_WORKER': {
+        'USERNAME': 'user@project_name.commcarehq.org',
+        'PASSWORD': 'password',
+        'URL': 'http://localhost:8000'
+    }
+}
+
+SELENIUM_APP_SETTINGS = {
+    'reports': {
+        'MAX_PRELOAD_TIME': 20,
+        'MAX_LOAD_TIME': 30,
+    },
+}
 
 ####### Misc / HQ-specific Config ########
 
@@ -123,3 +179,7 @@ FORMTRANSLATE_TIMEOUT = 5
 
 # list of domains to enable ADM reporting on
 ADM_ENABLED_PROJECTS = []
+
+# prod settings
+SOIL_DEFAULT_CACHE = "redis"
+SOIL_BACKEND = "soil.CachedDownload"

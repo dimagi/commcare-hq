@@ -5,6 +5,7 @@ import os
 import logging
 from django.contrib import messages
 
+
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 
 DEBUG = True
@@ -42,7 +43,7 @@ STATIC_ROOT = ''
 MEDIA_URL = '/media/'
 STATIC_URL = '/static/'
 
-filepath = os.path.abspath(os.path.dirname(__file__))
+FILEPATH = os.path.abspath(os.path.dirname(__file__))
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -50,10 +51,10 @@ STATICFILES_FINDERS = (
 )
 
 STATICFILES_DIRS = (
-    ('formdesigner', os.path.join(filepath,'submodules', 'formdesigner')),
+    ('formdesigner', os.path.join(FILEPATH,'submodules', 'formdesigner')),
 )
 
-DJANGO_LOG_FILE = "%s/%s" % (filepath, "commcarehq.django.log")
+DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -181,20 +182,24 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.couchapps',
+    'corehq.apps.selenium',
     'sofabed.forms',
     'soil',
     'corehq.apps.hqsofabed',
     'touchforms.formplayer',
-    'phonelog',
-    'pathfinder',
-    'hutch',
-    'dca',
-    'loadtest',
-    'hsph',
-    'pathindia',
-    'mvp',
     'hqbilling',
-    'a5288'
+    'phonelog',
+    'hutch',
+    'loadtest',
+    
+    # custom reports
+    'a5288',
+    'bihar',
+    'dca',
+    'hsph',
+    'mvp',
+    'pathfinder',
+    'pathindia',
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
@@ -279,7 +284,7 @@ SMS_GATEWAY_URL = "http://localhost:8001/"
 SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&text=%(message)s"
 
 # celery
-CARROT_BACKEND = "django"
+BROKER_URL = 'django://' #default django db based
 
 
 SKIP_SOUTH_TESTS = True
@@ -337,9 +342,15 @@ AUDIT_VIEWS = [
     'corehq.apps.domain.views.registration_confirm',
     'corehq.apps.domain.views.password_change',
     'corehq.apps.domain.views.password_change_done',
+    'corehq.apps.reports.views.submit_history',
+    'corehq.apps.reports.views.active_cases',
+    'corehq.apps.reports.views.submit_history',
+    'corehq.apps.reports.views.default',
+    'corehq.apps.reports.views.submission_log',
     'corehq.apps.reports.views.form_data',
     'corehq.apps.reports.views.export_data',
     'corehq.apps.reports.views.excel_report_data',
+    'corehq.apps.reports.views.daily_submissions',
 ]
 
 # Don't use google analytics unless overridden in localsettings
@@ -355,6 +366,7 @@ TOUCHFORMS_API_PASSWORD = "changeme"
 # import local settings if we find them
 LOCAL_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
+
 try:
     #try to see if there's an environmental variable set for local_settings
     if os.environ.has_key('CUSTOMSETTINGS') and os.environ['CUSTOMSETTINGS'] == "demo":
@@ -371,7 +383,7 @@ except ImportError:
 #SOUTH_TESTS_MIGRATE=False
 
 ####### Couch Forms & Couch DB Kit Settings #######
-from settingshelper import get_dynamic_db_settings
+from settingshelper import get_dynamic_db_settings, make_couchdb_tuple
 _dynamic_db_settings = get_dynamic_db_settings(COUCH_SERVER_ROOT, COUCH_USERNAME, COUCH_PASSWORD, COUCH_DATABASE_NAME, INSTALLED_APPS)
 
 # create local server and database configs
@@ -381,7 +393,8 @@ COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 # other urls that depend on the server
 XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
 
-COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
+
+COUCHDB_APPS = [
         'adm',
         'api',
         'app_manager',
@@ -418,18 +431,22 @@ COUCHDB_DATABASES = [(app_label, COUCH_DATABASE) for app_label in [
         'users',
         'formplayer',
         'phonelog',
-        'pathfinder',
         'registration',
         'hutch',
+        'hqbilling',
+        'couchlog',
+        
+        # custom reports
+        'bihar',
         'dca',
         'hsph',
-        'pathindia',
         'mvp',
-        'hqbilling',
+        'pathfinder',
+        'pathindia',
+]
 
-    ]
-] + [("couchlog", "%s/%s" %(COUCH_SERVER, COUCHLOG_DATABASE_NAME))]
 
+COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS ]
 
 INSTALLED_APPS += LOCAL_APPS
 
@@ -610,7 +627,19 @@ CUSTOM_REPORT_MAP = {
     },
     "a5288-test": {
         "Custom Reports": ["a5288.reports.MissedCallbackReport"]
+    },
+    "care-bihar": {
+        "Custom Reports": ["bihar.reports.supervisor.FamilyPlanningReport",
+                           "bihar.reports.supervisor.TeamDetailsReport",
+                           "bihar.reports.supervisor.TeamNavReport",
+                           "bihar.reports.supervisor.MotherListReport",
+                           "bihar.reports.supervisor.PregnanciesRegistered",
+                           "bihar.reports.supervisor.NoBPCounseling",
+                           "bihar.reports.supervisor.RecentDeliveries",]
     }
+#    "test": [
+#        'corehq.apps.reports.deid.FormDeidExport',
+#    ]
 }
 
 BILLING_REPORT_MAP = {
@@ -643,7 +672,7 @@ ADM_ADMIN_INTERFACE_MAP = {
         'corehq.apps.adm.admin.columns.ConfigurableADMColumnInterface'
     ],
     "ADM Default Reports": [
-        'corehq.apps.adm.admin.reports.ADMReportEditIterface',
+        'corehq.apps.adm.admin.reports.ADMReportAdminInterface',
     ]
 }
 
@@ -664,3 +693,17 @@ SMS_HANDLERS = [
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.api.form_session_handler',
 ]
+
+SELENIUM_APP_SETTING_DEFAULTS = {
+    'cloudcare': {
+        # over-generous defaults for now
+        'OPEN_FORM_WAIT_TIME': 20,
+        'SUBMIT_FORM_WAIT_TIME': 20
+    },
+
+    'reports': {
+        'MAX_PRELOAD_TIME': 20,
+        'MAX_LOAD_TIME': 30,
+    },
+}
+
