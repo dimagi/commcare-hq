@@ -51,7 +51,7 @@ def start_session(domain, contact, app, module, form, case_id=None):
     return (session, _responses_to_text(responses))
 
 def get_responses(msg):
-    return get_responses(msg.domain, msg.couch_recipient, msg.text)
+    return _get_responses(msg.domain, msg.couch_recipient, msg.text)
 
 def _get_responses(domain, recipient, text):
     """
