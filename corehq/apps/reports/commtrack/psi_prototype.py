@@ -4,6 +4,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.commtrack.models import *
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
+from corehq.apps.locations.models import Location
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
 import itertools
@@ -122,24 +123,26 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
     @property
     def rows(self):
         products = self.products
+        locs = Location.filter_by_type(self.domain, 'outlet', self.location)
         reports = get_stock_reports(self.domain, self.location, self.datespan)
-        reports_by_loc = map_reduce(lambda e: [(e['form']['location'],)], data=reports, include_docs=True)
 
-        locs = sorted(reports_by_loc.keys()) # todo: pull from location hierarchy
+        def leaf_loc(form):
+            return form['location_'][-1]
+        reports_by_loc = map_reduce(lambda e: [(leaf_loc(e),)], data=reports, include_docs=True)
 
         def summary_row(site, reports):
             all_transactions = list(itertools.chain(*(get_transactions(r) for r in reports)))
             tx_by_product = map_reduce(lambda tx: [(tx['product'],)], data=all_transactions, include_docs=True)
 
             data = [
-                site,
+                site.name,
             ]
             stockouts = {}
             for p in products:
                 tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
 
-                start_key = [str(self.domain), site, p['_id'], to_iso(self.datespan.startdate)]
-                end_key =   [str(self.domain), site, p['_id'], to_iso(self.datespan.end_of_end_day)]
+                start_key = [str(self.domain), site._id, p['_id'], to_iso(self.datespan.startdate)]
+                end_key =   [str(self.domain), site._id, p['_id'], to_iso(self.datespan.end_of_end_day)]
                 # list() is necessary or else get a weird error
                 product_states = list(get_db().view('commtrack/stock_product_state', start_key=start_key, end_key=end_key))
                 latest_state = product_states[-1]['value'] if product_states else None
@@ -169,4 +172,4 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
             return data
 
-        return [summary_row(site, reports_by_loc.get(site, [])) for site in locs]
+        return [summary_row(site, reports_by_loc.get(site._id, [])) for site in locs]

@@ -27,6 +27,14 @@ class Location(Document):
 
         super(Document, self).__init__(*args, **kwargs)
 
+    @classmethod
+    def filter_by_type(cls, domain, loc_type, root_loc=None):
+        loc_id = root_loc._id if root_loc else None
+        return cls.view('locations/by_type',
+                        start_key=[domain, loc_type, loc_id],
+                        end_key=[domain, loc_type, loc_id, {}],
+                        include_docs=True).all()
+
     @property
     def is_root(self):
         return not self.lineage
