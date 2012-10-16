@@ -926,6 +926,87 @@ class StartConditionReminderTestCase(TestCase):
     def tearDownClass(cls):
         pass
 
+class ReminderLockTestCase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = "test"
+        cls.user_id = "USER-ID-109352"
+        cls.user = CommCareUser.create(cls.domain, 'chw.bob6', '****', uuid=cls.user_id)
+        
+        cls.handler1 = CaseReminderHandler(
+            domain=cls.domain,
+            case_type="case_type_a",
+            method="test",
+            start_property='start_sending1',
+            start_value="^(ok|OK|\d\d\d\d-\d\d-\d\d)",
+            start_date='start_sending1',
+            start_offset=1,
+            start_match_type=MATCH_REGEX,
+            until='stop_sending1',
+            default_lang='en',
+            max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY,
+            schedule_length=3,
+            event_interpretation=EVENT_AS_OFFSET,
+            events = [
+                CaseReminderEvent(
+                    day_num = 0
+                   ,fire_time = time(0,0,0)
+                   ,message={"en":"Testing the lock"}
+                   ,callback_timeout_intervals=[]
+                )
+            ]
+        )
+        cls.handler1.save()
+        
+        cls.case1 = CommCareCase(
+            domain=cls.domain,
+            type="case_type_a",
+            user_id=cls.user_id
+        )
+        cls.case1.save()
+
+    def test_ok(self):
+        # Spawn the reminder with an "ok" start condition value
+        CaseReminderHandler.now = datetime(year=2012, month=2, day=17, hour=12, minute=0)
+        self.assertEqual(self.handler1.get_reminder(self.case1), None)
+        
+        self.case1.set_case_property("start_sending1", "ok")
+        self.case1.save()
+        
+        reminder = self.handler1.get_reminder(self.case1)
+        old_reminder = self.handler1.get_reminder(self.case1)
+        self.assertNotEqual(reminder, None)
+        
+        self.assertEqual(
+            reminder.next_fire
+           ,CaseReminderHandler.now + timedelta(days=self.handler1.start_offset)
+        )
+        
+        # Fire the reminder, testing that the locking process works
+        CaseReminderHandler.now = datetime(year=2012, month=2, day=18, hour=12, minute=1)
+        self.assertEqual(reminder.lock_date, None)
+        self.assertEqual(reminder.acquire_lock(CaseReminderHandler.now), True)
+        self.assertEqual(reminder.lock_date, CaseReminderHandler.now)
+        self.assertEqual(reminder.acquire_lock(CaseReminderHandler.now), False)
+        self.handler1.fire(reminder)
+        self.handler1.set_next_fire(reminder, CaseReminderHandler.now)
+        reminder.release_lock()
+        self.assertEqual(reminder.lock_date, None)
+        
+        # Ensure old versions of the document cannot acquire the lock
+        self.assertNotEqual(reminder._rev, old_reminder._rev)
+        self.assertEqual(old_reminder.acquire_lock(CaseReminderHandler.now), False)
+        
+        # Test the lock timeout
+        self.assertEqual(reminder.acquire_lock(CaseReminderHandler.now), True)
+        self.assertEqual(reminder.acquire_lock(CaseReminderHandler.now), False)
+        self.assertEqual(reminder.acquire_lock(CaseReminderHandler.now + LOCK_EXPIRATION + timedelta(minutes = 1)), True)
+
+    @classmethod
+    def tearDownClass(cls):
+        pass
+
+
 class MessageTestCase(TestCase):
     def test_message(self):
         message = 'The EDD for client with ID {case.external_id} is approaching in {case.edd.days_until} days.'

@@ -18,6 +18,9 @@ from corehq.apps.sms.util import format_message_list
 from corehq.apps.reminders.util import get_form_name
 from touchforms.formplayer.api import current_question
 from corehq.apps.sms.mixin import VerifiedNumber
+from couchdbkit.exceptions import ResourceConflict
+
+LOCK_EXPIRATION = timedelta(hours = 1)
 
 METHOD_CHOICES = ["sms", "email", "test", "callback", "callback_test", "survey"]
 
@@ -748,10 +751,12 @@ class CaseReminderHandler(Document):
     def fire_reminders(cls, now=None):
         now = now or cls.get_now()
         for reminder in cls.get_all_reminders(due_before=now):
-            handler = reminder.handler
-            if handler.fire(reminder):
-                handler.set_next_fire(reminder, now)
-                reminder.save()
+            if reminder.acquire_lock(now) and now >= reminder.next_fire:
+                handler = reminder.handler
+                if handler.fire(reminder):
+                    handler.set_next_fire(reminder, now)
+                    reminder.save()
+                reminder.release_lock()
 
     def retire(self):
         reminders = self.get_reminders()
@@ -788,6 +793,23 @@ class CaseReminder(Document):
     start_condition_datetime = DateTimeProperty()   # The date and time matching the case property specified by the CaseReminderHandler.start_condition
     sample_id = StringProperty()
     xforms_session_ids = ListProperty(StringProperty)
+    lock_date = DateTimeProperty()
+    
+    # Returns True if the lock was acquired by the calling thread, False if another thread acquired it first
+    def acquire_lock(self, now):
+        if (self.lock_date is None) or (now > (self.lock_date + LOCK_EXPIRATION)):
+            try:
+                self.lock_date = now
+                self.save()
+                return True
+            except ResourceConflict:
+                return False
+        else:
+            return False
+    
+    def release_lock(self):
+        self.lock_date = None
+        self.save()
     
     @property
     def handler(self):
