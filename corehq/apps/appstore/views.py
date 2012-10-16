@@ -212,12 +212,16 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
 @require_previewer # remove for production
 def snapshot_search(request):
     params = {}
+    facets = []
     for attr in request.GET.iterlists():
+        if attr[0] == 'facets':
+            facets = attr[1][0].split()
+            continue
         params[attr[0]] = attr[1][0] if len(attr[1]) < 2 else attr[1]
-    results = es_snapshot_search(params)
+    results = es_snapshot_search(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
-def es_snapshot_search(params):
+def es_snapshot_search(params, facets=[]):
     q = {"query": {"bool": {"must":
                             [{"match": {'doc_type': "Domain"}},
                              {"term": {"is_approved": params.get('is_approved', None) or True}},
@@ -229,6 +233,11 @@ def es_snapshot_search(params):
         if attr not in terms:
             attr_val = [params[attr].lower()] if isinstance(params[attr], basestring) else [p.lower() for p in params[attr]]
             q["query"]["bool"]["must"].append({"terms": {attr: attr_val}})
+
+    if facets:
+        q["facets"] = {}
+        for facet in facets:
+            q["facets"][facet] = {"terms": {"field": facet}}
 
     es_url = "commcarehq/commcarehq/_search"
     es = rawes.Elastic('localhost:9200')
