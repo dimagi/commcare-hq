@@ -6,6 +6,11 @@ from corehq.apps.commtrack.models import *
 from corehq.apps.sms import test_backend
 from dimagi.utils.couch.database import get_db
 
+"""
+helper code to populate the various commtrack models, for ease of
+development/testing, before we have proper UIs and imports
+"""
+
 def make_verified_contact(username, backend=test_backend.API_ID):
     """utility function to register 'verified' phone numbers for a commcare user"""
     u = CommCareUser.get_by_username(username)
@@ -20,11 +25,12 @@ def make_product(domain, name, code):
     p.save()
     return p
 
-def make_supply_point(domain, code, all_products=True):
+def make_supply_point(domain, location, code, all_products=True):
     c = CommCareCase()
     c.domain = domain
     c.site_code = code
     c.type = 'supply-point'
+    c.bind_to_location(location)
     c.save()
 
     products = []
@@ -41,13 +47,14 @@ def make_supply_point(domain, code, all_products=True):
         ix.referenced_type = 'supply-point'
         ix.referenced_id = c._id
         pc.indices = [ix]
+        pc.bind_to_location(location)
         pc.save()
 
     return c
 
-def make_psi_config():
+def make_psi_config(domain):
     c = CommtrackConfig(
-        domain='test',
+        domain=domain,
         multiaction_enabled=True,
         multiaction_keyword='psi',
         multiaction_delimiter='.',
