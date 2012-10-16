@@ -59,6 +59,9 @@ def parse_iso(dt):
 def to_iso(dt):
     return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
 
+def leaf_loc(form):
+    return form['location_'][-1]
+
 class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Visit Report'
     slug = 'visits'
@@ -84,12 +87,13 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
         products = self.products
         actions = self.actions
         reports = get_stock_reports(self.domain, self.location, self.datespan)
+        locs = dict((loc._id, loc) for loc in Location.view('_all_docs', keys=[leaf_loc(r) for r in reports], include_docs=True))
 
         def row(doc):
             transactions = dict(((tx['action'], tx['product']), tx['value']) for tx in get_transactions(doc))
 
             data = [
-                doc['form']['location'],
+                locs[leaf_loc(doc)].name,
                 parse_iso(doc['received_on']).strftime('%Y-%m-%d'),
                 CommCareUser.get(doc['form']['meta']['userID']).username_in_report,
             ]
@@ -125,9 +129,6 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
         products = self.products
         locs = Location.filter_by_type(self.domain, 'outlet', self.location)
         reports = get_stock_reports(self.domain, self.location, self.datespan)
-
-        def leaf_loc(form):
-            return form['location_'][-1]
         reports_by_loc = map_reduce(lambda e: [(leaf_loc(e),)], data=reports, include_docs=True)
 
         def summary_row(site, reports):
