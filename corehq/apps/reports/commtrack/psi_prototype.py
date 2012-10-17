@@ -24,7 +24,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
     @property
     def products(self):
-        query = get_db().view('commtrack/products', start_key=[self.domain], end_key=[self.domain, {}], include_docs=True)
+        query = get_db().view('commtrack/products', startkey=[self.domain], endkey=[self.domain, {}], include_docs=True)
         prods = [e['doc'] for e in query]
         return sorted(prods, key=lambda p: p['name'])
 
@@ -54,10 +54,10 @@ def get_stock_reports(domain, location, datespan):
     timestamp_end =  dateparse.json_format_datetime(datespan.end_of_end_day)
     loc_id = location._id if location else None
 
-    start_key = [domain, loc_id, timestamp_start]
-    end_key = [domain, loc_id, timestamp_end]
+    startkey = [domain, loc_id, timestamp_start]
+    endkey = [domain, loc_id, timestamp_end]
 
-    query = get_db().view('commtrack/stock_reports', start_key=start_key, end_key=end_key, include_docs=True)
+    query = get_db().view('commtrack/stock_reports', startkey=startkey, endkey=endkey, include_docs=True)
     return [e['doc'] for e in query]
 
 def leaf_loc(form):
@@ -145,11 +145,11 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
             for p in products:
                 tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
 
-                start_key = [str(self.domain), site._id, p['_id'], dateparse.json_format_datetime(self.datespan.startdate)]
-                end_key =   [str(self.domain), site._id, p['_id'], dateparse.json_format_datetime(self.datespan.end_of_end_day)]
+                startkey = [str(self.domain), site._id, p['_id'], dateparse.json_format_datetime(self.datespan.startdate)]
+                endkey =   [str(self.domain), site._id, p['_id'], dateparse.json_format_datetime(self.datespan.end_of_end_day)]
 
                 # list() is necessary or else get a weird error
-                product_states = list(get_db().view('commtrack/stock_product_state', start_key=start_key, end_key=end_key))
+                product_states = list(get_db().view('commtrack/stock_product_state', startkey=startkey, endkey=endkey))
                 latest_state = product_states[-1]['value'] if product_states else None
                 if latest_state:
                     stock = latest_state['updated_unknown_properties']['current_stock']

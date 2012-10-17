@@ -31,8 +31,8 @@ class Location(Document):
     def filter_by_type(cls, domain, loc_type, root_loc=None):
         loc_id = root_loc._id if root_loc else None
         return cls.view('locations/by_type',
-                        start_key=[domain, loc_type, loc_id],
-                        end_key=[domain, loc_type, loc_id, {}],
+                        startkey=[domain, loc_type, loc_id],
+                        endkey=[domain, loc_type, loc_id, {}],
                         include_docs=True).all()
 
     @property
@@ -54,28 +54,28 @@ class Location(Document):
 
     @property
     def _key_bounds(self):
-        start_key = list(itertools.chain([self.domain], self.path, ['']))
-        end_key = list(itertools.chain(start_key[:-1], [{}]))
-        return start_key, end_key
+        startkey = list(itertools.chain([self.domain], self.path, ['']))
+        endkey = list(itertools.chain(startkey[:-1], [{}]))
+        return startkey, endkey
 
     @property
     def descendants(self):
         """return list of all locations that have this location as an ancestor"""
-        start_key, end_key = self._key_bounds
-        return self.view('locations/hierarchy', start_key=start_key, end_key=end_key, reduce=False, include_docs=True).all()
+        startkey, endkey = self._key_bounds
+        return self.view('locations/hierarchy', startkey=startkey, endkey=endkey, reduce=False, include_docs=True).all()
 
     @property
     def children(self):
         """return list of immediate children of this location"""
-        start_key, end_key = self._key_bounds
+        startkey, endkey = self._key_bounds
         depth = len(self.path) + 2 # 1 for domain, 1 for next location level
-        q = self.view('locations/hierarchy', start_key=start_key, end_key=end_key, group_level=depth)
+        q = self.view('locations/hierarchy', startkey=startkey, endkey=endkey, group_level=depth)
         keys = [e['key'] for e in q if len(e['key']) == depth]
         return self.view('locations/hierarchy', keys=keys, reduce=False, include_docs=True).all()
 
 def location_tree(domain):
     """build a hierarchical tree of the entire location structure for a domain"""
-    locs = Location.view('locations/hierarchy', start_key=[domain], end_key=[domain, {}], reduce=False, include_docs=True).all()
+    locs = Location.view('locations/hierarchy', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True).all()
     locs.sort(key=lambda l: l.path) # just to be safe; couch view should return in the correct sorted order
     locs_by_id = dict((l._id, l) for l in locs)
 

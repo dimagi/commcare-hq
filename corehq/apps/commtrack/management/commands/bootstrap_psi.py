@@ -113,8 +113,8 @@ def create_locations(domain):
 
 def register_reporters(domain):
     mobile_workers = CommCareUser.view('users/phone_users_by_domain',
-                                       start_key=[domain],
-                                       end_key=[domain, {}],
+                                       startkey=[domain],
+                                       endkey=[domain, {}],
                                        include_docs=True)
     for mw in mobile_workers:
         make_verified_contact(mw.username)

@@ -35,7 +35,7 @@ def make_supply_point(domain, location, code, all_products=True):
 
     products = []
     if all_products:
-        products = get_db().view('commtrack/products', start_key=[domain], end_key=[domain, {}])
+        products = get_db().view('commtrack/products', startkey=[domain], endkey=[domain, {}])
     for p in products:
         prod_id = p['id']
         pc = CommCareCase()
