@@ -189,7 +189,8 @@ HQ_APPS = (
     'phonelog',
     'hutch',
     'loadtest',
-    
+    'pillowtop',
+
     # custom reports
     'a5288',
     'bihar',
@@ -364,6 +365,7 @@ TOUCHFORMS_API_PASSWORD = "changeme"
 # import local settings if we find them
 LOCAL_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
+LOCAL_PILLOWTOPS = ()
 
 try:
     #try to see if there's an environmental variable set for local_settings
@@ -431,7 +433,7 @@ COUCHDB_APPS = [
         'hutch',
         'hqbilling',
         'couchlog',
-        
+
         # custom reports
         'bihar',
         'dca',
@@ -692,3 +694,4 @@ SELENIUM_APP_SETTING_DEFAULTS = {
         'MAX_LOAD_TIME': 30,
     },
 }
+PILLOWTOPS = [] + LOCAL_PILLOWTOPS
