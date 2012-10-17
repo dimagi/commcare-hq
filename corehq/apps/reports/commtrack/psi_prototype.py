@@ -4,6 +4,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.commtrack.models import *
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
+from corehq.apps.locations.models import Location
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.loosechange import map_reduce
 from dimagi.utils import parsing as dateparse
@@ -11,6 +12,7 @@ import itertools
 from datetime import datetime, date, timedelta
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
+
     @classmethod
     def show_in_navigation(cls, request, *args, **kwargs):
         domain = Domain.get_by_name(kwargs['domain'])
@@ -30,6 +32,16 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
     def actions(self):
         return sorted(self.config.actions.keys())
 
+    # find a memoize decorator?
+    _location = None
+    @property
+    def active_location(self):
+        if not self._location:
+            loc_id = self.request_params.get('location_id')
+            if loc_id:
+                self._location = Location.get(loc_id)
+        return self._location
+
 def get_transactions(form_doc):
     from collections import Sequence
     txs = form_doc['form']['transaction']
@@ -37,20 +49,25 @@ def get_transactions(form_doc):
         txs = [txs]
     return txs
 
-def get_stock_reports(domain, datespan):
+def get_stock_reports(domain, location, datespan):
     timestamp_start = dateparse.json_format_datetime(datespan.startdate)
     timestamp_end =  dateparse.json_format_datetime(datespan.end_of_end_day)
+    loc_id = location._id if location else None
 
-    start_key = [domain, timestamp_start]
-    end_key = [domain, timestamp_end]
+    start_key = [domain, loc_id, timestamp_start]
+    end_key = [domain, loc_id, timestamp_end]
 
     query = get_db().view('commtrack/stock_reports', start_key=start_key, end_key=end_key, include_docs=True)
     return [e['doc'] for e in query]
 
+def leaf_loc(form):
+    return form['location_'][-1]
+
 class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Visit Report'
     slug = 'visits'
-    fields = ['corehq.apps.reports.fields.DatespanField']
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'corehq.apps.reports.fields.LocationField']
 
     @property
     def headers(self):
@@ -71,13 +88,14 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     def rows(self):
         products = self.products
         actions = self.actions
-        reports = get_stock_reports(self.domain, self.datespan)
+        reports = get_stock_reports(self.domain, self.active_location, self.datespan)
+        locs = dict((loc._id, loc) for loc in Location.view('_all_docs', keys=[leaf_loc(r) for r in reports], include_docs=True))
 
         def row(doc):
             transactions = dict(((tx['action'], tx['product']), tx['value']) for tx in get_transactions(doc))
 
             data = [
-                doc['form']['location'],
+                locs[leaf_loc(doc)].name,
                 dateparse.string_to_datetime(doc['received_on']).strftime('%Y-%m-%d'),
                 CommCareUser.get(doc['form']['meta']['userID']).username_in_report,
             ]
@@ -92,7 +110,8 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
 class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Sales and Consumption Report'
     slug = 'sales_consumption'
-    fields = ['corehq.apps.reports.fields.DatespanField']
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'corehq.apps.reports.fields.LocationField']
 
     @property
     def headers(self):
@@ -111,24 +130,24 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
     @property
     def rows(self):
         products = self.products
-        reports = get_stock_reports(self.domain, self.datespan)
-        reports_by_loc = map_reduce(lambda e: [(e['form']['location'],)], data=reports, include_docs=True)
-
-        locs = sorted(reports_by_loc.keys()) # todo: pull from location hierarchy
+        locs = Location.filter_by_type(self.domain, 'outlet', self.active_location)
+        reports = get_stock_reports(self.domain, self.active_location, self.datespan)
+        reports_by_loc = map_reduce(lambda e: [(leaf_loc(e),)], data=reports, include_docs=True)
 
         def summary_row(site, reports):
             all_transactions = list(itertools.chain(*(get_transactions(r) for r in reports)))
             tx_by_product = map_reduce(lambda tx: [(tx['product'],)], data=all_transactions, include_docs=True)
 
             data = [
-                site,
+                site.name,
             ]
             stockouts = {}
             for p in products:
                 tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
 
-                start_key = [str(self.domain), site, p['_id'], dateparse.json_format_datetime(self.datespan.startdate)]
-                end_key =   [str(self.domain), site, p['_id'], dateparse.json_format_datetime(self.datespan.end_of_end_day)]
+                start_key = [str(self.domain), site._id, p['_id'], dateparse.json_format_datetime(self.datespan.startdate)]
+                end_key =   [str(self.domain), site._id, p['_id'], dateparse.json_format_datetime(self.datespan.end_of_end_day)]
+
                 # list() is necessary or else get a weird error
                 product_states = list(get_db().view('commtrack/stock_product_state', start_key=start_key, end_key=end_key))
                 latest_state = product_states[-1]['value'] if product_states else None
@@ -158,4 +177,4 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
             return data
 
-        return [summary_row(site, reports_by_loc.get(site, [])) for site in locs]
+        return [summary_row(site, reports_by_loc.get(site._id, [])) for site in locs]
