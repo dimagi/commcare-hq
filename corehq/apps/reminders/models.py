@@ -476,7 +476,10 @@ class CaseReminderHandler(Document):
         if reminder.method == "survey":
             if reminder.callback_try_count > 0:
                 for session_id in reminder.xforms_session_ids:
-                    session = XFormsSession.get(session_id)
+                    session = XFormsSession.view("smsforms/sessions_by_touchforms_id",
+                                                    startkey=[session_id],
+                                                    endkey=[session_id, {}],
+                                                    include_docs=True).one()
                     if session.end_time is None:
                         vn = VerifiedNumber.view("sms/verified_number_by_owner_id",
                                                   key=session.connection_id,
@@ -484,6 +487,7 @@ class CaseReminderHandler(Document):
                         if vn is not None:
                             resp = current_question(session_id)
                             send_sms_to_verified_number(vn, resp.event.text_prompt)
+                return True
             else:
                 recipients = []
                 if self.recipient == RECIPIENT_CASE:
