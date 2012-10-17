@@ -344,7 +344,7 @@ class SuiteGenerator(object):
             e.datum.id='case_id'
             e.datum.nodeset="instance('casedb')/casedb/case[@case_type='{module.case_type}'][@status='open']{filter_xpath}".format(
                 module=module,
-                filter_xpath=self.get_filter_xpath(module) if use_filter else None
+                filter_xpath=self.get_filter_xpath(module) if use_filter else ''
             )
             e.datum.value="./@case_id"
             e.datum.detail_select=self.id_strings.detail(module=module, detail=module.get_detail('case_short'))

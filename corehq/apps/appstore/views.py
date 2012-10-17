@@ -190,7 +190,7 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
 
     average_ratings = list()
     for result in results:
-        average_ratings.append([result.name, Review.get_average_rating_by_app(result.project_id)])
+        average_ratings.append([result.name, Review.get_average_rating_by_app(result.copied_from._id)])
 
     vals = _appstore_context(dict(apps=results,
                                   filter_by=filter_by,

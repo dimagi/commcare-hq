@@ -61,7 +61,7 @@ class ReportDispatcher(View):
         """
         return True
 
-    def get_reports(self, request, *args, **kwargs):
+    def get_reports(self, domain=None):
         """
             Override this method as necessary for specially constructed report maps.
             For instance, custom reports are structured like:
@@ -73,13 +73,26 @@ class ReportDispatcher(View):
         """
         return self.report_map
 
+    
+    def get_report(self, domain, report_slug):
+        """
+        Returns the report class for a configured slug, or None if no 
+        report is found.
+        """
+        reports = self.get_reports(domain)
+        for key, report_model_paths in reports.items():
+            for model_path in report_model_paths:
+                report_class = to_function(model_path)
+                if report_class.slug == report_slug:
+                    return report_class
+        
     def dispatch(self, request, *args, **kwargs):
         if not self.validate_report_map(request, *args, **kwargs):
             return HttpResponseNotFound("Sorry, no reports have been configured yet.")
 
         current_slug = kwargs.get('report_slug')
         render_as = kwargs.get('render_as') or 'view'
-        reports = self.get_reports(request, *args, **kwargs)
+        reports = self.get_reports(request.domain)
         for key, report_model_paths in reports.items():
             for model_path in report_model_paths:
                 report_class = to_function(model_path)
@@ -115,7 +128,7 @@ class ReportDispatcher(View):
         report_nav = list()
         dispatcher = cls()
         args, kwargs = dispatcher.args_kwargs_from_context(context)
-        reports = dispatcher.get_reports(request, *args, **kwargs)
+        reports = dispatcher.get_reports(request.domain)
         current_slug = kwargs.get('report_slug')
         for key, models in reports.items():
             section = list()
@@ -174,6 +187,5 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
     prefix = 'custom_project_report'
     map_name = 'CUSTOM_REPORT_MAP'
 
-    def get_reports(self, request, *args, **kwargs):
-        domain = request.domain
+    def get_reports(self, domain):
         return self.report_map.get(domain, {})
