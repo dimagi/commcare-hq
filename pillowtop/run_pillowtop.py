@@ -1,15 +1,15 @@
 import gevent
-from socketpool.pool import ConnectionPool
-from gevent import monkey; monkey.patch_all()
-
-try:
-    from django.conf import settings
-except Exception, ex:
-    #if we are not in a django context, then import local pillowsettings
-    print ex
-    import pillowsettings as settings
+from gevent.pool import Pool
 
 def import_pillows():
+    try:
+        from django.conf import settings
+    except Exception, ex:
+        #if we are not in a django context, then import local pillowsettings
+        print "django import"
+        print ex
+        import pillowsettings as settings
+
     pillowtops = []
     if hasattr(settings, 'PILLOWTOPS'):
         for full_str in settings.PILLOWTOPS:
@@ -24,20 +24,14 @@ def import_pillows():
 
 
 #standalone pillowtop runner
-import pillowsettings as pillow_settings
-
-from restkit.conn import Connection
-from gevent.pool import Pool
 
 def start_pillows():
+    from gevent import monkey; monkey.patch_all()
     pillows = import_pillows()
-    pool = Pool(len(pillows)+1)
-    #cpool = ConnectionPool(factory=Connection, backend='gevent')
-    jobs = []
+    pool = Pool(len(pillows))
     for p in pillows:
-        #p.couch_db.pool = cpool
-        jobs.append(gevent.spawn(p.run))
-    gevent.joinall(jobs)
+        pool.spawn(p.run)
+    pool.join()
 
 if __name__ == "__main__":
     start_pillows()

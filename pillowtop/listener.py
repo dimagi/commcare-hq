@@ -1,24 +1,94 @@
 import logging
-from couchdbkit.changes import ChangesStream
-import restkit, couchdbkit
+import restkit
 from restkit.resource import Resource
 import simplejson
 from gevent import socket
+import rawes
+
+import couchdbkit
+if couchdbkit.version_info < (0,6,0):
+    USE_NEW_CHANGES=False
+else:
+    from couchdbkit.changes import ChangesStream
+    USE_NEW_CHANGES=True
+
+CHECKPOINT_FREQUENCY = 100
+
+def old_changes(pillow):
+    from couchdbkit import Server, Consumer
+    c = Consumer(pillow.couch_db, backend='gevent')
+    c.wait(pillow.parsing_processor, since=pillow.since, filter=pillow.couch_filter)
+
+def new_changes(pillow):
+     with ChangesStream(pillow.couch_db, feed='continuous', heartbeat=True, since=pillow.since,
+         filter=pillow.couch_filter) as st:
+        for c in st:
+            pillow.processor(c)
 
 class BasicPillow(object):
     couch_filter = None # string for filter if needed
     couch_db = None #couchdbkit Database Object
+    changes_seen = 0
 
     def run(self, since=0):
         """
         Couch changes stream creation
         """
         print "Starting pillow %s" % self.__class__
-        with ChangesStream(self.couch_db, feed='continuous', heartbeat=True, since=since) as st:
-            for c in st:
-                self.processor(c)
+        if USE_NEW_CHANGES:
+            new_changes(self)
+        else:
+            old_changes(self)
+
+
+    def get_checkpoint_doc_name(self):
+        return "pillowtop_%s.%s" % (self.__module__, self.__class__.__name__)
+
+    def get_checkpoint(self):
+        doc_name = self.get_checkpoint_doc_name()
+
+        if self.couch_db.doc_exist(doc_name):
+            checkpoint_doc = self.couch_db.open_doc(doc_name)
+        else:
+            checkpoint_doc = {
+                "_id": doc_name,
+                "seq": 0
+            }
+            self.couch_db.save_doc(checkpoint_doc)
+        return checkpoint_doc
+
+    def reset_checkpoint(self):
+        checkpoint_doc = self.get_checkpoint()
+        checkpoint_doc['old_seq'] = checkpoint_doc['seq']
+        checkpoint_doc['seq'] = 0
+        self.couch_db.save_doc(checkpoint_doc)
+
+
+    @property
+    def since(self):
+        checkpoint = self.get_checkpoint()
+        return checkpoint['seq']
+
+    def set_checkpoint(self, change):
+        checkpoint = self.get_checkpoint()
+        checkpoint['seq'] = change['seq']
+        self.couch_db.save_doc(checkpoint)
+
+    def parsing_processor(self, change):
+        """
+        Processor that also parses the change - for pre 0.6.0 couchdbkit,
+        the change is passed as a string
+        """
+        self.processor(simplejson.loads(change))
 
     def processor(self, change):
+        """
+        Parent processsor for a pillow class - this should not be overriden
+        """
+        self.changes_seen+=1
+        if self.changes_seen % CHECKPOINT_FREQUENCY == 0:
+            self.set_checkpoint(change)
+
         t = self.change_trigger(change)
         if t is not None:
             tr = self.change_transform(t)
@@ -32,19 +102,21 @@ class BasicPillow(object):
         For a given _changes indicator, the changes dict (the _id, _rev) is sent here.
         Should return a doc_dict
         """
-        #return self.couch_db.open_doc(changes_dict['id'])
-        return changes_dict
+        print changes_dict
+        if changes_dict.get('deleted', False):
+            return None
+        return self.couch_db.open_doc(changes_dict['id'])
 
     def change_transform(self, doc_dict):
         """
-        process/transform doc_dict if needed.
+        process/transform doc_dict if needed - default, return the doc_dict passed.
         """
         return doc_dict
     def change_transport(self, doc_dict):
         """
-        Finish transport of doc if needed.
+        Finish transport of doc if needed. Main subclass should implement this
         """
-        pass
+        raise NotImplementedError("Error, this pillowtop subclass has not been configured to do anything!")
 
 class ElasticPillow(BasicPillow):
     """
@@ -53,12 +125,14 @@ class ElasticPillow(BasicPillow):
     es_host = ""
     es_port = ""
     es_index = ""
+    es_type = ""
 
-    def change_transport(doc_dict):
+    def change_transport(self, doc_dict):
         try:
-            res = Resource("%s:%s" % (self.es_host, self.es_port))
-            r = res.post(self.es_index, payload = simplejson.dumps(doc_dict))
-            return r.status
+            #res = Resource("%s:%s" % (self.es_host, self.es_port))
+            #r = res.post(self.es_index, payload = simplejson.dumps(doc_dict))
+            es = rawes.Elastic('%s:%s' % (self.es_host, self.es_port))
+            es.put("%s/%s/%s" % (self.es_index, self.es_type, doc_dict['_id']),  data = doc_dict)
         except Exception, ex:
             logging.error("PillowTop: transporting change data to eleasticsearch error:  %s", ex)
             return None
@@ -74,8 +148,6 @@ class NetworkPillow(BasicPillow):
     transport_type = 'tcp'
 
     def change_transport(self, doc_dict):
-        print "Change Transport %s: %s" % (self.__class__, doc_dict)
-        return
         try:
             address = (self.endpoint_host, self.endpoint_port)
             if self.transport_type == 'tcp':

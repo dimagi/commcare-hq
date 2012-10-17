@@ -3,9 +3,6 @@
 def pillow_processor():
     pool = ConnectionPool(factory=Connection, backend='gevent')
 
-
-
-
     db = XFormInstance.get_db()
     db.server.pool = pool
 
