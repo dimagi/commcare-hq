@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import re
+from django.core.cache import cache
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import get_close_case_xml, get_close_referral_xml,\
@@ -9,6 +10,7 @@ from couchdbkit.ext.django.schema import *
 from casexml.apps.case import const
 from dimagi.utils import parsing
 import logging
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.indicators import ComputedDocumentMixin
 from receiver.util import spoof_submission
 from couchforms.models import XFormInstance
@@ -52,7 +54,7 @@ class CommCareCaseAction(DocumentSchema):
     updated_known_properties = DictProperty()
     updated_unknown_properties = DictProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
-    
+
     @classmethod
     def from_parsed_action(cls, action_type, date, xformdoc, action):
         if not action_type in const.CASE_ACTIONS:
@@ -71,8 +73,21 @@ class CommCareCaseAction(DocumentSchema):
         if hasattr(xformdoc, "last_sync_token"):
             ret.sync_log_id = xformdoc.last_sync_token
         return ret
-    
+
+    @property
+    def xform(self):
+        return XFormInstance.get(self.xform_id) if self.xform_id else None
         
+    def get_user_id(self):
+        key = 'xform-%s-user_id' % self.xform_id
+        id = cache.get(key)
+        if not id:
+            xform = self.xform
+            id = xform.metadata.userID if xform else None
+            cache.set(key, id, 12*60*60)
+        return id
+
+
     class Meta:
         app_label = 'case'
 
@@ -236,22 +251,19 @@ class CommCareCase(CaseBase, IndexHoldingMixIn, ComputedDocumentMixin):
                 # all custom properties go here
             }.items()),
             #reorganized
-            "indices": dict([
-                # all indexes are stored in the following form
-                (index.identifier, {
-                    "case_type": index.referenced_type,
-                    "case_id": index.referenced_id
-                }) for index in self.indices
-            ]),
-            "reverse_indices": dict([
-                # all indexes are stored in the following form
-                (index.identifier, {
-                    "case_type": index.referenced_type,
-                    "case_id": index.referenced_id
-                }) for index in self.reverse_indices
-            ]),
+            "indices": self.get_index_map(),
+            "reverse_indices": self.get_index_map(True)
         }
-    
+
+    @memoized
+    def get_index_map(self, reversed=False):
+        return dict([
+            (index.identifier, {
+                "case_type": index.referenced_type,
+                "case_id": index.referenced_id
+            }) for index in (self.indices if not reversed else self.reverse_indices)
+        ])
+
     def get_preloader_dict(self):
         """
         Gets the case as a dictionary for use in touchforms preloader framework
