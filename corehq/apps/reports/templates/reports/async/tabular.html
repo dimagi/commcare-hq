@@ -5,7 +5,9 @@
 
 {% block reportcontent %}
 {% if report.needs_filters %}
-    <p>Please choose your filters to see report data.</p>
+    <div class="well">
+        <p>Please choose your filters above to see report data.</p>
+    </div>
 {% else %}        
     <table class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
         <thead>

@@ -168,6 +168,19 @@ var ExportManager = function (o) {
         $.getJSON(downloadUrl, updateModal);
     };
 
+    self.requestCaseDownload = function(data, event) {
+        var $button = $(event.srcElement || event.currentTarget);
+        var downloadUrl = self.downloadUrl || $button.data('dlocation');
+        var modalTitle = "Case List";
+        resetModal(modalTitle, true);
+
+        downloadUrl += '?'+self.exportFilters;
+        downloadUrl += '&include_closed=' + $('#include-closed-select').val();
+        downloadUrl += '&async=true'
+
+        $.getJSON(downloadUrl, updateModal);
+    };
+
     self.checkCustomSheetNameLength = function(data, event) {
         var src = event.srcElement || event.currentTarget;
         var $input = $(src);

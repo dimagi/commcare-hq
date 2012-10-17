@@ -40,7 +40,7 @@ from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
 from couchexport import views as couchexport_views
 from couchexport.shortcuts import export_data_shared, export_raw_data,\
     export_response
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from couchforms.filters import instances
 from couchdbkit.exceptions import ResourceNotFound
 from fields import FilterUsersField
@@ -50,6 +50,9 @@ from StringIO import StringIO
 from corehq.apps.app_manager.util import get_app_id
 from corehq.apps.groups.models import Group
 from corehq.apps.adm import utils as adm_utils
+from soil import DownloadBase
+from celery.task import task
+from soil.tasks import prepare_download
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -82,6 +85,7 @@ def default(request, domain, template="reports/base_template.html"):
 @login_or_digest
 @require_form_export_permission
 @datespan_default
+@require_GET
 def export_data(req, domain):
     """
     Download all data for a couchdbkit model
@@ -138,6 +142,7 @@ def export_data(req, domain):
 @require_form_export_permission
 @login_and_domain_required
 @datespan_default
+@require_GET
 def export_data_async(request, domain):
     """
     Download all data for a couchdbkit model
@@ -247,6 +252,7 @@ class CustomExportHelper(object):
 
 @login_or_digest
 @datespan_default
+@require_GET
 def export_default_or_custom_data(request, domain, export_id=None, bulk_export=False):
     """
     Export data from a saved export schema
@@ -392,6 +398,7 @@ def edit_custom_export(req, domain, export_id):
 @login_or_digest
 @require_form_export_permission
 @login_and_domain_required
+@require_GET
 def hq_download_saved_export(req, domain, export_id):
     export = SavedBasicExport.get(export_id)
     # quasi-security hack: the first key of the index is always assumed 
@@ -402,6 +409,7 @@ def hq_download_saved_export(req, domain, export_id):
 @login_or_digest
 @require_form_export_permission
 @login_and_domain_required
+@require_GET
 def export_all_form_metadata(req, domain):
     """
     Export metadata for _all_ forms in a domain.
@@ -443,6 +451,7 @@ def delete_custom_export(req, domain, export_id):
 
 @require_can_view_all_reports
 @login_and_domain_required
+@require_GET
 def case_details(request, domain, case_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
 
@@ -474,37 +483,67 @@ def case_details(request, domain, case_id):
         "timezone": timezone
     })
 
-@login_or_digest
-@require_case_export_permission
-@login_and_domain_required
-def download_cases(request, domain):
-    include_closed = json.loads(request.GET.get('include_closed', 'false'))
-    format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
-
+def generate_case_export_payload(domain, include_closed, format, group, user_filter):
     view_name = 'hqcase/all_cases' if include_closed else 'hqcase/open_cases'
-
     key = [domain, {}, {}]
     cases = CommCareCase.view(view_name, startkey=key, endkey=key + [{}], reduce=False, include_docs=True)
-#    group, users = util.get_group_params(domain, **json_request(request.GET))
-    group = request.GET.get('group', None)
-    user_filter, _ = FilterUsersField.get_user_filter(request)
     # todo deal with cached user dict here
     users = get_all_users_by_domain(domain, group=group, user_filter=user_filter)
     groups = Group.get_case_sharing_groups(domain)
-    
-#    if not group:
-#        users.extend(CommCareUser.by_domain(domain, is_active=False))
+
+    #    if not group:
+    #        users.extend(CommCareUser.by_domain(domain, is_active=False))
 
     workbook = WorkBook()
     export_cases_and_referrals(cases, workbook, users=users, groups=groups)
     export_users(users, workbook)
-    response = HttpResponse(workbook.format(format.slug))
-    response['Content-Type'] = "%s" % format.mimetype
-    response['Content-Disposition'] = "attachment; filename={domain}_data.{ext}".format(domain=domain, ext=format.extension)
-    return response
+    payload = workbook.format(format.slug)
+    return payload
+
+@login_or_digest
+@require_case_export_permission
+@login_and_domain_required
+@require_GET
+def download_cases(request, domain):
+    include_closed = json.loads(request.GET.get('include_closed', 'false'))
+    format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
+    view_name = 'hqcase/all_cases' if include_closed else 'hqcase/open_cases'
+    group = request.GET.get('group', None)
+    user_filter, _ = FilterUsersField.get_user_filter(request)
+
+    async = request.GET.get('async') == 'true'
+
+    kwargs = {
+        'domain': domain,
+        'include_closed': include_closed,
+        'format': format,
+        'group': group,
+        'user_filter': user_filter,
+    }
+    payload_func = SerializableFunction(generate_case_export_payload, **kwargs)
+    content_disposition = "attachment; filename={domain}_data.{ext}".format(domain=domain, ext=format.extension)
+    mimetype = "%s" % format.mimetype
+
+    def generate_payload(payload_func):
+        if async:
+            download = DownloadBase()
+            a_task = prepare_download.delay(download.download_id, payload_func,
+                                            content_disposition, mimetype)
+            download.set_task(a_task)
+            return download.get_start_response()
+        else:
+            payload = payload_func()
+            response = HttpResponse(payload)
+            response['Content-Type'] = mimetype
+            response['Content-Disposition'] = content_disposition
+            return response
+
+    return generate_payload(payload_func)
+
 
 @require_can_view_all_reports
 @login_and_domain_required
+@require_GET
 def form_data(request, domain, instance_id):
     timezone = util.get_timezone(request.couch_user.user_id, domain)
     try:
@@ -530,6 +569,7 @@ def form_data(request, domain, instance_id):
                                                   modified=instance.received_on)))
 @require_form_export_permission
 @login_and_domain_required
+@require_GET
 def download_form(request, domain, instance_id):
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)
@@ -537,6 +577,7 @@ def download_form(request, domain, instance_id):
 
 @require_form_export_permission
 @login_and_domain_required
+@require_GET
 def download_attachment(request, domain, instance_id, attachment):
     instance = XFormInstance.get(instance_id)
     assert(domain == instance.domain)

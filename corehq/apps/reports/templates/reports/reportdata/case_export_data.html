@@ -4,21 +4,27 @@
 
 {% block js %} {{ block.super }}
     <script type="text/javascript" src="{% static 'reports/javascripts/reports.download_export.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/ko/export.manager.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         var exportDownloader = new HQExportDownloader({});
         exportDownloader.init();
+
+        var exportManager = new ExportManager( {
+            domain: '{{ domain }}',
+            exportFilters: '{{ get_filter_params.urlencode|safe }}',
+            downloadUrl: '{% url download_cases domain %}'
+        } );
+        $('#full-case-export').one().each(function () {
+            ko.applyBindings(exportManager, this);
+        });
+
     </script>
 {% endblock %}
 
 {% block reportcontent %}
-    <form class="form-horizontal hq-form-report" action="{% url download_cases domain %}" method="get">
-        {% for val, list in get_filter_params.lists %}
-            {% for item in list %}
-                <input type="hidden" name="{{ val }}" value="{{ item}}" />
-            {% endfor %}
-        {% endfor %}
+    <div id="full-case-export" class="form-horizontal hq-form-report">
         <fieldset style="margin-top: 2em;">
             <legend>Download Settings</legend>
             <div class="control-group">
@@ -31,11 +37,12 @@
                 </div>
             </div>
         </fieldset>
-
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary btn-large"><i class="icon-download-alt icon-white"></i> Download</button>
+            <a data-toggle="modal" href="#export-download-status"
+               data-bind="click: requestCaseDownload"
+               class="btn btn-primary btn-large dl-export" ><i class="icon-download-alt icon-white"></i> Download</a>
         </div>
-    </form>
+    </div>
 
     <div class="hq-generic-report form-horizontal">
         <h2>Saved Custom Exports</h2>

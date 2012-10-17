@@ -1,20 +1,17 @@
 from datetime import timedelta, datetime
 import json
 from copy import deepcopy
-from django.core.files import temp
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
-from django.contrib.auth.decorators import permission_required
-from django.template.context import RequestContext
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
 from corehq.apps.sms.models import SMSLog
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import  CommCareUser
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from collections import defaultdict
-from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
+from corehq.apps.domain.decorators import  require_superuser
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from dimagi.utils.web import json_response, render_to_response
@@ -27,6 +24,12 @@ from django.template.defaultfilters import yesno
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
 from django.contrib import messages
+from dimagi.utils import gitinfo
+from django.conf import settings
+from restkit import Resource
+import os
+from django.core import cache
+from django.core.cache import InvalidCacheBackendError
 
 @require_superuser
 def default(request):
@@ -502,3 +505,156 @@ def domain_list_download(request):
     data = (("domains", (_row(domain) for domain in domains)),)
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "domains")
+
+
+@require_superuser
+def system_ajax(request):
+    """
+    Utility ajax functions for polling couch and celerymon
+    """
+    type = request.GET.get('api', None)
+    task_limit = getattr(settings, 'CELERYMON_TASK_LIMIT', 5)
+    celerymon_url = getattr(settings, 'CELERYMON_URL', '')
+    db = XFormInstance.get_db()
+    ret = {}
+    if type == "_active_tasks":
+        tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
+        #tasks = [{'type': 'indexer', 'pid': 'foo', 'database': 'mock',
+        # 'design_document': 'mockymock', 'progress': random.randint(0,100), 'started_on': 1349906040.723517, 'updated_on': 1349905800.679458}]
+        return HttpResponse(json.dumps(tasks), mimetype='application/json')
+    elif type == "_stats":
+        return HttpResponse(json.dumps({}), mimetype = 'application/json')
+    elif type == "_logs":
+        pass
+
+    if celerymon_url != '':
+        cresource = Resource(celerymon_url)
+        if type == "celerymon_poll":
+            #inefficient way to just get everything in one fell swoop
+            #first, get all task types:
+            t = cresource.get("api/task/name/").body_string()
+            task_names = json.loads(t)
+            ret = []
+            for tname in task_names:
+                taskinfo_raw = json.loads(cresource.get('api/task/name/%s' % (tname), params_dict={'limit': task_limit}).body_string())
+                for traw in taskinfo_raw:
+                    # it's an array of arrays - looping through [<id>, {task_info_dict}]
+                    tinfo = traw[1]
+                    tinfo['name'] = '.'.join(tinfo['name'].split('.')[-2:])
+                    ret.append(tinfo)
+            ret = sorted(ret, key=lambda x: x['succeeded'], reverse=True)
+            return HttpResponse(json.dumps(ret), mimetype = 'application/json')
+
+#        if type=="celerymon_tasks_types":
+#            #call CELERYMON_URL/api/task/name/ to get seen task types
+#            t = cresource.get("api/task/name/")
+#            return HttpResponse(t.body_string(), mimetype = 'application/json')
+#        elif type == "celerymon_tasks_by_type":
+#            #call CELERYMON_URL/api/task/name/ to get seen task types
+#            task_name = request.GET.get('task_name', '')
+#            if task_name != '':
+#                t = cresource.get("/api/task/name/%s/?limit=%d" % (task_name, task_limit))
+#                return HttpResponse(t.body_string(), mimetype = 'application/json')
+
+    return HttpResponse('{}', mimetype = 'application/json')
+
+@require_superuser
+def system_info(request):
+
+    def human_bytes(bytes):
+        #source: https://github.com/bartTC/django-memcache-status
+        bytes = float(bytes)
+        if bytes >= 1073741824:
+            gigabytes = bytes / 1073741824
+            size = '%.2fGB' % gigabytes
+        elif bytes >= 1048576:
+            megabytes = bytes / 1048576
+            size = '%.2fMB' % megabytes
+        elif bytes >= 1024:
+            kilobytes = bytes / 1024
+            size = '%.2fKB' % kilobytes
+        else:
+            size = '%.2fB' % bytes
+        return size
+
+    context = get_hqadmin_base_context(request)
+
+    context['couch_update'] = request.GET.get('couch_update', 5000)
+    context['celery_update'] = request.GET.get('celery_update', 10000)
+
+    context['hide_filters'] = True
+    context['current_system'] = os.uname()[1]
+    context['current_ref'] = gitinfo.get_project_info()
+    if settings.COUCH_USERNAME == '' and settings.COUCH_PASSWORD == '':
+       couchlog_resource = Resource("http://%s/" % (settings.COUCH_SERVER_ROOT))
+    else:
+        couchlog_resource = Resource("http://%s:%s@%s/" % (settings.COUCH_USERNAME, settings.COUCH_PASSWORD, settings.COUCH_SERVER_ROOT))
+    context['couch_log'] = couchlog_resource.get('_log', params_dict={'bytes': 2000 }).body_string()
+
+    #redis status
+    redis_status = ""
+    redis_results = ""
+    try:
+        rc = cache.get_cache('redis')
+
+    except InvalidCacheBackendError, ex:
+        redis_status="Not Configured"
+        redis_results= "Redis is not configured on this system!"
+
+    try:
+        import redis
+        redis_api = redis.StrictRedis.from_url('redis://%s' % rc._server)
+        info_dict = redis_api.info()
+        redis_status = "Online"
+        redis_results = "Used Memory: %s" % info_dict['used_memory_human']
+    except Exception, ex:
+        redis_status="Offline"
+        redis_result= "Redis connection error: %s" % ex
+    context['redis_status'] = redis_status
+    context['redis_results'] = redis_results
+
+    #rabbitmq status
+    mq_status = "Unknown"
+    if settings.BROKER_URL.startswith('amqp'):
+        amqp_parts = settings.BROKER_URL.replace('amqp://','').split('/')
+        mq_management_url = amqp_parts[0].replace('5672', '55672')
+        vhost = amqp_parts[1]
+        mq = Resource('http://%s' % mq_management_url)
+        vhost_dict = json.loads(mq.get('api/vhosts').body_string())
+        mq_status = "Offline"
+        for d in vhost_dict:
+            if d['name'] == vhost:
+                mq_status='OK'
+    else:
+        mq_status = "Not configured"
+    context['rabbitmq_status'] = mq_status
+
+
+    #memcached_status
+    mc = cache.get_cache('default')
+    mc_status = "Unknown/Offline"
+    mc_results = ""
+    try:
+        mc_stats = mc._cache.get_stats()
+        if len(mc_stats) > 0:
+            mc_status = "Online"
+            stats_dict = mc_stats[0][1]
+            bytes = stats_dict['bytes']
+            max_bytes = stats_dict['limit_maxbytes']
+            curr_items = stats_dict['curr_items']
+            mc_results = "%s Items %s out of %s" % (curr_items, human_bytes(bytes),
+                                                    human_bytes(max_bytes))
+
+    except Exception, ex:
+        mc_status = "Offline"
+        mc_results = "%s" % ex
+    context['memcached_status'] = mc_status
+    context['memcached_results'] = mc_results
+
+
+    #elasticsearch status
+    #todo
+
+
+    return render_to_response(request, "hqadmin/system_info.html", context)
+
