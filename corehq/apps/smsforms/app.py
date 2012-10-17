@@ -19,9 +19,7 @@ def start_session(domain, contact, app, module, form, case_id=None):
     """
     # NOTE: this call assumes that "contact" will expose three
     # properties: .raw_username, .get_id, and .get_language_code
-    session_data = get_session_data(domain, contact, case_id, 
-                                    version=app.application_version, 
-                                    device_id=COMMCONNECT_DEVICE_ID)
+    session_data = get_session_data(domain, contact, case_id, device_id=COMMCONNECT_DEVICE_ID)
     
     # since the API user is a superuser, force touchforms to query only
     # the contact's cases by specifying it as an additional filterp
