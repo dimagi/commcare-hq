@@ -222,9 +222,9 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
             form = DomainMetadataForm(initial={
                 'default_timezone': domain.default_timezone,
                 'case_sharing': json.dumps(domain.case_sharing),
-                'city': domain.city,
-                'country': domain.country,
-                'region': domain.region,
+                'city': domain.deployment.city,
+                'country': domain.deployment.country,
+                'region': domain.deployment.region,
                 'project_type': domain.project_type,
                 'customer_type': domain.customer_type,
                 'is_test': json.dumps(domain.is_test),
@@ -288,9 +288,9 @@ def create_snapshot(request, domain):
         form = SnapshotSettingsForm(initial={
                 'default_timezone': domain.default_timezone,
                 'case_sharing': json.dumps(domain.case_sharing),
-                'city': domain.city,
-                'country': domain.country,
-                'region': domain.region,
+                'city': domain.deployment.city,
+                'country': domain.deployment.country,
+                'region': domain.deployment.region,
                 'project_type': domain.project_type,
                 'share_multimedia': True,
                 'license': domain.license
@@ -301,9 +301,9 @@ def create_snapshot(request, domain):
             form = SnapshotSettingsForm(initial={
                 'default_timezone': published_snapshot.default_timezone,
                 'case_sharing': json.dumps(published_snapshot.case_sharing),
-                'city': published_snapshot.city,
-                'country': published_snapshot.country,
-                'region': published_snapshot.region,
+#                'city': published_snapshot.city,
+#                'country': published_snapshot.country,
+#                'region': published_snapshot.region,
                 'project_type': published_snapshot.project_type,
                 'license': published_snapshot.license,
                 'title': published_snapshot.title,
@@ -381,9 +381,9 @@ def create_snapshot(request, domain):
         new_domain.description = request.POST['description']
         new_domain.short_description = request.POST['short_description']
         new_domain.project_type = request.POST['project_type']
-        new_domain.region = request.POST['region']
-        new_domain.city = request.POST['city']
-        new_domain.country = request.POST['country']
+#        new_domain.region = request.POST['region']
+#        new_domain.city = request.POST['city']
+#        new_domain.country = request.POST['country']
         new_domain.title = request.POST['title']
         new_domain.author = request.POST['author']
         for snapshot in domain.snapshots():
@@ -469,9 +469,9 @@ def snapshot_info(request, domain):
         form = DomainMetadataForm(initial={
             'default_timezone': domain.default_timezone,
             'case_sharing': json.dumps(domain.case_sharing),
-            'city': domain.city,
-            'country': domain.country,
-            'region': domain.region,
+#            'city': domain.city,
+#            'country': domain.country,
+#            'region': domain.region,
             'project_type': domain.project_type,
             'customer_type': domain.customer_type,
             'is_test': json.dumps(domain.is_test),

@@ -188,9 +188,9 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         if not res:
             return False
         try:
-            domain.city = self.cleaned_data['city']
-            domain.country = self.cleaned_data['country']
-            domain.region = self.cleaned_data['region']
+            domain.deployment.city = self.cleaned_data['city']
+            domain.deployment.country = self.cleaned_data['country']
+            domain.deployment.region = self.cleaned_data['region']
             domain.project_type = self.cleaned_data['project_type']
             domain.customer_type = self.cleaned_data['customer_type']
             domain.is_test = self.cleaned_data['is_test'] == 'true'

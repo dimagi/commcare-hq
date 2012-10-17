@@ -113,6 +113,19 @@ class HQBillingDomainMixin(DocumentSchema):
         self.currency_code = kwargs.get('currency_code', settings.DEFAULT_CURRENCY)
 
 
+class Deployment(DocumentSchema):
+    date = DateTimeProperty()
+    city = StringProperty()
+    country = StringProperty()
+    region = StringProperty() # e.g. US, LAC, SA, Sub-saharn Africa, East Africa, West Africa, Southeast Asia)
+    description = StringProperty()
+    public = BooleanProperty(default=False)
+
+    def update(self, new_dict):
+        for kw in new_dict:
+            self[kw] = new_dict[kw]
+
+
 class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the
@@ -129,9 +142,6 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     slug = StringProperty() # the slug for this project namespaced within an organization
 
     # domain metadata
-    city = StringProperty()
-    country = StringProperty()
-    region = StringProperty() # e.g. US, LAC, SA, Sub-saharn Africa, East Africa, West Africa, Southeast Asia)
     project_type = StringProperty() # e.g. MCH, HIV
     customer_type = StringProperty() # plus, full, etc.
     is_test = BooleanProperty(default=False)
@@ -148,9 +158,10 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     title = StringProperty()
 
     author = StringProperty()
-    deployment_date = DateTimeProperty()
     phone_model = StringProperty()
     attribution_notes = StringProperty()
+
+    deployment = SchemaProperty(Deployment)
 
     image_path = StringProperty()
     image_type = StringProperty()
@@ -499,28 +510,9 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         else:
             return ''
 
-    def create_deployment(self):
-        class DeploymentError(Exception):
-            def __init__(self, msg):
-                self.msg = msg
-            def __str__(self):
-                return "Create Deployment Error: %s" % self.msg
-
-        if self.deployment:
-            raise DeploymentError("A deployment already exists for this domain")
-
-        if self.is_snapshot:
-            raise DeploymentError("Can't create deployment of a snapshot")
-
-        dep = Deployment(domain_id=self._id)
-        if self.deployment_date:
-            dep.deployment_date = self.deployment_date
-        dep.save()
-        return dep
-
-    @property
-    def deployment(self):
-        return Deployment.view('domain/deployments', key=self._id, include_docs=True).one()
+    def update_deployment(self, **kwargs):
+        self.deployment.update(kwargs)
+        self.save()
 
     def display_name(self):
         if self.is_snapshot:
@@ -659,12 +651,3 @@ class OldDomain(models.Model):
 
     def __unicode__(self):
         return self.name
-
-class Deployment(Document):
-    domain_id = StringProperty()
-    deployment_date = DateTimeProperty()
-
-    @property
-    @memoized
-    def domain(self):
-        return Domain.get(self.domain_id)
