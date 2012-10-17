@@ -4,25 +4,25 @@
 </div>
 <input name="location_id" type="hidden" data-bind="value: selected_locid" />
 
-  <!-- pre-populate existing value -->
-  <!-- populate locs -->
-  <!-- update filter button initially greyed out -->
-
 <script type="text/javascript">
 
 $(function() {
 
   var locs = {{ locations|safe }};
+  var selected = '{{ loc_id }}';
   var model = new LocationSelectViewModel();
   ko.applyBindings(model, $('#group_{{ control_slug }}')[0]);
-  model.load(locs);
+  model.load(locs, selected);
 
 });
 
 function LocationSelectViewModel() {
+  var model = this;
+
   this.root = ko.observable();
   this.selected_path = ko.observableArray();
 
+  // currently selected location in the tree (or null)
   this.selected_location = ko.computed(function() {
       for (var i = this.selected_path().length - 1; i >= 0; i--) {
         var loc = this.selected_path()[i];
@@ -32,10 +32,12 @@ function LocationSelectViewModel() {
       }
       return null;
     }, this);
+  // uuid of currently selected location (or null)
   this.selected_locid = ko.computed(function() {
       return this.selected_location() ? this.selected_location().uuid() : null;
     }, this);
 
+  // add a new level of drill-down to the tree
   this.path_push = function(loc) {
     this.selected_path.push(loc);
     if (loc.num_children() == 1) {
@@ -43,9 +45,39 @@ function LocationSelectViewModel() {
     }
   }
 
-  this.load = function(locs) {
+  // search for a location within the tree by uuid; return path to location if found
+  this.find_loc = function(uuid, loc) {
+    loc = loc || this.root();
+
+    if (loc.uuid() == uuid) {
+      return [loc];
+    } else {
+      var path = null;
+      $.each(loc.children(), function(i, e) {
+          var subpath = model.find_loc(uuid, e);
+          if (subpath) {
+            path = subpath;
+            path.splice(0, 0, loc);
+            return false;
+          }
+        });
+      return path;
+    }
+  }
+
+  // load location hierarchy and set initial path
+  this.load = function(locs, selected) {
     this.root(new LocationModel({name: '_root', id: -1, children: locs}, this));
     this.path_push(this.root());
+
+    if (selected) {
+      var sel_path = this.find_loc(selected);
+      if (sel_path) {
+        for (var i = 1; i < sel_path.length; i++) {
+          sel_path[i - 1].selected_child(sel_path[i]);
+        }
+      }
+    }
   }
 }
 
@@ -63,6 +95,7 @@ function LocationModel(data, root, depth) {
     }, this);
 
   this.selected_child = ko.observable();
+  // when a location is selected, update the drill-down tree
   this.selected_child.subscribe(function(val) {
       if (val == null) {
         return;
