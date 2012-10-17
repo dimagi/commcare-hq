@@ -34,6 +34,9 @@ def _appstore_context(context={}):
             ('author', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('author')]),
             ('license', [(d, LICENSES.get(d), count) for d, count in Domain.field_by_prefix('license')]),
         ]
+    import pprint
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint(context)
     return context
 
 @require_previewer # remove for production
@@ -177,7 +180,7 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
     #query = '%s:"%s"' % (filter_by, filter)
 
 #    results = Domain.get_by_field(FILTERS[filter_by], filter)
-    results = es_snapshot_search({FILTERS[filter_by]: filter})
+    results = es_snapshot_filter({FILTERS[filter_by]: filter})
     results = [Domain.wrap(res['_source']) for res in results['hits']['hits']]
 
     total_rows = len(results)
@@ -209,8 +212,7 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
                                   average_ratings=average_ratings))
     return render_to_response(request, template, vals)
 
-@require_previewer # remove for production
-def snapshot_search(request):
+def parse_args_for_filter(request):
     params = {}
     facets = []
     for attr in request.GET.iterlists():
@@ -218,10 +220,60 @@ def snapshot_search(request):
             facets = attr[1][0].split()
             continue
         params[attr[0]] = attr[1][0] if len(attr[1]) < 2 else attr[1]
+    return params, facets
+
+def generate_sortables_from_facets(results, params=[]):
+    param_strings = {}
+    if params:
+        for attr in params:
+            val = params[attr]
+            if not isinstance(val, basestring):
+                val=" ".join(val)
+            param_strings[attr] = "{}={}".format(attr, val)
+
+    def generate_query_string(strings, attr, val):
+        strs = strings.copy()
+        strs[attr] = "{}={}".format(attr, val)
+        return "?%s" % "&".join(strs.values())
+
+    sortable = []
+    for facet in results.get("facets", []):
+        sortable.append((facet, [(generate_query_string(param_strings, facet, ft["term"]), ft["term"], ft["count"]) \
+                                 for ft in results["facets"][facet]["terms"]]))
+    return sortable or _appstore_context()
+
+@require_previewer # remove for production
+def snapshot_filter(request, template="appstore/appstore_base.html"):
+    params, _ = parse_args_for_filter(request)
+    facets = ['project_type', 'license', 'region', 'author']
+    results = es_snapshot_filter(params, facets)
+    d_results = [Domain.wrap(res['_source']) for res in results['hits']['hits']]
+
+    average_ratings = list()
+    for result in d_results:
+        average_ratings.append([result.name, Review.get_average_rating_by_app(result.copied_from._id)])
+
+    facets_sortables = generate_sortables_from_facets(results, params)
+    page = 1
+    include_unapproved = False
+    vals = dict(apps=d_results,
+        page=page,
+        prev_page=(page-1),
+        next_page=(page+1),
+        more_pages=False,
+        sort_by=None,
+        average_ratings=average_ratings,
+        include_unapproved=include_unapproved,
+        sortables=facets_sortables)
+    return render_to_response(request, template, vals)
+
+@require_previewer # remove for production
+def api_snapshot_filter(request):
+    params, facets = parse_args_for_filter(request)
     results = es_snapshot_filter(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
-def es_snapshot_filter(params, facets=[]):
+def es_snapshot_filter(params, facets=[], include_ratings=False):
     q = {"query":   {"bool": {"must":
                                   [{"match": {'doc_type': "Domain"}},
                                    {"term": {"published": True}},
@@ -250,7 +302,6 @@ def es_snapshot_filter(params, facets=[]):
     ret_data = es.get(es_url, data=q)
 
     return ret_data
-
 
 @require_previewer
 def appstore_default(request):
