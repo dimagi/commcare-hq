@@ -442,7 +442,7 @@ class CaseReminderHandler(Document):
                 reminder.next_fire = CaseReminderHandler.timestamp_to_utc(reminder.recipient, reminder_datetime)
             
             # Set whether or not the reminder should still be active
-            reminder.active = self.get_active(reminder, now, case)
+            reminder.active = self.get_active(reminder, reminder.next_fire, case)
     
     def get_active(self, reminder, now, case):
         return (not self.condition_reached(case, self.until, now)) and not (self.max_iteration_count != REPEAT_SCHEDULE_INDEFINITELY and reminder.schedule_iteration_num > self.max_iteration_count)
@@ -674,7 +674,7 @@ class CaseReminderHandler(Document):
             
             # Check to see if the reminder should still be active
             if reminder is not None:
-                active = self.get_active(reminder, now, case)
+                active = self.get_active(reminder, reminder.next_fire, case)
                 if active and not reminder.active:
                     reminder.active = True
                     self.set_next_fire(reminder, now) # This will fast-forward to the next event that does not occur in the past
