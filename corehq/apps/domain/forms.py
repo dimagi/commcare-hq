@@ -1,3 +1,4 @@
+import dateutil
 import re
 from django import forms
 from django.contrib.auth.models import User
@@ -83,10 +84,6 @@ class DomainSelectionForm(forms.Form):
 ########################################################################################################
 
 class SnapshotSettingsMixin(forms.Form):
-    city = CharField(label="City", required=False)
-    country = CharField(label="Country", required=False)
-    region = CharField(label="Region", required=False,
-        help_text="e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc.")
     project_type = CharField(label="Project Category", required=False,
         help_text="e.g. MCH, HIV, etc.")
 
@@ -143,9 +140,6 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             'short_description',
             'description',
             'license',
-            'city',
-            'country',
-            'region',
             'project_type',
             'share_multimedia',
             'image',]
@@ -188,9 +182,6 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
         if not res:
             return False
         try:
-            domain.deployment.city = self.cleaned_data['city']
-            domain.deployment.country = self.cleaned_data['country']
-            domain.deployment.region = self.cleaned_data['region']
             domain.project_type = self.cleaned_data['project_type']
             domain.customer_type = self.cleaned_data['customer_type']
             domain.is_test = self.cleaned_data['is_test'] == 'true'
@@ -198,6 +189,28 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             return True
         except Exception:
             return False
+
+class DomainDeploymentForm(forms.Form):
+    city = CharField(label="City", required=False)
+    country = CharField(label="Country", required=False)
+    region = CharField(label="Region", required=False,
+        help_text="e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc.")
+    deployment_date = CharField(label="Deployment date", required=False)
+    description = CharField(label="Description", required=False, widget=forms.Textarea)
+    public = ChoiceField(label='Make Public?', choices=(('false', 'No'), ('true', 'Yes')), required=False)
+
+    def save(self, domain):
+        try:
+            domain.update_deployment(city=self.cleaned_data['city'],
+                country=self.cleaned_data['country'],
+                region=self.cleaned_data['region'],
+                date=dateutil.parser.parse(self.cleaned_data['deployment_date']),
+                description=self.cleaned_data['description'],
+                public=(self.cleaned_data['public'] == 'true'))
+            return True
+        except Exception:
+            return False
+
 
 ########################################################################################################
 
