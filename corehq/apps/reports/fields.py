@@ -10,6 +10,7 @@ from corehq.apps.reports.models import HQUserType
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.datespan import datespan_in_request
+from corehq.apps.locations.models import location_tree
 import settings
 import json
 
@@ -378,28 +379,20 @@ class LocationField(ReportField):
     template = "reports/fields/location.html"
 
     def update_context(self):
-
-        locs = [
-            {'name': 'usa', 'type': 'country', 'uuid': 1, 'children': [
-                    {'name': 'ct', 'type': 'state', 'uuid': '2wefas', 'children': [
-                            {'name': 'middlesex', 'type': 'county', 'uuid': 4, 'children': [
-                                    {'name': 'portland', 'type': 'town', 'uuid': 7},
-                                    ]},
-                            {'name': 'hartford', 'type': 'county', 'uuid': 5, 'children': [
-                                    {'name': 'glastonbury', 'type': 'town', 'uuid': 8},
-                                    ]},
-                            ]},
-                    {'name': 'ma', 'type': 'state', 'uuid': 3, 'children': [
-                            {'name': 'berkshire', 'type': 'county', 'uuid': 6},
-                            ]},
-                    ]},
-            {'name': 'mexico', 'type': 'country', 'uuid': 9}
-            ]
+        all_locs = location_tree(self.domain)
+        def loc_to_json(loc):
+            return {
+                'name': loc.name,
+                'type': loc.location_type,
+                'uuid': loc._id,
+                'children': [loc_to_json(child) for child in loc._children],
+            }
+        loc_json = [loc_to_json(root) for root in all_locs]
 
         self.context['control_name'] = self.name
         self.context['control_slug'] = self.slug
         self.context['loc_id'] = self.request.GET.get('location_id')
-        self.context['locations'] = json.dumps(locs)
+        self.context['locations'] = json.dumps(loc_json)
 
 class DeviceLogTagField(ReportField):
     slug = "logtag"

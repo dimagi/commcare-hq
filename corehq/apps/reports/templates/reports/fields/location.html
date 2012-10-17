@@ -17,14 +17,6 @@ $(function() {
   ko.applyBindings(model, $('#group_{{ control_slug }}')[0]);
   model.load(locs);
 
-/*
-        $('#filter_startdate').change(function() {
-            $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.startdate', $(this).val());
-        });
-        $('#filter_enddate').change(function() {
-            $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.enddate', $(this).val());
-        });
-*/
 });
 
 function LocationSelectViewModel() {

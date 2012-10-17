@@ -72,3 +72,26 @@ class Location(Document):
         q = self.view('locations/hierarchy', start_key=start_key, end_key=end_key, group_level=depth)
         keys = [e['key'] for e in q if len(e['key']) == depth]
         return self.view('locations/hierarchy', keys=keys, reduce=False, include_docs=True).all()
+
+def location_tree(domain):
+    """build a hierarchical tree of the entire location structure for a domain"""
+    locs = Location.view('locations/hierarchy', start_key=[domain], end_key=[domain, {}], reduce=False, include_docs=True).all()
+    locs.sort(key=lambda l: l.path) # just to be safe; couch view should return in the correct sorted order
+    locs_by_id = dict((l._id, l) for l in locs)
+
+    tree_root = []
+    for loc in locs:
+        loc._children = []
+
+        try:
+            parent_id = loc.lineage[0]
+        except IndexError:
+            parent_id = None
+
+        if parent_id:
+            parent_loc = locs_by_id[parent_id]
+            parent_loc._children.append(loc)
+        else:
+            tree_root.append(loc)
+    return tree_root
+    
