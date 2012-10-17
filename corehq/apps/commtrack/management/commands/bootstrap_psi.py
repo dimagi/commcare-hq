@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand, CommandError
 from optparse import make_option
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.commtrack.helpers import *
 import sys
 import random
@@ -55,21 +56,31 @@ class Command(BaseCommand):
         self.stdout.write('Bootstrapping commtrack for domain [%s]\n' % domain_name)
 
         domain = Domain.get_by_name(domain_name)
+        if domain is None:
+            self.stderr.write('Can\'t find domain\n')
+            return
+        first_time = True
         if domain.commtrack_enabled:
+            self.stderr.write('This domain has already been set up.\n')
+            first_time = False
             if options['force']:
-                self.stderr.write('Warning: this domain appears to be already set up.\n')                
-            else:
-                self.stderr.write('Aborting: this domain has already been set up.\n')
-                return
+                self.stderr.write('Warning: forcing re-init...\n')
+                first_time = True
 
+        if first_time:
+            self.one_time_setup(domain)
+        self.every_time_setup(domain)
+
+    def one_time_setup(self, domain):
+        self.stderr.write('Setting up domain from scratch...\n')
         commtrack_enable_domain(domain)
         make_psi_config(domain.name)
         make_products(domain.name, PRODUCTS)
         create_locations(domain.name)
 
-        # allow redo at later time
-        #   users and verified contacts
-
+    def every_time_setup(self, domain):
+        self.stderr.write('Refreshing...\n')
+        register_reporters(domain.name)
 
 def commtrack_enable_domain(domain):
     domain.commtrack_enabled = True
@@ -99,3 +110,11 @@ def create_locations(domain):
                     outlet = make_loc(name=outlet_name, location_type='outlet', parent=block)
                     outlet_code = '%d%d%d%d' % (i + 1, j + 1, k + 1, l + 1)
                     make_supply_point(domain, outlet, outlet_code)
+
+def register_reporters(domain):
+    mobile_workers = CommCareUser.view('users/phone_users_by_domain',
+                                       start_key=[domain],
+                                       end_key=[domain, {}],
+                                       include_docs=True)
+    for mw in mobile_workers:
+        make_verified_contact(mw.username)
