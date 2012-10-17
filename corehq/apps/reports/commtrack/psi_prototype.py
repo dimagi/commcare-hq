@@ -141,7 +141,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
                     doc = state['value']
                     stocked_out_since = doc['updated_unknown_properties']['stocked_out_since']
                     if stocked_out_since:
-                        so_start = max(datetime.strptime(stocked_out_since, '%Y-%m-%d').date(), self.datespan.startdate.date())
+                        so_start = max(dateparse.string_to_datetime(stocked_out_since).date(), self.datespan.startdate.date())
                         so_end = dateparse.string_to_datetime(doc['server_date']).date() # TODO deal with time zone issues
                         dt = so_start
                         while dt < so_end:
