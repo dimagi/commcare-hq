@@ -11,6 +11,7 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.datespan import datespan_in_request
 import settings
+import json
 
 datespan_default = datespan_in_request(
             from_param="startdate",
@@ -377,8 +378,28 @@ class LocationField(ReportField):
     template = "reports/fields/location.html"
 
     def update_context(self):
+
+        locs = [
+            {'name': 'usa', 'type': 'country', 'uuid': 1, 'children': [
+                    {'name': 'ct', 'type': 'state', 'uuid': '2wefas', 'children': [
+                            {'name': 'middlesex', 'type': 'county', 'uuid': 4, 'children': [
+                                    {'name': 'portland', 'type': 'town', 'uuid': 7},
+                                    ]},
+                            {'name': 'hartford', 'type': 'county', 'uuid': 5, 'children': [
+                                    {'name': 'glastonbury', 'type': 'town', 'uuid': 8},
+                                    ]},
+                            ]},
+                    {'name': 'ma', 'type': 'state', 'uuid': 3, 'children': [
+                            {'name': 'berkshire', 'type': 'county', 'uuid': 6},
+                            ]},
+                    ]},
+            {'name': 'mexico', 'type': 'country', 'uuid': 9}
+            ]
+
         self.context['control_name'] = self.name
         self.context['control_slug'] = self.slug
+        self.context['loc_id'] = self.request.GET.get('location_id')
+        self.context['locations'] = json.dumps(locs)
 
 class DeviceLogTagField(ReportField):
     slug = "logtag"

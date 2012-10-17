@@ -11,7 +11,6 @@ import itertools
 from datetime import datetime, date, timedelta
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
-    location = None
 
     @classmethod
     def show_in_navigation(cls, request, *args, **kwargs):
@@ -31,6 +30,16 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
     @property
     def actions(self):
         return sorted(self.config.actions.keys())
+
+    # find a memoize decorator?
+    _location = None
+    @property
+    def active_location(self):
+        if not self._location:
+            loc_id = self.request_params.get('location_id')
+            if loc_id:
+                self._location = Location.get(loc_id)
+        return self._location
 
 def get_transactions(form_doc):
     from collections import Sequence
@@ -65,7 +74,8 @@ def leaf_loc(form):
 class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Visit Report'
     slug = 'visits'
-    fields = ['corehq.apps.reports.fields.DatespanField']
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'corehq.apps.reports.fields.LocationField']
 
     @property
     def headers(self):
@@ -86,7 +96,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     def rows(self):
         products = self.products
         actions = self.actions
-        reports = get_stock_reports(self.domain, self.location, self.datespan)
+        reports = get_stock_reports(self.domain, self.active_location, self.datespan)
         locs = dict((loc._id, loc) for loc in Location.view('_all_docs', keys=[leaf_loc(r) for r in reports], include_docs=True))
 
         def row(doc):
@@ -108,7 +118,8 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
 class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Sales and Consumption Report'
     slug = 'sales_consumption'
-    fields = ['corehq.apps.reports.fields.DatespanField']
+    fields = ['corehq.apps.reports.fields.DatespanField',
+              'corehq.apps.reports.fields.LocationField']
 
     @property
     def headers(self):
@@ -127,8 +138,8 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
     @property
     def rows(self):
         products = self.products
-        locs = Location.filter_by_type(self.domain, 'outlet', self.location)
-        reports = get_stock_reports(self.domain, self.location, self.datespan)
+        locs = Location.filter_by_type(self.domain, 'outlet', self.active_location)
+        reports = get_stock_reports(self.domain, self.active_location, self.datespan)
         reports_by_loc = map_reduce(lambda e: [(leaf_loc(e),)], data=reports, include_docs=True)
 
         def summary_row(site, reports):
