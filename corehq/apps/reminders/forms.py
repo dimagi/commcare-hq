@@ -51,6 +51,16 @@ EVENT_CHOICES = (
     (EVENT_AS_SCHEDULE, "represent the exact day and time in the schedule")
 )
 
+def validate_date(value):
+    date_regex = re.compile("^\d\d\d\d-\d\d-\d\d$")
+    if date_regex.match(value) is None:
+        raise ValidationError("Dates must be in yyyy-mm-dd format.")
+
+def validate_time(value):
+    time_regex = re.compile("^\d{1,2}:\d\d(:\d\d){0,1}$")
+    if time_regex.match(value) is None:
+        raise ValidationError("Times must be in hh:mm format.")
+
 class CaseReminderForm(Form):
     """
     A form used to create/edit fixed-schedule CaseReminderHandlers.
@@ -392,15 +402,12 @@ class SurveyForm(Form):
     def clean_waves(self):
         value = self.cleaned_data["waves"]
         datetimes = {}
-        date_regex = re.compile("^\d\d\d\d-\d\d-\d\d$")
-        time_regex = re.compile("^\d{1,2}:\d\d(:\d\d){0,1}$")
         for wave_json in value:
-            if date_regex.match(wave_json["date"]) is None:
-                raise ValidationError("Dates must be in yyyy-mm-dd format.")
+            validate_date(wave_json["date"])
+            validate_time(wave_json["time"])
             
-            if time_regex.match(wave_json["time"]) is None:
-                raise ValidationError("Times must be in hh:mm format.")
-            
+            # Convert the datetime to a string of "yyyy-mm-dd hh24:mm:ss", and compare it against the other datetimes
+            # to make sure no two waves have the same start timestamp
             dt = str(parse(wave_json["date"]).date()) + " " + str(parse(wave_json["time"]).time())
             if datetimes.get(dt, False):
                 raise ValidationError("Two waves cannot be scheduled at the same date and time.")
