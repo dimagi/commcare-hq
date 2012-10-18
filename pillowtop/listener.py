@@ -83,12 +83,13 @@ class BasicPillow(object):
 
     def processor(self, change):
         """
-        Parent processsor for a pillow class - this should not be overriden
+        Parent processsor for a pillow class - this should not be overridden
         """
         self.changes_seen+=1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0:
             print "(%s) setting checkpoint: %d" % (self.get_checkpoint_doc_name(), change['seq'])
             self.set_checkpoint(change)
+
 
         t = self.change_trigger(change)
         if t is not None:
@@ -115,12 +116,14 @@ class BasicPillow(object):
 
     def change_transform(self, doc_dict):
         """
-        process/transform doc_dict if needed - default, return the doc_dict passed.
+        Step two of the pillowtop processor:
+        Process/transform doc_dict if needed - by default, return the doc_dict passed.
         """
         return doc_dict
     def change_transport(self, doc_dict):
         """
-        Finish transport of doc if needed. Main subclass should implement this
+        Step three of the pillowtop processor:
+        Finish transport of doc if needed. Your subclass should implement this
         """
         raise NotImplementedError("Error, this pillowtop subclass has not been configured to do anything!")
 

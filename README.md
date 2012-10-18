@@ -3,17 +3,51 @@ pillowtop
 
 A couchdb listening framework to transform and process changes.
 
-Config a json file
+Django Config
+=============
 
-logstash
+In your settings file, add a  PILLOWTOPS = [] array
 
-elasticsearch
+Fill the array with the fully qualified class names of your pillows, for example:
 
-couchdb url
-filter (optional)
-transform functions (required)
-function must have signature of:
-func(doc_json, db)
-where doc_json is the doc that was referenced by the _changes feed, and the db passed is the one used to open the document(in case more needs to be done)
+    'corehq.pillows.CasePillow',
+    'corehq.pillows.AuditcarePillow',
+    'corehq.pillows.CouchlogPillow',
+    'corehq.pillows.DevicelogPillow',
 
-the function must return a json dictionary for it to be sent off to the endpoint
+The pillows depending on their config, need the following:
+
+A couch db to connect to its _changes feed
+An optional _changes filter
+
+Supported backends:
+Network Listener
+Currently this lets you arbitrarily send your changes results to a TCP socket. This is for the
+logstash log consumption system.
+
+Elastic Listener
+For elasticsearch endpoint to send json data directly to an elasticsearch index+type mapping.
+
+Extending pillowtop
+===================
+
+Inherit the BasicPillow class
+Implement at a bare minimum change_transport - and override the other processing steps where
+necessary.
+
+
+Running pillowtop
+=================
+
+python manage.py run_ptop
+
+This will fire off 1 gevent worker per pillow in your PILLOWTOPS array listening continuosly on
+the changes feed of their interest.
+
+This process does not pool right now the changes listeners, so be careful,
+or suggest an improvement :)
+
+Pillowtop also will keep checkpoints in couch so as to not keep going over changes when the
+process is restarted - all BasicPillows will keep a document unique to its class name in the DB
+to keep its checkpoint based upon the _seq of the changes listener it is on.
+
