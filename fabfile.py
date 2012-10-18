@@ -47,9 +47,12 @@ env.roledefs = {
         'django_celery': [],
         'django_app': [],
         'django_public': [],
+        'django_pillowtop': [], #for now combined with celery
+
+        'django_monolith': [], # all of the above config - use this ONLY for single server config, lest deploy() will run multiple times in parallel causing bad contentions
+
         'formsplayer': [],
         'staticfiles': [],
-        'django_monolith': [], # all of the above config - use this ONLY for single server config, lest deploy() will run multiple times in parallel causing bad contentions
         'remote_es': [], #remote elasticsearch ssh tunnel config
 
         #package level configs that are not quite config'ed yet in this fabfile
@@ -134,11 +137,13 @@ def india():
         'django_celery': [],
         'django_app': [],
         'django_public': [],
+        'django_pillowtop': [],
         'formsplayer': [],
-        'lb': [],
         'remote_es': [],
         'staticfiles': [],
+        'lb': [],
         'deploy': [],
+
         'django_monolith': ['220.226.209.82'],
     }
     env.jython_home = '/usr/local/lib/jython'
@@ -161,8 +166,11 @@ def production():
         'django_celery': ['hqdb.internal.commcarehq.org'],
         'django_app': ['hqdjango0.internal.commcarehq.org', 'hqdjango2.internal.commcarehq.org'],
         'django_public': ['hqdjango1.internal.commcarehq.org',],
+        'django_pillowtop': ['hqdb.internal.commcarehq.org'],
+
         'remote_es': ['hqdb.internal.commcarehq.org', 'hqdjango0.internal.commcarehq.org',
                       'hqdjango1.internal.commcarehq.org', 'hqdjango2.internal.commcarehq.org'],
+
         'formsplayer': ['hqdjango0.internal.commcarehq.org'],
         'lb': [], #todo on apache level config
         'staticfiles': ['hqproxy0.internal.commcarehq.org'],
@@ -547,7 +555,13 @@ def upload_celery_supervisorconf():
     _upload_supervisor_conf_file('supervisor_celery.conf')
     _upload_supervisor_conf_file('supervisor_celerybeat.conf')
     _upload_supervisor_conf_file('supervisor_celerymon.conf')
-    _upload_supervisor_conf_file('supervisor_couchdb_lucene.conf')
+    _upload_supervisor_conf_file('supervisor_couchdb_lucene.conf') #to be deprecated
+
+    #in reality this also should be another machine if the number of listeners gets too high
+    _upload_supervisor_conf_file('supervisor_pillowtop.conf')
+
+
+
 
 @roles('django_celery', 'django_monolith')
 def upload_sofabed_supervisorconf():
