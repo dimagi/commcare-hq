@@ -246,7 +246,7 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
             'city': domain.deployment.city,
             'country': domain.deployment.country,
             'region': domain.deployment.region,
-            'deployment_date': domain.deployment.date.date,
+            'deployment_date': domain.deployment.date.date if domain.deployment.date else "",
             'description': domain.deployment.description,
             'public': 'true' if domain.deployment.public else 'false'
         })
