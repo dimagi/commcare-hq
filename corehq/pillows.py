@@ -19,8 +19,11 @@ class CasePillow(ElasticPillow):
         """
         Lighten the load of the search index by removing the data heavy transactional cruft
         """
-        del doc_dict['actions']
-        del doc_dict['xform_ids']
+        try:
+            del doc_dict['actions']
+            del doc_dict['xform_ids']
+        except Exception, ex:
+            pass
         return doc_dict
 
 class AuditcarePillow(NetworkPillow):
@@ -44,7 +47,7 @@ class DevicelogPillow(NetworkPillow):
 
 class StrippedXformPillow(ElasticPillow):
     couch_db = XFormInstance.get_db()
-    couch_filter = ""
+    couch_filter = "couchforms/xforms"
     es_host = settings.ELASTICSEARCH_HOST
     es_port = settings.ELASTICSEARCH_PORT
     es_index = "xforms_clean"
@@ -56,7 +59,10 @@ class StrippedXformPillow(ElasticPillow):
         """
         for k in doc_dict['form']:
             if k not in ['meta', 'Meta', '@uiVersion', '@version']:
-                del doc_dict['form'][k]
+                try:
+                    del doc_dict['form'][k]
+                except:
+                    pass
         #todo: add geoip block here
         return doc_dict
 
