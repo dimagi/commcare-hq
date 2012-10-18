@@ -181,7 +181,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             original_doc = Domain.get_by_name(data.get('original_doc', None))
             if original_doc:
                 data['copy_history'] = [original_doc._id]
-                del data['origin_doc']
+                del data['original_doc']
                 should_save = True
         self = super(Domain, cls).wrap(data)
         if self.get_id:
@@ -660,3 +660,42 @@ class OldDomain(models.Model):
 
     def __unicode__(self):
         return self.name
+
+class DomainCounter(Document):
+    domain = StringProperty()
+    name = StringProperty()
+    count = IntegerProperty()
+    
+    @classmethod
+    def get_or_create(cls, domain, name):
+        #TODO: Need to make this atomic
+        counter = cls.view("domain/counter",
+            key = [domain, name],
+            include_docs=True
+        ).one()
+        if counter is None:
+            counter = DomainCounter (
+                domain = domain,
+                name = name,
+                count = 0
+            )
+            counter.save()
+        return counter
+    
+    @classmethod
+    def increment(cls, domain, name, amount=1):
+        num_tries = 0
+        while True:
+            try:
+                counter = cls.get_or_create(domain, name)
+                range_start = counter.count + 1
+                counter.count += amount
+                counter.save()
+                range_end = counter.count
+                break
+            except ResourceConflict:
+                num_tries += 1
+                if num_tries >= 500:
+                    raise
+        return (range_start, range_end)
+
