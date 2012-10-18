@@ -365,7 +365,7 @@ TOUCHFORMS_API_PASSWORD = "changeme"
 # import local settings if we find them
 LOCAL_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
-LOCAL_PILLOWTOPS = ()
+LOCAL_PILLOWTOPS = []
 
 try:
     #try to see if there's an environmental variable set for local_settings
