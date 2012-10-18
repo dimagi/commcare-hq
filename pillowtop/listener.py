@@ -4,6 +4,7 @@ from restkit.resource import Resource
 import simplejson
 from gevent import socket
 import rawes
+import gevent
 
 import couchdbkit
 if couchdbkit.version_info < (0,6,0):
@@ -13,11 +14,22 @@ else:
     USE_NEW_CHANGES=True
 
 CHECKPOINT_FREQUENCY = 100
+WAIT_HEARTBEAT = 10000
 
 def old_changes(pillow):
     from couchdbkit import Server, Consumer
     c = Consumer(pillow.couch_db, backend='gevent')
-    c.wait(pillow.parsing_processor, since=pillow.since, filter=pillow.couch_filter)
+    while True:
+        try:
+            c.wait(pillow.parsing_processor, since=pillow.since, filter=pillow.couch_filter,
+                heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=2000)
+        except Exception, ex:
+            print "error!"
+            logging.exception("caught exception in form listener: %s, "
+                              "sleeping and restarting" % ex)
+            gevent.sleep(5)
+
+
 
 def new_changes(pillow):
      with ChangesStream(pillow.couch_db, feed='continuous', heartbeat=True, since=pillow.since,
