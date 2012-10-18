@@ -18,6 +18,8 @@ urlpatterns = patterns('corehq.apps.appstore.views',
     url(r'^filter/(?P<filter_by>[\w]+)/(?P<filter>[^/]+)/(?P<sort_by>[\w_]+)/$', 'filter_snapshots', name='sorted_appstore_filter_snapshots'),
 
     url(r'^deployments/$', 'deployments', name='deployments'),
+    url(r'^deployments/search/$', 'deployment_search', name='deployment_search'),
+    url(r'^deployments/(?P<domain>[\w\.-]+)/info/$', 'deployment_info', name='deployment_info'),
 
     url(r'^(?P<sort_by>[\w_]+)/$', 'appstore', name='sorted_appstore'),
 

@@ -277,5 +277,15 @@ def deployments(request, template="appstore/deployments.html"):
         'prev_page': (page-1),
         'next_page': (page+1),
         'more_pages': more_pages,
-        'search_url': '/deployment_search' # change to the actual url when deployment search is made
+        'search_url': reverse('deployment_search')
     })
+
+@require_previewer # remove for production
+def deployment_info(request, domain, template="appstore/deployments.html"):
+    # todo
+    return
+
+@require_previewer # remove for production
+def deployment_search(request, template="appstore/deployments.html"):
+    # todo
+    return

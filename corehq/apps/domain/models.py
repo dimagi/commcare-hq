@@ -596,7 +596,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
 
     @classmethod
     def public_deployments(cls):
-        return get_db().view('domain/with_deployment', include_docs=True).all()
+        return Domain.view('domain/with_deployment', include_docs=True).all()
 
 
 ##############################################################################################################
