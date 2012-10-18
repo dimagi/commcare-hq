@@ -11,17 +11,27 @@ from dimagi.utils.parsing import json_format_datetime, ISO_MIN
 logging = get_task_logger()
 
 def run_only_once(fn):
-    """If this function is running (in any thread) then don't run"""
-    key = fn.__module__ + '.' + fn.__name__ + '_is_running'
+    """
+    If this function is running (in any thread) then don't run
+
+    Updated with some help from:
+    http://ask.github.com/celery/cookbook/tasks.html#ensuring-a-task-is-only-executed-one-at-a-time
+    """
+    LOCK_EXPIRE = 10*60
+    fn_name = fn.__module__ + '.' + fn.__name__
+    lock_id = fn_name + '_is_running'
+    acquire_lock = lambda: cache.add(lock_id, "true", LOCK_EXPIRE)
+    release_lock = lambda: cache.delete(lock_id)
 
     @wraps(fn)
     def _fn(*args, **kwargs):
-        if not cache.get(key):
-            cache.set(key, True, 10*60)
+        if acquire_lock():
             try:
-                fn(*args, **kwargs)
+                return fn(*args, **kwargs)
             finally:
-                cache.set(key, False)
+                release_lock()
+        else:
+            logging.debug("%s is already running; aborting" % fn_name)
     return _fn
 
 @periodic_task(run_every=timedelta(minutes=1))

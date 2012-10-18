@@ -170,6 +170,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             original_doc = Domain.get_by_name(data.get('original_doc', None))
             if original_doc:
                 data['copy_history'] = [original_doc._id]
+                del data['original_doc']
                 should_save = True
         self = super(Domain, cls).wrap(data)
         if self.get_id:
