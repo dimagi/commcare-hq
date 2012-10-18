@@ -35,3 +35,4 @@ simplejson
 gitpython
 gitdb
 gevent
+rawes
