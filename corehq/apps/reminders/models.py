@@ -445,7 +445,12 @@ class CaseReminderHandler(Document):
             reminder.active = self.get_active(reminder, reminder.next_fire, case)
     
     def get_active(self, reminder, now, case):
-        return (not self.condition_reached(case, self.until, now)) and not (self.max_iteration_count != REPEAT_SCHEDULE_INDEFINITELY and reminder.schedule_iteration_num > self.max_iteration_count)
+        schedule_not_finished = not (self.max_iteration_count != REPEAT_SCHEDULE_INDEFINITELY and reminder.schedule_iteration_num > self.max_iteration_count)
+        if case is not None:
+            until_not_reached = (not self.condition_reached(case, self.until, now))
+            return until_not_reached and schedule_not_finished
+        else:
+            return schedule_not_finished
     
     def should_fire(self, reminder, now):
         return now > reminder.next_fire
