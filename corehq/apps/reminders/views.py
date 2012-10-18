@@ -308,7 +308,9 @@ def add_survey(request, domain, survey_id=None):
                 # Keep any waves that didn't change in case the surveys are in progress
                 for wave in current_waves:
                     for wave_json in waves:
-                        if parse(wave_json["date"]).date() == wave.date and parse(wave_json["time"]).time() == wave.time and wave_json["form_id"] == wave.form_id:
+                        parsed_date = parse(wave_json["date"]).date()
+                        parsed_time = parse(wave_json["time"]).time()
+                        if parsed_date == wave.date and parsed_time == wave.time and wave_json["form_id"] == wave.form_id:
                             survey.waves.append(wave)
                             unchanged_wave_json.append(wave_json)
                             continue
@@ -327,7 +329,12 @@ def add_survey(request, domain, survey_id=None):
                 
                 # Add in new waves
                 for wave_json in waves:
-                    survey.waves.append(SurveyWave(date=parse(wave_json["date"]).date(), time=parse(wave_json["time"]).time(), form_id=wave_json["form_id"], reminder_definitions={}))
+                    survey.waves.append(SurveyWave(
+                        date=parse(wave_json["date"]).date(),
+                        time=parse(wave_json["time"]).time(),
+                        form_id=wave_json["form_id"],
+                        reminder_definitions={},
+                    ))
                 
                 # Retire reminder definitions that are no longer needed
                 if send_automatically:
