@@ -593,6 +593,10 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         domains = sorted(domains, key=lambda domain: len(domain.copies_of_parent()), reverse=True)
         return domains[((page-1)*9):((page)*9)]
 
+    @classmethod
+    def public_deployments(cls):
+        return get_db().view('domain/with_deployment', include_docs=True).all()
+
 
 ##############################################################################################################
 #
