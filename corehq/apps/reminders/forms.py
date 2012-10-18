@@ -422,10 +422,8 @@ class SurveyForm(Form):
         for followup in value:
             try:
                 interval = int(followup["interval"])
-            except ValueError:
-                raise ValidationError("Follow-up intervals must be positive integers.")
-            
-            if interval <= 0:
+                assert interval > 0
+            except (ValueError, AssertionError):
                 raise ValidationError("Follow-up intervals must be positive integers.")
             
         return value
