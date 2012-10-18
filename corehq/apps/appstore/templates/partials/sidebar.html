@@ -1,13 +1,15 @@
 <ul class="nav nav-list">
     <li class="nav-header">Search</li>
-    <li><form action="{% url appstore_search_snapshots %}" method="get" class="form-search">
-        <input type="text" name="q" placeholder="Search for apps..." value="{{ search_query }}" class="search-query" style="width: 80%" />
+    <li><form action="{{ search_url }}" method="get" class="form-search">
+        <input type="text" name="q" placeholder="Search for {{ search_for }}" value="{{ search_query }}" class="search-query" style="width: 80%" />
     </form></li>
-    {% if request.user.is_superuser %}
-        <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}">All approved</a></li>
-        <li{% if include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}?unapproved=true">All unapproved</a></li>
-    {% else %}
-        <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}">All</a></li>
+    {% if display_ua %}
+        {% if request.user.is_superuser %}
+            <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}">All approved</a></li>
+            <li{% if include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}?unapproved=true">All unapproved</a></li>
+        {% else %}
+            <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}">All</a></li>
+        {% endif %}
     {% endif %}
 
     <!--<li{% if report %} class="active"{% endif %}><a href="{% url appstore_interfaces_default %}">Advanced search...</a></li>-->

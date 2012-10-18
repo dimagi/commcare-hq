@@ -32,6 +32,7 @@ def _appstore_context(context={}):
             ('author', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('author')]),
             ('license', [(d, LICENSES.get(d), count) for d, count in Domain.field_by_prefix('license')]),
         ]
+    context['search_url'] = reverse('appstore_search_snapshots')
     return context
 
 @require_previewer # remove for production
@@ -265,3 +266,15 @@ def project_image(request, domain):
         return HttpResponse(image, content_type=project.image_type)
     else:
         raise Http404()
+
+@require_previewer # remove for production
+def deployments(request, template="appstore/deployments.html"):
+    more_pages = False
+    page = 1
+    return render_to_response(request, template, {
+        'apps': [],
+        'prev_page': (page-1),
+        'next_page': (page+1),
+        'more_pages': more_pages,
+        'search_url': '/deployment_search' # change to the actual url when deployment search is made
+    })

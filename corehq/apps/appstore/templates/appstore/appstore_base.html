@@ -141,7 +141,7 @@
 
 
 {% block sidebar %}
-{% include 'appstore/sidebar.html' %}
+{% include 'partials/sidebar.html' with search_for="apps..." display_ua='true' %}
 {% endblock %}
 
 {% block page-title %}
@@ -213,6 +213,7 @@
     {% endblock %}
 </div>
 <div class="row-fluid">
+{% block results-display %}
 {% for app in apps %}
     {% if forloop.counter0|divisibleby:"3" and forloop.counter0 != 0 %}
         </div><div class="row-fluid">
@@ -262,6 +263,7 @@
         </div>
     </div>
 {% endfor %}
+{% endblock %}
 </div>
 
 <div class="row-fluid">
