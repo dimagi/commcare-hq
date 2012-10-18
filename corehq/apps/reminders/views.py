@@ -468,7 +468,7 @@ def add_sample(request, domain, sample_id=None):
             id_range = DomainCounter.increment(domain, "survey_contact_id", len(nonexisting_numbers))
             ids = iter(range(id_range[0], id_range[1] + 1))
             for phone_number in nonexisting_numbers:
-                register_sms_contact(domain, "participant", str(ids.next()), request.couch_user.get_id, phone_number, contact_phone_number_is_verified="1", contact_backend_id="MOBILE_BACKEND_TEST", language_code="en", time_zone=time_zone.zone)
+                register_sms_contact(domain, "participant", str(ids.next()), request.couch_user.get_id, phone_number, contact_phone_number_is_verified="1", contact_backend_id="MOBILE_BACKEND_TROPO_US", language_code="en", time_zone=time_zone.zone)
             
             newly_registered_entries = VerifiedNumber.view('sms/verified_number_by_number',
                                             keys=nonexisting_numbers,
