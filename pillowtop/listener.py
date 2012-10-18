@@ -87,6 +87,7 @@ class BasicPillow(object):
         """
         self.changes_seen+=1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0:
+            print "(%s) setting checkpoint: %d" % (self.get_checkpoint_doc_name(), change['seq'])
             self.set_checkpoint(change)
 
         t = self.change_trigger(change)
@@ -99,11 +100,16 @@ class BasicPillow(object):
     def change_trigger(self, changes_dict):
         """
         Step one of pillowtop process
-        For a given _changes indicator, the changes dict (the _id, _rev) is sent here.
+        For a given _changes indicator, the changes dict (the id, _rev) is sent here.
+
+        Note, a couch _changes line is: {'changes': [], 'id': 'guid',  'seq': <int>}
+        a 'deleted': True might be there too
+
+        whereas a doc_dict is _id
         Should return a doc_dict
         """
-        print changes_dict
         if changes_dict.get('deleted', False):
+            #override deleted behavior on consumers that care/deal with deletions
             return None
         return self.couch_db.open_doc(changes_dict['id'])
 
@@ -127,12 +133,36 @@ class ElasticPillow(BasicPillow):
     es_index = ""
     es_type = ""
 
+    def get_doc_path(self, doc_id):
+        return "%s/%s/%s" % (self.es_index, self.es_type, doc_id)
+
+    def get_es(self):
+        return rawes.Elastic('%s:%s' % (self.es_host, self.es_port))
+
+
+
+    def change_trigger(self, changes_dict):
+        if changes_dict.get('deleted', False):
+            try:
+                self.get_es().delete(path=self.get_doc_path(changes_dict['id']))
+            except Exception, ex:
+                logging.error("ElasticPillow: error deleting route %s - ignoring: %s" % \
+                              (self.get_doc_path(changes_dict['id']), ex))
+            return None
+        return self.couch_db.open_doc(changes_dict['id'])
+
+
     def change_transport(self, doc_dict):
         try:
             #res = Resource("%s:%s" % (self.es_host, self.es_port))
             #r = res.post(self.es_index, payload = simplejson.dumps(doc_dict))
-            es = rawes.Elastic('%s:%s' % (self.es_host, self.es_port))
-            es.put("%s/%s/%s" % (self.es_index, self.es_type, doc_dict['_id']),  data = doc_dict)
+            es = self.get_es()
+            doc_path = self.get_doc_path(doc_dict['_id'])
+            head_result = es.head(doc_path)
+            if not head_result:
+                es.put(doc_path,  data = doc_dict)
+            else:
+                return None
         except Exception, ex:
             logging.error("PillowTop: transporting change data to eleasticsearch error:  %s", ex)
             return None
