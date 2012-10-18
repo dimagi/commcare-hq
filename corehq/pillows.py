@@ -19,8 +19,13 @@ class CasePillow(ElasticPillow):
         """
         Lighten the load of the search index by removing the data heavy transactional cruft
         """
-        del doc_dict['actions']
-        del doc_dict['xform_ids']
+        try:
+            if doc_dict.get('actions', None) is not None:
+                del doc_dict['actions']
+            if doc_dict.get('xform_ids', None) is not None:
+                del doc_dict['xform_ids']
+        except Exception, ex:
+            pass
         return doc_dict
 
 class AuditcarePillow(NetworkPillow):
