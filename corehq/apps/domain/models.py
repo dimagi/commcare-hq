@@ -460,6 +460,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             copy.is_snapshot = True
             copy.organization = self.organization
             copy.snapshot_time = datetime.now()
+            del copy.deployment
             copy.save()
             return copy
 

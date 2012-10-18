@@ -272,9 +272,6 @@ def deployments(request, template="appstore/deployments.html"):
     more_pages = False
     page = 1
     deployments = Domain.public_deployments()
-    import pprint
-    pp = pprint.PrettyPrinter(indent=4)
-    pp.pprint(deployments)
     return render_to_response(request, template, {
         'deployments': deployments,
         'prev_page': (page-1),
