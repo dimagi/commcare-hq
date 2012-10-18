@@ -19,13 +19,10 @@ class CasePillow(ElasticPillow):
         """
         Lighten the load of the search index by removing the data heavy transactional cruft
         """
-        try:
-            if doc_dict.has_key('actions'):
-                del doc_dict['actions']
-            if doc_dict.has_key('xform_ids'):
-                del doc_dict['xform_ids']
-        except Exception, ex:
-            pass
+        if doc_dict.has_key('actions'):
+            del doc_dict['actions']
+        if doc_dict.has_key('xform_ids'):
+            del doc_dict['xform_ids']
         return doc_dict
 
 class AuditcarePillow(NetworkPillow):
