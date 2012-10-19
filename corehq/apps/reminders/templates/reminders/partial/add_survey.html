@@ -159,14 +159,11 @@
         return tr;
     }
     
-    function followup_changed(element) {
-        followup_table = document.getElementById("followup_table");
-        if(element.checked) {
-            followup_table.style.display = "block";
-        } else {
-            followup_table.style.display = "none";
-        }
-    }
+    $(function() {
+        $("#send_followup").change(function() {
+            $("#followup_table").toggle();
+        });
+    });
     
     {% if form.waves.value|length == 0 %}
     var current_wave_num = 1;
@@ -271,7 +268,7 @@
     <br />
     {{ form.followups.errors }}
     <div class="form-block">
-        <input type="checkbox" name="send_followup" {% if form.send_followup.value %}value="on" checked="checked"{% endif %} onChange="followup_changed(this);" /> Send follow-up(s) for incomplete SMS Questionnaires
+        <input type="checkbox" id="send_followup" name="send_followup" {% if form.send_followup.value %}value="on" checked="checked"{% endif %} /> Send follow-up(s) for incomplete SMS Questionnaires
         <br />
         <br />
         <table id="followup_table" style="display: {% if form.send_followup.value %}block{% else %}none{% endif %};">
