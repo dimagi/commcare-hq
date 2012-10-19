@@ -222,7 +222,7 @@ def parse_args_for_filter(request):
         params[attr[0]] = attr[1][0] if len(attr[1]) < 2 else attr[1]
     return params, facets
 
-def generate_sortables_from_facets(results, params=[]):
+def generate_sortables_from_facets(results, params=None):
     param_strings = {}
     if params:
         for attr in params:
@@ -238,7 +238,10 @@ def generate_sortables_from_facets(results, params=[]):
 
     sortable = []
     for facet in results.get("facets", []):
-        sortable.append((facet, [(generate_query_string(param_strings, facet, ft["term"]), ft["term"], ft["count"]) \
+        license = False if facet != 'license' else True
+        sortable.append((facet, [(generate_query_string(param_strings, facet, ft["term"]),
+                                  ft["term"] if not license else LICENSES.get(ft["term"]),
+                                  ft["count"]) \
                                  for ft in results["facets"][facet]["terms"]]))
     return sortable or _appstore_context()
 
