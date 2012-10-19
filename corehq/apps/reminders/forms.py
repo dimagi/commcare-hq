@@ -418,15 +418,19 @@ class SurveyForm(Form):
         return value
     
     def clean_followups(self):
-        value = self.cleaned_data["followups"]
-        for followup in value:
-            try:
-                interval = int(followup["interval"])
-                assert interval > 0
-            except (ValueError, AssertionError):
-                raise ValidationError("Follow-up intervals must be positive integers.")
-            
-        return value
+        send_followup = self.cleaned_data["send_followup"]
+        if send_followup:
+            value = self.cleaned_data["followups"]
+            for followup in value:
+                try:
+                    interval = int(followup["interval"])
+                    assert interval > 0
+                except (ValueError, AssertionError):
+                    raise ValidationError("Follow-up intervals must be positive integers.")
+                
+            return value
+        else:
+            return []
     
     def clean_samples(self):
         value = self.cleaned_data["samples"]
