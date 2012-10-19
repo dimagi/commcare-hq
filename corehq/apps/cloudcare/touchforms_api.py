@@ -9,10 +9,11 @@ from django.core.urlresolvers import reverse
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
 class SessionDataHelper(object):
-    def __init__(self, domain, couch_user, case_id=None):
+    def __init__(self, domain, couch_user, case_id=None, delegation=False):
         self.domain = domain
         self.couch_user = couch_user
         self.case_id = case_id
+        self._delegation = delegation
 
     @property
     @memoized
@@ -26,11 +27,14 @@ class SessionDataHelper(object):
     @property
     def _case_parent_id(self):
         """Only makes sense if the case is a delegation stub"""
-        return self.case.get_index_map().get('parent')
+        return self.case.get_index_map().get('parent')['case_id']
 
     @property
-    def delegation_mode(self):
-        return self.case_type == DELEGATION_STUB_CASE_TYPE
+    def delegation(self):
+        if self._delegation and self.case_id:
+            assert self.case_type == DELEGATION_STUB_CASE_TYPE
+        return self._delegation
+
 
     def get_session_data(self, device_id=CLOUDCARE_DEVICE_ID):
         """
@@ -45,7 +49,7 @@ class SessionDataHelper(object):
             "domain": self.domain,
         }
         if self.case_id:
-            if self.delegation_mode:
+            if self.delegation:
                 session_data["delegation_id"] = self.case_id
                 session_data["case_id"] = self._case_parent_id
             else:
@@ -89,11 +93,11 @@ class SessionDataHelper(object):
 
 
 
-def get_session_data(domain, couch_user, case_id=None, device_id=CLOUDCARE_DEVICE_ID):
-    return SessionDataHelper(domain, couch_user, case_id).get_session_data(device_id)
+def get_session_data(domain, couch_user, case_id=None, device_id=CLOUDCARE_DEVICE_ID, delegation=False):
+    return SessionDataHelper(domain, couch_user, case_id, delegation=delegation).get_session_data(device_id)
 
-def filter_cases(domain, couch_user, xpath, additional_filters=None, auth=None):
-    return SessionDataHelper(domain, couch_user).filter_cases(xpath, additional_filters, auth)
+def filter_cases(domain, couch_user, xpath, additional_filters=None, auth=None, delegation=False):
+    return SessionDataHelper(domain, couch_user, delegation=delegation).filter_cases(xpath, additional_filters, auth)
 
-def get_full_context(domain, user, app, module, form, case_id=None):
-    return SessionDataHelper(domain, user, case_id).get_full_context(form)
+def get_full_context(domain, user, app, module, form, case_id=None, delegation=False):
+    return SessionDataHelper(domain, user, case_id, delegation=delegation).get_full_context(form)

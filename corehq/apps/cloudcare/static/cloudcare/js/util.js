@@ -44,9 +44,13 @@ var getSubmitUrl = function (urlRoot, appId) {
     return urlRoot + "/" + appId + "/";
 };
 
-var getCaseFilterUrl = function(urlRoot, appId, moduleId) {
+var getCaseFilterUrl = function(urlRoot, appId, moduleId, special) {
     // TODO: make this cleaner
-    return urlRoot + "module/" + appId + "/modules-" + moduleId + "/";
+    var url = urlRoot + "module/" + appId + "/modules-" + moduleId + "/";
+    if (special === 'task-list') {
+        url += '?task-list=true';
+    }
+    return url
 };
 
 var showError = function (message, location, autoHideTime) {

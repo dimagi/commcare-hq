@@ -1,6 +1,7 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.suite_xml import SuiteGenerator
 from corehq.apps.cloudcare.models import CaseSpec
+from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE
 from corehq.apps.domain.decorators import login_and_domain_required,\
     login_or_digest_ex
 from corehq.apps.groups.models import Group
@@ -76,10 +77,11 @@ def form_context(request, domain, app_id, module_id, form_id):
     app = Application.get(app_id)
     module = app.get_module(module_id)
     form = module.get_form(form_id)
-    case_id = request.REQUEST.get("case_id")
+    case_id = request.GET.get('case_id')
+    delegation = request.GET.get('task-list') == 'true'
     return json_response(
         touchforms_api.get_full_context(domain, request.couch_user, 
-                                        app, module, form, case_id))
+                                        app, module, form, case_id, delegation=delegation))
         
 @login_and_domain_required
 def case_list(request, domain):
@@ -146,6 +148,7 @@ def get_groups(request, domain, user_id):
 @cloudcare_api
 def get_cases(request, domain):
 
+
     if request.couch_user.is_commcare_user():
         user_id = request.couch_user.get_id
     else:
@@ -164,13 +167,18 @@ def get_cases(request, domain):
 def filter_cases(request, domain, app_id, module_id):
     app = Application.get(app_id)
     module = app.get_module(module_id)
+    delegation = request.GET.get('task-list') == 'true'
     auth_cookie = request.COOKIES.get('sessionid')
 
-    xpath = SuiteGenerator(app).get_filter_xpath(module)
+    xpath = SuiteGenerator(app).get_filter_xpath(module, delegation=delegation)
 
     # touchforms doesn't like this to be escaped
     xpath = HTMLParser.HTMLParser().unescape(xpath)
-    additional_filters = {"properties/case_type": module.case_type,
+    if delegation:
+        case_type = DELEGATION_STUB_CASE_TYPE
+    else:
+        case_type = module.case_type
+    additional_filters = {"properties/case_type": case_type,
                           "footprint": True }
     result = touchforms_api.filter_cases(domain, request.couch_user, 
                                          xpath, additional_filters, 
