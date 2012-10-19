@@ -178,15 +178,27 @@ def filter_cases(request, domain, app_id, module_id):
         case_type = DELEGATION_STUB_CASE_TYPE
     else:
         case_type = module.case_type
-    additional_filters = {"properties/case_type": case_type,
-                          "footprint": True }
+    additional_filters = {
+        "properties/case_type": case_type,
+        "footprint": True
+    }
     result = touchforms_api.filter_cases(domain, request.couch_user, 
                                          xpath, additional_filters, 
                                          auth=DjangoAuth(auth_cookie))
     case_ids = result.get("cases", [])
     cases = [CommCareCase.get(id) for id in case_ids]
     cases = [c.get_json() for c in cases if c]
-    return json_response(cases)
+    parents = []
+    if delegation:
+        for case in cases:
+            parent_id = case['indices']['parent']['case_id']
+            parents.append(CommCareCase.get(parent_id))
+        return json_response({
+            'cases': cases,
+            'parents': parents
+        })
+    else:
+        return json_response(cases)
     
 @cloudcare_api
 def get_apps_api(request, domain):

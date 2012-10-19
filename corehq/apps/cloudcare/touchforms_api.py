@@ -83,7 +83,7 @@ class SessionDataHelper(object):
         Get the entire touchforms context for a given user/app/module/form/case
         """
         session_data = self.get_session_data()
-        # always tell touchforms to include footprinted cases in it's case db
+        # always tell touchforms to include footprinted cases in its case db
         session_data["additional_filters"] = {"footprint": True}
         return {
             "form_content": form.render_xform(),

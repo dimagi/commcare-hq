@@ -417,10 +417,11 @@ cloudCare.AppView = Backbone.View.extend({
         };
 
         if (form) {
+            var module = self.moduleListView.getModuleView(form.get('module_index')).model;
             function getUrl(form, caseModel) {
                 var referencedForm = form, url;
                 if (form.get('index') === 'task-list') {
-                    var module = self.moduleListView.getModuleView(form.get('module_index')).model;
+
                     referencedForm = module.getFormByUniqueId(caseModel.getProperty('form_id'));
                 }
                 url = getFormUrl(
@@ -451,9 +452,12 @@ cloudCare.AppView = Backbone.View.extend({
 	                el: $("#cases"),
 	                listDetails: listDetails,
 	                summaryDetails: summaryDetails,
-	                appConfig: {"app_id": form.get("app_id"),
-	                            "module_index": form.get("module_index"),
-	                            "form_index": form.get("index")},
+	                appConfig: {
+                        app_id: form.get("app_id"),
+	                    module_index: form.get("module_index"),
+                        form_index: form.get("index"),
+                        module: module
+                    },
 	                language: formListView.options.language,
 	                caseUrl: getCaseFilterUrl(
                         self.options.caseUrlRoot,
@@ -505,7 +509,7 @@ cloudCare.AppView = Backbone.View.extend({
     },
     _clearCaseView: function () {
         if (this.formListView.caseView) {
-            $(this.formListView.caseView.el).html("");
+            $(this.formListView.caseView.el).remove().html("");
         }
     },
     _clearFormPlayer: function () {
