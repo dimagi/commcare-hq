@@ -1,13 +1,13 @@
 <ul class="nav nav-list">
     <li class="nav-header">Search</li>
-    <li><form action="{% url snapshot_filter %}" method="get" class="form-search">
+    <li><form action="{% url appstore %}" method="get" class="form-search">
         <input type="text" name="search" placeholder="Search for apps..." value="{{ search_query }}" class="search-query" style="width: 80%" />
     </form></li>
     {% if request.user.is_superuser %}
-        <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url snapshot_filter %}">All approved</a></li>
-        <li{% if include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url snapshot_filter %}?is_approved=false">All unapproved</a></li>
+        <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}">All approved</a></li>
+        <li{% if include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}?is_approved=false">All unapproved</a></li>
     {% else %}
-        <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url snapshot_filter %}">All</a></li>
+        <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}">All</a></li>
     {% endif %}
 
     <!--<li{% if report %} class="active"{% endif %}><a href="{% url appstore_interfaces_default %}">Advanced search...</a></li>-->
@@ -16,7 +16,7 @@
         <li class="nav-header">{{ sortable.title }}</li>
             {% for url, name, count in choices %}
                 <li class="sortable-{{ sortable }}{% if filter_by == sortable and filter_url == url %} active{% else %}{% if forloop.counter > 5 and choices|length > 6 %} hide{% endif %}{% endif %}">
-                    <a href="{% url snapshot_filter %}{{ url }}">{{ name }}</a>
+                    <a href="{% url appstore %}{{ url }}">{{ name }}</a>
                 </li>
             {% endfor %}
             {% if choices|length > 6 %}

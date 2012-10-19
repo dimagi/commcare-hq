@@ -10,18 +10,10 @@ store_urls = patterns('corehq.apps.appstore.views',
 
 urlpatterns = patterns('corehq.apps.appstore.views',
     url(r'^$', 'appstore', name='appstore'),
+    url(r'^api/', 'appstore_api', name='appstore_api'),
     url(r'^store/', include(store_urls)),
 
     url(r'^(?P<domain>[\w\.-]+)/info/$', 'project_info', name='project_info'),
-    url(r'^search/$', 'search_snapshots', name='appstore_search_snapshots'),
-    url(r'^es/$', 'snapshot_filter', name='snapshot_filter'),
-#    url(r'^filter/(?P<filter_by>[\w]+)/(?P<filter>[^/]+)/$', 'filter_snapshots', name='appstore_filter_snapshots'),
-    url(r'^filter/(?P<filter_by>[\w]+)/(?P<filter>[^/]+)/(?P<sort_by>[\w_]+)/$', 'filter_snapshots', name='sorted_appstore_filter_snapshots'),
-    url(r'^filter$', 'snapshot_filter', name='appstore_filter_snapshots'),
-    url(r'^api/filter', 'api_snapshot_filter', name='api_snapshot_filter'),
-
-    url(r'^(?P<sort_by>[\w_]+)/$', 'appstore', name='sorted_appstore'),
-
     url(r'^(?P<domain>[\w\.-]+)/approve/$', 'approve_app', name='approve_appstore_app'),
     url(r'^(?P<domain>[\w\.-]+)/copyapp/', 'copy_snapshot_app', name='copy_snapshot_app'),
     url(r'^(?P<domain>[\w\.-]+)/copy/$', 'copy_snapshot', name='domain_copy_snapshot'),
