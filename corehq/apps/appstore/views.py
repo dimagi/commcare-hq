@@ -29,14 +29,11 @@ def rewrite_url(request, path):
 
 def _appstore_context(context={}):
     context['sortables'] = [
-            ('category', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('project_type')]),
-            ('region', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('region')]),
-            ('author', [(d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('author')]),
-            ('license', [(d, LICENSES.get(d), count) for d, count in Domain.field_by_prefix('license')]),
+            ('project_type', [("?project_type=" + d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('project_type')]),
+            ('region', [("?region=" + d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('region')]),
+            ('author', [("?author=" + d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('author')]),
+            ('license', [("?license=" + d, LICENSES.get(d), count) for d, count in Domain.field_by_prefix('license')]),
         ]
-    import pprint
-    pp = pprint.PrettyPrinter(indent=4)
-    pp.pprint(context)
     return context
 
 @require_previewer # remove for production
@@ -243,7 +240,7 @@ def generate_sortables_from_facets(results, params=None):
                                   ft["term"] if not license else LICENSES.get(ft["term"]),
                                   ft["count"]) \
                                  for ft in results["facets"][facet]["terms"]]))
-    return sortable or _appstore_context()
+    return sortable
 
 @require_previewer # remove for production
 def snapshot_filter(request, template="appstore/appstore_base.html"):
@@ -263,7 +260,7 @@ def snapshot_filter(request, template="appstore/appstore_base.html"):
     for result in d_results:
         average_ratings.append([result.name, Review.get_average_rating_by_app(result.copied_from._id)])
 
-    more_pages = False if d_results <= page*10 else True
+    more_pages = False if len(d_results) <= page*10 else True
 
     facets_sortables = generate_sortables_from_facets(results, params)
     include_unapproved = True if request.GET.get('is_approved', "") == "false" else False
@@ -285,13 +282,24 @@ def api_snapshot_filter(request):
     results = es_snapshot_filter(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
-def es_snapshot_filter(params, facets=[], terms=['is_approved', 'sort_by'], sort_by="snapshot_time"):
+def es_snapshot_filter(params, facets=[], terms=['is_approved', 'sort_by', 'search'], sort_by="snapshot_time"):
     q = {"sort": {sort_by: {"order" : "desc"} },
          "query":   {"bool": {"must":
                                   [{"match": {'doc_type': "Domain"}},
                                    {"term": {"published": True}},
                                    {"term": {"is_snapshot": True}}]}},
          "filter":  {"and": [{"term": {"is_approved": params.get('is_approved', None) or True}}]}}
+
+    search_query = params.get('search', "")
+    if search_query:
+        q['query']['bool']['must'].append({
+            "match" : {
+                "_all" : {
+                    "query" : search_query,
+                    "operator" : "and"
+                }
+            }
+        })
 
     for attr in params:
         if attr not in terms:
