@@ -2,6 +2,7 @@
 {% load hq_shared_tags %}
 {% load hq_bootstrap_tags %}
 {% load i18n %}
+{% load url_extras %}
 
 {% block js %}{{ block.super }}
     <script type="text/javascript">
@@ -197,18 +198,10 @@
     {% block view-tabs %}
     <div class="tabbable" style="padding-top: 15px;">
         <ul class="nav nav-pills">
-            {% if filter_by %}
-            <li{% if not sort_by %} class="active"{% endif %}><a href="{% url appstore_filter_snapshots filter_by filter %}">Newest</a></li>
-            <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% url sorted_appstore_filter_snapshots filter_by filter 'best' %}">Highest Rated</a></li>
-            <li{% if sort_by == 'hits' %} class="active"{% endif %}><a href="{% url sorted_appstore_filter_snapshots filter_by filter 'hits' %}">Most Downloaded</a></li>
-            {% endif %}
-
-            {% if not filter_by %}
-            <li{% if not sort_by %} class="active"{% endif %}><a href="{% url appstore %}">Newest</a></li>
-            <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% url sorted_appstore 'best' %}">Highest Rated</a></li>
-            <li{% if sort_by == 'hits' %} class="active"{% endif %}><a href="{% url sorted_appstore 'hits' %}">Most Downloaded</a></li>
-            {% endif %}
-            </ul>
+            <li{% if not sort_by %} class="active"{% endif %}><a href="{% urlencode request.path request.GET without "sort_by" %}">Newest</a></li>
+            <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "best" %}">Highest Rated</a></li>
+            <li{% if sort_by == 'hits' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "hits" %}">Most Downloaded</a></li>
+        </ul>
     </div>
     {% endblock %}
 </div>
@@ -268,12 +261,12 @@
     <ul class="pager span10">
         {% if page > 1 %}
         <li class="previous">
-            <a href="?page={{ prev_page }}{% if search_query %}&q={{ search_query }}{% endif %}{% if include_unapproved %}&unapproved=true{% endif %}">&larr; Previous</a>
+            <a href="{% urlencode request.path request.GET with "page" as prev_page %}">&larr; Previous</a>
         </li>
         {% endif %}
         {% if more_pages %}
         <li class="next">
-            <a href="?page={{ next_page }}{% if search_query %}&q={{ search_query }}{% endif %}{% if include_unapproved %}&unapproved=true{% endif %}">Next &rarr;</a>
+            <a href="{% urlencode request.path request.GET with "page" as next_page %}">Next &rarr;</a>
         </li>
         {% endif %}
     </ul>

@@ -4,10 +4,10 @@
         <input type="text" name="q" placeholder="Search for apps..." value="{{ search_query }}" class="search-query" style="width: 80%" />
     </form></li>
     {% if request.user.is_superuser %}
-        <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}">All approved</a></li>
-        <li{% if include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}?unapproved=true">All unapproved</a></li>
+        <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url snapshot_filter %}">All approved</a></li>
+        <li{% if include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url snapshot_filter %}?is_approved=false">All unapproved</a></li>
     {% else %}
-        <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}">All</a></li>
+        <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url snapshot_filter %}">All</a></li>
     {% endif %}
 
     <!--<li{% if report %} class="active"{% endif %}><a href="{% url appstore_interfaces_default %}">Advanced search...</a></li>-->

@@ -245,26 +245,35 @@ def generate_sortables_from_facets(results, params=[]):
 @require_previewer # remove for production
 def snapshot_filter(request, template="appstore/appstore_base.html"):
     params, _ = parse_args_for_filter(request)
+    page = int(params.pop('page', 1))
     facets = ['project_type', 'license', 'region', 'author']
     results = es_snapshot_filter(params, facets)
     d_results = [Domain.wrap(res['_source']) for res in results['hits']['hits']]
+
+    sort_by = request.GET.get('sort_by', None)
+    if sort_by == 'best':
+        d_results = Domain.popular_sort(d_results, page)
+    elif sort_by == 'hits':
+        d_results = Domain.hit_sort(d_results, page)
 
     average_ratings = list()
     for result in d_results:
         average_ratings.append([result.name, Review.get_average_rating_by_app(result.copied_from._id)])
 
+    more_pages = False if d_results <= page*10 else True
+
     facets_sortables = generate_sortables_from_facets(results, params)
-    page = 1
-    include_unapproved = False
-    vals = dict(apps=d_results,
+    include_unapproved = True if request.GET.get('is_approved', "") == "false" else False
+    vals = dict(apps=d_results[(page-1)*10:page*10],
         page=page,
         prev_page=(page-1),
         next_page=(page+1),
-        more_pages=False,
-        sort_by=None,
+        more_pages=more_pages,
+        sort_by=sort_by,
         average_ratings=average_ratings,
         include_unapproved=include_unapproved,
-        sortables=facets_sortables)
+        sortables=facets_sortables,
+        query_str=request.META['QUERY_STRING'])
     return render_to_response(request, template, vals)
 
 @require_previewer # remove for production
@@ -273,14 +282,14 @@ def api_snapshot_filter(request):
     results = es_snapshot_filter(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
-def es_snapshot_filter(params, facets=[], include_ratings=False):
-    q = {"query":   {"bool": {"must":
+def es_snapshot_filter(params, facets=[], terms=['is_approved', 'sort_by'], sort_by="snapshot_time"):
+    q = {"sort": {sort_by: {"order" : "desc"} },
+         "query":   {"bool": {"must":
                                   [{"match": {'doc_type': "Domain"}},
                                    {"term": {"published": True}},
                                    {"term": {"is_snapshot": True}}]}},
          "filter":  {"and": [{"term": {"is_approved": params.get('is_approved', None) or True}}]}}
 
-    terms = ['is_approved']
     for attr in params:
         if attr not in terms:
             attr_val = [params[attr].lower()] if isinstance(params[attr], basestring) else [p.lower() for p in params[attr]]
