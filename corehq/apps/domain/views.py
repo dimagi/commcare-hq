@@ -9,7 +9,7 @@ from django.shortcuts import redirect
 
 from corehq.apps.domain.decorators import REDIRECT_FIELD_NAME, login_required_late_eval_of_LOGIN_URL, login_and_domain_required, domain_admin_required, require_previewer
 from corehq.apps.domain.forms import DomainSelectionForm, DomainGlobalSettingsForm,\
-    DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm
+    DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
 
@@ -206,7 +206,9 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
     domain = Domain.get_by_name(domain)
     user_sees_meta = request.couch_user.is_previewer()
 
-    if request.method == "POST" and 'billing_info_form' not in request.POST:
+    if request.method == "POST" and \
+       'billing_info_form' not in request.POST and \
+       'deployment_info_form' not in request.POST:
         # deal with saving the settings data
         if user_sees_meta:
             form = DomainMetadataForm(request.POST)
@@ -222,9 +224,6 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
             form = DomainMetadataForm(initial={
                 'default_timezone': domain.default_timezone,
                 'case_sharing': json.dumps(domain.case_sharing),
-                'city': domain.city,
-                'country': domain.country,
-                'region': domain.region,
                 'project_type': domain.project_type,
                 'customer_type': domain.customer_type,
                 'is_test': json.dumps(domain.is_test),
@@ -234,6 +233,23 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
                 'default_timezone': domain.default_timezone,
                 'case_sharing': json.dumps(domain.case_sharing)
                 })
+
+    if request.method == 'POST' and 'deployment_info_form' in request.POST:
+        deployment_form = DomainDeploymentForm(request.POST)
+        if deployment_form.is_valid():
+            if deployment_form.save(domain):
+                messages.success(request, "The deployment information for project %s was successfully updated!" % domain.name)
+            else:
+                messages.error(request, "There seems to have been an error. Please try again!")
+    else:
+        deployment_form = DomainDeploymentForm(initial={
+            'city': domain.deployment.city,
+            'country': domain.deployment.country,
+            'region': domain.deployment.region,
+            'deployment_date': domain.deployment.date.date if domain.deployment.date else "",
+            'description': domain.deployment.description,
+            'public': 'true' if domain.deployment.public else 'false'
+        })
 
     try:
         from hqbilling.forms import DomainBillingInfoForm
@@ -258,6 +274,7 @@ def project_settings(request, domain, template="domain/admin/project_settings.ht
     return render_to_response(request, template, dict(
         domain=domain.name,
         form=form,
+        deployment_form=deployment_form,
         languages=domain.readable_languages(),
         applications=domain.applications(),
         autocomplete_fields=('project_type', 'phone_model', 'user_type', 'city', 'country', 'region'),
@@ -288,9 +305,9 @@ def create_snapshot(request, domain):
         form = SnapshotSettingsForm(initial={
                 'default_timezone': domain.default_timezone,
                 'case_sharing': json.dumps(domain.case_sharing),
-                'city': domain.city,
-                'country': domain.country,
-                'region': domain.region,
+                'city': domain.deployment.city,
+                'country': domain.deployment.country,
+                'region': domain.deployment.region,
                 'project_type': domain.project_type,
                 'share_multimedia': True,
                 'license': domain.license
@@ -301,9 +318,9 @@ def create_snapshot(request, domain):
             form = SnapshotSettingsForm(initial={
                 'default_timezone': published_snapshot.default_timezone,
                 'case_sharing': json.dumps(published_snapshot.case_sharing),
-                'city': published_snapshot.city,
-                'country': published_snapshot.country,
-                'region': published_snapshot.region,
+#                'city': published_snapshot.city,
+#                'country': published_snapshot.country,
+#                'region': published_snapshot.region,
                 'project_type': published_snapshot.project_type,
                 'license': published_snapshot.license,
                 'title': published_snapshot.title,
@@ -381,9 +398,9 @@ def create_snapshot(request, domain):
         new_domain.description = request.POST['description']
         new_domain.short_description = request.POST['short_description']
         new_domain.project_type = request.POST['project_type']
-        new_domain.region = request.POST['region']
-        new_domain.city = request.POST['city']
-        new_domain.country = request.POST['country']
+#        new_domain.region = request.POST['region']
+#        new_domain.city = request.POST['city']
+#        new_domain.country = request.POST['country']
         new_domain.title = request.POST['title']
         new_domain.author = request.POST['author']
         for snapshot in domain.snapshots():

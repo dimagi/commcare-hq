@@ -6,12 +6,9 @@ function(doc) {
 //            ret.add(doc.original_doc);
             ret.add(doc.description);
             ret.add(doc.organization);
-            ret.add(doc.region);
-            ret.add(doc.city);
             ret.add(doc.title);
             ret.add(doc.author);
             ret.add(doc.phone_model);
-            ret.add(doc.country);
             ret.add({
                         'public': 'Public Domain',
                         'cc': 'Creative Commons Attribution',
@@ -27,7 +24,6 @@ function(doc) {
             ret.add(doc.license, {'field': 'license'});
             ret.add(doc.organization, {'field': 'organization'});
             ret.add(doc.project_type, {'field': 'category'});
-            ret.add(doc.region, {'field': 'region'});
             ret.add(doc.author, {'field': 'author'});
 
             return ret;
