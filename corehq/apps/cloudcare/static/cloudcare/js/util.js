@@ -5,17 +5,17 @@ var getLocalizedString = function (property, language) {
 };
 
 var localize = function(obj, language) {
-    s = obj[language];
+    var s = obj[language];
     if (!s) {
         for (var lang in obj) {
-            if (obj[lang]) {
+            if (obj.hasOwnProperty(lang) && obj[lang]) {
                 s = obj[lang];
                 break;
             }
         }
     }
     return s || "?";
-}
+};
 
 var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
     var url = urlRoot;

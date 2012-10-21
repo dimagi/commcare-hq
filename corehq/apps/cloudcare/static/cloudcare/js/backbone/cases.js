@@ -93,7 +93,7 @@ cloudCare.CaseView = Selectable.extend(cloudCare.caseViewMixin).extend({
     tagName: 'tr', // name of (orphan) root tag in this.el
     initialize: function () {
         var self = this;
-        _.bindAll(this, 'render', 'select', 'deselect', 'toggle');
+        _.bindAll(self, 'render', 'select', 'deselect', 'toggle');
         self.selected = false;
     },
     render: function () {
@@ -104,7 +104,7 @@ cloudCare.CaseView = Selectable.extend(cloudCare.caseViewMixin).extend({
         _(self.options.columns).each(function (col) {
             self.makeTd(col).appendTo(self.el);
         });
-        return this; 
+        return self;
     }
 });
 
@@ -112,7 +112,7 @@ cloudCare.CaseView = Selectable.extend(cloudCare.caseViewMixin).extend({
 cloudCare.CaseList = Backbone.Collection.extend({
     initialize: function () {
         var self = this;
-        _.bindAll(this, 'url', 'setUrl');
+        _.bindAll(self, 'url', 'setUrl');
         self.casedb = {};
     },
     model: cloudCare.Case,
@@ -166,22 +166,22 @@ cloudCare.CaseListView = Backbone.View.extend({
     },
     render: function () {
 	    var self = this;
-	    this.el = $('<section />').attr("id", "case-list").addClass("span7");
-        var table = $("<table />").addClass("table table-striped datatable").css('clear', 'both').appendTo($(this.el));
+	    self.el = $('<section />').attr("id", "case-list").addClass("span7");
+        var table = $("<table />").addClass("table table-striped datatable").css('clear', 'both').appendTo($(self.el));
         var thead = $("<thead />").appendTo(table);
         var theadrow = $("<tr />").appendTo(thead);
         if (self.options.delegation) {
             $('<th/>').appendTo(theadrow);
         }
-        _(this.detailsShort.get("columns")).each(function (col) {
+        _(self.detailsShort.get("columns")).each(function (col) {
             $("<th />").append('<i class="icon-hq-white icon-hq-doublechevron"></i> ').append(localize(col.header, self.options.language)).appendTo(theadrow);
         });
         var tbody = $("<tbody />").appendTo(table);
-        _(this.caseList.models).each(function(item){ 
+        _(self.caseList.models).each(function(item){
             self.appendItem(item);
         });
 
-        return this;
+        return self;
     },
     appendItem: function (item) {
         var self = this;
@@ -210,8 +210,8 @@ cloudCare.CaseListView = Backbone.View.extend({
             cloudCare.dispatch.trigger("case:deselected", this.model);
         });
       
-        $('table tbody', this.el).append(caseView.render().el);
-        this.caseMap[item.id] = caseView;
+        $('table tbody', self.el).append(caseView.render().el);
+        self.caseMap[item.id] = caseView;
 
     },
     appendAll: function () {
@@ -243,8 +243,7 @@ cloudCare.CaseListView = Backbone.View.extend({
 
 cloudCare.CaseDetailsView = Backbone.View.extend(cloudCare.caseViewMixin).extend({
     initialize: function () {
-        _.bindAll(this, 'render'); 
-        console.log('CaseDetailsView', this.options.delegation);
+        _.bindAll(this, 'render');
         this.details = new cloudCare.Details();
         this.details.set(this.options.details);
         this.render();
@@ -252,64 +251,57 @@ cloudCare.CaseDetailsView = Backbone.View.extend(cloudCare.caseViewMixin).extend
     
     render: function () {
         var self = this;
-        if (!this._everRendered) {
-            this.el = $('<section />').attr("id", "case-details").addClass("span5");
-            this._everRendered = true;    
+        if (!self._everRendered) {
+            self.el = $('<section />').attr("id", "case-details").addClass("span5");
+            self._everRendered = true;
         }
-        $(this.el).html(""); // clear
-        if (this.model) {
-            var table = $("<table />").addClass("table table-striped datatable").appendTo($(this.el));
+        $(self.el).html(""); // clear
+        if (self.model) {
+            var table = $("<table />").addClass("table table-striped datatable").appendTo($(self.el));
             var thead = $("<thead />").appendTo(table);
             var theadrow = $("<tr />").appendTo(thead);
 	        $("<th />").attr("colspan", "2").text("Case Details for " + self.model.getProperty("name")).appendTo(theadrow);
 	        var tbody = $("<tbody />").appendTo(table);
 	        
-            _(this.details.get("columns")).each(function (col) {
+            _(self.details.get("columns")).each(function (col) {
                 var row = $("<tr />").appendTo(table);
                 $("<th />").text(localize(col.header, self.options.language)).appendTo(row);
                 self.makeTd(col).appendTo(row);
             });
         }
-        return this;
+        return self;
     },               
 });
 
 cloudCare.CaseMainView = Backbone.View.extend({
     initialize: function () {
+        var self = this;
         _.bindAll(this, 'render', 'selectCase', 'fetchCaseList');
         // adding an internal section so that the filter button displays correctly
-        this.el = this.options.el;
-        this.section = $('<section class="row-fluid" />');
-        this.section.appendTo(this.el);
-        var self = this;
+        self.el = self.options.el;
+        self.section = $('<section class="row-fluid" />');
+        self.section.appendTo(self.el);
         // this is copy-pasted
         self.delegation = self.options.appConfig.form_index === 'task-list';
-        this.listView = new cloudCare.CaseListView({
-            details: this.options.listDetails,
-            cases: this.options.cases,
-            case_type: this.options.case_type,
-            language: this.options.language,
-            caseUrl: this.options.caseUrl,
-            appConfig: this.options.appConfig,
-            delegation: this.delegation
+        self.listView = new cloudCare.CaseListView({
+            details: self.options.listDetails,
+            cases: self.options.cases,
+            case_type: self.options.case_type,
+            language: self.options.language,
+            caseUrl: self.options.caseUrl,
+            appConfig: self.options.appConfig,
+            delegation: self.delegation
         });
-        $(this.listView.render().el).appendTo($(this.section));
-        this.detailsView = new cloudCare.CaseDetailsView({
-            details: this.options.summaryDetails,
-            language: this.options.language,
-            appConfig: this.options.appConfig,
-            casedb: this.listView.caseList.casedb,
-            delegation: this.delegation
+        $(self.listView.render().el).appendTo($(self.section));
+        self.detailsView = new cloudCare.CaseDetailsView({
+            details: self.options.summaryDetails,
+            language: self.options.language,
+            appConfig: self.options.appConfig,
+            casedb: self.listView.caseList.casedb,
+            delegation: self.delegation
         });
-        $(this.detailsView.render().el).appendTo($(this.section));
-        $("<div />").addClass("clear").appendTo($(this.section));
-        cloudCare.dispatch.on("case:selected", function (caseModel) {
-            self.selectCase(caseModel);
-        });
-        cloudCare.dispatch.on("case:deselected", function (caseModel) {
-            self.selectCase(null);
-        });
-        
+        $(self.detailsView.render().el).appendTo($(self.section));
+        $("<div />").addClass("clear").appendTo($(self.section));
     },
     
     selectCase: function (caseModel) {
