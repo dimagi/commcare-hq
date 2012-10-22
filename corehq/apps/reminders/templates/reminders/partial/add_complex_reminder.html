@@ -254,11 +254,11 @@
     function method_changed() {
         e = document.getElementById("id_method");
         if(e.value == "survey") {
-            show_elements_by_name("for_callbacks", "none");
+            show_elements_by_name("for_callbacks", "block");
             show_elements_by_name("for_sms", "none");
             show_elements_by_name("for_survey", "block");
             change_inner_html("event_label3","(hh:mm), send survey");
-            change_inner_html("event_label4","");
+            change_inner_html("event_label4","with timeout intervals");
         } else if(e.value == "callback") {
             show_elements_by_name("for_callbacks", "block");
             show_elements_by_name("for_sms", "block");
@@ -373,7 +373,7 @@
             <th name="for_survey" {% if form.method.value != "survey" %}style="display: none;"{% endif %}></th>
             <th></th>
             <th></th>
-            <th name="for_callbacks" {% if form.method.value != "callback" %}style="display: none;"{% endif %}></th>
+            <th name="for_callbacks" {% if form.method.value != "callback" and form.method.value != "survey" %}style="display: none;"{% endif %}></th>
             <th></th>
             <th onClick="add_row(this);"><div class="clickable">[+]</div></th>
         </tr>
@@ -404,8 +404,8 @@
                     </select>
                 </div>
             </td>
-            <td><span name="event_label4">{% if form.method.value == "callback" %}with callback intervals{% endif %}</span></td>
-            <td name="for_callbacks" {% if form.method.value != "callback" %}style="display: none;"{% endif %}><input type="text" class="short" name="reminder_events.{{ forloop.counter }}.timeouts" value="{{ e.timeouts }}" /></td>
+            <td><span name="event_label4">{% if form.method.value == "callback" %}with callback intervals{% else %}{%if form.method.value == "survey" %}with timeout intervals{% endif %}{% endif %}</span></td>
+            <td name="for_callbacks" {% if form.method.value != "callback" and form.method.value != "survey" %}style="display: none;"{% endif %}><input type="text" class="short" name="reminder_events.{{ forloop.counter }}.timeouts" value="{{ e.timeouts }}" /></td>
             <td onClick="delete_row(this);"><div class="clickable">[-]</div></td>
             <td onClick="add_row(this);"><div class="clickable">[+]</div></td>
         </tr>
@@ -430,8 +430,8 @@
                     </select>
                 </div>
             </td>
-            <td><span name="event_label4">{% if form.method.value == "callback" %}with callback intervals{% endif %}</span></td>
-            <td name="for_callbacks" {% if form.method.value != "callback" %}style="display: none;"{% endif %}><input type="text" class="short" name="reminder_events.1.timeouts" /></td>
+            <td><span name="event_label4">{% if form.method.value == "callback" %}with callback intervals{% else %}{% if form.method.value == "survey" %}with timeout intervals{% endif %}{% endif %}</span></td>
+            <td name="for_callbacks" {% if form.method.value != "callback" and form.method.value != "survey" %}style="display: none;"{% endif %}><input type="text" class="short" name="reminder_events.1.timeouts" /></td>
             <td onClick="delete_row(this);"><div class="clickable">[-]</div></td>
             <td onClick="add_row(this);"><div class="clickable">[+]</div></td>
         </tr>

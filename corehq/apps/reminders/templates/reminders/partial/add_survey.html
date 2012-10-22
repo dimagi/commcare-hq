@@ -1,6 +1,10 @@
 {% extends "reminders/survey_base.html" %}
+{% load hq_shared_tags %}
 
 {% block head %}{{ block.super }}
+
+<script language="javascript" type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-1.8.16.min.js' %}"></script>
+<link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-redmond-1.8.16.css' %}">
 
 <style type="text/css">
     #survey_info {
@@ -26,12 +30,19 @@
     }
 </style>
 
+<script type="text/javascript">
+    $(function() {
+        $("input[name$='.date']").datepicker({dateFormat : "yy-mm-dd"});
+    });
+</script>
+
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
 <script type="text/javascript">
     function add_record(element_id, record) {
         document.getElementById(element_id).appendChild(record);
+        $("#"+element_id+" input[name$='.date']:last").datepicker({dateFormat : "yy-mm-dd"});
     }
     
     function remove_record(ref) {
@@ -148,6 +159,12 @@
         return tr;
     }
     
+    $(function() {
+        $("#send_followup").change(function() {
+            $("#followup_table").toggle();
+        });
+    });
+    
     {% if form.waves.value|length == 0 %}
     var current_wave_num = 1;
     {% else %}
@@ -165,6 +182,7 @@
     {% else %}
     var current_sample_num = {{ form.samples.value|length }};
     {% endif %}
+    
 </script>
 
 {% endblock %}
@@ -199,6 +217,7 @@
     <br />
     <h4>Questionnaire Waves</h4>
     <br />
+    {{ form.waves.errors }}
     <div class="form-block">
         <input type="checkbox" name="send_automatically" {% if form.send_automatically.value %}value="on" checked="checked"{% endif %}/> Send Automatically
         <br />
@@ -247,11 +266,12 @@
     <br />
     <h4>Follow-ups</h4>
     <br />
+    {{ form.followups.errors }}
     <div class="form-block">
-        <input type="checkbox" name="send_followup" {% if form.send_followup.value %}value="on" checked="checked"{% endif %}/> Send follow-up(s) for incomplete SMS Questionnaires
+        <input type="checkbox" id="send_followup" name="send_followup" {% if form.send_followup.value %}value="on" checked="checked"{% endif %} /> Send follow-up(s) for incomplete SMS Questionnaires
         <br />
         <br />
-        <table id="followup_table">
+        <table id="followup_table" style="display: {% if form.send_followup.value %}block{% else %}none{% endif %};">
             <tbody id="followup_tbody">
                 {% if form.followups.value|length == 0 %}
                 <tr>

@@ -1,5 +1,4 @@
 from datetime import timedelta, datetime
-import random
 import json
 from copy import deepcopy
 from django.http import HttpResponseRedirect, HttpResponse
@@ -29,6 +28,8 @@ from dimagi.utils import gitinfo
 from django.conf import settings
 from restkit import Resource
 import os
+from django.core import cache
+from django.core.cache import InvalidCacheBackendError
 
 @require_superuser
 def default(request):
@@ -559,7 +560,28 @@ def system_ajax(request):
 
 @require_superuser
 def system_info(request):
+
+    def human_bytes(bytes):
+        #source: https://github.com/bartTC/django-memcache-status
+        bytes = float(bytes)
+        if bytes >= 1073741824:
+            gigabytes = bytes / 1073741824
+            size = '%.2fGB' % gigabytes
+        elif bytes >= 1048576:
+            megabytes = bytes / 1048576
+            size = '%.2fMB' % megabytes
+        elif bytes >= 1024:
+            kilobytes = bytes / 1024
+            size = '%.2fKB' % kilobytes
+        else:
+            size = '%.2fB' % bytes
+        return size
+
     context = get_hqadmin_base_context(request)
+
+    context['couch_update'] = request.GET.get('couch_update', 5000)
+    context['celery_update'] = request.GET.get('celery_update', 10000)
+
     context['hide_filters'] = True
     context['current_system'] = os.uname()[1]
     context['current_ref'] = gitinfo.get_project_info()
@@ -568,5 +590,71 @@ def system_info(request):
     else:
         couchlog_resource = Resource("http://%s:%s@%s/" % (settings.COUCH_USERNAME, settings.COUCH_PASSWORD, settings.COUCH_SERVER_ROOT))
     context['couch_log'] = couchlog_resource.get('_log', params_dict={'bytes': 2000 }).body_string()
+
+    #redis status
+    redis_status = ""
+    redis_results = ""
+    try:
+        rc = cache.get_cache('redis')
+
+    except InvalidCacheBackendError, ex:
+        redis_status="Not Configured"
+        redis_results= "Redis is not configured on this system!"
+
+    try:
+        import redis
+        redis_api = redis.StrictRedis.from_url('redis://%s' % rc._server)
+        info_dict = redis_api.info()
+        redis_status = "Online"
+        redis_results = "Used Memory: %s" % info_dict['used_memory_human']
+    except Exception, ex:
+        redis_status="Offline"
+        redis_result= "Redis connection error: %s" % ex
+    context['redis_status'] = redis_status
+    context['redis_results'] = redis_results
+
+    #rabbitmq status
+    mq_status = "Unknown"
+    if settings.BROKER_URL.startswith('amqp'):
+        amqp_parts = settings.BROKER_URL.replace('amqp://','').split('/')
+        mq_management_url = amqp_parts[0].replace('5672', '55672')
+        vhost = amqp_parts[1]
+        mq = Resource('http://%s' % mq_management_url)
+        vhost_dict = json.loads(mq.get('api/vhosts').body_string())
+        mq_status = "Offline"
+        for d in vhost_dict:
+            if d['name'] == vhost:
+                mq_status='OK'
+    else:
+        mq_status = "Not configured"
+    context['rabbitmq_status'] = mq_status
+
+
+    #memcached_status
+    mc = cache.get_cache('default')
+    mc_status = "Unknown/Offline"
+    mc_results = ""
+    try:
+        mc_stats = mc._cache.get_stats()
+        if len(mc_stats) > 0:
+            mc_status = "Online"
+            stats_dict = mc_stats[0][1]
+            bytes = stats_dict['bytes']
+            max_bytes = stats_dict['limit_maxbytes']
+            curr_items = stats_dict['curr_items']
+            mc_results = "%s Items %s out of %s" % (curr_items, human_bytes(bytes),
+                                                    human_bytes(max_bytes))
+
+    except Exception, ex:
+        mc_status = "Offline"
+        mc_results = "%s" % ex
+    context['memcached_status'] = mc_status
+    context['memcached_results'] = mc_results
+
+
+    #elasticsearch status
+    #todo
+
+
     return render_to_response(request, "hqadmin/system_info.html", context)
 

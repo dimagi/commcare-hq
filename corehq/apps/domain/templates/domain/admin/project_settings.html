@@ -49,6 +49,7 @@
 {% block user-view %}
     <ul class="nav nav-tabs" id="project-settings-tabs">
         <li><a href="#overall-settings" data-toggle="tab">Project Information</a></li>
+        <li><a href="#deployment-info" data-toggle="tab">Deployment Information</a></li>
         {% if billing_enabled %}<li><a href="#billing-info" data-toggle="tab">Billing Information</a></li>{% endif %}
     </ul>
     <div class="tab-content" id="settings">
@@ -89,6 +90,14 @@
                         </div>
                     {% endif %}
                 </fieldset>
+            </form>
+        </section>
+        <section class="tab-pane" id="deployment-info">
+            <form class="form-horizontal" method="post">
+                {% bootstrap_form_errors deployment_form %}
+                {% bootstrap_fieldset deployment_form "Deployment Settings" %}
+                <input type="hidden" name="deployment_info_form" value=true />
+                <div class="form-actions"><button type="submit" class="btn btn-primary">Update Project Settings</button></div>
             </form>
         </section>
         {% if billing_enabled %}

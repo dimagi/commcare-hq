@@ -12,8 +12,9 @@
                         time: "{{ reminder.next_fire.time }}",
                         username: "{{ reminder.user.raw_username }}",
                         case_name: "{{ reminder.case.name }}",
-                        case_url: "{% url case_details domain reminder.case.get_id %}",
-                        recipient: "{{ reminder.handler.recipient }}"
+                        case_url: "{% if reminder.case %}{% url case_details domain reminder.case.get_id %}{% endif %}",
+                        recipient: "{{ reminder.handler.recipient }}",
+                        sample_name: "{% if reminder.handler.recipient == 'SURVEY_SAMPLE' %}{{ reminder.recipient.name }}{% endif %}"
                     },
                 {% endfor %}
                     null
@@ -30,8 +31,12 @@
                             $('<p/>').html(
                                 "send <u>" + reminder.nickname + "</u><br/>" + (
                                     (reminder.recipient == "USER") ?
-                                    ("to <u>" + (reminder.username || "(?)") + '</u><br/> about <a href="' + reminder.case_url + '">' + (reminder.case_name || "(?)") + "</a>") :
-                                    ('to <a href="' + reminder.case_url + '">' + (reminder.case_name || "(?)") + "</a>")
+                                    ("to <u>" + (reminder.username || "(?)") + '</u><br/> about <a href="' + reminder.case_url + '">' + (reminder.case_name || "(?)") + "</a>") : (
+                                        (reminder.recipient == "CASE") ?
+                                        ('to <a href="' + reminder.case_url + '">' + (reminder.case_name || "(?)") + "</a>") :
+                                        
+                                        ('to ' + reminder.sample_name)
+                                    )
                                 )
                             )
                         )

@@ -347,10 +347,10 @@
                 </li><li>
                     <a class="dialog_opener" href="#"><span class="ui-icon ui-icon-arrowthick-1-n"></span>Upload</a>
                     <div class="dialog" title="Upload XForm">
-                        <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id  'xform' %}" method="POST" enctype="multipart/form-data">
-                            <input id="xform_file_input" type="file" name="xform" />
+                        <form action="{% url corehq.apps.app_manager.views.edit_form_attr domain app.id form.get_unique_id 'xform' %}" method="POST" enctype="multipart/form-data">
+                            <input type="file" id="xform_file_input" name="xform" />
                             <input type="hidden" name="ajax" value="false" />
-                            <input id="xform_file_submit"type="submit" value="Upload" />
+                            <input type="submit" id="xform_file_submit" value="Upload" />
                         </form>
                     </div>
                 </li><li>
@@ -443,7 +443,7 @@
                                             edit: $root.edit"></select>
                                     </span>
                                     <span data-bind="if: !$root.utils.getAnswers({question: condition.question()}).length">
-                                        <input class="code" data-bind="value: condition.answer, edit: $root.edit"/>
+                                        <input type="text" class="code" data-bind="value: condition.answer, edit: $root.edit"/>
                                     </span>
                             </div>
                             <div class="well" style="margin: 10px">
@@ -487,7 +487,7 @@
                                                 edit: $root.edit"></select>
                                         </td>
                                         <td>
-                                            <input class="code" data-bind="value: key, attr: {placeholder: defaultKey}, edit: $root.edit"/>
+                                            <input type="text" class="code" data-bind="value: key, attr: {placeholder: defaultKey}, edit: $root.edit"/>
                                             <p class="help-inline" data-bind="text: validate"></p>
                                         </td>
                                     </tr>

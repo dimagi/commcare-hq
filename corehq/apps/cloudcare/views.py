@@ -30,7 +30,6 @@ def default(request, domain):
 @login_and_domain_required
 def app_list(request, domain, urlPath):
     preview = string_to_boolean(request.REQUEST.get("preview", "false"))
-    language = request.couch_user.language or "en"
     
     def _app_latest_build_json(app_id):
         build = ApplicationBase.view('app_manager/saved_app',
@@ -51,6 +50,18 @@ def app_list(request, domain, urlPath):
     
     # trim out empty apps
     apps = filter(lambda app: app, apps)
+    
+    
+    def _default_lang():
+        if apps:
+            # unfortunately we have to go back to the DB to find this
+            return Application.get(apps[0]["_id"]).build_langs[0]
+        else:
+            return "en"
+    
+    # default language to user's preference, followed by 
+    # first app's default, followed by english
+    language = request.couch_user.language or _default_lang()
     return render_to_response(request, "cloudcare/cloudcare_home.html", 
                               {"domain": domain,
                                "language": language,
