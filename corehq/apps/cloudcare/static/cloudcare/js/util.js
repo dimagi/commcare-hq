@@ -14,8 +14,9 @@ var localize = function(obj, language) {
             }
         }
     }
-    return s || "?";
+    return s || localize.NOT_FOUND;
 };
+localize.NOT_FOUND = '?';
 
 var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
     var url = urlRoot;

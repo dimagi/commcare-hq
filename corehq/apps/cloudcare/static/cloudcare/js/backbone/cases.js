@@ -1,8 +1,8 @@
-
-
 if (typeof cloudCare === 'undefined') {
     var cloudCare = {};
 }
+
+cloudCare.EMPTY = '---';
 
 cloudCare.CASE_PROPERTY_MAP = {
     // IMPORTANT: if you edit this you probably want to also edit
@@ -91,7 +91,7 @@ cloudCare.caseViewMixin = {
             return td.text(text);
         } else {
             return td.append(
-                $('<small/>').text('No Data')
+                $('<small/>').text(cloudCare.EMPTY)
             );
         }
     }
