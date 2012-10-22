@@ -3,10 +3,8 @@ from calendar import month_name
 from celery.log import get_task_logger
 import dateutil
 import pytz
-from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import log_exception
 from dimagi.utils.parsing import string_to_datetime
-from dimagi.utils.timezones import utils as tz_utils
 from dateutil.rrule import *
 
 def force_to_date(val):
@@ -193,8 +191,8 @@ class DateSpan(object):
 
     @property
     def startdate_key_utc(self):
-        if self.startdate:
-            utc_startdate = self.startdate_utc
+        utc_startdate = self.startdate_utc
+        if utc_startdate:
             return [utc_startdate.year, utc_startdate.month, utc_startdate.day]
         return []
 
@@ -220,8 +218,8 @@ class DateSpan(object):
 
     @property
     def enddate_key_utc(self):
-        if self.enddate:
-            utc_enddate = self.enddate_utc
+        utc_enddate = self.enddate_utc
+        if utc_enddate:
             return [utc_enddate.year, utc_enddate.month, utc_enddate.day]
         return []
 
