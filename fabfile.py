@@ -41,15 +41,19 @@ RSYNC_EXCLUDE = (
 env.project = 'commcare-hq'
 env.code_repo = 'git://github.com/dimagi/commcare-hq.git'
 env.home = "/home/cchq"
-
+env.selenium_url = 'http://jenkins.dimagi.com/job/commcare-hq-post-deploy/buildWithParameters?token=%(token)s&TARGET=%(environment)s'
 
 env.roledefs = {
         'django_celery': [],
         'django_app': [],
         'django_public': [],
+        'django_pillowtop': [], #for now combined with celery
+
+        'django_monolith': [], # all of the above config - use this ONLY for single server config, lest deploy() will run multiple times in parallel causing bad contentions
+
         'formsplayer': [],
         'staticfiles': [],
-        'django_monolith': [], # all of the above config - use this ONLY for single server config, lest deploy() will run multiple times in parallel causing bad contentions
+        'remote_es': [], #remote elasticsearch ssh tunnel config
 
         #package level configs that are not quite config'ed yet in this fabfile
         'couch': [],
@@ -133,10 +137,13 @@ def india():
         'django_celery': [],
         'django_app': [],
         'django_public': [],
+        'django_pillowtop': [],
         'formsplayer': [],
-        'lb': [],
+        'remote_es': [],
         'staticfiles': [],
+        'lb': [],
         'deploy': [],
+
         'django_monolith': ['220.226.209.82'],
     }
     env.jython_home = '/usr/local/lib/jython'
@@ -159,10 +166,16 @@ def production():
         'django_celery': ['hqdb.internal.commcarehq.org'],
         'django_app': ['hqdjango0.internal.commcarehq.org', 'hqdjango2.internal.commcarehq.org'],
         'django_public': ['hqdjango1.internal.commcarehq.org',],
+        'django_pillowtop': ['hqdb.internal.commcarehq.org'],
+
+        'remote_es': ['hqdb.internal.commcarehq.org', 'hqdjango0.internal.commcarehq.org',
+                      'hqdjango1.internal.commcarehq.org', 'hqdjango2.internal.commcarehq.org'],
+
         'formsplayer': ['hqdjango0.internal.commcarehq.org'],
         'lb': [], #todo on apache level config
         'staticfiles': ['hqproxy0.internal.commcarehq.org'],
         'deploy': ['hqdb.internal.commcarehq.org'], #this is a stub becuaue we don't want to be prompted for a host or run deploy too many times
+        'django_monolith': [] # fab complains if this doesn't exist
     }
 
 
@@ -174,11 +187,7 @@ def production():
 
     env.jython_home = '/usr/local/lib/jython'
     _setup_path()
-    if not console.confirm('Are you sure you want to deploy production?', default=False) or \
-       not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
-        utils.abort('Deployment aborted.')
-
-
+    
 
 @task
 def install_packages():
@@ -318,8 +327,8 @@ def preindex_views():
 @parallel
 def update_code():
     with cd(env.code_root):
-        sudo('git pull', user=env.sudo_user)
         sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
+        sudo('git pull', user=env.sudo_user)
         sudo('git submodule sync', user=env.sudo_user)
         sudo('git submodule update --init --recursive', user=env.sudo_user)
 
@@ -327,7 +336,7 @@ def update_code():
 @task
 def deploy():
     """ deploy code to remote host by checking out the latest via git """
-    if not console.confirm('Are you sure you want to deploy production?', default=False) or \
+    if not console.confirm('Are you sure you want to deploy {env.environment}?'.format(env=env), default=False) or \
        not console.confirm('Did you run "fab {env.environment} preindex_views"? '.format(env=env), default=False):
         utils.abort('Deployment aborted.')
 
@@ -341,12 +350,10 @@ def deploy():
         upload_and_set_supervisor_config()
         execute(migrate)
         execute(_do_collectstatic)
+        execute(version_static)
     finally:
         # hopefully bring the server back to life if anything goes wrong
         execute(services_restart)
-
-
-
 
 
 @task
@@ -469,8 +476,20 @@ def _do_collectstatic():
     with cd(env.code_root):
         sudo('%(virtualenv_root)s/bin/python manage.py make_bootstrap' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env, user=env.sudo_user)
+
+@roles('django_app', 'django_monolith')
+@parallel
+def version_static():
+    """
+    Put refs on all static references to prevent stale browser cache hits when things change.
+    This needs to be run on the WEB WORKER since the web worker governs the actual static
+    reference.
+    """
+    with cd(env.code_root):
         sudo('rm -f tmp.sh resource_versions.py; %(virtualenv_root)s/bin/python manage.py   \
              printstatic > tmp.sh; bash tmp.sh > resource_versions.py' % env, user=env.sudo_user)
+
+
 
 @task
 @roles('staticfiles',)
@@ -536,7 +555,13 @@ def upload_celery_supervisorconf():
     _upload_supervisor_conf_file('supervisor_celery.conf')
     _upload_supervisor_conf_file('supervisor_celerybeat.conf')
     _upload_supervisor_conf_file('supervisor_celerymon.conf')
-    _upload_supervisor_conf_file('supervisor_couchdb_lucene.conf')
+    _upload_supervisor_conf_file('supervisor_couchdb_lucene.conf') #to be deprecated
+
+    #in reality this also should be another machine if the number of listeners gets too high
+    _upload_supervisor_conf_file('supervisor_pillowtop.conf')
+
+
+
 
 @roles('django_celery', 'django_monolith')
 def upload_sofabed_supervisorconf():
@@ -545,6 +570,11 @@ def upload_sofabed_supervisorconf():
 @roles('django_app', 'django_monolith')
 def upload_djangoapp_supervisorconf():
     _upload_supervisor_conf_file('supervisor_django.conf')
+
+
+@roles('remote_es')
+def upload_elasticsearch_supervisorconf():
+    _upload_supervisor_conf_file('supervisor_elasticsearch.conf')
 
 @roles('django_public')
 def upload_django_public_supervisorconf():
@@ -561,6 +591,7 @@ def upload_and_set_supervisor_config():
     execute(upload_celery_supervisorconf)
     execute(upload_sofabed_supervisorconf)
     execute(upload_djangoapp_supervisorconf)
+    execute(upload_elasticsearch_supervisorconf)
     execute(upload_django_public_supervisorconf)
     execute(upload_formsplayer_supervisorconf)
     #generate_supervisorconf_file()
@@ -586,3 +617,16 @@ def _supervisor_command(command):
     #elif what_os() == 'ubuntu':
         #cmd_exec = "/usr/local/bin/supervisorctl"
     sudo('supervisorctl %s' % (command), shell=False)
+
+
+# tests
+
+@task
+def selenium_test():
+    require('environment', provided_by=('staging', 'demo', 'production', 'india'))
+    prompt("Jenkins username:", key="jenkins_user", default="selenium")
+    prompt("Jenkins password:", key="jenkins_password")
+    url = env.selenium_url % {"token": "foobar", "environment": env.environment}
+    local("curl --user %(user)s:%(pass)s '%(url)s'" % \
+          {'user': env.jenkins_user, 'pass': env.jenkins_password, 'url': url})
+    

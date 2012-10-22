@@ -88,3 +88,6 @@
 [submodule "submodules/bihar-reports"]
 	path = submodules/bihar-reports
 	url = git://github.com/dimagi/bihar-reports.git
+[submodule "submodules/pillowtop-src"]
+	path = submodules/pillowtop-src
+	url = git://github.com/dimagi/pillowtop.git

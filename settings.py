@@ -189,7 +189,8 @@ HQ_APPS = (
     'phonelog',
     'hutch',
     'loadtest',
-    
+    'pillowtop',
+
     # custom reports
     'a5288',
     'bihar',
@@ -234,7 +235,7 @@ DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME="homepage"
 # domain syncs
 # e.g.
 #               { sourcedomain1: { "domain": targetdomain1,
-#                                  "transform": path.to.transformfunction1 },
+#                      "transform": path.to.transformfunction1 },
 #                 sourcedomain2: {...} }
 DOMAIN_SYNCS = { }
 # if you want to deidentify app names, put a dictionary in your settings
@@ -300,14 +301,14 @@ COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables-1.9/js/jque
 
 # These allow HQ to override what shows up in couchlog (add a domain column)
 COUCHLOG_TABLE_CONFIG = {"id_column":       0,
-                         "archived_column": 1,
-                         "date_column":     2,
-                         "message_column":  4,
-                         "actions_column":  8,
-                         "email_column":    9,
-                         "no_cols":         10}
+             "archived_column": 1,
+             "date_column":     2,
+             "message_column":  4,
+             "actions_column":  8,
+             "email_column":    9,
+             "no_cols":         10}
 COUCHLOG_DISPLAY_COLS = ["id", "archived?", "date", "exception type",
-                         "message", "domain", "user", "url", "actions", "report"]
+             "message", "domain", "user", "url", "actions", "report"]
 COUCHLOG_RECORD_WRAPPER = "corehq.apps.hqcouchlog.wrapper"
 COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
 
@@ -364,6 +365,7 @@ TOUCHFORMS_API_PASSWORD = "changeme"
 # import local settings if we find them
 LOCAL_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
+LOCAL_PILLOWTOPS = []
 
 try:
     #try to see if there's an environmental variable set for local_settings
@@ -431,7 +433,7 @@ COUCHDB_APPS = [
         'hutch',
         'hqbilling',
         'couchlog',
-        
+
         # custom reports
         'bihar',
         'dca',
@@ -623,13 +625,18 @@ CUSTOM_REPORT_MAP = {
         "Custom Reports": ["a5288.reports.MissedCallbackReport"]
     },
     "care-bihar": {
-        "Custom Reports": ["bihar.reports.supervisor.FamilyPlanningReport",
-                           "bihar.reports.supervisor.TeamDetailsReport",
-                           "bihar.reports.supervisor.TeamNavReport",
-                           "bihar.reports.supervisor.MotherListReport",
-                           "bihar.reports.supervisor.PregnanciesRegistered",
-                           "bihar.reports.supervisor.NoBPCounseling",
-                           "bihar.reports.supervisor.RecentDeliveries",]
+        "Custom Reports": [
+            "bihar.reports.supervisor.MainNavReport",
+            "bihar.reports.supervisor.WorkerRankReport",
+            "bihar.reports.supervisor.DueListReport",
+            "bihar.reports.supervisor.ToolsReport",
+            "bihar.reports.supervisor.SubCenterSelectionReport",
+            "bihar.reports.indicators.reports.IndicatorSelectNav",
+            "bihar.reports.indicators.reports.IndicatorNav",
+            "bihar.reports.indicators.reports.IndicatorSummaryReport",
+            "bihar.reports.indicators.reports.IndicatorClientList",
+            "bihar.reports.indicators.reports.IndicatorCharts",
+        ]
     }
 #    "test": [
 #        'corehq.apps.reports.deid.FormDeidExport',
@@ -681,3 +688,17 @@ MESSAGE_TAGS = {
 COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
 DEFAULT_CURRENCY = "USD"
+
+SELENIUM_APP_SETTING_DEFAULTS = {
+    'cloudcare': {
+        # over-generous defaults for now
+        'OPEN_FORM_WAIT_TIME': 20,
+        'SUBMIT_FORM_WAIT_TIME': 20
+    },
+
+    'reports': {
+        'MAX_PRELOAD_TIME': 20,
+        'MAX_LOAD_TIME': 30,
+    },
+}
+PILLOWTOPS = [] + LOCAL_PILLOWTOPS
