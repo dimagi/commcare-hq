@@ -15,9 +15,9 @@
 {% for domain in domains %}
     <tr>
         <td><a href="{% url default_report domain.name %}">{{ domain.display_name }}</a></td>
-		<td>{{ domain.city|default:"" }}</td>
-		<td>{{ domain.country|default:"" }}</td>
-		<td>{{ domain.region|default:"" }}</td>
+		<td>{{ domain.deployment.city|default:"" }}</td>
+		<td>{{ domain.deployment.country|default:"" }}</td>
+		<td>{{ domain.deployment.region|default:"" }}</td>
 		<td>{{ domain.project_type|default:"" }}</td>
 		<td>{{ domain.customer_type|default:"" }}</td>
 		<td>{{ domain.is_test|yesno }}</td>

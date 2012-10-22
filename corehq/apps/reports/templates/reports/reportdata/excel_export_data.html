@@ -89,44 +89,51 @@
             $('.all-users-all-time').popover({
                 title: "All users over all time",
                 content: "This number includes submissions that may not match your filter.",
-                placement: 'left'
+                placement: 'left',
+                trigger: 'hover'
             });
             $('.suggestions').popover({
                 title: "Uncategorized Submissions",
                 content: "It looks like this data should be categorized with one of your forms but is showing up " +
                         "separately. We strongly recommend that you Report an Issue with the button below.",
-                placement: 'right'
+                placement: 'right',
+                trigger: 'hover'
             });
             $('.sheet-name-info').popover({
                 title: "Sheet Name",
                 content: "Excel sheet names are limited to a maximum of 31 characters. "+
                         "This will be this custom export's sheet name in your bulk custom export.",
-                placement: 'right'
+                placement: 'right',
+                trigger: 'hover'
             });
             $('.custom-bulk-export-info').popover({
                 title: "What is Custom Bulk Export?",
                 content: "Custom Bulk Export creates a single Excel file " +
                         "with each export as a separate sheet inside that file."+
                         "<br /><br />NOTE: Excel 2007+ is currently the only bulk export format supported.",
-                placement: 'left'
+                placement: 'left',
+                trigger: 'hover'
             });
             $('.bulk-export-info').popover({
                 title: "What is Bulk Export?",
                 content: "Bulk Export creates a zip file with containing an Excel file for each application, " +
                         "with each form as a separate sheet inside that file."+
                         "<br /><br />NOTE: Excel 2007+ is currently the only bulk export format supported.",
-                placement: 'left'
+                placement: 'left',
+                trigger: 'hover'
             });
             $('.sheetname-duplicate').popover({
                 title: "Duplicate Sheet Name",
                 content: "This sheet name is a duplicate of another. Custom exports with duplicate sheet names will " +
                         "not be included in the Bulk Custom Export. Change the sheet name to resolve this issue.",
-                placement: 'right'
+                placement: 'right',
+                trigger: 'hover'
             });
             $('.custom-bulk-format-na').popover({
                 title: "Format Not Available",
                 content: "Custom Bulk Export does not support this format at the time.",
-                placement: 'left'
+                placement: 'left',
+                trigger: 'hover'
             });
         });
 
