@@ -34,7 +34,7 @@ def _appstore_context(context={}):
             ('author', [("?author=" + d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('author')]),
             ('license', [("?license=" + d, LICENSES.get(d), count) for d, count in Domain.field_by_prefix('license')]),
         ]
-    context['search_url'] = reverse('appstore_search_snapshots')
+    context['search_url'] = reverse('appstore')
     return context
 
 @require_previewer # remove for production
@@ -114,7 +114,7 @@ def project_info(request, domain, template="appstore/project_info.html"):
 
 FILTERS = {'category': 'project_type', 'license': 'license', 'region': 'region', 'author': 'author'}
 
-def parse_args_for_appstore(request):
+def parse_args_for_es(request):
     params = {}
     facets = []
     for attr in request.GET.iterlists():
@@ -124,24 +124,25 @@ def parse_args_for_appstore(request):
         params[attr[0]] = attr[1][0] if len(attr[1]) < 2 else attr[1]
     return params, facets
 
-def generate_sortables_from_facets(results, params=None):
+def generate_sortables_from_facets(results, params=None, prefix=""):
     param_strings = {}
     if params:
         for attr in params:
             val = params[attr]
             if not isinstance(val, basestring):
                 val=" ".join(val)
-            param_strings[attr] = "{}={}".format(attr, val)
+            param_strings[attr if not prefix else '{}.{}'.format(prefix, attr)] = "{}={}".format(attr, val)
 
+    pf_num = len(prefix) + 1 if prefix else 0
     def generate_query_string(strings, attr, val):
         strs = strings.copy()
-        strs[attr] = "{}={}".format(attr, val)
+        strs[attr] = "{}={}".format(attr[pf_num:], val)
         return "?%s" % "&".join(strs.values())
 
     sortable = []
     for facet in results.get("facets", []):
         license = False if facet != 'license' else True
-        sortable.append((facet, [(generate_query_string(param_strings, facet, ft["term"]),
+        sortable.append((facet[pf_num:], [(generate_query_string(param_strings, facet, ft["term"]),
                                   ft["term"] if not license else LICENSES.get(ft["term"]),
                                   ft["count"]) \
                                  for ft in results["facets"][facet]["terms"]]))
@@ -149,7 +150,7 @@ def generate_sortables_from_facets(results, params=None):
 
 @require_previewer # remove for production
 def appstore(request, template="appstore/appstore_base.html"):
-    params, _ = parse_args_for_appstore(request)
+    params, _ = parse_args_for_es(request)
     page = int(params.pop('page', 1))
     facets = ['project_type', 'license', 'region', 'author']
     results = es_snapshot_query(params, facets)
@@ -183,9 +184,37 @@ def appstore(request, template="appstore/appstore_base.html"):
 
 @require_previewer # remove for production
 def appstore_api(request):
-    params, facets = parse_args_for_appstore(request)
+    params, facets = parse_args_for_es(request)
     results = es_snapshot_query(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
+
+def es_query(params, facets=[], terms=[], q={}):
+    q["filter"] = q.get("filter", {})
+    q["filter"]["and"] = q["filter"].get("and", [])
+    for attr in params:
+        if attr not in terms:
+            attr_val = [params[attr].lower()] if isinstance(params[attr], basestring) else [p.lower() for p in params[attr]]
+            q["filter"]["and"].append({"terms": {attr: attr_val}})
+
+    def facet_filter(facet):
+        ff = {"facet_filter": {}}
+        ff["facet_filter"]["and"] = [clause for clause in q["filter"]["and"] if facet not in clause.get("terms", [])]
+        return ff if ff["facet_filter"]["and"] else {}
+
+    if facets:
+        q["facets"] = {}
+        for facet in facets:
+            q["facets"][facet] = {"terms": {"field": facet}}
+            q["facets"][facet].update(facet_filter(facet))
+
+    if not q['filter']['and']:
+        del q["filter"]
+
+    es_url = "commcarehq/commcarehq/_search"
+    es = rawes.Elastic('localhost:9200')
+    ret_data = es.get(es_url, data=q)
+
+    return ret_data
 
 def es_snapshot_query(params, facets=[], terms=['is_approved', 'sort_by', 'search'], sort_by="snapshot_time"):
     q = {"sort": {sort_by: {"order" : "desc"} },
@@ -206,27 +235,7 @@ def es_snapshot_query(params, facets=[], terms=['is_approved', 'sort_by', 'searc
             }
         })
 
-    for attr in params:
-        if attr not in terms:
-            attr_val = [params[attr].lower()] if isinstance(params[attr], basestring) else [p.lower() for p in params[attr]]
-            q["filter"]["and"].append({"terms": {attr: attr_val}})
-
-    def facet_filter(facet):
-        ff = {"facet_filter": {}}
-        ff["facet_filter"]["and"] = [clause for clause in q["filter"]["and"] if facet not in clause.get("terms", [])]
-        return ff
-
-    if facets:
-        q["facets"] = {}
-        for facet in facets:
-            q["facets"][facet] = {"terms": {"field": facet}}
-            q["facets"][facet].update(facet_filter(facet))
-
-    es_url = "commcarehq/commcarehq/_search"
-    es = rawes.Elastic('localhost:9200')
-    ret_data = es.get(es_url, data=q)
-
-    return ret_data
+    return es_query(params, facets, terms, q)
 
 @require_previewer
 def appstore_default(request):
@@ -310,5 +319,48 @@ def deployment_info(request, domain, template="appstore/deployments.html"):
 
 @require_previewer # remove for production
 def deployment_search(request, template="appstore/deployments.html"):
-    # todo
-    return
+    params, _ = parse_args_for_es(request)
+    page = int(params.pop('page', 1))
+    facets = ['deployment.region']
+    results = es_deployments_query(params, facets)
+    d_results = [Domain.wrap(res['_source']) for res in results['hits']['hits']]
+
+    more_pages = False if len(d_results) <= page*10 else True
+
+    facets_sortables = generate_sortables_from_facets(results, params, 'deployment')
+    include_unapproved = True if request.GET.get('is_approved', "") == "false" else False
+    vals = { 'deployments': d_results[(page-1)*10:page*10],
+             'page': page,
+             'prev_page': page-1,
+             'next_page': (page+1),
+             'more_pages': more_pages,
+             'include_unapproved': include_unapproved,
+             'sortables': facets_sortables,
+             'query_str': request.META['QUERY_STRING'],
+             'search_url': reverse('deployment_search')}
+    return render_to_response(request, template, vals)
+
+@require_previewer # remove for production
+def deployments_api(request):
+    params, facets = parse_args_for_es(request)
+    results = es_deployments_query(params, facets)
+    return HttpResponse(json.dumps(results), mimetype="application/json")
+
+def es_deployments_query(params, facets=[], terms=['is_approved', 'sort_by', 'search'], sort_by="snapshot_time"):
+    q = {"query":   {"bool": {"must":
+                                  [{"match": {'doc_type': "Domain"}},
+                                   {"term": {"deployment.public": True}}]}}}
+
+    search_query = params.pop('search', "")
+    if search_query:
+        q['query']['bool']['must'].append({
+            "match" : {
+                "_all" : {
+                    "query" : search_query,
+                    "operator" : "and"
+                }
+            }
+        })
+
+    params = {'deployment.%s' % key: params[key] for key in params}
+    return es_query(params, facets, terms, q)

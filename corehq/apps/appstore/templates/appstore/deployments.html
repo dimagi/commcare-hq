@@ -4,7 +4,7 @@
 {% load i18n %}
 
 {% block sidebar %}
-    {% include 'partials/sidebar.html' with search_for="deployments"%}
+    {% include 'partials/sidebar.html' with search_for="deployments" search_name="search" %}
 {% endblock %}
 
 {% block store-header %}
@@ -36,4 +36,7 @@
             </div>
         </div>
     {% endfor %}
+    {% if deployments|length <= 0 %}
+        No results were found for your query.
+    {% endif %}
 {% endblock %}

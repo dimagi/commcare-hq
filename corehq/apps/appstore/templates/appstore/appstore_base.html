@@ -142,7 +142,7 @@
 
 
 {% block sidebar %}
-{% include 'partials/sidebar.html' with search_for="apps..." display_ua='true' %}
+{% include 'partials/sidebar.html' with search_for="apps..." search_name="search" display_ua='true' %}
 {% endblock %}
 
 {% block page-title %}
@@ -256,6 +256,9 @@
         </div>
     </div>
 {% endfor %}
+{% if apps|length <= 0 %}
+    No results were found for your query.
+{% endif %}
 {% endblock %}
 </div>
 

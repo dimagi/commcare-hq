@@ -15,7 +15,8 @@ urlpatterns = patterns('corehq.apps.appstore.views',
 
     url(r'^(?P<domain>[\w\.-]+)/info/$', 'project_info', name='project_info'),
 
-    url(r'^deployments/$', 'deployments', name='deployments'),
+    url(r'^deployments/$', 'deployment_search', name='deployments'),
+    url(r'^deployments/api/$', 'deployments_api', name='deployments_api'),
     url(r'^deployments/search/$', 'deployment_search', name='deployment_search'),
     url(r'^deployments/(?P<domain>[\w\.-]+)/info/$', 'deployment_info', name='deployment_info'),
 

@@ -18,7 +18,7 @@
         <li class="nav-header">{{ sortable.title }}</li>
             {% for url, name, count in choices %}
                 <li class="sortable-{{ sortable }}{% if filter_by == sortable and filter_url == url %} active{% else %}{% if forloop.counter > 5 and choices|length > 6 %} hide{% endif %}{% endif %}">
-                    <a href="{% url appstore %}{{ url }}">{{ name }}</a>
+                    <a href="{% if url_base %}{{ url_base }}{% else %}{{ request.path }}{% endif %}{{ url }}">{{ name }}</a>
                 </li>
             {% endfor %}
             {% if choices|length > 6 %}
