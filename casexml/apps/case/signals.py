@@ -19,6 +19,14 @@ def process_cases(sender, xform, **kwargs):
     
     map(lambda case: case.save(), cases)
     
+    # HACK -- figure out how to do this more properly
+    if cases:
+        case = cases[0]
+        if case.location_ is not None:
+            # should probably store this in computed_
+            xform.location_ = list(case.location_)
+            xform.save()
+
     # handle updating the sync records for apps that use sync mode
     if hasattr(xform, "last_sync_token") and xform.last_sync_token:
         relevant_log = SyncLog.get(xform.last_sync_token)
