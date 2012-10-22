@@ -336,6 +336,7 @@ class SuiteGenerator(object):
 
         if delegation:
             xpath += "[index/parent/@case_type = '%s']" % module.case_type
+            xpath += "[start_date = '' or double(date(start_date)) <= double(today())]"
         return xpath
 
     @property
