@@ -5,17 +5,18 @@ var getLocalizedString = function (property, language) {
 };
 
 var localize = function(obj, language) {
-    s = obj[language];
+    var s = obj[language];
     if (!s) {
         for (var lang in obj) {
-            if (obj[lang]) {
+            if (obj.hasOwnProperty(lang) && obj[lang]) {
                 s = obj[lang];
                 break;
             }
         }
     }
-    return s || "?";
-}
+    return s || localize.NOT_FOUND;
+};
+localize.NOT_FOUND = '?';
 
 var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
     var url = urlRoot;
@@ -44,9 +45,13 @@ var getSubmitUrl = function (urlRoot, appId) {
     return urlRoot + "/" + appId + "/";
 };
 
-var getCaseFilterUrl = function(urlRoot, appId, moduleId) {
+var getCaseFilterUrl = function(urlRoot, appId, moduleId, special) {
     // TODO: make this cleaner
-    return urlRoot + "module/" + appId + "/modules-" + moduleId + "/";
+    var url = urlRoot + "module/" + appId + "/modules-" + moduleId + "/";
+    if (special === 'task-list') {
+        url += '?task-list=true';
+    }
+    return url
 };
 
 var showError = function (message, location, autoHideTime) {
