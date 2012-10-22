@@ -5,7 +5,6 @@ import dateutil
 import pytz
 from dimagi.utils.logging import log_exception
 from dimagi.utils.parsing import string_to_datetime
-from dimagi.utils.timezones import utils as tz_utils
 from dateutil.rrule import *
 
 def force_to_date(val):
@@ -172,6 +171,11 @@ class DateSpan(object):
             return self.startdate.strftime(self.format)
 
     @property
+    def startdate_utc(self):
+        if self.startdate:
+            return self.adjust_to_utc(self.startdate)
+
+    @property
     def startdate_param_utc(self):
         if self.startdate:
             adjusted_startdate = self.adjust_to_utc(self.startdate)
@@ -186,6 +190,13 @@ class DateSpan(object):
             return self.startdate.strftime(self.format)
 
     @property
+    def startdate_key_utc(self):
+        utc_startdate = self.startdate_utc
+        if utc_startdate:
+            return [utc_startdate.year, utc_startdate.month, utc_startdate.day]
+        return []
+
+    @property
     def enddate_param(self):
         if self.enddate:
             # you need to add a day to enddate if your dates are meant to be inclusive
@@ -193,12 +204,24 @@ class DateSpan(object):
             return (self.enddate + offset).strftime(self.format)
 
     @property
+    def enddate_utc(self):
+        if self.enddate:
+            adjusted_enddate = self.adjust_to_utc(self.enddate)
+            # you need to add a day to enddate if your dates are meant to be inclusive
+            adjusted_enddate = (adjusted_enddate + timedelta(days=1 if self.inclusive else 0))
+            return adjusted_enddate
+
+    @property
     def enddate_param_utc(self):
         if self.enddate:
-            # you need to add a day to enddate if your dates are meant to be inclusive
-            adjusted_enddate = self.adjust_to_utc(self.enddate)
-            adjusted_enddate = (adjusted_enddate + timedelta(days=1 if self.inclusive else 0))
-            return adjusted_enddate.isoformat()
+            return self.enddate_utc.isoformat()
+
+    @property
+    def enddate_key_utc(self):
+        utc_enddate = self.enddate_utc
+        if utc_enddate:
+            return [utc_enddate.year, utc_enddate.month, utc_enddate.day]
+        return []
 
     def adjust_to_utc(self, date):
         localized = self.timezone.localize(date)
