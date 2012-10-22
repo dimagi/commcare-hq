@@ -70,7 +70,18 @@ cloudCare.caseViewMixin = {
     },
     makeDelegationFormTd: function () {
         var self = this;
-        return $('<td/>').text(self.delegationFormName());
+        var name;
+
+        try {
+            name = self.delegationFormName();
+        } catch (e) {
+            if (e.type == 'FormLookupError') {
+                name = '?';
+            } else {
+                throw e;
+            }
+        }
+        return $('<td/>').text(name);
     },
     makeTd: function (col) {
         var self = this,
