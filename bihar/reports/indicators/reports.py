@@ -44,7 +44,7 @@ class IndicatorSelectNav(MockEmptyReport, IndicatorConfigMixIn):
         def _nav_link(indicator_set):
             params = copy(self.request_params)
             params["indicators"] = indicator_set.slug
-            params["next_report"] = IndicatorSummaryReport.slug
+            params["next_report"] = IndicatorNav.slug
             return format_html('<a href="{next}">{val}</a>',
                 val=indicator_set.name,
                 next=url_and_params(
