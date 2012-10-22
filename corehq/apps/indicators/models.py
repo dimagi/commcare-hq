@@ -1,10 +1,15 @@
 import logging
+import calendar
 from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, ListProperty, BooleanProperty, DateTimeProperty
 from couchdbkit.schema.base import DocumentSchema
 import datetime
 from couchdbkit.schema.properties import LazyDict
+from django.utils.safestring import mark_safe
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
+from dimagi.utils.couch.database import get_db
+from dimagi.utils.dates import DateSpan
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
 
 class DocumentNotInDomainError(Exception):
@@ -35,42 +40,28 @@ class IndicatorDefinition(Document):
     def __str__(self):
         return "%s %s in namespace %s." % (self.__class__.__name__, self.slug, self.namespace)
 
-    def get_clean_value(self, doc):
-        """
-            Add validation to whatever comes in as doc here...
-        """
-        if self.domain and doc.domain != self.domain:
-            raise DocumentNotInDomainError
-        return self.get_value(doc)
-
-    def get_value(self, doc):
-        raise NotImplementedError
-
-    def get_existing_value(self, doc):
-        try:
-            return doc.computed_.get(self.namespace, {}).get(self.slug, {}).get('value')
-        except AttributeError:
-            return None
-
     @classmethod
-    def key_params_order(cls):
+    def key_properties(cls):
         return ["namespace", "domain", "slug"]
 
     @classmethod
-    def couch_view(cls):
+    def indicator_list_view(cls):
         return "indicators/indicator_definitions"
 
     @classmethod
-    def _generate_couch_key(cls, version=None, **kwargs):
+    def _generate_couch_key(cls, version=None, reverse=False, **kwargs):
         key = list()
         key_prefix = list()
-        for p in cls.key_params_order():
+        for p in cls.key_properties():
             k = kwargs.get(p)
             if k is not None:
                 key_prefix.append(p)
                 key.append(k)
         key = [" ".join(key_prefix)] + key
-        return dict(startkey=key, endkey=key+[{}]) if version is None else dict(key=key+[version])
+        couch_key = dict(startkey=key, endkey=key+[{}]) if version is None else dict(key=key+[version])
+        if reverse:
+            return dict(startkey=couch_key.get('endkey'), endkey=couch_key.get('startkey'))
+        return couch_key
 
     @classmethod
     def update_or_create_unique(cls, namespace, domain, slug=None, version=None, **kwargs):
@@ -85,7 +76,7 @@ class IndicatorDefinition(Document):
             slug=slug,
             **kwargs
         )
-        unique_indicator = cls.view(cls.couch_view(),
+        unique_indicator = cls.view(cls.indicator_list_view(),
             reduce=False,
             include_docs=True,
             **couch_key
@@ -108,45 +99,344 @@ class IndicatorDefinition(Document):
         return unique_indicator
 
     @classmethod
-    def get_current(cls, namespace, domain, slug, include_docs=True, version=None, **kwargs):
+    def get_current(cls, namespace, domain, slug, version=None, wrap=True, **kwargs):
+
         couch_key = cls._generate_couch_key(
             namespace=namespace,
             domain=domain,
             slug=slug,
             version=version,
+            reverse=True,
             **kwargs
         )
-        return cls.view('indicators/indicator_definitions',
+        doc = get_db().view(cls.indicator_list_view(),
             reduce=False,
-            include_docs=include_docs,
+            include_docs=False,
             descending=True,
             **couch_key
         ).first()
 
+        if wrap:
+            try:
+                doc_class = to_function(doc.get('value', "%s.%s" % (cls._class_path, cls.__name__)))
+                return doc_class.get(doc.get('id'))
+            except Exception as e:
+                logging.error("Could not fetch indicator: %s" % e)
+                return None
+        return doc
+
     @classmethod
-    def all_slugs(cls, namespace, domain):
-        key = [" ".join(cls.key_params_order()), namespace, domain]
-        data = cls.view("indicators/indicator_definitions",
+    def all_slugs(cls, namespace, domain, **kwargs):
+        if kwargs.get('slug'):
+            del kwargs['slug']
+        couch_key = cls._generate_couch_key(
+            namespace=namespace,
+            domain=domain,
+            reverse=True,
+            **kwargs
+        )
+        couch_key['startkey'][0] = couch_key.get('startkey', [])[0]+' slug'
+        couch_key['endkey'][0] = couch_key.get('endkey', [])[0]+' slug'
+        data = cls.view(cls.indicator_list_view(),
             group=True,
-            group_level=len(cls.key_params_order())+1,
+            group_level=cls.key_properties().index('slug')+2,
             descending=True,
-            startkey=key+[{}],
-            endkey=key
+            **couch_key
         ).all()
         return [item.get('key',[])[-1] for item in data]
 
     @classmethod
     def get_all(cls, namespace, domain, version=None, **kwargs):
-        all_slugs = cls.all_slugs(namespace, domain)
+        all_slugs = cls.all_slugs(namespace, domain, **kwargs)
         all_indicators = list()
         for slug in all_slugs:
-            doc = cls.get_current(namespace, domain, slug, include_docs=False, version=version, **kwargs)
-            try:
-                doc_class = to_function(doc.get('value', "%s.%s" % (cls._class_path, cls.__name__)))
-                all_indicators.append(doc_class.get(doc.get('id')))
-            except Exception as e:
-                logging.error("Could not fetch indicator: %s" % e)
+            indicator = cls.get_current(namespace, domain, slug, version=version, **kwargs)
+            if indicator:
+                all_indicators.append(indicator)
         return all_indicators
+
+
+class MonthlyRetrospectiveMixin(object):
+
+    @property
+    def date_display_format(self):
+        return "%b. %Y"
+
+    def get_first_day_of_month(self, month_day):
+        return datetime.datetime(month_day.year, month_day.month, 1,
+            hour=0, minute=0, second=0, microsecond=0)
+
+    def get_last_day_of_month(self, month_day):
+        last_day = calendar.monthrange(month_day.year, month_day.month)[1]
+        return datetime.datetime(month_day.year, month_day.month, last_day,
+            hour=23, minute=59, second=59, microsecond=999999)
+
+    def get_month_datespan(self, start_month, end_month=None):
+        return DateSpan(
+            self.get_first_day_of_month(start_month),
+            self.get_last_day_of_month(end_month or start_month),
+            format="%b %Y",
+            inclusive=False
+        )
+
+    def get_first_days(self, current_month, num_previous_months, as_datespans=False):
+        now = current_month or datetime.datetime.utcnow()
+        month_datespan = self.get_month_datespan(now)
+        dates = [month_datespan] if as_datespans else [month_datespan.startdate]
+        for i in range(0, num_previous_months):
+            month_day = month_datespan.startdate - datetime.timedelta(days=7)
+            month_datespan = self.get_month_datespan(month_day)
+            if as_datespans:
+                dates.append(month_datespan)
+            else:
+                dates.append(month_datespan.startdate)
+        startdate = dates[-1].startdate if as_datespans else dates[-1]
+        enddate = dates[0].enddate if as_datespans else dates[0]
+        datespan = self.get_month_datespan(startdate, enddate)
+        return dates, datespan
+
+    def get_monthly_retrospective(self, user_ids=None, current_month=None, num_previous_months=12):
+        raise NotImplementedError
+
+class DynamicIndicatorDefinition(IndicatorDefinition):
+    description = StringProperty()
+    title = StringProperty()
+    base_doc = "DynamicIndicatorDefinition"
+
+    @classmethod
+    def indicator_list_view(cls):
+        return "indicators/dynamic_indicator_definitions"
+
+
+class CouchViewIndicatorDefinition(DynamicIndicatorDefinition, MonthlyRetrospectiveMixin):
+    """
+        This indicator defintion expects that it will deal with a couch view and a certain indicator key.
+        If a user_id is provided when fetching the results, this definition will use:
+        ["user", <domain_name>, <user_id>, <indicator_key>] as the main couch view key
+        Otherwise it will use:
+        ["all", <domain_name>, <indicator_key>]
+
+    """
+    couch_view = StringProperty()
+    indicator_key = StringProperty()
+    startdate_shift = IntegerProperty(default=0)
+    enddate_shift = IntegerProperty(default=0)
+    fixed_datespan_days = IntegerProperty(default=0)
+
+    @property
+    @memoized
+    def use_datespans_in_retrospective(self):
+        return (abs(self.startdate_shift) + abs(self.enddate_shift) + abs(self.fixed_datespan_days)) > 0
+
+    def _get_results_key(self, user_id=None):
+        prefix = "user" if user_id else "all"
+        key = [prefix, self.domain]
+        if user_id:
+            key.append(user_id)
+        key.append(self.indicator_key)
+        return key
+
+    def _apply_datespan_shifts(self, datespan):
+        if datespan and not isinstance(datespan, DateSpan):
+            raise ValueError("datespan must be an instance of DateSpan")
+
+        datespan = DateSpan(
+            datespan.startdate,
+            datespan.enddate,
+            format=datespan.format,
+            inclusive=datespan.inclusive,
+            timezone=datespan.timezone
+        )
+
+        if datespan:
+            if self.fixed_datespan_days:
+                datespan.startdate = datespan.enddate - datetime.timedelta(days=self.fixed_datespan_days)
+            datespan.startdate = datespan.startdate + datetime.timedelta(days=self.startdate_shift)
+            datespan.enddate = datespan.enddate + datetime.timedelta(days=self.enddate_shift)
+
+
+        return datespan
+
+    def _get_results_with_key(self, key, user_id=None, datespan=None, date_group_level=None, reduce=False):
+        view_kwargs = dict()
+        if datespan:
+            view_kwargs.update(
+                startkey=key+datespan.startdate_key_utc,
+                endkey=key+datespan.enddate_key_utc+[{}]
+            )
+        else:
+            view_kwargs.update(
+                startkey=key,
+                endkey=key+[{}]
+            )
+        if date_group_level:
+            base_level = 5 if user_id else 4
+            view_kwargs.update(
+                group=True,
+                group_level=base_level+date_group_level
+            )
+        else:
+            view_kwargs.update(
+                reduce=reduce
+            )
+        return get_db().view(self.couch_view,
+            **view_kwargs
+        ).all()
+
+    def get_couch_results(self, user_id=None, datespan=None, date_group_level=None, reduce=False):
+        """
+            date_group_level can be 0 to group by year, 1 to group by month and 2 to group by day
+        """
+        key = self._get_results_key(user_id)
+        datespan = self._apply_datespan_shifts(datespan)
+        return self._get_results_with_key(key, user_id, datespan, date_group_level, reduce)
+
+    def get_totals(self, user_id=None, datespan=None):
+        return self._get_value_from_result(self.get_couch_results(user_id, datespan, reduce=True))
+
+    def _get_value_from_result(self, result):
+        value = 0
+        if isinstance(result, dict) or isinstance(result, LazyDict):
+            result = [result]
+        for item in result:
+            new_val = item.get('value')
+            if isinstance(new_val, dict) or isinstance(new_val, LazyDict):
+                if '_total_unique' in new_val:
+                    value += new_val.get('_total_unique', 0)
+                elif '_sum_unique':
+                    value += new_val.get('_sum_unique', 0)
+            else:
+                value += new_val
+        return value
+
+    def get_totals_by_month(self, user_ids=None, datespan=None):
+        totals = dict()
+        for user_id in user_ids:
+            result = self.get_couch_results(user_id, datespan, date_group_level=1)
+            for item in result:
+                key = item.get('key', [])
+                value = self._get_value_from_result(item)
+                year = str(key[-2])
+                month = str(key[-1])
+                if not (month and year):
+                    continue
+                if year not in totals:
+                    totals[year] = dict()
+                if month not in totals[year]:
+                    totals[year][month] = 0
+                totals[year][month] += value
+        return totals
+
+    def get_totals_by_year(self, user_ids=None, datespan=None):
+        totals = dict()
+        for user_id in user_ids:
+            result = self.get_couch_results(user_id, datespan, date_group_level=0)
+            for item in result:
+                key = item.get('key', [])
+                value = self._get_value_from_result(item)
+                year = str(key[-1])
+                if not year:
+                    continue
+                if year not in totals:
+                    totals[year] = 0
+                totals[year] += value
+        return totals
+
+    def get_monthly_retrospective(self, user_ids=None, current_month=None, num_previous_months=12):
+        if not isinstance(user_ids, list):
+            user_ids = [user_ids]
+
+        retro_months, datespan = self.get_first_days(current_month, num_previous_months,
+            as_datespans=self.use_datespans_in_retrospective)
+        monthly_totals = {} if self.use_datespans_in_retrospective else self.get_totals_by_month(user_ids, datespan)
+        retrospective = list()
+        for i, this_month in enumerate(retro_months):
+            startdate = this_month.startdate if self.use_datespans_in_retrospective else this_month
+            month_display = ("(-%d)" % i) if i else "(Current)"
+            y = str(startdate.year)
+            m = str(startdate.month)
+            if self.use_datespans_in_retrospective:
+                month_value = 0
+                for user_id in user_ids:
+                    month_value += self.get_totals(user_id, this_month)
+            else:
+                month_value = monthly_totals.get(y, {}).get(m, 0)
+
+            retrospective.append(dict(
+                date=startdate,
+                title=mark_safe("%s<br />%s" % (startdate.strftime(self.date_display_format), month_display)),
+                value=month_value
+            ))
+        return retrospective
+
+
+class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
+    numerator_slug = StringProperty()
+    denominator_slug = StringProperty()
+
+    @property
+    @memoized
+    def numerator(self):
+        return self.get_current(self.namespace, self.domain, self.numerator_slug)
+
+    @property
+    @memoized
+    def denominator(self):
+        return self.get_current(self.namespace, self.domain, self.denominator_slug)
+
+    def get_totals(self, user_id=None, datespan=None):
+        numerator = self.numerator.get_totals(user_id, datespan)
+        denominator = self.denominator.get_totals(user_id, datespan)
+        ratio = float(numerator)/float(denominator) if denominator > 0 else None
+        return dict(
+            numerator=numerator,
+            denominator=denominator,
+            ratio=ratio
+        )
+
+    def get_monthly_retrospective(self, user_ids=None, current_month=None, num_previous_months=12):
+        numerator_retro = self.numerator.get_monthly_retrospective(user_ids, current_month, num_previous_months)
+        denominator_retro = self.denominator.get_monthly_retrospective(user_ids, current_month, num_previous_months)
+        combined_retro = list()
+        for i, denominator in enumerate(denominator_retro):
+            numerator = numerator_retro[i]
+            n_val = numerator.get('value', 0)
+            d_val = denominator.get('value', 0)
+            ratio = float(n_val)/float(d_val) if d_val else None
+            combined_retro.append(dict(
+                date=denominator.get('date'),
+                title=denominator.get('title'),
+                numerator=n_val,
+                denominator=d_val,
+                ratio=ratio
+            ))
+        return combined_retro
+
+
+class DocumentIndicatorDefinition(IndicatorDefinition):
+    """
+        This IndicatorDefinition expects to get a value from a couchdbkit Document and then
+        save that value in the computed_ property of that Document.
+
+        So far, the types of Documents that support this are XFormInstance and CommCareCase
+    """
+
+    def get_clean_value(self, doc):
+        """
+            Add validation to whatever comes in as doc here...
+        """
+        if self.domain and doc.domain != self.domain:
+            raise DocumentNotInDomainError
+        return self.get_value(doc)
+
+    def get_value(self, doc):
+        raise NotImplementedError
+
+    def get_existing_value(self, doc):
+        try:
+            return doc.computed_.get(self.namespace, {}).get(self.slug, {}).get('value')
+        except AttributeError:
+            return None
 
 
 class FormDataIndicatorDefinitionMixin(DocumentSchema):
@@ -163,13 +453,12 @@ class FormDataIndicatorDefinitionMixin(DocumentSchema):
             question_id = question_id.split('.')
         if len(question_id) > 0 and form_data:
             return self.get_from_form(form_data.get(question_id[0]), question_id[1:])
-        if form_data and ('#text' in form_data):
-            print "FOUND #text", form_data
-        result = form_data.get('#text') if form_data and ('#text' in form_data) else form_data
-        return result
+        if (isinstance(form_data, dict) or isinstance(form_data, LazyDict)) and form_data.get('#text'):
+            return form_data.get('#text')
+        return form_data
 
 
-class FormIndicatorDefinition(IndicatorDefinition, FormDataIndicatorDefinitionMixin):
+class FormIndicatorDefinition(DocumentIndicatorDefinition, FormDataIndicatorDefinitionMixin):
     """
         This Indicator Definition defines an indicator that will live in the computed_ property of an XFormInstance
         document. The 'doc' passed through get_value and get_clean_value should be an XFormInstance.
@@ -184,7 +473,7 @@ class FormIndicatorDefinition(IndicatorDefinition, FormDataIndicatorDefinitionMi
         return super(FormIndicatorDefinition, self).get_clean_value(doc)
 
     @classmethod
-    def key_params_order(cls):
+    def key_properties(cls):
         return ["namespace", "domain", "xmlns", "slug"]
 
 
@@ -221,7 +510,7 @@ class CaseDataInFormIndicatorDefinition(FormIndicatorDefinition):
         return None
 
 
-class CaseIndicatorDefinition(IndicatorDefinition):
+class CaseIndicatorDefinition(DocumentIndicatorDefinition):
     """
         This Indicator Definition defines an indicator that will live in the computed_ property of a CommCareCase
         document. The 'doc' passed through get_value and get_clean_value should be a CommCareCase.
@@ -237,7 +526,7 @@ class CaseIndicatorDefinition(IndicatorDefinition):
         return super(CaseIndicatorDefinition, self).get_clean_value(doc)
 
     @classmethod
-    def key_params_order(cls):
+    def key_properties(cls):
         return ["namespace", "domain", "case_type", "slug"]
 
 
@@ -246,6 +535,7 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
         Use this for when you want to grab all forms with the relevant xmlns in a case's xform_ids property and
         include a property from those forms as an indicator for this case.
     """
+    question_id = StringProperty()
     _returns_multiple = True
 
     def get_related_forms(self, case):
@@ -268,14 +558,11 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
             if isinstance(form, XFormInstance):
                 form_data = form.get_form
                 existing_value[form.get_id] = dict(
-                    value=self.get_value_for_form(form_data),
-                    timeEnd=form_data.get('meta', {}).get('timeEnd'),
+                    value=self.get_from_form(form_data, self.question_id),
+                    timeEnd=self.get_from_form(form_data, 'meta.timeEnd'),
                     received_on=form.received_on
                 )
         return existing_value
-
-    def get_value_for_form(self, form_data):
-        raise NotImplementedError
 
 
 class PopulateRelatedCasesWithIndicatorDefinitionMixin(DocumentSchema):
@@ -306,3 +593,6 @@ class PopulateRelatedCasesWithIndicatorDefinitionMixin(DocumentSchema):
                 logging.error("Could not populate indicator information to case %s due to error: %s" %
                     (case.get_id, e)
                 )
+
+
+
