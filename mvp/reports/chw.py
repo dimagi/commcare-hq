@@ -22,10 +22,12 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
         all_indicators = list()
         for section in self.indicator_slugs:
             section_indicators = list()
-            for slug in section.get('keys', []):
-                indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE,
-                    self.domain, slug, wrap_correctly=True)
-                section_indicators.append(indicator)
+            for indicator_content in section.get('indicators', []):
+                slug = indicator_content.get('slug')
+                if slug:
+                    indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE,
+                        self.domain, slug, wrap_correctly=True)
+                    section_indicators.append(indicator)
             all_indicators.append(section_indicators)
         return all_indicators
 
@@ -39,7 +41,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 col_group.add_column(DataTablesColumn(
                     indicator.title or indicator.description,
                     rotate=True,
-                    expected=section.get('expected', [])[j]
+                    expected=section.get('indicators', [])[j].get('expected')
                 ))
             sections.append(col_group)
         return DataTablesHeader(
@@ -126,83 +128,50 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
         return [
             dict(
                 title="Household",
-                keys=[
-                    "num_active_households",
-                    "num_household_visits",
-                    "households_routine_visit_past90days",
-                    "households_routine_visit_past30days"
-                ],
-                expected=[
-                    "--",
-                    "--",
-                    "100%",
-                    "100%"
+                indicators=[
+                    dict(slug="num_active_households", expected="--"),
+                    dict(slug="num_household_visits", expected="--"),
+                    dict(slug="households_routine_visit_past90days", expected="100%"),
+                    dict(slug="households_routine_visit_past30days", expected="100%"),
                 ]
             ),
             dict(
                 title="Newborn",
-                keys=[
-                    "num_births_registered",
-                    "facility_births_proportion",
-                    "newborn_visit_proportion",
-                    "neonate_routine_visit_past7days"
-                ],
-                expected=[
-                    "--",
-                    "100%",
-                    "100%",
-                    "100%"
+                indicators=[
+                    dict(slug="num_births_registered", expected="--"),
+                    dict(slug="facility_births_proportion", expected="100%"),
+                    dict(slug="newborn_visit_proportion", expected="100%"),
+                    dict(slug="neonate_routine_visit_past7days", expected="100%"),
                 ]
             ),
             dict(
                 title="Under-5s",
-                keys=[
-                    "num_under5",
-                    "under5_danger_signs",
-                    "under5_fever",
-                    "under5_fever_rdt",
-                    "under5_fever_rdt_positive",
-                    "under5_fever_rdt_positive_medicated",
-                    "under5_diarrhea",
-                    "under5_diarrhea_ors",
-                    "muac_routine_proportion",
-                    "under5_routine_visit_past30days"
-                ],
-                expected=[
-                    "--",
-                    "--",
-                    "--",
-                    "100%",
-                    "100%",
-                    "100%",
-                    "--",
-                    "100%",
-                    "100%",
-                    "100%"
+                indicators=[
+                    dict(slug="num_under5", expected="--"),
+                    dict(slug="under5_danger_signs", expected="--"),
+                    dict(slug="under5_fever", expected="--"),
+                    dict(slug="under5_fever_rdt_proportion", expected="100%"),
+                    dict(slug="under5_fever_rdt_positive_proportion", expected="100%"),
+                    dict(slug="under5_fever_rdt_positive_medicated_proportion", expected="100%"),
+                    dict(slug="under5_diarrhea", expected="--"),
+                    dict(slug="under5_diarrhea_ors_proportion", expected="100%"),
+                    dict(slug="muac_routine_proportion", expected="100%"),
+                    dict(slug="under5_routine_visit_past30days", expected="100%"),
                 ]
             ),
             dict(
                 title="Pregnant",
-                keys=[
-                    "num_active_pregnancies",
-                    "anc4_proportion",
-                    "pregnant_routine_visit_past30days"
-                ],
-                expected=[
-                    "--",
-                    "100%",
-                    "100%"
+                indicators=[
+                    dict(slug="num_active_pregnancies", expected="--"),
+                    dict(slug="anc4_proportion", expected="100%"),
+                    dict(slug="pregnant_routine_visit_past30days", expected="100%"),
                 ]
             ),
             dict(
                 title="Family Planning",
-                keys=[
-                    "household_num_ec",
-                    "family_planning_households"
-                ],
-                expected=[
-                    "--",
-                    "100%"
+                indicators=[
+                    dict(slug="household_num_ec", expected="--"),
+                    dict(slug="family_planning_households", expected="100%"),
                 ]
             )
         ]
