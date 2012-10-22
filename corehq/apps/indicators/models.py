@@ -1,5 +1,6 @@
 import logging
 import calendar
+import copy
 from couchdbkit.ext.django.schema import Document, StringProperty, IntegerProperty, ListProperty, BooleanProperty, DateTimeProperty
 from couchdbkit.schema.base import DocumentSchema
 import datetime
@@ -8,7 +9,7 @@ from django.utils.safestring import mark_safe
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.dates import DateSpan
+from dimagi.utils.dates import DateSpan, add_months, months_between
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
 
@@ -42,6 +43,12 @@ class IndicatorDefinition(Document):
 
     @classmethod
     def key_properties(cls):
+        """
+            The ordering of these property names should match the ordering of what's emitted in the first part of
+            the couch views used for fetching these indicators. These views currently are:
+            - indicators/dynamic_indicator_definitions (Couch View Indicator Defs)
+            - indicators/indicator_definitions (Form and Case Indicator Defs)
+        """
         return ["namespace", "domain", "slug"]
 
     @classmethod
@@ -127,8 +134,6 @@ class IndicatorDefinition(Document):
 
     @classmethod
     def all_slugs(cls, namespace, domain, **kwargs):
-        if kwargs.get('slug'):
-            del kwargs['slug']
         couch_key = cls._generate_couch_key(
             namespace=namespace,
             domain=domain,
@@ -162,38 +167,48 @@ class MonthlyRetrospectiveMixin(object):
     def date_display_format(self):
         return "%b. %Y"
 
-    def get_first_day_of_month(self, month_day):
-        return datetime.datetime(month_day.year, month_day.month, 1,
+    def get_first_day_of_month(self, year, month):
+        return datetime.datetime(year, month, 1,
             hour=0, minute=0, second=0, microsecond=0)
 
-    def get_last_day_of_month(self, month_day):
-        last_day = calendar.monthrange(month_day.year, month_day.month)[1]
-        return datetime.datetime(month_day.year, month_day.month, last_day,
+    def get_last_day_of_month(self, year, month):
+        last_day = calendar.monthrange(year, month)[1]
+        return datetime.datetime(year, month, last_day,
             hour=23, minute=59, second=59, microsecond=999999)
 
-    def get_month_datespan(self, start_month, end_month=None):
+    def get_month_datespan(self, start, end=None):
+        """
+            start and end are (year, month) tuples
+        """
+        if end is None:
+            end=start
         return DateSpan(
-            self.get_first_day_of_month(start_month),
-            self.get_last_day_of_month(end_month or start_month),
+            self.get_first_day_of_month(start[0], start[1]),
+            self.get_last_day_of_month(end[0], end[1]),
             format="%b %Y",
             inclusive=False
         )
 
     def get_first_days(self, current_month, num_previous_months, as_datespans=False):
-        now = current_month or datetime.datetime.utcnow()
-        month_datespan = self.get_month_datespan(now)
-        dates = [month_datespan] if as_datespans else [month_datespan.startdate]
-        for i in range(0, num_previous_months):
-            month_day = month_datespan.startdate - datetime.timedelta(days=7)
-            month_datespan = self.get_month_datespan(month_day)
+        enddate = current_month or datetime.datetime.utcnow()
+        enddate = self.get_first_day_of_month(enddate.year, enddate.month)
+        (start_year, start_month) = add_months(enddate.year, enddate.month, -num_previous_months)
+        startdate = self.get_last_day_of_month(start_year, start_month)
+
+        months = months_between(startdate, enddate)
+
+        month_dates = list()
+        for year, month in months:
             if as_datespans:
-                dates.append(month_datespan)
+                month_dates.append(self.get_month_datespan((year, month)))
             else:
-                dates.append(month_datespan.startdate)
-        startdate = dates[-1].startdate if as_datespans else dates[-1]
-        enddate = dates[0].enddate if as_datespans else dates[0]
-        datespan = self.get_month_datespan(startdate, enddate)
-        return dates, datespan
+                month_dates.append(self.get_first_day_of_month(year, month))
+
+        datespan = self.get_month_datespan(
+            (startdate.year, startdate.month),
+            (enddate.year, enddate.month)
+        )
+        return month_dates, datespan
 
     def get_monthly_retrospective(self, user_ids=None, current_month=None, num_previous_months=12):
         raise NotImplementedError
@@ -240,20 +255,12 @@ class CouchViewIndicatorDefinition(DynamicIndicatorDefinition, MonthlyRetrospect
         if datespan and not isinstance(datespan, DateSpan):
             raise ValueError("datespan must be an instance of DateSpan")
 
-        datespan = DateSpan(
-            datespan.startdate,
-            datespan.enddate,
-            format=datespan.format,
-            inclusive=datespan.inclusive,
-            timezone=datespan.timezone
-        )
-
         if datespan:
+            datespan = copy.copy(datespan)
             if self.fixed_datespan_days:
                 datespan.startdate = datespan.enddate - datetime.timedelta(days=self.fixed_datespan_days)
             datespan.startdate = datespan.startdate + datetime.timedelta(days=self.startdate_shift)
             datespan.enddate = datespan.enddate + datetime.timedelta(days=self.enddate_shift)
-
 
         return datespan
 
@@ -315,16 +322,17 @@ class CouchViewIndicatorDefinition(DynamicIndicatorDefinition, MonthlyRetrospect
             result = self.get_couch_results(user_id, datespan, date_group_level=1)
             for item in result:
                 key = item.get('key', [])
-                value = self._get_value_from_result(item)
-                year = str(key[-2])
-                month = str(key[-1])
-                if not (month and year):
-                    continue
-                if year not in totals:
-                    totals[year] = dict()
-                if month not in totals[year]:
-                    totals[year][month] = 0
-                totals[year][month] += value
+                if len(key) >= 2:
+                    value = self._get_value_from_result(item)
+                    year = str(key[-2])
+                    month = str(key[-1])
+                    if not (month and year):
+                        continue
+                    if year not in totals:
+                        totals[year] = dict()
+                    if month not in totals[year]:
+                        totals[year][month] = 0
+                    totals[year][month] += value
         return totals
 
     def get_totals_by_year(self, user_ids=None, datespan=None):
@@ -334,25 +342,24 @@ class CouchViewIndicatorDefinition(DynamicIndicatorDefinition, MonthlyRetrospect
             for item in result:
                 key = item.get('key', [])
                 value = self._get_value_from_result(item)
-                year = str(key[-1])
-                if not year:
-                    continue
-                if year not in totals:
-                    totals[year] = 0
-                totals[year] += value
+                if len(key) >= 1:
+                    year = str(key[-1])
+                    if not year:
+                        continue
+                    if year not in totals:
+                        totals[year] = 0
+                    totals[year] += value
         return totals
 
     def get_monthly_retrospective(self, user_ids=None, current_month=None, num_previous_months=12):
         if not isinstance(user_ids, list):
             user_ids = [user_ids]
-
         retro_months, datespan = self.get_first_days(current_month, num_previous_months,
             as_datespans=self.use_datespans_in_retrospective)
         monthly_totals = {} if self.use_datespans_in_retrospective else self.get_totals_by_month(user_ids, datespan)
         retrospective = list()
         for i, this_month in enumerate(retro_months):
             startdate = this_month.startdate if self.use_datespans_in_retrospective else this_month
-            month_display = ("(-%d)" % i) if i else "(Current)"
             y = str(startdate.year)
             m = str(startdate.month)
             if self.use_datespans_in_retrospective:
@@ -361,10 +368,8 @@ class CouchViewIndicatorDefinition(DynamicIndicatorDefinition, MonthlyRetrospect
                     month_value += self.get_totals(user_id, this_month)
             else:
                 month_value = monthly_totals.get(y, {}).get(m, 0)
-
             retrospective.append(dict(
                 date=startdate,
-                title=mark_safe("%s<br />%s" % (startdate.strftime(self.date_display_format), month_display)),
                 value=month_value
             ))
         return retrospective
@@ -405,7 +410,6 @@ class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
             ratio = float(n_val)/float(d_val) if d_val else None
             combined_retro.append(dict(
                 date=denominator.get('date'),
-                title=denominator.get('title'),
                 numerator=n_val,
                 denominator=d_val,
                 ratio=ratio
