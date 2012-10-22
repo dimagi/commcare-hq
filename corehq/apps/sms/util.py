@@ -90,7 +90,7 @@ def create_task(parent_case, submitting_user_id, task_owner_id, form_unique_id, 
         "date_modified" : date_modified,
         "task_owner_id" : task_owner_id,
         "form_unique_id" : form_unique_id,
-        "task_activation_date" : str(task_activation_datetime),
+        "task_activation_date" : str(task_activation_datetime.date()) + "T" + str(task_activation_datetime.time()),
         "parent" : parent_case,
     }
     case_block = render_to_string("sms/xml/create_task.xml", context)
