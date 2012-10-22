@@ -313,9 +313,12 @@ def deployments(request, template="appstore/deployments.html"):
     })
 
 @require_previewer # remove for production
-def deployment_info(request, domain, template="appstore/deployments.html"):
-    # todo
-    return
+def deployment_info(request, domain, template="appstore/deployment_info.html"):
+    dom = Domain.get_by_name(domain)
+    if not dom or not dom.deployment.public:
+        raise Http404()
+
+    return render_to_response(request, template, {'domain': dom, 'search_url': reverse('deployment_search')})
 
 @require_previewer # remove for production
 def deployment_search(request, template="appstore/deployments.html"):
