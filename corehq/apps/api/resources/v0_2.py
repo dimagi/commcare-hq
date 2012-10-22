@@ -29,7 +29,7 @@ class CommCareCaseResource(Resource):
 
     properties = fields.DictField('properties')
 
-    indices = fields.ListField('indices')
+    indices = fields.DictField('indices')
 
     def obj_get(self, request, **kwargs):
         case = CommCareCase.get(kwargs['pk'])
