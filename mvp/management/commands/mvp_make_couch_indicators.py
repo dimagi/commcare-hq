@@ -110,8 +110,8 @@ SIMPLE_COUCH_VIEW_INDICATORS = dict(
             indicator_key="num_fp"
         ),
         household_num_ec=dict(
-            description="No. of households opting for EC",
-            title="# Households Opting for EC",
+            description="No. of Households Seen for Family Planning",
+            title="# of Women 15-49 Seen for Family Planning",
             indicator_key="num_ec"
         )
     ),

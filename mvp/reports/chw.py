@@ -95,6 +95,14 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                         # more than two stds below average
                         v_text = mark_safe('<span class="label label-important">%s</span>' % v_text)
 
+                    #for debugging
+                    if isinstance(value, dict) and v is not None:
+                        v_text = mark_safe("%s<br /> (%d/%d)" % (
+                            v_text,
+                            value.get('numerator', 0),
+                            value.get('denominator', 0)
+                        ))
+
                     row.append(self.table_cell(v, v_text))
             rows.append(row)
 
@@ -104,9 +112,9 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 mdn = median[indicator.slug]
                 std = std_dev[indicator.slug]
                 if issubclass(indicator.__class__, CombinedCouchViewIndicatorDefinition):
-                    _fmt = lambda x: "%.f%%" % x
+                    _fmt = lambda x: "%.f%%" % x if not numpy.isnan(x) else "--"
                 else:
-                    _fmt = lambda x: "%.f" % x
+                    _fmt = lambda x: "%.f" % x if not numpy.isnan(x) else "--"
                 self.statistics_rows[0].append(self.table_cell(avg, _fmt(avg)))
                 self.statistics_rows[1].append(self.table_cell(mdn, _fmt(mdn)))
                 self.statistics_rows[2].append(self.table_cell(std, _fmt(std)))
@@ -127,8 +135,8 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 expected=[
                     "--",
                     "--",
-                    100,
-                    100
+                    "100%",
+                    "100%"
                 ]
             ),
             dict(
@@ -141,9 +149,9 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 ],
                 expected=[
                     "--",
-                    100,
-                    100,
-                    100
+                    "100%",
+                    "100%",
+                    "100%"
                 ]
             ),
             dict(
@@ -164,13 +172,13 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                     "--",
                     "--",
                     "--",
-                    100,
-                    100,
-                    100,
+                    "100%",
+                    "100%",
+                    "100%",
                     "--",
-                    100,
-                    100,
-                    100
+                    "100%",
+                    "100%",
+                    "100%"
                 ]
             ),
             dict(
@@ -182,17 +190,19 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 ],
                 expected=[
                     "--",
-                    100,
-                    100
+                    "100%",
+                    "100%"
                 ]
             ),
             dict(
                 title="Family Planning",
                 keys=[
+                    "household_num_ec",
                     "family_planning_households"
                 ],
                 expected=[
-                    100
+                    "--",
+                    "100%"
                 ]
             )
         ]

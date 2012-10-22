@@ -84,9 +84,9 @@ class Command(LabelCommand):
                     sys.stdout.write("R")
                 except (DocumentMistmatchError, MVPCannotFetchCaseError, DocumentNotInDomainError):
                     sys.stdout.write('-')
-#                except Exception as e:
-#                    errors.append(e)
-#                    sys.stdout.write('!')
+                except Exception as e:
+                    errors.append(e)
+                    sys.stdout.write('!')
             print "\n%d out of %d documents were updated." % (len(success), len(docs))
             if errors:
                 print "There were %d errors updating indicator %s" % (len(errors), indicator.slug)

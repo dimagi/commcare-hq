@@ -1,3 +1,5 @@
+import datetime
+from django.utils.safestring import mark_safe
 import numpy
 from corehq.apps.indicators.models import DynamicIndicatorDefinition, CombinedCouchViewIndicatorDefinition
 from mvp.models import MVP
@@ -61,18 +63,20 @@ class HealthCoordinatorReport(MVPIndicatorReport):
         ]
 
     def get_month_headers(self, retrospective):
-        dates = [i.get('title') for i in retrospective]
-        dates.reverse()
-        return dates
+        headers = list()
+        month_fmt = "%b %Y"
+        num_months = len(retrospective)
+        for i, result in enumerate(retrospective):
+            month = result.get('date')
+            month_text = month.strftime(month_fmt) if isinstance(month, datetime.datetime) else "Unknown"
+            month_desc = "(-%d)" % (num_months-(i+1)) if (num_months-i) > 1 else "(Current)"
+            headers.append(mark_safe("%s<br />%s" % (month_text, month_desc)))
+        return headers
 
     def get_indicator_table(self, retrospective):
         n_row = [i.get('numerator', 0) for i in retrospective]
         d_row = [i.get('denominator', 0) for i in retrospective]
         r_row = [i.get('ratio') for i in retrospective]
-
-        n_row.reverse()
-        d_row.reverse()
-        r_row.reverse()
 
         n_stats = []
         d_stats = []
@@ -121,7 +125,6 @@ class HealthCoordinatorReport(MVPIndicatorReport):
 
     def get_indicator_row(self, retrospective):
         row = [i.get('value', 0) for i in retrospective]
-        row.reverse()
         nonzero_row = [r for r in row if r]
         row.extend(self._get_statistics(nonzero_row))
         return dict(
