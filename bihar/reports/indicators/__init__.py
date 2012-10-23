@@ -1,15 +1,25 @@
-
+from collections import defaultdict
 
 # static config - should this eventually live in the DB?
 INDICATOR_SETS = [
-    {"slug": "homevisit", "name": "Home Visit Information",
-     "indicators": [
-        {"slug": "bp2", "name": "BP (2nd Tri) Visits in last 30 days"},
-        {"slug": "bp3", "name": "BP (3rd Tri) Visits in last 30 days"},
-        {"slug": "pnc", "name": "PNC Visits  in last 30 days"},
-        {"slug": "ebf", "name": "EBF Visits  in last 30 days"},
-        {"slug": "cf", "name": "CF  Visits  in last 30 days"},
-    ]},
+    {
+        "slug": "homevisit", 
+        "name": "Home Visit Information",
+        "indicators": {
+            "summary": [
+                {"slug": "bp2", "name": "BP (2nd Tri) Visits in last 30 days"},
+                {"slug": "bp3", "name": "BP (3rd Tri) Visits in last 30 days"},
+                {"slug": "pnc", "name": "PNC Visits  in last 30 days"},
+                {"slug": "ebf", "name": "EBF Visits  in last 30 days"},
+                {"slug": "cf", "name": "CF  Visits  in last 30 days"},
+            ],
+            "client_list": [
+                {"slug": "new_pregnancies", "name": "Pregnant woman registered in last 30 days"}, 
+                {"slug": "deliveries", "name": "Pregnant woman who delivered in last 30 days"},
+                {"slug": "upcoming_deliveries", "name": "All woman due for delivery in next 30 days"}
+            ]
+        }
+    },
     {"slug": "pregnancy", "name": "Pregnancy Outcome" },
     {"slug": "postpartum", "name": "Post-Partum Complications" },
     {"slug": "newborn", "name": "Weak Newborn" },
@@ -35,10 +45,17 @@ class IndicatorSet(object):
     def __init__(self, spec):
         self.slug = spec["slug"]
         self.name = spec["name"]
-        self.indicators = [Indicator(ispec) for ispec in (spec.get("indicators") or [])]
-        
-    def get_indicator(self, slug):
+        self.indicators = defaultdict(lambda: [])
+        for type, list in spec.get("indicators", {}).items():
+            self.indicators[type] = [Indicator(ispec) for ispec in list]  
+                
+    def get_indicators(self, type):
+        return self.indicators[type]
+    
+    def get_indicator(self, type, slug):
         return _one(lambda i: i.slug == slug, self.indicators)
+    
+    
     
 class Indicator(object):
     
