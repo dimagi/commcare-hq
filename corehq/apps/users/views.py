@@ -646,21 +646,10 @@ GROUP VIEWS
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 
-def _get_groups(domain):
-    key = [domain]
-    groups = Group.view("groups/by_name", startkey=key, endkey=key + [{}], include_docs=True)
-    for group in groups:
-        name = group.name if group.name else '-'
-        if group.name != name:
-            group.name = name
-            group.save()
-    return groups
-
-
 @require_can_edit_commcare_users
 def all_groups(request, domain, template="groups/all_groups.html"):
     context = _users_context(request, domain)
-    all_groups = _get_groups(domain)
+    all_groups = Group.by_domain(domain)
     context.update({
         'domain': domain,
         'all_groups': all_groups
@@ -670,7 +659,7 @@ def all_groups(request, domain, template="groups/all_groups.html"):
 @require_can_edit_commcare_users
 def group_members(request, domain, group_id, template="groups/group_members.html"):
     context = _users_context(request, domain)
-    all_groups = _get_groups(domain)
+    all_groups = Group.by_domain(domain)
     group = Group.get(group_id)
     if group is None:
         raise Http404("Group %s does not exist" % group_id)

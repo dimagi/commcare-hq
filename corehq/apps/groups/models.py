@@ -96,8 +96,6 @@ class Group(UndoableDocument):
             return users
     
     def save(self, *args, **kwargs):
-        # forcibly replace empty name with '-'
-        self.name = self.name or '-'
         super(Group, self).save()
 
     @classmethod
