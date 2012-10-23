@@ -10,6 +10,9 @@ import urllib
 from dimagi.utils.html import format_html
 from corehq.apps.groups.models import Group
 from dimagi.utils.decorators.memoized import memoized
+from casexml.apps.case.models import CommCareCase
+
+DEFAULT_EMPTY = "?"
 
 class ConvenientBaseMixIn(object):
     # this is everything that's shared amongst the Bihar supervision reports
@@ -53,6 +56,20 @@ class ReportReferenceMixIn(object):
         return CustomProjectReportDispatcher().get_report(self.domain, self.next_report_slug)
     
 
+class GroupReferenceMixIn(object):
+    # allow a report to reference a group
+    
+    @property
+    def group_id(self):
+        return self.request_params["group"]
+    
+    @property
+    @memoized
+    def group(self):
+        g = Group.get(self.group_id)
+        assert g.domain == self.domain, "Group %s isn't in domain %s" % (g.get_id, self.domain)
+        return g
+    
 class MockTablularReport(ConvenientBaseMixIn, GenericTabularReport, CustomProjectReport):
     
     row_count = 20 # override if needed
@@ -172,13 +189,22 @@ class ToolsReport(MockEmptyReport):
     name = "Tools"
     slug = "tools"
 
-class ClientListReport(MockTablularReport):
+class ClientListReport(ConvenientBaseMixIn, GenericTabularReport, 
+                       CustomProjectReport, GroupReferenceMixIn):
     _headers = ["Name", "EDD"] 
     
-    def _row(self, i):
-        def _random_edd():
-            return (datetime.now() + timedelta(days=random.randint(0, 9 * 28))).strftime("%Y-%m-%d" )
-        return ["Mother %s" % i, _random_edd()]
+    
+    def _get_clients(self):
+        # TODO: make more generic
+        cases = CommCareCase.view('case/by_owner', key=[self.group_id, False],
+                                  include_docs=True, reduce=False)
+        for c in cases:
+            if c.type == "cc_bihar_pregnancy":
+                yield c
+        
+    @property
+    def rows(self):
+        return [[c.name, getattr(c, 'edd', DEFAULT_EMPTY)] for c in self._get_clients()]
         
 def url_and_params(urlbase, params):
     assert "?" not in urlbase
