@@ -9,6 +9,7 @@ from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 import urllib
 from dimagi.utils.html import format_html
 from corehq.apps.groups.models import Group
+from dimagi.utils.decorators.memoized import memoized
 
 class ConvenientBaseMixIn(object):
     # this is everything that's shared amongst the Bihar supervision reports
@@ -118,6 +119,7 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
     def __init__(self, *args, **kwargs):
         super(SubCenterSelectionReport, self).__init__(*args, **kwargs)
     
+    @memoized
     def _get_groups(self):
         groups = Group.by_domain(self.domain)
         # temp hack till we figure out how user/group association works
@@ -125,22 +127,20 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
         
     @property
     def rows(self):
-        return [self._row(g) for g in self._get_groups()]
+        return [self._row(g, i+1) for i, g in enumerate(self._get_groups())]
         
-    def _row(self, group):
+    def _row(self, group, rank):
         
         def _link(g):
             params = copy(self.request_params)
-            params["team"] = g.get_id
+            params["group"] = g.get_id
             return format_html('<a href="{details}">{group}</a>',
                 group=g.name,
                 details=url_and_params(self.next_report_class.get_url(self.domain,
                                                                       render_as=self.render_next),
                                        params))
-        denom = random.randint(5, 20)
-        num = random.randint(0, denom)
         return [_link(group), 
-                "%s / %s" % (num, denom)]
+                "%s / %s" % (rank, len(self._get_groups()))]
             
 
 class MainNavReport(MockNavReport):
