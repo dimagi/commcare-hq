@@ -150,9 +150,16 @@ class ElasticPillow(BasicPillow):
     es_port = ""
     es_index = ""
     es_type = ""
+    es_meta = {}
     # Note - we allow for for existence because we do not care - we want the ES
     # index to always have the latest version of the case based upon ALL changes done to it.
     allow_updates=True
+
+    def __init__(self):
+        es = self.get_es()
+        if self.es_meta and not es.head(self.es_index):
+            es.put(self.es_index, data=self.es_meta)
+        return
 
     def get_doc_path(self, doc_id):
         return "%s/%s/%s" % (self.es_index, self.es_type, doc_id)
