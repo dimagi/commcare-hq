@@ -22,9 +22,8 @@ def old_changes(pillow):
     while True:
         try:
             c.wait(pillow.parsing_processor, since=pillow.since, filter=pillow.couch_filter,
-                heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=2000)
+                heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=30000)
         except Exception, ex:
-            print "error!"
             logging.exception("caught exception in form listener: %s, "
                               "sleeping and restarting" % ex)
             gevent.sleep(5)
@@ -46,15 +45,17 @@ class BasicPillow(object):
         """
         Couch changes stream creation
         """
-        print "Starting pillow %s" % self.__class__
+        logging.info("Starting pillow %s" % self.__class__)
         if USE_NEW_CHANGES:
             new_changes(self)
         else:
             old_changes(self)
 
+    def get_name(self):
+        return "%s.%s" % (self.__module__, self.__class__.__name__)
 
     def get_checkpoint_doc_name(self):
-        return "pillowtop_%s.%s" % (self.__module__, self.__class__.__name__)
+        return "pillowtop_%s" % self.get_name()
 
     def get_checkpoint(self):
         doc_name = self.get_checkpoint_doc_name()
@@ -88,18 +89,20 @@ class BasicPillow(object):
 
     def parsing_processor(self, change):
         """
-        Processor that also parses the change - for pre 0.6.0 couchdbkit,
-        the change is passed as a string
+        Processor that also parses the change to json - only for pre 0.6.0 couchdbkit,
+        as the change is passed as a string
         """
         self.processor(simplejson.loads(change))
 
     def processor(self, change):
         """
-        Parent processsor for a pillow class - this should not be overridden
+        Parent processsor for a pillow class - this should not be overridden.
+        This workflow is made for the situation where 1 change yields 1 transport/transaction
         """
         self.changes_seen+=1
         if self.changes_seen % CHECKPOINT_FREQUENCY == 0:
-            print "(%s) setting checkpoint: %d" % (self.get_checkpoint_doc_name(), change['seq'])
+            logging.info("(%s) setting checkpoint: %d" % (self.get_checkpoint_doc_name(),
+                                                      change['seq']))
             self.set_checkpoint(change)
 
 
@@ -147,14 +150,15 @@ class ElasticPillow(BasicPillow):
     es_port = ""
     es_index = ""
     es_type = ""
+    # Note - we allow for for existence because we do not care - we want the ES
+    # index to always have the latest version of the case based upon ALL changes done to it.
+    allow_updates=True
 
     def get_doc_path(self, doc_id):
         return "%s/%s/%s" % (self.es_index, self.es_type, doc_id)
 
     def get_es(self):
         return rawes.Elastic('%s:%s' % (self.es_host, self.es_port))
-
-
 
     def change_trigger(self, changes_dict):
         if changes_dict.get('deleted', False):
@@ -166,20 +170,34 @@ class ElasticPillow(BasicPillow):
             return None
         return self.couch_db.open_doc(changes_dict['id'])
 
+    def doc_exists(self, doc_id):
+        """
+        Using the HEAD 404/200 result API for document existence
+        Returns True if 200(exists)
+        """
+        es = self.get_es()
+        doc_path = self.get_doc_path(doc_id)
+        head_result = es.head(doc_path)
+        return head_result
 
     def change_transport(self, doc_dict):
         try:
-            #res = Resource("%s:%s" % (self.es_host, self.es_port))
-            #r = res.post(self.es_index, payload = simplejson.dumps(doc_dict))
             es = self.get_es()
             doc_path = self.get_doc_path(doc_dict['_id'])
-            head_result = es.head(doc_path)
-            if not head_result:
-                es.put(doc_path,  data = doc_dict)
+
+            if self.allow_updates:
+                can_put = True
             else:
-                return None
+                can_put = not self.doc_exists(doc_dict['_id'])
+
+            if can_put:
+                res = es.put(doc_path,  data = doc_dict)
+                if res.get('status', 0) == 400:
+                    logging.error("Pillowtop Error [%s]:\n%s\nDoc id: %s" % (self.get_name(),
+                                     res.get('error', "No error message"),
+                                     doc_dict['_id']))
         except Exception, ex:
-            logging.error("PillowTop: transporting change data to eleasticsearch error:  %s", ex)
+            logging.error("PillowTop: transporting change data to elasticsearch error:  %s", ex)
             return None
 
 
