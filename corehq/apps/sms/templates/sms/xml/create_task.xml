@@ -1,0 +1,14 @@
+<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="{{ subcase_guid }}" user_id="{{ user_id }}" date_modified="{{ date_modified }}">
+    <create>
+        <case_name>Task Delegation</case_name>
+        <owner_id>{{ task_owner_id }}</owner_id>
+        <case_type>cc_delegation_stub</case_type>
+    </create>
+    <update>
+        <form_id>{{ form_unique_id }}</form_id>
+        <start_date>{{ task_activation_date }}</start_date>
+    </update>
+    <index>
+        <parent case_type="{{ parent.type }}">{{ parent.get_id }}</parent>
+    </index>
+</case>

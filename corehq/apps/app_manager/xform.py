@@ -47,7 +47,7 @@ class WrappedNode(object):
         else:
             self.xml = xml
         self.namespaces=namespaces
-        
+
     def __getattr__(self, name):
         if name in ('find', 'findall', 'findtext'):
             wrap = {
@@ -119,7 +119,7 @@ class XForm(WrappedNode):
         if not r['success']:
             raise XFormValidationError(r["errstring"])
         return self
-    
+
     @property
     @raise_if_none("Can't find <model>")
     def model_node(self):
@@ -162,7 +162,7 @@ class XForm(WrappedNode):
     @property
     def audio_references(self):
         return self.media_references(form="audio")
-    
+
     def rename_language(self, old_code, new_code):
         trans_node = self.itext_node.find('{f}translation[@lang="%s"]' % old_code)
         duplicate_node = self.itext_node.find('{f}translation[@lang="%s"]' % new_code)
@@ -206,7 +206,7 @@ class XForm(WrappedNode):
         if form:
             search_tag += '[@form="%s"]' % form
         value_node = text_node.find(search_tag)
-        
+
         _safe_strip = lambda x: x if isinstance(x, unicode) else str.strip(x)
         if value_node:
             text = " ____ ".join([t for t in map(_safe_strip, value_node.itertext()) if t])
@@ -287,7 +287,7 @@ class XForm(WrappedNode):
             else:
                 raise XFormError("Node <%s> has no 'ref' or 'bind'" % prompt.tag_name)
             return path
-        
+
         questions = []
         excluded_paths = set()
 
@@ -624,7 +624,13 @@ class XForm(WrappedNode):
                     calculate=self.resolve_path(q_path),
                     relevant=("count(%s) > 0" % self.resolve_path(q_path))
                 )
-
+        def add_close_block(case_block, action=None, path=''):
+            case_block.append(make_case_elem('close'))
+            self.add_bind(
+                nodeset="%scase/close" % path,
+                relevant=relevance(action) if action else 'true()',
+            )
+        delegation_case_block = None
         if form.requires == 'none' and 'open_case' not in actions:
             case_block = None
         else:
@@ -632,6 +638,33 @@ class XForm(WrappedNode):
             needs_casedb_instance = False
 
             case_block = make_case_block()
+            if form.requires != 'none':
+                def make_delegation_stub_case_block():
+                    path = 'cc_delegation_stub/'
+                    DELEGATION_ID = 'delegation_id'
+                    outer_block = _make_elem('{x}cc_delegation_stub', {DELEGATION_ID: ''})
+                    delegation_case_block = make_case_block(path)
+                    add_close_block(delegation_case_block)
+                    session_delegation_id = "instance('commcaresession')/session/data/%s" % DELEGATION_ID
+                    path_to_delegation_id = self.resolve_path("%s@%s" % (path, DELEGATION_ID))
+                    self.add_setvalue(
+                        ref="%s@%s" % (path, DELEGATION_ID),
+                        value="if(count({d}) = 1, {d}, '')".format(d=session_delegation_id),
+                    )
+                    self.add_bind(
+                        nodeset="%scase" % path,
+                        relevant="%s != ''" % path_to_delegation_id,
+                    )
+                    self.add_bind(
+                        nodeset="%scase/@case_id" % path,
+                        calculate=path_to_delegation_id
+                    )
+                    outer_block.append(delegation_case_block)
+                    return outer_block
+
+
+                if form.get_module().task_list.show:
+                    delegation_case_block = make_delegation_stub_case_block()
 
             if 'open_case' in actions:
                 open_case_action = actions['open_case']
@@ -648,13 +681,7 @@ class XForm(WrappedNode):
                 add_update_block(case_block, getattr(actions.get('update_case'), 'update', {}), extra_updates=extra_updates)
 
             if 'close_case' in actions:
-                case_block.append(make_case_elem('close'))
-
-                r = relevance(actions['close_case'])
-                self.add_bind(
-                    nodeset="case/close",
-                    relevant=r,
-                )
+                add_close_block(case_block, actions['close_case'])
 
             if 'case_preload' in actions:
                 needs_casedb_instance = True
@@ -709,6 +736,8 @@ class XForm(WrappedNode):
                 raise XFormError("You cannot use the Case Management UI if you already have a case block in your form.")
             else:
                 case_parent.append(case_block)
+                if delegation_case_block is not None:
+                    case_parent.append(delegation_case_block)
 
         if not case_parent.exists():
             raise XFormError("Couldn't get the case XML from one of your forms. "

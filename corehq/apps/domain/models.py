@@ -148,6 +148,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     description = StringProperty()
     short_description = StringProperty()
     is_shared = BooleanProperty(default=False)
+    commtrack_enabled = BooleanProperty(default=False)
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)

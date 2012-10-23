@@ -8,6 +8,9 @@ from corehq.apps.users.models import CouchUser
 from django.template.loader import render_to_string
 from corehq.apps.hqcase.utils import submit_case_blocks
 
+from xml.etree.ElementTree import XML, tostring
+from dimagi.utils.parsing import json_format_datetime
+
 def clean_phone_number(text):
     """
     strip non-numeric characters and add '%2B' at the front
@@ -75,7 +78,24 @@ def register_sms_contact(domain, case_type, case_name, user_id, contact_phone_nu
         "time_zone" : time_zone
     }
     case_block = render_to_string("sms/xml/register_contact.xml", context)
+    case_block = tostring(XML(case_block)) # Ensure the XML is formatted properly, an exception is raised if not
     submit_case_blocks(case_block, domain)
 
+def create_task(parent_case, submitting_user_id, task_owner_id, form_unique_id, task_activation_datetime):
+    utcnow = str(datetime.datetime.utcnow())
+    subcase_guid = uuid.uuid3(uuid.NAMESPACE_URL, utcnow)
+    date_modified = utcnow
+    context = {
+        "subcase_guid" : subcase_guid,
+        "user_id" : submitting_user_id,
+        "date_modified" : date_modified,
+        "task_owner_id" : task_owner_id,
+        "form_unique_id" : form_unique_id,
+        "task_activation_date" : json_format_datetime(task_activation_datetime),
+        "parent" : parent_case,
+    }
+    case_block = render_to_string("sms/xml/create_task.xml", context)
+    case_block = tostring(XML(case_block)) # Ensure the XML is formatted properly, an exception is raised if not
+    submit_case_blocks(case_block, parent_case.domain)
 
 
