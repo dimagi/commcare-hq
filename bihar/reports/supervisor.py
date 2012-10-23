@@ -159,11 +159,7 @@ class ToolsReport(MockEmptyReport):
     name = "Tools"
     slug = "tools"
 
-class MotherListReport(MockTablularReport):
-    name = "Mother List"
-    slug = "motherlist"
-    description = "Mother details report"
-    
+class ClientListReport(MockTablularReport):
     _headers = ["Name", "EDD"] 
     
     def _row(self, i):
