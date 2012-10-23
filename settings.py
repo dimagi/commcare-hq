@@ -145,6 +145,8 @@ HQ_APPS = (
     'corehq.apps.hqwebapp',
     'corehq.apps.docs',
     'corehq.apps.hqmedia',
+    'corehq.apps.locations',
+    'corehq.apps.commtrack',
     'couchforms',
     'couchexport',
     'couchlog',
@@ -405,6 +407,7 @@ COUCHDB_APPS = [
         'case',
         'cleanup',
         'cloudcare',
+        'commtrack',
         'couch', # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
         'couchforms',
         'couchexport',
@@ -417,6 +420,7 @@ COUCHDB_APPS = [
         'hqmedia',
         'importer',
         'indicators',
+        'locations',
         'migration',
         'phone',
         'receiverwrapper',
@@ -552,7 +556,11 @@ PROJECT_REPORT_MAP = {
         'corehq.apps.receiverwrapper.reports.SubmissionErrorReport',
         'phonelog.reports.FormErrorReport',
         'phonelog.reports.DeviceLogDetailsReport'
-    ]
+    ],
+    "Commtrack": [
+        'corehq.apps.reports.commtrack.psi_prototype.VisitReport',
+        'corehq.apps.reports.commtrack.psi_prototype.SalesAndConsumptionReport',
+    ],
 }
 
 CUSTOM_REPORT_MAP = {
@@ -687,7 +695,13 @@ MESSAGE_TAGS = {
 
 COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
+
 DEFAULT_CURRENCY = "USD"
+
+SMS_HANDLERS = [
+    'corehq.apps.commtrack.sms.handle',
+    'corehq.apps.sms.api.form_session_handler',
+]
 
 SELENIUM_APP_SETTING_DEFAULTS = {
     'cloudcare': {
@@ -701,4 +715,6 @@ SELENIUM_APP_SETTING_DEFAULTS = {
         'MAX_LOAD_TIME': 30,
     },
 }
+
 PILLOWTOPS = [] + LOCAL_PILLOWTOPS
+
