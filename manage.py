@@ -9,38 +9,16 @@ import sys, os
 
 filedir = os.path.dirname(__file__)
 sys.path.append(os.path.join(filedir))
-sys.path.append(os.path.join(filedir,'apps'))
+#sys.path.append(os.path.join(filedir,'apps'))
+
 sys.path.append(os.path.join(filedir,'submodules'))
-sys.path.append(os.path.join(filedir,'submodules','casexml-src'))
-sys.path.append(os.path.join(filedir,'submodules','core-hq-src'))
+submodules_list = os.listdir(os.path.join(filedir, 'submodules'))
+for d in submodules_list:
+    if d == "__init__.py" or d == '.' or d == '..':
+        continue
+    sys.path.append(os.path.join(filedir,'submodules',d))
 sys.path.append(os.path.join(filedir,'submodules','core-hq-src','corehq'))
 sys.path.append(os.path.join(filedir,'submodules','core-hq-src','lib'))
-sys.path.append(os.path.join(filedir,'submodules','couchforms-src'))
-sys.path.append(os.path.join(filedir,'submodules','couchexport-src'))
-sys.path.append(os.path.join(filedir,'submodules','couchlog-src'))
-sys.path.append(os.path.join(filedir,'submodules','djangocouch-src'))
-sys.path.append(os.path.join(filedir,'submodules','django-soil-src'))
-sys.path.append(os.path.join(filedir,'submodules','dimagi-utils-src'))
-sys.path.append(os.path.join(filedir,'submodules','formtranslate-src'))
-sys.path.append(os.path.join(filedir,'submodules','receiver-src')) 
-sys.path.append(os.path.join(filedir,'submodules','auditcare-src'))
-sys.path.append(os.path.join(filedir,'submodules','commcare-translations'))
-sys.path.append(os.path.join(filedir,'submodules','langcodes'))
-sys.path.append(os.path.join(filedir,'submodules','sofabed-src'))
-sys.path.append(os.path.join(filedir,'submodules','touchforms-src'))
-sys.path.append(os.path.join(filedir,'submodules','django-digest-src'))
-sys.path.append(os.path.join(filedir,'submodules','python-digest'))
-sys.path.append(os.path.join(filedir,'submodules','phonelog'))
-sys.path.append(os.path.join(filedir,'submodules','pathfinder-reports'))
-sys.path.append(os.path.join(filedir,'submodules','hsph-reports'))
-sys.path.append(os.path.join(filedir,'submodules','pathindia-reports'))
-sys.path.append(os.path.join(filedir,'submodules','payments'))
-sys.path.append(os.path.join(filedir,'submodules','dca-reports'))
-sys.path.append(os.path.join(filedir,'submodules','hutch-src'))
-sys.path.append(os.path.join(filedir,'submodules','cchq-load-testing'))
-sys.path.append(os.path.join(filedir,'submodules','a5288-reports'))
-sys.path.append(os.path.join(filedir,'submodules','mvp-reports'))
-sys.path.append(os.path.join(filedir,'submodules','bihar-reports'))
 
 try:
     import settings # Assumed to be in the same directory.
