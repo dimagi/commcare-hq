@@ -8,9 +8,10 @@ from copy import copy
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 import urllib
 from dimagi.utils.html import format_html
+from corehq.apps.groups.models import Group
 
 class ConvenientBaseMixIn(object):
-    # this is everything that's shared amongst the Bihar reports
+    # this is everything that's shared amongst the Bihar supervision reports
     # this class is an amalgamation of random behavior and is just 
     # for convenience
     
@@ -106,28 +107,40 @@ class MockEmptyReport(MockSummaryReport):
     data = [""]
     
         
-class SubCenterSelectionReport(MockTablularReport, ReportReferenceMixIn):
+class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport, 
+                               CustomProjectReport, ReportReferenceMixIn):
     name = "Select Subcenter"
     slug = "subcenter"
     description = "Subcenter selection report"
     
-    _headers = ["AWCC", "Team Name", "Rank"]
+    _headers = ["Team Name", "Rank"]
     
     def __init__(self, *args, **kwargs):
         super(SubCenterSelectionReport, self).__init__(*args, **kwargs)
     
-    def _row(self, i):
+    def _get_groups(self):
+        groups = Group.by_domain(self.domain)
+        # temp hack till we figure out how user/group association works
+        return filter(lambda g: "Aguwanpur" in g.name, groups)
         
-        def _link(val):
+    @property
+    def rows(self):
+        return [self._row(g) for g in self._get_groups()]
+        
+    def _row(self, group):
+        
+        def _link(g):
             params = copy(self.request_params)
-            params["team"] = val
-            return format_html('<a href="{details}">{val}</a>',
-                val=val,
+            params["team"] = g.get_id
+            return format_html('<a href="{details}">{group}</a>',
+                group=g.name,
                 details=url_and_params(self.next_report_class.get_url(self.domain,
                                                                       render_as=self.render_next),
                                        params))
-        return ["009", _link("Khajuri Team %s" % i), 
-                "%s / %s" % (random.randint(0, i), i)] \
+        denom = random.randint(5, 20)
+        num = random.randint(0, denom)
+        return [_link(group), 
+                "%s / %s" % (num, denom)]
             
 
 class MainNavReport(MockNavReport):
@@ -159,11 +172,7 @@ class ToolsReport(MockEmptyReport):
     name = "Tools"
     slug = "tools"
 
-class MotherListReport(MockTablularReport):
-    name = "Mother List"
-    slug = "motherlist"
-    description = "Mother details report"
-    
+class ClientListReport(MockTablularReport):
     _headers = ["Name", "EDD"] 
     
     def _row(self, i):
