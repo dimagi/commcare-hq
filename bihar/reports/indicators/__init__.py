@@ -1,4 +1,5 @@
 from collections import defaultdict
+from dimagi.utils.modules import to_function
 
 # static config - should this eventually live in the DB?
 INDICATOR_SETS = [
@@ -14,7 +15,11 @@ INDICATOR_SETS = [
                 {"slug": "cf", "name": "CF  Visits  in last 30 days"},
             ],
             "client_list": [
-                {"slug": "new_pregnancies", "name": "Pregnant woman registered in last 30 days"}, 
+                {
+                    "slug": "new_pregnancies", 
+                    "name": "Pregnant woman registered in last 30 days",
+                    "filter_function": "bihar.reports.indicators.filters.became_pregnant_last_month"
+                }, 
                 {"slug": "deliveries", "name": "Pregnant woman who delivered in last 30 days"},
                 {"slug": "upcoming_deliveries", "name": "All woman due for delivery in next 30 days"}
             ]
@@ -53,7 +58,7 @@ class IndicatorSet(object):
         return self.indicators[type]
     
     def get_indicator(self, type, slug):
-        return _one(lambda i: i.slug == slug, self.indicators)
+        return _one(lambda i: i.slug == slug, self.indicators[type])
     
     
     
@@ -62,3 +67,5 @@ class Indicator(object):
     def __init__(self, spec):
         self.slug = spec["slug"]
         self.name = spec["name"]
+        self.filter_function = to_function(spec["filter_function"]) \
+            if "filter_function" in spec else None

@@ -3,16 +3,13 @@ from corehq.apps.reports.generic import GenericTabularReport,\
     SummaryTablularReport
 import random
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from datetime import datetime, timedelta
 from copy import copy
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 import urllib
 from dimagi.utils.html import format_html
 from corehq.apps.groups.models import Group
 from dimagi.utils.decorators.memoized import memoized
-from casexml.apps.case.models import CommCareCase
 
-DEFAULT_EMPTY = "?"
 
 class ConvenientBaseMixIn(object):
     # this is everything that's shared amongst the Bihar supervision reports
@@ -37,7 +34,6 @@ class ConvenientBaseMixIn(object):
     def show_in_navigation(cls, request, *args, **kwargs):
         return False
      
-
 
 class TeamHoldingMixIn(object):
     @property
@@ -189,23 +185,6 @@ class ToolsReport(MockEmptyReport):
     name = "Tools"
     slug = "tools"
 
-class ClientListReport(ConvenientBaseMixIn, GenericTabularReport, 
-                       CustomProjectReport, GroupReferenceMixIn):
-    _headers = ["Name", "EDD"] 
-    
-    
-    def _get_clients(self):
-        # TODO: make more generic
-        cases = CommCareCase.view('case/by_owner', key=[self.group_id, False],
-                                  include_docs=True, reduce=False)
-        for c in cases:
-            if c.type == "cc_bihar_pregnancy":
-                yield c
-        
-    @property
-    def rows(self):
-        return [[c.name, getattr(c, 'edd', DEFAULT_EMPTY)] for c in self._get_clients()]
-        
 def url_and_params(urlbase, params):
     assert "?" not in urlbase
     return "{url}?{params}".format(url=urlbase, 

@@ -1,9 +1,15 @@
 from bihar.reports.supervisor import MockNavReport, MockEmptyReport,\
     url_and_params, SubCenterSelectionReport, TeamHoldingMixIn,\
-    MockSummaryReport, MockTablularReport, ClientListReport
+    MockSummaryReport, MockTablularReport, ConvenientBaseMixIn,\
+    GroupReferenceMixIn
 from bihar.reports.indicators import INDICATOR_SETS, IndicatorConfig
 from copy import copy
 from dimagi.utils.html import format_html
+from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.standard import CustomProjectReport
+from casexml.apps.case.models import CommCareCase
+
+DEFAULT_EMPTY = "?"
 
 class IndicatorConfigMixIn(object):
     @property
@@ -85,16 +91,6 @@ class IndicatorSummaryReport(MockSummaryReport, IndicatorSetMixIn, TeamHoldingMi
                [self.fake_done_due(i) for i in range(len(self._headers) - 1)]
 
 
-class IndicatorClientList(ClientListReport, IndicatorMixIn):
-    slug = "indicatorclientlist"
-    
-    @property
-    def name(self):
-        try:
-            return self.indicator.name
-        except AttributeError:
-            return "Client List" 
-
 class IndicatorCharts(MockEmptyReport):
     name = "Charts"
     slug = "indicatorcharts"
@@ -132,3 +128,35 @@ class IndicatorClientSelectNav(MockSummaryReport, IndicatorSetMixIn):
         return [_nav_link(iset) for iset in self.indicators]
 
 
+class IndicatorClientList(ConvenientBaseMixIn, GenericTabularReport, 
+                          CustomProjectReport, GroupReferenceMixIn,
+                          IndicatorMixIn):
+    slug = "indicatorclientlist"
+    
+    @property
+    def name(self):
+        try:
+            return self.indicator.name
+        except AttributeError:
+            return "Client List" 
+
+    _headers = ["Name", "EDD"] 
+    
+    
+    def _filter(self, case):
+        if self.indicator and self.indicator.filter_function:
+            return self.indicator.filter_function(case)
+        else:
+            return True
+    
+    def _get_clients(self):
+        cases = CommCareCase.view('case/by_owner', key=[self.group_id, False],
+                                  include_docs=True, reduce=False)
+        for c in cases:
+            if self._filter(c):
+                yield c
+        
+    @property
+    def rows(self):
+        return [[c.name, getattr(c, 'edd', DEFAULT_EMPTY)] for c in self._get_clients()]
+        
