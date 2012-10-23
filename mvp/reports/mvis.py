@@ -19,47 +19,82 @@ class HealthCoordinatorReport(MVPIndicatorReport):
     def report_context(self):
         report_matrix = list()
         month_headers = None
-        for slug in self.indicator_slugs:
-            indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE, self.domain, slug, wrap_correctly=True)
-            retrospective = indicator.get_monthly_retrospective()
-            if not month_headers:
-                month_headers = self.get_month_headers(retrospective)
+        for category_group in self.indicator_slugs:
+            category_indicators = list()
+            for slug in category_group['indicator_slugs']:
+                indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE, self.domain, slug, wrap_correctly=True)
+                if indicator:
+                    retrospective = indicator.get_monthly_retrospective()
+                    if not month_headers:
+                        month_headers = self.get_month_headers(retrospective)
 
-            if isinstance(indicator, CombinedCouchViewIndicatorDefinition):
-                table = self.get_indicator_table(retrospective)
-            else:
-                table = self.get_indicator_row(retrospective)
+                    if isinstance(indicator, CombinedCouchViewIndicatorDefinition):
+                        table = self.get_indicator_table(retrospective)
+                    else:
+                        table = self.get_indicator_row(retrospective)
+                    category_indicators.append(dict(
+                        title=indicator.description,
+                        values=retrospective,
+                        table=table
+                    ))
             report_matrix.append(dict(
-                title=indicator.description,
-                values=retrospective,
-                table=table
+                category_title=category_group['category_title'],
+                rowspan=len(category_indicators)*4,
+                indicators=category_indicators,
             ))
         return dict(
             months=month_headers,
-            report=report_matrix
+            report=report_matrix,
         )
 
     @property
     def indicator_slugs(self):
         return  [
-            "under5_fever_rdt_proportion",
-            "under5_fever_rdt_positive_proportion",
-            "under5_fever_rdt_positive_medicated_proportion",
-            "under5_fever_rdt_not_received_proportion",
-            "households_routine_visit_past90days",
-            "households_routine_visit_past30days",
-            "under5_routine_visit_past30days",
-            "pregnant_routine_visit_past30days",
-            "neonate_routine_visit_past7days",
-            "newborn_visit_proportion",
-            "urgent_referrals_proportion",
-            "family_planning_households",
-            "anc4_proportion",
-            "muac_wasting_proportion",
-            "muac_routine_proportion",
-            "under5_fever_rdt_negative_medicated_proportion",
-            "under5_diarrhea_ors_proportion",
-            "num_births_registered"
+            dict(
+                category_title="Child Health",
+                indicator_slugs=[
+                    "under5_fever_rdt_proportion",
+                    "under5_fever_rdt_positive_proportion",
+                    "under5_fever_rdt_positive_medicated_proportion",
+                    "under5_fever_rdt_negative_medicated_proportion",
+                    "under5_fever_rdt_not_received_proportion",
+                    "under5_diarrhea_ors_proportion",
+                    "under5_diarrhea_zinc_proportion",
+                ]
+            ),
+            dict(
+                category_title="Child Nutrition",
+                indicator_slugs=[
+                    "muac_wasting_proportion",
+                    "muac_routine_proportion",
+                    ]
+            ),
+#            dict(
+#                category_title="CHW Visits",
+#                indicator_slugs=[
+#                    "households_routine_visit_past90days",
+#                    "households_routine_visit_past30days",
+#                    "under5_routine_visit_past30days",
+#                    "pregnant_routine_visit_past30days",
+#                    "neonate_routine_visit_past7days",
+#                    "urgent_referrals_proportion",
+#                    "newborn_visit_proportion",
+#                ]
+#            ),
+#            dict(
+#                category_title="Maternal",
+#                indicator_slugs=[
+#                    "family_planning_households",
+#                    "anc4_proportion",
+#                    "facility_births_proportion",
+#                ]
+#            ),
+#            dict(
+#                category_title="Births",
+#                indicator_slugs=[
+#                    "num_births_registered",
+#                ]
+#            ),
         ]
 
     def get_month_headers(self, retrospective):

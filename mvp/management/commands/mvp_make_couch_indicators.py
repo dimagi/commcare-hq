@@ -61,6 +61,11 @@ SIMPLE_COUCH_VIEW_INDICATORS = dict(
             description="No. Under-5s with uncomplicated diarrhea who received ORS",
             title="# Under-5s w/ Uncomplicated Diarrhea Receiving ORS",
             indicator_key="under5_diarrhea ors"
+        ),
+        under5_diarrhea_zinc=dict(
+            description="No. Under-5s with uncomplicated diarrhea who received zinc treatment",
+            title="# Under-5s w/ Uncomplicated Diarrhea Receiving ZINC",
+            indicator_key="under5_diarrhea zinc"
         )
     ),
     anc_visits=dict(
@@ -317,6 +322,12 @@ COMPOSITE_INDICATORS = dict(
         description="Proportion of Under-5s with uncomplicated diarrhea who received ORS",
         title="% Under-5s with uncomplicated diarrhea who received ORS",
         numerator_slug="under5_diarrhea_ors",
+        denominator_slug="under5_diarrhea"
+    ),
+    under5_diarrhea_zinc_proportion=dict(
+        description="Proportion of Under-5s with uncomplicated diarrhea who received ZINC",
+        title="% Under-5s with uncomplicated diarrhea who received ZINC",
+        numerator_slug="under5_diarrhea_zinc",
         denominator_slug="under5_diarrhea"
     ),
     under5_fever_rdt_proportion=dict(

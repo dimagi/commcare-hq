@@ -22,7 +22,8 @@ function(doc) {
                     diarrhea_only = false,
                     antimalarial_received = (fever_medication && (fever_medication.indexOf('anti_malarial') >= 0
                                                                     || fever_medication.indexOf('coartem') >= 0)),
-                    diarrhea_medication_received = (diarrhea_medication && diarrhea_medication.indexOf('ors') >= 0);
+                    diarrhea_medication_received = (diarrhea_medication && diarrhea_medication.indexOf('ors') >= 0),
+                    zinc_received = (diarrhea_medication && diarrhea_medication.indexOf('zinc') >= 0);
 
                 try {
                     var danger_signs = indicators.immediate_danger_sign.value.trim().toLowerCase();
@@ -65,6 +66,8 @@ function(doc) {
 
                     if (diarrhea_medication_received)
                         category_keys.push('ors');
+                    if (zinc_received)
+                        indicator_keys.push(category+"zinc");
                 }
 
                 if (category) {
