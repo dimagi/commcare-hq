@@ -29,10 +29,10 @@ def rewrite_url(request, path):
 
 def _appstore_context(context={}):
     context['sortables'] = [
-            ('project_type', [("?project_type=" + d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('project_type')]),
-            ('region', [("?region=" + d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('region')]),
-            ('author', [("?author=" + d.replace(' ', '+'), d, count) for d, count in Domain.field_by_prefix('author')]),
-            ('license', [("?license=" + d, LICENSES.get(d), count) for d, count in Domain.field_by_prefix('license')]),
+            ('project_type', [("?project_type=" + d.replace(' ', '+'), d, count, False) for d, count in Domain.field_by_prefix('project_type')]),
+            ('region', [("?region=" + d.replace(' ', '+'), d, count, False) for d, count in Domain.field_by_prefix('region')]),
+            ('author', [("?author=" + d.replace(' ', '+'), d, count, False) for d, count in Domain.field_by_prefix('author')]),
+            ('license', [("?license=" + d, LICENSES.get(d), count, False) for d, count in Domain.field_by_prefix('license')]),
         ]
     context['search_url'] = reverse('appstore')
     return context
@@ -144,7 +144,8 @@ def generate_sortables_from_facets(results, params=None, prefix=""):
         license = False if facet != 'license' else True
         sortable.append((facet[pf_num:], [(generate_query_string(param_strings, facet, ft["term"]),
                                   ft["term"] if not license else LICENSES.get(ft["term"]),
-                                  ft["count"]) \
+                                  ft["count"],
+                                  params.get(facet, "") == ft["term"] ) \
                                  for ft in results["facets"][facet]["terms"]]))
     return sortable
 
@@ -300,28 +301,15 @@ def project_image(request, domain):
         raise Http404()
 
 @require_previewer # remove for production
-def deployments(request, template="appstore/deployments.html"):
-    more_pages = False
-    page = 1
-    deployments = Domain.public_deployments()
-    return render_to_response(request, template, {
-        'deployments': deployments,
-        'prev_page': (page-1),
-        'next_page': (page+1),
-        'more_pages': more_pages,
-        'search_url': reverse('deployment_search')
-    })
-
-@require_previewer # remove for production
 def deployment_info(request, domain, template="appstore/deployment_info.html"):
     dom = Domain.get_by_name(domain)
     if not dom or not dom.deployment.public:
         raise Http404()
 
-    return render_to_response(request, template, {'domain': dom, 'search_url': reverse('deployment_search')})
+    return render_to_response(request, template, {'domain': dom, 'search_url': reverse('deployments')})
 
 @require_previewer # remove for production
-def deployment_search(request, template="appstore/deployments.html"):
+def deployments(request, template="appstore/deployments.html"):
     params, _ = parse_args_for_es(request)
     page = int(params.pop('page', 1))
     facets = ['deployment.region']
@@ -340,7 +328,7 @@ def deployment_search(request, template="appstore/deployments.html"):
              'include_unapproved': include_unapproved,
              'sortables': facets_sortables,
              'query_str': request.META['QUERY_STRING'],
-             'search_url': reverse('deployment_search')}
+             'search_url': reverse('deployments')}
     return render_to_response(request, template, vals)
 
 @require_previewer # remove for production
