@@ -133,6 +133,13 @@ class Group(UndoableDocument):
 
     def create_delete_record(self, *args, **kwargs):
         return DeleteGroupRecord(*args, **kwargs)
+
+    @property
+    def display_name(self):
+        if self.name:
+            return self.name
+        else:
+            return "[No Name]"
     
 class DeleteGroupRecord(DeleteDocRecord):
     def get_doc(self):

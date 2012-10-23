@@ -28,7 +28,7 @@
         <tbody>
         {% for group in groups %}
             <tr>
-                <td>{{ group.name|default:"[no name]" }}</td>
+                <td>{{ group.display_name }}</td>
                 <td>
                     <a class="btn btn-primary" href="#leave_group_{{ couch_user.user_id }}" data-toggle="modal"><i class="icon icon-white icon-minus"></i> {% trans "Leave Group" %}</a>
                     <div id="leave_group_{{ couch_user.user_id }}" class="modal hide fade">

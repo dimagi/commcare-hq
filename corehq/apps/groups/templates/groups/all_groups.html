@@ -25,7 +25,7 @@
             {% with group as this_group %}
                 {% for group in all_groups %}
                     <li {% if this_group.get_id == group.get_id %}class="active"{% endif %}>
-                        <a href="{% url group_members domain group.get_id %}">{{ group.name|default:"[No Name]" }}
+                        <a href="{% url group_members domain group.get_id %}">{{ group.display_name }}
                             {% if group.reporting %}
                                 <i class="icon-list-alt reporting-group-icon"></i>
                             {% else %}
