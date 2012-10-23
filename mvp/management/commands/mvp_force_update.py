@@ -78,7 +78,7 @@ class Command(LabelCommand):
             domain=domain,
             case_type=case_type
         )
-        print "\Found the following Case Indicator Definitions for Case Type %s in Domain %s" % (case_type, domain)
+        print "\nFound the following Case Indicator Definitions for Case Type %s in Domain %s" % (case_type, domain)
         print "--%s\n" % "\n--".join([i.slug for i in relevant_indicators])
 
         limit = 100
