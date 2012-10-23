@@ -95,9 +95,6 @@ class Group(UndoableDocument):
         else:
             return users
     
-    def save(self, *args, **kwargs):
-        super(Group, self).save()
-
     @classmethod
     def by_domain(cls, domain):
         key = [domain]
