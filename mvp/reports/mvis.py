@@ -69,32 +69,32 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                     "muac_routine_proportion",
                     ]
             ),
-#            dict(
-#                category_title="CHW Visits",
-#                indicator_slugs=[
-#                    "households_routine_visit_past90days",
-#                    "households_routine_visit_past30days",
-#                    "under5_routine_visit_past30days",
-#                    "pregnant_routine_visit_past30days",
-#                    "neonate_routine_visit_past7days",
-#                    "urgent_referrals_proportion",
-#                    "newborn_visit_proportion",
-#                ]
-#            ),
-#            dict(
-#                category_title="Maternal",
-#                indicator_slugs=[
-#                    "family_planning_households",
-#                    "anc4_proportion",
-#                    "facility_births_proportion",
-#                ]
-#            ),
-#            dict(
-#                category_title="Births",
-#                indicator_slugs=[
-#                    "num_births_registered",
-#                ]
-#            ),
+            dict(
+                category_title="CHW Visits",
+                indicator_slugs=[
+                    "households_routine_visit_past90days",
+                    "households_routine_visit_past30days",
+                    "under5_routine_visit_past30days",
+                    "pregnant_routine_visit_past30days",
+                    "neonate_routine_visit_past7days",
+                    "urgent_referrals_proportion",
+                    "newborn_visit_proportion",
+                ]
+            ),
+            dict(
+                category_title="Maternal",
+                indicator_slugs=[
+                    "family_planning_households",
+                    "anc4_proportion",
+                    "facility_births_proportion",
+                ]
+            ),
+            dict(
+                category_title="Births",
+                indicator_slugs=[
+                    "num_births_registered",
+                ]
+            ),
         ]
 
     def get_month_headers(self, retrospective):
