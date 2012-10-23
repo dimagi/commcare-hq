@@ -210,7 +210,7 @@ def es_query(params, facets=[], terms=[], q={}):
     if not q['filter']['and']:
         del q["filter"]
 
-    es_url = "commcarehq/commcarehq/_search"
+    es_url = "cc_exchange/domain/_search"
     es = rawes.Elastic('localhost:9200')
     ret_data = es.get(es_url, data=q)
 
