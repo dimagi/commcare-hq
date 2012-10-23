@@ -607,12 +607,14 @@ CUSTOM_REPORT_MAP = {
     },
     "mvp-sauri": {
         "Custom Reports": [
-                    'mvp.reports.MVISHealthCoordinatorReport'
+                    'mvp.reports.mvis.HealthCoordinatorReport',
+                    'mvp.reports.chw.CHWManagerReport'
         ]
     },
     "mvp-potou": {
         "Custom Reports": [
-                    'mvp.reports.MVISHealthCoordinatorReport'
+                    'mvp.reports.mvis.HealthCoordinatorReport',
+                    'mvp.reports.chw.CHWManagerReport'
         ]
     },
     # todo: giovanni, you should fix this report at some point.
