@@ -15,7 +15,6 @@
 {% endblock %}
 
 {% block results-display %}
-    <br />
     {% for dom in deployments %}
         {% if forloop.counter0|divisibleby:"3" and forloop.counter0 != 0 %}
             </div><div class="row-fluid">
