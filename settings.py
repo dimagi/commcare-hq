@@ -642,6 +642,7 @@ CUSTOM_REPORT_MAP = {
             "bihar.reports.indicators.reports.IndicatorSelectNav",
             "bihar.reports.indicators.reports.IndicatorNav",
             "bihar.reports.indicators.reports.IndicatorSummaryReport",
+            "bihar.reports.indicators.reports.IndicatorClientSelectNav",
             "bihar.reports.indicators.reports.IndicatorClientList",
             "bihar.reports.indicators.reports.IndicatorCharts",
         ]
