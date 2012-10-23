@@ -7,7 +7,8 @@ function shiftDates(days) {
     $("#startdate").datepicker('setDate', start);
     $("#enddate").datepicker('setDate', end);
     $("#paramSelectorForm").submit();
-}
+};
+
 $(function() {
     $('.date-picker').datepicker({
         changeMonth: true,

@@ -5,12 +5,13 @@ import pytz
 from corehq.apps import reports
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CouchUser, CommCareUser
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
 from couchexport.util import SerializableFunction
 import couchforms
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.mixins import UnicodeMixIn
+from dimagi.utils.decorators.memoized import memoized
 import settings
 
 class HQUserType(object):
@@ -106,6 +107,80 @@ class TempCommCareUser(CommCareUser):
     class Meta:
         app_label = 'reports'
 
+
+class ReportConfig(Document):
+    domain = StringProperty()
+   
+    # the unqualified report slug
+    report_slug = StringProperty()
+
+    # the URL path to the report slug after reports/, e.g. custom/,
+    # adm/supervisor/, etc.
+    report_path = StringProperty(default='')
+
+    name = StringProperty()
+    description = StringProperty()
+    owner_id = StringProperty()
+
+    filters = DictProperty()
+
+    date_range = StringProperty()
+    days = IntegerProperty(default=None)
+    start_date = DateProperty(default=None)
+    end_date = DateProperty(default=None)
+
+    @property
+    @memoized
+    def owner(self):
+        return CouchUser.get(self.owner_id)
+
+    @property
+    def url(self):
+        return ""
+        import urllib
+
+        return urllib.urlencode(filters)
+
+        parts = []
+
+        for f in filters:
+            parts.append()
+        pass
+
+    @property
+    def date_description(self):
+        if self.days and not self.start_date:
+            day = 'day' if self.days == 1 else 'days'
+            return "Last %d %s" % (self.days, day)
+        elif self.end_date:
+            return "From %s to %s" % (self.start_date, self.end_date)
+        else:
+            return "Since %s" % self.start_date
+
+
+    @classmethod
+    def by_domain_and_owner(cls, domain, owner_id, report_slug=None, include_docs=True):
+        key = [domain, owner_id]
+        if report_slug:
+            key.append(report_slug)
+
+        return cls.view('reports/configurations_by_domain',
+            reduce=False,
+            include_docs=include_docs,
+            startkey=key,
+            endkey=key + [{}])
+   
+    @classmethod
+    def default(self):
+        return {
+            'name': '',
+            'description': '',
+            'date_range': 'last7',
+            'days': None,
+            'start_date': None,
+            'end_date': None,
+            'filters': {}
+        }
 
 class ReportNotification(Document, UnicodeMixIn):
     domain = StringProperty()

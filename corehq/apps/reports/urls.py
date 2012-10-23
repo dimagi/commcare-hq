@@ -67,6 +67,15 @@ urlpatterns = patterns('corehq.apps.reports.views',
     ## saved
     url(r"^export/saved/download/(?P<export_id>[\w\-]+)/$", "hq_download_saved_export", name="hq_download_saved_export"),
 
+    # Saved reports
+    url(r"^configs$", 'add_config', name='add_report_config'),
+    url(r"^configs/(?P<report_slug>)?$", 'list_configs',
+        name='list_report_configs'),
+    url(r"^configs/(?P<config_id>[\w-]+)$",
+        'view_or_edit_config', name='view_or_edit_report_config'),
+    url(r"^configurations/(?P<config_id>[\w-]+)$/delete$",
+        'delete_config', name='delete_report_config'),
+
     # Internal Use
     url(r"^export/forms/all/$", 'export_all_form_metadata', name="export_all_form_metadata"),
     url(r'^download/cases/$', 'download_cases', name='download_cases'),

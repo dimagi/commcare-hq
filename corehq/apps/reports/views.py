@@ -5,8 +5,8 @@ from corehq.apps.reports import util
 from corehq.apps.reports.standard import inspect, export
 from corehq.apps.reports.standard.export import DeidExportReport
 from corehq.apps.reports.export import ApplicationBulkExportHelper, CustomBulkExportHelper
-from corehq.apps.reports.models import FormExportSchema,\
-    HQGroupExportConfiguration
+from corehq.apps.reports.models import (ReportConfig, FormExportSchema,
+    HQGroupExportConfiguration)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import Permissions
@@ -17,7 +17,7 @@ from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators import inline
 from dimagi.utils.export import WorkBook
-from dimagi.utils.web import json_request, render_to_response
+from dimagi.utils.web import json_request, json_response, render_to_response
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, HttpResponseForbidden
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
@@ -61,13 +61,17 @@ require_case_export_permission = require_permission(Permissions.view_report, 'co
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
-def default(request, domain, template="reports/base_template.html"):
+def default(request, domain, template="reports/home.html"):
+
+    configs = ReportConfig.by_domain_and_owner(domain, request.couch_user._id)
+
     from corehq.apps.reports.standard import ProjectReport
     context = dict(
         domain=domain,
+        configs=configs,
         report=dict(
             title="Select a Report to View",
-            show=request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
+            show=True,
             slug=None,
             is_async=True,
             section_name=ProjectReport.section_name,
@@ -443,6 +447,87 @@ def delete_custom_export(req, domain, export_id):
         return HttpResponseRedirect(export.ExcelExportReport.get_url(domain))
     else:
         return HttpResponseRedirect(export.CaseExportReport.get_url(domain))
+
+
+def _filter_report_filters(query_dict):
+    """
+    Filter query_dict to only contain report filter parameters, minus
+    time-specific parameters
+
+    """
+    exclude = ['hq_filters', 'filterSet', 'startdate', 'enddate']
+
+    return dict([(k, query_dict[k]) for k in query_dict if k not in exclude])
+    
+@login_and_domain_required
+@require_POST
+def add_config(request, domain):
+    POST = json.loads(request.raw_post_data)
+    POST['days'] = int(POST['days']) if POST['days'] else None
+   
+    exclude_fields = ['startdate', 'enddate']
+    for field in exclude_fields:
+        POST['filters'].pop(field, None)
+    
+    config = ReportConfig.get_or_create(POST.get('_id', None))
+    config.domain = domain
+    config.owner_id = request.couch_user._id
+
+    fields = ['report_slug', 'name', 'description', 'date_range', 'days',
+              'start_date', 'end_date', 'filters']
+
+    for field in fields:
+        setattr(config, field, POST[field])
+    
+    config.save()
+
+    return json_response(config)
+
+
+@login_and_domain_required
+@require_GET
+def list_configs(request, domain):
+    report_slug = request.GET['report_slug']
+    if report_slug:
+        configs = ReportConfig.by_domain_and_report(domain, report_slug)
+    else:
+        configs = ReportConfig.by_domain(domain)
+
+    ret = []
+    for config in configs:
+        c = config.all_properties()
+        c.update({'owner': c.owner.all_properties()})
+        ret.append(c)
+        
+    return json_response(ret)
+
+@login_and_domain_required
+def view_or_edit_config(request, domain, config_id):
+    POST = request.POST.copy()
+
+    if request.method == 'POST':
+        config = ReportConfig.get(config_id)
+        config.name = POST.pop('name', config.name)
+        config.description = POST.pop('description', config.description)
+
+
+        filters = _filter_report_filters(request.POST)
+    
+
+
+@login_and_domain_required
+@require_POST
+def delete_config(request, domain, config_id):
+    try:
+        config = ReportConfig.get(config_id)
+    except ResourceNotFound:
+        return Http404()
+
+    config.delete()
+    return HttpResponse()
+
+
+
 
 @require_can_view_all_reports
 @login_and_domain_required

@@ -1,0 +1,43 @@
+{% extends "reports/base_template.html" %}
+{% load case_tags %}
+{% load hq_shared_tags %}
+
+{% block js-inline %}{{ block.super }}
+{% endblock %}
+
+{% block main_column %}
+<div>
+
+    <h2>Favorites</h2>
+
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Date range</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for config in configs %}
+            <tr>
+                <td>
+                    <a href="{{ config.url }}">
+                        {{ config.name }}
+                    </a>
+                    ({{ config.report_slug }})
+                </td>
+                <td> {{ config.description }} </td>
+                <td>{{ config.date_description }}</td>
+                <td>
+                    <button class="btn btn-danger">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
