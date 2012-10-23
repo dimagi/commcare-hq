@@ -52,7 +52,7 @@ def appstore(request, template="appstore/appstore_base.html", sort_by=None):
         more_pages = page * PER_PAGE < total_results.total_rows and len(results) == PER_PAGE # hacky way to deal with approved vs unapproved
     average_ratings = list()
     for result in results:
-        average_ratings.append([result.name, Review.get_average_rating_by_app(result.original_doc)])
+        average_ratings.append([result.name, Review.get_average_rating_by_app(result.copied_from._id)])
 
     return render_to_response(request, template, _appstore_context({
         'apps': results,
@@ -71,7 +71,7 @@ def project_info(request, domain, template="appstore/project_info.html"):
     if not dom or not dom.is_snapshot or (not dom.is_approved and not request.couch_user.is_domain_admin(domain)):
         raise Http404()
 
-    if request.method == "POST" and dom.original_doc not in request.couch_user.get_domains():
+    if request.method == "POST" and dom.copied_from.name not in request.couch_user.get_domains():
         versioned = True
         form = AddReviewForm(request.POST)
         if form.is_valid():
@@ -94,7 +94,7 @@ def project_info(request, domain, template="appstore/project_info.html"):
                 review.info = info
                 review.date_published = date_published
             else:
-                review = Review(title=title, rating=rating, user=user, info=info, date_published = date_published, domain=domain, original_doc=dom.original_doc)
+                review = Review(title=title, rating=rating, user=user, info=info, date_published = date_published, domain=domain, project_id=dom.copied_from._id)
             review.save()
         else:
             form = AddReviewForm()
@@ -107,9 +107,9 @@ def project_info(request, domain, template="appstore/project_info.html"):
         average_rating = Review.get_average_rating_by_version(domain)
         num_ratings = Review.get_num_ratings_by_version(domain)
     else:
-        reviews = Review.get_by_app(dom.original_doc)
-        average_rating = Review.get_average_rating_by_app(dom.original_doc)
-        num_ratings = Review.get_num_ratings_by_app(dom.original_doc)
+        reviews = Review.get_by_app(dom.copied_from._id)
+        average_rating = Review.get_average_rating_by_app(dom.copied_from._id)
+        num_ratings = Review.get_num_ratings_by_app(dom.copied_from._id)
 
     if average_rating:
         average_rating = round(average_rating, 1)
@@ -190,7 +190,7 @@ def filter_snapshots(request, filter_by, filter, template="appstore/appstore_bas
 
     average_ratings = list()
     for result in results:
-        average_ratings.append([result.name, Review.get_average_rating_by_app(result.original_doc)])
+        average_ratings.append([result.name, Review.get_average_rating_by_app(result.copied_from._id)])
 
     vals = _appstore_context(dict(apps=results,
                                   filter_by=filter_by,

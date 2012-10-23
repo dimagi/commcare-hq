@@ -20,6 +20,7 @@ from corehq.apps.app_manager import fixtures, xform, suite_xml
 from corehq.apps.app_manager.suite_xml import IdStrings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, namespaces as NS, XFormError, XFormValidationError, WrappedNode
+from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import CommCareBuild, BuildSpec, CommCareBuildConfig, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.reports.templatetags.timezone_tags import utc_to_timezone
@@ -57,6 +58,16 @@ easy_install pygooglechart.  Until you do that this won't work.
 """
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
+
+CASE_PROPERTY_MAP = {
+    # IMPORTANT: if you edit this you probably want to also edit
+    # the corresponding map in cloudcare 
+    # (corehq.apps.cloudcare.static.cloudcare.js.backbone.cases.js)
+    'external-id': 'external_id',
+    'date-opened': 'date_opened',
+    'status': '@status',
+    'name': 'case_name',
+}
 
 def _dsstr(self):
     return ", ".join(json.dumps(self.to_json()), self.schema)
@@ -536,13 +547,7 @@ class DetailColumn(IndexedSchema):
         Convert special names like date-opened to their casedb xpath equivalent (e.g. @date_opened).
         Only ever called by 2.0 apps.
         """
-        return {
-            'external-id': 'external_id',
-            'date-opened': 'date_opened',
-            'status': '@status',
-            'name': 'case_name',
-        }.get(self.field, self.field)
-
+        return CASE_PROPERTY_MAP.get(self.field, self.field)
 
     @classmethod
     def wrap(cls, data):
@@ -629,6 +634,7 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
     put_in_root = BooleanProperty(default=False)
     case_list = SchemaProperty(CaseList)
     referral_list = SchemaProperty(CaseList)
+    task_list = SchemaProperty(CaseList)
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
@@ -818,7 +824,7 @@ class VersionedDoc(Document):
             return self.doc_type
 
 
-class ApplicationBase(VersionedDoc):
+class ApplicationBase(VersionedDoc, SnapshotMixin):
     """
     Abstract base class for Application and RemoteApp.
     Contains methods for generating the various files and zipping them into CommCare.jar
@@ -892,9 +898,17 @@ class ApplicationBase(VersionedDoc):
                 data['text_input'] = 'native' if data['native_input'] else 'roman'
             del data['native_input']
 
+        should_save = False
+        if data.has_key('original_doc'):
+            data['copy_history'] = [data.pop('original_doc')]
+            should_save = True
+
         self = super(ApplicationBase, cls).wrap(data)
         if not self.build_spec or self.build_spec.is_null():
             self.build_spec = CommCareBuildConfig.fetch().get_default(self.application_version)
+
+        if should_save:
+            self.save()
         return self
 
     def rename_lang(self, old_lang, new_lang):

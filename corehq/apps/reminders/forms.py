@@ -8,6 +8,8 @@ from django.forms import Field, Widget, Select, TextInput
 from django.utils.datastructures import DotExpandedDict
 from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_USER, RECIPIENT_CASE, MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET, SurveySample
 from dimagi.utils.parsing import string_to_datetime
+from dimagi.utils.timezones.forms import TimeZoneChoiceField
+from dateutil.parser import parse
 
 METHOD_CHOICES = (
     ('sms', 'SMS'),
@@ -48,6 +50,16 @@ EVENT_CHOICES = (
     (EVENT_AS_OFFSET, "are offsets from each other"),
     (EVENT_AS_SCHEDULE, "represent the exact day and time in the schedule")
 )
+
+def validate_date(value):
+    date_regex = re.compile("^\d\d\d\d-\d\d-\d\d$")
+    if date_regex.match(value) is None:
+        raise ValidationError("Dates must be in yyyy-mm-dd format.")
+
+def validate_time(value):
+    time_regex = re.compile("^\d{1,2}:\d\d(:\d\d){0,1}$")
+    if time_regex.match(value) is None:
+        raise ValidationError("Times must be in hh:mm format.")
 
 class CaseReminderForm(Form):
     """
@@ -135,7 +147,7 @@ class EventListField(Field):
                         raise ValidationError("You have entered the same language twice for the same reminder event.");
                     message[language] = text
             
-            if len(e["timeouts"].strip()) == 0 or self.widget.method != "callback":
+            if len(e["timeouts"].strip()) == 0 or self.widget.method not in ["callback", "survey"]:
                 timeouts_int = []
             else:
                 timeouts_str = e["timeouts"].split(",")
@@ -144,7 +156,7 @@ class EventListField(Field):
                     try:
                         timeouts_int.append(int(t))
                     except Exception:
-                        raise ValidationError("Callback timeout intervals must be a list of comma-separated numbers.")
+                        raise ValidationError("Timeout intervals must be a list of comma-separated numbers.")
             
             form_unique_id = None
             if self.widget.method == "survey":
@@ -389,11 +401,36 @@ class SurveyForm(Form):
     
     def clean_waves(self):
         value = self.cleaned_data["waves"]
+        datetimes = {}
+        for wave_json in value:
+            validate_date(wave_json["date"])
+            validate_time(wave_json["time"])
+            
+            # Convert the datetime to a string of "yyyy-mm-dd hh24:mm:ss", and compare it against the other datetimes
+            # to make sure no two waves have the same start timestamp
+            dt = str(parse(wave_json["date"]).date()) + " " + str(parse(wave_json["time"]).time())
+            if datetimes.get(dt, False):
+                raise ValidationError("Two waves cannot be scheduled at the same date and time.")
+            datetimes[dt] = True
+            
+            if wave_json["form_id"] == "--choose--":
+                raise ValidationError("Please choose a questionnaire.")
         return value
     
     def clean_followups(self):
-        value = self.cleaned_data["followups"]
-        return value
+        send_followup = self.cleaned_data["send_followup"]
+        if send_followup:
+            value = self.cleaned_data["followups"]
+            for followup in value:
+                try:
+                    interval = int(followup["interval"])
+                    assert interval > 0
+                except (ValueError, AssertionError):
+                    raise ValidationError("Follow-up intervals must be positive integers.")
+                
+            return value
+        else:
+            return []
     
     def clean_samples(self):
         value = self.cleaned_data["samples"]
@@ -407,14 +444,17 @@ class SurveyForm(Form):
 class SurveySampleForm(Form):
     name = CharField()
     sample_contacts = RecordListField(input_name="sample_contact")
+    time_zone = TimeZoneChoiceField()
     
     def clean_sample_contacts(self):
         value = self.cleaned_data["sample_contacts"]
         if len(value) == 0:
             raise ValidationError("Please add at least one contact.");
         for contact in value:
-            if contact["id"] == "" or contact["phone_number"] == "":
-                raise ValidationError("Please enter all fields.")
+            try:
+                contact["phone_number"] = str(int(contact["phone_number"]))
+            except ValueError:
+                raise ValidationError("Phone numbers must consist only of numbers and must be in international format.")
         return value
 
 

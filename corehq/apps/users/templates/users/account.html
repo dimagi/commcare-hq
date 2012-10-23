@@ -118,7 +118,7 @@
     {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
         <li><a href="#scheduled-reports" data-toggle="tab">My Scheduled Reports</a></li>
         {% if proj_settings_form %}
-        <li><a href="#project-settings" data-toggle="tab">Project "{{ request.project.display_name }}" Settings</a></li>
+        <li><a href="#project-settings" data-toggle="tab">My Settings for this Project</a></li>
         {% endif %}
         <li><a href="#domains" data-toggle="tab">My Projects</a></li>
     {% endif %}

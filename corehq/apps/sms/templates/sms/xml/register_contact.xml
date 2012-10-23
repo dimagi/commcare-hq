@@ -1,0 +1,26 @@
+<case case_id="{{ case_id }}" date_modified="{{ date_modified }}" user_id="{{ user_id }}" xmlns="http://commcarehq.org/case/transaction/v2">
+    <create>
+        <case_type>{{ case_type }}</case_type>
+        <case_name>{{ case_name }}</case_name>
+        <owner_id>{{ user_id }}</owner_id>
+    </create>
+    <update>
+        <contact_phone_number>{{ contact_phone_number }}</contact_phone_number>
+        <contact_phone_number_is_verified>{{ contact_phone_number_is_verified }}</contact_phone_number_is_verified>
+        {% if contact_backend_id %}
+        <contact_backend_id>{{ contact_backend_id }}</contact_backend_id>
+        {% else %}
+        <contact_backend_id/>
+        {% endif %}
+        {% if language_code %}
+        <language_code>{{ language_code }}</language_code>
+        {% else %}
+        <language_code/>
+        {% endif %}
+        {% if time_zone %}
+        <time_zone>{{ time_zone }}</time_zone>
+        {% else %}
+        <time_zone/>
+        {% endif %}
+    </update>
+</case>

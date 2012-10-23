@@ -109,8 +109,8 @@
         $(function () {
             ko.applyBindings(celeryViewModel, $("#celeryblock")[0]);
             ko.applyBindings(couchViewModel, $("#couchblock")[0]);
-            setInterval("celeryViewModel.refresh()", 10000);
-            setInterval("couchViewModel.refresh()", 5000);
+            setInterval("celeryViewModel.refresh()", {{ celery_update }});
+            setInterval("couchViewModel.refresh()", {{ couch_update }});
         });
     </script>
 
@@ -118,11 +118,43 @@
 {% endblock js-inline %}
 {% block reportcontent %}
     <div class="row-fluid">
-        <h2>Current Worker</h2>
-        <div class="well"> {{ current_system }} </div>
+        <table class="table table-striped">
+
+            <thead>
+                <tr>
+                    <th>Current Worker</th>
+                    <th>Memcached Status</th>
+                    <th>Redis Status</th>
+                    <th>RabbitMQ Status</th>
+                    <th>{#  Elasticsearch Status #}</th>
+                </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td><strong>{{ current_system }}</strong></td>
+                <td>
+                    {{ memcached_status }}
+                    <br>
+                    {{ memcached_results }}
+                </td>
+                <td>
+                    {{ redis_status }}
+                    <br>
+                    {{ redis_results }}
+                </td>
+                <td>
+                    {{ rabbitmq_status }}
+                </td>
+                <td>
+{#                    TBD#}
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
     </div>
     <div class="row-fluid" id="couchblock">
-        <h2>Couch Tasks</h2>
+        <h3>Couch Tasks</h3>
         <table class="table">
             <thead>
             <tr>
@@ -154,7 +186,7 @@
     </div>
 
     <div class="row-fluid" id="celeryblock">
-        <h2>Celery Monitor</h2>
+        <h3>Celery Monitor</h3>
         <table class="table table-striped">
             <thead>
             <tr>
@@ -187,13 +219,13 @@
     </div>
 
     <div class="row-fluid">
-    <h2>Couch _log</h2>
+    <h3>Couch _log</h3>
     <small>Last 2000 bytes</small>
     <pre>{{ couch_log }}</pre>
     </div>
 
     <div class="row-fluid">
-        <h2>Current Build</h2>
+        <h3>Current Build</h3>
 
         <div class="well">
             <h5>Active Branch</h5>

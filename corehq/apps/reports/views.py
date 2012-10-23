@@ -338,7 +338,6 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
 
 @require_form_export_permission
 @login_and_domain_required
-@require_GET
 def custom_export(req, domain):
     """
     Customize an export

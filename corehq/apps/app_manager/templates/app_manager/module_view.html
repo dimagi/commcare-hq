@@ -19,7 +19,9 @@
                     "will be organized by case type. Perhaps you will have one case called \"pregnant_mother\", and " +
                     "another called \"routine_patient\", etc.",
             "Case List": "Whether to have an item in the module's menu that lets you browse the case list without " +
-                    "moving on to fill out a form."
+                    "moving on to fill out a form.",
+            "Task List": "Whether to have an item in the module's menu that lets you see all of your delegated tasks. " +
+                    "Only makes sense if you're using a delegation workflow."
 
         };
         $('.help_popover').popover({
@@ -29,15 +31,9 @@
             },
             content: function () {
                 return help_text[$(this).attr('data-help-key')];
-            }
+            },
+            trigger: 'hover'
         });
-    });
-    $(function () {
-        function updateCaseListLabel() {
-            $(this).next()[$(this).val() === 'true' ? 'show' : 'hide']();
-        }
-        $('#case_list-label input').attr('name', 'case_list-label').removeClass('wide');
-        $('[name="case_list-show"]').change(updateCaseListLabel).each(updateCaseListLabel);
     });
 </script>
 {% endblock %}
@@ -124,27 +120,13 @@
                     </tr>
                     <tr class="form editable">
                         <th>
-                            Case List
-                            <span class="help_popover" data-help-key="Case List"><span> <i class="icon icon-question-sign"></i></span></span>
-                        </th>
-                        <td>
-                            <select class="code" type="text" name="case_list-show" data-value="{% if module.case_list.show %}true{% else %}false{% endif %}">
-                                <option value="false">Don't Show</option>
-                                <option value="true">Show</option>
-                            </select>
-                            <span id="case_list-label">
-                                with label: {{ module.case_list.label|input_trans:langs|safe }}
-                            </span>
-                        </td>
-                    </tr>
-                    <tr class="form editable">
-                        <th>
                             Label for Cases
                         </th>
                         <td>
                                 <input type="text" name="case_label" value="{{ module.case_label|trans:langs }}" />
                         </td>
                     </tr>
+                    {% if app.application_version == '1.0' %}
                     <tr class="form editable">
                         <th>
                             Label for Referrals
@@ -153,6 +135,7 @@
                             <input type="text" name="referral_label" value="{{ module.referral_label|trans:langs }}" />
                         </td>
                     </tr>
+                    {% endif %}
                 {% else %}
                     <tr>
                         <th>Module Name</th>
@@ -181,29 +164,23 @@
                         </td>
                     </tr>
                     <tr>
-                        <th>
-                            Case List
-                        </th>
-                        <td>
-                            {% if not module.case_list.show %}
-                                Don't Show
-                            {% else %}
-                                Show with label: {{ module.case_list.label|trans:langs }}
-                            {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
                         <th>Label for Cases</th>
                         <td>
                             {{ module.case_label|trans:langs }}
                         </td>
                     </tr>
+                    {% if app.application_version == '1.0' %}
                     <tr>
                         <th>Label for Referrals</th>
                         <td>
                             {{ module.referral_label|trans:langs }}
                         </td>
                     </tr>
+                    {% endif %}
+                {% endif %}
+                {% include 'app_manager/partials/case_list_setting.html' with LABEL="Case List" SLUG="case_list" case_list=module.case_list %}
+                {% if app.application_version != '1.0' %}
+                    {% include 'app_manager/partials/case_list_setting.html' with LABEL="Task List" SLUG="task_list" case_list=module.task_list %}
                 {% endif %}
             </table>
         </form>

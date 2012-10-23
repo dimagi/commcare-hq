@@ -19,9 +19,7 @@ def start_session(domain, contact, app, module, form, case_id=None):
     """
     # NOTE: this call assumes that "contact" will expose three
     # properties: .raw_username, .get_id, and .get_language_code
-    session_data = get_session_data(domain, contact, case_id, 
-                                    version=app.application_version, 
-                                    device_id=COMMCONNECT_DEVICE_ID)
+    session_data = get_session_data(domain, contact, case_id, device_id=COMMCONNECT_DEVICE_ID)
     
     # since the API user is a superuser, force touchforms to query only
     # the contact's cases by specifying it as an additional filterp
@@ -51,6 +49,9 @@ def start_session(domain, contact, app, module, form, case_id=None):
     return (session, _responses_to_text(responses))
 
 def get_responses(msg):
+    return _get_responses(msg.domain, msg.couch_recipient, msg.text)
+
+def _get_responses(domain, recipient, text):
     """
     Try to process this message like a session-based submission against
     an xform.
@@ -59,13 +60,13 @@ def get_responses(msg):
     """
         # assumes couch_recipient is the connection_id
     session = XFormsSession.view("smsforms/open_sessions_by_connection", 
-                                 key=[msg.domain, msg.couch_recipient],
+                                 key=[domain, recipient],
                                  include_docs=True).one()
     if session:
         session.modified_time = datetime.utcnow()
         session.save()
         # TODO auth
-        return _responses_to_text(tfsms.next_responses(session.session_id, msg.text,
+        return _responses_to_text(tfsms.next_responses(session.session_id, text,
                                                        auth=None))
                 
 def _responses_to_text(responses):

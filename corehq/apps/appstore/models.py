@@ -1,11 +1,31 @@
 from couchdbkit.ext.django.schema import *
 import util
+from dimagi.utils.couch.database import get_db
+from dimagi.utils.decorators.memoized import memoized
 
+class SnapshotMixin(DocumentSchema):
+    copy_history = StringListProperty()
+
+    @property
+    def is_copy(self):
+        return True if self.copy_history else False
+
+    @property
+    @memoized
+    def copied_from(self):
+        doc_id = self.copy_history[-1] if self.is_copy else None
+        if doc_id:
+            doc = self.get(doc_id)
+            return doc
+        return None
+
+    def get_updated_history(self):
+        return self.copy_history + [self._id]
 
 class Review(Document):
 
     domain = StringProperty()
-    original_doc = StringProperty()
+    project_id = StringProperty() #the id of the project this rates
     title = StringProperty() # for example "Great App"
     rating = IntegerProperty() # for example "4 (out of 5)"
     user = StringProperty() # for example "stank"
@@ -38,9 +58,9 @@ class Review(Document):
         return result
 
     @classmethod
-    def get_average_rating_by_app(cls, app_name):
+    def get_average_rating_by_app(cls, app_id):
         result = cls.get_db().view("appstore/by_app",
-            key=app_name,
+            key=app_id,
             reduce=True,
             include_docs=False)
 

@@ -322,7 +322,7 @@ class SuiteGenerator(object):
                             # only yield the Detail if it has Fields
                             yield d
 
-    def get_filter_xpath(self, module):
+    def get_filter_xpath(self, module, delegation=False):
         from corehq.apps.app_manager.detail_screen import Filter
         short_detail = module.details[0]
         filters = []
@@ -333,6 +333,10 @@ class SuiteGenerator(object):
             xpath = '[%s]' % (' and '.join(filters))
         else:
             xpath = ''
+
+        if delegation:
+            xpath += "[index/parent/@case_type = '%s']" % module.case_type
+            xpath += "[start_date = '' or double(date(start_date)) <= double(now())]"
         return xpath
 
     @property
@@ -344,7 +348,7 @@ class SuiteGenerator(object):
             e.datum.id='case_id'
             e.datum.nodeset="instance('casedb')/casedb/case[@case_type='{module.case_type}'][@status='open']{filter_xpath}".format(
                 module=module,
-                filter_xpath=self.get_filter_xpath(module) if use_filter else None
+                filter_xpath=self.get_filter_xpath(module) if use_filter else ''
             )
             e.datum.value="./@case_id"
             e.datum.detail_select=self.id_strings.detail(module=module, detail=module.get_detail('case_short'))
