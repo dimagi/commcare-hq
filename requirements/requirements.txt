@@ -36,3 +36,4 @@ gitpython
 gitdb
 gevent
 rawes
+numpy
