@@ -10,14 +10,14 @@ store_urls = patterns('corehq.apps.appstore.views',
 
 urlpatterns = patterns('corehq.apps.appstore.views',
     url(r'^$', 'appstore', name='appstore'),
+    url(r'^api/', 'appstore_api', name='appstore_api'),
     url(r'^store/', include(store_urls)),
 
     url(r'^(?P<domain>[\w\.-]+)/info/$', 'project_info', name='project_info'),
-    url(r'^search/$', 'search_snapshots', name='appstore_search_snapshots'),
-    url(r'^filter/(?P<filter_by>[\w]+)/(?P<filter>[^/]+)/$', 'filter_snapshots', name='appstore_filter_snapshots'),
-    url(r'^filter/(?P<filter_by>[\w]+)/(?P<filter>[^/]+)/(?P<sort_by>[\w_]+)/$', 'filter_snapshots', name='sorted_appstore_filter_snapshots'),
 
-    url(r'^(?P<sort_by>[\w_]+)/$', 'appstore', name='sorted_appstore'),
+    url(r'^deployments/$', 'deployments', name='deployments'),
+    url(r'^deployments/api/$', 'deployments_api', name='deployments_api'),
+    url(r'^deployments/(?P<domain>[\w\.-]+)/info/$', 'deployment_info', name='deployment_info'),
 
     url(r'^(?P<domain>[\w\.-]+)/approve/$', 'approve_app', name='approve_appstore_app'),
     url(r'^(?P<domain>[\w\.-]+)/copyapp/', 'copy_snapshot_app', name='copy_snapshot_app'),

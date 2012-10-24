@@ -461,6 +461,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             copy.is_snapshot = True
             copy.organization = self.organization
             copy.snapshot_time = datetime.now()
+            del copy.deployment
             copy.save()
             return copy
 
@@ -593,6 +594,10 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         domains = list(domains)
         domains = sorted(domains, key=lambda domain: len(domain.copies_of_parent()), reverse=True)
         return domains[((page-1)*9):((page)*9)]
+
+    @classmethod
+    def public_deployments(cls):
+        return Domain.view('domain/with_deployment', include_docs=True).all()
 
 
 ##############################################################################################################
