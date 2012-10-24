@@ -143,14 +143,14 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
         return "?%s" % urlencode(updated_params)
 
     def generate_facet_dict(f_name, ft):
-        return {'url': generate_query_string(disp_facet, ft["term"]),
+        license = (f_name == 'license')
+        return {'url': generate_query_string(f_name, ft["term"]),
                 'name': ft["term"] if not license else LICENSES.get(ft["term"]),
                 'count': ft["count"],
-                'active': params.get(disp_facet, "") == ft["term"]}
+                'active': params.get(f_name, "") == ft["term"]}
 
     sortable = []
     for facet in results.get("facets", []):
-        license = (facet == 'license')
         disp_facet = mapping.get(facet, facet) # the user-facing name for this facet
         sortable.append((disp_facet, [generate_facet_dict(disp_facet, ft) for ft in results["facets"][facet]["terms"]]))
 
