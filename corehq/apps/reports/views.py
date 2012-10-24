@@ -455,7 +455,8 @@ def add_config(request, domain):
     from datetime import datetime
     
     POST = json.loads(request.raw_post_data)
-    assert POST['name']
+    if 'name' not in POST or not POST['name']:
+        return HttpResponseBadRequest()
 
     to_date = lambda s: datetime.strptime(s, '%Y-%m-%d').date() if s else s
     POST['start_date'] = to_date(POST['start_date'])
