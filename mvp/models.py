@@ -3,9 +3,11 @@ import datetime
 from couchdbkit.schema.properties import LazyDict
 import dateutil
 from django.utils.safestring import mark_safe
+import numpy
+import pytz
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.indicators.models import CaseIndicatorDefinition, FormDataInCaseIndicatorDefinition,\
-    PopulateRelatedCasesWithIndicatorDefinitionMixin, CaseDataInFormIndicatorDefinition, CouchViewIndicatorDefinition
+    PopulateRelatedCasesWithIndicatorDefinitionMixin, CaseDataInFormIndicatorDefinition, CouchViewIndicatorDefinition, DynamicIndicatorDefinition
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
@@ -18,6 +20,14 @@ class MVP(object):
         child_visit='http://openrosa.org/formdesigner/B9CEFDCD-8068-425F-BA67-7DC897030A5A',
         household_visit='http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B'
     )
+    REGISTRATION_FORMS = dict(
+        child_registration='http://openrosa.org/formdesigner/E6511C2B-DFC8-4DEA-8200-CC2F2CED00DA',
+    )
+    CLOSE_FORMS = dict(
+        pregnancy_close="http://openrosa.org/formdesigner/01EB3014-71CE-4EBE-AE34-647EF70A55DE",
+        child_close="http://openrosa.org/formdesigner/AC164B28-AECA-45C9-B7F6-E0668D5AF84B",
+        death_without_registration="http://openrosa.org/formdesigner/b3af1fddeb661ee045fef1e764995440ea8f057f",
+    )
 
 CLASS_PATH = "mvp.models"
 
@@ -25,88 +35,51 @@ class MVPCannotFetchCaseError(Exception):
     pass
 
 
-class MVPRelatedCaseMixin(DocumentSchema):
-    related_case_type = StringProperty()
-
-    def get_related_cases(self, original_case):
-        if hasattr(original_case, 'household_head_health_id'):
-            household_id = original_case.household_head_health_id
-        elif hasattr(original_case, 'household_head_id'):
-            household_id = original_case.household_head_id
-        else:
-            raise MVPCannotFetchCaseError("Cannot fetch appropriate case from %s." % original_case.get_id)
-        key = [original_case.domain, self.related_case_type, household_id]
-        cases = CommCareCase.view("mvp/cases_by_household",
-            reduce=False,
-            include_docs=True,
-            startkey=key,
-            endkey=key+[{}]
-        ).all()
-        return cases
-
-
-class MVPRelatedCaseDataInFormIndicatorDefinition(CaseDataInFormIndicatorDefinition, MVPRelatedCaseMixin):
-    _class_path = CLASS_PATH
-    _returns_multiple = True
-
-    def get_value(self, doc):
-        values = list()
-        form_data = doc.get_form
-        related_case_id = form_data.get('case', {}).get('@case_id')
-        if related_case_id:
-            case = CommCareCase.get(related_case_id)
-            if isinstance(case, CommCareCase):
-                related_cases = self.get_related_cases(case)
-                for rc in related_cases:
-                    if hasattr(rc, str(self.case_property)):
-                        values.append(dict(
-                            case_id=rc.get_id,
-                            case_opened=rc.opened_on,
-                            case_closed=rc.closed_on,
-                            value=getattr(rc, str(self.case_property))
-                        ))
-        return values
-
-
-class MVPRelatedCaseDataInCaseIndicatorDefinition(CaseIndicatorDefinition, MVPRelatedCaseMixin):
-    related_case_property = StringProperty()
-
-    _class_path = CLASS_PATH
-    _returns_multiple = True
-
-    def get_value(self, case):
-        values = list()
-        related_cases = self.get_related_cases(case)
-        for rc in related_cases:
-            if hasattr(rc, str(self.related_case_property)):
-                values.append(dict(
-                    case_id=rc.get_id,
-                    case_opened=rc.opened_on,
-                    case_closed=rc.closed_on,
-                    value=getattr(rc, str(self.related_case_property))
-                ))
-        return values
-
-
-class MVPUniqueEmitDateSpan(DateSpan):
-    date_group_level = None
-
-    def _format_key_by_level(self, key):
-        if key and self.date_group_level is not None:
-            return [self.date_group_level] + key[0:self.date_group_level]
-        return key
-
-    @property
-    def startdate_key_utc(self):
-        return self._format_key_by_level(super(MVPUniqueEmitDateSpan, self).startdate_key_utc)
-
-    @property
-    def enddate_key_utc(self):
-        return self._format_key_by_level(super(MVPUniqueEmitDateSpan, self).enddate_key_utc)
-
-
 class MVPCouchViewIndicatorDefinition(CouchViewIndicatorDefinition):
     _class_path = CLASS_PATH
+
+
+class MVPDaysSinceLastTransmission(DynamicIndicatorDefinition):
+    _class_path = CLASS_PATH
+
+    def get_value(self, user_id=None, datespan=None):
+        if datespan:
+            enddate = datespan.enddate_utc
+        else:
+            enddate = datetime.datetime.utcnow()
+        couch_view = "reports/submit_history" if user_id else "reports/all_submissions"
+        key = [self.domain]
+        if user_id:
+            key.append(user_id)
+        results = get_db().view(couch_view,
+            reduce=False,
+            include_docs=False,
+            descending=True,
+            startkey=key+[enddate.isoformat(),{}],
+            endkey=key
+        ).first()
+        try:
+            last_transmission = results['key'][-1]
+            last_date = dateutil.parser.parse(last_transmission)
+            last_date = last_date.replace(tzinfo=pytz.utc)
+            enddate = enddate.replace(tzinfo=pytz.utc)
+            td = enddate - last_date
+            return td.days
+        except Exception:
+            pass
+        return None
+
+
+class MVPReturnMedianCouchViewIndicatorDefinition(MVPCouchViewIndicatorDefinition):
+
+    @property
+    def use_datespans_in_retrospective(self):
+        return True
+
+    def get_value(self, user_id=None, datespan=None):
+        results = self.get_couch_results(user_id, datespan)
+        values = [item.get('value', 0) for item in results if item.get('value')]
+        return numpy.median(values) if values else 0
 
 
 class MVPActiveCasesCouchViewIndicatorDefinition(MVPCouchViewIndicatorDefinition):
@@ -115,6 +88,10 @@ class MVPActiveCasesCouchViewIndicatorDefinition(MVPCouchViewIndicatorDefinition
         Cheers,
         --Biyeun
     """
+
+    @property
+    def use_datespans_in_retrospective(self):
+        return True
 
     def _format_datespan_by_status(self, datespan, date_status):
         common_kwargs = dict(
@@ -191,5 +168,5 @@ class MVPActiveCasesCouchViewIndicatorDefinition(MVPCouchViewIndicatorDefinition
 
         return len(valid_cases)
 
-    def get_totals(self, user_id=None, datespan=None):
+    def get_value(self, user_id=None, datespan=None):
         return self.get_couch_results(user_id, datespan)

@@ -65,34 +65,35 @@ class Command(LabelCommand):
     def update_indicators_for_case_type(self, case_type, domain):
         print "\n\n\nFetching %s cases in domain %s...." % (case_type, domain)
         key = ["all type", domain, case_type]
-        # do cases in chunks
-        num_matching_cases = get_db().view("case/all_cases",
-            reduce=True,
-            startkey=key,
-            endkey=key+[{}]
-        ).first().get('value', 0)
-        print "Found %d possible cases for update." % num_matching_cases
-
         relevant_indicators = CaseIndicatorDefinition.get_all(
             namespace=MVP.NAMESPACE,
             domain=domain,
             case_type=case_type
         )
-        print "\nFound the following Case Indicator Definitions for Case Type %s in Domain %s" % (case_type, domain)
-        print "--%s\n" % "\n--".join([i.slug for i in relevant_indicators])
-
-        limit = 100
-        for skip in range(0, num_matching_cases, limit):
-            print "Updating Cases %d to %d" % (skip, min(num_matching_cases, skip+limit))
-            relevant_cases = CommCareCase.view("case/all_cases",
-                reduce=False,
-                include_docs=True,
+        if relevant_indicators:
+            # do cases in chunks
+            num_matching_cases = get_db().view("case/all_cases",
+                reduce=True,
                 startkey=key,
-                endkey=key+[{}],
-                skip=skip,
-                limit=limit
-            ).all()
-            self.update_indicators(relevant_indicators, relevant_cases, domain)
+                endkey=key+[{}]
+            ).first().get('value', 0)
+            print "Found %d possible cases for update." % num_matching_cases
+
+            print "\nFound the following Case Indicator Definitions for Case Type %s in Domain %s" % (case_type, domain)
+            print "--%s\n" % "\n--".join([i.slug for i in relevant_indicators])
+
+            limit = 100
+            for skip in range(0, num_matching_cases, limit):
+                print "Updating Cases %d to %d of %d" % (skip, min(num_matching_cases, skip+limit), num_matching_cases)
+                relevant_cases = CommCareCase.view("case/all_cases",
+                    reduce=False,
+                    include_docs=True,
+                    startkey=key,
+                    endkey=key+[{}],
+                    skip=skip,
+                    limit=limit
+                ).all()
+                self.update_indicators(relevant_indicators, relevant_cases, domain)
 
     def update_indicators(self, indicators, docs, domain):
         for indicator in indicators:

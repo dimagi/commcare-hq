@@ -48,21 +48,26 @@
                     </th>
                 {% for indicator in category.indicators %}
                 {% ifnotequal forloop.counter0 0 %}<tr>{% endifnotequal %}
-                    <th rowspan="3" class="indicator-def">{{ indicator.title }}</th>
+                    <th rowspan="{{ indicator.rowspan }}" class="indicator-def">{{ indicator.title }}</th>
+
                     {% for p in indicator.table.percentages %}
                         <td{% if p.css %} class="{{ p.css }}"{% endif %}>{{ p.text }}</td>
                     {% endfor %}
+                {% ifequal indicator.rowspan 3 %}
                 </tr>
                 <tr>
+                {% endifequal %}
                     {% for n in indicator.table.numerators %}
                         <td{% if n.css %} class="{{ n.css }}"{% endif %}>{{ n.text }}</td>
                     {% endfor %}
                 </tr>
+                {% ifequal indicator.rowspan 3 %}
                 <tr>
                     {% for d in indicator.table.denominators %}
                         <td{% if d.css %} class="{{ d.css }}"{% endif %}>{{ d.text }}</td>
                     {% endfor %}
                 </tr>
+                {% endifequal %}
                 <tr>
                     <td colspan="17"></td>
                 </tr>

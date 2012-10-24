@@ -12,7 +12,8 @@ function(doc) {
 
                 var fever_medication = indicators.fever_medication.value,
                     diarrhea_medication = indicators.diarrhea_medication.value,
-                    rdt_result = indicators.rdt_result.value;
+                    rdt_result = indicators.rdt_result.value,
+                    referral_type = indicators.referral_type.value;
 
                 var rdt_test_received = (rdt_result === 'positive' || rdt_result === 'negative'),
                     rdt_test_positive = (rdt_result === 'positive'),
@@ -27,15 +28,13 @@ function(doc) {
                     zinc_received = (diarrhea_medication && diarrhea_medication.indexOf('zinc') >= 0);
 
                 try {
-                    var danger_signs = indicators.immediate_danger_sign.value.trim().toLowerCase();
-                    danger_signs = danger_signs.split(' ');
+                    var danger_signs = get_danger_signs(indicators.immediate_danger_sign.value);
                     if (danger_signs.indexOf('fever') >= 0) {
                         if (danger_signs.length === 1) {
                             uncomplicated_fever = true;
                         } else {
                             complicated_fever = true;
                         }
-
                     }
                     if (danger_signs.indexOf('diarrhea') >= 0 && danger_signs.length === 1) {
                         diarrhea_only = true;
@@ -68,7 +67,13 @@ function(doc) {
 
                 } else if (complicated_fever && meta.timeEnd) {
                     category = "under5_complicated_fever ";
-                    
+
+                    var valid_referrals = ['emergency', 'basic', 'convenient'];
+
+                    if (doc.form.patient_available.referral_given === 'yes' ||
+                        (referral_type && valid_referrals.indexOf(referral_type) >= 0)) {
+                        category_keys.push('referred');
+                    }
 
                 } else if (diarrhea_only && meta.timeEnd) {
                     category = "under5_diarrhea ";

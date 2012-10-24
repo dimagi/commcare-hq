@@ -1,5 +1,6 @@
 import datetime
 from django.utils.safestring import mark_safe
+import logging
 import numpy
 from corehq.apps.indicators.models import DynamicIndicatorDefinition, CombinedCouchViewIndicatorDefinition
 from mvp.models import MVP
@@ -21,6 +22,7 @@ class HealthCoordinatorReport(MVPIndicatorReport):
         month_headers = None
         for category_group in self.indicator_slugs:
             category_indicators = list()
+            total_rowspan = 0
             for slug in category_group['indicator_slugs']:
                 indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE, self.domain, slug, wrap_correctly=True)
                 if indicator:
@@ -30,16 +32,22 @@ class HealthCoordinatorReport(MVPIndicatorReport):
 
                     if isinstance(indicator, CombinedCouchViewIndicatorDefinition):
                         table = self.get_indicator_table(retrospective)
+                        indicator_rowspan = 3
                     else:
                         table = self.get_indicator_row(retrospective)
+                        indicator_rowspan = 1
+                    total_rowspan += indicator_rowspan + 1
                     category_indicators.append(dict(
                         title=indicator.description,
                         values=retrospective,
-                        table=table
+                        table=table,
+                        rowspan=indicator_rowspan
                     ))
+                else:
+                    logging.info("Could not grab indicator %s in domain %s" % (slug, self.domain))
             report_matrix.append(dict(
                 category_title=category_group['category_title'],
-                rowspan=len(category_indicators)*4,
+                rowspan=total_rowspan,
                 indicators=category_indicators,
             ))
         return dict(
@@ -60,6 +68,9 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                     "under5_fever_rdt_not_received_proportion",
                     "under5_diarrhea_ors_proportion",
                     "under5_diarrhea_zinc_proportion",
+                    "under5_complicated_fever_facility_followup_proportion",
+                    "under5_complicated_fever_referred_proportion",
+                    "under1_check_ups_proportion",
                 ]
             ),
             dict(
@@ -67,7 +78,9 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                 indicator_slugs=[
                     "muac_wasting_proportion",
                     "muac_routine_proportion",
-                    ]
+                    "under6month_exclusive_breastfeeding_proportion",
+                    "low_birth_weight_proportion",
+                ]
             ),
             dict(
                 category_title="CHW Visits",
@@ -82,11 +95,18 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                 ]
             ),
             dict(
+                category_title="CHW Mgmt",
+                indicator_slugs=[
+                    "median_days_referral_followup",
+                ]
+            ),
+            dict(
                 category_title="Maternal",
                 indicator_slugs=[
                     "family_planning_households",
                     "anc4_proportion",
                     "facility_births_proportion",
+                    "pregnant_routine_checkup_proportion",
                 ]
             ),
             dict(
@@ -95,6 +115,16 @@ class HealthCoordinatorReport(MVPIndicatorReport):
                     "num_births_registered",
                 ]
             ),
+            dict(
+                category_title="Deaths",
+                indicator_slugs=[
+                    "neonatal_deaths",
+                    "infant_deaths",
+                    "under5_deaths",
+                    "maternal_deaths",
+                    "over5_deaths",
+                ]
+            )
         ]
 
     def get_month_headers(self, retrospective):
