@@ -3,12 +3,16 @@
 <div class="controls">
 {% if show_user_filter %}
     <div id="user-filter-buttons" class="btn-group" data-toggle="buttons-checkbox">
-    {% for user in toggle_users %}
-        <button class="btn{% if user.show %} btn-success{% else %} active{% endif %}" data-checkfilter="user-filter-{{ forloop.counter }}">{{ user.name }}</button>
-    {% endfor %}
+				{% for user in toggle_users %}
+        <button class="btn{% if user.show %} btn-success{% else %} active{% endif %}"
+            data-checkfilter="user-filter-{{ user.type }}"
+            data-ufilter="{{ user.type }}">
+						{{ user.name }}
+				</button>
+				{% endfor %}
     </div>
     {% for user in toggle_users %}
-       <input type="checkbox" name="ufilter" value="{{ user.type }}" class="hide" id="user-filter-{{ forloop.counter }}" {% if user.show %}checked="checked"{% endif %}/>
+       <input type="checkbox" name="ufilter" value="{{ user.type }}" class="hide" id="user-filter-{{ user.type }}" {% if user.show %}checked="checked"{% endif %}/>
     {% endfor %}
 {% else %}
     <div id="user-filter-buttons" class="btn-group" data-toggle="buttons-checkbox">

@@ -4,26 +4,21 @@ from django.core.cache import cache
 from corehq.apps.reports import util
 from corehq.apps.reports.standard import inspect, export
 from corehq.apps.reports.standard.export import DeidExportReport
-from corehq.apps.reports.export import BulkExportHelper, ApplicationBulkExportHelper, CustomBulkExportHelper
-from corehq.apps.reports.models import FormExportSchema,\
-    HQGroupExportConfiguration
+from corehq.apps.reports.export import ApplicationBulkExportHelper, CustomBulkExportHelper
+from corehq.apps.reports.models import (ReportConfig, FormExportSchema,
+    HQGroupExportConfiguration)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import Permissions
 import couchexport
 from couchexport.export import UnsupportedExportFormat, export_raw
 from couchexport.util import SerializableFunction
-from couchexport.views import _export_tag_or_bust
-import couchforms
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators import inline
 from dimagi.utils.export import WorkBook
-from dimagi.utils.web import json_request, render_to_response
-from dimagi.utils.couch.database import get_db
-from dimagi.utils.modules import to_function
-from django.conf import settings
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, HttpResponseNotFound, HttpResponseForbidden
+from dimagi.utils.web import json_request, json_response, render_to_response
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, HttpResponseForbidden
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
 import couchforms.views as couchforms_views
@@ -40,7 +35,8 @@ from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
 from couchexport import views as couchexport_views
 from couchexport.shortcuts import export_data_shared, export_raw_data,\
     export_response
-from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.http import (require_http_methods, require_POST,
+    require_GET)
 from couchforms.filters import instances
 from couchdbkit.exceptions import ResourceNotFound
 from fields import FilterUsersField
@@ -51,7 +47,6 @@ from corehq.apps.app_manager.util import get_app_id
 from corehq.apps.groups.models import Group
 from corehq.apps.adm import utils as adm_utils
 from soil import DownloadBase
-from celery.task import task
 from soil.tasks import prepare_download
 
 DATE_FORMAT = "%Y-%m-%d"
@@ -67,10 +62,15 @@ require_case_export_permission = require_permission(Permissions.view_report, 'co
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
-def default(request, domain, template="reports/base_template.html"):
+def default(request, domain, template="reports/favorites.html"):
+
+    configs = ReportConfig.by_domain_and_owner(domain,
+        request.couch_user._id).all()
+
     from corehq.apps.reports.standard import ProjectReport
     context = dict(
         domain=domain,
+        configs=configs,
         report=dict(
             title="Select a Report to View",
             show=request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
@@ -449,6 +449,55 @@ def delete_custom_export(req, domain, export_id):
     else:
         return HttpResponseRedirect(export.CaseExportReport.get_url(domain))
 
+@login_and_domain_required
+@require_POST
+def add_config(request, domain):
+    from datetime import datetime
+    
+    POST = json.loads(request.raw_post_data)
+    assert POST['name']
+
+    to_date = lambda s: datetime.strptime(s, '%Y-%m-%d').date() if s else s
+    POST['start_date'] = to_date(POST['start_date'])
+    POST['end_date'] = to_date(POST['end_date'])
+    if POST['date_range'] == 'last7':
+        POST['days'] = 7
+    elif POST['date_range'] == 'last30':
+        POST['days'] = 30
+    elif POST['days']:
+        POST['days'] = int(POST['days'])
+  
+    exclude_filters = ['startdate', 'enddate']
+    for field in exclude_filters:
+        POST['filters'].pop(field, None)
+    
+    config = ReportConfig.get_or_create(POST.get('_id', None))
+
+    if config.owner_id:
+        assert config.owner_id == request.couch_user._id
+    else:
+        config.domain = domain
+        config.owner_id = request.couch_user._id
+
+    for field in config.properties().keys():
+        if field in POST:
+            setattr(config, field, POST[field])
+    
+    config.save()
+
+    return json_response(config)
+
+@login_and_domain_required
+@require_http_methods(['DELETE'])
+def delete_config(request, domain, config_id):
+    try:
+        config = ReportConfig.get(config_id)
+    except ResourceNotFound:
+        raise Http404()
+
+    config.delete()
+    return HttpResponse()
+
 @require_can_view_all_reports
 @login_and_domain_required
 @require_GET
@@ -567,6 +616,7 @@ def form_data(request, domain, instance_id):
                                    slug=inspect.SubmitHistory.slug,
                                    form_data=dict(name=form_name,
                                                   modified=instance.received_on)))
+
 @require_form_export_permission
 @login_and_domain_required
 @require_GET
