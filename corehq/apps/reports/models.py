@@ -116,8 +116,7 @@ project_report_dispatcher = ProjectReportDispatcher()
 custom_project_report_dispatcher = CustomProjectReportDispatcher()
 adm_section_dispatcher = ADMSectionDispatcher()
 
-DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'since',
-                      'range']
+DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'since', 'range']
 
 class ReportConfig(Document):
     _extra_json_properties = ['url', 'report_name', 'date_description']

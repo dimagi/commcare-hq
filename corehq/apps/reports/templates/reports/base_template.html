@@ -49,6 +49,16 @@ $(function() {
         defaultItem: {{ default_config|JSON }},
         saveUrl: '{% url add_report_config domain %}',
     });
+    
+    $("#reportFilters").css('overflow', 'visible');
+
+    $("#reportFilters").on('shown', function() {
+        $(this).css('overflow', 'visible'); 
+    });
+
+    $("#reportFilters").on('hidden', function() {
+        $(this).css('overflow', 'hidden');
+    });
 });
 </script>
 {% endblock %}

@@ -4,7 +4,7 @@ function ReportConfig(data) {
     });
 
     self.isNew = ko.computed(function () {
-        return typeof self._id === undefined;
+        return typeof self._id === "undefined";
     });
 
     self.modalTitle = ko.computed(function () {
@@ -61,7 +61,7 @@ function ReportConfig(data) {
         start_date = dateToParam(start_date);
 
         return "startdate=" + start_date + "&enddate=" + end_date + "&";
-    }
+    };
 
     return self;
 };
@@ -159,7 +159,7 @@ function ReportConfigsViewModel(options) {
                 name = el.prop('name'),
                 val = el.val();
 
-            if (el.prop('type') == 'checkbox') {
+            if (el.prop('type') === 'checkbox') {
                 if (el.prop('checked') === true) {
                     if (!filters.hasOwnProperty(name)) {
                         filters[name] = [];
@@ -208,7 +208,7 @@ $.fn.reportConfigEditor = function (options) {
         var data;
         if (options.initialItemID) {
             config = ko.utils.arrayFirst(viewModel.reportConfigs(), function(item) {
-                return item._id() == options.initialItemID;
+                return item._id() === options.initialItemID;
             });
             viewModel.setConfigBeingViewed(config);
         } else {
