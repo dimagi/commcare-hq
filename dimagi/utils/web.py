@@ -168,17 +168,17 @@ def parse_int(arg_keys=[], kwarg_keys=[]):
 
 # http://stackoverflow.com/questions/455580/json-datetime-between-python-and-javascript
 def json_handler(obj):
-    if isinstance(obj, datetime):
+    if callable(getattr(obj, 'to_complete_json', None)):
+        return obj.to_complete_json()
+    elif callable(getattr(obj, 'to_json', None)):
+        return obj.to_json()
+    elif isinstance(obj, datetime):
         return json_format_datetime(obj)
     elif isinstance(obj, date):
         return obj.isoformat()
     elif isinstance(obj, Decimal):
         return float(obj) # warning, potential loss of precision
     else:
-        try:
-            return obj.to_json()
-        except Exception:
-            pass
         return json.JSONEncoder().default(obj)
 
 def json_response(obj, **kwargs):
