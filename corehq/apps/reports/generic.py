@@ -428,12 +428,10 @@ class GenericReportView(object):
             Intention: Don't override.
         """
 
-        current_config_id = self.request.GET.get('config_id', '')
-        default_config = ReportConfig.default()
-        
         report_configs = ReportConfig.by_domain_and_owner(self.domain,
             self.request.couch_user._id, report_slug=self.slug).all()
-
+        current_config_id = self.request.GET.get('config_id', '')
+        default_config = ReportConfig.default()
 
         self.context.update(
             report=dict(
@@ -441,6 +439,8 @@ class GenericReportView(object):
                 description=self.description,
                 section_name=self.section_name,
                 slug=self.slug,
+                sub_slug=None,
+                type=self.dispatcher.prefix,
                 url_root=self.url_root,
                 is_async=self.asynchronous,
                 is_exportable=self.exportable,

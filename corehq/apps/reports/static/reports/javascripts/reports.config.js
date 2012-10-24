@@ -1,11 +1,10 @@
-var ReportConfig = function (data) {
-
+function ReportConfig(data) {
     var self = ko.mapping.fromJS(data, {
         'copy': ['filters']
     });
 
     self.isNew = ko.computed(function () {
-        return typeof self._id !== undefined;
+        return typeof self._id === undefined;
     });
 
     self.modalTitle = ko.computed(function () {
@@ -15,12 +14,15 @@ var ReportConfig = function (data) {
 
     self.unwrap = function () {
         var data = ko.mapping.toJS(self);
-        data['report_slug'] = reportSlug;
+        data['report_slug'] = standardHQReport.slug;
+        data['report_type'] = standardHQReport.type;
+        data['subreport_slug'] = standardHQReport.subReportSlug;
 
         return data;
     },
 
     self.getDateUrlFragment = function () {
+        // duplicated in reports/models.py
         var days, start_date, end_date = null,
             date_range = self.date_range(),
             today = new Date();
@@ -43,13 +45,13 @@ var ReportConfig = function (data) {
             } else {
                 throw "Invalid date range.";
             }
-
+            
             start_date = new Date();
             start_date.setDate(start_date.getDate() - days);
         }
 
         var dateToParam = function (date) {
-            if (typeof date !== 'string') {
+            if (date && typeof date !== 'string') {
                 return date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate();
             }
             return date;
@@ -78,11 +80,15 @@ function ReportConfigsViewModel(options) {
 
     self.configBeingEdited = ko.observable();
 
-    self.configDisplayName = ko.computed(function () {
+    self.filterHeadingName = ko.computed(function () {
         var config = self.configBeingViewed(),
-            text = (!config || config.isNew()) ? 'Favorites' : config.name();
+            text = 'Report Filters';
+            
+        if (config && !config.isNew()) {
+            text += ': ' + config.name(); 
+        }
 
-        return text + "<span class='caret'></span>";
+        return text;
     });
 
     self.addOrReplaceConfig = function (data) {
@@ -98,6 +104,22 @@ function ReportConfigsViewModel(options) {
         // todo: alphabetize
         self.reportConfigs.push(newConfig);
     };
+
+    self.deleteConfig = function (config) {
+        $.ajax({
+            type: "DELETE",
+            url: options.saveUrl + '/' + config._id(),
+            success: function (data) {
+                for (var i = 0; i < self.reportConfigs().length; i++) {
+                    if (ko.utils.unwrapObservable(self.reportConfigs()[i]._id) === config._id()) {
+                        self.reportConfigs.splice(i, 1);
+                        return;
+                    }
+                }
+            }
+        });
+         
+    }
 
     self.setConfigBeingViewed = function (config) {
         self.configBeingViewed(config);
@@ -176,8 +198,8 @@ function ReportConfigsViewModel(options) {
     };
 }
 
-$.fn.reportConfigs = function (options) {
-    this.each(function (i, v) {
+$.fn.reportConfigEditor = function (options) {
+    this.each(function(i, v) {
         options.filterForm = $(v);
         var viewModel = new ReportConfigsViewModel(options);
 
@@ -188,15 +210,17 @@ $.fn.reportConfigs = function (options) {
             config = ko.utils.arrayFirst(viewModel.reportConfigs(), function(item) {
                 return item._id() == options.initialItemID;
             });
-            console.log(config.unwrap());
             viewModel.setConfigBeingViewed(config);
         } else {
             viewModel.setConfigBeingViewed(new ReportConfig(options.defaultItem));
         }
+    });
+};
 
-
-
-
+$.fn.reportConfigList = function (options) {
+    this.each(function(i, v) {
+        var viewModel = new ReportConfigsViewModel(options);
+        ko.applyBindings(viewModel, $(this).get(i));
     });
 };
 
@@ -213,6 +237,9 @@ var HQReport = function (options) {
     self.toggleFiltersButton = options.toggleFiltersButton || "#toggle-report-filters";
     self.exportReportButton = options.exportReportButton || "#export-report-excel";
     self.urlRoot = options.urlRoot;
+    self.slug = options.slug;
+    self.subReportSlug = options.subReportSlug;
+    self.type = options.type;
 
     self.toggleFiltersCookie = self.domain+'.hqreport.toggleFilterState';
     self.datespanCookie = self.domain+".hqreport.filterSetting.test.datespan";

@@ -35,7 +35,8 @@ from couchexport.models import ExportSchema, ExportColumn, SavedExportSchema,\
 from couchexport import views as couchexport_views
 from couchexport.shortcuts import export_data_shared, export_raw_data,\
     export_response
-from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.http import (require_http_methods, require_POST,
+    require_GET)
 from couchforms.filters import instances
 from couchdbkit.exceptions import ResourceNotFound
 from fields import FilterUsersField
@@ -61,9 +62,10 @@ require_case_export_permission = require_permission(Permissions.view_report, 'co
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
-def default(request, domain, template="reports/home.html"):
+def default(request, domain, template="reports/favorites.html"):
 
-    configs = ReportConfig.by_domain_and_owner(domain, request.couch_user._id)
+    configs = ReportConfig.by_domain_and_owner(domain,
+        request.couch_user._id).all()
 
     from corehq.apps.reports.standard import ProjectReport
     context = dict(
@@ -447,86 +449,50 @@ def delete_custom_export(req, domain, export_id):
     else:
         return HttpResponseRedirect(export.CaseExportReport.get_url(domain))
 
-
-def _filter_report_filters(query_dict):
-    """
-    Filter query_dict to only contain report filter parameters, minus
-    time-specific parameters
-
-    """
-    exclude = ['hq_filters', 'filterSet', 'startdate', 'enddate']
-
-    return dict([(k, query_dict[k]) for k in query_dict if k not in exclude])
-    
 @login_and_domain_required
 @require_POST
 def add_config(request, domain):
+    from datetime import datetime
+    
     POST = json.loads(request.raw_post_data)
-    POST['days'] = int(POST['days']) if POST['days'] else None
-   
-    exclude_fields = ['startdate', 'enddate']
-    for field in exclude_fields:
+    assert POST['name']
+
+    to_date = lambda s: datetime.strptime(s, '%Y-%m-%d').date() if s else s
+    POST['start_date'] = to_date(POST['start_date'])
+    POST['end_date'] = to_date(POST['end_date'])
+    if POST['date_range'] == 'last7':
+        POST['days'] = 7
+    elif POST['date_range'] == 'last30':
+        POST['days'] = 30
+    elif POST['days']:
+        POST['days'] = int(POST['days'])
+  
+    exclude_filters = ['startdate', 'enddate']
+    for field in exclude_filters:
         POST['filters'].pop(field, None)
     
     config = ReportConfig.get_or_create(POST.get('_id', None))
     config.domain = domain
     config.owner_id = request.couch_user._id
 
-    fields = ['report_slug', 'name', 'description', 'date_range', 'days',
-              'start_date', 'end_date', 'filters']
-
-    for field in fields:
-        setattr(config, field, POST[field])
+    for field in config.properties().keys():
+        if field in POST:
+            setattr(config, field, POST[field])
     
     config.save()
 
     return json_response(config)
 
-
 @login_and_domain_required
-@require_GET
-def list_configs(request, domain):
-    report_slug = request.GET['report_slug']
-    if report_slug:
-        configs = ReportConfig.by_domain_and_report(domain, report_slug)
-    else:
-        configs = ReportConfig.by_domain(domain)
-
-    ret = []
-    for config in configs:
-        c = config.all_properties()
-        c.update({'owner': c.owner.all_properties()})
-        ret.append(c)
-        
-    return json_response(ret)
-
-@login_and_domain_required
-def view_or_edit_config(request, domain, config_id):
-    POST = request.POST.copy()
-
-    if request.method == 'POST':
-        config = ReportConfig.get(config_id)
-        config.name = POST.pop('name', config.name)
-        config.description = POST.pop('description', config.description)
-
-
-        filters = _filter_report_filters(request.POST)
-    
-
-
-@login_and_domain_required
-@require_POST
+@require_http_methods(['DELETE'])
 def delete_config(request, domain, config_id):
     try:
         config = ReportConfig.get(config_id)
     except ResourceNotFound:
-        return Http404()
+        raise Http404()
 
     config.delete()
     return HttpResponse()
-
-
-
 
 @require_can_view_all_reports
 @login_and_domain_required

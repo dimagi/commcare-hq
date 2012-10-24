@@ -85,6 +85,8 @@ class ReportDispatcher(View):
                 report_class = to_function(model_path)
                 if report_class.slug == report_slug:
                     return report_class
+
+        return None
         
     def dispatch(self, request, *args, **kwargs):
         if not self.validate_report_map(request, *args, **kwargs):
