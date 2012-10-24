@@ -20,9 +20,9 @@
 var standardHQReport = new HQReport({
     domain: '{{ domain }}',
     urlRoot: '{{ report.url_root }}',
-    slug: '{{ report.slug }}',
-    subReportSlug: '{{ report.sub_slug }}',
-    type: '{{ report.type }}',
+    slug: {{ report.slug|JSON }},
+    subReportSlug: {{ report.sub_slug|JSON }},
+    type: {{ report.type|JSON }},
     filterSet: {{ report.filter_set|JSON }},
     needsFilters: {{ report.needs_filters|JSON }},
 

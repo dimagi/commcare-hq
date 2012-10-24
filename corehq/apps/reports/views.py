@@ -472,8 +472,12 @@ def add_config(request, domain):
         POST['filters'].pop(field, None)
     
     config = ReportConfig.get_or_create(POST.get('_id', None))
-    config.domain = domain
-    config.owner_id = request.couch_user._id
+
+    if config.owner_id:
+        assert config.owner_id == request.couch_user._id
+    else:
+        config.domain = domain
+        config.owner_id = request.couch_user._id
 
     for field in config.properties().keys():
         if field in POST:
