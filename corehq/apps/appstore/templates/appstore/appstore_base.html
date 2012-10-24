@@ -255,10 +255,9 @@
         {% endif %}
         </div>
     </div>
-{% endfor %}
-{% if apps|length <= 0 %}
+{% empty %}
     No results were found for your query.
-{% endif %}
+{% endfor %}
 {% endblock %}
 </div>
 

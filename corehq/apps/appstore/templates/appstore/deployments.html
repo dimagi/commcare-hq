@@ -34,8 +34,7 @@
                 <a class="btn" href="{% url deployment_info dom.name %}">View &raquo;</a>
             </div>
         </div>
-    {% endfor %}
-    {% if deployments|length <= 0 %}
+    {% empty %}
         No results were found for your query.
-    {% endif %}
+    {% endfor %}
 {% endblock %}
