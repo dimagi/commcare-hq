@@ -50,13 +50,15 @@ $(function() {
         saveUrl: '{% url add_report_config domain %}',
     });
     
-    $("#reportFilters").css('overflow', 'visible');
+    if ($("#reportFilters").hasClass('in')) {
+        $("#reportFilters").css('overflow', 'visible');
+    }
 
     $("#reportFilters").on('shown', function() {
         $(this).css('overflow', 'visible'); 
     });
 
-    $("#reportFilters").on('hidden', function() {
+    $("#reportFilters").on('hide', function() {
         $(this).css('overflow', 'hidden');
     });
 });

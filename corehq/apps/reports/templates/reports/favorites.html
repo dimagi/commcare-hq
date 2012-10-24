@@ -17,17 +17,17 @@ $(function() {
 <div id="reportConfigList">
     <h2>Favorite Reports</h2>
 
-    <!-- ko ifnot: reportConfigs -->
+    <!-- ko ifnot: reportConfigs().length -->
     <p>You don't have any favorites.  You can add a favorite while viewing a report.</p>
     <!-- /ko -->
-    <!-- ko if: reportConfigs -->
+    <!-- ko if: reportConfigs().length -->
     <table class="table table-striped table-bordered">
         <thead>
             <tr>
                 <th>Report</th>
                 <th>Favorite Name</th>
                 <th>Description</th>
-                <th>Date range</th>
+                <th>Date Range</th>
                 <th></th>
             </tr>
         </thead>
