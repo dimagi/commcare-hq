@@ -34,7 +34,7 @@ def rewrite_url(request, path):
     return HttpResponseRedirect('/exchange%s?%s' % (path, request.META['QUERY_STRING']))
 
 def inverse_dict(d):
-    return {v: k for k, v in d.iteritems()}
+    return dict([(v, k) for k, v in d.iteritems()])
 
 @require_previewer # remove for production
 def project_info(request, domain, template="appstore/project_info.html"):
