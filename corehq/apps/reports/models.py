@@ -147,7 +147,7 @@ class ReportConfig(Document):
         if report_slug:
             key.append(report_slug)
 
-        return cls.view('reports/configurations_by_domain',
+        return cls.view('reports/configs_by_domain',
             reduce=False,
             include_docs=include_docs,
             startkey=key,
