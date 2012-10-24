@@ -58,7 +58,7 @@
                         {% ifnotequal field.name 'tos_confirmed' %}
                             {{ field }}
                         {% else %}
-                            <label class="checkbox">{{ field }} I have read and agree to the <a data-toggle="modal" data-target="#termsOfServiceDomainModal" href="#termsOfServiceDomainModal">CommCare HQ Terms of Service</a>.</label>
+                            <label class="checkbox">{{ field }} I have read and agree to the <a data-toggle="modal" data-target="#termsOfServiceDomainModal" href="#termsOfServiceDomainModal">CommCare HQ End User License Agreement</a>.</label>
                         {% endifnotequal %}
                         <span class="help-inline"></span>
                         {% for error in field.errors %}
@@ -93,7 +93,7 @@
     <div class="modal hide fade" id="termsOfServiceDomainModal">
         <div class="modal-header">
             <a class="close" data-dismiss="modal">&times;</a>
-            <h3>CommCare HQ Terms of Service</h3>
+            <h4>CommCare HQ End User License Agreement</h4>
         </div>
         <div class="modal-body">
             Loading Terms of Service...
