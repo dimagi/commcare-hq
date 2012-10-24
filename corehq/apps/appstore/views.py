@@ -112,7 +112,8 @@ def project_info(request, domain, template="appstore/project_info.html"):
         "current_link": current_link,
         "images": images,
         "audio": audio,
-        "sortables": facets_sortables
+        "sortables": facets_sortables,
+        "url_base": reverse('appstore')
     })
 
 def parse_args_for_es(request):
@@ -319,6 +320,7 @@ def deployment_info(request, domain, template="appstore/deployment_info.html"):
 
     return render_to_response(request, template, {'domain': dom,
                                                   'search_url': reverse('deployments'),
+                                                  'url_base': reverse('deployments'),
                                                   'sortables': facets_sortables})
 
 @require_previewer # remove for production
