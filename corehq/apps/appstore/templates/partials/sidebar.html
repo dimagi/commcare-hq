@@ -16,9 +16,9 @@
 
     {% for sortable, choices in sortables %}
         <li class="nav-header">{{ sortable.title }}</li>
-            {% for url, name, count, active in choices %}
-                <li class="sortable-{{ sortable }}{% if active %} active{% else %}{% if forloop.counter > 5 and choices|length > 6 %} hide{% endif %}{% endif %}">
-                    <a href="{% if url_base %}{{ url_base }}{% else %}{{ request.path }}{% endif %}{{ url }}">{{ name }}</a>
+            {% for choice in choices %}
+                <li class="sortable-{{ sortable }}{% if choice.active %} active{% else %}{% if forloop.counter > 5 and choices|length > 6 %} hide{% endif %}{% endif %}">
+                    <a href="{% if url_base %}{{ url_base }}{% else %}{{ request.path }}{% endif %}{{ choice.url }}">{{ choice.name }}</a>
                 </li>
             {% endfor %}
             {% if choices|length > 6 %}
