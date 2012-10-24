@@ -61,6 +61,7 @@ $(function() {
     $("#reportFilters").on('hide', function() {
         $(this).css('overflow', 'hidden');
     });
+
 });
 </script>
 {% endblock %}
@@ -214,13 +215,13 @@ $(function() {
                                     <div class="control-group" data-bind="visible: date_range() == 'since' || date_range() == 'range'">
                                         <label class="control-label" for="start_date">Begin Date</label>
                                         <div class="controls">
-                                            <input type="text" class="date-picker" name="start_date" data-bind="value: start_date"/>
+                                            <input type="text" class="date-picker" name="start_date" placeholder="YYYY-MM-DD" data-bind="value: start_date"/>
                                         </div>
                                     </div>
                                     <div class="control-group" data-bind="visible: date_range() == 'range'">
                                         <label class="control-label" for="end_date">End Date</label>
                                         <div class="controls">
-                                            <input type="text" class="date-picker" name="end_date" data-bind="value: end_date"/>
+                                            <input type="text" class="date-picker" name="end_date" placeholder="YYYY-MM-DD" data-bind="value: end_date"/>
                                         </div>
                                     </div>
                                 </div>
