@@ -59,7 +59,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 for indicator in section:
                     if indicator.slug not in raw_values:
                         raw_values[indicator.slug] = list()
-                    value = indicator.get_totals(user.get('user_id'), self.datespan)
+                    value = indicator.get_value(user.get('user_id'), self.datespan)
                     raw_values[indicator.slug].append(value)
 
         averages = dict()
@@ -88,7 +88,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                         v_text = "%.f%%" % (ratio*100) if ratio is not None else "--"
                     else:
                         v = value
-                        v_text = "%d" % value
+                        v_text = "%d" % value if value is not None else "--"
 
                     if v > avg+(std*2) and v is not None:
                         # more than two stds above average
@@ -156,6 +156,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                     dict(slug="under5_diarrhea", expected="--"),
                     dict(slug="under5_diarrhea_ors_proportion", expected="100%"),
                     dict(slug="muac_routine_proportion", expected="100%"),
+                    dict(slug="num_active_gam", expected="--"),
                     dict(slug="under5_routine_visit_past30days", expected="100%"),
                 ]
             ),
@@ -163,8 +164,20 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 title="Pregnant",
                 indicators=[
                     dict(slug="num_active_pregnancies", expected="--"),
+                    dict(slug="pregnancy_visit_danger_sign_referral_proportion", expected="100%"),
                     dict(slug="anc4_proportion", expected="100%"),
+                    dict(slug="pregnant_routine_checkup_proportion", expected="100%"),
                     dict(slug="pregnant_routine_visit_past30days", expected="100%"),
+                    ]
+            ),
+            dict(
+                title="Follow-up",
+                indicators=[
+                    dict(slug="num_urgent_treatment_referral", expected="--"),
+                    dict(slug="on_time_followups_proportion", expected="100%"),
+                    dict(slug="late_followups_proportion", expected="--"),
+                    dict(slug="no_followups_proportion", expected="--"),
+                    dict(slug="median_days_followup", expected="<=2"),
                 ]
             ),
             dict(
@@ -172,6 +185,12 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 indicators=[
                     dict(slug="household_num_ec", expected="--"),
                     dict(slug="family_planning_households", expected="100%"),
+                    ]
+            ),
+            dict(
+                title="Stats",
+                indicators=[
+                    dict(slug="days_since_last_transmission", expected="--"),
                 ]
             )
         ]

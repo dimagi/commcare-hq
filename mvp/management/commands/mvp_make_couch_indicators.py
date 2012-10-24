@@ -1,8 +1,7 @@
-from django.core.management.base import LabelCommand, CommandError
-from corehq.apps.indicators.models import IndicatorDefinition, CaseDataInFormIndicatorDefinition, \
-    FormDataAliasIndicatorDefinition, FormDataInCaseIndicatorDefinition, DynamicIndicatorDefinition, \
+from django.core.management.base import LabelCommand
+from corehq.apps.indicators.models import DynamicIndicatorDefinition, \
     CouchViewIndicatorDefinition, CombinedCouchViewIndicatorDefinition
-from mvp.models import MVP, MVPRelatedCaseDataInFormIndicatorDefinition, MVPRelatedCaseDataInCaseIndicatorDefinition, MVPActiveCasesCouchViewIndicatorDefinition
+from mvp.models import MVP, MVPActiveCasesCouchViewIndicatorDefinition, MVPDaysSinceLastTransmission, MVPReturnMedianCouchViewIndicatorDefinition
 
 SIMPLE_COUCH_VIEW_INDICATORS = dict(
     under5_child_health=dict(
@@ -61,6 +60,46 @@ SIMPLE_COUCH_VIEW_INDICATORS = dict(
             description="No. Under-5s with uncomplicated diarrhea who received ORS",
             title="# Under-5s w/ Uncomplicated Diarrhea Receiving ORS",
             indicator_key="under5_diarrhea ors"
+        ),
+        under5_diarrhea_zinc=dict(
+            description="No. Under-5s with uncomplicated diarrhea who received zinc treatment",
+            title="# Under-5s w/ Uncomplicated Diarrhea Receiving ZINC",
+            indicator_key="under5_diarrhea zinc"
+        ),
+        under5_complicated_fever=dict(
+            description="No. of Under-5s with Complicated Fever",
+            title="# Under-5s w/ Complicated Fever",
+            indicator_key="under5_complicated_fever"
+        ),
+        under5_complicated_fever_referred=dict(
+            description="No. of Under-5s with complicated fever who were referred to clinic or hospital",
+            title="# Under-5s with complicated fever referred to clinic/hospital",
+            indicator_key="under5_complicated_fever referred"
+        )
+    ),
+    under5_follow_up=dict(
+        under5_complicated_fever_facility_followup=dict(
+            description="No. of children who attended follow-up at facility after being referred"\
+                        " for complicated fever",
+            title="# Under-5 who attended follow-up at facility, referred for complicated fever",
+            indicator_key="under5_complicated_fever facility_followup"
+        )
+    ),
+    under1_child_health=dict(
+        under1_check_up=dict(
+            description="No. of children Under-1 receiving on-time scheduled check-ups during the time period",
+            title="# Under-1 receiving check-ups",
+            indicator_key="under1"
+        ),
+        under6month_visit=dict(
+            description="No. of children receiving visit who were under 6 months",
+            title="# Under-6-Month Visits",
+            indicator_key="under6months"
+        ),
+        under6month_exclusive_breastfeeding_visit=dict(
+            description="No. of children under 6 months reported as exclusively breast-fed during visit",
+            title="# Under-6-Months reported as exclusively breast-fed during visit",
+            indicator_key="under6months exclusive_breastfeeding"
         )
     ),
     anc_visits=dict(
@@ -86,13 +125,28 @@ SIMPLE_COUCH_VIEW_INDICATORS = dict(
             description="No. of Births delivered in a Health Facility during the time period",
             title="# Births delivered in Health Facility",
             indicator_key="facility_delivery"
-        )
+        ),
+        low_birth_weight_registration=dict(
+            description="No. of low birth weight (<2.5 kg) babies born during the time period",
+            title="# low birth weight (<2.5 kg) births",
+            indicator_key="birth_weight low"
+        ),
+        birth_weight_registration=dict(
+            description="Number of births reported with weight recorded during time period",
+            title="# birth registrations w/ weight recorded",
+            indicator_key="birth_weight"
+        ),
     ),
     urgent_referrals_by_form=dict(
         num_urgent_referrals=dict(
             description="No. of Urgent Referrals",
             title="# Urgent Referrals",
             indicator_key="urgent_referral"
+        ),
+        num_urgent_treatment_referral=dict(
+            description="No. of Cases Urgently referred OR Treated by CHW",
+            title="# Cases Urgently referred OR Treated by CHW",
+            indicator_key="urgent_treatment_referral"
         )
     ),
     urgent_referrals_by_case=dict(
@@ -177,12 +231,96 @@ SIMPLE_COUCH_VIEW_INDICATORS = dict(
             indicator_key="pregnant",
             fixed_datespan_days=30
         ),
+        pregnant_visited_past6weeks=dict(
+            description="No. of Pregnant Women visited in the last 6 weeks",
+            title="# Pregnant Women Visited in Last 6 weeks",
+            indicator_key="pregnant",
+            fixed_datespan_days=42
+        ),
     ),
     households_by_visit_date=dict(
         num_household_visits=dict(
-            dscription="No. of Household visits",
+            description="No. of Household visits",
             title="# Household Visits",
             indicator_key="visit"
+        )
+    ),
+    child_close=dict(
+        neonatal_deaths=dict(
+            description="No. of Neonatal (0-28 days) Deaths",
+            title="# Neonatal Deaths",
+            indicator_key="neonatal_death",
+        ),
+        infant_deaths=dict(
+            description="No. of Infant (0-11 months) Deaths",
+            title="# Infant Deaths",
+            indicator_key="infant_death",
+        ),
+        under5_deaths=dict(
+            description="No. of Under-5 (0-59 months) Deaths",
+            title="# Under-5 Deaths",
+            indicator_key="under5_death",
+        )
+    ),
+    pregnancy_close=dict(
+        maternal_deaths=dict(
+            description="No. of Maternal deaths (pregnant or within 42 days of delivery) during the time period",
+            title="# Maternal Deaths",
+            indicator_key="maternal_death",
+        )
+    ),
+    over5_deaths=dict(
+        over5_deaths=dict(
+            description="No. of Over-5 (non-maternal) deaths during the time period",
+            title="# Over-5 (non-maternal) Deaths",
+            indicator_key="over5_death",
+        )
+    ),
+    all_pregnancy_visits=dict(
+        pregnancy_visit_danger_sign=dict(
+            description="No. of Pregnant Women With Danger Sign Recorded During Visit",
+            title="# Pregnant Women w/ Danger Signs",
+            indicator_key="danger_sign",
+        ),
+        pregnancy_visit_danger_sign_referral=dict(
+            description="No. of Pregnant Women Referred for Danger Signs",
+            title="# Pregnant Women Referred for Danger Signs",
+            indicator_key="danger_sign referred",
+        )
+    ),
+    followup_cases=dict(
+        num_on_time_followups=dict(
+            description="# Referred / Treated receiving on-time follow-up (within 2 days)",
+            title="# Referred / Treated receiving on-time follow-up (within 2 days)",
+            indicator_key="urgent_followup on_time",
+        ),
+        num_late_followups=dict(
+            description="# Referred / Treated receiving LATE follow-up (within 3-7 days)",
+            title="# Referred / Treated receiving LATE follow-up (within 3-7 days)",
+            indicator_key="urgent_followup late",
+        ),
+        num_none_followups=dict(
+            description="# Referred / Treated receiving NO follow-up",
+            title="# Referred / Treated receiving NO follow-up",
+            indicator_key="urgent_followup none",
+        )
+    )
+)
+
+MEDIAN_INDICATORS = dict(
+    urgent_referrals_by_case=dict(
+        median_days_referral_followup=dict(
+            description="Median number of days to follow-up referral / treatment for " \
+                        "urgent referrals (codes A, E, B) or treatment ",
+            title="Median # Days to follow up urgent referral",
+            indicator_key="urgent_referral_followup_days",
+        )
+    ),
+    followup_cases=dict(
+        median_days_followup=dict(
+            description="Median # of days for follow-up",
+            title="Median # of days for follow-up",
+            indicator_key="urgent_followup_days",
         )
     )
 )
@@ -225,40 +363,113 @@ ACTIVE_CASES_INDICATORS=dict(
         num_under5_past30days=dict(
             description="Number of Under-5s in the last 30 days",
             title="# Under-5s in last 30 days",
-            indicator_key="",
+            indicator_key="dob",
             fixed_datespan_days=30,
             startdate_shift=-1826, # <60 months (5 years)
         ),
         num_neonate_past7days=dict(
             description="Number of Neonates in the last 7 days",
             title="# Neonates in last 7 days",
-            indicator_key="",
+            indicator_key="dob",
             fixed_datespan_days=7,
             startdate_shift=-31,
         ),
         num_newborns=dict(
             description="No. of newborns",
             title="# Newborns",
-            indicator_key="",
+            indicator_key="dob",
             startdate_shift=-7,
         ),
         num_children=dict(
             description="No. of children",
             title="# Children",
-            indicator_key="",
+            indicator_key="dob",
             startdate_shift=-1826, # <60 months (5 years)
             enddate_shift=-183 # >6 months
         ),
         num_under5=dict(
-            description="No. of Under-5s",
+            description="No. of Children Under 5",
             title="# Under-5s",
-            indicator_key="",
+            indicator_key="dob",
             startdate_shift=-1826, # <60 months (5 years)
+        ),
+        num_under1=dict(
+            description="No. of Children Under 1",
+            title="# Under-1s",
+            indicator_key="dob",
+            startdate_shift=-365, # 1 year
+        ),
+        num_active_gam=dict(
+            description="No. of Active GAM Cases",
+            title="# Active GAM Cases",
+            indicator_key="gam"
         )
     )
 )
 
 COMPOSITE_INDICATORS = dict(
+    on_time_followups_proportion=dict(
+        description="Proportion of Referred / Treated receiving on-time follow-up (within 2 days)",
+        title="% Referred / Treated receiving on-time follow-up (within 2 days)",
+        numerator_slug="num_on_time_followups",
+        denominator_slug="num_urgent_treatment_referral",
+    ),
+    late_followups_proportion=dict(
+        description="Proportion of Referred / Treated receiving LATE follow-up (within 3-7 days)",
+        title="% Referred / Treated receiving LATE follow-up (within 3-7 days)",
+        numerator_slug="num_late_followups",
+        denominator_slug="num_urgent_treatment_referral",
+    ),
+    no_followups_proportion=dict(
+        description="Proportion of Referred / Treated receiving NO follow-up",
+        title="% Referred / Treated receiving NO follow-up",
+        numerator_slug="num_none_followups",
+        denominator_slug="num_urgent_treatment_referral",
+    ),
+    pregnancy_visit_danger_sign_referral_proportion=dict(
+        description="Proportion of Pregnant Women Referred for Danger Signs",
+        title="% Pregnant Women Referred for Danger Signs",
+        numerator_slug="pregnancy_visit_danger_sign_referral",
+        denominator_slug="pregnancy_visit_danger_sign",
+    ),
+    under1_check_ups_proportion=dict(
+        description="Proportion of children Under-1 receiving on-time scheduled check-ups during the time period",
+        title="% Under-1 receiving check-ups",
+        numerator_slug="under1_check_up",
+        denominator_slug="num_under1",
+    ),
+    under6month_exclusive_breastfeeding_proportion=dict(
+        description="Proportion of children under 6 months reported as exclusively breast-fed during visit",
+        title="% Under-6-Months reported as exclusively breast-fed during visit",
+        numerator_slug="under1_check_up",
+        denominator_slug="num_under1",
+    ),
+    low_birth_weight_proportion=dict(
+        description="Proportion of low birth weight (<2.5 kg) babies born during the time period",
+        title="% low birth weight (<2.5 kg) babies born during the time period",
+        numerator_slug="low_birth_weight_registration",
+        denominator_slug="birth_weight_registration",
+    ),
+    pregnant_routine_checkup_proportion=dict(
+        description="Proportion of Pregnant women receiving on-time routine check-up (every 6 weeks)",
+        title="% Pregnant receiving CHW visit in last 6 weeks",
+        numerator_slug="pregnant_visited_past6weeks",
+        denominator_slug="num_active_pregnancies",
+    ),
+    under5_complicated_fever_facility_followup_proportion=dict(
+        description="Proportion of children who attended follow-up at facility after being referred"\
+                    " for complicated fever",
+        title="% Under-5 attending follow-up at facility after complicated fever referral",
+        numerator_slug="under5_complicated_fever_facility_followup",
+        denominator_slug="under5_complicated_fever",
+    ),
+    under5_complicated_fever_referred_proportion=dict(
+        description="Proportion of children who attended follow-up at facility after being referred"\
+                    " for complicated fever",
+        title="% Under-5 attending follow-up at facility after complicated fever referral",
+        numerator_slug="under5_complicated_fever_referred",
+        denominator_slug="under5_complicated_fever",
+    ),
     newborn_visit_proportion=dict(
         description=" Proportion of newborns receiving first CHW check-up within 7 days" \
                     " of birth during the time period",
@@ -317,6 +528,12 @@ COMPOSITE_INDICATORS = dict(
         description="Proportion of Under-5s with uncomplicated diarrhea who received ORS",
         title="% Under-5s with uncomplicated diarrhea who received ORS",
         numerator_slug="under5_diarrhea_ors",
+        denominator_slug="under5_diarrhea"
+    ),
+    under5_diarrhea_zinc_proportion=dict(
+        description="Proportion of Under-5s with uncomplicated diarrhea who received ZINC",
+        title="% Under-5s with uncomplicated diarrhea who received ZINC",
+        numerator_slug="under5_diarrhea_zinc",
         denominator_slug="under5_diarrhea"
     ),
     under5_fever_rdt_proportion=dict(
@@ -433,4 +650,22 @@ class Command(LabelCommand):
                     **indicator_kwargs
                 )
                 indicator_def.save()
+
+            for couch_view, indicator_defs in MEDIAN_INDICATORS.items():
+                for indicator_slug, indicator_kwargs in indicator_defs.items():
+                    indicator_def = MVPReturnMedianCouchViewIndicatorDefinition.update_or_create_unique(
+                        *shared_args,
+                        slug=indicator_slug,
+                        couch_view="mvp/%s" % couch_view,
+                        **indicator_kwargs
+                    )
+                    indicator_def.save()
+
+            days_since_last_transmission = MVPDaysSinceLastTransmission.update_or_create_unique(
+                *shared_args,
+                slug="days_since_last_transmission",
+                description="Days since last transmission",
+                title="Days since last transmission"
+            )
+            days_since_last_transmission.save()
 

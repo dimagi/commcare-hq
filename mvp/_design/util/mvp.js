@@ -15,16 +15,31 @@ function isChildVisitForm(doc) {
         && hasIndicators(doc));
 }
 
+function isChildCloseForm(doc) {
+    return (doc.doc_type === "XFormInstance"
+        && doc.xmlns === 'http://openrosa.org/formdesigner/AC164B28-AECA-45C9-B7F6-E0668D5AF84B');
+}
+
 function isPregnancyVisitForm(doc) {
     return (doc.doc_type === "XFormInstance"
         && doc.xmlns === 'http://openrosa.org/formdesigner/185A7E63-0ECD-4D9A-8357-6FD770B6F065'
         && hasIndicators(doc));
 }
 
+function isPregnancyCloseForm(doc) {
+    return (doc.doc_type === "XFormInstance"
+        && doc.xmlns === 'http://openrosa.org/formdesigner/01EB3014-71CE-4EBE-AE34-647EF70A55DE');
+}
+
 function isHomeVisitForm(doc) {
     return (doc.doc_type === "XFormInstance"
         && doc.xmlns === 'http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B'
         && hasIndicators(doc));
+}
+
+function isDeathWithoutRegistrationForm(doc) {
+    return (doc.doc_type === "XFormInstance"
+        && doc.xmlns === 'http://openrosa.org/formdesigner/b3af1fddeb661ee045fef1e764995440ea8f057f');
 }
 
 function isHouseholdCase(doc) {
@@ -98,6 +113,15 @@ function get_pregnancy_start_from_edd_date(edd_date) {
     return preg_start;
 }
 
+function get_danger_signs(danger_sign_value) {
+    if (danger_sign_value) {
+        var signs = danger_sign_value.trim().toLowerCase();
+        signs = signs.split(' ');
+        return signs;
+    }
+    return [];
+}
+
 function get_age_from_dob(dob, date_diff) {
     // dob and date_diff are date strings
     var now,
@@ -111,6 +135,13 @@ function get_age_from_dob(dob, date_diff) {
         return (now.getTime() - birth_date.getTime())/(MS_IN_DAY*365);
     }
     return null;
+}
+
+function contained_in_indicator_value(indicator, text) {
+    if (indicator && indicator.value) {
+        return (indicator.value.toLowerCase().indexOf(text) >= 0);
+    }
+    return false;
 }
 
 function emit_standard(doc, emit_date, indicator_keys, suffix) {

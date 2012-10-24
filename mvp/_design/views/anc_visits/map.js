@@ -11,6 +11,7 @@ function (doc) {
         if (indicators.pregnancy_edd && indicators.pregnancy_edd.value &&
             indicators.num_anc && indicators.prev_num_anc &&
             (indicators.last_anc_date || indicators.last_anc_weeks)) {
+
             var num_ancs = (indicators.num_anc.value) ? parseInt(indicators.num_anc.value) : 0,
                 prev_num_ancs = (indicators.prev_num_anc.value) ? parseInt(indicators.prev_num_anc.value) : 0,
                 edd = indicators.pregnancy_edd.value,

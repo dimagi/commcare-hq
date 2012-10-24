@@ -1,5 +1,6 @@
 import datetime
 from django.utils.safestring import mark_safe
+import logging
 import numpy
 from corehq.apps.indicators.models import DynamicIndicatorDefinition, CombinedCouchViewIndicatorDefinition
 from mvp.models import MVP
@@ -19,47 +20,111 @@ class HealthCoordinatorReport(MVPIndicatorReport):
     def report_context(self):
         report_matrix = list()
         month_headers = None
-        for slug in self.indicator_slugs:
-            indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE, self.domain, slug, wrap_correctly=True)
-            retrospective = indicator.get_monthly_retrospective()
-            if not month_headers:
-                month_headers = self.get_month_headers(retrospective)
+        for category_group in self.indicator_slugs:
+            category_indicators = list()
+            total_rowspan = 0
+            for slug in category_group['indicator_slugs']:
+                indicator = DynamicIndicatorDefinition.get_current(MVP.NAMESPACE, self.domain, slug, wrap_correctly=True)
+                if indicator:
+                    retrospective = indicator.get_monthly_retrospective()
+                    if not month_headers:
+                        month_headers = self.get_month_headers(retrospective)
 
-            if isinstance(indicator, CombinedCouchViewIndicatorDefinition):
-                table = self.get_indicator_table(retrospective)
-            else:
-                table = self.get_indicator_row(retrospective)
+                    if isinstance(indicator, CombinedCouchViewIndicatorDefinition):
+                        table = self.get_indicator_table(retrospective)
+                        indicator_rowspan = 3
+                    else:
+                        table = self.get_indicator_row(retrospective)
+                        indicator_rowspan = 1
+                    total_rowspan += indicator_rowspan + 1
+                    category_indicators.append(dict(
+                        title=indicator.description,
+                        values=retrospective,
+                        table=table,
+                        rowspan=indicator_rowspan
+                    ))
+                else:
+                    logging.info("Could not grab indicator %s in domain %s" % (slug, self.domain))
             report_matrix.append(dict(
-                title=indicator.description,
-                values=retrospective,
-                table=table
+                category_title=category_group['category_title'],
+                rowspan=total_rowspan,
+                indicators=category_indicators,
             ))
         return dict(
             months=month_headers,
-            report=report_matrix
+            report=report_matrix,
         )
 
     @property
     def indicator_slugs(self):
         return  [
-            "under5_fever_rdt_proportion",
-            "under5_fever_rdt_positive_proportion",
-            "under5_fever_rdt_positive_medicated_proportion",
-            "under5_fever_rdt_not_received_proportion",
-            "households_routine_visit_past90days",
-            "households_routine_visit_past30days",
-            "under5_routine_visit_past30days",
-            "pregnant_routine_visit_past30days",
-            "neonate_routine_visit_past7days",
-            "newborn_visit_proportion",
-            "urgent_referrals_proportion",
-            "family_planning_households",
-            "anc4_proportion",
-            "muac_wasting_proportion",
-            "muac_routine_proportion",
-            "under5_fever_rdt_negative_medicated_proportion",
-            "under5_diarrhea_ors_proportion",
-            "num_births_registered"
+            dict(
+                category_title="Child Health",
+                indicator_slugs=[
+                    "under5_fever_rdt_proportion",
+                    "under5_fever_rdt_positive_proportion",
+                    "under5_fever_rdt_positive_medicated_proportion",
+                    "under5_fever_rdt_negative_medicated_proportion",
+                    "under5_fever_rdt_not_received_proportion",
+                    "under5_diarrhea_ors_proportion",
+                    "under5_diarrhea_zinc_proportion",
+                    "under5_complicated_fever_facility_followup_proportion",
+                    "under5_complicated_fever_referred_proportion",
+                    "under1_check_ups_proportion",
+                ]
+            ),
+            dict(
+                category_title="Child Nutrition",
+                indicator_slugs=[
+                    "muac_wasting_proportion",
+                    "muac_routine_proportion",
+                    "under6month_exclusive_breastfeeding_proportion",
+                    "low_birth_weight_proportion",
+                ]
+            ),
+            dict(
+                category_title="CHW Visits",
+                indicator_slugs=[
+                    "households_routine_visit_past90days",
+                    "households_routine_visit_past30days",
+                    "under5_routine_visit_past30days",
+                    "pregnant_routine_visit_past30days",
+                    "neonate_routine_visit_past7days",
+                    "urgent_referrals_proportion",
+                    "newborn_visit_proportion",
+                ]
+            ),
+            dict(
+                category_title="CHW Mgmt",
+                indicator_slugs=[
+                    "median_days_referral_followup",
+                ]
+            ),
+            dict(
+                category_title="Maternal",
+                indicator_slugs=[
+                    "family_planning_households",
+                    "anc4_proportion",
+                    "facility_births_proportion",
+                    "pregnant_routine_checkup_proportion",
+                ]
+            ),
+            dict(
+                category_title="Births",
+                indicator_slugs=[
+                    "num_births_registered",
+                ]
+            ),
+            dict(
+                category_title="Deaths",
+                indicator_slugs=[
+                    "neonatal_deaths",
+                    "infant_deaths",
+                    "under5_deaths",
+                    "maternal_deaths",
+                    "over5_deaths",
+                ]
+            )
         ]
 
     def get_month_headers(self, retrospective):

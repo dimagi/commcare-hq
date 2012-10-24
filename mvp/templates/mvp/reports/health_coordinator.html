@@ -8,9 +8,11 @@
         $(function(){
             var recalc_thead_width = function () {
                 var th_width = $('.mvp-table tbody td').width();
-                var indicator_width = $('.mvp-table tbody th').width();
+                var category_title = $('.mvp-table tbody th.category_title').width();
+                var indicator_width = $('.mvp-table tbody th.indicator-def').width();
                 $('.mvp-table thead th, .mvp-table tbody td').width(th_width);
-                $('.mvp-table thead th:first-child, .mvp-table tbody th').width(indicator_width);
+                $('.mvp-table thead th.category_title, .mvp-table tbody th.category_title').width(category_title);
+                $('.mvp-table thead th.indicator-def, .mvp-table tbody th.indicator-def').width(indicator_width);
             };
             recalc_thead_width();
 
@@ -28,6 +30,7 @@
     <table class="table table-bordered table-striped datatable mvp-table">
         <thead id="mvp-table-head" data-spy="affix" data-offset-top="197">
             <tr>
+                <th class="category_title">&nbsp;</th>
                 <th class="indicator-def">&nbsp;</th>
                 {% for month in months %}
                 <th{% ifequal forloop.counter 13 %} class="current_month"{% endifequal %}>{{ month }}</th>
@@ -38,26 +41,37 @@
             </tr>
         </thead>
         <tbody>
-            {% for indicator in report %}
-            <tr>
-                <th rowspan="3">{{ indicator.title }}</th>
-                {% for p in indicator.table.percentages %}
-                    <td{% if p.css %} class="{{ p.css }}"{% endif %}>{{ p.text }}</td>
+            {% for category in report %}
+                <tr>
+                    <th class="category_title" rowspan="{{ category.rowspan }}">
+                        <div>{{ category.category_title }}</div>
+                    </th>
+                {% for indicator in category.indicators %}
+                {% ifnotequal forloop.counter0 0 %}<tr>{% endifnotequal %}
+                    <th rowspan="{{ indicator.rowspan }}" class="indicator-def">{{ indicator.title }}</th>
+
+                    {% for p in indicator.table.percentages %}
+                        <td{% if p.css %} class="{{ p.css }}"{% endif %}>{{ p.text }}</td>
+                    {% endfor %}
+                {% ifequal indicator.rowspan 3 %}
+                </tr>
+                <tr>
+                {% endifequal %}
+                    {% for n in indicator.table.numerators %}
+                        <td{% if n.css %} class="{{ n.css }}"{% endif %}>{{ n.text }}</td>
+                    {% endfor %}
+                </tr>
+                {% ifequal indicator.rowspan 3 %}
+                <tr>
+                    {% for d in indicator.table.denominators %}
+                        <td{% if d.css %} class="{{ d.css }}"{% endif %}>{{ d.text }}</td>
+                    {% endfor %}
+                </tr>
+                {% endifequal %}
+                <tr>
+                    <td colspan="17"></td>
+                </tr>
                 {% endfor %}
-            </tr>
-            <tr>
-                {% for n in indicator.table.numerators %}
-                    <td{% if n.css %} class="{{ n.css }}"{% endif %}>{{ n.text }}</td>
-                {% endfor %}
-            </tr>
-            <tr>
-                {% for d in indicator.table.denominators %}
-                    <td{% if d.css %} class="{{ d.css }}"{% endif %}>{{ d.text }}</td>
-                {% endfor %}
-            </tr>
-            <tr>
-                <td colspan="17"></td>
-            </tr>
             {% endfor %}
         </tbody>
     </table>
