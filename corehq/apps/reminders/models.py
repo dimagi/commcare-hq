@@ -1,6 +1,6 @@
 import pytz
 from pytz import timezone
-from datetime import timedelta, datetime, date
+from datetime import timedelta, datetime, date, time
 import re
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
@@ -53,6 +53,13 @@ SURVEY_METHOD_LIST = ["SMS","CATI"]
 
 def is_true_value(val):
     return val == 'ok' or val == 'OK'
+
+def looks_like_timestamp(value):
+    try:
+        regex = re.compile("^\d\d\d\d-\d\d-\d\d.*$")
+        return (regex.match(value) is not None)
+    except Exception:
+        return False
 
 class MessageVariable(object):
     def __init__(self, variable):
@@ -586,15 +593,26 @@ class CaseReminderHandler(Document):
         
         case            The CommCareCase to check.
         case_property   The property on CommCareCase to check.
-        now             The timestamp to use when comparing, if case[case_property] is a timestamp.
+        now             The timestamp to use when comparing, if case.case_property is a timestamp.
         
         return      True if the condition is reached, False if not.
         """
         condition = case.get_case_property(case_property)
-        try: condition = string_to_datetime(condition)
-        except Exception:
+        
+        if isinstance(condition, datetime):
             pass
-
+        elif isinstance(condition, date):
+            condition = datetime.combine(condition, time(0,0))
+        elif looks_like_timestamp(condition):
+            try:
+                condition = parse(condition)
+            except Exception:
+                pass
+        
+        if isinstance(condition, datetime) and getattr(condition, "tzinfo") is not None:
+            condition = condition.astimezone(pytz.utc)
+            condition = condition.replace(tzinfo=None)
+        
         if (isinstance(condition, datetime) and now > condition) or is_true_value(condition):
             return True
         else:
