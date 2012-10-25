@@ -118,8 +118,7 @@ function ReportConfigsViewModel(options) {
                 }
             }
         });
-         
-    }
+    };
 
     self.setConfigBeingViewed = function (config) {
         self.configBeingViewed(config);
@@ -209,7 +208,7 @@ function ReportConfigsViewModel(options) {
 
 $.fn.reportConfigEditor = function (options) {
     this.each(function(i, v) {
-        options.filterForm = $(v);
+        options.filterForm = options.filterForm || $(v);
         var viewModel = new ReportConfigsViewModel(options);
 
         ko.applyBindings(viewModel, $(this).get(i));
