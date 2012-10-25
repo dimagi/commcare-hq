@@ -5,13 +5,18 @@ import pytz
 from corehq.apps import reports
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CouchUser, CommCareUser
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
 from couchexport.util import SerializableFunction
 import couchforms
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.mixins import UnicodeMixIn
+from dimagi.utils.decorators.memoized import memoized
 import settings
+from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
+    CustomProjectReportDispatcher)
+from corehq.apps.adm.dispatcher import ADMSectionDispatcher
+
 
 class HQUserType(object):
     REGISTERED = 0
@@ -105,6 +110,149 @@ class TempCommCareUser(CommCareUser):
 
     class Meta:
         app_label = 'reports'
+
+
+project_report_dispatcher = ProjectReportDispatcher()
+custom_project_report_dispatcher = CustomProjectReportDispatcher()
+adm_section_dispatcher = ADMSectionDispatcher()
+
+DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'since', 'range']
+
+class ReportConfig(Document):
+    _extra_json_properties = ['url', 'report_name', 'date_description']
+
+    domain = StringProperty()
+
+    # the prefix of the report dispatcher class for this report, used to
+    # get route name for url reversing, and report names
+    report_type = StringProperty()
+    report_slug = StringProperty()
+    subreport_slug = StringProperty(default=None)
+
+    name = StringProperty()
+    description = StringProperty()
+    owner_id = StringProperty()
+
+    filters = DictProperty()
+
+    date_range = StringProperty(choices=DATE_RANGE_CHOICES)
+    days = IntegerProperty(default=None)
+    start_date = DateProperty(default=None)
+    end_date = DateProperty(default=None)
+
+    @classmethod
+    def by_domain_and_owner(cls, domain, owner_id, report_slug=None, include_docs=True):
+        key = [domain, owner_id]
+        if report_slug:
+            key.append(report_slug)
+
+        return cls.view('reports/configs_by_domain',
+            reduce=False,
+            include_docs=include_docs,
+            startkey=key,
+            endkey=key + [{}])
+   
+    @classmethod
+    def default(self):
+        return {
+            'name': '',
+            'description': '',
+            'date_range': 'last7',
+            'days': None,
+            'start_date': None,
+            'end_date': None,
+            'filters': {}
+        }
+
+    def to_complete_json(self):
+        json = super(ReportConfig, self).to_json()
+
+        for key in self._extra_json_properties:
+            json[key] = getattr(self, key)
+        
+        return json
+
+    @property
+    @memoized
+    def _dispatcher(self):
+        dispatchers = [project_report_dispatcher,
+                       custom_project_report_dispatcher,
+                       adm_section_dispatcher]
+
+        for dispatcher in dispatchers:
+            if dispatcher.prefix == self.report_type:
+                return dispatcher
+
+        raise Exception("Unknown dispatcher: %s" % self.report_type)
+
+    def get_date_range(self):
+        """Duplicated in reports.config.js"""
+
+        import datetime
+        today = datetime.date.today()
+        date_range = self.date_range
+
+        if date_range == 'since':
+            start_date = self.start_date
+            end_date = today
+        elif date_range == 'range':
+            start_date = self.start_date
+            end_date = self.end_date
+        else:
+            end_date = today
+
+            if date_range == 'last7':
+                days = 7
+            elif date_range == 'last30':
+                days = 30
+            elif date_range == 'lastn':
+                days = self.days
+            else:
+                raise Exception("Invalid date range")
+
+            start_date = today - datetime.timedelta(days=days)
+
+        return {'startdate': start_date.isoformat(),
+                'enddate': end_date.isoformat()}
+
+    @property
+    def url(self):
+        from django.core.urlresolvers import reverse
+        from urllib import urlencode
+
+        route = self._dispatcher.name()
+        kwargs = {'domain': self.domain,
+                  'report_slug': self.report_slug}
+
+        if self.subreport_slug:
+            kwargs.update(subreport_slug=self.subreport_slug)
+
+        params = self.filters.copy()
+        params['config_id'] = self._id
+        params.update(self.get_date_range())
+
+        return reverse(route, kwargs=kwargs) + '?' + urlencode(params, True)
+
+    @property
+    def report_name(self):
+        report = self._dispatcher.get_report(self.domain,
+                                            self.report_slug)
+        return report.name
+
+    @property
+    def date_description(self):
+        if self.days and not self.start_date:
+            day = 'day' if self.days == 1 else 'days'
+            return "Last %d %s" % (self.days, day)
+        elif self.end_date:
+            return "From %s to %s" % (self.start_date, self.end_date)
+        else:
+            return "Since %s" % self.start_date
+
+    @property
+    @memoized
+    def owner(self):
+        return CouchUser.get(self.owner_id)
 
 
 class ReportNotification(Document, UnicodeMixIn):

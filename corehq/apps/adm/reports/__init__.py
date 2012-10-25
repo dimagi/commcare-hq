@@ -54,6 +54,7 @@ class ADMSectionView(GenericReportView):
 
 
 class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectReportParametersMixin, DatespanMixin):
+
     section_name = "Active Data Management"
     app_slug = "adm"
     dispatcher = ADMSectionDispatcher

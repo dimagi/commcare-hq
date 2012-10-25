@@ -4,6 +4,7 @@ from couchlog.models import ExceptionRecord
 from pillowtop.listener import NetworkPillow
 from pillowtop.listener import ElasticPillow
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.domain.models import Domain
 import settings
 
 
@@ -65,3 +66,24 @@ class StrippedXformPillow(ElasticPillow):
     def change_transport(self, doc_dict):
         #not ready yet!
         return None
+
+class ExchangePillow(ElasticPillow):
+    couch_db = Domain.get_db()
+    couch_filter = "domain/all_domains"
+    es_host = settings.ELASTICSEARCH_HOST
+    es_port = settings.ELASTICSEARCH_PORT
+    es_index = "cc_exchange"
+    es_type = "domain"
+    es_meta = {
+        "settings" : {
+            "analysis" : {
+                "analyzer" : {
+                    "lowercase_analyzer" : {
+                        "type" : "custom",
+                        "tokenizer" : "keyword",
+                        "filter" : [ "lowercase"]}}}},
+        "mappings" : {
+            "domain" : {
+                "properties" : {
+                    "license" : { "type": "string", "index" : "not_analyzed" },
+                    "deployment.region": { "type": "string", "analyzer": "lowercase_analyzer" }}}}}
