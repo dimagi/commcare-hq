@@ -8,6 +8,7 @@ import json
 from django.template.loader import render_to_string
 import pickle
 import pytz
+from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.users.models import CouchUser
@@ -426,12 +427,20 @@ class GenericReportView(object):
         """
             Intention: Don't override.
         """
+
+        report_configs = ReportConfig.by_domain_and_owner(self.domain,
+            self.request.couch_user._id, report_slug=self.slug).all()
+        current_config_id = self.request.GET.get('config_id', '')
+        default_config = ReportConfig.default()
+
         self.context.update(
             report=dict(
                 title=self.name,
                 description=self.description,
                 section_name=self.section_name,
                 slug=self.slug,
+                sub_slug=None,
+                type=self.dispatcher.prefix,
                 url_root=self.url_root,
                 is_async=self.asynchronous,
                 is_exportable=self.exportable,
@@ -439,8 +448,11 @@ class GenericReportView(object):
                 filter_set=self.filter_set,
                 needs_filters=self.needs_filters,
                 show=self.request.couch_user.can_view_reports() or self.request.couch_user.get_viewable_reports(),
-                is_admin=self.is_admin_report # todo is this necessary???
+                is_admin=self.is_admin_report,   # todo is this necessary???
             ),
+            current_config_id=current_config_id,
+            default_config=default_config,
+            report_configs=report_configs,
             show_time_notice=self.show_time_notice,
             domain=self.domain,
             layout_flush_content=self.flush_layout

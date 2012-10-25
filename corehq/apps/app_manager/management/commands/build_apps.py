@@ -2,7 +2,7 @@ import json
 from django.core.management.base import BaseCommand, CommandError
 from lxml import etree
 import os
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, RemoteApp
 
 _parser = etree.XMLParser(remove_blank_text=True)
 def normalize_xml(xml):
@@ -33,7 +33,12 @@ class Command(BaseCommand):
             print 'Fetching %s...' % slug
             source_path = os.path.join(path, 'src', '%s.json' % slug)
             with open(source_path) as f:
-                app = Application.wrap(json.load(f))
+                j = json.load(f)
+                if j['doc_type'] == 'Application':
+                    app = Application.wrap(j)
+                elif j['doc_type'] == 'RemoteApp':
+                    app = RemoteApp.wrap(j)
+
             app.version = 1
             build_path = os.path.join(path, build_slug, slug)
             print ' Creating files...'

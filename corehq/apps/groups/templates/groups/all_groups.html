@@ -2,41 +2,6 @@
 {% load i18n %}
 
 {% block head %}{{ block.super }}
-{#    <style>#}
-{#        .next-to-sidebar {#}
-{#            padding: 0;#}
-{#        }#}
-{#        .group-name-input {#}
-{#            width: 100px !important;#}
-{#        }#}
-{#        #group-list {#}
-{#            margin: 0;#}
-{#        }#}
-{#        #group-list > div {#}
-{#            border: 1px solid white;#}
-{#            padding: 5px 10px;#}
-{#        }#}
-{#        #group-list > div.selected {#}
-{#            border: 1px solid #BBB;#}
-{#            border-right: 1px solid white;#}
-{#            background: white;#}
-{#            position: relative;#}
-{#            left: 2px;#}
-{#            padding-left: 8px;#}
-{#            padding-right: 12px;#}
-{#        }#}
-{#        #group-list > div.selected a {#}
-{#            color: #000000;#}
-{#        }#}
-{#        #group-layout {#}
-{#            width: 100%;#}
-{#        }#}
-{#        #group-layout > tbody > tr > td {#}
-{#        }#}
-{#        #group-layout > tbody > tr > td:first-child {#}
-{#            padding: 5px 0 5px 5px;#}
-{#        }#}
-{#    </style>#}
 
 {% endblock %}
 
@@ -60,7 +25,7 @@
             {% with group as this_group %}
                 {% for group in all_groups %}
                     <li {% if this_group.get_id == group.get_id %}class="active"{% endif %}>
-                        <a href="{% url group_members domain group.get_id %}">{{ group.name }}
+                        <a href="{% url group_members domain group.get_id %}">{{ group.display_name }}
                             {% if group.reporting %}
                                 <i class="icon-list-alt reporting-group-icon"></i>
                             {% else %}

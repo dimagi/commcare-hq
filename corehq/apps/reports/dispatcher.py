@@ -85,6 +85,8 @@ class ReportDispatcher(View):
                 report_class = to_function(model_path)
                 if report_class.slug == report_slug:
                     return report_class
+
+        return None
         
     def dispatch(self, request, *args, **kwargs):
         if not self.validate_report_map(request, *args, **kwargs):
@@ -92,7 +94,7 @@ class ReportDispatcher(View):
 
         current_slug = kwargs.get('report_slug')
         render_as = kwargs.get('render_as') or 'view'
-        reports = self.get_reports(request.domain)
+        reports = self.get_reports(getattr(request, 'domain', None))
         for key, report_model_paths in reports.items():
             for model_path in report_model_paths:
                 report_class = to_function(model_path)
@@ -128,7 +130,7 @@ class ReportDispatcher(View):
         report_nav = list()
         dispatcher = cls()
         args, kwargs = dispatcher.args_kwargs_from_context(context)
-        reports = dispatcher.get_reports(request.domain)
+        reports = dispatcher.get_reports(getattr(request, 'domain', None))
         current_slug = kwargs.get('report_slug')
         for key, models in reports.items():
             section = list()

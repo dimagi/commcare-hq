@@ -10,7 +10,9 @@ from corehq.apps.reports.models import HQUserType
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.datespan import datespan_in_request
+from corehq.apps.locations.models import location_tree
 import settings
+import json
 
 datespan_default = datespan_in_request(
             from_param="startdate",
@@ -371,6 +373,26 @@ class DatespanField(ReportField):
         self.context['timezone'] = self.timezone.zone
         self.context['datespan'] = self.datespan
 
+class LocationField(ReportField):
+    name = "Location"
+    slug = "location"
+    template = "reports/fields/location.html"
+
+    def update_context(self):
+        all_locs = location_tree(self.domain)
+        def loc_to_json(loc):
+            return {
+                'name': loc.name,
+                'type': loc.location_type,
+                'uuid': loc._id,
+                'children': [loc_to_json(child) for child in loc._children],
+            }
+        loc_json = [loc_to_json(root) for root in all_locs]
+
+        self.context['control_name'] = self.name
+        self.context['control_slug'] = self.slug
+        self.context['loc_id'] = self.request.GET.get('location_id')
+        self.context['locations'] = json.dumps(loc_json)
 
 class DeviceLogTagField(ReportField):
     slug = "logtag"
