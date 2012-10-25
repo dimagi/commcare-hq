@@ -55,6 +55,7 @@ class Command(BaseCommand):
         pool = Pool(num_pool)
 
         apps = get_apps()
+        
         completed = set()
         app_ids = set(range(len(apps)))
         for app_id in sorted(app_ids.difference(completed)):
@@ -70,6 +71,13 @@ class Command(BaseCommand):
                 print "number of server active tasks exceeds pool size, waiting %d seconds..." % POOL_WAIT
                 time.sleep(POOL_WAIT)
 
+        # sshhhhhh: if we're using HQ also preindex the couch apps
+        # this could probably be multithreaded too, but leaving for now
+        try:
+            from corehq.couchapps import sync_design_docs
+            sync_design_docs(get_db(), temp="tmp")
+        except ImportError:
+            pass
         print "All apps loaded into jobs, waiting..."
         pool.join()
         print "All apps reported complete."
