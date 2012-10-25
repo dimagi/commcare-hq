@@ -180,7 +180,7 @@ $(function() {
                                             <div class="control-group">
                                                 <label class="control-label" for="name">Name</label>
                                                 <div class="controls">
-                                                    <input type="text" id="name" data-bind="value: name" placeholder="Name"/>
+                                                    <input type="text" id="name" data-bind="value: name"/>
                                                     <span class="help-inline">
                                                         <small class="label">Required</small>
                                                     </span>
@@ -189,7 +189,7 @@ $(function() {
                                             <div class="control-group">
                                                 <label class="control-label" for="description">Description</label>
                                                 <div class="controls">
-                                                    <textarea rows="3" name="description" data-bind="value: description" placeholder="Description"></textarea>
+                                                    <textarea rows="3" name="description" data-bind="value: description"></textarea>
                                                 </div>
                                             </div>
 
@@ -214,13 +214,19 @@ $(function() {
                                             <div class="control-group" data-bind="visible: date_range() == 'since' || date_range() == 'range'">
                                                 <label class="control-label" for="start_date">Begin Date</label>
                                                 <div class="controls">
-                                                    <input type="text" class="date-picker" name="start_date" placeholder="YYYY-MM-DD" data-bind="value: start_date"/>
+                                                    <input type="text" class="date-picker" name="start_date" data-bind="value: start_date"/>
+                                                    <span class="help-inline">
+                                                        <small class="label">YYYY-MM-DD</small>
+                                                    </span>
                                                 </div>
                                             </div>
                                             <div class="control-group" data-bind="visible: date_range() == 'range'">
                                                 <label class="control-label" for="end_date">End Date</label>
                                                 <div class="controls">
-                                                    <input type="text" class="date-picker" name="end_date" placeholder="YYYY-MM-DD" data-bind="value: end_date"/>
+                                                    <input type="text" class="date-picker" name="end_date" data-bind="value: end_date"/>
+                                                    <span class="help-inline">
+                                                        <small class="label">YYYY-MM-DD</small>
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
