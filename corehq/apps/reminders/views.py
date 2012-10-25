@@ -14,7 +14,7 @@ from .models import UI_SIMPLE_FIXED, UI_COMPLEX
 from .util import get_form_list, get_sample_list
 from corehq.apps.app_manager.models import get_app, ApplicationBase
 from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.util import register_sms_contact, create_task
+from corehq.apps.sms.util import register_sms_contact
 from corehq.apps.domain.models import DomainCounter
 from casexml.apps.case.models import CommCareCase
 from dateutil.parser import parse
@@ -291,16 +291,6 @@ def add_survey(request, domain, survey_id=None):
                                 handler.save()
                                 wave.reminder_definitions[sample["sample_id"]] = handler._id
                 
-                for wave in wave_list:
-                    form_unique_id = wave["form_id"]
-                    for sample in samples:
-                        if sample["method"] == "CATI":
-                            s = SurveySample.get(sample["sample_id"])
-                            task_activation_datetime = CaseReminderHandler.timestamp_to_utc(s, datetime.combine(wave.date, wave.time))
-                            for case_id in s.contacts:
-                                case = CommCareCase.get(case_id)
-                                create_task(case, request.couch_user.get_id, sample["cati_operator"], form_unique_id, task_activation_datetime)
-                
                 survey = Survey (
                     domain = domain,
                     name = name,
@@ -403,6 +393,9 @@ def add_survey(request, domain, survey_id=None):
             # Sort the questionnaire waves by date and time (for display purposes only)
             survey.waves = sorted(survey.waves, key = lambda wave : datetime.combine(wave.date, wave.time))
             
+            # Create / Close delegation tasks as necessary for samples with method "CATI"
+            survey.update_delegation_tasks(request.couch_user.get_id)
+            
             survey.save()
             return HttpResponseRedirect(reverse("survey_list", args=[domain]))
     else:
@@ -495,6 +488,13 @@ def add_sample(request, domain, sample_id=None):
             sample.contacts = [v.owner_id for v in existing_number_entries] + [v.owner_id for v in newly_registered_entries]
             
             sample.save()
+            
+            # Update delegation tasks for surveys using this sample
+            surveys = Survey.view("reminders/sample_to_survey", key=[domain, sample._id, "CATI"], include_docs=True).all()
+            for survey in surveys:
+                survey.update_delegation_tasks(request.couch_user.get_id)
+                survey.save()
+            
             return HttpResponseRedirect(reverse("sample_list", args=[domain]))
     else:
         initial = {}
