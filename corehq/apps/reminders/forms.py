@@ -1,12 +1,12 @@
 import json
 import re
-from datetime import timedelta
+from datetime import timedelta, datetime
 from django.core.exceptions import ValidationError
 from django.forms.fields import *
 from django.forms.forms import Form
 from django.forms import Field, Widget, Select, TextInput
 from django.utils.datastructures import DotExpandedDict
-from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_USER, RECIPIENT_CASE, MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET, SurveySample
+from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_USER, RECIPIENT_CASE, MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET, SurveySample, CaseReminderHandler
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
@@ -402,19 +402,30 @@ class SurveyForm(Form):
     def clean_waves(self):
         value = self.cleaned_data["waves"]
         datetimes = {}
+        samples = [SurveySample.get(sample["sample_id"]) for sample in self.cleaned_data["samples"]]
+        utcnow = datetime.utcnow()
         for wave_json in value:
             validate_date(wave_json["date"])
             validate_time(wave_json["time"])
             
-            # Convert the datetime to a string of "yyyy-mm-dd hh24:mm:ss", and compare it against the other datetimes
+            # Convert the datetime to a string and compare it against the other datetimes
             # to make sure no two waves have the same start timestamp
-            dt = str(parse(wave_json["date"]).date()) + " " + str(parse(wave_json["time"]).time())
-            if datetimes.get(dt, False):
+            date = parse(wave_json["date"]).date()
+            time = parse(wave_json["time"]).time()
+            d8time = datetime.combine(date, time)
+            datetime_string = string_to_datetime(d8time)
+            if datetimes.get(datetime_string, False):
                 raise ValidationError("Two waves cannot be scheduled at the same date and time.")
-            datetimes[dt] = True
+            datetimes[datetime_string] = True
             
             if wave_json["form_id"] == "--choose--":
                 raise ValidationError("Please choose a questionnaire.")
+            
+            # If the wave was editable, make sure it is not being scheduled in the past for any sample
+            if "ignore" not in wave_json:
+                for sample in samples:
+                    if CaseReminderHandler.timestamp_to_utc(sample, d8time) < utcnow:
+                        raise ValidationError("Waves cannot be scheduled in the past.")
         return value
     
     def clean_followups(self):

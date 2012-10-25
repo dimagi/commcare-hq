@@ -1,6 +1,6 @@
 import pytz
 from pytz import timezone
-from datetime import timedelta, datetime, date
+from datetime import timedelta, datetime, date, time
 import re
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
@@ -19,6 +19,7 @@ from corehq.apps.reminders.util import get_form_name
 from touchforms.formplayer.api import current_question
 from corehq.apps.sms.mixin import VerifiedNumber
 from couchdbkit.exceptions import ResourceConflict
+from corehq.apps.sms.util import create_task, close_task
 
 LOCK_EXPIRATION = timedelta(hours = 1)
 
@@ -52,6 +53,13 @@ SURVEY_METHOD_LIST = ["SMS","CATI"]
 
 def is_true_value(val):
     return val == 'ok' or val == 'OK'
+
+def looks_like_timestamp(value):
+    try:
+        regex = re.compile("^\d\d\d\d-\d\d-\d\d.*$")
+        return (regex.match(value) is not None)
+    except Exception:
+        return False
 
 class MessageVariable(object):
     def __init__(self, variable):
@@ -585,15 +593,26 @@ class CaseReminderHandler(Document):
         
         case            The CommCareCase to check.
         case_property   The property on CommCareCase to check.
-        now             The timestamp to use when comparing, if case[case_property] is a timestamp.
+        now             The timestamp to use when comparing, if case.case_property is a timestamp.
         
         return      True if the condition is reached, False if not.
         """
         condition = case.get_case_property(case_property)
-        try: condition = string_to_datetime(condition)
-        except Exception:
+        
+        if isinstance(condition, datetime):
             pass
-
+        elif isinstance(condition, date):
+            condition = datetime.combine(condition, time(0,0))
+        elif looks_like_timestamp(condition):
+            try:
+                condition = parse(condition)
+            except Exception:
+                pass
+        
+        if isinstance(condition, datetime) and getattr(condition, "tzinfo") is not None:
+            condition = condition.astimezone(pytz.utc)
+            condition = condition.replace(tzinfo=None)
+        
         if (isinstance(condition, datetime) and now > condition) or is_true_value(condition):
             return True
         else:
@@ -924,6 +943,7 @@ class Survey(Document):
     samples = ListProperty(DictProperty)
     send_automatically = BooleanProperty()
     send_followup = BooleanProperty()
+    delegation_tasks = DictProperty() # Each task represented by a key-value pair of "<start_date>|<parent_case_id>|<form_unique_id>|<owner_id>" : "<subcase_id>"
     
     @classmethod
     def get_all(cls, domain):
@@ -932,6 +952,37 @@ class Survey(Document):
             endkey=[domain, {}],
             include_docs=True
         ).all()
-
+    
+    def update_delegation_tasks(self, submitting_user_id):
+        tasks_to_keep = {}
+        utcnow = datetime.utcnow()
+        
+        # Keep unchanged tasks and create new tasks as needed
+        for wave in self.waves:
+            form_unique_id = wave.form_id
+            for sample in self.samples:
+                if sample["method"] == "CATI":
+                    owner_id = sample["cati_operator"]
+                    s = SurveySample.get(sample["sample_id"])
+                    task_activation_datetime = CaseReminderHandler.timestamp_to_utc(s, datetime.combine(wave.date, wave.time))
+                    if task_activation_datetime >= utcnow:
+                        for case_id in s.contacts:
+                            key = "|".join([json_format_datetime(task_activation_datetime), case_id, form_unique_id, owner_id])
+                            if key in self.delegation_tasks:
+                                tasks_to_keep[key] = self.delegation_tasks[key]
+                            else:
+                                case = CommCareCase.get(case_id)
+                                tasks_to_keep[key] = create_task(case, submitting_user_id, owner_id, form_unique_id, task_activation_datetime)
+        
+        # Close tasks that are no longer valid
+        for key, value in self.delegation_tasks.items():
+            if key not in tasks_to_keep:
+                data = key.split("|")
+                if string_to_datetime(data[0]).replace(tzinfo=None) < utcnow:
+                    tasks_to_keep[key] = value
+                else:
+                    close_task(self.domain, value, submitting_user_id)
+        
+        self.delegation_tasks = tasks_to_keep
 
 from .signals import *
