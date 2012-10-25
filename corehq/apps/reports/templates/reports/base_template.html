@@ -43,7 +43,7 @@ standardHQReport.init();
 {% endif %}
 
 $(function() {
-    $("#reportFilters").reportConfigEditor({
+    $("#reportFavorites").reportConfigEditor({
         items: {{ report_configs|JSON }},
         initialItemID: '{{ current_config_id }}',
         defaultItem: {{ default_config|JSON }},
@@ -136,7 +136,7 @@ $(function() {
                                 {% include "reports/async/filters.html" %}
                             {% endif %}
                         </div>
-                        <div class="form-actions">
+                        <div id="reportFavorites" class="form-actions">
                             <div class="btn-toolbar">
                                 <div class="btn-group">
                                     <button type="submit" class="btn btn-large disabled"
@@ -169,75 +169,73 @@ $(function() {
                                     Save...
                                 </button>
                             </div>
+                            <div id="report-config-modal" data-bind="modal: configBeingEdited">
+                                <div data-bind="with: configBeingEdited">
+                                    <div class="modal-header">
+                                        <a class="close" data-bind="click: $root.unsetConfigBeingEdited">×</a>
+                                        <h3 data-bind="text: modalTitle"></h3>
+                                    </div>
+                                    <form class="form-horizontal">
+                                        <div class="modal-body">
+                                            <div class="control-group">
+                                                <label class="control-label" for="name">Name</label>
+                                                <div class="controls">
+                                                    <input type="text" id="name" data-bind="value: name" placeholder="Name"/>
+                                                </div>
+                                            </div>
+                                            <div class="control-group">
+                                                <label class="control-label" for="description">Description</label>
+                                                <div class="controls">
+                                                    <textarea rows="3" name="description" data-bind="value: description" placeholder="Description"></textarea>
+                                                </div>
+                                            </div>
+
+                                            <div class="control-group">
+                                                <label class="control-label" for="date_range">Default Date Range</label>
+                                                <div class="controls">
+                                                    <select name="date_range" data-bind="value: date_range">
+                                                        <option value="last7">Last 7 days</option>
+                                                        <option value="last30">Last 30 days</option>
+                                                        <option value="lastn">Days ago</option>
+                                                        <option value="since">Since a date</option>
+                                                        <option value="range">From a date to a date</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="control-group" data-bind="visible: date_range() == 'lastn'">
+                                                <label class="control-label" for="days">Number of Days</label>
+                                                <div class="controls">
+                                                    <input type="number" name="days" min="1" step="1" data-bind="value: days"/>
+                                                </div>
+                                            </div>
+                                            <div class="control-group" data-bind="visible: date_range() == 'since' || date_range() == 'range'">
+                                                <label class="control-label" for="start_date">Begin Date</label>
+                                                <div class="controls">
+                                                    <input type="text" class="date-picker" name="start_date" placeholder="YYYY-MM-DD" data-bind="value: start_date"/>
+                                                </div>
+                                            </div>
+                                            <div class="control-group" data-bind="visible: date_range() == 'range'">
+                                                <label class="control-label" for="end_date">End Date</label>
+                                                <div class="controls">
+                                                    <input type="text" class="date-picker" name="end_date" placeholder="YYYY-MM-DD" data-bind="value: end_date"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <div class="btn-toolbar">
+                                                <div class="btn-group">
+                                                    <a href="#" class="btn" data-bind="click: $root.unsetConfigBeingEdited">Cancel</a>
+                                                </div>
+                                                <div class="btn-group">
+                                                    <span data-bind="saveButton2: $root.modalSaveButton.state, saveOptions: $root.modalSaveButton.saveOptions"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </form>
-
-                    
-                    <div id="report-config-modal" data-bind="modal: configBeingEdited">
-                        <div data-bind="with: configBeingEdited">
-                            <div class="modal-header">
-                                <a class="close" data-bind="click: $root.unsetConfigBeingEdited">×</a>
-                                <h3 data-bind="text: modalTitle"></h3>
-                            </div>
-                            <form class="form-horizontal">
-                                <div class="modal-body">
-                                    <div class="control-group">
-                                        <label class="control-label" for="name">Name</label>
-                                        <div class="controls">
-                                            <input type="text" id="name" data-bind="value: name" placeholder="Name"/>
-                                        </div>
-                                    </div>
-                                    <div class="control-group">
-                                        <label class="control-label" for="description">Description</label>
-                                        <div class="controls">
-                                            <textarea rows="3" name="description" data-bind="value: description" placeholder="Description"></textarea>
-                                        </div>
-                                    </div>
-
-                                    <div class="control-group">
-                                        <label class="control-label" for="date_range">Default Date Range</label>
-                                        <div class="controls">
-                                            <select name="date_range" data-bind="value: date_range">
-                                                <option value="last7">Last 7 days</option>
-                                                <option value="last30">Last 30 days</option>
-                                                <option value="lastn">Days ago</option>
-                                                <option value="since">Since a date</option>
-                                                <option value="range">From a date to a date</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="control-group" data-bind="visible: date_range() == 'lastn'">
-                                        <label class="control-label" for="days">Number of Days</label>
-                                        <div class="controls">
-                                            <input type="number" name="days" min="1" step="1" data-bind="value: days"/>
-                                        </div>
-                                    </div>
-                                    <div class="control-group" data-bind="visible: date_range() == 'since' || date_range() == 'range'">
-                                        <label class="control-label" for="start_date">Begin Date</label>
-                                        <div class="controls">
-                                            <input type="text" class="date-picker" name="start_date" placeholder="YYYY-MM-DD" data-bind="value: start_date"/>
-                                        </div>
-                                    </div>
-                                    <div class="control-group" data-bind="visible: date_range() == 'range'">
-                                        <label class="control-label" for="end_date">End Date</label>
-                                        <div class="controls">
-                                            <input type="text" class="date-picker" name="end_date" placeholder="YYYY-MM-DD" data-bind="value: end_date"/>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <div class="btn-toolbar">
-                                        <div class="btn-group">
-                                            <a href="#" class="btn" data-bind="click: $root.unsetConfigBeingEdited">Cancel</a>
-                                        </div>
-                                        <div class="btn-group">
-                                            <span data-bind="saveButton2: $root.modalSaveButton.state, saveOptions: $root.modalSaveButton.saveOptions"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
                 </div>
             </div>
         {% endif %}
