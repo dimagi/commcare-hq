@@ -136,7 +136,7 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
     under that field (e.g. HIV and MCH are under Category). Each facet's dict contains the query string, display name,
     count and active-status for each facet.
     """
-    params = {mapping.get(p, p): params[p] for p in params}
+    params = dict([(mapping.get(p, p), params[p]) for p in params])
     def generate_query_string(attr, val):
         updated_params = params.copy()
         updated_params.update({attr: val})
@@ -159,7 +159,7 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
 @require_previewer # remove for production
 def appstore(request, template="appstore/appstore_base.html"):
     params, _ = parse_args_for_es(request)
-    params = {SNAPSHOT_MAPPING.get(p, p): params[p] for p in params}
+    params = dict([(SNAPSHOT_MAPPING.get(p, p), params[p]) for p in params])
     page = int(params.pop('page', 1))
     results = es_snapshot_query(params, SNAPSHOT_FACETS)
     d_results = [Domain.wrap(res['_source']) for res in results['hits']['hits']]
@@ -193,7 +193,7 @@ def appstore(request, template="appstore/appstore_base.html"):
 @require_previewer # remove for production
 def appstore_api(request):
     params, facets = parse_args_for_es(request)
-    params = {SNAPSHOT_MAPPING.get(p, p): params[p] for p in params}
+    params = dict([(SNAPSHOT_MAPPING.get(p, p), params[p]) for p in params])
     results = es_snapshot_query(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
@@ -326,7 +326,7 @@ def deployment_info(request, domain, template="appstore/deployment_info.html"):
 @require_previewer # remove for production
 def deployments(request, template="appstore/deployments.html"):
     params, _ = parse_args_for_es(request)
-    params = {DEPLOYMENT_MAPPING.get(p, p): params[p] for p in params}
+    params = dict([(DEPLOYMENT_MAPPING.get(p, p), params[p]) for p in params])
     page = int(params.pop('page', 1))
     results = es_deployments_query(params, DEPLOYMENT_FACETS)
     d_results = [Domain.wrap(res['_source']) for res in results['hits']['hits']]
@@ -349,7 +349,7 @@ def deployments(request, template="appstore/deployments.html"):
 @require_previewer # remove for production
 def deployments_api(request):
     params, facets = parse_args_for_es(request)
-    params = {DEPLOYMENT_MAPPING.get(p, p): params[p] for p in params}
+    params = dict([(DEPLOYMENT_MAPPING.get(p, p), params[p]) for p in params])
     results = es_deployments_query(params, facets)
     return HttpResponse(json.dumps(results), mimetype="application/json")
 
