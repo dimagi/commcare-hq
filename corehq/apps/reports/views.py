@@ -93,7 +93,7 @@ def export_data(req, domain):
     try:
         export_tag = json.loads(req.GET.get("export_tag", "null") or "null")
     except ValueError:
-        raise HttpResponseBadRequest()
+        return HttpResponseBadRequest()
 
     group, users = util.get_group_params(domain, **json_request(req.GET))
     include_errors = string_to_boolean(req.GET.get("include_errors", False))
