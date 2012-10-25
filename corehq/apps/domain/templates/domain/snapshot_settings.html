@@ -2,6 +2,20 @@
 {% load hq_bootstrap_tags %}
 {% load i18n %}
 
+{% block js-inline  %}{{ block.super }}
+    <script type="text/javascript">
+        $(function() {
+            $('[data-target="#contentDistributionAgreement"]').click(function() {
+                var new_action = $(this).attr('data-action');
+                $('#cda-agree').attr('action', new_action);
+            });
+            $("#contentDistributionAgreement").on("show", function() {
+                $(this).find(".modal-body").load("{% url cda %}");
+            });
+        });
+    </script>
+{% endblock %}
+
 {% block subsection-title %}
 <li class="active" xmlns="http://www.w3.org/1999/html">
     <a href="#">CommCare Exchange</a>
@@ -43,9 +57,7 @@
             {% else %}
             <td></td>
             <td>
-                <form action="{% url domain_set_published domain snapshot.name %}" method="POST">
-                    <button class="btn btn-primary" type="submit">Publish</button> (only one snapshot can be published at a time)
-                </form>
+                <a class="btn btn-primary" data-action="{% url domain_set_published domain snapshot.name %}" data-toggle="modal" data-target="#contentDistributionAgreement" href="#contentDistributionAgreement">Publish</a> (only one snapshot can be published at a time)
             </td>
             {% endif %}
         </tr>
@@ -120,3 +132,24 @@
     <div class="form-actions"><button type="submit" class="btn btn-primary">Create snapshot from these builds</button></div>
 </form>
 {% endblock %}>
+
+{% block modals %}{{ block.super }}
+    <div class="modal hide fade" id="contentDistributionAgreement">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h4>CommCare HQ Content Distribution Agreement</h4>
+        </div>
+        <div class="modal-body">
+            Loading Terms of Service...
+        </div>
+        <div class="modal-footer">
+            <div style="text-align: left; line-height: 2em;">
+                To publish this project, you must agree to our Content Distribution Agreement
+            </div>
+            <form id="cda-agree" action="" method="POST">
+                <button type="submit" href="#" class="btn btn-primary">Agree</button>
+                <a href="#" data-dismiss="modal" class="btn">Disagree</a>
+            </form>
+        </div>
+    </div>
+{% endblock %}
