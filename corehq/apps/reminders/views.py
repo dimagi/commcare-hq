@@ -402,18 +402,30 @@ def add_survey(request, domain, survey_id=None):
         initial = {}
         if survey is not None:
             waves = []
+            samples = [SurveySample.get(sample["sample_id"]) for sample in survey.samples]
+            utcnow = datetime.utcnow()
             for wave in survey.waves:
-                waves.append({
+                wave_json = {
                     "date" : str(wave.date),
                     "form_id" : wave.form_id,
-                    "time" : str(wave.time)
-                })
+                    "time" : str(wave.time),
+                    "ignore" : False,
+                }
+                
+                for sample in samples:
+                    if CaseReminderHandler.timestamp_to_utc(sample, datetime.combine(wave.date, wave.time)) < utcnow:
+                        wave_json["ignore"] = True
+                        break
+                
+                waves.append(wave_json)
+            
             initial["name"] = survey.name
             initial["waves"] = waves
             initial["followups"] = survey.followups
             initial["samples"] = survey.samples
             initial["send_automatically"] = survey.send_automatically
             initial["send_followup"] = survey.send_followup
+            
         form = SurveyForm(initial=initial)
     
     form_list = get_form_list(domain)
