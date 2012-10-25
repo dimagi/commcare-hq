@@ -6,7 +6,7 @@
     {% if display_ua %}
         {% if request.user.is_superuser %}
             <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}">All approved</a></li>
-            <li{% if include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}?is_approved=true">All unapproved</a></li>
+            <li{% if include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}?is_approved=false">All unapproved</a></li>
         {% else %}
             <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}">All</a></li>
         {% endif %}

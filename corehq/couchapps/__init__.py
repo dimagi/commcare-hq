@@ -4,11 +4,12 @@ import os
 from dimagi.utils.couch.database import get_db
 from couchdbkit import push
 
-def sync_design_docs(db):
+def sync_design_docs(db, temp=None):
     dir = os.path.abspath(os.path.dirname(__file__))
     for d in [d for d in os.listdir(dir) if os.path.isdir(os.path.join(dir, d))]:
+        design_name = '%s-%s' % (d, temp) if temp else d
         push(os.path.join(dir, d), db, force=True,
-             docid="_design/%s" % d)
+             docid="_design/%s" % design_name)
         print "synced couchapp %s in couchdb" % d
 
     
