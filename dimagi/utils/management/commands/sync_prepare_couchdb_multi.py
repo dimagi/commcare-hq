@@ -75,9 +75,11 @@ class Command(BaseCommand):
         # this could probably be multithreaded too, but leaving for now
         try:
             from corehq.couchapps import sync_design_docs
-            sync_design_docs(get_db(), temp="tmp")
         except ImportError:
             pass
+        else:
+            sync_design_docs(get_db(), temp="tmp")
+
         print "All apps loaded into jobs, waiting..."
         pool.join()
         print "All apps reported complete."
