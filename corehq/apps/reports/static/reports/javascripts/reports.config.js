@@ -158,8 +158,6 @@ function ReportConfigsViewModel(options) {
                 name = el.prop('name'),
                 val = el.val();
 
-                console.log(el);
-
             if (el.prop('type') === 'checkbox') {
                 if (el.prop('checked') === true) {
                     if (!filters.hasOwnProperty(name)) {
