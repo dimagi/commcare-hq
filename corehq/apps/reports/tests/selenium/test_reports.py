@@ -43,9 +43,7 @@ class ReportsTestCase(WebUserTestCase):
             if elem.text == 'Show Filter Options':
                 elem.click()
 
-            self.find_element_by_xpath(
-                "//div[@class='form-actions']/button"
-            ).click()
+            self.find_element_by_xpath("//button[@id='apply-filters']").click()
 
             self.wait_until_not(loading_report, time=self.max_load_time)
 
