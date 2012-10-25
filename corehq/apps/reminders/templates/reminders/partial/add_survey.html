@@ -219,9 +219,7 @@
     <br />
     {{ form.waves.errors }}
     <div class="form-block">
-        <input type="checkbox" name="send_automatically" {% if form.send_automatically.value %}value="on" checked="checked"{% endif %}/> Send Automatically
-        <br />
-        <br />
+        <input type="hidden" name="send_automatically" value="on" />
         <table id="wave_table" class="table table-bordered">
             <thead>
                 <th>Date</th>
