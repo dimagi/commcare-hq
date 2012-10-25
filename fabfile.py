@@ -71,6 +71,7 @@ def _setup_path():
     env.root = posixpath.join(env.home, 'www', env.environment)
     env.log_dir = posixpath.join(env.home, 'www', env.environment, 'log')
     env.code_root = posixpath.join(env.root, 'code_root')
+    env.code_root_preindex = posixpath.join(env.root, 'code_root_preindex')
     env.project_root = posixpath.join(env.code_root, env.project)
     env.project_media = posixpath.join(env.code_root, 'media')
     env.virtualenv_root = posixpath.join(env.root, 'python_env')
@@ -319,7 +320,7 @@ def preindex_views():
     with cd(env.code_root):
         update_code()
         update_env()
-        sudo('echo "%(virtualenv_root)s/bin/python %(code_root)s/manage.py \
+        sudo('echo "%(virtualenv_root)s/bin/python %(code_root_preindex)s/manage.py \
              sync_prepare_couchdb_multi 8 %(user)s" | at -t `date -d "5 seconds" \
              +%%m%%d%%H%%M.%%S`' % env, user=env.sudo_user)
 
