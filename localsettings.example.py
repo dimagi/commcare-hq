@@ -184,4 +184,16 @@ ADM_ENABLED_PROJECTS = []
 SOIL_DEFAULT_CACHE = "redis"
 SOIL_BACKEND = "soil.CachedDownload"
 
+ELASTICSEARCH_HOST = 'localhost' #on both a local and a distributed environment this should be
+# localhost
+ELASTICSEARCH_PORT = 9200
+
+# our production logstash aggregation
+LOGSTASH_DEVICELOG_PORT = 10777
+LOGSTASH_COUCHLOG_PORT = 10888
+LOGSTASH_AUDITCARE_PORT = 10999
+LOGSTASH_HOST = 'localhost'
+
 LOCAL_PILLOWTOPS = []
+
+
