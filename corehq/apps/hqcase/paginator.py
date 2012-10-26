@@ -44,6 +44,7 @@ class CasePaginator():
             #these are not supported/implemented on the UI side, so ignoring (dmyung)
             pass
 
+
         @list
         @inline
         def construct_and_array():
@@ -89,7 +90,6 @@ class CasePaginator():
             'from': self.params.start,
             'size': self.params.count,
         }
-
         es_results = es.get('hqcases/case/_search', data=es_query)
         #transform the return value to something compatible with the report listing
         ret = {
