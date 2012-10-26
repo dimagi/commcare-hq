@@ -6,6 +6,7 @@ import logging
 from django.contrib import messages
 
 
+
 CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
 
 DEBUG = True
@@ -718,6 +719,10 @@ SELENIUM_APP_SETTING_DEFAULTS = {
     },
 }
 
+#on both a single instance or distributed setup this should assume to be localhost
+ELASTICSEARCH_HOST = 'localhost'
+ELASTICSEARCH_PORT = 9200
+
 PILLOWTOPS = [ 'corehq.pillows.CasePillow',
                #'corehq.pillows.ExchangePillow', #todo when merged
 
@@ -725,3 +730,6 @@ PILLOWTOPS = [ 'corehq.pillows.CasePillow',
                'corehq.pillows.CouchlogPillow',
                'corehq.pillows.DevicelogPillow',
                ] + LOCAL_PILLOWTOPS
+
+
+
