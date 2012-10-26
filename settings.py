@@ -49,11 +49,11 @@ FILEPATH = os.path.abspath(os.path.dirname(__file__))
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder"
-    )
+)
 
 STATICFILES_DIRS = (
     ('formdesigner', os.path.join(FILEPATH,'submodules', 'formdesigner')),
-    )
+)
 
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 
@@ -71,7 +71,7 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.app_directories.load_template_source',
     'django.template.loaders.eggs.Loader',
     #     'django.template.loaders.eggs.load_template_source',
-    )
+)
 
 MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
@@ -84,7 +84,7 @@ MIDDLEWARE_CLASSES = [
     'corehq.apps.users.middleware.UsersMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
-    ]
+]
 
 ROOT_URLCONF = "urls"
 
@@ -98,7 +98,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     'django.core.context_processors.static',
     "corehq.util.context_processors.base_template", # sticks the base template inside all responses
     "corehq.util.context_processors.google_analytics",
-    ]
+]
 
 TEMPLATE_DIRS = [
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -121,7 +121,7 @@ DEFAULT_APPS = (
     #'ghettoq',     # pip install ghettoq
     'djkombu',     # pip install django-kombu
     'couchdbkit.ext.django',
-    )
+)
 
 HQ_APPS = (
     'django_digest',
@@ -202,7 +202,7 @@ HQ_APPS = (
     'mvp',
     'pathfinder',
     'pathindia',
-    )
+)
 
 REFLEXIVE_URL_BASE = "localhost:8000"
 
@@ -217,7 +217,7 @@ TABS = [
     ("corehq.apps.sms.views.messaging", "Messages", lambda request: not request.project.is_snapshot),
     ("corehq.apps.settings.views.default", "Settings & Users", lambda request: request.couch_user.can_edit_commcare_users() or request.couch_user.can_edit_web_users()),
     ("corehq.apps.hqadmin.views.default", "Admin Reports", "is_superuser"),
-    ]
+]
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
@@ -278,7 +278,7 @@ OPENROSA_VERSION = "1.0"
 FIXTURE_GENERATORS = [
     "corehq.apps.users.fixturegenerators.user_groups",
     "corehq.apps.fixtures.fixturegenerators.item_lists",
-    ]
+]
 
 GET_URL_BASE  = 'dimagi.utils.web.get_url_base'
 
@@ -331,14 +331,13 @@ UNICEL_CONFIG = {"username": "Dimagi",
 # mach sms config
 MACH_CONFIG = {"username": "Dimagi",
                "password": "changeme",
-               "service_profile": "changeme"
-}
+               "service_profile": "changeme"}
 
 #auditcare parameters
 AUDIT_MODEL_SAVE = [
     'corehq.apps.app_manager.Application',
     'corehq.apps.app_manager.RemoteApp',
-    ]
+]
 AUDIT_VIEWS = [
     'corehq.apps.domain.views.registration_request',
     'corehq.apps.domain.views.registration_confirm',
@@ -353,7 +352,7 @@ AUDIT_VIEWS = [
     'corehq.apps.reports.views.export_data',
     'corehq.apps.reports.views.excel_report_data',
     'corehq.apps.reports.views.daily_submissions',
-    ]
+]
 
 # Don't use google analytics unless overridden in localsettings
 GOOGLE_ANALYTICS_ID = ''
@@ -446,7 +445,7 @@ COUCHDB_APPS = [
     'mvp',
     'pathfinder',
     'pathindia',
-    ]
+]
 
 
 COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS ]
@@ -465,7 +464,7 @@ LOGGING = {
         'simple': {
             'format': '%(levelname)s %(message)s'
         },
-        },
+    },
     'handlers': {
         'console':{
             'level':'INFO',
@@ -481,28 +480,28 @@ LOGGING = {
         'couchlog':{
             'level':'WARNING',
             'class':'couchlog.handlers.CouchHandler',
-            },
+        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
-            }
+        }
     },
     'loggers': {
         '': {
             'handlers':['console', 'file', 'couchlog'],
             'propagate': True,
             'level':'INFO',
-            },
+        },
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
-            },
+        },
         'notify': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
-            },
+        },
         'celery.task': {
             'handlers': ['console', 'file', 'couchlog'],
             'level': 'INFO',
@@ -523,7 +522,7 @@ DATA_INTERFACE_MAP = {
     'Case Management' : [
         'corehq.apps.data_interfaces.interfaces.CaseReassignmentInterface',
         'corehq.apps.importer.base.ImportCases',
-        ]
+    ]
 }
 APPSTORE_INTERFACE_MAP = {
     'App Store' : [
@@ -541,17 +540,17 @@ PROJECT_REPORT_MAP = {
         'corehq.apps.reports.standard.monitoring.FormCompletionVsSubmissionTrendsReport',
         'corehq.apps.reports.standard.monitoring.SubmissionTimesReport',
         'corehq.apps.reports.standard.monitoring.SubmitDistributionReport',
-        ],
+    ],
     "Inspect Data" : [
         'corehq.apps.reports.standard.inspect.SubmitHistory',
         'corehq.apps.reports.standard.inspect.CaseListReport',
         'corehq.apps.reports.standard.inspect.MapReport',
-        ],
+    ],
     "Raw Data" : [
         'corehq.apps.reports.standard.export.ExcelExportReport',
         'corehq.apps.reports.standard.export.CaseExportReport',
         'corehq.apps.reports.standard.export.DeidExportReport',
-        ],
+    ],
     "Manage Deployments" : [
         'corehq.apps.reports.standard.deployments.ApplicationStatusReport',
         'corehq.apps.receiverwrapper.reports.SubmissionErrorReport',
@@ -561,8 +560,8 @@ PROJECT_REPORT_MAP = {
     "Commtrack": [
         'corehq.apps.reports.commtrack.psi_prototype.VisitReport',
         'corehq.apps.reports.commtrack.psi_prototype.SalesAndConsumptionReport',
-        ],
-    }
+    ],
+}
 
 CUSTOM_REPORT_MAP = {
     ## legacy custom reports. do not follow practices followed here
@@ -586,8 +585,9 @@ CUSTOM_REPORT_MAP = {
             'dca.reports.ProjectOfficerReport',
             'dca.reports.PortfolioComparisonReport',
             'dca.reports.PerformanceReport',
-            'dca.reports.PerformanceRatiosReport'],
-        },
+            'dca.reports.PerformanceRatiosReport'
+        ],
+    },
     ## end legacy custom reports
     "hsph": {
         'Field Management Reports': [
@@ -607,7 +607,8 @@ CUSTOM_REPORT_MAP = {
         ],
         'Data Summary Reports': [
             'hsph.reports.data_summary.PrimaryOutcomeReport',
-            'hsph.reports.data_summary.SecondaryOutcomeReport']
+            'hsph.reports.data_summary.SecondaryOutcomeReport'
+        ]
     },
     "pathindia": {
         'Custom Reports': [
@@ -646,7 +647,7 @@ CUSTOM_REPORT_MAP = {
             "bihar.reports.indicators.reports.IndicatorClientSelectNav",
             "bihar.reports.indicators.reports.IndicatorClientList",
             "bihar.reports.indicators.reports.IndicatorCharts",
-            ]
+        ]
     }
     #    "test": [
     #        'corehq.apps.reports.deid.FormDeidExport',
@@ -673,8 +674,8 @@ BILLING_REPORT_MAP = {
 ADM_SECTION_MAP = {
     "Supervisor Report": [
         'corehq.apps.adm.reports.supervisor.SupervisorReportsADMSection',
-        ],
-    }
+    ],
+}
 
 ADM_ADMIN_INTERFACE_MAP = {
     "ADM Default Columns": [
@@ -684,7 +685,7 @@ ADM_ADMIN_INTERFACE_MAP = {
     ],
     "ADM Default Reports": [
         'corehq.apps.adm.admin.reports.ADMReportAdminInterface',
-        ]
+    ]
 }
 
 MESSAGE_TAGS = {
@@ -693,7 +694,7 @@ MESSAGE_TAGS = {
     messages.SUCCESS: 'alert-success',
     messages.WARNING: 'alert-error',
     messages.ERROR: 'alert-error',
-    }
+}
 
 COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
@@ -703,7 +704,7 @@ DEFAULT_CURRENCY = "USD"
 SMS_HANDLERS = [
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.api.form_session_handler',
-    ]
+]
 
 SELENIUM_APP_SETTING_DEFAULTS = {
     'cloudcare': {
@@ -715,8 +716,8 @@ SELENIUM_APP_SETTING_DEFAULTS = {
     'reports': {
         'MAX_PRELOAD_TIME': 20,
         'MAX_LOAD_TIME': 30,
-        },
-    }
+    },
+}
 
 #on both a single instance or distributed setup this should assume to be localhost
 ELASTICSEARCH_HOST = 'localhost'
