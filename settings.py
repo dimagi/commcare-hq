@@ -706,6 +706,8 @@ SELENIUM_APP_SETTING_DEFAULTS = {
     },
 }
 PILLOWTOPS = [ 'corehq.pillows.CasePillow',
+               #'corehq.pillows.ExchangePillow', #todo when merged
+
                'corehq.pillows.AuditcarePillow',
                'corehq.pillows.CouchlogPillow',
                'corehq.pillows.DevicelogPillow',
