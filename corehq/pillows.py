@@ -15,6 +15,47 @@ class CasePillow(ElasticPillow):
     es_port = settings.ELASTICSEARCH_PORT
     es_index = "hqcases"
     es_type = "case"
+    #the meta here is defined for when the case index is created for the FIRST time
+    #subsequent data added to it will be added automatically, but the date_detection is necessary
+    # to be false to prevent indexes from not being created due to the way we store dates
+    #all will be strings EXCEPT the core case properties which we need to explicitly define below.
+    #that way date sort and ranges will work with canonical date formats for queries.
+    es_meta = { "case": {
+            "date_detection": False,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "domain": {
+                    "type": "string"
+                },
+                "modified_on": {
+                    "format": "dateOptionalTime",
+                    "type": "date"
+                },
+                "closed_on": {
+                    "format": "dateOptionalTime",
+                    "type": "date"
+                },
+                "opened_on": {
+                    "format": "dateOptionalTime",
+                    "type": "date"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "closed": {
+                    "type": "boolean"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "owner_id": {
+                    "type": "string"
+                }
+            }
+        }
+    }
 
     def change_transform(self, doc_dict):
         """
@@ -26,17 +67,20 @@ class CasePillow(ElasticPillow):
             del doc_dict['xform_ids']
         return doc_dict
 
+
 class AuditcarePillow(NetworkPillow):
     endpoint_host = settings.LOGSTASH_HOST
     endpoint_port = settings.LOGSTASH_AUDITCARE_PORT
     couch_db = AuditEvent.get_db()
     couch_filter = 'auditcare/auditdocs'
 
+
 class CouchlogPillow(NetworkPillow):
     endpoint_host = settings.LOGSTASH_HOST
     endpoint_port = settings.LOGSTASH_COUCHLOG_PORT
     couch_db = ExceptionRecord.get_db()
     couch_filter = 'couchlog/couchlogs'
+
 
 class DevicelogPillow(NetworkPillow):
     endpoint_host = settings.LOGSTASH_HOST
@@ -60,12 +104,13 @@ class StrippedXformPillow(ElasticPillow):
         for k in doc_dict['form']:
             if k not in ['meta', 'Meta', '@uiVersion', '@version']:
                 del doc_dict['form'][k]
-        #todo: add geoip block here
+            #todo: add geoip block here
         return doc_dict
 
     def change_transport(self, doc_dict):
         #not ready yet!
         return None
+
 
 class ExchangePillow(ElasticPillow):
     couch_db = Domain.get_db()
@@ -75,15 +120,15 @@ class ExchangePillow(ElasticPillow):
     es_index = "cc_exchange"
     es_type = "domain"
     es_meta = {
-        "settings" : {
-            "analysis" : {
-                "analyzer" : {
-                    "lowercase_analyzer" : {
-                        "type" : "custom",
-                        "tokenizer" : "keyword",
-                        "filter" : [ "lowercase"]}}}},
-        "mappings" : {
-            "domain" : {
-                "properties" : {
-                    "license" : { "type": "string", "index" : "not_analyzed" },
-                    "deployment.region": { "type": "string", "analyzer": "lowercase_analyzer" }}}}}
+        "settings": {
+            "analysis": {
+                "analyzer": {
+                    "lowercase_analyzer": {
+                        "type": "custom",
+                        "tokenizer": "keyword",
+                        "filter": ["lowercase"]}}}},
+        "mappings": {
+            "domain": {
+                "properties": {
+                    "license": {"type": "string", "index": "not_analyzed"},
+                    "deployment.region": {"type": "string", "analyzer": "lowercase_analyzer"}}}}}
