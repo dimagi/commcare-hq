@@ -71,9 +71,11 @@ def _setup_path():
     env.root = posixpath.join(env.home, 'www', env.environment)
     env.log_dir = posixpath.join(env.home, 'www', env.environment, 'log')
     env.code_root = posixpath.join(env.root, 'code_root')
+    env.code_root_preindex = posixpath.join(env.root, 'code_root_preindex')
     env.project_root = posixpath.join(env.code_root, env.project)
     env.project_media = posixpath.join(env.code_root, 'media')
     env.virtualenv_root = posixpath.join(env.root, 'python_env')
+    env.virtualenv_root_preindex = posixpath.join(env.root, 'python_env_preindex')
     env.services = posixpath.join(env.home, 'services')
 
 @task
@@ -128,6 +130,7 @@ def india():
 
     _setup_path()
     env.virtualenv_root = posixpath.join(root, '.virtualenvs/commcarehq')
+    env.virtualenv_root_preindex = posixpath.join(root, '.virtualenvs/commcarehq_preindex')
 
     env.roledefs = {
         'couch': [],
@@ -316,17 +319,24 @@ def clone_repo():
 @task
 @roles('pg', 'django_monolith')
 def preindex_views():
-    with cd(env.code_root):
-        update_code()
-        update_env()
-        sudo('echo "%(virtualenv_root)s/bin/python %(code_root)s/manage.py \
+    with cd(env.code_root_preindex):
+        #update the codebase of the preindex dir...
+        update_code(preindex=True)
+        update_env(preindex=True) #no update to env - the actual deploy will do - this may break if a new dependency is introduced in preindex
+
+        sudo('echo "%(virtualenv_root_preindex)s/bin/python %(code_root_preindex)s/manage.py \
              sync_prepare_couchdb_multi 8 %(user)s" | at -t `date -d "5 seconds" \
              +%%m%%d%%H%%M.%%S`' % env, user=env.sudo_user)
 
 @roles('django_app','django_celery', 'staticfiles', 'django_public', 'django_monolith')#,'formsplayer')
 @parallel
-def update_code():
-    with cd(env.code_root):
+def update_code(preindex=False):
+    if preindex:
+        root_to_use = env.code_root_preindex
+    else:
+        root_to_use = env.code_root
+
+    with cd(root_to_use):
         sudo('git checkout %(code_branch)s' % env, user=env.sudo_user)
         sudo('git pull', user=env.sudo_user)
         sudo('git submodule sync', user=env.sudo_user)
@@ -359,12 +369,18 @@ def deploy():
 @task
 @roles('django_app','django_celery','staticfiles', 'django_public', 'django_monolith')#,'formsplayer')
 @parallel
-def update_env():
+def update_env(preindex=False):
     """ update external dependencies on remote host assumes you've done a code update"""
     require('code_root', provided_by=('staging', 'production', 'india'))
+    if preindex:
+        root_to_use = env.code_root_preindex
+	env_to_use = env.virtualenv_root_preindex
+    else:
+        root_to_use = env.code_root
+	env_to_use = env.virtualenv_root
     requirements = posixpath.join(env.code_root, 'requirements')
-    with cd(env.code_root):
-        cmd = ['%(virtualenv_root)s/bin/pip install' % env]
+    with cd(root_to_use):
+        cmd = ['%s/bin/pip install' % env_to_use]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'prod-requirements.txt')]
         cmd += ['--requirement %s' % posixpath.join(requirements, 'requirements.txt')]
         sudo(' '.join(cmd), user=env.sudo_user)
