@@ -1,7 +1,7 @@
 from auditcare.models import AuditEvent
 from couchforms.models import XFormInstance
 from couchlog.models import ExceptionRecord
-from pillowtop.listener import NetworkPillow
+from pillowtop.listener import  LogstashMonitoringPillow
 from pillowtop.listener import ElasticPillow
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
@@ -62,27 +62,33 @@ class CasePillow(ElasticPillow):
         Lighten the load of the search index by removing the data heavy transactional cruft
         """
         if doc_dict.has_key('actions'):
+            #todo the actions dict is a huge amount of data whose inconsistencies cause some docs
+            # not to be indexed
             del doc_dict['actions']
         if doc_dict.has_key('xform_ids'):
+            #todo - xform_ids may need to be reintroduced depending on other API needs for cases
             del doc_dict['xform_ids']
         return doc_dict
 
 
-class AuditcarePillow(NetworkPillow):
+
+
+
+class AuditcarePillow(LogstashMonitoringPillow):
     endpoint_host = settings.LOGSTASH_HOST
     endpoint_port = settings.LOGSTASH_AUDITCARE_PORT
     couch_db = AuditEvent.get_db()
     couch_filter = 'auditcare/auditdocs'
 
 
-class CouchlogPillow(NetworkPillow):
+class CouchlogPillow(LogstashMonitoringPillow):
     endpoint_host = settings.LOGSTASH_HOST
     endpoint_port = settings.LOGSTASH_COUCHLOG_PORT
     couch_db = ExceptionRecord.get_db()
     couch_filter = 'couchlog/couchlogs'
 
 
-class DevicelogPillow(NetworkPillow):
+class DevicelogPillow(LogstashMonitoringPillow):
     endpoint_host = settings.LOGSTASH_HOST
     endpoint_port = settings.LOGSTASH_DEVICELOG_PORT
     couch_db = XFormInstance.get_db()
