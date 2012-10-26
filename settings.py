@@ -30,7 +30,7 @@ SITE_ID = 1
 USE_I18N = True
 
 # Django i18n searches for translation files (django.po) within this dir
-LOCALE_PATHS=['contrib/locale']
+LOCALE_PATHS = ['contrib/locale']
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
@@ -48,11 +48,11 @@ FILEPATH = os.path.abspath(os.path.dirname(__file__))
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder"
-)
+    )
 
 STATICFILES_DIRS = (
-    ('formdesigner', os.path.join(FILEPATH,'submodules', 'formdesigner')),
-)
+    ('formdesigner', os.path.join(FILEPATH, 'submodules', 'formdesigner')),
+    )
 
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 
@@ -69,8 +69,8 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
     'django.template.loaders.app_directories.load_template_source',
     'django.template.loaders.eggs.Loader',
-#     'django.template.loaders.eggs.load_template_source',
-)
+    #     'django.template.loaders.eggs.load_template_source',
+    )
 
 MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
@@ -113,14 +113,14 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     #'django.contrib.messages', # don't need this for messages and it's causing some error
-    'django.contrib.staticfiles', 
+    'django.contrib.staticfiles',
     'south',
-    'djcelery',    # pip install django-celery
-    'djtables',    # pip install djtables
+    'djcelery', # pip install django-celery
+    'djtables', # pip install djtables
     #'ghettoq',     # pip install ghettoq
-    'djkombu',     # pip install django-kombu
+    'djkombu', # pip install django-kombu
     'couchdbkit.ext.django',
-)
+    )
 
 HQ_APPS = (
     'django_digest',
@@ -199,45 +199,51 @@ HQ_APPS = (
     'mvp',
     'pathfinder',
     'pathindia',
-)
+    )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 TABS = [
-    ("corehq.apps.appstore.views.project_info", "Info", lambda request: request.project.is_snapshot),
-    ("corehq.apps.reports.views.default", "Reports", lambda request: not request.project.is_snapshot),
-    ("corehq.apps.data_interfaces.views.default", "Manage Data", lambda request: request.couch_user.can_edit_data()),
+    (
+    "corehq.apps.appstore.views.project_info", "Info", lambda request: request.project.is_snapshot),
+    ("corehq.apps.reports.views.default", "Reports",
+     lambda request: not request.project.is_snapshot),
+    ("corehq.apps.data_interfaces.views.default", "Manage Data",
+     lambda request: request.couch_user.can_edit_data()),
     ("corehq.apps.app_manager.views.default", "Applications"),
-    ("corehq.apps.cloudcare.views.default", "CloudCare", lambda request: request.couch_user.can_edit_data()),
-    ("corehq.apps.sms.views.messaging", "Messages", lambda request: not request.project.is_snapshot),
-    ("corehq.apps.settings.views.default", "Settings & Users", lambda request: request.couch_user.can_edit_commcare_users() or request.couch_user.can_edit_web_users()),
+    ("corehq.apps.cloudcare.views.default", "CloudCare",
+     lambda request: request.couch_user.can_edit_data()),
+    (
+    "corehq.apps.sms.views.messaging", "Messages", lambda request: not request.project.is_snapshot),
+    ("corehq.apps.settings.views.default", "Settings & Users", lambda
+            request: request.couch_user.can_edit_commcare_users() or request.couch_user.can_edit_web_users()),
     ("corehq.apps.hqadmin.views.default", "Admin Reports", "is_superuser"),
 ]
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
-LOGIN_REDIRECT_URL='/'
+LOGIN_REDIRECT_URL = '/'
 
 ####### Domain settings  #######
 
-DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY=99
-DOMAIN_SELECT_URL="/domain/select/"
-LOGIN_URL="/accounts/login/"
+DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY = 99
+DOMAIN_SELECT_URL = "/domain/select/"
+LOGIN_URL = "/accounts/login/"
 # For the registration app
 # One week to confirm a registered user account
-ACCOUNT_ACTIVATION_DAYS=7
+ACCOUNT_ACTIVATION_DAYS = 7
 # If a user tries to access domain admin pages but isn't a domain
 # administrator, here's where he/she is redirected
-DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME="homepage"
+DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"
 
 # domain syncs
 # e.g.
 #               { sourcedomain1: { "domain": targetdomain1,
 #                      "transform": path.to.transformfunction1 },
 #                 sourcedomain2: {...} }
-DOMAIN_SYNCS = { }
+DOMAIN_SYNCS = {}
 # if you want to deidentify app names, put a dictionary in your settings
 # of source names to deidentified names
 DOMAIN_SYNC_APP_NAME_MAP = {}
@@ -245,7 +251,7 @@ DOMAIN_SYNC_DATABASE_NAME = "commcarehq-public"
 
 
 ####### Release Manager App settings  #######
-RELEASE_FILE_PATH=os.path.join("data","builds")
+RELEASE_FILE_PATH = os.path.join("data", "builds")
 
 ## soil heartbead config ##
 SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
@@ -254,16 +260,15 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 ####### Shared/Global/UI Settings ######
 
 # restyle some templates
-BASE_TEMPLATE="hqwebapp/base.html"
-LOGIN_TEMPLATE="login_and_password/login.html"
-LOGGEDOUT_TEMPLATE="loggedout.html"
+BASE_TEMPLATE = "hqwebapp/base.html"
+LOGIN_TEMPLATE = "login_and_password/login.html"
+LOGGEDOUT_TEMPLATE = "loggedout.html"
 
 # email settings: these ones are the custom hq ones
-EMAIL_LOGIN="user@domain.com"
-EMAIL_PASSWORD="changeme"
-EMAIL_SMTP_HOST="smtp.gmail.com"
-EMAIL_SMTP_PORT=587
-
+EMAIL_LOGIN = "user@domain.com"
+EMAIL_PASSWORD = "changeme"
+EMAIL_SMTP_HOST = "smtp.gmail.com"
+EMAIL_SMTP_PORT = 587
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -277,14 +282,13 @@ FIXTURE_GENERATORS = [
     "corehq.apps.fixtures.fixturegenerators.item_lists",
 ]
 
-GET_URL_BASE  = 'dimagi.utils.web.get_url_base'
+GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
 SMS_GATEWAY_URL = "http://localhost:8001/"
 SMS_GATEWAY_PARAMS = "user=my_username&password=my_password&id=%(phone_number)s&text=%(message)s"
 
 # celery
 BROKER_URL = 'django://' #default django db based
-
 
 SKIP_SOUTH_TESTS = True
 #AUTH_PROFILE_MODULE = 'users.HqUserProfile'
@@ -297,18 +301,19 @@ XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 
 SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 COUCHLOG_BLUEPRINT_HOME = "%s%s" % (STATIC_URL, "hqwebapp/stylesheets/blueprint/")
-COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables-1.9/js/jquery.dataTables.min.js")
+COUCHLOG_DATATABLES_LOC = "%s%s" % (
+STATIC_URL, "hqwebapp/datatables-1.9/js/jquery.dataTables.min.js")
 
 # These allow HQ to override what shows up in couchlog (add a domain column)
-COUCHLOG_TABLE_CONFIG = {"id_column":       0,
-             "archived_column": 1,
-             "date_column":     2,
-             "message_column":  4,
-             "actions_column":  8,
-             "email_column":    9,
-             "no_cols":         10}
+COUCHLOG_TABLE_CONFIG = {"id_column": 0,
+                         "archived_column": 1,
+                         "date_column": 2,
+                         "message_column": 4,
+                         "actions_column": 8,
+                         "email_column": 9,
+                         "no_cols": 10}
 COUCHLOG_DISPLAY_COLS = ["id", "archived?", "date", "exception type",
-             "message", "domain", "user", "url", "actions", "report"]
+                         "message", "domain", "user", "url", "actions", "report"]
 COUCHLOG_RECORD_WRAPPER = "corehq.apps.hqcouchlog.wrapper"
 COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
 
@@ -323,13 +328,13 @@ FORMDATA_MODEL = 'hqsofabed.HQFormData'
 # unicel sms config
 UNICEL_CONFIG = {"username": "Dimagi",
                  "password": "changeme",
-                 "sender": "Promo" }
+                 "sender": "Promo"}
 
 # mach sms config
 MACH_CONFIG = {"username": "Dimagi",
                "password": "changeme",
                "service_profile": "changeme"
-               }
+}
 
 #auditcare parameters
 AUDIT_MODEL_SAVE = [
@@ -384,7 +389,9 @@ except ImportError:
 
 ####### Couch Forms & Couch DB Kit Settings #######
 from settingshelper import get_dynamic_db_settings, make_couchdb_tuple
-_dynamic_db_settings = get_dynamic_db_settings(COUCH_SERVER_ROOT, COUCH_USERNAME, COUCH_PASSWORD, COUCH_DATABASE_NAME, INSTALLED_APPS)
+
+_dynamic_db_settings = get_dynamic_db_settings(COUCH_SERVER_ROOT, COUCH_USERNAME, COUCH_PASSWORD,
+    COUCH_DATABASE_NAME, INSTALLED_APPS)
 
 # create local server and database configs
 COUCH_SERVER = _dynamic_db_settings["COUCH_SERVER"]
@@ -393,58 +400,57 @@ COUCH_DATABASE = _dynamic_db_settings["COUCH_DATABASE"]
 # other urls that depend on the server
 XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
 
-
 COUCHDB_APPS = [
-        'adm',
-        'api',
-        'app_manager',
-        'appstore',
-        'orgs',
-        'auditcare',
-        'builds',
-        'case',
-        'cleanup',
-        'cloudcare',
-        'couch', # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
-        'couchforms',
-        'couchexport',
-        'hqadmin',
-        'domain',
-        'forms',
-        'fixtures',
-        'groups',
-        'hqcase',
-        'hqmedia',
-        'importer',
-        'indicators',
-        'migration',
-        'phone',
-        'receiverwrapper',
-        'reminders',
-        'prescriptions',
-        'reports',
-        'sms',
-        'smsforms',
-        'translations',
-        'users',
-        'formplayer',
-        'phonelog',
-        'registration',
-        'hutch',
-        'hqbilling',
-        'couchlog',
+    'adm',
+    'api',
+    'app_manager',
+    'appstore',
+    'orgs',
+    'auditcare',
+    'builds',
+    'case',
+    'cleanup',
+    'cloudcare',
+    'couch',
+    # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
+    'couchforms',
+    'couchexport',
+    'hqadmin',
+    'domain',
+    'forms',
+    'fixtures',
+    'groups',
+    'hqcase',
+    'hqmedia',
+    'importer',
+    'indicators',
+    'migration',
+    'phone',
+    'receiverwrapper',
+    'reminders',
+    'prescriptions',
+    'reports',
+    'sms',
+    'smsforms',
+    'translations',
+    'users',
+    'formplayer',
+    'phonelog',
+    'registration',
+    'hutch',
+    'hqbilling',
+    'couchlog',
 
-        # custom reports
-        'bihar',
-        'dca',
-        'hsph',
-        'mvp',
-        'pathfinder',
-        'pathindia',
+    # custom reports
+    'bihar',
+    'dca',
+    'hsph',
+    'mvp',
+    'pathfinder',
+    'pathindia',
 ]
 
-
-COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS ]
+COUCHDB_DATABASES = [make_couchdb_tuple(app_label, COUCH_DATABASE) for app_label in COUCHDB_APPS]
 
 INSTALLED_APPS += LOCAL_APPS
 
@@ -462,20 +468,20 @@ LOGGING = {
         },
     },
     'handlers': {
-        'console':{
-            'level':'INFO',
-            'class':'logging.StreamHandler',
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
-        'file' : {
+        'file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
             'formatter': 'verbose',
             'filename': DJANGO_LOG_FILE
         },
-        'couchlog':{
-            'level':'WARNING',
-            'class':'couchlog.handlers.CouchHandler',
+        'couchlog': {
+            'level': 'WARNING',
+            'class': 'couchlog.handlers.CouchHandler',
         },
         'mail_admins': {
             'level': 'ERROR',
@@ -484,9 +490,9 @@ LOGGING = {
     },
     'loggers': {
         '': {
-            'handlers':['console', 'file', 'couchlog'],
+            'handlers': ['console', 'file', 'couchlog'],
             'propagate': True,
-            'level':'INFO',
+            'level': 'INFO',
         },
         'django.request': {
             'handlers': ['mail_admins'],
@@ -515,19 +521,19 @@ EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
 
 DATA_INTERFACE_MAP = {
-    'Case Management' : [
+    'Case Management': [
         'corehq.apps.data_interfaces.interfaces.CaseReassignmentInterface',
         'corehq.apps.importer.base.ImportCases',
     ]
 }
 APPSTORE_INTERFACE_MAP = {
-    'App Store' : [
+    'App Store': [
         'corehq.apps.appstore.interfaces.CommCareExchangeAdvanced'
     ]
 }
 
 PROJECT_REPORT_MAP = {
-    "Monitor Workers" : [
+    "Monitor Workers": [
         'corehq.apps.reports.standard.monitoring.CaseActivityReport',
         'corehq.apps.reports.standard.monitoring.SubmissionsByFormReport',
         'corehq.apps.reports.standard.monitoring.DailySubmissionsReport',
@@ -537,17 +543,17 @@ PROJECT_REPORT_MAP = {
         'corehq.apps.reports.standard.monitoring.SubmissionTimesReport',
         'corehq.apps.reports.standard.monitoring.SubmitDistributionReport',
     ],
-    "Inspect Data" : [
+    "Inspect Data": [
         'corehq.apps.reports.standard.inspect.SubmitHistory',
         'corehq.apps.reports.standard.inspect.CaseListReport',
         'corehq.apps.reports.standard.inspect.MapReport',
     ],
-    "Raw Data" : [
+    "Raw Data": [
         'corehq.apps.reports.standard.export.ExcelExportReport',
         'corehq.apps.reports.standard.export.CaseExportReport',
         'corehq.apps.reports.standard.export.DeidExportReport',
     ],
-    "Manage Deployments" : [
+    "Manage Deployments": [
         'corehq.apps.reports.standard.deployments.ApplicationStatusReport',
         'corehq.apps.receiverwrapper.reports.SubmissionErrorReport',
         'phonelog.reports.FormErrorReport',
@@ -559,60 +565,60 @@ CUSTOM_REPORT_MAP = {
     ## legacy custom reports. do not follow practices followed here
     "pathfinder": {
         'Custom Reports': [
-                   'pathfinder.models.PathfinderHBCReport',
-                   'pathfinder.models.PathfinderProviderReport',
-                   'pathfinder.models.PathfinderWardSummaryReport'
-                    ]
-                },
+            'pathfinder.models.PathfinderHBCReport',
+            'pathfinder.models.PathfinderProviderReport',
+            'pathfinder.models.PathfinderWardSummaryReport'
+        ]
+    },
     "dca-malawi": {
         'Custom Reports': [
-                   'dca.reports.ProjectOfficerReport',
-                   'dca.reports.PortfolioComparisonReport',
-                   'dca.reports.PerformanceReport',
-                   'dca.reports.PerformanceRatiosReport'
-                   ]
-                },
+            'dca.reports.ProjectOfficerReport',
+            'dca.reports.PortfolioComparisonReport',
+            'dca.reports.PerformanceReport',
+            'dca.reports.PerformanceRatiosReport'
+        ]
+    },
     "eagles-fahu": {
         'Custom Reports': [
-                   'dca.reports.ProjectOfficerReport',
-                   'dca.reports.PortfolioComparisonReport',
-                   'dca.reports.PerformanceReport',
-                   'dca.reports.PerformanceRatiosReport'],
-                },
+            'dca.reports.ProjectOfficerReport',
+            'dca.reports.PortfolioComparisonReport',
+            'dca.reports.PerformanceReport',
+            'dca.reports.PerformanceRatiosReport'],
+    },
     ## end legacy custom reports
     "hsph": {
         'Field Management Reports': [
-                    'hsph.reports.field_management.DCOActivityReport',
-                    'hsph.reports.field_management.FieldDataCollectionActivityReport',
-                    'hsph.reports.field_management.HVFollowUpStatusReport',
-                    'hsph.reports.field_management.HVFollowUpStatusSummaryReport',
-                    'hsph.reports.field_management.DCOProcessDataReport'
-                    ],
+            'hsph.reports.field_management.DCOActivityReport',
+            'hsph.reports.field_management.FieldDataCollectionActivityReport',
+            'hsph.reports.field_management.HVFollowUpStatusReport',
+            'hsph.reports.field_management.HVFollowUpStatusSummaryReport',
+            'hsph.reports.field_management.DCOProcessDataReport'
+        ],
         'Project Management Reports': [
-                    'hsph.reports.project_management.ProjectStatusDashboardReport',
-                    'hsph.reports.project_management.ImplementationStatusDashboardReport'
-                    ],
+            'hsph.reports.project_management.ProjectStatusDashboardReport',
+            'hsph.reports.project_management.ImplementationStatusDashboardReport'
+        ],
         'Call Center Reports': [
-                    'hsph.reports.call_center.DCCActivityReport',
-                    'hsph.reports.call_center.CallCenterFollowUpSummaryReport'
-                    ],
+            'hsph.reports.call_center.DCCActivityReport',
+            'hsph.reports.call_center.CallCenterFollowUpSummaryReport'
+        ],
         'Data Summary Reports': [
-                    'hsph.reports.data_summary.PrimaryOutcomeReport',
-                    'hsph.reports.data_summary.SecondaryOutcomeReport']
+            'hsph.reports.data_summary.PrimaryOutcomeReport',
+            'hsph.reports.data_summary.SecondaryOutcomeReport']
     },
     "pathindia": {
         'Custom Reports': [
-                    'pathindia.reports.PathIndiaKrantiReport'
+            'pathindia.reports.PathIndiaKrantiReport'
         ]
     },
     "mvp-sauri": {
         "Custom Reports": [
-                    'mvp.reports.MVISHealthCoordinatorReport'
+            'mvp.reports.MVISHealthCoordinatorReport'
         ]
     },
     "mvp-potou": {
         "Custom Reports": [
-                    'mvp.reports.MVISHealthCoordinatorReport'
+            'mvp.reports.MVISHealthCoordinatorReport'
         ]
     },
     # todo: giovanni, you should fix this report at some point.
@@ -636,9 +642,9 @@ CUSTOM_REPORT_MAP = {
             "bihar.reports.indicators.reports.IndicatorCharts",
         ]
     }
-#    "test": [
-#        'corehq.apps.reports.deid.FormDeidExport',
-#    ]
+    #    "test": [
+    #        'corehq.apps.reports.deid.FormDeidExport',
+    #    ]
 }
 
 BILLING_REPORT_MAP = {
@@ -699,4 +705,8 @@ SELENIUM_APP_SETTING_DEFAULTS = {
         'MAX_LOAD_TIME': 30,
     },
 }
-PILLOWTOPS = [] + LOCAL_PILLOWTOPS
+PILLOWTOPS = [ 'corehq.pillows.CasePillow',
+               'corehq.pillows.AuditcarePillow',
+               'corehq.pillows.CouchlogPillow',
+               'corehq.pillows.DevicelogPillow',
+             ] + LOCAL_PILLOWTOPS

@@ -183,3 +183,5 @@ ADM_ENABLED_PROJECTS = []
 # prod settings
 SOIL_DEFAULT_CACHE = "redis"
 SOIL_BACKEND = "soil.CachedDownload"
+
+LOCAL_PILLOWTOPS = []
