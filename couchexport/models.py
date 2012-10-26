@@ -202,7 +202,7 @@ class ExportTable(DocumentSchema):
                 else:
                     cells.append(val)
             id_index = self.id_index if id else 0
-            yield FormattedRow(cells, id, id_index=id_index)
+            yield FormattedRow(cells, row.id, id_index=id_index)
 
 class BaseSavedExportSchema(Document):
     # signature: filter(doc)
