@@ -5,6 +5,7 @@ import simplejson
 from gevent import socket
 import rawes
 import gevent
+from django.conf import settings
 
 import couchdbkit
 if couchdbkit.version_info < (0,6,0):
@@ -24,11 +25,8 @@ def old_changes(pillow):
             c.wait(pillow.parsing_processor, since=pillow.since, filter=pillow.couch_filter,
                 heartbeat=WAIT_HEARTBEAT, feed='continuous', timeout=30000)
         except Exception, ex:
-            logging.exception("caught exception in form listener: %s, "
-                              "sleeping and restarting" % ex)
+            logging.exception("Exception in form listener: %s, sleeping and restarting" % ex)
             gevent.sleep(5)
-
-
 
 def new_changes(pillow):
      with ChangesStream(pillow.couch_db, feed='continuous', heartbeat=True, since=pillow.since,
@@ -66,6 +64,7 @@ class BasicPillow(object):
             checkpoint_doc = {
                 "_id": doc_name,
                 "seq": 0
+                #todo: bigcouch changes seq are [num, string] arrs, num is meaningless,string is meaningful
             }
             self.couch_db.save_doc(checkpoint_doc)
         return checkpoint_doc
@@ -204,7 +203,7 @@ class ElasticPillow(BasicPillow):
                                      res.get('error', "No error message"),
                                      doc_dict['_id']))
         except Exception, ex:
-            logging.error("PillowTop: transporting change data to elasticsearch error:  %s", ex)
+            logging.error("PillowTop [%s]: transporting change data to elasticsearch error:  %s", (self.get_name(), ex))
             return None
 
 
@@ -226,9 +225,24 @@ class NetworkPillow(BasicPillow):
                 stype = socket.SOCK_DGRAM
             sock = socket.socket(type=stype)
             sock.connect(address)
-            sock.send(simplejson.dumps(doc_dict))
+            sock.send(simplejson.dumps(doc_dict), timeout=1)
             return 1
         except Exception, ex:
-            logging.error("PillowTop: transport to network socket error: %s" % ex)
+            logging.error("PillowTop [%s]: transport to network socket error: %s" % (self .get_name(), ex))
             return None
+
+class LogstashMonitoringPillow(NetworkPillow):
+    """
+    This is a logstash endpoint (but really just TCP) for our production monitoring/aggregation
+    of log information.
+    """
+    def __init__(self):
+        if settings.DEBUG:
+            #In a dev environment don't care about these
+            logging.info("[%s] Settings are DEBUG, suppressing the processing of these feeds" % self.get_name())
+    def processor(self, change):
+        if settings.DEBUG:
+            return {}
+        else:
+            return super(NetworkPillow, self).processor(change)
 

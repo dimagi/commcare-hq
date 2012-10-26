@@ -24,14 +24,17 @@ def import_pillows():
 
 
 #standalone pillowtop runner
-
 def start_pillows():
-    from gevent import monkey; monkey.patch_all()
+    #gevent patching: logging doesn't seem to work unless thread is not patched
+    from gevent import monkey; monkey.patch_all(thread=False)
     pillows = import_pillows()
     pool = Pool(len(pillows))
-    for p in pillows:
-        pool.spawn(p.run)
-    pool.join()
+    while True:
+        for p in pillows:
+            pool.spawn(p.run)
+        pool.join()
+        print "Pillows all joined and completed - restarting again"
+        #this shouldn't happen
 
 if __name__ == "__main__":
     start_pillows()

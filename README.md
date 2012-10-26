@@ -35,13 +35,16 @@ Inherit the BasicPillow class
 Implement at a bare minimum change_transport - and override the other processing steps where
 necessary.
 
+Todo on this is to make this standalone outside a django context - but the use case has not
+presented itself.
+
 
 Running pillowtop
 =================
 
 python manage.py run_ptop
 
-This will fire off 1 gevent worker per pillow in your PILLOWTOPS array listening continuosly on
+This will fire off 1 gevent worker per pillow in your PILLOWTOPS array listening continuously on
 the changes feed of their interest.
 
 This process does not pool right now the changes listeners, so be careful,
@@ -50,4 +53,5 @@ or suggest an improvement :)
 Pillowtop also will keep checkpoints in couch so as to not keep going over changes when the
 process is restarted - all BasicPillows will keep a document unique to its class name in the DB
 to keep its checkpoint based upon the _seq of the changes listener it is on.
+
 
