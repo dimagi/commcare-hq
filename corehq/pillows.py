@@ -91,7 +91,7 @@ class DevicelogPillow(NetworkPillow):
 
 class StrippedXformPillow(ElasticPillow):
     couch_db = XFormInstance.get_db()
-    couch_filter = ""
+    couch_filter = "couchforms/xforms"
     es_host = settings.ELASTICSEARCH_HOST
     es_port = settings.ELASTICSEARCH_PORT
     es_index = "xforms_clean"
@@ -103,8 +103,11 @@ class StrippedXformPillow(ElasticPillow):
         """
         for k in doc_dict['form']:
             if k not in ['meta', 'Meta', '@uiVersion', '@version']:
-                del doc_dict['form'][k]
-            #todo: add geoip block here
+                try:
+                    del doc_dict['form'][k]
+                except:
+                    pass
+        #todo: add geoip block here
         return doc_dict
 
     def change_transport(self, doc_dict):
