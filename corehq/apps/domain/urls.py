@@ -43,7 +43,7 @@ def auth_pages_path(page):
 urlpatterns =\
     patterns('corehq.apps.domain.views',
         (r'^user_registration/', include('corehq.apps.registration.user_registration_backend.urls')),
-        url(r'^domain/tos/$', direct_to_template, {'template': 'tos.html'}, name='tos'),
+        url(r'^domain/eula/$', direct_to_template, {'template': 'eula.html'}, name='eula'),
         url(r'^domain/select/$', 'select', name='domain_select'),
         url(r'^domain/autocomplete/(?P<field>\w+)/$', 'autocomplete_fields', name='domain_autocomplete_fields'),
     ) +\

@@ -20,11 +20,10 @@
 
 {% block js-inline %}
 {{ block.super }}
+{% url cda as cda_url %}
+{% include 'hq_bootstrap/partials/load_into_modal.html' with modal_id="cda-modal" load_from=cda_url %}
 <!-- unfortunately copied from project settings -->
 <script type="text/javascript">
-
-
-
     $(function(){
         {% for field in autocomplete_fields %}
             $("#id_{{ field }}").focus(function() {
