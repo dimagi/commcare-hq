@@ -26,51 +26,6 @@ class CasePaginator():
 
             return _inner
 
-        query_prototype = """{
-"query": {
-"filtered" : {
-"query" : {
-"term" : { "case.domain" : "localdmyung" }
-},
-
-"filter" : {
-"and" : [
-    {
-    "or" : {
-    "filters" : [
-        {
-        "term" : { "case.owner_id" : "9d207c07d68d5da97290e38905c9adac" }
-        },
-        {
-        "term" : { "case.owner_id" : "eadf13bfc89b0fd9b151566ee537ded1" }
-        },
-        {
-        "term" : { "case.owner_id" : "" }
-        }
-    ]
-    }
-    },
-    {
-    "or" : {
-    "filters" : [
-        {
-        "term" : { "case.user_id" : "9d207c07d68d5da97290e38905c9adac" }
-        },
-        {
-        "term" : { "case.user_id" : "eadf13bfc89b0fd9b151566ee537ded1" }
-        },
-        {
-        "term" : { "case.user_id" : "" }
-        }
-    ]
-    }
-    }
-]
-}
-}
-}
-}
-"""
         es = rawes.Elastic('%s:%s' % (settings.ELASTICSEARCH_HOST, settings.ELASTICSEARCH_PORT))
 
         def _filter_gen(key, list):
@@ -103,8 +58,8 @@ class CasePaginator():
         es_query['query']['filtered']['filter'] = {}
         es_query['query']['filtered']['filter']['and'] = []
 
-#        if self.case_type:
-#            es_query['filtered']['filter']['and'].append({"term": {"case.type": self.case_type}})
+        if self.case_type:
+            es_query['filtered']['filter']['and'].append({"term": {"case.type": self.case_type}})
 
         if self.status:
             if self.status == 'closed':
@@ -133,12 +88,7 @@ class CasePaginator():
         es_query['from'] = self.params.start
         es_query['size'] = self.params.count
 
-
-        import simplejson
-        print  simplejson.dumps(es_query)
-
         results = es.get('hqcases/case/_search', data=es_query)
-        #print results
         ret = {}
         ret['skip'] = self.params.start
         ret['limit'] = self.params.count

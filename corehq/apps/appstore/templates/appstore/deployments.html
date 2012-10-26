@@ -1,0 +1,40 @@
+{% extends "appstore/appstore_base.html" %}
+{% load hq_shared_tags %}
+{% load hq_bootstrap_tags %}
+{% load i18n %}
+
+{% block sidebar %}
+    {% include 'partials/sidebar.html' with search_for="deployments" search_name="search" %}
+{% endblock %}
+
+{% block store-header %}
+    Deployments
+{% endblock %}
+
+{% block view-tabs %}
+{% endblock %}
+
+{% block results-display %}
+    {% for dom in deployments %}
+        {% if forloop.counter0|divisibleby:"3" and forloop.counter0 != 0 %}
+            </div><div class="row-fluid">
+        {% endif %}
+        <div class="span3">
+            <div class="well">
+                <h2>
+                    {{ dom.name }}
+                    <br/>
+                    <small>In
+                        {{ dom.deployment.region }}
+                    </small>
+                </h2>
+                <br/>
+                <p>{{ dom.deployment.description }}</p>
+                <p>Date deployed: {{ dom.deployment.date|date:"N j, Y" }}</p>
+                <a class="btn" href="{% url deployment_info dom.name %}">View &raquo;</a>
+            </div>
+        </div>
+    {% empty %}
+        No results were found for your query.
+    {% endfor %}
+{% endblock %}

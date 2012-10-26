@@ -8,6 +8,7 @@ import json
 from django.template.loader import render_to_string
 import pickle
 import pytz
+from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports import util
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.users.models import CouchUser
@@ -426,12 +427,20 @@ class GenericReportView(object):
         """
             Intention: Don't override.
         """
+
+        report_configs = ReportConfig.by_domain_and_owner(self.domain,
+            self.request.couch_user._id, report_slug=self.slug).all()
+        current_config_id = self.request.GET.get('config_id', '')
+        default_config = ReportConfig.default()
+
         self.context.update(
             report=dict(
                 title=self.name,
                 description=self.description,
                 section_name=self.section_name,
                 slug=self.slug,
+                sub_slug=None,
+                type=self.dispatcher.prefix,
                 url_root=self.url_root,
                 is_async=self.asynchronous,
                 is_exportable=self.exportable,
@@ -439,8 +448,11 @@ class GenericReportView(object):
                 filter_set=self.filter_set,
                 needs_filters=self.needs_filters,
                 show=self.request.couch_user.can_view_reports() or self.request.couch_user.get_viewable_reports(),
-                is_admin=self.is_admin_report # todo is this necessary???
+                is_admin=self.is_admin_report,   # todo is this necessary???
             ),
+            current_config_id=current_config_id,
+            default_config=default_config,
+            report_configs=report_configs,
             show_time_notice=self.show_time_notice,
             domain=self.domain,
             layout_flush_content=self.flush_layout
@@ -662,6 +674,7 @@ class GenericTabularReport(GenericReportView):
     """
     # new class properties
     total_row = None
+    statistics_rows = None
     default_rows = 10
     start_at_row = 0
     show_all_rows = False
@@ -798,6 +811,8 @@ class GenericTabularReport(GenericReportView):
         table.extend(rows)
         if self.total_row:
             table.append(_unformat_row(self.total_row))
+        if self.statistics_rows:
+            table.extend([_unformat_row(row) for row in self.statistics_rows])
 
         return [[self.export_sheet_name, table]]
 
@@ -824,6 +839,9 @@ class GenericTabularReport(GenericReportView):
 
         if self.total_row is not None and not isinstance(self.total_row, list):
             raise ValueError("'total_row' should be a list.")
+        if self.statistics_rows is not None and not isinstance(self.statistics_rows, list) \
+                and not isinstance(self.statistics_rows[0], list):
+            raise ValueError("'statics row' should be a list of rows.")
 
         pagination_spec = dict(is_on=self.ajax_pagination)
         if self.ajax_pagination:
@@ -848,6 +866,7 @@ class GenericTabularReport(GenericReportView):
                 headers=headers,
                 rows=rows,
                 total_row=self.total_row,
+                statistics_rows=self.statistics_rows,
                 default_rows=self.default_rows,
                 start_at_row=self.start_at_row,
                 show_all_rows=self.show_all_rows,

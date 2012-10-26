@@ -159,6 +159,12 @@
         return tr;
     }
     
+    $(function() {
+        $("#send_followup").change(function() {
+            $("#followup_table").toggle();
+        });
+    });
+    
     {% if form.waves.value|length == 0 %}
     var current_wave_num = 1;
     {% else %}
@@ -176,6 +182,7 @@
     {% else %}
     var current_sample_num = {{ form.samples.value|length }};
     {% endif %}
+    
 </script>
 
 {% endblock %}
@@ -212,9 +219,7 @@
     <br />
     {{ form.waves.errors }}
     <div class="form-block">
-        <input type="checkbox" name="send_automatically" {% if form.send_automatically.value %}value="on" checked="checked"{% endif %}/> Send Automatically
-        <br />
-        <br />
+        <input type="hidden" name="send_automatically" value="on" />
         <table id="wave_table" class="table table-bordered">
             <thead>
                 <th>Date</th>
@@ -239,16 +244,24 @@
                 {% else %}
                 {% for wave in form.waves.value %}
                 <tr>
-                    <td><input type="text" name="wave.{{ forloop.counter0 }}.date" value="{{ wave.date }}" /></td>
-                    <td><input type="text" name="wave.{{ forloop.counter0 }}.time" value="{{ wave.time }}" /></td>
+                    <td>{% if wave.ignore %}{{ wave.date }}{% endif %}<input type="{% if wave.ignore %}hidden{% else %}text{% endif %}" name="wave.{{ forloop.counter0 }}.date" value="{{ wave.date }}" /></td>
+                    <td>{% if wave.ignore %}{{ wave.time }}{% endif %}<input type="{% if wave.ignore %}hidden{% else %}text{% endif %}" name="wave.{{ forloop.counter0 }}.time" value="{{ wave.time }}" /></td>
                     <td>
+                        {% if wave.ignore %}
+                        <input type="hidden" name="wave.{{ forloop.counter0 }}.ignore" value="1" />
+                        <input type="hidden" name="wave.{{ forloop.counter0 }}.form_id" value="{{ wave.form_id }}" />
+                            {% for f in form_list %}
+                                {% if f.code == wave.form_id %}{{ f.name }}{% endif %}
+                            {% endfor %}
+                        {% else %}
                         <select name="wave.{{ forloop.counter0 }}.form_id">
                             {% for f in form_list %}
                                 <option value="{{ f.code }}" {% if f.code == wave.form_id %}selected="selected"{% endif %}>{{ f.name }}</option>
                             {% endfor %}
                         </select>
+                        {% endif %}
                     </td>
-                    <td>{% if forloop.counter0 > 0 %}<span class="btn btn-danger" onClick="remove_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span>{% endif %}</td>
+                    <td>{% if forloop.counter0 > 0 and not wave.ignore %}<span class="btn btn-danger" onClick="remove_record(this);"><i class="icon icon-white icon-remove"></i> Remove</span>{% endif %}</td>
                 </tr>
                 {% endfor %}
                 {% endif %}
@@ -261,10 +274,10 @@
     <br />
     {{ form.followups.errors }}
     <div class="form-block">
-        <input type="checkbox" name="send_followup" {% if form.send_followup.value %}value="on" checked="checked"{% endif %}/> Send follow-up(s) for incomplete SMS Questionnaires
+        <input type="checkbox" id="send_followup" name="send_followup" {% if form.send_followup.value %}value="on" checked="checked"{% endif %} /> Send follow-up(s) for incomplete SMS Questionnaires
         <br />
         <br />
-        <table id="followup_table">
+        <table id="followup_table" style="display: {% if form.send_followup.value %}block{% else %}none{% endif %};">
             <tbody id="followup_tbody">
                 {% if form.followups.value|length == 0 %}
                 <tr>
