@@ -38,7 +38,7 @@ The following are necessary for the basic function of CommCare HQ.
 + `memcached`
 + **postgres** - [Download postgres here](http://www.enterprisedb.com/products-services-training/pgdownload)
 + **couchdb** - Version 1.0 or greater required - [View installation instructions here](http://wiki.apache.org/couchdb/Installation)
-+ **couchdb-lucene** - Instructrions [here](https://github.com/rnewson/couchdb-lucene). Follow instructions "For CouchDB versions prior to 1.1" when applicable, even if you're on a later version of couchdb.
++ **elasticsearch** - [Download](http://www.elasticsearch.org/download/) - and requisite requirements (java)
 
 Note on couchdb installation: Using aptitude or apt-get may not install the latest version. See other installation options if version < 1.0 is installed by using this method.
 
@@ -56,6 +56,19 @@ It is recommended that you create the database **commcarehq** before continuing.
 #### Configuration for CouchDB
 
 It is recommended that you create the database **commcarehq** before continuing.
+
+
+#### Configuration for Elasticsearch
+
+Unzip and install elasticsearch. To run it in an upstart configuration,
+see [this example](https://gist.github.com/3961323). Otherwise, just run the elasticsearch in the
+ bin/ directory of the unzipped archive.  All configs for indexes will be run via the run_ptop
+ management command.
+
+ To secure elasticsearch, we recommend setting the listen port to localhost on a local machine.
+ On a distributed environment, we recommend setting up ssh tunneled ports for the elasticsearch
+ port. The supervisor_elasticsearch.conf supervisor config demonstrates the tunnel creation using
+  autossh.
 
 
 #### Setting up a virtualenv

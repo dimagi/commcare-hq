@@ -69,7 +69,7 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
     'django.template.loaders.app_directories.load_template_source',
     'django.template.loaders.eggs.Loader',
-#     'django.template.loaders.eggs.load_template_source',
+    #     'django.template.loaders.eggs.load_template_source',
 )
 
 MIDDLEWARE_CLASSES = [
@@ -113,7 +113,7 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     #'django.contrib.messages', # don't need this for messages and it's causing some error
-    'django.contrib.staticfiles', 
+    'django.contrib.staticfiles',
     'south',
     'djcelery',    # pip install django-celery
     'djtables',    # pip install djtables
@@ -303,14 +303,14 @@ COUCHLOG_DATATABLES_LOC = "%s%s" % (STATIC_URL, "hqwebapp/datatables-1.9/js/jque
 
 # These allow HQ to override what shows up in couchlog (add a domain column)
 COUCHLOG_TABLE_CONFIG = {"id_column":       0,
-             "archived_column": 1,
-             "date_column":     2,
-             "message_column":  4,
-             "actions_column":  8,
-             "email_column":    9,
-             "no_cols":         10}
+                         "archived_column": 1,
+                         "date_column":     2,
+                         "message_column":  4,
+                         "actions_column":  8,
+                         "email_column":    9,
+                         "no_cols":         10}
 COUCHLOG_DISPLAY_COLS = ["id", "archived?", "date", "exception type",
-             "message", "domain", "user", "url", "actions", "report"]
+                         "message", "domain", "user", "url", "actions", "report"]
 COUCHLOG_RECORD_WRAPPER = "corehq.apps.hqcouchlog.wrapper"
 COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
 
@@ -330,8 +330,7 @@ UNICEL_CONFIG = {"username": "Dimagi",
 # mach sms config
 MACH_CONFIG = {"username": "Dimagi",
                "password": "changeme",
-               "service_profile": "changeme"
-               }
+               "service_profile": "changeme"}
 
 #auditcare parameters
 AUDIT_MODEL_SAVE = [
@@ -397,54 +396,54 @@ XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
 
 
 COUCHDB_APPS = [
-        'adm',
-        'api',
-        'app_manager',
-        'appstore',
-        'orgs',
-        'auditcare',
-        'builds',
-        'case',
-        'cleanup',
-        'cloudcare',
-        'commtrack',
-        'couch', # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
-        'couchforms',
-        'couchexport',
-        'hqadmin',
-        'domain',
-        'forms',
-        'fixtures',
-        'groups',
-        'hqcase',
-        'hqmedia',
-        'importer',
-        'indicators',
-        'locations',
-        'migration',
-        'phone',
-        'receiverwrapper',
-        'reminders',
-        'prescriptions',
-        'reports',
-        'sms',
-        'smsforms',
-        'translations',
-        'users',
-        'formplayer',
-        'phonelog',
-        'registration',
-        'hutch',
-        'hqbilling',
-        'couchlog',
+    'adm',
+    'api',
+    'app_manager',
+    'appstore',
+    'orgs',
+    'auditcare',
+    'builds',
+    'case',
+    'cleanup',
+    'cloudcare',
+    'commtrack',
+    'couch', # This is necessary for abstract classes in dimagi.utils.couch.undo; otherwise breaks tests
+    'couchforms',
+    'couchexport',
+    'hqadmin',
+    'domain',
+    'forms',
+    'fixtures',
+    'groups',
+    'hqcase',
+    'hqmedia',
+    'importer',
+    'indicators',
+    'locations',
+    'migration',
+    'phone',
+    'receiverwrapper',
+    'reminders',
+    'prescriptions',
+    'reports',
+    'sms',
+    'smsforms',
+    'translations',
+    'users',
+    'formplayer',
+    'phonelog',
+    'registration',
+    'hutch',
+    'hqbilling',
+    'couchlog',
 
-        # custom reports
-        'bihar',
-        'dca',
-        'hsph',
-        'mvp',
-        'pathfinder',
-        'pathindia',
+    # custom reports
+    'bihar',
+    'dca',
+    'hsph',
+    'mvp',
+    'pathfinder',
+    'pathindia',
 ]
 
 
@@ -567,62 +566,64 @@ CUSTOM_REPORT_MAP = {
     ## legacy custom reports. do not follow practices followed here
     "pathfinder": {
         'Custom Reports': [
-                   'pathfinder.models.PathfinderHBCReport',
-                   'pathfinder.models.PathfinderProviderReport',
-                   'pathfinder.models.PathfinderWardSummaryReport'
-                    ]
-                },
+            'pathfinder.models.PathfinderHBCReport',
+            'pathfinder.models.PathfinderProviderReport',
+            'pathfinder.models.PathfinderWardSummaryReport'
+        ]
+    },
     "dca-malawi": {
         'Custom Reports': [
-                   'dca.reports.ProjectOfficerReport',
-                   'dca.reports.PortfolioComparisonReport',
-                   'dca.reports.PerformanceReport',
-                   'dca.reports.PerformanceRatiosReport'
-                   ]
-                },
+            'dca.reports.ProjectOfficerReport',
+            'dca.reports.PortfolioComparisonReport',
+            'dca.reports.PerformanceReport',
+            'dca.reports.PerformanceRatiosReport'
+        ]
+    },
     "eagles-fahu": {
         'Custom Reports': [
-                   'dca.reports.ProjectOfficerReport',
-                   'dca.reports.PortfolioComparisonReport',
-                   'dca.reports.PerformanceReport',
-                   'dca.reports.PerformanceRatiosReport'],
-                },
+            'dca.reports.ProjectOfficerReport',
+            'dca.reports.PortfolioComparisonReport',
+            'dca.reports.PerformanceReport',
+            'dca.reports.PerformanceRatiosReport'
+        ],
+    },
     ## end legacy custom reports
     "hsph": {
         'Field Management Reports': [
-                    'hsph.reports.field_management.DCOActivityReport',
-                    'hsph.reports.field_management.FieldDataCollectionActivityReport',
-                    'hsph.reports.field_management.HVFollowUpStatusReport',
-                    'hsph.reports.field_management.HVFollowUpStatusSummaryReport',
-                    'hsph.reports.field_management.DCOProcessDataReport'
-                    ],
+            'hsph.reports.field_management.DCOActivityReport',
+            'hsph.reports.field_management.FieldDataCollectionActivityReport',
+            'hsph.reports.field_management.HVFollowUpStatusReport',
+            'hsph.reports.field_management.HVFollowUpStatusSummaryReport',
+            'hsph.reports.field_management.DCOProcessDataReport'
+        ],
         'Project Management Reports': [
-                    'hsph.reports.project_management.ProjectStatusDashboardReport',
-                    'hsph.reports.project_management.ImplementationStatusDashboardReport'
-                    ],
+            'hsph.reports.project_management.ProjectStatusDashboardReport',
+            'hsph.reports.project_management.ImplementationStatusDashboardReport'
+        ],
         'Call Center Reports': [
-                    'hsph.reports.call_center.DCCActivityReport',
-                    'hsph.reports.call_center.CallCenterFollowUpSummaryReport'
-                    ],
+            'hsph.reports.call_center.DCCActivityReport',
+            'hsph.reports.call_center.CallCenterFollowUpSummaryReport'
+        ],
         'Data Summary Reports': [
-                    'hsph.reports.data_summary.PrimaryOutcomeReport',
-                    'hsph.reports.data_summary.SecondaryOutcomeReport']
+            'hsph.reports.data_summary.PrimaryOutcomeReport',
+            'hsph.reports.data_summary.SecondaryOutcomeReport'
+        ]
     },
     "pathindia": {
         'Custom Reports': [
-                    'pathindia.reports.PathIndiaKrantiReport'
+            'pathindia.reports.PathIndiaKrantiReport'
         ]
     },
     "mvp-sauri": {
         "Custom Reports": [
-                    'mvp.reports.mvis.HealthCoordinatorReport',
-                    'mvp.reports.chw.CHWManagerReport'
+            'mvp.reports.mvis.HealthCoordinatorReport',
+            'mvp.reports.chw.CHWManagerReport'
         ]
     },
     "mvp-potou": {
         "Custom Reports": [
-                    'mvp.reports.mvis.HealthCoordinatorReport',
-                    'mvp.reports.chw.CHWManagerReport'
+            'mvp.reports.mvis.HealthCoordinatorReport',
+            'mvp.reports.chw.CHWManagerReport'
         ]
     },
     # todo: giovanni, you should fix this report at some point.
@@ -647,9 +648,9 @@ CUSTOM_REPORT_MAP = {
             "bihar.reports.indicators.reports.IndicatorCharts",
         ]
     }
-#    "test": [
-#        'corehq.apps.reports.deid.FormDeidExport',
-#    ]
+    #    "test": [
+    #        'corehq.apps.reports.deid.FormDeidExport',
+    #    ]
 }
 
 BILLING_REPORT_MAP = {
@@ -717,5 +718,10 @@ SELENIUM_APP_SETTING_DEFAULTS = {
     },
 }
 
-PILLOWTOPS = [] + LOCAL_PILLOWTOPS
+PILLOWTOPS = [ 'corehq.pillows.CasePillow',
+               #'corehq.pillows.ExchangePillow', #todo when merged
 
+               'corehq.pillows.AuditcarePillow',
+               'corehq.pillows.CouchlogPillow',
+               'corehq.pillows.DevicelogPillow',
+               ] + LOCAL_PILLOWTOPS
