@@ -89,7 +89,7 @@ Once all the requirements are in order, please do the following:
     cd commcare-hq
     git submodule update --init --recursive
     source ~/.virtualenvs/commcare-hq/bin/activate      # enter your virtualenv if you have one
-    pip install -r requirements.txt
+    pip install -r requirements/requirements.txt -r requirements/prod-requirements.txt
     cp localsettings.example.py localsettings.py
 
 
