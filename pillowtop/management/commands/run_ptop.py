@@ -6,10 +6,8 @@ from socketpool.pool import ConnectionPool
 from pillowtop.run_pillowtop import start_pillows
 
 class Command(NoArgsCommand):
-    help = "Recompute diff properties on all model changes, and set next/prev pointers"
+    help = "Run the pillowtop management command to scan all _changes feeds"
     option_list = NoArgsCommand.option_list + (
-        make_option('--reset', action='store_true', dest='recompute',
-            help='Recompute values.'),
     )
     def handle_noargs(self, **options):
         start_pillows()
