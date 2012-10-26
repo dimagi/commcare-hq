@@ -3,14 +3,14 @@
 {% load i18n %}
 
 {% block js-inline  %}{{ block.super }}
+    {% url cda as cda_url %}
+    {% include 'hq_bootstrap/partials/load_into_modal.html' with modal_id="contentDistributionAgreement" load_from=cda_url %}
+
     <script type="text/javascript">
         $(function() {
             $('[data-target="#contentDistributionAgreement"]').click(function() {
                 var new_action = $(this).attr('data-action');
                 $('#cda-agree').attr('action', new_action);
-            });
-            $("#contentDistributionAgreement").on("show", function() {
-                $(this).find(".modal-body").load("{% url cda %}");
             });
         });
     </script>
