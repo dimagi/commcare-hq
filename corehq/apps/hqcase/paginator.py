@@ -40,60 +40,62 @@ class CasePaginator():
             elif list and "demo_user" not in list:
                 yield {"not": {"term": {key: "demo_user"}}}
 
-        def owner_filters():
-            yield list(_filter_gen('case.owner_id', self.owner_ids))
-
-        def user_filters():
-            yield list(_filter_gen('case.user_id', self.owner_ids))
-
         if self.params.search:
             #these are not supported/implemented on the UI side, so ignoring (dmyung)
             pass
 
-        es_query = {}
-        es_query['query'] = {}
-        es_query['query']['filtered'] = {}
-        es_query['query']['filtered']['query'] = {}
-        es_query['query']['filtered']['query']['term'] = {'case.domain': self.domain}
-        es_query['query']['filtered']['filter'] = {}
-        es_query['query']['filtered']['filter']['and'] = []
+        @list
+        @inline
+        def construct_and_array():
+            if self.case_type:
+                yield {"term": {"case.type": self.case_type}}
 
-        if self.case_type:
-            es_query['filtered']['filter']['and'].append({"term": {"case.type": self.case_type}})
+            if self.status:
+                if self.status == 'closed':
+                    is_closed = True
+                else:
+                    is_closed = False
+                yield {"term": {"case.closed": is_closed}}
 
-        if self.status:
-            if self.status == 'closed':
-                is_closed = True
-            else:
-                is_closed = False
-            es_query['query']['filtered']['filter']['and'].append({"term": {"case.closed": is_closed}})
+            ofilters = list(_filter_gen('case.owner_id', self.owner_ids))
+            if len(ofilters) > 0:
+                yield {
+                    'or': {
+                        'filters': ofilters,
+                    }
+                }
+            ufilters = list(_filter_gen('case.user_id', self.owner_ids))
+            if len(ufilters) > 0:
+                yield {
+                    'or': {
+                        'filters': ufilters,
+                    }
+                }
 
-        ofilters = list(owner_filters())
-        if len(ofilters) > 0:
-            owner_filter_block = {}
-            owner_filter_block['or'] = {}
-            owner_filter_block['or']['filters'] = ofilters
-            es_query['query']['filtered']['filter']['and'].append(owner_filter_block)
+        es_query = {
+            'query': {
+                'filtered': {
+                    'query': {
+                        'term': {'case.domain': self.domain}
+                    },
+                    'filter': {
+                        'and': construct_and_array,
+                    }
+                }
+            },
+            'sort': {
+                'case.modified_on': {'order': 'asc'}
+            },
+            'from': self.params.start,
+            'size': self.params.count,
+        }
 
-        ufilters = list(user_filters())
-        if len(ufilters) > 0:
-            user_filter_block = {}
-            user_filter_block['or'] = {}
-            user_filter_block['or']['filters'] = ufilters
-            es_query['query']['filtered']['filter']['and'].append(user_filter_block)
-
-        es_query['sort'] = [
-            {"case.modified_on": {"order": "asc"}},
-        ]
-        es_query['from'] = self.params.start
-        es_query['size'] = self.params.count
-
-        results = es.get('hqcases/case/_search', data=es_query)
-        ret = {}
-        ret['skip'] = self.params.start
-        ret['limit'] = self.params.count
-        ret['rows'] = []
-        ret['total_rows'] = results['hits']['total']
-        for res in results['hits']['hits']:
-            ret['rows'].append({'doc': res['_source']})
+        es_results = es.get('hqcases/case/_search', data=es_query)
+        #transform the return value to something compatible with the report listing
+        ret = {
+            'skip': self.params.start,
+            'limit': self.params.count,
+            'rows': [{'doc': x['_source']} for x in es_results['hits']['hits']],
+            'total_rows': es_results['hits']['total']
+        }
         return ret
