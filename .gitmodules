@@ -91,3 +91,6 @@
 [submodule "submodules/pillowtop-src"]
 	path = submodules/pillowtop-src
 	url = git://github.com/dimagi/pillowtop.git
+[submodule "submodules/pact-src"]
+	path = submodules/pact-src
+	url = git://github.com/dimagi/hq-pact.git
