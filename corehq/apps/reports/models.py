@@ -16,7 +16,7 @@ import settings
 from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
     CustomProjectReportDispatcher)
 from corehq.apps.adm.dispatcher import ADMSectionDispatcher
-
+import json
 
 class HQUserType(object):
     REGISTERED = 0
@@ -112,9 +112,6 @@ class TempCommCareUser(CommCareUser):
         app_label = 'reports'
 
 
-project_report_dispatcher = ProjectReportDispatcher()
-custom_project_report_dispatcher = CustomProjectReportDispatcher()
-adm_section_dispatcher = ADMSectionDispatcher()
 
 DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'since', 'range']
 
@@ -175,22 +172,30 @@ class ReportConfig(Document):
     @property
     @memoized
     def _dispatcher(self):
-        dispatchers = [project_report_dispatcher,
-                       custom_project_report_dispatcher,
-                       adm_section_dispatcher]
+
+        dispatchers = [ProjectReportDispatcher,
+                       CustomProjectReportDispatcher,
+                       ADMSectionDispatcher]
 
         for dispatcher in dispatchers:
             if dispatcher.prefix == self.report_type:
-                return dispatcher
+                return dispatcher()
 
         raise Exception("Unknown dispatcher: %s" % self.report_type)
 
     def get_date_range(self):
         """Duplicated in reports.config.js"""
+        
+        date_range = self.date_range
+
+        # allow old report email notifications to represent themselves as a
+        # report config by leaving the default date range up to the report
+        # dispatcher
+        if not date_range:
+            return {}
 
         import datetime
         today = datetime.date.today()
-        date_range = self.date_range
 
         if date_range == 'since':
             start_date = self.start_date
@@ -216,28 +221,50 @@ class ReportConfig(Document):
                 'enddate': end_date.isoformat()}
 
     @property
-    def url(self):
-        from django.core.urlresolvers import reverse
+    @memoized
+    def query_string(self):
         from urllib import urlencode
-
-        route = self._dispatcher.name()
-        kwargs = {'domain': self.domain,
-                  'report_slug': self.report_slug}
-
-        if self.subreport_slug:
-            kwargs.update(subreport_slug=self.subreport_slug)
 
         params = self.filters.copy()
         params['config_id'] = self._id
         params.update(self.get_date_range())
 
-        return reverse(route, kwargs=kwargs) + '?' + urlencode(params, True)
+        return urlencode(params, True)
+
+    @property
+    @memoized
+    def view_kwargs(self):
+        kwargs = {'domain': self.domain,
+                  'report_slug': self.report_slug}
+
+        if self.subreport_slug:
+            kwargs['subreport_slug'] = self.subreport_slug
+
+        return kwargs
+
+    @property
+    @memoized
+    def url(self):
+        from django.core.urlresolvers import reverse
+        
+        return reverse(self._dispatcher.name(), kwargs=self.view_kwargs) \
+                + '?' + self.query_string
+
+    @property
+    @memoized
+    def report(self):
+        return self._dispatcher.get_report(self.domain, self.report_slug)
 
     @property
     def report_name(self):
-        report = self._dispatcher.get_report(self.domain,
-                                            self.report_slug)
-        return report.name
+        return self.report.name
+
+    @property
+    def full_name(self):
+        if self.name:
+            return "%s (%s)" % (self.name, self.report_name)
+        else:
+            return self.report_name
 
     @property
     def date_description(self):
@@ -254,15 +281,66 @@ class ReportConfig(Document):
     def owner(self):
         return CouchUser.get(self.owner_id)
 
+    def get_report_content(self, request_domain, request_user):
+        """
+        Get the report's HTML content as rendered by the static view format.
+        This method doesn't really have a natural place in this class, but it's
+        better than duplicating the code in tasks and emailtest.
+
+        """
+        from django.http import HttpRequest, QueryDict
+
+        request = HttpRequest()
+        request.couch_user = request_user
+        request.user = request_user.get_django_user()
+        request.domain = request_domain
+        request.couch_user.current_domain = request_domain
+
+        request.GET = QueryDict(self.query_string + '&filterSet=true')
+
+        content = self._dispatcher.dispatch(request, render_as='static',
+                                            **self.view_kwargs).content
+        return json.loads(content)['report']
+
 
 class ReportNotification(Document, UnicodeMixIn):
-    domain = StringProperty()
     user_ids = StringListProperty()
-    report_slug = StringProperty()
-    
-    def __unicode__(self):
-        return "Notify: %s user(s): %s, report: %s" % \
-                (self.doc_type, ",".join(self.user_ids), self.report_slug)
+    config_id = StringProperty()  # added 10/2012
+
+    # report_slug = StringProperty()  # removed 10/2012
+    # domain = StringProperty()  # removed 10/2012
+
+    @property
+    @memoized
+    def config(self):
+        """
+        Access the notification's config object, transparently returning an
+        appropriate dummy object for old notifications which have `report_slug`
+        instead of `config_id`.
+
+        """
+        if self.config_id:
+            config = ReportConfig.get(self.config_id)
+        else:
+            # create a new ReportConfig object, useful for its methods and
+            # calculated properties, but don't save it
+            config = ReportConfig()
+            config.save = lambda self, *args, **kwargs: None
+            object.__setattr__(config, '_id', 'dummy')
+            config.report_type = 'project_report'
+            config.report_slug = self.report_slug
+            config.domain = self.domain
+            config.owner_id = self.user_ids[0]
+
+        return config
+
+    def remove_user(self, user_id):
+        self.user_ids.remove(user_id)
+        if self.user_ids:
+            self.save()
+        else:
+            self.delete()
+
     
 class DailyReportNotification(ReportNotification):
     hours = IntegerProperty()

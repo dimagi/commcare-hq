@@ -49,7 +49,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
     # useful for debugging email reports
     url(r'^emaillist/$', 'emaillist', name="emailable_report_list"),
-    url(r'^emailtest/(?P<report_slug>[\w_]+)/$', 'emailtest', name="emailable_report_test"),
+    url(r'^emailtest/(?P<config_id>[\w_]+)/$', 'emailtest', name="emailable_report_test"),
 
     # Create and Manage Custom Exports
     url(r"^export/$", 'export_data'),

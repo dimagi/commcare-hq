@@ -14,18 +14,20 @@
 
 {% block user-view %}
     <h2>Schedule a New Email Report</h2>
+
+    {% if configs %}
     <form class="form form-horizontal" method="post" action="">
         <fieldset>
             <legend>What shoud we send you?</legend>
             <div class="control-group">
-                <label class="control-label" for="report_type">Choose Report: </label>
+                <label class="control-label" for="config_id">Report Favorite: </label>
                 <div class="controls">
-                    <select name="report_type" id="report_type">
-                        {{ reports }}
-                        {% for id, report in reports.items %}
-                            <option value="{{id}}">{{report.title}}</option>
+                    <select name="config_id" id="config_id">
+                        {% for config in configs %}
+                        <option value="{{ config.get_id }}">{{ config.name }} ({{ config.report_name }})</option>
                         {% endfor %}
                     </select>
+                    <span class="help-inline alert alert-info" style="width: 400px;">Not all built-in reports currently support email delivery, so some of your favorites may not appear in this list.</span>  
                 </div>
             </div>
             <div class="control-group">
@@ -58,4 +60,11 @@
         </fieldset>
         <div class="form-actions"><button type="submit" class="btn btn-primary">Add Scheduled Report</button></div>
     </form>
+    {% else %}
+    <div class="alert">
+        You need a saved report favorite in order to set up a scheduled email report, but you don't have any.
+        
+        To add a report favorite, navigate to a report, select your desired filters, and click "Save".
+    </div>
+    {% endif %}
 {% endblock %}

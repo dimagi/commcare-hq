@@ -653,25 +653,22 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
 @login_and_domain_required
 @permission_required("is_superuser")
 def emaillist(request, domain):
-    """
-    Test an email report 
-    """
-    # circular import
-    from corehq.apps.reports.schedule.config import ScheduledReportFactory
+    """List configured email reports"""
+
+    configs = ReportConfig.by_domain_and_owner(domain, request.couch_user._id).all()
+    
     return render_to_response(request, "reports/email/report_list.html", 
                               {"domain": domain,
-                               "reports": ScheduledReportFactory.get_reports()})
+                               "configs": configs})
 
 @login_and_domain_required
 @permission_required("is_superuser")
-def emailtest(request, domain, report_slug):
-    """
-    Test an email report 
-    """
-    # circular import
-    from corehq.apps.reports.schedule.config import ScheduledReportFactory
-    report = ScheduledReportFactory.get_report(report_slug)
-    return HttpResponse(report.get_response(request.couch_user, domain))
+def emailtest(request, domain, config_id):
+    """Display the HTML output for a given email report config"""
+
+    config = ReportConfig.get(config_id)
+    content = config.get_report_content(domain, request.couch_user)
+    return HttpResponse(content)
 
 
 @login_and_domain_required

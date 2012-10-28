@@ -42,7 +42,6 @@ from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
 from dimagi.utils.web import render_to_response, json_response, get_url_base
 import calendar
-from corehq.apps.reports.schedule.config import ScheduledReportFactory
 from corehq.apps.reports.models import WeeklyReportNotification, DailyReportNotification, ReportNotification
 from django.contrib import messages
 from corehq.apps.reports.tasks import send_report
@@ -584,29 +583,44 @@ def test_httpdigest(request, domain):
     return HttpResponse("ok")
 
 @login_and_domain_required
-def add_scheduled_report(request, domain, couch_user_id):
+def add_scheduled_report(request, domain, couch_user_id, template="users/add_scheduled_report.html"):
+    from corehq.apps.reports.models import ReportConfig
+
+
     if request.method == "POST":
-        report_type = request.POST["report_type"]
-        hour = request.POST["hour"]
         day = request.POST["day"]
-        if day=="all":
+        if day == "all":
             report = DailyReportNotification()
         else:
             report = WeeklyReportNotification()
             report.day_of_week = int(day)
-        report.hours = int(hour)
-        report.domain = domain
-        report.report_slug = report_type
+        report.hours = int(request.POST["hour"])
+        report.config_id = request.POST["config_id"]
         report.user_ids = [couch_user_id]
         report.save()
         messages.success(request, "New scheduled report added!")
-        return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
+        return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
+
+    # todo: replace with examining the report class to see if it supports
+    # static response (currently not possible)
+    SCHEDULABLE_REPORTS = [
+        "daily_submissions",
+        "daily_completions",
+        "submissions_by_form",
+        "admin_domains",
+        "case_activity"
+    ]
+
+    configs = ReportConfig.by_domain_and_owner(domain, couch_user_id).all()
+    configs = [c for c in configs if c.report_slug in SCHEDULABLE_REPORTS
+                                     or c.report_type != 'project_report']
 
     context = _users_context(request, domain)
-    context.update({"hours": [(val, "%s:00" % val) for val in range(24)],
-                    "days":  [(val, calendar.day_name[val]) for val in range(7)],
-                    "reports": dict([(key, value) for (key, value) in  ScheduledReportFactory.get_reports(domain).items() if value.auth(request)])})
-    return render_to_response(request, "users/add_scheduled_report.html", context)
+    context["configs"] = configs
+    context["hours"] = [(val, "%s:00" % val) for val in range(24)]
+    context["days"] = [(val, calendar.day_name[val]) for val in range(7)]
+
+    return render_to_response(request, template, context)
 
 @login_and_domain_required
 @require_POST

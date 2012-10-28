@@ -6,7 +6,7 @@
         <thead>
             <tr>
                 <th>{% trans "Project" %}</th>
-                <th>{% trans "Report" %}</th>
+                <th>{% trans "Report Favorite" %}</th>
                 <th>{% trans "Time" %}</th>
                 <th>{% trans "Day of week" %}</th>
                 <th>{% trans "Stop notifications" %}</th>
@@ -16,12 +16,12 @@
         <tbody>
         {% for report in couch_user.get_scheduled_reports %}
             <tr>
-                <td>{{ report.domain }}</td>
-                <td>{{ report.report_slug }}</td>
+                <td>{{ report.config.domain }}</td>
+                <td>{{ report.config.full_name }}</td>
                 <td>{{ report.hours }}:00</td>
                 <td>{% ifequal report.doc_type "DailyReportNotification" %}Every day{% else %}{% int_to_day report.day_of_week %}{% endifequal %}</td>
-                <td><a class="btn btn-warning" data-toggle="modal" href="#{{ report.domain }}_{{ report.report_slug }}_{{ report.hours }}"><i class="icon icon-minus-sign icon-white"></i> {% trans "Stop" %}</a>
-                    <div id="{{ report.domain }}_{{ report.report_slug }}_{{ report.hours }}" class="modal hide fade">
+                <td><a class="btn btn-warning" data-toggle="modal" href="#{{ report.config.domain }}_{{ report.config.report_slug }}_{{ report.config.subreport_slug }}_{{ report.hours }}"><i class="icon icon-minus-sign icon-white"></i> {% trans "Stop" %}</a>
+                    <div id="{{ report.config.domain }}_{{ report.config.report_slug }}_{{ report.config.subreport_slug }}_{{ report.hours }}" class="modal hide fade">
                         <div class="modal-header">
                             <a class="close" data-dismiss="modal">&times;</a>
                             <h3>Stop sending report?</h3>
