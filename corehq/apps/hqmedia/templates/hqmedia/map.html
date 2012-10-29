@@ -31,7 +31,8 @@
             uploadParams: {},
             modalClass: '.hqm-modal-image',
             mediaType: 'hquimage_',
-            swfLocation: '{% static 'hqmedia/yui/uploader/uploader.swf' %}'
+            swfLocation: '{% static 'hqmedia/yui/uploader/uploader.swf' %}',
+            uploadFormParams: ['license']
         });
         hqimage_uploader.render();
 
@@ -47,7 +48,8 @@
             uploadParams: {},
             modalClass: '.hqm-modal-audio',
             mediaType: 'hquaudio_',
-            swfLocation: '{% static 'hqmedia/yui/uploader/uploader.swf' %}'
+            swfLocation: '{% static 'hqmedia/yui/uploader/uploader.swf' %}',
+            uploadFormParams: ['license']
         });
         hqaudio_uploader.render();
     </script>
@@ -115,6 +117,7 @@
                                                 <div class="controls"></div>
                                             </div>
                                             <div class="upload-form-placeholder"></div>
+                                            <br />
                                             <div>
                                                 <form data-bind="submit: searchForImages">
                                                     <div class="control-group">
@@ -193,6 +196,7 @@
 {#                                            <div class="controls"></div>#}
 {#                                        </div>#}
                                         <div class="upload-form-placeholder"></div>
+                                        <br />
                                         <div>
                                             <form data-bind="submit: searchForAudio">
                                                 <div class="control-group">
@@ -248,7 +252,23 @@
             </div>
             <div class="controls hqm-upload-list"></div>
         </div>
-        <div class="controls" style="margin-top: 0;">
+        <div class="hide control-group hqm-file_selected_only" style="margin-bottom: 0;">
+            <div class="control-label">License</div>
+            <div class="hide controls hqm-upload-form">
+                <select name="license">
+                    <option value="cc-nc">Creative Commons Attribution, Non-Commercial</option>
+                    <option value="cc-nd">Creative Commons Attribution, No Derivatives</option>
+                    <option value="cc" selected="selected">Creative Commons Attribution</option>
+                    <option value="cc-nc-sa">Creative Commons Attribution, Non-Commercial, and Share Alike</option>
+                    <option value="cc-nc-nd">Creative Commons Attribution, Non-Commercial, and No Derivatives</option>
+                    <option value="cc-sa">Creative Commons Attribution, Share Alike</option>
+                    <option value="public">Public Domain</option>
+                </select>
+            </div>
+            <div class="controls hqm-status"></div>
+            <br />
+        </div>
+        <div class="controls">
             <div class="hide hqm-upload-hidden">
                 <label for="shareImage"><input id="shareImage" class="hqm-share-media" type="checkbox" checked="checked" /> Share this media with other CommCareHQ users</label>
                 <input id="imageTags" class="hqm-media-tags" type="text" placeholder="Enter space-separated tags for the image" />
@@ -268,6 +288,22 @@
                 </div>
             </div>
             <div class="controls hqm-upload-list"></div>
+        </div>
+        <div class="hide control-group hqm-file_selected_only" style="margin-bottom: 0;">
+            <div class="control-label">License</div>
+            <div class="hide controls hqm-upload-form">
+                <select name="license">
+                    <option value="cc-nc">Creative Commons Attribution, Non-Commercial</option>
+                    <option value="cc-nd">Creative Commons Attribution, No Derivatives</option>
+                    <option value="cc" selected="selected">Creative Commons Attribution</option>
+                    <option value="cc-nc-sa">Creative Commons Attribution, Non-Commercial, and Share Alike</option>
+                    <option value="cc-nc-nd">Creative Commons Attribution, Non-Commercial, and No Derivatives</option>
+                    <option value="cc-sa">Creative Commons Attribution, Share Alike</option>
+                    <option value="public">Public Domain</option>
+                </select>
+            </div>
+            <div class="controls hqm-status"></div>
+            <br />
         </div>
         <div class="controls" style="margin-top: 0;">
             <div class="hide hqm-upload-hidden">
