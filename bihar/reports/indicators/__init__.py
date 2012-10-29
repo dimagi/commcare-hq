@@ -18,7 +18,7 @@ INDICATOR_SETS = [
                 {
                     "slug": "new_pregnancies", 
                     "name": "Pregnant woman registered in last 30 days",
-                    "filter_function": "bihar.reports.indicators.filters.became_pregnant_last_month"
+                    "filter_function": "bihar.reports.indicators.filters.pregnancy_registered_last_month"
                 }, 
                 {"slug": "deliveries", "name": "Pregnant woman who delivered in last 30 days"},
                 {"slug": "upcoming_deliveries", "name": "All woman due for delivery in next 30 days"}
