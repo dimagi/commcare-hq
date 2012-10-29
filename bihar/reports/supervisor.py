@@ -176,12 +176,13 @@ class MainNavReport(BiharNavReport):
 
 class WorkerRankSelectionReport(SubCenterSelectionReport):
     slug = "workerranks"
+    name = "Worker Rank"
     
     def _row(self, group, rank):
         # HACK: hard code this for now until there's an easier 
         # way to get this from configuration
-        url = SupervisorReportsADMSection.get_url(self.domain, 
-                                                  self.render_next,
+        args = [self.domain, self.render_next] if self.render_next else [self.domain]
+        url = SupervisorReportsADMSection.get_url(*args,
                                                   subreport="worker_rank_table")
         end = datetime.today().date()
         start = end - timedelta(days=30)
