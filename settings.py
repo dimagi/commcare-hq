@@ -637,7 +637,7 @@ CUSTOM_REPORT_MAP = {
     "care-bihar": {
         "Custom Reports": [
             "bihar.reports.supervisor.MainNavReport",
-            "bihar.reports.supervisor.WorkerRankReport",
+            "bihar.reports.supervisor.WorkerRankSelectionReport",
             "bihar.reports.supervisor.DueListReport",
             "bihar.reports.supervisor.ToolsReport",
             "bihar.reports.supervisor.SubCenterSelectionReport",
