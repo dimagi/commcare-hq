@@ -1,5 +1,4 @@
 from itertools import islice
-import uuid
 from couchdbkit.ext.django.schema import Document, IntegerProperty, DictProperty,\
     Property, DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
     StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty
@@ -202,7 +201,8 @@ class ExportTable(DocumentSchema):
                 else:
                     cells.append(val)
             id_index = self.id_index if id else 0
-            yield FormattedRow(cells, row.id, id_index=id_index)
+            row_id = row.id if id else None
+            yield FormattedRow(cells, row_id, id_index=id_index)
 
 class BaseSavedExportSchema(Document):
     # signature: filter(doc)
