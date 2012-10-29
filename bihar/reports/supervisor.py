@@ -9,7 +9,8 @@ from dimagi.utils.html import format_html
 from corehq.apps.groups.models import Group
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.models import CommCareCase
-
+from datetime import datetime, timedelta
+from corehq.apps.adm.reports.supervisor import SupervisorReportsADMSection
 
 class ConvenientBaseMixIn(object):
     # this is everything that's shared amongst the Bihar supervision reports
@@ -169,14 +170,35 @@ class MainNavReport(BiharNavReport):
     @property
     def reports(self):
         from bihar.reports.indicators.reports import IndicatorSelectNav
-        return [IndicatorSelectNav, WorkerRankReport, 
+        return [IndicatorSelectNav, WorkerRankSelectionReport, 
                 DueListReport, ToolsReport]
 
 
-# TODO
-class WorkerRankReport(MockEmptyReport):
-    name = "Worker Rank"
+class WorkerRankSelectionReport(SubCenterSelectionReport):
     slug = "workerranks"
+    
+    def _row(self, group, rank):
+        # HACK: hard code this for now until there's an easier 
+        # way to get this from configuration
+        url = SupervisorReportsADMSection.get_url(self.domain, 
+                                                  self.render_next,
+                                                  subreport="worker_rank_table")
+        end = datetime.today().date()
+        start = end - timedelta(days=30)
+        params = {
+            "ufilter": 0, 
+            "startdate": start.strftime("%Y-%m-%d"),
+            "enddate": end.strftime("%Y-%m-%d")
+        }
+        def _link(g):
+            params["group"] = g.get_id
+            return format_html('<a href="{details}">{group}</a>',
+                group=g.name,
+                details=url_and_params(url,
+                                       params))
+        return [_link(group), 
+                "%s / %s" % (rank, len(self._get_groups()))]
+    
 
 class DueListReport(MockEmptyReport):
     name = "Due List"
