@@ -8,6 +8,7 @@ import urllib
 from dimagi.utils.html import format_html
 from corehq.apps.groups.models import Group
 from dimagi.utils.decorators.memoized import memoized
+from casexml.apps.case.models import CommCareCase
 
 
 class ConvenientBaseMixIn(object):
@@ -60,6 +61,12 @@ class GroupReferenceMixIn(object):
         assert g.domain == self.domain, "Group %s isn't in domain %s" % (g.get_id, self.domain)
         return g
     
+    @property
+    @memoized
+    def cases(self):
+        return CommCareCase.view('case/by_owner', key=[self.group_id, False],
+                                 include_docs=True, reduce=False)
+
 class MockTablularReport(ConvenientBaseMixIn, GenericTabularReport, CustomProjectReport):
     
     row_count = 20 # override if needed

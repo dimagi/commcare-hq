@@ -77,30 +77,36 @@ class IndicatorSelectNav(BiharSummaryReport, IndicatorConfigMixIn):
         return [_nav_link(iset) for iset in self.indicator_config.indicator_sets]
 
     
-class IndicatorSummaryReport(BiharSummaryReport, IndicatorSetMixIn, GroupReferenceMixIn):
+class IndicatorSummaryReport(BiharSummaryReport, IndicatorSetMixIn, 
+                             GroupReferenceMixIn):
+    
     name = "Indicators"
     slug = "indicatorsummary"
     description = "Indicator details report"
     
-    def fake_done_due(self, i=20):
-        # highly customized for gates
-        return "(%(done)s Done / %(due)s Due)" % \
-            {"done": random.randint(0, i),
-             "due": i}
+    @property
+    def summary_indicators(self):
+        return self.indicator_set.get_indicators("summary")
+    
     @property
     def _headers(self):
-        return ["Team Name"] + [i.name for i in self.indicator_set.get_indicators("summary")]
+        return ["Team Name"] + [i.name for i in self.summary_indicators]
     
     @property
     def data(self):
         return [self.group.name] + \
-               [self.fake_done_due(i) for i in range(len(self._headers) - 1)]
+               [self.get_indicator_value(i) for i in self.summary_indicators]
 
 
+    def get_indicator_value(self, indicator):
+        if indicator.calculation_function:
+            return indicator.calculation_function(self.cases)
+        return "not available yet"
+    
+    
 class IndicatorCharts(MockEmptyReport):
     name = "Charts"
     slug = "indicatorcharts"
-
 
 
 class IndicatorClientSelectNav(BiharSummaryReport, IndicatorSetMixIn):
@@ -138,7 +144,6 @@ class IndicatorClientList(ConvenientBaseMixIn, GenericTabularReport,
                           CustomProjectReport, GroupReferenceMixIn,
                           IndicatorMixIn):
     slug = "indicatorclientlist"
-    
     name = "Client List" 
     
     @property
@@ -161,9 +166,7 @@ class IndicatorClientList(ConvenientBaseMixIn, GenericTabularReport,
             return True
     
     def _get_clients(self):
-        cases = CommCareCase.view('case/by_owner', key=[self.group_id, False],
-                                  include_docs=True, reduce=False)
-        for c in cases:
+        for c in self.cases:
             if self._filter(c):
                 yield c
         
