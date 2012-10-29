@@ -201,6 +201,7 @@ HQ_APPS = (
     'mvp',
     'pathfinder',
     'pathindia',
+    'pact',
 )
 
 REFLEXIVE_URL_BASE = "localhost:8000"
