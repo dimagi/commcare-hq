@@ -56,8 +56,7 @@ def make_psi_config(domain):
     c = CommtrackConfig(
         domain=domain,
         multiaction_enabled=True,
-        multiaction_keyword='psi',
-        multiaction_delimiter='.',
+        multiaction_keyword='p',
         actions = {
             'prevstockonhand': CommtrackActionConfig(
                 keyword='soh',
