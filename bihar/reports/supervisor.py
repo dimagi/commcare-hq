@@ -1,7 +1,6 @@
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.generic import GenericTabularReport,\
     SummaryTablularReport
-import random
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from copy import copy
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
@@ -35,11 +34,6 @@ class ConvenientBaseMixIn(object):
         return False
      
 
-class TeamHoldingMixIn(object):
-    @property
-    def team(self):
-        return self.request_params.get('team')
-    
 class ReportReferenceMixIn(object):
     # allow a report to reference another report
     
@@ -77,15 +71,13 @@ class MockTablularReport(ConvenientBaseMixIn, GenericTabularReport, CustomProjec
     def rows(self):
         return [self._row(i) for i in range(self.row_count)]
 
-class MockSummaryReport(ConvenientBaseMixIn, SummaryTablularReport, CustomProjectReport):
-    
-    def fake_done_due(self, i=20):
-        # highly customized for gates
-        return "(%(done)s Done / %(due)s Due)" % \
-            {"done": random.randint(0, i),
-             "due": i}
+class BiharSummaryReport(ConvenientBaseMixIn, SummaryTablularReport, 
+                         CustomProjectReport):
+    # this is literally just a way to do a multiple inheritance without having
+    # the same 3 classes extended by a bunch of other classes
+    pass
             
-class MockNavReport(MockSummaryReport):
+class BiharNavReport(BiharSummaryReport):
     # this is a bit of a bastardization of the summary report
     # but it is quite DRY
     
@@ -113,7 +105,7 @@ class MockNavReport(MockSummaryReport):
         return [_nav_link(report_cls) for report_cls in self.reports]
         
 
-class MockEmptyReport(MockSummaryReport):
+class MockEmptyReport(BiharSummaryReport):
     """
     A stub empty report
     """
@@ -158,7 +150,7 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
                 "%s / %s" % (rank, len(self._get_groups()))]
             
 
-class MainNavReport(MockNavReport):
+class MainNavReport(BiharNavReport):
     name = "Main Menu"
     slug = "mainnav"
     description = "Main navigation"

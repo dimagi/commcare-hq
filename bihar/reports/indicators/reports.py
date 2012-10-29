@@ -1,6 +1,6 @@
-from bihar.reports.supervisor import MockNavReport, MockEmptyReport,\
-    url_and_params, SubCenterSelectionReport, TeamHoldingMixIn,\
-    MockSummaryReport, MockTablularReport, ConvenientBaseMixIn,\
+from bihar.reports.supervisor import BiharNavReport, MockEmptyReport,\
+    url_and_params, SubCenterSelectionReport, \
+    BiharSummaryReport, ConvenientBaseMixIn,\
     GroupReferenceMixIn
 from bihar.reports.indicators import INDICATOR_SETS, IndicatorConfig
 from copy import copy
@@ -8,6 +8,7 @@ from dimagi.utils.html import format_html
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
 from casexml.apps.case.models import CommCareCase
+import random
 
 DEFAULT_EMPTY = "?"
 
@@ -41,7 +42,7 @@ class IndicatorMixIn(IndicatorSetMixIn):
         return self.indicator_set.get_indicator(self.type_slug, self.indicator_slug)
         
         
-class IndicatorNav(MockNavReport):
+class IndicatorNav(BiharNavReport):
     name = "Indicator Options"
     slug = "indicatornav"
     description = "Indicator navigation"
@@ -52,7 +53,7 @@ class IndicatorNav(MockNavReport):
         return [IndicatorSummaryReport, IndicatorClientSelectNav, 
                 IndicatorCharts]
 
-class IndicatorSelectNav(MockSummaryReport, IndicatorConfigMixIn):
+class IndicatorSelectNav(BiharSummaryReport, IndicatorConfigMixIn):
     name = "Select Team"
     slug = "teams"
     
@@ -76,18 +77,23 @@ class IndicatorSelectNav(MockSummaryReport, IndicatorConfigMixIn):
         return [_nav_link(iset) for iset in self.indicator_config.indicator_sets]
 
     
-class IndicatorSummaryReport(MockSummaryReport, IndicatorSetMixIn, TeamHoldingMixIn):
+class IndicatorSummaryReport(BiharSummaryReport, IndicatorSetMixIn, GroupReferenceMixIn):
     name = "Indicators"
     slug = "indicatorsummary"
     description = "Indicator details report"
     
+    def fake_done_due(self, i=20):
+        # highly customized for gates
+        return "(%(done)s Done / %(due)s Due)" % \
+            {"done": random.randint(0, i),
+             "due": i}
     @property
     def _headers(self):
         return ["Team Name"] + [i.name for i in self.indicator_set.get_indicators("summary")]
     
     @property
     def data(self):
-        return [self.team] + \
+        return [self.group.name] + \
                [self.fake_done_due(i) for i in range(len(self._headers) - 1)]
 
 
@@ -97,7 +103,7 @@ class IndicatorCharts(MockEmptyReport):
 
 
 
-class IndicatorClientSelectNav(MockSummaryReport, IndicatorSetMixIn):
+class IndicatorClientSelectNav(BiharSummaryReport, IndicatorSetMixIn):
     name = "Select Client List"
     slug = "clients"
     
