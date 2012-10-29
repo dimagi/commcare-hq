@@ -586,7 +586,7 @@ def system_info(request):
     context['current_system'] = os.uname()[1]
     context['current_ref'] = gitinfo.get_project_info()
     if settings.COUCH_USERNAME == '' and settings.COUCH_PASSWORD == '':
-       couchlog_resource = Resource("http://%s/" % (settings.COUCH_SERVER_ROOT))
+        couchlog_resource = Resource("http://%s/" % (settings.COUCH_SERVER_ROOT))
     else:
         couchlog_resource = Resource("http://%s:%s@%s/" % (settings.COUCH_USERNAME, settings.COUCH_PASSWORD, settings.COUCH_SERVER_ROOT))
     context['couch_log'] = couchlog_resource.get('_log', params_dict={'bytes': 2000 }).body_string()
@@ -594,22 +594,21 @@ def system_info(request):
     #redis status
     redis_status = ""
     redis_results = ""
-    try:
+    if 'redis' in settings.CACHES:
         rc = cache.get_cache('redis')
+        try:
+            import redis
+            redis_api = redis.StrictRedis.from_url('redis://%s' % rc._server)
+            info_dict = redis_api.info()
+            redis_status = "Online"
+            redis_results = "Used Memory: %s" % info_dict['used_memory_human']
+        except Exception, ex:
+            redis_status = "Offline"
+            redis_results = "Redis connection error: %s" % ex
+    else:
+        redis_status = "Not Configured"
+        redis_results = "Redis is not configured on this system!"
 
-    except InvalidCacheBackendError, ex:
-        redis_status="Not Configured"
-        redis_results= "Redis is not configured on this system!"
-
-    try:
-        import redis
-        redis_api = redis.StrictRedis.from_url('redis://%s' % rc._server)
-        info_dict = redis_api.info()
-        redis_status = "Online"
-        redis_results = "Used Memory: %s" % info_dict['used_memory_human']
-    except Exception, ex:
-        redis_status="Offline"
-        redis_result= "Redis connection error: %s" % ex
     context['redis_status'] = redis_status
     context['redis_results'] = redis_results
 
