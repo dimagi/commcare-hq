@@ -53,28 +53,3 @@ def check_repeaters():
         except ResourceConflict:
             logging.error("ResourceConflict with repeat_record %s: %s" % (repeat_record.get_id, repeat_record.to_json()))
             raise
-
-@periodic_task(run_every=timedelta(minutes=1))
-def check_inline_form_repeaters(post_fn=None):
-    """old-style FormRepeater grandfathered in"""
-    now = datetime.utcnow()
-    forms = XFormInstance.view('receiverwrapper/forms_with_pending_repeats',
-        startkey="",
-        endkey=json_format_datetime(now),
-        include_docs=True,
-    )
-
-    for form in forms:
-        if hasattr(form, 'repeats'):
-            for repeat_record in form.repeats:
-                record = dict(repeat_record)
-                url = record.pop('url')
-                record = RepeatRecord.wrap(record)
-                record.payload_id = form.get_id
-
-                record._repeater = FormRepeater(url=url)
-                record.fire(post_fn=post_fn)
-                record = record.to_json()
-                record['url'] = url
-                repeat_record.update(record)
-            form.save()
