@@ -134,9 +134,11 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
     
     @memoized
     def _get_groups(self):
-        groups = Group.by_domain(self.domain)
-        # temp hack till we figure out how user/group association works
-        return filter(lambda g: "Aguwanpur" in g.name, groups)
+        if self.request.couch_user.is_commcare_user():
+            return Group.by_user(self.request.couch_user)
+        else:
+            # for web users just show everything?
+            return Group.by_domain(self.domain)
         
     @property
     def rows(self):
