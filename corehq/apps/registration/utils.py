@@ -38,7 +38,7 @@ def request_new_domain(request, form, org, new_user=True):
 
     dom_req = RegistrationRequest()
     if new_user:
-        dom_req.tos_confirmed = form.cleaned_data['tos_confirmed']
+        dom_req.tos_confirmed = form.cleaned_data['eula_confirmed']
         dom_req.request_time = now
         dom_req.request_ip = user_ip
         dom_req.activation_guid = uuid.uuid1().hex
