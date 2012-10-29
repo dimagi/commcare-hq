@@ -133,12 +133,17 @@ class IndicatorClientList(ConvenientBaseMixIn, GenericTabularReport,
                           IndicatorMixIn):
     slug = "indicatorclientlist"
     
+    name = "Client List" 
+    
     @property
-    def name(self):
+    def _name(self):
+        # NOTE: this isn't currently used, but is how things should work
+        # once we have a workaround for name needing to be available at
+        # the class level.
         try:
             return self.indicator.name
         except AttributeError:
-            return "Client List" 
+            return self.name
 
     _headers = ["Name", "EDD"] 
     
