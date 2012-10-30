@@ -369,6 +369,12 @@ LOCAL_APPS = ()
 LOCAL_MIDDLEWARE_CLASSES = ()
 LOCAL_PILLOWTOPS = []
 
+# our production logstash aggregation
+LOGSTASH_DEVICELOG_PORT = 10777
+LOGSTASH_COUCHLOG_PORT = 10888
+LOGSTASH_AUDITCARE_PORT = 10999
+LOGSTASH_HOST = 'localhost'
+
 try:
     #try to see if there's an environmental variable set for local_settings
     if os.environ.has_key('CUSTOMSETTINGS') and os.environ['CUSTOMSETTINGS'] == "demo":
@@ -730,6 +736,3 @@ PILLOWTOPS = [ 'corehq.pillows.CasePillow',
                'corehq.pillows.CouchlogPillow',
                'corehq.pillows.DevicelogPillow',
                ] + LOCAL_PILLOWTOPS
-
-
-
