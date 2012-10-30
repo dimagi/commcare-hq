@@ -141,7 +141,7 @@ def es_filter_cases(domain, filters=None):
             }
         
         def get_terms(self):
-            yield {'term': {'domain': self.domain}}
+            yield {'term': {'domain.exact': self.domain}}
             if self.uses_modified:
                 yield self.modified_params
             for k, v in self.scrubbed_filters.items():
