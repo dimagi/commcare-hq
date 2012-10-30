@@ -91,6 +91,30 @@ def make_products(domain, products):
     for name, code in products:
         make_product(domain, name, code)
 
+SAMPLE_VILLAGES = [
+    'Abhayapuri',
+    'Bathinda',
+    'Colgong',
+    'Gobranawapara',
+    'Jayankondam',
+    'Karimganj',
+    'Mahendragarh',
+    'Pallikonda',
+    'Rajahmundry',
+    'Srikakulam',
+]
+
+OUTLET_TYPES = [
+    'rural',
+    'peri-urban',
+    'urban',
+    'orbital',
+]
+
+def fake_phone_number(length):
+    prefix = '099'
+    return prefix + ''.join(str(random.randint(0, 9)) for i in range(length - len(prefix)))
+
 def create_locations(domain):
     def make_loc(*args, **kwargs):
         loc = Location(domain=domain, *args, **kwargs)
@@ -108,7 +132,16 @@ def create_locations(domain):
                 for l in range(random.randint(1, LOC_BRANCH_FACTOR)):
                     outlet_id = '%s%s' % (block_id, chr(ord('A') + l))
                     outlet_name = 'Outlet %s' % outlet_id
-                    outlet = make_loc(name=outlet_name, location_type='outlet', parent=block)
+                    properties = {
+                        'state': state_name,
+                        'district': district_name,
+                        'block': block_name,
+                        'village': random.choice(SAMPLE_VILLAGES),
+                        'outlet_id': outlet_id,
+                        'outlet_type': random.choice(OUTLET_TYPES),
+                        'contact_phone': fake_phone_number(10),
+                    }
+                    outlet = make_loc(name=outlet_name, location_type='outlet', parent=block, **properties)
                     outlet_code = '%d%d%d%d' % (i + 1, j + 1, k + 1, l + 1)
                     make_supply_point(domain, outlet, outlet_code)
 

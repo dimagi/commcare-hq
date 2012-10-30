@@ -63,6 +63,17 @@ def get_stock_reports(domain, location, datespan):
 def leaf_loc(form):
     return form['location_'][-1]
 
+OUTLET_METADATA = [
+    ('state', 'State'),
+    ('district', 'District'),
+    ('block', 'Block'),
+    ('village', 'Village'),
+    ('outlet_id', 'Outlet ID'),
+    ('name', 'Outlet'),
+    ('contact_phone', 'Contact Phone'),
+    ('outlet_type', 'Outlet Type'),
+]
+
 class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Visit Report'
     slug = 'visits'
@@ -71,12 +82,11 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
 
     @property
     def headers(self):
-        cols = [
-            DataTablesColumn('Outlet'),
-            # TODO lots of static outlet info
+        cols = [DataTablesColumn(caption) for key, caption in OUTLET_METADATA]
+        cols.extend([
             DataTablesColumn('Date'),
             DataTablesColumn('Reporter'),
-        ]
+        ])
         cfg = self.config
         for p in self.products:
             for a in self.actions:
@@ -93,12 +103,13 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
 
         def row(doc):
             transactions = dict(((tx['action'], tx['product']), tx['value']) for tx in get_transactions(doc))
+            location =  locs[leaf_loc(doc)]
 
-            data = [
-                locs[leaf_loc(doc)].name,
+            data = [getattr(location, key) for key, caption in OUTLET_METADATA]
+            data.extend([
                 dateparse.string_to_datetime(doc['received_on']).strftime('%Y-%m-%d'),
                 CommCareUser.get(doc['form']['meta']['userID']).username_in_report,
-            ]
+            ])
             for p in products:
                 for a in actions:
                     data.append(transactions.get((a, p['_id']), ''))
@@ -115,10 +126,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
     @property
     def headers(self):
-        cols = [
-            DataTablesColumn('Outlet'),
-            # TODO lots of static outlet info
-        ]
+        cols = [DataTablesColumn(caption) for key, caption in OUTLET_METADATA]
         for p in self.products:
             cols.append(DataTablesColumn('Stock on Hand (%s)' % p['name']))
             cols.append(DataTablesColumn('Total Sales (%s)' % p['name']))
@@ -138,9 +146,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
             all_transactions = list(itertools.chain(*(get_transactions(r) for r in reports)))
             tx_by_product = map_reduce(lambda tx: [(tx['product'],)], data=all_transactions, include_docs=True)
 
-            data = [
-                site.name,
-            ]
+            data = [getattr(site, key) for key, caption in OUTLET_METADATA]
             stockouts = {}
             for p in products:
                 tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
