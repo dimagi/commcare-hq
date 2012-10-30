@@ -103,7 +103,7 @@ class HQMediaMatcher():
         else:
             return CouchUser.get_by_username(self.username)
 
-    def match_zipped(self, zip, replace_existing_media=True):
+    def match_zipped(self, zip, replace_existing_media=True, **kwargs):
         unknown_files = []
         matched_audio = []
         matched_images = []
@@ -144,6 +144,9 @@ class HQMediaMatcher():
                             username=self.username,
                             replace_attachment=replace_existing_media)
                         media.add_domain(self.domain, owner=True)
+                        media.update_or_add_license(self.domain,
+                                                    type=kwargs.get('license', ''),
+                                                    author=kwargs.get('author', ''))
                         self.app.create_mapping(media, form_path)
                         match_map = HQMediaMapItem.format_match_map(form_path, media.doc_type, media._id, path)
                         if is_image:
@@ -190,6 +193,7 @@ class HQMediaMatcher():
                     username=self.username,
                     replace_attachment=replace_existing_media)
                 media.add_domain(self.domain, owner=True, **kwargs)
+                media.update_or_add_license(self.domain, type=kwargs.get('license', ''), author=kwargs.get('author', ''))
                 self.app.create_mapping(media, form_path)
 
                 return True, HQMediaMapItem.format_match_map(form_path, media.doc_type, media._id, filename), errors

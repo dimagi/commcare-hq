@@ -389,7 +389,7 @@ def create_snapshot(request, domain):
             for m_file in media:
                 if domain.name not in m_file.shared_by:
                     m_file.shared_by.append(domain.name)
-                    m_file.licenses[domain.name] = domain.license
+#                    m_file.licenses[domain.name] = domain.license # this shouldn't be necessary now that licenses are set on upload
                     m_file.save()
         old = domain.published_snapshot()
         new_domain = domain.save_snapshot()
@@ -491,13 +491,13 @@ def manage_multimedia(request, domain):
                 m_file.shared_by.remove(domain)
 
             if '%s_license' % m_file._id in request.POST:
-                m_file.licenses[domain] = request.POST.get('%s_license' % m_file._id, 'public')
+                m_file.update_or_add_license(domain, type=request.POST.get('%s_license' % m_file._id, 'public'))
             m_file.save()
         messages.success(request, "Multimedia updated successfully!")
 
     return render_to_response(request, 'domain/admin/media_manager.html', {'domain': domain,
         'media': [{
-            'license': m.licenses.get(domain, 'public'),
+            'license': m.license.type if m.license else 'public',
             'shared': domain in m.shared_by,
             'url': m.url(),
             'm_id': m._id,

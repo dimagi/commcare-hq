@@ -16,8 +16,17 @@ class HQMediaType(object):
     AUDIO = 1
     names = ["image", "audio"]
 
-class CommCareMultimedia(Document):
+class HQMediaLicense(DocumentSchema):
+    domain = StringProperty()
+    author = StringProperty()
+    organization = StringProperty()
+    type = StringProperty(choices=LICENSES)
 
+    @property
+    def display_name(self):
+        return LICENSES.get(self.type, "Improper License")
+
+class CommCareMultimedia(Document):
     file_hash = StringProperty()
     aux_media = SchemaListProperty(AuxMedia)
 
@@ -26,7 +35,7 @@ class CommCareMultimedia(Document):
     # add something about context from the form(s) its in
 
     owners = StringListProperty(default=[])
-    licenses = DictProperty(default={}) # dict of strings
+    licenses = SchemaListProperty(HQMediaLicense, default=[])
     shared_by = StringListProperty(default=[])
     tags = DictProperty(default={}) # dict of string lists
 
@@ -88,8 +97,6 @@ class CommCareMultimedia(Document):
             elif not shared and shared != '' and domain in self.shared_by:
                 self.shared_by.remove(domain)
 
-            if kwargs.get('licenses', ''):
-                self.licenses[domain] = kwargs['license']
             if kwargs.get('tags', ''):
                 self.tags[domain] = kwargs['tags']
 
@@ -160,6 +167,25 @@ class CommCareMultimedia(Document):
     def search(cls, query, limit=10):
         results = get_db().search(cls.Config.search_view, q=query, limit=limit, stale='ok')
         return map(cls.get, [r['id'] for r in results])
+
+    @property
+    def license(self):
+        return self.licenses[0] if self.licenses else None
+
+    def update_or_add_license(self, domain, type="", author="", org=""):
+        for license in self.licenses:
+            if license.domain == domain:
+                license.type = type or license.type
+                license.author = author or license.author
+                license.organization = org or license.organization
+                break
+        else:
+            print type
+            print author
+            license = HQMediaLicense(domain=domain, type=type, author=author, organization=org)
+            self.licenses.append(license)
+
+        self.save()
 
 class CommCareImage(CommCareMultimedia):
 
