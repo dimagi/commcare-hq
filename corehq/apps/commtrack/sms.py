@@ -3,6 +3,7 @@ from corehq.apps.commtrack.models import *
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack import stockreport
 from dimagi.utils.couch.database import get_db
+from corehq.apps.sms.api import send_sms_to_verified_number
 from lxml import etree
 import logging
 
@@ -14,16 +15,20 @@ def handle(verified_contact, text):
     if not domain.commtrack_enabled:
         return False
 
-    # TODO error handling
-    data = StockReport(domain).parse(text)
-    logger.debug(data)
+    try:
+        data = StockReport(domain).parse(text)
+        if not data:
+            return False
+        logger.debug(data)
+    except Exception, e:
+        send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
+        return True
+
     inst_xml = to_instance(verified_contact, data)
     logger.debug(inst_xml)
     
     stockreport.process(verified_contact.domain, inst_xml)
 
-    # TODO: if message doesn't parse, don't handle it and fallback
-    # to a catch-all error handler?
     return True
 
 class StockReport(object):
@@ -60,6 +65,10 @@ class StockReport(object):
                 args = args[1:]
 
             _tx = self.multiple_action_transactions(args)
+
+        else:
+            # initial keyword not recognized; delegate to another handler
+            return None
 
         return {
             'location': location,
