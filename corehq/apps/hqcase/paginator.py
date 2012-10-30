@@ -15,7 +15,7 @@ class CasePaginator():
         assert self.status in ('open', 'closed', None)
 
     def results(self):
-        """Lucene Results"""
+        """Elasticsearch Results"""
 
         # there's no point doing filters that are like owner_id:(x1 OR x2 OR ... OR x612)
         # so past a certain number just exclude
@@ -82,10 +82,9 @@ class CasePaginator():
             'query': {
                 'filtered': {
                     'query': {
-                        'match': {'case.domain': self.domain}
+                        'match': {'case.domain.exact': self.domain}
                     },
                     'filter': and_block
-
                 }
             },
             'sort': {
@@ -95,6 +94,7 @@ class CasePaginator():
             'size': self.params.count,
         }
         es_results = es.get('hqcases/case/_search', data=es_query)
+
         if es_results.has_key('error'):
             logging.exception("Error in case list elasticsearch query: %s" % es_results['error'])
             return {

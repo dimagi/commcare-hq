@@ -50,7 +50,7 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
     @property
     def rows(self):
         checkbox = '<input type="checkbox" class="selected-commcare-case" data-bind="event: {change: updateCaseSelection}" data-caseid="%(case_id)s" data-owner="%(owner)s" data-ownertype="%(owner_type)s" />'
-        for row in self.case_results:
+        for row in self.case_results['rows']:
             case = self.get_case(row)
             display = self.CaseDisplay(case)
             yield [
