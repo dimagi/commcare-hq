@@ -3,6 +3,7 @@ from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators import inline
 from django.conf import settings
 import rawes
+from corehq.elastic import get_es
 
 class CasePaginator():
     def __init__(self, domain, params, case_type=None, owner_ids=None, user_ids=None, status=None):
@@ -26,8 +27,6 @@ class CasePaginator():
                 return string.join([thing or '""' for thing in things])
 
             return _inner
-
-        es = rawes.Elastic('%s:%s' % (settings.ELASTICSEARCH_HOST, settings.ELASTICSEARCH_PORT))
 
         def _filter_gen(key, list):
             if list and len(list) < MAX_IDS:
@@ -93,7 +92,7 @@ class CasePaginator():
             'from': self.params.start,
             'size': self.params.count,
         }
-        es_results = es.get('hqcases/case/_search', data=es_query)
+        es_results = get_es().get('hqcases/case/_search', data=es_query)
 
         if es_results.has_key('error'):
             logging.exception("Error in case list elasticsearch query: %s" % es_results['error'])
