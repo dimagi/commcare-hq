@@ -111,7 +111,7 @@ class DomainRegistrationForm(forms.Form):
     """
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
     domain_name =  forms.CharField(label='Project Name:', max_length=25)
-    tos_confirmed = forms.BooleanField(required=False, label="Terms of Service") # Must be set to False to have the clean_*() routine called
+    eula_confirmed = forms.BooleanField(required=False, label="End User License Agreement") # Must be set to False to have the clean_*() routine called
 
     def clean_domain_name(self):
         data = self.cleaned_data['domain_name'].strip().lower()
@@ -126,10 +126,10 @@ class DomainRegistrationForm(forms.Form):
             raise forms.ValidationError('Project name already taken---please try another')
         return data
 
-    def clean_tos_confirmed(self):
-        data = self.cleaned_data['tos_confirmed']
+    def clean_eula_confirmed(self):
+        data = self.cleaned_data['eula_confirmed']
         if data is not True:
-            raise forms.ValidationError('You must agree to our Terms Of Service in order to create your own project.')
+            raise forms.ValidationError('You must agree to our End User License Agreement in order to create your own project.')
         return data
 
     def clean(self):

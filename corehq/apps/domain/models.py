@@ -125,6 +125,12 @@ class Deployment(DocumentSchema):
         for kw in new_dict:
             self[kw] = new_dict[kw]
 
+class LicenseAgreement(DocumentSchema):
+    signed = BooleanProperty(default=False)
+    type = StringProperty()
+    date = DateTimeProperty()
+    user_id = StringProperty()
+    user_ip = StringProperty()
 
 class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
@@ -140,6 +146,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     case_sharing = BooleanProperty(default=False)
     organization = StringProperty()
     slug = StringProperty() # the slug for this project namespaced within an organization
+    eula = SchemaProperty(LicenseAgreement)
 
     # domain metadata
     project_type = StringProperty() # e.g. MCH, HIV
@@ -157,6 +164,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     published = BooleanProperty(default=False)
     license = StringProperty(choices=LICENSES, default='public')
     title = StringProperty()
+    cda = SchemaProperty(LicenseAgreement)
 
     author = StringProperty()
     phone_model = StringProperty()

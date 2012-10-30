@@ -33,22 +33,28 @@ def activate_new_user(form, is_domain_admin=True, domain=None):
 
 def request_new_domain(request, form, org, new_user=True):
     now = datetime.utcnow()
+    user_ip = get_ip(request)
+    current_user = CouchUser.from_django_user(request.user)
 
     dom_req = RegistrationRequest()
     if new_user:
-        dom_req.tos_confirmed = form.cleaned_data['tos_confirmed']
         dom_req.request_time = now
-        dom_req.request_ip = get_ip(request)
+        dom_req.request_ip = user_ip
         dom_req.activation_guid = uuid.uuid1().hex
 
+    new_domain = Domain(name=form.cleaned_data['domain_name'],
+        is_active=False,
+        date_created=datetime.utcnow())
+
+    new_domain.eula.signed = True
+    new_domain.eula.date = now
+    new_domain.eula.type = 'End User License Agreement'
+    if current_user:
+        new_domain.eula.user_id = current_user.get_id
+    new_domain.eula.user_ip = user_ip
+
     if org:
-        new_domain = Domain(slug=form.cleaned_data['domain_name'],
-                            is_active=False,
-                            date_created=datetime.utcnow(), organization=org)
-    else:
-        new_domain = Domain(name=form.cleaned_data['domain_name'],
-                            is_active=False,
-                            date_created=datetime.utcnow())
+        new_domain.organization = org
 
     if not new_user:
         new_domain.is_active = True
@@ -61,7 +67,6 @@ def request_new_domain(request, form, org, new_user=True):
     dom_req.domain = new_domain.name
 
     if request.user.is_authenticated():
-        current_user = CouchUser.from_django_user(request.user)
         if not current_user:
             current_user = WebUser()
             current_user.sync_from_django_user(request.user)

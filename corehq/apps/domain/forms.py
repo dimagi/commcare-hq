@@ -131,6 +131,8 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         help_text="This will allow any user to see and use all multimedia in this project")
     image = forms.ImageField(label="Exchange image", required=False,
         help_text="An optional image to show other users your logo or what your app looks like")
+    cda_confirmed = BooleanField(required=False, label="Content Distribution Agreement",
+        help_text=render_to_string('domain/partials/cda_modal.html'))
 
     def __init__(self, *args, **kw):
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
@@ -142,7 +144,14 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             'license',
             'project_type',
             'share_multimedia',
-            'image',]
+            'image',
+            'cda_confirmed',]
+
+    def clean_cda_confirmed(self):
+        data = self.cleaned_data['cda_confirmed']
+        if data is not True:
+            raise forms.ValidationError('You must agree to our Content Distribution Agreement to publish your project.')
+        return data
 
 ########################################################################################################
 
