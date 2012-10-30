@@ -3,6 +3,7 @@ from optparse import make_option
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.sms.mixin import MobileBackend
 from corehq.apps.commtrack.helpers import *
 import sys
 import random
@@ -116,5 +117,15 @@ def register_reporters(domain):
                                        startkey=[domain],
                                        endkey=[domain, {}],
                                        include_docs=True)
+
+    backend = get_backend()
     for mw in mobile_workers:
-        make_verified_contact(mw.username)
+        make_verified_contact(mw.username, backend)
+
+def get_backend():
+    try:
+        backend = [mb for mb in MobileBackend.view('_all_docs', include_docs=True) if mb.outbound_module == 'corehq.apps.sms.test_backend'][0]
+        return backend
+    except IndexError:
+        raise RuntimeError('found no suitable backend for simulated sms; cannot commtrack-enable mobile workers')
+

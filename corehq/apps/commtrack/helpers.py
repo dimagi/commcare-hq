@@ -11,7 +11,7 @@ helper code to populate the various commtrack models, for ease of
 development/testing, before we have proper UIs and imports
 """
 
-def make_verified_contact(username, backend=test_backend.API_ID):
+def make_verified_contact(username, backend):
     """utility function to register 'verified' phone numbers for a commcare user"""
     u = CommCareUser.get_by_username(username)
     for phone in u.phone_numbers:
