@@ -20,38 +20,48 @@ class CasePillow(ElasticPillow):
     # to be false to prevent indexes from not being created due to the way we store dates
     #all will be strings EXCEPT the core case properties which we need to explicitly define below.
     #that way date sort and ranges will work with canonical date formats for queries.
-    es_meta = { "case": {
-            "date_detection": False,
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "domain": {
-                    "type": "string"
-                },
-                "modified_on": {
-                    "format": "dateOptionalTime",
-                    "type": "date"
-                },
-                "closed_on": {
-                    "format": "dateOptionalTime",
-                    "type": "date"
-                },
-                "opened_on": {
-                    "format": "dateOptionalTime",
-                    "type": "date"
-                },
-                "user_id": {
-                    "type": "string"
-                },
-                "closed": {
-                    "type": "boolean"
-                },
-                "type": {
-                    "type": "string"
-                },
-                "owner_id": {
-                    "type": "string"
+    es_meta = {
+        "mappings": {
+            "case": {
+                "date_detection": False,
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "domain": {
+                        "type": "multi_field",
+                        "fields": {
+                            "domain": {"type": "string", "index": "analyzed"},
+                            "exact": {"type": "string", "index": "not_analyzed"}
+                            #exact is full text string match - hyphens get parsed in standard
+                            # analyzer
+                            # in queries you can access by domain.exact
+                        }
+                    },
+                    "modified_on": {
+                        "format": "dateOptionalTime",
+                        "type": "date"
+                    },
+                    "closed_on": {
+                        "format": "dateOptionalTime",
+                        "type": "date"
+                    },
+                    "opened_on": {
+                        "format": "dateOptionalTime",
+                        "type": "date"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "closed": {
+                        "type": "boolean"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "owner_id": {
+                        "type": "string"
+                    }
                 }
             }
         }
@@ -69,9 +79,6 @@ class CasePillow(ElasticPillow):
             #todo - xform_ids may need to be reintroduced depending on other API needs for cases
             del doc_dict['xform_ids']
         return doc_dict
-
-
-
 
 
 class AuditcarePillow(LogstashMonitoringPillow):
@@ -113,7 +120,7 @@ class StrippedXformPillow(ElasticPillow):
                     del doc_dict['form'][k]
                 except:
                     pass
-        #todo: add geoip block here
+                    #todo: add geoip block here
         return doc_dict
 
     def change_transport(self, doc_dict):

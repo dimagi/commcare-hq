@@ -1,3 +1,4 @@
+import logging
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators import inline
 from django.conf import settings
@@ -14,7 +15,7 @@ class CasePaginator():
         assert self.status in ('open', 'closed', None)
 
     def results(self):
-        """Lucene Results"""
+        """Elasticsearch Results"""
 
         # there's no point doing filters that are like owner_id:(x1 OR x2 OR ... OR x612)
         # so past a certain number just exclude
@@ -45,43 +46,45 @@ class CasePaginator():
             pass
 
 
-        @list
         @inline
-        def construct_and_array():
+        def and_block():
+            subterms = []
             if self.case_type:
-                yield {"term": {"case.type": self.case_type}}
+                subterms.append({"term": {"case.type": self.case_type}})
 
             if self.status:
                 if self.status == 'closed':
                     is_closed = True
                 else:
                     is_closed = False
-                yield {"term": {"case.closed": is_closed}}
+                subterms.append({"term": {"case.closed": is_closed}})
 
             ofilters = list(_filter_gen('case.owner_id', self.owner_ids))
             if len(ofilters) > 0:
-                yield {
+                subterms.append( {
                     'or': {
                         'filters': ofilters,
                     }
-                }
+                })
             ufilters = list(_filter_gen('case.user_id', self.owner_ids))
             if len(ufilters) > 0:
-                yield {
+                subterms.append( {
                     'or': {
                         'filters': ufilters,
                     }
-                }
+                })
+            if len(subterms) > 0:
+                return {'and': subterms}
+            else:
+                return {}
 
         es_query = {
             'query': {
                 'filtered': {
                     'query': {
-                        'term': {'case.domain': self.domain}
+                        'match': {'case.domain.exact': self.domain}
                     },
-                    'filter': {
-                        'and': construct_and_array,
-                    }
+                    'filter': and_block
                 }
             },
             'sort': {
@@ -91,6 +94,16 @@ class CasePaginator():
             'size': self.params.count,
         }
         es_results = es.get('hqcases/case/_search', data=es_query)
+
+        if es_results.has_key('error'):
+            logging.exception("Error in case list elasticsearch query: %s" % es_results['error'])
+            return {
+                'skip': self.params.start,
+                'limit': self.params.count,
+                'rows': [],
+                'total_rows': 0
+            }
+
         #transform the return value to something compatible with the report listing
         ret = {
             'skip': self.params.start,
