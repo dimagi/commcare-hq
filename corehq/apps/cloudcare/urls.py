@@ -26,11 +26,15 @@ api_urls = patterns('corehq.apps.cloudcare.views',
     
 )
 
+# used in settings urls
+settings_urls = patterns('corehq.apps.cloudcare.views',
+    url(r'^app/', 'app_settings', name='cloudcare_app_settings'),
+)
+
 urlpatterns = patterns('corehq.apps.cloudcare.views',
     url(r'^$', 'default', name='cloudcare_default'),
     url(r'^apps/', include(app_urls)),
     url(r'^cases/', include(cases_urls)),
     url(r'^test/$', direct_to_template, {'template': 'cloudcare/test.html'}),
     url(r'^api/', include(api_urls)),
-
 )

@@ -1,0 +1,203 @@
+{% extends "users/users_base.html" %}
+{% load hq_shared_tags %}
+{% block subsection-title %}
+    <li class="active">
+        <a href="{% url cloudcare_app_settings domain %}">App Access</a>
+    </li>
+{% endblock %}
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+    <script src="{% static 'hqwebapp/javascripts/knockout.mapping.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+{% endblock %}
+{% block js-inline %}{{ block.super }}
+<script>
+    $(function () {
+        var makeDB = function (list) {
+            /* turn a list into a dict indexed by each object's _id */
+            var db = {};
+            list.sort(function (a, b) {return a.name > b.name;});
+            for (var i = 0; i < list.length; i++) {
+                var obj = list[i];
+                db[obj._id] = obj;
+            }
+            db._sorted = list;
+            console.log(db._sorted);
+            return db;
+        };
+        var access = {{ access|JSON }};
+        var appDB = makeDB({{ apps|JSON }});
+        var groupDB = makeDB({{ groups|JSON }});
+
+        var addJsonAccess = function (o) {
+            o.JSON = ko.computed({
+                read: function () {
+                    return JSON.stringify(o());
+                },
+                write: function (value) {
+                    o(JSON.parse(value));
+                }
+            });
+            return o;
+        };
+
+        var ApplicationAccess = function () {
+            var self = this;
+            self.restrict = addJsonAccess(ko.observable());
+            self.app_groups = ko.observableArray();
+            self._lock = ko.observable(false);
+            self.save = function () {
+                return $.ajax({
+                    url: "",
+                    type: 'put',
+                    dataType: 'json',
+                    data: ko.mapping.toJSON(self),
+                    success: function (data) {
+                        self._rev = data._rev;
+                    }
+                });
+            };
+        };
+        ApplicationAccess.wrap = function(o) {
+            var self = new ApplicationAccess();
+            self.restrict(o.restrict);
+            for (var i = 0; i < o.app_groups.length; i++) {
+                self.app_groups.push(AppGroup.wrap(o.app_groups[i]));
+            }
+            self._id = o._id;
+            self._rev = o._rev;
+            return self;
+        };
+
+        var AppGroup = function () {
+            var self = this;
+            self.group_id = linkToDB(groupDB, ko.observable());
+            self.app_id = linkToDB(appDB, ko.observable());
+        };
+        AppGroup.wrap = function (o) {
+            var self = new AppGroup();
+            self.group_id(o.group_id);
+            self.app_id(o.app_id);
+            return self;
+        };
+
+        var linkToDB = function (db, o) {
+            o.obj = function () {
+                return db[o()];
+            };
+            return o;
+        };
+
+        var $home = $('#cloudcare-app-settings');
+        var Controller = function (options) {
+            var self = this;
+            self.groupDB = options.groupDB;
+            self.appDB = options.appDB;
+            self.applicationAccess = ApplicationAccess.wrap(options.access);
+            self.saveButton = COMMCAREHQ.SaveButton.init({
+                saveRequest: function () {
+                    return self.applicationAccess.save();
+                }
+            });
+            self.appsByGroup = ko.computed(function () {
+                var lookup = {};
+                var returnValue = [];
+                for (var i = 0; i < self.applicationAccess.app_groups().length; i++) {
+                    var app_group = self.applicationAccess.app_groups()[i];
+                    if (!lookup.hasOwnProperty(app_group.group_id())) {
+                        lookup[app_group.group_id()] = {
+                            group: app_group.group_id.obj(),
+                            apps: []
+                        }
+                    }
+                    lookup[app_group.group_id()].apps.push(app_group.app_id.obj());
+                }
+                for (var id in lookup) {
+                    if (lookup.hasOwnProperty(id)) {
+                        returnValue.push(lookup[id]);
+                    }
+                }
+                return returnValue;
+            });
+        };
+        var controller = new Controller({
+            access: access,
+            groupDB: groupDB,
+            appDB: appDB
+        });
+        ko.applyBindings(controller, $home.get(0));
+        $home.show();
+        $(document).on('change', '#cloudcare-app-settings *', function () {
+            console.log('hello');
+            controller.saveButton.fire('change');
+        });
+    });
+</script>
+{% endblock %}
+
+{% block main_column %}
+    <h2>CloudCare App Settings</h2>
+    <section id="cloudcare-app-settings" class="hide">
+        <div data-bind="saveButton: saveButton"></div>
+        <div id="cloudcare-app-settings-form" data-bind="with: applicationAccess">
+            <label class="radio">
+                <input type="radio" value="false" data-bind="checked: restrict.JSON"/>
+                Allow all mobile workers to see all CloudCare apps
+            </label>
+            <label class="radio">
+                <input type="radio" value="true" data-bind="checked: restrict.JSON"/>
+                Customize each mobile worker's CloudCare access
+                <code data-bind="visible: !restrict()">...</code>
+            </label>
+            <div data-bind="visible: restrict">
+                <table class="table table-bordered table-striped" data-bind="if: app_groups().length">
+                    <thead>
+                        <tr>
+                            <th>Application</th>
+                            <th>Group</th>
+                        </tr>
+                    </thead>
+                    <tbody data-bind="foreach: app_groups">
+                        <tr>
+                            <td data-bind="text: app_id.obj().name"></td>
+                            <td>
+                                <select data-bind="
+                                    visible: $root.groupDB._sorted.length,
+                                    value: group_id,
+                                    options: $root.groupDB._sorted,
+                                    optionsText: 'name',
+                                    optionsValue: '_id',
+                                    optionsCaption: 'No one'
+                                "></select>
+                                <span data-bind="visible: !$root.groupDB._sorted.length">You have no groups</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="well">
+                    <h4>Here's what this means</h4>
+                    <ul data-bind="foreach: $root.appsByGroup">
+                        <li>
+                            <span></span>
+                            <span data-bind="if: group">
+                                Mobile workers in group
+                                <strong data-bind="text: group.name"></strong>
+                                have access to
+                            </span>
+                            <span data-bind="if: !group">
+                                <strong>No Mobile Workers</strong> have access to
+                            </span>
+                            <ul data-bind="foreach: apps">
+                                <li data-bind="text: name"></li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <p>...and all other mobile workers have no access to CloudCare.</p>
+                </div>
+                <div data-bind="if: !app_groups().length">
+                    You have no apps
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

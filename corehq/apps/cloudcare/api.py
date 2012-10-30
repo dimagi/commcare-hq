@@ -115,7 +115,7 @@ def get_filters_from_request(request, limit_top_level=None):
     return filters
 
 def get_cloudcare_apps(domain):
-    return map(lambda app: app._doc, 
+    return map(lambda app: app._doc,
                ApplicationBase.view('cloudcare/cloudcare_apps', 
                                     startkey=[domain], endkey=[domain, {}]))
 
