@@ -5,6 +5,8 @@ from corehq.apps.app_manager.models import ApplicationBase, Application
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.decorators import inline
 from casexml.apps.phone.caselogic import get_footprint
+from datetime import datetime
+from corehq.elastic import get_es
 
 # todo: Make these api functions use generators for streaming
 # so that a limit call won't fetch more docs than it needs to
@@ -92,6 +94,78 @@ def get_filtered_cases(domain, user_id=None, filters=None, footprint=False):
             return True
         cases = filter(_filter, cases)
     return cases
+
+def es_filter_cases(domain, filters=None):
+    """
+    Filter cases using elastic search
+    """
+    
+    class ElasticCaseQuery(object):
+        # this class is currently pretty customized to serve exactly
+        # this API. one day it may be worth reconciling our ES interfaces
+        # but today is not that day.
+        RESERVED_KEYS = ('date_modified_start', 'date_modified_end')
+    
+        def __init__(self, domain, filters):
+            self.domain = domain
+            self.filters = filters
+            self.limit = int(filters.get('limit', 50))
+            self._date_modified_start = filters.get("date_modified_start", None)
+            self._date_modified_end = filters.get("date_modified_end", None)
+            
+        @property
+        def uses_modified(self):
+            return bool(self._date_modified_start or self._date_modified_end)
+        
+        @property
+        def date_modified_start(self):
+            return self._date_modified_start or datetime.min.strftime("%Y-%m-%d")
+        
+        @property
+        def date_modified_end(self):
+            return self._date_modified_end or datetime.max.strftime("%Y-%m-%d")
+        
+        @property
+        def scrubbed_filters(self):
+            return dict((k, v) for k, v in self.filters.items() if k not in self.RESERVED_KEYS)
+        
+        @property
+        def modified_params(self):
+            return {
+                'range': {
+                    'modified_on': {
+                        'from': self.date_modified_start,
+                        'to': self.date_modified_end
+                    }
+                }
+            }
+        
+        def get_terms(self):
+            yield {'term': {'domain.exact': self.domain}}
+            if self.uses_modified:
+                yield self.modified_params
+            for k, v in self.scrubbed_filters.items():
+                yield {'term': {k: v.lower()}}
+
+        def get_query(self):
+            return {
+                'query': {
+                    'bool': {
+                        'must': list(self.get_terms())
+                    }
+                },
+                'sort': {
+                    'case.modified_on': {'order': 'asc'}
+                },
+                'from': 0,
+                'size': self.limit,
+            }
+    
+    q = ElasticCaseQuery(domain, filters)
+    res = get_es().get('hqcases/case/_search', data=q.get_query())
+    # this is ugly, but for consistency / ease of deployment just
+    # use this to return everything in the expected format for now
+    return [CommCareCase.wrap(r["_source"]).get_json() for r in res['hits']['hits'] if r["_source"]]
 
 def get_filters_from_request(request, limit_top_level=None):
     """

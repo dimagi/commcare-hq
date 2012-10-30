@@ -1,11 +1,12 @@
-from corehq.apps.api.resources import v0_1, v0_2
+from corehq.apps.api.resources import v0_1, v0_2, v0_3
 from django.conf.urls.defaults import *
 from tastypie.api import Api
 from dimagi.utils.decorators import inline
 
 API_LIST = (
     ((0, 1), (v0_1.CommCareUserResource, v0_1.CommCareCaseResource, v0_1.XFormInstanceResource)),
-    ((0, 2), (v0_1.CommCareUserResource, v0_2.CommCareCaseResource, v0_1.XFormInstanceResource))
+    ((0, 2), (v0_1.CommCareUserResource, v0_2.CommCareCaseResource, v0_1.XFormInstanceResource)),
+    ((0, 3), (v0_1.CommCareUserResource, v0_3.CommCareCaseResource, v0_1.XFormInstanceResource))
 )
 
 @inline
