@@ -259,6 +259,8 @@ function HQMediaUploader(options) {
                     (toggle_on) ? $uploadButton.removeClass('hide') : $uploadButton.addClass('hide');
                 else {
                     (toggle_on) ? $uploadButton.addClass('btn-success').removeClass('disabled') : $uploadButton.addClass('disabled').removeClass('btn-success');
+                    var $uploadButtonHelper = $('[href="#hqm-upload-modal"]');
+                    (toggle_on) ? $uploadButtonHelper.addClass('btn-success').removeClass('disabled') : $uploadButtonHelper.addClass('disabled').removeClass('btn-success');
                 }
                 if (!toggle_on)
                     $(self.uploadElem+" .hqm-media-tags").val('');
@@ -276,7 +278,7 @@ function HQMediaUploader(options) {
                 var $form = $(self.uploadElem+" .hqm-upload-form");
                 for (var i = 0; i < self.uploadFormParams.length; i++) {
                     param_name = self.uploadFormParams[i];
-                    param_val = $form.children('[name=' + param_name + ']').val();
+                    param_val = $form.find('[name=' + param_name + ']').val();
                     if (param_val.length > 0) params[param_name] = param_val;
                 }
                 return params;
