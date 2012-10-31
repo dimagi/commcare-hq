@@ -43,7 +43,7 @@ standardHQReport.init();
 {% endif %}
 {% if domain %}
 $(function() {
-    $("#reportFavorites").reportConfigEditor({
+    $("#savedReports").reportConfigEditor({
         filterForm: $("#reportFilters"),
         items: {{ report_configs|JSON }},
         initialItemID: '{{ current_config_id }}',
@@ -138,8 +138,8 @@ $(function() {
                                 {% include "reports/async/filters.html" %}
                             {% endif %}
                         </div>
-                    <div id="reportFavorites" class="form-actions">
-                    {% if domain %}
+                        {% if domain %}
+                        <div id="savedReports" class="form-actions">
                             <div class="btn-toolbar">
                                 <div class="btn-group">
                                     <button id="apply-filters" type="submit" class="filters btn btn-large disabled"
@@ -246,16 +246,16 @@ $(function() {
                                     </form>
                                 </div>
                             </div>
-                    {% else %}
+                        </div>
+                        {% else %}
                         <div class="btn-group">
-                            <button type="submit" class="btn btn-large disabled"
+                            <button id="apply-filters" type="submit" class="btn btn-large disabled"
                                     data-loading-text="Generating Report..."
                                     data-standard-text="Apply">
                                 Apply
                             </button>
                         </div>
-                    {% endif %}
-                    </div>
+                        {% endif %}
                     </form>
                 </div>
             </div>
