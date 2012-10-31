@@ -112,7 +112,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
             ])
             for p in products:
                 for a in actions:
-                    data.append(transactions.get((a, p['_id']), ''))
+                    data.append(transactions.get((a, p['_id']), u'\u2014'))
 
             return data
 
@@ -174,7 +174,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
                             dt += timedelta(days=1)
                 stockouts[p['_id']] = stockout_dates
 
-                data.append('%s (%s)' % (stock, as_of) if latest_state else '')
+                data.append('%s (%s)' % (stock, as_of) if latest_state else u'\u2014')
                 data.append(sum(tx_by_action.get('receipts', [])))
                 data.append(sum(tx_by_action.get('consumption', [])))
 
