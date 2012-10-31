@@ -13,10 +13,26 @@ INDICATOR_SETS = [
                     "name": "BP (2nd Tri) Visits in last 30 days",
                     "calculation_function": "bihar.reports.indicators.calculations.bp2_last_month"
                 },
-                {"slug": "bp3", "name": "BP (3rd Tri) Visits in last 30 days"},
-                {"slug": "pnc", "name": "PNC Visits  in last 30 days"},
-                {"slug": "ebf", "name": "EBF Visits  in last 30 days"},
-                {"slug": "cf", "name": "CF  Visits  in last 30 days"},
+                {
+                    "slug": "bp3",
+                    "name": "BP (3rd Tri) Visits in last 30 days",
+                    "calculation_function": "bihar.reports.indicators.calculations.bp3_last_month"
+                },
+                {
+                    "slug": "pnc",
+                    "name": "PNC Visits  in last 30 days",
+                    "calculation_function": "bihar.reports.indicators.calculations.pnc_last_month"
+                },
+                {
+                    "slug": "ebf",
+                    "name": "EBF Visits in last 30 days",
+                    "calculation_function": "bihar.reports.indicators.calculations.eb_last_month"
+                },
+                {
+                    "slug": "cf",
+                    "name": "CF Visits in last 30 days",
+                    "calculation_function": "bihar.reports.indicators.calculations.cf_last_month"
+                },
             ],
             "client_list": [
                 {

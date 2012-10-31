@@ -20,6 +20,11 @@ def in_second_trimester(edd, reference_date=None):
     return edd <= first_tri_cutoff(reference_date) \
         and edd > second_tri_cutoff(reference_date) 
 
+def in_third_trimester(edd, reference_date=None):
+    reference_date = reference_date or datetime.today().date()
+    return edd <= second_tri_cutoff(reference_date) \
+        and edd > third_tri_cutoff(reference_date) 
+
 def first_tri_cutoff(reference_date):
     # women with edd after this date are in their first trimester
     return reference_date + timedelta(days=196)
@@ -28,6 +33,11 @@ def second_tri_cutoff(reference_date):
     # women with edd after this date (but before first_tri_cutoff) 
     # are in their second trimester
     return reference_date + timedelta(days=98)
+
+def third_tri_cutoff(reference_date):
+    # women with edd after this date (but before second_tri_cutoff) 
+    # are in their third trimester
+    return reference_date + timedelta(days=-28)
 
 def pregnancy_registered_last_month(case):
     return is_pregnant_mother(case) and created_last_month(case)
