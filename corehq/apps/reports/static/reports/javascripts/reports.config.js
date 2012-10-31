@@ -8,7 +8,7 @@ function ReportConfig(data) {
     });
 
     self.modalTitle = ko.computed(function () {
-        return (self.isNew() ? 'New' : 'Edit') + ' Report Favorite' +
+        return (self.isNew() ? 'New' : 'Edit') + ' Saved Report' +
             (self.name() ? ': ' + self.name() : '');
     });
 

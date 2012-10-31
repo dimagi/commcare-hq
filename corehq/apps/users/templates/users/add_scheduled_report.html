@@ -20,7 +20,7 @@
         <fieldset>
             <legend>What shoud we send you?</legend>
             <div class="control-group">
-                <label class="control-label" for="config_id">Report Favorite: </label>
+                <label class="control-label" for="config_id">Saved Report: </label>
                 <div class="controls">
                     <select name="config_id" id="config_id">
                         {% for config in configs %}
@@ -62,9 +62,9 @@
     </form>
     {% else %}
     <div class="alert">
-        You need a saved report favorite in order to set up a scheduled email report, but you don't have any.
+        You need a saved report in order to set up a scheduled email report, but you don't have any.
         
-        To add a report favorite, navigate to a report, select your desired filters, and click "Save".
+        To create a saved report, navigate to a report, select your desired filters, and click "Save".
     </div>
     {% endif %}
 {% endblock %}
