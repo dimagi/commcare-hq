@@ -43,7 +43,7 @@ standardHQReport.init();
 {% endif %}
 
 $(function() {
-    $("#reportFavorites").reportConfigEditor({
+    $("#savedReports").reportConfigEditor({
         filterForm: $("#reportFilters"),
         items: {{ report_configs|JSON }},
         initialItemID: '{{ current_config_id }}',
@@ -137,7 +137,7 @@ $(function() {
                                 {% include "reports/async/filters.html" %}
                             {% endif %}
                         </div>
-                        <div id="reportFavorites" class="form-actions">
+                        <div id="savedReports" class="form-actions">
                             <div class="btn-toolbar">
                                 <div class="btn-group">
                                     <button id="apply-filters" type="submit" class="btn btn-large disabled"
@@ -148,12 +148,12 @@ $(function() {
                                 </div>
                                 <div class="btn-group">
                                     <a class="btn btn-large dropdown-toggle" data-toggle="dropdown">
-                                        Favorites<span class="caret"></span>
+                                        Saved Filters<span class="caret"></span>
                                     </a>
 
                                     <ul class="dropdown-menu">
                                         <li data-bind="ifnot: reportConfigs().length">
-                                            <a href="#">You don't have any favorites</a>
+                                            <a href="#">You don't have any saved filters</a>
                                         </li>
                                         <!-- ko foreach: reportConfigs -->
                                         <li>

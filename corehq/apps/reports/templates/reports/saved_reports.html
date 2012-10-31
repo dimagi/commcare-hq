@@ -15,10 +15,10 @@ $(function() {
 
 {% block main_column %}
 <div id="reportConfigList">
-    <h2>Favorite Reports</h2>
+    <h2>Saved Reports</h2>
 
     <!-- ko ifnot: reportConfigs().length -->
-    <div class="alert">You don't have any favorites.  You can add a favorite while viewing a report.</div>
+    <div class="alert">You don't have any saved reports.  You can create a new saved report while viewing a report.</div>
     <!-- /ko -->
     <!-- ko if: reportConfigs().length -->
     <table class="table table-striped table-bordered">

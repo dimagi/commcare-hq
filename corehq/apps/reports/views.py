@@ -62,7 +62,7 @@ require_case_export_permission = require_permission(Permissions.view_report, 'co
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
-def default(request, domain, template="reports/favorites.html"):
+def default(request, domain, template="reports/saved_reports.html"):
 
     configs = ReportConfig.by_domain_and_owner(domain,
         request.couch_user._id).all()
