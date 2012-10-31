@@ -58,20 +58,23 @@ class CasePaginator():
                     is_closed = False
                 subterms.append({"term": {"case.closed": is_closed}})
 
+            userGroupFilters = []
             ofilters = list(_filter_gen('case.owner_id', self.owner_ids))
             if len(ofilters) > 0:
-                subterms.append( {
+                userGroupFilters.append( {
                     'or': {
                         'filters': ofilters,
                     }
                 })
             ufilters = list(_filter_gen('case.user_id', self.owner_ids))
             if len(ufilters) > 0:
-                subterms.append( {
+                userGroupFilters.append( {
                     'or': {
                         'filters': ufilters,
                     }
                 })
+            if userGroupFilters:
+                subterms.append({'or': userGroupFilters})
             if len(subterms) > 0:
                 return {'and': subterms}
             else:
