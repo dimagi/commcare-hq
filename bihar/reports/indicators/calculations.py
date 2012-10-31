@@ -45,11 +45,12 @@ def bp2_last_month(cases):
                 for a in case.actions:
                     # relevant
                     if a.date > datetime.today() - A_MONTH \
-                        and in_second_trimester(edd, a.date) \
+                        and in_second_trimester(edd, a.date.date()) \
                         and _has_bp_visit(a) \
                         and _visit_is(a, 'bp'):
                         done += 1
                         due += 1 # NOTE: this isn't right but i'm not sure how it should be done.
+                        break
     
     return _done_due(done, due)
 
@@ -62,11 +63,12 @@ def bp3_last_month(cases):
                 for a in case.actions:
                     # relevant
                     if a.date > datetime.today() - A_MONTH \
-                        and in_third_trimester(edd, a.date) \
+                        and in_third_trimester(edd, a.date.date()) \
                         and _has_bp_visit(a) \
                         and _visit_is(a, 'bp'):
                         done += 1
                         due += 1 # NOTE: this isn't right but i'm not sure how it should be done.
+                        break
     
     return _done_due(done, due)
 
