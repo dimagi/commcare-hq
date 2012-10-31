@@ -524,6 +524,15 @@ EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
 EMAIL_USE_TLS = True
 
+NO_HTML_EMAIL_MESSAGE = """This is an email from CommCare HQ. You're seeing
+this message because your email client chose to display the plaintext version
+of an email that CommCare HQ can only provide in HTML.  Please set your email
+client to view this email in HTML or read this email in a client that supports
+HTML email.
+
+Thanks,
+The CommCare HQ Team"""
+
 DATA_INTERFACE_MAP = {
     'Case Management' : [
         'corehq.apps.data_interfaces.interfaces.CaseReassignmentInterface',
