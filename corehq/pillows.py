@@ -182,4 +182,5 @@ class ExchangePillow(ElasticPillow):
             "domain": {
                 "properties": {
                     "license": {"type": "string", "index": "not_analyzed"},
-                    "deployment.region": {"type": "string", "analyzer": "lowercase_analyzer"}}}}}
+                    "deployment.region": {"type": "string", "analyzer": "lowercase_analyzer"},
+                    "author": {"type": "string", "analyzer": "lowercase_analyzer"}}}}}

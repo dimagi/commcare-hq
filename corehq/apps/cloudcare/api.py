@@ -104,7 +104,7 @@ def es_filter_cases(domain, filters=None):
         # this class is currently pretty customized to serve exactly
         # this API. one day it may be worth reconciling our ES interfaces
         # but today is not that day.
-        RESERVED_KEYS = ('date_modified_start', 'date_modified_end')
+        RESERVED_KEYS = ('date_modified_start', 'date_modified_end', 'limit')
     
         def __init__(self, domain, filters):
             self.domain = domain
@@ -189,7 +189,7 @@ def get_filters_from_request(request, limit_top_level=None):
     return filters
 
 def get_cloudcare_apps(domain):
-    return map(lambda app: app._doc, 
+    return map(lambda app: app._doc,
                ApplicationBase.view('cloudcare/cloudcare_apps', 
                                     startkey=[domain], endkey=[domain, {}]))
 

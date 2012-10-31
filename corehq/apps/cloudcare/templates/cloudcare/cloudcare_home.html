@@ -1,4 +1,4 @@
-{% extends "hqwebapp/two_column.html" %}
+{% extends "cloudcare/base.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -33,14 +33,6 @@
 
     <link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
 
-{% endblock %}
-
-{% block page-title %}
-    <ul class="breadcrumb">
-        <li>
-            <a href="{% url cloudcare_default domain %}"><strong>CloudCare</strong></a><sup>beta</sup>
-        </li>
-    </ul>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}

@@ -67,6 +67,11 @@
         </li>
         <li><a href="{% url change_my_password domain %}">Change My Password</a></li>
 
+    {% if request.couch_user.is_domain_admin %}
+        <li class="nav-header">CloudCare Settings</li>
+        <li><a href="{% url cloudcare_app_settings domain %}">App Access</a></li>
+    {% endif %}
+
     {% if request.couch_user.can_edit_web_users  %}
         <li class="nav-header">Project Administration</li>
         {% if request.couch_user.is_domain_admin %}
