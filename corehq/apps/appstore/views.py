@@ -220,7 +220,7 @@ def es_query(params, facets=[], terms=[], q={}):
         del q["filter"]
 
     es_url = "cc_exchange/domain/_search"
-    es = rawes.Elastic('localhost:9200')
+    es = rawes.Elastic('%s:%s' % (settings.ELASTICSEARCH_HOST, settings.ELASTICSEARCH_PORT))
     ret_data = es.get(es_url, data=q)
 
     return ret_data
