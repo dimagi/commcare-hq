@@ -70,8 +70,9 @@ var SaveButton = {
                     this.ui.append(this.$retry);
                 }
             },
-            ajax: function (options) {
-                var beforeSend = options.beforeSend || function () {},
+            ajaxOptions: function (options) {
+                var options = options || {},
+                    beforeSend = options.beforeSend || function () {},
                     success = options.success || function () {},
                     error = options.error || function () {},
                     that = this;
@@ -90,7 +91,10 @@ var SaveButton = {
                     alert(SaveButton.message.ERROR_SAVING);
                     error.apply(this, arguments);
                 };
-                $.ajax(options);
+                return options;
+            },
+            ajax: function (options) {
+                $.ajax(button.ajaxOptions(options));
             }
         };
         eventize(button);
@@ -100,6 +104,15 @@ var SaveButton = {
         });
         if (options.save) {
             button.on('save', options.save);
+        } else if (options.saveRequest) {
+            button.on('save', function () {
+                var o = button.ajaxOptions();
+                o.beforeSend();
+                options.saveRequest()
+                    .success(o.success)
+                    .error(o.error)
+                ;
+            })
         }
         $(window).bind('beforeunload', function () {
             var stillAttached = button.ui.parents()[button.ui.parents().length - 1].tagName.toLowerCase() == 'html';

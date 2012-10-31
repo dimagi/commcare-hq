@@ -1,15 +1,13 @@
+from couchdbkit import ResourceConflict
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.suite_xml import SuiteGenerator
-from corehq.apps.cloudcare.models import CaseSpec
+from corehq.apps.cloudcare.models import CaseSpec, ApplicationAccess
 from corehq.apps.cloudcare.touchforms_api import DELEGATION_STUB_CASE_TYPE
-from corehq.apps.domain.decorators import login_and_domain_required,\
-    login_or_digest_ex
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, CommCareUser
-from dimagi.utils.decorators import inline
 from dimagi.utils.web import render_to_response, json_response, json_handler
-from django.http import HttpResponseRedirect, HttpResponse,\
-    HttpResponseBadRequest, Http404
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from corehq.apps.app_manager.models import Application, ApplicationBase
 import json
 from corehq.apps.cloudcare.api import get_owned_cases, get_app, get_cloudcare_apps, get_filtered_cases, get_filters_from_request
@@ -31,19 +29,19 @@ def default(request, domain):
 @login_and_domain_required
 def app_list(request, domain, urlPath):
     preview = string_to_boolean(request.REQUEST.get("preview", "false"))
-    
+    app_access = ApplicationAccess.get_by_domain(domain)
     def _app_latest_build_json(app_id):
         build = ApplicationBase.view('app_manager/saved_app',
-                                     startkey=[domain, app["_id"], {}],
-                                     endkey=[domain, app["_id"]],
+                                     startkey=[domain, app_id, {}],
+                                     endkey=[domain, app_id],
                                      descending=True,
                                      limit=1).one()
         return build._doc if build else None
-                                     
+
     if not preview:
         apps = get_cloudcare_apps(domain)
         # replace the apps with the last build of each app
-        apps = [_app_latest_build_json(app["_id"])for app in apps]
+        apps = [_app_latest_build_json(app["_id"]) for app in apps]
     
     else:
         apps = ApplicationBase.view('app_manager/applications_brief', startkey=[domain], endkey=[domain, {}])
@@ -51,7 +49,7 @@ def app_list(request, domain, urlPath):
     
     # trim out empty apps
     apps = filter(lambda app: app, apps)
-    
+    apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
     
     def _default_lang():
         if apps:
@@ -228,5 +226,35 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
                 assert len(fixture.getchildren()) == 1
                 return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
         raise Http404
-        
-        
+
+
+class HttpResponseConflict(HttpResponse):
+    status_code = 409
+
+@domain_admin_required
+def app_settings(request, domain):
+    if request.method == 'GET':
+        apps = get_cloudcare_apps(domain)
+        access = ApplicationAccess.get_template_json(domain, apps)
+        groups = Group.by_domain(domain).all()
+
+        return render_to_response(request, 'cloudcare/config.html', {
+            'domain': domain,
+            'apps': apps,
+            'groups': groups,
+            'access': access,
+        })
+    elif request.method == 'PUT':
+        j = json.loads(request.raw_post_data)
+        old = ApplicationAccess.get_by_domain(domain)
+        new = ApplicationAccess.wrap(j)
+        old.restrict = new.restrict
+        old.app_groups = new.app_groups
+        try:
+            if old._rev != new._rev or old._id != new._id:
+                raise ResourceConflict()
+            old.save()
+        except ResourceConflict:
+            return HttpResponseConflict()
+        else:
+            return json_response({'_rev': old._rev})

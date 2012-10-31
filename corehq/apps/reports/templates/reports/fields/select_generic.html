@@ -2,7 +2,10 @@
 {% if not hide_field %}
 <label for="{{ select.cssId }}" class="control-label">{{ select.label }}</label>
 <div class="controls">
-    <select id="{{ select.cssId }}" class="{{ select.cssClasses }}" data-bind="{% if not select.use_combo_box %}options: select_params, optionsText: 'text', optionsValue: 'val', optionsCaption: '{{ select.default }}',{% endif %} value: current_selection"  name="{{ slug }}">
+    <select id="{{ select.cssId }}"
+            {% if not select.use_combo_box %}class="{{ select.cssClasses }}"{% endif %}
+            data-bind="{% if not select.use_combo_box %}options: select_params, optionsText: 'text', optionsValue: 'val', optionsCaption: '{{ select.default }}',{% endif %} value: current_selection"
+            name="{{ slug }}">
     {% if select.use_combo_box %}
         <option></option>
         {% for option in select.options %}
@@ -13,12 +16,12 @@
 </div>
 <script type="text/javascript">
     $(function () {
-       ko.applyBindings({select_params: {{ select.options|JSON }}, current_selection: ko.observable('{{ select.selected|default:'' }}')}, $('#{{ select.cssId }}').parent().get(0));
+        ko.applyBindings({select_params: {{ select.options|JSON }}, current_selection: ko.observable('{{ select.selected|default:'' }}')}, $('#{{ select.cssId }}').parent().get(0));
+        {% if select.use_combo_box %}
+            $('#{{ select.cssId }}').combobox({
+                placeholder: '{{ select.default|safe }}'
+            });
+        {% endif %}
     });
-    {% if select.use_combo_box %}
-    $('#{{ select.cssId }}').combobox({
-        placeholder: '{{ select.default|safe }}'
-    });
-    {% endif %}
 </script>
 {% endif %}

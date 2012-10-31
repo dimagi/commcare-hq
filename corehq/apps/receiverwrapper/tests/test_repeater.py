@@ -4,7 +4,6 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.case.xml import V1
 from corehq.apps.receiverwrapper.models import RepeatRecord, CaseRepeater, FormRepeater
-from corehq.apps.receiverwrapper.tasks import check_inline_form_repeaters
 from couchforms.models import XFormInstance
 from django.core.urlresolvers import reverse
 from django.test import TestCase
@@ -124,36 +123,3 @@ class RepeaterTest(TestCase):
         for repeat_record in repeat_records:
             self.assertEqual(repeat_record.succeeded, True)
             self.assertEqual(repeat_record.next_check, None)
-
-    def test_migration(self):
-        now = datetime.utcnow()
-        repeats = [
-            {
-                "url": "http://example.com/",
-                "doc_type": "RepeatRecord",
-                "next_check": now,
-                "last_checked": None,
-                "succeeded": False
-            }
-        ]
-        xform = XFormInstance.get(instance_id)
-        xform.repeats = repeats
-        xform.save()
-
-        def always_success():
-            while True:
-                yield 200
-
-        self.clear_log()
-
-        check_inline_form_repeaters(post_fn=self.make_post_fn(always_success()))
-
-        self.assertEqual(len(self.log), 1)
-
-        self.assertEqual(self.log[0], (repeats[0]['url'], 200, xform_xml))
-
-        self.clear_log()
-
-        check_inline_form_repeaters(post_fn=self.make_post_fn(always_success()))
-
-        self.assertEqual(len(self.log), 0)

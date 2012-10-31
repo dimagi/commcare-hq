@@ -4,6 +4,7 @@ class SupervisorReportsADMSection(DefaultReportADMSectionView):
     name = "Supervisor Reports"
     slug = "supervisor"
     asynchronous = True
+    mobile_enabled = True
 
     adm_slug = "supervisor"
 

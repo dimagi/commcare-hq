@@ -111,8 +111,14 @@ class ReportDispatcher(View):
         return "%s_dispatcher" % prefix
 
     @classmethod
+    def _rendering_pattern(cls):
+        return "(?P<render_as>[{renderings}]+)".format(
+            renderings="|".join("(%s)" % r for r in cls.allowed_renderings())
+        )
+    
+    @classmethod
     def pattern(cls):
-        return r'^((?P<render_as>[(json)|(async)|(filters)|(export)|(mobile)|(static)|(clear_cache)]+)/)?(?P<report_slug>[\w_]+)/$'
+        return r'^({renderings}/)?(?P<report_slug>[\w_]+)/$'.format(renderings=cls._rendering_pattern())
 
     @classmethod
     def allowed_renderings(cls):
