@@ -44,7 +44,7 @@ def bp2_last_month(cases):
             if edd:
                 for a in case.actions:
                     # relevant
-                    if a.date > datetime.today() + A_MONTH \
+                    if a.date > datetime.today() - A_MONTH \
                         and in_second_trimester(edd, a.date) \
                         and _has_bp_visit(a) \
                         and _visit_is(a, 'bp'):
@@ -61,7 +61,7 @@ def bp3_last_month(cases):
             if edd:
                 for a in case.actions:
                     # relevant
-                    if a.date > datetime.today() + A_MONTH \
+                    if a.date > datetime.today() - A_MONTH \
                         and in_third_trimester(edd, a.date) \
                         and _has_bp_visit(a) \
                         and _visit_is(a, 'bp'):
@@ -75,7 +75,7 @@ def pnc_last_month(cases):
     for case in cases:
         if is_pregnant_mother(case):
             for a in case.actions:
-                if a.date > datetime.today() + A_MONTH \
+                if a.date > datetime.today() - A_MONTH \
                     and _has_pnc_visit(a) \
                     and _visit_is(a, 'pnc'):
                     done += 1
@@ -88,7 +88,7 @@ def eb_last_month(cases):
     for case in cases:
         if is_pregnant_mother(case):
             for a in case.actions:
-                if a.date > datetime.today() + A_MONTH \
+                if a.date > datetime.today() - A_MONTH \
                     and _has_eb_visit(a) \
                     and _visit_is(a, 'eb'):
                     done += 1
@@ -101,7 +101,7 @@ def cf_last_month(cases):
     for case in cases:
         if is_pregnant_mother(case):
             for a in case.actions:
-                if a.date > datetime.today() + A_MONTH \
+                if a.date > datetime.today() - A_MONTH \
                     and _has_cf_visit(a) \
                     and _visit_is(a, 'cf'):
                     done += 1
