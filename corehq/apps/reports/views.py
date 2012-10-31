@@ -451,7 +451,7 @@ def delete_custom_export(req, domain, export_id):
 
 @login_and_domain_required
 @require_POST
-def add_config(request, domain):
+def add_config(request, domain=None):
     from datetime import datetime
     
     POST = json.loads(request.raw_post_data)

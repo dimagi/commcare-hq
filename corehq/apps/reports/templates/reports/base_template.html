@@ -41,7 +41,7 @@ standardHQReport.init();
     });
     asyncHQReport.init();
 {% endif %}
-
+{% if domain %}
 $(function() {
     $("#savedReports").reportConfigEditor({
         filterForm: $("#reportFilters"),
@@ -64,6 +64,7 @@ $(function() {
     });
 
 });
+{% endif %}
 </script>
 {% endblock %}
 
@@ -137,6 +138,7 @@ $(function() {
                                 {% include "reports/async/filters.html" %}
                             {% endif %}
                         </div>
+                        {% if domain %}
                         <div id="savedReports" class="form-actions">
                             <div class="btn-toolbar">
                                 <div class="btn-group">
@@ -245,6 +247,15 @@ $(function() {
                                 </div>
                             </div>
                         </div>
+                        {% else %}
+                        <div class="btn-group">
+                            <button id="apply-filters" type="submit" class="btn btn-large disabled"
+                                    data-loading-text="Generating Report..."
+                                    data-standard-text="Apply">
+                                Apply
+                            </button>
+                        </div>
+                        {% endif %}
                     </form>
                 </div>
             </div>
