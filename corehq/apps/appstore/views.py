@@ -283,7 +283,7 @@ def copy_snapshot_app(request, domain):
 def copy_snapshot(request, domain):
     dom = Domain.get_by_name(domain)
     if request.method == "POST" and dom.is_snapshot:
-        args = {'domain_name': request.POST['new_project_name'], 'tos_confirmed': True}
+        args = {'domain_name': request.POST['new_project_name'], 'eula_confirmed': True}
         form = DomainRegistrationForm(args)
 
         if form.is_valid():

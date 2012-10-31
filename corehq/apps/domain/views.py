@@ -12,8 +12,9 @@ from corehq.apps.domain.forms import DomainSelectionForm, DomainGlobalSettingsFo
     DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
+from corehq.apps.users.models import CouchUser
 
-from dimagi.utils.web import render_to_response
+from dimagi.utils.web import render_to_response, get_ip
 from corehq.apps.users.views import require_can_edit_web_users
 from corehq.apps.receiverwrapper.forms import FormRepeaterForm
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
@@ -329,9 +330,7 @@ def create_snapshot(request, domain):
                 'description': published_snapshot.description,
                 'short_description': published_snapshot.short_description
             })
-            print published_snapshot._id
             for app in published_snapshot.full_applications():
-                print 'ps.fa: %s' % app._id
                 if domain == published_snapshot:
                     published_apps[app._id] = app
                 else:
@@ -409,6 +408,15 @@ def create_snapshot(request, domain):
                 snapshot.save()
         new_domain.is_approved = False
         new_domain.published = True
+
+        current_user = CouchUser.from_django_user(request.user)
+        new_domain.cda.signed = True
+        new_domain.cda.date = datetime.datetime.utcnow()
+        new_domain.cda.type = 'Content Distribution Agreement'
+        if current_user:
+            new_domain.cda.user_id = current_user.get_id
+        new_domain.cda.user_ip = get_ip(request)
+
         image = form.cleaned_data['image']
         if image:
             new_domain.image_path = image.name

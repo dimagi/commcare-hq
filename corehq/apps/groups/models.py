@@ -140,7 +140,19 @@ class Group(UndoableDocument):
             return self.name
         else:
             return "[No Name]"
-    
+
+    @classmethod
+    def user_in_group(cls, user_id, group_id):
+        if not user_id or not group_id:
+            return False
+        c = cls.get_db().view('groups/by_user', key=user_id, startkey_docid=group_id, endkey_docid=group_id).count()
+        if c == 0:
+            return False
+        elif c == 1:
+            return True
+        else:
+            raise Exception("This should just logically not be possible unless the group has the user in there twice")
+
 class DeleteGroupRecord(DeleteDocRecord):
     def get_doc(self):
         return Group.get(self.doc_id)

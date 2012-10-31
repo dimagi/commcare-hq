@@ -252,7 +252,7 @@ class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, Pr
 
     @property
     def total_records(self):
-        return self.case_results.total_rows
+        return self.case_results['total_rows']
 
     @property
     @memoized
@@ -375,7 +375,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
             ]
 
         try:
-            for item in self.case_results:
+            for item in self.case_results['rows']:
                 row = _format_row(item)
                 if row is not None:
                     rows.append(row)

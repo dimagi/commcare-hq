@@ -1,4 +1,5 @@
 from django.conf.urls.defaults import *
+from django.views.generic.simple import direct_to_template
 from corehq.apps.appstore.dispatcher import AppstoreDispatcher
 
 store_urls = patterns('corehq.apps.appstore.views',
@@ -22,6 +23,8 @@ urlpatterns = patterns('corehq.apps.appstore.views',
     url(r'^(?P<domain>[\w\.-]+)/approve/$', 'approve_app', name='approve_appstore_app'),
     url(r'^(?P<domain>[\w\.-]+)/copyapp/', 'copy_snapshot_app', name='copy_snapshot_app'),
     url(r'^(?P<domain>[\w\.-]+)/copy/$', 'copy_snapshot', name='domain_copy_snapshot'),
-    url(r'^(?P<domain>[\w\.-]+)/image/$', 'project_image', name='appstore_project_image')
+    url(r'^(?P<domain>[\w\.-]+)/image/$', 'project_image', name='appstore_project_image'),
+
+    url(r'^cda/$', direct_to_template, {'template': 'cda.html'}, name='cda'),
 )
 

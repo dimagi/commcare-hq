@@ -184,6 +184,7 @@ cloudCare.Module = LocalizableModel.extend({
                 });
                 form.set(sharedMeta);
                 self.forms.push(form);
+                self.taskListOnly = true;
             }
             self.trigger("forms-changed");
         }
@@ -292,12 +293,15 @@ cloudCare.FormListView = Backbone.View.extend({
     },
     render: function () {
         var self = this;
+        var taskListOnly = self.model ? self.model.taskListOnly : false;
         $(self.el).html("");
         if (self.model) {
 	        var formUl = $("<ul />").addClass("nav nav-list").appendTo($(self.el));
 	        $("<li />").addClass("nav-header").text("Forms").appendTo(formUl);
 	        _(self.model.forms).each(function (form) {
-	            self.appendForm(form);
+                if (!taskListOnly || form.get('index') === 'task-list') {
+                    self.appendForm(form);
+                }
 	        });
         }
         return self;
@@ -347,7 +351,7 @@ cloudCare.AppView = Backbone.View.extend({
             language: self.options.language
         });
         self.formListView = new cloudCare.FormListView({
-            language: self.options.language
+            language: self.options.language,
         });
 
         cloudCare.dispatch.on("form:selected", function (form) {
