@@ -2,9 +2,16 @@ from django.conf import settings
 from django.core.mail import SMTPConnection
 from django.core.mail.message import EmailMultiAlternatives
 
+NO_HTML_EMAIL_MESSAGE = """
+Your email client is trying to display the plaintext version of an email that
+is only supported in HTML. Please set your email client to display this message
+in HTML, or use an email client that supports HTML emails.
+"""
+
 def send_HTML_email(subject, recipient, html_content, text_content=None):
     if not text_content:
-        text_content = settings.NO_HTML_EMAIL_MESSAGE
+        text_content = getattr(settings, 'NO_HTML_EMAIL_MESSAGE',
+                               NO_HTML_EMAIL_MESSAGE)
 
     # If you get the return_path header wrong, this may impede mail delivery. It appears that the SMTP server
     # has to recognize the return_path as being valid for the sending host. If we set it to, say, our SMTP
