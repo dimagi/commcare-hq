@@ -4,14 +4,7 @@ from django.core.mail.message import EmailMultiAlternatives
 
 def send_HTML_email(subject, recipient, html_content, text_content=None):
     if not text_content:
-        text_content = """
-This is an email from CommCare HQ. You're seeing this message because your
-email client chose to display the plaintext version of an email that CommCare
-HQ can only provide in HTML.  Please set your email client to view this email
-in HTML or read this email in a client that supports HTML email.
-
-Thanks,
-The CommCare HQ Team"""
+        text_content = settings.NO_HTML_EMAIL_MESSAGE
 
     # If you get the return_path header wrong, this may impede mail delivery. It appears that the SMTP server
     # has to recognize the return_path as being valid for the sending host. If we set it to, say, our SMTP
