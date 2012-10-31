@@ -13,7 +13,7 @@ class CasePillow(ElasticPillow):
     couch_filter = "case/casedocs"
     es_host = settings.ELASTICSEARCH_HOST
     es_port = settings.ELASTICSEARCH_PORT
-    es_index = "hqcases"
+    es_index = "hqcases_all"
     es_type = "case"
     #the meta here is defined for when the case index is created for the FIRST time
     #subsequent data added to it will be added automatically, but the date_detection is necessary
@@ -50,6 +50,10 @@ class CasePillow(ElasticPillow):
                         "format": "dateOptionalTime",
                         "type": "date"
                     },
+                    "server_modified_on": {
+                        "type": "date",
+                        "format": "dateOptionalTime"
+                    },
                     "user_id": {
                         "type": "string"
                     },
@@ -61,20 +65,51 @@ class CasePillow(ElasticPillow):
                     },
                     "owner_id": {
                         "type": "string"
+                    },
+                    'actions': {
+                        'properties': {
+                            'action_type': {
+                                "type": "string"
+                            },
+                            'seq': {
+                                'type': 'long'
+                            },
+                            'server_date': {
+                                "format": "dateOptionalTime",
+                                "type": "date"
+                            },
+                            'date': {
+                                "format": "dateOptionalTime",
+                                "type": "date"
+                            },
+                            'xform_id': {
+                                "type": "string"
+                            },
+                        }
                     }
+
                 }
             }
         }
     }
 
+
+
+
     def change_transform(self, doc_dict):
         """
         Lighten the load of the search index by removing the data heavy transactional cruft
         """
+        retain_keys = set(['date','server_date','xform_id','sync_log_id', 'action_type'])
         if doc_dict.has_key('actions'):
             #todo the actions dict is a huge amount of data whose inconsistencies cause some docs
-            # not to be indexed
-            del doc_dict['actions']
+
+            for ix, action in enumerate(doc_dict['actions']):
+                all_keys = set(doc_dict['actions'][ix].keys())
+                for k in all_keys.difference(retain_keys):
+                    del doc_dict['actions'][ix][k]
+                doc_dict['actions'][ix]['seq'] = ix
+
         if doc_dict.has_key('xform_ids'):
             #todo - xform_ids may need to be reintroduced depending on other API needs for cases
             del doc_dict['xform_ids']
