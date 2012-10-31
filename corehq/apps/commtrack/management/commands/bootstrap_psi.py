@@ -11,6 +11,8 @@ import random
 PRODUCTS = [
     ('PSI kit', 'k'),
     ('non-PSI kit', 'nk'),
+    ('ORS', 'o'),
+    ('Zinc', 'z'),
 ]
 
 STATES = [

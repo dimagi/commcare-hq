@@ -65,7 +65,11 @@ def make_psi_config(domain):
             ),
             'receipts': CommtrackActionConfig(
                 keyword='s',
-                caption='Sales'
+                caption='Sales/Receipts'
+            ),
+            'consumption': CommtrackActionConfig(
+                keyword='c',
+                caption='Consumption'
             ),
             'stockedoutfor': CommtrackActionConfig(
                 keyword='so',

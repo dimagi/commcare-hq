@@ -28,9 +28,15 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
         prods = [e['doc'] for e in query]
         return sorted(prods, key=lambda p: p['name'])
 
+    def ordered_products(self, ordering):
+        return sorted(self.products, key=lambda p: (0, ordering.index(p['name'])) if p['name'] in ordering else (1, p['name']))
+
     @property
     def actions(self):
         return sorted(self.config.actions.keys())
+
+    def ordered_actions(self, ordering):
+        return sorted(self.actions, key=lambda a: (0, ordering.index(a)) if a in ordering else (1, a))
 
     # find a memoize decorator?
     _location = None
@@ -74,6 +80,9 @@ OUTLET_METADATA = [
     ('outlet_type', 'Outlet Type'),
 ]
 
+ACTION_ORDERING = ['prevstockonhand', 'receipts', 'consumption', 'stockedoutfor']
+PRODUCT_ORDERING = ['PSI kit', 'non-PSI kit', 'ORS', 'Zinc']
+
 class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Visit Report'
     slug = 'visits'
@@ -88,15 +97,15 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
             DataTablesColumn('Reporter'),
         ])
         cfg = self.config
-        for p in self.products:
-            for a in self.actions:
+        for p in self.ordered_products(PRODUCT_ORDERING):
+            for a in self.ordered_actions(ACTION_ORDERING):
                 cols.append(DataTablesColumn('%s (%s)' % (cfg.actions[a].caption, p['name'])))
         
         return DataTablesHeader(*cols)
 
     @property
     def rows(self):
-        products = self.products
+        products = self.ordered_products(PRODUCT_ORDERING)
         actions = self.actions
         reports = get_stock_reports(self.domain, self.active_location, self.datespan)
         locs = dict((loc._id, loc) for loc in Location.view('_all_docs', keys=[leaf_loc(r) for r in reports], include_docs=True))
@@ -111,7 +120,7 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
                 CommCareUser.get(doc['form']['meta']['userID']).username_in_report,
             ])
             for p in products:
-                for a in actions:
+                for a in self.ordered_actions(ACTION_ORDERING):
                     data.append(transactions.get((a, p['_id']), u'\u2014'))
 
             return data
@@ -127,7 +136,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
     @property
     def headers(self):
         cols = [DataTablesColumn(caption) for key, caption in OUTLET_METADATA]
-        for p in self.products:
+        for p in self.ordered_products(PRODUCT_ORDERING):
             cols.append(DataTablesColumn('Stock on Hand (%s)' % p['name']))
             cols.append(DataTablesColumn('Total Sales (%s)' % p['name']))
             cols.append(DataTablesColumn('Total Consumption (%s)' % p['name']))
@@ -137,7 +146,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
     @property
     def rows(self):
-        products = self.products
+        products = self.ordered_products(PRODUCT_ORDERING)
         locs = Location.filter_by_type(self.domain, 'outlet', self.active_location)
         reports = get_stock_reports(self.domain, self.active_location, self.datespan)
         reports_by_loc = map_reduce(lambda e: [(leaf_loc(e),)], data=reports, include_docs=True)
