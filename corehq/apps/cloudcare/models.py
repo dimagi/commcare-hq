@@ -99,7 +99,7 @@ class ApplicationAccess(Document):
             key=domain,
             include_docs=True
         ).first()
-        return self
+        return self or cls(domain=domain)
 
     def user_can_access_app(self, user, app):
         user_id = user['_id']
@@ -119,7 +119,7 @@ class ApplicationAccess(Document):
     @classmethod
     def get_template_json(cls, domain, apps):
         app_ids = dict([(app['_id'], app) for app in apps])
-        self = ApplicationAccess.get_by_domain(domain) or ApplicationAccess(domain=domain)
+        self = ApplicationAccess.get_by_domain(domain)
         j = self.to_json()
         merged_access_list = []
         for a in j['app_groups']:

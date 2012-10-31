@@ -246,7 +246,7 @@ def app_settings(request, domain):
         })
     elif request.method == 'PUT':
         j = json.loads(request.raw_post_data)
-        old = ApplicationAccess.get_by_domain(domain) or ApplicationAccess(domain=domain)
+        old = ApplicationAccess.get_by_domain(domain)
         new = ApplicationAccess.wrap(j)
         old.restrict = new.restrict
         old.app_groups = new.app_groups
