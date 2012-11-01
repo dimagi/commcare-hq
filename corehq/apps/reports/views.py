@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import json
 from django.core.cache import cache
+from corehq.apps.domain.models import Domain
 from corehq.apps.reports import util
 from corehq.apps.reports.standard import inspect, export
 from corehq.apps.reports.standard.export import DeidExportReport
@@ -63,9 +64,11 @@ require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
 def default(request, domain, template="reports/favorites.html"):
+    user = request.couch_user
+    need_eula = False if user.eula.signed else True
 
     configs = ReportConfig.by_domain_and_owner(domain,
-        request.couch_user._id).all()
+        user.get_id).all()
 
     from corehq.apps.reports.standard import ProjectReport
     context = dict(
@@ -73,11 +76,12 @@ def default(request, domain, template="reports/favorites.html"):
         configs=configs,
         report=dict(
             title="Select a Report to View",
-            show=request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
+            show=user.can_view_reports() or user.get_viewable_reports(),
             slug=None,
             is_async=True,
             section_name=ProjectReport.section_name,
-        )
+        ),
+        need_eula = need_eula
     )
     context["report"].update(show_subsection_navigation=adm_utils.show_adm_nav(domain, request))
     return render_to_response(request, template, context)
