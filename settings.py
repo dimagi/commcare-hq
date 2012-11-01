@@ -24,6 +24,11 @@ TIME_ZONE = "UTC"
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = 'en-us'
 
+LANGUAGES = (
+    ('en', 'English'),
+    ('hin', 'Hindi'),
+)
+
 SITE_ID = 1
 
 # If you set this to False, Django will make some optimizations so as not
@@ -740,7 +745,6 @@ ELASTICSEARCH_PORT = 9200
 
 PILLOWTOPS = [ 'corehq.pillows.CasePillow',
                #'corehq.pillows.ExchangePillow', #todo when merged
-
                'corehq.pillows.AuditcarePillow',
                'corehq.pillows.CouchlogPillow',
                'corehq.pillows.DevicelogPillow',
