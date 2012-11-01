@@ -199,7 +199,7 @@ class CasePillow(AliasedElasticPillow):
                 #this server confirm is a modest overhead but it tells us whether or not the type
                 # is successfully mapped into the index.
                 #0.19 mapping - retrieve the mapping to confirm that it's been seen
-                print "Setting mapping for: %s" % self.get_type_string(doc_dict)
+                #print "Setting mapping for: %s" % self.get_type_string(doc_dict)
                 self.seen_types = es.get('%s/_mapping' % self.es_index)[self.es_index]
 
             doc_path = self.get_doc_path_typed(doc_dict)
