@@ -1,8 +1,8 @@
 {% extends "registration/base.html" %}
 {% block title %}New Project Space{% endblock title %}
 {% block js-inline  %}{{ block.super }}
-    {% url eula as cda_url %}
-    {% include 'hq_bootstrap/partials/load_into_modal.html' with modal_id="eulaModal" load_from=cda_url %}
+    {% url eula as eula_url %}
+    {% include 'hq_bootstrap/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
 {% endblock %}
 
 {% block step-title %}
