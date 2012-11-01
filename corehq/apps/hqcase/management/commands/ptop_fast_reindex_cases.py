@@ -53,6 +53,11 @@ class Command(BaseCommand):
         print "starting fast tracked reindexing"
         chunk = db.view('case/by_owner', reduce=False, limit=CHUNK_SIZE, skip=start_num)
 
+        #though this might cause some superfluous reindexes of docs,
+        # we're going to set the checkpoint BEFORE we start our operation so that any changes
+        # that happen to cases while we're doing our reindexing would not get skipped once we
+        # finish.
+        casepillow.set_checkpoint({ 'seq': casepillow.couch_db.info()['update_seq'] } )
         def do_index(item):
             print "Processing: %s" % item['id']
             casepillow.processor(item, do_set_checkpoint=False)
@@ -63,4 +68,5 @@ class Command(BaseCommand):
             start_num += CHUNK_SIZE
             print "Grabbing next chunk: %d" % start_num
             chunk = db.view('case/by_owner', reduce=False, limit=CHUNK_SIZE, skip=start_num)
+
 
