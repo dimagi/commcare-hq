@@ -26,7 +26,7 @@ LANGUAGE_CODE = 'en-us'
 
 LANGUAGES = (
     ('en', 'English'),
-    ('hin', 'Hindi'),
+    # ('hin', 'Hindi'),
 )
 
 SITE_ID = 1
