@@ -17,6 +17,7 @@ from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
     CustomProjectReportDispatcher)
 from corehq.apps.adm.dispatcher import ADMSectionDispatcher
 import json
+import calendar
 
 class HQUserType(object):
     REGISTERED = 0
@@ -341,10 +342,16 @@ class ReportNotification(Document, UnicodeMixIn):
         else:
             self.delete()
 
+    @property
+    def day_name(self):
+        if self.doc_type == 'WeeklyReportNotification':
+            return calendar.day_name[self.day_of_week]
+        else:
+            return "Every day"
+
     @classmethod
     def days(cls):
         """List of tuples for day of week number and human-readable day of week"""
-        import calendar
         return [(val, calendar.day_name[val]) for val in range(7)]
 
     @classmethod
