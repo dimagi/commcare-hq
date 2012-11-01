@@ -68,13 +68,13 @@ class IndicatorSelectNav(BiharSummaryReport, IndicatorConfigMixIn):
             params = copy(self.request_params)
             params["indicators"] = indicator_set.slug
             params["next_report"] = IndicatorNav.slug
-            return mark_safe(u'<a href="{next}">{val}</a>'.format(
+            return format_html(u'<a href="{next}">{val}</a>',
                 val=_(indicator_set.name),
                 next=url_and_params(
                     SubCenterSelectionReport.get_url(self.domain, 
                                                      render_as=self.render_next),
                     params
-                )))
+            ))
         return [_nav_link(iset) for iset in self.indicator_config.indicator_sets]
 
     
@@ -130,9 +130,10 @@ class IndicatorClientSelectNav(BiharSummaryReport, IndicatorSetMixIn):
             params["indicators"] = self.indicator_set.slug
             params["indicator"] = indicator.slug
             params["indicator_type"] = self._indicator_type
+            
             # params["next_report"] = IndicatorNav.slug
-            return format_html('<a href="{next}">{val}</a>',
-                val=indicator.name,
+            return format_html(u'<a href="{next}">{val}</a>',
+                val=_(indicator.name),
                 next=url_and_params(
                     IndicatorClientList.get_url(self.domain, 
                                                 render_as=self.render_next),
