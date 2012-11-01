@@ -514,17 +514,3 @@ def manage_multimedia(request, domain):
                    } for m in media],
         'licenses': LICENSES.items()
                                                                      })
-
-def eula_agreement(request, domain):
-    domain = Domain.get_by_name(domain)
-    if request.method == 'POST':
-        current_user = CouchUser.from_django_user(request.user)
-        domain.eula.signed = True
-        domain.eula.date = datetime.datetime.utcnow()
-        domain.eula.type = 'End User License Agreement'
-        if current_user:
-            domain.eula.user_id = current_user.get_id
-        domain.eula.user_ip = get_ip(request)
-        domain.save()
-
-    return HttpResponseRedirect(reverse("corehq.apps.reports.views.default", args=[domain]))
