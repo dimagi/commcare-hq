@@ -68,7 +68,7 @@ class IndicatorSelectNav(BiharSummaryReport, IndicatorConfigMixIn):
             params = copy(self.request_params)
             params["indicators"] = indicator_set.slug
             params["next_report"] = IndicatorNav.slug
-            return mark_safe('<a href="{next}">{val}</a>'.format(
+            return mark_safe(u'<a href="{next}">{val}</a>'.format(
                 val=_(indicator_set.name),
                 next=url_and_params(
                     SubCenterSelectionReport.get_url(self.domain, 
