@@ -12,6 +12,9 @@ from casexml.apps.case.models import CommCareCase
 from datetime import datetime, timedelta
 from corehq.apps.adm.reports.supervisor import SupervisorReportsADMSection
 
+from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext as _
+
 class ConvenientBaseMixIn(object):
     # this is everything that's shared amongst the Bihar supervision reports
     # this class is an amalgamation of random behavior and is just 
@@ -108,7 +111,7 @@ class BiharNavReport(BiharSummaryReport):
             if self.preserve_url_params:
                 url = url_and_params(url, self.request_params)
             return format_html('<a href="{details}">{val}</a>',
-                                val=report_cls.name, 
+                                val=_(report_cls.name), 
                                 details=url)
         return [_nav_link(report_cls) for report_cls in self.reports]
         
@@ -123,11 +126,11 @@ class MockEmptyReport(BiharSummaryReport):
         
 class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport, 
                                CustomProjectReport, ReportReferenceMixIn):
-    name = "Select Subcenter"
+    name = ugettext_noop("Select Subcenter")
     slug = "subcenter"
-    description = "Subcenter selection report"
+    description = ugettext_noop("Subcenter selection report")
     
-    _headers = ["Team Name", "Rank"]
+    _headers = [ugettext_noop("Team Name"), ugettext_noop("Rank")]
     
     def __init__(self, *args, **kwargs):
         super(SubCenterSelectionReport, self).__init__(*args, **kwargs)
@@ -159,9 +162,9 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
             
 
 class MainNavReport(BiharNavReport):
-    name = "Main Menu"
+    name = ugettext_noop("Main Menu")
     slug = "mainnav"
-    description = "Main navigation"
+    description = ugettext_noop("Main navigation")
     
     @classmethod
     def show_in_navigation(cls, request, *args, **kwargs):
@@ -176,7 +179,7 @@ class MainNavReport(BiharNavReport):
 
 class WorkerRankSelectionReport(SubCenterSelectionReport):
     slug = "workerranks"
-    name = "Worker Rank"
+    name = ugettext_noop("Worker Rank")
     
     def _row(self, group, rank):
         # HACK: hard code this for now until there's an easier 
@@ -202,11 +205,11 @@ class WorkerRankSelectionReport(SubCenterSelectionReport):
     
 
 class DueListReport(MockEmptyReport):
-    name = "Due List"
+    name = ugettext_noop("Due List")
     slug = "duelist"
 
 class ToolsReport(MockEmptyReport):
-    name = "Tools"
+    name = ugettext_noop("Tools")
     slug = "tools"
 
 def url_and_params(urlbase, params):

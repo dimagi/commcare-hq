@@ -7,8 +7,9 @@ from copy import copy
 from dimagi.utils.html import format_html
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
-from casexml.apps.case.models import CommCareCase
-import random
+from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext as _
+from django.utils.safestring import mark_safe
 
 DEFAULT_EMPTY = "?"
 
@@ -43,9 +44,9 @@ class IndicatorMixIn(IndicatorSetMixIn):
         
         
 class IndicatorNav(BiharNavReport):
-    name = "Indicator Options"
+    name = ugettext_noop("Indicator Options")
     slug = "indicatornav"
-    description = "Indicator navigation"
+    description = ugettext_noop("Indicator navigation")
     preserve_url_params = True
     
     @property
@@ -54,7 +55,7 @@ class IndicatorNav(BiharNavReport):
                 IndicatorCharts]
 
 class IndicatorSelectNav(BiharSummaryReport, IndicatorConfigMixIn):
-    name = "Select Team"
+    name = ugettext_noop("Select Team")
     slug = "teams"
     
     @property
@@ -67,20 +68,20 @@ class IndicatorSelectNav(BiharSummaryReport, IndicatorConfigMixIn):
             params = copy(self.request_params)
             params["indicators"] = indicator_set.slug
             params["next_report"] = IndicatorNav.slug
-            return format_html('<a href="{next}">{val}</a>',
-                val=indicator_set.name,
+            return mark_safe('<a href="{next}">{val}</a>'.format(
+                val=_(indicator_set.name),
                 next=url_and_params(
                     SubCenterSelectionReport.get_url(self.domain, 
                                                      render_as=self.render_next),
                     params
-                ))
+                )))
         return [_nav_link(iset) for iset in self.indicator_config.indicator_sets]
 
     
 class IndicatorSummaryReport(BiharSummaryReport, IndicatorSetMixIn, 
                              GroupReferenceMixIn):
     
-    name = "Indicators"
+    name = ugettext_noop("Indicators")
     slug = "indicatorsummary"
     description = "Indicator details report"
     
@@ -90,7 +91,7 @@ class IndicatorSummaryReport(BiharSummaryReport, IndicatorSetMixIn,
     
     @property
     def _headers(self):
-        return ["Team Name"] + [i.name for i in self.summary_indicators]
+        return [_("Team Name")] + [_(i.name) for i in self.summary_indicators]
     
     @property
     def data(self):
@@ -105,12 +106,12 @@ class IndicatorSummaryReport(BiharSummaryReport, IndicatorSetMixIn,
     
     
 class IndicatorCharts(MockEmptyReport):
-    name = "Charts"
+    name = ugettext_noop("Charts")
     slug = "indicatorcharts"
 
 
 class IndicatorClientSelectNav(BiharSummaryReport, IndicatorSetMixIn):
-    name = "Select Client List"
+    name = ugettext_noop("Select Client List")
     slug = "clients"
     
     _indicator_type = "client_list"
@@ -144,7 +145,7 @@ class IndicatorClientList(ConvenientBaseMixIn, GenericTabularReport,
                           CustomProjectReport, GroupReferenceMixIn,
                           IndicatorMixIn):
     slug = "indicatorclientlist"
-    name = "Client List" 
+    name = ugettext_noop("Client List") 
     
     @property
     def _name(self):

@@ -1,65 +1,67 @@
 from collections import defaultdict
 from dimagi.utils.modules import to_function
+from django.utils.translation import ugettext_noop as _
 
 # static config - should this eventually live in the DB?
 INDICATOR_SETS = [
     {
         "slug": "homevisit", 
-        "name": "Home Visit Information",
+        "name": _("Home Visit Information"),
         "indicators": {
             "summary": [
                 {
                     "slug": "bp2",
-                    "name": "BP (2nd Tri) Visits in last 30 days",
+                    "name": _("BP (2nd Tri) Visits in last 30 days"),
                     "calculation_function": "bihar.reports.indicators.calculations.bp2_last_month"
                 },
                 {
                     "slug": "bp3",
-                    "name": "BP (3rd Tri) Visits in last 30 days",
+                    "name": _("BP (3rd Tri) Visits in last 30 days"),
                     "calculation_function": "bihar.reports.indicators.calculations.bp3_last_month"
                 },
                 {
                     "slug": "pnc",
-                    "name": "PNC Visits  in last 30 days",
+                    "name": _("PNC Visits  in last 30 days"),
                     "calculation_function": "bihar.reports.indicators.calculations.pnc_last_month"
                 },
                 {
                     "slug": "ebf",
-                    "name": "EBF Visits in last 30 days",
+                    "name": _("EBF Visits in last 30 days"),
                     "calculation_function": "bihar.reports.indicators.calculations.eb_last_month"
                 },
                 {
                     "slug": "cf",
-                    "name": "CF Visits in last 30 days",
+                    "name": _("CF Visits in last 30 days"),
                     "calculation_function": "bihar.reports.indicators.calculations.cf_last_month"
                 },
             ],
             "client_list": [
                 {
                     "slug": "new_pregnancies", 
-                    "name": "Pregnant woman registered in last 30 days",
+                    "name": _("Pregnant woman registered in last 30 days"),
                     "filter_function": "bihar.reports.indicators.filters.pregnancy_registered_last_month"
                 }, 
                 {
                     "slug": "deliveries", 
-                    "name": "Pregnant woman who delivered in last 30 days",
+                    "name": _("Pregnant woman who delivered in last 30 days"),
                     "filter_function": "bihar.reports.indicators.filters.delivered_last_month"
                 },
                 {
                     "slug": "upcoming_deliveries", 
-                    "name": "All woman due for delivery in next 30 days",
+                    "name": _("All woman due for delivery in next 30 days"),
                     "filter_function": "bihar.reports.indicators.filters.due_next_month"
                 }
             ]
         }
     },
-    {"slug": "pregnancy", "name": "Pregnancy Outcome" },
-    {"slug": "postpartum", "name": "Post-Partum Complications" },
-    {"slug": "newborn", "name": "Weak Newborn" },
-    {"slug": "familyplanning", "name": "Family Planning" },
-    {"slug": "complimentaryfeeding", "name": "Complimentary Feeding" },
-    {"slug": "mortality", "name": "Mortality" }
+    {"slug": "pregnancy", "name": _("Pregnancy Outcome") },
+    {"slug": "postpartum", "name": _("Post-Partum Complications") },
+    {"slug": "newborn", "name": _("Weak Newborn") },
+    {"slug": "familyplanning", "name": _("Family Planning") },
+    {"slug": "complimentaryfeeding", "name": _("Complimentary Feeding") },
+    {"slug": "mortality", "name": _("Mortality") }
 ]
+
 
 def _one(filter_func, list):
     # this will (intentionally) fail hard if not exactly 1 match
