@@ -155,7 +155,7 @@ def es_filter_cases(domain, filters=None):
                     }
                 },
                 'sort': {
-                    'case.modified_on': {'order': 'asc'}
+                    'modified_on': {'order': 'asc'}
                 },
                 'from': 0,
                 'size': self.limit,
