@@ -1,7 +1,5 @@
 /*
  * Filter that only returns cases without indicators in the specified namespace.  Used by the change listener.
- * && doc.domain === req.query.domain
- && !(doc.computed_  && req.query.namespace in doc.computed_)
  */
 function(doc, req)
 {
@@ -17,7 +15,7 @@ function(doc, req)
 
     if (domains && namespaces) {
         for (var namespace in namespaces) {
-            if (doc["doc_type"] === "CommCareCase"
+            if (doc["doc_type"] === "XFormInstance"
                 && !(doc.computed_  && namespace in doc.computed_)
                 && domains.indexOf(doc.domain) >= 0) {
                 return true;
