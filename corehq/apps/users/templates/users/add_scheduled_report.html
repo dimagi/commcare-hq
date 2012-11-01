@@ -1,18 +1,14 @@
-{% extends "users/users_base.html" %}
+{% extends "reports/base_template.html" %}
 
-{% block account_indicator %}
-<ul class="nav nav-list">
-    <li class="active"><a href="#">New Scheduled Report</a></li>
-</ul>
+{% block js-inline %}
+<script>
+$(function() {
+   $("#hour-input").val("9"); 
+});
+</script>
 {% endblock %}
 
-{% block subsection-title %}
-    <li class="active">
-        <a href="#">New Scheduled Report</a>
-    </li>
-{% endblock %}
-
-{% block user-view %}
+{% block main_column %}
     <h2>Schedule a New Email Report</h2>
 
     {% if configs %}
@@ -24,10 +20,14 @@
                 <div class="controls">
                     <select name="config_id" id="config_id">
                         {% for config in configs %}
-                        <option value="{{ config.get_id }}">{{ config.name }} ({{ config.report_name }})</option>
+                        <option value="{{ config.get_id }}">
+                            {{ config.name }} ({{ config.report_name }})
+                        </option>
                         {% endfor %}
                     </select>
-                    <span class="help-inline alert alert-info" style="width: 400px;">Not all built-in reports currently support email delivery, so some of your saved reports may not appear in this list.</span>  
+                    <span class="help-inline alert alert-info" style="width: 400px;">
+                        Not all built-in reports currently support email delivery, so some of your saved reports may not appear in this list.
+                    </span> 
                 </div>
             </div>
             <div class="control-group">
@@ -35,11 +35,13 @@
                 <div class="controls">
                     <select name="hour" id="hour-input">
                         {% for hr, display in hours %}
-                            <option value="{{hr}}" {% ifequal hr 9 %}selected{%endifequal%}>{{display}}</option>
+                        <option value="{{hr}}">{{display}}</option>
                         {% endfor %}
                     </select>
 
-                    <span class="help-inline alert alert-info" style="width: 400px;">Sorry, right now all times are in GMT.</span>
+                    <span class="help-inline alert alert-info" style="width: 400px;">
+                        Sorry, right now all times are in GMT.
+                    </span>
                 </div>
             </div>
             <div class="control-group">
@@ -51,14 +53,16 @@
                         </optgroup>
                         <optgroup label="Once a week on...">
                             {% for day, display in days %}
-                                <option value="{{day}}">{{display}}</option>
+                            <option value="{{day}}">{{display}}</option>
                             {% endfor %}
                         </optgroup>
                     </select>
                 </div>
             </div>
         </fieldset>
-        <div class="form-actions"><button type="submit" class="btn btn-primary">Add Scheduled Report</button></div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Add Scheduled Report</button>
+        </div>
     </form>
     {% else %}
     <div class="alert">

@@ -1,0 +1,121 @@
+{% extends "reports/base_template.html" %}
+{% load case_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load report_tags %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+$(function() {
+    $("#saved-reports").reportConfigList({
+        items: {{ configs|JSON }},
+        saveUrl: '{% url add_report_config domain %}'
+    });
+
+    $("#scheduled-reports").scheduledReportList({
+        items: {{ scheduled_reports|JSON }}
+    });
+});
+</script>
+{% endblock %}
+
+{% block main_column %}
+<ul class="nav nav-tabs">
+    <li class="active"><a href="#saved-reports" data-toggle="tab">My Saved Reports</a></li>
+    <li><a href="#scheduled-reports" data-toggle="tab">My Scheduled Reports</a></li>
+</ul>
+<div class="tab-content">
+    <div class="tab-pane active" id="saved-reports">
+        
+        <!-- ko ifnot: reportConfigs().length -->
+        <div data-bind="visible: reportConfigs().length" class="alert">
+            You don't have any saved reports.  You can create a new saved report while viewing a report.
+        </div>
+        <!-- /ko -->
+        <!-- ko if: reportConfigs().length -->
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Report</th>
+                    <th>Saved Report Name</th>
+                    <th>Description</th>
+                    <th>Date Range</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- ko foreach: reportConfigs -->
+                <tr>
+                    <td data-bind="text: report_name"></td>
+                    <td><a data-bind="attr: { href: url }, text: name"></a></td>
+                    <td data-bind="text: description"></td>
+                    <td data-bind="text: date_description"></td>
+                    <td>
+                        <button class="btn btn-danger"
+                            data-bind="click: $root.deleteConfig">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+                <!-- /ko -->
+            </tbody>
+        </table>
+        <!-- /ko -->
+    </div>
+
+    {% if report.show %}
+    <div class="tab-pane" id="scheduled-reports">
+        {% if scheduled_reports %}
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>{% trans "Project" %}</th>
+                    <th>{% trans "Saved Report" %}</th>
+                    <th>{% trans "Time" %}</th>
+                    <th>{% trans "Day of week" %}</th>
+                    <th>{% trans "Stop notifications" %}</th>
+                    <th>{% trans "Send test mail" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in scheduled_reports %}
+                <tr>
+                    <td>{{ report.config.domain }}</td>
+                    <td>{{ report.config.full_name }}</td>
+                    <td>{{ report.hours }}:00</td>
+                    <td>{% ifequal report.doc_type "DailyReportNotification" %}Every day{% else %}{% int_to_day report.day_of_week %}{% endifequal %}</td>
+                    <td><a class="btn btn-warning" data-toggle="modal" href="#{{ report.config.domain }}_{{ report.config.report_slug }}_{{ report.config.subreport_slug }}_{{ report.hours }}"><i class="icon icon-minus-sign icon-white"></i> {% trans "Stop" %}</a>
+                        <div id="{{ report.config.domain }}_{{ report.config.report_slug }}_{{ report.config.subreport_slug }}_{{ report.hours }}" class="modal hide fade">
+                            <div class="modal-header">
+                                <a class="close" data-dismiss="modal">&times;</a>
+                                <h3>Stop sending report?</h3>
+                            </div>
+                            <form class="form form-horizontal" action="{% url delete_scheduled_report domain report.get_id %}" method="post">
+                                <div class="modal-body">
+                                    <p>Are you sure you want to stop sending this report?</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                                    <button type="submit" class="btn btn-warning">{% trans 'Stop Sending' %}</button>
+                                </div>
+                            </form>
+                        </div>
+                    </td>
+                    <td>
+                        <form name="test_report" action="{% url test_scheduled_report domain report.get_id %}" method="post">
+                            <a class="btn btn-info" href="#" onclick="$(this).closest('form').submit()"><i class="icon icon-white icon-envelope"></i> Send</a>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p>There are no scheduled email reports for {{ couch_user.html_username|safe }}.</p>
+        {% endif %}
+        <a class="btn btn-success" href="{% url add_scheduled_report domain %}"><i class="icon icon-white icon-plus"></i> Schedule an Email Report</a>
+
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

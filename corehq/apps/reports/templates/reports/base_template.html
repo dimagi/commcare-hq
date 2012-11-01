@@ -80,7 +80,7 @@ $(function() {
     {% block subsection-navigation %}
     <nav class="hq-subsection-navbar">
         <ul class="nav">
-            <li {% ifequal report.section_name 'Project Reports' %}class="active"{% endifequal %}><a href="{% url default_report domain %}">Project Reports</a> <div class="arrow"></div></li>
+            <li {% ifequal report.section_name 'Project Reports' %}class="active"{% endifequal %}><a href="{% url reports_home domain %}">Project Reports</a> <div class="arrow"></div></li>
             <li {% ifequal report.section_name 'Active Data Management' %}class="active"{% endifequal %}><a href="{% url default_adm_report domain %}">Active Data Management</a> <div class="arrow"></div></li>
         </ul>
     </nav>
@@ -89,22 +89,21 @@ $(function() {
 {% endblock %}
 
 {% block page-title %}
-
-    <ul class="breadcrumb">
-        <li>
-            <a href="{{ report.default_url }}"><strong>{{ report.section_name|default:"Reports" }}</strong></a> <span class="divider">&gt;</span>
-        </li>
+<ul class="breadcrumb">
+    <li>
+        <a href="{{ report.default_url }}"><strong>{{ report.section_name|default:"Reports" }}</strong></a> <span class="divider">&gt;</span>
+    </li>
     {% if report.breadcrumbs %}
-        {% for crumb in report.breadcrumbs %}
-        <li>
-            <a href="{{ crumb.link }}">{{ crumb.title }}</a> <span class="divider">&gt;</span>
-        </li>
-        {% endfor %}
+    {% for crumb in report.breadcrumbs %}
+    <li>
+        <a href="{{ crumb.link }}">{{ crumb.title }}</a> <span class="divider">&gt;</span>
+    </li>
+    {% endfor %}
     {% endif %}
-        <li class="active">
-            <div id="report-title"><a href="{{ report.url }}">{{ report.title|default:"Untitled Report"|safe }}</a></div>
-        </li>
-    </ul>
+    <li class="active">
+        <div id="report-title"><a href="{{ report.url }}">{{ report.title|default:"Untitled Report"|safe }}</a></div>
+    </li>
+</ul>
 {% endblock %}
 
 {% block sidebar %}{% include "reports/partials/report_list.html" %}{% endblock %}

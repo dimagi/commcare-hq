@@ -8,7 +8,7 @@
 <tbody>
 {% for domain in domains %}
     <tr>
-        <td><a href="{% url default_report domain.name %}">{{ domain.display_name }}</a></td>
+        <td><a href="{% url reports_home domain.name %}">{{ domain.display_name }}</a></td>
         <td>{{ domain.web_users }}
             <span title="{{ domain.web_users }}"></span>
         </td>

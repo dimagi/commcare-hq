@@ -341,6 +341,20 @@ class ReportNotification(Document, UnicodeMixIn):
         else:
             self.delete()
 
+    @classmethod
+    def days(cls):
+        """List of tuples for day of week number and human-readable day of week"""
+        import calendar
+        return [(val, calendar.day_name[val]) for val in range(7)]
+
+    @classmethod
+    def hours(cls):
+        """List of tuples for hour number and human-readable hour"""
+        return [(val, "%s:00" % val) for val in range(24)]
+
+
+
+
     
 class DailyReportNotification(ReportNotification):
     hours = IntegerProperty()

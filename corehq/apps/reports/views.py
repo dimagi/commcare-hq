@@ -2,10 +2,11 @@ from datetime import datetime, timedelta
 import json
 from django.core.cache import cache
 from corehq.apps.reports import util
-from corehq.apps.reports.standard import inspect, export
+from corehq.apps.reports.standard import inspect, export, ProjectReport
 from corehq.apps.reports.standard.export import DeidExportReport
 from corehq.apps.reports.export import ApplicationBulkExportHelper, CustomBulkExportHelper
-from corehq.apps.reports.models import (ReportConfig, FormExportSchema,
+from corehq.apps.reports.models import (ReportConfig, ReportNotification,
+    WeeklyReportNotification, DailyReportNotification, FormExportSchema,
     HQGroupExportConfiguration)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
@@ -62,24 +63,25 @@ require_case_export_permission = require_permission(Permissions.view_report, 'co
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
-def default(request, domain, template="reports/saved_reports.html"):
-
+def reports_home(request, domain, template="reports/reports_home.html"):
     configs = ReportConfig.by_domain_and_owner(domain,
         request.couch_user._id).all()
 
-    from corehq.apps.reports.standard import ProjectReport
     context = dict(
+        couch_user=request.couch_user,
         domain=domain,
         configs=configs,
+        scheduled_reports=request.couch_user.get_scheduled_reports(),
         report=dict(
             title="Select a Report to View",
             show=request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
             slug=None,
             is_async=True,
             section_name=ProjectReport.section_name,
+            show_subsection_navigation=adm_utils.show_adm_nav(domain, request)
         )
     )
-    context["report"].update(show_subsection_navigation=adm_utils.show_adm_nav(domain, request))
+
     return render_to_response(request, template, context)
 
 @login_or_digest
@@ -498,6 +500,99 @@ def delete_config(request, domain, config_id):
 
     config.delete()
     return HttpResponse()
+
+@login_and_domain_required
+def add_scheduled_report(request, domain, template="users/add_scheduled_report.html"):
+    user_id = request.couch_user._id
+
+    if request.method == "POST":
+        day = request.POST["day"]
+        if day == "all":
+            report = DailyReportNotification()
+        else:
+            report = WeeklyReportNotification()
+            report.day_of_week = int(day)
+        report.hours = int(request.POST["hour"])
+        report.config_id = request.POST["config_id"]
+        report.user_ids = [user_id]
+        report.save()
+        messages.success(request, "New scheduled report added!")
+        return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
+
+    from corehq.apps.reports.standard import ProjectReport
+    
+    # todo: replace with examining the report class to see if it supports
+    # static response (currently not possible)
+    SCHEDULABLE_REPORTS = [
+        "daily_submissions",
+        "daily_completions",
+        "submissions_by_form",
+        "admin_domains",
+        "case_activity"
+    ]
+
+    configs = ReportConfig.by_domain_and_owner(domain, user_id).all()
+    configs = [c for c in configs if c.report_slug in SCHEDULABLE_REPORTS
+                                     or c.report_type != 'project_report']
+
+    context = {
+        'domain': domain,
+        'configs': configs,
+        'scheduled_reports': request.couch_user.get_scheduled_reports(),
+        'hours': ReportNotification.hours(),
+        'days': ReportNotification.days(),
+        'report': {
+            'title': 'New Scheduled Report',
+            'show': request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
+            'slug': None,
+            'default_url': reverse('reports_home', args=(domain,)),
+            'is_async': False,
+            'section_name': ProjectReport.section_name,
+            'show_subsection_navigation': adm_utils.show_adm_nav(domain, request)
+        }
+    }
+
+    return render_to_response(request, template, context)
+
+@login_and_domain_required
+@require_POST
+def delete_scheduled_report(request, domain, report_id):
+    user_id = request.couch_user._id
+    rep = ReportNotification.get(report_id)
+    try:
+        rep.user_ids.remove(user_id)
+    except ValueError:
+        pass  # odd, the user wasn't there in the first place
+    if rep.user_ids:
+        rep.save()
+    else:
+        rep.delete()
+    messages.success(request, "Scheduled report deleted!")
+    return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
+
+@login_and_domain_required
+@require_POST
+def test_scheduled_report(request, domain, report_id):
+    from corehq.apps.reports.tasks import send_report
+    from smtplib import SMTPRecipientsRefused
+    from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
+
+    user_id = request.couch_user._id
+
+    notification = ReportNotification.get(report_id)
+    try:
+        user = WebUser.get_by_user_id(user_id, domain)
+    except CouchUser.AccountTypeError:
+        user = CommCareUser.get_by_user_id(user_id, domain)
+
+    try:
+        send_report(notification, user)
+    except SMTPRecipientsRefused:
+        messages.error(request, "You have no email address configured")
+    else:
+        messages.success(request, "Test message sent to %s" % user.get_email())
+
+    return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
 
 @require_can_view_all_reports
 @login_and_domain_required

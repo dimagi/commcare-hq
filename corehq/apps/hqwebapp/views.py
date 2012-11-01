@@ -73,7 +73,7 @@ def redirect_to_default(req, domain=None):
                 if req.couch_user.is_commcare_user():
                     url = reverse("cloudcare_app_list", args=[domain, ""])
                 elif req.couch_user.can_view_reports(domain) or req.couch_user.get_viewable_reports(domain):
-                    url = reverse('corehq.apps.reports.views.default', args=[domain])
+                    url = reverse('corehq.apps.reports.views.reports_home', args=[domain])
                 else:
                     url = reverse('corehq.apps.app_manager.views.default', args=[domain])
             else:

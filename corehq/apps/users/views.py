@@ -6,7 +6,6 @@ from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
 from openpyxl.shared.exc import InvalidFileException
 import re
-from smtplib import SMTPRecipientsRefused
 import urllib
 from datetime import datetime
 import csv
@@ -41,10 +40,7 @@ from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUse
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
 from dimagi.utils.web import render_to_response, json_response, get_url_base
-import calendar
-from corehq.apps.reports.models import WeeklyReportNotification, DailyReportNotification, ReportNotification
 from django.contrib import messages
-from corehq.apps.reports.tasks import send_report
 from django.views.generic.base import TemplateView
 from django_digest.decorators import httpdigest
 from corehq.apps.users.bulkupload import create_or_update_users_and_groups, check_headers
@@ -582,78 +578,6 @@ def _handle_user_form(request, domain, couch_user=None):
 def test_httpdigest(request, domain):
     return HttpResponse("ok")
 
-@login_and_domain_required
-def add_scheduled_report(request, domain, couch_user_id, template="users/add_scheduled_report.html"):
-    from corehq.apps.reports.models import ReportConfig
-
-
-    if request.method == "POST":
-        day = request.POST["day"]
-        if day == "all":
-            report = DailyReportNotification()
-        else:
-            report = WeeklyReportNotification()
-            report.day_of_week = int(day)
-        report.hours = int(request.POST["hour"])
-        report.config_id = request.POST["config_id"]
-        report.user_ids = [couch_user_id]
-        report.save()
-        messages.success(request, "New scheduled report added!")
-        return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id)))
-
-    # todo: replace with examining the report class to see if it supports
-    # static response (currently not possible)
-    SCHEDULABLE_REPORTS = [
-        "daily_submissions",
-        "daily_completions",
-        "submissions_by_form",
-        "admin_domains",
-        "case_activity"
-    ]
-
-    configs = ReportConfig.by_domain_and_owner(domain, couch_user_id).all()
-    configs = [c for c in configs if c.report_slug in SCHEDULABLE_REPORTS
-                                     or c.report_type != 'project_report']
-
-    context = _users_context(request, domain)
-    context["configs"] = configs
-    context["hours"] = [(val, "%s:00" % val) for val in range(24)]
-    context["days"] = [(val, calendar.day_name[val]) for val in range(7)]
-
-    return render_to_response(request, template, context)
-
-@login_and_domain_required
-@require_POST
-def drop_scheduled_report(request, domain, couch_user_id, report_id):
-    rep = ReportNotification.get(report_id)
-    try:
-        rep.user_ids.remove(couch_user_id)
-    except ValueError:
-        pass # odd, the user wasn't there in the first place
-    if len(rep.user_ids) == 0:
-        rep.delete()
-    else:
-        rep.save()
-    messages.success(request, "Scheduled report dropped!")
-    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
-
-@login_and_domain_required
-@require_POST
-def test_scheduled_report(request, domain, couch_user_id, report_id):
-    rep = ReportNotification.get(report_id)
-    try:
-        user = WebUser.get_by_user_id(couch_user_id, domain)
-    except CouchUser.AccountTypeError:
-        user = CommCareUser.get_by_user_id(couch_user_id, domain)
-
-    try:
-        send_report(rep, user)
-    except SMTPRecipientsRefused:
-        messages.error(request, "You have no email address configured")
-    else:
-        messages.success(request, "Test message sent to %s" % user.get_email())
-
-    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 GROUP VIEWS

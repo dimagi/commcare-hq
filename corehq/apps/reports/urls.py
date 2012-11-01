@@ -34,7 +34,7 @@ phonelog_reports = patterns('',
 )
 
 urlpatterns = patterns('corehq.apps.reports.views',
-    url(r'^$', "default", name="default_report"),
+    url(r'^$', "reports_home", name="reports_home"),
 
     url(r'^case_data/(?P<case_id>[\w\-]+)/$', 'case_details', name="case_details"),
 
@@ -71,6 +71,14 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r"^configs$", 'add_config', name='add_report_config'),
     url(r"^configs/(?P<config_id>[\w-]+)$", 'delete_config',
         name='delete_report_config'),
+
+    # Scheduled reports
+    url(r'^add_scheduled_report/$', 'add_scheduled_report',
+        name='add_scheduled_report'),
+    url(r'^delete_scheduled_report/(?P<report_id>[\w-]+)/$',
+        'delete_scheduled_report', name='delete_scheduled_report'),
+    url(r'^test_scheduled_report/(?P<report_id>[\w-]+)/$',
+        'test_scheduled_report', name='test_scheduled_report'),
 
     # Internal Use
     url(r"^export/forms/all/$", 'export_all_form_metadata', name="export_all_form_metadata"),
