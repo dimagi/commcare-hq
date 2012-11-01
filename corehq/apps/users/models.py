@@ -27,6 +27,7 @@ from casexml.apps.phone.models import User as CaseXMLUser
 
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name
+from corehq.apps.domain.models import LicenseAgreement
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username, cc_user_domain
 from corehq.apps.users.xml import group_fixture
 from corehq.apps.sms.mixin import CommCareMobileContactMixin
@@ -559,6 +560,8 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 #        ('site_edited',     'Manually added or edited from the HQ website.'),
     status = StringProperty()
     language = StringProperty()
+
+    eula = SchemaProperty(LicenseAgreement)
 
     _user = None
     _user_checked = False

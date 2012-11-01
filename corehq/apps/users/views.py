@@ -40,7 +40,7 @@ from corehq.apps.users.forms import UserForm, CommCareAccountForm, ProjectSettin
 from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord, UserRole, AdminUserRole
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
-from dimagi.utils.web import render_to_response, json_response, get_url_base
+from dimagi.utils.web import render_to_response, json_response, get_url_base, get_ip
 import calendar
 from corehq.apps.reports.schedule.config import ScheduledReportFactory
 from corehq.apps.reports.models import WeeklyReportNotification, DailyReportNotification, ReportNotification
@@ -895,3 +895,15 @@ def audit_logs(request, domain):
             except Exception:
                 pass
     return json_response(data)
+
+def eula_agreement(request, domain):
+    domain = Domain.get_by_name(domain)
+    if request.method == 'POST':
+        current_user = CouchUser.from_django_user(request.user)
+        current_user.eula.signed = True
+        current_user.eula.date = datetime.utcnow()
+        current_user.eula.type = 'End User License Agreement'
+        current_user.eula.user_ip = get_ip(request)
+        current_user.save()
+
+    return HttpResponseRedirect(reverse("corehq.apps.reports.views.default", args=[domain]))

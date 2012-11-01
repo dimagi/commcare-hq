@@ -30,7 +30,7 @@ def register_user(request):
         if request.method == 'POST': # If the form has been submitted...
             form = NewWebUserRegistrationForm(request.POST) # A form bound to the POST data
             if form.is_valid(): # All validation rules pass
-                activate_new_user(form)
+                activate_new_user(form, ip=get_ip(request))
                 new_user = authenticate(username=form.cleaned_data['email'],
                                         password=form.cleaned_data['password'])
                 login(request, new_user)
