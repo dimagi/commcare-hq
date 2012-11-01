@@ -57,25 +57,30 @@ def make_psi_config(domain):
         domain=domain,
         multiaction_enabled=True,
         multiaction_keyword='p',
-        actions = {
-            'prevstockonhand': CommtrackActionConfig(
+        actions = [
+            CommtrackActionConfig(
+                action_type='stockedoutfor',
+                keyword='so',
+                caption='Stock-out Days'
+            ),
+            CommtrackActionConfig(
+                action_type='receipts',
+                keyword='r',
+                caption='Other Receipts'
+            ),
+            CommtrackActionConfig(
+                action_type='stockonhand',
                 keyword='soh',
                 multiaction_keyword='st',
                 caption='Stock on Hand'
             ),
-            'receipts': CommtrackActionConfig(
+            CommtrackActionConfig(
+                action_type='receipts',
                 keyword='s',
+                name='sales',
                 caption='Sales/Receipts'
             ),
-            'consumption': CommtrackActionConfig(
-                keyword='c',
-                caption='Consumption'
-            ),
-            'stockedoutfor': CommtrackActionConfig(
-                keyword='so',
-                caption='Stock-out Days'
-            ),
-        }
+        ]
     )
     c.save()
     return c
