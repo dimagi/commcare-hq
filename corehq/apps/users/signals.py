@@ -19,7 +19,7 @@ def set_language(sender, **kwargs):
     """
     user = kwargs['user']
     couch_user = CouchUser.from_django_user(user)
-    if couch_user.language:
+    if couch_user and couch_user.language:
         kwargs['request'].session['django_language'] = couch_user.language
     
     
