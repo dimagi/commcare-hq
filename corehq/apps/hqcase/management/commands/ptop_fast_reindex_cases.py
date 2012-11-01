@@ -28,6 +28,10 @@ class Command(BaseCommand):
         if confirm_ptop != "yes":
             return
 
+        confirm_alias = raw_input("""Are you sure you are not blowing away a production index?""")
+        if confirm_alias != "yes":
+            return
+
 
         #delete the existing index.
         casepillow = CasePillow()
@@ -42,21 +46,21 @@ class Command(BaseCommand):
 
 # view based reindexing is going to be commented out till we figure out what is up with indexing
 #       proceed with fast track by going through the docs 1 by 1
-#        db = CommCareCase.get_db()
-#        start_num = 0
+        db = CommCareCase.get_db()
+        start_num = 0
 
 # exceptions with inconsistent types - namely the @type #text attributed fields.
-#        print "starting fast tracked reindexing"
-#        chunk = db.view('case/by_owner', reduce=False, limit=CHUNK_SIZE, skip=start_num)
-#
-#        def do_index(item):
-#            print "Processing: %s" % item['id']
-#            casepillow.processor(item, do_set_checkpoint=False)
-#
-#        while chunk != []:
-#            for item in chunk:
-#                casepillow.processor(item, do_set_checkpoint=False)
-#            start_num += CHUNK_SIZE
-#            print "Grabbing next chunk: %d" % start_num
-#            chunk = db.view('case/by_owner', reduce=False, limit=CHUNK_SIZE, skip=start_num)
+        print "starting fast tracked reindexing"
+        chunk = db.view('case/by_owner', reduce=False, limit=CHUNK_SIZE, skip=start_num)
+
+        def do_index(item):
+            print "Processing: %s" % item['id']
+            casepillow.processor(item, do_set_checkpoint=False)
+
+        while len(chunk) > 0:
+            for item in chunk:
+                casepillow.processor(item, do_set_checkpoint=False)
+            start_num += CHUNK_SIZE
+            print "Grabbing next chunk: %d" % start_num
+            chunk = db.view('case/by_owner', reduce=False, limit=CHUNK_SIZE, skip=start_num)
 

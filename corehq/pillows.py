@@ -1,3 +1,5 @@
+import hashlib
+import simplejson
 from auditcare.models import AuditEvent
 from couchforms.models import XFormInstance
 from couchlog.models import ExceptionRecord
@@ -20,98 +22,98 @@ class CasePillow(AliasedElasticPillow):
 
     seen_types = {}
 
-    #the meta here is defined for when the case index is created for the FIRST time
-    #subsequent data added to it will be added automatically, but the date_detection is necessary
-    # to be false to prevent indexes from not being created due to the way we store dates
-    #all will be strings EXCEPT the core case properties which we need to explicitly define below.
-    #that way date sort and ranges will work with canonical date formats for queries.
     es_meta = {}
 
+    def calc_meta(self):
+        """
+        override of the meta calculator since we're separating out all the types,
+        so we just do a hash of the "prototype" instead to determind md5
+        """
+        if not hasattr(self, '_calc_meta'):
+            self._calc_meta = hashlib.md5(simplejson.dumps(
+                self.get_mapping_from_type({'domain': 'default', 'type': 'default'}))).hexdigest()
+        return self._calc_meta
+
     def get_mapping_from_type(self, doc_dict):
+        """
+        Define mapping uniquely to the domain_type document.
+        See below on why date_detection is False
+        """
+        #the meta here is defined for when the case index + type is created for the FIRST time
+        #subsequent data added to it will be added automatically, but the date_detection is necessary
+        # to be false to prevent indexes from not being created due to the way we store dates
+        #all will be strings EXCEPT the core case properties which we need to explicitly define below.
+        #that way date sort and ranges will work with canonical date formats for queries.
         return {
-                self.get_type_string(doc_dict): {
-                    "date_detection": False,
-                    "properties": {
-                        "name": {
-                            "type": "string"
-                        },
-                        "domain": {
-                            "type": "multi_field",
-                            "fields": {
-                                "domain": {"type": "string", "index": "analyzed"},
-                                "exact": {"type": "string", "index": "not_analyzed"}
-                                #exact is full text string match - hyphens get parsed in standard
-                                # analyzer
-                                # in queries you can access by domain.exact
-                            }
-                        },
-                        "modified_on": {
-                            "format": "dateOptionalTime",
-                            "type": "date"
-                        },
-                        "closed_on": {
-                            "format": "dateOptionalTime",
-                            "type": "date"
-                        },
-                        "opened_on": {
-                            "format": "dateOptionalTime",
-                            "type": "date"
-                        },
-                        "server_modified_on": {
-                            "type": "date",
-                            "format": "dateOptionalTime"
-                        },
-                        "user_id": {
-                            "type": "string"
-                        },
-                        "closed": {
-                            "type": "boolean"
-                        },
-                        "type": {
-                            "type": "string"
-                        },
-                        "owner_id": {
-                            "type": "string"
-                        },
-                        "xform_ids": {"type": "string", "index_name": "xform_id"},
-                        'actions': {
-                            'properties': {
-                                'action_type': {
-                                    "type": "string"
-                                },
-                                'seq': {
-                                    'type': 'long'
-                                },
-                                'server_date': {
-                                    "format": "dateOptionalTime",
-                                    "type": "date"
-                                },
-                                'date': {
-                                    "format": "dateOptionalTime",
-                                    "type": "date"
-                                },
-                                'xform_id': {
-                                    "type": "string"
-                                },
-                            }
+            self.get_type_string(doc_dict): {
+                "date_detection": False,
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "domain": {
+                        "type": "multi_field",
+                        "fields": {
+                            "domain": {"type": "string", "index": "analyzed"},
+                            "exact": {"type": "string", "index": "not_analyzed"}
+                            #exact is full text string match - hyphens get parsed in standard
+                            # analyzer
+                            # in queries you can access by domain.exact
+                        }
+                    },
+                    "modified_on": {
+                        "format": "dateOptionalTime",
+                        "type": "date"
+                    },
+                    "closed_on": {
+                        "format": "dateOptionalTime",
+                        "type": "date"
+                    },
+                    "opened_on": {
+                        "format": "dateOptionalTime",
+                        "type": "date"
+                    },
+                    "server_modified_on": {
+                        "type": "date",
+                        "format": "dateOptionalTime"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "closed": {
+                        "type": "boolean"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "owner_id": {
+                        "type": "string"
+                    },
+                    "xform_ids": {"type": "string", "index_name": "xform_id"},
+                    'actions': {
+                        'properties': {
+                            'action_type': {
+                                "type": "string"
+                            },
+                            'seq': {
+                                'type': 'long'
+                            },
+                            'server_date': {
+                                "format": "dateOptionalTime",
+                                "type": "date"
+                            },
+                            'date': {
+                                "format": "dateOptionalTime",
+                                "type": "date"
+                            },
+                            'xform_id': {
+                                "type": "string"
+                            },
                         }
                     }
                 }
+            }
         }
-
-
-    def change_transform(self, doc_dict):
-        """
-        Lighten the load of the search index by removing the data heavy transactional cruft
-        """
-        retain_keys = set(['date', 'server_date', 'xform_id', 'sync_log_id', 'action_type'])
-        if doc_dict.has_key('actions'):
-            for ix, action in enumerate(doc_dict['actions']):
-                all_keys = set(doc_dict['actions'][ix].keys())
-                for k in all_keys.difference(retain_keys):
-                    del doc_dict['actions'][ix][k]
-                doc_dict['actions'][ix]['seq'] = ix
-        return doc_dict
 
 
     def get_type_string(self, doc_dict):
@@ -124,8 +126,8 @@ class CasePillow(AliasedElasticPillow):
 
         return "%(type)s_%(domain)s__%(case_type)s" % {
             'type': self.es_type,
-            'domain': domain,
-            'case_type': case_type,
+            'domain': domain.lower(),
+            'case_type': case_type.lower(),
         }
 
     def get_doc_path_typed(self, doc_dict):
@@ -177,8 +179,9 @@ class CasePillow(AliasedElasticPillow):
             es = self.get_es()
 
             if not self.type_exists(doc_dict):
-                print "never seen type: %s" % self.get_type_string(doc_dict)
-                es.put("%s/%s/_mapping" % (self.es_index, self.get_type_string(doc_dict)), data=self.get_mapping_from_type(doc_dict))
+                #if type is never seen, apply mapping for said type
+                es.put("%s/%s/_mapping" % (self.es_index, self.get_type_string(doc_dict)),
+                    data=self.get_mapping_from_type(doc_dict))
 
             doc_path = self.get_doc_path_typed(doc_dict)
 
