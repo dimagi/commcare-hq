@@ -49,8 +49,7 @@ class CasePillow(AliasedElasticPillow):
             self.get_type_string(doc_dict): {
                 "date_detection": False,
                 "_meta" : {
-                    "created" :  datetime.isoformat(datetime.utcnow())
-
+                    "created" : '',
                 },
                 "properties": {
                     "name": {
@@ -193,8 +192,9 @@ class CasePillow(AliasedElasticPillow):
 
             if not self.type_exists(doc_dict):
                 #if type is never seen, apply mapping for said type
-                es.put("%s/%s/_mapping" % (self.es_index, self.get_type_string(doc_dict)),
-                    data=self.get_mapping_from_type(doc_dict))
+                type_mapping = self.get_mapping_from_type(doc_dict)
+                type_mapping[self.get_type_string(doc_dict)]['_meta']['created'] = datetime.isoformat(datetime.utcnow())
+                es.put("%s/%s/_mapping" % (self.es_index, self.get_type_string(doc_dict)), data=type_mapping)
                 #this server confirm is a modest overhead but it tells us whether or not the type
                 # is successfully mapped into the index.
                 #0.19 mapping - retrieve the mapping to confirm that it's been seen
