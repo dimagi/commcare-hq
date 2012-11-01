@@ -193,11 +193,13 @@ class CasePillow(AliasedElasticPillow):
             if not self.type_exists(doc_dict):
                 #if type is never seen, apply mapping for said type
                 type_mapping = self.get_mapping_from_type(doc_dict)
+                #update metadata
                 type_mapping[self.get_type_string(doc_dict)]['_meta']['created'] = datetime.isoformat(datetime.utcnow())
                 es.put("%s/%s/_mapping" % (self.es_index, self.get_type_string(doc_dict)), data=type_mapping)
                 #this server confirm is a modest overhead but it tells us whether or not the type
                 # is successfully mapped into the index.
                 #0.19 mapping - retrieve the mapping to confirm that it's been seen
+                print "Setting mapping for: %s" % self.get_type_string(doc_dict)
                 self.seen_types = es.get('%s/_mapping' % self.es_index)[self.es_index]
 
             doc_path = self.get_doc_path_typed(doc_dict)
