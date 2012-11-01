@@ -9,6 +9,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 import logging
 import settings
+from datetime import datetime
 
 
 class CasePillow(AliasedElasticPillow):
@@ -47,6 +48,10 @@ class CasePillow(AliasedElasticPillow):
         return {
             self.get_type_string(doc_dict): {
                 "date_detection": False,
+                "_meta" : {
+                    "created" :  datetime.isoformat(datetime.utcnow())
+
+                },
                 "properties": {
                     "name": {
                         "type": "string"
@@ -140,18 +145,26 @@ class CasePillow(AliasedElasticPillow):
 
     def type_exists(self, doc_dict):
         es = self.get_es()
-        type_path = "%(index)s/%(type_string)s" % (
-            {
-                'index': self.es_index,
-                'type_string': self.get_type_string(doc_dict),
-            })
-        if self.seen_types.has_key(type_path):
-            return True
-        else:
-            self.seen_types[type_path] = True
-        head_result = es.head(type_path)
 
-        return head_result
+        type_string = self.get_type_string(doc_dict)
+
+        ##################
+        #ES 0.20 has the index HEAD API.  While we're on 0.19, we will need to poll the index
+        # metadata
+        #type_path = "%(index)s/%(type_string)s" % ( { 'index': self.es_index, 'type_string': type_string, })
+
+        #if we don't want to server confirm it for both .19 or .20, then this hash is enough
+        #if self.seen_types.has_key(type_string):
+            #return True
+        #else:
+            #self.seen_types[type_string] = True
+        #head_result = es.head(type_path)
+        #return head_result
+        ##################
+
+        #####
+        #0.19 method, get the mapping from the index
+        return self.seen_types.has_key(type_string)
 
     def doc_exists(self, doc_dict):
         """
@@ -182,6 +195,10 @@ class CasePillow(AliasedElasticPillow):
                 #if type is never seen, apply mapping for said type
                 es.put("%s/%s/_mapping" % (self.es_index, self.get_type_string(doc_dict)),
                     data=self.get_mapping_from_type(doc_dict))
+                #this server confirm is a modest overhead but it tells us whether or not the type
+                # is successfully mapped into the index.
+                #0.19 mapping - retrieve the mapping to confirm that it's been seen
+                self.seen_types = es.get('%s/_mapping' % self.es_index)[self.es_index]
 
             doc_path = self.get_doc_path_typed(doc_dict)
 
