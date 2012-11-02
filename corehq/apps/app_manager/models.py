@@ -683,6 +683,8 @@ class Module(IndexedSchema, NavMenuItemMediaMixin):
         }[self.requires()]
     def requires_case_details(self):
         ret = False
+        if self.case_list.show:
+            return True
         for form in self.get_forms():
             if form.requires_case():
                 ret = True

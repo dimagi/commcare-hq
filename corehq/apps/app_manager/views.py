@@ -827,6 +827,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     _handle_media_edits(req, module, should_edit, resp)
 
     app.save(resp)
+    resp['case_list-show'] = module.requires_case_details()
     return HttpResponse(json.dumps(resp))
 
 @require_POST
