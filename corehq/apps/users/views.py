@@ -895,15 +895,3 @@ def audit_logs(request, domain):
             except Exception:
                 pass
     return json_response(data)
-
-def eula_agreement(request, domain):
-    domain = Domain.get_by_name(domain)
-    if request.method == 'POST':
-        current_user = CouchUser.from_django_user(request.user)
-        current_user.eula.signed = True
-        current_user.eula.date = datetime.utcnow()
-        current_user.eula.type = 'End User License Agreement'
-        current_user.eula.user_ip = get_ip(request)
-        current_user.save()
-
-    return HttpResponseRedirect(reverse("corehq.apps.reports.views.default", args=[domain]))

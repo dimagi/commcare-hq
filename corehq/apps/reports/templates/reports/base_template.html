@@ -2,15 +2,6 @@
 {% load hq_shared_tags %}
 
 {% block js-inline %}{{ block.super }}
-{% if need_eula and not request.couch_user.is_superuser %}
-    {% url eula as eula_url %}
-    {% include 'hq_bootstrap/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
-    <script type="text/javascript">
-        $(window).load(function(){
-            $('#eulaModal').modal('show');
-        });
-    </script>
-{% endif %}
     <script type="text/javascript">
         $(function() {
             $("#reportFavorites").reportConfigEditor({
@@ -154,27 +145,4 @@
             </form>
         </div>
     </div>
-{% endblock %}
-
-{% block modals %}{{ block.super }}
-    {% if need_eula and not request.couch_user.is_superuser %}
-    <div class="modal hide fade" id="eulaModal">
-        <div class="modal-header">
-            <a class="close" data-dismiss="modal">&times;</a>
-            <h4>CommCare HQ End User License Agreement</h4>
-        </div>
-        <div class="modal-body" style="max-height: 20em;">
-            Loading Terms of Service...
-        </div>
-        <div class="modal-footer">
-            <div style="text-align: left; line-height: 2em;">
-                To continue using Commcare HQ, please agree to our new End User License Agreement
-            </div>
-            <form id="eula-agree" action="{% url agree_to_eula domain%}" method="POST">
-                <button type="submit" href="#" class="btn btn-primary">Agree</button>
-                <a href="#" data-dismiss="modal" class="btn">Disagree</a>
-            </form>
-        </div>
-    </div>
-    {% endif %}
 {% endblock %}
