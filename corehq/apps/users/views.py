@@ -40,7 +40,7 @@ from corehq.apps.users.forms import UserForm, CommCareAccountForm, ProjectSettin
 from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, RemoveWebUserRecord, UserRole, AdminUserRole
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
-from dimagi.utils.web import render_to_response, json_response, get_url_base
+from dimagi.utils.web import render_to_response, json_response, get_url_base, get_ip
 import calendar
 from corehq.apps.reports.schedule.config import ScheduledReportFactory
 from corehq.apps.reports.models import WeeklyReportNotification, DailyReportNotification, ReportNotification
@@ -317,7 +317,6 @@ def restore_commcare_user(request, domain, user_id):
 def account(request, domain, couch_user_id, template="users/account.html"):
     context = _users_context(request, domain)
     couch_user = CouchUser.get_by_user_id(couch_user_id, domain)
-
     if not couch_user:
         raise Http404
 
@@ -553,6 +552,10 @@ def _handle_user_form(request, domain, couch_user=None):
                 if role:
                     couch_user.set_role(domain, role)
             couch_user.save()
+            if request.couch_user.get_id == couch_user.get_id and couch_user.language:
+                # update local language in the session
+                request.session['django_language'] = couch_user.language
+            
             messages.success(request, 'Changes saved for user "%s"' % couch_user.username)
     else:
         form = UserForm(role_choices=role_choices)

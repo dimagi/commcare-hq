@@ -5,7 +5,6 @@ class ADMSectionDispatcher(ProjectReportDispatcher):
     prefix = 'adm_section'
     map_name = 'ADM_SECTION_MAP'
 
-    @cls_domain_admin_required
     def dispatch(self, request, *args, **kwargs):
         return super(ADMSectionDispatcher, self).dispatch(request, *args, **kwargs)
 
