@@ -22,7 +22,6 @@
                 db[obj._id] = obj;
             }
             db._sorted = list;
-            console.log(db._sorted);
             return db;
         };
         var access = {{ access|JSON }};
@@ -128,7 +127,6 @@
         ko.applyBindings(controller, $home.get(0));
         $home.show();
         $(document).on('change', '#cloudcare-app-settings *', function () {
-            console.log('hello');
             controller.saveButton.fire('change');
         });
     });

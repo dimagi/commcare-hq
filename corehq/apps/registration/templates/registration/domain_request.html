@@ -1,9 +1,5 @@
 {% extends "registration/base.html" %}
 {% block title %}New Project Space{% endblock title %}
-{% block js-inline  %}{{ block.super }}
-    {% url eula as cda_url %}
-    {% include 'hq_bootstrap/partials/load_into_modal.html' with modal_id="eulaModal" load_from=cda_url %}
-{% endblock %}
 
 {% block step-title %}
     {% if is_new %}
@@ -50,11 +46,7 @@
                 <div class="control-group{% if field.errors %} error{% endif %}">
                     <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
                     <div class="controls">
-                        {% ifnotequal field.name 'eula_confirmed' %}
-                            {{ field }}
-                        {% else %}
-                            <label class="checkbox">{{ field }} I have read and agree to the <a data-toggle="modal" data-target="#eulaModal" href="#eulaModal">CommCare HQ End User License Agreement</a>.</label>
-                        {% endifnotequal %}
+                    {{ field }}
                         <span class="help-inline"></span>
                         {% for error in field.errors %}
                             <span class="help-inline">{{ error }}</span>
@@ -82,19 +74,4 @@
         For detailed documentation, please visit the <a href="http://wiki.commcarehq.org/display/commcarepublic/Home">CommCare Wiki</a>.
     </aside>
 </div>
-{% endblock %}
-
-{% block modals %}{{ block.super }}
-    <div class="modal hide fade" id="eulaModal">
-        <div class="modal-header">
-            <a class="close" data-dismiss="modal">&times;</a>
-            <h4>CommCare HQ End User License Agreement</h4>
-        </div>
-        <div class="modal-body">
-            Loading Terms of Service...
-        </div>
-        <div class="modal-footer">
-            <a href="#" data-dismiss="modal" class="btn">Close</a>
-        </div>
-    </div>
 {% endblock %}

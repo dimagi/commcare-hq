@@ -11,20 +11,25 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.django.email import send_HTML_email
 
-def activate_new_user(form, is_domain_admin=True, domain=None):
+def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     username = form.cleaned_data['email']
     password = form.cleaned_data['password']
     full_name = form.cleaned_data['full_name']
+    now = datetime.utcnow()
 
     new_user = WebUser.create(domain, username, password, is_admin=is_domain_admin)
     new_user.first_name = full_name[0]
     new_user.last_name = full_name[1]
     new_user.email = username
 
+    new_user.eula.signed = True
+    new_user.eula.date = now
+    new_user.eula.type = 'End User License Agreement'
+    if ip: new_user.eula.user_ip = ip
+
     new_user.is_staff = False # Can't log in to admin site
     new_user.is_active = True
     new_user.is_superuser = False
-    now = datetime.utcnow()
     new_user.last_login = now
     new_user.date_joined = now
     new_user.save()
@@ -33,25 +38,18 @@ def activate_new_user(form, is_domain_admin=True, domain=None):
 
 def request_new_domain(request, form, org, new_user=True):
     now = datetime.utcnow()
-    user_ip = get_ip(request)
     current_user = CouchUser.from_django_user(request.user)
 
     dom_req = RegistrationRequest()
     if new_user:
         dom_req.request_time = now
-        dom_req.request_ip = user_ip
+        dom_req.request_ip = get_ip(request)
         dom_req.activation_guid = uuid.uuid1().hex
 
     new_domain = Domain(name=form.cleaned_data['domain_name'],
         is_active=False,
         date_created=datetime.utcnow())
 
-    new_domain.eula.signed = True
-    new_domain.eula.date = now
-    new_domain.eula.type = 'End User License Agreement'
-    if current_user:
-        new_domain.eula.user_id = current_user.get_id
-    new_domain.eula.user_ip = user_ip
 
     if org:
         new_domain.organization = org
