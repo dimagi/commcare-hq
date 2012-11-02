@@ -10,16 +10,25 @@ function(doc, req)
         namespaces = req.query.namespaces.split(',');
     }
 
+    var computed_namespaces = [];
+    if (doc.computed_) {
+        computed_namespaces = Object.keys(doc.computed_);
+    }
+
     var domains = [];
     if (req.query.domains) {
         domains = req.query.domains.split(',');
     }
 
     if (domains && namespaces) {
-        for (var namespace in namespaces) {
+        for (var n in namespaces) {
+            var namespace = namespaces[n];
             if (doc["doc_type"] === "CommCareCase"
-                && !(doc.computed_  && namespace in doc.computed_)
+                && computed_namespaces.indexOf(namespace) < 0
                 && domains.indexOf(doc.domain) >= 0) {
+                log("FOUND");
+                log(computed_namespaces);
+                log(namespace);
                 return true;
             }
         }

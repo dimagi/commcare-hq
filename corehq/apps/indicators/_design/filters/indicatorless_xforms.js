@@ -8,6 +8,11 @@ function(doc, req)
         namespaces = req.query.namespaces.split(',');
     }
 
+    var computed_namespaces = [];
+    if (doc.computed_) {
+        computed_namespaces = Object.keys(doc.computed_);
+    }
+
     var domains = [];
     if (req.query.domains) {
         domains = req.query.domains.split(',');
@@ -16,7 +21,7 @@ function(doc, req)
     if (domains && namespaces) {
         for (var namespace in namespaces) {
             if (doc["doc_type"] === "XFormInstance"
-                && !(doc.computed_  && namespace in doc.computed_)
+                && computed_namespaces.indexOf(namespace) < 0
                 && domains.indexOf(doc.domain) >= 0) {
                 return true;
             }
