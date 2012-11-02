@@ -27,7 +27,7 @@ def handle(verified_contact, text):
     inst_xml = to_instance(verified_contact, data)
     logger.debug(inst_xml)
     
-    stockreport.process(verified_contact.domain, inst_xml)
+    stockreport.process(domain.name, inst_xml)
 
     return True
 
