@@ -1,0 +1,132 @@
+{% extends "hqwebapp/two_column.html" %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    {% include "imports/datatables.html" %}
+    <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+    {% include "imports/flot.html" %}
+    <script src="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js-custom/hq.legacy.js' %}"></script>
+    <script src="{% static 'hqwebapp/javascripts/jquery.history.js' %}"></script>
+    <script src="{% static 'hqwebapp/javascripts/knockout.mapping.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
+    <script src="{% static 'reports/javascripts/datepicker.js' %}"></script>
+    <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
+    <script src="{% static 'reports/javascripts/reports.async.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        var standardHQReport = new HQReport({
+            domain: '{{ domain }}',
+            urlRoot: '{{ report.url_root }}',
+            slug: {{ report.slug|JSON }},
+            subReportSlug: {{ report.sub_slug|JSON }},
+            type: {{ report.type|JSON }},
+            filterSet: {{ report.filter_set|JSON }},
+            needsFilters: {{ report.needs_filters|JSON }},
+
+            {% if request.datespan %}
+                datespan: {
+                    startdate: '{{ datespan.startdate|date:"Y-m-d" }}',
+                    enddate: '{{ datespan.enddate|date:"Y-m-d" }}'
+                },
+            {% endif %}
+        });
+        standardHQReport.init();
+
+        {% if report.slug and report.is_async %}
+            var asyncHQReport = new HQAsyncReport({
+                standardReport: standardHQReport
+            });
+            asyncHQReport.init();
+        {% endif %}
+    </script>
+{% endblock %}
+
+{% block head %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+{% endblock %}
+
+{% block title %} - Report: {{ report.title|default:"Project Reports"|safe }}{% endblock %}
+
+{% block header-section %} {{ block.super }}
+    {% if report.show_subsection_navigation %}
+        {% block subsection-navigation %}
+        {% endblock %}
+    {% endif %}
+{% endblock %}
+
+{% block page-title %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{{ report.default_url }}"><strong>{{ report.section_name|default:"Reports" }}</strong></a> <span class="divider">&gt;</span>
+        </li>
+        {% if report.breadcrumbs %}
+            {% for crumb in report.breadcrumbs %}
+                <li>
+                    <a href="{{ crumb.link }}">{{ crumb.title }}</a> <span class="divider">&gt;</span>
+                </li>
+            {% endfor %}
+        {% endif %}
+        <li class="active">
+            <div id="report-title"><a href="{{ report.url }}">{{ report.title|default:"Untitled Report"|safe }}</a></div>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block sidebar %}{% endblock %}
+{% block main_column %}
+    <div class="hq-accordion-control{% if report.is_async%} hide{% endif %}" id="reportFiltersAccordion">
+        <div class="accordion-heading">
+            <div class="accordion-actions">
+                {% if report.show_filters %}
+                    <a href="#reportFilters" class="btn" id="toggle-report-filters"
+                       data-toggle="collapse" data-show-text="Show Filter Options"
+                       data-hide-text="Hide Filter Options">
+                        Filter Options
+                    </a>
+                {% endif %}
+
+                {% if report.is_exportable %}
+                    <a href="#" class="btn" id="export-report-excel">
+                        <i class="icon icon-share"></i> Export to Excel
+                    </a>
+                {% endif %}
+            </div>
+            <div id="extra-filter-info" class="accordion-extra"></div>
+        </div>
+
+        {% if report.show_filters %}
+            <div id="reportFilters" class="accordion-body collapse">
+                <div class="accordion-inner">
+                    <form method="get" id="paramSelectorForm" class="form-horizontal">
+                        <div id="hq-report-filters">
+                            {% if not report.is_async %}
+                                {% include "reports/async/filters.html" %}
+                            {% endif %}
+                        </div>
+                        <div id="reportFavorites" class="form-actions">
+                            {% block report_filter_actions %}
+                            <button type="submit" class="btn btn-large disabled"
+                                    data-loading-text="Generating Report..."
+                                    data-standard-text="Apply">
+                                Apply
+                            </button>
+                            {% endblock %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    <div id="report-content">
+        {% if not report.is_async and report.slug %}
+            {% block reportcontent %}
+            {% endblock %}
+        {% else %}
+            {% include "reports/async/default.html" %}
+        {% endif %}
+    </div>
+{% endblock %}
