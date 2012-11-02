@@ -219,8 +219,8 @@ class CasePillow(AliasedElasticPillow):
                                                                            doc_dict['_id'],
                                                                            doc_dict.keys()))
         except Exception, ex:
-            logging.error("PillowTop [%s]: transporting change data to elasticsearch error: %s",
-                (self.get_name(), ex))
+            logging.error("PillowTop [%s]: transporting change data doc_id: %s to elasticsearch error: %s",
+                (self.get_name(), doc_dict['_id'], ex))
             return None
 
 
