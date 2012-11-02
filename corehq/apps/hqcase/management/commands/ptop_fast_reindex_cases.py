@@ -9,7 +9,7 @@ POOL_SIZE = 15
 
 
 class Command(BaseCommand):
-    help = "Prints the paths of all the static files"
+    help = "Fast reindex of case elastic index by using the case view and reindexing cases"
 
     def handle(self, *args, **options):
         confirm = raw_input("""
