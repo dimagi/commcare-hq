@@ -97,7 +97,15 @@ def _users_context(request, domain):
 
 @login_and_domain_required
 def users(request, domain):
-    return HttpResponseRedirect(reverse("commcare_users", args=[domain]))
+    redirect = reverse("user_account", args=[domain, request.couch_user._id])
+    try:
+        user = WebUser.get_by_user_id(request.couch_user._id, domain)
+        if user and user.has_permission(domain, 'edit_commcare_users'):
+            redirect = reverse("commcare_users", args=[domain])
+    except Exception as e:
+        logging.exception("Failed to grab user object: %s", e)
+
+    return HttpResponseRedirect(redirect)
 
 @require_can_edit_web_users
 def web_users(request, domain, template="users/web_users.html"):
