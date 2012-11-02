@@ -149,26 +149,28 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             h.max_iteration_count = form.cleaned_data["max_iteration_count"]
             h.until = form.cleaned_data["until"]
             h.events = form.cleaned_data["events"]
+            h.submit_partial_forms = form.cleaned_data["submit_partial_forms"]
             h.save()
             return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
     else:
         if h is not None:
             initial = {
-                "case_type"             : h.case_type
-               ,"nickname"              : h.nickname
-               ,"default_lang"          : h.default_lang
-               ,"method"                : h.method
-               ,"recipient"             : h.recipient
-               ,"start_property"        : h.start_property
-               ,"start_value"           : h.start_value
-               ,"start_date"            : h.start_date
-               ,"start_match_type"      : h.start_match_type
-               ,"start_offset"          : h.start_offset
-               ,"schedule_length"       : h.schedule_length
-               ,"event_interpretation"  : h.event_interpretation
-               ,"max_iteration_count"   : h.max_iteration_count
-               ,"until"                 : h.until
-               ,"events"                : h.events
+                "case_type"             : h.case_type,
+                "nickname"              : h.nickname,
+                "default_lang"          : h.default_lang,
+                "method"                : h.method,
+                "recipient"             : h.recipient,
+                "start_property"        : h.start_property,
+                "start_value"           : h.start_value,
+                "start_date"            : h.start_date,
+                "start_match_type"      : h.start_match_type,
+                "start_offset"          : h.start_offset,
+                "schedule_length"       : h.schedule_length,
+                "event_interpretation"  : h.event_interpretation,
+                "max_iteration_count"   : h.max_iteration_count,
+                "until"                 : h.until,
+                "events"                : h.events,
+                "submit_partial_forms"  : h.submit_partial_forms,
             }
         else:
             initial = {}

@@ -199,6 +199,7 @@ class ComplexCaseReminderForm(Form):
     event_interpretation = ChoiceField(choices=EVENT_CHOICES, widget=Select(attrs={"onchange":"event_interpretation_changed();"}))
     schedule_length = IntegerField()
     events = EventListField()
+    submit_partial_forms = BooleanField(required=False)
     
     def __init__(self, *args, **kwargs):
         super(ComplexCaseReminderForm, self).__init__(*args, **kwargs)
