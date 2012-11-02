@@ -8,6 +8,7 @@ import rawes
 import gevent
 from django.conf import settings
 import logging
+from dimagi.utils.decorators.memoized import memoized
 requests_log = logging.getLogger("requests")
 requests_log.setLevel(logging.ERROR)
 
@@ -169,6 +170,7 @@ class ElasticPillow(BasicPillow):
     def get_doc_path(self, doc_id):
         return "%s/%s/%s" % (self.es_index, self.es_type, doc_id)
 
+    @memoized
     def get_es(self):
         return rawes.Elastic('%s:%s' % (self.es_host, self.es_port))
 
