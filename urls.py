@@ -79,6 +79,7 @@ urlpatterns = patterns('',
     (r'^translations/', include('corehq.apps.translations.urls')),
     (r'^500/$', 'django.views.generic.simple.direct_to_template', {'template': '500.html'}),
     (r'^404/$', 'django.views.generic.simple.direct_to_template', {'template': '404.html'}),
+    url(r'^eula/$', 'django.views.generic.simple.direct_to_template', {'template': 'eula.html'}, name='eula'),
 ) + patterns('', *LOCAL_APP_URLS)
 
 
