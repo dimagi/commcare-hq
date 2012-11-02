@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 
 {% block js-inline %}{{ block.super }}
-{% if need_eula and not request.couch_user.is_superuser and request.couch_user.is_domain_admin %}
+{% if need_eula and not request.couch_user.is_superuser %}
     {% url eula as eula_url %}
     {% include 'hq_bootstrap/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
     <script type="text/javascript">
@@ -157,7 +157,7 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    {% if need_eula and not request.couch_user.is_superuser and request.couch_user.is_domain_admin %}
+    {% if need_eula and not request.couch_user.is_superuser %}
     <div class="modal hide fade" id="eulaModal">
         <div class="modal-header">
             <a class="close" data-dismiss="modal">&times;</a>
