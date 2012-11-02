@@ -208,3 +208,14 @@ def confirm_domain(request, guid=None):
     vals['message_body'] = 'Your account has been successfully activated. Thank you for taking the time to confirm your email address: %s.' % requesting_user.username
     vals['is_error'] = False
     return render_to_response(request, 'registration/confirmation_complete.html', vals)
+
+def eula_agreement(request):
+    if request.method == 'POST':
+        current_user = CouchUser.from_django_user(request.user)
+        current_user.eula.signed = True
+        current_user.eula.date = datetime.utcnow()
+        current_user.eula.type = 'End User License Agreement'
+        current_user.eula.user_ip = get_ip(request)
+        current_user.save()
+
+    return HttpResponseRedirect(request.POST.get('next', '/'))
