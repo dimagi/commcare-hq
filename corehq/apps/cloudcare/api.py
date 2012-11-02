@@ -119,7 +119,7 @@ def es_filter_cases(domain, filters=None):
         
         @property
         def date_modified_start(self):
-            return self._date_modified_start or datetime.min(1970,1,1).strftime("%Y-%m-%d")
+            return self._date_modified_start or datetime(1970,1,1).strftime("%Y-%m-%d")
         
         @property
         def date_modified_end(self):
