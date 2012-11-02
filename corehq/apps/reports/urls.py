@@ -34,7 +34,7 @@ phonelog_reports = patterns('',
 )
 
 urlpatterns = patterns('corehq.apps.reports.views',
-    url(r'^$', "reports_home", name="reports_home"),
+    url(r'^$', "home", name="reports_home"),
 
     url(r'^case_data/(?P<case_id>[\w\-]+)/$', 'case_details', name="case_details"),
 
@@ -48,8 +48,9 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^dodoma/', include(dodoma_reports)),
 
     # useful for debugging email reports
-    url(r'^emaillist/$', 'emaillist', name="emailable_report_list"),
-    url(r'^emailtest/(?P<config_id>[\w_]+)/$', 'emailtest', name="emailable_report_test"),
+    url(r'^list_configs/$', 'list_configs', name="list_configs"),
+    url(r'^test_config/(?P<config_id>[\w_]+)/$', 'test_config',
+        name="test_config"),
 
     # Create and Manage Custom Exports
     url(r"^export/$", 'export_data'),

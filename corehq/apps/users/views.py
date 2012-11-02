@@ -40,9 +40,6 @@ from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUse
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
 from dimagi.utils.web import render_to_response, json_response, get_url_base, get_ip
-import calendar
-from corehq.apps.reports.schedule.config import ScheduledReportFactory
-from corehq.apps.reports.models import WeeklyReportNotification, DailyReportNotification, ReportNotification
 from django.contrib import messages
 from django.views.generic.base import TemplateView
 from django_digest.decorators import httpdigest
@@ -847,4 +844,4 @@ def eula_agreement(request, domain):
         current_user.eula.user_ip = get_ip(request)
         current_user.save()
 
-    return HttpResponseRedirect(reverse("corehq.apps.reports.views.default", args=[domain]))
+    return HttpResponseRedirect(reverse("corehq.apps.reports.views.home", args=[domain]))

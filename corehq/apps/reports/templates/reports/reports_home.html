@@ -11,10 +11,6 @@ $(function() {
         items: {{ configs|JSON }},
         saveUrl: '{% url add_report_config domain %}'
     });
-
-    $("#scheduled-reports").scheduledReportList({
-        items: {{ scheduled_reports|JSON }}
-    });
 });
 </script>
 {% endblock %}
@@ -27,13 +23,10 @@ $(function() {
 <div class="tab-content">
     <div class="tab-pane active" id="saved-reports">
         
-        <!-- ko ifnot: reportConfigs().length -->
-        <div data-bind="visible: reportConfigs().length" class="alert">
+        <div data-bind="visible: !reportConfigs().length" class="alert">
             You don't have any saved reports.  You can create a new saved report while viewing a report.
         </div>
-        <!-- /ko -->
-        <!-- ko if: reportConfigs().length -->
-        <table class="table table-striped table-bordered">
+        <table data-bind="visible: reportConfigs().length" class="table table-striped table-bordered">
             <thead>
                 <tr>
                     <th>Report</th>
@@ -60,7 +53,6 @@ $(function() {
                 <!-- /ko -->
             </tbody>
         </table>
-        <!-- /ko -->
     </div>
 
     {% if report.show %}
@@ -69,26 +61,57 @@ $(function() {
         <table class="table table-striped table-bordered">
             <thead>
                 <tr>
-                    <th>{% trans "Project" %}</th>
-                    <th>{% trans "Saved Report" %}</th>
-                    <th>{% trans "Time" %}</th>
+                    <th>{% trans "Saved Report(s)" %}</th>
                     <th>{% trans "Day of week" %}</th>
-                    <th>{% trans "Stop notifications" %}</th>
-                    <th>{% trans "Send test mail" %}</th>
+                    <th>{% trans "Time" %}</th>
+                    <th>{% trans "Send to me" %}</th>
+                    <th>{% trans "Other recipients" %}</th>
+                    <th>{% trans "Send me a test mail" %}</th>
+                    <th>{% trans "Delete" %}</th>
                 </tr>
             </thead>
             <tbody>
                 {% for report in scheduled_reports %}
                 <tr>
-                    <td>{{ report.config.domain }}</td>
-                    <td>{{ report.config.full_name }}</td>
-                    <td>{{ report.hours }}:00</td>
-                    <td>{{ report.day_name }}</td>
                     <td>
-                        <a class="btn btn-warning" data-toggle="modal" href="#{{ report.config.domain }}_{{ report.config.report_slug }}_{{ report.config.subreport_slug }}_{{ report.hours }}">
-                            <i class="icon icon-minus-sign icon-white"></i> {% trans "Stop" %}
+                        {% if report.configs|length == 1 %}
+                        {% for config in report.configs %}
+                        <a href="{{ config.url }}">{{ config.full_name }}</a>
+                        {% endfor %}
+                        {% else %}
+                        <ul>
+                            {% for config in report.configs %}
+                            <li><a href="{{ config.url }}">{{ config.full_name }}</a></li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </td>
+                    <td>{{ report.day_name }}</td>
+                    <td>{{ report.hours }}:00</td>
+                    <td>
+                        {% comment %} handles old documents {% endcomment %}
+                        {% if report.user_ids or report.send_to_owner %}
+                        <i class="icon icon-check"></i>
+                        {% else %}
+                        <i class="icon icon-check-empty"></i>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% for email in report.recipient_emails %}
+                        {{ email }},
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <form name="test_report" action="{% url test_scheduled_report domain report.get_id %}" method="post">
+                            <a class="btn btn-info" href="#" onclick="$(this).closest('form').submit()"><i class="icon icon-white icon-envelope"></i> Send</a>
+                        </form>
+                    </td>
+                    
+                    <td>
+                        <a class="btn btn-danger" data-toggle="modal" href="#{{ report.get_id }}">
+                            <i class="icon icon-minus-sign icon-white"></i> {% trans "Delete" %}
                         </a>
-                        <div id="{{ report.config.domain }}_{{ report.config.report_slug }}_{{ report.config.subreport_slug }}_{{ report.hours }}" class="modal hide fade">
+                        <div id="{{ report.get_id }}" class="modal hide fade">
                             <div class="modal-header">
                                 <a class="close" data-dismiss="modal">&times;</a>
                                 <h3>Stop sending report?</h3>
@@ -103,11 +126,6 @@ $(function() {
                                 </div>
                             </form>
                         </div>
-                    </td>
-                    <td>
-                        <form name="test_report" action="{% url test_scheduled_report domain report.get_id %}" method="post">
-                            <a class="btn btn-info" href="#" onclick="$(this).closest('form').submit()"><i class="icon icon-white icon-envelope"></i> Send</a>
-                        </form>
                     </td>
                 </tr>
                 {% endfor %}

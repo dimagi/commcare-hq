@@ -12,8 +12,11 @@
 </style>
 </head>
 <body>
-    <p>Project: {{ domain }}</p>
-    {{ report_body|safe }}
+    {% for report in reports %}
+    <h2><a href="{{ report.url }}">{{ report.title }}</a></h2>
+    {{ report.content|safe }}
+    {% endfor %}
+
     <hr />
     <p>You are receiving this automated report email from <a href="{{ DNS_name }}">CommCareHQ</a>. You can modify these settings by visiting <a href="{{ DNS_name }}{% url user_account domain couch_user %}">Account Settings</a>.</p>
 </body>

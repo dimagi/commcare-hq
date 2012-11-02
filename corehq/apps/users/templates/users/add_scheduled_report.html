@@ -1,9 +1,19 @@
 {% extends "reports/base_template.html" %}
+{% load hq_shared_tags %}
+
+{% block js %}
+<script src="{% static 'hqwebapp/js/jquery.multi_typeahead.js' %}"></script>
+
+{% endblock %}
 
 {% block js-inline %}
 <script>
 $(function() {
-   $("#hour-input").val("9"); 
+   $("#hour-input").val("9");
+
+   $("#recipient_emails").multiTypeahead({
+       source: {{ user_emails|JSON }}
+   });
 });
 </script>
 {% endblock %}
@@ -14,41 +24,27 @@ $(function() {
     {% if configs %}
     <form class="form form-horizontal" method="post" action="">
         <fieldset>
-            <legend>What should we send you?</legend>
             <div class="control-group">
-                <label class="control-label" for="config_id">Saved Report: </label>
+                <label class="control-label" for="config_id">Saved report(s)</label>
                 <div class="controls">
-                    <select name="config_id" id="config_id">
+                    <select name="config_id" id="config_id" multiple="multiple">
                         {% for config in configs %}
                         <option value="{{ config.get_id }}">
-                            {{ config.name }} ({{ config.report_name }})
+                            {{ config.full_name }}
                         </option>
                         {% endfor %}
                     </select>
-                    <span class="help-inline alert alert-info" style="width: 400px;">
-                        Not all built-in reports currently support email delivery, so some of your saved reports may not appear in this list.
-                    </span> 
+                    <div class="help-inline alert alert-info" style="width: 400px;">
+                        <p>You can use Ctrl-Click to select multiple saved reports to include.</p>
+                        <p>Not all built-in reports currently support email delivery, so some of your saved reports may not appear in this list.</p>
+                    </div> 
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label" for="hour-input">at: </label>
-                <div class="controls">
-                    <select name="hour" id="hour-input">
-                        {% for hr, display in hours %}
-                        <option value="{{hr}}">{{display}}</option>
-                        {% endfor %}
-                    </select>
-
-                    <span class="help-inline alert alert-info" style="width: 400px;">
-                        Sorry, right now all times are in GMT.
-                    </span>
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label" for="day-input">on: </label>
+                <label class="control-label" for="day-input">Day </label>
                 <div class="controls">
                     <select name="day" id="day-input">
-                        <optgroup label="Daily...">
+                        <optgroup label="Daily">
                             <option value="all">Every Day</option>
                         </optgroup>
                         <optgroup label="Once a week on...">
@@ -59,7 +55,38 @@ $(function() {
                     </select>
                 </div>
             </div>
+            <div class="control-group">
+                <label class="control-label" for="hour-input">Time </label>
+                <div class="controls">
+                    <select name="hour" id="hour-input">
+                        {% for hr, display in hours %}
+                        <option value="{{hr}}">{{display}}</option>
+                        {% endfor %}
+                    </select>
+
+                    <div class="help-inline alert alert-info" style="width: 400px;">
+                        Sorry, right now all times are in GMT.
+                    </div>
+                </div>
+            </div>
+            <div class="control-group">
+                <div class="controls">
+                    <label class="checkbox" for="send_to_owner">
+                        <input type="checkbox" name="send_to_owner" checked="checked">Send to me
+                    </label>
+                    
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="recipient_emails">Other recipients</label>
+                <div class="controls">
+                    <textarea name="recipient_emails" id="recipient_emails"></textarea>
+                </div>
+            </div>
+            
+            
         </fieldset>
+
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Add Scheduled Report</button>
         </div>

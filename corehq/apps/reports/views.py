@@ -11,7 +11,7 @@ from corehq.apps.reports.models import (ReportConfig, ReportNotification,
     HQGroupExportConfiguration)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import Permissions, CouchUser
 import couchexport
 from couchexport.export import UnsupportedExportFormat, export_raw
 from couchexport.util import SerializableFunction
@@ -64,18 +64,18 @@ require_case_export_permission = require_permission(Permissions.view_report, 'co
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
-def reports_home(request, domain, template="reports/reports_home.html"):
+def home(request, domain, template="reports/reports_home.html"):
     user = request.couch_user
-    need_eula = False if user.eula.signed else True
 
-    configs = ReportConfig.by_domain_and_owner(domain,
-        user.get_id).all()
+    need_eula = False if user.eula.signed else True
+    configs = ReportConfig.by_domain_and_owner(domain, user._id).all()
+    scheduled_reports = ReportNotification.by_domain_and_owner(domain, user._id).all()
 
     context = dict(
         couch_user=request.couch_user,
         domain=domain,
         configs=configs,
-        scheduled_reports=request.couch_user.get_scheduled_reports(),
+        scheduled_reports=scheduled_reports,
         report=dict(
             title="Select a Report to View",
             show=user.can_view_reports() or user.get_viewable_reports(),
@@ -507,26 +507,62 @@ def delete_config(request, domain, config_id):
     return HttpResponse()
 
 @login_and_domain_required
+@permission_required("is_superuser")
+def list_configs(request, domain):
+    """List report configs, for testing"""
+
+    configs = ReportConfig.by_domain_and_owner(domain, request.couch_user._id).all()
+    
+    return render_to_response(request, "reports/email/report_list.html", 
+                              {"domain": domain,
+                               "configs": configs})
+
+@login_and_domain_required
+@permission_required("is_superuser")
+def test_config(request, domain, config_id):
+    """Display the HTML output for a given report config"""
+
+    config = ReportConfig.get(config_id)
+    content = config.get_report_content(domain, request.couch_user)
+    return HttpResponse(content)
+
+@login_and_domain_required
 def add_scheduled_report(request, domain, template="users/add_scheduled_report.html"):
     user_id = request.couch_user._id
 
     if request.method == "POST":
+        send_to_owner = ('send_to_owner' in request.POST)
+        config_ids = request.POST.getlist('config_id')
+        emails = request.POST['recipient_emails'].split(',')
+        emails = [e.strip() for e in emails if e.strip()]
+        # todo: validate emails
+
+        if not (config_ids and (emails or send_to_owner)):
+            if not config_ids:
+                messages.error(request, "You must choose at least one saved report.")
+            if not (emails or send_to_owner):
+                messages.error(request, "You must choose at least one recipient.")
+            return HttpResponseRedirect(reverse("add_scheduled_report",
+                                                args=(domain,)))
+
         day = request.POST["day"]
         if day == "all":
             report = DailyReportNotification()
         else:
             report = WeeklyReportNotification()
             report.day_of_week = int(day)
+        report.domain = domain
         report.hours = int(request.POST["hour"])
-        report.config_id = request.POST["config_id"]
-        report.user_ids = [user_id]
+        report.send_to_owner = send_to_owner
+        report.config_ids = config_ids
+        report.owner_id = user_id
+        report.recipient_emails = emails
         report.save()
+
         messages.success(request, "New scheduled report added!")
         return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
 
-    from corehq.apps.reports.standard import ProjectReport
-    
-    # todo: replace with examining the report class to see if it supports
+    # todo: replace with examining report classes to see if they support
     # static response (currently not possible)
     SCHEDULABLE_REPORTS = [
         "daily_submissions",
@@ -540,12 +576,16 @@ def add_scheduled_report(request, domain, template="users/add_scheduled_report.h
     configs = [c for c in configs if c.report_slug in SCHEDULABLE_REPORTS
                                      or c.report_type != 'project_report']
 
+    web_users = CouchUser.view('users/web_users_by_domain', reduce=False,
+                               key=domain, include_docs=True).all()
+    emails = [u.username for u in web_users]
+
     context = {
         'domain': domain,
         'configs': configs,
-        'scheduled_reports': request.couch_user.get_scheduled_reports(),
         'hours': ReportNotification.hours(),
         'days': ReportNotification.days(),
+        'user_emails': emails,
         'report': {
             'title': 'New Scheduled Report',
             'show': request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
@@ -581,7 +621,7 @@ def test_scheduled_report(request, domain, report_id):
     from corehq.apps.reports.tasks import send_report
     from smtplib import SMTPRecipientsRefused
     from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
-
+    
     user_id = request.couch_user._id
 
     notification = ReportNotification.get(report_id)
@@ -591,7 +631,7 @@ def test_scheduled_report(request, domain, report_id):
         user = CommCareUser.get_by_user_id(user_id, domain)
 
     try:
-        send_report(notification, user)
+        send_report(notification)
     except SMTPRecipientsRefused:
         messages.error(request, "You have no email address configured")
     else:
@@ -750,25 +790,6 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
     else:
         return start, end
 
-@login_and_domain_required
-@permission_required("is_superuser")
-def emaillist(request, domain):
-    """List configured email reports"""
-
-    configs = ReportConfig.by_domain_and_owner(domain, request.couch_user._id).all()
-    
-    return render_to_response(request, "reports/email/report_list.html", 
-                              {"domain": domain,
-                               "configs": configs})
-
-@login_and_domain_required
-@permission_required("is_superuser")
-def emailtest(request, domain, config_id):
-    """Display the HTML output for a given email report config"""
-
-    config = ReportConfig.get(config_id)
-    content = config.get_report_content(domain, request.couch_user)
-    return HttpResponse(content)
 
 
 @login_and_domain_required
