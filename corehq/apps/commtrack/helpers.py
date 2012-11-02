@@ -78,7 +78,7 @@ def make_psi_config(domain):
                 action_type='receipts',
                 keyword='s',
                 name='sales',
-                caption='Sales/Receipts'
+                caption='Sales'
             ),
         ]
     )

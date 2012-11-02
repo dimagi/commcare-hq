@@ -33,7 +33,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
 
     @property
     def actions(self):
-        return sorted(self.config.actions.keys())
+        return sorted(action_config.action_name for action_config in self.config.actions)
 
     def ordered_actions(self, ordering):
         return sorted(self.actions, key=lambda a: (0, ordering.index(a)) if a in ordering else (1, a))
@@ -48,12 +48,12 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
                 self._location = Location.get(loc_id)
         return self._location
 
-def get_transactions(form_doc):
+def get_transactions(form_doc, include_inferred=True):
     from collections import Sequence
     txs = form_doc['form']['transaction']
     if not isinstance(txs, Sequence):
         txs = [txs]
-    return txs
+    return [tx for tx in txs if include_inferred or not tx.get('@inferred')]
 
 def get_stock_reports(domain, location, datespan):
     timestamp_start = dateparse.json_format_datetime(datespan.startdate)
@@ -80,7 +80,7 @@ OUTLET_METADATA = [
     ('outlet_type', 'Outlet Type'),
 ]
 
-ACTION_ORDERING = ['prevstockonhand', 'receipts', 'consumption', 'stockedoutfor']
+ACTION_ORDERING = ['stockonhand', 'sales', 'receipts', 'stockedoutfor']
 PRODUCT_ORDERING = ['PSI kit', 'non-PSI kit', 'ORS', 'Zinc']
 
 class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
@@ -99,19 +99,18 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
         cfg = self.config
         for p in self.ordered_products(PRODUCT_ORDERING):
             for a in self.ordered_actions(ACTION_ORDERING):
-                cols.append(DataTablesColumn('%s (%s)' % (cfg.actions[a].caption, p['name'])))
+                cols.append(DataTablesColumn('%s (%s)' % (cfg.actions_by_name[a].caption, p['name'])))
         
         return DataTablesHeader(*cols)
 
     @property
     def rows(self):
         products = self.ordered_products(PRODUCT_ORDERING)
-        actions = self.actions
         reports = get_stock_reports(self.domain, self.active_location, self.datespan)
         locs = dict((loc._id, loc) for loc in Location.view('_all_docs', keys=[leaf_loc(r) for r in reports], include_docs=True))
 
         def row(doc):
-            transactions = dict(((tx['action'], tx['product']), tx['value']) for tx in get_transactions(doc))
+            transactions = dict(((tx['action'], tx['product']), tx['value']) for tx in get_transactions(doc, False))
             location =  locs[leaf_loc(doc)]
 
             data = [getattr(location, key) for key, caption in OUTLET_METADATA]
@@ -184,7 +183,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
                 stockouts[p['_id']] = stockout_dates
 
                 data.append('%s (%s)' % (stock, as_of) if latest_state else u'\u2014')
-                data.append(sum(tx_by_action.get('receipts', [])))
+                data.append(sum(tx_by_action.get('sales', [])))
                 data.append(sum(tx_by_action.get('consumption', [])))
 
             combined_stockout_days = len(reduce(lambda a, b: a.intersection(b), stockouts.values()))
