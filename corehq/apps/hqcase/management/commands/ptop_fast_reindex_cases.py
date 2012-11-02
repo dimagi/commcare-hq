@@ -1,3 +1,5 @@
+import logging
+from django.core.mail import send_mail
 from django.core.management.base import  BaseCommand
 from casexml.apps.case.models import CommCareCase
 from pillows import CasePillow
@@ -42,14 +44,9 @@ class Command(BaseCommand):
         print "Resetting CasePillow Checkpoint"
         casepillow.reset_checkpoint()
 
-        print "Index recreated - you may now restart run_ptop"
-
-# view based reindexing is going to be commented out till we figure out what is up with indexing
-#       proceed with fast track by going through the docs 1 by 1
         db = CommCareCase.get_db()
         start_num = 0
 
-# exceptions with inconsistent types - namely the @type #text attributed fields.
         print "starting fast tracked reindexing"
         chunk = db.view('case/by_owner', reduce=False, limit=CHUNK_SIZE, skip=start_num)
 
@@ -62,11 +59,19 @@ class Command(BaseCommand):
             print "Processing: %s" % item['id']
             casepillow.processor(item, do_set_checkpoint=False)
 
-        while len(chunk) > 0:
-            for item in chunk:
-                casepillow.processor(item, do_set_checkpoint=False)
-            start_num += CHUNK_SIZE
-            print "Grabbing next chunk: %d" % start_num
-            chunk = db.view('case/by_owner', reduce=False, limit=CHUNK_SIZE, skip=start_num)
+        try:
+            while len(chunk) > 0:
+                for item in chunk:
+                    casepillow.processor(item, do_set_checkpoint=False)
+                start_num += CHUNK_SIZE
+                print "Grabbing next chunk: %d" % start_num
+                chunk = db.view('case/by_owner', reduce=False, limit=CHUNK_SIZE, skip=start_num)
 
+            print "Index recreated - you may now restart run_ptop"
+            send_mail('[commcare-hq] Pillowtop Case Reindex Complete',
+                "Case reindex complete for index %s - it may now be aliased to hqcases" % casepillow
+                .es_index,
+                'hq-noreply@dimagi.com', ['commcarehq-dev@dimagi.com'], fail_silently=True)
+        except Exception, ex:
+            logging.exception("Case pillowtop fast reindex failed: %s" % ex)
 
