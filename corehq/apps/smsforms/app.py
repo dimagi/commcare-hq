@@ -1,9 +1,14 @@
 from .models import XFormsSession
 from datetime import datetime
 from corehq.apps.cloudcare.touchforms_api import get_session_data
-from touchforms.formplayer.api import XFormsConfig, DigestAuth
+from touchforms.formplayer.api import XFormsConfig, DigestAuth, get_raw_instance
 from touchforms.formplayer import sms as tfsms
 from django.conf import settings
+from xml.etree.ElementTree import XML, tostring
+from dimagi.utils.parsing import json_format_datetime
+from corehq.apps.receiverwrapper.util import get_submit_url
+from receiver.util import spoof_submission
+import re
 
 COMMCONNECT_DEVICE_ID = "commconnect"
 
@@ -71,3 +76,40 @@ def _get_responses(domain, recipient, text):
                 
 def _responses_to_text(responses):
     return [r.text_prompt for r in responses if r.text_prompt]
+
+# Gets the raw instance of the session's form, strips out any case action blocks, and submits it.
+# This is used with sms surveys to save all questions answered so far in a session that needs to close, 
+# making sure that there are no side-effects to the case on submit.
+def submit_unfinished_form(session_id):
+    session = XFormsSession.latest_by_session_id(session_id)
+    if session is not None:
+        # Get and clean the raw xml
+        xml = get_raw_instance(session_id)
+        root = XML(xml)
+        case_tag_regex = re.compile("^(\{.*\}){0,1}case$") # Use regex in order to search regardless of namespace
+        meta_tag_regex = re.compile("^(\{.*\}){0,1}meta$")
+        timeEnd_tag_regex = re.compile("^(\{.*\}){0,1}timeEnd$")
+        current_timstamp = json_format_datetime(datetime.utcnow())
+        for child in root:
+            if case_tag_regex.match(child.tag) is not None:
+                # Found the case tag, now remove all children
+                case_element = child
+                case_element.set("date_modified", current_timstamp)
+                child_elements = [case_action for case_action in case_element]
+                for case_action in child_elements:
+                    case_element.remove(case_action)
+            elif meta_tag_regex.match(child.tag) is not None:
+                # Found the meta tag, now set the value for timeEnd
+                for meta_child in child:
+                    if timeEnd_tag_regex.match(meta_child.tag):
+                        meta_child.text = current_timstamp
+        cleaned_xml = tostring(root)
+        
+        # Submit the xml and end the session
+        resp = spoof_submission(get_submit_url(session.domain, session.app_id), cleaned_xml, hqsubmission=False)
+        xform_id = resp['X-CommCareHQ-FormID']
+        session.end(completed=False)
+        session.submission_id = xform_id
+        session.save()
+
+
