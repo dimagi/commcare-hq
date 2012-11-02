@@ -67,7 +67,6 @@ require_can_view_all_reports = require_permission(Permissions.view_reports)
 def home(request, domain, template="reports/reports_home.html"):
     user = request.couch_user
 
-    need_eula = False if user.eula.signed else True
     configs = ReportConfig.by_domain_and_owner(domain, user._id).all()
     scheduled_reports = ReportNotification.by_domain_and_owner(domain, user._id).all()
 
@@ -84,7 +83,6 @@ def home(request, domain, template="reports/reports_home.html"):
             section_name=ProjectReport.section_name,
             show_subsection_navigation=adm_utils.show_adm_nav(domain, request)
         ),
-        need_eula=need_eula
     )
 
     return render_to_response(request, template, context)

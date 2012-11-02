@@ -5,7 +5,6 @@ from corehq.apps.domain.utils import grandfathered_domain_re
 
 urlpatterns = patterns('corehq.apps.users.views',
     url(r'^$', 'users', name="users_default"),
-    url(r'^eula_agreement/$', 'eula_agreement', name="agree_to_eula"),
     #url(r'my_domains/$', 'my_domains', name='my_domains'),
     url(r'^change_my_password/$', 'change_my_password', name="change_my_password"),
     url(r'^change_password/(?P<login_id>[\w-]+)/$', 'change_password', name="change_password"),
