@@ -1,3 +1,4 @@
+from gevent import monkey; monkey.patch_all(thread=False)
 import gevent
 from gevent.pool import Pool
 
@@ -26,7 +27,7 @@ def import_pillows():
 #standalone pillowtop runner
 def start_pillows():
     #gevent patching: logging doesn't seem to work unless thread is not patched
-    from gevent import monkey; monkey.patch_all(thread=False)
+
     pillows = import_pillows()
     pool = Pool(len(pillows))
     while True:

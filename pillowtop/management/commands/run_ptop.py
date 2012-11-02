@@ -10,6 +10,9 @@ class Command(NoArgsCommand):
     option_list = NoArgsCommand.option_list + (
     )
     def handle_noargs(self, **options):
+        import logging
+        requests_log = logging.getLogger("requests")
+        requests_log.setLevel(logging.WARNING)
         start_pillows()
 
 

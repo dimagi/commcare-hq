@@ -1,11 +1,15 @@
 import logging
 import restkit
 from restkit.resource import Resource
+import hashlib
 import simplejson
 from gevent import socket
 import rawes
 import gevent
 from django.conf import settings
+import logging
+requests_log = logging.getLogger("requests")
+requests_log.setLevel(logging.ERROR)
 
 import couchdbkit
 if couchdbkit.version_info < (0,6,0):
@@ -93,13 +97,13 @@ class BasicPillow(object):
         """
         self.processor(simplejson.loads(change))
 
-    def processor(self, change):
+    def processor(self, change, do_set_checkpoint=True):
         """
         Parent processsor for a pillow class - this should not be overridden.
         This workflow is made for the situation where 1 change yields 1 transport/transaction
         """
         self.changes_seen+=1
-        if self.changes_seen % CHECKPOINT_FREQUENCY == 0:
+        if self.changes_seen % CHECKPOINT_FREQUENCY == 0 and do_set_checkpoint:
             logging.info("(%s) setting checkpoint: %d" % (self.get_checkpoint_doc_name(),
                                                       change['seq']))
             self.set_checkpoint(change)
@@ -141,6 +145,8 @@ class BasicPillow(object):
         """
         raise NotImplementedError("Error, this pillowtop subclass has not been configured to do anything!")
 
+
+
 class ElasticPillow(BasicPillow):
     """
     Elasticsearch handler
@@ -150,21 +156,36 @@ class ElasticPillow(BasicPillow):
     es_index = ""
     es_type = ""
     es_meta = {}
+
     # Note - we allow for for existence because we do not care - we want the ES
     # index to always have the latest version of the case based upon ALL changes done to it.
     allow_updates=True
 
     def __init__(self):
         es = self.get_es()
-        if self.es_meta and not es.head(self.es_index):
+        if not es.head(self.es_index):
             es.put(self.es_index, data=self.es_meta)
-        return
 
     def get_doc_path(self, doc_id):
         return "%s/%s/%s" % (self.es_index, self.es_type, doc_id)
 
     def get_es(self):
         return rawes.Elastic('%s:%s' % (self.es_host, self.es_port))
+
+    def delete_index(self):
+        """
+        Coarse way of deleting an index - a todo is to set aliases where need be
+        """
+        es = self.get_es()
+        if es.head(self.es_index):
+            es.delete(self.es_index)
+
+    def create_index(self):
+        """
+        Rebuild an index after a delete
+        """
+        es = self.get_es()
+        es.put(self.es_index, data=self.es_meta)
 
     def change_trigger(self, changes_dict):
         if changes_dict.get('deleted', False):
@@ -175,6 +196,7 @@ class ElasticPillow(BasicPillow):
                               (self.get_doc_path(changes_dict['id']), ex))
             return None
         return self.couch_db.open_doc(changes_dict['id'])
+
 
     def doc_exists(self, doc_id):
         """
@@ -187,6 +209,9 @@ class ElasticPillow(BasicPillow):
         return head_result
 
     def change_transport(self, doc_dict):
+        """
+        Default elastic pillow for a given doc to a type.
+        """
         try:
             es = self.get_es()
             doc_path = self.get_doc_path(doc_dict['_id'])
@@ -199,12 +224,32 @@ class ElasticPillow(BasicPillow):
             if can_put:
                 res = es.put(doc_path,  data = doc_dict)
                 if res.get('status', 0) == 400:
-                    logging.error("Pillowtop Error [%s]:\n%s\nDoc id: %s" % (self.get_name(),
+                    logging.error("Pillowtop Error [%s]:\n%s\n\tDoc id: %s\n\t%s" % (self.get_name(),
                                      res.get('error', "No error message"),
-                                     doc_dict['_id']))
+                                     doc_dict['_id'], doc_dict.keys()))
         except Exception, ex:
-            logging.error("PillowTop [%s]: transporting change data to elasticsearch error:  %s", (self.get_name(), ex))
+            logging.error("PillowTop [%s]: transporting change data to elasticsearch error: %s",
+                (self.get_name(), ex))
             return None
+
+class AliasedElasticPillow(ElasticPillow):
+
+    es_alias = ''
+    es_index_prefix = ''
+
+    def get_name(self):
+        return "%s.%s.%s" % (self.__module__, self.__class__.__name__, self.calc_meta())
+
+    def calc_meta(self):
+        if not hasattr(self, '_calc_meta'):
+            self._calc_meta = hashlib.md5(simplejson.dumps(self.es_meta)).hexdigest()
+        return self._calc_meta
+
+    @property
+    def es_index(self):
+        return "%s_%s" % (self.es_index_prefix, self.calc_meta())
+
+
 
 
 class NetworkPillow(BasicPillow):
