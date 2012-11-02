@@ -155,14 +155,14 @@ def es_filter_cases(domain, filters=None):
                     }
                 },
                 'sort': {
-                    'case.modified_on': {'order': 'asc'}
+                    'modified_on': {'order': 'asc'}
                 },
                 'from': 0,
                 'size': self.limit,
             }
     
     q = ElasticCaseQuery(domain, filters)
-    res = get_es().get('hqcases/case/_search', data=q.get_query())
+    res = get_es().get('hqcases/_search', data=q.get_query())
     # this is ugly, but for consistency / ease of deployment just
     # use this to return everything in the expected format for now
     return [CommCareCase.wrap(r["_source"]).get_json() for r in res['hits']['hits'] if r["_source"]]
