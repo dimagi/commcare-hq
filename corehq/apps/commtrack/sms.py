@@ -151,6 +151,7 @@ class StockReport(object):
 
             
     def location_from_code(self, loc_code):
+        """return the supply point case referenced by loc_code"""
         loc = get_db().view('commtrack/locations_by_code',
                             key=[self.domain.name, loc_code],
                             include_docs=True).first()
@@ -159,6 +160,7 @@ class StockReport(object):
         return CommCareCase.get(loc['id'])
 
     def product_from_code(self, prod_code):
+        """return the product doc referenced by prod_code"""
         p = Product.get_by_code(self.domain.name, prod_code)
         if p is None:
             raise RuntimeError('invalid product code')
@@ -174,6 +176,14 @@ def looks_like_prod_code(code):
     except:
         return True
 
+def product_subcases(supply_point):
+    """given a supply point, return all the sub-cases for each product stocked at that supply point
+    actually returns a mapping: product doc id => sub-case id
+    """
+    product_subcase_uuids = [ix.referenced_id for ix in supply_point.reverse_indices if ix.identifier == 'parent']
+    product_subcases = CommCareCase.view('_all_docs', keys=product_subcase_uuids, include_docs=True)
+    product_subcase_mapping = dict((subcase.dynamic_properties().get('product'), subcase._id) for subcase in product_subcases)
+    return product_subcase_mapping
 
 def to_instance(v, data):
     """convert the parsed sms stock report into an instance like what would be
@@ -182,11 +192,7 @@ def to_instance(v, data):
     from lxml.builder import ElementMaker
     M = ElementMaker(namespace='http://openrosa.org/jr/xforms', nsmap={'jrm': 'http://openrosa.org/jr/xforms'})
 
-    # find all stock product sub-cases linked to the supply point case, and build a mapping
-    # of the general Product doc id to the site-specific product sub-case
-    product_subcase_uuids = [ix.referenced_id for ix in data['location'].reverse_indices if ix.identifier == 'parent']
-    product_subcases = CommCareCase.view('_all_docs', keys=product_subcase_uuids, include_docs=True)
-    product_subcase_mapping = dict((subcase.dynamic_properties().get('product'), subcase._id) for subcase in product_subcases)
+    product_subcase_mapping = product_subcases(data['location'])
 
     def mk_xml_tx(tx):
         tx['product_id'] = tx['product']._id
