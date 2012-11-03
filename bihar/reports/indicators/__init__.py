@@ -41,14 +41,14 @@ INDICATOR_SETS = [
                     "name": _("All woman due for delivery in next 30 days"),
                     "filter_function": "bihar.reports.indicators.filters.due_next_month",
                     "row_function": "bihar.reports.indicators.filters.mother_pre_delivery_columns",
-                    "sortkey": "bihar.reports.indicators.filters.get_edd",
+                    "sortkey": "bihar.reports.indicators.filters.get_edd_sortkey",
                 },
                 {
                     "slug": "deliveries", 
                     "name": _("Pregnant woman who delivered in last 30 days"),
                     "filter_function": "bihar.reports.indicators.filters.delivered_last_month",
                     "row_function": "bihar.reports.indicators.filters.mother_post_delivery_columns",
-                    "sortkey": "bihar.reports.indicators.filters.get_add",
+                    "sortkey": "bihar.reports.indicators.filters.get_add_sortkey",
                     "columns": [_("Name"), _("ADD")],
                 },
                 {
@@ -56,7 +56,7 @@ INDICATOR_SETS = [
                     "name": _("Pregnant woman registered in last 30 days"),
                     "filter_function": "bihar.reports.indicators.filters.pregnancy_registered_last_month",
                     "row_function": "bihar.reports.indicators.filters.mother_pre_delivery_columns",
-                    "sortkey": "bihar.reports.indicators.filters.get_edd",
+                    "sortkey": "bihar.reports.indicators.filters.get_edd_sortkey",
                 }, 
             ]
         }

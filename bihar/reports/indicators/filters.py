@@ -69,3 +69,11 @@ def get_edd(case):
 
 def get_add(case):
     return getattr(case, 'add', None)
+
+def get_edd_sortkey(case):
+    return get_edd(case) or datetime(1970,1,1).date()
+    
+def get_add_sortkey(case):
+    return get_add(case) or datetime(1970,1,1).date()
+    
+
