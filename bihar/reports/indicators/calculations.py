@@ -65,7 +65,7 @@ def _visits_due(case, schedule):
 def _visits_done(case, schedule, type):
     due = _visits_due(case, schedule)
     count = len(filter(lambda a: _visit_is(a, type), case.actions))
-    return len(v for v in due if count > v)
+    return len([v for v in due if count > v])
     
 # NOTE: cases in, values out might not be the right API
 # but it's what we need for the first set of stuff.
