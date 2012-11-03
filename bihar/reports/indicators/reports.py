@@ -1,15 +1,12 @@
-from bihar.reports.supervisor import BiharNavReport, MockEmptyReport,\
-    url_and_params, SubCenterSelectionReport, \
-    BiharSummaryReport, ConvenientBaseMixIn,\
-    GroupReferenceMixIn
 from bihar.reports.indicators import INDICATOR_SETS, IndicatorConfig
+from bihar.reports.supervisor import BiharNavReport, MockEmptyReport, \
+    url_and_params, SubCenterSelectionReport, BiharSummaryReport, \
+    ConvenientBaseMixIn, GroupReferenceMixIn
 from copy import copy
-from dimagi.utils.html import format_html
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
-from django.utils.translation import ugettext_noop
-from django.utils.translation import ugettext as _
-from django.utils.safestring import mark_safe
+from dimagi.utils.html import format_html
+from django.utils.translation import ugettext as _, ugettext_noop
 
 DEFAULT_EMPTY = "?"
 
@@ -159,8 +156,16 @@ class IndicatorClientList(ConvenientBaseMixIn, GenericTabularReport,
         except AttributeError:
             return self.name
 
-    _headers = ["Name", "EDD"] 
+    @property
+    def _headers(self):
+        return self.indicator.columns
     
+    @property
+    def sorted_cases(self):
+        if self.indicator.sortkey:
+            return sorted(self.cases, key=self.indicator.sortkey, reverse=True)
+        
+        return self.cases
     
     def _filter(self, case):
         if self.indicator and self.indicator.filter_function:
@@ -169,11 +174,12 @@ class IndicatorClientList(ConvenientBaseMixIn, GenericTabularReport,
             return True
     
     def _get_clients(self):
-        for c in self.cases:
+        for c in self.sorted_cases:
             if self._filter(c):
                 yield c
         
     @property
     def rows(self):
-        return [[c.name, getattr(c, 'edd', DEFAULT_EMPTY)] for c in self._get_clients()]
+        return [self.indicator.row_function(c) for c in self._get_clients()]
+    
         

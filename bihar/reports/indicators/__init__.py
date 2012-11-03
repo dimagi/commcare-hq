@@ -39,17 +39,24 @@ INDICATOR_SETS = [
                 {
                     "slug": "upcoming_deliveries", 
                     "name": _("All woman due for delivery in next 30 days"),
-                    "filter_function": "bihar.reports.indicators.filters.due_next_month"
+                    "filter_function": "bihar.reports.indicators.filters.due_next_month",
+                    "row_function": "bihar.reports.indicators.filters.mother_pre_delivery_columns",
+                    "sortkey": "bihar.reports.indicators.filters.get_edd",
                 },
                 {
                     "slug": "deliveries", 
                     "name": _("Pregnant woman who delivered in last 30 days"),
-                    "filter_function": "bihar.reports.indicators.filters.delivered_last_month"
+                    "filter_function": "bihar.reports.indicators.filters.delivered_last_month",
+                    "row_function": "bihar.reports.indicators.filters.mother_post_delivery_columns",
+                    "sortkey": "bihar.reports.indicators.filters.get_add",
+                    "columns": [_("Name"), _("ADD")],
                 },
                 {
                     "slug": "new_pregnancies", 
                     "name": _("Pregnant woman registered in last 30 days"),
-                    "filter_function": "bihar.reports.indicators.filters.pregnancy_registered_last_month"
+                    "filter_function": "bihar.reports.indicators.filters.pregnancy_registered_last_month",
+                    "row_function": "bihar.reports.indicators.filters.mother_pre_delivery_columns",
+                    "sortkey": "bihar.reports.indicators.filters.get_edd",
                 }, 
             ]
         }
@@ -93,11 +100,23 @@ class IndicatorSet(object):
     
     
 class Indicator(object):
+    # this class is currently used both for client list filters and 
+    # calcualtions. it probably makes sense to pull them out into separate
+    # things
     
     def __init__(self, spec):
         self.slug = spec["slug"]
         self.name = spec["name"]
-        self.filter_function = to_function(spec["filter_function"]) \
-            if "filter_function" in spec else None
         self.calculation_function = to_function(spec["calculation_function"]) \
             if "calculation_function" in spec else None
+        
+        # case filter stuff
+        self.filter_function = to_function(spec["filter_function"]) \
+            if "filter_function" in spec else None
+        self.sortkey = to_function(spec["sortkey"]) \
+            if "sortkey" in spec else None
+        self.row_function = to_function(spec["row_function"]) \
+            if "row_function" in spec else None
+        self.columns = spec.get("columns", [_("Name"), _("EDD")])
+        
+    
