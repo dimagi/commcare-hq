@@ -13,7 +13,7 @@
 </head>
 <body>
     {% for report in reports %}
-    <h2><a href="{{ report.url }}">{{ report.title }}</a></h2>
+    <h2><a href="{{ DNS_name }}{{ report.url }}">{{ report.title }}</a></h2>
     {{ report.content|safe }}
     {% endfor %}
 
