@@ -335,7 +335,7 @@ class ReportNotification(Document):
     def all_recipient_emails(self):
         # handle old documents
         if not self.owner_id:
-            return [self.owner.username]
+            return [self.owner.get_email()]
 
         emails = []
         if self.send_to_owner:
