@@ -52,7 +52,8 @@ class IndicatorNav(BiharNavReport):
     @property
     def reports(self):
         return [IndicatorSummaryReport, IndicatorClientSelectNav, 
-                IndicatorCharts]
+                # IndicatorCharts
+                ]
 
 class IndicatorSelectNav(BiharSummaryReport, IndicatorConfigMixIn):
     name = ugettext_noop("Select Team")

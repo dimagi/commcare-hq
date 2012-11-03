@@ -54,12 +54,12 @@ INDICATOR_SETS = [
             ]
         }
     },
-    {"slug": "pregnancy", "name": _("Pregnancy Outcome") },
-    {"slug": "postpartum", "name": _("Post-Partum Complications") },
-    {"slug": "newborn", "name": _("Weak Newborn") },
-    {"slug": "familyplanning", "name": _("Family Planning") },
-    {"slug": "complimentaryfeeding", "name": _("Complimentary Feeding") },
-    {"slug": "mortality", "name": _("Mortality") }
+#    {"slug": "pregnancy", "name": _("Pregnancy Outcome") },
+#    {"slug": "postpartum", "name": _("Post-Partum Complications") },
+#    {"slug": "newborn", "name": _("Weak Newborn") },
+#    {"slug": "familyplanning", "name": _("Family Planning") },
+#    {"slug": "complimentaryfeeding", "name": _("Complimentary Feeding") },
+#    {"slug": "mortality", "name": _("Mortality") }
 ]
 
 

@@ -174,7 +174,8 @@ class MainNavReport(BiharNavReport):
     def reports(self):
         from bihar.reports.indicators.reports import IndicatorSelectNav
         return [IndicatorSelectNav, WorkerRankSelectionReport, 
-                DueListReport, ToolsReport]
+                # DueListReport, ToolsReport
+                ]
 
 
 class WorkerRankSelectionReport(SubCenterSelectionReport):
