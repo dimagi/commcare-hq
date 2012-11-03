@@ -130,7 +130,9 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
     slug = "subcenter"
     description = ugettext_noop("Subcenter selection report")
     
-    _headers = [ugettext_noop("Team Name"), ugettext_noop("Rank")]
+    _headers = [ugettext_noop("Team Name"), 
+                # ugettext_noop("Rank")
+                ]
     
     def __init__(self, *args, **kwargs):
         super(SubCenterSelectionReport, self).__init__(*args, **kwargs)
@@ -157,8 +159,7 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
                 details=url_and_params(self.next_report_class.get_url(self.domain,
                                                                       render_as=self.render_next),
                                        params))
-        return [_link(group), 
-                "%s / %s" % (rank, len(self._get_groups()))]
+        return [_link(group)]
             
 
 class MainNavReport(BiharNavReport):
