@@ -526,20 +526,32 @@ def test_config(request, domain, config_id):
 
 @login_and_domain_required
 def add_scheduled_report(request, domain, template="users/add_scheduled_report.html"):
+    from django.core.validators import validate_email
+    
     user_id = request.couch_user._id
 
     if request.method == "POST":
         send_to_owner = ('send_to_owner' in request.POST)
         config_ids = request.POST.getlist('config_id')
-        emails = request.POST['recipient_emails'].split(',')
-        emails = [e.strip() for e in emails if e.strip()]
-        # todo: validate emails
+        emails = []
+        invalid_email = None
+        for email in request.POST['recipient_emails'].split(','):
+            email = email.strip()
+            if email:
+                try:
+                    validate_email(email)
+                    emails.append(email)
+                except:
+                    invalid_email = email
+                    break
 
-        if not (config_ids and (emails or send_to_owner)):
+        if not (config_ids and not invalid_email and (emails or send_to_owner)):
             if not config_ids:
                 messages.error(request, "You must choose at least one saved report.")
+            if invalid_email:
+                messages.error(request, "Invalid email: %s" % invalid_email)
             if not (emails or send_to_owner):
-                messages.error(request, "You must choose at least one recipient.")
+                messages.error(request, "You must specify at least one valid recipient.")
             return HttpResponseRedirect(reverse("add_scheduled_report",
                                                 args=(domain,)))
 
