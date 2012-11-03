@@ -210,7 +210,7 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 TABS = [
     ("corehq.apps.appstore.views.project_info", "Info", lambda request: request.project.is_snapshot),
-    ("corehq.apps.reports.views.default", "Reports", lambda request: not request.project.is_snapshot),
+    ("corehq.apps.reports.views.home", "Reports", lambda request: not request.project.is_snapshot),
     ("corehq.apps.data_interfaces.views.default", "Manage Data", lambda request: request.couch_user.can_edit_data()),
     ("corehq.apps.app_manager.views.default", "Applications"),
     ("corehq.apps.cloudcare.views.default", "CloudCare", lambda request: request.couch_user.can_edit_data()),
@@ -346,7 +346,7 @@ AUDIT_VIEWS = [
     'corehq.apps.reports.views.submit_history',
     'corehq.apps.reports.views.active_cases',
     'corehq.apps.reports.views.submit_history',
-    'corehq.apps.reports.views.default',
+    'corehq.apps.reports.views.home',
     'corehq.apps.reports.views.submission_log',
     'corehq.apps.reports.views.form_data',
     'corehq.apps.reports.views.export_data',
