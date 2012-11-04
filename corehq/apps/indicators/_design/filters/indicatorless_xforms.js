@@ -19,7 +19,8 @@ function(doc, req)
     }
 
     if (domains && namespaces) {
-        for (var namespace in namespaces) {
+        for (var n in namespaces) {
+            var namespace = namespaces[n];
             if (doc["doc_type"] === "XFormInstance"
                 && computed_namespaces.indexOf(namespace) < 0
                 && domains.indexOf(doc.domain) >= 0) {

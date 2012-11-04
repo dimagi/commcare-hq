@@ -107,7 +107,6 @@ class IndicatorDefinition(Document):
 
     @classmethod
     def get_current(cls, namespace, domain, slug, version=None, wrap=True, **kwargs):
-
         couch_key = cls._generate_couch_key(
             namespace=namespace,
             domain=domain,
@@ -122,13 +121,12 @@ class IndicatorDefinition(Document):
             descending=True,
             **couch_key
         ).first()
-
         if wrap:
             try:
                 doc_class = to_function(doc.get('value', "%s.%s" % (cls._class_path, cls.__name__)))
                 return doc_class.get(doc.get('id'))
             except Exception as e:
-                logging.error("Could not fetch indicator: %s" % e)
+                logging.error("No matching documents found for indicator %s: %s" % (slug, e))
                 return None
         return doc
 
@@ -148,6 +146,7 @@ class IndicatorDefinition(Document):
             descending=True,
             **couch_key
         ).all()
+        print "SLUG DAta", data
         return [item.get('key',[])[-1] for item in data]
 
     @classmethod
@@ -425,6 +424,14 @@ class DocumentIndicatorDefinition(IndicatorDefinition):
 
         So far, the types of Documents that support this are XFormInstance and CommCareCase
     """
+
+    def get_doc_dict(self, doc):
+        return {
+            'version': self.version,
+            'value': self.get_clean_value(doc),
+            'multi_value': self._returns_multiple,
+            'type': self.doc_type,
+        }
 
     def get_clean_value(self, doc):
         """
