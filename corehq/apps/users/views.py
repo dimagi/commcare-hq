@@ -97,17 +97,15 @@ def _users_context(request, domain):
 
 @login_and_domain_required
 def users(request, domain):
-    response = reverse("user_account", args=[domain, request.couch_user._id])
-    if request.couch_user:
-        try:
-            user = WebUser.get_by_user_id(request.couch_user._id, domain)
-            if user and user.has_permission(domain, 'edit_web_users'):
-                response = reverse("web_users", args=[domain])
-            elif user and user.has_permission(domain, 'edit_commcare_users'):
-                response = reverse("commcare_users", args=[domain])
-        except Exception as e:
-            logging.exception("Failed to grab user object: %s", e)
-    return HttpResponseRedirect(response)
+    redirect = reverse("user_account", args=[domain, request.couch_user._id])
+    try:
+        user = WebUser.get_by_user_id(request.couch_user._id, domain)
+        if user and user.has_permission(domain, 'edit_commcare_users'):
+            redirect = reverse("commcare_users", args=[domain])
+    except Exception as e:
+        logging.exception("Failed to grab user object: %s", e)
+
+    return HttpResponseRedirect(redirect)
 
 @require_can_edit_web_users
 def web_users(request, domain, template="users/web_users.html"):
@@ -895,15 +893,3 @@ def audit_logs(request, domain):
             except Exception:
                 pass
     return json_response(data)
-
-def eula_agreement(request, domain):
-    domain = Domain.get_by_name(domain)
-    if request.method == 'POST':
-        current_user = CouchUser.from_django_user(request.user)
-        current_user.eula.signed = True
-        current_user.eula.date = datetime.utcnow()
-        current_user.eula.type = 'End User License Agreement'
-        current_user.eula.user_ip = get_ip(request)
-        current_user.save()
-
-    return HttpResponseRedirect(reverse("corehq.apps.reports.views.default", args=[domain]))

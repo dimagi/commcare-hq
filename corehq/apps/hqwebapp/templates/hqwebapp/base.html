@@ -245,6 +245,27 @@
                 </form>
             </div>
         {% block modals %}
+            {% if request.couch_user and not request.couch_user.eula.signed and not request.couch_user.is_superuser %}
+                <div class="modal hide fade" id="eulaModal">
+                    <div class="modal-header">
+                        <a class="close" data-dismiss="modal">&times;</a>
+                        <h4>CommCare HQ End User License Agreement</h4>
+                    </div>
+                    <div class="modal-body" style="max-height: 20em;">
+                        Loading Terms of Service...
+                    </div>
+                    <div class="modal-footer">
+                        <div style="text-align: left; line-height: 2em;">
+                            To continue using Commcare HQ, please agree to our new End User License Agreement
+                        </div>
+                        <form id="eula-agree" action="{% url agree_to_eula %}" method="POST">
+                            <input name="next" type="hidden" value="{{ request.path }}" />
+                            <button type="submit" href="#" class="btn btn-primary">Agree</button>
+                            <a href="#" data-dismiss="modal" class="btn">Disagree</a>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
         {% endblock %}
         </div>
         <!--Begin javascript -->
@@ -258,6 +279,15 @@
         {% endblock %}
 
         {% block js-inline %}
+            {% if request.couch_user and not request.couch_user.eula.signed and not request.couch_user.is_superuser %}
+                {% url eula as eula_url %}
+                {% include 'hq_bootstrap/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
+                <script type="text/javascript">
+                    $(window).load(function(){
+                        $('#eulaModal').modal('show');
+                    });
+                </script>
+            {% endif %}
         {% endblock %}
 
         <script>
