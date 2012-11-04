@@ -8,6 +8,7 @@ from xml.etree.ElementTree import XML, tostring
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.receiverwrapper.util import get_submit_url
 from receiver.util import spoof_submission
+from couchforms.models import XFormInstance
 import re
 
 COMMCONNECT_DEVICE_ID = "commconnect"
@@ -111,5 +112,10 @@ def submit_unfinished_form(session_id):
         session.end(completed=False)
         session.submission_id = xform_id
         session.save()
+        
+        # Tag the submission as a partial submission
+        xform = XFormInstance.get(xform_id)
+        xform.partial_submission = True
+        xform.save()
 
 
