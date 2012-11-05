@@ -1,6 +1,10 @@
 {% extends "reports/standard/base_template.html" %}
 {% load hq_shared_tags %}
 
+{% block js %}{{ block.super }}
+<script src="{% static 'reports/ko/saved_reports.js' %}"></script>
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function() {
@@ -39,6 +43,7 @@
 
 {% block sidebar %}{% include "reports/partials/report_list.html" %}{% endblock %}
 {% block report_filter_actions %}
+<div id="savedReports">
     <div class="btn-toolbar">
         <div class="btn-group">
             <button id="apply-filters" type="submit" class="filters btn btn-large disabled"
@@ -71,7 +76,7 @@
             Save...
         </button>
     </div>
-    <div id="report-config-modal" data-bind="modal: configBeingEdited">
+    <div id="report-config-modal" class="hide fade" data-bind="modal: configBeingEdited">
         <div data-bind="with: configBeingEdited">
             <div class="modal-header">
                 <a class="close" data-bind="click: $root.unsetConfigBeingEdited">×</a>
@@ -145,4 +150,5 @@
             </form>
         </div>
     </div>
+</div>
 {% endblock %}

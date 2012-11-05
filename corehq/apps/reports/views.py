@@ -64,7 +64,7 @@ require_case_export_permission = require_permission(Permissions.view_report, 'co
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
-def home(request, domain, template="reports/reports_home.html"):
+def default(request, domain, template="reports/reports_home.html"):
     user = request.couch_user
 
     configs = ReportConfig.by_domain_and_owner(domain, user._id).all()
