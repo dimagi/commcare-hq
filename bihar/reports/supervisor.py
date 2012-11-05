@@ -23,6 +23,7 @@ class ConvenientBaseMixIn(object):
     hide_filters = True
     flush_layout = True
     mobile_enabled = True
+    fields = []
     
     # for the lazy
     _headers = []  # override
@@ -72,7 +73,7 @@ class GroupReferenceMixIn(object):
                                  include_docs=True, reduce=False)
 
 class MockTablularReport(ConvenientBaseMixIn, GenericTabularReport, CustomProjectReport):
-    
+
     row_count = 20 # override if needed
     def _row(self, i):
         # override
