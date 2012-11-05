@@ -45,21 +45,20 @@
 {% block sidebar %}
 <nav>
     <ul class="nav nav-list" id="users-main-nav">
-    {% if request.couch_user.can_edit_web_users or request.couch_user.can_edit_commcare_users %}
-            <li class="nav-header">User Management</li>
-            {% if request.couch_user.can_edit_commcare_users %}
-                <li><a href="{% url commcare_users domain %}">{% commcare_user %}s</a>
-                    {% block commcare_users_indicator %}{% endblock %}
-                </li>
-                <li><a href="{% url all_groups domain %}">Groups</a>
-                    {% block groups_indicator %}{% endblock %}
-                </li>
-            {% endif %}
-            {% if request.couch_user.can_edit_web_users %}
-                <li><a href="{% url web_users domain %}">{% hq_web_user %}s</a>
-                    {% block web_users_indicator %}{% endblock %}
-                </li>
-            {% endif %}
+    {% if request.couch_user.can_edit_commcare_users %}
+            <li class="nav-header">CommCare Mobile</li>
+            <li><a href="{% url commcare_users domain %}">{% commcare_user %}s</a>
+                {% block commcare_users_indicator %}{% endblock %}
+            </li>
+            <li><a href="{% url all_groups domain %}">Groups</a>
+                {% block groups_indicator %}{% endblock %}
+            </li>
+    {% endif %}
+    {% if request.couch_user.can_edit_web_users %}
+        <li class="nav-header">CommCare HQ</li>
+        <li><a href="{% url web_users domain %}">{% hq_web_user %}s</a>
+            {% block web_users_indicator %}{% endblock %}
+        </li>
     {% endif %}
         <li class="nav-header">My Account</li>
         <li><a href="{% url user_account domain request.couch_user.user_id %}">My Account Settings</a>
