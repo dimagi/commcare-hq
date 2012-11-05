@@ -22,6 +22,7 @@ class ConvenientBaseMixIn(object):
     hide_filters = True
     flush_layout = True
     mobile_enabled = True
+    fields = []
     
     # for the lazy
     _headers = []  # override
@@ -71,7 +72,7 @@ class GroupReferenceMixIn(object):
         return g
     
 class MockTablularReport(ConvenientBaseMixIn, GenericTabularReport, CustomProjectReport):
-    
+
     row_count = 20 # override if needed
     def _row(self, i):
         # override
@@ -82,7 +83,7 @@ class MockTablularReport(ConvenientBaseMixIn, GenericTabularReport, CustomProjec
         return [self._row(i) for i in range(self.row_count)]
 
 class MockSummaryReport(ConvenientBaseMixIn, SummaryTablularReport, CustomProjectReport):
-    
+
     def fake_done_due(self, i=20):
         # highly customized for gates
         return "(%(done)s Done / %(due)s Due)" % \
@@ -191,7 +192,7 @@ class ToolsReport(MockEmptyReport):
 
 class ClientListReport(ConvenientBaseMixIn, GenericTabularReport, 
                        CustomProjectReport, GroupReferenceMixIn):
-    _headers = ["Name", "EDD"] 
+    _headers = ["Name", "EDD"]
     
     
     def _get_clients(self):
