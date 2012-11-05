@@ -142,6 +142,7 @@
 
 
 {% block sidebar %}
+{% url appstore as search_url %}
 {% include 'partials/sidebar.html' with search_for="apps..." search_name="search" display_ua='true' %}
 {% endblock %}
 
