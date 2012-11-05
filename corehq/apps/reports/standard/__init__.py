@@ -19,7 +19,7 @@ class ProjectReport(GenericReportView):
 
     @property
     def default_report_url(self):
-        return reverse('default_report', args=[self.request.project])
+        return reverse('reports_home', args=[self.request.project])
 
     @property
     def show_subsection_navigation(self):
@@ -27,6 +27,7 @@ class ProjectReport(GenericReportView):
 
 class CustomProjectReport(ProjectReport):
     dispatcher = CustomProjectReportDispatcher
+    emailable = True
 
 
 class ProjectReportParametersMixin(object):

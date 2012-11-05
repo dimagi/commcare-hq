@@ -83,8 +83,8 @@
             <div class="accordion-actions">
                 {% if report.show_filters %}
                     <a href="#reportFilters" class="btn" id="toggle-report-filters"
-                       data-toggle="collapse" data-show-text="Show Filter Options"
-                       data-hide-text="Hide Filter Options">
+                       data-toggle="collapse" data-open-text="Show Filter Options"
+                       data-close-text="Hide Filter Options">
                         Filter Options
                     </a>
                 {% endif %}
@@ -107,9 +107,9 @@
                                 {% include "reports/async/filters.html" %}
                             {% endif %}
                         </div>
-                        <div id="reportFavorites" class="form-actions">
+                        <div class="form-actions">
                             {% block report_filter_actions %}
-                            <button type="submit" class="btn btn-large disabled"
+                            <button type="submit" class="btn disabled"
                                     data-loading-text="Generating Report..."
                                     data-standard-text="Apply">
                                 Apply
