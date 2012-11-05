@@ -537,7 +537,10 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
             images, audio, has_error = utils.get_multimedia_filenames(app)
         except ProcessTimedOut as e:
             notify_exception(req)
-            messages.warning(req, "We temporarily weren't able to validate your forms.")
+            messages.warning(req,
+                "We were unable to check if your forms had errors. "
+                "Refresh the page and we will try again."
+            )
             images, audio, has_error = [], [], True
             multimedia_images, missing_image_refs = [], 0
             multimedia_audio, missing_audio_refs = [], 0
