@@ -257,10 +257,42 @@ class CachedStringProperty(object):
         self.get_key = key
 
     def __get__(self, instance, owner):
-        return cache.get(self.get_key(instance))
+        return self.get(self.get_key(instance))
 
     def __set__(self, instance, value):
-        cache.set(self.get_key(instance), value, 12*60*60)
+        self.set(self.get_key(instance), value)
+
+    @classmethod
+    def get(cls, key):
+        return cache.get(key)
+
+    @classmethod
+    def set(cls, key, value):
+        cache.set(key, value, 12*60*60)
+
+class CouchCache(Document):
+    value = StringProperty(default=None)
+
+class CouchCachedStringProperty(CachedStringProperty):
+
+    @classmethod
+    def _get(cls, key):
+        try:
+            c = CouchCache.get(key)
+            assert(c.doc_type == CouchCache.__name__)
+        except ResourceNotFound:
+            c = CouchCache(_id=key)
+        return c
+
+    @classmethod
+    def get(cls, key):
+        return cls._get(key).value
+
+    @classmethod
+    def set(cls, key, value):
+        c = cls._get(key)
+        c.value = value
+        c.save()
 
 class FormBase(DocumentSchema):
     """
@@ -276,7 +308,7 @@ class FormBase(DocumentSchema):
     show_count  = BooleanProperty(default=False)
     xmlns       = StringProperty()
     source      = FormSource()
-    validation_cache = CachedStringProperty(lambda self: "%s-validation" % self.unique_id)
+    validation_cache = CouchCachedStringProperty(lambda self: "cache-%s-validation" % self.unique_id)
 
     @classmethod
     def wrap(cls, data):
