@@ -433,6 +433,9 @@ class GenericReportView(object):
         current_config_id = self.request.GET.get('config_id', '')
         default_config = ReportConfig.default()
 
+        has_datespan = ('corehq.apps.reports.fields.DatespanField' in
+                        self.fields)
+
         self.context.update(
             report=dict(
                 title=self.name,
@@ -447,6 +450,7 @@ class GenericReportView(object):
                 dispatcher=self.dispatcher,
                 filter_set=self.filter_set,
                 needs_filters=self.needs_filters,
+                has_datespan=has_datespan,
                 show=self.request.couch_user.can_view_reports() or self.request.couch_user.get_viewable_reports(),
                 is_admin=self.is_admin_report,   # todo is this necessary???
             ),

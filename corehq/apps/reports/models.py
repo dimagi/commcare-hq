@@ -156,7 +156,7 @@ class ReportConfig(Document):
         return {
             'name': '',
             'description': '',
-            'date_range': 'last7',
+            #'date_range': 'last7',
             'days': None,
             'start_date': None,
             'end_date': None,
@@ -275,8 +275,10 @@ class ReportConfig(Document):
             return "Last %d %s" % (self.days, day)
         elif self.end_date:
             return "From %s to %s" % (self.start_date, self.end_date)
-        else:
+        elif self.start_date:
             return "Since %s" % self.start_date
+        else:
+            return ''
 
     @property
     @memoized
