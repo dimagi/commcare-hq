@@ -1,59 +1,47 @@
-<div class="row">
-    <div class="span8">
-        <div class="page-header">
-            <h1>Welcome back to {% if domain %}{{ domain }}{% else %}CommCare HQ{% endif %}!<br />
-                <small>
-                {% if next %}
-                    You will be transferred to your original destination after you sign in.
-                {% else %}
-                    Please sign in below to continue.
-                {% endif %}
-                </small>
-            </h1>
-        </div>
-        <form class="form-horizontal form-login" name="form" method="post" action="{% url login %}">
-            {% csrf_token %}
-            {% for global_error in form.non_field_errors %}
-            <div class="alert alert-error">
-                {{ global_error }}
-            </div>
-            {% endfor %}
-            {% if next %}
-                <input name="next" type="hidden" value="{{next}}" />
-            {% endif %}
-            {% if domain %}
-                <input name="domain" type="hidden" value="{{ domain }}"/>
-            {% endif %}
-            <fieldset>
-            {% for field in form.visible_fields %}
-                <div class="control-group{% if field.errors %} error{% endif %}">
-                    <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
-                    <div class="controls">
-                        {{ field }}
-                        {% for error in field.errors %}
-                            <span class="help-inline">{{ error }}</span>
-                        {% endfor %}
-                        {% if field.name == "password" %}
-                            <p class="help-block">
-                                <a href="{% url password_reset_email %}"><i class="icon icon-question-sign"></i> Forgot your password?</a>
-                            </p>
-                        {% endif %}
-                    </div>
-                </div>
-            {% endfor %}
-            </fieldset>
-            <div class="form-actions"><button tabindex="3" type="submit" class="btn btn-primary btn-large">Sign In</button></div>
-        </form>
-    </div>
-    <div class="span4">
-        <aside class="well">
-            <h2>Are you new to CommCare HQ?<br /><small>Sign up today. It's free!</small></h2>
-            <p><a href="http://www.commcarehq.org/home">Learn more</a> about how CommCare HQ can be your mobile health solution.</p>
-            <p>Don't have an account with CommCare HQ yet? Sign up and check out our features.</p>
-            <div class="row"><a style="float: right; margin-top: 7px;" class="btn btn-success btn-large" href="{% url registration_new_user %}">Sign Up</a></div>
-        </aside>
-    </div>
+<div class="page-header">
+    <h1>Welcome back to {% if domain %}{{ domain }}{% else %}CommCare HQ{% endif %}!<br />
+        <small>
+        {% if next %}
+            You will be transferred to your original destination after you sign in.
+        {% else %}
+            Please sign in below to continue.
+        {% endif %}
+        </small>
+    </h1>
 </div>
+<form class="form-horizontal form-login" name="form" method="post" >
+    {% csrf_token %}
+    {% for global_error in form.non_field_errors %}
+    <div class="alert alert-error">
+        {{ global_error }}
+    </div>
+    {% endfor %}
+    {% if next %}
+        <input name="next" type="hidden" value="{{next}}" />
+    {% endif %}
+    {% if domain %}
+        <input name="domain" type="hidden" value="{{ domain }}"/>
+    {% endif %}
+    <fieldset>
+    {% for field in form.visible_fields %}
+        <div class="control-group{% if field.errors %} error{% endif %}">
+            <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
+            <div class="controls">
+                {{ field }}
+                {% for error in field.errors %}
+                    <span class="help-inline">{{ error }}</span>
+                {% endfor %}
+                {% if field.name == "password" %}
+                    <p class="help-block">
+                        <a href="{% url password_reset_email %}"><i class="icon icon-question-sign"></i> Forgot your password?</a>
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+    </fieldset>
+    <div class="form-actions"><button tabindex="3" type="submit" class="btn btn-primary btn-large">Sign In</button></div>
+</form>
 <script type="text/javascript">
     $(function () {
         $('#id_username').attr('tabindex', '1');
