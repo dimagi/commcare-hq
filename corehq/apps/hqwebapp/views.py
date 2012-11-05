@@ -161,23 +161,32 @@ def server_up(req):
 def no_permissions(request):
     return redirect('registration_domain')
 
+def _login(req, domain, template_name):
+    if req.user.is_authenticated() and req.method != "POST":
+        if not domain:
+            return HttpResponseRedirect(reverse('homepage'))
+        else:
+            return HttpResponseRedirect(reverse('domain_homepage', args=[domain]))
 
+    if req.method == 'POST' and domain and '@' not in req.POST.get('username', '@'):
+        req.POST._mutable = True
+        req.POST['username'] = format_username(req.POST['username'], domain)
+        req.POST._mutable = False
+    
+    req.base_template = settings.BASE_TEMPLATE
+    return django_login(req, template_name=template_name,
+                        authentication_form=EmailAuthenticationForm if not domain else CloudCareAuthenticationForm,
+                        extra_context={'domain': domain})
+    
 def login(req, template_name="login_and_password/login.html"):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
-    if req.user.is_authenticated() and req.method != "POST":
-        return HttpResponseRedirect(reverse('homepage'))
-
-    if req.method == 'POST' and req.POST.get('domain') and '@' not in req.POST.get('username', '@'):
-        req.POST._mutable = True
-        req.POST['username'] = format_username(req.POST['username'], req.POST['domain'])
-        req.POST._mutable = False
-
-    req.base_template = settings.BASE_TEMPLATE
-    return django_login(req, template_name=template_name,
-        authentication_form=EmailAuthenticationForm if not req.GET.get('domain') else CloudCareAuthenticationForm)
-
+    domain = req.REQUEST.get('domain', None)
+    return _login(req, domain, template_name)
+    
+def domain_login(req, domain, template_name="login_and_password/login.html"):
+    return _login(req, domain, template_name)
 
 def logout(req, template_name="hqwebapp/loggedout.html"):
     req.base_template = settings.BASE_TEMPLATE
