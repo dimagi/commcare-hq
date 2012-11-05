@@ -842,4 +842,4 @@ def eula_agreement(request, domain):
         current_user.eula.user_ip = get_ip(request)
         current_user.save()
 
-    return HttpResponseRedirect(reverse("corehq.apps.reports.views.home", args=[domain]))
+    return HttpResponseRedirect(reverse("corehq.apps.reports.views.default", args=[domain]))
