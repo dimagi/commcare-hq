@@ -1,6 +1,10 @@
 {% extends "reports/standard/base_template.html" %}
 {% load hq_shared_tags %}
 
+{% block js %}{{ block.super }}
+<script src="{% static 'reports/ko/saved_reports.js' %}"></script>
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function() {
@@ -71,7 +75,7 @@
             Save...
         </button>
     </div>
-    <div id="report-config-modal" data-bind="modal: configBeingEdited">
+    <div id="report-config-modal" class="hide fade" data-bind="modal: configBeingEdited">
         <div data-bind="with: configBeingEdited">
             <div class="modal-header">
                 <a class="close" data-bind="click: $root.unsetConfigBeingEdited">×</a>
