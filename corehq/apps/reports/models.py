@@ -402,8 +402,7 @@ class ReportNotification(Document):
 
         # Scenario: user has been removed from the domain that they
         # have scheduled reports for.  Delete this scheduled report
-        domain = Domain.get_by_name(self.domain)
-        if self.owner._id not in [user._id for user in domain.all_users()]:
+        if not self.owner.is_member_of(self.domain):
             self.delete()
             return
 
@@ -420,7 +419,7 @@ class ReportNotification(Document):
             body = render_to_string("reports/report_email.html", {
                 "reports": report_outputs,
                 "domain": self.domain,
-                "couch_user": user._id,
+                "couch_user": self.owner._id,
                 "DNS_name": DNS_name
             })
             title = "Scheduled report from CommCare HQ for %s" % self.domain
