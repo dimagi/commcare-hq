@@ -466,11 +466,12 @@ def add_config(request, domain=None):
     to_date = lambda s: datetime.strptime(s, '%Y-%m-%d').date() if s else s
     POST['start_date'] = to_date(POST['start_date'])
     POST['end_date'] = to_date(POST['end_date'])
-    if POST['date_range'] == 'last7':
+    date_range = POST.get('date_range')
+    if date_range == 'last7':
         POST['days'] = 7
-    elif POST['date_range'] == 'last30':
+    elif date_range == 'last30':
         POST['days'] = 30
-    elif POST['days']:
+    elif 'days' in POST:
         POST['days'] = int(POST['days'])
   
     exclude_filters = ['startdate', 'enddate']

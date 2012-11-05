@@ -156,7 +156,7 @@ class ReportConfig(Document):
         return {
             'name': '',
             'description': '',
-            'date_range': 'last7',
+            #'date_range': 'last7',
             'days': None,
             'start_date': None,
             'end_date': None,
@@ -275,8 +275,10 @@ class ReportConfig(Document):
             return "Last %d %s" % (self.days, day)
         elif self.end_date:
             return "From %s to %s" % (self.start_date, self.end_date)
-        else:
+        elif self.start_date:
             return "Since %s" % self.start_date
+        else:
+            return ''
 
     @property
     @memoized
@@ -325,7 +327,7 @@ class ReportNotification(Document):
     def by_domain_and_owner(cls, domain, owner_id):
         key = [domain, owner_id]
 
-        return cls.view("reports/user_notifications",
+        return cls.view("reportconfig/user_notifications",
             reduce=False,
             startkey=key,
             endkey=key + [{}],
@@ -400,8 +402,7 @@ class ReportNotification(Document):
 
         # Scenario: user has been removed from the domain that they
         # have scheduled reports for.  Delete this scheduled report
-        domain = Domain.get_by_name(self.domain)
-        if self.owner._id not in [user._id for user in domain.all_users()]:
+        if not self.owner.is_member_of(self.domain):
             self.delete()
             return
 
@@ -418,7 +419,7 @@ class ReportNotification(Document):
             body = render_to_string("reports/report_email.html", {
                 "reports": report_outputs,
                 "domain": self.domain,
-                "couch_user": user._id,
+                "couch_user": self.owner._id,
                 "DNS_name": DNS_name
             })
             title = "Scheduled report from CommCare HQ for %s" % self.domain

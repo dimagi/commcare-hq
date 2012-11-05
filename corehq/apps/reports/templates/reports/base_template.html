@@ -8,11 +8,16 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function() {
+            var defaultConfig = {{ default_config|JSON }};
+            {% if report.has_datespan %}
+                defaultConfig.date_range = 'last7';
+            {% endif %}
+            
             $("#savedReports").reportConfigEditor({
                 filterForm: $("#reportFilters"),
                 items: {{ report_configs|JSON }},
                 initialItemID: '{{ current_config_id }}',
-                defaultItem: {{ default_config|JSON }},
+                defaultItem: defaultConfig,
                 saveUrl: '{% url add_report_config domain %}',
             });
 
@@ -108,7 +113,8 @@
                             <textarea rows="3" name="description" data-bind="value: description"></textarea>
                         </div>
                     </div>
-
+                    
+                    {% if report.has_datespan %}
                     <div class="control-group">
                         <label class="control-label" for="date_range">Default Date Range</label>
                         <div class="controls">
@@ -145,6 +151,8 @@
                             </span>
                         </div>
                     </div>
+                    {% endif %}
+
                 </div>
                 <div class="modal-footer">
                     <div class="btn-toolbar">
