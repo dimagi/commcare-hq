@@ -134,7 +134,8 @@ The CommCareHQ Team
     subject = 'Welcome to CommCare HQ!'.format(**locals())
 
     try:
-        send_HTML_email(subject, recipient, message_plaintext, message_html)
+        send_HTML_email(subject, recipient, message_html,
+                        text_content=message_plaintext)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
@@ -186,7 +187,8 @@ The CommCareHQ Team
     subject = 'CommCare HQ: New project created!'.format(**locals())
 
     try:
-        send_HTML_email(subject, requesting_user.email, message_plaintext, message_html)
+        send_HTML_email(subject, requesting_user.email, message_html,
+                        text_content=message_plaintext)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 

@@ -4,7 +4,7 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function() {
-            $("#reportFavorites").reportConfigEditor({
+            $("#savedReports").reportConfigEditor({
                 filterForm: $("#reportFilters"),
                 items: {{ report_configs|JSON }},
                 initialItemID: '{{ current_config_id }}',
@@ -31,7 +31,7 @@
 {% block subsection-navigation %}
 <nav class="hq-subsection-navbar">
     <ul class="nav">
-        <li {% ifequal report.section_name 'Project Reports' %}class="active"{% endifequal %}><a href="{% url default_report domain %}">Project Reports</a> <div class="arrow"></div></li>
+        <li {% ifequal report.section_name 'Project Reports' %}class="active"{% endifequal %}><a href="{% url reports_home domain %}">Project Reports</a> <div class="arrow"></div></li>
         <li {% ifequal report.section_name 'Active Data Management' %}class="active"{% endifequal %}><a href="{% url default_adm_report domain %}">Active Data Management</a> <div class="arrow"></div></li>
     </ul>
 </nav>

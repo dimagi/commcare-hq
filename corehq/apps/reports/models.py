@@ -5,18 +5,20 @@ import pytz
 from corehq.apps import reports
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.domain.models import Domain
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
 from couchexport.util import SerializableFunction
 import couchforms
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.decorators.memoized import memoized
-import settings
+from django.conf import settings
 from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
     CustomProjectReportDispatcher)
 from corehq.apps.adm.dispatcher import ADMSectionDispatcher
-
+import json
+import calendar
 
 class HQUserType(object):
     REGISTERED = 0
@@ -112,9 +114,6 @@ class TempCommCareUser(CommCareUser):
         app_label = 'reports'
 
 
-project_report_dispatcher = ProjectReportDispatcher()
-custom_project_report_dispatcher = CustomProjectReportDispatcher()
-adm_section_dispatcher = ADMSectionDispatcher()
 
 DATE_RANGE_CHOICES = ['last7', 'last30', 'lastn', 'since', 'range']
 
@@ -175,22 +174,30 @@ class ReportConfig(Document):
     @property
     @memoized
     def _dispatcher(self):
-        dispatchers = [project_report_dispatcher,
-                       custom_project_report_dispatcher,
-                       adm_section_dispatcher]
+
+        dispatchers = [ProjectReportDispatcher,
+                       CustomProjectReportDispatcher,
+                       ADMSectionDispatcher]
 
         for dispatcher in dispatchers:
             if dispatcher.prefix == self.report_type:
-                return dispatcher
+                return dispatcher()
 
         raise Exception("Unknown dispatcher: %s" % self.report_type)
 
     def get_date_range(self):
         """Duplicated in reports.config.js"""
+        
+        date_range = self.date_range
+
+        # allow old report email notifications to represent themselves as a
+        # report config by leaving the default date range up to the report
+        # dispatcher
+        if not date_range:
+            return {}
 
         import datetime
         today = datetime.date.today()
-        date_range = self.date_range
 
         if date_range == 'since':
             start_date = self.start_date
@@ -216,28 +223,50 @@ class ReportConfig(Document):
                 'enddate': end_date.isoformat()}
 
     @property
-    def url(self):
-        from django.core.urlresolvers import reverse
+    @memoized
+    def query_string(self):
         from urllib import urlencode
-
-        route = self._dispatcher.name()
-        kwargs = {'domain': self.domain,
-                  'report_slug': self.report_slug}
-
-        if self.subreport_slug:
-            kwargs.update(subreport_slug=self.subreport_slug)
 
         params = self.filters.copy()
         params['config_id'] = self._id
         params.update(self.get_date_range())
 
-        return reverse(route, kwargs=kwargs) + '?' + urlencode(params, True)
+        return urlencode(params, True)
+
+    @property
+    @memoized
+    def view_kwargs(self):
+        kwargs = {'domain': self.domain,
+                  'report_slug': self.report_slug}
+
+        if self.subreport_slug:
+            kwargs['subreport_slug'] = self.subreport_slug
+
+        return kwargs
+
+    @property
+    @memoized
+    def url(self):
+        from django.core.urlresolvers import reverse
+        
+        return reverse(self._dispatcher.name(), kwargs=self.view_kwargs) \
+                + '?' + self.query_string
+
+    @property
+    @memoized
+    def report(self):
+        return self._dispatcher.get_report(self.domain, self.report_slug)
 
     @property
     def report_name(self):
-        report = self._dispatcher.get_report(self.domain,
-                                            self.report_slug)
-        return report.name
+        return self.report.name
+
+    @property
+    def full_name(self):
+        if self.name:
+            return "%s (%s)" % (self.name, self.report_name)
+        else:
+            return self.report_name
 
     @property
     def date_description(self):
@@ -252,18 +281,152 @@ class ReportConfig(Document):
     @property
     @memoized
     def owner(self):
-        return CouchUser.get(self.owner_id)
+        return WebUser.get(self.owner_id)
+
+    def get_report_content(self):
+        """
+        Get the report's HTML content as rendered by the static view format.
+        This method doesn't really have a natural place in this class, but it's
+        better than duplicating the code in tasks and test_config.
+
+        """
+        report_class = self.report.__module__ + '.' + self.report.__name__
+        if not self.owner.can_view_report(self.domain, report_class):
+            raise Exception("User %s can't view report %s" % (self.owner_id,
+                                                              report_class))
+
+        from django.http import HttpRequest, QueryDict
+        request = HttpRequest()
+        request.couch_user = self.owner
+        request.user = self.owner.get_django_user()
+        request.domain = self.domain
+        request.couch_user.current_domain = self.domain
+
+        request.GET = QueryDict(self.query_string + '&filterSet=true')
+
+        response = self._dispatcher.dispatch(request, render_as='static',
+                                             **self.view_kwargs)
+        return json.loads(response.content)['report']
 
 
-class ReportNotification(Document, UnicodeMixIn):
+class ReportNotification(Document):
     domain = StringProperty()
-    user_ids = StringListProperty()
-    report_slug = StringProperty()
-    
-    def __unicode__(self):
-        return "Notify: %s user(s): %s, report: %s" % \
-                (self.doc_type, ",".join(self.user_ids), self.report_slug)
-    
+    owner_id = StringProperty()
+
+    recipient_emails = StringListProperty()
+    config_ids = StringListProperty()  # added 11/2012
+    send_to_owner = BooleanProperty()  # added 11/2012
+
+    # report_slug = StringProperty()  # removed 11/2012
+    # removed 11/2012, only ever contained the user_id of the owner
+    # user_ids = StringListProperty()
+
+    @classmethod
+    def by_domain_and_owner(cls, domain, owner_id):
+        key = [domain, owner_id]
+
+        return cls.view("reports/user_notifications",
+            reduce=False,
+            startkey=key,
+            endkey=key + [{}],
+            include_docs=True)
+
+    @property
+    def all_recipient_emails(self):
+        # handle old documents
+        if not self.owner_id:
+            return [self.owner.get_email()]
+
+        emails = []
+        if self.send_to_owner:
+            emails.append(self.owner.username)
+        emails.extend(self.recipient_emails)
+        return emails
+
+    @property
+    @memoized
+    def owner(self):
+        id = self.owner_id if self.owner_id else self.user_ids[0]
+        return WebUser.get(id)
+
+    @property
+    @memoized
+    def configs(self):
+        """
+        Access the notification's associated configs as a list, transparently
+        returning an appropriate dummy for old notifications which have
+        `report_slug` instead of `config_ids`.
+
+        """
+        if self.config_ids:
+            configs = ReportConfig.view('_all_docs', keys=self.config_ids,
+                include_docs=True).all()
+        else:
+            # create a new ReportConfig object, useful for its methods and
+            # calculated properties, but don't save it
+            config = ReportConfig()
+            config.save = lambda self, *args, **kwargs: None
+            object.__setattr__(config, '_id', 'dummy')
+            config.report_type = ProjectReportDispatcher.prefix
+            config.report_slug = self.report_slug
+            config.domain = self.domain
+            config.owner_id = self.user_ids[0]
+            configs = [config]
+
+        return configs
+
+    @property
+    def day_name(self):
+        if self.doc_type == 'WeeklyReportNotification':
+            return calendar.day_name[self.day_of_week]
+        else:
+            return "Every day"
+
+    @classmethod
+    def days(cls):
+        """List of tuples for day of week number and human-readable day of week"""
+        return [(val, calendar.day_name[val]) for val in range(7)]
+
+    @classmethod
+    def hours(cls):
+        """List of tuples for hour number and human-readable hour"""
+        return [(val, "%s:00" % val) for val in range(24)]
+
+
+    def send(self):
+        from dimagi.utils.django.email import send_HTML_email
+        from django.template.loader import render_to_string
+        from django.contrib.sites.models import Site
+
+        # Scenario: user has been removed from the domain that they
+        # have scheduled reports for.  Delete this scheduled report
+        domain = Domain.get_by_name(self.domain)
+        if self.owner._id not in [user._id for user in domain.all_users()]:
+            self.delete()
+            return
+
+        report_outputs = []
+        for config in self.configs:
+            report_outputs.append({
+                'title': config.full_name,
+                'url': config.url,
+                'content': config.get_report_content()
+            })
+
+        if report_outputs:
+            DNS_name = "http://" + Site.objects.get(id=settings.SITE_ID).domain
+            body = render_to_string("reports/report_email.html", {
+                "reports": report_outputs,
+                "domain": self.domain,
+                "couch_user": user._id,
+                "DNS_name": DNS_name
+            })
+            title = "Scheduled report from CommCare HQ for %s" % self.domain
+
+            for email in self.all_recipient_emails:
+                send_HTML_email(title, email, body)
+
+
 class DailyReportNotification(ReportNotification):
     hours = IntegerProperty()
     

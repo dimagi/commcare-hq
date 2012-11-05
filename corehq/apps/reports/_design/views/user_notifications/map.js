@@ -1,7 +1,12 @@
 function(doc) {
-    if(doc.doc_type == "WeeklyReportNotification" || doc.doc_type == "DailyReportNotification") {
-        for (i in doc.user_ids) {
-            emit(doc.user_ids[i], null);
+    if (doc.doc_type == "WeeklyReportNotification" || doc.doc_type == "DailyReportNotification") {
+        var owner_id;
+        if (typeof doc.user_ids !== 'undefined') {
+            // old doc
+            owner_id = doc.user_ids[0];
+        } else {
+            owner_id = doc.owner_id;
         }
+        emit([doc.domain, owner_id], null);
     }
 }

@@ -1,61 +1,101 @@
-{% extends "users/users_base.html" %}
+{% extends "reports/base_template.html" %}
+{% load hq_shared_tags %}
 
-{% block account_indicator %}
-<ul class="nav nav-list">
-    <li class="active"><a href="#">New Scheduled Report</a></li>
-</ul>
+{% block js %}
+<script src="{% static 'hqwebapp/js/jquery.multi_typeahead.js' %}"></script>
+
 {% endblock %}
 
-{% block subsection-title %}
-    <li class="active">
-        <a href="#">New Scheduled Report</a>
-    </li>
+{% block js-inline %}
+<script>
+$(function() {
+   $("#hour-input").val("9");
+
+   $("#recipient_emails").multiTypeahead({
+       source: {{ user_emails|JSON }}
+   });
+});
+</script>
 {% endblock %}
 
-{% block user-view %}
+{% block main_column %}
     <h2>Schedule a New Email Report</h2>
+
+    {% if configs %}
     <form class="form form-horizontal" method="post" action="">
         <fieldset>
-            <legend>What shoud we send you?</legend>
             <div class="control-group">
-                <label class="control-label" for="report_type">Choose Report: </label>
+                <label class="control-label" for="config_id">Saved report(s)</label>
                 <div class="controls">
-                    <select name="report_type" id="report_type">
-                        {{ reports }}
-                        {% for id, report in reports.items %}
-                            <option value="{{id}}">{{report.title}}</option>
+                    <select name="config_id" id="config_id" multiple="multiple">
+                        {% for config in configs %}
+                        <option value="{{ config.get_id }}">
+                            {{ config.full_name }}
+                        </option>
                         {% endfor %}
                     </select>
+                    <div class="help-inline alert alert-info" style="width: 400px;">
+                        <p>You can use Ctrl-Click to select multiple saved reports to include.</p>
+                        <p>Not all built-in reports currently support email delivery, so some of your saved reports may not appear in this list.</p>
+                    </div> 
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label" for="hour-input">at: </label>
-                <div class="controls">
-                    <select name="hour" id="hour-input">
-                        {% for hr, display in hours %}
-                            <option value="{{hr}}" {% ifequal hr 9 %}selected{%endifequal%}>{{display}}</option>
-                        {% endfor %}
-                    </select>
-
-                    <span class="help-inline alert alert-info" style="width: 400px;">Sorry, right now all times are in GMT.</span>
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label" for="day-input">on: </label>
+                <label class="control-label" for="day-input">Day </label>
                 <div class="controls">
                     <select name="day" id="day-input">
-                        <optgroup label="Daily...">
+                        <optgroup label="Daily">
                             <option value="all">Every Day</option>
                         </optgroup>
                         <optgroup label="Once a week on...">
                             {% for day, display in days %}
-                                <option value="{{day}}">{{display}}</option>
+                            <option value="{{day}}">{{display}}</option>
                             {% endfor %}
                         </optgroup>
                     </select>
                 </div>
             </div>
+            <div class="control-group">
+                <label class="control-label" for="hour-input">Time </label>
+                <div class="controls">
+                    <select name="hour" id="hour-input">
+                        {% for hr, display in hours %}
+                        <option value="{{hr}}">{{display}}</option>
+                        {% endfor %}
+                    </select>
+
+                    <div class="help-inline alert alert-info" style="width: 400px;">
+                        Sorry, right now all times are in GMT.
+                    </div>
+                </div>
+            </div>
+            <div class="control-group">
+                <div class="controls">
+                    <label class="checkbox" for="send_to_owner">
+                        <input type="checkbox" name="send_to_owner" checked="checked">Send to me
+                    </label>
+                    
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="recipient_emails">Other recipients</label>
+                <div class="controls">
+                    <textarea name="recipient_emails" id="recipient_emails"></textarea>
+                </div>
+            </div>
+            
+            
         </fieldset>
-        <div class="form-actions"><button type="submit" class="btn btn-primary">Add Scheduled Report</button></div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Add Scheduled Report</button>
+        </div>
     </form>
+    {% else %}
+    <div class="alert">
+        You need a saved report in order to set up a scheduled email report, but you don't have any.
+        
+        To create a saved report, navigate to a report, select your desired filters, and click "Save".
+    </div>
+    {% endif %}
 {% endblock %}
