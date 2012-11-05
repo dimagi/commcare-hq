@@ -188,7 +188,8 @@ def appstore(request, template="appstore/appstore_base.html"):
         average_ratings=average_ratings,
         include_unapproved=include_unapproved,
         sortables=facets_sortables,
-        query_str=request.META['QUERY_STRING'])
+        query_str=request.META['QUERY_STRING'],
+        search_query = params.get('search', ""))
     return render_to_response(request, template, vals)
 
 @require_previewer # remove for production
@@ -344,7 +345,8 @@ def deployments(request, template="appstore/deployments.html"):
              'include_unapproved': include_unapproved,
              'sortables': facets_sortables,
              'query_str': request.META['QUERY_STRING'],
-             'search_url': reverse('deployments')}
+             'search_url': reverse('deployments'),
+             'search_query': params.get('search', "")}
     return render_to_response(request, template, vals)
 
 @require_previewer # remove for production
@@ -359,7 +361,7 @@ def es_deployments_query(params, facets=[], terms=['is_approved', 'sort_by', 'se
                                   [{"match": {'doc_type': "Domain"}},
                                    {"term": {"deployment.public": True}}]}}}
 
-    search_query = params.pop('search', "")
+    search_query = params.get('search', "")
     if search_query:
         q['query']['bool']['must'].append({
             "match" : {
