@@ -11,7 +11,8 @@ class Command(BaseCommand):
                  "img"]
     less_files = ["hq-bootstrap",
                   "old/core",
-                  "old/app_manager"]
+                  "old/app_manager",
+                  "mobile_c2/hq-mobile-c2"]
     js_bootstrap = ["bootstrap-transition",
                     "bootstrap-affix",
                     "bootstrap-alert",

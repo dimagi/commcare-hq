@@ -1,23 +1,14 @@
+{% load hq_shared_tags %}
 <!DOCTYPE html>
 <html>
 <head>
-    {# NOTE: this probably isn't the right long-term place for this #}
-    <style>
-        table.summary th {
-            text-align: right;
-            padding-right: 1em;
-            max-width: 15em;
-        }
-        body {
-            font-size: 150%;
-        }
-        body h1 {
-            font-size: 120%;
-        }
-    </style>
+    <link rel="stylesheet" media="screen" href="{% static 'hq_bootstrap/css/mobile_c2/hq-mobile-c2.css' %}"/>
+    <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
 </head>
 <body>
-<h1>{{ title }}</h1>
-{{ report }}
+<div class="container-fluid">
+    <h1>{{ title }}</h1>
+    {{ report }}
+</div>
 </body>
 </html>
