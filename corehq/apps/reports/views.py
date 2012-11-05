@@ -471,7 +471,7 @@ def add_config(request, domain=None):
         POST['days'] = 7
     elif date_range == 'last30':
         POST['days'] = 30
-    elif 'days' in POST:
+    elif POST.get('days'):
         POST['days'] = int(POST['days'])
   
     exclude_filters = ['startdate', 'enddate']
