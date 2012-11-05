@@ -142,37 +142,9 @@
             {% endfor %}
         </div>
         <div>
-            <form action="{% url copy_snapshot_app project.name %}" method="post">
-                <fieldset>
-                    <legend>Copy individual application into existing project</legend>
-                    {% if project.attribution_notes %}
-                        <dl>
-                            <dt>Attribution notes</dt>
-                            <dd>{{ project.attribution_notes }}</dd>
-                        </dl>
-                    {% endif %}
-                    <label for="app_to_copy_select">
-                        Application to Copy
-                    </label>
-                    <select name="app_id" id="app_to_copy_select">
-                        {% for app in project.applications %}
-                        <option value="{{ app.id }}">{{ app.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <label for="project_select">
-                        Destination project
-                    </label>
-                    <select name="project" id="project_select">
-                        {% for p in request.couch_user.projects %}
-                        <option value="{{ p.name }}">{{ p.display_name }}</option>
-                        {% endfor %}
-                    </select>
-                </fieldset>
-                <button class="btn btn-primary" type="submit">Copy application</button>
-            </form>
             <form method="post" class="form-inline" action="{% url domain_copy_snapshot project %}">
                 <fieldset>
-                    <legend>Copy entire project into new project</legend>
+                    <legend>Download project</legend>
                     {% if project.attribution_notes %}
                     <dl>
                         <dt>Attribution notes</dt>
