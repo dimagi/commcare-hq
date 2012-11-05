@@ -228,7 +228,8 @@ class ReportConfig(Document):
         from urllib import urlencode
 
         params = self.filters.copy()
-        params['config_id'] = self._id
+        if self._id != 'dummy':
+            params['config_id'] = self._id
         params.update(self.get_date_range())
 
         return urlencode(params, True)
