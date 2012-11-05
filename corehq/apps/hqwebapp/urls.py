@@ -19,5 +19,6 @@ urlpatterns = patterns('corehq.apps.hqwebapp.views',
 )
 
 domain_specific = patterns('corehq.apps.hqwebapp.views',
- url(r'^$', 'redirect_to_default', name='domain_homepage'),
+    url(r'^$', 'redirect_to_default', name='domain_homepage'),
+    url(r'^login/$', 'domain_login', name='domain_login'),
 )

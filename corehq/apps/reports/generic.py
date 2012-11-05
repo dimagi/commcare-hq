@@ -64,7 +64,11 @@ class GenericReportView(object):
     section_name = None # string. ex: "Reports"
     app_slug = None     # string. ex: 'reports' or 'manage'
     dispatcher = None   # ReportDispatcher subclass
-    
+
+    # Code can expect `fields` to be an iterable even when empty (never None)
+    fields = ()
+
+
     # not required
     description = None  # string. description of the report. Currently not being used.
     report_template_path = None
@@ -72,7 +76,6 @@ class GenericReportView(object):
 
     asynchronous = False
     hide_filters = False
-    fields = None
     emailable = False
 
     exportable = False
@@ -434,8 +437,7 @@ class GenericReportView(object):
         current_config_id = self.request.GET.get('config_id', '')
         default_config = ReportConfig.default()
 
-        has_datespan = ('corehq.apps.reports.fields.DatespanField' in
-                        self.fields)
+        has_datespan = ('corehq.apps.reports.fields.DatespanField' in self.fields)
 
         self.context.update(
             report=dict(
