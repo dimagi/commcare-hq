@@ -141,6 +141,8 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
     def generate_query_string(attr, val):
         updated_params = params.copy()
         updated_params.update({attr: val})
+        if params.get(attr, "") == val:
+            del updated_params[attr]
         return "?%s" % urlencode(updated_params)
 
     def generate_facet_dict(f_name, ft):
