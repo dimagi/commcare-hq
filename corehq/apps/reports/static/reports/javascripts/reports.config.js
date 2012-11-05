@@ -92,19 +92,22 @@ var HQReport = function (options) {
         }
         $(self.filterAccordion).addClass($.cookie(self.toggleFiltersCookie));
         
-        if ($.cookie(self.toggleFiltersCookie) == 'in')
-            $(self.toggleFiltersButton).button('hide');
-        else
-            $(self.toggleFiltersButton).button('show');
+        if ($.cookie(self.toggleFiltersCookie) == 'in') {
+            $(self.toggleFiltersButton).button('close');
+        } else {
+            $(self.toggleFiltersButton).button('open');
+        }
 
-        $(self.filterAccordion).on('hidden', function () {
+        $(self.filterAccordion).on('hidden', function (data) {
             _setShowFilterCookie(false);
-            $(self.toggleFiltersButton).button('show');
+            if (!(data.target && $(data.target).hasClass('modal'))) {
+                $(self.toggleFiltersButton).button('open');
+            }
         });
 
         $(self.filterAccordion).on('show', function () {
             _setShowFilterCookie(true);
-            $(self.toggleFiltersButton).button('hide');
+            $(self.toggleFiltersButton).button('close');
         });
 
     };

@@ -43,6 +43,7 @@
 
 {% block sidebar %}{% include "reports/partials/report_list.html" %}{% endblock %}
 {% block report_filter_actions %}
+<div id="savedReports">
     <div class="btn-toolbar">
         <div class="btn-group">
             <button id="apply-filters" type="submit" class="filters btn btn-large disabled"
@@ -149,4 +150,5 @@
             </form>
         </div>
     </div>
+</div>
 {% endblock %}
