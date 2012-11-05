@@ -63,8 +63,6 @@
             <h6>None</h6>
         {% endif %}
     </dd>
-    <dt>Users</dt>
-    <dd>{{ project.copied_from.all_users|length }}</dd>
     {% if project.city %}
     <dt>City</dt>
     <dd>{{ project.city }}</dd>
@@ -84,10 +82,6 @@
         {% else %}
         None
         {% endif %}
-    </dd>
-    <dt>Active?</dt>
-    <dd>
-        {{ project.copied_from.recent_submissions|yesno:"Yes,No" }}
     </dd>
     <dt>License</dt>
     <dd>{{ project.get_license_display }}</dd>
