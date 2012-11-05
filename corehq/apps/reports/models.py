@@ -325,7 +325,7 @@ class ReportNotification(Document):
     def by_domain_and_owner(cls, domain, owner_id):
         key = [domain, owner_id]
 
-        return cls.view("reports/user_notifications",
+        return cls.view("reportconfig/user_notifications",
             reduce=False,
             startkey=key,
             endkey=key + [{}],
