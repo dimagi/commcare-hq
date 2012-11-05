@@ -2,7 +2,7 @@ import logging
 from django.core.mail import send_mail
 from django.core.management.base import  BaseCommand
 from casexml.apps.case.models import CommCareCase
-from pillows import CasePillow
+from corehq.pillows import CasePillow
 
 CHUNK_SIZE=500
 POOL_SIZE = 15
@@ -42,6 +42,7 @@ class Command(BaseCommand):
         print "Recreating index"
         casepillow.create_index()
         print "Resetting CasePillow Checkpoint"
+
         casepillow.reset_checkpoint()
 
         db = CommCareCase.get_db()
