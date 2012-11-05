@@ -15,6 +15,7 @@ class ADMSectionView(GenericReportView):
     app_slug = "adm"
     dispatcher = ADMSectionDispatcher
     hide_filters = True
+    emailable = True
 
     # adm-specific stuff
     adm_slug = None

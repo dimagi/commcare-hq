@@ -27,6 +27,7 @@ class ProjectReport(GenericReportView):
 
 class CustomProjectReport(ProjectReport):
     dispatcher = CustomProjectReportDispatcher
+    emailable = True
 
 
 class ProjectReportParametersMixin(object):

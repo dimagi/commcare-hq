@@ -73,6 +73,7 @@ class GenericReportView(object):
     asynchronous = False
     hide_filters = False
     fields = None
+    emailable = False
 
     exportable = False
     mobile_enabled = False
@@ -448,6 +449,7 @@ class GenericReportView(object):
                 filter_set=self.filter_set,
                 needs_filters=self.needs_filters,
                 show=self.request.couch_user.can_view_reports() or self.request.couch_user.get_viewable_reports(),
+                is_emailable=self.emailable,
                 is_admin=self.is_admin_report,   # todo is this necessary???
             ),
             current_config_id=current_config_id,
