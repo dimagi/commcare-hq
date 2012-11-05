@@ -31,6 +31,8 @@ from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, CommCareUser
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.subprocess_timeout import ProcessTimedOut
 
 from dimagi.utils.web import render_to_response, json_response, json_request
 
@@ -531,9 +533,20 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update({"translations": app.translations.get(context['lang'], {})})
 
     if app and app.get_doc_type() == 'Application':
-        images, audio, has_error = utils.get_multimedia_filenames(app)
-        multimedia_images, missing_image_refs = app.get_template_map(images)
-        multimedia_audio, missing_audio_refs = app.get_template_map(audio)
+        try:
+            images, audio, has_error = utils.get_multimedia_filenames(app)
+        except ProcessTimedOut as e:
+            notify_exception(req)
+            messages.warning(req,
+                "We were unable to check if your forms had errors. "
+                "Refresh the page and we will try again."
+            )
+            images, audio, has_error = [], [], True
+            multimedia_images, missing_image_refs = [], 0
+            multimedia_audio, missing_audio_refs = [], 0
+        else:
+            multimedia_images, missing_image_refs = app.get_template_map(images)
+            multimedia_audio, missing_audio_refs = app.get_template_map(audio)
         context.update({
             'missing_image_refs': missing_image_refs,
             'missing_audio_refs': missing_audio_refs,
