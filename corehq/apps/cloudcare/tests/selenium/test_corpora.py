@@ -38,7 +38,7 @@ class BasicTestTestCase(CloudCareTestCase):
         tds = self.find_elements_by_xpath("//section[@id='case-details']//td")
         self.assertTrue(len(tds) > 0)
         for td in tds:
-            self.assertTrue(td.text == '?' or td.text == name)
+            self.assertTrue('---' in td.text or td.text == name)
 
     def test_update_case(self):
         name = self.create_case()
