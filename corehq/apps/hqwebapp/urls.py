@@ -21,4 +21,6 @@ urlpatterns = patterns('corehq.apps.hqwebapp.views',
 domain_specific = patterns('corehq.apps.hqwebapp.views',
     url(r'^$', 'redirect_to_default', name='domain_homepage'),
     url(r'^login/$', 'domain_login', name='domain_login'),
+    url(r'^login/mobile/$', 'domain_login', name='domain_mobile_login', 
+        kwargs={'template_name': 'login_and_password/mobile_login.html'}),
 )

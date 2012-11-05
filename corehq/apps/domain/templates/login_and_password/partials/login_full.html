@@ -1,0 +1,13 @@
+<div class="row">
+    <div class="span8">
+        {% include "login_and_password/partials/login_form.html" %}
+    </div>
+    <div class="span4">
+        <aside class="well">
+            <h2>Are you new to CommCare HQ?<br /><small>Sign up today. It's free!</small></h2>
+            <p><a href="http://www.commcarehq.org/home">Learn more</a> about how CommCare HQ can be your mobile health solution.</p>
+            <p>Don't have an account with CommCare HQ yet? Sign up and check out our features.</p>
+            <div class="row"><a style="float: right; margin-top: 7px;" class="btn btn-success btn-large" href="{% url registration_new_user %}">Sign Up</a></div>
+        </aside>
+    </div>
+</div>

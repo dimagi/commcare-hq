@@ -1,14 +1,5 @@
-{% load hq_shared_tags %}
-<!DOCTYPE html>
-<html>
-<head>
-    <link rel="stylesheet" media="screen" href="{% static 'hq_bootstrap/css/mobile_c2/hq-mobile-c2.css' %}"/>
-    <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
-</head>
-<body>
-<div class="container-fluid">
+{% extends "hqwebapp/base_mobile.html" %}
+{% block content %} 
     <h1>{{ title }}</h1>
     {{ report }}
-</div>
-</body>
-</html>
+{% endblock %}
