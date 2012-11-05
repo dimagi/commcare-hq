@@ -77,27 +77,27 @@ msgstr "उपकरण"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:9
 msgid "Home Visit Information"
-msgstr "1. गृह भ्रमण की जानकारी"री"
+msgstr "1. गृह भ्रमण की जानकारी"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:14
-msgid "1. BP (2nd Tri) Visits in last 30 days"
+msgid "1. BP (2nd Tri) Visits in last 30 days (Done/Due)"
 msgstr "1. प्रसव पूर्व देखभाल (2nd Tri) पिछले ३० दिनों मे भ्रमण (समाप्त/बॉकी) "
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:19
-msgid "2. BP (3rd Tri) Visits in last 30 days"
+msgid "2. BP (3rd Tri) Visits in last 30 days (Done/Due)"
 msgstr "2. प्रसव पूर्व देखभाल (3rd Tri) पिछले ३० दिनों मे भ्रमण (समाप्त/बॉकी)"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:24
-msgid "3. PNC Visits  in last 30 days"
+msgid "3. PNC Visits  in last 30 days (Done/Due)"
 msgstr "3. प्रसव बाद जाँच [PNC] पिछले ३० दिनों मे भ्रमण (समाप्त/बॉकी)"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:29
-msgid "4. EBF Visits in last 30 days"
+msgid "4. EBF Visits in last 30 days (Done/Due)"
 msgstr "4. केवल स्तनपान [EBF] पिछले ३० दिनों मे भ्रमण (समाप्त/बॉकी)"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:34
-msgid "5. CF Visits in last 30 days"
-msgstr "5. ऊपरी आहार [CF] पिछले ३० दिनों मे भ्रमण (समाप्त/बॉकी)"बॉकी)"
+msgid "5. CF Visits in last 30 days (Done/Due)"
+msgstr "5. ऊपरी आहार [CF] पिछले ३० दिनों मे भ्रमण (समाप्त/बॉकी)"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:41
 msgid "3. Pregnant woman registered in last 30 days"
@@ -105,7 +105,7 @@ msgstr "3. पिछले ३० दिनों मे पंजीकृत �
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:46
 msgid "2. Pregnant woman who delivered in last 30 days"
-msgstr "2. पिछले ३० दिनों मे जिन महिलाओं का प्रसव हुआ है की संख्या"ाऐं)"
+msgstr "2. पिछले ३० दिनों मे जिन महिलाओं का प्रसव हुआ है की संख्या"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:51
 msgid "1. All woman due for delivery in next 30 days"
@@ -113,7 +113,7 @@ msgstr "1. सभी महिलायें जिनका प्रसव �
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:57
 msgid "2. Pregnancy Outcome"
-msgstr "2. प्रसव का परिणाम"म"
+msgstr "2. प्रसव का परिणाम"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:58
 msgid "3. Post-Partum Complications"
@@ -133,7 +133,7 @@ msgstr "6. ऊपरी आहार"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:62
 msgid "7. Mortality"
-msgstr "7. मृत्यु""
+msgstr "7. मृत्यु"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:47
 msgid "Indicator Options"
