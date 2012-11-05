@@ -85,10 +85,10 @@
     </dd>
     <dt>License</dt>
     <dd>{{ project.get_license_display }}</dd>
-    <dt>{% trans 'Copy count' %}</dt>
+    <dt>{% trans 'Downloads' %}</dt>
     <dd>
-        This version: {{ project.copies|length }};
-        All versions: {{ project.copies_of_parent|length }}
+{#        This version: {{ project.copies|length }};#}
+        <!-- All versions: -->{{ project.copies_of_parent|length }}
     </dd>
  </dl>
 
