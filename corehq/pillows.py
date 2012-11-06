@@ -285,10 +285,14 @@ class ExchangePillow(ElasticPillow):
                     "lowercase_analyzer": {
                         "type": "custom",
                         "tokenizer": "keyword",
-                        "filter": ["lowercase"]}}}},
+                        "filter": ["lowercase"]},
+                    "comma":{
+                        "type": "pattern",
+                        "pattern":"\s*,\s*"}}}},
         "mappings": {
             "domain": {
                 "properties": {
                     "license": {"type": "string", "index": "not_analyzed"},
                     "deployment.region": {"type": "string", "analyzer": "lowercase_analyzer"},
-                    "author": {"type": "string", "analyzer": "lowercase_analyzer"}}}}}
+                    "author": {"type": "string", "analyzer": "lowercase_analyzer"},
+                    "project_type": {"type": "string", "analyzer": "comma"}}}}}
