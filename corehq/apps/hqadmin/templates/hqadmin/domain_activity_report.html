@@ -11,7 +11,7 @@
     {% for domain in domains %}
         {% if domain.users %}
             <tr>
-                <td><a href="{% url default_report domain.name %}">{{ domain.display_name }}</a></td>
+                <td><a href="{% url reports_home domain.name %}">{{ domain.display_name }}</a></td>
                 {% for users in domain.user_sets %}
                     <td title="{% for _, user in users.items %}{{ user.raw_username }} {% endfor %}">{{ users|length }}</td>
                 {% endfor %}

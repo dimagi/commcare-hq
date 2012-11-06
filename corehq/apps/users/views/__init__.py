@@ -4,7 +4,6 @@ from functools import wraps
 import json
 from openpyxl.shared.exc import InvalidFileException
 import re
-from smtplib import SMTPRecipientsRefused
 import urllib
 from datetime import datetime
 import csv
@@ -39,9 +38,6 @@ from corehq.apps.users.forms import UserForm, CommCareAccountForm, ProjectSettin
 from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUser, \
     RemoveWebUserRecord, UserRole, AdminUserRole
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
-from corehq.apps.reports.schedule.config import ScheduledReportFactory
-from corehq.apps.reports.models import WeeklyReportNotification, DailyReportNotification, ReportNotification
-from corehq.apps.reports.tasks import send_report
 from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
 
@@ -499,63 +495,6 @@ def _handle_user_form(request, domain, couch_user=None):
 def test_httpdigest(request, domain):
     return HttpResponse("ok")
 
-@login_and_domain_required
-def add_scheduled_report(request, domain, couch_user_id):
-    if request.method == "POST":
-        report_type = request.POST["report_type"]
-        hour = request.POST["hour"]
-        day = request.POST["day"]
-        if day=="all":
-            report = DailyReportNotification()
-        else:
-            report = WeeklyReportNotification()
-            report.day_of_week = int(day)
-        report.hours = int(hour)
-        report.domain = domain
-        report.report_slug = report_type
-        report.user_ids = [couch_user_id]
-        report.save()
-        messages.success(request, "New scheduled report added!")
-        return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
-
-    context = _users_context(request, domain)
-    context.update({"hours": [(val, "%s:00" % val) for val in range(24)],
-                    "days":  [(val, calendar.day_name[val]) for val in range(7)],
-                    "reports": dict([(key, value) for (key, value) in  ScheduledReportFactory.get_reports(domain).items() if value.auth(request)])})
-    return render_to_response(request, "users/add_scheduled_report.html", context)
-
-@login_and_domain_required
-@require_POST
-def drop_scheduled_report(request, domain, couch_user_id, report_id):
-    rep = ReportNotification.get(report_id)
-    try:
-        rep.user_ids.remove(couch_user_id)
-    except ValueError:
-        pass # odd, the user wasn't there in the first place
-    if len(rep.user_ids) == 0:
-        rep.delete()
-    else:
-        rep.save()
-    messages.success(request, "Scheduled report dropped!")
-    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
-
-@login_and_domain_required
-@require_POST
-def test_scheduled_report(request, domain, couch_user_id, report_id):
-    rep = ReportNotification.get(report_id)
-    try:
-        user = WebUser.get_by_user_id(couch_user_id, domain)
-    except CouchUser.AccountTypeError:
-        user = CommCareUser.get_by_user_id(couch_user_id, domain)
-
-    try:
-        send_report(rep, user)
-    except SMTPRecipientsRefused:
-        messages.error(request, "You have no email address configured")
-    else:
-        messages.success(request, "Test message sent to %s" % user.get_email())
-
-    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
 
 
 @login_and_domain_required
@@ -625,3 +564,15 @@ def audit_logs(request, domain):
             except Exception:
                 pass
     return json_response(data)
+
+def eula_agreement(request, domain):
+    domain = Domain.get_by_name(domain)
+    if request.method == 'POST':
+        current_user = CouchUser.from_django_user(request.user)
+        current_user.eula.signed = True
+        current_user.eula.date = datetime.utcnow()
+        current_user.eula.type = 'End User License Agreement'
+        current_user.eula.user_ip = get_ip(request)
+        current_user.save()
+
+    return HttpResponseRedirect(reverse("corehq.apps.reports.views.default", args=[domain]))

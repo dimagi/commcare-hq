@@ -94,6 +94,11 @@
 	                                $form.find('[name="' + key + '"]').val(data.corrections[key]);
 	                            }
 	                        }
+                            if (data.hasOwnProperty('case_list-show')){
+                                var $case_details_screen = $('#detail-screen-config');
+                                if (data['case_list-show']) $case_details_screen.show(500);
+                                else $case_details_screen.hide(500);
+                            }
 	                    }
 	                }).ui.appendTo($buttonHolder);
                 });

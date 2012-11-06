@@ -623,10 +623,6 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         self.first_name = data.pop(0)
         self.last_name = ' '.join(data)
 
-    def get_scheduled_reports(self):
-        from corehq.apps.reports.models import ReportNotification
-        return ReportNotification.view("reports/user_notifications", key=self.user_id, include_docs=True).all()
-
     def delete(self):
         try:
             user = self.get_django_user()
@@ -751,7 +747,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @classmethod
     def wrap_correctly(cls, source):
-        if source.get('doc_type') == 'CouchUser' and \
+        if source['doc_type'] == 'CouchUser' and \
                 source.has_key('commcare_accounts') and \
                 source.has_key('web_accounts'):
             from . import old_couch_user_models
@@ -1464,7 +1460,8 @@ class Invitation(Document):
         text_content = render_to_string("domain/email/domain_invite.txt", params)
         html_content = render_to_string("domain/email/domain_invite.html", params)
         subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name
-        send_HTML_email(subject, self.email, text_content, html_content)
+        send_HTML_email(subject, self.email, html_content,
+                        text_content=text_content)
 
     @classmethod
     def by_domain(cls, domain, is_active=True):

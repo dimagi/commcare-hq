@@ -82,7 +82,7 @@ class CaseActivityReport(WorkerMonitoringReportTable):
               'corehq.apps.reports.fields.GroupField']
     all_users = None
     display_data = ['percent']
-
+    emailable = True
 
     class Row(object):
         def __init__(self, report, user):
@@ -376,6 +376,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTable, DatespanMixin):
                 'corehq.apps.reports.fields.GroupField',
                 'corehq.apps.reports.fields.DatespanField']
     fix_left_col = True
+    emailable = True
 
     _form_types = None
     @property
@@ -490,6 +491,7 @@ class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
     # new class properties
     dates_in_utc = True
     couch_view = None
+    emailable = True
 
     _dates = None
     @property
