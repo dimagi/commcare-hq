@@ -134,7 +134,7 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
     slug = "subcenter"
     description = ugettext_noop("Subcenter selection report")
     
-    _headers = [ugettext_noop("Team Name"), 
+    _headers = [_("Team Name"), 
                 # ugettext_noop("Rank")
                 ]
     

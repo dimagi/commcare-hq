@@ -158,7 +158,7 @@ class IndicatorClientList(ConvenientBaseMixIn, GenericTabularReport,
 
     @property
     def _headers(self):
-        return self.indicator.columns
+        return [_(c) for c in self.indicator.columns]
     
     @property
     def sorted_cases(self):
