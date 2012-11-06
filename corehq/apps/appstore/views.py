@@ -1,3 +1,4 @@
+import copy
 from datetime import datetime
 import json
 import logging
@@ -128,7 +129,8 @@ def parse_args_for_es(request):
         if attr[0] == 'facets':
             facets = attr[1][0].split()
             continue
-        params[attr[0]] = attr[1][0] if len(attr[1]) < 2 else attr[1]
+#        params[attr[0]] = attr[1][0] if len(attr[1]) < 2 else attr[1]
+        params[attr[0]] = attr[1]
     return params, facets
 
 def generate_sortables_from_facets(results, params=None, mapping={}):
@@ -139,18 +141,20 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
     """
     params = dict([(mapping.get(p, p), params[p]) for p in params])
     def generate_query_string(attr, val):
-        updated_params = params.copy()
-        updated_params.update({attr: val})
-        if params.get(attr, "") == val:
-            del updated_params[attr]
-        return "?%s" % urlencode(updated_params)
+        updated_params = copy.deepcopy(params)
+        updated_params[attr] = updated_params.get(attr, [])
+        if val in params.get(attr, []):
+            updated_params[attr].remove(val)
+        else:
+            updated_params[attr].append(val)
+        return "?%s" % urlencode(updated_params, True)
 
     def generate_facet_dict(f_name, ft):
         license = (f_name == 'license')
         return {'url': generate_query_string(f_name, ft["term"]),
                 'name': ft["term"] if not license else LICENSES.get(ft["term"]),
                 'count': ft["count"],
-                'active': params.get(f_name, "") == ft["term"]}
+                'active': ft["term"] in params.get(f_name, "")}
 
     sortable = []
     for facet in results.get("facets", []):
@@ -226,7 +230,6 @@ def es_query(params, facets=[], terms=[], q={}):
     es_url = "cc_exchange/domain/_search"
     es = get_es()
     ret_data = es.get(es_url, data=q)
-
     return ret_data
 
 def es_snapshot_query(params, facets=[], terms=['is_approved', 'sort_by', 'search'], sort_by="snapshot_time"):
