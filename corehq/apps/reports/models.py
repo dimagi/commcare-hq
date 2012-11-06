@@ -398,8 +398,7 @@ class ReportNotification(Document):
 
     def send(self):
         from dimagi.utils.django.email import send_HTML_email
-        from django.template.loader import render_to_string
-        from django.contrib.sites.models import Site
+        from corehq.apps.reports.views import get_scheduled_report_response
 
         # Scenario: user has been removed from the domain that they
         # have scheduled reports for.  Delete this scheduled report
@@ -407,26 +406,12 @@ class ReportNotification(Document):
             self.delete()
             return
 
-        report_outputs = []
-        for config in self.configs:
-            report_outputs.append({
-                'title': config.full_name,
-                'url': config.url,
-                'content': config.get_report_content()
-            })
+        title = "Scheduled report from CommCare HQ for %s" % self.domain
+        body = get_scheduled_report_response(self.owner, self.domain,
+                                             self._id).content
 
-        if report_outputs:
-            DNS_name = "http://" + Site.objects.get(id=settings.SITE_ID).domain
-            body = render_to_string("reports/report_email.html", {
-                "reports": report_outputs,
-                "domain": self.domain,
-                "couch_user": self.owner._id,
-                "DNS_name": DNS_name
-            })
-            title = "Scheduled report from CommCare HQ for %s" % self.domain
-
-            for email in self.all_recipient_emails:
-                send_HTML_email(title, email, body)
+        for email in self.all_recipient_emails:
+            send_HTML_email(title, email, body)
 
 
 class DailyReportNotification(ReportNotification):
