@@ -16,6 +16,14 @@
             });
         });
     </script>
+
+    <script type="text/javascript">
+        $(function () {
+            $(".facet-checkbox").click(function() {
+                window.location = $(this).parent().attr('href');
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
