@@ -14,8 +14,7 @@ _phonelog_context = {
 }
 
 custom_report_urls = patterns('',
-    url(CustomProjectReportDispatcher.pattern(), CustomProjectReportDispatcher.as_view(),
-        name=CustomProjectReportDispatcher.name())
+    CustomProjectReportDispatcher.url_pattern(),
 )
 
 phonelog_reports = patterns('',
@@ -89,7 +88,5 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^phonelog/', include(phonelog_reports)),
 
     url(r'^custom/', include(custom_report_urls)),
-    url(ProjectReportDispatcher.pattern(), ProjectReportDispatcher.as_view(),
-        name=ProjectReportDispatcher.name()
-    )
+    ProjectReportDispatcher.url_pattern(),
 )

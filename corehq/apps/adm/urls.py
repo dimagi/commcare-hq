@@ -5,14 +5,10 @@ adm_admin_interface_urls = patterns('corehq.apps.adm.views',
     url(r'^$', 'default_adm_admin', name="default_adm_admin_interface"),
     url(r'^form/(?P<form_type>[\w_]+)/(?P<action>[(update)|(new)|(delete)]+)/((?P<item_id>[\w_]+)/)?$',
         'adm_item_form', name="adm_item_form"),
-    url(ADMAdminInterfaceDispatcher.pattern(), ADMAdminInterfaceDispatcher.as_view(),
-        name=ADMAdminInterfaceDispatcher.name()
-    )
+    ADMAdminInterfaceDispatcher.url_pattern(),
 )
 
 urlpatterns = patterns('corehq.apps.adm.views',
     url(r'^$', 'default_adm_report', name="default_adm_report"),
-    url(ADMSectionDispatcher.pattern(), ADMSectionDispatcher.as_view(),
-        name=ADMSectionDispatcher.name()
-    )
+    ADMSectionDispatcher.url_pattern(),
 )
