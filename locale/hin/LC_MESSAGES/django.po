@@ -107,11 +107,11 @@ msgstr "पिछले ३० दिनों मे जिन महिला�
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:120
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:81
 msgid "Name"
-msgstr ""
+msgstr "नाम"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:52
 msgid "ADD"
-msgstr ""
+msgstr "प्रसव की तारीख"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:56
 msgid "Pregnant woman registered in last 30 days"
@@ -119,7 +119,7 @@ msgstr "पिछले ३० दिनों मे पंजीकृत ग�
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:120
 msgid "EDD"
-msgstr ""
+msgstr "प्रसव की सम्भावित तारीख"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:44
 msgid "Indicator Options"
