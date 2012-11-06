@@ -584,15 +584,12 @@ def add_scheduled_report(request, domain, template="users/add_scheduled_report.h
 @require_POST
 def delete_scheduled_report(request, domain, scheduled_report_id):
     user_id = request.couch_user._id
-    rep = ReportNotification.get(report_id)
-    try:
-        rep.user_ids.remove(user_id)
-    except ValueError:
-        pass  # odd, the user wasn't there in the first place
-    if rep.user_ids:
-        rep.save()
-    else:
-        rep.delete()
+    rep = ReportNotification.get(scheduled_report_id)
+
+    if user_id != rep.owner._id:
+        return HttpResponseBadRequest()
+
+    rep.delete()
     messages.success(request, "Scheduled report deleted!")
     return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
 
