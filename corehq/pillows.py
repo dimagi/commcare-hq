@@ -288,7 +288,7 @@ class ExchangePillow(ElasticPillow):
                         "filter": ["lowercase"]},
                     "comma":{
                         "type": "pattern",
-                        "pattern":","}}}},
+                        "pattern":"\s*,\s*"}}}},
         "mappings": {
             "domain": {
                 "properties": {
