@@ -573,19 +573,8 @@ def add_scheduled_report(request, domain, template="users/add_scheduled_report.h
         messages.success(request, "New scheduled report added!")
         return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
 
-    # todo: replace with examining report classes to see if they support
-    # static response (currently not possible)
-    SCHEDULABLE_REPORTS = [
-        "daily_submissions",
-        "daily_completions",
-        "submissions_by_form",
-        "admin_domains",
-        "case_activity"
-    ]
-
     configs = ReportConfig.by_domain_and_owner(domain, user_id).all()
-    configs = [c for c in configs if c.report_slug in SCHEDULABLE_REPORTS
-                                     or c.report_type != 'project_report']
+    configs = [c for c in configs if c.report.emailable]
 
     web_users = CouchUser.view('users/web_users_by_domain', reduce=False,
                                key=domain, include_docs=True).all()
