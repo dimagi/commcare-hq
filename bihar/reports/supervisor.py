@@ -39,6 +39,10 @@ class ConvenientBaseMixIn(object):
     def show_in_navigation(cls, request, *args, **kwargs):
         return False
      
+def list_prompt(index, value):
+    # e.g. 1. Reports
+    return u"%s. %s" % (_(str(index+1)), _(value)) 
+
 
 class ReportReferenceMixIn(object):
     # allow a report to reference another report
@@ -106,17 +110,16 @@ class BiharNavReport(BiharSummaryReport):
     
     @property
     def data(self):
-        def _nav_link(report_cls):
+        def _nav_link(i, report_cls):
             url = report_cls.get_url(self.domain, 
                                      render_as=self.render_next)
             if self.preserve_url_params:
                 url = url_and_params(url, self.request_params)
-            return format_html('<a href="{details}">{val}</a>',
-                                val=_(report_cls.name), 
+            return format_html(u'<a href="{details}">{val}</a>',
+                                val=list_prompt(i, report_cls.name),
                                 details=url)
-        return [_nav_link(report_cls) for report_cls in self.reports]
+        return [_nav_link(i, report_cls) for i, report_cls in enumerate(self.reports)]
         
-
 class MockEmptyReport(BiharSummaryReport):
     """
     A stub empty report
@@ -155,7 +158,7 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
         def _link(g):
             params = copy(self.request_params)
             params["group"] = g.get_id
-            return format_html('<a href="{details}">{group}</a>',
+            return format_html(u'<a href="{details}">{group}</a>',
                 group=g.name,
                 details=url_and_params(self.next_report_class.get_url(self.domain,
                                                                       render_as=self.render_next),
@@ -182,7 +185,7 @@ class MainNavReport(BiharNavReport):
 
 class WorkerRankSelectionReport(SubCenterSelectionReport):
     slug = "workerranks"
-    name = ugettext_noop("Worker Rank")
+    name = ugettext_noop("Worker Rank Table")
     
     def _row(self, group, rank):
         # HACK: hard code this for now until there's an easier 
@@ -199,7 +202,7 @@ class WorkerRankSelectionReport(SubCenterSelectionReport):
         }
         def _link(g):
             params["group"] = g.get_id
-            return format_html('<a href="{details}">{group}</a>',
+            return format_html(u'<a href="{details}">{group}</a>',
                 group=g.name,
                 details=url_and_params(url,
                                        params))

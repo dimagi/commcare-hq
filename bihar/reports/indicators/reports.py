@@ -1,7 +1,7 @@
 from bihar.reports.indicators import INDICATOR_SETS, IndicatorConfig
 from bihar.reports.supervisor import BiharNavReport, MockEmptyReport, \
     url_and_params, SubCenterSelectionReport, BiharSummaryReport, \
-    ConvenientBaseMixIn, GroupReferenceMixIn
+    ConvenientBaseMixIn, GroupReferenceMixIn, list_prompt
 from copy import copy
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
@@ -53,7 +53,7 @@ class IndicatorNav(BiharNavReport):
                 ]
 
 class IndicatorSelectNav(BiharSummaryReport, IndicatorConfigMixIn):
-    name = ugettext_noop("Select Team")
+    name = ugettext_noop("Select Indicator Category")
     slug = "teams"
     
     @property
@@ -62,18 +62,18 @@ class IndicatorSelectNav(BiharSummaryReport, IndicatorConfigMixIn):
     
     @property
     def data(self):
-        def _nav_link(indicator_set):
+        def _nav_link(i, indicator_set):
             params = copy(self.request_params)
             params["indicators"] = indicator_set.slug
             params["next_report"] = IndicatorNav.slug
             return format_html(u'<a href="{next}">{val}</a>',
-                val=_(indicator_set.name),
+                val=list_prompt(i, indicator_set.name),
                 next=url_and_params(
                     SubCenterSelectionReport.get_url(self.domain, 
                                                      render_as=self.render_next),
                     params
             ))
-        return [_nav_link(iset) for iset in self.indicator_config.indicator_sets]
+        return [_nav_link(i, iset) for i, iset in enumerate(self.indicator_config.indicator_sets)]
 
     
 class IndicatorSummaryReport(BiharSummaryReport, IndicatorSetMixIn, 
@@ -123,7 +123,7 @@ class IndicatorClientSelectNav(BiharSummaryReport, IndicatorSetMixIn):
     
     @property
     def data(self):
-        def _nav_link(indicator):
+        def _nav_link(i, indicator):
             params = copy(self.request_params)
             params["indicators"] = self.indicator_set.slug
             params["indicator"] = indicator.slug
@@ -131,13 +131,13 @@ class IndicatorClientSelectNav(BiharSummaryReport, IndicatorSetMixIn):
             
             # params["next_report"] = IndicatorNav.slug
             return format_html(u'<a href="{next}">{val}</a>',
-                val=_(indicator.name),
+                val=list_prompt(i, indicator.name),
                 next=url_and_params(
                     IndicatorClientList.get_url(self.domain, 
                                                 render_as=self.render_next),
                     params
                 ))
-        return [_nav_link(iset) for iset in self.indicators]
+        return [_nav_link(i, iset) for i, iset in enumerate(self.indicators)]
 
 
 class IndicatorClientList(ConvenientBaseMixIn, GenericTabularReport, 

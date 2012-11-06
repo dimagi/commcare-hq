@@ -11,27 +11,27 @@ INDICATOR_SETS = [
             "summary": [
                 {
                     "slug": "bp2",
-                    "name": _("BP (2nd Tri) Visits in last 30 days"),
+                    "name": _("BP (2nd Tri) Visits in last 30 days (Done/Due)"),
                     "calculation_function": "bihar.reports.indicators.calculations.bp2_last_month"
                 },
                 {
                     "slug": "bp3",
-                    "name": _("BP (3rd Tri) Visits in last 30 days"),
+                    "name": _("BP (3rd Tri) Visits in last 30 days (Done/Due)"),
                     "calculation_function": "bihar.reports.indicators.calculations.bp3_last_month"
                 },
                 {
                     "slug": "pnc",
-                    "name": _("PNC Visits  in last 30 days"),
+                    "name": _("PNC Visits  in last 30 days (Done/Due)"),
                     "calculation_function": "bihar.reports.indicators.calculations.pnc_last_month"
                 },
                 {
                     "slug": "ebf",
-                    "name": _("EBF Visits in last 30 days"),
+                    "name": _("EBF Visits in last 30 days (Done/Due)"),
                     "calculation_function": "bihar.reports.indicators.calculations.eb_last_month"
                 },
                 {
                     "slug": "cf",
-                    "name": _("CF Visits in last 30 days"),
+                    "name": _("CF Visits in last 30 days (Done/Due)"),
                     "calculation_function": "bihar.reports.indicators.calculations.cf_last_month"
                 },
             ],
@@ -103,7 +103,6 @@ class Indicator(object):
     # this class is currently used both for client list filters and 
     # calcualtions. it probably makes sense to pull them out into separate
     # things
-    
     def __init__(self, spec):
         self.slug = spec["slug"]
         self.name = spec["name"]
