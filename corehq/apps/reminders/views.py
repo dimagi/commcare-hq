@@ -150,6 +150,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             h.until = form.cleaned_data["until"]
             h.events = form.cleaned_data["events"]
             h.submit_partial_forms = form.cleaned_data["submit_partial_forms"]
+            h.start_condition_type = form.cleaned_data["start_condition_type"]
             h.save()
             return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
     else:
@@ -171,16 +172,22 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                 "until"                 : h.until,
                 "events"                : h.events,
                 "submit_partial_forms"  : h.submit_partial_forms,
+                "start_condition_type"  : h.start_condition_type,
+                "start_datetime_date"   : str(h.start_datetime.date()) if isinstance(h.start_datetime, datetime) else None,
+                "start_datetime_time"   : str(h.start_datetime.time()) if isinstance(h.start_datetime, datetime) else None,
             }
         else:
-            initial = {}
+            initial = {
+                "events"    : [CaseReminderEvent(day_num=0, fire_time=time(0,0), message={"":""}, callback_timeout_intervals=[], form_unique_id=None)],
+            }
         
         form = ComplexCaseReminderForm(initial=initial)
     
     return render_to_response(request, "reminders/partial/add_complex_reminder.html", {
-        "domain":       domain
-       ,"form":         form
-       ,"form_list":    form_list
+        "domain":       domain,
+        "form":         form,
+        "form_list":    form_list,
+        "handler_id":   handler_id,
     })
 
 

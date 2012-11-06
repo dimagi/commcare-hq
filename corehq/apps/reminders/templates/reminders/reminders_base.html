@@ -1,8 +1,9 @@
-{% extends base_template %}
+{% extends 'hqwebapp/two_column.html' %}
+
+{% load hq_shared_tags %}
 
 {% block head %}
     {{ block.super }}
-{#    <link rel="stylesheet" href="{{ STATIC_URL }}reminders/css/reminders.css">#}
     <style>
         h1 {
             font-size: 2em;
@@ -63,22 +64,30 @@
         .center {
             text-align: center;
         }
+        .form-block {
+            border: 1px solid #EAEAFF;
+            background-color: #FAFAFF;
+            padding: 20px;
+        }
     </style>
 {% endblock %}
-{% block content %}
-    <div id="main_container">
-        <ul class="horizontal">
-            <li>
-                <a href="{% url list_reminders domain %}">Reminders</a>
-            </li>
-            <li>
-                <a href="{% url scheduled_reminders domain %}">Reminder Calendar</a>
-            </li>
-            <li>
-                <a href="{% url manage_surveys domain %}">Survey Management</a>
-            </li>
+
+{% block sidebar %}
+    {% url list_reminders domain as default_url %}
+    {% url scheduled_reminders domain as scheduled_reminders_url %}
+    {% url manage_surveys domain as keywords_url %}
+    <nav>
+        <ul class="nav nav-list">
+            <li class="nav-header">Reminders</li>
+            <li{% ifequal request.path_info default_url %} class="active"{% endifequal %}><a href="{{ default_url }}">Reminder Definitions</a></li>
+            {% block reminder_definition_nav %}{% endblock %}
+            <li{% is_url_active request scheduled_reminders_url %}><a href="{{ scheduled_reminders_url }}">Scheduled Reminders</a></li>
+            <li{% is_url_active request keywords_url %}><a href="{{ keywords_url }}">Keywords</a></li>
         </ul>
-        {% block reminders_content %}
-        {% endblock %}
-    </div>
+    </nav>
+{% endblock %}
+
+{% block main_column %}
+    {% block reminders_content %}
+    {% endblock %}
 {% endblock %}

@@ -15,8 +15,8 @@ METHOD_CHOICES = (
     ('sms', 'SMS'),
     #('email', 'Email'),
     #('test', 'Test'),
-    ('survey', 'SMS Survey'),
-    ('callback', 'SMS/Callback'),
+    ('survey', 'SMS survey'),
+    ('callback', 'SMS expecting callback'),
 )
 
 RECIPIENT_CHOICES = (
@@ -25,8 +25,8 @@ RECIPIENT_CHOICES = (
 )
 
 MATCH_TYPE_DISPLAY_CHOICES = (
-    (MATCH_EXACT, "exactly matches"),
-    (MATCH_ANY_VALUE, "takes any value"),
+    (MATCH_EXACT, "equals"),
+    (MATCH_ANY_VALUE, "exists"),
     (MATCH_REGEX, "matches the regular expression")
 )
 
@@ -34,7 +34,7 @@ START_IMMEDIATELY = "IMMEDIATELY"
 START_ON_DATE = "DATE"
 
 START_CHOICES = (
-    (START_ON_DATE, "on the date referenced by case property"),
+    (START_ON_DATE, "defined by case property"),
     (START_IMMEDIATELY, "immediately")
 )
 
@@ -47,8 +47,8 @@ ITERATION_CHOICES = (
 )
 
 EVENT_CHOICES = (
-    (EVENT_AS_OFFSET, "are offsets from each other"),
-    (EVENT_AS_SCHEDULE, "represent the exact day and time in the schedule")
+    (EVENT_AS_OFFSET, "Offset-based"),
+    (EVENT_AS_SCHEDULE, "Schedule-based")
 )
 
 def validate_date(value):
@@ -183,11 +183,11 @@ class ComplexCaseReminderForm(Form):
     """
     nickname = CharField(error_messages={"required":"Please enter the name of this reminder definition."})
     case_type = CharField(error_messages={"required":"Please enter the case type."})
-    method = ChoiceField(choices=METHOD_CHOICES, widget=Select(attrs={"onchange":"method_changed();"}))
+    method = ChoiceField(choices=METHOD_CHOICES)
     recipient = ChoiceField(choices=RECIPIENT_CHOICES)
-    start_match_type = ChoiceField(choices=MATCH_TYPE_DISPLAY_CHOICES, widget=Select(attrs={"onchange":"start_match_type_changed();"}))
-    start_choice = ChoiceField(choices=START_CHOICES, widget=Select(attrs={"onchange":"start_choice_changed();"}))
-    iteration_type = ChoiceField(choices=ITERATION_CHOICES, widget=Select(attrs={"onchange":"iteration_type_changed();"}))
+    start_match_type = ChoiceField(choices=MATCH_TYPE_DISPLAY_CHOICES)
+    start_choice = ChoiceField(choices=START_CHOICES)
+    iteration_type = ChoiceField(choices=ITERATION_CHOICES)
     start_property = CharField(error_messages={"required":"Please enter the name of the case property."})
     start_value = CharField(required=False)
     start_date = CharField(required=False)
@@ -196,10 +196,13 @@ class ComplexCaseReminderForm(Form):
     default_lang = CharField(error_messages={"required":"Please enter the default language to use for the messages."})
     max_iteration_count_input = CharField(required=False)
     max_iteration_count = IntegerField(required=False)
-    event_interpretation = ChoiceField(choices=EVENT_CHOICES, widget=Select(attrs={"onchange":"event_interpretation_changed();"}))
+    event_interpretation = ChoiceField(choices=EVENT_CHOICES)
     schedule_length = IntegerField()
     events = EventListField()
     submit_partial_forms = BooleanField(required=False)
+    start_condition_type = CharField()
+    start_datetime_date = CharField()
+    start_datetime_time = CharField()
     
     def __init__(self, *args, **kwargs):
         super(ComplexCaseReminderForm, self).__init__(*args, **kwargs)
