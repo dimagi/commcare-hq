@@ -67,7 +67,7 @@ $(function() {
                     <th>{% trans "Send to me" %}</th>
                     <th>{% trans "Other recipients" %}</th>
                     <th>{% trans "Send me a test mail" %}</th>
-                    <th>{% trans "Delete" %}</th>
+                    <!--<th>{% trans "Delete" %}</th>-->
                 </tr>
             </thead>
             <tbody>
@@ -106,7 +106,8 @@ $(function() {
                             <a class="btn btn-info" href="#" onclick="$(this).closest('form').submit()"><i class="icon icon-white icon-envelope"></i> Send</a>
                         </form>
                     </td>
-                    
+                   
+                    <!--
                     <td>
                         <a class="btn btn-danger" data-toggle="modal" href="#{{ report.get_id }}">
                             <i class="icon icon-minus-sign icon-white"></i> {% trans "Delete" %}
@@ -126,7 +127,7 @@ $(function() {
                                 </div>
                             </form>
                         </div>
-                    </td>
+                    </td>-->
                 </tr>
                 {% endfor %}
             </tbody>
