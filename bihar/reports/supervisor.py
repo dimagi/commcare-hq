@@ -206,8 +206,7 @@ class WorkerRankSelectionReport(SubCenterSelectionReport):
                 group=g.name,
                 details=url_and_params(url,
                                        params))
-        return [_link(group), 
-                "%s / %s" % (rank, len(self._get_groups()))]
+        return [_link(group)]
     
 
 class DueListReport(MockEmptyReport):
