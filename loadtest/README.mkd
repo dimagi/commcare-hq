@@ -27,3 +27,12 @@ Can tweak server, domain and user credentials by adding a localsettings.py file 
     MOBILE_PASSWORD = "***"
 
 Edit config.cfg to tweak number of threads per user profile and length of test. See multimechanize docs for more info.
+
+### Mac OS 10.8 (Mountain Lion) Specific instructions
+
+In order to install matlibplot, if you get an error message about `#include "ft2build.h"` failing:
+* Download and install XQuartz (http://xquartz.macosforge.org/landing/)
+* Run `sudo ln -s /usr/X11/include/freetype2/freetype /usr/X11/include/freetype`
+* Finally `sudo pip install matlibplot`
+
+Worked for me!
