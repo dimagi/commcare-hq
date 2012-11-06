@@ -163,6 +163,9 @@ def no_permissions(request):
 
 def _login(req, domain, template_name):
     if req.user.is_authenticated() and req.method != "POST":
+        redirect_to = req.REQUEST.get('next', '')
+        if redirect_to:
+            return HttpResponseRedirect(redirect_to)
         if not domain:
             return HttpResponseRedirect(reverse('homepage'))
         else:
