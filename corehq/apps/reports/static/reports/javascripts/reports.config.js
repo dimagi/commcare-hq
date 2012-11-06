@@ -99,8 +99,8 @@ var HQReport = function (options) {
         }
 
         $(self.filterAccordion).on('hidden', function (data) {
-            _setShowFilterCookie(false);
             if (!(data.target && $(data.target).hasClass('modal'))) {
+                _setShowFilterCookie(true);
                 $(self.toggleFiltersButton).button('open');
             }
         });
