@@ -37,3 +37,4 @@ gitdb
 gevent
 rawes
 numpy
+socketpool
