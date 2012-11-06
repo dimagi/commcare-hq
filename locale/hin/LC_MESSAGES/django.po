@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-11-05 18:52-0500\n"
+"POT-Creation-Date: 2012-11-06 15:13-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -38,36 +38,61 @@ msgstr ""
 msgid "Audited Model Changes"
 msgstr ""
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:130
+#: .\submodules\bihar-reports\bihar\reports\__init__.py:4
+msgid "Active Cases"
+msgstr "सक्रिय ग्राहकों"
+
+#: .\submodules\bihar-reports\bihar\reports\__init__.py:5
+msgid "Total Cases"
+msgstr "कुल ग्राहक"
+
+#: .\submodules\bihar-reports\bihar\reports\__init__.py:6
+msgid "Total Form Submissions"
+msgstr "कुल फार्म प्रस्तुतियाँ"
+
+#: .\submodules\bihar-reports\bihar\reports\__init__.py:7
+msgid "Days Since Last Submission"
+msgstr "अंतिम प्रस्तुत चूंकि दिन"
+
+#: .\submodules\bihar-reports\bihar\reports\__init__.py:8
+#, fuzzy
+msgid "Clients Visited"
+msgstr "ग्राहक बार देखा गया"
+
+#: .\submodules\bihar-reports\bihar\reports\__init__.py:9
+msgid "Inactive Clients"
+msgstr "निष्क्रिय ग्राहक"
+
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:133
 msgid "Select Subcenter"
 msgstr "सब-सेंटर चुनिए"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:132
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:135
 msgid "Subcenter selection report"
 msgstr "सब-सेंटर चयन रिपोर्ट"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:134
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:137
 #: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:92
 msgid "Team Name"
 msgstr "टीम का नाम"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:167
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:170
 msgid "Main Menu"
 msgstr "मुख्य मेनू"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:169
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:172
 msgid "Main navigation"
 msgstr "मुख्य नेवीगेशन"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:185
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:188
 msgid "Worker Rank Table"
 msgstr "कार्यकर्ता रैंक/पद"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:211
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:214
 msgid "Due List"
 msgstr "ड्यू लिस्ट"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:215
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:218
 msgid "Tools"
 msgstr "उपकरण"
 
@@ -104,7 +129,7 @@ msgid "Pregnant woman who delivered in last 30 days"
 msgstr "पिछले ३० दिनों मे जिन महिलाओं का प्रसव हुआ है की संख्या"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:52
-#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:120
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:119
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:81
 msgid "Name"
 msgstr "नाम"
@@ -117,7 +142,7 @@ msgstr "प्रसव की तारीख"
 msgid "Pregnant woman registered in last 30 days"
 msgstr "पिछले ३० दिनों मे पंजीकृत गर्भवती महिलाओं की संख्या"
 
-#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:120
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:119
 msgid "EDD"
 msgstr "प्रसव की सम्भावित तारीख"
 
@@ -149,6 +174,20 @@ msgstr "लाभार्थी सूचि चुनिए"
 msgid "Client List"
 msgstr "लाभार्थी सूचि"
 
+#: .\submodules\core-hq-src\corehq\apps\adm\reports\__init__.py:15
+#: .\submodules\core-hq-src\corehq\apps\adm\reports\__init__.py:60
+msgid "Active Data Management"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\adm\reports\__init__.py:37
+msgid "ADM Report"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\adm\reports\__init__.py:108
+#, fuzzy
+msgid "FLW Name"
+msgstr "नाम"
+
 #: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\apps_base.html.py:174
 msgid "Blank Application"
 msgstr ""
@@ -170,26 +209,26 @@ msgid "Description"
 msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\deployment_info.html.py:53
-#: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:80
+#: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:78
 #: .\submodules\core-hq-src\corehq\apps\domain\templates\domain\admin\project_settings.html.py:74
 msgid "Languages"
 msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:42
-#: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:133
+#: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:127
 msgid "Short Description"
 msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:50
-#: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:139
+#: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:133
 msgid "Long Description"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:94
-msgid "Copy count"
+#: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:88
+msgid "Downloads"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:190
+#: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:156
 #: .\submodules\core-hq-src\corehq\apps\domain\templates\domain\copy_snapshot.html.py:16
 msgid "New project name"
 msgstr ""
@@ -341,7 +380,7 @@ msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\prescriptions\templates\prescriptions\all.html.py:9
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:70
-#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:113
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:114
 msgid "Delete"
 msgstr ""
 
@@ -365,7 +404,7 @@ msgstr ""
 msgid "Send me a test mail"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:126
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:127
 msgid "Stop Sending"
 msgstr ""
 
