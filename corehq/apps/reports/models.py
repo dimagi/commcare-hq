@@ -6,12 +6,10 @@ from corehq.apps import reports
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
 from corehq.apps.users.models import WebUser, CommCareUser
-from corehq.apps.domain.models import Domain
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
 from couchexport.util import SerializableFunction
 import couchforms
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
@@ -138,6 +136,19 @@ class ReportConfig(Document):
     days = IntegerProperty(default=None)
     start_date = DateProperty(default=None)
     end_date = DateProperty(default=None)
+
+    def delete(self, *args, **kwargs):
+        notifications = self.view('reportconfig/notifications_by_config',
+            reduce=False, include_docs=True, key=self._id).all()
+
+        for n in notifications:
+            n.config_ids.remove(self._id)
+            if n.config_ids:
+                n.save()
+            else:
+                n.delete()
+
+        super(ReportConfig, self).delete(*args, **kwargs)
 
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, report_slug=None, include_docs=True):
@@ -364,6 +375,7 @@ class ReportNotification(Document):
         if self.config_ids:
             configs = ReportConfig.view('_all_docs', keys=self.config_ids,
                 include_docs=True).all()
+            configs = [c for c in configs if not hasattr(c, 'deleted')]
         else:
             # create a new ReportConfig object, useful for its methods and
             # calculated properties, but don't save it
