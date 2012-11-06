@@ -1,5 +1,5 @@
 from couchdbkit.ext.django.schema import *
-import util
+from corehq import util
 from django import forms
 from django.db import models
 from corehq.apps.users.models import AuthorizableMixin, WebUser
