@@ -145,7 +145,6 @@ var CommCareUsersViewModel = function (o) {
                     });
 
                 }
-                console.log("button", button);
             }
         };
 };

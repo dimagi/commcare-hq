@@ -140,10 +140,11 @@ def set_commcare_user_group(request, domain):
 def archive_commcare_user(request, domain, user_id, is_active=False):
     user = CommCareUser.get_by_user_id(user_id, domain)
     user.is_active = is_active
-#    user.save()
+    user.save()
     return HttpResponse(json.dumps(dict(
         success=True,
-        message="User '%s' has successfully been archived." % user.raw_username
+        message="User '%s' has successfully been %s." %
+                (user.raw_username, "Un-Archived" if user.is_active else "Archived")
     )))
 
 @require_can_edit_commcare_users
