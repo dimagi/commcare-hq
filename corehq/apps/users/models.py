@@ -656,7 +656,6 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @classmethod
     def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0):
-        print "limit, skip", limit, skip
         flag = "active" if is_active else "inactive"
         if cls.__name__ == "CouchUser":
             key = [flag, domain]
@@ -671,7 +670,6 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
                     skip=skip
                 )
 
-        print "extra args", extra_args
         return cls.view("users/by_domain",
             reduce=reduce,
             startkey=key,
