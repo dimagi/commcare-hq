@@ -166,28 +166,12 @@
 
 <hr/>
         <div>
-            <div>
-                <form action="{% url project_info project %}" method="post">
-                    {% if versioned %}
-                    <input type="hidden" name="versioned" value="">
-                    {% else %}
-                    <input type="hidden" name="versioned" value="1">
-                    {% endif %}
-                </form>
-            </div>
-            <h3>
-                Reviews for {% if versioned %} the current version {% else %} all versions {% endif %} of {{ project.copied_from.display_name }}
-                <small><a href="?current={{ current_link }}" class="btn btn-primary">{% if versioned %} View reviews for all versions {% else %} Only show reviews from current version{% endif %}</a></small>
-            </h3>
-            <br/>
+            <h3>Reviews of {{ project.copied_from.display_name }}</h3>
             {% if project.copied_from.name not in request.couch_user.get_domains %}
             <div>
                 <a href="#add_review_modal" data-toggle="modal" class="btn btn-inverse">Write a Review</a>
             </div>
             {% endif %}
-            <div>
-                
-            </div>
         </div>
         {% for review in reviews %}
         <hr/>
@@ -205,7 +189,6 @@
             </div>
         </div>
         {% endfor %}
-
 {% endblock %}
 
 
