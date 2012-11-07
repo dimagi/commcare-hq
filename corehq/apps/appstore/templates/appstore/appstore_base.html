@@ -145,6 +145,18 @@
         margin-top: 25px;
     }
 
+    .app-pic {
+        max-width: 200px;
+        max-height: 200px;
+    }
+
+    .opacity65 {
+        filter:alpha(opacity=65);
+        -moz-opacity:0.65;
+        -khtml-opacity: 0.65;
+        opacity: 0.65;
+    }
+
     </style>
 {% endblock %}
 
@@ -225,7 +237,11 @@
         <div class="well">
             {% if app.image_path %}
             <div style="text-align: center;">
-                <img src="{% url appstore_project_image app.name %}" style="max-width: 200px; max-height:200px;" />
+                <img class="app-pic" src="{% url appstore_project_image app.name %}" />
+            </div>
+            {% else %}
+            <div style="text-align: center;">
+                <img class="app-pic opacity65" src="{% static 'hq_bootstrap/img/no-image-available.png' %}" />
             </div>
             {% endif %}
             <h2>
