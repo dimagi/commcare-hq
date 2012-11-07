@@ -125,7 +125,7 @@
 
     <div class="row-fluid">
         <div class="span12">
-            <div data-bind="visible: !(users_list().length || archive_action_users().length)" class="alert alert-info">
+            <div id="user-list-notification" data-bind="visible: !(users_list().length || archive_action_users().length)" class="alert alert-info">
                 {% if show_inactive %}
                     You have no inactive {% commcare_user %}s in this project.
                 {% else %}

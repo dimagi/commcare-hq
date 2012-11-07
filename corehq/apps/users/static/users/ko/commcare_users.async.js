@@ -73,6 +73,12 @@ var CommCareUsersViewModel = function (o) {
             $.ajax({
                 url: format_url(page),
                 dataType: 'json',
+                error: function () {
+                    self.initial_load(true);
+                    $('.hide-until-load').fadeIn();
+                    $('#user-list-notification').text('Sorry, there was an problem contacting the server ' +
+                        'to fetch your Mobile Workers list. Please, try again in a little bit.');
+                },
                 success: reloadList
             });
         }
