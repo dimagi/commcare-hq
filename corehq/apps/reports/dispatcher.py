@@ -164,6 +164,11 @@ class ReportDispatcher(View):
                 report_nav.extend(section)
         return "\n".join(report_nav)
 
+    @classmethod
+    def url_pattern(cls):
+        from django.conf.urls.defaults import url
+        return url(cls.pattern(), cls.as_view(), name=cls.name())
+
 cls_to_view_login_and_domain = cls_to_view(additional_decorator=login_and_domain_required)
 
 class ProjectReportDispatcher(ReportDispatcher):

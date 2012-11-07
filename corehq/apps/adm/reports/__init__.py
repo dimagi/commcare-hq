@@ -9,9 +9,10 @@ from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin, ProjectReportParametersMixin
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
+from django.utils.translation import ugettext as _, ugettext_noop
 
 class ADMSectionView(GenericReportView):
-    section_name = "Active Data Management"
+    section_name = ugettext_noop("Active Data Management")
     app_slug = "adm"
     dispatcher = ADMSectionDispatcher
     hide_filters = True
@@ -33,7 +34,7 @@ class ADMSectionView(GenericReportView):
         if self.subreport_data:
             self.name = mark_safe("""%s <small>%s</small>""" %\
                         (self.subreport_data.get('value', {}).get('name'),
-                         self.adm_sections.get(self.adm_slug, "ADM Report")))
+                         self.adm_sections.get(self.adm_slug, _("ADM Report"))))
 
     @property
     def subreport_data(self):
@@ -56,7 +57,7 @@ class ADMSectionView(GenericReportView):
 
 class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectReportParametersMixin, DatespanMixin):
 
-    section_name = "Active Data Management"
+    section_name = ugettext_noop("Active Data Management")
     app_slug = "adm"
     dispatcher = ADMSectionDispatcher
 
@@ -104,9 +105,9 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
 
     @property
     def headers(self):
-        header = DataTablesHeader(DataTablesColumn("FLW Name"))
+        header = DataTablesHeader(DataTablesColumn(_("FLW Name")))
         for col in self.adm_report.columns:
-            header.add_column(DataTablesColumn(col.name, help_text=col.description))
+            header.add_column(DataTablesColumn(_(col.name), help_text=_(col.description)))
         return header
 
     @property

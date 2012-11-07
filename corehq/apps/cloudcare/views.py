@@ -208,7 +208,12 @@ def get_app_api(request, domain, app_id):
 
 @cloudcare_api
 def get_fixtures(request, domain, user_id, fixture_id=None):
-    user = CommCareUser.get_by_user_id(user_id)
+    try:
+        user = CommCareUser.get_by_user_id(user_id)
+    except CouchUser.AccountTypeError:
+        err = ("You can't use case sharing or fixtures as a %s. " 
+               "Login as a mobile worker and try again.") % settings.WEB_USER_TERM,
+        return HttpResponse(err, status=412, content_type="text/plain")
     
     if not user:
         raise Http404

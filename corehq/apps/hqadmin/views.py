@@ -24,7 +24,6 @@ from django.template.defaultfilters import yesno
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
 from django.contrib import messages
-from dimagi.utils import gitinfo
 from django.conf import settings
 from restkit import Resource
 import os
@@ -532,7 +531,10 @@ def system_ajax(request):
         if type == "celerymon_poll":
             #inefficient way to just get everything in one fell swoop
             #first, get all task types:
-            t = cresource.get("api/task/name/").body_string()
+            try:
+                t = cresource.get("api/task/name/").body_string()
+            except Exception, ex:
+                t = {}
             task_names = json.loads(t)
             ret = []
             for tname in task_names:
@@ -584,7 +586,11 @@ def system_info(request):
 
     context['hide_filters'] = True
     context['current_system'] = os.uname()[1]
-    context['current_ref'] = gitinfo.get_project_info()
+
+    #from dimagi.utils import gitinfo
+    #context['current_ref'] = gitinfo.get_project_info()
+    #removing until the async library is updated
+    context['current_ref'] = {}
     if settings.COUCH_USERNAME == '' and settings.COUCH_PASSWORD == '':
         couchlog_resource = Resource("http://%s/" % (settings.COUCH_SERVER_ROOT))
     else:
@@ -618,12 +624,15 @@ def system_info(request):
         amqp_parts = settings.BROKER_URL.replace('amqp://','').split('/')
         mq_management_url = amqp_parts[0].replace('5672', '55672')
         vhost = amqp_parts[1]
-        mq = Resource('http://%s' % mq_management_url)
-        vhost_dict = json.loads(mq.get('api/vhosts').body_string())
-        mq_status = "Offline"
-        for d in vhost_dict:
-            if d['name'] == vhost:
-                mq_status='OK'
+        try:
+            mq = Resource('http://%s' % mq_management_url)
+            vhost_dict = json.loads(mq.get('api/vhosts').body_string())
+            mq_status = "Offline"
+            for d in vhost_dict:
+                if d['name'] == vhost:
+                    mq_status='OK'
+        except Exception, ex:
+            mq_status = "Error connecting: %s" % ex
     else:
         mq_status = "Not configured"
     context['rabbitmq_status'] = mq_status

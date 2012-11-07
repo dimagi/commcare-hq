@@ -16,6 +16,14 @@
             });
         });
     </script>
+
+    <script type="text/javascript">
+        $(function () {
+            $(".facet-checkbox").click(function() {
+                window.location = $(this).parent().attr('href');
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -137,11 +145,24 @@
         margin-top: 25px;
     }
 
+    .app-pic {
+        max-width: 200px;
+        max-height: 200px;
+    }
+
+    .opacity65 {
+        filter:alpha(opacity=65);
+        -moz-opacity:0.65;
+        -khtml-opacity: 0.65;
+        opacity: 0.65;
+    }
+
     </style>
 {% endblock %}
 
 
 {% block sidebar %}
+{% url appstore as search_url %}
 {% include 'partials/sidebar.html' with search_for="apps..." search_name="search" display_ua='true' %}
 {% endblock %}
 
@@ -158,6 +179,7 @@
     {% if search_query %}
         <li>
             Searching for "{{ search_query }}"
+            <a href="{% urlencode request.path request.GET without "search" %}" style="font-size: 60%;">(cancel)</a>
             {% if sort_by %}
                 <span class="divider">&gt;</span>
             {% endif %}
@@ -215,7 +237,11 @@
         <div class="well">
             {% if app.image_path %}
             <div style="text-align: center;">
-                <img src="{% url appstore_project_image app.name %}" style="max-width: 200px; max-height:200px;" />
+                <img class="app-pic" src="{% url appstore_project_image app.name %}" />
+            </div>
+            {% else %}
+            <div style="text-align: center;">
+                <img class="app-pic opacity65" src="{% static 'hq_bootstrap/img/no-image-available.png' %}" />
             </div>
             {% endif %}
             <h2>

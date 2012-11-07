@@ -14,8 +14,7 @@ _phonelog_context = {
 }
 
 custom_report_urls = patterns('',
-    url(CustomProjectReportDispatcher.pattern(), CustomProjectReportDispatcher.as_view(),
-        name=CustomProjectReportDispatcher.name())
+    CustomProjectReportDispatcher.url_pattern(),
 )
 
 phonelog_reports = patterns('',
@@ -47,10 +46,6 @@ urlpatterns = patterns('corehq.apps.reports.views',
     # Custom Hook for Dodoma TODO should this be here?
     url(r'^dodoma/', include(dodoma_reports)),
 
-    # useful for debugging email reports
-    url(r'^list_configs/$', 'list_configs', name="list_configs"),
-    url(r'^test_config/(?P<config_id>[\w_]+)/$', 'test_config',
-        name="test_config"),
 
     # Create and Manage Custom Exports
     url(r"^export/$", 'export_data'),
@@ -76,10 +71,12 @@ urlpatterns = patterns('corehq.apps.reports.views',
     # Scheduled reports
     url(r'^add_scheduled_report/$', 'add_scheduled_report',
         name='add_scheduled_report'),
-    url(r'^delete_scheduled_report/(?P<report_id>[\w-]+)/$',
+    url(r'^delete_scheduled_report/(?P<scheduled_report_id>[\w-]+)/$',
         'delete_scheduled_report', name='delete_scheduled_report'),
-    url(r'^test_scheduled_report/(?P<report_id>[\w-]+)/$',
-        'test_scheduled_report', name='test_scheduled_report'),
+    url(r'^send_test_scheduled_report/(?P<scheduled_report_id>[\w-]+)/$',
+         'send_test_scheduled_report', name='send_test_scheduled_report'),
+    url(r'^view_scheduled_report/(?P<scheduled_report_id>[\w_]+)/$',
+        'view_scheduled_report', name='view_scheduled_report'),
 
     # Internal Use
     url(r"^export/forms/all/$", 'export_all_form_metadata', name="export_all_form_metadata"),
@@ -89,7 +86,5 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^phonelog/', include(phonelog_reports)),
 
     url(r'^custom/', include(custom_report_urls)),
-    url(ProjectReportDispatcher.pattern(), ProjectReportDispatcher.as_view(),
-        name=ProjectReportDispatcher.name()
-    )
+    ProjectReportDispatcher.url_pattern(),
 )

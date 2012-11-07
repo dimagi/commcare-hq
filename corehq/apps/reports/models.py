@@ -6,12 +6,10 @@ from corehq.apps import reports
 from corehq.apps.reports.display import xmlns_to_name
 from couchdbkit.ext.django.schema import *
 from corehq.apps.users.models import WebUser, CommCareUser
-from corehq.apps.domain.models import Domain
 from couchexport.models import SavedExportSchema, GroupExportConfiguration
 from couchexport.util import SerializableFunction
 import couchforms
 from dimagi.utils.couch.database import get_db
-from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.decorators.memoized import memoized
 from django.conf import settings
 from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
@@ -138,6 +136,19 @@ class ReportConfig(Document):
     days = IntegerProperty(default=None)
     start_date = DateProperty(default=None)
     end_date = DateProperty(default=None)
+
+    def delete(self, *args, **kwargs):
+        notifications = self.view('reportconfig/notifications_by_config',
+            reduce=False, include_docs=True, key=self._id).all()
+
+        for n in notifications:
+            n.config_ids.remove(self._id)
+            if n.config_ids:
+                n.save()
+            else:
+                n.delete()
+
+        super(ReportConfig, self).delete(*args, **kwargs)
 
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, report_slug=None, include_docs=True):
@@ -364,6 +375,7 @@ class ReportNotification(Document):
         if self.config_ids:
             configs = ReportConfig.view('_all_docs', keys=self.config_ids,
                 include_docs=True).all()
+            configs = [c for c in configs if not hasattr(c, 'deleted')]
         else:
             # create a new ReportConfig object, useful for its methods and
             # calculated properties, but don't save it
@@ -398,8 +410,7 @@ class ReportNotification(Document):
 
     def send(self):
         from dimagi.utils.django.email import send_HTML_email
-        from django.template.loader import render_to_string
-        from django.contrib.sites.models import Site
+        from corehq.apps.reports.views import get_scheduled_report_response
 
         # Scenario: user has been removed from the domain that they
         # have scheduled reports for.  Delete this scheduled report
@@ -407,26 +418,12 @@ class ReportNotification(Document):
             self.delete()
             return
 
-        report_outputs = []
-        for config in self.configs:
-            report_outputs.append({
-                'title': config.full_name,
-                'url': config.url,
-                'content': config.get_report_content()
-            })
+        title = "Scheduled report from CommCare HQ for %s" % self.domain
+        body = get_scheduled_report_response(self.owner, self.domain,
+                                             self._id).content
 
-        if report_outputs:
-            DNS_name = "http://" + Site.objects.get(id=settings.SITE_ID).domain
-            body = render_to_string("reports/report_email.html", {
-                "reports": report_outputs,
-                "domain": self.domain,
-                "couch_user": self.owner._id,
-                "DNS_name": DNS_name
-            })
-            title = "Scheduled report from CommCare HQ for %s" % self.domain
-
-            for email in self.all_recipient_emails:
-                send_HTML_email(title, email, body)
+        for email in self.all_recipient_emails:
+            send_HTML_email(title, email, body)
 
 
 class DailyReportNotification(ReportNotification):

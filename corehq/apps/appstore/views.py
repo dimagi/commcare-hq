@@ -1,3 +1,4 @@
+import copy
 from datetime import datetime
 import json
 import logging
@@ -72,23 +73,13 @@ def project_info(request, domain, template="appstore/project_info.html"):
             form = AddReviewForm()
     else:
         form = AddReviewForm()
-        versioned = request.GET.get('current', False)
 
-    if versioned:
-        reviews = Review.get_by_version(domain)
-        average_rating = Review.get_average_rating_by_version(domain)
-        num_ratings = Review.get_num_ratings_by_version(domain)
-    else:
-        reviews = Review.get_by_app(dom.copied_from._id)
-        average_rating = Review.get_average_rating_by_app(dom.copied_from._id)
-        num_ratings = Review.get_num_ratings_by_app(dom.copied_from._id)
+    reviews = Review.get_by_app(dom.copied_from._id)
+    average_rating = Review.get_average_rating_by_app(dom.copied_from._id)
+    num_ratings = Review.get_num_ratings_by_app(dom.copied_from._id)
 
     if average_rating:
         average_rating = round(average_rating, 1)
-
-    current_link = ''
-    if not versioned:
-        current_link = 'true'
 
     images = set()
     audio = set()
@@ -109,8 +100,6 @@ def project_info(request, domain, template="appstore/project_info.html"):
         "reviews": reviews,
         "average_rating": average_rating,
         "num_ratings": num_ratings,
-        "versioned": versioned,
-        "current_link": current_link,
         "images": images,
         "audio": audio,
         "sortables": facets_sortables,
@@ -128,7 +117,8 @@ def parse_args_for_es(request):
         if attr[0] == 'facets':
             facets = attr[1][0].split()
             continue
-        params[attr[0]] = attr[1][0] if len(attr[1]) < 2 else attr[1]
+#        params[attr[0]] = attr[1][0] if len(attr[1]) < 2 else attr[1]
+        params[attr[0]] = attr[1]
     return params, facets
 
 def generate_sortables_from_facets(results, params=None, mapping={}):
@@ -139,16 +129,20 @@ def generate_sortables_from_facets(results, params=None, mapping={}):
     """
     params = dict([(mapping.get(p, p), params[p]) for p in params])
     def generate_query_string(attr, val):
-        updated_params = params.copy()
-        updated_params.update({attr: val})
-        return "?%s" % urlencode(updated_params)
+        updated_params = copy.deepcopy(params)
+        updated_params[attr] = updated_params.get(attr, [])
+        if val in params.get(attr, []):
+            updated_params[attr].remove(val)
+        else:
+            updated_params[attr].append(val)
+        return "?%s" % urlencode(updated_params, True)
 
     def generate_facet_dict(f_name, ft):
         license = (f_name == 'license')
         return {'url': generate_query_string(f_name, ft["term"]),
                 'name': ft["term"] if not license else LICENSES.get(ft["term"]),
                 'count': ft["count"],
-                'active': params.get(f_name, "") == ft["term"]}
+                'active': ft["term"] in params.get(f_name, "")}
 
     sortable = []
     for facet in results.get("facets", []):
@@ -188,7 +182,8 @@ def appstore(request, template="appstore/appstore_base.html"):
         average_ratings=average_ratings,
         include_unapproved=include_unapproved,
         sortables=facets_sortables,
-        query_str=request.META['QUERY_STRING'])
+        query_str=request.META['QUERY_STRING'],
+        search_query = params.get('search', ""))
     return render_to_response(request, template, vals)
 
 @require_previewer # remove for production
@@ -223,7 +218,6 @@ def es_query(params, facets=[], terms=[], q={}):
     es_url = "cc_exchange/domain/_search"
     es = get_es()
     ret_data = es.get(es_url, data=q)
-
     return ret_data
 
 def es_snapshot_query(params, facets=[], terms=['is_approved', 'sort_by', 'search'], sort_by="snapshot_time"):
@@ -344,7 +338,8 @@ def deployments(request, template="appstore/deployments.html"):
              'include_unapproved': include_unapproved,
              'sortables': facets_sortables,
              'query_str': request.META['QUERY_STRING'],
-             'search_url': reverse('deployments')}
+             'search_url': reverse('deployments'),
+             'search_query': params.get('search', "")}
     return render_to_response(request, template, vals)
 
 @require_previewer # remove for production
@@ -359,7 +354,7 @@ def es_deployments_query(params, facets=[], terms=['is_approved', 'sort_by', 'se
                                   [{"match": {'doc_type': "Domain"}},
                                    {"term": {"deployment.public": True}}]}}}
 
-    search_query = params.pop('search', "")
+    search_query = params.get('search', "")
     if search_query:
         q['query']['bool']['must'].append({
             "match" : {
