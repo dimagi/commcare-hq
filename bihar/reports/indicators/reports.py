@@ -48,7 +48,7 @@ class IndicatorNav(BiharNavReport):
     
     @property
     def reports(self):
-        return [IndicatorSummaryReport, IndicatorClientSelectNav, 
+        return [IndicatorClientSelectNav, IndicatorSummaryReport,
                 # IndicatorCharts
                 ]
 
