@@ -15,7 +15,6 @@ Server layout:
         Each environment has its own subfolder named for its evironment
         (i.e. ~/www/staging/logs and ~/www/demo/logs).
 """
-import pdb
 import uuid
 from fabric.context_managers import settings, cd
 from fabric.decorators import hosts
@@ -23,7 +22,7 @@ from fabric.operations import require, local, prompt
 
 import os, sys
 
-from fabric.api import run, roles, execute, task, sudo, env, serial, parallel
+from fabric.api import run, roles, execute, task, sudo, env, parallel
 from fabric.contrib import files, console
 from fabric import utils
 import posixpath
@@ -479,7 +478,7 @@ def migrate():
     """ run south migration on remote environment """
     require('code_root', provided_by=('production', 'demo', 'staging', "india"))
     with cd(env.code_root):
-        sudo('%(virtualenv_root)s/bin/python manage.py sync_finish_couchdb' % env, user=env.sudo_user)
+        sudo('%(virtualenv_root)s/bin/python manage.py sync_finish_couchdb_hq' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py syncdb --noinput' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py migrate --noinput' % env, user=env.sudo_user)
 
