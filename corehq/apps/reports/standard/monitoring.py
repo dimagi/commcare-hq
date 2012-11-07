@@ -517,7 +517,6 @@ class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
             _dates = [tz_utils.adjust_datetime_to_timezone(date, self.timezone.zone, pytz.utc.zone) for date in self.dates]
         else:
             _dates = self.dates
-        date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(_dates)])
 
         key = [self.domain]
         results = get_db().view(
@@ -528,6 +527,7 @@ class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
         ).all()
 
         user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(self.users)])
+        date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
         rows = [[0]*(2+len(date_map)) for _ in range(len(self.users))]
         total_row = [0]*(2+len(date_map))
 
