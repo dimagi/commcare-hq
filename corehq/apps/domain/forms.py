@@ -153,6 +153,20 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             raise forms.ValidationError('You must agree to our Content Distribution Agreement to publish your project.')
         return data
 
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        sm = cleaned_data["share_multimedia"]
+        license = cleaned_data["license"]
+
+        if sm and license not in self.dom.most_restrictive_licenses:
+            msg = "You must select a license that is more restrictive than your multimedia."
+            self._errors["share_multimedia"] = self.error_class([msg])
+            self._errors["license"] = self.error_class([msg])
+
+            del cleaned_data["license"]
+
+        return cleaned_data
+
 ########################################################################################################
 
 class DomainGlobalSettingsForm(forms.Form):

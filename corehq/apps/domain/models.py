@@ -572,6 +572,15 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         from corehq.apps.hqmedia.models import CommCareMultimedia
         return CommCareMultimedia.view('hqmedia/by_domain', key=self.name, include_docs=True).all()
 
+    @property
+    def most_restrictive_licenses(self):
+        from corehq.apps.hqmedia.utils import most_restrictive
+        if self.is_snapshot:
+            licenses = [m.license['type'] for m in self.copied_from.all_media()]
+        else:
+            licenses = [m.license['type'] for m in self.all_media()]
+        return most_restrictive(licenses)
+
     @classmethod
     def popular_sort(cls, domains, page):
         sorted_list = []

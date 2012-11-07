@@ -7,6 +7,7 @@ from corehq.apps.app_manager.xform import XFormValidationError, XFormError
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser
 from corehq.apps.hqmedia.models import CommCareMultimedia, CommCareAudio, CommCareImage, HQMediaMapItem
+from corehq.apps.domain.models import LICENSES
 
 MULTIMEDIA_PREFIX = "jr://file/"
 IMAGE_MIMETYPES = ["image/jpeg", "image/gif", "image/png"]
@@ -65,6 +66,29 @@ def get_multimedia_filenames(app):
             except (XFormValidationError, XFormError):
                 has_error = True
     return images, audio_files, has_error
+
+def most_restrictive(licenses):
+    licenses = set(licenses)
+    for license in licenses:
+        if license not in LICENSES:
+            raise Exception("Not a valid license type")
+
+    if 'cc-nc-nd' in licenses:
+        return ['cc-nc-nd']
+    if 'cc-nd' in licenses:
+        if 'cc-nc-sa' in licenses or 'cc-nc' in licenses:
+            return ['cc-nc-nd']
+        else:
+            return ['cc-nc-nd', 'cc-nd']
+    if 'cc-nc-sa' in licenses or ('cc-sa' in licenses and 'cc-nc' in licenses):
+        return ['cc-nc-nd', 'cc-nc-sa']
+    if 'cc-nc' in licenses:
+        return ['cc-nc-nd', 'cc-nc-sa', 'cc-nc']
+    if 'cc-sa' in licenses:
+        return ['cc-nc-nd', 'cc-nc-sa', 'cc-nd', 'cc-sa']
+    if 'cc' in licenses:
+        return ['cc-nc-nd', 'cc-nc-sa', 'cc-nd', 'cc-nc', 'cc-sa', 'cc']
+    return ['cc-nc-nd', 'cc-nc-sa', 'cc-nd', 'cc-nc', 'cc-sa', 'cc', 'public']
 
 class HQMediaMatcher():
     image_paths = {}
