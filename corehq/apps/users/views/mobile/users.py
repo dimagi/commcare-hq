@@ -5,6 +5,7 @@ import uuid
 import logging
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
+import math
 from openpyxl.shared.exc import InvalidFileException
 
 from django.core.urlresolvers import reverse
@@ -25,13 +26,19 @@ from dimagi.utils.web import render_to_response, get_url_base
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.excel import Excel2007DictReader, WorkbookJSONReader
 
+DEFAULT_USER_LIST_LIMIT = 10
+
 @require_can_edit_commcare_users
-def base_view(request, domain, template="users/commcare_users.html"):
-    page = request.GET.get('page', 0)
-    limit = request.GET.get('limit', 10)
-    total = CommCareUser.total_by_domain(domain)
+def base_view(request, domain, template="users/mobile/users_list.html"):
+    page = request.GET.get('page', 1)
+    limit = request.GET.get('limit', DEFAULT_USER_LIST_LIMIT)
+
+    more_columns = json.loads(request.GET.get('more_columns', 'false'))
     cannot_share = json.loads(request.GET.get('cannot_share', 'false'))
     show_inactive = json.loads(request.GET.get('show_inactive', 'false'))
+
+    total = CommCareUser.total_by_domain(domain, is_active=not show_inactive)
+
     context = _users_context(request, domain)
     context.update(
         users_list=dict(
@@ -40,40 +47,77 @@ def base_view(request, domain, template="users/commcare_users.html"):
             total=total,
         ),
         cannot_share=cannot_share,
-        show_inactive=show_inactive
+        show_inactive=show_inactive,
+        more_columns=more_columns,
+        show_case_sharing=request.project.case_sharing_included(),
+        pagination_limit_options=range(DEFAULT_USER_LIST_LIMIT, 51, DEFAULT_USER_LIST_LIMIT)
     )
     return render_to_response(request, template, context)
 
 @require_can_edit_commcare_users
-def user_list(request, domain, template="users/commcare_mobile/commcare_users_list.html"):
-    sort_by = request.GET.get('sortBy', 'abc')
-    show_more_columns = request.GET.get('show_more_columns') is not None
+def user_list(request, domain):
+    page = int(request.GET.get('page', 1))
+    limit = int(request.GET.get('limit', DEFAULT_USER_LIST_LIMIT))
+    skip = (page-1)*limit
 
+    sort_by = request.GET.get('sortBy', 'abc')
+
+    more_columns = json.loads(request.GET.get('more_columns', 'false'))
     cannot_share = json.loads(request.GET.get('cannot_share', 'false'))
     show_inactive = json.loads(request.GET.get('show_inactive', 'false'))
 
-    context = _users_context(request, domain)
     if cannot_share:
         users = CommCareUser.cannot_share(domain)
     else:
-        users = CommCareUser.by_domain(domain)
-        if show_inactive:
-            users.extend(CommCareUser.by_domain(domain, is_active=False))
+        users = CommCareUser.by_domain(domain, is_active=not show_inactive, limit=limit, skip=skip)
 
     if sort_by == 'forms':
         users.sort(key=lambda user: -user.form_count)
 
-    context.update({
-        'commcare_users': users,
-        'groups': Group.get_case_sharing_groups(domain),
-        'show_case_sharing': request.project.case_sharing_included(),
-        'show_inactive': show_inactive,
-        'cannot_share': cannot_share,
-        'show_more_columns': show_more_columns or cannot_share,
-        })
-    user_list_html = render_to_string(template, context, context_instance=RequestContext(request))
+    users_list = []
+    for user in users:
+        user_data = dict(
+            user_id=user.user_id,
+            status="" if user.is_active else "Archived",
+            edit_url=reverse('user_account', args=[domain, user.user_id]),
+            username=user.raw_username,
+            full_name=user.full_name,
+            joined_on=user.date_joined.strftime("%d %b %Y"),
+            phone_numbers=user.phone_numbers,
+            form_count="--",
+            case_count="--",
+            case_sharing_groups=[],
+        )
+        if more_columns:
+            user_data.update(
+                form_count=user.form_count,
+                case_count=user.case_count,
+            )
+            if request.project.case_sharing_included():
+                user_data.update(
+                    case_sharing_groups=[g.name for g in user.get_case_sharing_groups()]
+                )
+        if request.couch_user.can_edit_commcare_user:
+            if user.is_active:
+                archive_action_desc = "As a result of archiving, this user will no longer " \
+                                      "appear in reports. This action is reversable; you can " \
+                                      "reactivate this user by viewing Show Archived Mobile Workers and " \
+                                      "clicking 'Unarchive'."
+            else:
+                archive_action_desc = "This will re-activate the user, and the user will show up in reports again."
+            user_data.update(
+                archive_action_text="Archive" if user.is_active else "Un-Archive",
+                archive_action_url=reverse('%s_commcare_user' % ('archive' if user.is_active else 'unarchive'),
+                    args=[domain, user.user_id]),
+                archive_action_desc=archive_action_desc,
+                archive_action_complete=False,
+            )
+        users_list.append(user_data)
+
     return HttpResponse(json.dumps(dict(
-        user_list_html=user_list_html
+        success=True,
+        current_page=page,
+        users_list=users_list,
     )))
 
 # this was originally written with a GET, which is wrong
@@ -96,8 +140,11 @@ def set_commcare_user_group(request, domain):
 def archive_commcare_user(request, domain, user_id, is_active=False):
     user = CommCareUser.get_by_user_id(user_id, domain)
     user.is_active = is_active
-    user.save()
-    return HttpResponseRedirect(reverse('commcare_users', args=[domain]))
+#    user.save()
+    return HttpResponse(json.dumps(dict(
+        success=True,
+        message="User '%s' has successfully been archived." % user.raw_username
+    )))
 
 @require_can_edit_commcare_users
 @require_POST
