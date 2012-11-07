@@ -73,23 +73,13 @@ def project_info(request, domain, template="appstore/project_info.html"):
             form = AddReviewForm()
     else:
         form = AddReviewForm()
-        versioned = request.GET.get('current', False)
 
-    if versioned:
-        reviews = Review.get_by_version(domain)
-        average_rating = Review.get_average_rating_by_version(domain)
-        num_ratings = Review.get_num_ratings_by_version(domain)
-    else:
-        reviews = Review.get_by_app(dom.copied_from._id)
-        average_rating = Review.get_average_rating_by_app(dom.copied_from._id)
-        num_ratings = Review.get_num_ratings_by_app(dom.copied_from._id)
+    reviews = Review.get_by_app(dom.copied_from._id)
+    average_rating = Review.get_average_rating_by_app(dom.copied_from._id)
+    num_ratings = Review.get_num_ratings_by_app(dom.copied_from._id)
 
     if average_rating:
         average_rating = round(average_rating, 1)
-
-    current_link = ''
-    if not versioned:
-        current_link = 'true'
 
     images = set()
     audio = set()
@@ -110,8 +100,6 @@ def project_info(request, domain, template="appstore/project_info.html"):
         "reviews": reviews,
         "average_rating": average_rating,
         "num_ratings": num_ratings,
-        "versioned": versioned,
-        "current_link": current_link,
         "images": images,
         "audio": audio,
         "sortables": facets_sortables,
