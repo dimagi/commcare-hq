@@ -101,9 +101,7 @@ var CommCareUsersViewModel = function (o) {
         $.ajax({
             url: action_url,
             dataType: 'json',
-            error: function () {
-
-            },
+            error: unsuccessful_archive_action(button, user_index),
             success: successful_archive_action(button, user_index)
         });
     };
@@ -143,8 +141,14 @@ var CommCareUsersViewModel = function (o) {
                         self.users_list(users);
                         self.archive_action_users(actioned);
                     });
-
+                } else {
+                    unsuccessful_archive_action(button, index)(data);
                 }
+            }
+        },
+        unsuccessful_archive_action = function (button, index) {
+            return function (data) {
+                $(button).button('unsuccessful');
             }
         };
 };
