@@ -49,6 +49,7 @@
 {% endblock %}
 
 {% block user-view %}
+<header>
     <div class="row-fluid">
         <div class="span8">
             <h2>
@@ -80,13 +81,13 @@
         </div>
         <div class="span4">
             {% if not show_inactive %}
-                <a class="btn btn-inverse pull-right" href="?show_inactive=true">Show Archived {% commcare_user %}s</a>
+                <a class="btn btn-inverse pull-right" href="?show_inactive=true" style="margin-right: 2.5em;">Show Archived {% commcare_user %}s</a>
             {% else %}
-                <a class="btn pull-right" href="?">Show Active {% commcare_user %}s</a>
+                <a class="btn pull-right" href="?" style="margin-right: 2.5em;">Show Active {% commcare_user %}s</a>
             {% endif %}
         </div>
     </div>
-
+</header>
 <div id="commcare-users-list">
 
     <div class="row-fluid">
