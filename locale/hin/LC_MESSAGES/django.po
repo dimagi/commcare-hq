@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-11-06 15:13-0500\n"
+"POT-Creation-Date: 2012-11-07 14:49-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -88,11 +88,11 @@ msgstr "मुख्य नेवीगेशन"
 msgid "Worker Rank Table"
 msgstr "कार्यकर्ता रैंक/पद"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:214
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:213
 msgid "Due List"
 msgstr "ड्यू लिस्ट"
 
-#: .\submodules\bihar-reports\bihar\reports\supervisor.py:218
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:217
 msgid "Tools"
 msgstr "उपकरण"
 
@@ -133,6 +133,11 @@ msgstr "पिछले ३० दिनों मे जिन महिला�
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:81
 msgid "Name"
 msgstr "नाम"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:52
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:119
+msgid "Husband's Name"
+msgstr "पति"
 
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:52
 msgid "ADD"
@@ -380,7 +385,7 @@ msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\prescriptions\templates\prescriptions\all.html.py:9
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:70
-#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:114
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:122
 msgid "Delete"
 msgstr ""
 
@@ -404,7 +409,7 @@ msgstr ""
 msgid "Send me a test mail"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:127
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:135
 msgid "Stop Sending"
 msgstr ""
 
