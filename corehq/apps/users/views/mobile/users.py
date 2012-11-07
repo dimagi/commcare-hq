@@ -67,7 +67,7 @@ def user_list(request, domain):
     show_inactive = json.loads(request.GET.get('show_inactive', 'false'))
 
     if cannot_share:
-        users = CommCareUser.cannot_share(domain)
+        users = CommCareUser.cannot_share(domain, limit=limit, skip=skip)
     else:
         users = CommCareUser.by_domain(domain, is_active=not show_inactive, limit=limit, skip=skip)
 

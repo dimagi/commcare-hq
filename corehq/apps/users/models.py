@@ -1037,10 +1037,6 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
             )])
         )
 
-    @classmethod
-    def cannot_share(cls, domain):
-        return [user for user in cls.by_domain(domain) if len(user.get_case_sharing_groups()) != 1]
-
     def is_commcare_user(self):
         return True
 
@@ -1200,8 +1196,15 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
         return [group for group in Group.by_user(self) if group.case_sharing]
 
     @classmethod
-    def cannot_share(cls, domain):
-        return [user for user in cls.by_domain(domain) if len(user.get_case_sharing_groups()) != 1]
+    def cannot_share(cls, domain, limit=None, skip=0):
+        users = [user for user in cls.by_domain(domain, limit=limit, skip=skip) if len(user.get_case_sharing_groups()) != 1]
+        if limit is not None:
+            total = cls.total_by_domain(domain)
+            max_limit = min(total, skip+limit) - skip
+            if len(users) < max_limit:
+                new_limit = max_limit-len(users)
+                return users.extend(cls.cannot_share(domain, new_limit, skip))
+        return users
 
     def get_group_ids(self):
         from corehq.apps.groups.models import Group
