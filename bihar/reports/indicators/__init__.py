@@ -49,7 +49,7 @@ INDICATOR_SETS = [
                     "filter_function": "bihar.reports.indicators.filters.delivered_last_month",
                     "row_function": "bihar.reports.indicators.filters.mother_post_delivery_columns",
                     "sortkey": "bihar.reports.indicators.filters.get_add_sortkey",
-                    "columns": [_("Name"), _("ADD")],
+                    "columns": [_("Name"), _("Husband's Name"), _("ADD")],
                 },
                 {
                     "slug": "new_pregnancies", 
@@ -116,6 +116,6 @@ class Indicator(object):
             if "sortkey" in spec else None
         self.row_function = to_function(spec["row_function"]) \
             if "row_function" in spec else None
-        self.columns = spec.get("columns", [_("Name"), _("EDD")])
+        self.columns = spec.get("columns", [_("Name"), _("Husband's Name"), _("EDD")])
         
     

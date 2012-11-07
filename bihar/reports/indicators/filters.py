@@ -59,10 +59,12 @@ def due_next_month(case):
     return is_pregnant_mother(case) and _due_next_month(case)
 
 def mother_pre_delivery_columns(case):
-    return (case.name, getattr(case, "edd", DEFAULT_EMPTY))
+    return (case.name, getattr(case, "husband_name", DEFAULT_EMPTY),
+            getattr(case, "edd", DEFAULT_EMPTY))
 
 def mother_post_delivery_columns(case):
-    return (case.name, getattr(case, "add", DEFAULT_EMPTY))
+    return (case.name, getattr(case, "husband_name", DEFAULT_EMPTY),
+            getattr(case, "add", DEFAULT_EMPTY))
 
 def get_edd(case):
     return getattr(case, 'edd', None)
