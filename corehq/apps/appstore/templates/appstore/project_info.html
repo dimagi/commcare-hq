@@ -17,7 +17,9 @@
 <div class="page-header row-fluid">
 <div class="span2" style="text-align: center;">
     {% if project.image_path %}
-        <img src="{% url appstore_project_image project.name %}" style="max-width: 200px; max-height:200px;" />
+        <img class="app-pic" src="{% url appstore_project_image project.name %}" />
+    {% else %}
+        <img class="app-pic opacity65" src="{% static 'hq_bootstrap/img/no-image-available.png' %}" />
     {% endif %}
 </div>
     <div class="span7">
