@@ -1202,7 +1202,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
             total = cls.total_by_domain(domain)
             max_limit = min(total, skip+limit) - skip
             if len(users) < max_limit:
-                new_limit = max_limit-len(users)
+                new_limit = max_limit - len(users)
                 return users.extend(cls.cannot_share(domain, new_limit, skip))
         return users
 

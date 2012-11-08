@@ -166,7 +166,7 @@ def accept_invitation(request, domain, invitation_id):
     invitation = Invitation.get(invitation_id)
     assert(invitation.domain == domain)
     if invitation.is_accepted:
-        messages.error(request, "Sorry that invitation has already been used up. "
+        messages.error(request, "Sorry, that invitation has already been used up. "
                                 "If you feel this is a mistake please ask the inviter for "
                                 "another invitation.")
         return HttpResponseRedirect(reverse("login"))
@@ -435,9 +435,8 @@ def _handle_user_form(request, domain, couch_user=None):
         create_user = False
     else:
         create_user = True
-    can_change_admin_status =\
-    (request.user.is_superuser or request.couch_user.can_edit_web_users(domain=domain))\
-    and request.couch_user.user_id != couch_user.user_id
+    can_change_admin_status = ((request.user.is_superuser or request.couch_user.can_edit_web_users(domain=domain))
+        and request.couch_user.user_id != couch_user.user_id)
 
     if couch_user.is_commcare_user():
         role_choices = UserRole.commcareuser_role_choices(domain)
