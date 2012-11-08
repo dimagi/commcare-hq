@@ -72,8 +72,22 @@ INDICATOR_SETS = [
                     "row_function": "bihar.reports.indicators.filters.mother_pre_delivery_columns",
                     "sortkey": "bihar.reports.indicators.filters.get_edd_sortkey",
                 },
-
-                
+#                {
+#                    "slug": "",
+#                    "name": _("Women due for delivery within 30 days who have not done preparation for Emergency Maternal Care")
+#                },
+#                {
+#                    "slug": "",
+#                    "name": _("Women due for delivery within 30 days who have not done preparation for immediate new-born")
+#                },
+#                {
+#                    "slug": "",
+#                    "name": _("Women due for delivery within 30 days who have not been counselled on Immediate Post-Partum Family Planning")
+#                },
+#                {
+#                    "slug": "",
+#                    "name": _("Women due for delivery within 30 days who have not showed interest to adopt Family planning methods")
+#                }
             ]
         }
     },
