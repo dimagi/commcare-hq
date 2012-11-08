@@ -1,22 +1,17 @@
 import logging
-import uuid
 from corehq.apps.app_manager.views import require_can_edit_apps
 import magic
 from django.conf import settings
 from couchdbkit.exceptions import ResourceNotFound
 from django.contrib.sites.models import Site
-from django.http import HttpResponse, HttpResponseServerError, Http404
+from django.http import HttpResponse, Http404
 from django.utils import simplejson
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import zipfile
-from corehq.apps.hqmedia import upload, utils
-from corehq.apps.hqmedia.forms import HQMediaZipUploadForm, HQMediaFileUploadForm
-from corehq.apps.hqmedia.models import *
-from corehq.apps.users.decorators import require_permission
-from corehq.apps.app_manager.models import Application, get_app
-from corehq.apps.domain.models import Domain
+from corehq.apps.hqmedia import utils
+from corehq.apps.app_manager.models import get_app
 from dimagi.utils.web import render_to_response
+from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio
 
 X_PROGRESS_ERROR = 'Server Error: You must provide X-Progress-ID header or query param.'
 
