@@ -25,7 +25,7 @@
             background-color: #CCF;
             border: 1px solid #AAF;
             margin: 2px;
-            padding: 2px;
+            padding: 5px;
         }
         .calendar-today {
             background-color: #EEE;
@@ -83,6 +83,7 @@
             {% block reminder_definition_nav %}{% endblock %}
             <li{% is_url_active request scheduled_reminders_url %}><a href="{{ scheduled_reminders_url }}">Scheduled Reminders</a></li>
             <li{% is_url_active request keywords_url %}><a href="{{ keywords_url }}">Keywords</a></li>
+            {% block keyword_nav %}{% endblock %}
         </ul>
     </nav>
 {% endblock %}
