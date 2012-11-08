@@ -24,7 +24,9 @@ $(function() {
     <div class="tab-pane active" id="saved-reports">
         
         <div data-bind="visible: !reportConfigs().length" class="alert">
-            You don't have any saved reports.  You can create a new saved report while viewing a report.
+            <p>You don't have any saved reports.  You can store your favorite filters in a saved report and then easily navigate to that report with the filters already applied.  Saved reports can also be sent by email on a recurring basis.</p>
+            
+            <p>To create a new saved report, navigate to a report, select the filters you want to save, and click "Save".</p>
         </div>
         <table data-bind="visible: reportConfigs().length" class="table table-striped table-bordered">
             <thead>
@@ -57,13 +59,15 @@ $(function() {
 
     {% if report.show %}
     <div class="tab-pane" id="scheduled-reports">
+
+        <p><a class="btn btn-success" href="{% url add_scheduled_report domain %}"><i class="icon icon-white icon-plus"></i> Create a New Scheduled Report</a>
+        </p>
         {% if scheduled_reports %}
         <table class="table table-striped table-bordered">
             <thead>
                 <tr>
-                    <th>{% trans "Saved Report(s)" %}</th>
-                    <th>{% trans "Day of week" %}</th>
-                    <th>{% trans "Time" %}</th>
+                    <th>{% trans "Saved Reports" %}</th>
+                    <th>{% trans "Day and Time" %}</th>
                     <th>{% trans "Send to me" %}</th>
                     <th>{% trans "Other recipients" %}</th>
                     <th>{% trans "Send me a test mail" %}</th>
@@ -86,8 +90,7 @@ $(function() {
                         </ul>
                         {% endif %}
                     </td>
-                    <td>{{ report.day_name }}</td>
-                    <td>{{ report.hours }}:00</td>
+                    <td>{{ report.day_name }} at {{ report.hours }}:00</td>
                     <td>
                         {% comment %} handles old documents {% endcomment %}
                         {% if report.user_ids or report.send_to_owner %}
@@ -141,9 +144,11 @@ $(function() {
             </tbody>
         </table>
         {% else %}
-            <p>There are no scheduled email reports for {{ couch_user.html_username|safe }}.</p>
+
+        <div class="alert">
+            You don't have any scheduled reports.  You can create a scheduled report based on a saved report to have a report delivered by email on a regular basis.
+        </div>
         {% endif %}
-        <a class="btn btn-success" href="{% url add_scheduled_report domain %}"><i class="icon icon-white icon-plus"></i> Schedule an Email Report</a>
 
     </div>
     {% endif %}

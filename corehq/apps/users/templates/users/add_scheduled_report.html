@@ -21,7 +21,7 @@ $(function() {
 {% block main_column %}
     <div class="row-fluid">
         <div class="span12">
-            <h2>Schedule a New Email Report</h2>
+            <h2>Create a new scheduled report</h2>
             {% if configs %}
             <form class="form form-horizontal" method="post" action="">
                 <fieldset>
@@ -66,7 +66,7 @@ $(function() {
                             </select>
 
                             <div class="help-inline alert alert-info" style="width: 400px;">
-                                Sorry, right now all times are in GMT.
+                                Sorry, at the moment all times are in GMT.
                             </div>
                         </div>
                     </div>
@@ -86,17 +86,15 @@ $(function() {
                 </fieldset>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Add Scheduled Report</button>
+                    <button type="submit" class="btn btn-primary">Submit</button>
                 </div>
             </form>
             {% else %}
             <div class="alert">
-                You need a supported saved report in order to set up a scheduled email report, but you don't have any.
-                To create a saved report, navigate to a report, select your desired filters, and click "Save".
+                You need a saved report that supports email in order to set up a scheduled email report, but you don't have any.
             </div>
             <div class="alert alert-info">
-                <strong>Note:</strong> Not all built-in reports currently support email delivery,
-                    so some of your saved reports may not appear in this list.
+                <strong>Note:</strong> Not all built-in reports currently support email delivery.
             </div>
             {% endif %}
         </div>
