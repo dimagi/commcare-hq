@@ -273,7 +273,7 @@ class CouchViewADMColumn(BaseADMColumn):
         for key in self.couch_key:
             if isinstance(key, DateSpan):
                 datespan = key
-            elif isinstance(key, str) or isinstance(key, unicode):
+            elif isinstance(key, basestring):
                 cleaned_key.append(kwargs.get(key, key))
             else:
                 cleaned_key.append(key)
