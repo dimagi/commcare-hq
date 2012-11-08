@@ -1,10 +1,10 @@
 {% extends "users/users_base.html" %}
-{% load hq_bootstrap_tags %}
+{% load hqstyle_tags %}
 {% load i18n %}
 
 {% block js-inline  %}{{ block.super }}
     {% url cda as cda_url %}
-    {% include 'hq_bootstrap/partials/load_into_modal.html' with modal_id="contentDistributionAgreement" load_from=cda_url %}
+    {% include 'hqstyle/partials/load_into_modal.html' with modal_id="contentDistributionAgreement" load_from=cda_url %}
 
     <script type="text/javascript">
         $(function() {

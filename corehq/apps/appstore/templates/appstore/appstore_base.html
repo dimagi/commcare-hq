@@ -1,6 +1,6 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load hq_shared_tags %}
-{% load hq_bootstrap_tags %}
+{% load hqstyle_tags %}
 {% load i18n %}
 {% load url_extras %}
 
@@ -241,7 +241,7 @@
             </div>
             {% else %}
             <div style="text-align: center;">
-                <img class="app-pic opacity65" src="{% static 'hq_bootstrap/img/no-image-available.png' %}" />
+                <img class="app-pic opacity65" src="{% static 'hqstyle/img/no-image-available.png' %}" />
             </div>
             {% endif %}
             <h2>
