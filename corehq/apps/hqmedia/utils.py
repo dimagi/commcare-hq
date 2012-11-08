@@ -68,6 +68,17 @@ def get_multimedia_filenames(app):
     return images, audio_files, has_error
 
 def most_restrictive(licenses):
+    """
+    given a list of licenses, this function returns the list of licenses that are as restrictive or more restrictive
+    than each of the input licenses
+    '<' == less restrictive
+    pd < cc
+    cc < cc-nd, cc-nc, cc-sa
+    cc-nd < cc-nc-nd
+    cc-nc < cc-nc-sa
+    cc-sa < cc-nd, cc-nc-sa
+    cc-nc-sa < cc-nc-nd
+    """
     licenses = set(licenses)
     for license in licenses:
         if license not in LICENSES:
