@@ -159,7 +159,8 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         license = cleaned_data["license"]
 
         if sm and license not in self.dom.most_restrictive_licenses:
-            msg = "You must select a license that is more restrictive than your multimedia."
+            license_choices = [LICENSES[l] for l in self.dom.most_restrictive_licenses]
+            msg = render_to_string('domain/partials/restrictive_license.html', {'licenses': license_choices})
             self._errors["share_multimedia"] = self.error_class([msg])
             self._errors["license"] = self.error_class([msg])
 
