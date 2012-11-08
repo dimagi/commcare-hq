@@ -4,6 +4,9 @@
 {% load i18n %}
 
 
+{% block sidebar %}
+{% endblock %}
+
 {% block breadcrumb %}
 <li>{{ project.title }}</li>
 {% endblock %}
@@ -14,7 +17,9 @@
 <div class="page-header row-fluid">
 <div class="span2" style="text-align: center;">
     {% if project.image_path %}
-        <img src="{% url appstore_project_image project.name %}" style="max-width: 200px; max-height:200px;" />
+        <img class="app-pic" src="{% url appstore_project_image project.name %}" />
+    {% else %}
+        <img class="app-pic opacity65" src="{% static 'hq_bootstrap/img/no-image-available.png' %}" />
     {% endif %}
 </div>
     <div class="span7">
@@ -28,6 +33,7 @@
                 {% endif %}
             </small>
         </h1>
+        <h4 style="color: #808080;">{{ project.short_description }}</h4>
         <h3>
             Ratings: <span class="badge badge-info">{{ num_ratings }}</span>
         </h3>
@@ -39,15 +45,7 @@
 </div>
 </div>
 <dl class="dl-horizontal">
-    <dt>{% trans 'Short Description' %}</dt>
-    <dd>
-        {% if project.short_description %}
-            {{ project.short_description }}
-        {% else %}
-            <h6>None</h6>
-        {% endif %}
-    </dd>
-    <dt>{% trans 'Long Description' %}</dt>
+    <dt>{% trans 'Description' %}</dt>
     <dd>
         {% if project.description %}
             {{ project.description }}
