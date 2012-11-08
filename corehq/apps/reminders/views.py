@@ -192,12 +192,12 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
 
 
 @login_and_domain_required
-def manage_surveys(request, domain):
+def manage_keywords(request, domain):
     context = {
         "domain" : domain,
         "keywords" : SurveyKeyword.get_all(domain)
     }
-    return render_to_response(request, "reminders/partial/manage_surveys.html", context)
+    return render_to_response(request, "reminders/partial/manage_keywords.html", context)
 
 @login_and_domain_required
 def add_keyword(request, domain, keyword_id=None):
@@ -239,13 +239,13 @@ def add_keyword(request, domain, keyword_id=None):
             return render_to_response(request, "reminders/partial/add_keyword.html", context)
         else:
             s.save()
-            return HttpResponseRedirect(reverse("manage_surveys", args=[domain]))
+            return HttpResponseRedirect(reverse("manage_keywords", args=[domain]))
 
 @login_and_domain_required
 def delete_keyword(request, domain, keyword_id):
     s = SurveyKeyword.get(keyword_id)
     s.retire()
-    return HttpResponseRedirect(reverse("manage_surveys", args=[domain]))
+    return HttpResponseRedirect(reverse("manage_keywords", args=[domain]))
 
 @login_and_domain_required
 def add_survey(request, domain, survey_id=None):
