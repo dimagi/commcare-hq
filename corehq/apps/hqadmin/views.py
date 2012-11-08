@@ -28,7 +28,6 @@ from django.conf import settings
 from restkit import Resource
 import os
 from django.core import cache
-from django.core.cache import InvalidCacheBackendError
 
 @require_superuser
 def default(request):
@@ -495,8 +494,8 @@ def domain_list_download(request):
     def _row(domain):
         def _prop(domain, prop):
             if prop.endswith("?"):
-                return yesno(getattr(domain, prop[:-1]))
-            return getattr(domain, prop) or ""
+                return yesno(getattr(domain, prop[:-1], ""))
+            return getattr(domain, prop, "")
         return (_prop(domain, prop) for prop in properties)
     
     temp = StringIO()
