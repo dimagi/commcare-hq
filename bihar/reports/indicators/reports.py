@@ -40,7 +40,7 @@ class IndicatorMixIn(IndicatorSetMixIn):
         return self.indicator_set.get_indicator(self.type_slug, self.indicator_slug)
         
         
-class IndicatorNav(BiharNavReport):
+class IndicatorNav(GroupReferenceMixIn, BiharNavReport):
     name = ugettext_noop("Indicator Options")
     slug = "indicatornav"
     description = ugettext_noop("Indicator navigation")
@@ -76,13 +76,12 @@ class IndicatorSelectNav(BiharSummaryReport, IndicatorConfigMixIn):
         return [_nav_link(i, iset) for i, iset in enumerate(self.indicator_config.indicator_sets)]
 
     
-class IndicatorSummaryReport(BiharSummaryReport, IndicatorSetMixIn, 
-                             GroupReferenceMixIn):
+class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport, IndicatorSetMixIn):
     
     name = ugettext_noop("Indicators")
     slug = "indicatorsummary"
     description = "Indicator details report"
-    
+
     @property
     def summary_indicators(self):
         return self.indicator_set.get_indicators("summary")
@@ -108,7 +107,7 @@ class IndicatorCharts(MockEmptyReport):
     slug = "indicatorcharts"
 
 
-class IndicatorClientSelectNav(BiharSummaryReport, IndicatorSetMixIn):
+class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport, IndicatorSetMixIn):
     name = ugettext_noop("Select Client List")
     slug = "clients"
     
@@ -140,8 +139,8 @@ class IndicatorClientSelectNav(BiharSummaryReport, IndicatorSetMixIn):
         return [_nav_link(i, iset) for i, iset in enumerate(self.indicators)]
 
 
-class IndicatorClientList(ConvenientBaseMixIn, GenericTabularReport, 
-                          CustomProjectReport, GroupReferenceMixIn,
+class IndicatorClientList(GroupReferenceMixIn, ConvenientBaseMixIn,
+                          GenericTabularReport, CustomProjectReport,
                           IndicatorMixIn):
     slug = "indicatorclientlist"
     name = ugettext_noop("Client List") 
@@ -159,7 +158,7 @@ class IndicatorClientList(ConvenientBaseMixIn, GenericTabularReport,
     @property
     def _headers(self):
         return [_(c) for c in self.indicator.columns]
-    
+
     @property
     def sorted_cases(self):
         if self.indicator.sortkey:

@@ -76,6 +76,11 @@ class GroupReferenceMixIn(object):
         return CommCareCase.view('case/by_owner', key=[self.group_id, False],
                                  include_docs=True, reduce=False)
 
+    @property
+    def render_report_title(self):
+        return u"{title} - {group}".format(title=_(self.name),
+                                           group=self.group.name)
+
 class MockTablularReport(ConvenientBaseMixIn, GenericTabularReport, CustomProjectReport):
 
     row_count = 20 # override if needed
