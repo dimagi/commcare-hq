@@ -2278,7 +2278,7 @@ table th[class*="span"],
   *margin-right: .3em;
   line-height: 14px;
   vertical-align: text-top;
-  background-image: url("../img/glyphicons-halflings.png");
+  background-image: url("../../img/glyphicons-halflings.png");
   background-position: 14px 14px;
   background-repeat: no-repeat;
   margin-top: 1px;
@@ -2297,7 +2297,7 @@ table th[class*="span"],
 .dropdown-menu > .active > a > [class*=" icon-"],
 .dropdown-submenu:hover > a > [class^="icon-"],
 .dropdown-submenu:hover > a > [class*=" icon-"] {
-  background-image: url("../img/glyphicons-halflings-white.png");
+  background-image: url("../../img/glyphicons-halflings-white.png");
 }
 .icon-glass {
   background-position: 0      0;
@@ -2722,10 +2722,10 @@ table th[class*="span"],
   background-position: -456px -144px;
 }
 .icon-hq {
-  background-image: url('../img/commcare-glyphs.png');
+  background-image: url('../../img/commcare-glyphs.png');
 }
 .icon-hq-white {
-  background-image: url('../img/commcare-glyphs-white.png');
+  background-image: url('../../img/commcare-glyphs-white.png');
 }
 .icon-hq-logo {
   background-position: 0      0;
@@ -4203,7 +4203,7 @@ input[type="submit"].btn.btn-mini {
 }
 .nav-list .active > a [class^="icon-"],
 .nav-list .active > a:hover [class^="icon-"] {
-  background-image: url('../img/glyphicons-halflings-white.png');
+  background-image: url('../../img/glyphicons-halflings-white.png');
 }
 .nav-list .nav-header {
   font-size: 12px;
@@ -4820,7 +4820,7 @@ input[type="submit"].btn.btn-mini {
 }
 .hq-navbar hgroup h1 a:before {
   z-index: 950;
-  content: url('../img/commcare-logo-hover.png');
+  content: url('../../img/commcare-logo-hover.png');
   position: absolute;
   top: 0;
   left: 0;
