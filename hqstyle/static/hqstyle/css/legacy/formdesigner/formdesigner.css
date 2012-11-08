@@ -1,0 +1,505 @@
+.hq-oldstyle {
+  /* to prevent flicker */
+
+  display: none;
+  margin-bottom: 60px;
+  font-size: 12px;
+}
+.hq-oldstyle #main_container {
+  padding: 10px;
+  width: 1000px;
+}
+.hq-oldstyle select {
+  height: auto;
+  width: auto;
+  display: inline;
+}
+.hq-oldstyle input {
+  display: inline;
+}
+.hq-oldstyle label {
+  display: inline;
+}
+.hq-oldstyle h1,
+.hq-oldstyle h2 {
+  font-size: 13px;
+  line-height: normal;
+  width: auto;
+}
+.hq-oldstyle ul {
+  margin: 0;
+}
+.hq-oldstyle .container::before,
+.hq-oldstyle .container::after {
+  display: none;
+}
+.hq-oldstyle .dataTables_filter label,
+.hq-oldstyle .dataTables_length label {
+  color: #ffffff;
+  font-weight: bold;
+}
+.hq-oldstyle .dataTables_filter {
+  float: right;
+  line-height: 20px;
+}
+.hq-oldstyle .dataTables_length {
+  padding-left: 10px;
+  padding-top: 5px;
+}
+.hq-oldstyle .dataTables_length label {
+  margin-bottom: 0;
+}
+.hq-oldstyle .dataTables_paginate {
+  float: right;
+  margin-top: 5px;
+}
+.hq-oldstyle .ui-accordion .ui-accordion-header a {
+  font-size: 13px;
+  text-align: left;
+}
+.hq-oldstyle {
+  /* overrides for stuff in jquery UI */
+
+  /* new question UI styling */
+
+  /* xpath editor styling */
+
+  /* stolen from blueprint */
+
+}
+.hq-oldstyle .loadingBar {
+  z-index: 9999;
+  position: fixed;
+  margin: 0px;
+  padding: 0px;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+  /*display:none*/
+
+}
+.hq-oldstyle .myProgressBar {
+  width: 90%;
+}
+.hq-oldstyle body {
+  font-family: "Helvetica Neue", "Helvetica", "Verdana", "Arial", sans-serif;
+  overflow-x: hidden;
+}
+.hq-oldstyle #fd-props-content .ui-widget {
+  font-family: inherit;
+}
+.hq-oldstyle #fd-question-table {
+  border: 1px solid #bbbbbb;
+  width: 50em;
+}
+.hq-oldstyle .fd-question-table-header {
+  font: bold;
+}
+.hq-oldstyle .fd-monitor-window-textarea {
+  width: 49em;
+  height: 30em;
+}
+.hq-oldstyle .fd-toolbar {
+  padding: 5px;
+  /*border: 1px solid black;*/
+
+  margin-top: 0px;
+  vertical-align: middle;
+}
+.hq-oldstyle .fd-toolbar > * {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 1px;
+}
+.hq-oldstyle .ui-state-error a {
+  font-weight: bold;
+}
+.hq-oldstyle #fd-trees {
+  position: relative;
+}
+.hq-oldstyle .fd-tree {
+  background: none repeat scroll 0 0 white;
+  border: 1px solid #bbbbbb;
+  float: left;
+  height: 640px;
+  margin-top: 5px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+  width: 30%;
+}
+.hq-oldstyle #fd-props-advanced {
+  margin-right: 5px;
+}
+.hq-oldstyle #fd-question-tree {
+  clear: right;
+  float: left;
+  background: none;
+}
+.hq-oldstyle #fd-data-tree {
+  background: none;
+}
+.hq-oldstyle #fd-data-tree-container {
+  float: left;
+  left: -360px;
+  /*top:500px;*/
+
+  position: absolute;
+  z-index: 0;
+  overflow: auto;
+  margin-top: 10px;
+  width: 280px;
+}
+.hq-oldstyle .fd-message {
+  padding: .8em;
+  margin: .8em;
+}
+.hq-oldstyle #fd-question-properties,
+.hq-oldstyle #fd-xpath-editor {
+  border: 1px solid #bbbbbb;
+  float: right;
+  margin-top: 5px;
+  height: 640px;
+  width: 69%;
+  display: none;
+  overflow-x: hidden;
+}
+.hq-oldstyle #fd-ui-container td {
+  text-align: center;
+}
+.hq-oldstyle .fd-properties-block-header {
+  text-align: left;
+}
+.hq-oldstyle .fd-props-ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  /*top: -20px;*/
+
+}
+.hq-oldstyle #fd-adv-props-content .fd-props-ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  /*padding-top:20px;*/
+
+  position: relative;
+  top: -20px;
+}
+.hq-oldstyle #fd-extra-tools-accordion .fd-props-ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 30px 0 0 5px;
+  position: relative;
+  top: -20px;
+}
+.hq-oldstyle #fd-acc-min-max {
+  cursor: pointer;
+  float: left;
+  left: -237px;
+  margin: 0;
+  padding: 0;
+  top: 237px;
+  width: 498px;
+  z-index: 5;
+}
+.hq-oldstyle #textDrop {
+  width: 640px;
+  height: 640px;
+}
+.hq-oldstyle #fd-source {
+  width: 800px;
+  height: 800px;
+}
+.hq-oldstyle #fd-source-help,
+.hq-oldstyle #fd-source-controls {
+  width: 800px;
+  padding: 1em;
+}
+.hq-oldstyle .fd-property-input {
+  margin-top: 0;
+  padding-bottom: 2px;
+  padding-left: 5px;
+  padding-top: 0;
+  width: 80%;
+}
+.hq-oldstyle .fd-property {
+  display: table;
+  padding: 5px 0 5px 5px;
+  width: 100%;
+}
+.hq-oldstyle #fd-props-head,
+.hq-oldstyle #fd-extra-props-head,
+.hq-oldstyle #fd-xpath-editor-head {
+  position: relative;
+  width: 100%;
+}
+.hq-oldstyle .fd-property-text {
+  height: 50px;
+  position: relative;
+}
+.hq-oldstyle #fd-question-properties ul {
+  list-style-type: none;
+}
+.hq-oldstyle #fd-form-opts-ul {
+  list-style-type: none;
+}
+.hq-oldstyle #fd-question-properties ul li.fd-property:nth-child(even) {
+  background: #fafaff;
+}
+.hq-oldstyle .questionButton {
+  margin: 1px;
+  vertical-align: middle;
+  width: 200px;
+}
+.hq-oldstyle #fd-save-button {
+  float: right;
+}
+.hq-oldstyle #fd-question-properties ul li:hover {
+  background: #f0f8ff;
+}
+.hq-oldstyle .fd-props-heading {
+  font-weight: bold;
+}
+.hq-oldstyle .fd-props-validate {
+  float: right;
+}
+.hq-oldstyle .fd-head {
+  /*-webkit-transform: rotate(-90deg);*/
+
+  /*-moz-transform: rotate(-90deg);*/
+
+  /* for ie */
+
+  /*filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);*/
+
+  /*background: url("smoothness/images/ui-bg_glass_75_e6e6e6_1x400.png") repeat-x scroll 50% 50% #E6E6E6;*/
+
+  border: 1px solid #D3D3D3;
+  /*color: #555555;*/
+
+  font-size: 17px;
+  font-weight: bold;
+  height: 24px;
+  padding: 0;
+  position: absolute;
+  text-align: center;
+  width: 500px;
+  z-index: 3;
+  line-height: 25px;
+}
+.hq-oldstyle #fd-question-tree-head {
+  position: relative;
+  width: 100%;
+}
+.hq-oldstyle #fd-question-tree-container {
+  overflow-x: auto;
+}
+.hq-oldstyle #fd-data-tree-head {
+  position: relative;
+  width: 100%;
+}
+.hq-oldstyle #fd-props-content {
+  padding: 5px;
+  position: relative;
+}
+.hq-oldstyle .fd-tree-valid-alert-icon {
+  display: inline;
+  position: absolute;
+}
+.hq-oldstyle #fd-adv-props-content {
+  padding: 0;
+  overflow-x: hidden;
+  /*width: 100%;*/
+
+}
+.hq-oldstyle .fd-template-but {
+  width: 200px;
+  margin: 2px;
+}
+.hq-oldstyle #fd-ui-container {
+  width: 100%;
+}
+.hq-oldstyle #fd-min-max-button {
+  float: right;
+  height: 21px;
+  margin: 1px;
+  width: 37px;
+}
+.hq-oldstyle .fd-prop-input-div {
+  float: right;
+  width: 320px;
+}
+.hq-oldstyle #fd-parsexml-button {
+  float: right;
+  margin-left: 2px;
+  margin-right: 0;
+  margin-top: 7px;
+}
+.hq-oldstyle #fd-extra-template-questions,
+.hq-oldstyle #fd-extra-advanced,
+.hq-oldstyle #fd-dragons,
+.hq-oldstyle #fd-extra-settings {
+  margin: 0;
+  overflow-x: hidden;
+  padding-left: 2px;
+}
+.hq-oldstyle .fd-prop-input-div-checkbox {
+  float: right;
+  width: 150px;
+}
+.hq-oldstyle #fd-props-message {
+  margin: 0;
+  text-align: center;
+  vertical-align: middle;
+}
+.hq-oldstyle #fd-itext-lang-select_chzn {
+  float: left;
+}
+.hq-oldstyle #fd-itext-add-lang-button {
+  float: right;
+}
+.hq-oldstyle #fd-form-saving-img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+.hq-oldstyle #fd-question-add {
+  display: inline-block;
+}
+.hq-oldstyle #fd-question-select {
+  position: relative;
+  width: 280px;
+}
+.hq-oldstyle #fd-question-select_chzn {
+  clear: none;
+  float: left;
+  margin-right: 5px;
+}
+.hq-oldstyle #fd-add-but {
+  position: relative;
+}
+.hq-oldstyle #formdesigner {
+  width: 996px;
+  margin: auto;
+}
+.hq-oldstyle #fd-props-mugtype-info {
+  border: 1px solid #bbbbbb;
+  text-align: center;
+}
+.hq-oldstyle #xpath-edit-inner {
+  padding-top: 25px;
+  margin: 5px;
+}
+.hq-oldstyle #fd-props-content h1 {
+  font-weight: bold;
+  font-size: 1.4em;
+  margin-bottom: .5em;
+}
+.hq-oldstyle #fd-props-content h2 {
+  font-size: 1.1em;
+  border: 1px solid lightgray;
+  border-bottom: 0;
+  text-align: center;
+  background-color: whitesmoke;
+  padding: .2em;
+  font-weight: bold;
+  margin-bottom: 0;
+}
+.hq-oldstyle #fd-props-content .ui-accordion-content {
+  padding: 1em .5em;
+}
+.hq-oldstyle #fd-props-content fieldset:not(.ui-widget) {
+  padding: 0 .4em .4em .4em;
+  margin: 0 0 1.5em 0;
+  border: 1px solid #ccc;
+}
+.hq-oldstyle #fd-props-content fieldset h3 {
+  text-align: left;
+  font-size: 1.1em;
+  font-weight: bold;
+  line-height: 1em;
+}
+.hq-oldstyle #fd-props-content fieldset div .widget {
+  clear: both;
+  margin-bottom: .3em;
+}
+.hq-oldstyle #fd-props-content fieldset label {
+  font-weight: normal;
+  display: inline-block;
+  padding-top: .4em;
+}
+.hq-oldstyle #fd-props-content fieldset input[type="text"],
+.hq-oldstyle #fd-props-content fieldset select {
+  width: 380px;
+  float: right;
+  margin: .5em 10px .5em 0;
+}
+.hq-oldstyle #fd-props-content fieldset select {
+  width: 220px;
+  margin-right: 175px;
+}
+.hq-oldstyle #fd-props-content fieldset .xpath-edit-button {
+  float: right;
+  margin-right: 2em;
+}
+.hq-oldstyle #fd-props-content fieldset .auto-itext {
+  float: right;
+  margin-right: 2em;
+  display: inline-block;
+}
+.hq-oldstyle .question-section {
+  margin-bottom: 1em;
+}
+.hq-oldstyle .error,
+.hq-oldstyle .notice,
+.hq-oldstyle .success {
+  padding: .4em;
+  border: 2px solid #ddd;
+}
+.hq-oldstyle .error {
+  background: #FBE3E4;
+  color: #8a1f11;
+  border-color: #FBC2C4;
+}
+.hq-oldstyle .notice {
+  background: #FFF6BF;
+  color: #514721;
+  border-color: #FFD324;
+}
+.hq-oldstyle .success {
+  background: #E6EFC2;
+  color: #264409;
+  border-color: #C6D880;
+}
+.hq-oldstyle .bin-expression {
+  min-height: 35px;
+}
+.hq-oldstyle .xpath-edit-node,
+.hq-oldstyle .expression-part,
+.hq-oldstyle .op-select,
+.hq-oldstyle .validation-results {
+  vertical-align: text-bottom;
+  display: inline-block;
+  margin-left: .4em;
+}
+.hq-oldstyle .expression-part {
+  padding-bottom: 8px;
+}
+.hq-oldstyle .xpath-edit-node {
+  width: 180px !important;
+}
+.hq-oldstyle .validation-results {
+  position: relative;
+  margin-bottom: 0px;
+}
+.hq-oldstyle .dismiss-message-button {
+  float: right;
+}
+.hq-oldstyle #fd-lang-disp-div {
+  padding-left: 10px;
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid #CCC;
+  font-size: .8em;
+}
