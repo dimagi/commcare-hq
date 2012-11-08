@@ -101,12 +101,18 @@ cloudCare.App = LocalizableModel.extend({
     initialize: function () {
         var self = this;
         self.constructor.__super__.initialize.apply(self, [self.options]);
-        _.bindAll(self, "updateModules", "urlRoot", "getSubmitId");
+        _.bindAll(self, "updateModules", "url", "urlRoot", "getSubmitId");
 
         self.updateModules();
         self.on("change", function () {
             this.updateModules();
         });
+    },
+    url: function () {
+        // HT: http://stackoverflow.com/questions/10555962/enable-django-and-tastypie-support-for-trailing-slashes
+        var original_url = Backbone.Model.prototype.url.call( this );
+        var parsed_url = original_url + ( original_url.charAt( original_url.length - 1 ) == '/' ? '' : '/' );
+        return parsed_url;
     },
     urlRoot: function () {
         return this.get("urlRoot");
