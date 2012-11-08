@@ -272,6 +272,8 @@ EMAIL_PASSWORD="changeme"
 EMAIL_SMTP_HOST="smtp.gmail.com"
 EMAIL_SMTP_PORT=587
 
+# put email addresses here to have them receive bug reports
+BUG_REPORT_RECIPIENTS=() 
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
