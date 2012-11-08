@@ -1,0 +1,36 @@
+.table {
+    border: 1px solid @tableBorder;
+    max-width: 15em;
+
+    th, td {
+        padding: 2px 3px;
+    }
+    tbody {
+        tr:hover {
+            th, th:first-child,
+            td, td:first-child {
+                background-color: lighten(@blueDark, 50);
+                a:hover {
+                    text-decoration: none;
+                }
+            }
+        }
+        tr:nth-child(odd):hover {
+            th, th:first-child,
+            td, td:first-child {
+                background-color: darken(@tableBackgroundHover, 5);
+            }
+        }
+    }
+
+    thead {
+        th {
+            background-color: lighten(@blueDark, 20);
+            color: @white;
+        }
+        th:nth-child(even) {
+            background-color: @blueDark;
+        }
+    }
+}
+

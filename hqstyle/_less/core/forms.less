@@ -1,0 +1,57 @@
+// Extension of Twitter Bootstrap's Forms
+
+select[multiple="multiple"],
+select[size^=""] {
+  height: auto;
+}
+
+.control-group .controls label.sub-label {
+    display: inline-block;
+    vertical-align: top;
+    padding-left: @gridGutterWidth;
+    padding-right: @gridGutterWidth/3;
+    line-height: 28px;
+    &:first-child {
+        padding-left: 0;
+    }
+}
+
+.hq-accordion-control .accordion-inner form {
+    margin: 0;
+
+    .form-actions {
+        margin-bottom: 0;
+        a {
+            vertical-align: top;
+        }
+    }
+}
+
+form .table tbody td {
+    line-height: 28px;
+}
+
+form fieldset > p {
+    padding: 2em 0 1em;
+}
+
+form fieldset > legend {
+    margin-bottom: @gridGutterWidth;
+}
+
+legend + .control-group {
+  margin-top: 0px;
+  -webkit-margin-top-collapse: separate;
+}
+
+.hq-form-report {
+    padding-left: @gridGutterWidth*2;
+    padding-right: @gridGutterWidth*2;
+}
+.hq-content .table tbody tr td > form:first-child {
+    margin-bottom: 0;
+}
+
+.input-fancy-multi {
+    width: 100%;
+}

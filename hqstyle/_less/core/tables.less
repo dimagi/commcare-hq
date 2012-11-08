@@ -1,0 +1,202 @@
+// Extends the styling for Twitter Bootstrap Tables
+
+// DataTables, HQ Tables & Export Data Tables styling
+
+.sideways-header() {
+    transform-origin: 0 0;
+    -webkit-writing-mode:vertical-rl;
+    -moz-writing-mode:vertical-rl;
+    writing-mode:vertical-rl;
+    .rotate(180deg);
+}
+
+.datatable {
+    margin-bottom: 1px;
+}
+
+.datatable thead th,
+.hq-generic-report .table thead th,
+.table-hq thead th {
+    color: @white;
+    #gradient > .vertical(desaturate(lighten(@blue, 20), 60), desaturate(darken(@blue, 5), 20));
+    font-weight: normal;
+    position: relative;
+}
+.datatable thead th:nth-child(odd),
+.table-hq thead th:nth-child(odd) {
+    #gradient > .vertical(desaturate(@blue, 60), desaturate(darken(@blue, 10), 20));
+}
+
+.datatable thead th {
+    &.headerSortDown [class^="icon-hq-"] {
+        background-position: -24px  -48px;
+    }
+    &.headerSortUp [class^="icon-hq-"] {
+        background-position: 0  -48px;
+    }
+}
+
+.datatable thead th .sideways {
+    .sideways-header();
+    height:200px;
+    width:50px;
+}
+
+.datatable thead th .expected {
+    #gradient > .vertical(desaturate(lighten(@green, 40), 10), desaturate(lighten(@green, 30), 10));
+    margin-top:10px;
+    color: darken(@green, 20);
+    font-weight: bold;
+    padding: 2px;
+    text-align: center;
+}
+
+.datatable tbody,
+.export_data tbody,
+.table-hq tbody {
+    .odd {
+        background-color: @oddDataTableRowBackground;
+        .sorting_1 {
+            background-color: @oddDataTableRowSelectedBackground;
+            border-color: darken(#ddd, 5);
+        }
+    }
+    .even {
+        background-color: @evenDataTableRowBackground;
+        .sorting_1 {
+            background-color: @evenDataTableRowSelectedBackground;
+            border-color: darken(#ddd, 5);
+        }
+    }
+}
+
+// Strictly DataTables
+
+.datatable tfoot td,
+.datatable tfoot th {
+    background-color: lighten(desaturate(@blue, 60), 10);
+    color: @white;
+    border-top: 1px solid darken(desaturate(@blue, 60), 40);
+}
+
+.dataTables_filter {
+    padding-top: 2px;
+    label {
+        padding-right: 10px;
+        [class^="icon-"] {
+            margin-top: 3px;
+        }
+    }
+}
+
+.dataTables_wrapper .dataTables_filter {
+    float: right;
+    padding: 1em 1em;
+}
+
+.dataTables_control {
+    #gradient > .vertical(@sideNavigationBackground, darken(@sideNavigationBackground, 10));
+    color: @commCareGray;
+    padding: 10px 0 0;
+    border-top: 1px solid @grayBorderColor;
+    border-bottom: 1px solid darken(@grayBorderColor, 20);
+    .box-shadow(0 1px 3px rgba(0,0,0,.25));
+}
+
+.dataTables_info,
+.dataTables_length {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.dataTables_info {
+    margin: 0 @gridGutterWidth;
+    line-height: 28px;
+}
+
+// Strictly Export Data Tables
+
+.hq-generic-report .table {
+    .box-shadow(0 1px 3px rgba(0,0,0,.25));
+}
+.export_data tbody td {
+    padding-top: 13px;
+
+    &.cell-vertical-centered {
+        padding-top: 8px;
+        line-height: 28px;
+    }
+}
+
+.table.column_list tbody tr:hover,
+.table.column_list tr.dragged {
+    cursor: move;
+}
+
+.table.column_list tbody tr:hover td {
+    background-color: @warningBackground;
+}
+
+.table.column_list tbody tr.dragged td,
+.table.column_list tbody tr.dragged td.even,
+.table.column_list tbody tr.dragged td.odd{
+    background-color: @infoBackground;
+}
+
+// General Styling Additions
+
+.table-striped tbody tr.active td {
+    background-color: lighten(@yellow, 40);    
+}
+
+.hqtable-vcentered tbody td {
+    vertical-align: middle;
+}
+
+
+.mvp-table {
+    @tdSummary: #FFF9ED;
+    @tdCurrentMonth: #F4FBDE;
+    @thSummary: #FFC080;
+    @thCurrentMonth: #B3CC8F;
+
+    tbody td{
+        width: 88/16%;
+    }
+    thead.affix {
+        margin-top: -197px;
+    }
+    tbody th {
+        width: 9%;
+    }
+    td.summary {
+        background-color: @tdSummary;
+    }
+    td.current_month {
+        background-color: @tdCurrentMonth;
+    }
+    tr:nth-child(odd) td.summary {
+        background-color: darken(@tdSummary, 5);
+    }
+    tr:nth-child(odd) td.current_month {
+        background-color: darken(@tdCurrentMonth, 5);
+    }
+
+    tbody th.category_title {
+        width: 3%;
+        color: @white;
+        #gradient > .vertical(desaturate(lighten(@blue, 20), 60), desaturate(darken(@blue, 5), 20));
+    }
+    tbody th.category_title div {
+        .sideways-header();
+        font-size: 2.1em;
+        line-height: 1.1em;
+    }
+
+    thead th.summary {
+        #gradient > .vertical(darken(@thSummary, 10), darken(@thSummary, 30));
+    }
+    thead th.current_month {
+        #gradient > .vertical(darken(@thCurrentMonth, 10), darken(@thCurrentMonth, 30));
+    }
+}

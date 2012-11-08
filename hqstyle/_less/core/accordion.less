@@ -1,0 +1,57 @@
+// HQ extension of Twitter Bootstrap's Accordion styles
+.hq-accordion-control {
+    margin-bottom: 2px;
+}
+
+.hq-accordion-control .accordion-heading {
+    border: none;
+    position: relative;
+    #gradient > .vertical(lighten(@sideNavigationBackground, 3), darken(@sideNavigationBackground, 5));
+    border-top: 1px solid @white;
+    border-bottom: 1px solid darken(@grayBorderColor,10);
+    height: 35px;
+
+    .accordion-actions {
+        padding: 3px 3px 0;
+        a:hover {
+            .btn-primary();
+        }
+        span {
+            font-size: @baseFontSize;
+            padding: 1px 5px 1px 10px;
+            vertical-align: middle;
+        }
+    }
+
+    .accordion-extra {
+        display: block;
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 0 @gridGutterWidth;
+        background-color: transparent;
+        height: 32px;
+    }
+}
+
+.hq-accordion-control .accordion-body {
+    .box-shadow(inset 0 0px 8px rgba(0,0,0,.2));
+    background-color: lighten(@sideNavigationBackground, 3);
+    border: none;
+    border-bottom: 1px solid darken(@navbarBackground, 15);
+
+    .accordion-inner {
+        padding-bottom: 3px;
+    }
+
+
+    &.collapse {
+    }
+    &.in {
+        padding-bottom: 9px;
+        margin-bottom: 1px;
+        .accordion-inner {
+            display: block;
+        }
+    }
+}
