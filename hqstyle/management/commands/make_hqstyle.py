@@ -15,21 +15,23 @@ class Command(BaseCommand):
         "legacy/formdesigner/screen",
         "mobile/c2/hqstyle-mobile-c2",
     ]
+    # NOTE: Order matters for the bootstrap js files.
     js_bootstrap = [
-        "affix",
+        "transition",
         "alert",
         "button",
         "carousel",
         "collapse",
         "dropdown",
         "modal",
+        "tooltip",
         "popover",
         "scrollspy",
         "tab",
-        "tooltip",
-        "transition",
         "typeahead",
+        "affix",
     ]
+    
     js_plugins = [
         "combobox",
     ]
@@ -64,16 +66,16 @@ class Command(BaseCommand):
         core_dest = "%s/js/core" % self.destination
         all_js = open(os.path.join(core_dest, "bootstrap.js"), "w+")
         print "-- HQ Bootstrap ----"
-        self.write_files_to_file(all_js, self.js_bootstrap, self.hq_bootstrap_src, "js/bootstrap-%s.js")
+        self.concat_files(all_js, self.js_bootstrap, self.hq_bootstrap_src, "js/bootstrap-%s.js")
         print "-- HQ Style ----"
-        self.write_files_to_file(all_js, self.js_plugins, self.hqstyle_src, "_plugins/bootstrap-%s.js")
+        self.concat_files(all_js, self.js_plugins, self.hqstyle_src, "_plugins/bootstrap-%s.js")
         all_js.close()
 
         self.compile_file(self.uglifyjs,
             os.path.join(core_dest, "bootstrap.js"),
             os.path.join(core_dest, "bootstrap.min.js"))
 
-    def write_files_to_file(self, all_files, file_names, source_dir, file_pattern):
+    def concat_files(self, all_files, file_names, source_dir, file_pattern):
         for f in file_names:
             print f
             filestring = open(os.path.join(source_dir, file_pattern % f), "r").read()
