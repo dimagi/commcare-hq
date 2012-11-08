@@ -1,128 +1,145 @@
-// Variables.less
-// Variables to customize the look and feel of Bootstrap
-// -----------------------------------------------------
-
-
-
-// GLOBAL VALUES
+//
+// Overrides of Variables & New Variables
 // --------------------------------------------------
 
-// Links
-@linkColor:             #1557A2;
-@linkColorHover:        darken(@linkColor, 15%);
+
+// Global values
+// --------------------------------------------------
+
 
 // Grays
-@black:                 #000;
+// -------------------------
 @grayDarker:            #2C2C2C;
-@grayDark:              #333;
-@gray:                  #555;
-@grayLight:             #999;
-@grayLighter:           #eee;
-@white:                 #fff;
-@commCareGray:          #6C6C6C;
+@commCareGray:          #6C6C6C; // hq
+@grayBorderColor:       darken(@navbarBackground, 10); // hq
+
 
 // Accent colors
+// -------------------------
 @blue:                  #1557A2;
 @blueDark:              #4A607D;
-@green:                 #46a546;
-@red:                   #9d261d;
-@yellow:                #ffc40d;
 @orange:                #FF8B03;
-@pink:                  #c3325f;
-@purple:                #7a43b6;
+
+
+// Scaffolding
+// -------------------------
+@textOrangeColor:       #E06C00; // hq
+
+
+// Links
+// -------------------------
+@linkColor:             #1557A2;
+//@linkColorHover:        darken(@linkColor, 15%); test this out
+
 
 // Typography
+// -------------------------
 @baseFontSize:          13px;
-@baseFontFamily:        "Helvetica Neue", Helvetica, Arial, sans-serif;
 @baseLineHeight:        18px;
-@textColor:             @grayDark;
 
-@textOrangeColor:       #E06C00;
+
+// Component sizing
+// -------------------------
+// Based on 13px font-size and 18px line-height
+
+
+
+// Tables
+// -------------------------
+@oddDataTableRowBackground:             @white; // hq
+@oddDataTableRowSelectedBackground:     darken(@oddDataTableRowBackground, 5); // hq
+@evenDataTableRowBackground:            @grayLighter; // hq
+@evenDataTableRowSelectedBackground:    darken(@evenDataTableRowBackground, 5); // hq
+
 
 // Buttons
-@primaryButtonBackground:    @linkColor;
+// -------------------------
 
 
+// Forms
+// -------------------------
 
 
-// Common File Locations
-@imageDirectory:                  "../img/";
-
+// Dropdowns
+// -------------------------
 
 
 // COMPONENT VARIABLES
 // --------------------------------------------------
 
+
 // Z-index master list
+// -------------------------
 // Used for a bird's eye view of components dependent on the z-axis
 // Try to avoid customizing these :)
-@zindexBrand:           900;
-@zindexBrandHover:      950;
-@zindexDropdown:        1000;
-@zindexPopover:         1010;
-@zindexTooltip:         1020;
-@zindexFixedNavbar:     1030;
-@zindexModalBackdrop:   1040;
-@zindexModal:           1050;
+@zindexBrand:           900; // hq
+@zindexBrandHover:      950; // hq
+
+
+// Sprite icons path
+// -------------------------
+@hqImageDirectory:                  "../img/"; // hq
 
 // Input placeholder text color
-@placeholderText:       @grayLight;
+// -------------------------
 
-// Hr Border Color
-@hrBorder:                @grayLighter;
+
+// Hr border color
+// -------------------------
+
+
+// Horizontal forms & lists
+// -------------------------
+
+
+// Wells
+// -------------------------
+
 
 // Navbar
+// -------------------------
 @navbarHeight:                    62px;
-@navbarBackground:                #F4F4F4;
 @navbarBackgroundHighlight:       #FDFDFD;
-@navbarLinkBackgroundHover:       transparent;
+@navbarBackground:                #F4F4F4;
 
-@navbarBrandWidth:                211px;
-@navbarBrandHeight:               32px;
+@navbarBrandWidth:                211px;                // hq
+@navbarBrandHeight:               32px;                 // hq
 
 @navbarText:                      @commCareGray;
 @navbarLinkColor:                 @commCareGray;
 @navbarLinkColorHover:            @white;
 
-// Sub Section Navbar
-@subsectionNavbarBackground:        #435873;
-@subsectionNavbarBackgroundActive:  #7C91B1;
+// Sub Section Navbar - hq
+@subsectionNavbarBackground:        #435873;            // hq
+@subsectionNavbarBackgroundActive:  #7C91B1;            // hq
 
-// Side Navbar
-@sideNavigationBackground:        @navbarBackground;
+// Side Navbar - hq
+@sideNavigationBackground:        @navbarBackground;    // hq
 
-// Other stuff
-@grayBorderColor:       darken(@navbarBackground, 10);
 
-// Footer
-@footerHeight:                    100px;
-@footerBackground:                @grayDarker;
-@footerLinkColor:                 @white;
-@footerLinkColorHover:            @grayLighter;
-@footerButtonColor:               #474747;
+// Footer - hq
+// -------------------------
+@footerHeight:                    100px;                // hq
+@footerBackground:                @grayDarker;          // hq
+@footerLinkColor:                 @white;               // hq
+@footerLinkColorHover:            @grayLighter;         // hq
+@footerButtonColor:               #474747;              // hq
+
+
+// Pagination
+// -------------------------
+
+
+// Hero unit
+// -------------------------
+
 
 // Form states and alerts
-@warningText:             #c09853;
-@warningBackground:       #fcf8e3;
-@warningBorder:           darken(spin(@warningBackground, -10), 3%);
+// -------------------------
 
-@errorText:               #b94a48;
-@errorBackground:         #f2dede;
-@errorBorder:             darken(spin(@errorBackground, -10), 3%);
 
-@successText:             #468847;
-@successBackground:       #dff0d8;
-@successBorder:           darken(spin(@successBackground, -10), 5%);
-
-@infoText:                #3a87ad;
-@infoBackground:          #d9edf7;
-@infoBorder:              darken(spin(@infoBackground, -10), 7%);
-
-// Tables
-@oddDataTableRowBackground:             @white;
-@oddDataTableRowSelectedBackground:     darken(@oddDataTableRowBackground, 5);
-@evenDataTableRowBackground:            @grayLighter;
-@evenDataTableRowSelectedBackground:    darken(@evenDataTableRowBackground, 5);
+// Tooltips and popovers
+// -------------------------
 
 
 
@@ -130,15 +147,20 @@
 // --------------------------------------------------
 
 // Default 940px grid
-@gridColumns:             12;
-@gridColumnWidth:         60px;
-@gridGutterWidth:         20px;
-@gridRowWidth:            (@gridColumns * @gridColumnWidth) + (@gridGutterWidth * (@gridColumns - 1));
+// -------------------------
+
+// 1200px min
+
+// 768px-979px
+
 
 // Fluid grid
-@fluidMinimumWidth:       1250px;
+// -------------------------
+@fluidMinimumWidth:       1250px; // hq
 @fluidGridColumnWidth:    6.382978723%;
 @fluidGridGutterWidth:    2.127659574%;
+@fluidSidebarWidth: @gridColumnWidth*4; // hq
 
-// Sidebar
-@fluidSidebarWidth: @gridColumnWidth*4;
+// 1200px min
+
+// 768px-979px

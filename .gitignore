@@ -2,4 +2,3 @@
 *.pot
 *.pyc
 local_settings.py
-hqstyle/_less/*.css

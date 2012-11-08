@@ -89,7 +89,7 @@
             }
             a:before {
                 z-index: @zindexBrandHover;
-                content: url('@{imageDirectory}commcare-logo-hover.png');
+                content: url('@{hqImageDirectory}commcare-logo-hover.png');
                 position: absolute;
                 top: 0;
                 left: 0;
@@ -160,8 +160,8 @@
 // Hover
 .hq-navbar .nav > li > a:hover {
   text-decoration: none;
-  border-color: darken(@primaryButtonBackground, 15);
-  .buttonBackground(desaturate(lighten(@primaryButtonBackground, 15), 15), @primaryButtonBackground);
+  border-color: darken(@btnPrimaryBackground, 15);
+  .buttonBackground(desaturate(lighten(@btnPrimaryBackground, 15), 15), @btnPrimaryBackground);
   color: @white;
 }
 
