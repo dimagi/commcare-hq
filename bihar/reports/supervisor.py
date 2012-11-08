@@ -20,6 +20,8 @@ class ConvenientBaseMixIn(object):
     # this class is an amalgamation of random behavior and is just 
     # for convenience
     
+    report_template_path = "bihar/tabular.html"
+    
     hide_filters = True
     flush_layout = True
     mobile_enabled = True
@@ -39,6 +41,13 @@ class ConvenientBaseMixIn(object):
     def show_in_navigation(cls, request, *args, **kwargs):
         return False
      
+    @property
+    def report_context(self):
+        context = super(ConvenientBaseMixIn, self).report_context
+        context['home'] = MainNavReport.get_url(self.domain, render_as=self.render_next)
+        context['render_as'] = self.render_next
+        return context
+        
 def list_prompt(index, value):
     # e.g. 1. Reports
     return u"%s. %s" % (_(str(index+1)), _(value)) 
@@ -81,22 +90,12 @@ class GroupReferenceMixIn(object):
         return u"{title} - {group}".format(title=_(self.name),
                                            group=self.group.name)
 
-class MockTablularReport(ConvenientBaseMixIn, GenericTabularReport, CustomProjectReport):
-
-    row_count = 20 # override if needed
-    def _row(self, i):
-        # override
-        raise NotImplementedError("Override this!")
-    
-    @property
-    def rows(self):
-        return [self._row(i) for i in range(self.row_count)]
-
 class BiharSummaryReport(ConvenientBaseMixIn, SummaryTablularReport, 
                          CustomProjectReport):
     # this is literally just a way to do a multiple inheritance without having
     # the same 3 classes extended by a bunch of other classes
-    pass
+    report_template_path = "bihar/summary_tabular.html"
+    
             
 class BiharNavReport(BiharSummaryReport):
     # this is a bit of a bastardization of the summary report
