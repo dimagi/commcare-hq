@@ -295,7 +295,7 @@ def snapshot_settings(request, domain):
     domain = Domain.get_by_name(domain)
     snapshots = domain.snapshots()
     return render_to_response(request, 'domain/snapshot_settings.html',
-                {'domain': domain.name, 'snapshots': snapshots})
+                {'domain': domain.name, 'snapshots': snapshots, 'published_snapshot': domain.published_snapshot()})
 
 @require_previewer # remove for production
 @domain_admin_required
@@ -319,9 +319,6 @@ def create_snapshot(request, domain):
             form = SnapshotSettingsForm(initial={
                 'default_timezone': published_snapshot.default_timezone,
                 'case_sharing': json.dumps(published_snapshot.case_sharing),
-#                'city': published_snapshot.city,
-#                'country': published_snapshot.country,
-#                'region': published_snapshot.region,
                 'project_type': published_snapshot.project_type,
                 'license': published_snapshot.license,
                 'title': published_snapshot.title,
@@ -361,6 +358,7 @@ def create_snapshot(request, domain):
              'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
     elif request.method == 'POST':
         form = SnapshotSettingsForm(request.POST, request.FILES)
+        form.dom = domain
         app_forms = []
         publishing_apps = False
         for app in domain.applications():

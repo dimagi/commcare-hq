@@ -64,7 +64,7 @@
 <form class="form-horizontal" enctype="multipart/form-data" method="post" action="{% url domain_create_snapshot domain %}" id="snapshot_form">
     <fieldset>
         {% bootstrap_form_errors form %}
-        {% bootstrap_fieldset form "Creating new snapshot..." %}
+        {% bootstrap_fieldset form "Publishing new version of your project to Commcare Exchange" %}
         {% if request.project.published_snapshot.image_path %}
             <div class="control-group">
                 <div class="control-label"><label for="id_old_image">Use current image</label></div>
@@ -84,6 +84,6 @@
         {% endfor %}
     </fieldset>
 
-    <div class="form-actions"><button type="submit" class="btn btn-primary">Create New Snapshot</button></div>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Publish Project</button></div>
 </form>
 {% endblock %}>

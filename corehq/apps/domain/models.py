@@ -484,10 +484,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         for snapshot in snapshots:
             if snapshot.published:
                 return snapshot
-        if len(snapshots) > 0:
-            return snapshots[0]
-        else:
-            return None
+        return None
 
     @classmethod
     def published_snapshots(cls, include_unapproved=False, page=None, per_page=10):
@@ -571,6 +568,15 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     def all_media(self):
         from corehq.apps.hqmedia.models import CommCareMultimedia
         return CommCareMultimedia.view('hqmedia/by_domain', key=self.name, include_docs=True).all()
+
+    @property
+    def most_restrictive_licenses(self):
+        from corehq.apps.hqmedia.utils import most_restrictive
+        if self.is_snapshot:
+            licenses = [m.license['type'] for m in self.copied_from.all_media()]
+        else:
+            licenses = [m.license['type'] for m in self.all_media()]
+        return most_restrictive(licenses)
 
     @classmethod
     def popular_sort(cls, domains, page):
