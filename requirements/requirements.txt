@@ -1,4 +1,4 @@
-restkit==3.2.1
+restkit==4.2.0
 couchdbkit==0.5.7
 celery==2.4.5
 decorator==3.3.2
