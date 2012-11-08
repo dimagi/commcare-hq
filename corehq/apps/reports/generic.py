@@ -284,7 +284,7 @@ class GenericReportView(object):
         """
         if self._rendered_report_title is None:
             rendered_title = self.render_report_title
-            self._rendered_report_title = rendered_title if isinstance(rendered_title, str) else self.name
+            self._rendered_report_title = rendered_title if isinstance(rendered_title, basestring) else self.name
         return self._rendered_report_title
 
     @property
