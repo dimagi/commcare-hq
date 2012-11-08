@@ -233,7 +233,7 @@ def report_list(context, dispatcher):
         This requires a valid ReportDispatcher subclass or path.to.ReportDispatcherSubclass
         to generate a Report List.
     """
-    if isinstance(dispatcher, str) or isinstance(dispatcher, unicode):
+    if isinstance(dispatcher, basestring):
         try:
             dispatcher = to_function(dispatcher)
         except Exception:

@@ -40,7 +40,7 @@ class ReportDispatcher(View):
         map_name = kwargs.get('map_name')
         if map_name:
             self.map_name = map_name
-        if not self.map_name or not isinstance(self.map_name, str):
+        if not self.map_name or not isinstance(self.map_name, str): # unicode?
             raise NotImplementedError("Class property 'map_name' must be a string, and not empty.")
         super(ReportDispatcher, self).__init__(**kwargs)
 
