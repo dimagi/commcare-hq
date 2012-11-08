@@ -43,4 +43,7 @@ except ImportError:
 
 if __name__ == "__main__":
 #    monkey_patch_couchdbkit()
+    # proxy for whether we're running gunicorn with -k gevent
+    if "gevent" in sys.argv:
+        from restkit.session import set_session; set_session("gevent")
     execute_manager(settings)
