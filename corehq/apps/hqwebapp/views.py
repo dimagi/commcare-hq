@@ -13,7 +13,7 @@ from django.shortcuts import redirect
 from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
 from corehq.apps.app_manager.models import import_app
 from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.domain.utils import normalize_domain_name, legacy_domain_re, get_domain_from_url
+from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.users.util import format_username
 from dimagi.utils.logging import notify_exception
@@ -21,6 +21,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import render_to_response, get_url_base
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
+from django.core.mail.message import EmailMessage
 from django.template import loader
 from django.template.context import RequestContext
 from couchforms.models import XFormInstance
@@ -240,8 +241,13 @@ def bug_report(req):
         u"{message}\n"
         ).format(**report)
 
-    from django.core.mail.message import EmailMessage
-    from django.core.mail import send_mail
+
+    reply_to = report['username']
+
+    # if the person looks like a commcare user, fogbugz can't reply
+    # to their email, so just use the default
+    if settings.HQ_ACCOUNT_ROOT in reply_to:
+        reply_to = settings.EMAIL_HOST_USER
 
     if req.POST.get('five-hundred-report'):
         message = "%s \n\n This messge was reported from a 500 error page! Please fix this ASAP (as if you wouldn't anyway)..." % message
@@ -250,7 +256,7 @@ def bug_report(req):
         message,
         report['username'],
         settings.BUG_REPORT_RECIPIENTS,
-        headers={'Reply-To': report['username']}
+        headers={'Reply-To': reply_to}
     )
     email.send(fail_silently=False)
 

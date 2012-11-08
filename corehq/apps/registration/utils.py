@@ -213,6 +213,6 @@ You can view the project here: %s""" % (
         get_url_base() + "/a/%s/" % domain_name)
     try:
         recipients = settings.NEW_DOMAIN_RECIPIENTS
-        send_mail("New Project: %s" % domain_name, message, settings.EMAIL_LOGIN, recipients)
+        send_mail("New Project: %s" % domain_name, message, settings.EMAIL_HOST_USER, recipients)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message)
