@@ -13,30 +13,30 @@ class Command(BaseCommand):
         "legacy/core",
         "legacy/formdesigner/formdesigner",
         "legacy/formdesigner/screen",
+        "mobile/c2/hqstyle-mobile-c2",
     ]
     js_bootstrap = [
-        "bootstrap-transition",
-        "bootstrap-affix",
-        "bootstrap-alert",
-        "bootstrap-button",
-        "bootstrap-carousel",
-        "bootstrap-collapse",
-        "bootstrap-dropdown",
-        "bootstrap-modal",
-        "bootstrap-tooltip",
-        "bootstrap-popover",
-        "bootstrap-scrollspy",
-        "bootstrap-tab",
-        "bootstrap-typeahead",
+        "affix",
+        "alert",
+        "button",
+        "carousel",
+        "collapse",
+        "dropdown",
+        "modal",
+        "popover",
+        "scrollspy",
+        "tab",
+        "tooltip",
+        "transition",
+        "typeahead",
     ]
     js_plugins = [
-        "bootstrap-combobox",
+        "combobox",
     ]
 
-    bootstrap_source = "submodules/hqstyle-src/hqhq-bootstrap"
-    bootstrap_destination = "submodules/core-hq-src/corehq/apps/hq_bootstrap/static/hq_bootstrap"
-
-    formdesigner_dest = "submodules/formdesigner"
+    hq_bootstrap_src = "submodules/hqstyle-src/hq-bootstrap"
+    hqstyle_src = "submodules/hqstyle-src/hqstyle"
+    destination = "%s/static/hqstyle" % hqstyle_src
 
     lessc = "lessc"
     uglifyjs = "uglifyjs"
@@ -55,108 +55,60 @@ class Command(BaseCommand):
             self.uglifyjs = "/opt/UglifyJS/bin/uglifyjs"
             print "NOTICE: Using uglifyjs as '%s'" % self.uglifyjs
 
-        if "vellum" in args:
-            self.bootstrap_destination = "submodules/formdesigner/hq-bootstrap-standalone"
+        self.compile_core_js()
+        self.compile_css()
+        self.copy_bootstrap_images()
 
-        # make sure all of the root dirs exist
-        for root_dir in self.root_dirs:
-            full_root_dir = os.path.join(self.bootstrap_destination, root_dir)
-            try:
-                os.makedirs(full_root_dir)
-            except OSError:
-                print "%s was already created. Cleaning it up." % full_root_dir
-                self.clear_dir(full_root_dir)
-
-        # copy files over from hq-bootstrap
-        self.copy_all_files("js/includes", "js")
-        self.copy_all_files("img")
-
-        # compile all of the less files
-        self.prepare_dir(self.less_files, "css")
-        for less_file in self.less_files:
-            self.compile_file(self.lessc,
-                os.path.join(self.bootstrap_source, "less/%s.less" % less_file),
-                os.path.join(self.bootstrap_destination, "css/%s.css" % less_file))
-
-        for fd_less in ["formdesigner", "screen"]:
-            self.compile_file(self.lessc,
-                os.path.join(self.bootstrap_source, "less/formdesigner-old/%s.less" % fd_less),
-                os.path.join(self.formdesigner_dest, "css/%s.css" % fd_less))
-
-        # cat and minify the bootstrap javascript files
-        complete_bootstrap = open(os.path.join(self.bootstrap_destination, "js/bootstrap.js"), "w+")
-        for js_file in self.js_bootstrap:
-            filestring = open(os.path.join(self.bootstrap_source, "js/%s.js" % js_file), "r").read()
-            complete_bootstrap.write(filestring)
-            complete_bootstrap.write("\n")
-        complete_bootstrap.close()
+    def compile_core_js(self):
+        print "\nCompiling HQStyle Core Javascript"
+        core_dest = "%s/js/core" % self.destination
+        all_js = open(os.path.join(core_dest, "bootstrap.js"), "w+")
+        print "-- HQ Bootstrap ----"
+        self.write_files_to_file(all_js, self.js_bootstrap, self.hq_bootstrap_src, "js/bootstrap-%s.js")
+        print "-- HQ Style ----"
+        self.write_files_to_file(all_js, self.js_plugins, self.hqstyle_src, "_plugins/bootstrap-%s.js")
+        all_js.close()
 
         self.compile_file(self.uglifyjs,
-            os.path.join(self.bootstrap_destination, "js/bootstrap.js"),
-            os.path.join(self.bootstrap_destination, "js/bootstrap.min.js"))
+            os.path.join(core_dest, "bootstrap.js"),
+            os.path.join(core_dest, "bootstrap.min.js"))
 
+    def write_files_to_file(self, all_files, file_names, source_dir, file_pattern):
+        for f in file_names:
+            print f
+            filestring = open(os.path.join(source_dir, file_pattern % f), "r").read()
+            all_files.write(filestring)
+            all_files.write("\n")
 
-    def compile_file(self, command, source, dest):
-        compile_command = "%(command)s %(source)s > %(dest)s" %\
-                          {"command": command,
-                           "source": source,
-                           "dest": dest}
-        print compile_command
-        os.system(compile_command)
+    def compile_css(self):
+        print "\nCompiling CSS from LESS Files in HQStyle"
+        for less_file in self.less_files:
+            self.compile_file(self.lessc,
+                os.path.join(self.hqstyle_src, "_less/%s.less" % less_file),
+                os.path.join(self.destination, "css/%s.css" % less_file))
 
+    def copy_bootstrap_images(self):
+        print "\nCopying Images from HQ Bootstrap"
+        source_folder = "%s/img" % self.hq_bootstrap_src
+        dest_folder = "%s/img" % self.destination
+        self.copy_all_files(source_folder, dest_folder)
 
-    def copy_all_files(self, folder_nub, folder_nub_dest=None):
-        folder_src = os.path.join(self.bootstrap_source, folder_nub)
-        if folder_nub_dest:
-            folder_dest = os.path.join(self.bootstrap_destination, folder_nub_dest)
-        else:
-            folder_dest = os.path.join(self.bootstrap_destination, folder_nub)
-
-        if not os.path.exists(folder_dest):
-            try:
-                os.mkdir(folder_dest)
-            except OSError:
-                print "Could not create directory %s." % folder_dest
-        else:
-            self.clear_dir(folder_dest)
-
+    def copy_all_files(self, folder_src, folder_dest):
         for the_file in os.listdir(folder_src):
             file_src = os.path.join(folder_src, the_file)
             file_dest = os.path.join(folder_dest, the_file)
             try:
                 if os.path.isfile(file_src):
                     shutil.copy(file_src, file_dest)
-                else:
-                    if folder_nub_dest:
-                        self.copy_all_files("%s/%s" % (folder_nub, the_file), "%s/%s" % (folder_nub_dest, the_file))
-                    else:
-                        self.copy_all_files("%s/%s" % (folder_nub, the_file))
+                    print "copied %s" % the_file
             except OSError:
                 print "Could not handle copying file from %s to %s." % (file_src, file_dest)
 
-    def clear_dir(self, folder):
-        for the_file in os.listdir(folder):
-            file_path = os.path.join(folder, the_file)
-            try:
-                if os.path.isfile(file_path):
-                    os.remove(file_path)
-            except OSError:
-                print "Could not remove file at path %s." % file_path
-
-
-    def prepare_dir(self, file_list, root_dir):
-        created_dirs = []
-        for file in file_list:
-            structure = file.split("/")
-            if len(structure) > 1:
-                directory = "/".join(structure[0:-1])
-                if not directory in created_dirs:
-                    created_dirs.append(directory)
-                    new_dir = os.path.join(self.bootstrap_destination, "%s/%s" % (root_dir, directory))
-                    if not os.path.exists(new_dir):
-                        try:
-                            os.makedirs(new_dir)
-                        except OSError:
-                            print "Could not make directory %s." % new_dir
-                    else:
-                        self.clear_dir(new_dir)
+    def compile_file(self, command, source, dest):
+        print "Running Command:"
+        compile_command = "%(command)s %(source)s > %(dest)s" %\
+                          {"command": command,
+                           "source": source,
+                           "dest": dest}
+        print compile_command
+        os.system(compile_command)
