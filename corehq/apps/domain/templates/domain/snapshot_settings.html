@@ -14,6 +14,20 @@
             });
         });
     </script>
+    <script type="text/javascript">
+        $(function() {
+            $('#toggle-snapshots').click(function() {
+                if ($(this).text() === 'Show previous versions') {
+                    $('#snapshots').show(500);
+                    $(this).text('Hide previous versions');
+                }
+                else {
+                    $('#snapshots').hide(500);
+                    $(this).text('Show previous versions');
+                }
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block subsection-title %}
@@ -24,8 +38,29 @@
 
 {% block user-view %}
 <div>
-    <h3>This project has {{ snapshots|length }} snapshots</h3>
-    <table class="table table-striped">
+    {% if published_snapshot %}
+        <form action="{% url domain_clear_published domain %}" method="POST">
+            <h3>
+                This project has been published
+                <button style="margin-left: 4em" class="btn btn-danger" type="submit">Unpublish</button>
+            </h3>
+        </form>
+        <dl class="dl-horizontal">
+            <dt>{% trans 'Published on' %}</dt>
+            <dd>{{ published_snapshot.snapshot_time }}</dd>
+            <dt>{% trans 'License' %}</dt>
+            <dd>{{ published_snapshot.get_license_display }}</dd>
+            <dt>{% trans 'Status' %}</dt>
+            <dd>{% if published_snapshot.is_approved %}Approved{% else %}Not yet approved{% endif %}</dd>
+            <dd><a href="{% url project_info published_snapshot.name %}">View on exchange</a></dd>
+    {% else %}
+    <h3>This project has not been published</h3>
+    {% endif %}
+</div>
+<button id="toggle-snapshots" class="btn">Show previous versions</button>
+<div id="snapshots" class="hide">
+    <h3>This project has {{ snapshots|length }} unpublished versions</h3>
+    <table class="table table-striped" id="snapshot-list">
         <thead>
         <tr>
             <th></th>
@@ -68,14 +103,15 @@
 <div class="alert alert-error">{{ error_message }}</div>
 {% endif %}
 <form class="form-horizontal" method="get" action="{% url domain_create_snapshot domain %}">
+    <br>
     <fieldset>
         <legend>
-            Create a new snapshot
+            Publish a new version
         </legend>
         <div class="alert alert-info">
             <a href="#" class="close" data-dismiss="alert">×</a>
-            <h3>You are about to create a snapshot that contains the following builds:</h3>
-            <p>Snapshots are taken from the latest starred builds, or, if no builds are starred, from the latest build overall.</p>
+            <h3>You are about to publish your project using the following builds:</h3>
+            <p>Your project will be published using the latest starred builds, or, if no builds are starred, from the latest build overall.</p>
         </div>
         <div>
             <table class="table table-striped">
@@ -129,7 +165,7 @@
         </div>
     </fieldset>
 
-    <div class="form-actions"><button type="submit" class="btn btn-primary">Create snapshot from these builds</button></div>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Publish a new version of your project</button></div>
 </form>
 {% endblock %}>
 

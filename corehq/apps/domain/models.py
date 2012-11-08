@@ -484,10 +484,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         for snapshot in snapshots:
             if snapshot.published:
                 return snapshot
-        if len(snapshots) > 0:
-            return snapshots[0]
-        else:
-            return None
+        return None
 
     @classmethod
     def published_snapshots(cls, include_unapproved=False, page=None, per_page=10):

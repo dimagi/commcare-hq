@@ -141,10 +141,10 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             'author',
             'short_description',
             'description',
-            'license',
             'project_type',
-            'share_multimedia',
             'image',
+            'share_multimedia',
+            'license',
             'cda_confirmed',]
 
     def clean_cda_confirmed(self):
@@ -161,7 +161,6 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         if sm and license not in self.dom.most_restrictive_licenses:
             license_choices = [LICENSES[l] for l in self.dom.most_restrictive_licenses]
             msg = render_to_string('domain/partials/restrictive_license.html', {'licenses': license_choices})
-            self._errors["share_multimedia"] = self.error_class([msg])
             self._errors["license"] = self.error_class([msg])
 
             del cleaned_data["license"]
