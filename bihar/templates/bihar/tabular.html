@@ -1,5 +1,8 @@
 {% extends "reports/async/tabular.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
 {% block reportcontent %}
-<img src="{% static 'bihar/img/Felipe_icon_User.svg.png %}" alt="Home" />
+<p style="float:right;"><a href="{{ home }}">{% trans 'Main Menu' %}
+</a></p>
 {{ block.super }}
 {% endblock %}
