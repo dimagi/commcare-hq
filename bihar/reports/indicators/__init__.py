@@ -57,7 +57,23 @@ INDICATOR_SETS = [
                     "filter_function": "bihar.reports.indicators.filters.pregnancy_registered_last_month",
                     "row_function": "bihar.reports.indicators.filters.mother_pre_delivery_columns",
                     "sortkey": "bihar.reports.indicators.filters.get_edd_sortkey",
-                }, 
+                },
+                {
+                    "slug": "no_bp_counseling",
+                    "name": _("Pregnant woman not given BP counselling (of pregnant woman registered in last 30 days)"),
+                    "filter_function": "bihar.reports.indicators.filters.no_bp_counseling",
+                    "row_function": "bihar.reports.indicators.filters.mother_pre_delivery_columns",
+                    "sortkey": "bihar.reports.indicators.filters.get_edd_sortkey",
+                },
+                {
+                    "slug": "no_ifa_tablets",
+                    "name": _("Pregnant woman not received IFA tablets (of pregnant woman registered in last 30 days)"),
+                    "filter_function": "bihar.reports.indicators.filters.no_ifa_tablets",
+                    "row_function": "bihar.reports.indicators.filters.mother_pre_delivery_columns",
+                    "sortkey": "bihar.reports.indicators.filters.get_edd_sortkey",
+                },
+
+                
             ]
         }
     },

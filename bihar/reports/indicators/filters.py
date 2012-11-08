@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from bihar.reports.indicators.reports import DEFAULT_EMPTY
+from bihar.reports.indicators.visits import has_visit
 
 # for now we do in-memory filtering, but should consider the implications
 # before diving too far down that road.
@@ -57,6 +58,15 @@ def due_next_month(case):
         return edd and edd >= today - A_MONTH and edd < today + A_MONTH and not delivered(case)
          
     return is_pregnant_mother(case) and _due_next_month(case)
+
+def no_bp_counseling(case):
+    return pregnancy_registered_last_month(case) and not has_visit(case, 'bp')
+
+def no_ifa_tablets(case):
+    def _ifa_tabs(case):
+        ifa = getattr(case, "ifa_tablets", None)
+        return int(ifa) if ifa else 0
+    return pregnancy_registered_last_month(case) and _ifa_tabs(case) > 0
 
 def mother_pre_delivery_columns(case):
     return (case.name, getattr(case, "husband_name", DEFAULT_EMPTY),
