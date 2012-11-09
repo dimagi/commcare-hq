@@ -131,13 +131,29 @@
     
     function start_condition_type_changed() {
         if($("#id_start_condition_type").val() == "CASE_CRITERIA") {
-            $("#case_criteria_table").show();
-            $("#start_date_table").show();
-            $("#datetime_table").hide();
+            $(".for_on_datetime").hide();
+            $(".for_case_criteria").show();
+            if($("#id_recipient").val() == "SURVEY_SAMPLE") {
+                $("#id_recipient").val("CASE");
+                recipient_changed();
+            }
         } else {
-            $("#case_criteria_table").hide();
-            $("#start_date_table").hide();
-            $("#datetime_table").show();
+            $("#id_method").val("survey");
+            $(".for_case_criteria").hide();
+            $(".for_on_datetime").show();
+            if($("#id_recipient").val() != "SURVEY_SAMPLE") {
+                $("#id_recipient").val("SURVEY_SAMPLE");
+                recipient_changed();
+            }
+        }
+        method_changed();
+    }
+    
+    function recipient_changed() {
+        if($("#id_recipient").val() == "SURVEY_SAMPLE") {
+            $("#id_sample_id").show();
+        } else {
+            $("#id_sample_id").hide();
         }
     }
     
@@ -241,6 +257,10 @@
         
         $("#id_start_datetime_date").datepicker({dateFormat : "yy-mm-dd"});
         
+        $("#id_recipient").change(function() {
+            recipient_changed();
+        });
+        
         // Run on change methods
         
         method_changed();
@@ -248,6 +268,7 @@
         start_choice_changed();
         iteration_type_changed();
         start_condition_type_changed();
+        recipient_changed();
     });
 </script>
 {% endblock %}
@@ -282,7 +303,7 @@
             </select>
             <br />
             <br />
-            <table id="case_criteria_table" class="parameter_table">
+            <table id="case_criteria_table" class="parameter_table for_case_criteria">
                 <tbody>
                     <tr>
                         <td>Case Type</td>
@@ -301,7 +322,7 @@
     <h4>Start</h4>
     <div class="form-block">
         <div id="start_date_div">
-            <table id="start_date_table" class="parameter_table">
+            <table id="start_date_table" class="parameter_table for_case_criteria">
                 <tbody>
                     <tr>
                         <td>Start Date</td>
@@ -321,17 +342,17 @@
                     </tr>
                 </tbody>
             </table>
-            <table id="datetime_table" class="parameter_table">
+            <table id="datetime_table" class="parameter_table for_on_datetime">
                 <tbody>
                     <tr>
                         <td>Date</td>
                         <td><input type="text" name="start_datetime_date" id="id_start_datetime_date" value="{{ form.start_datetime_date.value|default:"" }}" /></td>
-                        <td></td>
+                        <td>{{ form.start_datetime_date.errors }}</td>
                     </tr>
                     <tr>
                         <td>Time (GMT)</td>
                         <td><input type="text" name="start_datetime_time" id="id_start_datetime_time" value="{{ form.start_datetime_time.value|default:"" }}" /></td>
-                        <td></td>
+                        <td>{{ form.start_datetime_time.errors }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -345,9 +366,9 @@
                     <td>Send</td>
                     <td>
                         <select name="method" id="id_method">
-                            <option value="sms" {% if form.method.value == "sms" %}selected="selected"{% endif %}>SMS</option>
-                            <option value="survey" {% if form.method.value == "survey" %}selected="selected"{% endif %}>SMS survey</option>
-                            <option value="callback" {% if form.method.value == "callback" %}selected="selected"{% endif %}>SMS expecting callback</option>
+                            <option value="sms" class="for_case_criteria" {% if form.method.value == "sms" %}selected="selected"{% endif %}>SMS</option>
+                            <option value="survey" class="for_case_criteria for_on_datetime" {% if form.method.value == "survey" %}selected="selected"{% endif %}>SMS survey</option>
+                            <option value="callback" class="for_case_criteria" {% if form.method.value == "callback" %}selected="selected"{% endif %}>SMS expecting callback</option>
                         </select>
                     </td>
                     <td></td>
@@ -356,11 +377,17 @@
                     <td>To</td>
                     <td>
                         <select name="recipient" id="id_recipient">
-                            <option value="USER" class="for_sms" {% if form.recipient.value == "USER" %}selected="selected"{% endif %}>The case's last submitting user</option>
-                            <option value="CASE" {% if form.recipient.value == "CASE" %}selected="selected"{% endif %}>The case</option>
+                            <option value="USER" class="for_sms for_case_criteria" {% if form.recipient.value == "USER" %}selected="selected"{% endif %}>The case's last submitting user</option>
+                            <option value="CASE" class="for_case_criteria" {% if form.recipient.value == "CASE" %}selected="selected"{% endif %}>The case</option>
+                            <option value="SURVEY_SAMPLE" class="for_on_datetime" {% if form.recipient.value == "SURVEY_SAMPLE" %}selected="selected"{% endif %}>Survey Sample</option>
+                        </select>
+                        <select name="sample_id" id="id_sample_id">
+                            {% for sample in sample_list %}
+                                <option value="{{ sample.code }}" {% if form.sample_id.value == sample.code %}selected="selected"{% endif %}>{{ sample.name }}</option>
+                            {% endfor %}
                         </select>
                     </td>
-                    <td></td>
+                    <td>{{ form.sample_id.errors }}</td>
                 </tr>
                 <tr>
                     <td>Frequency</td>
@@ -375,8 +402,8 @@
                     <td class="help_popover" data-help-key="Schedule Type">Schedule Type <i class="icon icon-question-sign"></i></td>
                     <td>
                         <select name="event_interpretation" id="id_event_interpretation">
-                            <option value="SCHEDULE">Schedule-based</option>
-                            <option value="OFFSET">Offset-based</option>
+                            <option value="SCHEDULE" {% if form.event_interpretation.value == "SCHEDULE" %}selected="selected"{% endif %}>Schedule-based</option>
+                            <option value="OFFSET" {% if form.event_interpretation.value == "OFFSET" %}selected="selected"{% endif %}>Offset-based</option>
                         </select>
                     </td>
                     <td></td>
@@ -428,6 +455,13 @@
                             <span class="btn btn-success language_message add_translation"><i class="icon icon-white icon-plus"></i> Add Translation</span>
                             <span class="btn btn-danger language_message remove_translation"><i class="icon icon-white icon-remove"></i> Remove Translation</span>
                         </div>
+                        {% empty %}
+                        <div>
+                            <input type="text" class="tiny language_message language" name="reminder_events.{{ forloop.counter }}.messages.1.language" />
+                            <input type="text" class="language_message message" name="reminder_events.{{ forloop.counter }}.messages.1.text" />
+                            <span class="btn btn-success language_message add_translation"><i class="icon icon-white icon-plus"></i> Add Translation</span>
+                            <span class="btn btn-danger language_message remove_translation"><i class="icon icon-white icon-remove"></i> Remove Translation</span>
+                        </div>
                         {% endfor %}
                     </td>
                     <td class="for_sms_survey">
@@ -439,7 +473,7 @@
                             </select>
                         </div>
                     </td>
-                    <td class="for_sms_survey for_sms_callback"><input type="text" class="short" name="reminder_events.{{ forloop.counter }}.timeouts" value="{{ e.timeouts }}" /></td>
+                    <td class="for_sms_survey for_sms_callback"><input type="text" name="reminder_events.{{ forloop.counter }}.timeouts" value="{{ e.timeouts }}" /></td>
                     <td><span class="btn btn-danger remove_event"><i class="icon icon-white icon-remove"></i> Remove</span></td>
                 </tr>
                 {% endfor %}
@@ -447,9 +481,9 @@
         </table>
         <span class="btn btn-success add_event"><i class="icon icon-white icon-plus"></i> Add Event</span>
         <br />
-        <br />
+        {{ form.schedule_length.errors }}<br />
         <span class="for_schedule_based">Schedule length (days):</span>
-        <span class="for_offset_based">Days to wait after restarting:</span>
+        <span class="for_offset_based">Days to wait before restarting schedule:</span>
         {{ form.schedule_length }}
     </div>
     <h4>Stop</h4>
@@ -468,10 +502,10 @@
                         </td>
                         <td>{{ form.max_iteration_count.errors }}</td>
                     </tr>
-                    <tr>
+                    <tr class="for_case_criteria">
                         <td>
                             Stop sending using case property
-                            <select id="id_use_until" style="width: 100px;">
+                            <select name="use_until" id="id_use_until" style="width: 100px;">
                                 <option value="Y" {% if form.until.value %}selected="selected"{% endif %}>:</option>
                                 <option value="N" {% if not form.until.value %}selected="selected"{% endif %}>(none)</option>
                             </select>

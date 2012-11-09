@@ -182,18 +182,18 @@ class ComplexCaseReminderForm(Form):
     A form used to create/edit CaseReminderHandlers with any type of schedule.
     """
     nickname = CharField(error_messages={"required":"Please enter the name of this reminder definition."})
-    case_type = CharField(error_messages={"required":"Please enter the case type."})
+    case_type = CharField(required=False)
     method = ChoiceField(choices=METHOD_CHOICES)
     recipient = ChoiceField(choices=RECIPIENT_CHOICES)
     start_match_type = ChoiceField(choices=MATCH_TYPE_DISPLAY_CHOICES)
     start_choice = ChoiceField(choices=START_CHOICES)
     iteration_type = ChoiceField(choices=ITERATION_CHOICES)
-    start_property = CharField(error_messages={"required":"Please enter the name of the case property."})
+    start_property = CharField(required=False)
     start_value = CharField(required=False)
     start_date = CharField(required=False)
-    start_offset = IntegerField(error_messages={"required":"Please enter an integer for the day offset.","invalid":"Please enter an integer for the day offset."})
+    start_offset = IntegerField(required=False)
     until = CharField(required=False)
-    default_lang = CharField(error_messages={"required":"Please enter the default language to use for the messages."})
+    default_lang = CharField(required=False)
     max_iteration_count_input = CharField(required=False)
     max_iteration_count = IntegerField(required=False)
     event_interpretation = ChoiceField(choices=EVENT_CHOICES)
@@ -201,8 +201,11 @@ class ComplexCaseReminderForm(Form):
     events = EventListField()
     submit_partial_forms = BooleanField(required=False)
     start_condition_type = CharField()
-    start_datetime_date = CharField()
-    start_datetime_time = CharField()
+    start_datetime_date = CharField(required=False)
+    start_datetime_time = CharField(required=False)
+    frequency = CharField()
+    use_until = CharField()
+    sample_id = CharField(required=False)
     
     def __init__(self, *args, **kwargs):
         super(ComplexCaseReminderForm, self).__init__(*args, **kwargs)
@@ -273,36 +276,101 @@ class ComplexCaseReminderForm(Form):
             raise ValidationError("Please enter a number greater than zero.")
         
         return max_iteration_count
-
+    
+    def clean_case_type(self):
+        if self.cleaned_data.get("start_condition_type") == "CASE_CRITERIA":
+            value = self.cleaned_data.get("case_type").strip()
+            if value == "":
+                raise ValidationError("Please enter the case type.")
+            return value
+        else:
+            return None
+    
+    def clean_start_property(self):
+        if self.cleaned_data.get("start_condition_type") == "CASE_CRITERIA":
+            value = self.cleaned_data.get("start_property").strip()
+            if value == "":
+                raise ValidationError("Please enter the case property's name.")
+            return value
+        else:
+            return None
+    
+    def clean_start_match_type(self):
+        if self.cleaned_data.get("start_condition_type") == "CASE_CRITERIA":
+            return self.cleaned_data.get("start_match_type")
+        else:
+            return None
+    
     def clean_start_value(self):
-        if self.cleaned_data.get("start_match_type", None) == MATCH_ANY_VALUE:
+        if self.cleaned_data.get("start_match_type", None) == MATCH_ANY_VALUE or self.cleaned_data.get("start_condition_type") != "CASE_CRITERIA":
             return None
         else:
-            value = self.cleaned_data.get("start_value")
-            if value is None or value == "":
+            value = self.cleaned_data.get("start_value").strip()
+            if value == "":
                 raise ValidationError("Please enter the value to match.")
             return value
-
+    
     def clean_start_date(self):
-        if self.cleaned_data.get("start_choice", None) == START_IMMEDIATELY:
+        if self.cleaned_data.get("start_choice", None) == START_IMMEDIATELY or self.cleaned_data.get("start_condition_type") != "CASE_CRITERIA":
             return None
         else:
-            value = self.cleaned_data.get("start_date")
-            if value is None or value == "":
-                raise ValidationError("Please enter the name of the case property.")
-            return value
-
-    def clean_until(self):
-        if self.cleaned_data.get("iteration_type", None) == ITERATE_FIXED_NUMBER:
-            return None
-        else:
-            value = self.cleaned_data.get("until")
+            value = self.cleaned_data.get("start_date").strip()
             if value is None or value == "":
                 raise ValidationError("Please enter the name of the case property.")
             return value
     
+    def clean_start_offset(self):
+        if self.cleaned_data.get("start_condition_type") == "CASE_CRITERIA":
+            value = self.cleaned_data.get("start_offset").strip()
+            try:
+                value = int(value)
+                return value
+            except ValueError:
+                raise ValidationError("Please enter an integer.")
+        else:
+            return 0
+    
+    def clean_until(self):
+        if self.cleaned_data.get("use_until", None) == "N" or self.cleaned_date.get("start_condition_type") != "CASE_CRITERIA":
+            return None
+        else:
+            value = self.cleaned_data.get("until").strip()
+            if value == "":
+                raise ValidationError("Please enter the name of the case property.")
+            return value
+    
     def clean_default_lang(self):
-        return self.cleaned_data.get("default_lang").strip()
+        if self.cleaned_data.get("method") == "survey":
+            return None
+        else:
+            value = self.cleaned_data.get("default_lang").strip()
+            if value == "":
+                raise ValidationError("Please enter the default language code to use for the messages.")
+            return value
+    
+    def clean_start_datetime_date(self):
+        if self.cleaned_data.get("start_condition_type") == "ON_DATETIME":
+            value = self.cleaned_data.get("start_datetime_date")
+            validate_date(value)
+            return value
+        else:
+            return None
+    
+    def clean_start_datetime_time(self):
+        if self.cleaned_data.get("start_condition_type") == "ON_DATETIME":
+            value = self.cleaned_data.get("start_datetime_time")
+            validate_time(value)
+            return value
+        else:
+            return None
+    
+    def clean_sample_id(self):
+        if self.cleaned_data.get("recipient") == "SURVEY_SAMPLE":
+            value = self.cleaned_data.get("sample_id")
+            if value is None or value == "":
+                raise ValidationError("Please select a Survey Sample.")
+        else:
+            return None
     
     def clean(self):
         cleaned_data = super(ComplexCaseReminderForm, self).clean()

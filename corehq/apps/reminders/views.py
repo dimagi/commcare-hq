@@ -127,6 +127,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
         h = None
     
     form_list = get_form_list(domain)
+    sample_list = get_sample_list(domain)
     
     if request.method == "POST":
         form = ComplexCaseReminderForm(request.POST)
@@ -150,7 +151,15 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             h.until = form.cleaned_data["until"]
             h.events = form.cleaned_data["events"]
             h.submit_partial_forms = form.cleaned_data["submit_partial_forms"]
+            h.ui_frequency = form.cleaned_data["frequency"]
             h.start_condition_type = form.cleaned_data["start_condition_type"]
+            if form.cleaned_data["start_condition_type"] == "ON_DATETIME":
+                dt = parse(form.cleaned_data["start_datetime_date"]).date()
+                tm = parse(form.cleaned_data["start_datetime_time"]).time()
+                h.start_datetime = datetime.combine(dt, tm)
+            else:
+                h.start_datetime = None
+            h.sample_id = form.cleaned_data["sample_id"]
             h.save()
             return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
     else:
@@ -175,6 +184,8 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                 "start_condition_type"  : h.start_condition_type,
                 "start_datetime_date"   : str(h.start_datetime.date()) if isinstance(h.start_datetime, datetime) else None,
                 "start_datetime_time"   : str(h.start_datetime.time()) if isinstance(h.start_datetime, datetime) else None,
+                "frequency"             : h.ui_frequency,
+                "sample_id"             : h.sample_id,
             }
         else:
             initial = {
@@ -188,6 +199,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
         "form":         form,
         "form_list":    form_list,
         "handler_id":   handler_id,
+        "sample_list":  sample_list,
     })
 
 

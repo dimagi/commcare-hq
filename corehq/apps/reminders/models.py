@@ -52,6 +52,9 @@ START_CONDITION_TYPES = [CASE_CRITERIA, ON_DATETIME]
 
 SURVEY_METHOD_LIST = ["SMS","CATI"]
 
+UI_FREQUENCY_ADVANCED = "ADVANCED"
+UI_FREQUENCY_CHOICES = [UI_FREQUENCY_ADVANCED]
+
 def is_true_value(val):
     return val == 'ok' or val == 'OK'
 
@@ -249,6 +252,7 @@ class CaseReminderHandler(Document):
     method = StringProperty(choices=METHOD_CHOICES, default="sms")
     ui_type = StringProperty(choices=UI_CHOICES, default=UI_SIMPLE_FIXED)
     recipient = StringProperty(choices=RECIPIENT_CHOICES, default=RECIPIENT_USER)
+    ui_frequency = StringProperty(choices=UI_FREQUENCY_CHOICES, default=UI_FREQUENCY_ADVANCED) # This will be used to simplify the scheduling process in the ui
     
     # Only applies when method is "survey".
     # If this is True, on the last survey timeout, instead of resending the current question, 
