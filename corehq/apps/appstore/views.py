@@ -184,7 +184,7 @@ def appstore(request, template="appstore/appstore_base.html"):
         include_unapproved=include_unapproved,
         sortables=facets_sortables,
         query_str=request.META['QUERY_STRING'],
-        search_query = params.get('search', ""))
+        search_query = params.get('search', [""])[0])
     return render_to_response(request, template, vals)
 
 @require_previewer # remove for production
@@ -340,7 +340,7 @@ def deployments(request, template="appstore/deployments.html"):
              'sortables': facets_sortables,
              'query_str': request.META['QUERY_STRING'],
              'search_url': reverse('deployments'),
-             'search_query': params.get('search', "")}
+             'search_query': params.get('search', [""])[0]}
     return render_to_response(request, template, vals)
 
 @require_previewer # remove for production
