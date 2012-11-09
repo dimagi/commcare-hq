@@ -87,11 +87,12 @@ Run `source ~/.virtualenvs/commcare-hq/bin/activate` to enter your virtualenv.
 
      brew install libmagic
 
-#### HQ Bootstrap Requirements
+#### CommCare HQ Style Developer Requirements
 
 We use our own flavor of [Twitter Bootstrap](http://twitter.github.com/bootstrap/) for our user interface.
-Please check the README on our [HQ Bootstrap project page](https://github.com/dimagi/hq-bootstrap) for requirements and instructions.
-Most notably, you will need `lessc` and `uglify-js` to compile HQ Bootstrap.
+Please check the README on our [CommCare HQ Style project page](https://github.com/dimagi/hqstyle-src) for requirements and instructions.
+Most notably, you will need `lessc` and `uglify-js` to compile CommCare HQ Style. However, since compiled files already exist,
+so you compiling the .less files from scratch will not be necessary unless you make modifications to the .less files.
 
 
 ### Install CommCare HQ
@@ -126,7 +127,6 @@ Please make sure you're still in the root directory of commcare-hq and that you 
     ./manage.py migrate
     # this will do some basic setup, create a superuser, and create a project
     ./manage.py bootstrap <project-name> <email> <password>
-    ./manage.py make_bootstrap # (if it fails add the 'direct-lessc' directive)
     ./manage.py collectstatic
 
 ### Don't forget to start up helper processes

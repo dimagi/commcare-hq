@@ -110,7 +110,6 @@ def staging():
     env.db = '%s_%s' % (env.project, env.environment)
     _setup_path()
     env.user = prompt("Username: ", default='dimagivm')
-    env.make_bootstrap_command = 'python manage.py make_bootstrap direct-lessc'
 
 @task
 def india():
@@ -124,7 +123,6 @@ def india():
     env.hosts = ['220.226.209.82']
     env.user = prompt("Username: ", default=env.user)
     env.service_manager = "supervisor"
-    env.make_bootstrap_command = 'python manage.py make_bootstrap'
     env.server_port = '8001'
 
     _setup_path()
@@ -489,7 +487,6 @@ def _do_collectstatic():
     Collect static after a code update
     """
     with cd(env.code_root):
-        sudo('%(virtualenv_root)s/bin/python manage.py make_bootstrap' % env, user=env.sudo_user)
         sudo('%(virtualenv_root)s/bin/python manage.py collectstatic --noinput' % env, user=env.sudo_user)
 
 @roles('django_app', 'django_monolith')
