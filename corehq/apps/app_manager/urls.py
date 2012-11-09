@@ -29,6 +29,7 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     (r'^view/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/source/$',
                                                                             'form_source'),
     url(r'^view/(?P<app_id>[\w-]+)/summary/$', 'summary', name='app_summary'),
+    url(r'^view/(?P<app_id>[\w-]+)/exchange_summary/$', 'summary', {'webapp': False}, name='exchange_app_summary'),
     (r'^$',                                                                 'default'),
 
     (r'^new_module/(?P<app_id>[\w-]+)/$',                                       'new_module'),

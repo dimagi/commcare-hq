@@ -1824,7 +1824,7 @@ def _find_name(names, langs):
     return name
 
 @login_and_domain_required
-def summary(request, domain, app_id):
+def summary(request, domain, app_id, webapp=True):
     app = Application.get(app_id)
     context = get_apps_base_context(request, domain, app)
     langs = context['langs']
@@ -1844,4 +1844,7 @@ def summary(request, domain, app_id):
     context['modules'] = modules
     context['summary'] = True
 
-    return render_to_response(request, "app_manager/summary.html", context)
+    if webapp:
+        return render_to_response(request, "app_manager/summary.html", context)
+    else:
+        return render_to_response(request, "app_manager/app_summary.html", context)
