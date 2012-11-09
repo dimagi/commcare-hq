@@ -241,6 +241,7 @@
     {% endif %}
     <div class="span3">
         <div class="well">
+            <a href="{% url project_info app.name %}">
             {% if app.image_path %}
             <div style="text-align: center;">
                 <img class="app-pic" src="{% url appstore_project_image app.name %}" />
@@ -250,6 +251,7 @@
                 <img class="app-pic opacity65" src="{% static 'hq_bootstrap/img/no-image-available.png' %}" />
             </div>
             {% endif %}
+            </a>
             <h2>
                 {{ app.title }}
                 <br/>
