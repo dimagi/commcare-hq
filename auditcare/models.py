@@ -274,10 +274,6 @@ class ModelActionAudit(AuditEvent):
                 audit.compute_changes(save=False)
                 audit.save()
 
-                prev_doc = cls.get(sorted_revs[-1]['id'])
-                prev_doc.next_id = audit._id
-                prev_doc.save()
-
     @classmethod
     def audit_django_save(cls, model_class, instance, instance_json, user):
         audit = cls.create_audit(cls, user)
