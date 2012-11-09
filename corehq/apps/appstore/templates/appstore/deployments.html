@@ -4,7 +4,15 @@
 {% load i18n %}
 
 {% block sidebar %}
-    {% include 'partials/sidebar.html' with search_for="deployments" search_name="search" %}
+    {% url deployments as search_url %}
+    {% include 'partials/sidebar.html' with search_name="search" search_for="deployments..." display_ua='true' %}
+{% endblock %}
+
+{% block tabs %}
+    {% url deployments as search_url %}
+    <ul class="nav">
+        {% include 'partials/search_input.html' with search_name="search" search_for="deployments..." %}
+    </ul>
 {% endblock %}
 
 {% block store-header %}

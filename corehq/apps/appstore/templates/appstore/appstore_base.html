@@ -166,10 +166,16 @@
     </style>
 {% endblock %}
 
-
 {% block sidebar %}
-{% url appstore as search_url %}
-{% include 'partials/sidebar.html' with search_for="apps..." search_name="search" display_ua='true' %}
+    {% url appstore as search_url %}
+    {% include 'partials/sidebar.html' with search_name="search" search_for="apps..." display_ua='true' %}
+{% endblock %}
+
+{% block tabs %}
+    {% url appstore as search_url %}
+    <ul class="nav">
+        {% include 'partials/search_input.html' with search_name="search" search_for="apps..." %}
+    </ul>
 {% endblock %}
 
 {% block page-title %}
