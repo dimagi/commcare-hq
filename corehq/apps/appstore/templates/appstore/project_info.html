@@ -19,7 +19,7 @@
     {% if project.image_path %}
         <img class="app-pic" src="{% url appstore_project_image project.name %}" />
     {% else %}
-        <img class="app-pic opacity65" src="{% static 'hq_bootstrap/img/no-image-available.png' %}" />
+        <img class="app-pic opacity65" src="{% static 'hqstyle/img/no-image-available.png' %}" />
     {% endif %}
 </div>
     <div class="span7">
@@ -61,6 +61,10 @@
             <h6>None</h6>
         {% endif %}
     </dd>
+    <dt> {% trans 'Published on' %}</dt>
+    <dd>
+        {{ project.snapshot_time|date:"N j, Y" }}
+    </dd>
     {% if project.city %}
     <dt>City</dt>
     <dd>{{ project.city }}</dd>
@@ -88,105 +92,94 @@
 {#        This version: {{ project.copies|length }};#}
         <!-- All versions: -->{{ project.copies_of_parent|length }}
     </dd>
- </dl>
-
-<h2>Applications</h2>
-        <div class="accordion" id="application-accordion">
-            {% for app in project.full_applications %}
-                <div class="accordion-group">
-                    <div class="accordion-heading">
-                        <a class="accordion-toggle" href="#application-{{ app.id }}" data-toggle="collapse" data-parent="#application-accordion">{{ app.name }}</a>
-                    </div>
-                    <div id="application-{{ app.id }}" class="accordion-body collapse">
-                        <dl class="dl-horizontal">
-                            <dt>Uses cases?</dt>
-                            <dd>{{ app.has_case_management|yesno:"Yes,No" }}</dd>
-                            <dt>Has media?</dt>
-                            <dd>
-                                {{ app.has_media|yesno:"Yes,No" }}
-                            </dd>
-                            <dt>CommCare</dt>
-                            <dd>
-                                Version {{ app.application_version }}
-                            </dd>
-                            {% if app.user_type %}
-                                <dt>User type</dt>
-                                <dd>{{ app.user_type }}</dd>
-                            {% endif %}
-                            {% if app.phone_model %}
-                                <dt>Phone model</dt>
-                                <dd>{{ app.phone_model }}</dd>
-                            {% endif %}
-                            {% if app.deployment_date %}
-                                <dt>Deployment date</dt>
-                                <dd>{{ app.deployment_date.date }}</dd>
-                            {% endif %}
-                            {% if app.short_description %}
-                                <dt>{% trans 'Short Description' %}</dt>
-                                <dd>
-                                    {{ app.short_description }}
-                                </dd>
-                            {% endif %}
-                            {% if app.description %}
-                                <dt>{% trans 'Long Description' %}</dt>
-                                <dd>
-                                    {{ app.description }}
-                                </dd>
-                            {% endif %}
-                            <dd><a class="btn" href="{% url exchange_app_summary project app.id %}">Application summary</a></dd>
-                        </dl>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-        <div>
-            <form method="post" class="form-inline" action="{% url domain_copy_snapshot project %}">
-                <fieldset>
-                    <legend>Download project</legend>
-                    {% if project.attribution_notes %}
+</dl>
+<hr />
+    <div id="application-accordion">
+        {% for app in project.full_applications %}
+            <div id="application-{{ app.id }}">
+                <dl class="dl-horizontal">
+                    <dd><h4>{{ app.name }}</h4></dd>
+                    <dt>Media</dt>
+                    <dd>
+                        {{ app.has_media|yesno:"Yes,No" }}
+                    </dd>
+                    <dt>CommCare</dt>
+                    <dd>
+                        Version {{ app.application_version }}
+                    </dd>
+                    {% if app.user_type %}
+                        <dt>User type</dt>
+                        <dd>{{ app.user_type }}</dd>
+                    {% endif %}
+                    {% if app.phone_model %}
+                        <dt>Phone model</dt>
+                        <dd>{{ app.phone_model }}</dd>
+                    {% endif %}
+                    {% if app.short_description %}
+                        <dt>{% trans 'Short Description' %}</dt>
+                        <dd>
+                            {{ app.short_description }}
+                        </dd>
+                    {% endif %}
+                    {% if app.description %}
+                        <dt>{% trans 'Long Description' %}</dt>
+                        <dd>
+                            {{ app.description }}
+                        </dd>
+                    {% endif %}
+                    <dd><a class="btn" style="margin: .4em 0" href="{% url exchange_app_summary project app.id %}">Application summary</a></dd>
+                </dl>
+            </div>
+        {% endfor %}
+    </div>
+    <div>
+        <form method="post" class="form-inline" action="{% url domain_copy_snapshot project %}">
+            <fieldset>
+                <legend>Download project</legend>
+                {% if project.attribution_notes %}
                     <dl>
                         <dt>Attribution notes</dt>
                         <dd>{{ project.attribution_notes }}</dd>
                     </dl>
-                    {% endif %}
-                    <div{% if error_message %} class="error"{% endif %}>
-                        <input type="text" class="span3" id="new_project_name"
-                               name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">
-                        {% if error_message %}
+                {% endif %}
+                <div{% if error_message %} class="error"{% endif %}>
+                    <input type="text" class="span3" id="new_project_name"
+                           name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">
+                    {% if error_message %}
                         <span class="help-inline">{{ error_message }}</span>
-                        {% endif %}
+                    {% endif %}
                     <button type="submit" class="btn btn-primary">Create New Project</button>
-                    </div>
+                </div>
 
-                </fieldset>
-            </form>
-        </div>
+            </fieldset>
+        </form>
+    </div>
 
-<hr/>
-        <div>
-            <h3>Reviews of {{ project.copied_from.display_name }}</h3>
-            {% if project.copied_from.name not in request.couch_user.get_domains %}
+    <hr/>
+    <div>
+        <h3>Reviews of {{ project.copied_from.display_name }}</h3>
+        {% if project.copied_from.name not in request.couch_user.get_domains %}
             <div>
                 <a href="#add_review_modal" data-toggle="modal" class="btn btn-inverse">Write a Review</a>
             </div>
-            {% endif %}
-        </div>
-        {% for review in reviews %}
-            <hr/>
-            <div class="row">
-                <div class="span1">
-                    <h4 style="padding-left:25px">{{ forloop.counter }})</h4>
-                </div>
-                <div class="span6">
-                    <div>
-                        {% include "partials/five_stars.html" with rating_name=review.get_id rating=review.rating class="pi-stars" %}
-                        <h4 style="display: inline-block; vertical-align: bottom;">{{ review.title }}</h4>
-                    </div>
-                    <div>{{ review.info }}</div>
-                    <p><small>{{ review.user }} on {{ review.date_published }}</small></p>
-                </div>
+        {% endif %}
+    </div>
+    {% for review in reviews %}
+        <hr/>
+        <div class="row">
+            <div class="span1">
+                <h4 style="padding-left:25px">{{ forloop.counter }})</h4>
             </div>
-        {% endfor %}
+            <div class="span6">
+                <div>
+                    {% include "partials/five_stars.html" with rating_name=review.get_id rating=review.rating class="pi-stars" %}
+                    <h4 style="display: inline-block; vertical-align: bottom;">{{ review.title }}</h4>
+                </div>
+                <div>{{ review.info }}</div>
+                <p><small>{{ review.user }} on {{ review.date_published }}</small></p>
+            </div>
+        </div>
+    {% endfor %}
 {% endblock %}
 
 
