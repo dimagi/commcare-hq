@@ -3,11 +3,6 @@
 {% load hq_bootstrap_tags %}
 {% load i18n %}
 
-{% block sidebar %}
-    {% url deployments as search_url %}
-    {% include 'partials/sidebar.html' with search_name="search" search_for="deployments..." display_ua='true' %}
-{% endblock %}
-
 {% block tabs %}
     {% url deployments as search_url %}
     <ul class="nav">

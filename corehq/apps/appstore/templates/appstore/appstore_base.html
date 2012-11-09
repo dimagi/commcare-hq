@@ -167,8 +167,7 @@
 {% endblock %}
 
 {% block sidebar %}
-    {% url appstore as search_url %}
-    {% include 'partials/sidebar.html' with search_name="search" search_for="apps..." display_ua='true' %}
+    {% include 'partials/sidebar.html' with display_ua='true' %}
 {% endblock %}
 
 {% block tabs %}
