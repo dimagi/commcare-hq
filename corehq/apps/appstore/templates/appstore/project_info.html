@@ -167,17 +167,18 @@
                     {% endif %}
                     <button type="submit" class="btn btn-primary">Create New Project</button> or
                     <a class="btn" id="import-app-button">Import to Existing Project</a>
-                    <div class="hide" style="margin-top: 1em" id="import-app">
-                        <select name="project" id="project_select">
-                            {% for p in request.couch_user.projects %}
-                                <option value="{{ p.name }}">{{ p.display_name }}</option>
-                            {% endfor %}
-                        </select>
-                        <button type="submit" id="import-into-button" class="btn btn-primary">Import into</button>
-                    </div>
                 </div>
-
             </fieldset>
+        </form>
+        <form method="post" class="form-inline" action="{% url import_app_from_snapshot project %}">
+            <div class="hide" id="import-app">
+                <select name="project" id="project_select">
+                    {% for p in request.couch_user.projects %}
+                        <option value="{{ p.name }}">{{ p.display_name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" id="import-into-button" class="btn btn-primary">Import into</button>
+            </div>
         </form>
     </div>
 

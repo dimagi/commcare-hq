@@ -19,8 +19,8 @@ urlpatterns = patterns('corehq.apps.appstore.views',
     url(r'^deployments/(?P<domain>[\w\.-]+)/info/$', 'deployment_info', name='deployment_info'),
 
     url(r'^(?P<domain>[\w\.-]+)/approve/$', 'approve_app', name='approve_appstore_app'),
-    url(r'^(?P<domain>[\w\.-]+)/copyapp/', 'copy_snapshot_app', name='copy_snapshot_app'),
     url(r'^(?P<domain>[\w\.-]+)/copy/$', 'copy_snapshot', name='domain_copy_snapshot'),
+    url(r'^(?P<domain>[\w\.-]+)/importapp/$', 'import_app', name='import_app_from_snapshot'),
     url(r'^(?P<domain>[\w\.-]+)/image/$', 'project_image', name='appstore_project_image'),
 
     url(r'^cda/$', direct_to_template, {'template': 'cda.html'}, name='cda'),
