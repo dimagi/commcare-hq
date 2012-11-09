@@ -3,6 +3,23 @@
 {% load hqstyle_tags %}
 {% load i18n %}
 
+{% block js %}{{ block.super }}
+    <script>
+        function update_import_into_button() {
+            var project = $('#project_select option:selected').text();
+            $("#import-into-button").text("Import into " + project);
+        }
+        $(function () {
+            update_import_into_button();
+
+            $("#import-app-button").click(function() {
+                $('#import-app').show(500);
+            });
+
+            $('#project_select').change(update_import_into_button);
+        });
+    </script>
+{% endblock %}
 
 {% block sidebar %}
 {% endblock %}
@@ -148,7 +165,16 @@
                     {% if error_message %}
                         <span class="help-inline">{{ error_message }}</span>
                     {% endif %}
-                    <button type="submit" class="btn btn-primary">Create New Project</button>
+                    <button type="submit" class="btn btn-primary">Create New Project</button> or
+                    <a class="btn" id="import-app-button">Import to Existing Project</a>
+                    <div class="hide" style="margin-top: 1em" id="import-app">
+                        <select name="project" id="project_select">
+                            {% for p in request.couch_user.projects %}
+                                <option value="{{ p.name }}">{{ p.display_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" id="import-into-button" class="btn btn-primary">Import into</button>
+                    </div>
                 </div>
 
             </fieldset>
