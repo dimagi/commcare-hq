@@ -1824,7 +1824,17 @@ def _find_name(names, langs):
     return name
 
 @login_and_domain_required
-def summary(request, domain, app_id, webapp=True):
+def app_summary(request, domain, app_id):
+    return summary(request, domain, app_id, should_edit=True)
+
+def app_summary_from_exchange(request, domain, app_id):
+    dom = Domain.get_by_name(domain)
+    if dom.is_snapshot:
+        return summary(request, domain, app_id, should_edit=False)
+    else:
+        return HttpResponseForbidden()
+
+def summary(request, domain, app_id, should_edit=True):
     app = Application.get(app_id)
     context = get_apps_base_context(request, domain, app)
     langs = context['langs']
@@ -1844,7 +1854,7 @@ def summary(request, domain, app_id, webapp=True):
     context['modules'] = modules
     context['summary'] = True
 
-    if webapp:
+    if should_edit:
         return render_to_response(request, "app_manager/summary.html", context)
     else:
-        return render_to_response(request, "app_manager/app_summary.html", context)
+        return render_to_response(request, "app_manager/exchange_summary.html", context)
