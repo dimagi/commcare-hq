@@ -157,6 +157,12 @@
         opacity: 0.65;
     }
 
+    .pi-stars {
+        display: inline-block;
+        padding-right: 1.8em;
+        font-size: 70%;
+    }
+
     </style>
 {% endblock %}
 
@@ -235,6 +241,7 @@
     {% endif %}
     <div class="span3">
         <div class="well">
+            <a href="{% url project_info app.name %}">
             {% if app.image_path %}
             <div style="text-align: center;">
                 <img class="app-pic" src="{% url appstore_project_image app.name %}" />
@@ -244,6 +251,7 @@
                 <img class="app-pic opacity65" src="{% static 'hqstyle/img/no-image-available.png' %}" />
             </div>
             {% endif %}
+            </a>
             <h2>
                 {{ app.title }}
                 <br/>
@@ -267,7 +275,6 @@
                         {% endif %}
                     {% endif %}
                 {% endfor %}
-            <br/>
             <h6>{{ app.copies_of_parent|length }} download{{ app.copies_of_parent|length|pluralize }}</h6>
         <p>{{ app.short_description }}</p>
         <p>Last updated: {{ app.snapshot_time|date:"N j, Y" }}</p>

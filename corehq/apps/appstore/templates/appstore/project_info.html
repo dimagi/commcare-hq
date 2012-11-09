@@ -133,7 +133,7 @@
                                     {{ app.description }}
                                 </dd>
                             {% endif %}
-                            <dd><a href="{% url app_summary project app.id %}">Application summary</a></dd>
+                            <dd><a href="{% url exchange_app_summary project app.id %}">Application summary</a></dd>
                         </dl>
                     </div>
                 </div>
@@ -172,20 +172,20 @@
             {% endif %}
         </div>
         {% for review in reviews %}
-        <hr/>
-        <div class="row">
-            <div class="span1">
-                <h4 style="padding-left:25px">{{ forloop.counter }})</h4>
+            <hr/>
+            <div class="row">
+                <div class="span1">
+                    <h4 style="padding-left:25px">{{ forloop.counter }})</h4>
+                </div>
+                <div class="span6">
+                    <div>
+                        {% include "partials/five_stars.html" with rating_name=review.get_id rating=review.rating class="pi-stars" %}
+                        <h4 style="display: inline-block; vertical-align: bottom;">{{ review.title }}</h4>
+                    </div>
+                    <div>{{ review.info }}</div>
+                    <p><small>{{ review.user }} on {{ review.date_published }}</small></p>
+                </div>
             </div>
-            <div class="span6">
-        <h4>{{ review.title }}</h4>
-        <div>
-            <p><small>{{ review.user }} on {{ review.date_published }}</small></p>
-            {% include "partials/five_stars.html" with rating_name=review.get_id rating=review.rating %}
-        </div>
-        <div>{{ review.info }}</div>
-            </div>
-        </div>
         {% endfor %}
 {% endblock %}
 
