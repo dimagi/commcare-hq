@@ -17,11 +17,6 @@
         margin: 0;
         padding: 0;
     }
-    .errorlist li {
-        background-color: #F88;
-        border: 1px solid #A44;
-        padding: 2px;
-    }
     div.clickable {
         cursor: pointer;
         font-family: "Courier New";
@@ -69,7 +64,7 @@
                         });
                         break;
                     case 3:
-                        $(this).find("input").attr("name", "reminder_events." + i + ".survey");
+                        $(this).find("select").attr("name", "reminder_events." + i + ".survey");
                         break;
                     case 4:
                         $(this).find("input").attr("name", "reminder_events." + i + ".timeouts");
@@ -157,6 +152,14 @@
         }
     }
     
+    function use_until_changed() {
+        if($("#id_use_until").val() == "Y") {
+            $("#id_until").show();
+        } else {
+            $("#id_until").hide();
+        }
+    }
+    
     $(function(){
         // Set help text bubbles
         
@@ -221,11 +224,7 @@
         });
         
         $("#id_use_until").change(function() {
-            if($("#id_use_until").val() == "Y") {
-                $("#id_until").show();
-            } else {
-                $("#id_until").hide();
-            }
+            use_until_changed();
         });
         
         $(".add_event").click(function() {
@@ -244,7 +243,7 @@
         });
         
         $("#id_start_match_type").change(function() {
-            if ($("id_start_match_type").val() == "ANY_VALUE") {
+            if ($("#id_start_match_type").val() == "ANY_VALUE") {
                 $("#id_start_value").hide();
             } else {
                 $("#id_start_value").show();
@@ -269,6 +268,7 @@
         iteration_type_changed();
         start_condition_type_changed();
         recipient_changed();
+        use_until_changed();
     });
 </script>
 {% endblock %}
@@ -288,8 +288,11 @@
     <br />
     <table id="reminder_info" class="parameter_table">
         <tbody>
-            <tr><td></td><td>{{ form.nickname.errors }}</td></tr>
-            <tr><td><h4>Name</h4></td><td>{{ form.nickname }}</td></tr>
+            <tr>
+                <td><h4>Name</h4></td>
+                <td>{{ form.nickname }}</td>
+                <td>{{ form.nickname.errors }}</td>
+            </tr>
         </tbody>
     </table>
     <br />
@@ -481,10 +484,19 @@
         </table>
         <span class="btn btn-success add_event"><i class="icon icon-white icon-plus"></i> Add Event</span>
         <br />
-        {{ form.schedule_length.errors }}<br />
-        <span class="for_schedule_based">Schedule length (days):</span>
-        <span class="for_offset_based">Days to wait before restarting schedule:</span>
-        {{ form.schedule_length }}
+        <br />
+        <table class="parameter_table">
+            <tbody>
+                <tr>
+                    <td>
+                        <span class="for_schedule_based">Schedule length (days):</span>
+                        <span class="for_offset_based">Days to wait before restarting schedule:</span>
+                        {{ form.schedule_length }}
+                    </td>
+                    <td>{{ form.schedule_length.errors }}</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
     <h4>Stop</h4>
     <div class="form-block">
@@ -495,8 +507,8 @@
                         <td>
                             Repeat the schedule
                             <select name="iteration_type" id="id_iteration_type">
-                                <option value="FIXED">the following number of times:</option>
-                                <option value="INDEFINITE">indefinitely</option>
+                                <option value="FIXED" {% if form.iteration_type.value == "FIXED" %}selected="selected"{% endif %}>the following number of times:</option>
+                                <option value="INDEFINITE" {% if form.iteration_type.value == "INDEFINITE" %}selected="selected"{% endif %}>indefinitely</option>
                             </select>
                             <input type="text" name="max_iteration_count_input" id="id_max_iteration_count_input" class="tiny" value="{{ form.max_iteration_count_input.value|default:"" }}" />
                         </td>
@@ -506,8 +518,8 @@
                         <td>
                             Stop sending using case property
                             <select name="use_until" id="id_use_until" style="width: 100px;">
-                                <option value="Y" {% if form.until.value %}selected="selected"{% endif %}>:</option>
-                                <option value="N" {% if not form.until.value %}selected="selected"{% endif %}>(none)</option>
+                                <option value="Y" {% if form.use_until.value == "Y" %}selected="selected"{% endif %}>:</option>
+                                <option value="N" {% if form.use_until.value == "N" %}selected="selected"{% endif %}>(none)</option>
                             </select>
                             <input type="text" name="until" id="id_until" value="{{ form.until.value|default:"" }}" {% if not form.until.value %}style="display: none;"{% endif %} />
                         </td>

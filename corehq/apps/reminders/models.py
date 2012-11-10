@@ -253,6 +253,7 @@ class CaseReminderHandler(Document):
     ui_type = StringProperty(choices=UI_CHOICES, default=UI_SIMPLE_FIXED)
     recipient = StringProperty(choices=RECIPIENT_CHOICES, default=RECIPIENT_USER)
     ui_frequency = StringProperty(choices=UI_FREQUENCY_CHOICES, default=UI_FREQUENCY_ADVANCED) # This will be used to simplify the scheduling process in the ui
+    sample_id = StringProperty()
     
     # Only applies when method is "survey".
     # If this is True, on the last survey timeout, instead of resending the current question, 

@@ -135,6 +135,10 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             if h is None:
                 h = CaseReminderHandler(domain=domain)
                 h.ui_type = UI_COMPLEX
+            else:
+                if h.start_condition_type != form.cleaned_data["start_condition_type"]:
+                    for reminder in h.get_reminders():
+                        reminder.retire()
             h.case_type = form.cleaned_data["case_type"]
             h.nickname = form.cleaned_data["nickname"]
             h.default_lang = form.cleaned_data["default_lang"]
@@ -186,6 +190,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                 "start_datetime_time"   : str(h.start_datetime.time()) if isinstance(h.start_datetime, datetime) else None,
                 "frequency"             : h.ui_frequency,
                 "sample_id"             : h.sample_id,
+                "use_until"             : "Y" if h.until is not None else "N"
             }
         else:
             initial = {

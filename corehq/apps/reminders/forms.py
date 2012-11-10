@@ -6,7 +6,7 @@ from django.forms.fields import *
 from django.forms.forms import Form
 from django.forms import Field, Widget, Select, TextInput
 from django.utils.datastructures import DotExpandedDict
-from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_USER, RECIPIENT_CASE, MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET, SurveySample, CaseReminderHandler
+from .models import REPEAT_SCHEDULE_INDEFINITELY, CaseReminderEvent, RECIPIENT_USER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE, MATCH_EXACT, MATCH_REGEX, MATCH_ANY_VALUE, EVENT_AS_SCHEDULE, EVENT_AS_OFFSET, SurveySample, CaseReminderHandler
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from dateutil.parser import parse
@@ -20,8 +20,9 @@ METHOD_CHOICES = (
 )
 
 RECIPIENT_CHOICES = (
-    (RECIPIENT_USER, "the user whose case matches the rule"),
-    (RECIPIENT_CASE, "the case that matches the rule")
+    (RECIPIENT_USER, "The case's last submitting user"),
+    (RECIPIENT_CASE, "The case"),
+    (RECIPIENT_SURVEY_SAMPLE, "Survey Sample"),
 )
 
 MATCH_TYPE_DISPLAY_CHOICES = (
@@ -122,8 +123,9 @@ class EventListField(Field):
         for e in value:
             try:
                 day = int(e["day"])
-            except Exception:
-                raise ValidationError("Day must be specified and must be a number.")
+                assert day >= 0
+            except (ValueError, AssertionError):
+                raise ValidationError("Day must be specified and must be a non-negative number.")
             
             pattern = re.compile("\d{1,2}:\d\d")
             if pattern.match(e["time"]):
@@ -182,6 +184,7 @@ class ComplexCaseReminderForm(Form):
     A form used to create/edit CaseReminderHandlers with any type of schedule.
     """
     nickname = CharField(error_messages={"required":"Please enter the name of this reminder definition."})
+    start_condition_type = CharField()
     case_type = CharField(required=False)
     method = ChoiceField(choices=METHOD_CHOICES)
     recipient = ChoiceField(choices=RECIPIENT_CHOICES)
@@ -191,20 +194,19 @@ class ComplexCaseReminderForm(Form):
     start_property = CharField(required=False)
     start_value = CharField(required=False)
     start_date = CharField(required=False)
-    start_offset = IntegerField(required=False)
+    start_offset = CharField(required=False)
+    use_until = CharField()
     until = CharField(required=False)
     default_lang = CharField(required=False)
     max_iteration_count_input = CharField(required=False)
     max_iteration_count = IntegerField(required=False)
     event_interpretation = ChoiceField(choices=EVENT_CHOICES)
-    schedule_length = IntegerField()
+    schedule_length = CharField()
     events = EventListField()
     submit_partial_forms = BooleanField(required=False)
-    start_condition_type = CharField()
     start_datetime_date = CharField(required=False)
     start_datetime_time = CharField(required=False)
     frequency = CharField()
-    use_until = CharField()
     sample_id = CharField(required=False)
     
     def __init__(self, *args, **kwargs):
@@ -262,20 +264,16 @@ class ComplexCaseReminderForm(Form):
         self.initial["events"] = events
     
     def clean_max_iteration_count(self):
-        if self.cleaned_data.get("iteration_type",None) == ITERATE_FIXED_NUMBER:
-            max_iteration_count = self.cleaned_data.get("max_iteration_count_input",None)
+        if self.cleaned_data.get("iteration_type") == ITERATE_FIXED_NUMBER:
+            max_iteration_count = self.cleaned_data.get("max_iteration_count_input")
+            try:
+                max_iteration_count = int(max_iteration_count)
+                assert max_iteration_count > 0
+                return max_iteration_count
+            except (ValueError, AssertionError):
+                raise ValidationError("Please enter a number greater than zero.")
         else:
-            max_iteration_count = REPEAT_SCHEDULE_INDEFINITELY
-        
-        try:
-            max_iteration_count = int(max_iteration_count)
-        except Exception:
-            raise ValidationError("Please enter a number greater than zero.")
-        
-        if max_iteration_count != REPEAT_SCHEDULE_INDEFINITELY and max_iteration_count <= 0:
-            raise ValidationError("Please enter a number greater than zero.")
-        
-        return max_iteration_count
+            return REPEAT_SCHEDULE_INDEFINITELY
     
     def clean_case_type(self):
         if self.cleaned_data.get("start_condition_type") == "CASE_CRITERIA":
@@ -331,7 +329,7 @@ class ComplexCaseReminderForm(Form):
             return 0
     
     def clean_until(self):
-        if self.cleaned_data.get("use_until", None) == "N" or self.cleaned_date.get("start_condition_type") != "CASE_CRITERIA":
+        if self.cleaned_data.get("use_until", None) == "N" or self.cleaned_data.get("start_condition_type") != "CASE_CRITERIA":
             return None
         else:
             value = self.cleaned_data.get("until").strip()
@@ -369,8 +367,23 @@ class ComplexCaseReminderForm(Form):
             value = self.cleaned_data.get("sample_id")
             if value is None or value == "":
                 raise ValidationError("Please select a Survey Sample.")
+            return value
         else:
             return None
+    
+    def clean_schedule_length(self):
+        try:
+            value = self.cleaned_data.get("schedule_length")
+            value = int(value)
+        except ValueError:
+            raise ValidationError("Please enter a number.")
+        
+        if self.cleaned_data.get("event_interpretation") == "OFFSET" and value < 0:
+            raise ValidationError("Please enter a non-negative number.")
+        elif self.cleaned_data.get("event_interpretation") == "SCHEDULE" and value <= 0:
+            raise ValidationError("Please enter a positive number.")
+        
+        return value
     
     def clean(self):
         cleaned_data = super(ComplexCaseReminderForm, self).clean()
