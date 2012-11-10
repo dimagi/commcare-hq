@@ -4,14 +4,16 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from django.core.cache import cache
 from corehq.apps.domain.models import Domain
-from corehq.apps.reports.models import (DailyReportNotification,
-    HQGroupExportConfiguration, CaseActivityReportCache)
+from corehq.apps.reports.models import (ReportNotification,
+    DailyReportNotification, HQGroupExportConfiguration,
+    CaseActivityReportCache)
 from couchexport.groupexports import export_for_group
 
 logging = get_task_logger()
 
 @task
-def send_report(notification):
+def send_report(notification_id):
+    notification = ReportNotification.get(notification_id)
     notification.send()
 
 @periodic_task(run_every=crontab(hour="*", minute="0", day_of_week="*"))
@@ -21,7 +23,7 @@ def daily_reports():
                                         key=datetime.utcnow().hour, 
                                         include_docs=True).all()
     for rep in reps:
-        send_report.delay(rep)
+        send_report.delay(rep._id)
 
 @periodic_task(run_every=crontab(hour="*", minute="1", day_of_week="*"))
 def weekly_reports():    
@@ -31,7 +33,7 @@ def weekly_reports():
                                         key=[now.weekday(), now.hour], 
                                         include_docs=True).all()
     for rep in reps:
-        send_report.delay(rep)
+        send_report.delay(rep._id)
 
 @periodic_task(run_every=crontab(hour=[0,12], minute="0", day_of_week="*"))
 def saved_exports():    

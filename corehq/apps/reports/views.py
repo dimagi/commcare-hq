@@ -612,7 +612,7 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
         user = CommCareUser.get_by_user_id(user_id, domain)
 
     try:
-        send_report.delay(notification)
+        send_report.delay(notification._id)
     except Exception, e:
         import logging
         logging.exception(e)
