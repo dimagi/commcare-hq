@@ -1,6 +1,6 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load hq_shared_tags %}
-{% load hq_bootstrap_tags %}
+{% load hqstyle_tags %}
 {% load i18n %}
 {% load url_extras %}
 
@@ -13,6 +13,14 @@
                 $('.sortable-' + sortable).show();
                 e.hide();
                 return false;
+            });
+        });
+    </script>
+
+    <script type="text/javascript">
+        $(function () {
+            $(".facet-checkbox").click(function() {
+                window.location = $(this).parent().attr('href');
             });
         });
     </script>
@@ -137,12 +145,36 @@
         margin-top: 25px;
     }
 
+    .app-pic {
+        max-width: 180px;
+        max-height: 180px;
+    }
+
+    .opacity65 {
+        filter:alpha(opacity=65);
+        -moz-opacity:0.65;
+        -khtml-opacity: 0.65;
+        opacity: 0.65;
+    }
+
+    .pi-stars {
+        display: inline-block;
+        padding-right: 1.8em;
+        font-size: 70%;
+    }
+
     </style>
 {% endblock %}
 
-
 {% block sidebar %}
-{% include 'partials/sidebar.html' with search_for="apps..." search_name="search" display_ua='true' %}
+    {% include 'partials/sidebar.html' with display_ua='true' %}
+{% endblock %}
+
+{% block tabs %}
+    {% url appstore as search_url %}
+    <ul class="nav">
+        {% include 'partials/search_input.html' with search_name="search" search_for="apps..." %}
+    </ul>
 {% endblock %}
 
 {% block page-title %}
@@ -158,6 +190,7 @@
     {% if search_query %}
         <li>
             Searching for "{{ search_query }}"
+            <a href="{% urlencode request.path request.GET without "search" %}" style="font-size: 60%;">(cancel)</a>
             {% if sort_by %}
                 <span class="divider">&gt;</span>
             {% endif %}
@@ -213,15 +246,20 @@
     {% endif %}
     <div class="span3">
         <div class="well">
+            <a href="{% url project_info app.name %}">
             {% if app.image_path %}
             <div style="text-align: center;">
-                <img src="{% url appstore_project_image app.name %}" style="max-width: 200px; max-height:200px;" />
+                <img class="app-pic" src="{% url appstore_project_image app.name %}" />
+            </div>
+            {% else %}
+            <div style="text-align: center;">
+                <img class="app-pic opacity65" src="{% static 'hqstyle/img/no-image-available.png' %}" />
             </div>
             {% endif %}
+            </a>
             <h2>
                 {{ app.title }}
-                <br/>
-                <small>By
+                <small style="display: block;">By
                     {% if app.organization %}
                         {{ app.organization_doc.title }}
                     {% else %}
@@ -241,7 +279,6 @@
                         {% endif %}
                     {% endif %}
                 {% endfor %}
-            <br/>
             <h6>{{ app.copies_of_parent|length }} download{{ app.copies_of_parent|length|pluralize }}</h6>
         <p>{{ app.short_description }}</p>
         <p>Last updated: {{ app.snapshot_time|date:"N j, Y" }}</p>

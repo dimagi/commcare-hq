@@ -49,24 +49,24 @@ class CasePaginator():
         def and_block():
             subterms = []
             if self.case_type:
-                subterms.append({"term": {"case.type": self.case_type}})
+                subterms.append({"term": {"type": self.case_type}})
 
             if self.status:
                 if self.status == 'closed':
                     is_closed = True
                 else:
                     is_closed = False
-                subterms.append({"term": {"case.closed": is_closed}})
+                subterms.append({"term": {"closed": is_closed}})
 
             userGroupFilters = []
-            ofilters = list(_filter_gen('case.owner_id', self.owner_ids))
+            ofilters = list(_filter_gen('owner_id', self.owner_ids))
             if len(ofilters) > 0:
                 userGroupFilters.append( {
                     'or': {
                         'filters': ofilters,
                     }
                 })
-            ufilters = list(_filter_gen('case.user_id', self.owner_ids))
+            ufilters = list(_filter_gen('user_id', self.owner_ids))
             if len(ufilters) > 0:
                 userGroupFilters.append( {
                     'or': {
@@ -84,18 +84,18 @@ class CasePaginator():
             'query': {
                 'filtered': {
                     'query': {
-                        'match': {'case.domain.exact': self.domain}
+                        'match': {'domain.exact': self.domain}
                     },
                     'filter': and_block
                 }
             },
             'sort': {
-                'case.modified_on': {'order': 'asc'}
+                'modified_on': {'order': 'asc'}
             },
             'from': self.params.start,
             'size': self.params.count,
         }
-        es_results = get_es().get('hqcases/case/_search', data=es_query)
+        es_results = get_es().get('hqcases/_search', data=es_query)
 
         if es_results.has_key('error'):
             logging.exception("Error in case list elasticsearch query: %s" % es_results['error'])

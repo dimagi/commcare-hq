@@ -1,22 +1,17 @@
 import logging
-import uuid
 from corehq.apps.app_manager.views import require_can_edit_apps
 import magic
 from django.conf import settings
 from couchdbkit.exceptions import ResourceNotFound
 from django.contrib.sites.models import Site
-from django.http import HttpResponse, HttpResponseServerError, Http404
+from django.http import HttpResponse, Http404
 from django.utils import simplejson
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import zipfile
-from corehq.apps.hqmedia import upload, utils
-from corehq.apps.hqmedia.forms import HQMediaZipUploadForm, HQMediaFileUploadForm
-from corehq.apps.hqmedia.models import *
-from corehq.apps.users.decorators import require_permission
-from corehq.apps.app_manager.models import Application, get_app
-from corehq.apps.domain.models import Domain
+from corehq.apps.hqmedia import utils
+from corehq.apps.app_manager.models import get_app
 from dimagi.utils.web import render_to_response
+from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio
 
 X_PROGRESS_ERROR = 'Server Error: You must provide X-Progress-ID header or query param.'
 
@@ -56,7 +51,7 @@ def search_for_media(request, domain, app_id):
         raise Http404()
     return HttpResponse(simplejson.dumps([
         {'url': i.url(),
-         'licenses': map(LICENSES.__getitem__, i.licenses.values()),
+         'licenses': [license.display_name for license in i.licenses],
          'tags': [tag for tags in i.tags.values() for tag in tags],
          'm_id': i._id} for i in files]))
 
@@ -149,12 +144,18 @@ def uploaded(request, domain, app_id):
         uploaded_file.file.seek(0)
         matcher = utils.HQMediaMatcher(app, domain, request.user.username, specific_params)
 
+        license=request.POST.get('license', "")
+        author=request.POST.get('author', "")
+
         if content_type in utils.ZIP_MIMETYPES:
             zip = zipfile.ZipFile(uploaded_file)
             bad_file = zip.testzip()
             if bad_file:
                 raise Exception("Bad ZIP file.")
-            matched_images, matched_audio, unknown_files, errors = matcher.match_zipped(zip, replace_existing_media=replace_existing)
+            matched_images, matched_audio, unknown_files, errors = matcher.match_zipped(zip,
+                                                                                        replace_existing_media=replace_existing,
+                                                                                        license=license,
+                                                                                        author=author)
             response = {"unknown": unknown_files,
                         "images": matched_images,
                         "audio": matched_audio,
@@ -167,7 +168,12 @@ def uploaded(request, domain, app_id):
             else:
                 raise Exception("Unsupported content type.")
             tags = [t.strip() for t in request.POST.get('tags', '').split(' ')]
-            match_found, match_map, errors = matcher.match_file(uploaded_file, replace_existing_media=replace_existing, shared=request.POST.get('shared', False), tags=tags, license=Domain.get_by_name(domain).license)
+            match_found, match_map, errors = matcher.match_file(uploaded_file,
+                                                                replace_existing_media=replace_existing,
+                                                                shared=request.POST.get('shared', False),
+                                                                tags=tags,
+                                                                license=license,
+                                                                author=author)
             response = {"match_found": match_found,
                         file_type: match_map,
                         "file": True}

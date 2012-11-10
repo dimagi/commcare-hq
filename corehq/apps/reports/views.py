@@ -1,15 +1,17 @@
 from datetime import datetime, timedelta
 import json
 from django.core.cache import cache
+from corehq.apps.domain.models import Domain
 from corehq.apps.reports import util
-from corehq.apps.reports.standard import inspect, export
+from corehq.apps.reports.standard import inspect, export, ProjectReport
 from corehq.apps.reports.standard.export import DeidExportReport
 from corehq.apps.reports.export import ApplicationBulkExportHelper, CustomBulkExportHelper
-from corehq.apps.reports.models import (ReportConfig, FormExportSchema,
+from corehq.apps.reports.models import (ReportConfig, ReportNotification,
+    WeeklyReportNotification, DailyReportNotification, FormExportSchema,
     HQGroupExportConfiguration)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import Permissions, CouchUser
 import couchexport
 from couchexport.export import UnsupportedExportFormat, export_raw
 from couchexport.util import SerializableFunction
@@ -59,27 +61,34 @@ datespan_default = datespan_in_request(
 
 require_form_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.export.ExcelExportReport', login_decorator=None)
 require_case_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.export.CaseExportReport', login_decorator=None)
+
+require_form_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.inspect.SubmitHistory', login_decorator=None)
+require_case_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.inspect.CaseListReport', login_decorator=None)
+
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
-def default(request, domain, template="reports/favorites.html"):
+def default(request, domain, template="reports/reports_home.html"):
+    user = request.couch_user
 
-    configs = ReportConfig.by_domain_and_owner(domain,
-        request.couch_user._id).all()
+    configs = ReportConfig.by_domain_and_owner(domain, user._id).all()
+    scheduled_reports = ReportNotification.by_domain_and_owner(domain, user._id).all()
 
-    from corehq.apps.reports.standard import ProjectReport
     context = dict(
+        couch_user=request.couch_user,
         domain=domain,
         configs=configs,
+        scheduled_reports=scheduled_reports,
         report=dict(
             title="Select a Report to View",
-            show=request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
+            show=user.can_view_reports() or user.get_viewable_reports(),
             slug=None,
             is_async=True,
             section_name=ProjectReport.section_name,
-        )
+            show_subsection_navigation=adm_utils.show_adm_nav(domain, request)
+        ),
     )
-    context["report"].update(show_subsection_navigation=adm_utils.show_adm_nav(domain, request))
+
     return render_to_response(request, template, context)
 
 @login_or_digest
@@ -461,11 +470,12 @@ def add_config(request, domain=None):
     to_date = lambda s: datetime.strptime(s, '%Y-%m-%d').date() if s else s
     POST['start_date'] = to_date(POST['start_date'])
     POST['end_date'] = to_date(POST['end_date'])
-    if POST['date_range'] == 'last7':
+    date_range = POST.get('date_range')
+    if date_range == 'last7':
         POST['days'] = 7
-    elif POST['date_range'] == 'last30':
+    elif date_range == 'last30':
         POST['days'] = 30
-    elif POST['days']:
+    elif POST.get('days'):
         POST['days'] = int(POST['days'])
   
     exclude_filters = ['startdate', 'enddate']
@@ -499,7 +509,154 @@ def delete_config(request, domain, config_id):
     config.delete()
     return HttpResponse()
 
-@require_can_view_all_reports
+
+@login_and_domain_required
+def add_scheduled_report(request, domain, template="users/add_scheduled_report.html"):
+    from django.core.validators import validate_email
+    
+    user_id = request.couch_user._id
+
+    if request.method == "POST":
+        send_to_owner = ('send_to_owner' in request.POST)
+        config_ids = request.POST.getlist('config_id')
+        emails = []
+        invalid_email = None
+        for email in request.POST['recipient_emails'].split(','):
+            email = email.strip()
+            if email:
+                try:
+                    validate_email(email)
+                    emails.append(email)
+                except:
+                    invalid_email = email
+                    break
+
+        if not (config_ids and not invalid_email and (emails or send_to_owner)):
+            if not config_ids:
+                messages.error(request, "You must choose at least one saved report.")
+            if invalid_email:
+                messages.error(request, "Invalid email: %s" % invalid_email)
+            if not (emails or send_to_owner):
+                messages.error(request, "You must specify at least one valid recipient.")
+            return HttpResponseRedirect(reverse("add_scheduled_report",
+                                                args=(domain,)))
+
+        day = request.POST["day"]
+        if day == "all":
+            report = DailyReportNotification()
+        else:
+            report = WeeklyReportNotification()
+            report.day_of_week = int(day)
+        report.domain = domain
+        report.hours = int(request.POST["hour"])
+        report.send_to_owner = send_to_owner
+        report.config_ids = config_ids
+        report.owner_id = user_id
+        report.recipient_emails = emails
+        report.save()
+
+        messages.success(request, "New scheduled report added!")
+        return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
+
+    configs = ReportConfig.by_domain_and_owner(domain, user_id).all()
+    configs = [c for c in configs if c.report.emailable]
+
+    web_users = CouchUser.view('users/web_users_by_domain', reduce=False,
+                               key=domain, include_docs=True).all()
+    emails = [u.username for u in web_users]
+
+    context = {
+        'domain': domain,
+        'configs': configs,
+        'hours': ReportNotification.hours(),
+        'days': ReportNotification.days(),
+        'user_emails': emails,
+        'report': {
+            'title': 'New Scheduled Report',
+            'show': request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
+            'slug': None,
+            'default_url': reverse('reports_home', args=(domain,)),
+            'is_async': False,
+            'section_name': ProjectReport.section_name,
+            'show_subsection_navigation': adm_utils.show_adm_nav(domain, request)
+        }
+    }
+
+    return render_to_response(request, template, context)
+
+@login_and_domain_required
+@require_POST
+def delete_scheduled_report(request, domain, scheduled_report_id):
+    user_id = request.couch_user._id
+    rep = ReportNotification.get(scheduled_report_id)
+
+    if user_id != rep.owner._id:
+        return HttpResponseBadRequest()
+
+    rep.delete()
+    messages.success(request, "Scheduled report deleted!")
+    return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
+
+@login_and_domain_required
+@require_POST
+def send_test_scheduled_report(request, domain, scheduled_report_id):
+    from corehq.apps.reports.tasks import send_report
+    from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
+    
+    user_id = request.couch_user._id
+
+    notification = ReportNotification.get(scheduled_report_id)
+    try:
+        user = WebUser.get_by_user_id(user_id, domain)
+    except CouchUser.AccountTypeError:
+        user = CommCareUser.get_by_user_id(user_id, domain)
+
+    try:
+        send_report.delay(notification._id)
+    except Exception, e:
+        import logging
+        logging.exception(e)
+        messages.error(request, "An error occured, message unable to send")
+    else:
+        messages.success(request, "Test message sent to %s" % user.get_email())
+
+    return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
+
+
+def get_scheduled_report_response(couch_user, domain, scheduled_report_id):
+    from dimagi.utils.web import get_url_base
+    from django.http import HttpRequest
+    
+    request = HttpRequest()
+    request.couch_user = couch_user
+    request.user = couch_user.get_django_user()
+    request.domain = domain
+    request.couch_user.current_domain = domain
+
+    notification = ReportNotification.get(scheduled_report_id)
+
+    report_outputs = []
+    for config in notification.configs:
+        report_outputs.append({
+            'title': config.full_name,
+            'url': config.url,
+            'content': config.get_report_content()
+        })
+    
+    return render_to_response(request, "reports/report_email.html", {
+        "reports": report_outputs,
+        "domain": notification.domain,
+        "couch_user": notification.owner._id,
+        "DNS_name": get_url_base(),
+    })
+
+@login_and_domain_required
+@permission_required("is_superuser")
+def view_scheduled_report(request, domain, scheduled_report_id):
+    return get_scheduled_report_response(request.couch_user, domain,
+            scheduled_report_id)
+
+@require_case_view_permission
 @login_and_domain_required
 @require_GET
 def case_details(request, domain, case_id):
@@ -591,7 +748,7 @@ def download_cases(request, domain):
     return generate_payload(payload_func)
 
 
-@require_can_view_all_reports
+@require_form_view_permission
 @login_and_domain_required
 @require_GET
 def form_data(request, domain, instance_id):
@@ -618,7 +775,7 @@ def form_data(request, domain, instance_id):
                                    form_data=dict(name=form_name,
                                                   modified=instance.received_on)))
 
-@require_form_export_permission
+@require_form_view_permission
 @login_and_domain_required
 @require_GET
 def download_form(request, domain, instance_id):
@@ -626,7 +783,7 @@ def download_form(request, domain, instance_id):
     assert(domain == instance.domain)
     return couchforms_views.download_form(request, instance_id)
 
-@require_form_export_permission
+@require_form_view_permission
 @login_and_domain_required
 @require_GET
 def download_attachment(request, domain, instance_id, attachment):
@@ -650,28 +807,6 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
     else:
         return start, end
 
-@login_and_domain_required
-@permission_required("is_superuser")
-def emaillist(request, domain):
-    """
-    Test an email report 
-    """
-    # circular import
-    from corehq.apps.reports.schedule.config import ScheduledReportFactory
-    return render_to_response(request, "reports/email/report_list.html", 
-                              {"domain": domain,
-                               "reports": ScheduledReportFactory.get_reports()})
-
-@login_and_domain_required
-@permission_required("is_superuser")
-def emailtest(request, domain, report_slug):
-    """
-    Test an email report 
-    """
-    # circular import
-    from corehq.apps.reports.schedule.config import ScheduledReportFactory
-    report = ScheduledReportFactory.get_report(report_slug)
-    return HttpResponse(report.get_response(request.couch_user, domain))
 
 
 @login_and_domain_required

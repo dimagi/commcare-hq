@@ -104,7 +104,9 @@ def es_filter_cases(domain, filters=None):
         # this class is currently pretty customized to serve exactly
         # this API. one day it may be worth reconciling our ES interfaces
         # but today is not that day.
-        RESERVED_KEYS = ('date_modified_start', 'date_modified_end', 'limit')
+        RESERVED_KEYS = ('date_modified_start', 'date_modified_end', 
+                         'server_date_modified_start', 'server_date_modified_end', 
+                         'limit')
     
         def __init__(self, domain, filters):
             self.domain = domain
@@ -112,38 +114,68 @@ def es_filter_cases(domain, filters=None):
             self.limit = int(filters.get('limit', 50))
             self._date_modified_start = filters.get("date_modified_start", None)
             self._date_modified_end = filters.get("date_modified_end", None)
+            self._server_date_modified_start = filters.get("server_date_modified_start", None)
+            self._server_date_modified_end = filters.get("server_date_modified_end", None)
             
+        
         @property
         def uses_modified(self):
             return bool(self._date_modified_start or self._date_modified_end)
         
         @property
+        def uses_server_modified(self):
+            return bool(self._server_date_modified_start or self._server_date_modified_end)
+        
+        @property
         def date_modified_start(self):
-            return self._date_modified_start or datetime.min.strftime("%Y-%m-%d")
+            return self._date_modified_start or datetime(1970,1,1).strftime("%Y-%m-%d")
         
         @property
         def date_modified_end(self):
             return self._date_modified_end or datetime.max.strftime("%Y-%m-%d")
         
         @property
+        def server_date_modified_start(self):
+            return self._server_date_modified_start or datetime(1970,1,1).strftime("%Y-%m-%d")
+        
+        @property
+        def server_date_modified_end(self):
+            return self._server_date_modified_end or datetime.max.strftime("%Y-%m-%d")
+        
+        @property
         def scrubbed_filters(self):
             return dict((k, v) for k, v in self.filters.items() if k not in self.RESERVED_KEYS)
         
-        @property
-        def modified_params(self):
+        def _modified_params(self, key, start, end):
             return {
                 'range': {
-                    'modified_on': {
-                        'from': self.date_modified_start,
-                        'to': self.date_modified_end
+                    key: {
+                        'from': start,
+                        'to': end
                     }
                 }
             }
+        
+        @property
+        def modified_params(self, ):
+            return self._modified_params('modified_on',
+                                         self.date_modified_start,
+                                         self.date_modified_end)
+        
+        @property
+        def server_modified_params(self):
+            return self._modified_params('server_modified_on',
+                                         self.server_date_modified_start,
+                                         self.server_date_modified_end)
         
         def get_terms(self):
             yield {'term': {'domain.exact': self.domain}}
             if self.uses_modified:
                 yield self.modified_params
+            if self.uses_modified:
+                yield self.modified_params
+            if self.uses_server_modified:
+                yield self.server_modified_params
             for k, v in self.scrubbed_filters.items():
                 yield {'term': {k: v.lower()}}
 
@@ -155,14 +187,14 @@ def es_filter_cases(domain, filters=None):
                     }
                 },
                 'sort': {
-                    'case.modified_on': {'order': 'asc'}
+                    'modified_on': {'order': 'asc'}
                 },
                 'from': 0,
                 'size': self.limit,
             }
     
     q = ElasticCaseQuery(domain, filters)
-    res = get_es().get('hqcases/case/_search', data=q.get_query())
+    res = get_es().get('hqcases/_search', data=q.get_query())
     # this is ugly, but for consistency / ease of deployment just
     # use this to return everything in the expected format for now
     return [CommCareCase.wrap(r["_source"]).get_json() for r in res['hits']['hits'] if r["_source"]]

@@ -4,17 +4,19 @@ from django.utils.safestring import mark_safe
 from corehq.apps.adm import utils
 from corehq.apps.adm.dispatcher import ADMSectionDispatcher
 from corehq.apps.adm.models import REPORT_SECTION_OPTIONS, ADMReport
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin, ProjectReportParametersMixin
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
+from django.utils.translation import ugettext as _, ugettext_noop
 
 class ADMSectionView(GenericReportView):
-    section_name = "Active Data Management"
+    section_name = ugettext_noop("Active Data Management")
     app_slug = "adm"
     dispatcher = ADMSectionDispatcher
     hide_filters = True
+    emailable = True
 
     # adm-specific stuff
     adm_slug = None
@@ -32,7 +34,7 @@ class ADMSectionView(GenericReportView):
         if self.subreport_data:
             self.name = mark_safe("""%s <small>%s</small>""" %\
                         (self.subreport_data.get('value', {}).get('name'),
-                         self.adm_sections.get(self.adm_slug, "ADM Report")))
+                         self.adm_sections.get(self.adm_slug, _("ADM Report"))))
 
     @property
     def subreport_data(self):
@@ -55,7 +57,7 @@ class ADMSectionView(GenericReportView):
 
 class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectReportParametersMixin, DatespanMixin):
 
-    section_name = "Active Data Management"
+    section_name = ugettext_noop("Active Data Management")
     app_slug = "adm"
     dispatcher = ADMSectionDispatcher
 
@@ -103,9 +105,11 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
 
     @property
     def headers(self):
-        header = DataTablesHeader(DataTablesColumn("FLW Name"))
+        header = DataTablesHeader(DataTablesColumn(_("FLW Name")))
         for col in self.adm_report.columns:
-            header.add_column(DataTablesColumn(col.name, help_text=col.description))
+            header.add_column(DataTablesColumn(_(col.name), help_text=_(col.description),
+                sort_type=DTSortType.NUMERIC))
+        header.custom_sort = self.adm_report.default_sort_params
         return header
 
     @property
@@ -119,6 +123,11 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
                 row.append(self.table_cell(col.clean_value(val),
                     col.html_value(val)))
             rows.append(row)
+        self.statistics_rows = [["Total"], ["Average"]]
+        for ind, col in enumerate(self.adm_columns):
+            column_data = [row[1+ind] for row in rows]
+            self.statistics_rows[0].append(col.calculate_totals(column_data))
+            self.statistics_rows[1].append(col.calculate_averages(column_data))
         return rows
 
     @property

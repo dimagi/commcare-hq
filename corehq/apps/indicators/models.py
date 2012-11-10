@@ -454,7 +454,7 @@ class FormDataIndicatorDefinitionMixin(DocumentSchema):
         """
             question_id must be formatted like: path.to.question_id
         """
-        if isinstance(question_id, str) or isinstance(question_id, unicode):
+        if isinstance(question_id, basestring):
             question_id = question_id.split('.')
         if len(question_id) > 0 and form_data:
             return self.get_from_form(form_data.get(question_id[0]), question_id[1:])

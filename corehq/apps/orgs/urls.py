@@ -1,4 +1,3 @@
-from corehq.apps.users.views import UploadCommCareUsers
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('corehq.apps.orgs.views',

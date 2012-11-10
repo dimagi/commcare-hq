@@ -9,10 +9,21 @@
             {% else %}
                 {% report_list 'corehq.apps.adm.dispatcher.ADMSectionDispatcher' %}
                 {% if request.couch_user.is_superuser %}
-                <li class="nav-header">Superuser Options</li>
-                <li><a href="{% url default_adm_admin_interface %}">Configure ADM Columns &amp; Reports</a></li>
+                <li class="divider"></li>
                 {% endif %}
             {% endif %}
         </ul>
+
+        {% if request.couch_user.is_superuser and not adm_admin %}
+            <p style="margin: 1em 1.5em; margin-bottom: 0;">
+                <a class="btn btn-warning"
+                  href="{% url default_adm_admin_interface %}">Config. ADM Columns &amp; Reports</a>
+            </p>
+            <p class="alert alert-info" style="margin:.25em 1.5em;">
+                <strong>ADM Report Configuration</strong> is currently only available for superusers.
+                This is a very basic interface, and not at all intended for field manager use as it is.
+                However, it might be of interest for <em>browsing</em> to some field managers and other superusers.
+            </p>
+        {% endif %}
     </nav>
 {% endblock %}

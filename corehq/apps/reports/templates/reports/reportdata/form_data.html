@@ -6,7 +6,7 @@
 
 {% block head %}{{ block.super }}
     {% include "imports/bootstrap.google-prettify.html" %}
-    <script type="text/javascript" src="{% static 'hq_bootstrap/js/jquery.selectText.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqstyle/js/jquery/plugins/jquery.selectText.js' %}"></script>
     <script type="text/javascript">
         $(function() {
             var $codeBlock = $("#formatted-form-xml"),
@@ -34,7 +34,7 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{% url default_report domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url reports_home domain %}"><strong>Reports</strong></a> <span class="divider">&gt;</span>
         </li>
         <li>
             <a href="{% url project_report_dispatcher domain 'submit_history' %}">Submit History</a> <span class="divider">&gt;</span>

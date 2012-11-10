@@ -27,6 +27,7 @@ from casexml.apps.phone.models import User as CaseXMLUser
 
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name
+from corehq.apps.domain.models import LicenseAgreement
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username, cc_user_domain
 from corehq.apps.users.xml import group_fixture
 from corehq.apps.sms.mixin import CommCareMobileContactMixin
@@ -560,6 +561,8 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     status = StringProperty()
     language = StringProperty()
 
+    eula = SchemaProperty(LicenseAgreement)
+
     _user = None
     _user_checked = False
 
@@ -620,10 +623,6 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         self.first_name = data.pop(0)
         self.last_name = ' '.join(data)
 
-    def get_scheduled_reports(self):
-        from corehq.apps.reports.models import ReportNotification
-        return ReportNotification.view("reports/user_notifications", key=self.user_id, include_docs=True).all()
-
     def delete(self):
         try:
             user = self.get_django_user()
@@ -656,18 +655,32 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         return CouchUser.view("users/by_username", include_docs=True)
 
     @classmethod
-    def by_domain(cls, domain, is_active=True):
+    def by_domain(cls, domain, is_active=True, reduce=False, limit=None, skip=0):
         flag = "active" if is_active else "inactive"
         if cls.__name__ == "CouchUser":
             key = [flag, domain]
         else:
             key = [flag, domain, cls.__name__]
+        extra_args = dict()
+        if not reduce:
+            extra_args.update(include_docs=True)
+            if limit is not None:
+                extra_args.update(
+                    limit=limit,
+                    skip=skip
+                )
+
         return cls.view("users/by_domain",
-            reduce=False,
+            reduce=reduce,
             startkey=key,
             endkey=key + [{}],
-            include_docs=True,
+            **extra_args
         ).all()
+
+    @classmethod
+    def total_by_domain(cls, domain, is_active=True):
+        data = cls.by_domain(domain, is_active, reduce=True)
+        return data[0].get('value', 0) if data else 0
 
     @classmethod
     def phone_users_by_domain(cls, domain):
@@ -734,7 +747,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
     @classmethod
     def wrap_correctly(cls, source):
-        if source.get('doc_type') == 'CouchUser' and \
+        if source['doc_type'] == 'CouchUser' and \
                 source.has_key('commcare_accounts') and \
                 source.has_key('web_accounts'):
             from . import old_couch_user_models
@@ -1024,10 +1037,6 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
             )])
         )
 
-    @classmethod
-    def cannot_share(cls, domain):
-        return [user for user in cls.by_domain(domain) if len(user.get_case_sharing_groups()) != 1]
-
     def is_commcare_user(self):
         return True
 
@@ -1187,8 +1196,15 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
         return [group for group in Group.by_user(self) if group.case_sharing]
 
     @classmethod
-    def cannot_share(cls, domain):
-        return [user for user in cls.by_domain(domain) if len(user.get_case_sharing_groups()) != 1]
+    def cannot_share(cls, domain, limit=None, skip=0):
+        users = [user for user in cls.by_domain(domain, limit=limit, skip=skip) if len(user.get_case_sharing_groups()) != 1]
+        if limit is not None:
+            total = cls.total_by_domain(domain)
+            max_limit = min(total, skip+limit) - skip
+            if len(users) < max_limit:
+                new_limit = max_limit - len(users)
+                return users.extend(cls.cannot_share(domain, new_limit, skip))
+        return users
 
     def get_group_ids(self):
         from corehq.apps.groups.models import Group
@@ -1447,7 +1463,8 @@ class Invitation(Document):
         text_content = render_to_string("domain/email/domain_invite.txt", params)
         html_content = render_to_string("domain/email/domain_invite.html", params)
         subject = 'Invitation from %s to join CommCareHQ' % self.get_inviter().formatted_name
-        send_HTML_email(subject, self.email, text_content, html_content)
+        send_HTML_email(subject, self.email, html_content,
+                        text_content=text_content)
 
     @classmethod
     def by_domain(cls, domain, is_active=True):

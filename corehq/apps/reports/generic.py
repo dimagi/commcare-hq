@@ -64,7 +64,11 @@ class GenericReportView(object):
     section_name = None # string. ex: "Reports"
     app_slug = None     # string. ex: 'reports' or 'manage'
     dispatcher = None   # ReportDispatcher subclass
-    
+
+    # Code can expect `fields` to be an iterable even when empty (never None)
+    fields = ()
+
+
     # not required
     description = None  # string. description of the report. Currently not being used.
     report_template_path = None
@@ -72,7 +76,7 @@ class GenericReportView(object):
 
     asynchronous = False
     hide_filters = False
-    fields = None
+    emailable = False
 
     exportable = False
     mobile_enabled = False
@@ -253,7 +257,7 @@ class GenericReportView(object):
         """
         if self._template_report_partial is None:
             override_partial = self.override_report_partial_template
-            self._template_report_partial = override_partial if isinstance(override_partial, str) \
+            self._template_report_partial = override_partial if isinstance(override_partial, basestring) \
                                                 else self.report_partial_path
         return self._template_report_partial
 
@@ -280,7 +284,7 @@ class GenericReportView(object):
         """
         if self._rendered_report_title is None:
             rendered_title = self.render_report_title
-            self._rendered_report_title = rendered_title if isinstance(rendered_title, str) else self.name
+            self._rendered_report_title = rendered_title if isinstance(rendered_title, basestring) else self.name
         return self._rendered_report_title
 
     @property
@@ -433,6 +437,8 @@ class GenericReportView(object):
         current_config_id = self.request.GET.get('config_id', '')
         default_config = ReportConfig.default()
 
+        has_datespan = ('corehq.apps.reports.fields.DatespanField' in self.fields)
+
         self.context.update(
             report=dict(
                 title=self.name,
@@ -447,7 +453,9 @@ class GenericReportView(object):
                 dispatcher=self.dispatcher,
                 filter_set=self.filter_set,
                 needs_filters=self.needs_filters,
+                has_datespan=has_datespan,
                 show=self.request.couch_user.can_view_reports() or self.request.couch_user.get_viewable_reports(),
+                is_emailable=self.emailable,
                 is_admin=self.is_admin_report,   # todo is this necessary???
             ),
             current_config_id=current_config_id,
@@ -789,7 +797,7 @@ class GenericTabularReport(GenericReportView):
     def export_sheet_name(self):
         if self._export_sheet_name is None:
             override = self.override_export_sheet_name
-            self._export_sheet_name = override if isinstance(override, str) else self.name
+            self._export_sheet_name = override if isinstance(override, str) else self.name # unicode?
         return self._export_sheet_name
 
     @property

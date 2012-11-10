@@ -40,7 +40,7 @@ class ReportDispatcher(View):
         map_name = kwargs.get('map_name')
         if map_name:
             self.map_name = map_name
-        if not self.map_name or not isinstance(self.map_name, str):
+        if not self.map_name or not isinstance(self.map_name, str): # unicode?
             raise NotImplementedError("Class property 'map_name' must be a string, and not empty.")
         super(ReportDispatcher, self).__init__(**kwargs)
 
@@ -163,6 +163,11 @@ class ReportDispatcher(View):
                 report_nav.append(section_header)
                 report_nav.extend(section)
         return "\n".join(report_nav)
+
+    @classmethod
+    def url_pattern(cls):
+        from django.conf.urls.defaults import url
+        return url(cls.pattern(), cls.as_view(), name=cls.name())
 
 cls_to_view_login_and_domain = cls_to_view(additional_decorator=login_and_domain_required)
 

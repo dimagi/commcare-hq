@@ -1,8 +1,4 @@
 <ul class="nav nav-list">
-    <li class="nav-header">Search</li>
-    <li><form action="{{ search_url }}" method="get" class="form-search">
-        <input type="text" name="{{ search_name }}" placeholder="Search for {{ search_for }}" value="{{ search_query }}" class="search-query" style="width: 80%" />
-    </form></li>
     {% if display_ua %}
         {% if request.user.is_superuser %}
             <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url appstore %}">All approved</a></li>
@@ -17,8 +13,11 @@
     {% for sortable, choices in sortables %}
         <li class="nav-header">{{ sortable.title }}</li>
             {% for choice in choices %}
-                <li class="sortable-{{ sortable }}{% if choice.active %} active{% else %}{% if forloop.counter > 5 and choices|length > 6 %} hide{% endif %}{% endif %}">
-                    <a href="{% if url_base %}{{ url_base }}{% else %}{{ request.path }}{% endif %}{{ choice.url }}">{{ choice.name }}</a>
+                <li class="sortable-{{ sortable }}{% if forloop.counter > 5 and choices|length > 6 %} hide{% endif %}">
+                    <a href="{% if url_base %}{{ url_base }}{% else %}{{ request.path }}{% endif %}{{ choice.url }}">
+                        {{ choice.name }} ({{ choice.count }})
+                        <input class="facet-checkbox" style="float: right" type="checkbox" {% if choice.active %}checked=checked{% endif %}/>
+                    </a>
                 </li>
             {% endfor %}
             {% if choices|length > 6 %}

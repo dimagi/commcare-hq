@@ -1,0 +1,151 @@
+{% extends "reports/base_template.html" %}
+{% load case_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load report_tags %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+$(function() {
+    $("#saved-reports").reportConfigList({
+        items: {{ configs|JSON }},
+        saveUrl: '{% url add_report_config domain %}'
+    });
+});
+</script>
+{% endblock %}
+
+{% block main_column %}
+<ul class="nav nav-tabs">
+    <li class="active"><a href="#saved-reports" data-toggle="tab">My Saved Reports</a></li>
+    <li><a href="#scheduled-reports" data-toggle="tab">My Scheduled Reports</a></li>
+</ul>
+<div class="tab-content">
+    <div class="tab-pane active" id="saved-reports">
+        
+        <div data-bind="visible: !reportConfigs().length" class="alert">
+            You don't have any saved reports.  You can create a new saved report while viewing a report.
+        </div>
+        <table data-bind="visible: reportConfigs().length" class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Report</th>
+                    <th>Saved Report Name</th>
+                    <th>Description</th>
+                    <th>Date Range</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- ko foreach: reportConfigs -->
+                <tr>
+                    <td data-bind="text: report_name"></td>
+                    <td><a data-bind="attr: { href: url }, text: name"></a></td>
+                    <td data-bind="text: description"></td>
+                    <td data-bind="text: date_description"></td>
+                    <td>
+                        <button class="btn btn-danger"
+                            data-bind="click: $root.deleteConfig">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+                <!-- /ko -->
+            </tbody>
+        </table>
+    </div>
+
+    {% if report.show %}
+    <div class="tab-pane" id="scheduled-reports">
+        {% if scheduled_reports %}
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>{% trans "Saved Report(s)" %}</th>
+                    <th>{% trans "Day of week" %}</th>
+                    <th>{% trans "Time" %}</th>
+                    <th>{% trans "Send to me" %}</th>
+                    <th>{% trans "Other recipients" %}</th>
+                    <th>{% trans "Send me a test mail" %}</th>
+                    <th>{% trans "Delete" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in scheduled_reports %}
+                <tr>
+                    <td>
+                        {% if report.configs|length == 1 %}
+                        {% for config in report.configs %}
+                        <a href="{{ config.url }}">{{ config.full_name }}</a>
+                        {% endfor %}
+                        {% else %}
+                        <ul>
+                            {% for config in report.configs %}
+                            <li><a href="{{ config.url }}">{{ config.full_name }}</a></li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </td>
+                    <td>{{ report.day_name }}</td>
+                    <td>{{ report.hours }}:00</td>
+                    <td>
+                        {% comment %} handles old documents {% endcomment %}
+                        {% if report.user_ids or report.send_to_owner %}
+                        <i class="icon icon-check"></i>
+                        {% else %}
+                        <i class="icon icon-check-empty"></i>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% for email in report.recipient_emails %}
+                        {{ email }},
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <form style="float: left; padding-right: 5px" name="test_report" action="{% url send_test_scheduled_report domain report.get_id %}" method="post">
+                            <button type="submit" class="btn btn-info" href="#">
+                                <i class="icon icon-white icon-envelope"></i> Send
+                            </button>
+                        </form>
+
+                        {% if request.user.is_superuser %}
+                        <form action="{% url view_scheduled_report domain report.get_id %}" method="post">
+                            <button type="submit" class="btn btn-info" href="#">
+                                <i class="icon icon-white icon-eye-open"></i> View HTML
+                        </form>
+                        {% endif %}
+                    </td>
+                   
+                    <td>
+                        <a class="btn btn-danger" data-toggle="modal" href="#{{ report.get_id }}">
+                            <i class="icon icon-minus-sign icon-white"></i> {% trans "Delete" %}
+                        </a>
+                        <div id="{{ report.get_id }}" class="modal hide fade">
+                            <div class="modal-header">
+                                <a class="close" data-dismiss="modal">&times;</a>
+                                <h3>Stop sending report?</h3>
+                            </div>
+                            <form class="form form-horizontal" action="{% url delete_scheduled_report domain report.get_id %}" method="post">
+                                <div class="modal-body">
+                                    <p>Are you sure you want to stop sending this report?</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                                    <button type="submit" class="btn btn-warning">{% trans 'Stop Sending' %}</button>
+                                </div>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p>There are no scheduled email reports for {{ couch_user.html_username|safe }}.</p>
+        {% endif %}
+        <a class="btn btn-success" href="{% url add_scheduled_report domain %}"><i class="icon icon-white icon-plus"></i> Schedule an Email Report</a>
+
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

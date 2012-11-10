@@ -82,7 +82,7 @@ class CaseActivityReport(WorkerMonitoringReportTable):
               'corehq.apps.reports.fields.GroupField']
     all_users = None
     display_data = ['percent']
-
+    emailable = True
 
     class Row(object):
         def __init__(self, report, user):
@@ -376,6 +376,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTable, DatespanMixin):
                 'corehq.apps.reports.fields.GroupField',
                 'corehq.apps.reports.fields.DatespanField']
     fix_left_col = True
+    emailable = True
 
     _form_types = None
     @property
@@ -490,6 +491,7 @@ class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
     # new class properties
     dates_in_utc = True
     couch_view = None
+    emailable = True
 
     _dates = None
     @property
@@ -515,7 +517,6 @@ class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
             _dates = [tz_utils.adjust_datetime_to_timezone(date, self.timezone.zone, pytz.utc.zone) for date in self.dates]
         else:
             _dates = self.dates
-        date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(_dates)])
 
         key = [self.domain]
         results = get_db().view(
@@ -526,6 +527,7 @@ class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
         ).all()
 
         user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(self.users)])
+        date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
         rows = [[0]*(2+len(date_map)) for _ in range(len(self.users))]
         total_row = [0]*(2+len(date_map))
 

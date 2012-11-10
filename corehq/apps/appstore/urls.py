@@ -4,9 +4,7 @@ from corehq.apps.appstore.dispatcher import AppstoreDispatcher
 
 store_urls = patterns('corehq.apps.appstore.views',
     url(r'^$', 'appstore_default', name="appstore_interfaces_default"),
-    url(AppstoreDispatcher.pattern(), AppstoreDispatcher.as_view(),
-        name=AppstoreDispatcher.name()
-    )
+    AppstoreDispatcher.url_pattern(),
 )
 
 urlpatterns = patterns('corehq.apps.appstore.views',

@@ -73,8 +73,6 @@ except ImportError:
 @register.simple_tag
 def static(url):
     resource_url = url
-    if "hq_bootstrap" in url:
-        resource_url = resource_url.replace("/css/", "/less/").replace(".css", ".less").replace("hq_bootstrap/", "hq-bootstrap/")
     version = resource_versions.get(resource_url)
     url = settings.STATIC_URL + url
     if version:
