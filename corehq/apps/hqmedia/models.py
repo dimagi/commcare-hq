@@ -45,6 +45,12 @@ class CommCareMultimedia(Document):
             data['tags'] = {}
         if not data.get('owners'):
             data['owners'] = data.get('valid_domains', [])
+        if isinstance(data.get('licenses', ''), dict):
+            # need to migrate licncses from old format to new format
+            # old: {"mydomain": "public", "yourdomain": "cc"}
+            migrated = [HQMediaLicense(domain=domain, type=type)._doc \
+                        for domain, type in data["licenses"].items()]
+            data['licenses'] = migrated
         return super(CommCareMultimedia, cls).wrap(data)
 
     def attach_data(self, data, upload_path=None, username=None, attachment_id=None,

@@ -4,7 +4,7 @@
 {% block step-title %}Create an Account{% endblock %}
 {% block js-inline  %}{{ block.super }}
     {% url eula as eula_url %}
-    {% include 'hq_bootstrap/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
+    {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
 {% endblock %}
 
 {% block registration-content %}

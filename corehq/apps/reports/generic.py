@@ -257,7 +257,7 @@ class GenericReportView(object):
         """
         if self._template_report_partial is None:
             override_partial = self.override_report_partial_template
-            self._template_report_partial = override_partial if isinstance(override_partial, str) \
+            self._template_report_partial = override_partial if isinstance(override_partial, basestring) \
                                                 else self.report_partial_path
         return self._template_report_partial
 
@@ -284,7 +284,7 @@ class GenericReportView(object):
         """
         if self._rendered_report_title is None:
             rendered_title = self.render_report_title
-            self._rendered_report_title = rendered_title if isinstance(rendered_title, str) else self.name
+            self._rendered_report_title = rendered_title if isinstance(rendered_title, basestring) else self.name
         return self._rendered_report_title
 
     @property
@@ -797,7 +797,7 @@ class GenericTabularReport(GenericReportView):
     def export_sheet_name(self):
         if self._export_sheet_name is None:
             override = self.override_export_sheet_name
-            self._export_sheet_name = override if isinstance(override, str) else self.name
+            self._export_sheet_name = override if isinstance(override, str) else self.name # unicode?
         return self._export_sheet_name
 
     @property

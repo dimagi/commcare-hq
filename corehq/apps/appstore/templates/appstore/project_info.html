@@ -1,8 +1,11 @@
 {% extends "appstore/appstore_base.html" %}
 {% load hq_shared_tags %}
-{% load hq_bootstrap_tags %}
+{% load hqstyle_tags %}
 {% load i18n %}
 
+
+{% block sidebar %}
+{% endblock %}
 
 {% block breadcrumb %}
 <li>{{ project.title }}</li>
@@ -14,7 +17,9 @@
 <div class="page-header row-fluid">
 <div class="span2" style="text-align: center;">
     {% if project.image_path %}
-        <img src="{% url appstore_project_image project.name %}" style="max-width: 200px; max-height:200px;" />
+        <img class="app-pic" src="{% url appstore_project_image project.name %}" />
+    {% else %}
+        <img class="app-pic opacity65" src="{% static 'hq_bootstrap/img/no-image-available.png' %}" />
     {% endif %}
 </div>
     <div class="span7">
@@ -28,6 +33,7 @@
                 {% endif %}
             </small>
         </h1>
+        <h4 style="color: #808080;">{{ project.short_description }}</h4>
         <h3>
             Ratings: <span class="badge badge-info">{{ num_ratings }}</span>
         </h3>
@@ -39,15 +45,7 @@
 </div>
 </div>
 <dl class="dl-horizontal">
-    <dt>{% trans 'Short Description' %}</dt>
-    <dd>
-        {% if project.short_description %}
-            {{ project.short_description }}
-        {% else %}
-            <h6>None</h6>
-        {% endif %}
-    </dd>
-    <dt>{% trans 'Long Description' %}</dt>
+    <dt>{% trans 'Description' %}</dt>
     <dd>
         {% if project.description %}
             {{ project.description }}
@@ -135,7 +133,7 @@
                                     {{ app.description }}
                                 </dd>
                             {% endif %}
-                            <dd><a href="{% url app_summary project app.id %}">Application summary</a></dd>
+                            <dd><a href="{% url exchange_app_summary project app.id %}">Application summary</a></dd>
                         </dl>
                     </div>
                 </div>
@@ -174,20 +172,20 @@
             {% endif %}
         </div>
         {% for review in reviews %}
-        <hr/>
-        <div class="row">
-            <div class="span1">
-                <h4 style="padding-left:25px">{{ forloop.counter }})</h4>
+            <hr/>
+            <div class="row">
+                <div class="span1">
+                    <h4 style="padding-left:25px">{{ forloop.counter }})</h4>
+                </div>
+                <div class="span6">
+                    <div>
+                        {% include "partials/five_stars.html" with rating_name=review.get_id rating=review.rating class="pi-stars" %}
+                        <h4 style="display: inline-block; vertical-align: bottom;">{{ review.title }}</h4>
+                    </div>
+                    <div>{{ review.info }}</div>
+                    <p><small>{{ review.user }} on {{ review.date_published }}</small></p>
+                </div>
             </div>
-            <div class="span6">
-        <h4>{{ review.title }}</h4>
-        <div>
-            <p><small>{{ review.user }} on {{ review.date_published }}</small></p>
-            {% include "partials/five_stars.html" with rating_name=review.get_id rating=review.rating %}
-        </div>
-        <div>{{ review.info }}</div>
-            </div>
-        </div>
         {% endfor %}
 {% endblock %}
 

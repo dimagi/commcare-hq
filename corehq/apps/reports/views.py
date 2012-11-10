@@ -61,6 +61,10 @@ datespan_default = datespan_in_request(
 
 require_form_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.export.ExcelExportReport', login_decorator=None)
 require_case_export_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.export.CaseExportReport', login_decorator=None)
+
+require_form_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.inspect.SubmitHistory', login_decorator=None)
+require_case_view_permission = require_permission(Permissions.view_report, 'corehq.apps.reports.standard.inspect.CaseListReport', login_decorator=None)
+
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 @login_and_domain_required
@@ -608,7 +612,7 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
         user = CommCareUser.get_by_user_id(user_id, domain)
 
     try:
-        send_report.delay(notification)
+        send_report.delay(notification._id)
     except Exception, e:
         import logging
         logging.exception(e)
@@ -652,7 +656,7 @@ def view_scheduled_report(request, domain, scheduled_report_id):
     return get_scheduled_report_response(request.couch_user, domain,
             scheduled_report_id)
 
-@require_can_view_all_reports
+@require_case_view_permission
 @login_and_domain_required
 @require_GET
 def case_details(request, domain, case_id):
@@ -744,7 +748,7 @@ def download_cases(request, domain):
     return generate_payload(payload_func)
 
 
-@require_can_view_all_reports
+@require_form_view_permission
 @login_and_domain_required
 @require_GET
 def form_data(request, domain, instance_id):
@@ -771,7 +775,7 @@ def form_data(request, domain, instance_id):
                                    form_data=dict(name=form_name,
                                                   modified=instance.received_on)))
 
-@require_form_export_permission
+@require_form_view_permission
 @login_and_domain_required
 @require_GET
 def download_form(request, domain, instance_id):
@@ -779,7 +783,7 @@ def download_form(request, domain, instance_id):
     assert(domain == instance.domain)
     return couchforms_views.download_form(request, instance_id)
 
-@require_form_export_permission
+@require_form_view_permission
 @login_and_domain_required
 @require_GET
 def download_attachment(request, domain, instance_id, attachment):

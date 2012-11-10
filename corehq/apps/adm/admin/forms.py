@@ -5,7 +5,7 @@ from django.utils.safestring import mark_safe
 from corehq.apps.adm.models import BaseADMColumn, ReducedADMColumn, DaysSinceADMColumn, ConfigurableADMColumn,\
     CompareADMColumn, ADMReport, KEY_TYPE_OPTIONS, REPORT_SECTION_OPTIONS, \
     CASE_FILTER_OPTIONS, CASE_STATUS_OPTIONS, CaseCountADMColumn, ConfigurableADMColumn, CouchViewADMColumn
-from corehq.apps.hq_bootstrap.forms import fields as hq_fields
+from hqstyle.forms import fields as hq_fields
 from dimagi.utils.data.crud import BaseCRUDForm
 from dimagi.utils.decorators.memoized import memoized
 

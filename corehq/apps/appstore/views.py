@@ -9,6 +9,7 @@ from restkit.errors import RequestFailed
 from corehq.apps.appstore.forms import AddReviewForm
 from corehq.apps.appstore.models import Review
 from corehq.apps.domain.decorators import require_previewer, login_and_domain_required
+from corehq.apps.hqmedia.utils import most_restrictive
 from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.users.models import Permissions
 from corehq.elastic import get_es
@@ -183,7 +184,7 @@ def appstore(request, template="appstore/appstore_base.html"):
         include_unapproved=include_unapproved,
         sortables=facets_sortables,
         query_str=request.META['QUERY_STRING'],
-        search_query = params.get('search', ""))
+        search_query = params.get('search', [""])[0])
     return render_to_response(request, template, vals)
 
 @require_previewer # remove for production
@@ -339,7 +340,7 @@ def deployments(request, template="appstore/deployments.html"):
              'sortables': facets_sortables,
              'query_str': request.META['QUERY_STRING'],
              'search_url': reverse('deployments'),
-             'search_query': params.get('search', "")}
+             'search_query': params.get('search', [""])[0]}
     return render_to_response(request, template, vals)
 
 @require_previewer # remove for production

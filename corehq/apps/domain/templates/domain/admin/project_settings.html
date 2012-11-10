@@ -1,5 +1,5 @@
 {% extends "users/users_base.html" %}
-{% load hq_bootstrap_tags %}
+{% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -102,7 +102,7 @@
         </section>
         {% if billing_enabled %}
         <section class="tab-pane" id="billing-info">
-            {% include billing_info_partial|default:'hq_bootstrap/forms/basic_fieldset.html' %}
+            {% include billing_info_partial|default:'hqstyle/forms/basic_fieldset.html' %}
         </section>
         {% endif %}
     </div>
