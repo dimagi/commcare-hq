@@ -38,93 +38,100 @@
         <div class="hq-container-fluid {% block layout_style %}{% endblock %}{% block oldstyle_tag %} old-style{% endblock %}">
             <header>
                 {% block header-section %}
-                <div class="hq-navbar">
-                <hgroup>
-                    <h1><a href="{% url homepage %}"><img src="{% static 'hqstyle/img/commcare-logo.png' %}" alt="CommCare HQ" /></a></h1>
-                </hgroup>
-                {% if request.user.is_authenticated %}
-                    <nav id="hq-navigation-bar">
-                        {% block tabs %}
-                        <ul class="nav">
-                            {# hide tabs from commcare users #}
-                            {% if domain and request.couch_user and request.couch_user.is_web_user %}
-                                {% get_tabs as tabs %}
-                                {% for tab in tabs %}
-                                    {% if tab.visible %}
-                                        <li class="{% if tab.is_active %}active{% endif %}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
-                                    {% endif %}
-                                {% endfor %}
-                            {% endif %}
-                        </ul>
-                        {% endblock %}
-
-
-                        <div class="btn-toolbar secondary-nav">
-                            <div class="btn-group">
-                            {% if request.project.organization %}
-                                <a href="{% url orgs_landing request.project.organization %}" class="btn btn-info">{{ request.project.organization_doc.title }}</a>
-                                {% comment %}TODO: Add a drop-down list of organizations the current user is a member of?{% endcomment %}
-                            {% endif %}
-                            </div>
-
-                            {% if request.couch_user and request.couch_user.is_web_user %}
-                            <div class="btn-group">
-                                <a class="btn btn-project dropdown-toggle" data-toggle="dropdown" href="#">
-                                    <i class="icon-hq-white icon-hq-logo"></i>
-                                    {% if domain %}
-                                        {% ifequal domain 'public' %}
-                                            CommCare HQ Demo Project
-                                        {% else %}
-                                            {% if request.project.is_snapshot %}
-                                                Snapshot of {{ request.project.copied_from.display_name }}
-                                            {% else %}
-                                                {{ request.project.display_name }}
-                                            {% endif %}
-                                        {% endifequal %}
-                                    {% else %}
-                                        No Project Selected
-                                    {% endif %}
-                                    <span class="caret"></span>
-                                </a>
-                                {% if domain %}
-                                    {% domains_for_user request domain %}
-                                {% else %}
-                                    {% domains_for_user request %}
-                                {% endif %}
-                            </div>
-                            {% endif %}
-
-                            <div class="btn-group">
-                                <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
-                                    <i class="icon-hq-white icon-hq-person"></i>
-                                    {% if user.first_name %}
-                                        {{ user.first_name }} {{ user.last_name }}
-                                    {% else %}
-                                        {{ user.username }}
-                                    {% endif %}
-                                    {% with request.couch_user.role_label as role %}
-                                        {% if role %}
-                                            ({{ role }})
+                <div class="navbar">
+                    <div class="navbar-inner">
+                        <hgroup class="brand">
+                            <h1><a href="{% url homepage %}"><img src="{% static 'hqstyle/img/commcare-logo.png' %}" alt="CommCare HQ" /></a></h1>
+                        </hgroup>
+                    {% if request.user.is_authenticated %}
+                        <nav id="hq-navigation-bar">
+                            {% block tabs %}
+                            <ul class="nav">
+                                {# hide tabs from commcare users #}
+                                {% if domain and request.couch_user and request.couch_user.is_web_user %}
+                                    {% get_tabs as tabs %}
+                                    {% for tab in tabs %}
+                                        {% if tab.visible %}
+                                            <li class="dropdown{% if tab.is_active %} active{% endif %}">
+                                                <a class="dropdown-hover" data-hover="dropdown" href="{{ tab.url }}">{{ tab.caption }}</a>
+                                                <ul class="dropdown-menu" role="menu">
+                                                    <li><a href="#">Test</a></li>
+                                                </ul>
+                                            </li>
                                         {% endif %}
-                                    {% endwith %}
-                                    <span class="caret"></span>
-                                </a>
-                                <ul class="dropdown-menu nav-list dropdown-blue right-align">
-                                    <li class="nav-header">Signed in as:</li>
-                                    <li>{{ user.username }}</li>
-                                    <li class="divider"></li>
-                                    <li><a href="{% url logout %}">Sign Out</a></li>
-                                </ul>
+                                    {% endfor %}
+                                {% endif %}
+                            </ul>
+                            {% endblock %}
+
+
+                            <div class="btn-toolbar pull-right">
+                                <div class="btn-group">
+                                {% if request.project.organization %}
+                                    <a href="{% url orgs_landing request.project.organization %}" class="btn btn-info">{{ request.project.organization_doc.title }}</a>
+                                    {% comment %}TODO: Add a drop-down list of organizations the current user is a member of?{% endcomment %}
+                                {% endif %}
+                                </div>
+
+                                {% if request.couch_user and request.couch_user.is_web_user %}
+                                <div class="btn-group">
+                                    <a class="btn btn-project dropdown-toggle" data-toggle="dropdown" href="#">
+                                        <i class="icon-hq-white icon-hq-logo"></i>
+                                        {% if domain %}
+                                            {% ifequal domain 'public' %}
+                                                CommCare HQ Demo Project
+                                            {% else %}
+                                                {% if request.project.is_snapshot %}
+                                                    Snapshot of {{ request.project.copied_from.display_name }}
+                                                {% else %}
+                                                    {{ request.project.display_name }}
+                                                {% endif %}
+                                            {% endifequal %}
+                                        {% else %}
+                                            No Project Selected
+                                        {% endif %}
+                                        <span class="caret"></span>
+                                    </a>
+                                    {% if domain %}
+                                        {% domains_for_user request domain %}
+                                    {% else %}
+                                        {% domains_for_user request %}
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+
+                                <div class="btn-group">
+                                    <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
+                                        <i class="icon-hq-white icon-hq-person"></i>
+                                        {% if user.first_name %}
+                                            {{ user.first_name }} {{ user.last_name }}
+                                        {% else %}
+                                            {{ user.username }}
+                                        {% endif %}
+                                        {% with request.couch_user.role_label as role %}
+                                            {% if role %}
+                                                ({{ role }})
+                                            {% endif %}
+                                        {% endwith %}
+                                        <span class="caret"></span>
+                                    </a>
+                                    <ul class="dropdown-menu nav-list dropdown-blue right-align">
+                                        <li class="nav-header">Signed in as:</li>
+                                        <li>{{ user.username }}</li>
+                                        <li class="divider"></li>
+                                        <li><a href="{% url logout %}">Sign Out</a></li>
+                                    </ul>
+                                </div>
                             </div>
-                        </div>
-                    </nav>
-                {% else %}
-                    <nav>
-                        <div class="btn-toolbar secondary-nav">
-                            <a href="{% url login %}" class="btn btn-primary">Sign In</a>
-                        </div>
-                    </nav>
-                {% endif %}
+                        </nav>
+                    {% else %}
+                        <nav>
+                            <div class="btn-toolbar secondary-nav">
+                                <a href="{% url login %}" class="btn btn-primary">Sign In</a>
+                            </div>
+                        </nav>
+                    {% endif %}
+                    </div>
                 </div>
                 {% endblock %}
             </header>
