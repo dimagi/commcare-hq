@@ -4,7 +4,7 @@ from django.forms.widgets import Textarea
 from django.utils.safestring import mark_safe
 from corehq.apps.adm.models import BaseADMColumn, ReducedADMColumn, DaysSinceADMColumn, ConfigurableADMColumn,\
     CompareADMColumn, ADMReport, KEY_TYPE_OPTIONS, REPORT_SECTION_OPTIONS, \
-    CASE_FILTER_OPTIONS, CASE_STATUS_OPTIONS, CaseCountADMColumn, ConfigurableADMColumn, CouchViewADMColumn
+    CASE_FILTER_OPTIONS, CASE_STATUS_OPTIONS, CaseCountADMColumn, ConfigurableADMColumn, CouchViewADMColumn, SORT_BY_DIRECTION_OPTIONS
 from hqstyle.forms import fields as hq_fields
 from dimagi.utils.data.crud import BaseCRUDForm
 from dimagi.utils.decorators.memoized import memoized
@@ -158,6 +158,12 @@ class ADMReportForm(BaseADMDocumentForm):
         help_text="A comma separated list of column slugs for the report.",
         required=False,
         widget=Textarea(attrs=dict(style="height:80px;width:340px;"))
+    )
+    sort_by_default = forms.CharField(label="Slug of Sort By Default",
+        required=False,
+        help_text="The default is to sort by username.")
+    sort_by_direction = forms.CharField(label="Sort By Direction",
+        widget=forms.Select(choices=SORT_BY_DIRECTION_OPTIONS)
     )
     key_type = forms.CharField(label="Key By",
         widget=forms.Select(choices=KEY_TYPE_OPTIONS)

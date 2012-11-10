@@ -4,7 +4,7 @@ from django.utils.safestring import mark_safe
 from corehq.apps.adm import utils
 from corehq.apps.adm.dispatcher import ADMSectionDispatcher
 from corehq.apps.adm.models import REPORT_SECTION_OPTIONS, ADMReport
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin, ProjectReportParametersMixin
 from dimagi.utils.couch.database import get_db
@@ -107,7 +107,9 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
     def headers(self):
         header = DataTablesHeader(DataTablesColumn(_("FLW Name")))
         for col in self.adm_report.columns:
-            header.add_column(DataTablesColumn(_(col.name), help_text=_(col.description)))
+            header.add_column(DataTablesColumn(_(col.name), help_text=_(col.description),
+                sort_type=DTSortType.NUMERIC))
+        header.custom_sort = self.adm_report.default_sort_params
         return header
 
     @property
@@ -121,6 +123,11 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
                 row.append(self.table_cell(col.clean_value(val),
                     col.html_value(val)))
             rows.append(row)
+        self.statistics_rows = [["Total"], ["Average"]]
+        for ind, col in enumerate(self.adm_columns):
+            column_data = [row[1+ind] for row in rows]
+            self.statistics_rows[0].append(col.calculate_totals(column_data))
+            self.statistics_rows[1].append(col.calculate_averages(column_data))
         return rows
 
     @property

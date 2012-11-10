@@ -82,8 +82,9 @@ function HQReportDataTables(options) {
             var datatable = $(this).dataTable(params);
             if (!self.datatable)
                 self.datatable = datatable;
-            if(self.customSort)
+            if(self.customSort) {
                 datatable.fnSort( self.customSort );
+            }
             if(self.fixColumns)
                 new FixedColumns( datatable, {
                     iLeftColumns: self.fixColsNumLeft,
