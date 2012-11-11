@@ -81,9 +81,10 @@ def _responses_to_text(responses):
 # Gets the raw instance of the session's form, strips out any case action blocks, and submits it.
 # This is used with sms surveys to save all questions answered so far in a session that needs to close, 
 # making sure that there are no side-effects to the case on submit.
+# The form is only submitted if the smsforms session has not yet completed.
 def submit_unfinished_form(session_id):
     session = XFormsSession.latest_by_session_id(session_id)
-    if session is not None:
+    if session is not None and session.end_time is None:
         # Get and clean the raw xml
         xml = get_raw_instance(session_id)
         root = XML(xml)

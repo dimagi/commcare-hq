@@ -803,7 +803,15 @@ class CaseReminderHandler(Document):
                 handler = reminder.handler
                 if handler.fire(reminder):
                     handler.set_next_fire(reminder, now)
-                    reminder.save()
+                    try:
+                        reminder.save()
+                    except ResourceConflict:
+                        # Submitting a form updates the case, which can update the reminder.
+                        # Grab the latest version of the reminder and set the next fire if it's still in use.
+                        reminder = CaseReminder.get(reminder._id)
+                        if not reminder.retired:
+                            handler.set_next_fire(reminder, now)
+                            reminder.save()
                 reminder.release_lock()
 
     def retire(self):
@@ -894,7 +902,11 @@ class CaseReminder(Document):
             return CommConnectCase.get(self.case_id)
         else:
             return SurveySample.get(self.sample_id)
-
+    
+    @property
+    def retired(self):
+        return self.doc_type.endswith("-Deleted")
+    
     def retire(self):
         self.doc_type += "-Deleted"
         self.save()

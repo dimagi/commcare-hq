@@ -190,11 +190,12 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
                 "start_datetime_time"   : str(h.start_datetime.time()) if isinstance(h.start_datetime, datetime) else None,
                 "frequency"             : h.ui_frequency,
                 "sample_id"             : h.sample_id,
-                "use_until"             : "Y" if h.until is not None else "N"
+                "use_until"             : "Y" if h.until is not None else "N",
             }
         else:
             initial = {
                 "events"    : [CaseReminderEvent(day_num=0, fire_time=time(0,0), message={"":""}, callback_timeout_intervals=[], form_unique_id=None)],
+                "use_until" : "N",
             }
         
         form = ComplexCaseReminderForm(initial=initial)
