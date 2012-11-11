@@ -42,6 +42,10 @@
     .language_message {
         vertical-align: top;
     }
+    .popover {
+        font-size: 12px;
+        font-weight: normal;
+    }
 </style>
 {% endblock %}
 
@@ -176,7 +180,13 @@
             "Time to Wait": "For offset-based schedules, this is the hours and minutes (hh:mm) to wait before sending the content.",
             "Default Language": "When sending SMS, this is the default language code to use when no translation is available for the recipient. A translation must be present in " +
                                 "the default language for each message.",
-            "Schedule Type": "Use Schedule-based to send at an exact time of day. Use Offset-based to send a certain number of days or hours and minutes later."
+            "Schedule Type": "Use Schedule-based to send at an exact time of day. Use Offset-based to send a certain number of days or hours and minutes later.",
+            "Schedule Length": "The length of the schedule. For example, this would be 1 for daily schedules and 7 for weekly schedules.",
+            "Days to Wait Before Restarting": "The number of days to wait after the end of one iteration of the schedule and before the beginning of the next iteration.",
+            "Until Condition": "Optionally specify a case property which will be used to deactivate this reminder. If the case property is a date, no reminders for that case will go out " +
+                               "after that date. Also, if this case property is set to 'OK', the reminder for that case will automatically be deactivated.",
+            "Stop": "A reminder will stop sending if its trigger condition is no longer true. Also, you can use the below stop conditions to deactivate a reminder. Whichever of these stop "+
+                    "conditions comes first will deactivate an active reminder."
         };
 
         $('.help_popover').popover({
@@ -339,7 +349,7 @@
                         <td>{{ form.start_date.errors }}</td>
                     </tr>
                     <tr>
-                        <td class="help_popover" data-help-key="Start Offset">Start Offset (days) <i class="icon icon-question-sign"></i></td>
+                        <td><div class="help_popover" data-help-key="Start Offset">Start Offset (days) <i class="icon icon-question-sign"></i></div></td>
                         <td>{{ form.start_offset }}</td>
                         <td>{{ form.start_offset.errors }}</td>
                     </tr>
@@ -402,7 +412,7 @@
                     <td></td>
                 </tr>
                 <tr>
-                    <td class="help_popover" data-help-key="Schedule Type">Schedule Type <i class="icon icon-question-sign"></i></td>
+                    <td><div class="help_popover" data-help-key="Schedule Type">Schedule Type <i class="icon icon-question-sign"></i></div></td>
                     <td>
                         <select name="event_interpretation" id="id_event_interpretation">
                             <option value="SCHEDULE" {% if form.event_interpretation.value == "SCHEDULE" %}selected="selected"{% endif %}>Schedule-based</option>
@@ -412,7 +422,7 @@
                     <td></td>
                 </tr>
                 <tr class="for_sms for_sms_callback">
-                    <td class="help_popover" data-help-key="Default Language">Default Language <i class="icon icon-question-sign"></i></td>
+                    <td><div class="help_popover" data-help-key="Default Language">Default Language <i class="icon icon-question-sign"></i></div></td>
                     <td><input type="text" class="tiny" name="default_lang" id="id_default_lang" value="{{ form.default_lang.value|default:"" }}" /></td>
                     <td>{{ form.default_lang.errors }}</td>
                 </tr>
@@ -489,8 +499,8 @@
             <tbody>
                 <tr>
                     <td>
-                        <span class="for_schedule_based">Schedule length (days):</span>
-                        <span class="for_offset_based">Days to wait before restarting schedule:</span>
+                        <span class="for_schedule_based help_popover" data-help-key="Schedule Length">Schedule length (days) <i class="icon icon-question-sign"></i> :</span>
+                        <span class="for_offset_based help_popover" data-help-key="Days to Wait Before Restarting">Days to wait before restarting schedule <i class="icon icon-question-sign"></i> :</span>
                         {{ form.schedule_length }}
                     </td>
                     <td>{{ form.schedule_length.errors }}</td>
@@ -498,7 +508,7 @@
             </tbody>
         </table>
     </div>
-    <h4>Stop</h4>
+    <h4><span class="help_popover" data-help-key="Stop">Stop <i class="icon icon-question-sign"></i></span></h4>
     <div class="form-block">
         <div>
             <table class="parameter_table">
@@ -516,7 +526,7 @@
                     </tr>
                     <tr class="for_case_criteria">
                         <td>
-                            Stop sending using case property
+                            <span class="help_popover" data-help-key="Until Condition">Stop sending using case property <i class="icon icon-question-sign"></i> </span>
                             <select name="use_until" id="id_use_until" style="width: 100px;">
                                 <option value="Y" {% if form.use_until.value == "Y" %}selected="selected"{% endif %}>:</option>
                                 <option value="N" {% if form.use_until.value == "N" %}selected="selected"{% endif %}>(none)</option>
