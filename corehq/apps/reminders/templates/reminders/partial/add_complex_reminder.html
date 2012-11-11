@@ -186,7 +186,8 @@
             "Until Condition": "Optionally specify a case property which will be used to deactivate this reminder. If the case property is a date, no reminders for that case will go out " +
                                "after that date. Also, if this case property is set to 'OK', the reminder for that case will automatically be deactivated.",
             "Stop": "A reminder will stop sending if its trigger condition is no longer true. Also, you can use the below stop conditions to deactivate a reminder. Whichever of these stop "+
-                    "conditions comes first will deactivate an active reminder."
+                    "conditions comes first will deactivate an active reminder.",
+            "Partial Form Submission": "NOTE: If a partial form submission occurs, no case actions (create, update, or close) will be performed in order to protect data integrity."
         };
 
         $('.help_popover').popover({
@@ -546,7 +547,7 @@
                 <tbody>
                     <tr>
                         <td>{{ form.submit_partial_forms }}</td>
-                        <td>Submit the current state of forms on the last survey timeout</td>
+                        <td>Submit the current state of forms on the last survey timeout <span class="help_popover" data-help-key="Partial Form Submission"><i class="icon icon-question-sign"></i></span></td>
                     </tr>
                 </tbody>
             </table>
