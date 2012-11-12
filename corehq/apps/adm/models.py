@@ -418,6 +418,41 @@ class ConfigurableADMColumn(BaseADMColumn):
         return wrapped_data
 
 
+class UserDataADMColumn(ConfigurableADMColumn):
+    user_data_key = StringProperty()
+
+    _admin_crud_class = ConfigurableColumnAdminCRUDManager
+
+    @property
+    def configurable_properties(self):
+        return ["user_data_key"]
+
+    def raw_value(self, **kwargs):
+        user_id = kwargs.get('user_id')
+        try:
+            user = CommCareUser.get(user_id)
+            return user.user_data.get(self.user_data_key)
+        except Exception:
+            pass
+        return None
+
+    def clean_value(self, value):
+        return "--" if value is None else value
+
+    def html_value(self, value):
+        return self.clean_value(value)
+
+    def calculate_averages(self, column_data):
+        return "--"
+
+    def calculate_totals(self, column_data):
+        return "--"
+
+    @classmethod
+    def column_type(cls):
+        return "User Data"
+
+
 class CompareADMColumn(ConfigurableADMColumn):
     """
         Grabs two ADMColumns that return numerical values.
