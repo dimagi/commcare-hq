@@ -2,7 +2,6 @@ from gevent import monkey; monkey.patch_all()
 from gevent.pool import Pool
 from restkit.session import set_session; set_session("gevent")
 
-
 def import_pillows():
     try:
         from django.conf import settings
