@@ -4,7 +4,7 @@ from django.forms.widgets import Textarea
 from django.utils.safestring import mark_safe
 from corehq.apps.adm.models import BaseADMColumn, ReducedADMColumn, DaysSinceADMColumn, ConfigurableADMColumn,\
     CompareADMColumn, ADMReport, KEY_TYPE_OPTIONS, REPORT_SECTION_OPTIONS, \
-    CASE_FILTER_OPTIONS, CASE_STATUS_OPTIONS, CaseCountADMColumn, ConfigurableADMColumn, CouchViewADMColumn, SORT_BY_DIRECTION_OPTIONS
+    CASE_FILTER_OPTIONS, CASE_STATUS_OPTIONS, CaseCountADMColumn, ConfigurableADMColumn, CouchViewADMColumn, SORT_BY_DIRECTION_OPTIONS, UserDataADMColumn
 from hqstyle.forms import fields as hq_fields
 from dimagi.utils.data.crud import BaseCRUDForm
 from dimagi.utils.decorators.memoized import memoized
@@ -97,6 +97,10 @@ class CaseFilterFormMixin(forms.Form):
     case_status = forms.CharField("Case Status",
         required=False,
         widget=forms.Select(choices=CASE_STATUS_OPTIONS))
+
+class UserDataADMColumnForm(ConfigurableADMColumnForm):
+    doc_class = UserDataADMColumn
+    user_data_key = forms.CharField(label="User Data Key")
 
 
 class CaseCountADMColumnForm(ConfigurableADMColumnForm, CaseFilterFormMixin):

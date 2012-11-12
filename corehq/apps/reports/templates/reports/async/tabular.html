@@ -104,7 +104,10 @@
         {% endif %}
 
         $(function() {
-            $('.header-tooltip').tooltip();
+            $('.dataTables_scrollHead').css('overflow', 'visible');
+            $('.header-popover').tooltip({
+                placement: 'bottom',
+            });
         });
     </script>
 {% endblock %}
