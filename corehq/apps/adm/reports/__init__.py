@@ -107,8 +107,9 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
     def headers(self):
         header = DataTablesHeader(DataTablesColumn(_("FLW Name")))
         for col in self.adm_report.columns:
-            header.add_column(DataTablesColumn(_(col.name), help_text=_(col.description),
-                sort_type=DTSortType.NUMERIC))
+            sort_type = DTSortType.NUMERIC if hasattr(col, 'returns_numerical') and col.returns_numerical else None
+            help_text = _(col.description) if col.description else None
+            header.add_column(DataTablesColumn(_(col.name), sort_type=DTSortType.NUMERIC, help_text=help_text))
         header.custom_sort = self.adm_report.default_sort_params
         return header
 
