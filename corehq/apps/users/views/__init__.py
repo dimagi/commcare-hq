@@ -54,6 +54,8 @@ def require_permission_to_edit_user(view_func):
                 go_ahead = True
             else:
                 couch_user = CouchUser.get_by_user_id(couch_user_id)
+                if not couch_user:
+                    raise Http404()
                 if couch_user.is_commcare_user() and request.couch_user.can_edit_commcare_users():
                     go_ahead = True
                 elif couch_user.is_web_user() and request.couch_user.can_edit_web_users():
@@ -85,14 +87,14 @@ def _users_context(request, domain):
 
 @login_and_domain_required
 def users(request, domain):
-    redirect = reverse("user_account", args=[domain, request.couch_user._id])
-    try:
-        user = WebUser.get_by_user_id(request.couch_user._id, domain)
-        if user and user.has_permission(domain, 'edit_commcare_users'):
+    user = WebUser.get_by_user_id(request.couch_user._id, domain)
+    if user:
+        if user.has_permission(domain, 'edit_commcare_users'):
             redirect = reverse("commcare_users", args=[domain])
-    except Exception as e:
-        logging.exception("Failed to grab user object: %s", e)
-
+        else:
+            redirect = reverse("user_account", args=[domain, request.couch_user._id])
+    else:
+        raise Http404()
     return HttpResponseRedirect(redirect)
 
 @require_can_edit_web_users
