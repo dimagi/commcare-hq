@@ -259,20 +259,25 @@ def approve_app(request, domain):
     meta = request.META
     return HttpResponseRedirect(request.META.get('HTTP_REFERER') or reverse('appstore'))
 
-@require_previewer # remove for production
-def copy_snapshot_app(request, domain):
-    user = request.couch_user
-    dom = Domain.get_by_name(domain)
-    if request.method == 'POST':
-        new_domain_name = request.POST['project']
-        app_id = request.POST['app_id']
-        if user.is_member_of(new_domain_name):
-            doc_type = get_db().get(app_id)['doc_type']
-            new_doc = dom.copy_component(doc_type, app_id, new_domain_name, user)
 
-            messages.info(request, "Application successfully copied!")
-            return HttpResponseRedirect(reverse('view_app', args=[new_domain_name, new_doc.id]))
-    return HttpResponseRedirect(reverse('project_info', args=[domain]))
+@require_previewer # remove for production
+def import_app(request, domain):
+    user = request.couch_user
+    from_project = Domain.get_by_name(domain)
+
+    if request.method == 'POST' and from_project.is_snapshot:
+        to_project_name = request.POST['project']
+        if not user.is_member_of(to_project_name):
+            messages.error(request, "You don't belong to that project")
+            return project_info(request, domain)
+
+        for app in from_project.full_applications():
+            new_doc = from_project.copy_component(app['doc_type'], app.get_id, to_project_name, user)
+
+        messages.info(request, "Application successfully imported!")
+        return HttpResponseRedirect(reverse('view_app', args=[to_project_name, new_doc.id]))
+    else:
+        return project_info(request, domain)
 
 #@login_and_domain_required
 @require_previewer # remove for production
@@ -282,18 +287,22 @@ def copy_snapshot(request, domain):
         args = {'domain_name': request.POST['new_project_name'], 'eula_confirmed': True}
         form = DomainRegistrationForm(args)
 
-        if form.is_valid():
-            new_domain = dom.save_copy(form.clean_domain_name(), user=request.couch_user)
+        if request.POST.get('new_project_name', ""):
+            if form.is_valid():
+                new_domain = dom.save_copy(form.clean_domain_name(), user=request.couch_user)
+            else:
+                messages.error(request, form.errors)
+                return project_info(request, domain)
+
+            if new_domain is None:
+                messages.error(request, "A project by that name already exists")
+                return project_info(request, domain)
+            messages.success(request, "Project copied successfully!")
+            return redirect("domain_project_settings", new_domain.name)
         else:
-            messages.error(request, form.errors)
+            messages.error(request, "You must specify a name for the new project")
             return project_info(request, domain)
 
-        if new_domain is None:
-            messages.error(request, "A project by that name already exists")
-            return project_info(request, domain)
-
-        messages.success(request, "Project copied successfully!")
-        return redirect("domain_project_settings", new_domain.name)
 
 @require_previewer # remove for production
 def project_image(request, domain):
