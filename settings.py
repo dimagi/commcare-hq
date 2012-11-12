@@ -382,6 +382,10 @@ LOGSTASH_COUCHLOG_PORT = 10888
 LOGSTASH_AUDITCARE_PORT = 10999
 LOGSTASH_HOST = 'localhost'
 
+#on both a single instance or distributed setup this should assume to be localhost
+ELASTICSEARCH_HOST = 'localhost'
+ELASTICSEARCH_PORT = 9200
+
 try:
     #try to see if there's an environmental variable set for local_settings
     if os.environ.has_key('CUSTOMSETTINGS') and os.environ['CUSTOMSETTINGS'] == "demo":
@@ -740,10 +744,6 @@ SELENIUM_APP_SETTING_DEFAULTS = {
         'MAX_LOAD_TIME': 30,
     },
 }
-
-#on both a single instance or distributed setup this should assume to be localhost
-ELASTICSEARCH_HOST = 'localhost'
-ELASTICSEARCH_PORT = 9200
 
 PILLOWTOPS = [ 'corehq.pillows.CasePillow',
                #'corehq.pillows.ExchangePillow', #todo when merged
