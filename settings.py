@@ -182,7 +182,6 @@ HQ_APPS = (
     'corehq.apps.reports',
     'corehq.apps.data_interfaces',
     'corehq.apps.adm',
-    'corehq.apps.hq_bootstrap',
     'corehq.apps.builds',
     'corehq.apps.orgs',
     'corehq.apps.api',
@@ -198,6 +197,7 @@ HQ_APPS = (
     'hutch',
     'loadtest',
     'pillowtop',
+    'hqstyle',
 
     # custom reports
     'a5288',

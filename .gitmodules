@@ -61,9 +61,6 @@
 [submodule "submodules/hutch-src"]
 	path = submodules/hutch-src
 	url = git://github.com/dimagi/hutch.git
-[submodule "submodules/hq-bootstrap"]
-	path = submodules/hq-bootstrap
-	url = git://github.com/dimagi/hq-bootstrap.git
 [submodule "submodules/dca-reports"]
 	path = submodules/dca-reports
 	url = git://github.com/dimagi/dca-reports.git
@@ -91,3 +88,6 @@
 [submodule "submodules/pillowtop-src"]
 	path = submodules/pillowtop-src
 	url = git://github.com/dimagi/pillowtop.git
+[submodule "submodules/hqstyle-src"]
+	path = submodules/hqstyle-src
+	url = git://github.com/dimagi/hqstyle-src.git
