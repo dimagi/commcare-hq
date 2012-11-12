@@ -48,6 +48,7 @@ class XFormInstance(Document, UnicodeMixIn, ComputedDocumentMixin):
     """An XForms instance."""
     xmlns = StringProperty()
     received_on = DateTimeProperty()
+    partial_submission = BooleanProperty(default=False) # Used to tag forms that were forcefully submitted without a touchforms session completing normally
     
     @property
     def get_form(self):
