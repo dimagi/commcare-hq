@@ -3,13 +3,60 @@ import urllib
 import uuid
 import datetime
 
+from django.conf import settings
 from dimagi.utils.couch.database import get_db
 from corehq.apps.users.models import CouchUser
 from django.template.loader import render_to_string
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.sms.mixin import MobileBackend
 
 from xml.etree.ElementTree import XML, tostring
 from dimagi.utils.parsing import json_format_datetime
+
+def get_outbound_sms_backend(phone_number, domain=None):
+    """
+    Get the appropriate outbound SMS backend to send to a
+    particular phone_number
+    """
+
+
+    # TODO: refer to domain specific settings
+
+    backend_mapping = sorted(settings.SMS_BACKENDS.iteritems(),
+                             key=lambda (prefix, backend): len(prefix),
+                             reverse=True)
+    for prefix, backend in backend_mapping:
+        if phone_number.startswith('+' + prefix):
+            return load_backend(backend)
+    raise RuntimeError('no suitable backend found for phone number %s' % phone_number)
+
+def load_backend(tag):
+    # new-style backend
+    try:
+        return MobileBackend.get(tag)
+    except:
+        pass
+
+    # old-style backend
+
+    # hard-coded old-style backends with new-style IDs
+    # once the backend migration is complete, these backends
+    # should exist in couch
+    transitional = {
+        'MOBILE_BACKEND_MACH': 'corehq.apps.sms.mach_api',
+        'MOBILE_BACKEND_UNICEL': 'corehq.apps.unicel.api',
+        'MOBILE_BACKEND_TEST': 'corehq.apps.sms.test_backend',
+        # tropo?
+    }
+    try:
+        module = transitional[tag]
+    except KeyError:
+        module = tag
+
+    return MobileBackend(
+        outbound_module=module,
+        description='virtual backend for %s' % tag,
+    )
 
 def clean_phone_number(text):
     """

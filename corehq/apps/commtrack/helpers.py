@@ -3,7 +3,6 @@ from corehq.apps.users.models import CommCareUser
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.commtrack.models import *
-from corehq.apps.sms import test_backend
 from dimagi.utils.couch.database import get_db
 
 """
