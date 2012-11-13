@@ -6137,6 +6137,9 @@ a.badge:hover {
 .hero-unit li {
   line-height: 27px;
 }
+.ui-datepicker {
+  z-index: 1000 !important;
+}
 /* Styling for the celery downloader. See download export */
 .downloader > h2 {
   font-size: 13px;
