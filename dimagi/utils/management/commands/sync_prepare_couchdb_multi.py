@@ -86,7 +86,7 @@ class Command(BaseCommand):
 
         #Git info
         message = "Preindex results:\n"
-        message += "\tInitiated by: %s" % username
+        message += "\tInitiated by: %s\n" % username
         if has_git:
             repo = gitinfo.Repo(settings.FILEPATH)
             logs = repo.head.log()
