@@ -40,11 +40,14 @@ class Subprocess(object):
                 timeout
             ))
         elif self.process == 'started':
-            raise ProcessTimedOut("Still don't know what's going on here. Process `%s` 'timed out' after %s seconds "
-                "(not %s) with the value 'started'",
+            raise ProcessTimedOut((
+                "Still don't know what's going on here. "
+                "Process `%s` 'timed out' after %s seconds "
+                "(not %s) with the value 'started'"
+            ) % (
                 self.command_display,
                 time.time() - start,
                 timeout,
-            )
+            ))
         else:
             return self.process.returncode
