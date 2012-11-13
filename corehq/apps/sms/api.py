@@ -118,15 +118,8 @@ def start_session_from_keyword(survey_keyword, verified_number):
         print "ERROR: Exception raised while starting survey for keyword " + survey_keyword.keyword + ", domain " + verified_number.domain
 
 def incoming(phone_number, text, backend_api):
-    phone_without_plus = str(phone_number)
-    if phone_without_plus[0] == "+":
-        phone_without_plus = phone_without_plus[1:]
-    phone_with_plus = "+" + phone_without_plus
-    
-    v = VerifiedNumber.view("sms/verified_number_by_number",
-        key=phone_without_plus,
-        include_docs=True
-    ).one()
+    phone_number = clean_phone_number(phone_number)
+    v = VerifiedNumber.by_phone(phone_number)
     
     # Log message in message log
     msg = SMSLog(

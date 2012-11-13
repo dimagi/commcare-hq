@@ -158,11 +158,22 @@
 
             <div class="form form-horizontal">
                 <fieldset>
-                    {% for phone_number in phone_numbers %}
+                    {% for phone in couch_user.phone_numbers_extended %}
                         {% if forloop.first %}<legend>Registered Phone Numbers</legend>{% endif %}
                         <div class="control-group">
-                            <label class="control-label">+{{ phone_number }}</label>
+                            <label class="control-label">+{{ phone.phone }}
+                                {% ifequal phone.status "verified" %}
+                                <br><span class="help-inline"><small class="label" style="background-color: #468847;">VERIFIED</small></span>
+                                {% endifequal %}
+                                {% ifequal phone.status "pending" %}
+                                <br><span class="help-inline"><small class="label">VERIFICATION PENDING</small></span>
+                                {% endifequal %}
+                            </label>
+                            
                             <div class="controls">
+                                {% ifnotequal phone.status "verified" %}
+                                <a title="{% ifequal phone.status "unverified" %}Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified.{% else %}Re-send the verification SMS to this phone{% endifequal %}" class="btn btn-primary" data-toggle="modal" href="#verify_{{phone_number|urlencode}}"><i class="icon icon-signal icon-white"></i> {% ifequal phone.status "unverified" %}Verify{% else %}Verify (try again){% endifequal %}</a>
+                                {% endifnotequal %}
                                 <a class="btn btn-danger" data-toggle="modal" href="#delete_{{phone_number|urlencode}}"><i class="icon icon-remove icon-white"></i> Delete</a>
                             </div>
                         </div>

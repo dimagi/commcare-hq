@@ -18,9 +18,7 @@ def get_outbound_sms_backend(phone_number, domain=None):
     Get the appropriate outbound SMS backend to send to a
     particular phone_number
     """
-
-
-    # TODO: refer to domain specific settings
+    # TODO: support domain-specific settings
 
     backend_mapping = sorted(settings.SMS_BACKENDS.iteritems(),
                              key=lambda (prefix, backend): len(prefix),
@@ -31,6 +29,11 @@ def get_outbound_sms_backend(phone_number, domain=None):
     raise RuntimeError('no suitable backend found for phone number %s' % phone_number)
 
 def load_backend(tag):
+    """look up a mobile backend
+    for 'old-style' backends, create a virtual backend record
+    wrapping the backend module
+    """
+
     # new-style backend
     try:
         return MobileBackend.get(tag)

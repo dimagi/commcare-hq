@@ -40,6 +40,13 @@ class VerifiedNumber(Document):
             return CommCareUser.get(self.owner_id)
         else:
             return None
+    
+    @classmethod
+    def by_phone(cls, phone_number, unverified=False):
+        v = cls.view("sms/verified_number_by_number",
+                     key=phone_number[1:] if phone_number.startswith('+') else phone_number,
+                     include_docs=True).one()
+        return v if (unverified or (v and v.verified)) else None
 
 class MobileBackend(Document):
     """
