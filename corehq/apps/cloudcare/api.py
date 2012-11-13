@@ -7,6 +7,7 @@ from dimagi.utils.decorators import inline
 from casexml.apps.phone.caselogic import get_footprint
 from datetime import datetime
 from corehq.elastic import get_es
+import urllib
 
 # todo: Make these api functions use generators for streaming
 # so that a limit call won't fetch more docs than it needs to
@@ -204,7 +205,15 @@ def get_filters_from_request(request, limit_top_level=None):
     limit_top_level lets you specify a whitelist of top-level properties you can include in the filters,
     properties with a / in them are always included in the filters
     """
-    filters = dict(request.REQUEST.items())
+    def _decode(thing):
+        try:
+            return urllib.unquote(thing)
+        except Exception:
+            return thing
+    
+    # super weird hack: force decoding keys because sometimes (only seen in 
+    # production) django doesn't do this for us.
+    filters = dict((_decode(k), v) for k, v in request.REQUEST.items())
     if limit_top_level is not None:
         filters = dict([(key, val) for key, val in filters.items() if '/' in key or key in limit_top_level])
 
