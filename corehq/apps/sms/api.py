@@ -77,12 +77,16 @@ def send_sms_with_backend(domain, phone_number, text, backend_id):
 
 def send_message_via_backend(msg, backend, onerror=lambda: None):
     try:
-        backend_module = try_import(backend.outbound_module)
+        try:
+            backend_module = try_import(backend.outbound_module)
+        except:
+            raise RuntimeError('could not find outbound module %s' % backend.outbound_module)
+        backend_module.send(msg, **backend.outbound_params)
+
         try:
             msg.backend_api = backend_module.API_ID
         except Exception:
             pass
-        backend_module.send(msg, **backend.outbound_params)
         msg.save()
         return True
     except Exception:
