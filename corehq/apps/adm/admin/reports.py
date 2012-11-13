@@ -21,6 +21,8 @@ class ADMReportAdminInterface(BaseADMAdminInterface):
             DataTablesColumn("Report Name"),
             DataTablesColumn("Description"),
             DataTablesColumn("Columns"),
+            DataTablesColumn("Sort By Default Column"),
+            DataTablesColumn("Sort By Direction"),
             DataTablesColumn("Key Type"),
             DataTablesColumn("Edit"),
         )
