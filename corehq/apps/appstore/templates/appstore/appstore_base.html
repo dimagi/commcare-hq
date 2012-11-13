@@ -28,11 +28,14 @@
     <script>
         // This assures that all the result elements are the same height
         $(function(){
-            var heighest = 0;
-            $('#results .well').each(function(){
-                heighest = ($(this).height() > heighest) ? $(this).height() : heighest;
+            $('.results').each(function(){
+                var heighest = 0;
+                var $this = $(this);
+                $this.find('.well').each(function(){
+                    heighest = ($(this).height() > heighest) ? $(this).height() : heighest;
+                });
+                $this.find('.well').css('height',heighest + 'px');
             });
-            $('#results .well').css('height',heighest + 'px');
         });
     </script>
 {% endblock %}
@@ -256,11 +259,11 @@
     </div>
     {% endblock %}
 </div>
-<div class="row-fluid" id="results">
+<div class="row-fluid results">
 {% block results-display %}
 {% for app in apps %}
     {% if forloop.counter0|divisibleby:"3" and forloop.counter0 != 0 %}
-        </div><div class="row-fluid">
+        </div><div class="row-fluid results">
     {% endif %}
     <div class="span3">
         <div class="well" style="height: 100%">
