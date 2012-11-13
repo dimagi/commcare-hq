@@ -366,8 +366,11 @@ def get_apps_base_context(request, domain, app):
             lang = (app.langs or ['en'])[0]
         langs = [lang] + app.langs
 
-    edit = (request.GET.get('edit', 'true') == 'true') and\
-           (request.couch_user.can_edit_apps(domain) or request.user.is_superuser)
+    if getattr(request, 'couch_user', None):
+        edit = (request.GET.get('edit', 'true') == 'true') and\
+               (request.couch_user.can_edit_apps(domain) or request.user.is_superuser)
+    else:
+        edit = False
 
     if app:
         latest_app_version = ApplicationBase.view('app_manager/saved_app',
@@ -410,8 +413,13 @@ def get_apps_base_context(request, domain, app):
         'build_errors': build_errors,
         'edit': edit,
         'latest_app_version': latest_app_version,
-        'timezone': report_utils.get_timezone(request.couch_user.user_id, domain)
     })
+
+    if getattr(request, 'couch_user', None):
+        context['timezone'] = report_utils.get_timezone(request.couch_user.user_id, domain)
+    else:
+        context['timezone'] = None
+
     return context
 
 @login_and_domain_required

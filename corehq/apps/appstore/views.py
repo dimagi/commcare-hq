@@ -39,7 +39,7 @@ def rewrite_url(request, path):
 def inverse_dict(d):
     return dict([(v, k) for k, v in d.iteritems()])
 
-@require_previewer # remove for production
+#@require_previewer # remove for production
 def project_info(request, domain, template="appstore/project_info.html"):
     dom = Domain.get_by_name(domain)
     if not dom or not dom.is_snapshot or (not dom.is_approved and not request.couch_user.is_domain_admin(domain)):

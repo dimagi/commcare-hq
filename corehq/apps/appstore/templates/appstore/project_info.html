@@ -19,7 +19,7 @@
             $('#project_select').change(update_import_into_button);
         });
 
-        //remove gray sidebar
+        // remove gray sidebar
         $(function () {
             $('.hq-double-col').removeClass('hq-double-col');
         });
@@ -157,22 +157,26 @@
     <div>
         <form method="post" class="form-inline" action="{% url domain_copy_snapshot project %}">
             <fieldset>
-                <legend>Download project</legend>
-                {% if project.attribution_notes %}
-                    <dl>
-                        <dt>Attribution notes</dt>
-                        <dd>{{ project.attribution_notes }}</dd>
-                    </dl>
-                {% endif %}
-                <div{% if error_message %} class="error"{% endif %}>
-                    <input type="text" class="span3" id="new_project_name"
-                           name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">
-                    {% if error_message %}
-                        <span class="help-inline">{{ error_message }}</span>
+                <legend>Download Application</legend>
+                {% if request.couch_user %}
+                    {% if project.attribution_notes %}
+                        <dl>
+                            <dt>Attribution notes</dt>
+                            <dd>{{ project.attribution_notes }}</dd>
+                        </dl>
                     {% endif %}
-                    <button type="submit" class="btn btn-primary">Create New Project</button> or
-                    <a class="btn" id="import-app-button">Import to Existing Project</a>
-                </div>
+                    <div{% if error_message %} class="error"{% endif %}>
+                        <input type="text" class="span3" id="new_project_name"
+                               name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">
+                        {% if error_message %}
+                            <span class="help-inline">{{ error_message }}</span>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary">Create New Project</button> or
+                        <a class="btn" id="import-app-button">Import to Existing Project</a>
+                    </div>
+                {% else %}
+                    Please <a href="{% url login %}">sign in</a> or <a href="{% url registration_new_user %}">register</a> to download an app from the exchange
+                {% endif %}
             </fieldset>
         </form>
         <form method="post" class="form-inline" action="{% url import_app_from_snapshot project %}">
