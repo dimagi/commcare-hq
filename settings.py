@@ -703,6 +703,16 @@ SMS_HANDLERS = [
     'corehq.apps.sms.api.form_session_handler',
 ]
 
+# mapping of phone number prefix (including country code) to a registered
+# outbound sms backend to use for that set of numbers. the backend can be:
+# * the ID of a MobileBackend couch doc ("new-style" backends), or
+# * the python path of a backend module ("old-style" backends)
+SMS_BACKENDS = {
+    '': 'MOBILE_BACKEND_MACH', # default backend
+    '91': 'MOBILE_BACKEND_UNICEL', # india
+    '999': 'MOBILE_BACKEND_TEST', # +999 is an unused country code
+}
+
 SELENIUM_APP_SETTING_DEFAULTS = {
     'cloudcare': {
         # over-generous defaults for now
