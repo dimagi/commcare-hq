@@ -306,12 +306,10 @@ def create_snapshot(request, domain):
         form = SnapshotSettingsForm(initial={
                 'default_timezone': domain.default_timezone,
                 'case_sharing': json.dumps(domain.case_sharing),
-                'city': domain.deployment.city,
-                'country': domain.deployment.country,
-                'region': domain.deployment.region,
                 'project_type': domain.project_type,
                 'share_multimedia': True,
-                'license': domain.license
+                'license': domain.license,
+                'publish_on_submit': True,
             })
         published_snapshot = domain.published_snapshot() or domain
         published_apps = {}
@@ -325,7 +323,8 @@ def create_snapshot(request, domain):
                 'author': published_snapshot.author,
                 'share_multimedia': True,
                 'description': published_snapshot.description,
-                'short_description': published_snapshot.short_description
+                'short_description': published_snapshot.short_description,
+                'publish_on_submit': True,
             })
             for app in published_snapshot.full_applications():
                 if domain == published_snapshot:
@@ -395,17 +394,18 @@ def create_snapshot(request, domain):
         new_domain.description = request.POST['description']
         new_domain.short_description = request.POST['short_description']
         new_domain.project_type = request.POST['project_type']
-#        new_domain.region = request.POST['region']
-#        new_domain.city = request.POST['city']
-#        new_domain.country = request.POST['country']
         new_domain.title = request.POST['title']
         new_domain.author = request.POST['author']
-        for snapshot in domain.snapshots():
-            if snapshot.published and snapshot._id != new_domain._id:
-                snapshot.published = False
-                snapshot.save()
+
         new_domain.is_approved = False
-        new_domain.published = True
+        if request.POST.get('publish_on_submit', False):
+            for snapshot in domain.snapshots():
+                if snapshot.published and snapshot._id != new_domain._id:
+                    snapshot.published = False
+                    snapshot.save()
+            new_domain.published = True
+        else:
+            new_domain.published = False
 
         current_user = CouchUser.from_django_user(request.user)
         new_domain.cda.signed = True
