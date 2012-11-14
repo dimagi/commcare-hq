@@ -1,5 +1,5 @@
-from django.http import HttpResponseRedirect
-from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
+from django.http import HttpResponseRedirect, HttpResponse, Http404
+from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, login_required_late_eval_of_LOGIN_URL
 from django.core.urlresolvers import reverse
 from dimagi.utils.web import json_response
 
@@ -14,6 +14,12 @@ def redirect_users(request, domain, old_url=""):
 @login_and_domain_required
 def redirect_domain_settings(request, domain, old_url=""):
     return HttpResponseRedirect(reverse("domain_forwarding", args=[domain]))
+
+@login_required_late_eval_of_LOGIN_URL
+def account_settings(request):
+    if not request.couch_user.is_web_user():
+        raise Http404
+    return HttpResponse("woo")
 
 @require_superuser
 def project_id_mapping(request, domain):
