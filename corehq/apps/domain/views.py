@@ -323,7 +323,7 @@ def create_snapshot(request, domain):
                 'license': published_snapshot.license,
                 'title': published_snapshot.title,
                 'author': published_snapshot.author,
-                'share_multimedia': True,
+                'share_multimedia': published_snapshot.multimedia_included,
                 'description': published_snapshot.description,
                 'short_description': published_snapshot.short_description
             })
@@ -395,9 +395,6 @@ def create_snapshot(request, domain):
         new_domain.description = request.POST['description']
         new_domain.short_description = request.POST['short_description']
         new_domain.project_type = request.POST['project_type']
-#        new_domain.region = request.POST['region']
-#        new_domain.city = request.POST['city']
-#        new_domain.country = request.POST['country']
         new_domain.title = request.POST['title']
         new_domain.author = request.POST['author']
         for snapshot in domain.snapshots():
@@ -406,6 +403,7 @@ def create_snapshot(request, domain):
                 snapshot.save()
         new_domain.is_approved = False
         new_domain.published = True
+        new_domain.multimedia_included = request.POST.get('share_multimedia', '') == 'on'
 
         current_user = CouchUser.from_django_user(request.user)
         new_domain.cda.signed = True
@@ -450,6 +448,9 @@ def create_snapshot(request, domain):
                 application.phone_model = request.POST["%s-phone_model" % original_id]
                 application.attribution_notes = request.POST["%s-attribution_notes" % original_id]
                 application.user_type = request.POST["%s-user_type" % original_id]
+
+                if not new_domain.multimedia_included:
+                    application.multimedia_map = None
                 application.save()
             else:
                 application.delete()
