@@ -110,10 +110,12 @@
 
 @navbarText:                      @commCareGray;
 @navbarLinkColor:                 @commCareGray;
-@navbarLinkColorHover:            @white;
+@navbarLinkColorHover:            @blue;
+@navbarLinkBackgroundHover:       lighten(mix(@navbarLinkColorActive, @blue, 80), 60);
 
 // Sub Section Navbar - hq
 @subsectionNavbarBackground:        #435873;            // hq
+@subsectionNavbarBackgroundDark:    darken(@subsectionNavbarBackground, 30);
 @subsectionNavbarBackgroundActive:  #7C91B1;            // hq
 
 // Side Navbar - hq
