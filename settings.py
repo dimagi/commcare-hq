@@ -129,6 +129,8 @@ DEFAULT_APPS = (
     'crispy_forms'
 )
 
+CRISPY_TEMPLATE_PACK = 'bootstrap'
+
 HQ_APPS = (
     'django_digest',
     'django_rest_interface',
