@@ -1,4 +1,4 @@
-{% load tabs_tags %}{% load i18n %}{% load hq_shared_tags %}<!DOCTYPE html>
+{% load tabs_tags %}{% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}<!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="utf-8"/>
@@ -31,8 +31,6 @@
     
         {% block page_imports %}
         {% endblock %}
-
-
     </head>
     <body>
         <div class="hq-container-fluid {% block layout_style %}{% endblock %}{% block oldstyle_tag %} old-style{% endblock %}">
@@ -46,24 +44,8 @@
                     {% if request.user.is_authenticated %}
                         <nav id="hq-navigation-bar">
                             {% block tabs %}
-                            <ul class="nav">
-                                {# hide tabs from commcare users #}
-                                {% if domain and request.couch_user and request.couch_user.is_web_user %}
-                                    {% get_tabs as tabs %}
-                                    {% for tab in tabs %}
-                                        {% if tab.visible %}
-                                            <li class="dropdown{% if tab.is_active %} active{% endif %}">
-                                                <a class="dropdown-hover" data-hover="dropdown" href="{{ tab.url }}">{{ tab.caption }}</a>
-                                                <ul class="dropdown-menu" role="menu">
-                                                    <li><a href="#">Test</a></li>
-                                                </ul>
-                                            </li>
-                                        {% endif %}
-                                    {% endfor %}
-                                {% endif %}
-                            </ul>
+                                {% format_main_menu %}
                             {% endblock %}
-
 
                             <div class="btn-toolbar pull-right">
                                 <div class="btn-group">
@@ -126,7 +108,7 @@
                         </nav>
                     {% else %}
                         <nav>
-                            <div class="btn-toolbar secondary-nav">
+                            <div class="btn-toolbar pull-right">
                                 <a href="{% url login %}" class="btn btn-primary">Sign In</a>
                             </div>
                         </nav>
