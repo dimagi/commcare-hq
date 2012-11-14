@@ -1,8 +1,6 @@
-from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother,\
-    in_second_trimester, in_third_trimester
+from bihar.reports.indicators.filters import A_MONTH, is_pregnant_mother
 from datetime import datetime, timedelta
 from bihar.reports.indicators.visits import visit_is
-
 
 EMPTY = (0,0)
 GRACE_PERIOD = timedelta(days=7)
@@ -13,17 +11,17 @@ def _done_due(done, due):
 
 def _in_last_month(date):
     today = datetime.today().date()
-    return date < today - A_MONTH < today
+    return today - A_MONTH < date < today
 
 def _mother_due_in_window(case, days):
     get_edd = lambda case: getattr(case, 'edd', None)
-    get_duedate = lambda case: case.edd - timedelta(days=days) + GRACE_PERIOD
-    return is_pregnant_mother(case) and get_edd(case) and _in_last_month(get_duedate(case))
+    get_visitduedate = lambda case: case.edd - timedelta(days=days) + GRACE_PERIOD
+    return is_pregnant_mother(case) and get_edd(case) and _in_last_month(get_visitduedate(case))
         
 def _mother_delivered_in_window(case, days):
-    get_add = lambda case: getattr(case, 'add', None)
-    get_duedate = lambda case: case.add + timedelta(days=days) + GRACE_PERIOD
-    return is_pregnant_mother(case) and get_add(case) and _in_last_month(get_duedate(case))
+    get_add = lambda case: getattr(case, 'add', None) 
+    get_visitduedate = lambda case: case.add + timedelta(days=days) + GRACE_PERIOD 
+    return is_pregnant_mother(case) and get_add(case) and _in_last_month(get_visitduedate(case))
         
 def _done_due_count(cases, done_func, due_func):
     done = due = 0
@@ -39,7 +37,7 @@ def _done_due_count(cases, done_func, due_func):
     return _done_due(done, due)
 
 def _visits_due(case, schedule):
-    return [i +1 for i, days in enumerate(schedule) \
+    return [i + 1 for i, days in enumerate(schedule) \
             if _mother_delivered_in_window(case, days)]
 
 def _visits_done(case, schedule, type):
