@@ -1,6 +1,7 @@
-cherrypy
+CherryPy==3.2.2
 git+git://github.com/dimagi/django-cpserver.git
-celerymon
-gunicorn
-django-redis
+celerymon==1.0.3
+gunicorn==0.14.6
+redis==2.6.2
+django-redis==2.2
 
