@@ -42,12 +42,15 @@ class VerifiedNumber(Document):
             return None
     
     @classmethod
-    def by_phone(cls, phone_number, unverified=False):
+    def by_phone(cls, phone_number, include_pending=False):
         # TODO: do we assume phone number duplicates are prevented?
         v = cls.view("sms/verified_number_by_number",
-                     key=phone_number[1:] if phone_number.startswith('+') else phone_number,
+                     key=strip_plus(phone_number),
                      include_docs=True).one()
-        return v if (unverified or (v and v.verified)) else None
+        return v if (include_pending or (v and v.verified)) else None
+
+def strip_plus(phone_number):
+    return phone_number[1:] if phone_number.startswith('+') else phone_number
 
 class MobileBackend(Document):
     """
@@ -99,7 +102,7 @@ class CommCareMobileContactMixin(object):
             # for backwards compatibility with code that assumes only one verified phone #
             return sorted(verified.iteritems())[0][1]
 
-        return verified.get(phone)
+        return verified.get(strip_plus(phone))
     
     def validate_number_format(self, phone_number):
         """
@@ -135,6 +138,7 @@ class CommCareMobileContactMixin(object):
         raises  InvalidFormatException if the phone number format is invalid
         raises  PhoneNumberInUseException if the phone number is already in use by another contact
         """
+        phone_number = strip_plus(phone_number)
         self.verify_unique_number(phone_number)
         v = self.get_verified_number(phone_number)
         if v is None:
@@ -148,14 +152,14 @@ class CommCareMobileContactMixin(object):
         v.backend_id = backend_id
         v.save()
 
-    def delete_verified_number(self):
+    def delete_verified_number(self, phone_number=None):
         """
         Deletes this contact's phone number from the verified phone number list, freeing it up
         for use by other contacts.
         
         return  void
         """
-        v = self.get_verified_number()
+        v = self.get_verified_number(phone_number)
         if v is not None:
             v.doc_type += "-Deleted"
             v.save()

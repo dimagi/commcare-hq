@@ -123,7 +123,7 @@ def incoming(phone_number, text, backend_api):
     
     # Log message in message log
     msg = SMSLog(
-        phone_number    = phone_with_plus,
+        phone_number    = phone_number,
         direction       = INCOMING,
         date            = datetime.utcnow(),
         text            = text,
@@ -153,9 +153,8 @@ def incoming(phone_number, text, backend_api):
                 break
 
     else:
-        # don't handle messages from unknown phone #s currently
-        # TODO support sms registration workflows here
-        pass
+        import verify
+        verify.process_verification(phone_number, text)
 
 
 def form_session_handler(v, text):

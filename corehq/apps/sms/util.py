@@ -57,6 +57,7 @@ def load_backend(tag):
         module = tag
 
     return MobileBackend(
+        _id=tag,
         outbound_module=module,
         description='virtual backend for %s' % tag,
     )

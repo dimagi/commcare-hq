@@ -51,7 +51,7 @@ from django_digest.decorators import httpdigest
 from corehq.apps.users.bulkupload import create_or_update_users_and_groups, check_headers
 import uuid
 from corehq.apps.users.tasks import bulk_upload_async
-
+from corehq.apps.sms import verify as smsverify
 
 def require_permission_to_edit_user(view_func):
     @wraps(view_func)
@@ -430,7 +430,7 @@ def verify_phone_number(request, domain, couch_user_id):
     user = CouchUser.get_by_user_id(couch_user_id, domain)
 
     # send verification message
-
+    smsverify.send_verification(domain, user, phone_number)
 
     # create pending verified entry if doesn't exist already
     user.save_verified_number(domain, phone_number, False, None)
