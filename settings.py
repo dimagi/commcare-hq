@@ -126,6 +126,7 @@ DEFAULT_APPS = (
     #'ghettoq',     # pip install ghettoq
     'djkombu',     # pip install django-kombu
     'couchdbkit.ext.django',
+    'crispy_forms'
 )
 
 HQ_APPS = (
