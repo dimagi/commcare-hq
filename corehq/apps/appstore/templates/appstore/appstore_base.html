@@ -1,7 +1,8 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load hq_shared_tags %}
-{% load hq_bootstrap_tags %}
+{% load hqstyle_tags %}
 {% load i18n %}
+{% load url_extras %}
 
 {% block js %}{{ block.super }}
     <script type="text/javascript">
@@ -12,6 +13,14 @@
                 $('.sortable-' + sortable).show();
                 e.hide();
                 return false;
+            });
+        });
+    </script>
+
+    <script type="text/javascript">
+        $(function () {
+            $(".facet-checkbox").click(function() {
+                window.location = $(this).parent().attr('href');
             });
         });
     </script>
@@ -136,12 +145,36 @@
         margin-top: 25px;
     }
 
+    .app-pic {
+        width: 180px;
+        height: 180px;
+    }
+
+    .opacity65 {
+        filter:alpha(opacity=65);
+        -moz-opacity:0.65;
+        -khtml-opacity: 0.65;
+        opacity: 0.65;
+    }
+
+    .pi-stars {
+        display: inline-block;
+        padding-right: 1.8em;
+        font-size: 70%;
+    }
+
     </style>
 {% endblock %}
 
-
 {% block sidebar %}
-{% include 'appstore/sidebar.html' %}
+    {% include 'partials/sidebar.html' with display_ua='true' %}
+{% endblock %}
+
+{% block tabs %}
+    {% url appstore as search_url %}
+    <ul class="nav">
+        {% include 'partials/search_input.html' with search_name="search" search_for="apps..." %}
+    </ul>
 {% endblock %}
 
 {% block page-title %}
@@ -157,6 +190,7 @@
     {% if search_query %}
         <li>
             Searching for "{{ search_query }}"
+            <a href="{% urlencode request.path request.GET without "search" %}" style="font-size: 60%;">(cancel)</a>
             {% if sort_by %}
                 <span class="divider">&gt;</span>
             {% endif %}
@@ -188,7 +222,6 @@
 
 <h1>
     {% block store-header %}
-    Projects
     {% endblock %}
 </h1>
 
@@ -197,37 +230,35 @@
     {% block view-tabs %}
     <div class="tabbable" style="padding-top: 15px;">
         <ul class="nav nav-pills">
-            {% if filter_by %}
-            <li{% if not sort_by %} class="active"{% endif %}><a href="{% url appstore_filter_snapshots filter_by filter %}">Newest</a></li>
-            <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% url sorted_appstore_filter_snapshots filter_by filter 'best' %}">Highest Rated</a></li>
-            <li{% if sort_by == 'hits' %} class="active"{% endif %}><a href="{% url sorted_appstore_filter_snapshots filter_by filter 'hits' %}">Most Downloaded</a></li>
-            {% endif %}
-
-            {% if not filter_by %}
-            <li{% if not sort_by %} class="active"{% endif %}><a href="{% url appstore %}">Newest</a></li>
-            <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% url sorted_appstore 'best' %}">Highest Rated</a></li>
-            <li{% if sort_by == 'hits' %} class="active"{% endif %}><a href="{% url sorted_appstore 'hits' %}">Most Downloaded</a></li>
-            {% endif %}
-            </ul>
+            <li{% if not sort_by %} class="active"{% endif %}><a href="{% urlencode request.path request.GET without "sort_by" %}">Newest</a></li>
+            <li{% if sort_by == 'best' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "best" %}">Highest Rated</a></li>
+            <li{% if sort_by == 'hits' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "hits" %}">Most Downloaded</a></li>
+        </ul>
     </div>
     {% endblock %}
 </div>
 <div class="row-fluid">
+{% block results-display %}
 {% for app in apps %}
     {% if forloop.counter0|divisibleby:"3" and forloop.counter0 != 0 %}
         </div><div class="row-fluid">
     {% endif %}
     <div class="span3">
         <div class="well">
+            <a href="{% url project_info app.name %}">
             {% if app.image_path %}
             <div style="text-align: center;">
-                <img src="{% url appstore_project_image app.name %}" style="max-width: 200px; max-height:200px;" />
+                <img class="app-pic" src="{% url appstore_project_image app.name %}" />
+            </div>
+            {% else %}
+            <div style="text-align: center;">
+                <img class="app-pic opacity65" src="{% static 'hqstyle/img/no-image-available.png' %}" />
             </div>
             {% endif %}
+            </a>
             <h2>
                 {{ app.title }}
-                <br/>
-                <small>By
+                <small style="display: block;">By
                     {% if app.organization %}
                         {{ app.organization_doc.title }}
                     {% else %}
@@ -247,7 +278,6 @@
                         {% endif %}
                     {% endif %}
                 {% endfor %}
-            <br/>
             <h6>{{ app.copies_of_parent|length }} download{{ app.copies_of_parent|length|pluralize }}</h6>
         <p>{{ app.short_description }}</p>
         <p>Last updated: {{ app.snapshot_time|date:"N j, Y" }}</p>
@@ -261,19 +291,22 @@
         {% endif %}
         </div>
     </div>
+{% empty %}
+    No results were found for your query.
 {% endfor %}
+{% endblock %}
 </div>
 
 <div class="row-fluid">
     <ul class="pager span10">
         {% if page > 1 %}
         <li class="previous">
-            <a href="?page={{ prev_page }}{% if search_query %}&q={{ search_query }}{% endif %}{% if include_unapproved %}&unapproved=true{% endif %}">&larr; Previous</a>
+            <a href="{% urlencode request.path request.GET with "page" as prev_page %}">&larr; Previous</a>
         </li>
         {% endif %}
         {% if more_pages %}
         <li class="next">
-            <a href="?page={{ next_page }}{% if search_query %}&q={{ search_query }}{% endif %}{% if include_unapproved %}&unapproved=true{% endif %}">Next &rarr;</a>
+            <a href="{% urlencode request.path request.GET with "page" as next_page %}">Next &rarr;</a>
         </li>
         {% endif %}
     </ul>

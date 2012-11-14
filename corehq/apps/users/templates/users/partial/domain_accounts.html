@@ -14,6 +14,7 @@
             </tr>
         {% endif %}
         {% for project in request.couch_user.projects %}
+            {% if project %}
             {# domain refers to the current domain and is used within this loop #}
             <tr class="row-fluid">
                 <td class="span6"><a href="{% url domain_homepage project.name %}">{{ project.long_display_name }}</a></td>
@@ -36,6 +37,7 @@
                     </div>
                 </td>
             </tr>
+            {% endif %}
         {% endfor %}
         </tbody>
 	</table>

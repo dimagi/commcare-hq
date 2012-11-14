@@ -31,6 +31,8 @@ from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, CommCareUser
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.subprocess_timeout import ProcessTimedOut
 
 from dimagi.utils.web import render_to_response, json_response, json_request
 
@@ -531,9 +533,20 @@ def view_generic(req, domain, app_id=None, module_id=None, form_id=None, is_user
         context.update({"translations": app.translations.get(context['lang'], {})})
 
     if app and app.get_doc_type() == 'Application':
-        images, audio, has_error = utils.get_multimedia_filenames(app)
-        multimedia_images, missing_image_refs = app.get_template_map(images)
-        multimedia_audio, missing_audio_refs = app.get_template_map(audio)
+        try:
+            images, audio, has_error = utils.get_multimedia_filenames(app)
+        except ProcessTimedOut as e:
+            notify_exception(req)
+            messages.warning(req,
+                "We were unable to check if your forms had errors. "
+                "Refresh the page and we will try again."
+            )
+            images, audio, has_error = [], [], True
+            multimedia_images, missing_image_refs = [], 0
+            multimedia_audio, missing_audio_refs = [], 0
+        else:
+            multimedia_images, missing_image_refs = app.get_template_map(images)
+            multimedia_audio, missing_audio_refs = app.get_template_map(audio)
         context.update({
             'missing_image_refs': missing_image_refs,
             'missing_audio_refs': missing_audio_refs,
@@ -827,6 +840,7 @@ def edit_module_attr(req, domain, app_id, module_id, attr):
     _handle_media_edits(req, module, should_edit, resp)
 
     app.save(resp)
+    resp['case_list-show'] = module.requires_case_details()
     return HttpResponse(json.dumps(resp))
 
 @require_POST
@@ -1810,7 +1824,17 @@ def _find_name(names, langs):
     return name
 
 @login_and_domain_required
-def summary(request, domain, app_id):
+def app_summary(request, domain, app_id):
+    return summary(request, domain, app_id, should_edit=True)
+
+def app_summary_from_exchange(request, domain, app_id):
+    dom = Domain.get_by_name(domain)
+    if dom.is_snapshot:
+        return summary(request, domain, app_id, should_edit=False)
+    else:
+        return HttpResponseForbidden()
+
+def summary(request, domain, app_id, should_edit=True):
     app = Application.get(app_id)
     context = get_apps_base_context(request, domain, app)
     langs = context['langs']
@@ -1830,4 +1854,7 @@ def summary(request, domain, app_id):
     context['modules'] = modules
     context['summary'] = True
 
-    return render_to_response(request, "app_manager/summary.html", context)
+    if should_edit:
+        return render_to_response(request, "app_manager/summary.html", context)
+    else:
+        return render_to_response(request, "app_manager/exchange_summary.html", context)

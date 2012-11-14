@@ -40,7 +40,7 @@ class ReportDispatcher(View):
         map_name = kwargs.get('map_name')
         if map_name:
             self.map_name = map_name
-        if not self.map_name or not isinstance(self.map_name, str):
+        if not self.map_name or not isinstance(self.map_name, str): # unicode?
             raise NotImplementedError("Class property 'map_name' must be a string, and not empty.")
         super(ReportDispatcher, self).__init__(**kwargs)
 
@@ -85,6 +85,8 @@ class ReportDispatcher(View):
                 report_class = to_function(model_path)
                 if report_class.slug == report_slug:
                     return report_class
+
+        return None
         
     def dispatch(self, request, *args, **kwargs):
         if not self.validate_report_map(request, *args, **kwargs):
@@ -92,7 +94,7 @@ class ReportDispatcher(View):
 
         current_slug = kwargs.get('report_slug')
         render_as = kwargs.get('render_as') or 'view'
-        reports = self.get_reports(request.domain)
+        reports = self.get_reports(getattr(request, 'domain', None))
         for key, report_model_paths in reports.items():
             for model_path in report_model_paths:
                 report_class = to_function(model_path)
@@ -109,8 +111,14 @@ class ReportDispatcher(View):
         return "%s_dispatcher" % prefix
 
     @classmethod
+    def _rendering_pattern(cls):
+        return "(?P<render_as>[{renderings}]+)".format(
+            renderings="|".join("(%s)" % r for r in cls.allowed_renderings())
+        )
+    
+    @classmethod
     def pattern(cls):
-        return r'^((?P<render_as>[(json)|(async)|(filters)|(export)|(mobile)|(static)|(clear_cache)]+)/)?(?P<report_slug>[\w_]+)/$'
+        return r'^({renderings}/)?(?P<report_slug>[\w_]+)/$'.format(renderings=cls._rendering_pattern())
 
     @classmethod
     def allowed_renderings(cls):
@@ -128,7 +136,7 @@ class ReportDispatcher(View):
         report_nav = list()
         dispatcher = cls()
         args, kwargs = dispatcher.args_kwargs_from_context(context)
-        reports = dispatcher.get_reports(request.domain)
+        reports = dispatcher.get_reports(getattr(request, 'domain', None))
         current_slug = kwargs.get('report_slug')
         for key, models in reports.items():
             section = list()
@@ -155,6 +163,11 @@ class ReportDispatcher(View):
                 report_nav.append(section_header)
                 report_nav.extend(section)
         return "\n".join(report_nav)
+
+    @classmethod
+    def url_pattern(cls):
+        from django.conf.urls.defaults import url
+        return url(cls.pattern(), cls.as_view(), name=cls.name())
 
 cls_to_view_login_and_domain = cls_to_view(additional_decorator=login_and_domain_required)
 

@@ -27,9 +27,10 @@ def delete_group(request, domain, group_id):
     group = Group.get(group_id)
     if group.domain == domain:
         record = group.soft_delete()
-        messages.success(request, 'You have deleted a group. <a href="{url}" class="post-link">Undo</a>'.format(
-            url=reverse('undo_delete_group', args=[domain, record.get_id])
-        ), extra_tags="html")
+        if record:
+            messages.success(request, 'You have deleted a group. <a href="{url}" class="post-link">Undo</a>'.format(
+                url=reverse('undo_delete_group', args=[domain, record.get_id])
+            ), extra_tags="html")
         return HttpResponseRedirect(reverse("all_groups", args=(domain, )))
     else:
         return HttpResponseForbidden()

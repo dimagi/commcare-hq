@@ -11,9 +11,23 @@
         border: 1px solid #A44;
         padding: 2px;
     }
+    #new_keyword_table {
+        width: auto;
+        margin-left: 0px;
+        min-width: 50%;
+    }
 </style>
 {% endblock %}
 
+{% block keyword_nav %}
+<ul class="nav nav-list">
+    {% if keyword.get_id %}
+    <li class="active"><a href="{% url edit_keyword domain keyword.get_id %}">{{ keyword.keyword }}</a></li>
+    {% else %}
+    <li class="active"><a href="{% url add_keyword domain %}">New Keyword</a></li>
+    {% endif %}
+</ul>
+{% endblock %}
 
 {% block reminders_content %}
 
@@ -25,23 +39,25 @@
 </ul>
 
 <form action="" method="post">
-    <table>
-        <tr>
-            <th>Keyword:</th>
-            <td><input type="text" name="keyword" value="{{ keyword.keyword|default:'' }}"/></td>
-        </tr>
-        <tr>
-            <th>Survey:</th>
-            <td>
-                <select name="survey">
-                {% for f in form_list %}
-                    <option value="{{ f.code }}" {% if f.code == keyword.form_unique_id %}selected="selected"{% endif %}>{{ f.name }}</option>
-                {% endfor %}
-                </select>
-            </td>
-        </tr>
+    <table id="new_keyword_table" class="table table-bordered">
+        <tbody>
+            <tr>
+                <th>Keyword:</th>
+                <td><input type="text" name="keyword" value="{{ keyword.keyword|default:'' }}"/></td>
+            </tr>
+            <tr>
+                <th>Survey:</th>
+                <td>
+                    <select name="survey">
+                    {% for f in form_list %}
+                        <option value="{{ f.code }}" {% if f.code == keyword.form_unique_id %}selected="selected"{% endif %}>{{ f.name }}</option>
+                    {% endfor %}
+                    </select>
+                </td>
+            </tr>
+        </tbody>
     </table>
-    <input type="submit" name="Submit" />
+    <input type="submit" class="btn btn-primary" value="Submit" />
 </form>
 
 {% endblock %}

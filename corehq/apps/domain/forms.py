@@ -131,6 +131,8 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         help_text="This will allow any user to see and use all multimedia in this project")
     image = forms.ImageField(label="Exchange image", required=False,
         help_text="An optional image to show other users your logo or what your app looks like")
+    cda_confirmed = BooleanField(required=False, label="Content Distribution Agreement",
+        help_text=render_to_string('domain/partials/cda_modal.html'))
 
     def __init__(self, *args, **kw):
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
@@ -139,10 +141,31 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
             'author',
             'short_description',
             'description',
-            'license',
             'project_type',
+            'image',
             'share_multimedia',
-            'image',]
+            'license',
+            'cda_confirmed',]
+
+    def clean_cda_confirmed(self):
+        data = self.cleaned_data['cda_confirmed']
+        if data is not True:
+            raise forms.ValidationError('You must agree to our Content Distribution Agreement to publish your project.')
+        return data
+
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        sm = cleaned_data["share_multimedia"]
+        license = cleaned_data["license"]
+
+        if sm and license not in self.dom.most_restrictive_licenses:
+            license_choices = [LICENSES[l] for l in self.dom.most_restrictive_licenses]
+            msg = render_to_string('domain/partials/restrictive_license.html', {'licenses': license_choices})
+            self._errors["license"] = self.error_class([msg])
+
+            del cleaned_data["license"]
+
+        return cleaned_data
 
 ########################################################################################################
 

@@ -12,7 +12,15 @@ function(doc) {
                     });
                 }
 
-                ret.add(doc.licenses[domain]);
+                var index;
+                for (var i = 0; i < doc.licenses.length; i++) {
+                    if (doc.licenses[i].domain === domain) {
+                        index = i;
+                        break;
+                    }
+                }
+
+                ret.add(doc.licenses[index].type);
                 ret.add({
                     'public': 'Public Domain',
                     'cc': 'Creative Commons Attribution',
@@ -21,7 +29,7 @@ function(doc) {
                     'cc-nc': 'Creative Commons Attribution, Non-Commercial',
                     'cc-nc-sa': 'Creative Commons Attribution, Non-Commercial, and Share Alike',
                     'cc-nc-nd': 'Creative Commons Attribution, Non-Commercial, and No Derivatives'
-                }[doc.licenses[domain]]); // directly copied from models.py. Be sure to update--for now just a hack.
+                }[doc.licenses[index].type]); // directly copied from models.py. Be sure to update--for now just a hack.
             })
 
             return ret;

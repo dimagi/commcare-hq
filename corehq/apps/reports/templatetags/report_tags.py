@@ -15,25 +15,6 @@ from dimagi.utils.modules import to_function
 register = template.Library()
 
 @register.simple_tag
-def int_to_month(month_number):
-    # there has to be a better way to do this
-    d = datetime(2010, month_number, 1)
-    return d.strftime("%b")
-
-@register.simple_tag
-def int_to_day(day_number):
-    # there has to be a better way to do this
-    return calendar.day_name[day_number]
-    
-@register.simple_tag
-def js_int_to_month(month_number):
-    """
-    Convert a javascript integer to a month name.  Javascript months are 0
-    indexed."""
-    return int_to_month(month_number + 1)
-
-
-@register.simple_tag
 def render_user_inline(user, ):
     """
     A short display for a user object
@@ -252,7 +233,7 @@ def report_list(context, dispatcher):
         This requires a valid ReportDispatcher subclass or path.to.ReportDispatcherSubclass
         to generate a Report List.
     """
-    if isinstance(dispatcher, str) or isinstance(dispatcher, unicode):
+    if isinstance(dispatcher, basestring):
         try:
             dispatcher = to_function(dispatcher)
         except Exception:

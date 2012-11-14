@@ -1,3 +1,4 @@
+from django.utils.safestring import mark_safe
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.groups.models import Group
 from django.core.urlresolvers import reverse
@@ -37,7 +38,7 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn('Select  <a href="#" class="select-all btn btn-mini btn-inverse">all</a> <a href="#" class="select-none btn btn-mini btn-warning">none</a>', sortable=False, span=2),
+            DataTablesColumn(mark_safe('Select  <a href="#" class="select-all btn btn-mini btn-inverse">all</a> <a href="#" class="select-none btn btn-mini btn-warning">none</a>'), sortable=False, span=2),
             DataTablesColumn("Case Name", span=3),
             DataTablesColumn("Case Type", span=2),
             DataTablesColumn("Owner", span=2),
@@ -49,8 +50,8 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
 
     @property
     def rows(self):
-        checkbox = '<input type="checkbox" class="selected-commcare-case" data-bind="event: {change: updateCaseSelection}" data-caseid="%(case_id)s" data-owner="%(owner)s" data-ownertype="%(owner_type)s" />'
-        for row in self.case_results:
+        checkbox = mark_safe('<input type="checkbox" class="selected-commcare-case" data-bind="event: {change: updateCaseSelection}" data-caseid="%(case_id)s" data-owner="%(owner)s" data-ownertype="%(owner_type)s" />')
+        for row in self.case_results['rows']:
             case = self.get_case(row)
             display = self.CaseDisplay(case)
             yield [

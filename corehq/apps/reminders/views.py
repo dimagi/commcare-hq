@@ -14,7 +14,7 @@ from .models import UI_SIMPLE_FIXED, UI_COMPLEX
 from .util import get_form_list, get_sample_list
 from corehq.apps.app_manager.models import get_app, ApplicationBase
 from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.util import register_sms_contact, create_task
+from corehq.apps.sms.util import register_sms_contact
 from corehq.apps.domain.models import DomainCounter
 from casexml.apps.case.models import CommCareCase
 from dateutil.parser import parse
@@ -127,6 +127,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
         h = None
     
     form_list = get_form_list(domain)
+    sample_list = get_sample_list(domain)
     
     if request.method == "POST":
         form = ComplexCaseReminderForm(request.POST)
@@ -134,6 +135,10 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             if h is None:
                 h = CaseReminderHandler(domain=domain)
                 h.ui_type = UI_COMPLEX
+            else:
+                if h.start_condition_type != form.cleaned_data["start_condition_type"]:
+                    for reminder in h.get_reminders():
+                        reminder.retire()
             h.case_type = form.cleaned_data["case_type"]
             h.nickname = form.cleaned_data["nickname"]
             h.default_lang = form.cleaned_data["default_lang"]
@@ -149,46 +154,68 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             h.max_iteration_count = form.cleaned_data["max_iteration_count"]
             h.until = form.cleaned_data["until"]
             h.events = form.cleaned_data["events"]
+            h.submit_partial_forms = form.cleaned_data["submit_partial_forms"]
+            h.ui_frequency = form.cleaned_data["frequency"]
+            h.start_condition_type = form.cleaned_data["start_condition_type"]
+            if form.cleaned_data["start_condition_type"] == "ON_DATETIME":
+                dt = parse(form.cleaned_data["start_datetime_date"]).date()
+                tm = parse(form.cleaned_data["start_datetime_time"]).time()
+                h.start_datetime = datetime.combine(dt, tm)
+            else:
+                h.start_datetime = None
+            h.sample_id = form.cleaned_data["sample_id"]
             h.save()
             return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
     else:
         if h is not None:
             initial = {
-                "case_type"             : h.case_type
-               ,"nickname"              : h.nickname
-               ,"default_lang"          : h.default_lang
-               ,"method"                : h.method
-               ,"recipient"             : h.recipient
-               ,"start_property"        : h.start_property
-               ,"start_value"           : h.start_value
-               ,"start_date"            : h.start_date
-               ,"start_match_type"      : h.start_match_type
-               ,"start_offset"          : h.start_offset
-               ,"schedule_length"       : h.schedule_length
-               ,"event_interpretation"  : h.event_interpretation
-               ,"max_iteration_count"   : h.max_iteration_count
-               ,"until"                 : h.until
-               ,"events"                : h.events
+                "case_type"             : h.case_type,
+                "nickname"              : h.nickname,
+                "default_lang"          : h.default_lang,
+                "method"                : h.method,
+                "recipient"             : h.recipient,
+                "start_property"        : h.start_property,
+                "start_value"           : h.start_value,
+                "start_date"            : h.start_date,
+                "start_match_type"      : h.start_match_type,
+                "start_offset"          : h.start_offset,
+                "schedule_length"       : h.schedule_length,
+                "event_interpretation"  : h.event_interpretation,
+                "max_iteration_count"   : h.max_iteration_count,
+                "until"                 : h.until,
+                "events"                : h.events,
+                "submit_partial_forms"  : h.submit_partial_forms,
+                "start_condition_type"  : h.start_condition_type,
+                "start_datetime_date"   : str(h.start_datetime.date()) if isinstance(h.start_datetime, datetime) else None,
+                "start_datetime_time"   : str(h.start_datetime.time()) if isinstance(h.start_datetime, datetime) else None,
+                "frequency"             : h.ui_frequency,
+                "sample_id"             : h.sample_id,
+                "use_until"             : "Y" if h.until is not None else "N",
             }
         else:
-            initial = {}
+            initial = {
+                "events"    : [CaseReminderEvent(day_num=0, fire_time=time(0,0), message={"":""}, callback_timeout_intervals=[], form_unique_id=None)],
+                "use_until" : "N",
+            }
         
         form = ComplexCaseReminderForm(initial=initial)
     
     return render_to_response(request, "reminders/partial/add_complex_reminder.html", {
-        "domain":       domain
-       ,"form":         form
-       ,"form_list":    form_list
+        "domain":       domain,
+        "form":         form,
+        "form_list":    form_list,
+        "handler_id":   handler_id,
+        "sample_list":  sample_list,
     })
 
 
 @login_and_domain_required
-def manage_surveys(request, domain):
+def manage_keywords(request, domain):
     context = {
         "domain" : domain,
         "keywords" : SurveyKeyword.get_all(domain)
     }
-    return render_to_response(request, "reminders/partial/manage_surveys.html", context)
+    return render_to_response(request, "reminders/partial/manage_keywords.html", context)
 
 @login_and_domain_required
 def add_keyword(request, domain, keyword_id=None):
@@ -230,13 +257,13 @@ def add_keyword(request, domain, keyword_id=None):
             return render_to_response(request, "reminders/partial/add_keyword.html", context)
         else:
             s.save()
-            return HttpResponseRedirect(reverse("manage_surveys", args=[domain]))
+            return HttpResponseRedirect(reverse("manage_keywords", args=[domain]))
 
 @login_and_domain_required
 def delete_keyword(request, domain, keyword_id):
     s = SurveyKeyword.get(keyword_id)
     s.retire()
-    return HttpResponseRedirect(reverse("manage_surveys", args=[domain]))
+    return HttpResponseRedirect(reverse("manage_keywords", args=[domain]))
 
 @login_and_domain_required
 def add_survey(request, domain, survey_id=None):
@@ -290,16 +317,6 @@ def add_survey(request, domain, survey_id=None):
                                 )
                                 handler.save()
                                 wave.reminder_definitions[sample["sample_id"]] = handler._id
-                
-                for wave in wave_list:
-                    form_unique_id = wave["form_id"]
-                    for sample in samples:
-                        if sample["method"] == "CATI":
-                            s = SurveySample.get(sample["sample_id"])
-                            task_activation_datetime = CaseReminderHandler.timestamp_to_utc(s, datetime.combine(wave.date, wave.time))
-                            for case_id in s.contacts:
-                                case = CommCareCase.get(case_id)
-                                create_task(case, request.couch_user.get_id, sample["cati_operator"], form_unique_id, task_activation_datetime)
                 
                 survey = Survey (
                     domain = domain,
@@ -403,24 +420,39 @@ def add_survey(request, domain, survey_id=None):
             # Sort the questionnaire waves by date and time (for display purposes only)
             survey.waves = sorted(survey.waves, key = lambda wave : datetime.combine(wave.date, wave.time))
             
+            # Create / Close delegation tasks as necessary for samples with method "CATI"
+            survey.update_delegation_tasks(request.couch_user.get_id)
+            
             survey.save()
             return HttpResponseRedirect(reverse("survey_list", args=[domain]))
     else:
         initial = {}
         if survey is not None:
             waves = []
+            samples = [SurveySample.get(sample["sample_id"]) for sample in survey.samples]
+            utcnow = datetime.utcnow()
             for wave in survey.waves:
-                waves.append({
+                wave_json = {
                     "date" : str(wave.date),
                     "form_id" : wave.form_id,
-                    "time" : str(wave.time)
-                })
+                    "time" : str(wave.time),
+                    "ignore" : False,
+                }
+                
+                for sample in samples:
+                    if CaseReminderHandler.timestamp_to_utc(sample, datetime.combine(wave.date, wave.time)) < utcnow:
+                        wave_json["ignore"] = True
+                        break
+                
+                waves.append(wave_json)
+            
             initial["name"] = survey.name
             initial["waves"] = waves
             initial["followups"] = survey.followups
             initial["samples"] = survey.samples
             initial["send_automatically"] = survey.send_automatically
             initial["send_followup"] = survey.send_followup
+            
         form = SurveyForm(initial=initial)
     
     form_list = get_form_list(domain)
@@ -495,6 +527,13 @@ def add_sample(request, domain, sample_id=None):
             sample.contacts = [v.owner_id for v in existing_number_entries] + [v.owner_id for v in newly_registered_entries]
             
             sample.save()
+            
+            # Update delegation tasks for surveys using this sample
+            surveys = Survey.view("reminders/sample_to_survey", key=[domain, sample._id, "CATI"], include_docs=True).all()
+            for survey in surveys:
+                survey.update_delegation_tasks(request.couch_user.get_id)
+                survey.save()
+            
             return HttpResponseRedirect(reverse("sample_list", args=[domain]))
     else:
         initial = {}

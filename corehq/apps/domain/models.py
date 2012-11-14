@@ -125,6 +125,12 @@ class Deployment(DocumentSchema):
         for kw in new_dict:
             self[kw] = new_dict[kw]
 
+class LicenseAgreement(DocumentSchema):
+    signed = BooleanProperty(default=False)
+    type = StringProperty()
+    date = DateTimeProperty()
+    user_id = StringProperty()
+    user_ip = StringProperty()
 
 class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
@@ -140,6 +146,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     case_sharing = BooleanProperty(default=False)
     organization = StringProperty()
     slug = StringProperty() # the slug for this project namespaced within an organization
+    eula = SchemaProperty(LicenseAgreement)
 
     # domain metadata
     project_type = StringProperty() # e.g. MCH, HIV
@@ -157,6 +164,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     published = BooleanProperty(default=False)
     license = StringProperty(choices=LICENSES, default='public')
     title = StringProperty()
+    cda = SchemaProperty(LicenseAgreement)
 
     author = StringProperty()
     phone_model = StringProperty()
@@ -461,6 +469,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
             copy.is_snapshot = True
             copy.organization = self.organization
             copy.snapshot_time = datetime.now()
+            del copy.deployment
             copy.save()
             return copy
 
@@ -475,10 +484,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         for snapshot in snapshots:
             if snapshot.published:
                 return snapshot
-        if len(snapshots) > 0:
-            return snapshots[0]
-        else:
-            return None
+        return None
 
     @classmethod
     def published_snapshots(cls, include_unapproved=False, page=None, per_page=10):
@@ -563,6 +569,15 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         from corehq.apps.hqmedia.models import CommCareMultimedia
         return CommCareMultimedia.view('hqmedia/by_domain', key=self.name, include_docs=True).all()
 
+    @property
+    def most_restrictive_licenses(self):
+        from corehq.apps.hqmedia.utils import most_restrictive
+        if self.is_snapshot:
+            licenses = [m.license['type'] for m in self.copied_from.all_media()]
+        else:
+            licenses = [m.license['type'] for m in self.all_media()]
+        return most_restrictive(licenses)
+
     @classmethod
     def popular_sort(cls, domains, page):
         sorted_list = []
@@ -593,6 +608,10 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
         domains = list(domains)
         domains = sorted(domains, key=lambda domain: len(domain.copies_of_parent()), reverse=True)
         return domains[((page-1)*9):((page)*9)]
+
+    @classmethod
+    def public_deployments(cls):
+        return Domain.view('domain/with_deployment', include_docs=True).all()
 
 
 ##############################################################################################################

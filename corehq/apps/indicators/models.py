@@ -161,7 +161,14 @@ class IndicatorDefinition(Document):
         return all_indicators
 
 
-class MonthlyRetrospectiveMixin(object):
+class DynamicIndicatorDefinition(IndicatorDefinition):
+    description = StringProperty()
+    title = StringProperty()
+    base_doc = "DynamicIndicatorDefinition"
+
+    @classmethod
+    def indicator_list_view(cls):
+        return "indicators/dynamic_indicator_definitions"
 
     @property
     def date_display_format(self):
@@ -213,17 +220,11 @@ class MonthlyRetrospectiveMixin(object):
     def get_monthly_retrospective(self, user_ids=None, current_month=None, num_previous_months=12):
         raise NotImplementedError
 
-class DynamicIndicatorDefinition(IndicatorDefinition):
-    description = StringProperty()
-    title = StringProperty()
-    base_doc = "DynamicIndicatorDefinition"
-
-    @classmethod
-    def indicator_list_view(cls):
-        return "indicators/dynamic_indicator_definitions"
+    def get_value(self, user_id=None, datespan=None):
+        raise NotImplementedError
 
 
-class CouchViewIndicatorDefinition(DynamicIndicatorDefinition, MonthlyRetrospectiveMixin):
+class CouchViewIndicatorDefinition(DynamicIndicatorDefinition):
     """
         This indicator defintion expects that it will deal with a couch view and a certain indicator key.
         If a user_id is provided when fetching the results, this definition will use:
@@ -298,7 +299,7 @@ class CouchViewIndicatorDefinition(DynamicIndicatorDefinition, MonthlyRetrospect
         datespan = self._apply_datespan_shifts(datespan)
         return self._get_results_with_key(key, user_id, datespan, date_group_level, reduce)
 
-    def get_totals(self, user_id=None, datespan=None):
+    def get_value(self, user_id=None, datespan=None):
         return self._get_value_from_result(self.get_couch_results(user_id, datespan, reduce=True))
 
     def _get_value_from_result(self, result):
@@ -316,7 +317,7 @@ class CouchViewIndicatorDefinition(DynamicIndicatorDefinition, MonthlyRetrospect
                 value += new_val
         return value
 
-    def get_totals_by_month(self, user_ids=None, datespan=None):
+    def get_values_by_month(self, user_ids=None, datespan=None):
         totals = dict()
         for user_id in user_ids:
             result = self.get_couch_results(user_id, datespan, date_group_level=1)
@@ -335,7 +336,7 @@ class CouchViewIndicatorDefinition(DynamicIndicatorDefinition, MonthlyRetrospect
                     totals[year][month] += value
         return totals
 
-    def get_totals_by_year(self, user_ids=None, datespan=None):
+    def get_values_by_year(self, user_ids=None, datespan=None):
         totals = dict()
         for user_id in user_ids:
             result = self.get_couch_results(user_id, datespan, date_group_level=0)
@@ -356,7 +357,7 @@ class CouchViewIndicatorDefinition(DynamicIndicatorDefinition, MonthlyRetrospect
             user_ids = [user_ids]
         retro_months, datespan = self.get_first_days(current_month, num_previous_months,
             as_datespans=self.use_datespans_in_retrospective)
-        monthly_totals = {} if self.use_datespans_in_retrospective else self.get_totals_by_month(user_ids, datespan)
+        monthly_totals = {} if self.use_datespans_in_retrospective else self.get_values_by_month(user_ids, datespan)
         retrospective = list()
         for i, this_month in enumerate(retro_months):
             startdate = this_month.startdate if self.use_datespans_in_retrospective else this_month
@@ -365,7 +366,7 @@ class CouchViewIndicatorDefinition(DynamicIndicatorDefinition, MonthlyRetrospect
             if self.use_datespans_in_retrospective:
                 month_value = 0
                 for user_id in user_ids:
-                    month_value += self.get_totals(user_id, this_month)
+                    month_value += self.get_value(user_id, this_month)
             else:
                 month_value = monthly_totals.get(y, {}).get(m, 0)
             retrospective.append(dict(
@@ -389,9 +390,9 @@ class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
     def denominator(self):
         return self.get_current(self.namespace, self.domain, self.denominator_slug)
 
-    def get_totals(self, user_id=None, datespan=None):
-        numerator = self.numerator.get_totals(user_id, datespan)
-        denominator = self.denominator.get_totals(user_id, datespan)
+    def get_value(self, user_id=None, datespan=None):
+        numerator = self.numerator.get_value(user_id, datespan)
+        denominator = self.denominator.get_value(user_id, datespan)
         ratio = float(numerator)/float(denominator) if denominator > 0 else None
         return dict(
             numerator=numerator,
@@ -453,7 +454,7 @@ class FormDataIndicatorDefinitionMixin(DocumentSchema):
         """
             question_id must be formatted like: path.to.question_id
         """
-        if isinstance(question_id, str) or isinstance(question_id, unicode):
+        if isinstance(question_id, basestring):
             question_id = question_id.split('.')
         if len(question_id) > 0 and form_data:
             return self.get_from_form(form_data.get(question_id[0]), question_id[1:])

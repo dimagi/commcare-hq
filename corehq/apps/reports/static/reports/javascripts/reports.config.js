@@ -10,6 +10,9 @@ var HQReport = function (options) {
     self.toggleFiltersButton = options.toggleFiltersButton || "#toggle-report-filters";
     self.exportReportButton = options.exportReportButton || "#export-report-excel";
     self.urlRoot = options.urlRoot;
+    self.slug = options.slug;
+    self.subReportSlug = options.subReportSlug;
+    self.type = options.type;
 
     self.toggleFiltersCookie = self.domain+'.hqreport.toggleFilterState';
     self.datespanCookie = self.domain+".hqreport.filterSetting.test.datespan";
@@ -89,19 +92,22 @@ var HQReport = function (options) {
         }
         $(self.filterAccordion).addClass($.cookie(self.toggleFiltersCookie));
         
-        if ($.cookie(self.toggleFiltersCookie) == 'in')
-            $(self.toggleFiltersButton).button('hide');
-        else
-            $(self.toggleFiltersButton).button('show');
+        if ($.cookie(self.toggleFiltersCookie) == 'in') {
+            $(self.toggleFiltersButton).button('close');
+        } else {
+            $(self.toggleFiltersButton).button('open');
+        }
 
-        $(self.filterAccordion).on('hidden', function () {
-            _setShowFilterCookie(false);
-            $(self.toggleFiltersButton).button('show');
+        $(self.filterAccordion).on('hidden', function (data) {
+            if (!(data.target && $(data.target).hasClass('modal'))) {
+                _setShowFilterCookie(true);
+                $(self.toggleFiltersButton).button('open');
+            }
         });
 
         $(self.filterAccordion).on('show', function () {
             _setShowFilterCookie(true);
-            $(self.toggleFiltersButton).button('hide');
+            $(self.toggleFiltersButton).button('close');
         });
 
     };
@@ -122,6 +128,4 @@ var HQReport = function (options) {
             $('#paramSelectorForm button[type="submit"]').button('reset').addClass('btn-primary');
         });
     };
-
-
 };

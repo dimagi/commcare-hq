@@ -1,6 +1,6 @@
 import pytz
 from pytz import timezone
-from datetime import timedelta, datetime, date
+from datetime import timedelta, datetime, date, time
 import re
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
@@ -19,6 +19,8 @@ from corehq.apps.reminders.util import get_form_name
 from touchforms.formplayer.api import current_question
 from corehq.apps.sms.mixin import VerifiedNumber
 from couchdbkit.exceptions import ResourceConflict
+from corehq.apps.sms.util import create_task, close_task
+from corehq.apps.smsforms.app import submit_unfinished_form
 
 LOCK_EXPIRATION = timedelta(hours = 1)
 
@@ -50,8 +52,18 @@ START_CONDITION_TYPES = [CASE_CRITERIA, ON_DATETIME]
 
 SURVEY_METHOD_LIST = ["SMS","CATI"]
 
+UI_FREQUENCY_ADVANCED = "ADVANCED"
+UI_FREQUENCY_CHOICES = [UI_FREQUENCY_ADVANCED]
+
 def is_true_value(val):
     return val == 'ok' or val == 'OK'
+
+def looks_like_timestamp(value):
+    try:
+        regex = re.compile("^\d\d\d\d-\d\d-\d\d.*$")
+        return (regex.match(value) is not None)
+    except Exception:
+        return False
 
 class MessageVariable(object):
     def __init__(self, variable):
@@ -240,6 +252,13 @@ class CaseReminderHandler(Document):
     method = StringProperty(choices=METHOD_CHOICES, default="sms")
     ui_type = StringProperty(choices=UI_CHOICES, default=UI_SIMPLE_FIXED)
     recipient = StringProperty(choices=RECIPIENT_CHOICES, default=RECIPIENT_USER)
+    ui_frequency = StringProperty(choices=UI_FREQUENCY_CHOICES, default=UI_FREQUENCY_ADVANCED) # This will be used to simplify the scheduling process in the ui
+    sample_id = StringProperty()
+    
+    # Only applies when method is "survey".
+    # If this is True, on the last survey timeout, instead of resending the current question, 
+    # it will submit the form for the recipient with whatever is completed up to that point.
+    submit_partial_forms = BooleanProperty(default=False)
     
     # start condition
     start_condition_type = StringProperty(choices=START_CONDITION_TYPES, default=CASE_CRITERIA)
@@ -411,12 +430,17 @@ class CaseReminderHandler(Document):
         return      void
         """
         case = reminder.case
+        iteration = 0
         while now >= reminder.next_fire and reminder.active:
+            iteration += 1
             # If it is a callback reminder, check the callback_timeout_intervals
             if (reminder.method in ["callback", "callback_test", "survey"]) and len(reminder.current_event.callback_timeout_intervals) > 0:
                 #reminder.callback_received is always False for surveys, so it only has an effect for callbacks
                 if reminder.callback_received or reminder.callback_try_count >= len(reminder.current_event.callback_timeout_intervals):
-                    pass
+                    if self.method == "survey" and self.submit_partial_forms and iteration > 1:
+                        # This is to make sure we submit the unfinished forms even when fast-forwarding to the next event after system downtime
+                        for session_id in reminder.xforms_session_ids:
+                            submit_unfinished_form(session_id)
                 else:
                     reminder.next_fire = reminder.next_fire + timedelta(minutes = reminder.current_event.callback_timeout_intervals[reminder.callback_try_count])
                     reminder.callback_try_count += 1
@@ -480,18 +504,22 @@ class CaseReminderHandler(Document):
         
         if reminder.method == "survey":
             if reminder.callback_try_count > 0:
-                for session_id in reminder.xforms_session_ids:
-                    session = XFormsSession.view("smsforms/sessions_by_touchforms_id",
-                                                    startkey=[session_id],
-                                                    endkey=[session_id, {}],
-                                                    include_docs=True).one()
-                    if session.end_time is None:
-                        vn = VerifiedNumber.view("sms/verified_number_by_owner_id",
-                                                  key=session.connection_id,
-                                                  include_docs=True).one()
-                        if vn is not None:
-                            resp = current_question(session_id)
-                            send_sms_to_verified_number(vn, resp.event.text_prompt)
+                if self.submit_partial_forms and (reminder.callback_try_count == len(reminder.current_event.callback_timeout_intervals)):
+                    for session_id in reminder.xforms_session_ids:
+                        submit_unfinished_form(session_id)
+                else:
+                    for session_id in reminder.xforms_session_ids:
+                        session = XFormsSession.view("smsforms/sessions_by_touchforms_id",
+                                                        startkey=[session_id],
+                                                        endkey=[session_id, {}],
+                                                        include_docs=True).one()
+                        if session.end_time is None:
+                            vn = VerifiedNumber.view("sms/verified_number_by_owner_id",
+                                                      key=session.connection_id,
+                                                      include_docs=True).one()
+                            if vn is not None:
+                                resp = current_question(session_id)
+                                send_sms_to_verified_number(vn, resp.event.text_prompt)
                 return True
             else:
                 recipients = []
@@ -585,15 +613,26 @@ class CaseReminderHandler(Document):
         
         case            The CommCareCase to check.
         case_property   The property on CommCareCase to check.
-        now             The timestamp to use when comparing, if case[case_property] is a timestamp.
+        now             The timestamp to use when comparing, if case.case_property is a timestamp.
         
         return      True if the condition is reached, False if not.
         """
         condition = case.get_case_property(case_property)
-        try: condition = string_to_datetime(condition)
-        except Exception:
+        
+        if isinstance(condition, datetime):
             pass
-
+        elif isinstance(condition, date):
+            condition = datetime.combine(condition, time(0,0))
+        elif looks_like_timestamp(condition):
+            try:
+                condition = parse(condition)
+            except Exception:
+                pass
+        
+        if isinstance(condition, datetime) and getattr(condition, "tzinfo") is not None:
+            condition = condition.astimezone(pytz.utc)
+            condition = condition.replace(tzinfo=None)
+        
         if (isinstance(condition, datetime) and now > condition) or is_true_value(condition):
             return True
         else:
@@ -764,7 +803,15 @@ class CaseReminderHandler(Document):
                 handler = reminder.handler
                 if handler.fire(reminder):
                     handler.set_next_fire(reminder, now)
-                    reminder.save()
+                    try:
+                        reminder.save()
+                    except ResourceConflict:
+                        # Submitting a form updates the case, which can update the reminder.
+                        # Grab the latest version of the reminder and set the next fire if it's still in use.
+                        reminder = CaseReminder.get(reminder._id)
+                        if not reminder.retired:
+                            handler.set_next_fire(reminder, now)
+                            reminder.save()
                 reminder.release_lock()
 
     def retire(self):
@@ -855,7 +902,11 @@ class CaseReminder(Document):
             return CommConnectCase.get(self.case_id)
         else:
             return SurveySample.get(self.sample_id)
-
+    
+    @property
+    def retired(self):
+        return self.doc_type.endswith("-Deleted")
+    
     def retire(self):
         self.doc_type += "-Deleted"
         self.save()
@@ -924,6 +975,7 @@ class Survey(Document):
     samples = ListProperty(DictProperty)
     send_automatically = BooleanProperty()
     send_followup = BooleanProperty()
+    delegation_tasks = DictProperty() # Each task represented by a key-value pair of "<start_date>|<parent_case_id>|<form_unique_id>|<owner_id>" : "<subcase_id>"
     
     @classmethod
     def get_all(cls, domain):
@@ -932,6 +984,37 @@ class Survey(Document):
             endkey=[domain, {}],
             include_docs=True
         ).all()
-
+    
+    def update_delegation_tasks(self, submitting_user_id):
+        tasks_to_keep = {}
+        utcnow = datetime.utcnow()
+        
+        # Keep unchanged tasks and create new tasks as needed
+        for wave in self.waves:
+            form_unique_id = wave.form_id
+            for sample in self.samples:
+                if sample["method"] == "CATI":
+                    owner_id = sample["cati_operator"]
+                    s = SurveySample.get(sample["sample_id"])
+                    task_activation_datetime = CaseReminderHandler.timestamp_to_utc(s, datetime.combine(wave.date, wave.time))
+                    if task_activation_datetime >= utcnow:
+                        for case_id in s.contacts:
+                            key = "|".join([json_format_datetime(task_activation_datetime), case_id, form_unique_id, owner_id])
+                            if key in self.delegation_tasks:
+                                tasks_to_keep[key] = self.delegation_tasks[key]
+                            else:
+                                case = CommCareCase.get(case_id)
+                                tasks_to_keep[key] = create_task(case, submitting_user_id, owner_id, form_unique_id, task_activation_datetime)
+        
+        # Close tasks that are no longer valid
+        for key, value in self.delegation_tasks.items():
+            if key not in tasks_to_keep:
+                data = key.split("|")
+                if string_to_datetime(data[0]).replace(tzinfo=None) < utcnow:
+                    tasks_to_keep[key] = value
+                else:
+                    close_task(self.domain, value, submitting_user_id)
+        
+        self.delegation_tasks = tasks_to_keep
 
 from .signals import *

@@ -101,12 +101,18 @@ cloudCare.App = LocalizableModel.extend({
     initialize: function () {
         var self = this;
         self.constructor.__super__.initialize.apply(self, [self.options]);
-        _.bindAll(self, "updateModules", "urlRoot", "getSubmitId");
+        _.bindAll(self, "updateModules", "url", "urlRoot", "getSubmitId");
 
         self.updateModules();
         self.on("change", function () {
             this.updateModules();
         });
+    },
+    url: function () {
+        // HT: http://stackoverflow.com/questions/10555962/enable-django-and-tastypie-support-for-trailing-slashes
+        var original_url = Backbone.Model.prototype.url.call( this );
+        var parsed_url = original_url + ( original_url.charAt( original_url.length - 1 ) == '/' ? '' : '/' );
+        return parsed_url;
     },
     urlRoot: function () {
         return this.get("urlRoot");
@@ -184,6 +190,7 @@ cloudCare.Module = LocalizableModel.extend({
                 });
                 form.set(sharedMeta);
                 self.forms.push(form);
+                self.taskListOnly = true;
             }
             self.trigger("forms-changed");
         }
@@ -292,12 +299,15 @@ cloudCare.FormListView = Backbone.View.extend({
     },
     render: function () {
         var self = this;
+        var taskListOnly = self.model ? self.model.taskListOnly : false;
         $(self.el).html("");
         if (self.model) {
 	        var formUl = $("<ul />").addClass("nav nav-list").appendTo($(self.el));
 	        $("<li />").addClass("nav-header").text("Forms").appendTo(formUl);
 	        _(self.model.forms).each(function (form) {
-	            self.appendForm(form);
+                if (!taskListOnly || form.get('index') === 'task-list') {
+                    self.appendForm(form);
+                }
 	        });
         }
         return self;
@@ -347,7 +357,7 @@ cloudCare.AppView = Backbone.View.extend({
             language: self.options.language
         });
         self.formListView = new cloudCare.FormListView({
-            language: self.options.language
+            language: self.options.language,
         });
 
         cloudCare.dispatch.on("form:selected", function (form) {

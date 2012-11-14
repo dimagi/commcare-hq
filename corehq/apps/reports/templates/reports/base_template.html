@@ -1,128 +1,172 @@
-{% extends "hqwebapp/two_column.html" %}
+{% extends "reports/standard/base_template.html" %}
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    {% include "imports/datatables.html" %}
-    <script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
-    {% include "imports/flot.html" %}
-    <script type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/jquery-ui-1.8.17.custom.datepicker.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'hqwebapp/javascripts/jquery.history.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reports/javascripts/reports.config.js' %}"></script>
-    <script type="text/javascript" src="{% static 'reports/javascripts/reports.async.js' %}"></script>
+<script src="{% static 'reports/ko/saved_reports.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
-        var standardHQReport = new HQReport({
-            domain: '{{ domain }}',
-            urlRoot: '{{ report.url_root }}',
-            {% if request.datespan %}datespan: {
-                startdate: '{{ datespan.startdate|date:"Y-m-d" }}',
-                enddate: '{{ datespan.enddate|date:"Y-m-d" }}'
-            },{% endif %}
-            filterSet: {{ report.filter_set|JSON }},
-            needsFilters: {{ report.needs_filters|JSON }},
-        });
-        standardHQReport.init();
-
-        {% if report.slug and report.is_async %}
-            var asyncHQReport = new HQAsyncReport({
-                standardReport: standardHQReport
+        $(function() {
+            var defaultConfig = {{ default_config|JSON }};
+            {% if report.has_datespan %}
+                defaultConfig.date_range = 'last7';
+            {% endif %}
+            
+            $("#savedReports").reportConfigEditor({
+                filterForm: $("#reportFilters"),
+                items: {{ report_configs|JSON }},
+                initialItemID: '{{ current_config_id }}',
+                defaultItem: defaultConfig,
+                saveUrl: '{% url add_report_config domain %}',
             });
-            asyncHQReport.init();
-        {% endif %}
+
+            if ($("#reportFilters").hasClass('in')) {
+                $("#reportFilters").css('overflow', 'visible');
+            }
+
+            $("#reportFilters").on('shown', function() {
+                $(this).css('overflow', 'visible');
+            });
+
+            $("#reportFilters").on('hide', function() {
+                $(this).css('overflow', 'hidden');
+            });
+
+            $('#email-enabled').tooltip({
+                placement: 'right',
+                html: true,
+                title: "You can email a saved version<br />of this report."
+            });
+        });
     </script>
 {% endblock %}
 
-{% block head %}
-    {{ block.super }}
-    <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
-{% endblock %}
-
-{% block title %} - Report: {{ report.title|default:"Project Reports"|safe }}{% endblock %}
-
-{% block header-section %} {{ block.super }}
-{% if report.show_subsection_navigation %}
-    {% block subsection-navigation %}
-    <nav class="hq-subsection-navbar">
-        <ul class="nav">
-            <li {% ifequal report.section_name 'Project Reports' %}class="active"{% endifequal %}><a href="{% url default_report domain %}">Project Reports</a> <div class="arrow"></div></li>
-            <li {% ifequal report.section_name 'Active Data Management' %}class="active"{% endifequal %}><a href="{% url default_adm_report domain %}">Active Data Management</a> <div class="arrow"></div></li>
-        </ul>
-    </nav>
-    {% endblock %}
-{% endif %}
-{% endblock %}
-
-{% block page-title %}
-
-    <ul class="breadcrumb">
-        <li>
-            <a href="{{ report.default_url }}"><strong>{{ report.section_name|default:"Reports" }}</strong></a> <span class="divider">&gt;</span>
-        </li>
-    {% if report.breadcrumbs %}
-        {% for crumb in report.breadcrumbs %}
-        <li>
-            <a href="{{ crumb.link }}">{{ crumb.title }}</a> <span class="divider">&gt;</span>
-        </li>
-        {% endfor %}
-    {% endif %}
-        <li class="active">
-            <div id="report-title"><a href="{{ report.url }}">{{ report.title|default:"Untitled Report"|safe }}</a></div>
-        </li>
+{% block subsection-navigation %}
+<nav class="hq-subsection-navbar">
+    <ul class="nav">
+        <li {% ifequal report.section_name 'Project Reports' %}class="active"{% endifequal %}><a href="{% url reports_home domain %}">Project Reports</a> <div class="arrow"></div></li>
+        <li {% ifequal report.section_name 'Active Data Management' %}class="active"{% endifequal %}><a href="{% url default_adm_report domain %}">Active Data Management</a> <div class="arrow"></div></li>
     </ul>
+</nav>
 {% endblock %}
 
 {% block sidebar %}{% include "reports/partials/report_list.html" %}{% endblock %}
-{% block main_column %}
-    <div class="hq-accordion-control{% if report.is_async%} hide{% endif %}" id="reportFiltersAccordion">
-        <div class="accordion-heading">
-            <div class="accordion-actions">
-                {% if report.show_filters or report.is_exportable %}
-                    <span>Report Actions:</span>
-                    {% if report.show_filters %}
-                        <a href="#reportFilters" class="btn"
-                           id="toggle-report-filters"
-                           data-toggle="collapse"
-                           data-show-text="Show Filter Options"
-                           data-hide-text="Hide Filter Options">Filter Options</a>
-                    {% endif %}
-                    {% if report.is_exportable %}
-                        <a href="#" class="btn" id="export-report-excel">
-                            <i class="icon icon-share"></i> Export to Excel
-                        </a>
-                    {% endif %}
-                {% endif %}
-            </div>
-            <div id="extra-filter-info" class="accordion-extra"></div>
+{% block report_filter_actions %}
+<div id="savedReports">
+    <div class="btn-toolbar">
+        <div class="btn-group">
+            <button id="apply-filters" type="submit" class="filters btn disabled"
+                data-loading-text="Generating Report..."
+                data-standard-text="Apply">
+                Apply
+            </button>
         </div>
-        {% if report.show_filters %}
-            <div id="reportFilters" class="accordion-body collapse">
-                <div class="accordion-inner">
-                    <form method="get" id="paramSelectorForm" class="form-horizontal">
-                        <div id="hq-report-filters">
-                            {% if not report.is_async %}
-                                {% include "reports/async/filters.html" %}
-                            {% endif %}
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" data-loading-text="Generating Report..."
-                                    data-standard-text="Update Filters"
-                                    class="btn btn-large disabled">Update Filters</button>
-                            <a href="#reportFilters" data-toggle="collapse" class="btn btn-large">Close</a>
-                        </div>
-                    </form>
-                </div>
+        <div class="btn-group">
+            <a class="btn dropdown-toggle" data-toggle="dropdown">
+                Favorites<span class="caret"></span>
+            </a>
+
+            <ul class="dropdown-menu">
+                <li data-bind="ifnot: reportConfigs().length">
+                    <a href="#">You don't have any favorites</a>
+                </li>
+                <!-- ko foreach: reportConfigs -->
+                <li>
+                    <a href="#" tabindex="-1"
+                        data-bind="text: name, attr: { title: description }, click: $root.setConfigBeingViewed">
+                    </a>
+                </li>
+                <!-- /ko -->
+            </ul>
+        </div>
+
+        <button class="btn" data-bind="click: setConfigBeingEdited">
+            Save...
+        </button>
+
+        {% if report.is_emailable %}
+            <div style="display: inline-block; margin-left:0.5em;" class="label label-info" id="email-enabled">
+                <i class="icon-white icon-info-sign"></i> Email Supported
             </div>
         {% endif %}
     </div>
-    <div id="report-content">
-        {% if not report.is_async and report.slug %}
-            {% block reportcontent %}
-            {% endblock %}
-        {% else %}
-            {% include "reports/async/default.html" %}
-        {% endif %}
-    </div>
-{% endblock %}
+    <div id="report-config-modal" class="hide fade" data-bind="modal: configBeingEdited">
+        <div data-bind="with: configBeingEdited">
+            <div class="modal-header">
+                <a class="close" data-bind="click: $root.unsetConfigBeingEdited">×</a>
+                <h3 data-bind="text: modalTitle"></h3>
+            </div>
+            <form class="form-horizontal">
+                <div class="modal-body">
+                    <div class="control-group">
+                        <label class="control-label" for="name">Name</label>
+                        <div class="controls">
+                            <input type="text" id="name" data-bind="value: name"/>
+                            <span class="help-inline">
+                                <small class="label">Required</small>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label" for="description">Description</label>
+                        <div class="controls">
+                            <textarea rows="3" name="description" data-bind="value: description"></textarea>
+                        </div>
+                    </div>
+                    
+                    {% if report.has_datespan %}
+                    <div class="control-group">
+                        <label class="control-label" for="date_range">Default Date Range</label>
+                        <div class="controls">
+                            <select name="date_range" data-bind="value: date_range">
+                                <option value="last7">Last 7 days</option>
+                                <option value="last30">Last 30 days</option>
+                                <option value="lastn">Days ago</option>
+                                <option value="since">Since a date</option>
+                                <option value="range">From a date to a date</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="control-group" data-bind="visible: date_range() == 'lastn'">
+                        <label class="control-label" for="days">Number of Days</label>
+                        <div class="controls">
+                            <input type="number" name="days" min="1" step="1" data-bind="value: days"/>
+                        </div>
+                    </div>
+                    <div class="control-group" data-bind="visible: date_range() == 'since' || date_range() == 'range'">
+                        <label class="control-label" for="start_date">Begin Date</label>
+                        <div class="controls">
+                            <input type="text" class="date-picker" name="start_date" data-bind="value: start_date"/>
+                            <span class="help-inline">
+                                <small class="label">YYYY-MM-DD</small>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="control-group" data-bind="visible: date_range() == 'range'">
+                        <label class="control-label" for="end_date">End Date</label>
+                        <div class="controls">
+                            <input type="text" class="date-picker" name="end_date" data-bind="value: end_date"/>
+                            <span class="help-inline">
+                                <small class="label">YYYY-MM-DD</small>
+                            </span>
+                        </div>
+                    </div>
+                    {% endif %}
 
+                </div>
+                <div class="modal-footer">
+                    <div class="btn-toolbar">
+                        <div class="btn-group">
+                            <a href="#" class="btn" data-bind="click: $root.unsetConfigBeingEdited">Cancel</a>
+                        </div>
+                        <div class="btn-group">
+                            <span data-bind="saveButton2: $root.modalSaveButton.state, saveOptions: $root.modalSaveButton.saveOptions"></span>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

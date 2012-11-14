@@ -8,10 +8,10 @@
 
         <link rel="shortcut icon" href="{% static 'hqwebapp/img/favicon2.png' %}" />
 
-        <link rel="stylesheet" media="screen" href="{% static 'hq_bootstrap/css/hq-bootstrap.css' %}"/>
+        <link rel="stylesheet" media="screen" href="{% static 'hqstyle/css/core/hqstyle-core.css' %}"/>
 
         {# this should eventually be moved to the end of the page #}
-        <script src="{% static 'hq_bootstrap/js/jquery-1.7.1.min.js' %}"></script>
+        <script src="{% static 'hqstyle/js/jquery/jquery-1.7.1.min.js' %}"></script>
         {% if DEBUG %}
             <script type="text/javascript" src="{% static 'hqwebapp/javascripts/knockout-2.1.0.js' %}"></script>
         {% else %}
@@ -22,7 +22,7 @@
 
         {% block oldstyle_imports %}
             <link rel="stylesheet" href="{% static 'hqwebapp/javascripts/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
-            <link rel="stylesheet" href="{% static 'hq_bootstrap/css/old/core.css' %}"/>
+            <link rel="stylesheet" href="{% static 'hqstyle/css/legacy/core.css' %}"/>
             {% include "imports/hq-oldstyle-js.html" %}
         {% endblock %}
 
@@ -40,7 +40,7 @@
                 {% block header-section %}
                 <div class="hq-navbar">
                 <hgroup>
-                    <h1><a href="{% url homepage %}"><img src="{% static 'hq_bootstrap/img/commcare-logo.png' %}" alt="CommCare HQ" /></a></h1>
+                    <h1><a href="{% url homepage %}"><img src="{% static 'hqstyle/img/commcare-logo.png' %}" alt="CommCare HQ" /></a></h1>
                 </hgroup>
                 {% if request.user.is_authenticated %}
                     <nav id="hq-navigation-bar">
@@ -171,7 +171,7 @@
         </div>
 
         <footer>
-            <a href="http://www.dimagi.com/" class="footer-left"><img src="{% static 'hq_bootstrap/img/powered-by-dimagi.png' %}" class="powered" alt="Powered by Diamgi, Inc." /></a>
+            <a href="http://www.dimagi.com/" class="footer-left"><img src="{% static 'hqstyle/img/powered-by-dimagi.png' %}" class="powered" alt="Powered by Diamgi, Inc." /></a>
 
             {% if user.is_authenticated %}
             <div class="footer-right">
@@ -245,11 +245,32 @@
                 </form>
             </div>
         {% block modals %}
+            {% if request.couch_user and not request.couch_user.eula.signed and not request.couch_user.is_superuser %}
+                <div class="modal hide fade" id="eulaModal">
+                    <div class="modal-header">
+                        <a class="close" data-dismiss="modal">&times;</a>
+                        <h4>CommCare HQ End User License Agreement</h4>
+                    </div>
+                    <div class="modal-body" style="max-height: 20em;">
+                        Loading Terms of Service...
+                    </div>
+                    <div class="modal-footer">
+                        <div style="text-align: left; line-height: 2em;">
+                            To continue using Commcare HQ, please agree to our new End User License Agreement
+                        </div>
+                        <form id="eula-agree" action="{% url agree_to_eula %}" method="POST">
+                            <input name="next" type="hidden" value="{{ request.path }}" />
+                            <button type="submit" class="btn btn-primary">Agree</button>
+                            <a href="#" data-dismiss="modal" class="btn">Disagree</a>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
         {% endblock %}
         </div>
         <!--Begin javascript -->
-        <script src="{% static 'hq_bootstrap/js/bootstrap.min.js' %}"></script>
-        <script src="{% static 'hq_bootstrap/js/jquery.form.js' %}"></script>
+        <script src="{% static 'hqstyle/js/core/bootstrap.min.js' %}"></script>
+        <script src="{% static 'hqstyle/js/jquery/plugins/jquery.form.js' %}"></script>
 
         {% block js %}
         <script src="{% static 'hqwebapp/js-custom/hqhandler.form.bugReport.js' %}"></script>
@@ -258,6 +279,15 @@
         {% endblock %}
 
         {% block js-inline %}
+            {% if request.couch_user and not request.couch_user.eula.signed and not request.couch_user.is_superuser %}
+                {% url eula as eula_url %}
+                {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
+                <script type="text/javascript">
+                    $(window).load(function(){
+                        $('#eulaModal').modal('show');
+                    });
+                </script>
+            {% endif %}
         {% endblock %}
 
         <script>

@@ -24,12 +24,10 @@ from django.template.defaultfilters import yesno
 from dimagi.utils.excel import WorkbookJSONReader
 from dimagi.utils.decorators.view import get_file
 from django.contrib import messages
-from dimagi.utils import gitinfo
 from django.conf import settings
 from restkit import Resource
 import os
 from django.core import cache
-from django.core.cache import InvalidCacheBackendError
 
 @require_superuser
 def default(request):
@@ -496,8 +494,8 @@ def domain_list_download(request):
     def _row(domain):
         def _prop(domain, prop):
             if prop.endswith("?"):
-                return yesno(getattr(domain, prop[:-1]))
-            return getattr(domain, prop) or ""
+                return yesno(getattr(domain, prop[:-1], ""))
+            return getattr(domain, prop, "")
         return (_prop(domain, prop) for prop in properties)
     
     temp = StringIO()
@@ -532,7 +530,10 @@ def system_ajax(request):
         if type == "celerymon_poll":
             #inefficient way to just get everything in one fell swoop
             #first, get all task types:
-            t = cresource.get("api/task/name/").body_string()
+            try:
+                t = cresource.get("api/task/name/").body_string()
+            except Exception, ex:
+                t = {}
             task_names = json.loads(t)
             ret = []
             for tname in task_names:
@@ -584,9 +585,13 @@ def system_info(request):
 
     context['hide_filters'] = True
     context['current_system'] = os.uname()[1]
-    context['current_ref'] = gitinfo.get_project_info()
+
+    #from dimagi.utils import gitinfo
+    #context['current_ref'] = gitinfo.get_project_info()
+    #removing until the async library is updated
+    context['current_ref'] = {}
     if settings.COUCH_USERNAME == '' and settings.COUCH_PASSWORD == '':
-       couchlog_resource = Resource("http://%s/" % (settings.COUCH_SERVER_ROOT))
+        couchlog_resource = Resource("http://%s/" % (settings.COUCH_SERVER_ROOT))
     else:
         couchlog_resource = Resource("http://%s:%s@%s/" % (settings.COUCH_USERNAME, settings.COUCH_PASSWORD, settings.COUCH_SERVER_ROOT))
     context['couch_log'] = couchlog_resource.get('_log', params_dict={'bytes': 2000 }).body_string()
@@ -594,22 +599,21 @@ def system_info(request):
     #redis status
     redis_status = ""
     redis_results = ""
-    try:
+    if 'redis' in settings.CACHES:
         rc = cache.get_cache('redis')
+        try:
+            import redis
+            redis_api = redis.StrictRedis.from_url('redis://%s' % rc._server)
+            info_dict = redis_api.info()
+            redis_status = "Online"
+            redis_results = "Used Memory: %s" % info_dict['used_memory_human']
+        except Exception, ex:
+            redis_status = "Offline"
+            redis_results = "Redis connection error: %s" % ex
+    else:
+        redis_status = "Not Configured"
+        redis_results = "Redis is not configured on this system!"
 
-    except InvalidCacheBackendError, ex:
-        redis_status="Not Configured"
-        redis_results= "Redis is not configured on this system!"
-
-    try:
-        import redis
-        redis_api = redis.StrictRedis.from_url('redis://%s' % rc._server)
-        info_dict = redis_api.info()
-        redis_status = "Online"
-        redis_results = "Used Memory: %s" % info_dict['used_memory_human']
-    except Exception, ex:
-        redis_status="Offline"
-        redis_result= "Redis connection error: %s" % ex
     context['redis_status'] = redis_status
     context['redis_results'] = redis_results
 
@@ -619,12 +623,15 @@ def system_info(request):
         amqp_parts = settings.BROKER_URL.replace('amqp://','').split('/')
         mq_management_url = amqp_parts[0].replace('5672', '55672')
         vhost = amqp_parts[1]
-        mq = Resource('http://%s' % mq_management_url)
-        vhost_dict = json.loads(mq.get('api/vhosts').body_string())
-        mq_status = "Offline"
-        for d in vhost_dict:
-            if d['name'] == vhost:
-                mq_status='OK'
+        try:
+            mq = Resource('http://%s' % mq_management_url)
+            vhost_dict = json.loads(mq.get('api/vhosts').body_string())
+            mq_status = "Offline"
+            for d in vhost_dict:
+                if d['name'] == vhost:
+                    mq_status='OK'
+        except Exception, ex:
+            mq_status = "Error connecting: %s" % ex
     else:
         mq_status = "Not configured"
     context['rabbitmq_status'] = mq_status

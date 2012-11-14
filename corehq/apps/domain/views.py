@@ -12,8 +12,9 @@ from corehq.apps.domain.forms import DomainSelectionForm, DomainGlobalSettingsFo
     DomainMetadataForm, SnapshotSettingsForm, SnapshotApplicationForm, DomainDeploymentForm
 from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.utils import get_domained_url, normalize_domain_name
+from corehq.apps.users.models import CouchUser
 
-from dimagi.utils.web import render_to_response
+from dimagi.utils.web import render_to_response, get_ip
 from corehq.apps.users.views import require_can_edit_web_users
 from corehq.apps.receiverwrapper.forms import FormRepeaterForm
 from corehq.apps.receiverwrapper.models import FormRepeater, CaseRepeater, ShortFormRepeater
@@ -294,7 +295,7 @@ def snapshot_settings(request, domain):
     domain = Domain.get_by_name(domain)
     snapshots = domain.snapshots()
     return render_to_response(request, 'domain/snapshot_settings.html',
-                {'domain': domain.name, 'snapshots': snapshots})
+                {'domain': domain.name, 'snapshots': snapshots, 'published_snapshot': domain.published_snapshot()})
 
 @require_previewer # remove for production
 @domain_admin_required
@@ -318,9 +319,6 @@ def create_snapshot(request, domain):
             form = SnapshotSettingsForm(initial={
                 'default_timezone': published_snapshot.default_timezone,
                 'case_sharing': json.dumps(published_snapshot.case_sharing),
-#                'city': published_snapshot.city,
-#                'country': published_snapshot.country,
-#                'region': published_snapshot.region,
                 'project_type': published_snapshot.project_type,
                 'license': published_snapshot.license,
                 'title': published_snapshot.title,
@@ -329,9 +327,7 @@ def create_snapshot(request, domain):
                 'description': published_snapshot.description,
                 'short_description': published_snapshot.short_description
             })
-            print published_snapshot._id
             for app in published_snapshot.full_applications():
-                print 'ps.fa: %s' % app._id
                 if domain == published_snapshot:
                     published_apps[app._id] = app
                 else:
@@ -362,6 +358,7 @@ def create_snapshot(request, domain):
              'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
     elif request.method == 'POST':
         form = SnapshotSettingsForm(request.POST, request.FILES)
+        form.dom = domain
         app_forms = []
         publishing_apps = False
         for app in domain.applications():
@@ -389,7 +386,7 @@ def create_snapshot(request, domain):
             for m_file in media:
                 if domain.name not in m_file.shared_by:
                     m_file.shared_by.append(domain.name)
-                    m_file.licenses[domain.name] = domain.license
+#                    m_file.licenses[domain.name] = domain.license # this shouldn't be necessary now that licenses are set on upload
                     m_file.save()
         old = domain.published_snapshot()
         new_domain = domain.save_snapshot()
@@ -409,6 +406,15 @@ def create_snapshot(request, domain):
                 snapshot.save()
         new_domain.is_approved = False
         new_domain.published = True
+
+        current_user = CouchUser.from_django_user(request.user)
+        new_domain.cda.signed = True
+        new_domain.cda.date = datetime.datetime.utcnow()
+        new_domain.cda.type = 'Content Distribution Agreement'
+        if current_user:
+            new_domain.cda.user_id = current_user.get_id
+        new_domain.cda.user_ip = get_ip(request)
+
         image = form.cleaned_data['image']
         if image:
             new_domain.image_path = image.name
@@ -491,13 +497,13 @@ def manage_multimedia(request, domain):
                 m_file.shared_by.remove(domain)
 
             if '%s_license' % m_file._id in request.POST:
-                m_file.licenses[domain] = request.POST.get('%s_license' % m_file._id, 'public')
+                m_file.update_or_add_license(domain, type=request.POST.get('%s_license' % m_file._id, 'public'))
             m_file.save()
         messages.success(request, "Multimedia updated successfully!")
 
     return render_to_response(request, 'domain/admin/media_manager.html', {'domain': domain,
         'media': [{
-            'license': m.licenses.get(domain, 'public'),
+            'license': m.license.type if m.license else 'public',
             'shared': domain in m.shared_by,
             'url': m.url(),
             'm_id': m._id,

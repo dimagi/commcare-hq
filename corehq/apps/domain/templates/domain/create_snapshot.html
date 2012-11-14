@@ -1,5 +1,5 @@
 {% extends "users/users_base.html" %}
-{% load hq_bootstrap_tags %}
+{% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -20,11 +20,10 @@
 
 {% block js-inline %}
 {{ block.super }}
+{% url cda as cda_url %}
+{% include 'hqstyle/partials/load_into_modal.html' with modal_id="cda-modal" load_from=cda_url %}
 <!-- unfortunately copied from project settings -->
 <script type="text/javascript">
-
-
-
     $(function(){
         {% for field in autocomplete_fields %}
             $("#id_{{ field }}").focus(function() {
@@ -65,7 +64,7 @@
 <form class="form-horizontal" enctype="multipart/form-data" method="post" action="{% url domain_create_snapshot domain %}" id="snapshot_form">
     <fieldset>
         {% bootstrap_form_errors form %}
-        {% bootstrap_fieldset form "Creating new snapshot..." %}
+        {% bootstrap_fieldset form "Publishing new version of your project to Commcare Exchange" %}
         {% if request.project.published_snapshot.image_path %}
             <div class="control-group">
                 <div class="control-label"><label for="id_old_image">Use current image</label></div>
@@ -85,6 +84,6 @@
         {% endfor %}
     </fieldset>
 
-    <div class="form-actions"><button type="submit" class="btn btn-primary">Create New Snapshot</button></div>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Publish Project</button></div>
 </form>
 {% endblock %}>

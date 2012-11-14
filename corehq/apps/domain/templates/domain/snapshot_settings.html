@@ -1,6 +1,34 @@
 {% extends "users/users_base.html" %}
-{% load hq_bootstrap_tags %}
+{% load hqstyle_tags %}
 {% load i18n %}
+
+{% block js-inline  %}{{ block.super }}
+    {% url cda as cda_url %}
+    {% include 'hqstyle/partials/load_into_modal.html' with modal_id="contentDistributionAgreement" load_from=cda_url %}
+
+    <script type="text/javascript">
+        $(function() {
+            $('[data-target="#contentDistributionAgreement"]').click(function() {
+                var new_action = $(this).attr('data-action');
+                $('#cda-agree').attr('action', new_action);
+            });
+        });
+    </script>
+    <script type="text/javascript">
+        $(function() {
+            $('#toggle-snapshots').click(function() {
+                if ($(this).text() === 'Show previous versions') {
+                    $('#snapshots').show(500);
+                    $(this).text('Hide previous versions');
+                }
+                else {
+                    $('#snapshots').hide(500);
+                    $(this).text('Show previous versions');
+                }
+            });
+        });
+    </script>
+{% endblock %}
 
 {% block subsection-title %}
 <li class="active" xmlns="http://www.w3.org/1999/html">
@@ -10,8 +38,29 @@
 
 {% block user-view %}
 <div>
-    <h3>This project has {{ snapshots|length }} snapshots</h3>
-    <table class="table table-striped">
+    {% if published_snapshot %}
+        <form action="{% url domain_clear_published domain %}" method="POST">
+            <h3>
+                This project has been published
+                <button style="margin-left: 4em" class="btn btn-danger" type="submit">Unpublish</button>
+            </h3>
+        </form>
+        <dl class="dl-horizontal">
+            <dt>{% trans 'Published on' %}</dt>
+            <dd>{{ published_snapshot.snapshot_time }}</dd>
+            <dt>{% trans 'License' %}</dt>
+            <dd>{{ published_snapshot.get_license_display }}</dd>
+            <dt>{% trans 'Status' %}</dt>
+            <dd>{% if published_snapshot.is_approved %}Approved{% else %}Not yet approved{% endif %}</dd>
+            <dd><a href="{% url project_info published_snapshot.name %}">View on exchange</a></dd>
+    {% else %}
+    <h3>This project has not been published</h3>
+    {% endif %}
+</div>
+<button id="toggle-snapshots" class="btn">Show previous versions</button>
+<div id="snapshots" class="hide">
+    <h3>This project has {{ snapshots|length }} unpublished versions</h3>
+    <table class="table table-striped" id="snapshot-list">
         <thead>
         <tr>
             <th></th>
@@ -43,9 +92,7 @@
             {% else %}
             <td></td>
             <td>
-                <form action="{% url domain_set_published domain snapshot.name %}" method="POST">
-                    <button class="btn btn-primary" type="submit">Publish</button> (only one snapshot can be published at a time)
-                </form>
+                <a class="btn btn-primary" data-action="{% url domain_set_published domain snapshot.name %}" data-toggle="modal" data-target="#contentDistributionAgreement" href="#contentDistributionAgreement">Publish</a> (only one snapshot can be published at a time)
             </td>
             {% endif %}
         </tr>
@@ -56,14 +103,14 @@
 <div class="alert alert-error">{{ error_message }}</div>
 {% endif %}
 <form class="form-horizontal" method="get" action="{% url domain_create_snapshot domain %}">
-    <fieldset>
+    <fieldset style="margin-top: 1em">
         <legend>
-            Create a new snapshot
+            Publish a new version
         </legend>
         <div class="alert alert-info">
             <a href="#" class="close" data-dismiss="alert">×</a>
-            <h3>You are about to create a snapshot that contains the following builds:</h3>
-            <p>Snapshots are taken from the latest starred builds, or, if no builds are starred, from the latest build overall.</p>
+            <h3>You are about to publish your project using the following builds:</h3>
+            <p>Your project will be published using the latest starred builds, or, if no builds are starred, from the latest build overall.</p>
         </div>
         <div>
             <table class="table table-striped">
@@ -117,6 +164,27 @@
         </div>
     </fieldset>
 
-    <div class="form-actions"><button type="submit" class="btn btn-primary">Create snapshot from these builds</button></div>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Publish a new version of your project</button></div>
 </form>
 {% endblock %}>
+
+{% block modals %}{{ block.super }}
+    <div class="modal hide fade" id="contentDistributionAgreement">
+        <div class="modal-header">
+            <a class="close" data-dismiss="modal">&times;</a>
+            <h4>CommCare HQ Content Distribution Agreement</h4>
+        </div>
+        <div class="modal-body">
+            Loading Terms of Service...
+        </div>
+        <div class="modal-footer">
+            <div style="text-align: left; line-height: 2em;">
+                To publish this project, you must agree to our Content Distribution Agreement
+            </div>
+            <form id="cda-agree" action="" method="POST">
+                <button type="submit" href="#" class="btn btn-primary">Agree</button>
+                <a href="#" data-dismiss="modal" class="btn">Disagree</a>
+            </form>
+        </div>
+    </div>
+{% endblock %}

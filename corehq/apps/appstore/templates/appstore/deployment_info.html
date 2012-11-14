@@ -1,0 +1,66 @@
+{% extends "appstore/deployments.html" %}
+{% load hq_shared_tags %}
+{% load hqstyle_tags %}
+{% load i18n %}
+
+
+{% block breadcrumb %}
+    <li>{{ domain.name }}</li>
+{% endblock %}
+
+{% block main_column %}
+
+    <div class="container-fluid">
+        <div class="page-header row-fluid">
+            <div class="span7">
+                <h1>
+                    {{ domain.name }}
+                    <small>by
+                        {% if domain.organization %}
+                            <a href="{% url orgs_landing domain.organization %}">{{ domain.organization_doc.title }}</a>
+                        {% else %}
+                            {{ domain.author }}
+                        {% endif %}
+                    </small>
+                </h1>
+                <br/>
+            </div>
+        </div>
+    </div>
+    <dl class="dl-horizontal">
+        <dt>{% trans 'Description' %}</dt>
+        <dd>
+            {% if domain.deployment.description %}
+                {{ domain.deployment.description }}
+            {% else %}
+                <h6>None</h6>
+            {% endif %}
+        </dd>
+        <dt>Users</dt>
+        <dd>{{ domain.all_users|length }}</dd>
+        {% if domain.deployment.city %}
+            <dt>City</dt>
+            <dd>{{ domain.deployment.city }}</dd>
+        {% endif %}
+        {% if domain.deployment.country %}
+            <dt>Country</dt>
+            <dd>{{ domain.deployment.country }}</dd>
+        {% endif %}
+        {% if domain.deployment.region %}
+            <dt>Region</dt>
+            <dd>{{ domain.deployment.region }}</dd>
+        {% endif %}
+        <dt>{% trans 'Languages' %}</dt>
+        <dd>
+            {% if domain.languages %}
+                {{ domain.readable_languages }}
+            {% else %}
+                None
+            {% endif %}
+        </dd>
+        <dt>Active</dt>
+        <dd>
+            {{ domain.recent_submissions|yesno:"Yes,No" }}
+        </dd>
+    </dl>
+{% endblock %}

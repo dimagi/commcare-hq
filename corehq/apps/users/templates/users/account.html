@@ -1,6 +1,6 @@
 {% extends "users/users_base.html" %}
 {% load hq_shared_tags %}
-{% load hq_bootstrap_tags %}
+{% load hqstyle_tags %}
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/javascripts/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'users/js/key_filters.js' %}"></script>
@@ -110,13 +110,7 @@
     {% if couch_user.is_commcare_user %}
         <li><a href="#user-data" data-toggle="tab">Custom Registration Data</a></li>
     {% endif %}
-    {% if couch_user.user_id == request.couch_user.user_id and couch_user.is_commcare_user %}
-        {% if request.couch_user.can_view_reports or request.couch_user.get_viewable_reports %}
-            <li><a href="#scheduled-reports" data-toggle="tab">My Scheduled Reports</a></li>
-        {% endif %}
-    {% endif %}
     {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
-        <li><a href="#scheduled-reports" data-toggle="tab">My Scheduled Reports</a></li>
         {% if proj_settings_form %}
         <li><a href="#project-settings" data-toggle="tab">My Settings for this Project</a></li>
         {% endif %}
@@ -213,17 +207,7 @@
             {% include "users/partial/user_data.html" %}
         </div>
         {% endif %}
-        {% if couch_user.user_id == request.couch_user.user_id and couch_user.is_commcare_user %}
-            {% if request.couch_user.can_view_reports or request.couch_user.get_viewable_reports %}
-                <div class="tab-pane" id="scheduled-reports">
-                    {% include "users/partial/scheduled_reports.html" %}
-                </div>
-            {% endif %}
-        {% endif %}
         {% if couch_user.user_id == request.couch_user.user_id and not couch_user.is_commcare_user %}
-        <div class="tab-pane" id="scheduled-reports">
-            {% include "users/partial/scheduled_reports.html" %}
-        </div>
         {% if proj_settings_form %}
         <div class="tab-pane" id="project-settings">
             {% include "users/partial/project_settings.html" %}

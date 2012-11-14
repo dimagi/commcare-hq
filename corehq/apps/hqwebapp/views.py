@@ -13,7 +13,7 @@ from django.shortcuts import redirect
 from corehq.apps.app_manager.models import BUG_REPORTS_DOMAIN
 from corehq.apps.app_manager.models import import_app
 from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.domain.utils import normalize_domain_name, legacy_domain_re, get_domain_from_url
+from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.users.util import format_username
 from dimagi.utils.logging import notify_exception
@@ -21,6 +21,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import render_to_response, get_url_base
 from django.core.urlresolvers import reverse
 from corehq.apps.domain.models import Domain
+from django.core.mail.message import EmailMessage
 from django.template import loader
 from django.template.context import RequestContext
 from couchforms.models import XFormInstance
@@ -161,23 +162,35 @@ def server_up(req):
 def no_permissions(request):
     return redirect('registration_domain')
 
+def _login(req, domain, template_name):
+    if req.user.is_authenticated() and req.method != "POST":
+        redirect_to = req.REQUEST.get('next', '')
+        if redirect_to:
+            return HttpResponseRedirect(redirect_to)
+        if not domain:
+            return HttpResponseRedirect(reverse('homepage'))
+        else:
+            return HttpResponseRedirect(reverse('domain_homepage', args=[domain]))
 
+    if req.method == 'POST' and domain and '@' not in req.POST.get('username', '@'):
+        req.POST._mutable = True
+        req.POST['username'] = format_username(req.POST['username'], domain)
+        req.POST._mutable = False
+    
+    req.base_template = settings.BASE_TEMPLATE
+    return django_login(req, template_name=template_name,
+                        authentication_form=EmailAuthenticationForm if not domain else CloudCareAuthenticationForm,
+                        extra_context={'domain': domain})
+    
 def login(req, template_name="login_and_password/login.html"):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
-    if req.user.is_authenticated() and req.method != "POST":
-        return HttpResponseRedirect(reverse('homepage'))
-
-    if req.method == 'POST' and req.POST.get('domain') and '@' not in req.POST.get('username', '@'):
-        req.POST._mutable = True
-        req.POST['username'] = format_username(req.POST['username'], req.POST['domain'])
-        req.POST._mutable = False
-
-    req.base_template = settings.BASE_TEMPLATE
-    return django_login(req, template_name=template_name,
-        authentication_form=EmailAuthenticationForm if not req.GET.get('domain') else CloudCareAuthenticationForm)
-
+    domain = req.REQUEST.get('domain', None)
+    return _login(req, domain, template_name)
+    
+def domain_login(req, domain, template_name="login_and_password/login.html"):
+    return _login(req, domain, template_name)
 
 def logout(req, template_name="hqwebapp/loggedout.html"):
     req.base_template = settings.BASE_TEMPLATE
@@ -228,8 +241,13 @@ def bug_report(req):
         u"{message}\n"
         ).format(**report)
 
-    from django.core.mail.message import EmailMessage
-    from django.core.mail import send_mail
+
+    reply_to = report['username']
+
+    # if the person looks like a commcare user, fogbugz can't reply
+    # to their email, so just use the default
+    if settings.HQ_ACCOUNT_ROOT in reply_to:
+        reply_to = settings.EMAIL_HOST_USER
 
     if req.POST.get('five-hundred-report'):
         message = "%s \n\n This messge was reported from a 500 error page! Please fix this ASAP (as if you wouldn't anyway)..." % message
@@ -238,7 +256,7 @@ def bug_report(req):
         message,
         report['username'],
         settings.BUG_REPORT_RECIPIENTS,
-        headers={'Reply-To': report['username']}
+        headers={'Reply-To': reply_to}
     )
     email.send(fail_silently=False)
 

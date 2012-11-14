@@ -1,8 +1,28 @@
 {% extends "appstore/appstore_base.html" %}
 {% load hq_shared_tags %}
-{% load hq_bootstrap_tags %}
+{% load hqstyle_tags %}
 {% load i18n %}
 
+{% block js %}{{ block.super }}
+    <script>
+        function update_import_into_button() {
+            var project = $('#project_select option:selected').text();
+            $("#import-into-button").text("Import into " + project);
+        }
+        $(function () {
+            update_import_into_button();
+
+            $("#import-app-button").click(function() {
+                $('#import-app').show(500);
+            });
+
+            $('#project_select').change(update_import_into_button);
+        });
+    </script>
+{% endblock %}
+
+{% block sidebar %}
+{% endblock %}
 
 {% block breadcrumb %}
 <li>{{ project.title }}</li>
@@ -11,10 +31,12 @@
 {% block main_column %}
 
 <div class="container-fluid">
-<div class="page-header row-fluid">
+<div class="page-header row-fluid" style="border-bottom: 0; margin-bottom: 0;">
 <div class="span2" style="text-align: center;">
     {% if project.image_path %}
-        <img src="{% url appstore_project_image project.name %}" style="max-width: 200px; max-height:200px;" />
+        <img class="app-pic" src="{% url appstore_project_image project.name %}" />
+    {% else %}
+        <img class="app-pic opacity65" src="{% static 'hqstyle/img/no-image-available.png' %}" />
     {% endif %}
 </div>
     <div class="span7">
@@ -28,6 +50,7 @@
                 {% endif %}
             </small>
         </h1>
+        <h4 style="color: #808080;">{{ project.short_description }}</h4>
         <h3>
             Ratings: <span class="badge badge-info">{{ num_ratings }}</span>
         </h3>
@@ -39,15 +62,7 @@
 </div>
 </div>
 <dl class="dl-horizontal">
-    <dt>{% trans 'Short Description' %}</dt>
-    <dd>
-        {% if project.short_description %}
-            {{ project.short_description }}
-        {% else %}
-            <h6>None</h6>
-        {% endif %}
-    </dd>
-    <dt>{% trans 'Long Description' %}</dt>
+    <dt>{% trans 'Description' %}</dt>
     <dd>
         {% if project.description %}
             {{ project.description }}
@@ -63,8 +78,10 @@
             <h6>None</h6>
         {% endif %}
     </dd>
-    <dt>Users</dt>
-    <dd>{{ project.copied_from.all_users|length }}</dd>
+    <dt> {% trans 'Published on' %}</dt>
+    <dd>
+        {{ project.snapshot_time|date:"N j, Y" }}
+    </dd>
     {% if project.city %}
     <dt>City</dt>
     <dd>{{ project.city }}</dd>
@@ -85,161 +102,111 @@
         None
         {% endif %}
     </dd>
-    <dt>Active?</dt>
-    <dd>
-        {{ project.copied_from.recent_submissions|yesno:"Yes,No" }}
-    </dd>
     <dt>License</dt>
     <dd>{{ project.get_license_display }}</dd>
-    <dt>{% trans 'Copy count' %}</dt>
+    <dt>{% trans 'Downloads' %}</dt>
     <dd>
-        This version: {{ project.copies|length }};
-        All versions: {{ project.copies_of_parent|length }}
+{#        This version: {{ project.copies|length }};#}
+        <!-- All versions: -->{{ project.copies_of_parent|length }}
     </dd>
- </dl>
-
-<h2>Applications</h2>
-        <div class="accordion" id="application-accordion">
-            {% for app in project.full_applications %}
-                <div class="accordion-group">
-                    <div class="accordion-heading">
-                        <a class="accordion-toggle" href="#application-{{ app.id }}" data-toggle="collapse" data-parent="#application-accordion">{{ app.name }}</a>
-                    </div>
-                    <div id="application-{{ app.id }}" class="accordion-body collapse">
-                        <dl class="dl-horizontal">
-                            <dt>Uses cases?</dt>
-                            <dd>{{ app.has_case_management|yesno:"Yes,No" }}</dd>
-                            <dt>Has media?</dt>
-                            <dd>
-                                {{ app.has_media|yesno:"Yes,No" }}
-                            </dd>
-                            <dt>CommCare</dt>
-                            <dd>
-                                Version {{ app.application_version }}
-                            </dd>
-                            {% if app.user_type %}
-                                <dt>User type</dt>
-                                <dd>{{ app.user_type }}</dd>
-                            {% endif %}
-                            {% if app.phone_model %}
-                                <dt>Phone model</dt>
-                                <dd>{{ app.phone_model }}</dd>
-                            {% endif %}
-                            {% if app.deployment_date %}
-                                <dt>Deployment date</dt>
-                                <dd>{{ app.deployment_date.date }}</dd>
-                            {% endif %}
-                            {% if app.short_description %}
-                                <dt>{% trans 'Short Description' %}</dt>
-                                <dd>
-                                    {{ app.short_description }}
-                                </dd>
-                            {% endif %}
-                            {% if app.description %}
-                                <dt>{% trans 'Long Description' %}</dt>
-                                <dd>
-                                    {{ app.description }}
-                                </dd>
-                            {% endif %}
-                            <dd><a href="{% url app_summary project app.id %}">Application summary</a></dd>
-                        </dl>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-        <div>
-            <form action="{% url copy_snapshot_app project.name %}" method="post">
-                <fieldset>
-                    <legend>Copy individual application into existing project</legend>
-                    {% if project.attribution_notes %}
-                        <dl>
-                            <dt>Attribution notes</dt>
-                            <dd>{{ project.attribution_notes }}</dd>
-                        </dl>
+</dl>
+<hr />
+    <div id="application-accordion">
+        {% for app in project.full_applications %}
+            <div id="application-{{ app.id }}">
+                <dl class="dl-horizontal">
+                    <dd><h4>{{ app.name }}</h4></dd>
+                    <dt>Media</dt>
+                    <dd>
+                        {{ app.has_media|yesno:"Yes,No" }}
+                    </dd>
+                    <dt>CommCare</dt>
+                    <dd>
+                        Version {{ app.application_version }}
+                    </dd>
+                    {% if app.user_type %}
+                        <dt>User type</dt>
+                        <dd>{{ app.user_type }}</dd>
                     {% endif %}
-                    <label for="app_to_copy_select">
-                        Application to Copy
-                    </label>
-                    <select name="app_id" id="app_to_copy_select">
-                        {% for app in project.applications %}
-                        <option value="{{ app.id }}">{{ app.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <label for="project_select">
-                        Destination project
-                    </label>
-                    <select name="project" id="project_select">
-                        {% for p in request.couch_user.projects %}
-                        <option value="{{ p.name }}">{{ p.display_name }}</option>
-                        {% endfor %}
-                    </select>
-                </fieldset>
-                <button class="btn btn-primary" type="submit">Copy application</button>
-            </form>
-            <form method="post" class="form-inline" action="{% url domain_copy_snapshot project %}">
-                <fieldset>
-                    <legend>Copy entire project into new project</legend>
-                    {% if project.attribution_notes %}
+                    {% if app.phone_model %}
+                        <dt>Phone model</dt>
+                        <dd>{{ app.phone_model }}</dd>
+                    {% endif %}
+                    {% if app.short_description %}
+                        <dt>{% trans 'Short Description' %}</dt>
+                        <dd>
+                            {{ app.short_description }}
+                        </dd>
+                    {% endif %}
+                    {% if app.description %}
+                        <dt>{% trans 'Long Description' %}</dt>
+                        <dd>
+                            {{ app.description }}
+                        </dd>
+                    {% endif %}
+                    <dd><a class="btn" style="margin: .4em 0" href="{% url exchange_app_summary project app.id %}">Application summary</a></dd>
+                </dl>
+            </div>
+        {% endfor %}
+    </div>
+    <div>
+        <form method="post" class="form-inline" action="{% url domain_copy_snapshot project %}">
+            <fieldset>
+                <legend>Download project</legend>
+                {% if project.attribution_notes %}
                     <dl>
                         <dt>Attribution notes</dt>
                         <dd>{{ project.attribution_notes }}</dd>
                     </dl>
-                    {% endif %}
-                    <div{% if error_message %} class="error"{% endif %}>
-                        <input type="text" class="span3" id="new_project_name"
-                               name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">
-                        {% if error_message %}
+                {% endif %}
+                <div{% if error_message %} class="error"{% endif %}>
+                    <input type="text" class="span3" id="new_project_name"
+                           name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">
+                    {% if error_message %}
                         <span class="help-inline">{{ error_message }}</span>
-                        {% endif %}
-                    <button type="submit" class="btn btn-primary">Create New Project</button>
-                    </div>
-
-                </fieldset>
-            </form>
-        </div>
-
-<hr/>
-        <div>
-            <div>
-                <form action="{% url project_info project %}" method="post">
-                    {% if versioned %}
-                    <input type="hidden" name="versioned" value="">
-                    {% else %}
-                    <input type="hidden" name="versioned" value="1">
                     {% endif %}
-                </form>
+                    <button type="submit" class="btn btn-primary">Create New Project</button> or
+                    <a class="btn" id="import-app-button">Import to Existing Project</a>
+                </div>
+            </fieldset>
+        </form>
+        <form method="post" class="form-inline" action="{% url import_app_from_snapshot project %}">
+            <div class="hide" id="import-app">
+                <select name="project" id="project_select">
+                    {% for p in request.couch_user.projects %}
+                        <option value="{{ p.name }}">{{ p.display_name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" id="import-into-button" class="btn btn-primary">Import into</button>
             </div>
-            <h3>
-                Reviews for {% if versioned %} the current version {% else %} all versions {% endif %} of {{ project.copied_from.display_name }}
-                <small><a href="?current={{ current_link }}" class="btn btn-primary">{% if versioned %} View reviews for all versions {% else %} Only show reviews from current version{% endif %}</a></small>
-            </h3>
-            <br/>
-            {% if project.copied_from.name not in request.couch_user.get_domains %}
+        </form>
+    </div>
+
+    <hr/>
+    <div>
+        <h3>Reviews of {{ project.copied_from.display_name }}</h3>
+        {% if project.copied_from.name not in request.couch_user.get_domains %}
             <div>
                 <a href="#add_review_modal" data-toggle="modal" class="btn btn-inverse">Write a Review</a>
             </div>
-            {% endif %}
-            <div>
-                
-            </div>
-        </div>
-        {% for review in reviews %}
+        {% endif %}
+    </div>
+    {% for review in reviews %}
         <hr/>
         <div class="row">
             <div class="span1">
                 <h4 style="padding-left:25px">{{ forloop.counter }})</h4>
             </div>
             <div class="span6">
-        <h4>{{ review.title }}</h4>
-        <div>
-            <p><small>{{ review.user }} on {{ review.date_published }}</small></p>
-            {% include "partials/five_stars.html" with rating_name=review.get_id rating=review.rating %}
-        </div>
-        <div>{{ review.info }}</div>
+                <div>
+                    {% include "partials/five_stars.html" with rating_name=review.get_id rating=review.rating class="pi-stars" %}
+                    <h4 style="display: inline-block; vertical-align: bottom;">{{ review.title }}</h4>
+                </div>
+                <div>{{ review.info }}</div>
+                <p><small>{{ review.user }} on {{ review.date_published }}</small></p>
             </div>
         </div>
-        {% endfor %}
-
+    {% endfor %}
 {% endblock %}
 
 

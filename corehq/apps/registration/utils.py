@@ -11,20 +11,25 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.django.email import send_HTML_email
 
-def activate_new_user(form, is_domain_admin=True, domain=None):
+def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     username = form.cleaned_data['email']
     password = form.cleaned_data['password']
     full_name = form.cleaned_data['full_name']
+    now = datetime.utcnow()
 
     new_user = WebUser.create(domain, username, password, is_admin=is_domain_admin)
     new_user.first_name = full_name[0]
     new_user.last_name = full_name[1]
     new_user.email = username
 
+    new_user.eula.signed = True
+    new_user.eula.date = now
+    new_user.eula.type = 'End User License Agreement'
+    if ip: new_user.eula.user_ip = ip
+
     new_user.is_staff = False # Can't log in to admin site
     new_user.is_active = True
     new_user.is_superuser = False
-    now = datetime.utcnow()
     new_user.last_login = now
     new_user.date_joined = now
     new_user.save()
@@ -33,22 +38,21 @@ def activate_new_user(form, is_domain_admin=True, domain=None):
 
 def request_new_domain(request, form, org, new_user=True):
     now = datetime.utcnow()
+    current_user = CouchUser.from_django_user(request.user)
 
     dom_req = RegistrationRequest()
     if new_user:
-        dom_req.tos_confirmed = form.cleaned_data['tos_confirmed']
         dom_req.request_time = now
         dom_req.request_ip = get_ip(request)
         dom_req.activation_guid = uuid.uuid1().hex
 
+    new_domain = Domain(name=form.cleaned_data['domain_name'],
+        is_active=False,
+        date_created=datetime.utcnow())
+
+
     if org:
-        new_domain = Domain(slug=form.cleaned_data['domain_name'],
-                            is_active=False,
-                            date_created=datetime.utcnow(), organization=org)
-    else:
-        new_domain = Domain(name=form.cleaned_data['domain_name'],
-                            is_active=False,
-                            date_created=datetime.utcnow())
+        new_domain.organization = org
 
     if not new_user:
         new_domain.is_active = True
@@ -61,7 +65,6 @@ def request_new_domain(request, form, org, new_user=True):
     dom_req.domain = new_domain.name
 
     if request.user.is_authenticated():
-        current_user = CouchUser.from_django_user(request.user)
         if not current_user:
             current_user = WebUser()
             current_user.sync_from_django_user(request.user)
@@ -131,7 +134,8 @@ The CommCareHQ Team
     subject = 'Welcome to CommCare HQ!'.format(**locals())
 
     try:
-        send_HTML_email(subject, recipient, message_plaintext, message_html)
+        send_HTML_email(subject, recipient, message_html,
+                        text_content=message_plaintext)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
@@ -183,7 +187,8 @@ The CommCareHQ Team
     subject = 'CommCare HQ: New project created!'.format(**locals())
 
     try:
-        send_HTML_email(subject, requesting_user.email, message_plaintext, message_html)
+        send_HTML_email(subject, requesting_user.email, message_html,
+                        text_content=message_plaintext)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
@@ -208,6 +213,6 @@ You can view the project here: %s""" % (
         get_url_base() + "/a/%s/" % domain_name)
     try:
         recipients = settings.NEW_DOMAIN_RECIPIENTS
-        send_mail("New Project: %s" % domain_name, message, settings.EMAIL_LOGIN, recipients)
+        send_mail("New Project: %s" % domain_name, message, settings.EMAIL_HOST_USER, recipients)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message)

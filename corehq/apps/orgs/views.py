@@ -5,7 +5,6 @@ from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.registration.forms import DomainRegistrationForm
 from corehq.apps.orgs.forms import AddProjectForm, AddMemberForm, AddTeamForm, UpdateOrgInfo
 from corehq.apps.users.models import CouchUser, WebUser
-from corehq.apps.users.views import require_can_edit_commcare_users
 from dimagi.utils.web import render_to_response, json_response, get_url_base
 from corehq.apps.orgs.models import Organization, Team, DeleteTeamRecord
 from corehq.apps.domain.models import Domain
