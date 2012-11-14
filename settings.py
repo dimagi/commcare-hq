@@ -224,6 +224,17 @@ TABS = [
     ("corehq.apps.hqadmin.views.default", "Admin Reports", "is_superuser"),
 ]
 
+MENU_ITEMS = (
+    "corehq.apps.hqwebapp.models.ProjectInfoMenuItem",
+    "corehq.apps.hqwebapp.models.ReportsMenuItem",
+    "corehq.apps.hqwebapp.models.ManageDataMenuItem",
+    "corehq.apps.hqwebapp.models.ApplicationsMenuItem",
+    "corehq.apps.hqwebapp.models.CloudcareMenuItem",
+    "corehq.apps.hqwebapp.models.MessagesMenuItem",
+    "corehq.apps.hqwebapp.models.ProjectSettingsMenuItem",
+    "corehq.apps.hqwebapp.models.AdminReportsMenuItem",
+)
+
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL='/'
