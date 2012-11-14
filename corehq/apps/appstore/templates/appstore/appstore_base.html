@@ -38,6 +38,22 @@
             });
         });
     </script>
+
+    <script>
+        function genScalePicFunc() {
+            var $app_pic = $('.app-pic');
+            return function() {
+                var pic_width = $app_pic.width();
+                $app_pic.css('height', pic_width+'px');
+            }
+        }
+        var scaleAppPic = genScalePicFunc();
+
+        $(function(){
+            scaleAppPic();
+            $(window).resize(scaleAppPic);
+        });
+    </script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
