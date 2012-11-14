@@ -411,7 +411,7 @@ class ReportNotification(Document):
 
     @property
     def day_name(self):
-        if self.doc_type == 'WeeklyReportNotification':
+        if self.day_of_week != -1:
             return calendar.day_name[self.day_of_week]
         else:
             return "Every day"
