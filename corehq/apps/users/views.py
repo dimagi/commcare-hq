@@ -416,6 +416,7 @@ def delete_phone_number(request, domain, couch_user_id):
             del user.phone_numbers[i]
             break
     user.save()
+    user.delete_verified_number(phone_number)
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
 
 @require_permission_to_edit_user

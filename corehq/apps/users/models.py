@@ -647,6 +647,30 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     phone_number = default_phone_number
 
     @property
+    def phone_numbers_extended(self):
+        # TODO: what about web users... do we not want to verify phone numbers
+        # for them too? if so, CommCareMobileContactMixin should be on CouchUser,
+        # not CommCareUser
+
+        # hack to work around the above issue
+        if hasattr(self, 'get_verified_numbers'):
+            verified = self.get_verified_numbers(True)
+        else:
+            verified = {}
+
+        def _():
+            for phone in self.phone_numbers:
+                contact = verified.get(phone)
+                if contact:
+                    status = 'verified' if contact.verified else 'pending'
+                else:
+                    status = 'unverified'
+
+                yield {'number': phone, 'status': status, 'contact': contact}
+
+        return list(_())
+
+    @property
     def couch_id(self):
         return self._id
 
@@ -1126,26 +1150,6 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
 
         return owner_ids
         
-    @property
-    def phone_numbers_extended(self):
-        # TODO: what about web users... do we not want to verify phone numbers
-        # for them too? if so, CommCareMobileContactMixin should be on CouchUser,
-        # not CommCareUser
-
-        verified = self.get_verified_numbers(True)
-
-        def _():
-            for phone in self.phone_numbers:
-                contact = verified.get(phone)
-                if contact:
-                    status = 'verified' if contact.verified else 'pending'
-                else:
-                    status = 'unverified'
-
-                yield {'number': phone, 'status': status, 'contact': contact}
-
-        return list(_())
-
     def retire(self):
         suffix = DELETED_SUFFIX
         deletion_id = random_hex()

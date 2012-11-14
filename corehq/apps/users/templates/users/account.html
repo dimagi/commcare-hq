@@ -171,11 +171,13 @@
                             </label>
                             
                             <div class="controls">
+                                {% ifnotequal couch_user.doc_type "WebUser" %}
                                 {% ifequal phone.status "unverified" %}
                                 <form method="post" action="{% url verify_phone_number domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}" style="display: inline;">
                                     <button type="submit" title="Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified." class="btn btn-primary"><i class="icon icon-signal icon-white"></i> Verify</button>
                                 </form>
                                 {% endifequal %}
+                                {% endifnotequal %}
                                 {% ifequal phone.status "pending" %}
                                 <a title="Re-send the verification SMS to this phone" class="btn btn-primary" data-toggle="modal" href="#reverify_{{phone.number|urlencode}}"><i class="icon icon-signal icon-white"></i> Verify (retry)</a>
                                 {% endifequal %}
