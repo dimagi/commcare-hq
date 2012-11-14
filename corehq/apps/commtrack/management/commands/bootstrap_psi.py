@@ -46,9 +46,7 @@ class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option('-f', '--force', action='store_true', dest='force', default=False,
                     help='force bootstrapping of domain, even if already appears set up'),
-        make_option('-b', '--backend', dest='backend_name',
-                    help='SMS backend to associate with mobile workers (default: test backend)'),
-        )
+         )
     help = 'Initialize commtrack config for PSI'
 
     def handle(self, *args, **options):
@@ -74,7 +72,7 @@ class Command(BaseCommand):
 
         if first_time:
             self.one_time_setup(domain)
-        self.every_time_setup(domain, **{'backend': get_sms_backend(options['backend_name'])})
+        self.every_time_setup(domain)
 
     def one_time_setup(self, domain):
         self.stderr.write('Setting up domain from scratch...\n')
@@ -85,7 +83,8 @@ class Command(BaseCommand):
 
     def every_time_setup(self, domain, **kwargs):
         self.stderr.write('Refreshing...\n')
-        register_reporters(domain.name, kwargs['backend'])
+        # nothing to do
+        pass
 
 def commtrack_enable_domain(domain):
     domain.commtrack_enabled = True
@@ -149,27 +148,4 @@ def create_locations(domain):
                     outlet_code = '%d%d%d%d' % (i + 1, j + 1, k + 1, l + 1)
                     make_supply_point(domain, outlet, outlet_code)
 
-def register_reporters(domain, backend):
-    mobile_workers = CommCareUser.view('users/phone_users_by_domain',
-                                       startkey=[domain],
-                                       endkey=[domain, {}],
-                                       include_docs=True)
-    for mw in mobile_workers:
-        make_verified_contact(mw.username, backend)
-
-def get_sms_backend(name):
-    if name:
-        try:
-            return MobileBackend.get(name)
-        except:
-            raise RuntimeError('could not find any sms backend [%s]' % name)
-    else:
-        return get_default_backend()
-
-def get_default_backend():
-    try:
-        backend = [mb for mb in MobileBackend.view('_all_docs', include_docs=True) if mb.outbound_module == 'corehq.apps.sms.test_backend'][0]
-        return backend
-    except IndexError:
-        raise RuntimeError('found no suitable backend for simulated sms; cannot commtrack-enable mobile workers')
 
