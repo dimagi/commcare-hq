@@ -46,4 +46,5 @@ if __name__ == "__main__":
     # proxy for whether we're running gunicorn with -k gevent
     if "gevent" in sys.argv:
         from restkit.session import set_session; set_session("gevent")
+        from gevent.monkey import patch_all; patch_all()
     execute_manager(settings)
