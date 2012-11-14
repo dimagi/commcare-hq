@@ -381,17 +381,22 @@ def create_snapshot(request, domain):
                      'app_forms': app_forms,
                      'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
 
+        new_license = request.POST['license']
         if request.POST.get('share_multimedia', False):
             media = domain.all_media()
             for m_file in media:
                 if domain.name not in m_file.shared_by:
                     m_file.shared_by.append(domain.name)
-#                    m_file.licenses[domain.name] = domain.license # this shouldn't be necessary now that licenses are set on upload
-                    m_file.save()
+
+                # set the license of every multimedia file that doesn't yet have a license set
+                if not m_file.license:
+                    m_file.update_or_add_license(domain, type=new_license)
+
+                m_file.save()
+
         old = domain.published_snapshot()
         new_domain = domain.save_snapshot()
-        if request.POST['license'] in LICENSES.keys():
-            new_domain.license = request.POST['license']
+        new_domain.license = new_license
         new_domain.description = request.POST['description']
         new_domain.short_description = request.POST['short_description']
         new_domain.project_type = request.POST['project_type']
