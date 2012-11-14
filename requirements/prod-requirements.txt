@@ -1,7 +1,7 @@
 CherryPy==3.2.2
 git+git://github.com/dimagi/django-cpserver.git
 celerymon==1.0.3
-gunicorn==0.14.6
+gunicorn==0.15.0
 redis==2.6.2
 django-redis==2.2
 
