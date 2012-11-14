@@ -658,17 +658,15 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         else:
             verified = {}
 
-        def _():
-            for phone in self.phone_numbers:
-                contact = verified.get(phone)
-                if contact:
-                    status = 'verified' if contact.verified else 'pending'
-                else:
-                    status = 'unverified'
+        def extend_phone(phone):
+            contact = verified.get(phone)
+            if contact:
+                status = 'verified' if contact.verified else 'pending'
+            else:
+                status = 'unverified'
+            return {'number': phone, 'status': status, 'contact': contact}
+        return [extend_phone(phone) for phone in self.phone_numbers]
 
-                yield {'number': phone, 'status': status, 'contact': contact}
-
-        return list(_())
 
     @property
     def couch_id(self):
