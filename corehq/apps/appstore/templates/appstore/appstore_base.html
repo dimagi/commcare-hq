@@ -272,6 +272,15 @@
                             </div>
                         {% endif %}
                     </a>
+                    <p style="margin-top: .5em;">Last updated: {{ app.snapshot_time|date:"N j, Y" }}</p>
+                    <a class="btn" href="{% url project_info app.name %}">View &raquo;</a>
+                    {% if user.is_superuser %}
+                        {% if app.is_approved %}
+                            <a class="btn btn-danger" href="{% url approve_appstore_app app.name %}?approve=false">Unapprove</a>
+                        {% else %}
+                            <a class="btn btn-success" href="{% url approve_appstore_app app.name %}?approve=true">Approve</a>
+                        {% endif %}
+                    {% endif %}
                 </div>
                 <div class="span7">
                     <h3>
@@ -300,15 +309,6 @@
                     <p>{{ app.short_description }}</p>
                 </div>
             </div>
-        <p style="margin-top: .5em;">Last updated: {{ app.snapshot_time|date:"N j, Y" }}</p>
-        <a class="btn" href="{% url project_info app.name %}">View &raquo;</a>
-        {% if user.is_superuser %}
-            {% if app.is_approved %}
-                <a class="btn btn-danger" href="{% url approve_appstore_app app.name %}?approve=false">Unapprove</a>
-            {% else %}
-                <a class="btn btn-success" href="{% url approve_appstore_app app.name %}?approve=true">Approve</a>
-            {% endif %}
-        {% endif %}
         </div>
     </div>
 {% empty %}
