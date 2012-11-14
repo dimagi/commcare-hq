@@ -22,7 +22,7 @@ def send_report(notification_id):
 @periodic_task(run_every=crontab(hour="*", minute="0", day_of_week="*"))
 def daily_reports():    
     # this should get called every hour by celery
-    reps = ReportNotification.view("reports/daily_notifications",
+    reps = ReportNotification.view("reportconfig/daily_notifications",
                                    key=datetime.utcnow().hour,
                                    include_docs=True).all()
     for rep in reps:
@@ -32,7 +32,7 @@ def daily_reports():
 def weekly_reports():    
     # this should get called every hour by celery
     now = datetime.utcnow()
-    reps = ReportNotification.view("reports/weekly_notifications",
+    reps = ReportNotification.view("reportconfig/weekly_notifications",
                                    key=[now.weekday(), now.hour],
                                    include_docs=True).all()
     for rep in reps:

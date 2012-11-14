@@ -59,8 +59,7 @@ $(function() {
 
     {% if report.show %}
     <div class="tab-pane" id="scheduled-reports">
-
-        <p><a class="btn btn-success" href="{% url add_scheduled_report domain %}"><i class="icon icon-white icon-plus"></i> Create a New Scheduled Report</a>
+        <p><a class="btn btn-success" href="{% url edit_scheduled_report domain %}"><i class="icon icon-white icon-plus"></i> Create a New Scheduled Report</a>
         </p>
         {% if scheduled_reports %}
         <table class="table table-striped table-bordered">
@@ -68,10 +67,8 @@ $(function() {
                 <tr>
                     <th>{% trans "Saved Reports" %}</th>
                     <th>{% trans "Day and Time" %}</th>
-                    <th>{% trans "Send to me" %}</th>
-                    <th>{% trans "Other recipients" %}</th>
-                    <th>{% trans "Send me a test mail" %}</th>
-                    <th>{% trans "Delete" %}</th>
+                    <th>{% trans "Recipients" %}</th>
+                    <th>{% trans "Actions" %}</th>
                 </tr>
             </thead>
             <tbody>
@@ -83,7 +80,7 @@ $(function() {
                         <a href="{{ config.url }}">{{ config.full_name }}</a>
                         {% endfor %}
                         {% else %}
-                        <ul>
+                        <ul style="float: left">
                             {% for config in report.configs %}
                             <li><a href="{{ config.url }}">{{ config.full_name }}</a></li>
                             {% endfor %}
@@ -92,54 +89,64 @@ $(function() {
                     </td>
                     <td>{{ report.day_name }} at {{ report.hours }}:00</td>
                     <td>
-                        {% comment %} handles old documents {% endcomment %}
+                        {# handles old documents #}
                         {% if report.user_ids or report.send_to_owner %}
-                        <i class="icon icon-check"></i>
-                        {% else %}
-                        <i class="icon icon-check-empty"></i>
+                        me{% if report.recipient_emails %}, {% endif %}
                         {% endif %}
-                    </td>
-                    <td>
                         {% for email in report.recipient_emails %}
                         {{ email }},
                         {% endfor %}
                     </td>
-                    <td>
-                        <form style="float: left; padding-right: 5px" name="test_report" action="{% url send_test_scheduled_report domain report.get_id %}" method="post">
-                            <button type="submit" class="btn btn-info" href="#">
-                                <i class="icon icon-white icon-envelope"></i> Send
-                            </button>
-                        </form>
-
-                        {% if request.user.is_superuser %}
-                        <form action="{% url view_scheduled_report domain report.get_id %}" method="post">
-                            <button type="submit" class="btn btn-info" href="#">
-                                <i class="icon icon-white icon-eye-open"></i> View HTML
-                        </form>
-                        {% endif %}
-                    </td>
                    
                     <td>
-                        <a class="btn btn-danger" data-toggle="modal" href="#{{ report.get_id }}">
-                            <i class="icon icon-minus-sign icon-white"></i> {% trans "Delete" %}
-                        </a>
-                        <div id="{{ report.get_id }}" class="modal hide fade">
-                            <div class="modal-header">
-                                <a class="close" data-dismiss="modal">&times;</a>
-                                <h3>Stop sending report?</h3>
+                        <div class="btn-toolbar">
+
+                            <div class="btn-group">
+                                <a class="btn btn-info"
+                                    {% if report.is_editable %}
+                                    href="{% url edit_scheduled_report domain report.get_id %}"
+                                    {% else %}
+                                    disabled
+                                    {% endif %}>
+                                    <i class="icon icon-white icon-edit"></i> Edit
+                                </a>
                             </div>
-                            <form class="form form-horizontal" action="{% url delete_scheduled_report domain report.get_id %}" method="post">
-                                <div class="modal-body">
-                                    <p>Are you sure you want to stop sending this report?</p>
+
+                            <div class="btn-group">
+                                <a class="btn btn-info" href="{% url view_scheduled_report domain report.get_id %}">
+                                    <i class="icon icon-white icon-eye-open"></i> View
+                                </a>
+
+                                <a class="btn btn-info" href="{% url send_test_scheduled_report domain report.get_id %}">
+                                    <i class="icon icon-white icon-envelope"></i> Send Test
+                                </a>
+                            </div>
+
+                            <div class="btn-group">
+                                <button class="btn btn-danger" data-toggle="modal" href="#delete_{{ report.get_id }}">
+                                    <i class="icon icon-white icon-minus-sign"></i> {% trans "Delete" %}
+                                </button>
+                            </div>
+
+                                <div id="delete_{{ report.get_id }}" class="modal hide fade">
+                                    <div class="modal-header">
+                                        <a class="close" data-dismiss="modal">&times;</a>
+                                        <h3>Stop sending report?</h3>
+                                    </div>
+                                    <form class="form form-horizontal" action="{% url delete_scheduled_report domain report.get_id %}" method="post">
+                                        <div class="modal-body">
+                                            <p>Are you sure you want to stop sending this report?</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                                            <button type="submit" class="btn btn-warning">{% trans 'Stop Sending' %}</button>
+                                        </div>
+                                    </form>
                                 </div>
-                                <div class="modal-footer">
-                                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-                                    <button type="submit" class="btn btn-warning">{% trans 'Stop Sending' %}</button>
-                                </div>
-                            </form>
                         </div>
                     </td>
                 </tr>
+
                 {% endfor %}
             </tbody>
         </table>
@@ -149,7 +156,6 @@ $(function() {
             You don't have any scheduled reports.  You can create a scheduled report based on a saved report to have a report delivered by email on a regular basis.
         </div>
         {% endif %}
-
     </div>
     {% endif %}
 </div>

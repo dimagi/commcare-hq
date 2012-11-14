@@ -1,17 +1,15 @@
 from datetime import datetime, timedelta
 import json
 from django.core.cache import cache
-from corehq.apps.domain.models import Domain
 from corehq.apps.reports import util
 from corehq.apps.reports.standard import inspect, export, ProjectReport
 from corehq.apps.reports.standard.export import DeidExportReport
 from corehq.apps.reports.export import ApplicationBulkExportHelper, CustomBulkExportHelper
 from corehq.apps.reports.models import (ReportConfig, ReportNotification,
-    WeeklyReportNotification, DailyReportNotification, FormExportSchema,
-    HQGroupExportConfiguration)
+    FormExportSchema, HQGroupExportConfiguration)
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
-from corehq.apps.users.models import Permissions, CouchUser
+from corehq.apps.users.models import Permissions
 import couchexport
 from couchexport.export import UnsupportedExportFormat, export_raw
 from couchexport.util import SerializableFunction
@@ -511,66 +509,49 @@ def delete_config(request, domain, config_id):
 
 
 @login_and_domain_required
-def add_scheduled_report(request, domain, template="users/add_scheduled_report.html"):
-    from django.core.validators import validate_email
+def edit_scheduled_report(request, domain, scheduled_report_id=None, 
+                          template="reports/add_scheduled_report.html"):
+    from forms import make_scheduled_report_form
     
     user_id = request.couch_user._id
 
+    if scheduled_report_id:
+        instance = ReportNotification.get(scheduled_report_id)
+    else:
+        instance = None
+    
+    ScheduledReportForm = make_scheduled_report_form(
+        domain, user_id, instance=instance)
+    
+    is_new = instance is None
+    form_title = ("Create a new" if is_new else "Edit") + " scheduled report"
+
     if request.method == "POST":
-        send_to_owner = ('send_to_owner' in request.POST)
-        config_ids = request.POST.getlist('config_id')
-        emails = []
-        invalid_email = None
-        for email in request.POST['recipient_emails'].split(','):
-            email = email.strip()
-            if email:
-                try:
-                    validate_email(email)
-                    emails.append(email)
-                except:
-                    invalid_email = email
-                    break
+        form = ScheduledReportForm(request.POST)
 
-        if not (config_ids and not invalid_email and (emails or send_to_owner)):
-            if not config_ids:
-                messages.error(request, "You must choose at least one saved report.")
-            if invalid_email:
-                messages.error(request, "Invalid email: %s" % invalid_email)
-            if not (emails or send_to_owner):
-                messages.error(request, "You must specify at least one valid recipient.")
-            return HttpResponseRedirect(reverse("add_scheduled_report",
-                                                args=(domain,)))
+        if form.is_valid():
+            instance = instance or ReportNotification()
+            instance.owner_id = user_id
+            instance.domain = domain
 
-        day = request.POST["day"]
-        if day == "all":
-            report = DailyReportNotification()
-        else:
-            report = WeeklyReportNotification()
-            report.day_of_week = int(day)
-        report.domain = domain
-        report.hours = int(request.POST["hour"])
-        report.send_to_owner = send_to_owner
-        report.config_ids = config_ids
-        report.owner_id = user_id
-        report.recipient_emails = emails
-        report.save()
+            for k, v in form.cleaned_data.items():
+                setattr(instance, k, v)
 
-        messages.success(request, "New scheduled report added!")
-        return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
+            instance.save()
 
-    configs = ReportConfig.by_domain_and_owner(domain, user_id).all()
-    configs = [c for c in configs if c.report.emailable]
+            if is_new:
+                messages.success(request, "Scheduled report added!")
+            else:
+                messages.success(request, "Scheduled report updated!")
 
-    web_users = CouchUser.view('users/web_users_by_domain', reduce=False,
-                               key=domain, include_docs=True).all()
-    emails = [u.username for u in web_users]
+            return HttpResponseRedirect(reverse('reports_home', args=(domain,)))
+    else:
+        form = ScheduledReportForm()
 
     context = {
+        'form': form,
+        'form_title': form_title,
         'domain': domain,
-        'configs': configs,
-        'hours': ReportNotification.hours(),
-        'days': ReportNotification.days(),
-        'user_emails': emails,
         'report': {
             'title': 'New Scheduled Report',
             'show': request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
@@ -598,7 +579,6 @@ def delete_scheduled_report(request, domain, scheduled_report_id):
     return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
 
 @login_and_domain_required
-@require_POST
 def send_test_scheduled_report(request, domain, scheduled_report_id):
     from corehq.apps.reports.tasks import send_report
     from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
