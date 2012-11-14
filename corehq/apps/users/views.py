@@ -418,6 +418,26 @@ def delete_phone_number(request, domain, couch_user_id):
     user.save()
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
 
+@require_permission_to_edit_user
+def verify_phone_number(request, domain, couch_user_id):
+    """
+    phone_number cannot be passed in the url due to special characters
+    but it can be passed as %-encoded GET parameters
+    """
+    if 'phone_number' not in request.GET:
+        return Http404('Must include phone number in request.')
+    phone_number = urllib.unquote(request.GET['phone_number'])
+    user = CouchUser.get_by_user_id(couch_user_id, domain)
+
+    # send verification message
+
+
+    # create pending verified entry if doesn't exist already
+    user.save_verified_number(domain, phone_number, False, None)
+
+    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
+
+
 #@require_POST
 #@require_permission_to_edit_user
 #def link_commcare_account_to_user(request, domain, couch_user_id, commcare_login_id):

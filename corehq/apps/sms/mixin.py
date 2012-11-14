@@ -43,6 +43,7 @@ class VerifiedNumber(Document):
     
     @classmethod
     def by_phone(cls, phone_number, unverified=False):
+        # TODO: do we assume phone number duplicates are prevented?
         v = cls.view("sms/verified_number_by_number",
                      key=phone_number[1:] if phone_number.startswith('+') else phone_number,
                      include_docs=True).one()
@@ -77,18 +78,28 @@ class CommCareMobileContactMixin(object):
         """
         raise NotImplementedError("Subclasses of CommCareMobileContactMixin must implement method get_language_code().")
     
-    def get_verified_number(self):
+    def get_verified_numbers(self, include_pending=False):
+        v = VerifiedNumber.view("sms/verified_number_by_doc_type_id",
+            startkey=[self.doc_type, self._id],
+            endkey=[self.doc_type, self._id],
+            include_docs=True
+        )
+        v = filter(lambda c: c.verified or include_pending, v)
+        return dict((c.phone_number, c) for c in v)
+
+    def get_verified_number(self, phone=None):
         """
         Retrieves this contact's verified number entry by (self.doc_type, self._id).
         
         return  the VerifiedNumber entry
         """
-        v = VerifiedNumber.view("sms/verified_number_by_doc_type_id",
-            startkey=[self.doc_type, self._id],
-            endkey=[self.doc_type, self._id],
-            include_docs=True
-        ).one()
-        return v
+        verified = self.get_verified_numbers(True)
+
+        if not phone:
+            # for backwards compatibility with code that assumes only one verified phone #
+            return sorted(verified.iteritems())[0][1]
+
+        return verified.get(phone)
     
     def validate_number_format(self, phone_number):
         """
@@ -125,7 +136,7 @@ class CommCareMobileContactMixin(object):
         raises  PhoneNumberInUseException if the phone number is already in use by another contact
         """
         self.verify_unique_number(phone_number)
-        v = self.get_verified_number()
+        v = self.get_verified_number(phone_number)
         if v is None:
             v = VerifiedNumber(
                 owner_doc_type = self.doc_type,

@@ -161,7 +161,7 @@
                     {% for phone in couch_user.phone_numbers_extended %}
                         {% if forloop.first %}<legend>Registered Phone Numbers</legend>{% endif %}
                         <div class="control-group">
-                            <label class="control-label">+{{ phone.phone }}
+                            <label class="control-label">+{{ phone.number }}
                                 {% ifequal phone.status "verified" %}
                                 <br><span class="help-inline"><small class="label" style="background-color: #468847;">VERIFIED</small></span>
                                 {% endifequal %}
@@ -171,10 +171,16 @@
                             </label>
                             
                             <div class="controls">
-                                {% ifnotequal phone.status "verified" %}
-                                <a title="{% ifequal phone.status "unverified" %}Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified.{% else %}Re-send the verification SMS to this phone{% endifequal %}" class="btn btn-primary" data-toggle="modal" href="#verify_{{phone_number|urlencode}}"><i class="icon icon-signal icon-white"></i> {% ifequal phone.status "unverified" %}Verify{% else %}Verify (try again){% endifequal %}</a>
-                                {% endifnotequal %}
-                                <a class="btn btn-danger" data-toggle="modal" href="#delete_{{phone_number|urlencode}}"><i class="icon icon-remove icon-white"></i> Delete</a>
+                                {% ifequal phone.status "unverified" %}
+                                <form method="post" action="{% url verify_phone_number domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}" style="display: inline;">
+                                    <button type="submit" title="Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified." class="btn btn-primary"><i class="icon icon-signal icon-white"></i> Verify</button>
+                                </form>
+                                {% endifequal %}
+                                {% ifequal phone.status "pending" %}
+                                <a title="Re-send the verification SMS to this phone" class="btn btn-primary" data-toggle="modal" href="#reverify_{{phone.number|urlencode}}"><i class="icon icon-signal icon-white"></i> Verify (retry)</a>
+                                {% endifequal %}
+
+                                <a class="btn btn-danger" data-toggle="modal" href="#delete_{{phone.number|urlencode}}"><i class="icon icon-remove icon-white"></i> Delete</a>
                             </div>
                         </div>
                     {% endfor %}
@@ -255,7 +261,7 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    {% for phone_number in phone_numbers %}
+    {% for phone_number in couch_user.phone_numbers %}
         <div id="delete_{{phone_number|urlencode}}" class="modal hide fade">
             <div class="modal-header">
                 <a class="close" data-dismiss="modal">&times;</a>
@@ -272,6 +278,23 @@
             </form>
         </div>
     {% endfor %}
+    {% for phone in couch_user.phone_numbers_extended %}{% ifequal phone.status "pending" %}
+        <div id="reverify_{{phone.number|urlencode}}" class="modal hide fade">
+            <div class="modal-header">
+                <a class="close" data-dismiss="modal">&times;</a>
+                <h3>Verify +{{ phone.number }}?</h3>
+            </div>
+            <form class="form form-horizontal hq-form" name="reverify_phone_number" action="{% url verify_phone_number domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}" method="post">
+                <div class="modal-body">
+                    <p>A verification message has already been sent to this phone. Send again?</p>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                    <button type="submit" class="btn btn-primary"><i class="icon icon-signal icon-white"></i> Verify</button>
+                </div>
+            </form>
+        </div>
+    {% endifequal %}{% endfor %}
     {% if couch_user.is_commcare_user and couch_user.user_id != request.couch_user.user_id %}
     <div id="delete_user_{{ couch_user.user_id }}" class="modal hide fade">
         <div class="modal-header">

@@ -29,7 +29,7 @@ from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username, cc_user_domain
 from corehq.apps.users.xml import group_fixture
-from corehq.apps.sms.mixin import CommCareMobileContactMixin, VerifiedNumber
+from corehq.apps.sms.mixin import CommCareMobileContactMixin
 from couchforms.models import XFormInstance
 
 from dimagi.utils.couch.database import get_db
@@ -646,26 +646,6 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         return _get_default(self.phone_numbers)
     phone_number = default_phone_number
 
-    def contacts(self, verified_only=True):
-        vns = VerifiedNumber.view('sms/verified_number_by_number', keys=self.phone_numbers, include_docs=True)
-        return [vn for vn in vns if vn.verified or not verified_only]
-
-    @property
-    def phone_numbers_extended(self):
-        verified = dict((c.phone_number, c) for c in self.contacts(False))
-
-        def _():
-            for phone in self.phone_numbers:
-                contact = verified.get(phone)
-                if contact:
-                    status = 'verified' if contact.verified else 'pending'
-                else:
-                    status = 'unverified'
-
-                yield {'phone': phone, 'status': status, 'contact': contact}
-
-        return list(_())
-
     @property
     def couch_id(self):
         return self._id
@@ -1145,6 +1125,26 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
         owner_ids.extend(Group.by_user(self, wrap=False))
 
         return owner_ids
+        
+    @property
+    def phone_numbers_extended(self):
+        # TODO: what about web users... do we not want to verify phone numbers
+        # for them too? if so, CommCareMobileContactMixin should be on CouchUser,
+        # not CommCareUser
+
+        verified = self.get_verified_numbers(True)
+
+        def _():
+            for phone in self.phone_numbers:
+                contact = verified.get(phone)
+                if contact:
+                    status = 'verified' if contact.verified else 'pending'
+                else:
+                    status = 'unverified'
+
+                yield {'number': phone, 'status': status, 'contact': contact}
+
+        return list(_())
 
     def retire(self):
         suffix = DELETED_SUFFIX
