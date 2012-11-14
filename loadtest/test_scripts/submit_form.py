@@ -63,7 +63,7 @@ class Transaction(HQTransaction):
     def run(self):
         submit = _case_submission()
         start_timer = time.time()
-        url = "%s%s" % (self.base_url, "/a/cory/receiver") 
+        url = "%s%s" % (self.base_url, "/a/%s/receiver" % self.domain) 
         resp = _post(submit, url)
         latency = time.time() - start_timer
         self.custom_timers['submission'] = latency  
