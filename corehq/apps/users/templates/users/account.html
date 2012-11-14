@@ -157,10 +157,10 @@
                         <div class="control-group">
                             <label class="control-label">+{{ phone.number }}
                                 {% ifequal phone.status "verified" %}
-                                <br><span class="help-inline"><small class="label" style="background-color: #468847;">VERIFIED</small></span>
+                                <div><span class="label label-success"><small>VERIFIED</small></span></div>
                                 {% endifequal %}
                                 {% ifequal phone.status "pending" %}
-                                <br><span class="help-inline"><small class="label">VERIFICATION PENDING</small></span>
+                                <div><span class="label"><small>VERIFICATION PENDING</small></span></div>
                                 {% endifequal %}
                             </label>
                             
@@ -272,7 +272,7 @@
             </div>
             <form class="form form-horizontal hq-form" name="reverify_phone_number" action="{% url verify_phone_number domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}" method="post">
                 <div class="modal-body">
-                    <p>A verification message has already been sent to this phone. Send again?</p>
+                    <p>A verification message has already been sent to this phone. The phone has not replied yet. Send again?</p>
                 </div>
                 <div class="modal-footer">
                     <a href="#" data-dismiss="modal" class="btn">Cancel</a>
