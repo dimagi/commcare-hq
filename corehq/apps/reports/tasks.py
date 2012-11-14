@@ -5,7 +5,7 @@ from celery.task import periodic_task, task
 from django.core.cache import cache
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.models import (ReportNotification,
-    DailyReportNotification, HQGroupExportConfiguration,
+    UnsupportedScheduledReportError, HQGroupExportConfiguration,
     CaseActivityReportCache)
 from couchexport.groupexports import export_for_group
 
@@ -14,14 +14,17 @@ logging = get_task_logger()
 @task
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
-    notification.send()
+    try:
+        notification.send()
+    except UnsupportedScheduledReportError:
+        pass
 
 @periodic_task(run_every=crontab(hour="*", minute="0", day_of_week="*"))
 def daily_reports():    
     # this should get called every hour by celery
-    reps = DailyReportNotification.view("reports/daily_notifications", 
-                                        key=datetime.utcnow().hour, 
-                                        include_docs=True).all()
+    reps = ReportNotification.view("reports/daily_notifications",
+                                   key=datetime.utcnow().hour,
+                                   include_docs=True).all()
     for rep in reps:
         send_report.delay(rep._id)
 
@@ -29,9 +32,9 @@ def daily_reports():
 def weekly_reports():    
     # this should get called every hour by celery
     now = datetime.utcnow()
-    reps = DailyReportNotification.view("reports/weekly_notifications", 
-                                        key=[now.weekday(), now.hour], 
-                                        include_docs=True).all()
+    reps = ReportNotification.view("reports/weekly_notifications",
+                                   key=[now.weekday(), now.hour],
+                                   include_docs=True).all()
     for rep in reps:
         send_report.delay(rep._id)
 

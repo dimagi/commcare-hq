@@ -148,7 +148,7 @@ class ReportConfig(Document):
             else:
                 n.delete()
 
-        super(ReportConfig, self).delete(*args, **kwargs)
+        return super(ReportConfig, self).delete(*args, **kwargs)
 
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, report_slug=None, include_docs=True):
@@ -300,8 +300,6 @@ class ReportConfig(Document):
     def get_report_content(self):
         """
         Get the report's HTML content as rendered by the static view format.
-        This method doesn't really have a natural place in this class, but it's
-        better than duplicating the code in tasks and test_config.
 
         """
         report_class = self.report.__module__ + '.' + self.report.__name__
@@ -322,6 +320,8 @@ class ReportConfig(Document):
                                              **self.view_kwargs)
         return json.loads(response.content)['report']
 
+
+class UnsupportedScheduledReportError(Exception): pass
 
 class ReportNotification(Document):
     domain = StringProperty()
