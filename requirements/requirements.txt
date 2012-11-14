@@ -1,9 +1,10 @@
-restkit==3.2.1
+restkit==4.2.0
 couchdbkit==0.5.7
 celery==2.4.5
 decorator==3.3.2
 django==1.3.1
 django-celery==2.2.4
+django-crispy-forms==1.2.0
 kombu==2.1.8
 django-kombu==0.9.1
 django-digest

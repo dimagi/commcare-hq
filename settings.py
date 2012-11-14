@@ -126,7 +126,10 @@ DEFAULT_APPS = (
     #'ghettoq',     # pip install ghettoq
     'djkombu',     # pip install django-kombu
     'couchdbkit.ext.django',
+    'crispy_forms'
 )
+
+CRISPY_TEMPLATE_PACK = 'bootstrap'
 
 HQ_APPS = (
     'django_digest',
@@ -182,7 +185,6 @@ HQ_APPS = (
     'corehq.apps.reports',
     'corehq.apps.data_interfaces',
     'corehq.apps.adm',
-    'corehq.apps.hq_bootstrap',
     'corehq.apps.builds',
     'corehq.apps.orgs',
     'corehq.apps.api',
@@ -198,6 +200,7 @@ HQ_APPS = (
     'hutch',
     'loadtest',
     'pillowtop',
+    'hqstyle',
 
     # custom reports
     'a5288',
@@ -382,6 +385,10 @@ LOGSTASH_DEVICELOG_PORT = 10777
 LOGSTASH_COUCHLOG_PORT = 10888
 LOGSTASH_AUDITCARE_PORT = 10999
 LOGSTASH_HOST = 'localhost'
+
+#on both a single instance or distributed setup this should assume to be localhost
+ELASTICSEARCH_HOST = 'localhost'
+ELASTICSEARCH_PORT = 9200
 
 try:
     #try to see if there's an environmental variable set for local_settings
@@ -741,10 +748,6 @@ SELENIUM_APP_SETTING_DEFAULTS = {
         'MAX_LOAD_TIME': 30,
     },
 }
-
-#on both a single instance or distributed setup this should assume to be localhost
-ELASTICSEARCH_HOST = 'localhost'
-ELASTICSEARCH_PORT = 9200
 
 PILLOWTOPS = [ 'corehq.pillows.CasePillow',
                #'corehq.pillows.ExchangePillow', #todo when merged
