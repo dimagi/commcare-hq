@@ -1,0 +1,628 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2012-11-08 15:34-0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: .\submodules\auditcare-src\auditcare\forms.py:14
+msgid ""
+"Please enter a correct username and password. Note that both fields are case-"
+"sensitive."
+msgstr ""
+
+#: .\submodules\auditcare-src\auditcare\forms.py:16
+msgid "This account is inactive."
+msgstr ""
+
+#: .\submodules\auditcare-src\auditcare\templates\auditcare\audit_views.html.py:5
+#: .\submodules\auditcare-src\auditcare\templates\auditcare\index.html.py:5
+msgid "Audit Viewer"
+msgstr ""
+
+#: .\submodules\auditcare-src\auditcare\templates\auditcare\model_changes.html.py:5
+#: .\submodules\auditcare-src\auditcare\templates\auditcare\model_instance_history.html.py:5
+#: .\submodules\auditcare-src\auditcare\templates\auditcare\single_model_changes.html.py:5
+#: .\submodules\auditcare-src\auditcare\templates\auditcare\partials\model_property_change.html.py:5
+msgid "Audited Model Changes"
+msgstr ""
+
+#: .\submodules\bihar-reports\bihar\reports\__init__.py:4
+msgid "Active Cases"
+msgstr "सक्रिय ग्राहकों"
+
+#: .\submodules\bihar-reports\bihar\reports\__init__.py:5
+msgid "Total Cases"
+msgstr "कुल ग्राहक"
+
+#: .\submodules\bihar-reports\bihar\reports\__init__.py:6
+msgid "Total Form Submissions"
+msgstr "कुल फार्म प्रस्तुतियाँ"
+
+#: .\submodules\bihar-reports\bihar\reports\__init__.py:7
+msgid "Days Since Last Submission"
+msgstr "अंतिम प्रस्तुत चूंकि दिन"
+
+#: .\submodules\bihar-reports\bihar\reports\__init__.py:8
+#, fuzzy
+msgid "Clients Visited"
+msgstr "ग्राहक बार देखा गया"
+
+#: .\submodules\bihar-reports\bihar\reports\__init__.py:9
+msgid "Inactive Clients"
+msgstr "निष्क्रिय ग्राहक"
+
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:137
+msgid "Select Subcenter"
+msgstr "सब-सेंटर चुनिए"
+
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:139
+msgid "Subcenter selection report"
+msgstr "सब-सेंटर चयन रिपोर्ट"
+
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:141
+#: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:91
+msgid "Team Name"
+msgstr "टीम का नाम"
+
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:174
+#: .\submodules\bihar-reports\bihar\templates\bihar\summary_tabular.html.py:6
+#: .\submodules\bihar-reports\bihar\templates\bihar\tabular.html.py:5
+msgid "Main Menu"
+msgstr "मुख्य मेनू"
+
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:176
+msgid "Main navigation"
+msgstr "मुख्य नेवीगेशन"
+
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:192
+msgid "Worker Rank Table"
+msgstr "कार्यकर्ता रैंक/पद"
+
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:217
+msgid "Due List"
+msgstr "ड्यू लिस्ट"
+
+#: .\submodules\bihar-reports\bihar\reports\supervisor.py:221
+msgid "Tools"
+msgstr "उपकरण"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:9
+msgid "Home Visit Information"
+msgstr "गृह भ्रमण की जानकारी"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:14
+msgid "BP (2nd Tri) Visits in last 30 days (Done/Due)"
+msgstr "प्रसव पूर्व देखभाल (2nd Tri) पिछले ३० दिनों मे भ्रमण (समाप्त/बॉकी) "
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:19
+msgid "BP (3rd Tri) Visits in last 30 days (Done/Due)"
+msgstr "प्रसव पूर्व देखभाल (3rd Tri) पिछले ३० दिनों मे भ्रमण (समाप्त/बॉकी)"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:24
+msgid "PNC Visits  in last 30 days (Done/Due)"
+msgstr "प्रसव बाद जाँच [PNC] पिछले ३० दिनों मे भ्रमण (समाप्त/बॉकी)"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:29
+msgid "EBF Visits in last 30 days (Done/Due)"
+msgstr "केवल स्तनपान [EBF] पिछले ३० दिनों मे भ्रमण (समाप्त/बॉकी)"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:34
+msgid "CF Visits in last 30 days (Done/Due)"
+msgstr "ऊपरी आहार [CF] पिछले ३० दिनों मे भ्रमण (समाप्त/बॉकी)"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:41
+msgid "All woman due for delivery in next 30 days"
+msgstr "सभी महिलायें जिनका प्रसव अगले ३० दिनों मे होना है"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:48
+msgid "Pregnant woman who delivered in last 30 days"
+msgstr "पिछले ३० दिनों मे जिन महिलाओं का प्रसव हुआ है की संख्या"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:52
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:149
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:81
+msgid "Name"
+msgstr "नाम"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:52
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:149
+msgid "Husband's Name"
+msgstr "पति"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:52
+msgid "ADD"
+msgstr "प्रसव की तारीख"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:56
+msgid "Pregnant woman registered in last 30 days"
+msgstr "पिछले ३० दिनों मे पंजीकृत गर्भवती महिलाओं की संख्या"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:63
+msgid ""
+"Pregnant woman not given BP counselling (of pregnant woman registered in "
+"last 30 days)"
+msgstr "गर्भवती महिला जिन्हे प्रसव पूर्व देखभाल की जानकारी नही दी गई (पिछले ३० दिनों मे पंजीकृत गर्भवती महिलाओं का) (और अलग किये गये लाभार्थी को अगले स्क्रीन मे दिखाऐं)"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:70
+msgid ""
+"Pregnant woman not received IFA tablets (of pregnant woman registered in "
+"last 30 days)"
+msgstr "गर्भवती महिला जिन्हे IFA की गोलीयॉ नही मिली (पिछले ३० दिनों मे पंजीकृत गर्भवती महिलाओं का) (और अलग किये गये लाभार्थी को अगले स्क्रीन मे दिखाऐं)"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:77
+msgid ""
+"Women due for delivery within 30 days who have not done preparation for "
+"Emergency Maternal Care"
+msgstr "महिलायें  ३० दिनों मे प्रसव के लिये बॉकीं जिन्होने आपातकालीन मातृत्व देखभाल के लिये तैयारी नहीं की(और अलग किये गये लाभार्थी को अगले स्क्रीन मे दिखाऐं)"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:81
+msgid ""
+"Women due for delivery within 30 days who have not done preparation for "
+"immediate new-born"
+msgstr "महिलायें ३० दिनों मे प्रसव के लिये बॉकीं जिन्होने तुरंत जन्म हुये बच्चे के लिये तैयारी नहीं की(और अलग किये गये लाभार्थी को अगले स्क्रीन मे दिखाऐं)"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:85
+msgid ""
+"Women due for delivery within 30 days who have not been counselled on "
+"Immediate Post-Partum Family Planning"
+msgstr "महिलायें ३० दिनों मे प्रसव के लिये बॉकीं जिन्हे प्रसव के तुरंत बाद परिवार नियोजन के लिये नहीं समझाया गया? (और अलग किये गये लाभार्थी को अगले स्क्रीन मे दिखाऐं)"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:89
+msgid ""
+"Women due for delivery within 30 days who have not showed interest to adopt "
+"Family planning methods"
+msgstr "महिलायें ३० दिनों मे प्रसव के लिये बॉकीं जिन्होने परिवार नियोजन की विधियॉ अपनाने मे रुची नहीं दिखायीं ? (और अलग किये गये लाभार्थी को अगले स्क्रीन मे दिखाऐं)"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:149
+msgid "EDD"
+msgstr "प्रसव की सम्भावित तारीख"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:44
+msgid "Indicator Options"
+msgstr "संकेतक विकल्प"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:46
+msgid "Indicator navigation"
+msgstr "संकेतक नेवीगेशन"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:56
+msgid "Select Indicator Category"
+msgstr "टीम चुनिए"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:81
+msgid "Indicators"
+msgstr "संकेतक"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:106
+msgid "Charts"
+msgstr "चार्ट/चित्र"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:111
+msgid "Select Client List"
+msgstr "लाभार्थी सूचि चुनिए"
+
+#: .\submodules\bihar-reports\bihar\reports\indicators\reports.py:146
+msgid "Client List"
+msgstr "लाभार्थी सूचि"
+
+#: .\submodules\core-hq-src\corehq\apps\adm\reports\__init__.py:15
+#: .\submodules\core-hq-src\corehq\apps\adm\reports\__init__.py:60
+msgid "Active Data Management"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\adm\reports\__init__.py:37
+msgid "ADM Report"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\adm\reports\__init__.py:108
+#, fuzzy
+msgid "FLW Name"
+msgstr "नाम"
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\apps_base.html.py:174
+msgid "Blank Application"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\apps_base.html.py:178
+msgid "Remote App (Advanced Users Only)"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\apps_base.html.py:182
+msgid "Visit CommCare Exchange to copy existing app..."
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\app_manager\templates\app_manager\apps_base.html.py:192
+msgid "Go to: "
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\deployment_info.html.py:31
+msgid "Description"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\deployment_info.html.py:53
+#: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:78
+#: .\submodules\core-hq-src\corehq\apps\domain\templates\domain\admin\project_settings.html.py:74
+msgid "Languages"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:42
+#: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:127
+msgid "Short Description"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:50
+#: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:133
+msgid "Long Description"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:88
+msgid "Downloads"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:156
+#: .\submodules\core-hq-src\corehq\apps\domain\templates\domain\copy_snapshot.html.py:16
+msgid "New project name"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\builds\templates\builds\all.html.py:7
+msgid "Build Number"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\builds\templates\builds\all.html.py:8
+msgid "Version"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\builds\templates\builds\all.html.py:9
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:66
+msgid "Time"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\cloudcare\templates\cloudcare\cloudcare_home.html.py:98
+msgid "Loading"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\commtrack\stockreport.py:49
+msgid "product"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\commtrack\stockreport.py:50
+msgid "product_entry"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\commtrack\stockreport.py:51
+msgid "action"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\commtrack\stockreport.py:52
+msgid "value"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\commtrack\stockreport.py:72
+msgid "transaction"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\domain\templates\domain\admin\project_settings.html.py:82
+msgid "Applications"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\domain\templates\domain\admin\repeater_row.html.py:5
+msgid "Stop Forwarding"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\domain\templates\login_and_password\password_reset_email.html.py:3
+msgid "You're receiving this email because you requested a password reset"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\domain\templates\login_and_password\password_reset_email.html.py:4
+#, python-format
+msgid "for your user account at %(site_name)s"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\domain\templates\login_and_password\password_reset_email.html.py:6
+msgid "Please go to the following page and choose a new password:"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\domain\templates\login_and_password\password_reset_email.html.py:10
+msgid "Your username, in case you've forgotten:"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\domain\templates\login_and_password\password_reset_email.html.py:12
+msgid "Your domains, in case you've forgotten:"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\domain\templates\login_and_password\password_reset_email.html.py:14
+msgid "Thank you for using CommCare HQ."
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\domain\templates\login_and_password\password_reset_email.html.py:15
+msgid "--The CommCare HQ Team"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\groups\templates\groups\groups.html.py:24
+#: .\submodules\core-hq-src\corehq\apps\groups\templates\groups\groups.html.py:59
+msgid "Group Name"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\groups\templates\groups\groups.html.py:25
+#: .\submodules\core-hq-src\corehq\apps\groups\templates\groups\groups.html.py:60
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\partial\domain_accounts.html.py:7
+msgid "Action"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\groups\templates\groups\groups.html.py:33
+msgid "Leave Group"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\hqadmin\templates\hqadmin\commcare_version.html.py:23
+#: .\submodules\core-hq-src\corehq\apps\prescriptions\templates\prescriptions\all.html.py:6
+msgid "Domain"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\hqadmin\templates\hqadmin\commcare_version.html.py:24
+msgid "Application"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\forms.py:9
+#: .\submodules\core-hq-src\corehq\apps\users\forms.py:91
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:79
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:121
+msgid "E-mail"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\forms.py:16
+#: .\submodules\core-hq-src\corehq\apps\userhack\admin.py:13
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\mobile\users_list.html.py:139
+#: .\submodules\core-hq-src\lib\django_user_registration\forms.py:35
+msgid "Username"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\templates\hqwebapp\dashboard.html.py:5
+msgid "My Dashboard"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\templates\hqwebapp\dashboard.html.py:8
+msgid "Activity Dashboard"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\templates\hqwebapp\dashboard.html.py:16
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\templates\hqwebapp\dashboard.html.py:21
+msgid "Forms Submitted"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\hqwebapp\templates\hqwebapp\no_permission.html.py:4
+msgid "You do not have domain permissions."
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\prescriptions\templates\prescriptions\all.html.py:4
+msgid "Edit"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\prescriptions\templates\prescriptions\all.html.py:5
+msgid "Type"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\prescriptions\templates\prescriptions\all.html.py:7
+msgid "Start"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\prescriptions\templates\prescriptions\all.html.py:8
+msgid "End"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\prescriptions\templates\prescriptions\all.html.py:9
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:70
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:122
+msgid "Delete"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:64
+msgid "Saved Report(s)"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:65
+msgid "Day of week"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:67
+msgid "Send to me"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:68
+msgid "Other recipients"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:69
+msgid "Send me a test mail"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:135
+msgid "Stop Sending"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\userhack\admin.py:14
+msgid "Required. 128 characters or fewer. Letters, digits and @/./+/-/_ only."
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\userhack\admin.py:15
+msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\users\forms.py:32
+msgid "Please enter a valid two or three digit language code."
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\users\forms.py:146
+msgid "Username contains invalid characters."
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:80
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:122
+msgid "Role"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:82
+msgid "Phone Numbers"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:83
+msgid "Remove"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:123
+msgid "Date"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\mobile\users_list.html.py:140
+msgid "Full Name"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\mobile\users_list.html.py:141
+msgid "Date Registered"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\mobile\users_list.html.py:142
+msgid "Phone"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\mobile\users_list.html.py:143
+msgid "Forms"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\mobile\users_list.html.py:144
+msgid "Cases"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\mobile\users_list.html.py:147
+msgid "Case Sharing"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\mobile\users_list.html.py:151
+msgid "More..."
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\mobile\users_list.html.py:155
+msgid "Archive"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\users\templates\users\partial\domain_accounts.html.py:6
+msgid "Project Name"
+msgstr ""
+
+#: .\submodules\core-hq-src\lib\django_rest_interface\authentication.py:49
+#: .\submodules\core-hq-src\lib\django_rest_interface\authentication.py:93
+#: .\submodules\core-hq-src\lib\django_rest_interface\authentication.py:219
+msgid "Restricted Access"
+msgstr ""
+
+#: .\submodules\core-hq-src\lib\django_rest_interface\model_resource.py:241
+msgid "Object successfully deleted."
+msgstr ""
+
+#: .\submodules\core-hq-src\lib\django_rest_interface\resource.py:136
+msgid "Authorization Required"
+msgstr ""
+
+#: .\submodules\core-hq-src\lib\django_user_registration\admin.py:23
+msgid "Activate users"
+msgstr ""
+
+#: .\submodules\core-hq-src\lib\django_user_registration\admin.py:43
+msgid "Re-send activation emails"
+msgstr ""
+
+#: .\submodules\core-hq-src\lib\django_user_registration\forms.py:36
+msgid "This value must contain only letters, numbers and underscores."
+msgstr ""
+
+#: .\submodules\core-hq-src\lib\django_user_registration\forms.py:39
+msgid "Email address"
+msgstr ""
+
+#: .\submodules\core-hq-src\lib\django_user_registration\forms.py:41
+msgid "Password"
+msgstr ""
+
+#: .\submodules\core-hq-src\lib\django_user_registration\forms.py:43
+msgid "Password (again)"
+msgstr ""
+
+#: .\submodules\core-hq-src\lib\django_user_registration\forms.py:55
+msgid "A user with that username already exists."
+msgstr ""
+
+#: .\submodules\core-hq-src\lib\django_user_registration\forms.py:67
+msgid "The two password fields didn't match."
+msgstr ""
+
+#: .\submodules\core-hq-src\lib\django_user_registration\forms.py:78
+msgid "I have read and agree to the Terms of Service"
+msgstr ""
+
+#: .\submodules\core-hq-src\lib\django_user_registration\forms.py:79
+msgid "You must agree to the terms to register"
+msgstr ""
+
+#: .\submodules\core-hq-src\lib\django_user_registration\forms.py:95
+msgid ""
+"This email address is already in use. Please supply a different email "
+"address."
+msgstr ""
+
+#: .\submodules\core-hq-src\lib\django_user_registration\forms.py:122
+msgid ""
+"Registration using free email addresses is prohibited. Please supply a "
+"different email address."
+msgstr ""
+
+#: .\submodules\core-hq-src\lib\django_user_registration\models.py:168
+msgid "user"
+msgstr ""
+
+#: .\submodules\core-hq-src\lib\django_user_registration\models.py:169
+msgid "activation key"
+msgstr ""
+
+#: .\submodules\core-hq-src\lib\django_user_registration\models.py:174
+msgid "registration profile"
+msgstr ""
+
+#: .\submodules\core-hq-src\lib\django_user_registration\models.py:175
+msgid "registration profiles"
+msgstr ""
+
+#: .\submodules\pathfinder-reports\pathfinder\templates\pathfinder-reports\hbc.html.py:5
+msgid "Home-Based Care Monthly Report"
+msgstr ""
+
+#~ msgid "Rank"
+#~ msgstr "रैंक/पद"
+
+#~ msgid "Pregnancy Outcome"
+#~ msgstr "प्रसव का परिणाम"
+
+#~ msgid "Post-Partum Complications"
+#~ msgstr "प्रसव पश्चात जटिलता"
+
+#~ msgid "Weak Newborn"
+#~ msgstr "कमजोर नवजात"
+
+#~ msgid "Family Planning"
+#~ msgstr "परिवार नियोजन"
+
+#~ msgid "Complimentary Feeding"
+#~ msgstr "ऊपरी आहार"
+
+#~ msgid "Mortality"
+#~ msgstr "मृत्यु"

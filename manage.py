@@ -4,6 +4,7 @@ import hashlib
 import random
 import threading
 
+
 from django.core.management import execute_manager
 import sys, os
 
@@ -17,7 +18,6 @@ for d in submodules_list:
     if d == "__init__.py" or d == '.' or d == '..':
         continue
     sys.path.append(os.path.join(filedir,'submodules',d))
-sys.path.append(os.path.join(filedir,'submodules','core-hq-src','corehq'))
 sys.path.append(os.path.join(filedir,'submodules','core-hq-src','lib'))
 
 try:
@@ -43,4 +43,7 @@ except ImportError:
 
 if __name__ == "__main__":
 #    monkey_patch_couchdbkit()
+    # proxy for whether we're running gunicorn with -k gevent
+    if "gevent" in sys.argv:
+        from restkit.session import set_session; set_session("gevent")
     execute_manager(settings)

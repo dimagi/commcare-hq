@@ -38,7 +38,7 @@ The following are necessary for the basic function of CommCare HQ.
 + `memcached`
 + **postgres** - [Download postgres here](http://www.enterprisedb.com/products-services-training/pgdownload)
 + **couchdb** - Version 1.0 or greater required - [View installation instructions here](http://wiki.apache.org/couchdb/Installation)
-+ **couchdb-lucene** - Instructrions [here](https://github.com/rnewson/couchdb-lucene). Follow instructions "For CouchDB versions prior to 1.1" when applicable, even if you're on a later version of couchdb.
++ **elasticsearch** - [Download](http://www.elasticsearch.org/download/) - and requisite requirements (java)
 
 Note on couchdb installation: Using aptitude or apt-get may not install the latest version. See other installation options if version < 1.0 is installed by using this method.
 
@@ -58,6 +58,19 @@ It is recommended that you create the database **commcarehq** before continuing.
 It is recommended that you create the database **commcarehq** before continuing.
 
 
+#### Configuration for Elasticsearch
+
+Unzip and install elasticsearch. To run it in an upstart configuration,
+see [this example](https://gist.github.com/3961323). Otherwise, just run the elasticsearch in the
+ bin/ directory of the unzipped archive.  All configs for indexes will be run via the run_ptop
+ management command.
+
+ To secure elasticsearch, we recommend setting the listen port to localhost on a local machine.
+ On a distributed environment, we recommend setting up ssh tunneled ports for the elasticsearch
+ port. The supervisor_elasticsearch.conf supervisor config demonstrates the tunnel creation using
+  autossh.
+
+
 #### Setting up a virtualenv
 
 A virtualenv is not required, but it may make your life easier.
@@ -74,11 +87,12 @@ Run `source ~/.virtualenvs/commcare-hq/bin/activate` to enter your virtualenv.
 
      brew install libmagic
 
-#### HQ Bootstrap Requirements
+#### CommCare HQ Style Developer Requirements
 
 We use our own flavor of [Twitter Bootstrap](http://twitter.github.com/bootstrap/) for our user interface.
-Please check the README on our [HQ Bootstrap project page](https://github.com/dimagi/hq-bootstrap) for requirements and instructions.
-Most notably, you will need `lessc` and `uglify-js` to compile HQ Bootstrap.
+Please check the README on our [CommCare HQ Style project page](https://github.com/dimagi/hqstyle-src) for requirements and instructions.
+Most notably, you will need `lessc` and `uglify-js` to compile CommCare HQ Style. However, since compiled files already exist,
+so you compiling the .less files from scratch will not be necessary unless you make modifications to the .less files.
 
 
 ### Install CommCare HQ
@@ -89,7 +103,7 @@ Once all the requirements are in order, please do the following:
     cd commcare-hq
     git submodule update --init --recursive
     source ~/.virtualenvs/commcare-hq/bin/activate      # enter your virtualenv if you have one
-    pip install -r requirements.txt
+    pip install -r requirements/requirements.txt -r requirements/prod-requirements.txt
     cp localsettings.example.py localsettings.py
 
 
@@ -113,7 +127,6 @@ Please make sure you're still in the root directory of commcare-hq and that you 
     ./manage.py migrate
     # this will do some basic setup, create a superuser, and create a project
     ./manage.py bootstrap <project-name> <email> <password>
-    ./manage.py make_bootstrap # (if it fails add the 'direct-lessc' directive)
     ./manage.py collectstatic
 
 ### Don't forget to start up helper processes
