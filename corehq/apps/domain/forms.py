@@ -120,8 +120,9 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
     author = CharField(label="Author name", required=True)
     project_type = CharField(label="Project Category", required=True,
         help_text="e.g. MCH, HIV, etc.")
-    license = ChoiceField(label='License', required=False, choices=LICENSES.items(),
-        help_text=render_to_string('domain/partials/license_explanations.html'))
+    license = ChoiceField(label='License', required=True, choices=LICENSES.items(),
+        help_text=render_to_string('domain/partials/license_explanations.html',
+            {'extra': "All un-licensed multimedia files in your project will be given this license"}))
     description = CharField(label="Long Description", required=False, widget=forms.Textarea,
         help_text="A high-level overview of your project as a whole")
     short_description = CharField(label="Short Description", required=False,

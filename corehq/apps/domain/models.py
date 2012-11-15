@@ -165,6 +165,7 @@ class Domain(Document, HQBillingDomainMixin, SnapshotMixin):
     license = StringProperty(choices=LICENSES, default='public')
     title = StringProperty()
     cda = SchemaProperty(LicenseAgreement)
+    multimedia_included = BooleanProperty(default=True)
 
     author = StringProperty()
     phone_model = StringProperty()

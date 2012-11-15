@@ -6,7 +6,7 @@ from corehq.apps.adm.models import ReducedADMColumn, DaysSinceADMColumn, Configu
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 
 class BaseADMColumnAdminInterface(BaseADMAdminInterface):
-    adm_item_type = "Column"
+    crud_item_type = "Column"
 
     @property
     def headers(self):
@@ -27,8 +27,8 @@ class BaseADMColumnAdminInterface(BaseADMAdminInterface):
 
     @property
     def columns(self):
-        key = ["defaults all type", self.property_class.__name__]
-        data = self.property_class.view('adm/all_default_columns',
+        key = ["defaults all type", self.document_class.__name__]
+        data = self.document_class.view('adm/all_default_columns',
             reduce=False,
             include_docs=True,
             startkey=key,
@@ -38,7 +38,7 @@ class BaseADMColumnAdminInterface(BaseADMAdminInterface):
 
 
 class CouchViewADMColumnAdminInterface(BaseADMColumnAdminInterface):
-    adm_item_type = "Couch View Column"
+    crud_item_type = "Couch View Column"
     form_class = CouchViewADMColumnForm
 
     @property
@@ -53,10 +53,10 @@ class ReducedADMColumnInterface(CouchViewADMColumnAdminInterface):
     name = "Reduced & Unfiltered ADMCol"
     description = "Typically used for ADM Columns displaying a count (No. Cases or No. Submissions)."
     slug = "reduced_column"
-    property_class = ReducedADMColumn
+    document_class = ReducedADMColumn
     form_class = ReducedADMColumnForm
 
-    adm_item_type = "Reduced ADM Column"
+    crud_item_type = "Reduced ADM Column"
     detailed_description = mark_safe("""<p>This column returns the reduced value of the couch_view specified. This assumes that
     the reduced view returns a numerical value.</p>
     <p><strong>Example Usage:</strong> Columns that display a count, like # Cases or # Submissions.</p>""")
@@ -73,10 +73,10 @@ class DaysSinceADMColumnInterface(CouchViewADMColumnAdminInterface):
     name = "Days Since ADM Column"
     description = "Columns that return the number of days since the specified datetime property occurred."
     slug = "days_since_column"
-    property_class = DaysSinceADMColumn
+    document_class = DaysSinceADMColumn
     form_class = DaysSinceADMColumnForm
 
-    adm_item_type = "Days Since ADM Column"
+    crud_item_type = "Days Since ADM Column"
     detailed_description = mark_safe("""<p>Returns the number of days between the date of
     <span class="label">property_name</span> of the first item in the view and the
     startdate or enddate of the datespan.</p>""")
@@ -91,12 +91,12 @@ class DaysSinceADMColumnInterface(CouchViewADMColumnAdminInterface):
 
 class ConfigurableADMColumnInterface(BaseADMColumnAdminInterface):
     name = "Configurable ADM Columns"
-    description = "Default definitions for vonfigurable ADM Columns"
+    description = "Default definitions for configurable ADM Columns"
     slug = "config_column"
-    property_class = ConfigurableADMColumn
+    document_class = ConfigurableADMColumn
     form_class = ConfigurableADMColumnChoiceForm
 
-    adm_item_type = "User-Configurable ADM Column"
+    crud_item_type = "User-Configurable ADM Column"
 
     @property
     def headers(self):
@@ -108,4 +108,4 @@ class ConfigurableADMColumnInterface(BaseADMColumnAdminInterface):
 
     @property
     def columns(self):
-        return self.property_class.all_admin_configurable_columns()
+        return self.document_class.all_admin_configurable_columns()
