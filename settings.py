@@ -126,7 +126,10 @@ DEFAULT_APPS = (
     #'ghettoq',     # pip install ghettoq
     'djkombu',     # pip install django-kombu
     'couchdbkit.ext.django',
+    'crispy_forms'
 )
+
+CRISPY_TEMPLATE_PACK = 'bootstrap'
 
 HQ_APPS = (
     'django_digest',
