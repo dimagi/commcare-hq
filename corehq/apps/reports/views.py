@@ -70,6 +70,8 @@ require_can_view_all_reports = require_permission(Permissions.view_reports)
 @login_and_domain_required
 def default(request, domain, template="reports/reports_home.html"):
     user = request.couch_user
+    if not request.couch_user.is_web_user():
+        raise Http404
 
     configs = ReportConfig.by_domain_and_owner(domain, user._id).all()
     scheduled_reports = ReportNotification.by_domain_and_owner(domain, user._id).all()
