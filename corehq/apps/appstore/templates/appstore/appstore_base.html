@@ -4,58 +4,6 @@
 {% load i18n %}
 {% load url_extras %}
 
-{% block js %}{{ block.super }}
-    <script type="text/javascript">
-        $(function () {
-            $(".more-sortable-button").click(function() {
-                var e = $(this);
-                var sortable = e.data('sortable');
-                $('.sortable-' + sortable).show();
-                e.hide();
-                return false;
-            });
-        });
-    </script>
-
-    <script type="text/javascript">
-        $(function () {
-            $(".facet-checkbox").click(function() {
-                window.location = $(this).parent().attr('href');
-            });
-        });
-    </script>
-
-    <script>
-        // This assures that all the result elements are the same height
-        $(function(){
-            $('.results').each(function(){
-                var heighest = 0;
-                var $this = $(this);
-                $this.find('.well').each(function(){
-                    heighest = ($(this).height() > heighest) ? $(this).height() : heighest;
-                });
-                $this.find('.well').css('height',heighest + 'px');
-            });
-        });
-    </script>
-
-    <script>
-        function genScalePicFunc() {
-            var $app_pic = $('.app-pic');
-            return function() {
-                var pic_width = $app_pic.width();
-                $app_pic.css('height', pic_width+'px');
-            }
-        }
-        var scaleAppPic = genScalePicFunc();
-
-        $(function(){
-            scaleAppPic();
-            $(window).resize(scaleAppPic);
-        });
-    </script>
-{% endblock %}
-
 {% block js-inline %}{{ block.super }}
 <style type="text/css">
     .rating_static > span {
@@ -202,6 +150,57 @@
     }
 
     </style>
+
+
+    <script type="text/javascript">
+        $(function () {
+            $(".more-sortable-button").click(function() {
+                var e = $(this);
+                var sortable = e.data('sortable');
+                $('.sortable-' + sortable).show();
+                e.hide();
+                return false;
+            });
+        });
+    </script>
+
+    <script type="text/javascript">
+        $(function () {
+            $(".facet-checkbox").click(function() {
+                window.location = $(this).parent().attr('href');
+            });
+        });
+    </script>
+
+    <script>
+        // This assures that all the result elements are the same height
+        $(function(){
+            $('.results').each(function(){
+                var heighest = 0;
+                var $this = $(this);
+                $this.find('.well').each(function(){
+                    heighest = ($(this).height() > heighest) ? $(this).height() : heighest;
+                });
+                $this.find('.well').css('height',heighest + 'px');
+            });
+        });
+    </script>
+
+    <script>
+        function genScalePicFunc() {
+            var $app_pic = $('.app-pic');
+            return function() {
+                var pic_width = $app_pic.width();
+                $app_pic.css('height', pic_width+'px');
+            }
+        }
+        var scaleAppPic = genScalePicFunc();
+
+        $(function(){
+            scaleAppPic();
+            $(window).resize(scaleAppPic);
+        });
+    </script>
 {% endblock %}
 
 {% block sidebar %}

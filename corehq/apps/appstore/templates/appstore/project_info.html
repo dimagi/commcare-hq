@@ -3,7 +3,7 @@
 {% load hqstyle_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
+{% block js-inline %}{{ block.super }}
     <script>
         function update_import_into_button() {
             var project = $('#project_select option:selected').text();
