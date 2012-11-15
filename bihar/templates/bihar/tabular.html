@@ -1,8 +1,3 @@
 {% extends "reports/async/tabular.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% block reportcontent %}
-<p style="float:right;"><a href="{{ home }}">{% trans 'Main Menu' %}
-</a></p>
-{{ block.super }}
-{% endblock %}
