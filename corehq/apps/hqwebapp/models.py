@@ -139,8 +139,10 @@ class ApplicationsMenuItem(DropdownMenuItem):
                 self._format_submenu_context(None, html=self._new_app_link('Blank Application')),
                 self._format_submenu_context(None, html=self._new_app_link('RemoteApp (Advanced Users Only)',
                     is_remote=True)),
-                self._format_submenu_context('Visit CommCare Exchange to copy existing app...', url='#'),
             ]
+            if self.request.couch_user.is_previewer:
+                newapp_options.append(self._format_submenu_context('Visit CommCare Exchange to copy existing app...',
+                    url=reverse('appstore')))
             submenu_context.append(self._format_second_level_context(
                 'New Application...',
                 '#',

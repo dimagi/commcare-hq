@@ -158,7 +158,7 @@ def appstore(request, template="appstore/appstore_base.html"):
     params = dict([(SNAPSHOT_MAPPING.get(p, p), params[p]) for p in params])
     page = int(params.pop('page', 1))
     results = es_snapshot_query(params, SNAPSHOT_FACETS)
-    d_results = [Domain.wrap(res['_source']) for res in results['hits']['hits']]
+    d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
 
     sort_by = request.GET.get('sort_by', None)
     if sort_by == 'best':
