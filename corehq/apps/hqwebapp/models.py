@@ -75,7 +75,7 @@ class ReportsMenuItem(DropdownMenuItem):
 
     @classmethod
     def is_viewable(cls, request, domain):
-        return domain and not request.project.is_snapshot
+        return domain and not request.project.is_snapshot and request.couch_user.is_web_user()
 
 
 class ProjectInfoMenuItem(DropdownMenuItem):
@@ -133,14 +133,14 @@ class ApplicationsMenuItem(DropdownMenuItem):
                                                                mark_for_escaping(app_extras)))
                 submenu_context.append(self._format_submenu_context(app_name, url=url))
 
-        if self.request.couch_user.can_edit_apps:
+        if self.request.couch_user.can_edit_apps():
             submenu_context.append(self._format_submenu_context(None, is_divider=True))
             newapp_options = [
                 self._format_submenu_context(None, html=self._new_app_link('Blank Application')),
                 self._format_submenu_context(None, html=self._new_app_link('RemoteApp (Advanced Users Only)',
                     is_remote=True)),
             ]
-            if self.request.couch_user.is_previewer:
+            if self.request.couch_user.is_previewer():
                 newapp_options.append(self._format_submenu_context('Visit CommCare Exchange to copy existing app...',
                     url=reverse('appstore')))
             submenu_context.append(self._format_second_level_context(
