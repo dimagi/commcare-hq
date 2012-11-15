@@ -1,6 +1,6 @@
 from django import forms
-from corehq.apps.hqwebapp.templatetags.hq_shared_tags import JSON
 from django.utils.safestring import mark_safe
+import json
 
 class AutocompleteTextarea(forms.Textarea):
     """
@@ -21,11 +21,11 @@ $(function() {
         source: %s
     });
 });
-</script>\n""" % (attrs['id'], JSON(self.choices)))
+</script>\n""" % (attrs['id'], json.dumps(self.choices)))
 
         else:
             output = mark_safe("")
 
         output += super(AutocompleteTextarea, self).render(name, value,
-                                                             attrs=attrs)
+                                                           attrs=attrs)
         return output

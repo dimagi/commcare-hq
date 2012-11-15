@@ -13,19 +13,24 @@ class MultiCharField(forms.Field):
     """
     widget = AutocompleteTextarea
 
-    def __init__(self, choices=None, initial=None, *args,
-                 **kwargs):
+    def __init__(self, initial=None, choices=(), *args, **kwargs):
         """
         choices - a list of choices to use as a source for autocompletion
 
         """
         if initial:
-            initial = ', '.join(initial) + ', '
-
+            initial = ', '.join(initial)
         super(MultiCharField, self).__init__(initial=initial, *args, **kwargs)
 
-        self.choices = choices or []
-        self.widget.choices = self.choices
+        self.choices = choices
+
+    def _get_choices(self):
+        return self._choices
+
+    def _set_choices(self, value):
+        self._choices = self.widget.choices = value
+    
+    choices = property(_get_choices, _set_choices)
 
     def to_python(self, value):
         if not value:
