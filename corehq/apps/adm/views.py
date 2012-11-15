@@ -1,5 +1,6 @@
 import inspect
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
+from corehq.apps.crud.views import _process_crud_admin_form
 from corehq.apps.domain.decorators import require_superuser, domain_admin_required
 from dimagi.utils.data.crud import CRUDFormRequestManager, CRUDActionError
 from dimagi.utils.modules import to_function
@@ -28,26 +29,10 @@ def default_adm_admin(request):
     return HttpResponseRedirect(ADMReportAdminInterface.get_url())
 
 @require_superuser
-def adm_item_form(request, template="adm/forms/admin_adm_item.html", **kwargs):
+def adm_item_form(request, **kwargs):
+    template = "crud/forms/crud.add_item.html"
     form_type = kwargs.get('form_type')
-    action = kwargs.get('action', 'new')
-    item_id = kwargs.get("item_id")
-
-    try:
-        form_class = to_function("corehq.apps.adm.admin.forms.%s" % form_type)
-    except Exception:
-        form_class = None
-
-    if not inspect.isclass(form_class):
-        return HttpResponseBadRequest("'%s' should be a class name in corehq.apps.adm.admin.forms" % form_type)
-
-    from corehq.apps.adm.admin.forms import ConfigurableADMColumnChoiceForm
-    if form_class == ConfigurableADMColumnChoiceForm:
+    if form_type == 'ConfigurableADMColumnChoiceForm':
         template = "adm/forms/configurable_admin_adm_item.html"
-
-    try:
-        form_manager = CRUDFormRequestManager(request, form_class, template,
-            doc_id=item_id, delete=bool(action == 'delete'))
-        return HttpResponse(form_manager.json_response)
-    except CRUDActionError as e:
-        return HttpResponseBadRequest(e)
+    return _process_crud_admin_form(request,
+        template=template, base_loc="corehq.apps.adm.admin.forms", **kwargs)

@@ -1,4 +1,4 @@
-{% extends "adm/forms/admin_adm_item.html" %}
+{% extends "crud/forms/curd.add_item.html" %}
 {% block additional-form-content %}
 <div id="adm_form_extension">
 
@@ -6,7 +6,7 @@
 <script type="text/javascript">
     $(function() {
         var resetSubmitButton = function (item_type) {
-            var $submitButton = adm_interface.addADMItemModal.find('button[type="submit"]');
+            var $submitButton = crud_interface.addItemModal.find('button[type="submit"]');
             if (!item_type) {
                 $submitButton.addClass('disabled').removeClass('btn-primary');
             } else {
@@ -14,16 +14,16 @@
             }
         };
         resetSubmitButton(null);
-        adm_interface.addADMItemModal.find('button[type=submit]').button('loading');
+        crud_interface.addItemModal.find('button[type=submit]').button('loading');
         $('#id_column_choice').change(function (data) {
             var item_type = $(this).val();
             var item_text = $(this).find('option:selected').text();
-            adm_interface.overrideNewFormType = item_type+"Form";
-            adm_interface.overrideNewFormDiv = $("#adm_form_extension");
+            crud_interface.overrideNewFormType = item_type+"Form";
+            crud_interface.overrideNewFormDiv = $("#adm_form_extension");
             resetSubmitButton(item_type);
             if (item_type) {
                 $('#adm_form_extension').text("Loading form for "+item_text+" Column...");
-                adm_interface.init_new_form();
+                crud_interface.init_new_form();
             } else {
                 $('#adm_form_extension').empty();
             }
