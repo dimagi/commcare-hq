@@ -1,9 +1,9 @@
 from django import forms
 from django.core.validators import MinLengthValidator
+from hqstyle.forms.fields import MultiEmailField
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from .models import ReportNotification
-from corehq.apps.hqwebapp.fields import MultiEmailField
 
 class ScheduledReportForm(forms.Form):
     config_ids = forms.MultipleChoiceField(
