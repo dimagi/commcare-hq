@@ -1,5 +1,6 @@
-
 from couchforms.models import XFormInstance
+from restkit.session import set_session
+set_session("gevent")
 
 def run():
     views = [
@@ -48,7 +49,7 @@ def run():
         except:
             print "Got an exception but ignoring"
 
-    from gevent import monkey; monkey.patch_all(thread=False)
+    from gevent import monkey; monkey.patch_all()
     from gevent.pool import Pool
     import time
     pool = Pool(12)
