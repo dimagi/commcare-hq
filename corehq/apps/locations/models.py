@@ -76,7 +76,8 @@ class Location(Document):
 def location_tree(domain):
     """build a hierarchical tree of the entire location structure for a domain"""
     locs = Location.view('locations/hierarchy', startkey=[domain], endkey=[domain, {}], reduce=False, include_docs=True).all()
-    locs.sort(key=lambda l: l.path) # just to be safe; couch view should return in the correct sorted order
+    locs.sort(key=lambda l: l.path) # parents must appear before their children; couch should
+      # return docs in the correct order, but, just to be safe...
     locs_by_id = dict((l._id, l) for l in locs)
 
     tree_root = []
