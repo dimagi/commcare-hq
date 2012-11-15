@@ -26,7 +26,8 @@ class VerifiedNumber(Document):
     
     @property
     def backend(self):
-        return MobileBackend.get(self.backend_id)
+        from corehq.apps.sms.util import load_backend
+        return load_backend(self.backend_id)
     
     @property
     def owner(self):
