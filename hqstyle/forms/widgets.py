@@ -108,13 +108,10 @@ class BootstrapPhoneNumberInput(Input):
 
 class AutocompleteTextarea(forms.Textarea):
     """
-    Textarea with auto-complete.  Requires Twitter Bootstrap typeahead JS
-    plugin to be available.
+    Textarea with auto-complete.  Uses a custom extension on top of Twitter
+    Bootstrap's typeahead plugin.
     
     """
-
-    class Media:
-        js = ('hqstyle/js/jquery.multi_typeahead.js',)
 
     def render(self, name, value, attrs=None):
         if hasattr(self, 'choices') and self.choices:
