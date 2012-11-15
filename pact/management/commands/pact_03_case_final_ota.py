@@ -16,6 +16,7 @@ import getpass
 from lxml import etree
 from corehq.apps.users.models import WebUser
 from couchforms.util import post_xform_to_couch
+from pact.management.commands import PactMigrateCommand
 from pact.management.commands.constants import PACT_DOMAIN
 from pact.management.commands.utils import get_user_id_map
 from receiver.util import spoof_submission
@@ -29,7 +30,7 @@ set_session("gevent")
 
 POOL_SIZE = 15
 
-class Command(NoArgsCommand):
+class Command(PactMigrateCommand):
     help = "OTA restore from pact server but ONLY create stub of cases"
     option_list = NoArgsCommand.option_list + (
     )

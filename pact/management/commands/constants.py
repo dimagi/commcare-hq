@@ -1,6 +1,7 @@
 from django.conf import settings
 
-
+RETRY_LIMIT = 5
+POOL_SIZE = 8
 PACT_DOMAIN = settings.PACT_DOMAIN
 PACT_HP_GROUPNAME = settings.PACT_HP_GROUPNAME
 PACT_HP_GROUP_ID = settings.PACT_HP_GROUP_ID

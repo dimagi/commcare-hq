@@ -1,78 +1,39 @@
 #OTA restore from pact
 #recreate submissions to import as new cases to
 from StringIO import StringIO
-from functools import partial
-import pdb
-import gevent
+from django.test.client import RequestFactory
 import simplejson
 import urllib2
 from datetime import datetime
-import time
 import uuid
 
 from django.core.management.base import NoArgsCommand
-from gunicorn.http import body
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests import CaseBlock
 from corehq.apps.domain.models import Domain
 import sys
 import getpass
 from lxml import etree
 from corehq.apps.users.models import WebUser
-from couchforms.util import post_xform_to_couch
-from pact.management.commands.constants import PACT_DOMAIN, PACT_URL, PACT_HP_GROUP_ID
+from pact.management.commands import PactMigrateCommand
+from pact.management.commands.constants import PACT_DOMAIN, PACT_URL, PACT_HP_GROUP_ID, PACT_HP_GROUPNAME
 from pact.management.commands.utils import get_user_id_map, base_create_block, purge_case
-from receiver.util import spoof_submission
 
 from gevent.pool import Pool
-from gevent import monkey; monkey.patch_all()
+from gevent import monkey
+from receiver.signals import successful_form_received
+
+monkey.patch_all()
+
 
 from restkit.session import set_session
-from restkit import Resource
 set_session("gevent")
+from restkit import Resource
 
-POOL_SIZE = 4
-RETRY_LIMIT=5
 
-class Command(NoArgsCommand):
+class Command(PactMigrateCommand):
     help = "OTA restore from pact server"
     option_list = NoArgsCommand.option_list + (
     )
 
-
-    def get_credentials(self):
-        self.username = raw_input("""\tEnter pact username: """)
-        if self.username == "":
-            return
-
-        self.password = getpass.getpass("""\tEnter pact password: """)
-        if self.password == "":
-            return
-
-        self.pact_realm = 'DJANGO'
-        self.passwdmngr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        self.authhandler = urllib2.HTTPDigestAuthHandler(self.passwdmngr)
-        self.opener = urllib2.build_opener(self.authhandler)
-
-
-
-    def get_url(self, url, retry=0):
-#        print "\tGetting: %s" % url
-        urllib2.install_opener(self.opener)
-        self.passwdmngr.add_password(self.pact_realm, url, self.username, self.password)
-        self.authhandler = urllib2.HTTPDigestAuthHandler(self.passwdmngr)
-        self.opener = urllib2.build_opener(self.authhandler)
-        try:
-            req = urllib2.Request(url)
-            res = urllib2.urlopen(req)
-            payload = res.read()
-            return payload
-        except urllib2.HTTPError, e:
-            print "\t\t\tError: %s: %s" % (url, e)
-            if retry < RETRY_LIMIT:
-                print "Retry %d/%d" % (retry,RETRY_LIMIT)
-#                gevent.sleep(1)
-                return self.get_url(url, retry=retry+1)
 
     def get_meta_block(self, instance_id=None, timestart=None, timeend=None, webuser=None):
 
@@ -114,19 +75,37 @@ class Command(NoArgsCommand):
         form.append(etree.XML(caseblock))
 
         submission_xml_string = etree.tostring(form)
-        self.submit_xform(submission_xml_string)
+        self.submit_xform_rf(submission_xml_string)
 
-    def submit_xform(self, submission_xml_string):
-        p = Resource('http://localhost:8000')
-        f = StringIO(submission_xml_string.encode('utf-8'))
-        f.name = 'form.xml'
-        res = p.post('/a/pact/receiver', payload= { 'xml_submission_file': f }, headers={'content-type':"multipart/form-data"})
-        return res
+
+
+    def disable_signals(self):
+        print "Disabling signals"
+        print len(successful_form_received.receivers)
+        #disable signals:
+        from casexml.apps.phone.signals import send_default_response
+        successful_form_received.disconnect(send_default_response)
+
+        from corehq.apps.app_manager.signals import get_custom_response_message
+        successful_form_received.disconnect(get_custom_response_message)
+
+        from corehq.apps.receiverwrapper.signals import create_case_repeat_records,\
+            create_short_form_repeat_records, create_case_repeat_records ,create_form_repeat_records
+
+        from casexml.apps.case.signals import case_post_save
+
+        successful_form_received.disconnect(create_form_repeat_records)
+        successful_form_received.disconnect(create_short_form_repeat_records)
+        case_post_save.disconnect(create_case_repeat_records)
+        print "successful_form_received signals truncated: %d" % len(successful_form_received.receivers)
 
     def handle(self, **options):
         domain_obj = Domain.get_by_name(PACT_DOMAIN)
         self.old_id_map = get_user_id_map()
+        print self.old_id_map
         self.get_credentials()
+        self.disable_signals()
+
 
         #get cases
         case_ids = simplejson.loads(self.get_url(PACT_URL + 'hqmigration/cases/'))
@@ -141,7 +120,10 @@ class Command(NoArgsCommand):
         pool.join()
         print "Cases Purged"
 
-        for id in case_ids:
+        import random
+        random.shuffle(case_ids)
+
+        for id in case_ids[0:5]:
             #get cases
             try:
                 case_json = simplejson.loads(self.get_url(PACT_URL + 'hqmigration/cases/%s' % id))
@@ -151,10 +133,7 @@ class Command(NoArgsCommand):
 
 #            self.process_case(case_json)
             pool.spawn(self.process_case, case_json)
-            if pool.full():
-                print "Pool full, waiting..."
-                pool.join()
-                print "Pool freed, continuing..."
+        pool.join()
 
 #            print "Case %s completed" % id
             #print case_json
@@ -200,7 +179,7 @@ class Command(NoArgsCommand):
 
 
         try:
-            self.submit_xform(etree.tostring(xfroot))
+            self.submit_xform_rf(etree.tostring(xfroot))
         except Exception, ex:
             print "\t\tError: %s: %s" % (action['xform_id'], ex)
 #        print "Form %s submitted" % action['xform_id']
@@ -211,7 +190,7 @@ class Command(NoArgsCommand):
         case_id = case_json['_id']
         pact_id = case_json['pactid']
         name = case_json['name']
-        case_type = case_json['type']
+        case_type = 'cc_path_client' # case_json['type']
         user_id = self.old_id_map.get(case_json['user_id'], None)
         owner_id = PACT_HP_GROUP_ID
 
@@ -219,7 +198,7 @@ class Command(NoArgsCommand):
         #make new blank case
         new_block = base_create_block(pact_id, case_id, user_id, name, case_type, owner_id)
         res = self.submit_case_block(new_block)
-#        print "\tRegenerated case"
+        print "\tRegenerated case"
 
         for ix, action in enumerate(case_json['actions']):
             print "\t[%s] %s/%s (%d/%d)" % (pact_id, case_id, action['xform_id'], ix, len(case_json['actions']))

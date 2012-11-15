@@ -1,15 +1,16 @@
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import WebUser, CommCareUser
 from pact.management.commands.constants import PACT_DOMAIN
 
+
 def get_user_id_map():
-    all_users = WebUser.by_domain(PACT_DOMAIN)
+    print "Retrieving migrated pact users from HQ and setting map"
+    all_users = CommCareUser.by_domain(PACT_DOMAIN)
     old_id_map = {}
     for u in all_users:
         old_user_id = getattr(u, 'old_user_id', None)
         if old_user_id is not None:
             old_id_map[str(u['old_user_id'])] = u.get_id
-    print old_id_map
     return old_id_map
 
 
@@ -20,7 +21,7 @@ def purge_case(case_id):
     try:
         casedoc = CommCareCase.get(case_id)
     except Exception, ex:
-        print "Case doesn't exist, we're done"
+        print "Case %s not found" % case_id
         return
     print "Purging case %s" % case_id
 
