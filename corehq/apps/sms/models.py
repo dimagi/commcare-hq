@@ -229,6 +229,7 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
                 pass
         elif contact_phone_number_is_verified:
             try:
+                self.delete_verified_number()
                 self.save_verified_number(self.domain, contact_phone_number, True, contact_backend_id)
             except:
                 #TODO: Handle exception
