@@ -127,13 +127,16 @@ function LocationModel(data, root, depth) {
     this.type(data.type);
     this.uuid(data.uuid);
 
+    var children = [];
     if (data.children) {
+      children = _.sortBy(data.children, function(e) { return e.name; });
+
       //'all choices' meta-entry; annoying that we have to stuff this in
       //the children list, but all my attempts to make computed observables
       //based of children() caused infinite loops.
-      data.children.splice(0, 0, {name: '_all', id: -1});
+      children.splice(0, 0, {name: '_all', id: -1});
     }
-    this.children($.map(data.children || [], function(e) {
+    this.children($.map(children, function(e) {
         return new LocationModel(e, root, loc.depth + 1);
       }));
   }

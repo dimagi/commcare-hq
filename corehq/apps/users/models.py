@@ -647,6 +647,28 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     phone_number = default_phone_number
 
     @property
+    def phone_numbers_extended(self):
+        # TODO: what about web users... do we not want to verify phone numbers
+        # for them too? if so, CommCareMobileContactMixin should be on CouchUser,
+        # not CommCareUser
+
+        # hack to work around the above issue
+        if hasattr(self, 'get_verified_numbers'):
+            verified = self.get_verified_numbers(True)
+        else:
+            verified = {}
+
+        def extend_phone(phone):
+            contact = verified.get(phone)
+            if contact:
+                status = 'verified' if contact.verified else 'pending'
+            else:
+                status = 'unverified'
+            return {'number': phone, 'status': status, 'contact': contact}
+        return [extend_phone(phone) for phone in self.phone_numbers]
+
+
+    @property
     def couch_id(self):
         return self._id
 
@@ -1138,7 +1160,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
         owner_ids.extend(Group.by_user(self, wrap=False))
 
         return owner_ids
-
+        
     def retire(self):
         suffix = DELETED_SUFFIX
         deletion_id = random_hex()
