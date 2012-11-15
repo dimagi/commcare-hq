@@ -1,8 +1,11 @@
 from django import template
+from django.utils import html
+from django.utils.safestring import mark_safe
 
 register = template.Library()
 
 LANG_BUTTON = ' <a href="#" style="color: #FFFFFF; text-decoration:none;" class="btn btn-mini btn-inverse btn-langcode-preprocessed%(extra_class)s">%(lang)s</a>'
+EMPTY_LABEL = '<span class="label label-info">Empty</span>'
 
 @register.simple_tag
 def translate(t, lang, langs=[]):
@@ -16,7 +19,7 @@ def trans(name, langs=["default"], include_lang=True, use_delim=True):
         if use_delim:
             suffix = lambda lang: ' [%s]' % lang
         else:
-            suffix = lambda lang: LANG_BUTTON % {"lang": lang, "extra_class": ""}
+            suffix = lambda lang: LANG_BUTTON % {"lang": html.escape(lang), "extra_class": ""}
     else:
         suffix = lambda lang: ""
     for lang in langs:
@@ -29,7 +32,11 @@ def trans(name, langs=["default"], include_lang=True, use_delim=True):
 
 @register.filter
 def html_trans(name, langs=["default"]):
-    return trans(name, langs, use_delim=False)
+    return mark_safe(trans(name, langs, use_delim=False) or EMPTY_LABEL)
+
+@register.filter
+def html_name(name):
+    return mark_safe(name or EMPTY_LABEL)
 
 @register.filter
 def input_trans(name, langs=["default"]):
