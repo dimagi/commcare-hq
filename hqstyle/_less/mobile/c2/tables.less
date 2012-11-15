@@ -1,9 +1,18 @@
 .table {
     border: 1px solid @tableBorder;
     max-width: 15em;
-
-    th, td {
-        padding: 2px 3px;
+    th, td{
+        line-height: 1.5em;
+        padding: 0;
+    }
+    &.datatable th,
+    &.datatable td {
+        padding: .15em .5em;
+    }
+    th a, 
+    td a {
+        display: block;
+        padding: .15em .5em;
     }
     tbody {
         tr:hover {
