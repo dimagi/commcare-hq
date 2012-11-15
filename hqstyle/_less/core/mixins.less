@@ -91,3 +91,12 @@
     border-right: @arrowWidth solid @color;
   }
 }
+
+// Animations
+// ------
+.animation-fade(@thing, @delay) {
+    -webkit-transition: @thing @delay ease-in-out;
+       -moz-transition: @thing @delay ease-in-out;
+         -o-transition: @thing @delay ease-in-out;
+            transition: @thing @delay ease-in-out;
+}
