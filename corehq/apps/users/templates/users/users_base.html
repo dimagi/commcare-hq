@@ -46,7 +46,7 @@
 <nav>
     <ul class="nav nav-list" id="users-main-nav">
     {% if request.couch_user.can_edit_commcare_users %}
-            <li class="nav-header">Mobile &amp; Reports User Management</li>
+            <li class="nav-header">Mobile Users</li>
             <li><a href="{% url commcare_users domain %}">{% commcare_user %}s</a>
                 {% block commcare_users_indicator %}{% endblock %}
             </li>
@@ -55,11 +55,13 @@
             </li>
     {% endif %}
     {% if request.couch_user.can_edit_web_users %}
-        <li class="nav-header">CommCare HQ User Management</li>
-        <li><a href="{% url web_users domain %}">My Project's {% hq_web_user %}s</a>
+        <li class="nav-header">CommCare HQ Users</li>
+        <li><a href="{% url web_users domain %}">{% hq_web_user %}s</a>
             {% block web_users_indicator %}{% endblock %}
         </li>
     {% endif %}
+
+        <li class="nav-header">My Account</li>
         <li><a href="{% url user_account domain request.couch_user.user_id %}">My Account Settings</a>
             {% block account_indicator %}{% endblock %}
         </li>

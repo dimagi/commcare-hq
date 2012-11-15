@@ -28,9 +28,15 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
         prods = [e['doc'] for e in query]
         return sorted(prods, key=lambda p: p['name'])
 
+    def ordered_products(self, ordering):
+        return sorted(self.products, key=lambda p: (0, ordering.index(p['name'])) if p['name'] in ordering else (1, p['name']))
+
     @property
     def actions(self):
-        return sorted(self.config.actions.keys())
+        return sorted(action_config.action_name for action_config in self.config.actions)
+
+    def ordered_actions(self, ordering):
+        return sorted(self.actions, key=lambda a: (0, ordering.index(a)) if a in ordering else (1, a))
 
     # find a memoize decorator?
     _location = None
@@ -42,12 +48,12 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin):
                 self._location = Location.get(loc_id)
         return self._location
 
-def get_transactions(form_doc):
+def get_transactions(form_doc, include_inferred=True):
     from collections import Sequence
     txs = form_doc['form']['transaction']
     if not isinstance(txs, Sequence):
         txs = [txs]
-    return txs
+    return [tx for tx in txs if include_inferred or not tx.get('@inferred')]
 
 def get_stock_reports(domain, location, datespan):
     timestamp_start = dateparse.json_format_datetime(datespan.startdate)
@@ -63,6 +69,20 @@ def get_stock_reports(domain, location, datespan):
 def leaf_loc(form):
     return form['location_'][-1]
 
+OUTLET_METADATA = [
+    ('state', 'State'),
+    ('district', 'District'),
+    ('block', 'Block'),
+    ('village', 'Village'),
+    ('outlet_id', 'Outlet ID'),
+    ('name', 'Outlet'),
+    ('contact_phone', 'Contact Phone'),
+    ('outlet_type', 'Outlet Type'),
+]
+
+ACTION_ORDERING = ['stockonhand', 'sales', 'receipts', 'stockedoutfor']
+PRODUCT_ORDERING = ['PSI kit', 'non-PSI kit', 'ORS', 'Zinc']
+
 class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
     name = 'Visit Report'
     slug = 'visits'
@@ -71,37 +91,36 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
 
     @property
     def headers(self):
-        cols = [
-            DataTablesColumn('Outlet'),
-            # TODO lots of static outlet info
+        cols = [DataTablesColumn(caption) for key, caption in OUTLET_METADATA]
+        cols.extend([
             DataTablesColumn('Date'),
             DataTablesColumn('Reporter'),
-        ]
+        ])
         cfg = self.config
-        for p in self.products:
-            for a in self.actions:
-                cols.append(DataTablesColumn('%s (%s)' % (cfg.actions[a].caption, p['name'])))
+        for p in self.ordered_products(PRODUCT_ORDERING):
+            for a in self.ordered_actions(ACTION_ORDERING):
+                cols.append(DataTablesColumn('%s (%s)' % (cfg.actions_by_name[a].caption, p['name'])))
         
         return DataTablesHeader(*cols)
 
     @property
     def rows(self):
-        products = self.products
-        actions = self.actions
+        products = self.ordered_products(PRODUCT_ORDERING)
         reports = get_stock_reports(self.domain, self.active_location, self.datespan)
         locs = dict((loc._id, loc) for loc in Location.view('_all_docs', keys=[leaf_loc(r) for r in reports], include_docs=True))
 
         def row(doc):
-            transactions = dict(((tx['action'], tx['product']), tx['value']) for tx in get_transactions(doc))
+            transactions = dict(((tx['action'], tx['product']), tx['value']) for tx in get_transactions(doc, False))
+            location =  locs[leaf_loc(doc)]
 
-            data = [
-                locs[leaf_loc(doc)].name,
+            data = [getattr(location, key) for key, caption in OUTLET_METADATA]
+            data.extend([
                 dateparse.string_to_datetime(doc['received_on']).strftime('%Y-%m-%d'),
                 CommCareUser.get(doc['form']['meta']['userID']).username_in_report,
-            ]
+            ])
             for p in products:
-                for a in actions:
-                    data.append(transactions.get((a, p['_id']), ''))
+                for a in self.ordered_actions(ACTION_ORDERING):
+                    data.append(transactions.get((a, p['_id']), u'\u2014'))
 
             return data
 
@@ -115,11 +134,8 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
     @property
     def headers(self):
-        cols = [
-            DataTablesColumn('Outlet'),
-            # TODO lots of static outlet info
-        ]
-        for p in self.products:
+        cols = [DataTablesColumn(caption) for key, caption in OUTLET_METADATA]
+        for p in self.ordered_products(PRODUCT_ORDERING):
             cols.append(DataTablesColumn('Stock on Hand (%s)' % p['name']))
             cols.append(DataTablesColumn('Total Sales (%s)' % p['name']))
             cols.append(DataTablesColumn('Total Consumption (%s)' % p['name']))
@@ -129,7 +145,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
     @property
     def rows(self):
-        products = self.products
+        products = self.ordered_products(PRODUCT_ORDERING)
         locs = Location.filter_by_type(self.domain, 'outlet', self.active_location)
         reports = get_stock_reports(self.domain, self.active_location, self.datespan)
         reports_by_loc = map_reduce(lambda e: [(leaf_loc(e),)], data=reports, include_docs=True)
@@ -138,9 +154,7 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
             all_transactions = list(itertools.chain(*(get_transactions(r) for r in reports)))
             tx_by_product = map_reduce(lambda tx: [(tx['product'],)], data=all_transactions, include_docs=True)
 
-            data = [
-                site.name,
-            ]
+            data = [getattr(site, key) for key, caption in OUTLET_METADATA]
             stockouts = {}
             for p in products:
                 tx_by_action = map_reduce(lambda tx: [(tx['action'], int(tx['value']))], data=tx_by_product.get(p['_id'], []))
@@ -168,8 +182,8 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
                             dt += timedelta(days=1)
                 stockouts[p['_id']] = stockout_dates
 
-                data.append('%s (%s)' % (stock, as_of) if latest_state else '')
-                data.append(sum(tx_by_action.get('receipts', [])))
+                data.append('%s (%s)' % (stock, as_of) if latest_state else u'\u2014')
+                data.append(sum(tx_by_action.get('sales', [])))
                 data.append(sum(tx_by_action.get('consumption', [])))
 
             combined_stockout_days = len(reduce(lambda a, b: a.intersection(b), stockouts.values()))

@@ -4,7 +4,7 @@
     [%= renderOptions(getQuestions("all"), actions.open_case.name_path, 'name_path') %]
 </div>
 <div>
-    [% if (edit || actions.open_case.external_id) { %]
+    [% if (actions.open_case.external_id) { %]
         (Optional) Set External ID according to [%= renderOptions(getQuestions("all"), actions.open_case.external_id, 'external_id') %]
     [% } %]
 </div>
