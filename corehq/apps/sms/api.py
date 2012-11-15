@@ -37,7 +37,7 @@ def send_sms(domain, id, phone_number, text):
     
     def onerror():
         logging.exception("Problem sending SMS to %s" % phone_number)
-    return send_message_via_backend(msg, msg.outbound_backend, onerror=onerror)
+    return send_message_via_backend(msg, onerror=onerror)
 
 def send_sms_to_verified_number(verified_number, text):
     """
@@ -75,8 +75,22 @@ def send_sms_with_backend(domain, phone_number, text, backend_id):
         logging.exception("Exception while sending SMS to %s with backend %s" % (phone_number, backend_id))
     return send_message_via_backend(msg, load_backend(backend_id), onerror=onerror)
 
-def send_message_via_backend(msg, backend, onerror=lambda: None):
+def send_message_via_backend(msg, backend=None, onerror=lambda: None):
+    """send sms using a specific backend
+
+    msg - outbound message object
+    backend - MobileBackend object to use for sending; if None, use the default
+      backend guessing rules
+    onerror - error handler; mostly useful for logging a custom message to the
+      error log
+    """
     try:
+        if not backend:
+            backend = msg.outbound_backend
+            # note: this will handle "verified" contacts that are still pending
+            # verification, thus the backend is None. it's best to only call
+            # send_sms_to_verified_number on truly verified contacts, though
+
         try:
             backend_module = try_import(backend.outbound_module)
         except:

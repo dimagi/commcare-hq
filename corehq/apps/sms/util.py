@@ -20,7 +20,8 @@ def get_outbound_sms_backend(phone_number, domain=None):
     """
     # TODO: support domain-specific settings
 
-    backend_mapping = sorted(settings.SMS_BACKENDS.iteritems(),
+    global_backends = getattr(settings, 'SMS_BACKENDS', {})
+    backend_mapping = sorted(global_backends.iteritems(),
                              key=lambda (prefix, backend): len(prefix),
                              reverse=True)
     for prefix, backend in backend_mapping:
