@@ -126,7 +126,10 @@ DEFAULT_APPS = (
     #'ghettoq',     # pip install ghettoq
     'djkombu',     # pip install django-kombu
     'couchdbkit.ext.django',
+    'crispy_forms'
 )
+
+CRISPY_TEMPLATE_PACK = 'bootstrap'
 
 HQ_APPS = (
     'django_digest',
@@ -159,6 +162,9 @@ HQ_APPS = (
     'formtranslate',
     'receiver',
     'langcodes',
+    'corehq.apps.adm',
+    'corehq.apps.announcements',
+    'corehq.apps.crud',
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
@@ -181,7 +187,6 @@ HQ_APPS = (
     'corehq.apps.unicel',
     'corehq.apps.reports',
     'corehq.apps.data_interfaces',
-    'corehq.apps.adm',
     'corehq.apps.builds',
     'corehq.apps.orgs',
     'corehq.apps.api',
@@ -213,16 +218,16 @@ REFLEXIVE_URL_BASE = "localhost:8000"
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
-TABS = [
-    ("corehq.apps.appstore.views.project_info", "Info", lambda request: request.project.is_snapshot),
-    ("corehq.apps.reports.views.default", "Reports", lambda request: not request.project.is_snapshot),
-    ("corehq.apps.data_interfaces.views.default", "Manage Data", lambda request: request.couch_user.can_edit_data()),
-    ("corehq.apps.app_manager.views.default", "Applications"),
-    ("corehq.apps.cloudcare.views.default", "CloudCare", lambda request: request.couch_user.can_edit_data()),
-    ("corehq.apps.sms.views.messaging", "Messages", lambda request: not request.project.is_snapshot),
-    ("corehq.apps.settings.views.default", "Settings & Users", lambda request: request.couch_user.can_edit_commcare_users() or request.couch_user.can_edit_web_users()),
-    ("corehq.apps.hqadmin.views.default", "Admin Reports", "is_superuser"),
-]
+MENU_ITEMS = (
+    "corehq.apps.hqwebapp.models.ProjectInfoMenuItem",
+    "corehq.apps.hqwebapp.models.ReportsMenuItem",
+    "corehq.apps.hqwebapp.models.ManageDataMenuItem",
+    "corehq.apps.hqwebapp.models.ApplicationsMenuItem",
+    "corehq.apps.hqwebapp.models.CloudcareMenuItem",
+    "corehq.apps.hqwebapp.models.MessagesMenuItem",
+    "corehq.apps.hqwebapp.models.ProjectSettingsMenuItem",
+    "corehq.apps.hqwebapp.models.AdminReportsMenuItem",
+)
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
@@ -415,6 +420,7 @@ XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
 
 COUCHDB_APPS = [
     'adm',
+    'announcements',
     'api',
     'app_manager',
     'appstore',
@@ -711,6 +717,12 @@ ADM_ADMIN_INTERFACE_MAP = {
     ],
     "ADM Default Reports": [
         'corehq.apps.adm.admin.reports.ADMReportAdminInterface',
+    ]
+}
+
+ANNOUNCEMENTS_ADMIN_INTERFACE_MAP = {
+    "Global HQ Announcements": [
+        'corehq.apps.announcements.interface.ManageGlobalHQAnnouncementsInterface',
     ]
 }
 
