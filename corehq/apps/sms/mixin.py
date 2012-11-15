@@ -99,8 +99,8 @@ class CommCareMobileContactMixin(object):
         verified = self.get_verified_numbers(True)
 
         if not phone:
+            # for backwards compatibility with code that assumes only one verified phone #
             if len(verified) > 0:
-                # for backwards compatibility with code that assumes only one verified phone #
                 return sorted(verified.iteritems())[0][1]
             else:
                 return None
