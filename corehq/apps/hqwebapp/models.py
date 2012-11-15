@@ -122,7 +122,7 @@ class ApplicationsMenuItem(DropdownMenuItem):
             app_info = app['value']
             if app_info:
                 url = reverse('view_app', args=[self.domain, app_info['_id']])
-                app_name = mark_safe("%s" % mark_for_escaping(app_info['name']))
+                app_name = mark_safe("%s" % mark_for_escaping(app_info['name'] or '(Untitled)'))
                 submenu_context.append(self._format_submenu_context(app_name, url=url))
 
         if self.request.couch_user.can_edit_apps():
