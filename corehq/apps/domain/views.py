@@ -294,7 +294,6 @@ def autocomplete_fields(request, field):
 def snapshot_settings(request, domain):
     domain = Domain.get_by_name(domain)
     snapshots = domain.snapshots()
-    print snapshots
     return render_to_response(request, 'domain/snapshot_settings.html',
                 {'domain': domain.name, 'snapshots': list(snapshots), 'published_snapshot': domain.published_snapshot()})
 
