@@ -19,7 +19,8 @@ class ConvenientBaseMixIn(object):
     # this is everything that's shared amongst the Bihar supervision reports
     # this class is an amalgamation of random behavior and is just 
     # for convenience
-    
+
+    base_template_mobile = "bihar/base_template_mobile.html"
     report_template_path = "bihar/tabular.html"
     
     hide_filters = True
@@ -86,9 +87,11 @@ class GroupReferenceMixIn(object):
                                  include_docs=True, reduce=False)
 
     @property
-    def render_report_title(self):
+    @memoized
+    def rendered_report_title(self):
         return u"{title} - {group}".format(title=_(self.name),
                                            group=self.group.name)
+
 
 class BiharSummaryReport(ConvenientBaseMixIn, SummaryTablularReport, 
                          CustomProjectReport):

@@ -1,11 +1,3 @@
 {% extends "reports/async/summary_tabular.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% block reportcontent %}
-{% if render_as == 'mobile' %}
-<p style="float:right;"><a href="{{ home }}">{% trans 'Main Menu' %}
-{#    <img src="{% static 'bihar/img/Felipe_icon_User.svg.png' %}" alt="{% trans 'Home' %}" /></a> #}
-</a></p>
-{% endif %}
-{{ block.super }}
-{% endblock %}
