@@ -5,6 +5,7 @@ from django.utils.safestring import mark_safe
 from corehq.apps.adm.models import BaseADMColumn, ReducedADMColumn, DaysSinceADMColumn, ConfigurableADMColumn,\
     CompareADMColumn, ADMReport, KEY_TYPE_OPTIONS, REPORT_SECTION_OPTIONS, \
     CASE_FILTER_OPTIONS, CASE_STATUS_OPTIONS, CaseCountADMColumn, ConfigurableADMColumn, CouchViewADMColumn, SORT_BY_DIRECTION_OPTIONS, UserDataADMColumn
+from corehq.apps.crud.models import BaseAdminCRUDForm
 from hqstyle.forms import fields as hq_fields
 from dimagi.utils.data.crud import BaseCRUDForm
 from dimagi.utils.decorators.memoized import memoized
@@ -17,19 +18,12 @@ IGNORE_DATESPAN_FIELD = forms.BooleanField(
     help_text="If unchecked, the records returned will be between the startdate and enddate of the datespan."
 )
 
-class BaseADMDocumentForm(BaseCRUDForm):
+class BaseADMDocumentForm(BaseAdminCRUDForm):
     slug = forms.SlugField(label="Slug")
     domain = forms.CharField(label="Project Name (blank applies to all projects)", required=False)
     name = forms.CharField(label="Name")
     description = forms.CharField(label="Description", required=False,
         widget=Textarea(attrs=dict(style="height:80px;width:340px;")))
-
-    @property
-    @memoized
-    def crud_manager(self):
-        if self.existing_object:
-            return self.existing_object.admin_crud
-        return self.doc_class.get_admin_crud()
 
 
 class CouchViewADMColumnForm(BaseADMDocumentForm):

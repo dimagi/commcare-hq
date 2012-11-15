@@ -9,7 +9,7 @@ class BaseADMAdminInterface(GenericTabularReport):
     dispatcher = ADMAdminInterfaceDispatcher
     asynchronous = True
     hide_filters = True
-    report_template_path = "adm/interfaces/adm_tabular.html"
+    report_template_path = "crud/interfaces/crud.tabular.html"
 
     # new
     property_class = None
@@ -41,10 +41,11 @@ class BaseADMAdminInterface(GenericTabularReport):
         context = super(BaseADMAdminInterface, self).report_context
         context.update(
             detailed_description=self.detailed_description,
-            adm_item = dict(
-                type=self.adm_item_type,
-                form=self.form_class.__name__
-            )
+            crud_item = {
+                'type': self.adm_item_type,
+                'form': self.form_class.__name__,
+                'url': "/adm/form/",
+            }
         )
         return context
 

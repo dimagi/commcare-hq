@@ -1,9 +1,6 @@
-import inspect
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
-from corehq.apps.crud.views import _process_crud_admin_form
+from django.http import HttpResponseRedirect
+from corehq.apps.crud.views import BaseAdminCRUDFormView
 from corehq.apps.domain.decorators import require_superuser, domain_admin_required
-from dimagi.utils.data.crud import CRUDFormRequestManager, CRUDActionError
-from dimagi.utils.modules import to_function
 from dimagi.utils.web import render_to_response
 
 @domain_admin_required
@@ -28,11 +25,11 @@ def default_adm_admin(request):
     from corehq.apps.adm.admin.reports import ADMReportAdminInterface
     return HttpResponseRedirect(ADMReportAdminInterface.get_url())
 
-@require_superuser
-def adm_item_form(request, **kwargs):
-    template = "crud/forms/crud.add_item.html"
-    form_type = kwargs.get('form_type')
-    if form_type == 'ConfigurableADMColumnChoiceForm':
-        template = "adm/forms/configurable_admin_adm_item.html"
-    return _process_crud_admin_form(request,
-        template=template, base_loc="corehq.apps.adm.admin.forms", **kwargs)
+class ADMAdminCRUDFormView(BaseAdminCRUDFormView):
+    base_loc = "corehq.apps.adm.admin.forms"
+
+    def is_form_class_valid(self, form_class):
+        from corehq.apps.adm.admin.forms import ConfigurableADMColumnChoiceForm
+        if form_class == ConfigurableADMColumnChoiceForm:
+            self.template_name = "adm/forms/configurable_admin_adm_item.html"
+        return True

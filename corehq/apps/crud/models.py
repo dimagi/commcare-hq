@@ -2,17 +2,17 @@ from django.utils.safestring import mark_safe
 from dimagi.utils.data.crud import TabularCRUDManager, BaseCRUDForm
 from dimagi.utils.decorators.memoized import memoized
 
-class BaseHQTabularCRUDManager(TabularCRUDManager):
+class BaseAdminHQTabularCRUDManager(TabularCRUDManager):
     """
         All Tabular CRUD Managers for CoreHQ-based CRUD should extend this.
     """
     @property
     def edit_button(self):
         doc_id = self.document_instance.get_id if self.document_instance else ""
-        return mark_safe("""<a href="#updateHQAnnouncementModal"
+        return mark_safe("""<a href="#crud_update_modal"
             class="btn"
             data-item_id="%s"
-            onclick="adm_interface.update_item(this)"
+            onclick="crud_interface.update_item(this)"
             data-toggle="modal"><i class="icon icon-pencil"></i> Edit</a>""" % doc_id)
 
     def update(self, **kwargs):
