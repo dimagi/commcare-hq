@@ -54,7 +54,14 @@ class MessageLog(Document, UnicodeMixIn):
             except Exception as e:
                 pass
         return name
-
+    
+    @property
+    def recipient(self):
+        if self.couch_recipient_doc_type == "CommCareCase":
+            return CommConnectCase.get(self.couch_recipient)
+        else:
+            return CouchUser.get_by_user_id(self.couch_recipient)
+    
     @classmethod
     def by_domain_asc(cls, domain):
         if cls.__name__ == "MessageLog":
@@ -142,6 +149,12 @@ class SMSLog(MessageLog):
         return "%s (%s %s)" % (str, to_from, self.phone_number)
 
 class CallLog(MessageLog):
+    form_unique_id = StringProperty()
+    answered = BooleanProperty(default=False)
+    duration = IntegerProperty() # Length of the call in seconds
+    gateway_session_id = StringProperty() # This is the session id returned from the backend
+    error = BooleanProperty(default=False)
+    error_message = StringProperty()
     
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"

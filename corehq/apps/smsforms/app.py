@@ -16,7 +16,8 @@ COMMCONNECT_DEVICE_ID = "commconnect"
 AUTH = DigestAuth(settings.TOUCHFORMS_API_USER, 
                   settings.TOUCHFORMS_API_PASSWORD)
 
-def start_session(domain, contact, app, module, form, case_id=None):
+# If yield_responses is True, the list of xforms responses is returned, otherwise the text prompt for each is returned
+def start_session(domain, contact, app, module, form, case_id=None, yield_responses=False):
     """
     Starts a session in touchforms and saves the record in the database.
     
@@ -52,12 +53,15 @@ def start_session(domain, contact, app, module, form, case_id=None):
                             completed=False, domain=domain,
                             app_id=app.get_id, user_id=contact.get_id)
     session.save()
-    return (session, _responses_to_text(responses))
+    if yield_responses:
+        return (session, responses)
+    else:
+        return (session, _responses_to_text(responses))
 
 def get_responses(msg):
     return _get_responses(msg.domain, msg.couch_recipient, msg.text)
 
-def _get_responses(domain, recipient, text):
+def _get_responses(domain, recipient, text, yield_responses=False):
     """
     Try to process this message like a session-based submission against
     an xform.
@@ -72,9 +76,11 @@ def _get_responses(domain, recipient, text):
         session.modified_time = datetime.utcnow()
         session.save()
         # TODO auth
-        return _responses_to_text(tfsms.next_responses(session.session_id, text,
-                                                       auth=None))
-                
+        if yield_responses:
+            return tfsms.next_responses(session.session_id, text, auth=None)
+        else:
+            return _responses_to_text(tfsms.next_responses(session.session_id, text, auth=None))
+
 def _responses_to_text(responses):
     return [r.text_prompt for r in responses if r.text_prompt]
 

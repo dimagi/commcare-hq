@@ -22,11 +22,16 @@ class VerifiedNumber(Document):
     owner_id        = StringProperty()
     phone_number    = StringProperty()
     backend_id      = StringProperty() # points to a MobileBackend
+    ivr_backend_id  = StringProperty() # points to a MobileBackend
     verified        = BooleanProperty()
     
     @property
     def backend(self):
         return MobileBackend.get(self.backend_id)
+    
+    @property
+    def ivr_backend(self):
+        return MobileBackend.get(self.ivr_backend_id)
     
     @property
     def owner(self):
@@ -43,11 +48,11 @@ class VerifiedNumber(Document):
 
 class MobileBackend(Document):
     """
-    Defines a backend to be used for sending / receiving SMS.
+    Defines an instance of a backend api to be used for either sending sms, or sending outbound calls.
     """
     domain = ListProperty(StringProperty)   # A list of domains for which this backend is applicable
     description = StringProperty()          # (optional) A description of this backend
-    outbound_module = StringProperty()      # The fully-qualified name of the inbound module to be used (must implement send() method)
+    outbound_module = StringProperty()      # The fully-qualified name of the outbound module to be used (sms backends: must implement send(); ivr backends: must implement initiate_outbound_call() )
     outbound_params = DictProperty()        # The parameters which will be the keyword arguments sent to the outbound module's send() method
 
 class CommCareMobileContactMixin(object):
