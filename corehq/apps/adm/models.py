@@ -5,6 +5,7 @@ from couchdbkit.ext.django.schema import *
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.adm import utils
 from corehq.apps.adm.admin.crud import *
+from corehq.apps.crud.models import AdminCRUDDocumentMixin
 from corehq.apps.groups.models import Group
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.dates import DateSpan
@@ -59,7 +60,7 @@ class IgnoreDatespanADMColumnMixin(DocumentSchema):
     ignore_datespan = BooleanProperty(default=True)
 
 
-class BaseADMDocument(Document):
+class BaseADMDocument(Document, AdminCRUDDocumentMixin):
     """
         For all things ADM.
         The important thing is that default versions of ADM items (reports and columns) are unique for domain + slug
@@ -90,15 +91,6 @@ class BaseADMDocument(Document):
     date_modified = DateTimeProperty()
 
     _admin_crud_class = ADMAdminCRUDManager
-
-    @property
-    @memoized
-    def admin_crud(self):
-        return self._admin_crud_class(self.__class__, self)
-
-    @classmethod
-    def get_admin_crud(cls):
-        return cls._admin_crud_class(cls)
 
     @classmethod
     def defaults_couch_view(cls):
