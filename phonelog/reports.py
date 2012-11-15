@@ -13,6 +13,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.fields import DeviceLogTagField, DeviceLogUsersField, DeviceLogDevicesField
 from corehq.apps.reports.models import HQUserType, TempCommCareUser
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request, get_url_base
 
@@ -171,7 +172,8 @@ class DeviceLogDetailsReport(PhonelogReport):
         return breadcrumbs
 
     @property
-    def render_report_title(self):
+    @memoized
+    def rendered_report_title(self):
         new_title = self.name
         if self.errors_only:
             new_title = "Errors &amp; Warnings Log <small>for %s</small>" % ", ".join(self.device_log_users) \
