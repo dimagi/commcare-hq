@@ -186,8 +186,6 @@ class CommCareMultimedia(Document):
                 license.organization = org or license.organization
                 break
         else:
-            print type
-            print author
             license = HQMediaLicense(domain=domain, type=type, author=author, organization=org)
             self.licenses.append(license)
 
