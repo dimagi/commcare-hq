@@ -4,158 +4,159 @@
 {% load i18n %}
 {% load url_extras %}
 
-{% block js-inline %}{{ block.super }}
-<style type="text/css">
-    .rating_static > span {
-        display: inline-block;
-        position: relative;
-        width: 1.1em;
-    }
+{% block head %}
+    <style type="text/css">
+        .rating_static > span {
+            display: inline-block;
+            position: relative;
+            width: 1.1em;
+        }
 
-        /* :not(:checked) is a filter, so that browsers that don’t support :checked don’t
- follow these rules. Every browser that supports :checked also supports :not(), so
- it doesn’t make the test unnecessarily selective */
-    .rating_static:not(:checked) > input {
-        position:absolute;
-        top:-9999px;
-        clip:rect(0,0,0,0);
-    }
+            /* :not(:checked) is a filter, so that browsers that don’t support :checked don’t
+     follow these rules. Every browser that supports :checked also supports :not(), so
+     it doesn’t make the test unnecessarily selective */
+        .rating_static:not(:checked) > input {
+            position:absolute;
+            top:-9999px;
+            clip:rect(0,0,0,0);
+        }
 
-    .rating_static:not(:checked) > label {
-        float:left;
-        padding:0 .1em;
-        overflow:hidden;
-        white-space:nowrap;
-        cursor:default;
-        font-size:200%;
-        line-height:1.1;
-        color:#ddd;
-        text-shadow:1px 1px #bbb, 2px 2px #666, .1em .1em .2em rgba(0,0,0,.5);
-    }
+        .rating_static:not(:checked) > label {
+            float:left;
+            padding:0 .1em;
+            overflow:hidden;
+            white-space:nowrap;
+            cursor:default;
+            font-size:200%;
+            line-height:1.1;
+            color:#ddd;
+            text-shadow:1px 1px #bbb, 2px 2px #666, .1em .1em .2em rgba(0,0,0,.5);
+        }
 
-    .rating_static:not(:checked) > label:before {
-        content: '★ ';
-    }
+        .rating_static:not(:checked) > label:before {
+            content: '★ ';
+        }
 
-    .rating_static > input.filled + label {
-        color: #f70;
-        text-shadow:1px 1px #c60, 2px 2px #940, .1em .1em .2em rgba(0,0,0,.5);
-    }
+        .rating_static > input.filled + label {
+            color: #f70;
+            text-shadow:1px 1px #c60, 2px 2px #940, .1em .1em .2em rgba(0,0,0,.5);
+        }
 
-    .rating_static > label:active {
-        position:relative;
-        top:2px;
-        left:2px;
-    }
+        .rating_static > label:active {
+            position:relative;
+            top:2px;
+            left:2px;
+        }
 
 
 
-    .rating > span {
-        display: inline-block;
-        position: relative;
-        width: 1.1em;
-    }
+        .rating > span {
+            display: inline-block;
+            position: relative;
+            width: 1.1em;
+        }
 
-    .rating {
-        float:left;
-    }
+        .rating {
+            float:left;
+        }
 
-        /* :not(:checked) is a filter, so that browsers that don’t support :checked don’t
- follow these rules. Every browser that supports :checked also supports :not(), so
- it doesn’t make the test unnecessarily selective */
-    .rating:not(:checked) > input {
-        position:absolute;
-        top:-9999px;
-        clip:rect(0,0,0,0);
-    }
+            /* :not(:checked) is a filter, so that browsers that don’t support :checked don’t
+     follow these rules. Every browser that supports :checked also supports :not(), so
+     it doesn’t make the test unnecessarily selective */
+        .rating:not(:checked) > input {
+            position:absolute;
+            top:-9999px;
+            clip:rect(0,0,0,0);
+        }
 
-    .rating:not(:checked) > label {
-        float:right;
-        width:1em;
-        padding:0 .1em;
-        overflow:hidden;
-        white-space:nowrap;
-        cursor:pointer;
-        font-size:200%;
-        line-height:1.2;
-        color:#ddd;
-        text-shadow:1px 1px #bbb, 2px 2px #666, .1em .1em .2em rgba(0,0,0,.5);
-    }
+        .rating:not(:checked) > label {
+            float:right;
+            width:1em;
+            padding:0 .1em;
+            overflow:hidden;
+            white-space:nowrap;
+            cursor:pointer;
+            font-size:200%;
+            line-height:1.2;
+            color:#ddd;
+            text-shadow:1px 1px #bbb, 2px 2px #666, .1em .1em .2em rgba(0,0,0,.5);
+        }
 
-    .rating:not(:checked) > label:before {
-        content: '★ ';
-    }
+        .rating:not(:checked) > label:before {
+            content: '★ ';
+        }
 
-    .rating > input:checked ~ label {
-        color: #f70;
-        text-shadow:1px 1px #c60, 2px 2px #940, .1em .1em .2em rgba(0,0,0,.5);
-    }
+        .rating > input:checked ~ label {
+            color: #f70;
+            text-shadow:1px 1px #c60, 2px 2px #940, .1em .1em .2em rgba(0,0,0,.5);
+        }
 
-    .rating:not(:checked) > label:hover,
-    .rating:not(:checked) > label:hover ~ label {
-        color: gold;
-        text-shadow:1px 1px goldenrod, 2px 2px #B57340, .1em .1em .2em rgba(0,0,0,.5);
-    }
+        .rating:not(:checked) > label:hover,
+        .rating:not(:checked) > label:hover ~ label {
+            color: gold;
+            text-shadow:1px 1px goldenrod, 2px 2px #B57340, .1em .1em .2em rgba(0,0,0,.5);
+        }
 
-    .rating > input:checked + label:hover,
-    .rating > input:checked + label:hover ~ label,
-    .rating > input:checked ~ label:hover,
-    .rating > input:checked ~ label:hover ~ label,
-    .rating > label:hover ~ input:checked ~ label {
-        color: #ea0;
-        text-shadow:1px 1px goldenrod, 2px 2px #B57340, .1em .1em .2em rgba(0,0,0,.5);
-    }
+        .rating > input:checked + label:hover,
+        .rating > input:checked + label:hover ~ label,
+        .rating > input:checked ~ label:hover,
+        .rating > input:checked ~ label:hover ~ label,
+        .rating > label:hover ~ input:checked ~ label {
+            color: #ea0;
+            text-shadow:1px 1px goldenrod, 2px 2px #B57340, .1em .1em .2em rgba(0,0,0,.5);
+        }
 
-    .rating > label:active {
-        position:relative;
-        top:2px;
-        left:2px;
-    }
+        .rating > label:active {
+            position:relative;
+            top:2px;
+            left:2px;
+        }
 
-    .label-for-star {
-        cursor: default;
-    }
+        .label-for-star {
+            cursor: default;
+        }
 
-    .scrollable {
-        overflow-x: scroll;
-        overflow-y:hidden;
-        white-space:nowrap;
-        /*max-height: 300px;*/
-    }
+        .scrollable {
+            overflow-x: scroll;
+            overflow-y:hidden;
+            white-space:nowrap;
+            /*max-height: 300px;*/
+        }
 
-    .pager {
-        margin-top: 25px;
-    }
+        .pager {
+            margin-top: 25px;
+        }
 
-    .app-pic {
-        width: 180px;
-        height: 180px;
-    }
+        .app-pic {
+            width: 180px;
+            height: 180px;
+        }
 
-    .opacity65 {
-        filter:alpha(opacity=65);
-        -moz-opacity:0.65;
-        -khtml-opacity: 0.65;
-        opacity: 0.65;
-    }
+        .opacity65 {
+            filter:alpha(opacity=65);
+            -moz-opacity:0.65;
+            -khtml-opacity: 0.65;
+            opacity: 0.65;
+        }
 
-    .pi-stars {
-        display: inline-block;
-        padding-right: 1.8em;
-        font-size: 70%;
-    }
+        .pi-stars {
+            display: inline-block;
+            padding-right: 1.8em;
+            font-size: 70%;
+        }
 
-    #results {
-        display: table;
-    }
+        #results {
+            display: table;
+        }
 
-    #results div.span3 {
-        display: "table-cell";
-    }
+        #results div.span3 {
+            display: "table-cell";
+        }
 
     </style>
+{% endblock %}
 
-
+{% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function () {
             $(".more-sortable-button").click(function() {
