@@ -321,7 +321,9 @@ class ReportConfig(Document):
         return json.loads(response.content)['report']
 
 
-class UnsupportedScheduledReportError(Exception): pass
+class UnsupportedScheduledReportError(Exception):
+    pass
+
 
 class ReportNotification(Document):
     # 11/12: removed WeeklyNotification and DailyNotification subclasses
@@ -348,7 +350,7 @@ class ReportNotification(Document):
         try:
             self.report_slug
             return False
-        except:
+        except AttributeError:
             return True
         
     @classmethod
