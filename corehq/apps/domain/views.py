@@ -311,7 +311,8 @@ def create_snapshot(request, domain):
                 'license': domain.license,
                 'publish_on_submit': True,
             })
-        published_snapshot = list(domain.snapshots())[0] or domain
+        snapshots = list(domain.snapshots())
+        published_snapshot = snapshots[0] if snapshots else domain
         published_apps = {}
         if published_snapshot is not None:
             form = SnapshotSettingsForm(initial={
