@@ -17,9 +17,8 @@ def redirect_domain_settings(request, domain, old_url=""):
 
 @login_required_late_eval_of_LOGIN_URL
 def account_settings(request):
-    if not request.couch_user.is_web_user():
-        raise Http404
-    return HttpResponse("woo")
+    # tabling this until HQ Announcements is flushed out.
+    raise Http404
 
 @require_superuser
 def project_id_mapping(request, domain):

@@ -33,6 +33,10 @@ class ADMAdminCRUDManager(BaseAdminHQTabularCRUDManager):
             return existing.slug == slug or not existing_doc
         return not existing_doc
 
+    def update(self, **kwargs):
+        self.document_instance.date_modified = datetime.datetime.utcnow()
+        super(ADMAdminCRUDManager, self).update(**kwargs)
+
 
 class ColumnAdminCRUDManager(ADMAdminCRUDManager):
 

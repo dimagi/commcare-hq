@@ -199,9 +199,33 @@ class ProjectSettingsMenuItem(DropdownMenuItem):
 
 
 class AdminReportsMenuItem(DropdownMenuItem):
-    title = "Admin Reports"
+    title = "Admin"
     view = "corehq.apps.hqadmin.views.default"
-    css_id = "admin_reports"
+    css_id = "admin_tab"
+
+    @property
+    @memoized
+    def submenu_items(self):
+        submenu_context = [
+            self._format_submenu_context("Reports", is_header=True),
+            self._format_submenu_context("Admin Reports", url=reverse("default_admin_report")),
+            self._format_submenu_context("System Info", url=reverse("system_info")),
+            self._format_submenu_context("Management", is_header=True),
+            self._format_submenu_context(mark_for_escaping("ADM Reports & Columns"),
+                url=reverse("default_adm_admin_interface")),
+#            self._format_submenu_context(mark_for_escaping("HQ Announcements"),
+#                url=reverse("default_announcement_admin")),
+        ]
+        try:
+            submenu_context.append(self._format_submenu_context(mark_for_escaping("Billing"),
+                url=reverse("billing_default")))
+        except Exception:
+            pass
+        submenu_context.extend([
+            self._format_submenu_context(None, is_divider=True),
+            self._format_submenu_context("Django Admin", url="/admin")
+        ])
+        return submenu_context
 
     @classmethod
     def is_viewable(cls, request, domain):

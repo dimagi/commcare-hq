@@ -8,7 +8,6 @@ from corehq.apps.adm.models import BaseADMColumn, ReducedADMColumn, DaysSinceADM
 from corehq.apps.crud.models import BaseAdminCRUDForm
 from hqstyle.forms import fields as hq_fields
 from dimagi.utils.data.crud import BaseCRUDForm
-from dimagi.utils.decorators.memoized import memoized
 
 DATESPAN_CHOICES = [("startdate", "Start of Datespan"), ("enddate", "End of Datespan")]
 IGNORE_DATESPAN_FIELD = forms.BooleanField(

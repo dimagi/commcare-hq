@@ -1,16 +1,16 @@
-from django.utils.safestring import mark_safe
-from dimagi.utils.data.crud import TabularCRUDManager
+import datetime
+from corehq.apps.crud.models import BaseAdminHQTabularCRUDManager
 
-class HQAnnouncementCRUDManager(TabularCRUDManager):
+class HQAnnouncementCRUDManager(BaseAdminHQTabularCRUDManager):
     """
         CRUD Manager for HQ Announcements
     """
     @property
-    def edit_button(self):
-        doc_id = self.document_instance.get_id if self.document_instance else ""
-        return mark_safe("""<a href="#crud_update_modal"
-            class="btn"
-            data-item_id="%s"
-            onclick="crud_interface.update_item(this)"
-            data-toggle="modal"><i class="icon icon-pencil"></i> Edit</a>""" % doc_id)
+    def properties_in_row(self):
+        return ["title", "summary", "highlighted_selectors", "date_created", "valid_until"]
+
+    def update(self, **kwargs):
+        if not self.document_instance.date_created:
+            self.document_instance.date_created = datetime.datetime.utcnow()
+        super(HQAnnouncementCRUDManager, self).update(**kwargs)
 

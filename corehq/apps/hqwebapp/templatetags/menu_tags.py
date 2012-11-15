@@ -18,8 +18,6 @@ def format_main_menu(context):
         if menu_item_class.is_viewable(request, domain):
             menu_item = menu_item_class(request, domain)
             menu_context.append(menu_item.menu_context)
-    menu = render_to_string(menu_template, menu_context)
-    print menu
     return mark_safe(render_to_string(menu_template, {
         'menu_items': menu_context,
     }))
