@@ -212,7 +212,7 @@ def domain_admin_required_ex( redirect_page_name = None ):
             if not request.couch_user.is_web_user():
                 raise Http404
             domain_name, domain = load_domain(request, domain)
-            if not request.couch_user.is_domain_admin:
+            if not request.couch_user.is_domain_admin(domain):
                 return HttpResponseRedirect(reverse(redirect_page_name))
             return view_func(request, domain_name, *args, **kwargs)
 
