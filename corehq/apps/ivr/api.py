@@ -19,8 +19,6 @@ def convert_media_path_to_hq_url(path, app):
         return None
     else:
         url_base = get_url_base()
-        if url_base.endswith("/"):
-            url_base = url_base[0:-1]
         return url_base + HQMediaMapItem.format_match_map(path, media_type=media.media_type, media_id=media.multimedia_id)["url"] + "foo.wav"
 
 def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_data=None):

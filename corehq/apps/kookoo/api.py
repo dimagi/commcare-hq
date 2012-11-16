@@ -5,6 +5,7 @@ from urllib2 import urlopen
 from xml.etree.ElementTree import XML
 from dimagi.utils.web import get_url_base
 from django.core.urlresolvers import reverse
+from xml.sax.saxutils import escape
 
 class InvalidPhoneNumberException(Exception):
     pass
@@ -18,9 +19,9 @@ def get_http_response_string(gateway_session_id, ivr_responses, collect_input=Fa
         audio_file_url = response["audio_file_url"]
         
         if audio_file_url is not None:
-            xml_string += "<playaudio>%s</playaudio>" % audio_file_url
+            xml_string += "<playaudio>%s</playaudio>" % escape(audio_file_url)
         elif text_to_say is not None:
-            xml_string += "<playtext>%s</playtext>" % text_to_say
+            xml_string += "<playtext>%s</playtext>" % escape(text_to_say)
     
     if collect_input:
         xml_string = '<collectdtmf o="5000">' + xml_string + '</collectdtmf>'
@@ -45,8 +46,6 @@ def initiate_outbound_call(call_log_entry, *args, **kwargs):
         raise InvalidPhoneNumberException("Kookoo can only send to Indian phone numbers.")
     
     url_base = get_url_base()
-    if url_base.endswith("/"):
-        url_base = url_base[0:-1]
     
     params = urlencode({
         "phone_no" : phone_number,
