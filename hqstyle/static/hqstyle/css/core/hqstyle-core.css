@@ -1761,6 +1761,13 @@ select[multiple="multiple"],
 select[size^=""] {
   height: auto;
 }
+.selectmultiple {
+  width: 100%;
+}
+.autocompletetextarea {
+  width: 100%;
+  height: 56px;
+}
 .control-group .controls label.sub-label {
   display: inline-block;
   vertical-align: top;
@@ -2955,8 +2962,10 @@ table th[class*="span"],
 .dropdown-menu.dropdown-orange .nav-header {
   color: #cf7000;
 }
-select[size] {
-  height: 27px;
+.typeahead.dropdown-menu li > a:hover,
+.typeahead.dropdown-menu li > a:focus,
+.typeahead.dropdown-menu li.active > a {
+  color: #ffffff;
 }
 .well {
   min-height: 20px;
