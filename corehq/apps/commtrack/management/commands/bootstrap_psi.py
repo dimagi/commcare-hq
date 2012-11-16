@@ -17,29 +17,102 @@ PRODUCTS = [
 
 STATES = [
     'Andra Predesh',
+    'Bihar',
+    'Jammu and Kashmir',
     'Karnataka',
+    'Punjab',
+    'Rajasthan',
     'Tamil Nadu',
 ]
 
 DISTRICTS = {
     'Andra Predesh': [
+        'Anantapur',
+        'Chittoor',
+        'East Godavari',
         'Hyderabad',
+        'Khammam',
         'Medak',
+        'Prakasam',
+        'Srikakulam',
         'Vizianagaram',
+        'West Godavari'
+    ],
+    'Bihar': [
+        'Buxar',
+        'Darbhanga',
+        'Gaya',
+        'Jamui',
+        'Lakhisarai',
+        'Muzaffarpur',
+        'Nawada',
+        'Pashchim Champaran',
+        'Saran',
+        'Vaishali'
+    ],
+    'Jammu and Kashmir': [
+        'Anantnag',
+        'Badgam',
+        'Doda',
+        'Jammu',
+        'Kupwara',
+        'Leh',
+        'Poonch',
+        'Rajauri',
+        'Srinagar',
+        'Udhampur'
     ],
     'Karnataka': [
+        'Bagalkot',
+        'Chitradurga',
         'Davanagere',
+        'Gadag',
+        'Haveri',
+        'Kodagu',
         'Mysore',
-        'Uttara Kannada',
+        'Raichur',
+        'Shimoga',
+        'Uttara Kannada'
+    ],
+    'Punjab': [
+        'Amritsar',
+        'Bathinda',
+        'Firozpur',
+        'Gurdaspur',
+        'Jalandhar',
+        'Ludhiana',
+        'Mansa',
+        'Patiala',
+        'Rupnagar',
+        'Sangrur'
+    ],
+    'Rajasthan': [
+        'Ajmer',
+        'Banswara',
+        'Dausa',
+        'Ganganagar',
+        'Jaipur',
+        'Karauli',
+        'Nagaur',
+        'Pali',
+        'Sikar',
+        'Udaipur'
     ],
     'Tamil Nadu': [
-        'Chennai',
-        'Vuddalore',
-        'Theni',
-    ],
-}    
+        'Ariyalur',
+        'Coimbatore',
+        'Dindigul',
+        'Erode',
+        'Kanyakumari',
+        'Nagapattinam',
+        'Pudukkottai',
+        'Sivaganga',
+        'Tiruvannamalai',
+        'Villupuram'
+    ]
+}
 
-LOC_BRANCH_FACTOR = 3
+LOC_BRANCH_FACTOR = 23
 
 class Command(BaseCommand):
     args = 'domain'
