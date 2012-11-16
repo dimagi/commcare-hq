@@ -490,7 +490,7 @@ class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
 
     # new class properties
     dates_in_utc = True
-    couch_view = None
+    by_submission_time=True
     emailable = True
 
     _dates = None
@@ -518,9 +518,8 @@ class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
         else:
             _dates = self.dates
 
-        key = [self.domain]
-        results = get_db().view(
-            self.couch_view,
+        key = make_form_couch_key(self.domain, by_submission_time=self.by_submission_time)
+        results = get_db().view("reports_forms/all_forms",
             reduce=False,
             startkey=key+[self.datespan.startdate_param_utc if self.dates_in_utc else self.datespan.startdate_param],
             endkey=key+[self.datespan.enddate_param_utc if self.dates_in_utc else self.datespan.enddate_param]
@@ -563,14 +562,12 @@ class DailySubmissionsReport(DailyReport):
     name = "Daily Form Submissions"
     slug = "daily_submissions"
 
-    couch_view = 'reports/daily_submissions'
-
 
 class DailyFormCompletionsReport(DailyReport):
     name = "Daily Form Completions"
     slug = "daily_completions"
 
-    couch_view = 'reports/daily_completions'
+    by_submission_time=False
     dates_in_utc = False
 
 
