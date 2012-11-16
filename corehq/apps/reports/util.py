@@ -128,14 +128,12 @@ def get_all_users_by_domain(domain, **kwargs):
     return users
 
 def get_all_userids_submitted(domain):
-    submitted = get_db().view(
-        'reports/all_users_submitted',
+    submitted = get_db().view('reports_forms/all_submitted_users',
         startkey=[domain],
         endkey=[domain, {}],
         group=True,
-        reduce=True
     ).all()
-    return [ user['key'][1] for user in submitted]
+    return [user['key'][1] for user in submitted]
 
 def get_all_owner_ids_submitted(domain):
     key = ["all owner", domain]
