@@ -181,7 +181,7 @@ class MessagesMenuItem(DropdownMenuItem):
 
     @classmethod
     def is_viewable(cls, request, domain):
-        return domain and request.project.is_snapshot
+        return domain and not request.project.is_snapshot
 
 
 class ProjectSettingsMenuItem(DropdownMenuItem):
