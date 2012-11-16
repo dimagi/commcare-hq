@@ -131,7 +131,7 @@ def start_session_from_keyword(survey_keyword, verified_number):
         print e
         print "ERROR: Exception raised while starting survey for keyword " + survey_keyword.keyword + ", domain " + verified_number.domain
 
-def incoming(phone_number, text, backend_api, domain_scope=None):
+def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None):
     """
     entry point for incoming sms
 
@@ -154,7 +154,7 @@ def incoming(phone_number, text, backend_api, domain_scope=None):
     msg = SMSLog(
         phone_number    = phone_number,
         direction       = INCOMING,
-        date            = datetime.utcnow(),
+        date            = timestamp or datetime.utcnow(),
         text            = text,
         backend_api     = backend_api
     )
@@ -185,6 +185,7 @@ def incoming(phone_number, text, backend_api, domain_scope=None):
         import verify
         verify.process_verification(phone_number, text)
 
+    return msg
 
 def form_session_handler(v, text):
     # Circular Import

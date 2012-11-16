@@ -189,8 +189,8 @@ def send_to_recipients(request, domain):
 def message_test(request, domain, phone_number):
     if request.method == "POST":
         message = request.POST.get("message", "")
-        domain_context = None if request.couch_user.is_superuser else domain
-        incoming(phone_number, message, "TEST", domain_context)
+        domain_scope = None if request.couch_user.is_superuser else domain
+        incoming(phone_number, message, "TEST", domain_scope=domain_scope)
 
     context = get_sms_autocomplete_context(request, domain)
     context['domain'] = domain
