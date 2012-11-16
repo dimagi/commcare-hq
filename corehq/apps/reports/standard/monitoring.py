@@ -352,6 +352,7 @@ class CaseActivityReportCahed(WorkerMonitoringReportTable, CouchCachedReportMixi
             row.append(self.table_cell(total_inactive))
             rows.append(row)
 
+        
         total_row = [_("All Users")]
         for i in range(1, len(self.landmarks)+4):
             total_row.append(sum([row[i].get('sort_key', 0) for row in rows]))
@@ -530,11 +531,11 @@ class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
 
         user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(self.users)])
         date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
-        rows = [[0]*(2+len(date_map)) for _ in range(len(self.users))]
+        rows = [[0]*(2+len(date_map)) for _tmp in range(len(self.users))]
         total_row = [0]*(2+len(date_map))
 
         for result in results:
-            _, date = result['key']
+            _tmp, date = result['key']
             date = dateutil.parser.parse(date)
             tz_offset = self.timezone.localize(self.datespan.enddate).strftime("%z")
             date = date + datetime.timedelta(hours=int(tz_offset[0:3]), minutes=int(tz_offset[0]+tz_offset[3:5]))
@@ -844,7 +845,7 @@ class SubmitDistributionReport(WorkerMonitoringChart):
                 form_name = xmlns_to_name(self.domain, xmlns, app_id=None)
                 def _desc(amt, form_name):
                     return _("(%(amt)s) submissions of %(form)s") % {
-                        "amt": _(amt), 
+                        "amt": _(str(amt)), 
                         "form": _(form_name)
                     }
                 if form_name in predata:
