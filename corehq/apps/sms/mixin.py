@@ -1,6 +1,7 @@
 import re
 from couchdbkit.ext.django.schema import *
 from django.conf import settings
+from dimagi.utils.modules import try_import
 
 phone_number_re = re.compile("^\d+$")
 
@@ -53,6 +54,9 @@ class VerifiedNumber(Document):
 def strip_plus(phone_number):
     return phone_number[1:] if phone_number.startswith('+') else phone_number
 
+def add_plus(phone_number):
+    return ('+' + phone_number) if not phone_number.startswith('+') else phone_number
+
 class MobileBackend(Document):
     """
     Defines a backend to be used for sending / receiving SMS.
@@ -68,6 +72,8 @@ class MobileBackend(Document):
         Get the appropriate outbound SMS backend to send to a
         particular phone_number
         """
+        phone_number = add_plus(phone_number)
+
         # TODO: support domain-specific settings
         
         global_backends = getattr(settings, 'SMS_BACKENDS', {})
@@ -112,6 +118,13 @@ class MobileBackend(Document):
             outbound_module=module,
             description='virtual backend for %s' % backend_id,
         )
+
+    @property
+    def backend_module(self):
+        module = try_import(self.outbound_module)
+        if not module:
+            raise RuntimeError('could not find outbound module %s' % self.outbound_module)
+        return module
 
 class CommCareMobileContactMixin(object):
     """

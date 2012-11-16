@@ -91,11 +91,7 @@ def send_message_via_backend(msg, backend=None, onerror=lambda: None):
             # verification, thus the backend is None. it's best to only call
             # send_sms_to_verified_number on truly verified contacts, though
 
-        try:
-            backend_module = try_import(backend.outbound_module)
-        except:
-            raise RuntimeError('could not find outbound module %s' % backend.outbound_module)
-        backend_module.send(msg, **backend.outbound_params)
+        backend.backend_module.send(msg, **backend.outbound_params)
 
         try:
             msg.backend_api = backend_module.API_ID
