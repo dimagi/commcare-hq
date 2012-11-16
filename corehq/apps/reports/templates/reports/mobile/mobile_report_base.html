@@ -1,6 +1,16 @@
 {% extends "hqwebapp/base_mobile.html" %}
+{% load hq_shared_tags %}
 {% load i18n %}
 {% block content %} 
-    <h1>{% trans title %}</h1>
+    <div class="navbar">
+        <div class="navbar-inner">
+            <a class="brand" href="{% block home-link %}/{% endblock %}">
+                <img src="{% static 'hqstyle/img/commcare-logo-mobile.png' %}" alt="CommCare HQ Mobile" />
+            </a>
+            <h1 class="page-title">{% trans title %}</h1>
+            {% block mobile-nav %}
+            {% endblock %}
+        </div>
+    </div>
     {{ report }}
 {% endblock %}

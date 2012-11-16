@@ -69,9 +69,9 @@ urlpatterns = patterns('corehq.apps.reports.views',
         name='delete_report_config'),
 
     # Scheduled reports
-    url(r'^add_scheduled_report/$', 'add_scheduled_report',
-        name='add_scheduled_report'),
-    url(r'^delete_scheduled_report/(?P<scheduled_report_id>[\w-]+)/$',
+    url(r'^scheduled_reports/(?P<scheduled_report_id>[\w-]+)?$',
+        'edit_scheduled_report', name="edit_scheduled_report"),
+    url(r'^scheduled_report/(?P<scheduled_report_id>[\w-]+)/delete$',
         'delete_scheduled_report', name='delete_scheduled_report'),
     url(r'^send_test_scheduled_report/(?P<scheduled_report_id>[\w-]+)/$',
          'send_test_scheduled_report', name='send_test_scheduled_report'),

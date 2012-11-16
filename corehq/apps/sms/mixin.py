@@ -45,6 +45,17 @@ class VerifiedNumber(Document):
             return CommCareUser.get(self.owner_id)
         else:
             return None
+    
+    @classmethod
+    def by_phone(cls, phone_number, include_pending=False):
+        # TODO: do we assume phone number duplicates are prevented?
+        v = cls.view("sms/verified_number_by_number",
+                     key=strip_plus(phone_number),
+                     include_docs=True).one()
+        return v if (include_pending or (v and v.verified)) else None
+
+def strip_plus(phone_number):
+    return phone_number[1:] if phone_number.startswith('+') else phone_number
 
 class MobileBackend(Document):
     """
@@ -75,18 +86,31 @@ class CommCareMobileContactMixin(object):
         """
         raise NotImplementedError("Subclasses of CommCareMobileContactMixin must implement method get_language_code().")
     
-    def get_verified_number(self):
+    def get_verified_numbers(self, include_pending=False):
+        v = VerifiedNumber.view("sms/verified_number_by_doc_type_id",
+            startkey=[self.doc_type, self._id],
+            endkey=[self.doc_type, self._id],
+            include_docs=True
+        )
+        v = filter(lambda c: c.verified or include_pending, v)
+        return dict((c.phone_number, c) for c in v)
+
+    def get_verified_number(self, phone=None):
         """
         Retrieves this contact's verified number entry by (self.doc_type, self._id).
         
         return  the VerifiedNumber entry
         """
-        v = VerifiedNumber.view("sms/verified_number_by_doc_type_id",
-            startkey=[self.doc_type, self._id],
-            endkey=[self.doc_type, self._id],
-            include_docs=True
-        ).one()
-        return v
+        verified = self.get_verified_numbers(True)
+
+        if not phone:
+            # for backwards compatibility with code that assumes only one verified phone #
+            if len(verified) > 0:
+                return sorted(verified.iteritems())[0][1]
+            else:
+                return None
+
+        return verified.get(strip_plus(phone))
     
     def validate_number_format(self, phone_number):
         """
@@ -122,8 +146,9 @@ class CommCareMobileContactMixin(object):
         raises  InvalidFormatException if the phone number format is invalid
         raises  PhoneNumberInUseException if the phone number is already in use by another contact
         """
+        phone_number = strip_plus(phone_number)
         self.verify_unique_number(phone_number)
-        v = self.get_verified_number()
+        v = self.get_verified_number(phone_number)
         if v is None:
             v = VerifiedNumber(
                 owner_doc_type = self.doc_type,
@@ -135,14 +160,14 @@ class CommCareMobileContactMixin(object):
         v.backend_id = backend_id
         v.save()
 
-    def delete_verified_number(self):
+    def delete_verified_number(self, phone_number=None):
         """
         Deletes this contact's phone number from the verified phone number list, freeing it up
         for use by other contacts.
         
         return  void
         """
-        v = self.get_verified_number()
+        v = self.get_verified_number(phone_number)
         if v is not None:
             v.doc_type += "-Deleted"
             v.save()

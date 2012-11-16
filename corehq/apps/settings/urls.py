@@ -2,6 +2,10 @@ from django.conf.urls.defaults import *
 from corehq.apps.domain.urls import domain_settings
 from corehq.apps.cloudcare.urls import settings_urls as cloudcare_settings
 
+urlpatterns = patterns('corehq.apps.settings.views',
+    url(r'^$', 'account_settings', name='my_account_settings')
+)
+
 domain_specific = patterns('',
     url(r'^$', 'corehq.apps.settings.views.default', name="settings_default"),
     (r'^users/', include('corehq.apps.users.urls')),
@@ -18,3 +22,4 @@ users_redirect = patterns('corehq.apps.settings.views',
 domain_redirect = patterns('corehq.apps.settings.views',
     (r'^$', 'redirect_domain_settings'),
     (r'^(?P<old_url>[\w_\\\/\-]+)/$', 'redirect_domain_settings'))
+

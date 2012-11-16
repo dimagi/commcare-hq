@@ -1,29 +1,27 @@
 from datetime import timedelta, datetime, time
 import json
 from django.core.urlresolvers import reverse
-from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
-from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm
 from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, EVENT_AS_SCHEDULE, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST, SurveyWave, ON_DATETIME, RECIPIENT_SURVEY_SAMPLE
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import CouchUser, CommCareUser, Permissions
 from dimagi.utils.web import render_to_response
-from dimagi.utils.parsing import string_to_datetime
-from tropo import Tropo
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
 from .util import get_form_list, get_sample_list
-from corehq.apps.app_manager.models import get_app, ApplicationBase
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import register_sms_contact
 from corehq.apps.domain.models import DomainCounter
 from casexml.apps.case.models import CommCareCase
 from dateutil.parser import parse
 
-@login_and_domain_required
+reminders_permission = require_permission(Permissions.edit_data)
+
+@reminders_permission
 def default(request, domain):
     return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
 
-@login_and_domain_required
+@reminders_permission
 def list_reminders(request, domain, template="reminders/partial/list_reminders.html"):
     handlers = CaseReminderHandler.get_handlers(domain=domain).all()
     print handlers
@@ -32,7 +30,7 @@ def list_reminders(request, domain, template="reminders/partial/list_reminders.h
         'reminder_handlers': handlers
     })
 
-@login_and_domain_required
+@reminders_permission
 def add_reminder(request, domain, handler_id=None, template="reminders/partial/add_reminder.html"):
 
     if handler_id:
@@ -81,7 +79,7 @@ def add_reminder(request, domain, handler_id=None, template="reminders/partial/a
         'domain': domain
     })
 
-@login_and_domain_required
+@reminders_permission
 def delete_reminder(request, domain, handler_id):
     handler = CaseReminderHandler.get(handler_id)
     if handler.doc_type != 'CaseReminderHandler' or handler.domain != domain:
@@ -89,7 +87,7 @@ def delete_reminder(request, domain, handler_id):
     handler.retire()
     return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
 
-@login_and_domain_required
+@reminders_permission
 def scheduled_reminders(request, domain, template="reminders/partial/scheduled_reminders.html"):
     reminders = CaseReminderHandler.get_all_reminders(domain)
     dates = []
@@ -117,7 +115,7 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
         'now': now,
     })
 
-@login_and_domain_required
+@reminders_permission
 def add_complex_reminder_schedule(request, domain, handler_id=None):
     if handler_id:
         h = CaseReminderHandler.get(handler_id)
@@ -209,7 +207,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
     })
 
 
-@login_and_domain_required
+@reminders_permission
 def manage_keywords(request, domain):
     context = {
         "domain" : domain,
@@ -217,7 +215,7 @@ def manage_keywords(request, domain):
     }
     return render_to_response(request, "reminders/partial/manage_keywords.html", context)
 
-@login_and_domain_required
+@reminders_permission
 def add_keyword(request, domain, keyword_id=None):
     if keyword_id is None:
         s = SurveyKeyword(domain = domain)
@@ -259,13 +257,13 @@ def add_keyword(request, domain, keyword_id=None):
             s.save()
             return HttpResponseRedirect(reverse("manage_keywords", args=[domain]))
 
-@login_and_domain_required
+@reminders_permission
 def delete_keyword(request, domain, keyword_id):
     s = SurveyKeyword.get(keyword_id)
     s.retire()
     return HttpResponseRedirect(reverse("manage_keywords", args=[domain]))
 
-@login_and_domain_required
+@reminders_permission
 def add_survey(request, domain, survey_id=None):
     survey = None
     if survey_id is not None:
@@ -471,7 +469,7 @@ def add_survey(request, domain, survey_id=None):
     }
     return render_to_response(request, "reminders/partial/add_survey.html", context)
 
-@login_and_domain_required
+@reminders_permission
 def survey_list(request, domain):
     context = {
         "domain" : domain,
@@ -479,7 +477,7 @@ def survey_list(request, domain):
     }
     return render_to_response(request, "reminders/partial/survey_list.html", context)
 
-@login_and_domain_required
+@reminders_permission
 def add_sample(request, domain, sample_id=None):
     sample = None
     if sample_id is not None:
@@ -554,7 +552,7 @@ def add_sample(request, domain, sample_id=None):
     }
     return render_to_response(request, "reminders/partial/add_sample.html", context)
 
-@login_and_domain_required
+@reminders_permission
 def sample_list(request, domain):
     context = {
         "domain" : domain,

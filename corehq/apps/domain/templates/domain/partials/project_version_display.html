@@ -1,0 +1,31 @@
+{% load i18n %}
+{% if published %}
+<form class="form-horizontal" action="{% url domain_clear_published domain %}" method="POST">
+<div class="row-fluid">
+    <div class="span4"><h3>This project has been published</h3></div>
+    <div class="span8">
+        <h3><button class="btn btn-danger" type="submit">Unpublish</button></h3>
+    </div>
+</div>
+</form>
+
+<dl class="dl-horizontal">
+{% else %}
+    <dl class="dl-horizontal">
+        <dt><h4>Most Recent Version</h4></dt>
+        <dd>
+            <form method="get" action="{% url domain_create_snapshot domain %}">
+                <a class="btn btn-primary" data-action="{% url domain_set_published domain version.name %}" data-toggle="modal" data-target="#contentDistributionAgreement" href="#contentDistributionAgreement">Publish</a>
+                <button type="submit" class="btn btn-primary">Edit</button>
+            </form>
+        </dd>
+{% endif %}
+
+    <dt>{% trans 'Published on' %}</dt>
+    <dd>{{ version.snapshot_time }}</dd>
+    <dt>{% trans 'License' %}</dt>
+    <dd>{{ version.get_license_display }}</dd>
+    <dt>{% trans 'Status' %}</dt>
+    <dd>{% if version.is_approved %}Approved{% else %}Not yet approved{% endif %}</dd>
+    <dd><a href="{% url project_info version.name %}">View on exchange</a></dd>
+</dl>

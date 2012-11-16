@@ -1,5 +1,5 @@
 function(doc) {
-    if (doc.doc_type == "WeeklyReportNotification" || doc.doc_type == "DailyReportNotification") {
+    if (doc.doc_type == "ReportNotification" || doc.doc_type == "WeeklyReportNotification" || doc.doc_type == "DailyReportNotification") {
         var owner_id;
         if (doc.user_ids) {
             // old doc
