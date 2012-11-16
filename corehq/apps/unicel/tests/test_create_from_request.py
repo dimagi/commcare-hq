@@ -1,9 +1,9 @@
 from datetime import datetime
 from django.test import TestCase
 from django.test.client import Client
-from corehq.apps.sms.models import SMSLog
+from corehq.apps.sms.models import SMSLog, INCOMING
 from corehq.apps.users.models import CouchUser, WebUser
-from corehq.apps.unicel.api import InboundParams, INCOMING, DATE_FORMAT
+from corehq.apps.unicel.api import InboundParams, DATE_FORMAT
 
 class IncomingPostTest(TestCase):
 
