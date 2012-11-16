@@ -4247,7 +4247,7 @@ input[type="submit"].btn.btn-mini {
   *z-index: 2;
 }
 .navbar-inner {
-  min-height: 62px;
+  min-height: 60px;
   padding-left: 20px;
   padding-right: 20px;
   background-color: #f9f9f9;
@@ -4286,7 +4286,7 @@ input[type="submit"].btn.btn-mini {
 .navbar .brand {
   float: left;
   display: block;
-  padding: 22px 20px 22px;
+  padding: 21px 20px 21px;
   margin-left: -20px;
   font-size: 20px;
   font-weight: 200;
@@ -4298,23 +4298,23 @@ input[type="submit"].btn.btn-mini {
 }
 .navbar-text {
   margin-bottom: 0;
-  line-height: 62px;
+  line-height: 60px;
 }
 .navbar-link {
   color: #6c6c6c;
 }
 .navbar-link:hover {
-  color: #ffffff;
+  color: #1557a2;
 }
 .navbar .divider-vertical {
-  height: 62px;
+  height: 60px;
   margin: 0 9px;
   border-left: 1px solid #f4f4f4;
   border-right: 1px solid #fdfdfd;
 }
 .navbar .btn,
 .navbar .btn-group {
-  margin-top: 16px;
+  margin-top: 15px;
 }
 .navbar .btn-group .btn,
 .navbar .input-prepend .btn,
@@ -4338,7 +4338,7 @@ input[type="submit"].btn.btn-mini {
 .navbar-form select,
 .navbar-form .radio,
 .navbar-form .checkbox {
-  margin-top: 16px;
+  margin-top: 15px;
 }
 .navbar-form input,
 .navbar-form select,
@@ -4363,7 +4363,7 @@ input[type="submit"].btn.btn-mini {
 .navbar-search {
   position: relative;
   float: left;
-  margin-top: 16px;
+  margin-top: 15px;
   margin-bottom: 0;
 }
 .navbar-search .search-query {
@@ -4447,7 +4447,7 @@ input[type="submit"].btn.btn-mini {
 }
 .navbar .nav > li > a {
   float: none;
-  padding: 22px 15px 22px;
+  padding: 21px 15px 21px;
   color: #6c6c6c;
   text-decoration: none;
   text-shadow: 0 1px 0 #fdfdfd;
@@ -4457,8 +4457,8 @@ input[type="submit"].btn.btn-mini {
 }
 .navbar .nav > li > a:focus,
 .navbar .nav > li > a:hover {
-  background-color: transparent;
-  color: #ffffff;
+  background-color: #edeff2;
+  color: #1557a2;
   text-decoration: none;
 }
 .navbar .nav > .active > a,
@@ -4724,26 +4724,68 @@ input[type="submit"].btn.btn-mini {
 .navbar-inverse .btn-navbar.active {
   background-color: #000000 \9;
 }
-.hq-navbar {
-  min-width: 1250px;
-  width: 100%;
-  height: 62px;
-  background-color: #f9f9f9;
-  background-image: -moz-linear-gradient(top, #fdfdfd, #f4f4f4);
-  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#fdfdfd), to(#f4f4f4));
-  background-image: -webkit-linear-gradient(top, #fdfdfd, #f4f4f4);
-  background-image: -o-linear-gradient(top, #fdfdfd, #f4f4f4);
-  background-image: linear-gradient(to bottom, #fdfdfd, #f4f4f4);
-  background-repeat: repeat-x;
-  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffdfdfd', endColorstr='#fff4f4f4', GradientType=0);
-  position: relative;
-  border-bottom: 1px solid #dbdbdb;
-  -webkit-box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.075);
-  -moz-box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.075);
-  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.075);
+.navbar {
+  margin-bottom: 0;
 }
-#hq-navigation-bar {
-  height: 62px;
+#hq-navigation-bar .nav > li:not(.active) > a:focus,
+#hq-navigation-bar .nav > li:not(.active) > a:hover {
+  -webkit-transition: color 0.2s ease-in-out;
+  -moz-transition: color 0.2s ease-in-out;
+  -o-transition: color 0.2s ease-in-out;
+  transition: color 0.2s ease-in-out;
+  -webkit-transition: background 0.2s ease-in-out;
+  -moz-transition: background 0.2s ease-in-out;
+  -o-transition: background 0.2s ease-in-out;
+  transition: background 0.2s ease-in-out;
+  -webkit-box-shadow: inset 0 3px 8px #f4f4f4;
+  -moz-box-shadow: inset 0 3px 8px #f4f4f4;
+  box-shadow: inset 0 3px 8px #f4f4f4;
+}
+.navbar-inner {
+  -webkit-border-radius: 0px;
+  -moz-border-radius: 0px;
+  border-radius: 0px;
+}
+.navbar .brand {
+  padding: 0 20px;
+}
+.navbar .btn-toolbar {
+  margin: 0;
+}
+#hq-navigation-bar .dropdown-menu li > form {
+  padding: 0;
+  margin: 0;
+}
+#hq-navigation-bar .dropdown-menu li > form button {
+  background-color: transparent;
+  border: none;
+  display: block;
+  width: 100%;
+  padding: 3px 20px;
+  line-height: 18px;
+  color: #333333;
+  white-space: nowrap;
+  text-align: left;
+}
+#hq-navigation-bar .dropdown-menu li > form button:hover {
+  color: #ffffff;
+  background-color: #145299;
+  background-image: -moz-linear-gradient(top, #1557a2, #124b8b);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#1557a2), to(#124b8b));
+  background-image: -webkit-linear-gradient(top, #1557a2, #124b8b);
+  background-image: -o-linear-gradient(top, #1557a2, #124b8b);
+  background-image: linear-gradient(to bottom, #1557a2, #124b8b);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff1557a2', endColorstr='#ff124b8b', GradientType=0);
+}
+#hq-navigation-bar .nav > .dropdown.open > a {
+  background-color: #ffffff;
+  -webkit-box-shadow: 0px 0px 10px #e7e7e7;
+  -moz-box-shadow: 0px 0px 10px #e7e7e7;
+  box-shadow: 0px 0px 10px #e7e7e7;
+}
+#hq-navigation-bar .dropdown.open .dropdown-toggle {
+  background-color: #ffffff;
 }
 .hq-subsection-navbar {
   clear: both;
@@ -4787,177 +4829,6 @@ input[type="submit"].btn.btn-mini {
   border-right: 6px solid transparent;
   border-top: 6px solid #0b0e12;
   top: 30px;
-}
-.hq-navbar hgroup {
-  padding-top: 15px;
-  position: absolute;
-  left: 20px;
-}
-.hq-navbar hgroup h1 {
-  padding: 0;
-  margin: 0;
-  width: 211px;
-  height: 32px;
-  display: block;
-  overflow: visible;
-  position: relative;
-  line-height: inherit;
-  font-size: inherit;
-}
-.hq-navbar hgroup h1 img,
-.hq-navbar hgroup h1 a,
-.hq-navbar hgroup h1 a:before {
-  width: 211px;
-  height: 32px;
-}
-.hq-navbar hgroup h1 img {
-  z-index: 900;
-}
-.hq-navbar hgroup h1 a {
-  display: block;
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-.hq-navbar hgroup h1 a:before {
-  z-index: 950;
-  content: url('../../img/commcare-logo-hover.png');
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: none;
-}
-.hq-navbar hgroup h1 a:hover:before {
-  display: block;
-}
-.hq-navbar .navbar-text {
-  margin-bottom: 0;
-  line-height: 40px;
-  color: #6c6c6c;
-}
-.hq-navbar .navbar-text a:hover {
-  color: #ffffff;
-  background-color: transparent;
-}
-.hq-navbar .btn,
-.hq-navbar .btn-group {
-  margin-top: 5px;
-}
-.hq-navbar .btn-group .btn {
-  margin-top: 0;
-}
-.hq-navbar .nav {
-  position: absolute;
-  top: 16px;
-  left: 271px;
-  display: block;
-  margin: 0 10px 0 0;
-}
-.hq-navbar .nav.pull-right {
-  left: auto;
-  right: 20px;
-}
-.hq-navbar .nav > li {
-  display: block;
-  float: left;
-}
-.hq-navbar .nav > li > a {
-  float: none;
-  margin-right: 2px;
-  padding: 4px 10px 5px;
-  font-size: 13px;
-  line-height: 19px;
-  color: #6c6c6c;
-  border: 1px solid transparent;
-  -webkit-border-radius: 5px;
-  -moz-border-radius: 5px;
-  border-radius: 5px;
-  text-decoration: none;
-}
-.hq-navbar .nav > li > a:hover {
-  text-decoration: none;
-  border-color: #0c335e;
-  color: #ffffff;
-  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
-  background-color: #286ebd;
-  background-image: -moz-linear-gradient(top, #347dcf, #1557a2);
-  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#347dcf), to(#1557a2));
-  background-image: -webkit-linear-gradient(top, #347dcf, #1557a2);
-  background-image: -o-linear-gradient(top, #347dcf, #1557a2);
-  background-image: linear-gradient(to bottom, #347dcf, #1557a2);
-  background-repeat: repeat-x;
-  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff347dcf', endColorstr='#ff1557a2', GradientType=0);
-  border-color: #1557a2 #1557a2 #0c335e;
-  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
-  *background-color: #1557a2;
-  /* Darken IE7 buttons by default so they stand out more given they won't have borders */
-
-  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
-  color: #ffffff;
-}
-.hq-navbar .nav > li > a:hover:hover,
-.hq-navbar .nav > li > a:hover:active,
-.hq-navbar .nav > li > a:hover.active,
-.hq-navbar .nav > li > a:hover.disabled,
-.hq-navbar .nav > li > a:hover[disabled] {
-  color: #ffffff;
-  background-color: #1557a2;
-  *background-color: #124b8b;
-}
-.hq-navbar .nav > li > a:hover:active,
-.hq-navbar .nav > li > a:hover.active {
-  background-color: #0f3f75 \9;
-}
-.hq-navbar .nav .active > a,
-.hq-navbar .nav .active > a:hover {
-  text-decoration: none;
-  color: #ffffff;
-  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
-  background-color: #f0f0f0;
-  background-image: -moz-linear-gradient(top, #ffffff, #dbdbdb);
-  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#ffffff), to(#dbdbdb));
-  background-image: -webkit-linear-gradient(top, #ffffff, #dbdbdb);
-  background-image: -o-linear-gradient(top, #ffffff, #dbdbdb);
-  background-image: linear-gradient(to bottom, #ffffff, #dbdbdb);
-  background-repeat: repeat-x;
-  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffffff', endColorstr='#ffdbdbdb', GradientType=0);
-  border-color: #dbdbdb #dbdbdb #b4b4b4;
-  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
-  *background-color: #dbdbdb;
-  /* Darken IE7 buttons by default so they stand out more given they won't have borders */
-
-  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
-  border-color: #d5d5d5;
-  color: #6c6c6c !important;
-}
-.hq-navbar .nav .active > a:hover,
-.hq-navbar .nav .active > a:hover:hover,
-.hq-navbar .nav .active > a:active,
-.hq-navbar .nav .active > a:hover:active,
-.hq-navbar .nav .active > a.active,
-.hq-navbar .nav .active > a:hover.active,
-.hq-navbar .nav .active > a.disabled,
-.hq-navbar .nav .active > a:hover.disabled,
-.hq-navbar .nav .active > a[disabled],
-.hq-navbar .nav .active > a:hover[disabled] {
-  color: #ffffff;
-  background-color: #dbdbdb;
-  *background-color: #cecece;
-}
-.hq-navbar .nav .active > a:active,
-.hq-navbar .nav .active > a:hover:active,
-.hq-navbar .nav .active > a.active,
-.hq-navbar .nav .active > a:hover.active {
-  background-color: #c1c1c1 \9;
-}
-.hq-navbar .secondary-nav {
-  position: absolute;
-  top: 0;
-  right: 20px;
-  padding-top: 2px;
-}
-.hq-navbar .secondary-nav .btn {
-  font-size: 12px;
 }
 .breadcrumb {
   padding: 8px 15px;
@@ -6321,6 +6192,9 @@ a.badge:hover {
 }
 .hero-unit li {
   line-height: 27px;
+}
+.ui-datepicker {
+  z-index: 1000 !important;
 }
 /* Styling for the celery downloader. See download export */
 .downloader > h2 {
