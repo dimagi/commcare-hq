@@ -58,7 +58,7 @@
     <div class="span7">
         <h1>
             {{ project.title }}
-            <small>by
+            <small>{% trans "by" %}
                 {% if project.organization %}
                 <a href="{% url orgs_landing project.organization %}">{{ project.organization_doc.title }}</a>
                 {% else %}
@@ -68,7 +68,7 @@
         </h1>
         <h4 style="color: #808080;">{{ project.short_description }}</h4>
         <h3>
-            Ratings: <span class="badge badge-info">{{ num_ratings }}</span>
+            {% trans "Ratings" %}: <span class="badge badge-info">{{ num_ratings }}</span>
         </h3>
             {% if average_rating %}
                 {% include "partials/five_stars.html" with rating_name=average_rating rating=average_rating %}
@@ -83,42 +83,30 @@
         {% if project.description %}
             {{ project.description }}
         {% else %}
-            <h6>None</h6>
+            <h6>{% trans "None" %}</h6>
         {% endif %}
     </dd>
-    <dt>Category</dt>
+    <dt>{% trans 'Category' %}</dt>
     <dd>
         {% if project.project_type %}
             {{ project.project_type }}
         {% else %}
-            <h6>None</h6>
+            <h6>{% trans "None" %}</h6>
         {% endif %}
     </dd>
     <dt> {% trans 'Published on' %}</dt>
     <dd>
         {{ project.snapshot_time|date:"N j, Y" }}
     </dd>
-    {% if project.city %}
-    <dt>City</dt>
-    <dd>{{ project.city }}</dd>
-    {% endif %}
-    {% if project.country %}
-    <dt>Country</dt>
-    <dd>{{ project.country }}</dd>
-    {% endif %}
-    {% if project.region %}
-    <dt>Region</dt>
-    <dd>{{ project.region }}</dd>
-    {% endif %}
     <dt>{% trans 'Languages' %}</dt>
     <dd>
         {% if project.languages %}
-        {{ project.readable_languages }}
+            {{ project.readable_languages }}
         {% else %}
-        None
+            {% trans "None" %}
         {% endif %}
     </dd>
-    <dt>License</dt>
+    <dt>{% trans 'License' %}</dt>
     <dd>{{ project.get_license_display }}</dd>
     <dt>{% trans 'Downloads' %}</dt>
     <dd>
@@ -132,20 +120,20 @@
             <div id="application-{{ app.id }}">
                 <dl class="dl-horizontal">
                     <dd><h4>{{ app.name }}</h4></dd>
-                    <dt>Media</dt>
+                    <dt>{% trans 'Media' %}</dt>
                     <dd>
                         {{ app.has_media|yesno:"Yes,No" }}
                     </dd>
                     <dt>CommCare</dt>
                     <dd>
-                        Version {{ app.application_version }}
+                        {% trans "Version" %} {{ app.application_version }}
                     </dd>
                     {% if app.user_type %}
-                        <dt>User type</dt>
+                        <dt>{% trans 'User type' %}</dt>
                         <dd>{{ app.user_type }}</dd>
                     {% endif %}
                     {% if app.phone_model %}
-                        <dt>Phone model</dt>
+                        <dt>{% trans 'Phone model' %}</dt>
                         <dd>{{ app.phone_model }}</dd>
                     {% endif %}
                     {% if app.short_description %}
@@ -160,7 +148,11 @@
                             {{ app.description }}
                         </dd>
                     {% endif %}
-                    <dd><a class="btn" style="margin: .4em 0" href="{% url exchange_app_summary project app.id %}">Application summary</a></dd>
+                    {% if app.attribution_notes %}
+                        <dt>{% trans 'Attribution notes' %}</dt>
+                        <dd>{{ app.attribution_notes }}</dd>
+                    {% endif %}
+                    <dd><a class="btn" style="margin: .4em 0" href="{% url exchange_app_summary project app.id %}">{% trans "Application Summary" %}</a></dd>
                 </dl>
             </div>
         {% endfor %}
@@ -168,25 +160,19 @@
     <div>
         <form id="new-project-form" method="post" class="form-inline" action="{% url domain_copy_snapshot project %}">
             <fieldset>
-                <legend>Download</legend>
+                <legend>{% trans "Download" %}</legend>
                 {% if request.couch_user %}
-                    {% if project.attribution_notes %}
-                        <dl>
-                            <dt>Attribution notes</dt>
-                            <dd>{{ project.attribution_notes }}</dd>
-                        </dl>
-                    {% endif %}
                     <div{% if error_message %} class="error"{% endif %}>
                         <input type="text" class="span3" id="new_project_name"
                                name="new_project_name" value="{{ new_project_name }}" placeholder="{% trans 'New project name' %}">
                         {% if error_message %}
                             <span class="help-inline">{{ error_message }}</span>
                         {% endif %}
-                        <a class="btn btn-primary" data-form="new-project-form" data-toggle="modal" data-target="#licenseAgreement" href="#licenseAgreement">Create New Project</a> or
-                        <a class="btn" id="import-app-button">Import to Existing Project</a>
+                        <a class="btn btn-primary" data-form="new-project-form" data-toggle="modal" data-target="#licenseAgreement" href="#licenseAgreement">{% trans "Create New Project" %}</a> {% trans "or" %}
+                        <a class="btn" id="import-app-button">{% trans "Import to Existing Project" %}</a>
                     </div>
                 {% else %}
-                    Please <a href="{% url login %}">sign in</a> or <a href="{% url registration_new_user %}">register</a> to download an app from the exchange
+                    {% trans "Please" %} <a href="{% url login %}">{% trans "sign in" %}</a> {% trans "or" %} <a href="{% url registration_new_user %}">{% trans "register" %}</a> {% trans "to download an app from Exchange" %}
                 {% endif %}
             </fieldset>
         </form>
@@ -205,10 +191,10 @@
 
     <hr/>
     <div>
-        <h3>Reviews of {{ project.copied_from.display_name }}</h3>
+        <h3>{% trans "Reviews of" %} {{ project.copied_from.display_name }}</h3>
         {% if project.copied_from.name not in request.couch_user.get_domains and project.published %}
             <div>
-                <a href="#add_review_modal" data-toggle="modal" class="btn btn-inverse">Write a Review</a>
+                <a href="#add_review_modal" data-toggle="modal" class="btn btn-inverse">{% trans "Write a Review" %}</a>
             </div>
         {% endif %}
     </div>
@@ -224,7 +210,7 @@
                     <h4 style="display: inline-block; vertical-align: bottom;">{{ review.title }}</h4>
                 </div>
                 <div>{{ review.info }}</div>
-                <p><small>{{ review.user }} on {{ review.date_published }}</small></p>
+                <p><small>{{ review.user }} {% trans "on" %} {{ review.date_published }}</small></p>
             </div>
         </div>
     {% endfor %}
@@ -236,19 +222,19 @@
 <div id="add_review_modal" class="modal hide fade">
     <div class="modal-header">
         <a class="close" data-dismiss="modal">&times;</a>
-        <h3>Write a review for {{ project.copied_from.display_name }}</h3>
+        <h3>{% trans 'Write a review for ' %}{{ project.copied_from.display_name }}</h3>
     </div>
     <form class="form-horizontal" method="post" action="{% url project_info project %}">
         <div class="modal-body">
             <fieldset>
-                <legend>Review This App</legend>
+                <legend>{% trans 'Review This App' %}</legend>
                 {% for global_error in form.non_field_errors %}
                 <div class="alert alert-error">
                     {{ global_error }}
                 </div>
                 {% endfor %}
                 <div class="control-group">
-                    <label class="control-label">Rating</label>
+                    <label class="control-label">{% trans 'Rating' %}</label>
                     <div class="controls">
                         <fieldset class="rating" title="Rating">
                             <input type="radio" id="star5" name="rating" value="5" /><label for="star5">5 stars</label>
@@ -280,8 +266,8 @@
             <input type="hidden" name="versioned" value="{{ versioned }}">
         </div>
         <div class="modal-footer">
-            <a href="#" data-dismiss="modal" class="btn">Cancel</a>
-            <button type="submit" class="btn btn-primary">Post</button>
+            <a href="#" data-dismiss="modal" class="btn">{% trans "Cancel" %}</a>
+            <button type="submit" class="btn btn-primary">{% trans "Post" %}</button>
         </div>
     </form>
 </div>
@@ -290,17 +276,17 @@
 <div class="modal hide fade" id="licenseAgreement">
     <div class="modal-header">
         <a class="close" data-dismiss="modal">&times;</a>
-        <h4>You're about to download {{ project.title }}</h4>
+        <h4>{% trans "You're about to download " %}{{ project.title }}</h4>
     </div>
     <div class="modal-body">
-        {{ project.title }} is licensed under <a target="_blank" href="http://creativecommons.org/licenses/#licenses">{{ project.get_license_display }}</a>
+        {{ project.title }} {% trans 'is licensed under ' %}<a target="_blank" href="http://creativecommons.org/licenses/#licenses">{{ project.get_license_display }}</a>
     </div>
     <div class="modal-footer">
         <div style="text-align: left; line-height: 2em;">
-            I have read and agree to terms of this license.
+            {% trans "I have read and agree to terms of this license." %}
         </div>
-        <a id="agree-button" data-form="" href="#" class="btn btn-primary">Agree</a>
-        <a href="#" data-dismiss="modal" class="btn">Disagree</a>
+        <a id="agree-button" data-form="" href="#" class="btn btn-primary">{% trans "Agree" %}</a>
+        <a href="#" data-dismiss="modal" class="btn">{% trans "Disagree" %}</a>
     </div>
 </div>
 {% endblock %}
