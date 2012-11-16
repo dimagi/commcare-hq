@@ -9,7 +9,7 @@ from casexml.apps.case.models import CommCareCase
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.signals import case_post_save
-from .mixin import CommCareMobileContactMixin
+from .mixin import CommCareMobileContactMixin, MobileBackend
 from corehq.apps.sms import util as smsutil
 
 INCOMING = "I"
@@ -136,7 +136,7 @@ class SMSLog(MessageLog):
     @property
     def outbound_backend(self):
         """appropriate outbound sms backend"""
-        return smsutil.get_outbound_sms_backend(
+        return MobileBackend.auto_load(
             smsutil.clean_phone_number(self.phone_number),
             self.domain
         )
