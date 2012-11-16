@@ -274,7 +274,9 @@ def import_app(request, domain):
         for app in from_project.full_applications():
             new_doc = from_project.copy_component(app['doc_type'], app.get_id, to_project_name, user)
 
-        messages.info(request, "Application successfully imported!")
+        from_project.downloads += 1
+        from_project.save()
+        messages.success(request, "Application successfully imported!")
         return HttpResponseRedirect(reverse('view_app', args=[to_project_name, new_doc.id]))
     else:
         return project_info(request, domain)
@@ -297,6 +299,8 @@ def copy_snapshot(request, domain):
             if new_domain is None:
                 messages.error(request, "A project by that name already exists")
                 return project_info(request, domain)
+            dom.downloads += 1
+            dom.save()
             messages.success(request, "Project copied successfully!")
             return redirect("domain_project_settings", new_domain.name)
         else:
