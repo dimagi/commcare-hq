@@ -75,7 +75,7 @@
             <h6>None</h6>
         {% endif %}
     </dd>
-    <dt>Category</dt>
+    <dt>{% trans 'Category' %}</dt>
     <dd>
         {% if project.project_type %}
             {{ project.project_type }}
@@ -87,18 +87,6 @@
     <dd>
         {{ project.snapshot_time|date:"N j, Y" }}
     </dd>
-    {% if project.city %}
-    <dt>City</dt>
-    <dd>{{ project.city }}</dd>
-    {% endif %}
-    {% if project.country %}
-    <dt>Country</dt>
-    <dd>{{ project.country }}</dd>
-    {% endif %}
-    {% if project.region %}
-    <dt>Region</dt>
-    <dd>{{ project.region }}</dd>
-    {% endif %}
     <dt>{% trans 'Languages' %}</dt>
     <dd>
         {% if project.languages %}
@@ -107,7 +95,7 @@
         None
         {% endif %}
     </dd>
-    <dt>License</dt>
+    <dt>{% trans 'License' %}</dt>
     <dd>{{ project.get_license_display }}</dd>
     <dt>{% trans 'Downloads' %}</dt>
     <dd>
@@ -121,7 +109,7 @@
             <div id="application-{{ app.id }}">
                 <dl class="dl-horizontal">
                     <dd><h4>{{ app.name }}</h4></dd>
-                    <dt>Media</dt>
+                    <dt>{% trans 'Media' %}</dt>
                     <dd>
                         {{ app.has_media|yesno:"Yes,No" }}
                     </dd>
@@ -130,11 +118,11 @@
                         Version {{ app.application_version }}
                     </dd>
                     {% if app.user_type %}
-                        <dt>User type</dt>
+                        <dt>{% trans 'User type' %}</dt>
                         <dd>{{ app.user_type }}</dd>
                     {% endif %}
                     {% if app.phone_model %}
-                        <dt>Phone model</dt>
+                        <dt>{% trans 'Phone model' %}</dt>
                         <dd>{{ app.phone_model }}</dd>
                     {% endif %}
                     {% if app.short_description %}
@@ -150,7 +138,7 @@
                         </dd>
                     {% endif %}
                     {% if app.attribution_notes %}
-                        <dt>Attribution notes</dt>
+                        <dt>{% trans 'Attribution notes' %}</dt>
                         <dd>{{ app.attribution_notes }}</dd>
                     {% endif %}
                     <dd><a class="btn" style="margin: .4em 0" href="{% url exchange_app_summary project app.id %}">Application summary</a></dd>
