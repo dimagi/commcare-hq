@@ -421,18 +421,26 @@ def get_apps_base_context(request, domain, app):
     return context
 
 @login_and_domain_required
+def paginate_releases(request, domain, app_id):
+    limit = request.GET.get('limit', 10)
+    start_build = request.GET.get('start_build', {})
+    timezone = report_utils.get_timezone(request.couch_user.user_id, domain)
+    saved_apps = get_db().view('app_manager/saved_app',
+        startkey=[domain, app_id, start_build],
+        endkey=[domain, app_id],
+        descending=True,
+        limit=limit,
+        wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
+    ).all()
+    return json_response(saved_apps)
+
+@login_and_domain_required
 def release_manager(request, domain, app_id, template='app_manager/releases.html'):
     app = get_app(domain, app_id)
     latest_release = get_app(domain, app_id, latest=True)
     context = get_apps_base_context(request, domain, app)
-    timezone = context['timezone']
 
-    saved_apps = get_db().view('app_manager/saved_app',
-        startkey=[domain, app.id, {}],
-        endkey=[domain, app.id],
-        descending=True,
-        wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
-    ).all()
+    saved_apps = []
 
     users_cannot_share = CommCareUser.cannot_share(domain)
     context.update({
