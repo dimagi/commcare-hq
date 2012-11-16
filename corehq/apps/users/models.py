@@ -5,6 +5,7 @@ from __future__ import absolute_import
 
 from datetime import datetime
 import logging
+from couchdbkit import ResourceConflict
 import re
 from django.utils import html, safestring
 from restkit.errors import NoMoreData
@@ -646,6 +647,28 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
     phone_number = default_phone_number
 
     @property
+    def phone_numbers_extended(self):
+        # TODO: what about web users... do we not want to verify phone numbers
+        # for them too? if so, CommCareMobileContactMixin should be on CouchUser,
+        # not CommCareUser
+
+        # hack to work around the above issue
+        if hasattr(self, 'get_verified_numbers'):
+            verified = self.get_verified_numbers(True)
+        else:
+            verified = {}
+
+        def extend_phone(phone):
+            contact = verified.get(phone)
+            if contact:
+                status = 'verified' if contact.verified else 'pending'
+            else:
+                status = 'unverified'
+            return {'number': phone, 'status': status, 'contact': contact}
+        return [extend_phone(phone) for phone in self.phone_numbers]
+
+
+    @property
     def couch_id(self):
         return self._id
 
@@ -861,15 +884,18 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
 
 
     @classmethod
-    def django_user_post_save_signal(cls, sender, django_user, created, **kwargs):
+    def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
         if hasattr(django_user, 'DO_NOT_SAVE_COUCH_USER'):
             del django_user.DO_NOT_SAVE_COUCH_USER
         else:
             couch_user = cls.from_django_user(django_user)
             if couch_user:
                 couch_user.sync_from_django_user(django_user)
-                # avoid triggering cyclical sync
-                super(CouchUser, couch_user).save()
+                try:
+                    # avoid triggering cyclical sync
+                    super(CouchUser, couch_user).save()
+                except ResourceConflict:
+                    cls.django_user_post_save_signal(sender, django_user, created, max_tries - 1)
 
     def is_deleted(self):
         return self.base_doc.endswith(DELETED_SUFFIX)
@@ -1134,7 +1160,7 @@ class CommCareUser(CouchUser, CommCareMobileContactMixin):
         owner_ids.extend(Group.by_user(self, wrap=False))
 
         return owner_ids
-
+        
     def retire(self):
         suffix = DELETED_SUFFIX
         deletion_id = random_hex()

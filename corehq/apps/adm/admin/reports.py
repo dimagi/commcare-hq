@@ -8,8 +8,8 @@ class ADMReportAdminInterface(BaseADMAdminInterface):
     description = "The report that shows up by default for each domain"
     slug = "default_adm_reports"
 
-    adm_item_type = "ADM Report"
-    property_class = ADMReport
+    crud_item_type = "ADM Report"
+    document_class = ADMReport
     form_class = ADMReportForm
 
     @property
@@ -21,6 +21,8 @@ class ADMReportAdminInterface(BaseADMAdminInterface):
             DataTablesColumn("Report Name"),
             DataTablesColumn("Description"),
             DataTablesColumn("Columns"),
+            DataTablesColumn("Sort By Default Column"),
+            DataTablesColumn("Sort By Direction"),
             DataTablesColumn("Key Type"),
             DataTablesColumn("Edit"),
         )
@@ -29,7 +31,7 @@ class ADMReportAdminInterface(BaseADMAdminInterface):
     def rows(self):
         rows = []
         key = ["defaults all slug"]
-        data = self.property_class.view('adm/all_default_reports',
+        data = self.document_class.view('adm/all_default_reports',
             reduce=False,
             include_docs=True,
             startkey=key,

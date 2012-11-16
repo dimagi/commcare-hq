@@ -10,6 +10,7 @@ from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.case.signals import case_post_save
 from .mixin import CommCareMobileContactMixin
+from corehq.apps.sms import util as smsutil
 
 INCOMING = "I"
 OUTGOING = "O"
@@ -132,6 +133,14 @@ class MessageLog(Document, UnicodeMixIn):
 class SMSLog(MessageLog):
     text = StringProperty()
     
+    @property
+    def outbound_backend(self):
+        """appropriate outbound sms backend"""
+        return smsutil.get_outbound_sms_backend(
+            smsutil.clean_phone_number(self.phone_number),
+            self.domain
+        )
+
     def __unicode__(self):
 
         # crop the text (to avoid exploding the admin)
@@ -220,6 +229,7 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
                 pass
         elif contact_phone_number_is_verified:
             try:
+                self.delete_verified_number()
                 self.save_verified_number(self.domain, contact_phone_number, True, contact_backend_id)
             except:
                 #TODO: Handle exception

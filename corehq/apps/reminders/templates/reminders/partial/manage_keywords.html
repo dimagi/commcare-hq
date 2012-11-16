@@ -1,0 +1,57 @@
+{% extends "reminders/reminders_base.html" %}
+
+{% block head %}{{ block.super }}
+
+<style type="text/css">
+    #keyword_list_table {
+        width: auto;
+        margin-left: 0px;
+        min-width: 50%;
+    }
+</style>
+
+{% endblock %}
+
+{% block reminders_content %}
+
+<table id="keyword_list_table" class="table table-striped datatable table-bordered">
+    <thead>
+        <tr>
+            <th>Keyword</th>
+            <th>Form</th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    {% for k in keywords %}
+    <tbody>
+        <tr>
+            <td>{{ k.keyword }}</td>
+            <td>{{ k.survey_name }}</td>
+            <td><a href="{% url edit_keyword domain k.get_id %}"><span class="btn btn-primary">Edit</span></a></td>
+            <td>
+                <a class="btn btn-danger" data-toggle="modal" href="#delete_{{ k.get_id }}"><i class="icon icon-white icon-remove"></i> Delete</a>
+                <div id="delete_{{ k.get_id }}" class="modal hide fade">
+                    <div class="modal-header">
+                        <a class="close" data-dismiss="modal">&times;</a>
+                        <h3>Delete Keyword?</h3>
+                    </div>
+                    <form class="form form-horizontal" name="delete_keyword" action="{% url delete_keyword domain k.get_id %}" method="post">
+                        <div class="modal-body">
+                            <p>Are you sure you want to keyword "{{ k.keyword }}"?</p>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                            <button type="submit" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Delete</button>
+                        </div>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<br />
+<a href="{% url add_keyword domain %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i> Add Keyword</span></a>
+
+{% endblock %}

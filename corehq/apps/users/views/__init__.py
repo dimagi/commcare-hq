@@ -40,6 +40,7 @@ from corehq.apps.users.models import CouchUser, Invitation, CommCareUser, WebUse
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser, domain_admin_required
 from corehq.apps.orgs.models import Team
 from corehq.apps.reports.util import get_possible_reports
+from corehq.apps.sms import verify as smsverify
 
 require_can_edit_web_users = require_permission('edit_web_users')
 require_can_edit_commcare_users = require_permission('edit_commcare_users')
@@ -54,6 +55,8 @@ def require_permission_to_edit_user(view_func):
                 go_ahead = True
             else:
                 couch_user = CouchUser.get_by_user_id(couch_user_id)
+                if not couch_user:
+                    raise Http404()
                 if couch_user.is_commcare_user() and request.couch_user.can_edit_commcare_users():
                     go_ahead = True
                 elif couch_user.is_web_user() and request.couch_user.can_edit_web_users():
@@ -81,18 +84,18 @@ def _users_context(request, domain):
         'web_users': web_users,
         'domain': domain,
         'couch_user': couch_user,
-        }
+    }
 
 @login_and_domain_required
 def users(request, domain):
-    redirect = reverse("user_account", args=[domain, request.couch_user._id])
-    try:
-        user = WebUser.get_by_user_id(request.couch_user._id, domain)
-        if user and user.has_permission(domain, 'edit_commcare_users'):
+    user = WebUser.get_by_user_id(request.couch_user._id, domain)
+    if user:
+        if user.has_permission(domain, 'edit_commcare_users'):
             redirect = reverse("commcare_users", args=[domain])
-    except Exception as e:
-        logging.exception("Failed to grab user object: %s", e)
-
+        else:
+            redirect = reverse("user_account", args=[domain, request.couch_user._id])
+    else:
+        raise Http404()
     return HttpResponseRedirect(redirect)
 
 @require_can_edit_web_users
@@ -242,12 +245,12 @@ def account(request, domain, couch_user_id, template="users/account.html"):
 
     context.update({
         'couch_user': couch_user,
-        })
+    })
     if couch_user.is_commcare_user():
         context.update({
             'reset_password_form': SetPasswordForm(user=""),
             'only_numeric': (request.project.password_format() == 'n'),
-            })
+        })
 
     if couch_user.is_deleted():
         if couch_user.is_commcare_user():
@@ -277,11 +280,8 @@ def account(request, domain, couch_user_id, template="users/account.html"):
         })
         # scheduled reports tab
     context.update({
-        # for phone-number tab
-        'phone_numbers': couch_user.phone_numbers,
-
         # for commcare-accounts tab
-        #        "other_commcare_accounts": other_commcare_accounts,
+        # "other_commcare_accounts": other_commcare_accounts,
     })
 
     #project settings tab
@@ -328,7 +328,28 @@ def delete_phone_number(request, domain, couch_user_id):
             del user.phone_numbers[i]
             break
     user.save()
+    user.delete_verified_number(phone_number)
     return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
+
+@require_permission_to_edit_user
+def verify_phone_number(request, domain, couch_user_id):
+    """
+    phone_number cannot be passed in the url due to special characters
+    but it can be passed as %-encoded GET parameters
+    """
+    if 'phone_number' not in request.GET:
+        return Http404('Must include phone number in request.')
+    phone_number = urllib.unquote(request.GET['phone_number'])
+    user = CouchUser.get_by_user_id(couch_user_id, domain)
+
+    # send verification message
+    smsverify.send_verification(domain, user, phone_number)
+
+    # create pending verified entry if doesn't exist already
+    user.save_verified_number(domain, phone_number, False, None)
+
+    return HttpResponseRedirect(reverse("user_account", args=(domain, couch_user_id )))
+
 
 #@require_POST
 #@require_permission_to_edit_user
@@ -404,7 +425,7 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
     context = _users_context(request, domain)
     context.update({
         'reset_password_form': form,
-        })
+    })
     json_dump['formHTML'] = render_to_string(template, context)
     return HttpResponse(json.dumps(json_dump))
 
@@ -424,7 +445,7 @@ def change_my_password(request, domain, template="users/change_my_password.html"
     context = _users_context(request, domain)
     context.update({
         'form': form,
-        })
+    })
     return render_to_response(request, template, context)
 
 

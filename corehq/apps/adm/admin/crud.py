@@ -2,22 +2,13 @@ import datetime
 from new import instancemethod
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
-from dimagi.utils.data.crud import TabularCRUDManager
+from corehq.apps.crud.models import BaseAdminHQTabularCRUDManager
 from dimagi.utils.decorators.memoized import memoized
 
-class ADMAdminCRUDManager(TabularCRUDManager):
+class ADMAdminCRUDManager(BaseAdminHQTabularCRUDManager):
     """
        CRUDManager for ADMReports and ADMColumns.
     """
-    @property
-    def edit_button(self):
-        doc_id = self.document_instance.get_id if self.document_instance else ""
-        return mark_safe("""<a href="#updateADMItemModal"
-            class="btn"
-            data-item_id="%s"
-            onclick="adm_interface.update_item(this)"
-            data-toggle="modal"><i class="icon icon-pencil"></i> Edit</a>""" % doc_id)
-
     @property
     def properties_in_row(self):
         return ["slug", "domain", "name", "description"]
@@ -43,17 +34,8 @@ class ADMAdminCRUDManager(TabularCRUDManager):
         return not existing_doc
 
     def update(self, **kwargs):
-        for key, item in kwargs.items():
-            try:
-                setattr(self.document_instance, key, item)
-            except AttributeError:
-                pass
         self.document_instance.date_modified = datetime.datetime.utcnow()
-        self.document_instance.save()
-
-    def create(self, **kwargs):
-        self.document_instance = self.document_class()
-        self.update(**kwargs)
+        super(ADMAdminCRUDManager, self).update(**kwargs)
 
 
 class ColumnAdminCRUDManager(ADMAdminCRUDManager):
@@ -104,11 +86,11 @@ class ConfigurableColumnAdminCRUDManager(ColumnAdminCRUDManager):
     @property
     def edit_button(self):
         doc_id = self.document_instance.get_id if self.document_instance else ""
-        return mark_safe("""<a href="#updateADMItemModal"
+        return mark_safe("""<a href="#crud_update_modal"
             class="btn"
             data-item_id="%s"
             data-form_class="%s"
-            onclick="adm_interface.update_item(this)"
+            onclick="crud_interface.update_item(this)"
             data-toggle="modal"><i class="icon icon-pencil"></i> Edit</a>""" %\
                          (doc_id, "%sForm" % self.document_class.__name__))
 
@@ -183,7 +165,7 @@ class ADMReportCRUDManager(ADMAdminCRUDManager):
     @property
     def properties_in_row(self):
         return ["reporting_section"] + super(ADMReportCRUDManager, self).properties_in_row +\
-               ["column_refs", "key_type"]
+               ["column_refs", "sort_by_default", "sort_by_direction", "key_type"]
 
     def format_property(self, key, property):
         if key == 'column_refs':
@@ -202,5 +184,18 @@ class ADMReportCRUDManager(ADMAdminCRUDManager):
             from corehq.apps.adm.models import REPORT_SECTION_OPTIONS
             sections = dict(REPORT_SECTION_OPTIONS)
             return sections.get(property, "Unknown")
+        if key == 'sort_by_default':
+            if property:
+                try:
+                    from corehq.apps.adm.models import BaseADMColumn
+                    col = BaseADMColumn.get_default(property)
+                    return col.name
+                except Exception:
+                    pass
+            return "Username (Default Config)"
+        if key == "sort_by_direction":
+            from corehq.apps.adm.models import SORT_BY_DIRECTION_OPTIONS
+            options = dict(SORT_BY_DIRECTION_OPTIONS)
+            return options.get(property, "Ascending")
         return super(ADMReportCRUDManager, self).format_property(key, property)
 

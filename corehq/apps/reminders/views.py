@@ -1,29 +1,27 @@
 from datetime import timedelta, datetime, time
 import json
 from django.core.urlresolvers import reverse
-from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseBadRequest
-from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reminders.forms import CaseReminderForm, ComplexCaseReminderForm, SurveyForm, SurveySampleForm
 from corehq.apps.reminders.models import CaseReminderHandler, CaseReminderEvent, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET, EVENT_AS_SCHEDULE, SurveyKeyword, Survey, SurveySample, SURVEY_METHOD_LIST, SurveyWave, ON_DATETIME, RECIPIENT_SURVEY_SAMPLE
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import CouchUser, CommCareUser, Permissions
 from dimagi.utils.web import render_to_response
-from dimagi.utils.parsing import string_to_datetime
-from tropo import Tropo
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
 from .util import get_form_list, get_sample_list
-from corehq.apps.app_manager.models import get_app, ApplicationBase
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import register_sms_contact
 from corehq.apps.domain.models import DomainCounter
 from casexml.apps.case.models import CommCareCase
 from dateutil.parser import parse
 
-@login_and_domain_required
+reminders_permission = require_permission(Permissions.edit_data)
+
+@reminders_permission
 def default(request, domain):
     return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
 
-@login_and_domain_required
+@reminders_permission
 def list_reminders(request, domain, template="reminders/partial/list_reminders.html"):
     handlers = CaseReminderHandler.get_handlers(domain=domain).all()
     print handlers
@@ -32,7 +30,7 @@ def list_reminders(request, domain, template="reminders/partial/list_reminders.h
         'reminder_handlers': handlers
     })
 
-@login_and_domain_required
+@reminders_permission
 def add_reminder(request, domain, handler_id=None, template="reminders/partial/add_reminder.html"):
 
     if handler_id:
@@ -81,7 +79,7 @@ def add_reminder(request, domain, handler_id=None, template="reminders/partial/a
         'domain': domain
     })
 
-@login_and_domain_required
+@reminders_permission
 def delete_reminder(request, domain, handler_id):
     handler = CaseReminderHandler.get(handler_id)
     if handler.doc_type != 'CaseReminderHandler' or handler.domain != domain:
@@ -89,7 +87,7 @@ def delete_reminder(request, domain, handler_id):
     handler.retire()
     return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
 
-@login_and_domain_required
+@reminders_permission
 def scheduled_reminders(request, domain, template="reminders/partial/scheduled_reminders.html"):
     reminders = CaseReminderHandler.get_all_reminders(domain)
     dates = []
@@ -117,7 +115,7 @@ def scheduled_reminders(request, domain, template="reminders/partial/scheduled_r
         'now': now,
     })
 
-@login_and_domain_required
+@reminders_permission
 def add_complex_reminder_schedule(request, domain, handler_id=None):
     if handler_id:
         h = CaseReminderHandler.get(handler_id)
@@ -127,6 +125,7 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
         h = None
     
     form_list = get_form_list(domain)
+    sample_list = get_sample_list(domain)
     
     if request.method == "POST":
         form = ComplexCaseReminderForm(request.POST)
@@ -134,6 +133,10 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             if h is None:
                 h = CaseReminderHandler(domain=domain)
                 h.ui_type = UI_COMPLEX
+            else:
+                if h.start_condition_type != form.cleaned_data["start_condition_type"]:
+                    for reminder in h.get_reminders():
+                        reminder.retire()
             h.case_type = form.cleaned_data["case_type"]
             h.nickname = form.cleaned_data["nickname"]
             h.default_lang = form.cleaned_data["default_lang"]
@@ -149,48 +152,70 @@ def add_complex_reminder_schedule(request, domain, handler_id=None):
             h.max_iteration_count = form.cleaned_data["max_iteration_count"]
             h.until = form.cleaned_data["until"]
             h.events = form.cleaned_data["events"]
+            h.submit_partial_forms = form.cleaned_data["submit_partial_forms"]
+            h.ui_frequency = form.cleaned_data["frequency"]
+            h.start_condition_type = form.cleaned_data["start_condition_type"]
+            if form.cleaned_data["start_condition_type"] == "ON_DATETIME":
+                dt = parse(form.cleaned_data["start_datetime_date"]).date()
+                tm = parse(form.cleaned_data["start_datetime_time"]).time()
+                h.start_datetime = datetime.combine(dt, tm)
+            else:
+                h.start_datetime = None
+            h.sample_id = form.cleaned_data["sample_id"]
             h.save()
             return HttpResponseRedirect(reverse('list_reminders', args=[domain]))
     else:
         if h is not None:
             initial = {
-                "case_type"             : h.case_type
-               ,"nickname"              : h.nickname
-               ,"default_lang"          : h.default_lang
-               ,"method"                : h.method
-               ,"recipient"             : h.recipient
-               ,"start_property"        : h.start_property
-               ,"start_value"           : h.start_value
-               ,"start_date"            : h.start_date
-               ,"start_match_type"      : h.start_match_type
-               ,"start_offset"          : h.start_offset
-               ,"schedule_length"       : h.schedule_length
-               ,"event_interpretation"  : h.event_interpretation
-               ,"max_iteration_count"   : h.max_iteration_count
-               ,"until"                 : h.until
-               ,"events"                : h.events
+                "case_type"             : h.case_type,
+                "nickname"              : h.nickname,
+                "default_lang"          : h.default_lang,
+                "method"                : h.method,
+                "recipient"             : h.recipient,
+                "start_property"        : h.start_property,
+                "start_value"           : h.start_value,
+                "start_date"            : h.start_date,
+                "start_match_type"      : h.start_match_type,
+                "start_offset"          : h.start_offset,
+                "schedule_length"       : h.schedule_length,
+                "event_interpretation"  : h.event_interpretation,
+                "max_iteration_count"   : h.max_iteration_count,
+                "until"                 : h.until,
+                "events"                : h.events,
+                "submit_partial_forms"  : h.submit_partial_forms,
+                "start_condition_type"  : h.start_condition_type,
+                "start_datetime_date"   : str(h.start_datetime.date()) if isinstance(h.start_datetime, datetime) else None,
+                "start_datetime_time"   : str(h.start_datetime.time()) if isinstance(h.start_datetime, datetime) else None,
+                "frequency"             : h.ui_frequency,
+                "sample_id"             : h.sample_id,
+                "use_until"             : "Y" if h.until is not None else "N",
             }
         else:
-            initial = {}
+            initial = {
+                "events"    : [CaseReminderEvent(day_num=0, fire_time=time(0,0), message={"":""}, callback_timeout_intervals=[], form_unique_id=None)],
+                "use_until" : "N",
+            }
         
         form = ComplexCaseReminderForm(initial=initial)
     
     return render_to_response(request, "reminders/partial/add_complex_reminder.html", {
-        "domain":       domain
-       ,"form":         form
-       ,"form_list":    form_list
+        "domain":       domain,
+        "form":         form,
+        "form_list":    form_list,
+        "handler_id":   handler_id,
+        "sample_list":  sample_list,
     })
 
 
-@login_and_domain_required
-def manage_surveys(request, domain):
+@reminders_permission
+def manage_keywords(request, domain):
     context = {
         "domain" : domain,
         "keywords" : SurveyKeyword.get_all(domain)
     }
-    return render_to_response(request, "reminders/partial/manage_surveys.html", context)
+    return render_to_response(request, "reminders/partial/manage_keywords.html", context)
 
-@login_and_domain_required
+@reminders_permission
 def add_keyword(request, domain, keyword_id=None):
     if keyword_id is None:
         s = SurveyKeyword(domain = domain)
@@ -230,15 +255,15 @@ def add_keyword(request, domain, keyword_id=None):
             return render_to_response(request, "reminders/partial/add_keyword.html", context)
         else:
             s.save()
-            return HttpResponseRedirect(reverse("manage_surveys", args=[domain]))
+            return HttpResponseRedirect(reverse("manage_keywords", args=[domain]))
 
-@login_and_domain_required
+@reminders_permission
 def delete_keyword(request, domain, keyword_id):
     s = SurveyKeyword.get(keyword_id)
     s.retire()
-    return HttpResponseRedirect(reverse("manage_surveys", args=[domain]))
+    return HttpResponseRedirect(reverse("manage_keywords", args=[domain]))
 
-@login_and_domain_required
+@reminders_permission
 def add_survey(request, domain, survey_id=None):
     survey = None
     if survey_id is not None:
@@ -444,7 +469,7 @@ def add_survey(request, domain, survey_id=None):
     }
     return render_to_response(request, "reminders/partial/add_survey.html", context)
 
-@login_and_domain_required
+@reminders_permission
 def survey_list(request, domain):
     context = {
         "domain" : domain,
@@ -452,7 +477,7 @@ def survey_list(request, domain):
     }
     return render_to_response(request, "reminders/partial/survey_list.html", context)
 
-@login_and_domain_required
+@reminders_permission
 def add_sample(request, domain, sample_id=None):
     sample = None
     if sample_id is not None:
@@ -527,7 +552,7 @@ def add_sample(request, domain, sample_id=None):
     }
     return render_to_response(request, "reminders/partial/add_sample.html", context)
 
-@login_and_domain_required
+@reminders_permission
 def sample_list(request, domain):
     context = {
         "domain" : domain,

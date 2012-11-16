@@ -3,27 +3,32 @@ from corehq.apps.commtrack.models import *
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack import stockreport
 from dimagi.utils.couch.database import get_db
+from corehq.apps.sms.api import send_sms_to_verified_number
 from lxml import etree
 import logging
 
 logger = logging.getLogger('commtrack.sms')
 
-def handle(v, text):
+def handle(verified_contact, text):
     """top-level handler for incoming stock report messages"""
-    domain = Domain.get_by_name(v.domain)
+    domain = Domain.get_by_name(verified_contact.domain)
     if not domain.commtrack_enabled:
         return False
 
-    # TODO error handling
-    data = StockReport(domain).parse(text)
-    logger.debug(data)
-    inst_xml = to_instance(v, data)
+    try:
+        data = StockReport(domain).parse(text)
+        if not data:
+            return False
+        logger.debug(data)
+    except Exception, e:
+        send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))
+        return True
+
+    inst_xml = to_instance(verified_contact, data)
     logger.debug(inst_xml)
     
-    stockreport.process(v.domain, inst_xml)
+    stockreport.process(domain.name, inst_xml)
 
-    # TODO: if message doesn't parse, don't handle it and fallback
-    # to a catch-all error handler?
     return True
 
 class StockReport(object):
@@ -33,12 +38,14 @@ class StockReport(object):
         self.domain = domain
         self.C = CommtrackConfig.for_domain(domain.name)
 
+    # TODO sms parsing could really use unit tests
     def parse(self, text, location=None):
         """take in a text and return the parsed stock transactions"""
         args = text.split()
 
         if args[0] in self.C.keywords().values():
             # single action sms
+            # TODO: support single-action by product, as well as by action?
             action = self.C.keywords()[args[0]]
             args = args[1:]
 
@@ -58,6 +65,10 @@ class StockReport(object):
                 args = args[1:]
 
             _tx = self.multiple_action_transactions(args)
+
+        else:
+            # initial keyword not recognized; delegate to another handler
+            return None
 
         return {
             'location': location,
@@ -94,26 +105,53 @@ class StockReport(object):
             raise RuntimeError('missing a value')
 
     def multiple_action_transactions(self, args):
+        action = None
+        product = None
+
         _args = iter(args)
+        def next():
+            return _args.next()
+
+        found_product_for_action = True
         while True:
             try:
-                op = _args.next()
+                keyword = next()
             except StopIteration:
-                # this is the only valid place for the arg list to end
+                if not found_product_for_action:
+                    raise RuntimeError('product expected')
                 break
 
-            prod_code, keyword = op.split(self.C.multiaction_delimiter)
-            product = self.product_from_code(prod_code)
-            action = self.C.keywords(multi=True)[keyword]
+            try:
+                action = self.C.keywords(multi=True)[keyword]
+                if not found_product_for_action:
+                    raise RuntimeError('product expected')
+                found_product_for_action = False
+                continue
+            except KeyError:
+                pass
 
-            if action == 'stockout':
-                value = 0
-            else:
-                value = int(_args.next())
+            try:
+                product = self.product_from_code(keyword)
+                found_product_for_action = True
+            except:
+                product = None
+            if product:
+                if action == 'stockout':
+                    value = 0
+                else:
+                    try:
+                        value = int(next())
+                    except (ValueError, StopIteration):
+                        raise RuntimeError('value expected')
 
-            yield mk_tx(product, action, value)
+                yield mk_tx(product, action, value)
+                continue
+
+            raise RuntimeError('do not recognize keyword')
+
             
     def location_from_code(self, loc_code):
+        """return the supply point case referenced by loc_code"""
         loc = get_db().view('commtrack/locations_by_code',
                             key=[self.domain.name, loc_code],
                             include_docs=True).first()
@@ -122,6 +160,7 @@ class StockReport(object):
         return CommCareCase.get(loc['id'])
 
     def product_from_code(self, prod_code):
+        """return the product doc referenced by prod_code"""
         p = Product.get_by_code(self.domain.name, prod_code)
         if p is None:
             raise RuntimeError('invalid product code')
@@ -137,6 +176,14 @@ def looks_like_prod_code(code):
     except:
         return True
 
+def product_subcases(supply_point):
+    """given a supply point, return all the sub-cases for each product stocked at that supply point
+    actually returns a mapping: product doc id => sub-case id
+    """
+    product_subcase_uuids = [ix.referenced_id for ix in supply_point.reverse_indices if ix.identifier == 'parent']
+    product_subcases = CommCareCase.view('_all_docs', keys=product_subcase_uuids, include_docs=True)
+    product_subcase_mapping = dict((subcase.dynamic_properties().get('product'), subcase._id) for subcase in product_subcases)
+    return product_subcase_mapping
 
 def to_instance(v, data):
     """convert the parsed sms stock report into an instance like what would be
@@ -145,11 +192,7 @@ def to_instance(v, data):
     from lxml.builder import ElementMaker
     M = ElementMaker(namespace='http://openrosa.org/jr/xforms', nsmap={'jrm': 'http://openrosa.org/jr/xforms'})
 
-    # find all stock product sub-cases linked to the supply point case, and build a mapping
-    # of the general Product doc id to the site-specific product sub-case
-    product_subcase_uuids = [ix.referenced_id for ix in data['location'].reverse_indices if ix.identifier == 'parent']
-    product_subcases = CommCareCase.view('_all_docs', keys=product_subcase_uuids, include_docs=True)
-    product_subcase_mapping = dict((subcase.dynamic_properties().get('product'), subcase._id) for subcase in product_subcases)
+    product_subcase_mapping = product_subcases(data['location'])
 
     def mk_xml_tx(tx):
         tx['product_id'] = tx['product']._id
