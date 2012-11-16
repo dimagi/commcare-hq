@@ -5,6 +5,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.fields import SelectApplicationField
 from corehq.apps.reports.generic import GenericTabularReport
 from couchforms.models import XFormInstance
+from django.utils.translation import ugettext_noop
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     """
@@ -13,7 +14,7 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
     pass
 
 class ApplicationStatusReport(DeploymentsReport):
-    name = "Application Status"
+    name = ugettext_noop("Application Status")
     slug = "app_status"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.GroupField',

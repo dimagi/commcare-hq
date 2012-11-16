@@ -3,6 +3,8 @@ from django.utils.safestring import mark_safe, mark_for_escaping
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from django.core.urlresolvers import reverse
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 
 class DropdownMenuItem(object):
     title = None
@@ -69,7 +71,7 @@ class DropdownMenuItem(object):
 
 
 class ReportsMenuItem(DropdownMenuItem):
-    title = "Reports"
+    title = ugettext_noop("Reports")
     view = "corehq.apps.reports.views.default"
     css_id = "project_reports"
 
@@ -79,7 +81,7 @@ class ReportsMenuItem(DropdownMenuItem):
 
 
 class ProjectInfoMenuItem(DropdownMenuItem):
-    title = "Project Info"
+    title = ugettext_noop("Project Info")
     view = "corehq.apps.appstore.views.project_info"
     css_id = "project_info"
 
@@ -89,7 +91,7 @@ class ProjectInfoMenuItem(DropdownMenuItem):
 
 
 class ManageDataMenuItem(DropdownMenuItem):
-    title = "Manage Data"
+    title = ugettext_noop("Manage Data")
     view = "corehq.apps.data_interfaces.views.default"
     css_id = "manage_data"
 
@@ -99,7 +101,7 @@ class ManageDataMenuItem(DropdownMenuItem):
 
 
 class ApplicationsMenuItem(DropdownMenuItem):
-    title = "Applications"
+    title = ugettext_noop("Applications")
     view = "corehq.apps.app_manager.views.default"
     css_id = "applications"
 
@@ -117,7 +119,7 @@ class ApplicationsMenuItem(DropdownMenuItem):
         if not apps:
             return submenu_context
 
-        submenu_context.append(self._format_submenu_context('My Applications', is_header=True))
+        submenu_context.append(self._format_submenu_context(_('My Applications'), is_header=True))
         for app in apps:
             app_info = app['value']
             if app_info:
@@ -128,15 +130,15 @@ class ApplicationsMenuItem(DropdownMenuItem):
         if self.request.couch_user.can_edit_apps():
             submenu_context.append(self._format_submenu_context(None, is_divider=True))
             newapp_options = [
-                self._format_submenu_context(None, html=self._new_app_link('Blank Application')),
-                self._format_submenu_context(None, html=self._new_app_link('RemoteApp (Advanced Users Only)',
+                self._format_submenu_context(None, html=self._new_app_link(_('Blank Application'))),
+                self._format_submenu_context(None, html=self._new_app_link(_('RemoteApp (Advanced Users Only)'),
                     is_remote=True)),
             ]
             if self.request.couch_user.is_previewer():
-                newapp_options.append(self._format_submenu_context('Visit CommCare Exchange to copy existing app...',
+                newapp_options.append(self._format_submenu_context(_('Visit CommCare Exchange to copy existing app...'),
                     url=reverse('appstore')))
             submenu_context.append(self._format_second_level_context(
-                'New Application...',
+                _('New Application...'),
                 '#',
                 newapp_options
             ))
@@ -157,7 +159,7 @@ class ApplicationsMenuItem(DropdownMenuItem):
 
 
 class CloudcareMenuItem(DropdownMenuItem):
-    title = "CloudCare"
+    title = ugettext_noop("CloudCare")
     view = "corehq.apps.cloudcare.views.default"
     css_id = "cloudcare"
 
@@ -167,7 +169,7 @@ class CloudcareMenuItem(DropdownMenuItem):
 
 
 class MessagesMenuItem(DropdownMenuItem):
-    title = "Messages"
+    title = ugettext_noop("Messages")
     view = "corehq.apps.sms.views.messaging"
     css_id = "messages"
 
@@ -177,7 +179,7 @@ class MessagesMenuItem(DropdownMenuItem):
 
 
 class ProjectSettingsMenuItem(DropdownMenuItem):
-    title = "Settings & Users"
+    title = ugettext_noop("Settings & Users")
     view = "corehq.apps.settings.views.default"
     css_id = "project_settings"
 
@@ -193,7 +195,7 @@ class ProjectSettingsMenuItem(DropdownMenuItem):
 
 
 class AdminReportsMenuItem(DropdownMenuItem):
-    title = "Admin"
+    title = ugettext_noop("Admin")
     view = "corehq.apps.hqadmin.views.default"
     css_id = "admin_tab"
 
@@ -201,23 +203,23 @@ class AdminReportsMenuItem(DropdownMenuItem):
     @memoized
     def submenu_items(self):
         submenu_context = [
-            self._format_submenu_context("Reports", is_header=True),
-            self._format_submenu_context("Admin Reports", url=reverse("default_admin_report")),
-            self._format_submenu_context("System Info", url=reverse("system_info")),
-            self._format_submenu_context("Management", is_header=True),
-            self._format_submenu_context(mark_for_escaping("ADM Reports & Columns"),
+            self._format_submenu_context(_("Reports"), is_header=True),
+            self._format_submenu_context(_("Admin Reports"), url=reverse("default_admin_report")),
+            self._format_submenu_context(_("System Info"), url=reverse("system_info")),
+            self._format_submenu_context(_("Management"), is_header=True),
+            self._format_submenu_context(mark_for_escaping(_("ADM Reports & Columns")),
                 url=reverse("default_adm_admin_interface")),
 #            self._format_submenu_context(mark_for_escaping("HQ Announcements"),
 #                url=reverse("default_announcement_admin")),
         ]
         try:
-            submenu_context.append(self._format_submenu_context(mark_for_escaping("Billing"),
+            submenu_context.append(self._format_submenu_context(mark_for_escaping(_("Billing")),
                 url=reverse("billing_default")))
         except Exception:
             pass
         submenu_context.extend([
             self._format_submenu_context(None, is_divider=True),
-            self._format_submenu_context("Django Admin", url="/admin")
+            self._format_submenu_context(_("Django Admin"), url="/admin")
         ])
         return submenu_context
 

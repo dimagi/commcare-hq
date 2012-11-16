@@ -7,12 +7,13 @@ from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjec
 from corehq.apps.reports.fields import FilterUsersField
 from corehq.apps.reports.generic import GenericReportView
 from dimagi.utils.dates import DateSpan
+from django.utils.translation import ugettext_noop
 
 DATE_FORMAT = "%Y-%m-%d"
 
 class ProjectReport(GenericReportView):
     # overriding properties from GenericReportView
-    section_name = "Project Reports"
+    section_name = ugettext_noop("Project Reports")
     app_slug = 'reports'
     dispatcher = ProjectReportDispatcher
     asynchronous = True

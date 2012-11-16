@@ -8,10 +8,11 @@ from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard.inspect import CaseListMixin
 from dimagi.utils.decorators.memoized import memoized
+from django.utils.translation import ugettext_noop
 
 class DataInterface(GenericReportView):
     # overriding properties from GenericReportView
-    section_name = 'Manage Data'
+    section_name = ugettext_noop('Manage Data')
     app_slug = 'data_interfaces'
     asynchronous = True
     dispatcher = DataInterfaceDispatcher
@@ -22,7 +23,7 @@ class DataInterface(GenericReportView):
         return reverse('data_interfaces_default', args=[self.request.project])
 
 class CaseReassignmentInterface(CaseListMixin, DataInterface):
-    name = "Reassign Cases"
+    name = ugettext_noop("Reassign Cases")
     slug = "reassign_cases"
 
     report_template_path = 'data_interfaces/interfaces/case_management.html'
