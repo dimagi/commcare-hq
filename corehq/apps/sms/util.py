@@ -8,7 +8,6 @@ from dimagi.utils.couch.database import get_db
 from corehq.apps.users.models import CouchUser
 from django.template.loader import render_to_string
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.sms.mixin import MobileBackend
 
 from xml.etree.ElementTree import XML, tostring
 from dimagi.utils.parsing import json_format_datetime
@@ -34,6 +33,8 @@ def load_backend(tag):
     for 'old-style' backends, create a virtual backend record
     wrapping the backend module
     """
+    # circular import
+    from corehq.apps.sms.mixin import MobileBackend
 
     # new-style backend
     try:

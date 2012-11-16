@@ -14,7 +14,7 @@ from corehq.apps.users import models as user_models
 from corehq.apps.sms.models import SMSLog, INCOMING
 from corehq.apps.groups.models import Group
 from dimagi.utils.web import render_to_response
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest, domain_admin_required
 from dimagi.utils.couch.database import get_db
 from django.contrib import messages
 from corehq.apps.reports import util as report_utils
@@ -185,11 +185,13 @@ def send_to_recipients(request, domain):
         reverse(compose_message, args=[domain])
     )
 
-@login_and_domain_required
+@domain_admin_required
 def message_test(request, domain, phone_number):
     if request.method == "POST":
         message = request.POST.get("message", "")
-        incoming(phone_number, message, "TEST")
+        domain_scope = None if request.couch_user.is_superuser else domain
+        incoming(phone_number, message, "TEST", domain_scope=domain_scope)
+
     context = get_sms_autocomplete_context(request, domain)
     context['domain'] = domain
     context['messagelog'] = SMSLog.by_domain_dsc(domain)
