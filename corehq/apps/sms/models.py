@@ -234,6 +234,7 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
         contact_phone_number = self.get_case_property("contact_phone_number")
         contact_phone_number_is_verified = self.get_case_property("contact_phone_number_is_verified")
         contact_backend_id = self.get_case_property("contact_backend_id")
+        contact_ivr_backend_id = self.get_case_property("contact_ivr_backend_id")
         if (contact_phone_number is None) or (contact_phone_number == "") or (str(contact_phone_number) == "0") or self.closed:
             try:
                 self.delete_verified_number()
@@ -243,7 +244,7 @@ class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
         elif contact_phone_number_is_verified:
             try:
                 self.delete_verified_number()
-                self.save_verified_number(self.domain, contact_phone_number, True, contact_backend_id)
+                self.save_verified_number(self.domain, contact_phone_number, True, contact_backend_id, ivr_backend_id=contact_ivr_backend_id)
             except:
                 #TODO: Handle exception
                 pass

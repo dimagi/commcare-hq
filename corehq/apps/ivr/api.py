@@ -7,6 +7,7 @@ from corehq.apps.app_manager.models import get_app, Form
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from django.http import HttpResponse
 from django.conf import settings
+from dimagi.utils.web import get_url_base
 
 IVR_EVENT_NEW_CALL = "NEW_CALL"
 IVR_EVENT_INPUT = "INPUT"
@@ -17,7 +18,10 @@ def convert_media_path_to_hq_url(path, app):
     if media is None:
         return None
     else:
-        return settings.BASE_URL + HQMediaMapItem.format_match_map(path, media_type=media.media_type, media_id=media.multimedia_id)["url"] + "foo.wav"
+        url_base = get_url_base()
+        if url_base.endswith("/"):
+            url_base = url_base[0:-1]
+        return url_base + HQMediaMapItem.format_match_map(path, media_type=media.media_type, media_id=media.multimedia_id)["url"] + "foo.wav"
 
 def incoming(phone_number, backend_module, gateway_session_id, ivr_event, input_data=None):
     # Look up the call if one already exists

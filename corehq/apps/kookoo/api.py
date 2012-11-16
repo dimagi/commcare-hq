@@ -3,6 +3,8 @@ from django.conf import settings
 from urllib import urlencode
 from urllib2 import urlopen
 from xml.etree.ElementTree import XML
+from dimagi.utils.web import get_url_base
+from django.core.urlresolvers import reverse
 
 class InvalidPhoneNumberException(Exception):
     pass
@@ -42,12 +44,16 @@ def initiate_outbound_call(call_log_entry, *args, **kwargs):
     else:
         raise InvalidPhoneNumberException("Kookoo can only send to Indian phone numbers.")
     
+    url_base = get_url_base()
+    if url_base.endswith("/"):
+        url_base = url_base[0:-1]
+    
     params = urlencode({
         "phone_no" : phone_number,
         "api_key" : kwargs["api_key"],
         "outbound_version" : "2",
-        "url" : settings.BASE_URL + "/kookoo/ivr/",
-        "callback_url" : settings.BASE_URL + "/kookoo/ivr_finished/",
+        "url" : url_base + reverse("corehq.apps.kookoo.views.ivr"),
+        "callback_url" : url_base + reverse("corehq.apps.kookoo.views.ivr_finished"),
     })
     url = "http://www.kookoo.in/outbound/outbound.php?%s" % params
     response = urlopen(url).read()

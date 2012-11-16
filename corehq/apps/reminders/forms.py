@@ -17,6 +17,7 @@ METHOD_CHOICES = (
     #('test', 'Test'),
     ('survey', 'SMS survey'),
     ('callback', 'SMS expecting callback'),
+    ('ivr_survey', 'IVR survey'),
 )
 
 RECIPIENT_CHOICES = (
@@ -161,7 +162,7 @@ class EventListField(Field):
                         raise ValidationError("Timeout intervals must be a list of comma-separated numbers.")
             
             form_unique_id = None
-            if self.widget.method == "survey":
+            if self.widget.method in ["survey", "ivr_survey"]:
                 form_unique_id = e.get("survey", None)
                 if form_unique_id is None:
                     raise ValidationError("Please create a form for the survey first, and then create the reminder definition.")
@@ -338,13 +339,13 @@ class ComplexCaseReminderForm(Form):
             return value
     
     def clean_default_lang(self):
-        if self.cleaned_data.get("method") == "survey":
-            return None
-        else:
+        if self.cleaned_data.get("method") in ["sms", "callback"]:
             value = self.cleaned_data.get("default_lang").strip()
             if value == "":
                 raise ValidationError("Please enter the default language code to use for the messages.")
             return value
+        else:
+            return None
     
     def clean_start_datetime_date(self):
         if self.cleaned_data.get("start_condition_type") == "ON_DATETIME":

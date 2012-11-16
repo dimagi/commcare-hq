@@ -21,10 +21,11 @@ from corehq.apps.sms.mixin import VerifiedNumber
 from couchdbkit.exceptions import ResourceConflict
 from corehq.apps.sms.util import create_task, close_task
 from corehq.apps.smsforms.app import submit_unfinished_form
+from corehq.apps.ivr.api import initiate_outbound_call
 
 LOCK_EXPIRATION = timedelta(hours = 1)
 
-METHOD_CHOICES = ["sms", "email", "test", "callback", "callback_test", "survey"]
+METHOD_CHOICES = ["sms", "email", "test", "callback", "callback_test", "survey", "ivr_survey"]
 
 REPEAT_SCHEDULE_INDEFINITELY = -1
 
@@ -502,7 +503,11 @@ class CaseReminderHandler(Document):
         except Exception:
             lang = None
         
-        if reminder.method == "survey":
+        if reminder.method == "ivr_survey":
+            if verified_number is not None:
+                initiate_outbound_call(verified_number, reminder.current_event.form_unique_id)
+            return True
+        elif reminder.method == "survey":
             if reminder.callback_try_count > 0:
                 if self.submit_partial_forms and (reminder.callback_try_count == len(reminder.current_event.callback_timeout_intervals)):
                     for session_id in reminder.xforms_session_ids:
