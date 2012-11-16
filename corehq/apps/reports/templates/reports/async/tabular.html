@@ -6,7 +6,7 @@
 {% block reportcontent %}
 {% if report.needs_filters %}
     <div class="well">
-        <p>Please choose your filters above to see report data.</p>
+        <p>{% trans "Please choose your filters above to see report data." %}</p>
     </div>
 {% else %}        
     <table class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
@@ -32,7 +32,7 @@
         {% if report_table.pagination.is_on %}
             <tr>
                 <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
-                    Fetching additional data, please wait...
+                    {% trans "Fetching additional data, please wait..." %}
                 </td>
             </tr>
         {% endif %}

@@ -17,6 +17,7 @@ from corehq.apps.reports.dispatcher import (ProjectReportDispatcher,
 from corehq.apps.adm.dispatcher import ADMSectionDispatcher
 import json
 import calendar
+from django.utils.translation import ugettext as _
 
 class HQUserType(object):
     REGISTERED = 0
@@ -271,7 +272,7 @@ class ReportConfig(Document):
 
     @property
     def report_name(self):
-        return self.report.name
+        return _(self.report.name)
 
     @property
     def full_name(self):
