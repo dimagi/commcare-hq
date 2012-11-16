@@ -1,6 +1,6 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load hq_shared_tags %}
-
+{% load i18n %}
 {% block js %}{{ block.super }}
     {% include "imports/datatables.html" %}
     <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
@@ -61,7 +61,7 @@
 {% block page-title %}
     <ul class="breadcrumb">
         <li>
-            <a href="{{ report.default_url }}"><strong>{{ report.section_name|default:"Reports" }}</strong></a> <span class="divider">&gt;</span>
+            <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a> <span class="divider">&gt;</span>
         </li>
         {% if report.breadcrumbs %}
             {% for crumb in report.breadcrumbs %}
@@ -71,7 +71,7 @@
             {% endfor %}
         {% endif %}
         <li class="active">
-            <div id="report-title"><a href="{{ report.url }}">{{ report.title|default:"Untitled Report"|safe }}</a></div>
+            <div id="report-title"><a href="{{ report.url }}">{% trans report.title|default:"Untitled Report"|safe %}</a></div>
         </li>
     </ul>
 {% endblock %}
