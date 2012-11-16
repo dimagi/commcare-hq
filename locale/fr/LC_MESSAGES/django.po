@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-11-16 16:15-0500\n"
+"POT-Creation-Date: 2012-11-16 18:31-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -134,6 +134,7 @@ msgstr ""
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:52
 #: .\submodules\bihar-reports\bihar\reports\indicators\__init__.py:149
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\inspect.py:329
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:103
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\web_users.html.py:81
 msgid "Name"
 msgstr ""
@@ -197,6 +198,7 @@ msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\adm\reports\__init__.py:15
 #: .\submodules\core-hq-src\corehq\apps\adm\reports\__init__.py:60
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:49
 msgid "Active Data Management"
 msgstr ""
 
@@ -228,6 +230,8 @@ msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\deployment_info.html.py:31
 #: .\submodules\core-hq-src\corehq\apps\appstore\templates\appstore\project_info.html.py:70
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:112
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:36
 msgid "Description"
 msgstr ""
 
@@ -383,7 +387,7 @@ msgid "E-mail"
 msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\hqwebapp\forms.py:16
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:510
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:511
 #: .\submodules\core-hq-src\corehq\apps\userhack\admin.py:13
 #: .\submodules\core-hq-src\corehq\apps\users\templates\users\mobile\users_list.html.py:139
 #: .\submodules\core-hq-src\lib\django_user_registration\forms.py:35
@@ -469,6 +473,7 @@ msgid "You do not have domain permissions."
 msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\prescriptions\templates\prescriptions\all.html.py:4
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:111
 msgid "Edit"
 msgstr ""
 
@@ -513,6 +518,7 @@ msgid "Commtrack"
 msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\__init__.py:16
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:48
 msgid "Project Reports"
 msgstr "Rapports de Projets"
 
@@ -590,16 +596,16 @@ msgid ""
 msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:208
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:355
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:437
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:556
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:356
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:438
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:557
 msgid "All Users"
 msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:299
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:411
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:589
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:648
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:412
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:590
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:649
 msgid "User"
 msgstr ""
 
@@ -626,105 +632,191 @@ msgstr ""
 msgid "Inactive Cases"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:375
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:376
 msgid "Submissions By Form"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:406
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:407
 msgid "(No name)"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:414
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:415
 msgid "All Forms"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:513
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:514
 msgid "Total"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:565
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:566
 msgid "Daily Form Submissions"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:572
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:573
 msgid "Daily Form Completions"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:580
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:581
 msgid "Form Completion Trends"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:590
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:591
 msgid "Average duration"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:591
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:592
 msgid "Shortest"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:592
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:593
 msgid "Longest"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:593
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:594
 msgid "No. of Forms"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:637
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:638
 msgid "Form Completion vs. Submission Trends"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:649
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:650
 msgid "Completion Time"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:650
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:651
 msgid "Submission Time"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:651
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:652
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:117
 msgid "View"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:652
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:653
 msgid "Difference"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:697
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:698
 msgid "Average"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:716
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:717
 msgid "day"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:716
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:717
 msgid "hour"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:716
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:717
 msgid "minute"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:716
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:717
 msgid "second"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:728
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:729
 msgid "submitted before completed [strange]"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:742
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:743
 msgid "Submission Times"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:824
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:825
 msgid "Submit Distribution"
 msgstr ""
 
-#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:846
+#: .\submodules\core-hq-src\corehq\apps\reports\standard\monitoring.py:847
 #, python-format
 msgid "(%(amt)s) submissions of %(form)s"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:72
+msgid "You don't have any favorites"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:90
+msgid "Email Supported"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:120
+msgid "Default Date Range"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:123
+msgid "Last 7 days"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:124
+msgid "Last 30 days"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:125
+msgid "Days ago"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:126
+msgid "Since a date"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:127
+msgid "From a date to a date"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:132
+msgid "Number of Days"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:138
+msgid "Begin Date"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:142
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:151
+msgid "YYYY-MM-DD"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\base_template.html.py:147
+msgid "End Date"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:20
+#, fuzzy
+msgid "My Saved Reports"
+msgstr "Rapports"
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:21
+msgid "My Scheduled Reports"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:27
+msgid ""
+"You don't have any saved reports.  You can store your favorite filters in a "
+"saved report and then easily navigate to that report with the filters "
+"already applied.  Saved reports can also be sent by email on a recurring "
+"basis."
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:29
+msgid ""
+"To create a new saved report, navigate to a report, select the filters you "
+"want to save, and click \\"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:34
+#, fuzzy
+msgid "Report"
+msgstr "Rapports"
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:35
+msgid "Saved Report Name"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:37
+msgid "Date Range"
 msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:68
@@ -743,8 +835,35 @@ msgstr ""
 msgid "Actions"
 msgstr ""
 
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:121
+msgid "Send Test"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:134
+msgid "Stop sending report?"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:138
+msgid "Are you sure you want to stop sending this report?"
+msgstr ""
+
 #: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:142
 msgid "Stop Sending"
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\reports_home.html.py:156
+msgid ""
+"You don't have any scheduled reports.  You can create a scheduled report "
+"based on a saved report to have a report delivered by email on a regular "
+"basis."
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\async\tabular.html.py:9
+msgid "Please choose your filters above to see report data."
+msgstr ""
+
+#: .\submodules\core-hq-src\corehq\apps\reports\templates\reports\async\tabular.html.py:35
+msgid "Fetching additional data, please wait..."
 msgstr ""
 
 #: .\submodules\core-hq-src\corehq\apps\userhack\admin.py:14
