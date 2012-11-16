@@ -1,4 +1,5 @@
 from StringIO import StringIO
+from datetime import datetime
 import getpass
 import urllib2
 from django.core.management.base import NoArgsCommand
@@ -53,10 +54,41 @@ class PactMigrateCommand(NoArgsCommand):
         res = p.post('/a/pact/receiver', payload= { 'xml_submission_file': f }, headers={'content-type':"multipart/form-data"})
         return res
 
-    def submit_xform_rf(self, submission_xml_string):
+    def submit_xform_rf(self, action, submission_xml_string):
+#        received_on = request.META.get('HTTP_X_SUBMIT_TIME')
+#        date_header = request.META.get('HTTP_DATE')
+#        if received_on:
+#            doc.received_on = string_to_datetime(received_on)
+#        if date_header:
+#            comes in as:
+#            Mon, 11 Apr 2011 18:24:43 GMT
+#            goes out as:
+#            2011-04-11T18:24:43Z
+#            try:
+#                date = datetime.strptime(date_header, "%a, %d %b %Y %H:%M:%S GMT")
+#                date = datetime.strftime(date, "%Y-%m-%dT%H:%M:%SZ")
+
+
         rf = RequestFactory()
         f = StringIO(submission_xml_string.encode('utf-8'))
         f.name = 'form.xml'
         req = rf.post('/a/pact/receiver', data = { 'xml_submission_file': f }) #, content_type='multipart/form-data')
+
+        server_date = action.get('server_date', None)
+        phone_date = action.get('date', None)
+
+        if phone_date:
+            date = datetime.strptime(phone_date, "%Y-%m-%dT%H:%M:%SZ")
+            date = datetime.strftime(date, "%a, %d %b %Y %H:%M:%S GMT")
+            req.META['HTTP_DATE'] = date
+
+        if server_date:
+            req.META['HTTP_X_SUBMIT_TIME'] = server_date
+        else:
+            if phone_date is not None:
+                req.META['HTTP_X_SUBMIT_TIME'] = phone_date
+
+
+
         return rcv_views.post(req, PACT_DOMAIN)
 

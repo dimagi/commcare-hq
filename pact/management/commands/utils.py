@@ -42,7 +42,7 @@ def base_create_block(pact_id, case_id, user_id, name, type, owner_id):
     Skeleton case to send to HQ
     """
     return """
-    <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="%(case_id)s" date_modified="2012-08-01" user_id="%(user_id)s">
+    <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="%(case_id)s" user_id="%(user_id)s">
         <create>
             <case_type>%(case_type)s</case_type>
             <case_name>%(case_name)s</case_name>

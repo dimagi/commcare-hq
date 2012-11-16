@@ -9,6 +9,7 @@ from dimagi.utils import make_time
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.groups.models import Group
 from localsettings import PACT_CHWS
+from pact.management.commands import PactMigrateCommand
 from pact.management.commands.constants import PACT_DOMAIN, PACT_HP_GROUP_ID, PACT_HP_GROUPNAME, RETRY_LIMIT
 from pact.management.commands.constants import  PACT_URL
 
@@ -16,8 +17,12 @@ from pact.management.commands.constants import  PACT_URL
 def get_or_create_pact_group():
     print "### Get or create pact hp group"
     group = Group.view("groups/by_name", key=[PACT_DOMAIN, PACT_HP_GROUPNAME],  include_docs=True).first()
+    if group:
+        Group.get_db().delete_doc(group['_id'])
+        group=None
+
     if not group:
-        group = Group(name=PACT_HP_GROUPNAME, domain=PACT_DOMAIN, _id = PACT_HP_GROUP_ID)
+        group = Group(name=PACT_HP_GROUPNAME, domain=PACT_DOMAIN, _id=PACT_HP_GROUP_ID)
         group.save()
         print "\tpact group created"
     if not group.case_sharing:
@@ -27,7 +32,7 @@ def get_or_create_pact_group():
     print "\tretrieved pact group"
     return group
 
-class Command(NoArgsCommand):
+class Command(PactMigrateCommand):
     help = "Create or update pact users from django to WebUsers"
     option_list = NoArgsCommand.option_list + (
     )

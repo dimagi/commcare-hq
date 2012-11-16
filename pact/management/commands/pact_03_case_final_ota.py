@@ -162,7 +162,7 @@ class Command(PactMigrateCommand):
             if remapped_user_id is not None:
                 #print "Set remapped id: %s->%s" % (child.get('user_id'),  remapped_user.username)
                 child.set('user_id', remapped_user_id._id)
-#            self.submit_case_block(child)
+#            self.submit_case_create_block(child)
 
         pool = Pool(POOL_SIZE)
         for child in tree.getchildren():
