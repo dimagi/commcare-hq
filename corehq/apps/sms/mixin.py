@@ -100,7 +100,10 @@ class CommCareMobileContactMixin(object):
 
         if not phone:
             # for backwards compatibility with code that assumes only one verified phone #
-            return sorted(verified.iteritems())[0][1]
+            if len(verified) > 0:
+                return sorted(verified.iteritems())[0][1]
+            else:
+                return None
 
         return verified.get(strip_plus(phone))
     

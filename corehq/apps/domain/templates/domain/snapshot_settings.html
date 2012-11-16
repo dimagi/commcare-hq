@@ -39,22 +39,12 @@
 {% block user-view %}
 <div>
     {% if published_snapshot %}
-        <form action="{% url domain_clear_published domain %}" method="POST">
-            <h3>
-                This project has been published
-                <button style="margin-left: 4em" class="btn btn-danger" type="submit">Unpublish</button>
-            </h3>
-        </form>
-        <dl class="dl-horizontal">
-            <dt>{% trans 'Published on' %}</dt>
-            <dd>{{ published_snapshot.snapshot_time }}</dd>
-            <dt>{% trans 'License' %}</dt>
-            <dd>{{ published_snapshot.get_license_display }}</dd>
-            <dt>{% trans 'Status' %}</dt>
-            <dd>{% if published_snapshot.is_approved %}Approved{% else %}Not yet approved{% endif %}</dd>
-            <dd><a href="{% url project_info published_snapshot.name %}">View on exchange</a></dd>
+        {% include 'domain/partials/project_version_display.html' with version=published_snapshot published=1 %}
     {% else %}
     <h3>This project has not been published</h3>
+        {% if snapshots %}
+            {% include 'domain/partials/project_version_display.html' with version=snapshots.0 published=0 %}
+        {% endif %}
     {% endif %}
 </div>
 <button id="toggle-snapshots" class="btn">Show previous versions</button>
