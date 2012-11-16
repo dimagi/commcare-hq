@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.views.decorators.http import require_POST, require_GET
-from corehq.apps.reports.util import SubmissionCouchKey, make_form_couch_key
+from corehq.apps.reports.util import make_form_couch_key
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
