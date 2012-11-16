@@ -194,7 +194,7 @@
     <hr/>
     <div>
         <h3>Reviews of {{ project.copied_from.display_name }}</h3>
-        {% if project.copied_from.name not in request.couch_user.get_domains %}
+        {% if project.copied_from.name not in request.couch_user.get_domains and project.published %}
             <div>
                 <a href="#add_review_modal" data-toggle="modal" class="btn btn-inverse">Write a Review</a>
             </div>
