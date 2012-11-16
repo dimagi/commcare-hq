@@ -1,5 +1,6 @@
 from django.core.management.base import LabelCommand, CommandError
 import os
+from corehq.apps.reports.util import make_form_couch_key
 from couchforms.models import XFormInstance
 from corehq.apps.users.util import format_username
 from dimagi.utils.couch.database import get_db
@@ -14,7 +15,12 @@ class Command(LabelCommand):
         if len(args) < 1:
             raise CommandError('Usage: manage.py submit_forms <domain>')
         domain = args[0]
-        submissions = XFormInstance.view('reports/all_submissions', startkey=[domain], endkey=[domain, {}], include_docs=True)
+        key = make_form_couch_key(domain)
+        submissions = XFormInstance.view('reports_forms/all_forms',
+            startkey=key,
+            endkey=key+[{}],
+            include_docs=True
+        )
         ids_by_username = dict()
         def get_id(username):
             if username in ids_by_username:

@@ -17,6 +17,7 @@ from corehq.apps.reports.decorators import cache_report
 from corehq.apps.reports.display import xmlns_to_name, FormType
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.models import CaseActivityReportCache
+from corehq.apps.reports.util import make_form_couch_key
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -386,17 +387,16 @@ class SubmissionsByFormReport(WorkerMonitoringReportTable, DatespanMixin):
             self._form_types = form_types if form_types else set()
         return self._form_types
 
-    _all_submissions = None
     @property
+    @memoized
     def all_submissions(self):
-        if self._all_submissions is None:
-            self._all_submissions = XFormInstance.view('reports/all_submissions',
-                startkey=[self.domain, self.datespan.startdate_param_utc],
-                endkey=[self.domain, self.datespan.enddate_param_utc],
-                include_docs=True,
-                reduce=False
-            )
-        return self._all_submissions
+        key = make_form_couch_key(self.domain)
+        return XFormInstance.view('reports_forms/all_forms',
+            startkey=key+[self.datespan.startdate_param_utc],
+            endkey=key+[self.datespan.enddate_param_utc],
+            include_docs=True,
+            reduce=False
+        )
 
     @property
     def headers(self):

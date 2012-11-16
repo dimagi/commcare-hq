@@ -1,22 +1,29 @@
+
+import json
 from collections import defaultdict
 from couchdbkit.exceptions import ResourceNotFound
-from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.groups.models import Group
-from dimagi.utils.couch.undo import DELETED_SUFFIX
-from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.make_uuid import random_hex
+
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
-import json
 from django.views.decorators.http import require_POST, require_GET
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CommCareUser, Permissions
-from couchforms.models import XFormInstance
+from corehq.apps.reports.util import SubmissionCouchKey, make_form_couch_key
+
+from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.web import render_to_response, json_request, json_response
+
+from casexml.apps.case.models import CommCareCase
+
+from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.groups.models import Group
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import CommCareUser, Permissions
 from corehq.apps.receiverwrapper.util import get_submit_url
+
+from couchforms.models import XFormInstance
 
 require_can_cleanup = require_permission(Permissions.edit_data)
 
@@ -48,17 +55,18 @@ def submissions_json(request, domain):
             total = len(subs)
         else:
             if userID is None:
-                subs = XFormInstance.view('reports/all_submissions',
-                    startkey=[domain, {}],
-                    endkey=[domain],
+                key = make_form_couch_key(domain)
+                subs = XFormInstance.view('reports_forms/all_forms',
+                    startkey=key+[{}],
+                    endkey=key,
                     reduce=False,
                     include_docs=True,
                     descending=True,
                     limit=limit
                 )
-                total = get_db().view('reports/all_submissions',
-                    startkey=[domain],
-                    endkey=[domain, {}],
+                total = get_db().view('reports_forms/all_forms',
+                    startkey=key,
+                    endkey=key+[{}],
                     group_level=1
                 ).one()
                 total = total['value'] if total else 0
@@ -224,7 +232,7 @@ def change_submissions_app_id(request, domain):
     new_app_id = request.POST['new_app_id']
     next = request.POST['next']
 
-    submissions = XFormInstance.view('reports/forms_by_xmlns',
+    submissions = XFormInstance.view('exports_forms/by_xmlns',
         key=['^XFormInstance', domain, app_id, xmlns],
         include_docs=True,
         reduce=False,
@@ -244,9 +252,10 @@ def delete_all_data(request, domain, template="cleanup/delete_all_data.html"):
         return render_to_response(request, template, {
             'domain': domain
         })
-    xforms = XFormInstance.view('reports/all_submissions',
-        startkey=[domain],
-        endkey=[domain, {}],
+    key = make_form_couch_key(domain)
+    xforms = XFormInstance.view('reports_forms/all_forms',
+        startkey=key,
+        endkey=key+[{}],
         include_docs=True,
         reduce=False
     )

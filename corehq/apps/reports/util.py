@@ -23,6 +23,18 @@ from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import json_request
 from django.conf import settings
 
+def make_form_couch_key(domain, by_submission_time=True,
+                   xmlns=None, user_id=None):
+    prefix = ["submission"] if by_submission_time else ["completion"]
+    key = [domain] if domain is not None else []
+    if xmlns:
+        prefix.append("xmlns")
+        key.append(xmlns)
+    if user_id:
+        prefix.append("user")
+        key.append(user_id)
+    return [" ".join(prefix)] + key
+
 def user_list(domain):
     #todo cleanup
     #referenced in fields -> SelectMobileWorkerField
