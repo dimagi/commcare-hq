@@ -54,12 +54,12 @@ def create_from_request(request, delay=True):
     From an inbound request (representing an incoming message), 
     create a message (log) object with the right fields populated.
     """
-    sender = request.REQUEST.get(InboundParams.SENDER, "")
-    message = request.REQUEST.get(InboundParams.MESSAGE, "")
+    sender = request.REQUEST[InboundParams.SENDER]
+    message = request.REQUEST[InboundParams.MESSAGE]
     timestamp = request.REQUEST.get(InboundParams.TIMESTAMP, "")
     # parse date or default to current utc time
     actual_timestamp = datetime.strptime(timestamp, DATE_FORMAT) \
-                            if timestamp else datetime.utcnow()
+                            if timestamp else None
     
     # not sure yet if this check is valid
     is_unicode = request.REQUEST.get(InboundParams.UDHI, "") == "1"
