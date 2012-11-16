@@ -81,6 +81,8 @@ def create_from_request(request, delay=True):
 
     return log
     
+def receive_phone_number():
+    return _config().get('receive_phone')
 
 def send(message, delay=True):
     """

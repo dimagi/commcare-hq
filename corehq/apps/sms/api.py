@@ -2,7 +2,7 @@ import logging
 from django.conf import settings
 
 from dimagi.utils.modules import try_import, to_function
-from corehq.apps.sms.util import clean_phone_number, load_backend
+from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
 from datetime import datetime
@@ -73,7 +73,7 @@ def send_sms_with_backend(domain, phone_number, text, backend_id):
 
     def onerror():
         logging.exception("Exception while sending SMS to %s with backend %s" % (phone_number, backend_id))
-    return send_message_via_backend(msg, load_backend(backend_id), onerror=onerror)
+    return send_message_via_backend(msg, MobileBackend.load(backend_id), onerror=onerror)
 
 def send_message_via_backend(msg, backend=None, onerror=lambda: None):
     """send sms using a specific backend
@@ -91,11 +91,7 @@ def send_message_via_backend(msg, backend=None, onerror=lambda: None):
             # verification, thus the backend is None. it's best to only call
             # send_sms_to_verified_number on truly verified contacts, though
 
-        try:
-            backend_module = try_import(backend.outbound_module)
-        except:
-            raise RuntimeError('could not find outbound module %s' % backend.outbound_module)
-        backend_module.send(msg, **backend.outbound_params)
+        backend.backend_module.send(msg, **backend.outbound_params)
 
         try:
             msg.backend_api = backend_module.API_ID
@@ -138,6 +134,7 @@ def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None)
     phone_number - originating phone number
     text - message content
     backend_api - backend ID of receiving sms backend
+    timestamp - message received timestamp; defaults to now (UTC)
     domain_scope - if present, only messages from phone numbers that can be
       definitively linked to this domain will be processed; others will be
       dropped (useful to provide security when simulating incoming sms)
