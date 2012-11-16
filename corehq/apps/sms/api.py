@@ -131,10 +131,25 @@ def start_session_from_keyword(survey_keyword, verified_number):
         print e
         print "ERROR: Exception raised while starting survey for keyword " + survey_keyword.keyword + ", domain " + verified_number.domain
 
-def incoming(phone_number, text, backend_api):
+def incoming(phone_number, text, backend_api, domain_scope=None):
+    """
+    entry point for incoming sms
+
+    phone_number - originating phone number
+    text - message content
+    backend_api - backend ID of receiving sms backend
+    domain_scope - if present, only messages from phone numbers that can be
+      definitively linked to this domain will be processed; others will be
+      dropped (useful to provide security when simulating incoming sms)
+    """
     phone_number = clean_phone_number(phone_number)
     v = VerifiedNumber.by_phone(phone_number)
-    
+ 
+    if domain_scope:
+        # only process messages for phones known to be associated with this domain
+        if v is None or v.domain != domain_scope:
+            raise RuntimeError('attempted to simulate incoming sms from phone number not verified with this domain')
+
     # Log message in message log
     msg = SMSLog(
         phone_number    = phone_number,
