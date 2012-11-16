@@ -148,7 +148,7 @@ class ReportConfig(Document):
             else:
                 n.delete()
 
-        super(ReportConfig, self).delete(*args, **kwargs)
+        return super(ReportConfig, self).delete(*args, **kwargs)
 
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, report_slug=None, include_docs=True):
@@ -300,8 +300,6 @@ class ReportConfig(Document):
     def get_report_content(self):
         """
         Get the report's HTML content as rendered by the static view format.
-        This method doesn't really have a natural place in this class, but it's
-        better than duplicating the code in tasks and test_config.
 
         """
         report_class = self.report.__module__ + '.' + self.report.__name__
@@ -323,7 +321,13 @@ class ReportConfig(Document):
         return json.loads(response.content)['report']
 
 
+class UnsupportedScheduledReportError(Exception):
+    pass
+
+
 class ReportNotification(Document):
+    # 11/12: removed WeeklyNotification and DailyNotification subclasses
+
     domain = StringProperty()
     owner_id = StringProperty()
 
@@ -331,10 +335,24 @@ class ReportNotification(Document):
     config_ids = StringListProperty()  # added 11/2012
     send_to_owner = BooleanProperty()  # added 11/2012
 
+    # should be named hour, actually.  moved from subclasses
+    hours = IntegerProperty(default=8)
+    # moved from WeeklyNotification subclass.  Will now be -1 for daily
+    # notifications
+    day_of_week = IntegerProperty(default=-1)
+
     # report_slug = StringProperty()  # removed 11/2012
     # removed 11/2012, only ever contained the user_id of the owner
     # user_ids = StringListProperty()
 
+    @property
+    def is_editable(self):
+        try:
+            self.report_slug
+            return False
+        except AttributeError:
+            return True
+        
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id):
         key = [domain, owner_id]
@@ -376,6 +394,9 @@ class ReportNotification(Document):
             configs = ReportConfig.view('_all_docs', keys=self.config_ids,
                 include_docs=True).all()
             configs = [c for c in configs if not hasattr(c, 'deleted')]
+        elif self.report_slug == 'admin_domains':
+            raise UnsupportedScheduledReportError("admin_domains is no longer"
+                "supported as a schedulable report for the time being")
         else:
             # create a new ReportConfig object, useful for its methods and
             # calculated properties, but don't save it
@@ -392,20 +413,20 @@ class ReportNotification(Document):
 
     @property
     def day_name(self):
-        if self.doc_type == 'WeeklyReportNotification':
+        if self.day_of_week != -1:
             return calendar.day_name[self.day_of_week]
         else:
             return "Every day"
 
     @classmethod
-    def days(cls):
-        """List of tuples for day of week number and human-readable day of week"""
-        return [(val, calendar.day_name[val]) for val in range(7)]
+    def day_choices(cls):
+        """Tuples for day of week number and human-readable day of week"""
+        return tuple([(val, calendar.day_name[val]) for val in range(7)])
 
     @classmethod
-    def hours(cls):
-        """List of tuples for hour number and human-readable hour"""
-        return [(val, "%s:00" % val) for val in range(24)]
+    def hour_choices(cls):
+        """Tuples for hour number and human-readable hour"""
+        return tuple([(val, "%s:00" % val) for val in range(24)])
 
 
     def send(self):
@@ -424,15 +445,6 @@ class ReportNotification(Document):
 
         for email in self.all_recipient_emails:
             send_HTML_email(title, email, body)
-
-
-class DailyReportNotification(ReportNotification):
-    hours = IntegerProperty()
-    
-    
-class WeeklyReportNotification(ReportNotification):
-    hours = IntegerProperty()
-    day_of_week = IntegerProperty()
 
 class FormExportSchema(SavedExportSchema):
     doc_type = 'SavedExportSchema'
