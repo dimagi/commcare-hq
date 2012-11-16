@@ -182,6 +182,7 @@ HQ_APPS = (
     'corehq.apps.smsforms',
     'corehq.apps.ivr',
     'corehq.apps.tropo',
+    'corehq.apps.kookoo',
     'corehq.apps.yo',
     'corehq.apps.registration',
     'corehq.apps.unicel',
