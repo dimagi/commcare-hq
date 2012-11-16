@@ -4,10 +4,10 @@ from django.forms.widgets import Textarea
 from django.utils.safestring import mark_safe
 from corehq.apps.adm.models import BaseADMColumn, ReducedADMColumn, DaysSinceADMColumn, ConfigurableADMColumn,\
     CompareADMColumn, ADMReport, KEY_TYPE_OPTIONS, REPORT_SECTION_OPTIONS, \
-    CASE_FILTER_OPTIONS, CASE_STATUS_OPTIONS, CaseCountADMColumn, ConfigurableADMColumn, CouchViewADMColumn
+    CASE_FILTER_OPTIONS, CASE_STATUS_OPTIONS, CaseCountADMColumn, ConfigurableADMColumn, CouchViewADMColumn, SORT_BY_DIRECTION_OPTIONS, UserDataADMColumn
+from corehq.apps.crud.models import BaseAdminCRUDForm
 from hqstyle.forms import fields as hq_fields
 from dimagi.utils.data.crud import BaseCRUDForm
-from dimagi.utils.decorators.memoized import memoized
 
 DATESPAN_CHOICES = [("startdate", "Start of Datespan"), ("enddate", "End of Datespan")]
 IGNORE_DATESPAN_FIELD = forms.BooleanField(
@@ -17,19 +17,12 @@ IGNORE_DATESPAN_FIELD = forms.BooleanField(
     help_text="If unchecked, the records returned will be between the startdate and enddate of the datespan."
 )
 
-class BaseADMDocumentForm(BaseCRUDForm):
+class BaseADMDocumentForm(BaseAdminCRUDForm):
     slug = forms.SlugField(label="Slug")
     domain = forms.CharField(label="Project Name (blank applies to all projects)", required=False)
     name = forms.CharField(label="Name")
     description = forms.CharField(label="Description", required=False,
         widget=Textarea(attrs=dict(style="height:80px;width:340px;")))
-
-    @property
-    @memoized
-    def crud_manager(self):
-        if self.existing_object:
-            return self.existing_object.admin_crud
-        return self.doc_class.get_admin_crud()
 
 
 class CouchViewADMColumnForm(BaseADMDocumentForm):
@@ -98,6 +91,10 @@ class CaseFilterFormMixin(forms.Form):
         required=False,
         widget=forms.Select(choices=CASE_STATUS_OPTIONS))
 
+class UserDataADMColumnForm(ConfigurableADMColumnForm):
+    doc_class = UserDataADMColumn
+    user_data_key = forms.CharField(label="User Data Key")
+
 
 class CaseCountADMColumnForm(ConfigurableADMColumnForm, CaseFilterFormMixin):
     doc_class = CaseCountADMColumn
@@ -158,6 +155,12 @@ class ADMReportForm(BaseADMDocumentForm):
         help_text="A comma separated list of column slugs for the report.",
         required=False,
         widget=Textarea(attrs=dict(style="height:80px;width:340px;"))
+    )
+    sort_by_default = forms.CharField(label="Slug of Sort By Default",
+        required=False,
+        help_text="The default is to sort by username.")
+    sort_by_direction = forms.CharField(label="Sort By Direction",
+        widget=forms.Select(choices=SORT_BY_DIRECTION_OPTIONS)
     )
     key_type = forms.CharField(label="Key By",
         widget=forms.Select(choices=KEY_TYPE_OPTIONS)

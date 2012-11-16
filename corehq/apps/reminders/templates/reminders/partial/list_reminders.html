@@ -1,66 +1,58 @@
 {% extends "reminders/reminders_base.html" %}
 {% load hq_shared_tags %}
-{% block js-inline %}{{ block.super }}
-    <script>
-        $(function () {
-            $('.message-popup').addClass('shadow').find('td').each(function () {
-                var message = $(this).html();
-                message = message.replace(/(\{[^\}]*\})/g, "<code>$1</code>");
-                $(this).html(message);
-            });
-            $('.message-popup-link').click(function (e) {
-                e.preventDefault();
-                Shield.open(
-                    $(this).prev('.message-popup')
-                );
-            });
-        });
-    </script>
-{% endblock %}
+
 {% block head %}{{ block.super }}
-    <style>
-        .message-popup {
-            position: absolute;
-            z-index: 10;
-            background-color: white;
-            border: 1px solid #CCC;
-            width: 400px;
-            text-align: justify;
-        }
-    </style>
+
+<style type="text/css">
+    #reminder_list_table {
+        width: auto;
+        margin-left: 0px;
+        min-width: 50%;
+    }
+</style>
+
 {% endblock %}
 
 {% block reminders_content %}
-    <h1>Reminders</h1>
-    <table>
-        <tr>
-            <th>Edit</th>
-            <th>Nickname</th>
-            <th>Delete</th>
-        </tr>
-        {% for handler in reminder_handlers %}
-            {% ifchanged handler.case_type %}
-                <tr class="separator center">
-                    <td colspan="7">For case type <code>{{ handler.case_type }}</code></td>
+    <table id="reminder_list_table" class="table table-striped datatable table-bordered">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Trigger Type</th>
+                <th>Case Type</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for handler in reminder_handlers %}
+                <tr>
+                    <td>{{ handler.nickname }}</td>
+                    <td>{% if handler.start_condition_type == "CASE_CRITERIA" %}Case Criteria{% else %}{% if handler.start_condition_type == "ON_DATETIME" %}Specific Date/Time{% else %}{{ handler.start_condition_type }}{% endif %}{% endif %}</td>
+                    <td>{{ handler.case_type|default:"n/a" }}</td>
+                    <td><a href="{% url edit_complex domain handler.get_id %}"><span class="btn btn-primary">Edit</span></a></td>
+                    <td>
+                        <a class="btn btn-danger" data-toggle="modal" href="#delete_{{ handler.get_id }}"><i class="icon icon-white icon-remove"></i> Delete</a>
+                        <div id="delete_{{ handler.get_id }}" class="modal hide fade">
+                            <div class="modal-header">
+                                <a class="close" data-dismiss="modal">&times;</a>
+                                <h3>Delete Reminder Definition?</h3>
+                            </div>
+                            <form class="form form-horizontal" name="delete_handler" action="{% url delete_reminder domain handler.get_id %}" method="post">
+                                <div class="modal-body">
+                                    <p>Are you sure you want to delete reminder definition "{{ handler.nickname }}"?</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <a href="#" data-dismiss="modal" class="btn">Cancel</a>
+                                    <button type="submit" class="btn btn-danger"><i class="icon icon-white icon-remove"></i> Delete</button>
+                                </div>
+                            </form>
+                        </div>
+                    </td>
                 </tr>
-            {% endifchanged %}
-        <tr>
-            <td><a href="{% url edit_complex domain handler.get_id %}">edit</a></td>
-            <td>{{ handler.nickname }}</td>
-            <td>
-                <form action="{% url delete_reminder domain handler.get_id %}" method="post"
-                      style="display: inline;"
-                      data-title="Delete Reminder?" data-message="Are you sure you want to delete reminder {{ handler.nickname }}?">
-{#                    <input type="submit" value="Delete"/>#}
-                    <a href="#" class="confirm-submit">delete</a>
-                </form>
-            </td>
-        </tr>
-        {% endfor %}
-        <tr class="separator">
-            <td colspan="7">
-                <a href="{% url add_complex_reminder_schedule domain %}"><div class="ui-icon ui-icon-plusthick"></div>Add Reminder</a>
-            </td>
-        </tr>
+            {% endfor %}
+        </tbody>
     </table>
+    <br />
+    <a href="{% url add_complex_reminder_schedule domain %}"><span class="btn btn-success"><i class="icon icon-white icon-plus"></i> New Reminder Definition</span></a>
 {% endblock %}

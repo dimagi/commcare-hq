@@ -295,7 +295,7 @@ def snapshot_settings(request, domain):
     domain = Domain.get_by_name(domain)
     snapshots = domain.snapshots()
     return render_to_response(request, 'domain/snapshot_settings.html',
-                {'domain': domain.name, 'snapshots': snapshots, 'published_snapshot': domain.published_snapshot()})
+                {'domain': domain.name, 'snapshots': list(snapshots), 'published_snapshot': domain.published_snapshot()})
 
 @require_previewer # remove for production
 @domain_admin_required
@@ -306,14 +306,13 @@ def create_snapshot(request, domain):
         form = SnapshotSettingsForm(initial={
                 'default_timezone': domain.default_timezone,
                 'case_sharing': json.dumps(domain.case_sharing),
-                'city': domain.deployment.city,
-                'country': domain.deployment.country,
-                'region': domain.deployment.region,
                 'project_type': domain.project_type,
                 'share_multimedia': True,
-                'license': domain.license
+                'license': domain.license,
+                'publish_on_submit': True,
             })
-        published_snapshot = domain.published_snapshot() or domain
+        snapshots = list(domain.snapshots())
+        published_snapshot = snapshots[0] if snapshots else domain
         published_apps = {}
         if published_snapshot is not None:
             form = SnapshotSettingsForm(initial={
@@ -323,9 +322,10 @@ def create_snapshot(request, domain):
                 'license': published_snapshot.license,
                 'title': published_snapshot.title,
                 'author': published_snapshot.author,
-                'share_multimedia': True,
+                'share_multimedia': published_snapshot.multimedia_included,
                 'description': published_snapshot.description,
-                'short_description': published_snapshot.short_description
+                'short_description': published_snapshot.short_description,
+                'publish_on_submit': True,
             })
             for app in published_snapshot.full_applications():
                 if domain == published_snapshot:
@@ -381,31 +381,38 @@ def create_snapshot(request, domain):
                      'app_forms': app_forms,
                      'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
 
+        new_license = request.POST['license']
         if request.POST.get('share_multimedia', False):
             media = domain.all_media()
             for m_file in media:
                 if domain.name not in m_file.shared_by:
                     m_file.shared_by.append(domain.name)
-#                    m_file.licenses[domain.name] = domain.license # this shouldn't be necessary now that licenses are set on upload
-                    m_file.save()
+
+                # set the license of every multimedia file that doesn't yet have a license set
+                if not m_file.license:
+                    m_file.update_or_add_license(domain, type=new_license)
+
+                m_file.save()
+
         old = domain.published_snapshot()
         new_domain = domain.save_snapshot()
-        if request.POST['license'] in LICENSES.keys():
-            new_domain.license = request.POST['license']
+        new_domain.license = new_license
         new_domain.description = request.POST['description']
         new_domain.short_description = request.POST['short_description']
         new_domain.project_type = request.POST['project_type']
-#        new_domain.region = request.POST['region']
-#        new_domain.city = request.POST['city']
-#        new_domain.country = request.POST['country']
         new_domain.title = request.POST['title']
         new_domain.author = request.POST['author']
-        for snapshot in domain.snapshots():
-            if snapshot.published and snapshot._id != new_domain._id:
-                snapshot.published = False
-                snapshot.save()
+        new_domain.multimedia_included = request.POST.get('share_multimedia', '') == 'on'
+
         new_domain.is_approved = False
-        new_domain.published = True
+        if request.POST.get('publish_on_submit', False):
+            for snapshot in domain.snapshots():
+                if snapshot.published and snapshot._id != new_domain._id:
+                    snapshot.published = False
+                    snapshot.save()
+            new_domain.published = True
+        else:
+            new_domain.published = False
 
         current_user = CouchUser.from_django_user(request.user)
         new_domain.cda.signed = True
@@ -450,6 +457,9 @@ def create_snapshot(request, domain):
                 application.phone_model = request.POST["%s-phone_model" % original_id]
                 application.attribution_notes = request.POST["%s-attribution_notes" % original_id]
                 application.user_type = request.POST["%s-user_type" % original_id]
+
+                if not new_domain.multimedia_included:
+                    application.multimedia_map = None
                 application.save()
             else:
                 application.delete()
