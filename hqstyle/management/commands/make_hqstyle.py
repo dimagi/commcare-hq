@@ -34,6 +34,7 @@ class Command(BaseCommand):
     
     js_plugins = [
         "combobox",
+        "multi-typeahead",
         "hoverdropdown",
     ]
 

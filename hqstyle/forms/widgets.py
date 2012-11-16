@@ -1,9 +1,11 @@
+from django import forms
 from django.forms.fields import MultiValueField, CharField
 from django.forms.util import flatatt
 from django.forms.widgets import CheckboxInput, HiddenInput, Input, RadioSelect, RadioFieldRenderer, RadioInput, TextInput, MultiWidget
 from django.utils.encoding import force_unicode
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
+import json
 
 class BootstrapCheckboxInput(CheckboxInput):
 
@@ -101,3 +103,30 @@ class BootstrapPhoneNumberInput(Input):
         return mark_safe(u"""<div class="input-prepend">
         <span class="add-on">+</span>%s
         </div>""" % super(BootstrapPhoneNumberInput, self).render(name, value, attrs))
+
+
+
+class AutocompleteTextarea(forms.Textarea):
+    """
+    Textarea with auto-complete.  Uses a custom extension on top of Twitter
+    Bootstrap's typeahead plugin.
+    
+    """
+
+    def render(self, name, value, attrs=None):
+        if hasattr(self, 'choices') and self.choices:
+            output = mark_safe("""
+<script>
+$(function() {
+    $("#%s").multiTypeahead({
+        source: %s
+    });
+});
+</script>\n""" % (attrs['id'], json.dumps(self.choices)))
+
+        else:
+            output = mark_safe("")
+
+        output += super(AutocompleteTextarea, self).render(name, value,
+                                                           attrs=attrs)
+        return output
