@@ -26,6 +26,7 @@ LANGUAGE_CODE = 'en-us'
 
 LANGUAGES = (
     ('en', 'English'),
+    ('fr', 'French'),
     # ('hin', 'Hindi'),
 )
 
