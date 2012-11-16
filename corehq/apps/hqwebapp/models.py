@@ -122,15 +122,7 @@ class ApplicationsMenuItem(DropdownMenuItem):
             app_info = app['value']
             if app_info:
                 url = reverse('view_app', args=[self.domain, app_info['_id']])
-                app_extras = "v.%d" % app_info['version']
-                is_remote = (app_info.get('doc_type') == 'RemoteApp')
-                is_2x = (app_info.get('application_version') == '2.0')
-                if is_remote:
-                    app_extras = "%s | Remote" % app_extras
-                if is_2x:
-                    app_extras = "%s | 2.x" % app_extras
-                app_name = mark_safe("%s <small>%s</small>" % (mark_for_escaping(app_info['name']),
-                                                               mark_for_escaping(app_extras)))
+                app_name = mark_safe("%s" % mark_for_escaping(app_info['name'] or '(Untitled)'))
                 submenu_context.append(self._format_submenu_context(app_name, url=url))
 
         if self.request.couch_user.can_edit_apps():
@@ -181,7 +173,7 @@ class MessagesMenuItem(DropdownMenuItem):
 
     @classmethod
     def is_viewable(cls, request, domain):
-        return domain and request.project.is_snapshot
+        return domain and not request.project.is_snapshot
 
 
 class ProjectSettingsMenuItem(DropdownMenuItem):
