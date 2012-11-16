@@ -24,11 +24,16 @@ class VerifiedNumber(Document):
     owner_id        = StringProperty()
     phone_number    = StringProperty()
     backend_id      = StringProperty() # points to a MobileBackend
+    ivr_backend_id  = StringProperty() # points to a MobileBackend
     verified        = BooleanProperty()
     
     @property
     def backend(self):
         return MobileBackend.load(self.backend_id)
+    
+    @property
+    def ivr_backend(self):
+        return MobileBackend.get(self.ivr_backend_id)
     
     @property
     def owner(self):
@@ -59,11 +64,11 @@ def add_plus(phone_number):
 
 class MobileBackend(Document):
     """
-    Defines a backend to be used for sending / receiving SMS.
+    Defines an instance of a backend api to be used for either sending sms, or sending outbound calls.
     """
     domain = ListProperty(StringProperty)   # A list of domains for which this backend is applicable
     description = StringProperty()          # (optional) A description of this backend
-    outbound_module = StringProperty()      # The fully-qualified name of the inbound module to be used (must implement send() method)
+    outbound_module = StringProperty()      # The fully-qualified name of the outbound module to be used (sms backends: must implement send(); ivr backends: must implement initiate_outbound_call() )
     outbound_params = DictProperty()        # The parameters which will be the keyword arguments sent to the outbound module's send() method
 
     @classmethod
@@ -198,7 +203,7 @@ class CommCareMobileContactMixin(object):
         if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self._id):
             raise PhoneNumberInUseException("Phone number is already in use.")
     
-    def save_verified_number(self, domain, phone_number, verified, backend_id):
+    def save_verified_number(self, domain, phone_number, verified, backend_id, ivr_backend_id=None):
         """
         Saves the given phone number as this contact's verified phone number.
         
@@ -218,6 +223,7 @@ class CommCareMobileContactMixin(object):
         v.phone_number = phone_number
         v.verified = verified
         v.backend_id = backend_id
+        v.ivr_backend_id = ivr_backend_id
         v.save()
 
     def delete_verified_number(self, phone_number=None):

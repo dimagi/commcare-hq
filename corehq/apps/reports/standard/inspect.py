@@ -20,6 +20,8 @@ from dimagi.utils.couch.pagination import CouchFilter, FilteredPaginator
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.timezones import utils as tz_utils
 from corehq.apps.groups.models import Group
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 
 
 class ProjectInspectionReportParamsMixin(object):
@@ -47,7 +49,7 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
 
 
 class SubmitHistory(ProjectInspectionReport):
-    name = 'Submit History'
+    name = ugettext_noop('Submit History')
     slug = 'submit_history'
 
     @property
@@ -135,7 +137,7 @@ class CaseDisplay(object):
         self.report = report
 
     def user_not_found_display(self, user_id):
-        return "Unknown [%s]" % user_id
+        return _("Unknown [%s]") % user_id
 
     @property
     def owner_display(self):
@@ -223,7 +225,7 @@ class CaseDisplay(object):
             if action['action_type'] == 'create':
                 owner_id = action.get_user_id()
         if not owner_id:
-            return "No data"
+            return _("No data")
         return self.report.usernames.get(owner_id, self.user_not_found_display(owner_id))
 
 class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReportParametersMixin):
@@ -304,7 +306,7 @@ class CaseListMixin(ProjectInspectionReportParamsMixin, GenericTabularReport, Pr
 
 
 class CaseListReport(CaseListMixin, ProjectInspectionReport):
-    name = 'Case List'
+    name = ugettext_noop('Case List')
     slug = 'case_list'
 
     @property
@@ -323,17 +325,20 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn("Case Type"),
-            DataTablesColumn("Name"),
-            DataTablesColumn("Owner"),
-            DataTablesColumn("Created Date"),
-            DataTablesColumn("Created By"),
-            DataTablesColumn("Modified Date"),
-            DataTablesColumn("Status")
+            DataTablesColumn(_("Case Type")),
+            DataTablesColumn(_("Name")),
+            DataTablesColumn(_("Owner")),
+            DataTablesColumn(_("Created Date")),
+            DataTablesColumn(_("Created By")),
+            DataTablesColumn(_("Modified Date")),
+            DataTablesColumn(_("Status"))
         )
         headers.no_sort = True
         if not self.individual:
-            self.name = "%s for %s" % (self.name, SelectMobileWorkerField.get_default_text(self.user_filter))
+            self.name = _("%(report_name)s for %(worker_type)s") % {
+                "report_name": _(self.name), 
+                "worker_type": _(SelectMobileWorkerField.get_default_text(self.user_filter))
+            }
 
         return headers
 
@@ -440,7 +445,7 @@ create a couch doc as such:
 }
 """
 
-    name = "Maps"
+    name = ugettext_noop("Maps")
     slug = "maps"
     # todo: support some of these filters -- right now this report
     hide_filters = True
