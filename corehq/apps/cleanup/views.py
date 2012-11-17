@@ -71,17 +71,18 @@ def submissions_json(request, domain):
                 ).one()
                 total = total['value'] if total else 0
             else:
-                subs = XFormInstance.view('reports/submit_history',
-                    startkey=[domain, userID, {}],
-                    endkey=[domain, userID],
+                key = make_form_couch_key(domain, user_id=userID)
+                subs = XFormInstance.view('reports_forms/all_forms',
+                    startkey=key+[{}],
+                    endkey=key,
                     reduce=False,
                     include_docs=True,
                     descending=True,
                     limit=limit
                 )
-                total = get_db().view('reports/submit_history',
-                    startkey=[domain, userID],
-                    endkey=[domain, userID, {}],
+                total = get_db().view('reports_forms/all_forms',
+                    startkey=key,
+                    endkey=key+[{}],
                     group_level=2
                 ).one()
                 total = total['value'] if total else 0

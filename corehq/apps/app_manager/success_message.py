@@ -61,9 +61,11 @@ class SuccessMessage(object):
         if not hasattr(self, 'domain'):
             self.domain = self.couch_user.domain if self.couch_user else None
 
-        r = get_db().view('reports/submit_history',
-            startkey=[self.domain, self.userID, json_format_datetime(time)],
-            endkey=[self.domain, self.userID, {}],
+        from corehq.apps.reports.util import make_form_couch_key
+        key = make_form_couch_key(self.domain, user_id=self.userID)
+        r = get_db().view('reports_forms/all_forms',
+            startkey=key+[json_format_datetime(time)],
+            endkey=key+[{}],
             group=False
         ).one()
         return r['value'] if r else 0
