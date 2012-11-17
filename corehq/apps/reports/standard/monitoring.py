@@ -660,10 +660,10 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTable, Datesp
         total = 0
         total_seconds = 0
         for user in self.users:
-            key = [" ".join(prefix), self.domain, user.get('user_id')]
-            if selected_form:
-                key.append(selected_form)
-            data = get_db().view("reports/completion_vs_submission",
+            key = make_form_couch_key(self.domain,
+                user_id=user.get('user_id'),
+                xmlns=selected_form)
+            data = get_db().view("reports_forms/all_forms",
                 startkey=key+[self.datespan.startdate_param_utc],
                 endkey=key+[self.datespan.enddate_param_utc],
                 reduce=False
