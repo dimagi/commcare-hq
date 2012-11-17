@@ -26,6 +26,7 @@ LANGUAGE_CODE = 'en-us'
 
 LANGUAGES = (
     ('en', 'English'),
+    ('fr', 'French'),
     # ('hin', 'Hindi'),
 )
 
@@ -182,6 +183,7 @@ HQ_APPS = (
     'corehq.apps.smsforms',
     'corehq.apps.ivr',
     'corehq.apps.tropo',
+    'corehq.apps.kookoo',
     'corehq.apps.yo',
     'corehq.apps.registration',
     'corehq.apps.unicel',
@@ -768,7 +770,7 @@ SELENIUM_APP_SETTING_DEFAULTS = {
 }
 
 PILLOWTOPS = [ 'corehq.pillows.CasePillow',
-               #'corehq.pillows.ExchangePillow', #todo when merged
+               'corehq.pillows.ExchangePillow',
                'corehq.pillows.AuditcarePillow',
                'corehq.pillows.CouchlogPillow',
                'corehq.pillows.DevicelogPillow',
