@@ -118,7 +118,11 @@ def active_users(request):
     number_threshold = 15
     date_threshold_days_ago = 90
     date_threshold = json_format_datetime(datetime.utcnow() - timedelta(days=date_threshold_days_ago))
-    for line in get_db().view("reports/submit_history", group_level=2):
+    key = make_form_couch_key(None, user_id="")
+    for line in get_db().view("reports_forms/all_forms",
+        startkey=key,
+        endkey=key+[{}],
+        group_level=3):
         if line['value'] >= number_threshold:
             keys.append(line["key"])
 
@@ -132,8 +136,11 @@ def active_users(request):
         except Exception:
             return False
 
-    for domain, user_id in keys:
-        if get_db().view("reports/submit_history", reduce=False, startkey=[domain, user_id, date_threshold], limit=1):
+    for time_type, domain, user_id in keys:
+        if get_db().view("reports_forms/all_forms",
+            reduce=False,
+            startkey=[time_type, domain, user_id, date_threshold],
+            limit=1):
             if True or is_valid_user_id(user_id):
                 final_count[domain] += 1
 

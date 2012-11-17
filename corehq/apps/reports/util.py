@@ -30,9 +30,10 @@ def make_form_couch_key(domain, by_submission_time=True,
     if xmlns:
         prefix.append("xmlns")
         key.append(xmlns)
-    if user_id:
+    if user_id is not None:
         prefix.append("user")
-        key.append(user_id)
+        if user_id:
+            key.append(user_id)
     return [" ".join(prefix)] + key
 
 def user_list(domain):
@@ -145,9 +146,10 @@ def get_all_owner_ids_submitted(domain):
     return set([row['key'][2] for row in submitted])
 
 def get_username_from_forms(domain, user_id):
+    key = make_form_couch_key(domain, user_id=user_id)
     user_info = get_db().view(
-        'reports/submit_history',
-        startkey=[domain, user_id],
+        'reports_forms/all_forms',
+        startkey=key,
         limit=1,
         reduce=False
     ).one()
