@@ -26,6 +26,7 @@ LANGUAGE_CODE = 'en-us'
 
 LANGUAGES = (
     ('en', 'English'),
+    ('fr', 'French'),
     # ('hin', 'Hindi'),
 )
 
@@ -162,6 +163,9 @@ HQ_APPS = (
     'formtranslate',
     'receiver',
     'langcodes',
+    'corehq.apps.adm',
+    'corehq.apps.announcements',
+    'corehq.apps.crud',
     'corehq.apps.receiverwrapper',
     'corehq.apps.migration',
     'corehq.apps.app_manager',
@@ -179,12 +183,12 @@ HQ_APPS = (
     'corehq.apps.smsforms',
     'corehq.apps.ivr',
     'corehq.apps.tropo',
+    'corehq.apps.kookoo',
     'corehq.apps.yo',
     'corehq.apps.registration',
     'corehq.apps.unicel',
     'corehq.apps.reports',
     'corehq.apps.data_interfaces',
-    'corehq.apps.adm',
     'corehq.apps.builds',
     'corehq.apps.orgs',
     'corehq.apps.api',
@@ -217,16 +221,16 @@ REFLEXIVE_URL_BASE = "localhost:8000"
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
-TABS = [
-    ("corehq.apps.appstore.views.project_info", "Info", lambda request: request.project.is_snapshot),
-    ("corehq.apps.reports.views.default", "Reports", lambda request: not request.project.is_snapshot),
-    ("corehq.apps.data_interfaces.views.default", "Manage Data", lambda request: request.couch_user.can_edit_data()),
-    ("corehq.apps.app_manager.views.default", "Applications"),
-    ("corehq.apps.cloudcare.views.default", "CloudCare", lambda request: request.couch_user.can_edit_data()),
-    ("corehq.apps.sms.views.messaging", "Messages", lambda request: not request.project.is_snapshot),
-    ("corehq.apps.settings.views.default", "Settings & Users", lambda request: request.couch_user.can_edit_commcare_users() or request.couch_user.can_edit_web_users()),
-    ("corehq.apps.hqadmin.views.default", "Admin Reports", "is_superuser"),
-]
+MENU_ITEMS = (
+    "corehq.apps.hqwebapp.models.ProjectInfoMenuItem",
+    "corehq.apps.hqwebapp.models.ReportsMenuItem",
+    "corehq.apps.hqwebapp.models.ManageDataMenuItem",
+    "corehq.apps.hqwebapp.models.ApplicationsMenuItem",
+    "corehq.apps.hqwebapp.models.CloudcareMenuItem",
+    "corehq.apps.hqwebapp.models.MessagesMenuItem",
+    "corehq.apps.hqwebapp.models.ProjectSettingsMenuItem",
+    "corehq.apps.hqwebapp.models.AdminReportsMenuItem",
+)
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
@@ -419,6 +423,7 @@ XFORMS_POST_URL = _dynamic_db_settings["XFORMS_POST_URL"]
 
 COUCHDB_APPS = [
     'adm',
+    'announcements',
     'api',
     'app_manager',
     'appstore',
@@ -718,6 +723,12 @@ ADM_ADMIN_INTERFACE_MAP = {
     ]
 }
 
+ANNOUNCEMENTS_ADMIN_INTERFACE_MAP = {
+    "Global HQ Announcements": [
+        'corehq.apps.announcements.interface.ManageGlobalHQAnnouncementsInterface',
+    ]
+}
+
 MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
     messages.DEBUG: '',
@@ -736,6 +747,16 @@ SMS_HANDLERS = [
     'corehq.apps.sms.api.form_session_handler',
 ]
 
+# mapping of phone number prefix (including country code) to a registered
+# outbound sms backend to use for that set of numbers. the backend can be:
+# * the ID of a MobileBackend couch doc ("new-style" backends), or
+# * the python path of a backend module ("old-style" backends)
+SMS_BACKENDS = {
+    '': 'MOBILE_BACKEND_MACH', # default backend
+    '91': 'MOBILE_BACKEND_UNICEL', # india
+    '999': 'MOBILE_BACKEND_TEST', # +999 is an unused country code
+}
+
 SELENIUM_APP_SETTING_DEFAULTS = {
     'cloudcare': {
         # over-generous defaults for now
@@ -750,7 +771,7 @@ SELENIUM_APP_SETTING_DEFAULTS = {
 }
 
 PILLOWTOPS = [ 'corehq.pillows.CasePillow',
-               #'corehq.pillows.ExchangePillow', #todo when merged
+               'corehq.pillows.ExchangePillow',
                'corehq.pillows.AuditcarePillow',
                'corehq.pillows.CouchlogPillow',
                'corehq.pillows.DevicelogPillow',
