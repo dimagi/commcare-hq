@@ -66,8 +66,9 @@ class FormErrorReport(DeploymentsReport, DatespanMixin):
             formatted_error_count = '<span class="label label-important">%d</span>' % error_count if error_count > 0\
                                         else '<span class="label">%d</span>' % error_count
 
-            key = [self.domain, user.get('user_id')]
-            data = get_db().view("reports/submit_history",
+            from corehq.apps.reports.util import make_form_couch_key
+            key = make_form_couch_key(self.domain, user_id=user.get('user_id'))
+            data = get_db().view("reports_forms/all_forms",
                 startkey=key + [self.datespan.startdate_param_utc],
                 endkey=key + [self.datespan.enddate_param_utc, {}],
                 reduce=True
