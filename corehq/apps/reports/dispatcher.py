@@ -5,6 +5,7 @@ from corehq.apps.domain.decorators import login_and_domain_required, cls_login_a
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.modules import to_function
 from django.utils.html import escape
+from django.utils.translation import ugettext as _
 
 datespan_default = datespan_in_request(
     from_param="startdate",
@@ -140,7 +141,7 @@ class ReportDispatcher(View):
         current_slug = kwargs.get('report_slug')
         for key, models in reports.items():
             section = list()
-            section_header = '<li class="nav-header">%s</li>' % escape(key)
+            section_header = '<li class="nav-header">%s</li>' % escape(_(key))
             for model in models:
                 if not dispatcher.permissions_check(model, request, *args, **kwargs):
                     continue
@@ -155,9 +156,9 @@ class ReportDispatcher(View):
                         </a></li>""" % dict(
                             css_class="active" if selected_report else "",
                             link=report.get_url(*args),
-                            link_title=report.description or "",
+                            link_title=_(report.description) if report.description else "",
                             icon='<i class="icon%s %s"></i> ' % ("-white" if selected_report else "", report.icon) if report.icon else "",
-                            title=report.name
+                            title=_(report.name) if report.name else ""
                         ))
             if section:
                 report_nav.append(section_header)

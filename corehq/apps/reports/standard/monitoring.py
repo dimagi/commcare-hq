@@ -24,6 +24,8 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.timezones import utils as tz_utils
 from dimagi.utils.web import get_url_base
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 
 def cache_report():
     """do nothing until the real cache_report is fixed"""
@@ -76,7 +78,7 @@ class CaseActivityReport(WorkerMonitoringReportTable):
     danny   5 (25%)         10 (50%)        20 (100%)       17                          6
     (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
     """
-    name = 'Case Activity'
+    name = ugettext_noop('Case Activity')
     slug = 'case_activity'
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.CaseTypeField',
@@ -192,19 +194,19 @@ class CaseActivityReport(WorkerMonitoringReportTable):
         for landmark in self.landmarks:
             headers.add_column(DataTablesColumn("Last %s Days" % landmark.days if landmark else "Ever",
                 sort_type=DTSortType.NUMERIC,
-                help_text='Number of cases modified (or closed) in the last %s days' % landmark.days))
+                help_text=_('Number of cases modified (or closed) in the last %s days') % landmark.days))
         headers.add_column(DataTablesColumn("Active Cases",
             sort_type=DTSortType.NUMERIC,
-            help_text='Number of cases modified in the last %s days that are still open' % self.milestone.days))
+            help_text=_('Number of cases modified in the last %s days that are still open') % self.milestone.days))
         headers.add_column(DataTablesColumn("Inactive Cases",
             sort_type=DTSortType.NUMERIC,
-            help_text="Number of cases that are open but haven't been touched in the last %s days" % self.milestone.days))
+            help_text=_("Number of cases that are open but haven't been touched in the last %s days") % self.milestone.days))
         return headers
 
     @property
     def rows(self):
         rows = [self.Row(self, user) for user in self.users]
-        total_row = self.TotalRow(rows, "All Users")
+        total_row = self.TotalRow(rows, _("All Users"))
 
         def format_row(row):
             cells = [row.header()]
@@ -255,7 +257,7 @@ class CaseActivityReportCahed(WorkerMonitoringReportTable, CouchCachedReportMixi
         danny   5 (25%)         10 (50%)        20 (100%)       17                          6
         (name)  (modified_since(x)/[active + closed_since(x)])  (open & modified_since(120)) (open & !modified_since(120))
     """
-    name = 'Case Activity'
+    name = ugettext_noop('Case Activity')
     slug = 'case_activity_cached' #change to case_activity when ready to deploy
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.CaseTypeField',
@@ -295,20 +297,20 @@ class CaseActivityReportCahed(WorkerMonitoringReportTable, CouchCachedReportMixi
 
     @property
     def headers(self):
-        headers = DataTablesHeader(DataTablesColumn("User"))
+        headers = DataTablesHeader(DataTablesColumn(_("User")))
         for landmark in self.landmarks:
-            headers.add_column(DataTablesColumn("Last %s Days" % landmark if landmark else "Ever",
+            headers.add_column(DataTablesColumn(_("Last %s Days") % landmark if landmark else _("Ever"),
                 sort_type=DTSortType.NUMERIC,
-                help_text='Number of cases modified or closed in the last %s days ' % landmark))
-        headers.add_column(DataTablesColumn("Active Cases ",
+                help_text=_('Number of cases modified or closed in the last %s days') % landmark))
+        headers.add_column(DataTablesColumn(_("Active Cases"),
             sort_type=DTSortType.NUMERIC,
-            help_text='Number of cases modified in the last %s days that are still open' % self.milestone))
-        headers.add_column(DataTablesColumn("Closed Cases ",
+            help_text=_('Number of cases modified in the last %s days that are still open') % self.milestone))
+        headers.add_column(DataTablesColumn("Closed Cases",
             sort_type=DTSortType.NUMERIC,
-            help_text='Number of cases closed in the last %s days' % self.milestone))
-        headers.add_column(DataTablesColumn("Inactive Cases ",
+            help_text=_('Number of cases closed in the last %s days') % self.milestone))
+        headers.add_column(DataTablesColumn(_("Inactive Cases"),
             sort_type=DTSortType.NUMERIC,
-            help_text="Number of cases that are open but haven't been touched in the last %s days" % self.milestone))
+            help_text=_("Number of cases that are open but haven't been touched in the last %s days") % self.milestone))
         return headers
 
     @property
@@ -351,7 +353,8 @@ class CaseActivityReportCahed(WorkerMonitoringReportTable, CouchCachedReportMixi
             row.append(self.table_cell(total_inactive))
             rows.append(row)
 
-        total_row = ["All Users"]
+        
+        total_row = [_("All Users")]
         for i in range(1, len(self.landmarks)+4):
             total_row.append(sum([row[i].get('sort_key', 0) for row in rows]))
         grand_total = sum(total_row[-3:-1])
@@ -371,7 +374,7 @@ class CaseActivityReportCahed(WorkerMonitoringReportTable, CouchCachedReportMixi
 
 
 class SubmissionsByFormReport(WorkerMonitoringReportTable, DatespanMixin):
-    name = "Submissions By Form"
+    name = ugettext_noop("Submissions By Form")
     slug = "submissions_by_form"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
                 'corehq.apps.reports.fields.GroupField',
@@ -401,15 +404,15 @@ class SubmissionsByFormReport(WorkerMonitoringReportTable, DatespanMixin):
     @property
     def headers(self):
         form_names = [xmlns_to_name(*id_tuple) for id_tuple in self.form_types]
-        form_names = [name.replace("/", " / ") if name is not None else '(No name)' for name in form_names]
+        form_names = [name.replace("/", " / ") if name is not None else _('(No name)') for name in form_names]
         if self.form_types:
             # this fails if form_names, form_types is [], []
             form_names, self._form_types = zip(*sorted(zip(form_names, self.form_types)))
 
-        headers = DataTablesHeader(DataTablesColumn("User", span=3))
+        headers = DataTablesHeader(DataTablesColumn(_("User"), span=3))
         for name in list(form_names):
             headers.add_column(DataTablesColumn(name, sort_type=DTSortType.NUMERIC))
-        headers.add_column(DataTablesColumn("All Forms", sort_type=DTSortType.NUMERIC))
+        headers.add_column(DataTablesColumn(_("All Forms"), sort_type=DTSortType.NUMERIC))
         return headers
 
     @property
@@ -432,7 +435,7 @@ class SubmissionsByFormReport(WorkerMonitoringReportTable, DatespanMixin):
                         [self.table_cell(row_sum, "<strong>%s</strong>" % row_sum)])
 
         totals_by_form = [totals_by_form[form_type] for form_type in self.form_types]
-        self.total_row = ["All Users"] + \
+        self.total_row = [_("All Users")] + \
                          ["%s" % t for t in totals_by_form] + \
                          ["<strong>%s</strong>" % sum(totals_by_form)]
         return rows
@@ -505,10 +508,10 @@ class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
 
     @property
     def headers(self):
-        headers = DataTablesHeader(DataTablesColumn("Username", span=3))
+        headers = DataTablesHeader(DataTablesColumn(_("Username"), span=3))
         for d in self.dates:
             headers.add_column(DataTablesColumn(d.strftime(DATE_FORMAT), sort_type=DTSortType.NUMERIC))
-        headers.add_column(DataTablesColumn("Total", sort_type=DTSortType.NUMERIC))
+        headers.add_column(DataTablesColumn(_("Total"), sort_type=DTSortType.NUMERIC))
         return headers
 
     @property
@@ -527,11 +530,11 @@ class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
 
         user_map = dict([(user.get('user_id'), i) for (i, user) in enumerate(self.users)])
         date_map = dict([(date.strftime(DATE_FORMAT), i+1) for (i,date) in enumerate(self.dates)])
-        rows = [[0]*(2+len(date_map)) for _ in range(len(self.users))]
+        rows = [[0]*(2+len(date_map)) for _tmp in range(len(self.users))]
         total_row = [0]*(2+len(date_map))
 
         for result in results:
-            _, date = result['key']
+            _tmp, date = result['key']
             date = dateutil.parser.parse(date)
             tz_offset = self.timezone.localize(self.datespan.enddate).strftime("%z")
             date = date + datetime.timedelta(hours=int(tz_offset[0:3]), minutes=int(tz_offset[0]+tz_offset[3:5]))
@@ -550,7 +553,7 @@ class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
             total_row[1:-1] = [total_row[ind+1]+val for ind, val in enumerate(rows[i][1:-1])]
             total_row[-1] += total
 
-        total_row[0] = "All Users"
+        total_row[0] = _("All Users")
         self.total_row = total_row
 
         for row in rows:
@@ -559,12 +562,12 @@ class DailyReport(WorkerMonitoringReportTable, DatespanMixin):
 
 
 class DailySubmissionsReport(DailyReport):
-    name = "Daily Form Submissions"
+    name = ugettext_noop("Daily Form Submissions")
     slug = "daily_submissions"
 
 
 class DailyFormCompletionsReport(DailyReport):
-    name = "Daily Form Completions"
+    name = ugettext_noop("Daily Form Completions")
     slug = "daily_completions"
 
     by_submission_time=False
@@ -572,7 +575,7 @@ class DailyFormCompletionsReport(DailyReport):
 
 
 class FormCompletionTrendsReport(WorkerMonitoringReportTable, DatespanMixin):
-    name = "Form Completion Trends"
+    name = ugettext_noop("Form Completion Trends")
     slug = "completion_times"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.SelectFormField',
@@ -581,11 +584,11 @@ class FormCompletionTrendsReport(WorkerMonitoringReportTable, DatespanMixin):
 
     @property
     def headers(self):
-        return DataTablesHeader(DataTablesColumn("User"),
-            DataTablesColumn("Average duration"),
-            DataTablesColumn("Shortest"),
-            DataTablesColumn("Longest"),
-            DataTablesColumn("No. of Forms"))
+        return DataTablesHeader(DataTablesColumn(_("User")),
+            DataTablesColumn(_("Average duration")),
+            DataTablesColumn(_("Shortest")),
+            DataTablesColumn(_("Longest")),
+            DataTablesColumn(_("No. of Forms")))
 
     @property
     def rows(self):
@@ -629,7 +632,7 @@ class FormCompletionTrendsReport(WorkerMonitoringReportTable, DatespanMixin):
 
 
 class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTable, DatespanMixin):
-    name = "Form Completion vs. Submission Trends"
+    name = ugettext_noop("Form Completion vs. Submission Trends")
     slug = "completion_vs_submission"
     
     fields = ['corehq.apps.reports.fields.FilterUsersField',
@@ -640,11 +643,11 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTable, Datesp
 
     @property
     def headers(self):
-        return DataTablesHeader(DataTablesColumn("User", span=3),
-            DataTablesColumn("Completion Time", span=2),
-            DataTablesColumn("Submission Time", span=2),
-            DataTablesColumn("View", sortable=False, span=2),
-            DataTablesColumn("Difference", sort_type=DTSortType.NUMERIC, span=3)
+        return DataTablesHeader(DataTablesColumn(_("User"), span=3),
+            DataTablesColumn(_("Completion Time"), span=2),
+            DataTablesColumn(_("Submission Time"), span=2),
+            DataTablesColumn(_("View"), sortable=False, span=2),
+            DataTablesColumn(_("Difference"), sort_type=DTSortType.NUMERIC, span=3)
         )
 
     @property
@@ -689,7 +692,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTable, Datesp
                     total_seconds += td_total
                     total += 1
 
-        self.total_row = ["Average", "-", "-", "-", self._format_td_status(int(total_seconds/total), False) if total > 0 else "--"]
+        self.total_row = [_("Average"), "-", "-", "-", self._format_td_status(int(total_seconds/total), False) if total > 0 else "--"]
         return rows
 
     def _format_date(self, date, d_format="%d %b %Y, %H:%M:%S"):
@@ -708,7 +711,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTable, Datesp
             hours = td.seconds//3600
             minutes = (td.seconds//60)%60
             vals = [td.days, hours, minutes, (td.seconds - hours*3600 - minutes*60)]
-            names = ["day", "hour", "minute", "second"]
+            names = [_("day"), _("hour"), _("minute"), _("second")]
             status = ["%s %s%s" % (val, names[i], "s" if val != 1 else "") for (i, val) in enumerate(vals) if val > 0]
 
             if td.days > 1:
@@ -720,7 +723,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTable, Datesp
             if not status:
                 status.append("same")
             elif td.days < 0:
-                status = ["submitted before completed [strange]"]
+                status = [_("submitted before completed [strange]")]
                 klass = "label-inverse"
 
         if use_label:
@@ -734,7 +737,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringReportTable, Datesp
 
 
 class SubmissionTimesReport(WorkerMonitoringChart):
-    name = "Submission Times"
+    name = ugettext_noop("Submission Times")
     slug = "submit_time_punchcard"
 
     report_partial_path = "reports/partials/punchcard.html"
@@ -816,7 +819,7 @@ easy_install pygooglechart.  Until you do that this won't work.
 
 
 class SubmitDistributionReport(WorkerMonitoringChart):
-    name = "Submit Distribution"
+    name = ugettext_noop("Submit Distribution")
     slug = "submit_distribution"
 
     report_partial_path = "reports/partials/generic_piechart.html"
@@ -837,15 +840,19 @@ class SubmitDistributionReport(WorkerMonitoringChart):
             for row in view:
                 xmlns = row["key"][-1]
                 form_name = xmlns_to_name(self.domain, xmlns, app_id=None)
+                def _desc(amt, form_name):
+                    return _("(%(amt)s) submissions of %(form)s") % {
+                        "amt": _(str(amt)), 
+                        "form": _(form_name)
+                    }
                 if form_name in predata:
                     predata[form_name]["value"] = predata[form_name]["value"] + row["value"]
-                    predata[form_name]["description"] = "(%s) submissions of %s" %\
-                                                        (predata[form_name]["value"], form_name)
+                    predata[form_name]["description"] = _desc(predata[form_name]["value"], 
+                                                              form_name)
                 else:
                     predata[form_name] = {"display": form_name,
                                           "value": row["value"],
-                                          "description": "(%s) submissions of %s" %\
-                                                         (row["value"], form_name)}
+                                          "description": _desc(row["value"], form_name)}
         for value in predata.values():
             data.append(value)
         return dict(

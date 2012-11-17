@@ -1,9 +1,10 @@
 from datetime import datetime
 from django.test import TestCase
 from django.test.client import Client
-from corehq.apps.sms.models import SMSLog
+from corehq.apps.sms.models import SMSLog, INCOMING
 from corehq.apps.users.models import CouchUser, WebUser
-from corehq.apps.unicel.api import InboundParams, INCOMING, DATE_FORMAT
+from corehq.apps.unicel.api import InboundParams, DATE_FORMAT
+import json
 
 class IncomingPostTest(TestCase):
 
@@ -24,18 +25,15 @@ class IncomingPostTest(TestCase):
 
     def tearDown(self):
         self.couch_user.delete()
-        
+
     def testPostToIncomingAscii(self):
         fake_post = {InboundParams.SENDER: str(self.number),
                      InboundParams.MESSAGE: self.message_ascii,
                      InboundParams.TIMESTAMP: datetime.now().strftime(DATE_FORMAT),
                      InboundParams.DCS: self.dcs,
                      InboundParams.UDHI: '0'}
-        client = Client()
-        response = client.post('/unicel/in/', fake_post)
+        response, log = post(fake_post)
         self.assertEqual(200, response.status_code)
-        self.assertEqual(1, SMSLog.count_by_domain(self.domain))
-        log = SMSLog.by_domain_dsc(self.domain).all()[0]
         self.assertEqual(self.message_ascii, log.text)
         self.assertEqual(INCOMING, log.direction)
         self.assertEqual(log.date.strftime(DATE_FORMAT),
@@ -48,13 +46,16 @@ class IncomingPostTest(TestCase):
                      InboundParams.TIMESTAMP: datetime.now().strftime(DATE_FORMAT),
                      InboundParams.DCS: self.dcs,
                      InboundParams.UDHI: '1'}
-        client = Client()
-        response = client.get('/unicel/in/', fake_post)
+        response, log = post(fake_post)
         self.assertEqual(200, response.status_code)
-        self.assertEqual(1, SMSLog.count_by_domain(self.domain))
-        log = SMSLog.by_domain_dsc(self.domain).all()[0]
         self.assertEqual(self.message_utf_hex.decode("hex").decode("utf_16_be"),
                         log.text)
         self.assertEqual(INCOMING, log.direction)
         self.assertEqual(log.date.strftime(DATE_FORMAT),
                          fake_post[InboundParams.TIMESTAMP])
+
+def post(data):
+    client = Client()
+    response = client.post('/unicel/in/', data)
+    message_id = json.loads(response.content)['message_id']
+    return response, SMSLog.get(message_id)

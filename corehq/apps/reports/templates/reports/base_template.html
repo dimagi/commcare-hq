@@ -1,6 +1,6 @@
 {% extends "reports/standard/base_template.html" %}
 {% load hq_shared_tags %}
-
+{% load i18n %}
 {% block js %}{{ block.super }}
 <script src="{% static 'reports/ko/saved_reports.js' %}"></script>
 {% endblock %}
@@ -45,8 +45,8 @@
 {% block subsection-navigation %}
 <nav class="hq-subsection-navbar">
     <ul class="nav">
-        <li {% ifequal report.section_name 'Project Reports' %}class="active"{% endifequal %}><a href="{% url reports_home domain %}">Project Reports</a> <div class="arrow"></div></li>
-        <li {% ifequal report.section_name 'Active Data Management' %}class="active"{% endifequal %}><a href="{% url default_adm_report domain %}">Active Data Management</a> <div class="arrow"></div></li>
+        <li {% ifequal report.app_slug 'reports' %}class="active"{% endifequal %}><a href="{% url reports_home domain %}">{% trans  "Project Reports" %}</a> <div class="arrow"></div></li>
+        <li {% ifequal report.app_slug 'adm' %}class="active"{% endifequal %}><a href="{% url default_adm_report domain %}">{% trans  "Active Data Management" %}</a> <div class="arrow"></div></li>
     </ul>
 </nav>
 {% endblock %}
@@ -69,7 +69,7 @@
 
             <ul class="dropdown-menu">
                 <li data-bind="ifnot: reportConfigs().length">
-                    <a href="#">You don't have any favorites</a>
+                    <a href="#">{% trans "You don't have any favorites" %}</a>
                 </li>
                 <!-- ko foreach: reportConfigs -->
                 <li>
@@ -87,7 +87,7 @@
 
         {% if report.is_emailable %}
             <div style="display: inline-block; margin-left:0.5em;" class="label label-info" id="email-enabled">
-                <i class="icon-white icon-info-sign"></i> Email Supported
+                <i class="icon-white icon-info-sign"></i> {% trans "Email Supported" %}
             </div>
         {% endif %}
     </div>
@@ -100,7 +100,7 @@
             <form class="form-horizontal">
                 <div class="modal-body">
                     <div class="control-group">
-                        <label class="control-label" for="name">Name</label>
+                        <label class="control-label" for="name">{% trans "Name" %}</label>
                         <div class="controls">
                             <input type="text" id="name" data-bind="value: name"/>
                             <span class="help-inline">
@@ -109,7 +109,7 @@
                         </div>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="description">Description</label>
+                        <label class="control-label" for="description">{% trans "Description" %}</label>
                         <div class="controls">
                             <textarea rows="3" name="description" data-bind="value: description"></textarea>
                         </div>
@@ -117,38 +117,38 @@
                     
                     {% if report.has_datespan %}
                     <div class="control-group">
-                        <label class="control-label" for="date_range">Default Date Range</label>
+                        <label class="control-label" for="date_range">{% trans "Default Date Range" %}</label>
                         <div class="controls">
                             <select name="date_range" data-bind="value: date_range">
-                                <option value="last7">Last 7 days</option>
-                                <option value="last30">Last 30 days</option>
-                                <option value="lastn">Days ago</option>
-                                <option value="since">Since a date</option>
-                                <option value="range">From a date to a date</option>
+                                <option value="last7">{% trans "Last 7 days" %}</option>
+                                <option value="last30">{% trans "Last 30 days" %}</option>
+                                <option value="lastn">{% trans "Days ago" %}</option>
+                                <option value="since">{% trans "Since a date" %}</option>
+                                <option value="range">{% trans "From a date to a date" %}</option>
                             </select>
                         </div>
                     </div>
                     <div class="control-group" data-bind="visible: date_range() == 'lastn'">
-                        <label class="control-label" for="days">Number of Days</label>
+                        <label class="control-label" for="days">{% trans "Number of Days" %}</label>
                         <div class="controls">
                             <input type="number" name="days" min="1" step="1" data-bind="value: days"/>
                         </div>
                     </div>
                     <div class="control-group" data-bind="visible: date_range() == 'since' || date_range() == 'range'">
-                        <label class="control-label" for="start_date">Begin Date</label>
+                        <label class="control-label" for="start_date">{% trans "Begin Date" %}x</label>
                         <div class="controls">
                             <input type="text" class="date-picker" name="start_date" data-bind="value: start_date"/>
                             <span class="help-inline">
-                                <small class="label">YYYY-MM-DD</small>
+                                <small class="label">{% trans "YYYY-MM-DD" %}</small>
                             </span>
                         </div>
                     </div>
                     <div class="control-group" data-bind="visible: date_range() == 'range'">
-                        <label class="control-label" for="end_date">End Date</label>
+                        <label class="control-label" for="end_date">{% trans "End Date" %}</label>
                         <div class="controls">
                             <input type="text" class="date-picker" name="end_date" data-bind="value: end_date"/>
                             <span class="help-inline">
-                                <small class="label">YYYY-MM-DD</small>
+                                <small class="label">{% trans "YYYY-MM-DD" %}</small>
                             </span>
                         </div>
                     </div>
