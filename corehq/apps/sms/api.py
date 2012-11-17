@@ -1,39 +1,18 @@
 import logging
 from django.conf import settings
 
-from dimagi.utils.modules import to_function
+from dimagi.utils.modules import try_import, to_function
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
 from datetime import datetime
-from corehq.apps.unicel import api as unicel_api
 
-from corehq.apps.tropo import api as tropo_api
-from corehq.apps.sms import mach_api
 from corehq.apps.sms.util import format_message_list
 from corehq.apps.smsforms.models import XFormsSession
 from corehq.apps.smsforms.app import _get_responses, start_session
 from corehq.apps.app_manager.models import get_app, Form
 from casexml.apps.case.models import CommCareCase
 from touchforms.formplayer.api import current_question
-
-ALTERNATIVE_BACKENDS = [("+91", unicel_api)] # TODO: move to setting?
-DEFAULT_BACKEND = mach_api
-
-def get_backend_api(msg):
-    """
-    Given a message, find which version of the api to return.
-    """
-    # this is currently a very dumb method that checks for 
-    # india and routes to unicel, otherwise returning mach
-    
-    # The caller assumes the returned module has a send() method 
-    # that takes in a message object.
-    phone = clean_phone_number(msg.phone_number)
-    for code, be_module in ALTERNATIVE_BACKENDS:
-        if phone.startswith(code):
-            return be_module
-    return DEFAULT_BACKEND
 
 def send_sms(domain, id, phone_number, text):
     """
@@ -45,25 +24,20 @@ def send_sms(domain, id, phone_number, text):
         phone_number = str(phone_number)
     logging.debug('Sending message: %s' % text)
     phone_number = clean_phone_number(phone_number)
-    msg = SMSLog(domain=domain,
-                     couch_recipient=id, 
-                     couch_recipient_doc_type="CouchUser",
-                     phone_number=phone_number,
-                     direction=OUTGOING,
-                     date = datetime.utcnow(),
-                     text = text)
-    try:
-        api = get_backend_api(msg)
-        try:
-            msg.backend_api = api.API_ID
-        except Exception:
-            pass
-        api.send(msg)
-        msg.save()
-        return True
-    except Exception:
+
+    msg = SMSLog(
+        domain=domain,
+        couch_recipient=id, 
+        couch_recipient_doc_type="CouchUser",
+        phone_number=phone_number,
+        direction=OUTGOING,
+        date = datetime.utcnow(),
+        text = text
+    )
+    
+    def onerror():
         logging.exception("Problem sending SMS to %s" % phone_number)
-        return False
+    return send_message_via_backend(msg, onerror=onerror)
 
 def send_sms_to_verified_number(verified_number, text):
     """
@@ -74,81 +48,60 @@ def send_sms_to_verified_number(verified_number, text):
     
     return  True on success, False on failure
     """
-    try:
-        backend = verified_number.backend
-        module = __import__(backend.outbound_module, fromlist=["send"])
-        kwargs = backend.outbound_params
-        msg = SMSLog(
-            couch_recipient_doc_type    = verified_number.owner_doc_type,
-            couch_recipient             = verified_number.owner_id,
-            phone_number                = "+" + str(verified_number.phone_number),
-            direction                   = OUTGOING,
-            date                        = datetime.utcnow(),
-            domain                      = verified_number.domain,
-            text                        = text
-        )
-        try:
-            msg.backend_api = module.API_ID
-        except Exception:
-            pass
-        module.send(msg, **kwargs)
-        msg.save()
-        return True
-    except Exception as e:
+    msg = SMSLog(
+        couch_recipient_doc_type    = verified_number.owner_doc_type,
+        couch_recipient             = verified_number.owner_id,
+        phone_number                = "+" + str(verified_number.phone_number),
+        direction                   = OUTGOING,
+        date                        = datetime.utcnow(),
+        domain                      = verified_number.domain,
+        text                        = text
+    )
+
+    def onerror():
         logging.exception("Exception while sending SMS to VerifiedNumber id " + verified_number._id)
-        return False
+    return send_message_via_backend(msg, verified_number.backend, onerror=onerror)
 
 def send_sms_with_backend(domain, phone_number, text, backend_id):
-    msg = SMSLog(domain = domain,
-                 phone_number = phone_number,
-                 direction = OUTGOING,
-                 date = datetime.utcnow(),
-                 text = text)
-    if backend_id == "MOBILE_BACKEND_MACH":
+    msg = SMSLog(
+        domain=domain,
+        phone_number=phone_number,
+        direction=OUTGOING,
+        date=datetime.utcnow(),
+        text=text
+    )
+
+    def onerror():
+        logging.exception("Exception while sending SMS to %s with backend %s" % (phone_number, backend_id))
+    return send_message_via_backend(msg, MobileBackend.load(backend_id), onerror=onerror)
+
+def send_message_via_backend(msg, backend=None, onerror=lambda: None):
+    """send sms using a specific backend
+
+    msg - outbound message object
+    backend - MobileBackend object to use for sending; if None, use the default
+      backend guessing rules
+    onerror - error handler; mostly useful for logging a custom message to the
+      error log
+    """
+    try:
+        if not backend:
+            backend = msg.outbound_backend
+            # note: this will handle "verified" contacts that are still pending
+            # verification, thus the backend is None. it's best to only call
+            # send_sms_to_verified_number on truly verified contacts, though
+
+        backend.backend_module.send(msg, **backend.outbound_params)
+
         try:
-            try:
-                msg.backend_api = mach_api.API_ID
-            except Exception:
-                pass
-            mach_api.send(msg)
-            msg.save()
-            return True
+            msg.backend_api = backend_module.API_ID
         except Exception:
-            logging.exception("Exception while sending SMS to %s with backend %s" % (phone_number, backend_id))
-            return False
-    elif backend_id == "MOBILE_BACKEND_UNICEL":
-        try:
-            try:
-                msg.backend_api = unicel_api.API_ID
-            except Exception:
-                pass
-            unicel_api.send(msg)
-            msg.save()
-            return True
-        except Exception:
-            logging.exception("Exception while sending SMS to %s with backend %s" % (phone_number, backend_id))
-            return False
-    else:
-        try:
-            backend = MobileBackend.get(backend_id)
-        except Exception:
-            backend = None
-        if backend is None:
-            return False
-        
-        try:
-            module = __import__(backend.outbound_module, fromlist=["send"])
-            try:
-                msg.backend_api = module.API_ID
-            except Exception:
-                pass
-            kwargs = backend.outbound_params
-            module.send(msg, **kwargs)
-            msg.save()
-            return True
-        except Exception as e:
-            logging.exception("Exception while sending SMS to %s with backend %s" % (phone_number, backend_id))
-            return False
+            pass
+        msg.save()
+        return True
+    except Exception:
+        onerror()
+        return False
 
 
 def start_session_from_keyword(survey_keyword, verified_number):
@@ -174,22 +127,31 @@ def start_session_from_keyword(survey_keyword, verified_number):
         print e
         print "ERROR: Exception raised while starting survey for keyword " + survey_keyword.keyword + ", domain " + verified_number.domain
 
-def incoming(phone_number, text, backend_api):
-    phone_without_plus = str(phone_number)
-    if phone_without_plus[0] == "+":
-        phone_without_plus = phone_without_plus[1:]
-    phone_with_plus = "+" + phone_without_plus
-    
-    v = VerifiedNumber.view("sms/verified_number_by_number",
-        key=phone_without_plus,
-        include_docs=True
-    ).one()
-    
+def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None):
+    """
+    entry point for incoming sms
+
+    phone_number - originating phone number
+    text - message content
+    backend_api - backend ID of receiving sms backend
+    timestamp - message received timestamp; defaults to now (UTC)
+    domain_scope - if present, only messages from phone numbers that can be
+      definitively linked to this domain will be processed; others will be
+      dropped (useful to provide security when simulating incoming sms)
+    """
+    phone_number = clean_phone_number(phone_number)
+    v = VerifiedNumber.by_phone(phone_number)
+ 
+    if domain_scope:
+        # only process messages for phones known to be associated with this domain
+        if v is None or v.domain != domain_scope:
+            raise RuntimeError('attempted to simulate incoming sms from phone number not verified with this domain')
+
     # Log message in message log
     msg = SMSLog(
-        phone_number    = phone_with_plus,
+        phone_number    = phone_number,
         direction       = INCOMING,
-        date            = datetime.utcnow(),
+        date            = timestamp or datetime.utcnow(),
         text            = text,
         backend_api     = backend_api
     )
@@ -217,10 +179,10 @@ def incoming(phone_number, text, backend_api):
                 break
 
     else:
-        # don't handle messages from unknown phone #s currently
-        # TODO support sms registration workflows here
-        pass
+        import verify
+        verify.process_verification(phone_number, text)
 
+    return msg
 
 def form_session_handler(v, text):
     # Circular Import

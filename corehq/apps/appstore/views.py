@@ -158,7 +158,7 @@ def appstore(request, template="appstore/appstore_base.html"):
     params = dict([(SNAPSHOT_MAPPING.get(p, p), params[p]) for p in params])
     page = int(params.pop('page', 1))
     results = es_snapshot_query(params, SNAPSHOT_FACETS)
-    d_results = [Domain.wrap(res['_source']) for res in results['hits']['hits']]
+    d_results = [Domain.wrap(res['_source']) for res in results.get('hits', {}).get('hits', [])]
 
     sort_by = request.GET.get('sort_by', None)
     if sort_by == 'best':
@@ -266,6 +266,10 @@ def import_app(request, domain):
     from_project = Domain.get_by_name(domain)
 
     if request.method == 'POST' and from_project.is_snapshot:
+        if not from_project.published:
+            messages.error(request, "This project is not published and can't be downloaded")
+            return project_info(request, domain)
+
         to_project_name = request.POST['project']
         if not user.is_member_of(to_project_name):
             messages.error(request, "You don't belong to that project")
@@ -288,6 +292,10 @@ def copy_snapshot(request, domain):
         form = DomainRegistrationForm(args)
 
         if request.POST.get('new_project_name', ""):
+            if not dom.published:
+                messages.error(request, "This project is not published and can't be downloaded")
+                return project_info(request, domain)
+
             if form.is_valid():
                 new_domain = dom.save_copy(form.clean_domain_name(), user=request.couch_user)
             else:

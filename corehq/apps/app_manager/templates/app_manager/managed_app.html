@@ -35,7 +35,7 @@
         <div id="modules" class="sidebar">
         <!--h2 id="modules-header">Modules</h2-->
         <h2 {% if not module and not form and not release_manager %}class="selected"{% endif %}>
-            <a href="{% url view_app domain app.id %}?edit={{ edit|BOOL }}" class="variable-app_name">{{ app.name }}
+            <a href="{% url view_app domain app.id %}?edit={{ edit|BOOL }}" class="variable-app_name">{{ app.name|html_name }}
             </a>
         </h2>
             {% if app.get_doc_type == "Application" %}
@@ -62,7 +62,7 @@
                                     {% endif %}
                                     <a href="{% url view_module domain app.id module.id %}?edit={{ edit|BOOL }}"
                                        {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
-                                        {{ module.name|html_trans:langs|safe }}
+                                        {{ module.name|html_trans:langs }}
                                     </a>
                                 </div>
                                 <ul class="{% ifequal module.id selected_module.id %}selected{% endifequal %} {% if edit %}sortable{% endif %}">
@@ -85,7 +85,7 @@
                                                 {% endif %}
                                                 <a href="{% url view_form domain app.id module.id form.id %}?edit={{ edit|BOOL }}"
                                                    {% if form == selected_form %}class="variable-form_name"{% endif %}>
-                                                    {{ form.name|html_trans:langs|safe }}
+                                                    {{ form.name|html_trans:langs }}
                                                 </a>
                                             </li>
                                         {% endfor %}

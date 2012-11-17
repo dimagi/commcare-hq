@@ -1,16 +1,13 @@
 from couchdbkit.ext.django.schema import *
 
-# these are the allowable stock transaction types, in the order
-# they are processed
+# these are the allowable stock transaction types, listed in the
+# default ordering in which they are processed. processing order
+# may be customized per domain
 ACTION_TYPES = [
     # indicates the product has been stocked out for N days
-    # prior to the reporting date
+    # prior to the reporting date, including today ('0' does
+    # not trigger an immediate stock-out)
     'stockedoutfor',
-
-    # indicates the stock on hand at the start of the reporting
-    # visit, prior to any transactions taking place during that
-    # visit
-    'prevstockonhand',
 
     # additions to stock
     'receipts',
@@ -18,8 +15,7 @@ ACTION_TYPES = [
     # subtractions from stock
     'consumption',
 
-    # indicates the current stock on hand as of the end of
-    # the reporting visit
+    # indicates the current stock on hand
     'stockonhand',
 
     # immediately indicates that product is stocked out right now
@@ -42,8 +38,10 @@ class Product(Document):
         return result
 
 class CommtrackActionConfig(DocumentSchema):
+    action_type = StringProperty() # a value in ACTION_TYPES (could be converted to enum?)
     keyword = StringProperty()
     multiaction_keyword = StringProperty() # defaults to single-action keyword
+    name = StringProperty() # defaults to action_type
     caption = StringProperty()
 
     def _keyword(self, multi):
@@ -52,17 +50,21 @@ class CommtrackActionConfig(DocumentSchema):
         else:
             return self.keyword
 
+    @property
+    def action_name(self):
+        return self.name or self.action_type
+
 class CommtrackConfig(Document):
     domain = StringProperty()
 
     # supported stock actions for this commtrack domain
-    #   action type (see ACTION_TYPES) => action config
-    actions = SchemaDictProperty(CommtrackActionConfig)
+    # listed in the order they are processed
+    actions = SchemaListProperty(CommtrackActionConfig)
+    # TODO must catch ambiguous action lists (two action configs with the same 'name')
 
     multiaction_enabled = BooleanProperty()
     multiaction_keyword = StringProperty() # if None, will attempt to parse
       # all messages as multi-action
-    multiaction_delimiter = StringProperty() # default '.'
 
     @classmethod
     def for_domain(cls, domain):
@@ -72,4 +74,8 @@ class CommtrackConfig(Document):
         return result
 
     def keywords(self, multi=False):
-        return dict((action_config._keyword(multi), action_type) for action_type, action_config in self.actions.iteritems())
+        return dict((action_config._keyword(multi), action_config.action_name) for action_config in self.actions)
+
+    @property
+    def actions_by_name(self):
+        return dict((action_config.action_name, action_config) for action_config in self.actions)

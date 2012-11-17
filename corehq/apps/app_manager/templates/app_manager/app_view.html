@@ -391,7 +391,7 @@
     </style>
 {% endblock %}
 {% block form-view %}
-    <h3 class="variable-app_name">{{ app.name }}</h3>
+    <h3 class="variable-app_name">{{ app.name|html_name }}</h3>
     {% if app.get_doc_type == "Application" %}
         <h4>Application Settings</h4>
     {% else %}

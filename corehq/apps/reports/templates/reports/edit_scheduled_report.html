@@ -1,0 +1,21 @@
+{% extends "reports/base_template.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% block main_column %}
+    <div class="row-fluid">
+        <div class="span12">
+            <h2>{{ form_action }} scheduled report</h2>
+            {% if form %}
+            {% crispy form %}
+            {% else %}
+            <div class="alert">
+                You need a saved report that supports email in order to set up a scheduled email report, but you don't have any.
+            </div>
+            <div class="alert alert-info">
+                <strong>Note:</strong> Not all built-in reports currently support email delivery.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

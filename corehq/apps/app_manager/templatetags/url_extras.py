@@ -44,7 +44,7 @@ class URLEncodeNode(template.Node):
     def render(self, context):
         path = self.path_var.resolve(context)
         params = {}
-        for key,val in self.params_var.resolve(context).items():
+        for key,val in self.params_var.resolve(context).lists():
             params[key] = val
 
         for key,val in self.extra_params.items():
@@ -59,4 +59,4 @@ class URLEncodeNode(template.Node):
         for key in params:
             if isinstance(params[key], unicode):
                 params[key] = params[key].encode('utf-8')
-        return "%s?%s" % (path, urllib.urlencode(params)) if params else path
+        return "%s?%s" % (path, urllib.urlencode(params, True)) if params else path
