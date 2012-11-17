@@ -13,6 +13,9 @@ from dimagi.utils.decorators.datespan import datespan_in_request
 from corehq.apps.locations.models import location_tree
 import settings
 import json
+from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext as _
+
 
 datespan_default = datespan_in_request(
             from_param="startdate",
@@ -46,8 +49,8 @@ class ReportField(object):
 class ReportSelectField(ReportField):
     slug = "generic_select"
     template = "reports/fields/select_generic.html"
-    name = "Generic Select"
-    default_option = "Select Something..."
+    name = ugettext_noop("Generic Select")
+    default_option = ugettext_noop("Select Something...")
     options = [dict(val="val", text="text")]
     cssId = "generic_select_box"
     cssClasses = "span4"
@@ -89,8 +92,8 @@ class YearField(ReportField):
 
 class GroupField(ReportSelectField):
     slug = "group"
-    name = "Group"
-    default_option = "Everybody"
+    name = ugettext_noop("Group")
+    default_option = ugettext_noop("Everybody")
     cssId = "group_select"
 
     def update_params(self):
@@ -99,8 +102,8 @@ class GroupField(ReportSelectField):
         self.options = [dict(val=group.get_id, text=group.name) for group in self.groups]
 
 class SelectReportingGroupField(GroupField):
-    name = "Reporting Group"
-    default_option = "All Groups"
+    name = ugettext_noop("Reporting Group")
+    default_option = ugettext_noop("All Groups")
     cssClasses = "span6"
 
     def update_params(self):
@@ -144,7 +147,7 @@ class FilterUsersField(ReportField):
 
 class CaseTypeField(ReportSelectField):
     slug = "case_type"
-    name = "Case Type"
+    name = ugettext_noop("Case Type")
     cssId = "case_type_select"
 
     def update_params(self):
@@ -153,7 +156,7 @@ class CaseTypeField(ReportSelectField):
 
         self.selected = case_type
         self.options = [dict(val=case, text="%s" % case) for case in case_types]
-        self.default_option = "All Case Types"
+        self.default_option = _("All Case Types")
 
     @classmethod
     def get_case_types(cls, domain):
@@ -170,7 +173,8 @@ class CaseTypeField(ReportSelectField):
 
     @classmethod
     def get_case_counts(cls, domain, case_type=None, user_ids=None):
-        """ Returns open count, all count
+        """
+        Returns open count, all count
         """
         user_ids = user_ids or [{}]
         for view_name in ('hqcase/open_cases', 'hqcase/all_cases'):
@@ -189,33 +193,33 @@ class CaseTypeField(ReportSelectField):
 
 class SelectFormField(ReportSelectField):
     slug = "form"
-    name = "Form Type"
+    name = ugettext_noop("Form Type")
     cssId = "form_select"
     cssClasses = "span6"
-    default_option = "Select a Form"
+    default_option = ugettext_noop("Select a Form")
 
     def update_params(self):
         self.options = util.form_list(self.domain)
         self.selected = self.request.GET.get(self.slug, None)
 
 class SelectAllFormField(SelectFormField):
-    default_option = "Show All Forms"
+    default_option = ugettext_noop("Show All Forms")
 
 class SelectOpenCloseField(ReportSelectField):
     slug = "is_open"
-    name = "Opened / Closed"
+    name = ugettext_noop("Opened / Closed")
     cssId = "opened_closed"
     cssClasses = "span3"
     default_option = "Show All"
-    options = [dict(val="open", text="Only Open"),
-               dict(val="closed", text="Only Closed")]
+    options = [dict(val="open", text=ugettext_noop("Only Open")),
+               dict(val="closed", text=ugettext_noop("Only Closed"))]
 
 class SelectApplicationField(ReportSelectField):
     slug = "app"
-    name = "Application"
+    name = ugettext_noop("Application")
     cssId = "application_select"
     cssClasses = "span6"
-    default_option = "Select Application [Latest Build Version]"
+    default_option = ugettext_noop("Select Application [Latest Build Version]")
 
     def update_params(self):
         apps_for_domain = get_db().view("app_manager/applications_brief",
@@ -223,17 +227,19 @@ class SelectApplicationField(ReportSelectField):
             endkey=[self.domain, {}],
             include_docs=True).all()
         available_apps = [dict(val=app['value']['_id'],
-                                text="%s [up to build %s]" % (app['value']['name'], app['value']['version']))
+                                text=_("%(name)s [up to build %(version)s]") % {
+                                    'name': app['value']['name'], 
+                                    'version': app['value']['version']})
                           for app in apps_for_domain]
         self.selected = self.request.GET.get(self.slug,'')
         self.options = available_apps
 
 class SelectOrganizationField(ReportSelectField):
     slug = "org"
-    name = "Organization"
+    name = ugettext_noop("Organization")
     cssId = "organization_select"
     cssClasses = "span6"
-    default_option = "All Organizations"
+    default_option = ugettext_noop("All Organizations")
 
     def update_params(self):
         available_orgs = [{'val': o.name, 'text': o.title} for o in  Organization.get_all()]
@@ -242,10 +248,10 @@ class SelectOrganizationField(ReportSelectField):
 
 class SelectCategoryField(ReportSelectField):
     slug = "category"
-    name = "Category"
+    name = ugettext_noop("Category")
     cssId = "category_select"
     cssClasses = "span6"
-    default_option = "All Categories"
+    default_option = ugettext_noop("All Categories")
 
     def update_params(self):
         if hasattr(Domain, 'categories'):
@@ -257,10 +263,10 @@ class SelectCategoryField(ReportSelectField):
 
 class SelectLicenseField(ReportSelectField):
     slug = "license"
-    name = "License"
+    name = ugettext_noop("License")
     cssId = "license_select"
     cssClasses = "span6"
-    default_option = "All Licenses"
+    default_option = ugettext_noop("All Licenses")
 
     def update_params(self):
         available_licenses = [{'val': code, 'text': license} for code, license in LICENSES.items()]
@@ -269,10 +275,10 @@ class SelectLicenseField(ReportSelectField):
 
 class SelectRegionField(ReportSelectField):
     slug = "region"
-    name = "Region"
+    name = ugettext_noop("Region")
     cssId = "region_select"
     cssClasses = "span6"
-    default_option = "All Regions"
+    default_option = ugettext_noop("All Regions")
 
     def update_params(self):
         if hasattr(Domain, 'regions'):
@@ -286,8 +292,8 @@ class SelectRegionField(ReportSelectField):
 class SelectMobileWorkerField(ReportField):
     slug = "select_mw"
     template = "reports/fields/select_mobile_worker.html"
-    name = "Select Mobile Worker"
-    default_option = "All Mobile Workers"
+    name = ugettext_noop("Select Mobile Worker")
+    default_option = ugettext_noop("All Mobile Workers")
 
     def update_params(self):
         pass
@@ -310,12 +316,12 @@ class SelectMobileWorkerField(ReportField):
         default = cls.default_option
         if user_filter[HQUserType.ADMIN].show or \
            user_filter[HQUserType.DEMO_USER].show or user_filter[HQUserType.UNKNOWN].show:
-            default = '%s & Others' % default
+            default = _('%s & Others') % _(default)
         return default
 
 class SelectCaseOwnerField(SelectMobileWorkerField):
-    name = "Select Case Owner"
-    default_option = "All Case Owners"
+    name = ugettext_noop("Select Case Owner")
+    default_option = ugettext_noop("All Case Owners")
 
     def update_params(self):
         case_sharing_groups = Group.get_case_sharing_groups(self.domain)
@@ -328,10 +334,9 @@ class SelectFilteredMobileWorkerField(SelectMobileWorkerField):
         Since by default we still want to show all the data, no filtering is done unless the special group filter is selected.
     """
     slug = "select_filtered_mw"
-    name = "Select Mobile Worker"
-    default_option = "All Mobile Workers"
+    name = ugettext_noop("Select Mobile Worker")
     template = "reports/fields/select_filtered_mobile_worker.html"
-    default_option = "Showing All Mobile Workers..."
+    default_option = ugettext_noop("Showing All Mobile Workers...")
 
     group_names = []
 
@@ -344,7 +349,7 @@ class SelectFilteredMobileWorkerField(SelectMobileWorkerField):
             filtered_group = Group.by_name(self.domain, group)
             if filtered_group:
                 self.group_options.append(dict(group_id=filtered_group._id,
-                    name="Only %s Mobile Workers" % group))
+                    name=_("Only %s Mobile Workers") % group))
                 self.users.extend(filtered_group.get_users(is_active=True, only_commcare=True))
 
     def update_context(self):
@@ -360,7 +365,7 @@ class SelectFilteredMobileWorkerField(SelectMobileWorkerField):
 
 
 class DatespanField(ReportField):
-    name = "Date Range"
+    name = ugettext_noop("Date Range")
     slug = "datespan"
     template = "reports/fields/datespan.html"
 
@@ -374,7 +379,7 @@ class DatespanField(ReportField):
         self.context['datespan'] = self.datespan
 
 class LocationField(ReportField):
-    name = "Location"
+    name = ugettext_noop("Location")
     slug = "location"
     template = "reports/fields/location.html"
 
@@ -439,11 +444,11 @@ class DeviceLogFilterField(ReportField):
 class DeviceLogUsersField(DeviceLogFilterField):
     slug = "loguser"
     view = "phonelog/devicelog_data_users"
-    filter_desc = "Filter Logs by Username"
+    filter_desc = ugettext_noop("Filter Logs by Username")
 
 class DeviceLogDevicesField(DeviceLogFilterField):
     slug = "logdevice"
     view = "phonelog/devicelog_data_devices"
-    filter_desc = "Filter Logs by Device"
+    filter_desc = ugettext_noop("Filter Logs by Device")
 
 
