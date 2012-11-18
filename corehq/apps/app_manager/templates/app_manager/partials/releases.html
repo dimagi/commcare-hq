@@ -1,0 +1,67 @@
+{% load i18n %}
+<table class="table">
+    <tr>
+        <th colspan="2">Version</th>
+        <th colspan="2">Build Date &amp; Time</th>
+        <th>CommCare Binary</th>
+        <th></th>
+        <th data-bind="visible: edit"></th>
+        <th>Comment</th>
+        <th>Released</th>
+
+    </tr>
+    <tbody data-bind="foreach: savedApps, css: {hidden: false}" class="hidden">
+        <tr class="build" data-bind="css: {'build-released': is_released(), 'build-unreleased': !is_released()}">
+{% comment %}        data-is_released="{{ saved_app.is_released|BOOL }}"  {% endcomment %}
+{#        {% if saved_app.id == latest_release.id %}build-latest-release{% endif %}#}
+            <td data-bind="if: edit">
+{#                <form action="{% url corehq.apps.app_manager.views.delete_copy domain app.id %}"#}
+{#                      data-title="Delete Build"#}
+{#                      data-message="Are you sure you want to delete this build (version {{ saved_app.version }})?"#}
+{#                      method="post">#}
+{#                    <input type="hidden" name="saved_app" value="{{ saved_app.id }}" />#}
+{#                    <input type="hidden" name="next" value="{{ request.get_full_path }}" />#}
+{#                    <a class="delete_link confirm-submit" href="#"></a>#}
+{#                </form>#}
+            </td>
+            <td class="nowrap" data-bind="text: version"></td>
+            <td class="nowrap" data-bind="text: built_on_date"></td>
+            <td class="nowrap" data-bind="text: built_on_time"></td>
+            <td class="nowrap">
+                <span data-bind="if: build_label(), text: build_label()"></span>
+                <p data-bind="text: jar_path"></p>
+                <h6 data-bind="if: built_with.signed">{% trans "Unsigned Jar" %}</h6>
+            </td>
+            <td class="nowrap">
+                <div class="btn-group">
+                    <span class="btn btn-primary" data-toggle="modal">
+                        {# data-target="#{{ saved_app.id }}_modal" #}
+                        Deploy
+                    </span>
+                </div>
+            </td>
+            <td data-bind="if: edit">
+{#                    {% if saved_app.version != app.version %}#}
+{#                        <button class="btn dialog_opener">Revert</button>#}
+{#                        <form class="dialog" action="{% url corehq.apps.app_manager.views.revert_to_copy domain app.id %}" method="post"#}
+{#                              title="Revert to Build">#}
+{#                            <p>Are you sure you want to revert to build {{ saved_app.version }}?</p>#}
+{#                            <input type="hidden" name="saved_app" value="{{ saved_app.id }}" />#}
+{#                            <button class="btn btn-primary" data-dismiss="modal" type="submit">Revert</button>#}
+{#                        </form>#}
+{#                    {% endif %}#}
+            </td>
+            <td data-bind="if: build_comment">
+                <b data-bind="visible: comment_user_name, text: comment_user_name"></b>
+                <span data-bind="text: build_comment"></span>
+                <h6 data-bind="visible: !build_comment()">{% trans "(No Comment)" %}</h6>
+            </td>
+            <td class="build-is-released">
+                {% comment %}<div data-is-released="{{ saved_app.is_released|BOOL }}" data-saved-app-id="{{ saved_app.id }}"></div>{% endcomment %}
+            </td>
+        </tr>
+    </tbody>
+</table>
+<div data-bind="visible: !doneFetching(), css: {hidden: false}" class="hidden">
+    <a href="#" class="btn" data-bind="click: getMoreSavedApps">{% trans "View More" %}</a>
+</div>

@@ -423,7 +423,11 @@ def get_apps_base_context(request, domain, app):
 @login_and_domain_required
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit', 10)
-    start_build = request.GET.get('start_build', {})
+    start_build = json.loads(request.GET.get('start_build'))
+    if start_build:
+        assert isinstance(start_build, int)
+    else:
+        start_build = {}
     timezone = report_utils.get_timezone(request.couch_user.user_id, domain)
     saved_apps = get_db().view('app_manager/saved_app',
         startkey=[domain, app_id, start_build],
@@ -449,17 +453,17 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
         'latest_release': latest_release,
         'users_cannot_share': users_cannot_share,
     })
-    if not app.is_remote_app():
-        sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
-        multimedia_images, missing_image_refs = app.get_template_map(sorted_images)
-        multimedia_audio, missing_audio_refs = app.get_template_map(sorted_audio)
-        if len(multimedia_images) > 0 or len(multimedia_audio) > 0 or has_error:
-            context.update(dict(multimedia={
-                'missing_image_refs': missing_image_refs,
-                'missing_audio_refs': missing_audio_refs,
-                'errors': has_error,
-                'notice': bool(has_error or missing_image_refs > 0  or missing_audio_refs > 0)
-            }))
+#    if not app.is_remote_app():
+#        sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
+#        multimedia_images, missing_image_refs = app.get_template_map(sorted_images)
+#        multimedia_audio, missing_audio_refs = app.get_template_map(sorted_audio)
+#        if len(multimedia_images) > 0 or len(multimedia_audio) > 0 or has_error:
+#            context.update(dict(multimedia={
+#                'missing_image_refs': missing_image_refs,
+#                'missing_audio_refs': missing_audio_refs,
+#                'errors': has_error,
+#                'notice': bool(has_error or missing_image_refs > 0  or missing_audio_refs > 0)
+#            }))
     response = render_to_response(request, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response

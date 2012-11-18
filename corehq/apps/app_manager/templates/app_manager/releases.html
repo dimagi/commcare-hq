@@ -5,6 +5,10 @@
 {% load hq_shared_tags %}
 {% load timezone_tags %}
 {% load i18n %}
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/javascripts/knockout.mapping.js' %}"></script>
+    <script src="{% static 'app_manager/js/releases.js' %}"></script>
+{% endblock %}
 {% block js-inline %}{{ block.super }}
 <script>
     $(function () {
@@ -107,6 +111,14 @@
             return false;
         });
     });
+$(function () {
+    var o = {
+        fetchUrl: '{% url paginate_releases domain app.id %}'
+    };
+    var el = $('#releases-table');
+    ko.applyBindings(new ReleasesMain(o), el.get(0));
+    el.show();
+});
 </script>
 {% endblock %}
 {% block head %}{{ block.super }}
@@ -238,75 +250,9 @@
         </p>
     </div>
     {% endif %}
-    <table class="table">
-        <tr>
-            <th colspan="2">Version</th>
-            <th colspan="2">Build Date &amp; Time</th>
-            <th>CommCare Binary</th>
-
-            <th></th>
-            {% if edit %}
-            <th></th>
-            {% endif %}
-            <th>Comment</th>
-            <th>Released</th>
-
-        </tr>
-        {% for saved_app in saved_apps %}
-        <tr data-is_released="{{ saved_app.is_released|BOOL }}" class="build build-{% if saved_app.is_released %}released{% else %}unreleased{% endif %} {% if saved_app.id == latest_release.id %}build-latest-release{% endif %}">
-            <td>
-                {% if edit %}
-                <form action="{% url corehq.apps.app_manager.views.delete_copy domain app.id %}"
-                      data-title="Delete Build"
-                      data-message="Are you sure you want to delete this build (version {{ saved_app.version }})?"
-                      method="post">
-                    <input type="hidden" name="saved_app" value="{{ saved_app.id }}" />
-                    <input type="hidden" name="next" value="{{ request.get_full_path }}" />
-                    <a class="delete_link confirm-submit" href="#"></a>
-                </form>
-                {% endif %}
-            </td>
-            <td class="nowrap">{{ saved_app.version }}</td>
-            <td class="nowrap">{{ saved_app.built_on_date }}</td>
-            <td class="nowrap">{{ saved_app.built_on_time }}</td>
-            <td class="nowrap">
-                {% if saved_app.build_label %}{{ saved_app.build_label }}{% endif %}
-                <p>{{ saved_app.jar_path }}</p>
-                {% if not saved_app.built_with.signed %}<h6>Unsigned Jar</h6>{% endif %}
-            </td>
-            <td class="nowrap">
-                <div class="btn-group">
-                    <span class="btn btn-primary" data-toggle="modal" data-target="#{{ saved_app.id }}_modal">
-                        Deploy
-                    </span>
-                </div>
-            </td>
-            {% if edit %}
-            <td>
-                {% if saved_app.version != app.version %}
-                <button class="btn dialog_opener">Revert</button>
-                <form class="dialog" action="{% url corehq.apps.app_manager.views.revert_to_copy domain app.id %}" method="post"
-                        title="Revert to Build">
-                    <p>Are you sure you want to revert to build {{ saved_app.version }}?</p>
-                    <input type="hidden" name="saved_app" value="{{ saved_app.id }}" />
-                    <button class="btn btn-primary" data-dismiss="modal" type="submit">Revert</button>
-                </form>
-                {% endif %}
-            </td>
-            {% endif %}
-            <td>
-                {% if saved_app.build_comment %}
-                    {% if saved_app.comment_user_name %}<b>{{ saved_app.comment_user_name }}:</b>{% endif %}
-                    {{ saved_app.build_comment }}
-                {% else %}<h6>(No Comment)</h6>
-                {% endif %}
-            </td>
-            <td class="build-is-released">
-                <div data-is-released="{{ saved_app.is_released|BOOL }}" data-saved-app-id="{{ saved_app.id }}"></div>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
+    <div id="releases-table">
+        {% include 'app_manager/partials/releases.html' %}
+    </div>
 {% endblock %}
 
 {% block modals %}
