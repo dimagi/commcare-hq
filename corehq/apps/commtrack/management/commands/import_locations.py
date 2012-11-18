@@ -1,6 +1,7 @@
 import csv
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.helpers import make_supply_point
+from dimagi.utils.couch.database import get_db
 
 def import_locations(domain, f):
     data = list(csv.DictReader(f))
@@ -29,10 +30,11 @@ def import_location(domain, loc):
     # create parent hierarchy if it does not exist
     parent = None
     for anc_type, anc_name in hierarchy:
-        parent = get_by_name(anc_name, anc_type, parent)
-        if not parent:
-            parent = _loc(name=anc_name, location_type=anc_type, parent=parent)
+        child = get_by_name(anc_name, anc_type, parent)
+        if not child:
+            child = _loc(name=anc_name, location_type=anc_type, parent=parent)
             messages.append('created %s %s' % (anc_type, anc_name))
+        parent = child
 
     name = loc['outlet_name']
     # check if outlet already exists
@@ -44,9 +46,16 @@ def import_location(domain, loc):
         for k in ('outlet_name', 'outlet_code'):
             del outlet_props[k]
 
-        outlet = _loc(name=name, location_type='outlet', parent=parent, **outlet_props)
-        make_supply_point(domain, outlet, loc['outlet_code'].lower())
-        messages.append('created outlet %s' % name)
+        # check that sms code for outlet is unique
+        code = loc['outlet_code'].lower()
+        if get_db().view('commtrack/locations_by_code',
+                         key=[domain, code],
+                         include_docs=True).one():
+            messages.append('code %s for outlet %s already in use! outlet NOT created' % (code, name))
+        else:
+            outlet = _loc(name=name, location_type='outlet', parent=parent, **outlet_props)
+            make_supply_point(domain, outlet, code)
+            messages.append('created outlet %s' % name)
 
     return messages
 
