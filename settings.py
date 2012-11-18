@@ -338,8 +338,7 @@ FORMDATA_MODEL = 'hqsofabed.HQFormData'
 # unicel sms config
 UNICEL_CONFIG = {"username": "Dimagi",
                  "password": "changeme",
-                 "sender": "Promo",
-                 "receive_phone": "+919900003265"}
+                 "sender": "Promo"}
 
 # mach sms config
 MACH_CONFIG = {"username": "Dimagi",
