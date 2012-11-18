@@ -152,6 +152,7 @@ class StockReport(object):
             
     def location_from_code(self, loc_code):
         """return the supply point case referenced by loc_code"""
+        loc_code = loc_code.lower()
         loc = get_db().view('commtrack/locations_by_code',
                             key=[self.domain.name, loc_code],
                             include_docs=True).first()
@@ -161,6 +162,7 @@ class StockReport(object):
 
     def product_from_code(self, prod_code):
         """return the product doc referenced by prod_code"""
+        prod_code = prod_code.lower()
         p = Product.get_by_code(self.domain.name, prod_code)
         if p is None:
             raise RuntimeError('invalid product code')
