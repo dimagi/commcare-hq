@@ -3,15 +3,11 @@ import re
 from django import forms
 from django.contrib.auth.models import User
 
-import django_tables as tables
-from django.core.validators import validate_email
-from django.forms.fields import ChoiceField, CharField, BooleanField, DateField
+from django.forms.fields import ChoiceField, CharField, BooleanField
 from django.utils.encoding import smart_str
 
 from corehq.apps.domain.middleware import _SESSION_KEY_SELECTED_DOMAIN
 from corehq.apps.domain.models import Domain, LICENSES
-from django.forms.extras.widgets import SelectDateWidget
-import datetime
 
 ########################################################################################################
 #
@@ -23,11 +19,9 @@ import datetime
 # Need to remember to call:
 #
 # super(_BaseForm, self).clean() in any derived class that overrides clean()
-from corehq.apps.domain.utils import new_domain_re
 from corehq.apps.users.models import WebUser
 from dimagi.utils.timezones.fields import TimeZoneField
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
-from corehq.apps.users.util import format_username
 from django.template.loader import render_to_string
 
 class _BaseForm(object):
@@ -260,10 +254,3 @@ class UpdateSelfForm(_BaseForm, forms.Form):
     first_name  =  forms.CharField(label='First name', max_length=User._meta.get_field('first_name').max_length)
     last_name   =  forms.CharField(label='Last (family) name', max_length=User._meta.get_field('last_name').max_length)
     email       =  forms.EmailField(label ='Email address', max_length=User._meta.get_field('email').max_length)
-
-########################################################################################################
-
-class UpdateSelfTable(tables.Table):
-    property = tables.Column(verbose_name="Property")
-    old_val= tables.Column(verbose_name="Old value")
-    new_val= tables.Column(verbose_name="New value")
