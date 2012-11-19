@@ -1,0 +1,40 @@
+{% extends 'reports/filters/base.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block filter_content %}
+    <div id="{{ css_id }}" class="parts" data-bind="foreach: controls">
+        {% if use_last %}
+        <div class="control-group" data-bind="fadeVisibleInOnly: show_alert">
+            <label class="control-label">
+                <div class="label">{% trans 'Next' %}: <strong data-bind="text: label"></strong></div>
+            </label>
+            <div class="controls">
+                <select class="{{ css_class }}" disabled="disabled"></select>
+            </div>
+        </div>
+        {% endif %}
+        <div class="control-group"
+             data-bind="{% if use_last %}fadeVisibleInOnly{% else %}fadeVisible{% endif %}: is_visible">
+            <label data-bind="attr: {for: '{{ css_id }}_'+slug}, text: label"
+                   class="control-label"></label>
+            <div class="controls">
+                <select  class="{{ css_class }}" data-bind="attr: {id: '{{ css_id }}_'+slug, name: '{{ slug }}_'+slug},
+                options: control_options, optionsText: 'text', optionsValue: 'val', optionsCaption: default_text,
+                value: selected,
+                event: {change: function (data, event) { $parent.updateNextDrilldown(level);  }}"></select>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block filter_js %}
+<script type="text/javascript" src="{% static 'reports/ko/report_filter.drilldown_options.js' %}"></script>
+<script type="text/javascript">
+    $(function () {
+       $('#{{ css_id }}').drilldownOptionFilter({
+           drilldown_map: {{ option_map|JSON }},
+           controls: {{ selects|JSON }},
+           selected: {{ selected|JSON }},
+       });
+    });
+</script>
+{% endblock %}
