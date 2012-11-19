@@ -63,8 +63,7 @@ def make_psi_config(domain):
             ),
             CommtrackActionConfig(
                 action_type='stockonhand',
-                keyword='soh',
-                multiaction_keyword='st',
+                keyword='b', # 'B'alance
                 caption='Stock on Hand'
             ),
             CommtrackActionConfig(
