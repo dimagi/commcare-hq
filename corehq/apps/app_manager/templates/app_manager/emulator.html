@@ -57,7 +57,7 @@
             <param name="archive" value="./CommCare.jar" />
             <param name="midlet" value="org.commcare.midlet.CommCareMidlet" />
             <param name="Profile" value="jr://resource/profile.xml" />
-            <param name="FileRootTranslator" value="{{ request.META.HTTP_HOST }}{% url emulator_root_url domain app.get_id %}"/>
+            <param name="FileRootTranslator" value="http://{{ request.META.HTTP_HOST }}{% url emulator_root_url domain app.get_id %}"/>
             {% if app.admin_password %}
                 <param name="JavaRosa-Admin-Password" value="{{ app.admin_password }}" />
             {% endif %}
