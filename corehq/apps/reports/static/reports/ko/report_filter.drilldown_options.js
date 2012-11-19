@@ -1,6 +1,5 @@
 var DrilldownOptionFilterControl = function (options) {
     var self = this;
-    console.log(options.notifications);
 
     self.notification = new DrilldownFinalNotification(options.notifications);
     self.controls = ko.observableArray(ko.utils.arrayMap(options.controls, function (select) {
