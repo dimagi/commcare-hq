@@ -7,11 +7,15 @@ function get_username(xform_doc) {
 }
 
 function get_app_id(xform_doc) {
-    if (xform_doc.app_id) {
-        return xform_doc.app_id;
-    } else {
-        var meta = xform_doc.form.meta;
-        if (meta && meta.appVersion) return meta.appVersion;
+    try {
+        if (xform_doc.app_id) {
+            return xform_doc.app_id;
+        } else {
+            var meta = xform_doc.form.meta;
+            if (meta && meta.appVersion) return meta.appVersion;
+        }
+    } catch (e) {
+        // do nothing
     }
     return null;
 }
