@@ -127,13 +127,24 @@ class VisitReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
         return [row(r) for r in reports]
 
 class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, DatespanMixin):
+    OUTLETS_LIMIT = 200
+
     name = 'Sales and Consumption Report'
     slug = 'sales_consumption'
     fields = ['corehq.apps.reports.fields.DatespanField',
               'corehq.apps.reports.fields.LocationField']
 
     @property
+    def outlets(self):
+        if not hasattr(self, '_locs'):
+            self._locs = Location.filter_by_type(self.domain, 'outlet', self.active_location)
+        return self._locs
+
+    @property
     def headers(self):
+        if len(self.outlets) > self.OUTLETS_LIMIT:
+            return DataTablesHeader(DataTablesColumn('Too many outlets'))
+
         cols = [DataTablesColumn(caption) for key, caption in OUTLET_METADATA]
         for p in self.ordered_products(PRODUCT_ORDERING):
             cols.append(DataTablesColumn('Stock on Hand (%s)' % p['name']))
@@ -145,6 +156,13 @@ class SalesAndConsumptionReport(GenericTabularReport, CommtrackReportMixin, Date
 
     @property
     def rows(self):
+        if len(self.outlets) > self.OUTLETS_LIMIT:
+            return [[
+                    'This report is limited to <b>%(max)d</b> outlets. Your location filter includes <b>%(count)d</b> outlets. Please make your location filter more specific.' % {
+                        'count': len(self.outlets),
+                        'max': self.OUTLETS_LIMIT,
+                }]]
+
         products = self.ordered_products(PRODUCT_ORDERING)
         locs = Location.filter_by_type(self.domain, 'outlet', self.active_location)
         reports = get_stock_reports(self.domain, self.active_location, self.datespan)

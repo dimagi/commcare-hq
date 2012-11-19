@@ -1,6 +1,7 @@
 {% extends eport_base|default:"reports/async/default.html" %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
+{% load i18n %}
 {% block js %} {{ block.super }}
     <script type="text/javascript" src="{% static 'reports/javascripts/reports.download_export.js' %}"></script>
     <script type="text/javascript" src="{% static 'reports/ko/export.manager.js' %}"></script>
@@ -87,51 +88,47 @@
         });
         $(function () {
             $('.all-users-all-time').popover({
-                title: "All users over all time",
-                content: "This number includes submissions that may not match your filter.",
+                title: "{% trans "All users over all time" %}",
+                content: "{% trans "This number includes submissions that may not match your filter." %}",
                 placement: 'left',
                 trigger: 'hover'
             });
             $('.suggestions').popover({
-                title: "Uncategorized Submissions",
-                content: "It looks like this data should be categorized with one of your forms but is showing up " +
-                        "separately. We strongly recommend that you Report an Issue with the button below.",
+                title: "{% trans "Uncategorized Submissions" %}",
+                content: "{% trans "It looks like this data should be categorized with one of your forms but is showing up separately. We strongly recommend that you Report an Issue with the button below." %}",
                 placement: 'right',
                 trigger: 'hover'
             });
             $('.sheet-name-info').popover({
                 title: "Sheet Name",
-                content: "Excel sheet names are limited to a maximum of 31 characters. "+
-                        "This will be this custom export's sheet name in your bulk custom export.",
+                content: "{% trans "Excel sheet names are limited to a maximum of 31 characters. This will be this custom export's sheet name in your bulk custom export." %}",
                 placement: 'right',
                 trigger: 'hover'
             });
+            var bulkExportTitle = "{% trans "What is Custom Bulk Export?" %}";
+            var bulkExportContent = "{% trans "Custom Bulk Export creates a single Excel file with each export as a separate sheet inside that file." %}" +
+                                    "<br /><br />{% trans "NOTE: Excel 2007+ is currently the only bulk export format supported." %}"
             $('.custom-bulk-export-info').popover({
-                title: "What is Custom Bulk Export?",
-                content: "Custom Bulk Export creates a single Excel file " +
-                        "with each export as a separate sheet inside that file."+
-                        "<br /><br />NOTE: Excel 2007+ is currently the only bulk export format supported.",
+                title: bulkExportTitle,
+                content: bulkExportContent,
                 placement: 'left',
                 trigger: 'hover'
             });
             $('.bulk-export-info').popover({
-                title: "What is Bulk Export?",
-                content: "Bulk Export creates a zip file with containing an Excel file for each application, " +
-                        "with each form as a separate sheet inside that file."+
-                        "<br /><br />NOTE: Excel 2007+ is currently the only bulk export format supported.",
+                title: bulkExportTitle,
+                content: bulkExportContent,
                 placement: 'left',
                 trigger: 'hover'
             });
             $('.sheetname-duplicate').popover({
-                title: "Duplicate Sheet Name",
-                content: "This sheet name is a duplicate of another. Custom exports with duplicate sheet names will " +
-                        "not be included in the Bulk Custom Export. Change the sheet name to resolve this issue.",
+                title: "{% trans "Duplicate Sheet Name" %}",
+                content: "{% trans "This sheet name is a duplicate of another. Custom exports with duplicate sheet names will not be included in the Bulk Custom Export. Change the sheet name to resolve this issue." %}",
                 placement: 'right',
                 trigger: 'hover'
             });
             $('.custom-bulk-format-na').popover({
-                title: "Format Not Available",
-                content: "Custom Bulk Export does not support this format at the time.",
+                title: "{% trans "Format Not Available" %}",
+                content: "{% trans "Custom Bulk Export does not support this format at the time." %}",
                 placement: 'left',
                 trigger: 'hover'
             });
@@ -146,13 +143,13 @@
 
 {#    CUSTOM EXPORTS #}
 <section id="custom-form-export">
-<h2>Saved Custom Exports</h2>
+<h2>{% trans "Saved Custom Exports" %}</h2>
 {% if saved_exports %}
     {% include 'reports/partials/bulk_export_notice.html' %}
     {% include "reports/partials/saved_custom_exports.html" with allow_edit="yes" %}
 {% else %}
     <div class="alert alert-info">
-        <strong>No Custom Exports yet!</strong> Click "Create Custom Export" on a form below to make one.
+        <strong>{% trans "No Custom Exports yet!" %}</strong>{% trans 'Click "Create Custom Export" on a form below to make one.' %}
     </div>
 {% endif %}
 </section>
@@ -160,23 +157,23 @@
 {# EXPORTS #}
 {% if forms %}
 <section id="full-form-export">
-    <h2>Export full forms</h2>
+    <h2>{% trans "Export full forms" %}</h2>
     {% include 'reports/partials/bulk_export_notice.html' %}
     <table class="export_data table table-striped">
         <thead>
         <tr>
-            <th>Application</th>
-            <th>Module</th>
-            <th>Form</th>
-            <th>Custom Export</th>
-            <th>Download</th>
-            <th>Total Submissions</th>
+            <th>{% trans "Application" %}</th>
+            <th>{% trans "Module" %}</th>
+            <th>{% trans "Form" %}</th>
+            <th>{% trans "Custom Export" %}</th>
+            <th>{% trans "Download" %}</th>
+            <th>{% trans "Total Submissions" %}</th>
             <th>
-                Add to Bulk Export <i class="bulk-export-info icon-white icon-info-sign"></i>
+                {% trans "Add to Bulk Export" %} <i class="bulk-export-info icon-white icon-info-sign"></i>
                 <small style="display: block;">
-                    Select:
-                    <a href="#" class="btn btn-mini" data-all="true" data-bind="click: toggleSelectAllExports">all</a>
-                    <a href="#" class="btn btn-mini btn-inverse" data-bind="click: toggleSelectAllExports">none</a>
+                    {% trans "Select" %}:
+                    <a href="#" class="btn btn-mini" data-all="true" data-bind="click: toggleSelectAllExports">{% trans "all" %}</a>
+                    <a href="#" class="btn btn-mini btn-inverse" data-bind="click: toggleSelectAllExports">{% trans "none" %}</a>
                 </small>
             </th>
         </tr>
@@ -189,13 +186,13 @@
                         {% if form.app.name %}
                             {{ form.app.name }}
                             {% if form.app_deleted %}
-                                <span class="label label-info">deleted</span>
+                                <span class="label label-info">{% trans "deleted" %}</span>
                                 {% if request.couch_user.can_edit_apps %}(<a href="{% url view_app domain form.app.id %}"
-                                                 target="_blank">Restore</a>){% endif %}
+                                                 target="_blank">{% trans "Restore" %}</a>){% endif %}
                             {% endif %}
                             <!-- Make sure to check whether {{ form.app.id }} changed -->
                         {% else %}
-                            <h6>No Application</h6>
+                            <h6>{% trans "No Application" %}</h6>
                         {% endif %}
                     {% endifchanged %}
 
@@ -219,24 +216,24 @@
                 {% include "reports/partials/form_name.html" %}
                 {% if form.show_xmlns %}</code>{% endif %}
                 {% if form.app_copy %}
-                    <span class="label label-info">Mislabeled</span>
+                    <span class="label label-info">{% trans "Mislabeled" %}</span>
                     {% if request.couch_user.can_edit_data %}
                         (<a href="{% url change_submissions_app_id domain %}" class="fix-submissions-link"
                            data-app_id="{{ form.current_app.id }}"
                            data-xmlns="{{ form.xmlns }}"
                            data-new_app_id="{{ form.app_copy.id }}"
-                           data-new_app_name="{{ form.app_copy.name }}">Fix</a>)
+                           data-new_app_name="{{ form.app_copy.name }}">{% trans "Fix" %}</a>)
                     {% endif %}
                 {% endif %}
                 {% if not form.has_app and not form.no_suggestions %}
                     <p><span class="label label-important suggestions">Suggestions:</span></p>
                     <ul>
                     {% if form.app_does_not_exist %}
-                        <li>These submissions are tagged as if they belong to an application that doesn't exist.</li>
+                        <li>{% trans "These submissions are tagged as if they belong to an application that doesn't exist." %}</li>
                     {% endif %}
                     {% if form.duplicate %}
                         <li>
-                            <p>These submissions could belong to one of the following forms:</p>
+                            <p>{% trans "These submissions could belong to one of the following forms:" %}</p>
                             <ul>
                                 {% for possibility in form.possibilities %}
                                 <li>
@@ -248,7 +245,7 @@
                                     {% include "reports/partials/form_name.html" %}
                                     {% endwith %}
                                     {% if possibility.app_deleted %}
-                                        <span class="label label-info">deleted</span>
+                                        <span class="label label-info">{% trans "deleted" %}</span>
                                     {% endif %}
 
                                     {% if request.couch_user.can_edit_data %}
@@ -256,7 +253,7 @@
                                        data-app_id="{{ form.current_app.id }}"
                                        data-xmlns="{{ form.xmlns }}"
                                        data-new_app_id="{{ possibility.app.id }}"
-                                       data-new_app_name="{{ possibility.app.name }}">{% if form.possibilities|length == 1 %}Fix{% else %}Select this option{% endif %}</a>
+                                       data-new_app_name="{{ possibility.app.name }}">{% if form.possibilities|length == 1 %}{% trans "Fix" %}{% else %}{% trans "Select this option" %}{% endif %}</a>
                                     {% endif %}
                                 </li>
                                 {% endfor %}
@@ -265,13 +262,13 @@
                     {% endif %}
                     </ul>
                     {% if form.no_suggestions %}
-                        <h6>No suggestions</h6>
+                        <h6>{% trans "No suggestions" %}</h6>
                     {% endif %}
                 {% endif %}
                 </td>
                 <td class="cell-vertical-centered">
                     {% if form.submissions %}
-                        <a class="btn" href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ form.xmlns }}"{% if form.current_app.id %}&app_id={{ form.current_app.id }}{% endif %}&type=form'><i class="icon-star-empty"></i> Create Custom Export</a>
+                        <a class="btn" href='{% url corehq.apps.reports.views.custom_export domain %}?export_tag="{{ form.xmlns }}"{% if form.current_app.id %}&app_id={{ form.current_app.id }}{% endif %}&type=form'><i class="icon-star-empty"></i> {% trans "Create Custom Export" %}</a>
                     {% endif %}
                 </td>
                 <td class="cell-vertical-centered">
@@ -282,9 +279,9 @@
                            data-xmlns="{% if form.xmlns != None %}{{ form.xmlns }}{% endif %}"
                            data-appid="{{ form.app.id }}"
                            data-bind="click: requestDownload"
-                           class="btn btn-primary dl-export" ><i class="icon-download-alt icon-white"></i> Download</a>
+                           class="btn btn-primary dl-export" ><i class="icon-download-alt icon-white"></i> {% trans "Download" %}</a>
                     {% else %}
-                        No Forms
+                        {% trans "No Forms" %}
                     {% endif %}
                 </td>
                 <td>
@@ -296,10 +293,10 @@
                     {% if form.submissions %}
                         <label>
                             <input type="checkbox" class="select-bulk" data-bind="event: {change: updateSelectedExports}" />
-                            <span class="label label-info">+ Bulk Export</span>
+                            <span class="label label-info">+ {% trans "Bulk Export" %}</span>
                         </label>
                     {% else %}
-                        <span class="label">Not Available</span>
+                        <span class="label">{% trans "Not Available" %}</span>
                     {% endif %}
                 </td>
             </tr>
@@ -309,7 +306,7 @@
 </section>
 {% if group_exports %}
 <section>
-    <h2>Saved Export Files</h2>
+    <h2>{% trans "Saved Export Files" %}</h2>
     {% for group in group_exports %}
     {% include "reports/partials/hqexport_group_table.html" %}
     {% endfor %}
@@ -317,10 +314,10 @@
 {% endif %}
 {% endif %}
 <section id="all-forms-metadata">
-    <h2>Export all Forms' Metadata</h2>
+    <h2>{% trans "Export all Forms' Metadata" %}</h2>
     <div class="well">
         <p>
-            Export basic data for all forms in this domain. Note that this export does not support the filters above.
+            {% trans "Export basic data for all forms in this domain. Note that this export does not support the filters above." %}
         </p>
         <a class="btn btn-primary" href='{% url corehq.apps.reports.views.export_all_form_metadata domain %}'>
             <i class="icon-download-alt icon-white"></i> Download

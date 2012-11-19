@@ -2,7 +2,7 @@ import logging
 from django.conf import settings
 
 from dimagi.utils.modules import try_import, to_function
-from corehq.apps.sms.util import clean_phone_number, load_backend
+from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.models import SMSLog, OUTGOING, INCOMING
 from corehq.apps.sms.mixin import MobileBackend, VerifiedNumber
 from datetime import datetime
@@ -73,7 +73,7 @@ def send_sms_with_backend(domain, phone_number, text, backend_id):
 
     def onerror():
         logging.exception("Exception while sending SMS to %s with backend %s" % (phone_number, backend_id))
-    return send_message_via_backend(msg, load_backend(backend_id), onerror=onerror)
+    return send_message_via_backend(msg, MobileBackend.load(backend_id), onerror=onerror)
 
 def send_message_via_backend(msg, backend=None, onerror=lambda: None):
     """send sms using a specific backend
@@ -91,11 +91,7 @@ def send_message_via_backend(msg, backend=None, onerror=lambda: None):
             # verification, thus the backend is None. it's best to only call
             # send_sms_to_verified_number on truly verified contacts, though
 
-        try:
-            backend_module = try_import(backend.outbound_module)
-        except:
-            raise RuntimeError('could not find outbound module %s' % backend.outbound_module)
-        backend_module.send(msg, **backend.outbound_params)
+        backend.backend_module.send(msg, **backend.outbound_params)
 
         try:
             msg.backend_api = backend_module.API_ID
@@ -131,15 +127,31 @@ def start_session_from_keyword(survey_keyword, verified_number):
         print e
         print "ERROR: Exception raised while starting survey for keyword " + survey_keyword.keyword + ", domain " + verified_number.domain
 
-def incoming(phone_number, text, backend_api):
+def incoming(phone_number, text, backend_api, timestamp=None, domain_scope=None):
+    """
+    entry point for incoming sms
+
+    phone_number - originating phone number
+    text - message content
+    backend_api - backend ID of receiving sms backend
+    timestamp - message received timestamp; defaults to now (UTC)
+    domain_scope - if present, only messages from phone numbers that can be
+      definitively linked to this domain will be processed; others will be
+      dropped (useful to provide security when simulating incoming sms)
+    """
     phone_number = clean_phone_number(phone_number)
     v = VerifiedNumber.by_phone(phone_number)
-    
+ 
+    if domain_scope:
+        # only process messages for phones known to be associated with this domain
+        if v is None or v.domain != domain_scope:
+            raise RuntimeError('attempted to simulate incoming sms from phone number not verified with this domain')
+
     # Log message in message log
     msg = SMSLog(
         phone_number    = phone_number,
         direction       = INCOMING,
-        date            = datetime.utcnow(),
+        date            = timestamp or datetime.utcnow(),
         text            = text,
         backend_api     = backend_api
     )
@@ -170,6 +182,7 @@ def incoming(phone_number, text, backend_api):
         import verify
         verify.process_verification(phone_number, text)
 
+    return msg
 
 def form_session_handler(v, text):
     # Circular Import

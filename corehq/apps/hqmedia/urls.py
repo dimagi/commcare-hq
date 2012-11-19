@@ -1,7 +1,7 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('corehq.apps.hqmedia.views',
-    url(r'^file/(?P<media_type>[\w\-]+)/(?P<doc_id>[\w\-]+)/(foo.mp3)?$', "download_media", name="hqmedia_download"),
+    url(r'^file/(?P<media_type>[\w\-]+)/(?P<doc_id>[\w\-]+)/(foo.mp3)?(foo.wav)?$', "download_media", name="hqmedia_download"),
 )
 
 application_urls = patterns('corehq.apps.hqmedia.views',

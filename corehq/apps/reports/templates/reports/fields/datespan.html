@@ -1,11 +1,12 @@
-<label class="control-label">{{ datespan_name }}</label>
+{% load i18n %}
+<label class="control-label">{% trans datespan_name %}</label>
 <div class="controls">
-    <label for="filter_startdate" class="sub-label">From</label>
+    <label for="filter_startdate" class="sub-label">{% trans "From" %}</label>
     <input type="text" id="filter_startdate" name="startdate" class="date-picker input-small" value="{{ datespan.startdate|date:"Y-m-d" }}">
-    <label for="filter_enddate" class="sub-label">To</label>
+    <label for="filter_enddate" class="sub-label">{% trans "To" %}</label>
     <input type="text" id="filter_enddate" name="enddate" class="date-picker input-small" value="{{ datespan.enddate|date:"Y-m-d" }}">
     <span class="helptext help-inline" style="margin-left: 1.5em;">
-        {% if timezone %}This report's timezone is in {{ timezone }}. {% endif %}Showing {{ datespan }}.
+        {% if timezone %}{% trans "This report's timezone is in" %} {{ timezone }}. {% endif %}{% trans "Showing" %} {{ datespan }}.
     </span>
 </div>
 

@@ -3,10 +3,6 @@
 {% load hq_shared_tags %}
 {% load timezone_tags %}
 
-{% block js %} {{ block.super }}
-<script src="{% static 'hqstyle/js/jquery.multi_typeahead.js' %}"></script>
-{% endblock %}
-
 {% block sms-js %}
     {% include "imports/checklist.html" %}
 {% endblock %}

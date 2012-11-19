@@ -14,7 +14,7 @@ def make_product(domain, name, code):
     p = Product()
     p.domain = domain
     p.name = name
-    p.code = code
+    p.code = code.lower()
     p.save()
     return p
 

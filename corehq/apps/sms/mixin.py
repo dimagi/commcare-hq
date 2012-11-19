@@ -1,5 +1,7 @@
 import re
 from couchdbkit.ext.django.schema import *
+from django.conf import settings
+from dimagi.utils.modules import try_import
 
 phone_number_re = re.compile("^\d+$")
 
@@ -22,11 +24,16 @@ class VerifiedNumber(Document):
     owner_id        = StringProperty()
     phone_number    = StringProperty()
     backend_id      = StringProperty() # points to a MobileBackend
+    ivr_backend_id  = StringProperty() # points to a MobileBackend
     verified        = BooleanProperty()
     
     @property
     def backend(self):
-        return MobileBackend.get(self.backend_id)
+        return MobileBackend.load(self.backend_id)
+    
+    @property
+    def ivr_backend(self):
+        return MobileBackend.get(self.ivr_backend_id)
     
     @property
     def owner(self):
@@ -52,14 +59,77 @@ class VerifiedNumber(Document):
 def strip_plus(phone_number):
     return phone_number[1:] if phone_number.startswith('+') else phone_number
 
+def add_plus(phone_number):
+    return ('+' + phone_number) if not phone_number.startswith('+') else phone_number
+
 class MobileBackend(Document):
     """
-    Defines a backend to be used for sending / receiving SMS.
+    Defines an instance of a backend api to be used for either sending sms, or sending outbound calls.
     """
     domain = ListProperty(StringProperty)   # A list of domains for which this backend is applicable
     description = StringProperty()          # (optional) A description of this backend
-    outbound_module = StringProperty()      # The fully-qualified name of the inbound module to be used (must implement send() method)
+    outbound_module = StringProperty()      # The fully-qualified name of the outbound module to be used (sms backends: must implement send(); ivr backends: must implement initiate_outbound_call() )
     outbound_params = DictProperty()        # The parameters which will be the keyword arguments sent to the outbound module's send() method
+
+    @classmethod
+    def auto_load(cls, phone_number, domain=None):
+        """
+        Get the appropriate outbound SMS backend to send to a
+        particular phone_number
+        """
+        phone_number = add_plus(phone_number)
+
+        # TODO: support domain-specific settings
+        
+        global_backends = getattr(settings, 'SMS_BACKENDS', {})
+        backend_mapping = sorted(global_backends.iteritems(),
+                                 key=lambda (prefix, backend): len(prefix),
+                                 reverse=True)
+        for prefix, backend in backend_mapping:
+            if phone_number.startswith('+' + prefix):
+                return cls.load(backend)
+        raise RuntimeError('no suitable backend found for phone number %s' % phone_number)
+
+    @classmethod
+    def load(cls, backend_id):
+        """load a mobile backend
+        for 'old-style' backends, create a virtual backend record
+        wrapping the backend module
+        """
+        # new-style backend
+        try:
+            return cls.get(backend_id)
+        except:
+            pass
+
+        # old-style backend
+
+        # hard-coded old-style backends with new-style IDs
+        # once the backend migration is complete, these backends
+        # should exist in couch
+        transitional = {
+            'MOBILE_BACKEND_MACH': 'corehq.apps.sms.mach_api',
+            'MOBILE_BACKEND_UNICEL': 'corehq.apps.unicel.api',
+            'MOBILE_BACKEND_TEST': 'corehq.apps.sms.test_backend',
+            # tropo?
+        }
+        try:
+            module = transitional[backend_id]
+        except KeyError:
+            module = backend_id
+
+        return cls(
+            _id=backend_id,
+            outbound_module=module,
+            description='virtual backend for %s' % backend_id,
+        )
+
+    @property
+    def backend_module(self):
+        module = try_import(self.outbound_module)
+        if not module:
+            raise RuntimeError('could not find outbound module %s' % self.outbound_module)
+        return module
 
 class CommCareMobileContactMixin(object):
     """
@@ -133,7 +203,7 @@ class CommCareMobileContactMixin(object):
         if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self._id):
             raise PhoneNumberInUseException("Phone number is already in use.")
     
-    def save_verified_number(self, domain, phone_number, verified, backend_id):
+    def save_verified_number(self, domain, phone_number, verified, backend_id, ivr_backend_id=None):
         """
         Saves the given phone number as this contact's verified phone number.
         
@@ -153,6 +223,7 @@ class CommCareMobileContactMixin(object):
         v.phone_number = phone_number
         v.verified = verified
         v.backend_id = backend_id
+        v.ivr_backend_id = ivr_backend_id
         v.save()
 
     def delete_verified_number(self, phone_number=None):

@@ -1,14 +1,14 @@
 {% load hq_shared_tags %}
-
+{% load i18n %}
 {% if show_time_notice %}{% include "hqwebapp/partials/time-notice.html"%}{% endif %}
 
 {% block reportcontent %}
     {% if report.show %}
         {% if report.slug %}
             <div class="hq-loading" style="display: none;">
-                <h4>Loading Report</h4>
+                <h4>{% trans "Loading Report" %}</h4>
                 <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
-                <h6>{{ report.title }}</h6>
+                <h6>{% trans report.title %}</h6>
             </div>
         {% else %}
             <h6 style="text-align: center; margin-top: 200px;">{{ report.title }}</h6>
