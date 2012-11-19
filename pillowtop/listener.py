@@ -170,6 +170,10 @@ class ElasticPillow(BasicPillow):
     def get_doc_path(self, doc_id):
         return "%s/%s/%s" % (self.es_index, self.es_type, doc_id)
 
+    def get_index_mapping(self):
+        es = self.get_es()
+        return es.get('%s/_mapping' % self.es_index)[self.es_index]
+
     @memoized
     def get_es(self):
         return rawes.Elastic('%s:%s' % (self.es_host, self.es_port))
@@ -234,10 +238,67 @@ class ElasticPillow(BasicPillow):
                 (self.get_name(), ex))
             return None
 
-class AliasedElasticPillow(ElasticPillow):
 
+class AliasedElasticPillow(ElasticPillow):
     es_alias = ''
     es_index_prefix = ''
+    seen_types = {}
+
+    def __init__(self, **kwargs):
+        super(AliasedElasticPillow, self).__init__(**kwargs)
+        self.seen_types = self.get_index_mapping()
+
+
+    def calc_meta(self):
+        raise NotImplementedError("Need to implement your own meta calculator")
+
+
+    def type_exists(self, doc_dict):
+        es = self.get_es()
+        type_string = self.get_type_string(doc_dict)
+
+        ##################
+        #ES 0.20 has the index HEAD API.  While we're on 0.19, we will need to poll the index
+        # metadata
+        #type_path = "%(index)s/%(type_string)s" % ( { 'index': self.es_index, 'type_string': type_string, })
+
+        #if we don't want to server confirm it for both .19 or .20, then this hash is enough
+        #if self.seen_types.has_key(type_string):
+        #return True
+        #else:
+        #self.seen_types[type_string] = True
+        #head_result = es.head(type_path)
+        #return head_result
+        ##################
+
+        #####
+        #0.19 method, get the mapping from the index
+        return self.seen_types.has_key(type_string)
+
+    def get_type_string(self, doc_dict):
+        raise NotImplementedError("Please implement acustom type string resolver")
+
+    def get_doc_path_typed(self, doc_dict):
+        return "%(index)s/%(type_string)s/%(id)s" % (
+            {
+                'index': self.es_index,
+                'type_string': self.get_type_string(doc_dict),
+                'id': doc_dict['_id']
+            })
+
+    def doc_exists(self, doc_dict):
+        """
+        Overrided based upon the doc type
+        """
+        es = self.get_es()
+        doc_path = "%(index)s/%(type_string)s/%(id)s" % (
+            {
+                'index': self.es_index,
+                'type_string': self.get_type_string(doc_dict),
+                'id': doc_dict['_id']
+            })
+        head_result = es.head(doc_path)
+        return head_result
 
     def get_name(self):
         return "%s.%s.%s" % (self.__module__, self.__class__.__name__, self.calc_meta())
