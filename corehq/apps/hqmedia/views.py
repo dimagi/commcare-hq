@@ -118,7 +118,6 @@ def media_map(request, domain, app_id):
     })
 
 def media_from_path(request, domain, app_id, file_path):
-#    print reverse('media_from_path', args=[domain, app_id, ])
     app = get_app(domain, app_id)
     sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
 
