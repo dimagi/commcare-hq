@@ -1,5 +1,6 @@
 function (doc) {
-    if ( (doc.doc_type === "Application" || doc.doc_type === "Application-Deleted")) {
+    if ( (doc.doc_type === "Application" || doc.doc_type === "Application-Deleted")
+        && doc.copy_of === null) {
         // all xforms bound to an application at some point in time
         var is_deleted = doc.doc_type === 'Application-Deleted';
 
@@ -23,8 +24,7 @@ function (doc) {
                             names: form.name,
                             id: f
                         },
-                        is_deleted: is_deleted,
-                        copy_of: doc.copy_of
+                        is_deleted: is_deleted
                     };
                     emit(["xmlns", doc.domain, form.xmlns], value);
                     emit(["app", doc.domain, value.app.id], value);
@@ -39,19 +39,26 @@ function (doc) {
                     var reg_value = {
                         xmlns: reg_form.xmlns,
                         app: {
-                            name: doc.name,
+                            names: doc.name,
                             langs: doc.langs,
                             id: doc._id
                         },
+                        module: {
+                            names: "User Registration",
+                            id: -1
+                        },
+                        form: {
+                            names: "User Registration Form",
+                            id: 0
+                        },
                         is_user_registration: true,
-                        is_deleted: is_deleted,
-                        copy_of: doc.copy_of
+                        is_deleted: is_deleted
                     };
                     emit(["xmlns", doc.domain, reg_form.xmlns], reg_value);
                     emit(["app", doc.domain, reg_value.app.id], reg_value);
                     emit(["app xmlns", doc.domain, reg_value.app.id], reg_value);
-                    emit(["app module", doc.domain, reg_value.app.id, -1], reg_value);
-                    emit(["app module form", doc.domain, reg_value.app.id, -1, -1], reg_value);
+                    emit(["app module", doc.domain, reg_value.app.id, reg_value.module.id], reg_value);
+                    emit(["app module form", doc.domain, reg_value.app.id, reg_value.module.id, reg_value.form.id], reg_value);
                 }
             }
         }

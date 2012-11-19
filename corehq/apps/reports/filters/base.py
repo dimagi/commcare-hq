@@ -62,7 +62,7 @@ class BaseReportFilter(object):
         return render_to_string(self.template, self.context)
 
     @classmethod
-    def get_value(cls, request):
+    def get_value(cls, request, domain):
         return request.GET.get(cls.slug)
 
 
@@ -116,15 +116,59 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
         ---> Select Module: <module options based on selected application (if selected)>
         ---------> Select Form: <form_options based on selected module (if selected)>
 
-        use_only_last => Whether to indicate to the user that they must move all the way through the hierarchy before
-            the result is usable. (eg: you can't just pick an application and show all of its forms,
-            you must select exactly one form)
+        use_only_last => Whether to indicate to the user that they must move all the way through the hierarchy
+            and select a final option before the result is usable. For example, you can't just pick an application
+            and show all of its forms, you must select exactly one form.
     """
     template = "reports/filters/drilldown_options.html"
     use_only_last = False
 
     @property
-    def option_map(self):
+    def selected(self):
+        selected = []
+        for label in self.rendered_labels:
+            value = self._get_label_value(self.request, label)
+            if not value:
+                break
+            selected.append(value)
+        return selected
+
+    @property
+    def rendered_labels(self):
+        """
+            Modify the default set of labels here.
+        """
+        return self.labels()
+
+    @property
+    def filter_context(self):
+        controls = []
+        for level, label in enumerate(self.rendered_labels):
+            controls.append({
+                'label': label[0],
+                'default_text': label[1],
+                'slug': label[2],
+                'level': level,
+            })
+        return {
+            'option_map': self.drilldown_map,
+            'controls': controls,
+            'selected': self.selected,
+            'use_last': self.use_only_last,
+            'notifications': self.final_notifications,
+        }
+
+    @property
+    def final_notifications(self):
+        """
+            Not required, but this can be used to display a message when the drill down is complete
+            that's based on the value of the final drill down option.
+            ex: {'xmlns_of_form': 'This form does not have a unique id.'}
+        """
+        return {}
+
+    @property
+    def drilldown_map(self):
         """
             Should return a structure like:
             [{
@@ -142,34 +186,16 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
             {...}
             ]
         """
-        raise NotImplementedError("options must be implemented")
+        raise NotImplementedError("drilldown_map must be implemented")
 
-    @property
-    def selected(self):
-        selected = []
-        for label in self.labels():
-            value = self._get_label_value(self.request, label)
-            if not value:
-                break
-            selected.append(value)
-        return selected
-
-    @property
-    def filter_context(self):
-        selects = []
-        for level, label in enumerate(self.labels()):
-            selects.append({
-                'label': label[0],
-                'default_text': label[1],
-                'slug': label[2],
-                'level': level,
-            })
+    def _map_structure(self, val, text, next=None):
+        if next is None:
+            next = []
         return {
-            'option_map': self.option_map,
-            'selects': selects,
-            'selected': self.selected,
-            'use_last': self.use_only_last,
-        }
+            'val': val,
+            'text': text,
+            'next': next,
+            }
 
     @classmethod
     def labels(cls):
@@ -179,7 +205,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
                 ('Application', 'Select Application...', 'app'),
                 ('Module', 'Select Module...', 'module'),
                 ('Form', 'Select Form...', 'form')
-                ]
+            ]
         """
         raise NotImplementedError("label_hierarchy must be implemented")
 
@@ -188,9 +214,10 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
         return request.GET.get('%s_%s' % (cls.slug, str(label[2])))
 
     @classmethod
-    def get_value(cls, request):
+    def get_value(cls, request, domain):
         values = {}
-        for label in cls.labels():
+        instance = cls(request, domain)
+        for label in instance.rendered_labels:
             value = cls._get_label_value(request, label)
             if not value:
                 break

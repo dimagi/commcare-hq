@@ -2,7 +2,8 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block filter_content %}
-    <div id="{{ css_id }}" class="parts" data-bind="foreach: controls">
+<div id="{{ css_id }}" class="well" style="padding-bottom: 0;">
+    <div data-bind="foreach: controls">
         {% if use_last %}
         <div class="control-group" data-bind="fadeVisibleInOnly: show_alert">
             <label class="control-label">
@@ -25,6 +26,8 @@
             </div>
         </div>
     </div>
+    <div class="alert alert-info" data-bind="fadeVisible: notification.is_visible, html: notification.message"></div>
+ </div>
 {% endblock %}
 {% block filter_js %}
 <script type="text/javascript" src="{% static 'reports/ko/report_filter.drilldown_options.js' %}"></script>
@@ -32,8 +35,9 @@
     $(function () {
        $('#{{ css_id }}').drilldownOptionFilter({
            drilldown_map: {{ option_map|JSON }},
-           controls: {{ selects|JSON }},
+           controls: {{ controls|JSON }},
            selected: {{ selected|JSON }},
+           notifications: {{ notifications|JSON }},
        });
     });
 </script>

@@ -40,7 +40,7 @@ def make_form_couch_key(domain, by_submission_time=True,
             key.append(user_id)
     return [" ".join(prefix)] + key
 
-def all_forms_in_domain(domain):
+def all_xmlns_in_domain(domain):
     # todo replace form_list with this
     key = make_form_couch_key(domain, xmlns="")
     domain_xmlns = get_db().view('reports_forms/all_forms',
@@ -50,6 +50,55 @@ def all_forms_in_domain(domain):
         group_level=3,
     ).all()
     return [d['key'][-1] for d in domain_xmlns if d['key'][-1] is not None]
+
+def all_application_forms(domain):
+    key = ["app module form", domain]
+    xmlns_used = []
+    app_forms = {}
+    data = get_db().view('reports_forms/by_app_info',
+        reduce=False,
+        startkey=key,
+        endkey=key+[{}]
+    ).all()
+    for line in data:
+        app_info = line.get('value')
+        if not app_info:
+            continue
+
+        index_offset = 1 if app_info.get('is_user_registration', False) else 0
+        xmlns_used.append(app_info['xmlns'])
+        app_id = app_info['app']['id']
+
+        if not app_id in app_forms:
+            app_forms[app_id] = {
+                'app': app_info['app'],
+                'is_user_registration': app_info.get('is_user_registration', False),
+                'is_deleted': app_info['is_deleted'],
+                'modules': []
+            }
+
+        module_id = app_info['module']['id'] + index_offset
+        if module_id+1 > len(app_forms[app_id]['modules']):
+            app_forms[app_id]['modules'].append({
+                'module': app_info['module'],
+                'forms': [],
+            })
+
+        app_forms[app_id]['modules'][module_id]['forms'].append({
+            'form': app_info['form'],
+            'xmlns': app_info['xmlns'],
+        })
+    return app_forms, xmlns_used
+
+def get_duplicate_xmlns(domain):
+    key = ["xmlns", domain]
+    data = get_db().view('reports_forms/by_app_info',
+        group=True,
+        startkey=key,
+        endkey=key+[{}]
+    ).all()
+    return [d['key'][-1] for d in data if d['value'] > 1]
+
 
 def user_list(domain):
     #todo cleanup
