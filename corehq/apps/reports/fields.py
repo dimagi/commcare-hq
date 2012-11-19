@@ -14,6 +14,12 @@ from corehq.apps.locations.models import location_tree
 import settings
 import json
 
+"""
+    Note: Fields is being phased out in favor of filters.
+    The only reason it still exists is because admin reports needs to get moved over to the new
+    reporting structure.
+"""
+
 datespan_default = datespan_in_request(
             from_param="startdate",
             to_param="enddate",
@@ -157,7 +163,6 @@ class CaseTypeField(ReportSelectField):
 
     @classmethod
     def get_case_types(cls, domain):
-
         key = [domain]
         for r in get_db().view('hqcase/all_cases',
             startkey=key,
