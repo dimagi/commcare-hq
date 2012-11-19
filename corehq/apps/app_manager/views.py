@@ -453,17 +453,17 @@ def release_manager(request, domain, app_id, template='app_manager/releases.html
         'latest_release': latest_release,
         'users_cannot_share': users_cannot_share,
     })
-#    if not app.is_remote_app():
-#        sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
-#        multimedia_images, missing_image_refs = app.get_template_map(sorted_images)
-#        multimedia_audio, missing_audio_refs = app.get_template_map(sorted_audio)
-#        if len(multimedia_images) > 0 or len(multimedia_audio) > 0 or has_error:
-#            context.update(dict(multimedia={
-#                'missing_image_refs': missing_image_refs,
-#                'missing_audio_refs': missing_audio_refs,
-#                'errors': has_error,
-#                'notice': bool(has_error or missing_image_refs > 0  or missing_audio_refs > 0)
-#            }))
+    if not app.is_remote_app():
+        sorted_images, sorted_audio, has_error = utils.get_sorted_multimedia_refs(app)
+        multimedia_images, missing_image_refs = app.get_template_map(sorted_images)
+        multimedia_audio, missing_audio_refs = app.get_template_map(sorted_audio)
+        if len(multimedia_images) > 0 or len(multimedia_audio) > 0 or has_error:
+            context.update(dict(multimedia={
+                'missing_image_refs': missing_image_refs,
+                'missing_audio_refs': missing_audio_refs,
+                'errors': has_error,
+                'notice': bool(has_error or missing_image_refs > 0  or missing_audio_refs > 0)
+            }))
     response = render_to_response(request, template, context)
     response.set_cookie('lang', _encode_if_unicode(context['lang']))
     return response
@@ -1539,11 +1539,11 @@ def delete_copy(req, domain, app_id):
     See VersionedDoc.delete_copy
 
     """
-    next = req.POST.get('next')
     app = get_app(domain, app_id)
     copy = get_app(domain, req.POST['saved_app'])
     app.delete_copy(copy)
-    return HttpResponseRedirect(next)
+    return json_response({})
+
 
 # download_* views are for downloading the files that the application generates
 # (such as CommCare.jad, suite.xml, profile.xml, etc.

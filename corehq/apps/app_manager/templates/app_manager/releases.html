@@ -7,6 +7,7 @@
 {% load i18n %}
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/javascripts/knockout.mapping.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/knockout-bindings.js' %}"></script>
     <script src="{% static 'app_manager/js/releases.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
@@ -17,9 +18,9 @@
             set_is_released: function (saved_app_id, is_released) {
                 return(
                     is_released
-                    ? '{% url unrelease_build domain app.id "__saved_app_id__" %}'
-                    : '{% url release_build domain app.id "__saved_app_id__" %}'
-                ).replace("__saved_app_id__", saved_app_id);
+                    ? '{% url unrelease_build domain app.id '___' %}'
+                    : '{% url release_build domain app.id '___' %}'
+                ).replace('___', saved_app_id);
             }
         };
         function setIsReleased(element, is_released) {
@@ -110,15 +111,25 @@
             $(this).parent().hide();
             return false;
         });
+        // init releases
+        var urls = {
+            fetch: '{% url paginate_releases domain app.id %}',
+            delete: '{% url corehq.apps.app_manager.views.delete_copy domain app.id %}',
+            emulator: '{% url emulator domain '___' %}',
+            cloudcare: '{% url cloudcare_get_app domain '___' %}',
+            jad: '{% url corehq.apps.app_manager.views.download_jad domain '___' %}',
+            jar: '{% url corehq.apps.app_manager.views.download_jar domain '___' %}',
+            odk: '{% url corehq.apps.app_manager.views.odk_install domain '___' %}',
+            source: '{% url download_index domain '___' %}'
+        };
+        var o = {
+            users_cannot_share: {{ users_cannot_share|JSON }},
+            urls: urls
+        };
+        var el = $('#releases-table');
+        ko.applyBindings(new ReleasesMain(o), el.get(0));
+        el.show();
     });
-$(function () {
-    var o = {
-        fetchUrl: '{% url paginate_releases domain app.id %}'
-    };
-    var el = $('#releases-table');
-    ko.applyBindings(new ReleasesMain(o), el.get(0));
-    el.show();
-});
 </script>
 {% endblock %}
 {% block head %}{{ block.super }}
@@ -140,18 +151,18 @@ $(function () {
     .nowrap {
         white-space: nowrap;
     }
-    .build-is-released [data-is-released]{
+    .build-is-released .star{
         min-width: 20px;
         min-height: 20px;
         background-repeat: no-repeat;
     }
-    .build-is-released [data-is-released="true"] {
+    .build-is-released .starred {
         background-image: url("{% static 'app_manager/img/star-filled.svg' %}");
     }
-    .build-is-released [data-is-released="false"] {
+    .build-is-released .unstarred {
         background-image: url("{% static 'app_manager/img/star-empty.svg' %}");
     }
-    .build-is-released [data-is-released="error"]:after {
+    .build-is-released .star-error:after {
         content: "Error";
     }
 </style>
@@ -253,185 +264,4 @@ $(function () {
     <div id="releases-table">
         {% include 'app_manager/partials/releases.html' %}
     </div>
-{% endblock %}
-
-{% block modals %}
-{{ block.super }}
-    {% for saved_app in saved_apps %}
-        <div id="{{ saved_app.id }}_modal" class="modal hide fade">
-            <div class="modal-header">
-            <a href="#" class="close" data-dismiss="modal">×</a>
-            <h3>Deploying version {{ saved_app.version }}</h3>
-            </div>
-            <div class="modal-body">
-            {% if saved_app.case_sharing and users_cannot_share|length > 0 %}
-                <p>
-                    <span class="label label-important">Warning!</span>
-                    The following users cannot use this case sharing app because they have either more or less than one group. To fix this, please <a href="{% url commcare_users domain %}?cannot_share=true">edit their group settings</a> so that they all belong to exactly one group.
-                </p>
-                <ul>
-                    {% for user in users_cannot_share %}
-                        <li>{{ user.raw_username }}</li>
-                    {% endfor %}
-                </ul>
-                <p>
-                    <a href="{% url commcare_users domain %}?cannot_share=true" class="btn">Edit mobile users</a>
-                    <a href="#{{ saved_app.id }}_accordion" class="btn showAccordionButton">Deploy anyway</a>
-                </p>
-            {% endif %}
-            <div class="accordion{% if saved_app.case_sharing and users_cannot_share|length > 0 %} hide {% endif %}" id="{{ saved_app.id }}_accordion">
-                <div class="accordion-group">
-                  <div class="accordion-heading">
-                    <a class="accordion-toggle"{% if saved_app.cloudcare_enabled %} data-toggle="collapse" data-parent="#{{ saved_app.id }}_accordion" href="#{{ saved_app.id }}_preview"{% else %} href="{% url emulator domain saved_app.id %}"{% endif %}>
-                      Preview
-                      {% if not saved_app.cloudcare_enabled %}
-                        in emulator
-                      {% endif %}
-                    </a>
-                  </div>
-                  <div id="{{ saved_app.id }}_preview" class="accordion-body collapse">
-                    <div class="accordion-inner">
-                      <p>
-                            Preview in <a href="{% url emulator domain saved_app.id %}">the emulator</a> or in <a href="{% url cloudcare_get_app domain saved_app.id %}">CloudCare</a>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="accordion-group">
-                  <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#{{ saved_app.id }}_accordion" href="#{{ saved_app.id }}_j2me">
-                      Download to J2ME
-                    </a>
-                  </div>
-                  <div id="{{ saved_app.id }}_j2me" class="accordion-body collapse">
-                    <div class="accordion-inner">
-                      <ol>
-                        <li>
-                            Download <strong>both</strong> of the following files:
-                            <p><a href="{% url corehq.apps.app_manager.views.download_jad domain saved_app.id %}">Download CommCare.jad</a></p>
-                            <p><a href="{% url corehq.apps.app_manager.views.download_jar domain saved_app.id %}">Download CommCare.jar</a></p>
-                        </li>
-                        <li>
-                            For help on how to install, see our <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Set+Up+Mobile+Phone">Set Up Mobile Phone</a>.
-                        </li>
-                        <li>
-                            If you have any issues with the installation, please refer to
-                            <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Troubleshooting+Phone+Problems">Troubleshooting Phone Problems</a>.
-                        </li>
-                    </ol>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="accordion-group">
-                  <div class="accordion-heading">
-                    <a class="accordion-toggle odk_install" href="{% url corehq.apps.app_manager.views.odk_install domain saved_app.id %}">
-                        Download to CommCare ODK (Android)
-                    </a>
-                  </div>
-                </div>
-
-                <div class="accordion-group">
-                  <div class="accordion-heading">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#{{ saved_app.id }}_accordion" href="#{{ saved_app.id }}_sms">
-                      Send to phone via SMS
-                    </a>
-                  </div>
-
-                  <div id="{{ saved_app.id }}_sms" class="accordion-body collapse">
-                    <div class="accordion-inner">
-                      <div class="tab-pane" id="pills-basic">
-                          <div class="tabbable">
-                            <ul class="nav nav-pills">
-                              <li class="active">
-                                <a href="#{{ saved_app.id }}_sms_j2me" data-toggle="tab">Send J2ME app</a>
-                              </li>
-                              <li>
-                                <a href="#{{ saved_app.id }}_sms_odk" data-toggle="tab">Send CommCare ODK app (Android)</a>
-                              </li>
-                            </ul>
-                            <div class="tab-content">
-                              <div id="{{ saved_app.id }}_sms_j2me" class="tab-pane active">
-                              {% if saved_app.short_url %}
-                                <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
-                                  <label>Send to: </label>
-                                  <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
-                                  <br />
-                                  <textarea name="message">Update to CommCare: {{ saved_app.short_url }} ("{{ app.short_name }}" v.{{ saved_app.version }})</textarea>
-                                  <br />
-                                  <input type="submit" class="btn" value="Send"/>
-                                </form>
-                              {% else %}
-                                <span class="label label-important">
-                                  No URL was found for this app, try rebuilding. 
-                                </span>
-                              {% endif %}
-                              </div>
-
-                              <div id="{{ saved_app.id }}_sms_odk" class="tab-pane">
-                              {% if saved_app.short_odk_url %}
-                                <form method="post" action="{% url corehq.apps.sms.views.send_to_recipients domain %}">
-                                  <label>Send to: </label>
-                                  <input type="text" name="recipients" class="sms-autocomplete" value="{{ app.recipients }}"/>
-                                  <br />
-                                  <textarea name="message">Update to CommCare: {{ saved_app.short_odk_url }} ("{{ app.short_name }}" v.{{ saved_app.version }})</textarea>
-                                  <br />
-                                  <input type="submit" class="btn" value="Send"/>
-                                </form>
-                              {% else %}
-                                <span class="label label-important">
-                                  No URL was found for this app, try rebuilding.
-                                </span>
-                              {% endif %}
-                              </div>
-                            </div>
-                          </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {% ifchanged %}
-                {% if multimedia %}
-                <div class="accordion-group">
-                  <div class="accordion-heading">
-                    <a class="accordion-toggle" href="{% if multimedia.notice %}#{{ saved_app.id }}_multimedia{% else %}{% url download_multimedia_zip domain app.id %}{% endif %}" {% if multimedia.notice %}data-toggle="collapse" data-target="#{{ saved_app.id }}_multimedia"{% endif %}>Download Multimedia Zip</a>
-                  </div>
-                  <div class="accordion-body collapse" id="{{ saved_app.id }}_multimedia">
-                    <div class="accordion-inner">
-                    {% if multimedia.missing_image_refs > 0 or multimedia.missing_audio_refs > 0 %}
-                        <p>
-                            Your multimedia zip is missing {{ multimedia.missing_image_refs }} image reference{{ multimedia.missing_image_refs|pluralize }} and
-                            {{ multimedia.missing_audio_refs }} audio reference{{ multimedia.missing_audio_refs|pluralize }}. Your app will likely crash unless this
-                            is resolved.
-                        </p>
-                    {% endif %}
-                    {% if multimedia.errors %}
-                        <p>
-                            Your application contains errors, therefore, your multimedia could not properly be assembled. Please fix your errors and any missing
-                            multimedia references that are found afterward before using this file.
-                        </p>
-                    {% endif %}
-                    <a class="btn btn-warning" href="{% url download_multimedia_zip domain app.id %}">Download Anyway</a>
-                    </div>
-                  </div>
-                </div>
-                {% endif %}
-                {% endifchanged %}
-
-                {% if request.user.is_superuser %}
-                <div class="accordion-group">
-                  <div class="accordion-heading">
-                    <a class="accordion-toggle" href="{% url download_index domain saved_app.id %}">View Source Files</a>
-                  </div>
-                </div>
-                {% endif %}
-            </div>
-            </div>
-            <div class="modal-footer">
-            <a href="#" class="btn" data-dismiss="modal">Close</a>
-            </div>
-        </div>
-    {% endfor %}
 {% endblock %}

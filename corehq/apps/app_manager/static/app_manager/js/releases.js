@@ -7,15 +7,24 @@ function SavedApp(o) {
 }
 
 function ReleasesMain(o) {
-    /* {fetchUrl} */
+    /* {fetchUrl, deleteUrl} */
     var self = this;
+    self.options = o;
+    self.users_cannot_share = self.options.users_cannot_share;
     self.savedApps = ko.observableArray();
     self.doneFetching = ko.observable(false);
     self.nextVersionToFetch = null;
     self.fetchLimit = 5;
+    self.url = function (name) {
+        var template = self.options.urls[name];
+        for (var i = 1; i < arguments.length; i++) {
+            template = template.replace('___', ko.utils.unwrapObservable(arguments[i]));
+        }
+        return template;
+    };
     self.getMoreSavedApps = function () {
         $.ajax({
-            url: o.fetchUrl,
+            url: self.url('fetch'),
             dataType: 'json',
             data: {
                 start_build: self.nextVersionToFetch,
@@ -34,5 +43,11 @@ function ReleasesMain(o) {
             }
         });
     };
+    self.deleteSavedApp = function (savedApp) {
+        $.post(self.url('delete'), {saved_app: savedApp.id}, function () {
+            self.savedApps.remove(savedApp);
+        });
+    };
+    // init
     self.getMoreSavedApps();
 }
