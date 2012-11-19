@@ -237,7 +237,7 @@
     {% if search_query %}
         <li>
             {% trans "Searching for" %} "{{ search_query }}"
-            <a href="{% urlencode request.path request.GET without "search" %}" style="font-size: 60%;">({% trans "cancel" %})</a>
+            <a href="{% urlencode request.path request.GET without "search" %}" style="font-size: 60%;">{% trans "(cancel)" %}</a>
             {% if sort_by %}
                 <span class="divider">&gt;</span>
             {% endif %}
