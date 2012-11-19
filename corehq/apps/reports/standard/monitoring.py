@@ -579,6 +579,7 @@ class FormCompletionTrendsReport(WorkerMonitoringReportTable, DatespanMixin):
     slug = "completion_times"
     fields = ['corehq.apps.reports.fields.FilterUsersField',
               'corehq.apps.reports.fields.SelectFormField',
+              'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
               'corehq.apps.reports.fields.GroupField',
               'corehq.apps.reports.fields.DatespanField']
 
