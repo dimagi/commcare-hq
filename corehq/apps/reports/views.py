@@ -520,7 +520,6 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
         'form': None,
         'domain': domain,
         'report': {
-            'title': 'New Scheduled Report',
             'show': request.couch_user.can_view_reports() or request.couch_user.get_viewable_reports(),
             'slug': None,
             'default_url': reverse('reports_home', args=(domain,)),
@@ -575,7 +574,12 @@ def edit_scheduled_report(request, domain, scheduled_report_id=None,
         return HttpResponseRedirect(reverse('reports_home', args=(domain,)))
 
     context['form'] = form
-    context['form_action'] = "Create a new" if is_new else "Edit"
+    if is_new:
+        context['form_action'] = "Create a new"
+        context['report']['title'] = "New Scheduled Report"
+    else:
+        context['form_action'] = "Edit"
+        context['report']['title'] = "Edit Scheduled Report"
 
     return render_to_response(request, template, context)
 
