@@ -31,7 +31,7 @@ from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.domain.models import LicenseAgreement
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username, cc_user_domain
 from corehq.apps.users.xml import group_fixture
-from corehq.apps.sms.mixin import CommCareMobileContactMixin, PhoneNumberInUseException
+from corehq.apps.sms.mixin import CommCareMobileContactMixin, VerifiedNumber, PhoneNumberInUseException
 from couchforms.models import XFormInstance
 
 from dimagi.utils.couch.database import get_db
@@ -659,6 +659,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             verified = {}
 
         def extend_phone(phone):
+            extended_info = {}
             contact = verified.get(phone)
             if contact:
                 status = 'verified' if contact.verified else 'pending'
@@ -668,7 +669,28 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
                     status = 'unverified'
                 except PhoneNumberInUseException:
                     status = 'duplicate'
-            return {'number': phone, 'status': status, 'contact': contact}
+
+                    duplicate = VerifiedNumber.by_phone(phone, include_pending=True)
+                    assert duplicate is not None, 'expected duplicate VerifiedNumber entry'
+
+                    # TODO seems like this could be a useful utility function? where to put it...
+                    try:
+                        doc_type = {
+                            'CouchUser': 'user',
+                            'CommCareUser': 'user',
+                            'CommCareCase': 'case',
+                            'CommConnectCase': 'case',
+                        }[duplicate.owner_doc_type]
+                        url_ref, doc_id_param = {
+                            'user': ('user_account', 'couch_user_id'),
+                            'case': ('case_details', 'case_id'),
+                        }[doc_type]
+                        extended_info['dup_url'] = reverse(url_ref, kwargs={'domain': duplicate.domain, doc_id_param: duplicate.owner_id})
+                    except:
+                        pass
+
+            extended_info.update({'number': phone, 'status': status, 'contact': contact})
+            return extended_info
         return [extend_phone(phone) for phone in self.phone_numbers]
 
 

@@ -163,7 +163,7 @@
                                 <div><span class="label"><small>VERIFICATION PENDING</small></span></div>
                                 {% endifequal %}
                                 {% ifequal phone.status "duplicate" %}
-                                <div><span class="label label-warning"><small>ALREADY IN USE</small></span></div>
+                                <div>{% if phone.dup_url %}<a href="{{ phone.dup_url }}">{% endif %}<span class="label label-warning"><small>ALREADY IN USE</small></span>{% if phone.dup_url %}</a>{% endif %}</a></div>
                                 {% endifequal %}
                             </label>
                             
