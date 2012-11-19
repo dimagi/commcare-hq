@@ -27,14 +27,29 @@ def make_form_couch_key(domain, by_submission_time=True,
                    xmlns=None, user_id=None):
     prefix = ["submission"] if by_submission_time else ["completion"]
     key = [domain] if domain is not None else []
-    if xmlns:
-        prefix.append("xmlns")
-        key.append(xmlns)
-    if user_id is not None:
+    if xmlns == "":
+        prefix.append('xmlns')
+    elif user_id == "":
         prefix.append("user")
+    else:
+        if xmlns:
+            prefix.append("xmlns")
+            key.append(xmlns)
         if user_id:
+            prefix.append("user")
             key.append(user_id)
     return [" ".join(prefix)] + key
+
+def all_forms_in_domain(domain):
+    # todo replace form_list with this
+    key = make_form_couch_key(domain, xmlns="")
+    domain_xmlns = get_db().view('reports_forms/all_forms',
+        startkey=key,
+        endkey=key+[{}],
+        group=True,
+        group_level=3,
+    ).all()
+    return [d['key'][-1] for d in domain_xmlns if d['key'][-1] is not None]
 
 def user_list(domain):
     #todo cleanup
