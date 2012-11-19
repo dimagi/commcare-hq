@@ -154,9 +154,9 @@ class ReportConfig(Document):
     @classmethod
     def by_domain_and_owner(cls, domain, owner_id, report_slug=None, include_docs=True):
         if report_slug is not None:
-            key = ["by_name_with_slug", domain, owner_id, report_slug]
+            key = ["name slug", domain, owner_id, report_slug]
         else:
-            key = ["by_name_no_slug", domain, owner_id]
+            key = ["name", domain, owner_id]
 
         return cls.view('reportconfig/configs_by_domain',
             reduce=False,
