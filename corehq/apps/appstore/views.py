@@ -104,7 +104,8 @@ def project_info(request, domain, template="appstore/project_info.html"):
         "images": images,
         "audio": audio,
         "sortables": facets_sortables,
-        "url_base": reverse('appstore')
+        "url_base": reverse('appstore'),
+        'display_import': True if request.couch_user.get_domains() else False
     })
 
 def parse_args_for_es(request):
