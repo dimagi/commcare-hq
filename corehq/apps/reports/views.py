@@ -84,6 +84,7 @@ def default(request, domain, template="reports/reports_home.html"):
             show=user.can_view_reports() or user.get_viewable_reports(),
             slug=None,
             is_async=True,
+            app_slug="reports",
             section_name=ProjectReport.section_name,
             show_subsection_navigation=adm_utils.show_adm_nav(domain, request)
         ),
