@@ -1,22 +1,23 @@
+{% load i18n %}
 <table class="export_data table table-striped">
     <thead>
     <tr>
-        <th>Name</th>
-        <th>Preview</th>
+        <th>{% trans "Name" %}</th>
+        <th>{% trans "Preview" %}</th>
         {% if allow_edit %}
-            <th>Edit</th>
+            <th>{% trans "Edit" %}</th>
         {% endif %}
-        <th>Download</th>
+        <th>{% trans "Download" %}</th>
         <th>
-            Add to Custom Bulk Export <i class="icon-white icon-info-sign custom-bulk-export-info"></i>
+            {% trans "Add to Custom Bulk Export" %} <i class="icon-white icon-info-sign custom-bulk-export-info"></i>
             <small style="display: block;">
-                Select:
-                <a href="#" class="btn btn-mini" data-all="true" data-bind="click: toggleSelectAllExports">all</a>
-                <a href="#" class="btn btn-mini btn-inverse" data-bind="click: toggleSelectAllExports">none</a>
+                {% trans "Select" %}:
+                <a href="#" class="btn btn-mini" data-all="true" data-bind="click: toggleSelectAllExports">{% trans "all" %}</a>
+                <a href="#" class="btn btn-mini btn-inverse" data-bind="click: toggleSelectAllExports">{% trans "none" %}</a>
             </small>
         </th>
         {% if allow_edit %}
-            <th>Delete</th>
+            <th>{% trans "Delete" %}</th>
         {% endif %}
     </tr>
     </thead>
@@ -25,27 +26,27 @@
         <tr class="{% cycle "odd" "even" %}">
             <td class="control-group form-inline">
                 {{ export.name|default:"[blank]" }}
-                {% if not deid and export.is_safe %}<span class="label">de-identified</span>{% endif %}
+                {% if not deid and export.is_safe %}<span class="label">{% trans "de-identified" %}</span>{% endif %}
                 <p style="display:none; margin-top:1em;" class="controls">
-                    <label>Sheet Name <i class="icon icon-info-sign sheet-name-info"></i>:</label>
+                    <label>{% trans "Sheet Name" %} <i class="icon icon-info-sign sheet-name-info"></i>:</label>
                     <input data-bind="updateCustomSheetName: selected_exports, checkForUniqueSheetName: sheet_names, event: {keydown: checkCustomSheetNameLength, keyup: updateCustomSheetNameCharacterCount}"
                            class="sheetname"
                            data-exportid="{{ export.get_id }}"
                            value="{{ export.name|default:"[blank]" }}" />
                     <span class="label label-info sheetname-count">31</span>
-                    <span class="label label-important sheetname-duplicate hide">duplicate <i class="icon-white icon-info-sign"></i></span>
+                    <span class="label label-important sheetname-duplicate hide">{% trans "duplicate" %} <i class="icon-white icon-info-sign"></i></span>
                 </p>
                 <div><p class="help-inline">{{ export.formname }}</p></div>
             </td>
             <td class="cell-vertical-centered">
                 <a class="btn" href='{% url export_custom_data domain export.get_id %}?format=html&{{ get_filter_params.urlencode|safe }}'>
-                    HTML Preview
+                    {% trans "HTML Preview" %}
                 </a>
             </td>
             {% if allow_edit %}
                 <td class="cell-vertical-centered">
                     <a class="btn btn-info" href='{% url corehq.apps.reports.views.edit_custom_export domain export.get_id %}?type=form'>
-                        <i class="icon-pencil icon-white"></i> Edit
+                        <i class="icon-pencil icon-white"></i> {% trans "Edit" %}
                     </a>
                 </td>
             {% endif %}
@@ -57,16 +58,16 @@
                    data-exporttype="form"
                    data-dlocation='{% url export_custom_data domain export.get_id %}'
                    data-bind="click: requestDownload"
-                   class="dl-export btn btn-primary"><i class="icon-download-alt icon-white"></i> Download</a>
+                   class="dl-export btn btn-primary"><i class="icon-download-alt icon-white"></i> {% trans "Download" %}x</a>
             </td>
             <td class="form-inline">
                 {% ifequal export.default_format custom_bulk_export_format %}
                     <label>
                         <input type="checkbox" class="select-custom" data-bind="event: {change: updateSelectedExports}" />
-                        <span class="label label-info">+ Bulk Export</span>
+                        <span class="label label-info">+ {% trans "Bulk Export" %}</span>
                     </label>
                 {% else %}
-                    <span class="label custom-bulk-format-na">{{ export.default_format }} Not Available</span>
+                    <span class="label custom-bulk-format-na">{{ export.default_format }} {% trans "Not Available" %}</span>
                 {% endifequal %}
             </td>
             {% if allow_edit %}

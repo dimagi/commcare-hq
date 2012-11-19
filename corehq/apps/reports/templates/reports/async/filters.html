@@ -1,6 +1,7 @@
 {% load hq_shared_tags %}
+{% load i18n %}
 <fieldset>
-    <legend><span data-bind="text: filterHeadingName">Report Filters</span></legend>
+    <legend><span data-bind="text: filterHeadingName">{% trans "Report Filters" %}</span></legend>
     {% for field in report_filters %}
         <fieldset id="fieldset_{{ field.slug }}">
             <div id="group_{{ field.slug }}" class="control-group">
