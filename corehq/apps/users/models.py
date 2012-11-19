@@ -31,7 +31,7 @@ from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.domain.models import LicenseAgreement
 from corehq.apps.users.util import normalize_username, user_data_from_registration_form, format_username, raw_username, cc_user_domain
 from corehq.apps.users.xml import group_fixture
-from corehq.apps.sms.mixin import CommCareMobileContactMixin
+from corehq.apps.sms.mixin import CommCareMobileContactMixin, PhoneNumberInUseException
 from couchforms.models import XFormInstance
 
 from dimagi.utils.couch.database import get_db
@@ -663,7 +663,11 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
             if contact:
                 status = 'verified' if contact.verified else 'pending'
             else:
-                status = 'unverified'
+                try:
+                    self.verify_unique_number(phone)
+                    status = 'unverified'
+                except PhoneNumberInUseException:
+                    status = 'duplicate'
             return {'number': phone, 'status': status, 'contact': contact}
         return [extend_phone(phone) for phone in self.phone_numbers]
 

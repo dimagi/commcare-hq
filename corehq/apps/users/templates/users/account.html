@@ -162,10 +162,14 @@
                                 {% ifequal phone.status "pending" %}
                                 <div><span class="label"><small>VERIFICATION PENDING</small></span></div>
                                 {% endifequal %}
+                                {% ifequal phone.status "duplicate" %}
+                                <div><span class="label label-warning"><small>ALREADY IN USE</small></span></div>
+                                {% endifequal %}
                             </label>
                             
                             <div class="controls">
                                 {% ifnotequal couch_user.doc_type "WebUser" %}
+
                                 {% ifequal phone.status "unverified" %}
                                 <form method="post" action="{% url verify_phone_number domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}" style="display: inline;">
                                     <button type="submit" title="Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified." class="btn btn-primary"><i class="icon icon-signal icon-white"></i> Verify</button>
@@ -174,6 +178,9 @@
                                 {% endifnotequal %}
                                 {% ifequal phone.status "pending" %}
                                 <a title="Re-send the verification SMS to this phone" class="btn btn-primary" data-toggle="modal" href="#reverify_{{phone.number|urlencode}}"><i class="icon icon-signal icon-white"></i> Verify (retry)</a>
+                                {% endifequal %}
+                                {% ifequal phone.status "duplicate" %}
+                                <a title="You cannot verify this phone because it is already being used elsewhere" class="btn btn-primary disabled"><i class="icon icon-signal icon-white"></i> Verify</a>
                                 {% endifequal %}
 
                                 <a class="btn btn-danger" data-toggle="modal" href="#delete_{{phone.number|urlencode}}"><i class="icon icon-remove icon-white"></i> Delete</a>
