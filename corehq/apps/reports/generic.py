@@ -401,6 +401,7 @@ class GenericReportView(object):
                 section_name=self.section_name,
                 slug=self.slug,
                 sub_slug=None,
+                app_slug=self.app_slug,
                 type=self.dispatcher.prefix,
                 url_root=self.url_root,
                 is_async=self.asynchronous,
