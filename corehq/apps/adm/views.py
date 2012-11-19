@@ -13,6 +13,7 @@ def default_adm_report(request, domain, template="adm/base_template.html", **kwa
             title="Select a Report to View",
             show=True,
             slug=None,
+            app_slug="adm",
             is_async=True,
             section_name=ADMSectionView.section_name,
         )

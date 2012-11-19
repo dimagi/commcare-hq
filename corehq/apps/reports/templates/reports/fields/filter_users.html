@@ -1,5 +1,6 @@
 {% load hq_shared_tags %}
-<label class="control-label">User Type</label>
+{% load i18n %}
+<label class="control-label">{% trans "User Type" %}</label>
 <div class="controls">
 {% if show_user_filter %}
     <div id="user-filter-buttons" class="btn-group" data-toggle="buttons-checkbox">
@@ -16,7 +17,7 @@
     {% endfor %}
 {% else %}
     <div id="user-filter-buttons" class="btn-group" data-toggle="buttons-checkbox">
-        <button class="btn btn-success">{% commcare_user %}s Only</button>
+        <button class="btn btn-success">{% commcare_user %}s {% trans "Only" %}</button>
     </div>
 {% endif %}
 </div>

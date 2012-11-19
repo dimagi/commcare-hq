@@ -1,10 +1,11 @@
+{% load i18n %}
 {% if group.saved_exports %}
 <table class="couchexport-group-download">
     <thead>
         <tr>
-            <th>File</th>
-            <th>Last Updated</th>
-            <th>Size</th>
+            <th>{% trans "File" %}</th>
+            <th>{% trans "Last Updated" %}</th>
+            <th>{% trans "Size" %}</th>
         </tr>
     </thead>
     <tbody>
@@ -16,8 +17,8 @@
         <td>{{ saved.size|filesizeformat }}</td>
     {% else %}
         <td>{{ config.name }}</td>
-        <td>N/A</td>
-        <td>N/A</td>
+        <td>{% trans "N/A" %}</td>
+        <td>{% trans "N/A" %}</td>
     {% endif %}
     </tr>
 {% endfor %}    
