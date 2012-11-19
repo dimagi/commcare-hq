@@ -15,7 +15,11 @@ def format_main_menu(context):
     domain = context.get('domain')
     for m in menu_items:
         menu_item_class = to_function(m)
-        if menu_item_class.is_viewable(request, domain):
+        try:
+            viewable = menu_item_class.is_viewable(request, domain)
+        except AttributeError:
+            viewable = False
+        if viewable:
             menu_item = menu_item_class(request, domain)
             menu_context.append(menu_item.menu_context)
     return mark_safe(render_to_string(menu_template, {

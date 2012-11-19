@@ -83,10 +83,12 @@
         if (value == "sms") {
             $(".for_sms_survey").hide();
             $(".for_sms_callback").hide();
+            $(".for_ivr_survey").hide();
             $(".for_sms").show();
         } else if (value == "survey") {
             $(".for_sms_callback").hide();
             $(".for_sms").hide();
+            $(".for_ivr_survey").hide();
             $(".for_sms_survey").show();
             if($("#id_recipient").val() == "USER") {
                 $("#id_recipient").val("CASE");
@@ -94,7 +96,16 @@
         } else if (value == "callback") {
             $(".for_sms").hide();
             $(".for_sms_survey").hide();
+            $(".for_ivr_survey").hide();
             $(".for_sms_callback").show();
+            if($("#id_recipient").val() == "USER") {
+                $("#id_recipient").val("CASE");
+            }
+        } else if (value == "ivr_survey") {
+            $(".for_sms").hide();
+            $(".for_sms_survey").hide();
+            $(".for_sms_callback").hide();
+            $(".for_ivr_survey").show();
             if($("#id_recipient").val() == "USER") {
                 $("#id_recipient").val("CASE");
             }
@@ -382,6 +393,7 @@
                         <select name="method" id="id_method">
                             <option value="sms" class="for_case_criteria" {% if form.method.value == "sms" %}selected="selected"{% endif %}>SMS</option>
                             <option value="survey" class="for_case_criteria for_on_datetime" {% if form.method.value == "survey" %}selected="selected"{% endif %}>SMS survey</option>
+                            <option value="ivr_survey" class="for_case_criteria" {% if form.method.value == "ivr_survey" %}selected="selected"{% endif %}>IVR survey</option>
                             <option value="callback" class="for_case_criteria" {% if form.method.value == "callback" %}selected="selected"{% endif %}>SMS expecting callback</option>
                         </select>
                     </td>
@@ -447,7 +459,7 @@
                     <th class="for_sms for_sms_callback">
                         <div class="help_popover" data-help-key="Language | Message">Language | Message <i class="icon icon-question-sign"></i></div>
                     </th>
-                    <th class="for_sms_survey">
+                    <th class="for_sms_survey for_ivr_survey">
                         <div class="help_popover" data-help-key="Form">Form <i class="icon icon-question-sign"></i></div>
                     </th>
                     <th class="for_sms_survey for_sms_callback">
@@ -478,7 +490,7 @@
                         </div>
                         {% endfor %}
                     </td>
-                    <td class="for_sms_survey">
+                    <td class="for_sms_survey for_ivr_survey">
                         <div>
                             <select name="reminder_events.{{ forloop.counter }}.survey">
                             {% for f in form_list %}

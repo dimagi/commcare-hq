@@ -1,8 +1,7 @@
 from datetime import datetime, date, timedelta
 import logging
-from corehq.apps.sms.models import SMSLog, INCOMING
-from corehq.apps.sms.util import domains_for_phone, users_for_phone,\
-    clean_phone_number, clean_outgoing_sms_text
+from corehq.apps.sms.util import clean_phone_number, clean_outgoing_sms_text
+from corehq.apps.sms.api import incoming
 from django.conf import settings
 from urllib2 import urlopen
 from urllib import urlencode
@@ -55,32 +54,19 @@ def create_from_request(request, delay=True):
     From an inbound request (representing an incoming message), 
     create a message (log) object with the right fields populated.
     """
-    sender = request.REQUEST.get(InboundParams.SENDER, "")
-    message = request.REQUEST.get(InboundParams.MESSAGE, "")
+    sender = request.REQUEST[InboundParams.SENDER]
+    message = request.REQUEST[InboundParams.MESSAGE]
     timestamp = request.REQUEST.get(InboundParams.TIMESTAMP, "")
     # parse date or default to current utc time
     actual_timestamp = datetime.strptime(timestamp, DATE_FORMAT) \
-                            if timestamp else datetime.utcnow()
+                            if timestamp else None
     
     # not sure yet if this check is valid
     is_unicode = request.REQUEST.get(InboundParams.UDHI, "") == "1"
     if is_unicode:
         message = message.decode("hex").decode("utf_16_be")
-    # if you don't have an exact match for either of these fields, save nothing
-    domains = domains_for_phone(sender)
-    domain = domains[0] if len(domains) == 1 else "" 
-    recipients = users_for_phone(sender)
-    recipient = recipients[0].get_id if len(recipients) == 1 else "" 
-    
-    log = SMSLog(couch_recipient=recipient,
-                        couch_recipient_doc_type="CouchUser",
-                        phone_number=sender,
-                        direction=INCOMING,
-                        date=actual_timestamp,
-                        text=message,
-                        domain=domain,
-                        backend_api=API_ID)
-    log.save()
+
+    log = incoming(sender, message, API_ID, timestamp=actual_timestamp)
 
     try:
         # attempt to bill client
@@ -95,6 +81,8 @@ def create_from_request(request, delay=True):
 
     return log
     
+def receive_phone_number():
+    return _config().get('receive_phone')
 
 def send(message, delay=True):
     """
