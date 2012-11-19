@@ -59,8 +59,9 @@ $(function() {
 
     {% if report.show %}
     <div class="tab-pane" id="scheduled-reports">
-        <p><a class="btn btn-success" href="{% url edit_scheduled_report domain %}"><i class="icon icon-white icon-plus"></i> Create a New Scheduled Report</a>
-        </p>
+        <p><a class="btn btn-success" href="{% url edit_scheduled_report domain %}"><i class="icon icon-white icon-plus"></i>
+            {% trans "Create a New Scheduled Report" %}
+        </a></p>
         {% if scheduled_reports %}
         <table class="table table-striped table-bordered">
             <thead>
@@ -91,7 +92,7 @@ $(function() {
                     <td>
                         {# handles old documents #}
                         {% if report.user_ids or report.send_to_owner %}
-                        me{% if report.recipient_emails %}, {% endif %}
+                        {% trans "me" %}{% if report.recipient_emails %}, {% endif %}
                         {% endif %}
                         {% for email in report.recipient_emails %}
                         {{ email }},
