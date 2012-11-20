@@ -1,13 +1,14 @@
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from corehq.apps.reports.display import FormType
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
+from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
 # For translations
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from corehq.apps.reports.util import all_xmlns_in_domain, all_application_forms, get_duplicate_xmlns
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
+
 
 class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     slug = "form"
@@ -149,3 +150,17 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         ]
 
 
+class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):
+    slug = "sub_time"
+    label = ugettext_noop("Filter Dates By")
+    css_class = "span2"
+    help_text = mark_safe("%s<br />%s" % (ugettext_noop("<strong>Completion</strong> time is when the form is completed on the phone."),
+                                          ugettext_noop("<strong>Submission</strong> time is when we receive the form.")))
+    default_text = ugettext_noop("Completion Time")
+
+
+    @property
+    def options(self):
+        return [
+            ('submission', _('Submission Time')),
+        ]
