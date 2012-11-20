@@ -6,7 +6,35 @@ DEFAULT_OPEN_FORM_WAIT_TIME = 10
 DEFAULT_SUBMIT_FORM_WAIT_TIME = 5
 
 
+class CloudCareQuestion(object):
+    """
+    Selenium WebElement wrapper class with convenience methods for question
+    divs.
+
+    """
+    def __init__(self, element):
+        self.element = element
+
+    def __getattr__(self, name):
+        return getattr(self.element, name)
+
+    @property
+    def input(self):
+        return self.find_element_by_xpath("div[@id='widget']/input")
+
+    def set_value(self, value):
+        self.input.send_keys(value)
+        # todo: click outside to trigger validation, and handle non-text inputs
+
+
 class CloudCareTestCase(MobileWorkerTestCase):
+    """
+    Base TestCase for cloudcare with convenience methods.
+
+    All methods should be classmethods so they are available to each other and
+    setupClass() and tearDownClass() (including for subclasses).
+
+    """
     app = selenium.get_app('cloudcare')
     open_form_wait_time = app.get('OPEN_FORM_WAIT_TIME',
                                   DEFAULT_OPEN_FORM_WAIT_TIME)
@@ -49,19 +77,29 @@ class CloudCareTestCase(MobileWorkerTestCase):
         else:
             xpath = "//section//div[@id='form']"
 
-        find_form = lambda: cls.driver.find_element_by_xpath(xpath,
-                                        duration=cls.open_form_wait_time)
+        click_form = lambda: cls.driver.find_element_by_link_text(name).click()
+        find_form = lambda: cls.driver.find_element_by_xpath(
+            xpath, duration=cls.open_form_wait_time)
 
-        # click the form
-        cls.driver.find_element_by_link_text(name).click()
-
+        click_form()
         # ensure that the form/case list has loaded
         try:
             find_form()
         except NoSuchElementException:
             # retry in case that form was already open and we closed it
-            cls.driver.find_element_by_link_text(name).click()
+            click_form()
             find_form()
+
+    @classmethod
+    def find_question(cls, name=None):
+        if name:
+            xpath = "//span[@id='caption' and text()='%s']/.." % name
+        else:
+            # find any question
+            xpath = "//span[@id='caption']/.."
+        question = cls.driver.find_element_by_xpath(xpath)
+            
+        return CloudCareQuestion(question)
 
     @classmethod
     def submit_form(cls, expect_success=True):
@@ -76,15 +114,14 @@ class CloudCareTestCase(MobileWorkerTestCase):
         cls.driver.find_element_by_id('submit').click()
 
         if expect_success:
-            cls.driver.find_element_by_xpath(success,
-                                             duration=cls.submit_form_wait_time)
+            cls.driver.find_element_by_xpath(
+                success, duration=cls.submit_form_wait_time)
 
     @classmethod
     def click_case(cls, name):
         cls.driver.find_element_by_xpath(
-            "//section//td[text()='%s']" % name
-        ).click()
-    
+            "//section//td[text()='%s']" % name).click()
+   
     @classmethod
     def close_all_cases(cls, close_case_form_name):
         while True:
@@ -98,5 +135,5 @@ class CloudCareTestCase(MobileWorkerTestCase):
                 return
             
             cls.driver.find_element_by_link_text('Enter Close Case').click()
-            cls.driver.find_element_by_id('textfield')
+            cls.find_question()
             cls.submit_form()

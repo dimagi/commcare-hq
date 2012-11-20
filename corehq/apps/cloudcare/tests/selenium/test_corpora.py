@@ -12,26 +12,25 @@ class BasicTestTestCase(CloudCareTestCase):
     case_list_forms = ['Update Case', 'Close Case']
     teardown_close_case_form = 'Close Case'
 
-    def create_case(self):
+    def _create_case(self):
         self.open_form('New Case')
         name = self.random_string()
-        self.find_element_by_id('textfield').send_keys(name)
+        self.find_question('Enter your name').set_value(name)
         self.submit_form()
 
         return name
 
     def test_first_form(self):
         self.open_form('First Form')
-
         name = self.random_string()
-        self.find_element_by_id('textfield').send_keys(name)
+        self.find_question('Enter your name').set_value(name)
         self.submit_form()
         
         self.open_form('Update Case')
         self.assertNotIn(name, self.page_source)
 
     def test_new_case(self):
-        name = self.create_case()
+        name = self._create_case()
         self.open_form('Update Case')
         self.click_case(name)
         self.find_element_by_id('case-details')
@@ -41,7 +40,7 @@ class BasicTestTestCase(CloudCareTestCase):
             self.assertTrue('---' in td.text or td.text == name)
 
     def test_update_case(self):
-        name = self.create_case()
+        name = self._create_case()
 
         self.open_form('Update Case')
         self.click_case(name)
@@ -57,11 +56,11 @@ class BasicTestTestCase(CloudCareTestCase):
         )
 
     def test_close_case(self):
-        name = self.create_case()
+        name = self._create_case()
         self.open_form('Close Case')
         self.click_case(name)
         self.find_element_by_link_text('Enter Close Case').click()
-        self.find_element_by_id('textfield').send_keys('reason for closing')
+        self.find_question('Reason for Closing').set_value('foo')
         self.submit_form()
         self.open_form('Update Case')
         self.assertNotIn(name, self.page_source)
