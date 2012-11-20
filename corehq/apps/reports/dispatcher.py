@@ -55,7 +55,7 @@ class ReportDispatcher(View):
     def validate_report_map(self, request, *args, **kwargs):
         return bool(isinstance(self.report_map, dict) and self.report_map)
 
-    def permissions_check(self, report, request, *args, **kwargs):
+    def permissions_check(self, report, request, domain=None):
         """
             Override this method to check for appropriate permissions based on the report model
             and other arguments.
@@ -95,14 +95,17 @@ class ReportDispatcher(View):
 
         current_slug = kwargs.get('report_slug')
         render_as = kwargs.get('render_as') or 'view'
-        reports = self.get_reports(getattr(request, 'domain', None))
+        domain = kwargs.get('domain') or getattr(request, 'domain', None)
+
+        reports = self.get_reports(domain)
+
         for key, report_model_paths in reports.items():
             for model_path in report_model_paths:
                 report_class = to_function(model_path)
                 if report_class.slug == current_slug:
-                    report = report_class(request, *args, **kwargs)
+                    report = report_class(request, domain=domain)
                     report.rendered_as = render_as
-                    if self.permissions_check(model_path, request, *args, **kwargs):
+                    if self.permissions_check(model_path, request, domain=domain):
                         return getattr(report, '%s_response' % render_as)
         raise Http404
 
@@ -126,27 +129,23 @@ class ReportDispatcher(View):
         return ['json', 'async', 'filters', 'export', 'mobile', 'static', 'clear_cache']
 
     @classmethod
-    def args_kwargs_from_context(cls, context):
-        args = []
-        kwargs = dict(report_slug=context.get('report',{}).get('slug',''))
-        return args, kwargs
-
-    @classmethod
     def report_navigation_list(cls, context):
         request = context.get('request')
+        domain = context.get('domain') or getattr(request, 'domain', None)
+
         report_nav = list()
         dispatcher = cls()
-        args, kwargs = dispatcher.args_kwargs_from_context(context)
-        reports = dispatcher.get_reports(getattr(request, 'domain', None))
-        current_slug = kwargs.get('report_slug')
+        current_slug = context.get('report',{}).get('slug','')
+
+        reports = dispatcher.get_reports(domain)
         for key, models in reports.items():
             section = list()
             section_header = '<li class="nav-header">%s</li>' % escape(_(key))
             for model in models:
-                if not dispatcher.permissions_check(model, request, *args, **kwargs):
+                if not dispatcher.permissions_check(model, request, domain=domain):
                     continue
                 report = to_function(model)
-                if report.show_in_navigation(request, *args, **kwargs):
+                if report.show_in_navigation(request, domain=domain):
                     if hasattr(report, 'override_navigation_list'):
                         section.extend(report.override_navigation_list(context))
                     else:
@@ -155,7 +154,7 @@ class ReportDispatcher(View):
                         %(icon)s%(title)s
                         </a></li>""" % dict(
                             css_class="active" if selected_report else "",
-                            link=report.get_url(*args),
+                            link=report.get_url(domain=domain),
                             link_title=_(report.description) if report.description else "",
                             icon='<i class="icon%s %s"></i> ' % ("-white" if selected_report else "", report.icon) if report.icon else "",
                             title=_(report.name) if report.name else ""
@@ -181,21 +180,10 @@ class ProjectReportDispatcher(ReportDispatcher):
     def dispatch(self, request, *args, **kwargs):
         return super(ProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
 
-    def permissions_check(self, report, request, *args, **kwargs):
-        domain = kwargs.get('domain')
+    def permissions_check(self, report, request, domain=None):
         if domain is None:
-            domain = args[0]
+            return False
         return request.couch_user.can_view_report(domain, report)
-
-    @classmethod
-    def args_kwargs_from_context(cls, context):
-        args, kwargs = super(ProjectReportDispatcher, cls).args_kwargs_from_context(context)
-        domain=context.get('domain')
-        kwargs.update(
-            domain=domain
-        )
-        args = [domain] + args
-        return args, kwargs
 
 class CustomProjectReportDispatcher(ProjectReportDispatcher):
     prefix = 'custom_project_report'
