@@ -29,6 +29,7 @@ from dimagi.utils.timezones.fields import TimeZoneField
 from dimagi.utils.timezones.forms import TimeZoneChoiceField
 from corehq.apps.users.util import format_username
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext_noop
 
 class _BaseForm(object):
     def clean(self):
@@ -63,7 +64,7 @@ class DomainBoundModelChoiceField(forms.ModelChoiceField):
 ########################################################################################################
 
 class DomainSelectionForm(forms.Form):
-    domain_list = DomainModelChoiceField(queryset=[], empty_label=None, label="Project List")
+    domain_list = DomainModelChoiceField(queryset=[], empty_label=None, label=ugettext_noop("Project List"))
 
     def __init__(self, domain_list=None, *args, **kwargs):
         super(DomainSelectionForm, self).__init__(*args, **kwargs)
@@ -76,7 +77,7 @@ class DomainSelectionForm(forms.Form):
               request,
               selected_domain_key = _SESSION_KEY_SELECTED_DOMAIN ):
         d = Domain(id = self.cleaned_data['domain_list'].id,
-                   name = self.cleaned_data['domain_list'].name )
+            name = self.cleaned_data['domain_list'].name )
         request.session[selected_domain_key] = d
         request.user.selected_domain = d
         return True
@@ -84,23 +85,23 @@ class DomainSelectionForm(forms.Form):
 ########################################################################################################
 
 class SnapshotSettingsMixin(forms.Form):
-    project_type = CharField(label="Project Category", required=False,
-        help_text="e.g. MCH, HIV, etc.")
+    project_type = CharField(label=ugettext_noop("Project Category"), required=False,
+        help_text=ugettext_noop("e.g. MCH, HIV, etc."))
 
 class SnapshotApplicationForm(forms.Form):
-    publish = BooleanField(label="Publish?", required=False)
-    name = CharField(label="Name", required=True)
-    short_description = CharField(label="Short Description", required=False,
+    publish = BooleanField(label=ugettext_noop("Publish?"), required=False)
+    name = CharField(label=ugettext_noop("Name"), required=True)
+    short_description = CharField(label=ugettext_noop("Short Description"), required=False,
         max_length=200, widget=forms.Textarea,
-        help_text="A brief description of the application (max. 200 characters)")
-    description = CharField(label="Long Description", required=False, widget=forms.Textarea,
-        help_text="A detailed technical description of the app design")
-    deployment_date = CharField(label="Deployment date", required=False)
-    phone_model = CharField(label="Phone model", required=False)
-    user_type = CharField(label="User type", required=False,
-        help_text="e.g. CHW, ASHA, RA, etc")
-    attribution_notes = CharField(label="Attribution notes", required=False,
-        help_text="Enter any special instructions to users here. This will be shown just before users copy your project.", widget=forms.Textarea)
+        help_text=ugettext_noop("A brief description of the application (max. 200 characters)"))
+    description = CharField(label=ugettext_noop("Long Description"), required=False, widget=forms.Textarea,
+        help_text=ugettext_noop("A detailed technical description of the app design"))
+    deployment_date = CharField(label=ugettext_noop("Deployment date"), required=False)
+    phone_model = CharField(label=ugettext_noop("Phone model"), required=False)
+    user_type = CharField(label=ugettext_noop("User type"), required=False,
+        help_text=ugettext_noop("e.g. CHW, ASHA, RA, etc"))
+    attribution_notes = CharField(label=ugettext_noop("Attribution notes"), required=False,
+        help_text=ugettext_noop("Enter any special instructions to users here. This will be shown just before users copy your project."), widget=forms.Textarea)
 
     def __init__(self, *args, **kwargs):
         super(SnapshotApplicationForm, self).__init__(*args, **kwargs)
@@ -116,26 +117,26 @@ class SnapshotApplicationForm(forms.Form):
         ]
 
 class SnapshotSettingsForm(SnapshotSettingsMixin):
-    title = CharField(label="Title", required=True)
-    author = CharField(label="Author name", required=True)
-    project_type = CharField(label="Project Category", required=True,
-        help_text="e.g. MCH, HIV, etc.")
-    license = ChoiceField(label='License', required=True, choices=LICENSES.items(),
+    title = CharField(label=ugettext_noop("Title"), required=True)
+    author = CharField(label=ugettext_noop("Author name"), required=True)
+    project_type = CharField(label=ugettext_noop("Project Category"), required=True,
+        help_text=ugettext_noop("e.g. MCH, HIV, etc."))
+    license = ChoiceField(label=ugettext_noop("License"), required=True, choices=LICENSES.items(),
         help_text=render_to_string('domain/partials/license_explanations.html',
-            {'extra': "All un-licensed multimedia files in your project will be given this license"}))
-    description = CharField(label="Long Description", required=False, widget=forms.Textarea,
-        help_text="A high-level overview of your project as a whole")
-    short_description = CharField(label="Short Description", required=False,
+            {'extra': ugettext_noop("All un-licensed multimedia files in your project will be given this license")}))
+    description = CharField(label=ugettext_noop("Long Description"), required=False, widget=forms.Textarea,
+        help_text=ugettext_noop("A high-level overview of your project as a whole"))
+    short_description = CharField(label=ugettext_noop("Short Description"), required=False,
         max_length=200, widget=forms.Textarea,
-        help_text="A brief description of your project (max. 200 characters)")
-    share_multimedia = BooleanField(label="Share all multimedia?", required=False,
-        help_text="This will allow any user to see and use all multimedia in this project")
-    image = forms.ImageField(label="Exchange image", required=False,
-        help_text="An optional image to show other users your logo or what your app looks like")
-    cda_confirmed = BooleanField(required=False, label="Content Distribution Agreement",
+        help_text=ugettext_noop("A brief description of your project (max. 200 characters)"))
+    share_multimedia = BooleanField(label=ugettext_noop("Share all multimedia?"), required=False,
+        help_text=ugettext_noop("This will allow any user to see and use all multimedia in this project"))
+    image = forms.ImageField(label=ugettext_noop("Exchange image"), required=False,
+        help_text=ugettext_noop("An optional image to show other users your logo or what your app looks like"))
+    cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"),
         help_text=render_to_string('domain/partials/cda_modal.html'))
-    publish_on_submit = BooleanField(required=False, label="Immediately publish?",
-        help_text="If this is selected, the project will be published when you submit this form")
+    publish_on_submit = BooleanField(required=False, label=ugettext_noop("Immediately publish?"),
+        help_text=ugettext_noop("If this is selected, the project will be published when you submit this form"))
 
     def __init__(self, *args, **kw):
         super(SnapshotSettingsForm, self).__init__(*args, **kw)
@@ -161,9 +162,10 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
         cleaned_data = self.cleaned_data
         sm = cleaned_data["share_multimedia"]
         license = cleaned_data["license"]
+        apps = self._get_apps_to_publish()
 
-        if sm and license not in self.dom.most_restrictive_licenses:
-            license_choices = [LICENSES[l] for l in self.dom.most_restrictive_licenses]
+        if sm and license not in self.dom.most_restrictive_licenses(apps_to_check=apps):
+            license_choices = [LICENSES[l] for l in self.dom.most_restrictive_licenses(apps_to_check=apps)]
             msg = render_to_string('domain/partials/restrictive_license.html', {'licenses': license_choices})
             self._errors["license"] = self.error_class([msg])
 
@@ -171,11 +173,22 @@ class SnapshotSettingsForm(SnapshotSettingsMixin):
 
         return cleaned_data
 
+    def _get_apps_to_publish(self):
+        app_ids = []
+        for d, val in self.data.iteritems():
+            d = d.split('-')
+            if len(d) < 2:
+                continue
+            if d[1] == 'publish' and val == 'on':
+                app_ids.append(d[0])
+
+        return app_ids
+
 ########################################################################################################
 
 class DomainGlobalSettingsForm(forms.Form):
-    default_timezone = TimeZoneChoiceField(label="Default Timezone", initial="UTC")
-    case_sharing = ChoiceField(label='Case Sharing', choices=(('false', 'Off'), ('true', 'On')))
+    default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
+    case_sharing = ChoiceField(label=ugettext_noop("Case Sharing"), choices=(('false', 'Off'), ('true', 'On')))
 
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
@@ -201,7 +214,7 @@ class DomainGlobalSettingsForm(forms.Form):
 
 class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
     customer_type = ChoiceField(label='Customer Type',
-                                choices=(('basic', 'Basic'), ('plus', 'Plus'), ('full', 'Full')))
+        choices=(('basic', 'Basic'), ('plus', 'Plus'), ('full', 'Full')))
     is_test = ChoiceField(label='Test Project', choices=(('false', 'Real'), ('true', 'Test')))
 
     def save(self, request, domain):
@@ -218,13 +231,13 @@ class DomainMetadataForm(DomainGlobalSettingsForm, SnapshotSettingsMixin):
             return False
 
 class DomainDeploymentForm(forms.Form):
-    city = CharField(label="City", required=False)
-    country = CharField(label="Country", required=False)
-    region = CharField(label="Region", required=False,
-        help_text="e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc.")
-    deployment_date = CharField(label="Deployment date", required=False)
-    description = CharField(label="Description", required=False, widget=forms.Textarea)
-    public = ChoiceField(label='Make Public?', choices=(('false', 'No'), ('true', 'Yes')), required=False)
+    city = CharField(label=ugettext_noop("City"), required=False)
+    country = CharField(label=ugettext_noop("Country"), required=False)
+    region = CharField(label=ugettext_noop("Region"), required=False,
+        help_text=ugettext_noop("e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."))
+    deployment_date = CharField(label=ugettext_noop("Deployment date"), required=False)
+    description = CharField(label=ugettext_noop("Description"), required=False, widget=forms.Textarea)
+    public = ChoiceField(label=ugettext_noop("Make Public?"), choices=(('false', 'No'), ('true', 'Yes')), required=False)
 
     def save(self, domain):
         try:
