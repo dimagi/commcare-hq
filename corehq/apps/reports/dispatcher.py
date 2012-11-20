@@ -45,14 +45,20 @@ class ReportDispatcher(View):
             raise NotImplementedError("Class property 'map_name' must be a string, and not empty.")
         super(ReportDispatcher, self).__init__(**kwargs)
 
-    _report_map = None
     @property
     def report_map(self):
-        if self._report_map is None:
-            self._report_map = getattr(settings, self.map_name, None)
-        return self._report_map
+        return getattr(settings, self.map_name, None)
 
-    def validate_report_map(self, request, *args, **kwargs):
+    @property
+    def slug_aliases(self):
+        """
+            For those times when you merge a report or delete it and still want to keep around the old link.
+            Format like:
+            { 'old_slug': 'new_slug' }
+        """
+        return {}
+
+    def validate_report_map(self, request):
         return bool(isinstance(self.report_map, dict) and self.report_map)
 
     def permissions_check(self, report, request, domain=None):
@@ -88,14 +94,22 @@ class ReportDispatcher(View):
                     return report_class
 
         return None
+
+    def _slug_alias(self, slug):
+        return self.slug_aliases.get('slug') or slug
         
     def dispatch(self, request, *args, **kwargs):
-        if not self.validate_report_map(request, *args, **kwargs):
+        if not self.validate_report_map(request):
             return HttpResponseNotFound("Sorry, no reports have been configured yet.")
 
-        current_slug = kwargs.get('report_slug')
+        current_slug = self._slug_alias(kwargs.get('report_slug'))
         render_as = kwargs.get('render_as') or 'view'
         domain = kwargs.get('domain') or getattr(request, 'domain', None)
+        report_kwargs = kwargs.copy()
+        if domain:
+            del report_kwargs['domain']
+        del report_kwargs['report_slug']
+        del report_kwargs['render_as']
 
         reports = self.get_reports(domain)
 
@@ -103,7 +117,7 @@ class ReportDispatcher(View):
             for model_path in report_model_paths:
                 report_class = to_function(model_path)
                 if report_class.slug == current_slug:
-                    report = report_class(request, domain=domain)
+                    report = report_class(request, domain=domain, **report_kwargs)
                     report.rendered_as = render_as
                     if self.permissions_check(model_path, request, domain=domain):
                         return getattr(report, '%s_response' % render_as)
@@ -135,7 +149,7 @@ class ReportDispatcher(View):
 
         report_nav = list()
         dispatcher = cls()
-        current_slug = context.get('report',{}).get('slug','')
+        current_slug = dispatcher._slug_alias(context.get('report',{}).get('slug',''))
 
         reports = dispatcher.get_reports(domain)
         for key, models in reports.items():
