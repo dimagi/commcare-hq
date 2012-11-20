@@ -46,9 +46,10 @@ class CommtrackActionConfig(DocumentSchema):
 
     def _keyword(self, multi):
         if multi:
-            return self.multiaction_keyword or self.keyword
+            k = self.multiaction_keyword or self.keyword
         else:
-            return self.keyword
+            k = self.keyword
+        return k.lower()
 
     @property
     def action_name(self):
