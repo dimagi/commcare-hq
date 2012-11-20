@@ -320,12 +320,6 @@ class ReportConfig(Document):
                      " scheduled report and create a new one using an available"
                      " report.")
 
-        # seems like this check should be happening in dispatcher.dispatch() 
-        report_class = self.report.__module__ + '.' + self.report.__name__
-        if not self.owner.can_view_report(self.domain, report_class):
-            raise Exception("User %s can't view report %s" % (self.owner_id,
-                                                              report_class))
-
         from django.http import HttpRequest, QueryDict
         request = HttpRequest()
         request.couch_user = self.owner
