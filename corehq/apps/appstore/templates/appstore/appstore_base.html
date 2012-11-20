@@ -340,7 +340,7 @@
                             {% endif %}
                         {% endif %}
                     {% endfor %}
-                    <h6>{{ app.copies_of_parent|length }} download{{ app.copies_of_parent|length|pluralize }}</h6>
+                    <h6>{{ app.downloads }} download{{ app.copies_of_parent|length|pluralize }}</h6>
                     {% if app.short_description %}
                         <p>{{ app.short_description }}</p>
                     {% endif %}
