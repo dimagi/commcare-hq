@@ -73,7 +73,6 @@ class DefaultReportADMSectionView(GenericTabularReport, ADMSectionView, ProjectR
     @property
     @memoized
     def subreport_data(self):
-        print self.domain, self.subreport_slug, self.adm_slug
         default_subreport = ADMReport.get_default(self.subreport_slug, domain=self.domain,
                 section=self.adm_slug, wrap=False)
         if default_subreport is None:
