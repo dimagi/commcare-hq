@@ -901,7 +901,7 @@ class CouchUser(Document, DjangoUserMixin, UnicodeMixIn):
         return self.base_doc.endswith(DELETED_SUFFIX)
 
     def is_eula_signed(self):
-        return self.eula.signed or self.is_superuser or self.is_staff
+        return self.eula.signed or self.is_superuser
 
     def get_viewable_reports(self, domain=None, name=True):
         try:
