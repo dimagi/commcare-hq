@@ -374,7 +374,7 @@ def create_snapshot(request, domain):
                  'autocomplete_fields': ('project_type', 'phone_model', 'user_type', 'city', 'country', 'region')})
 
         current_user = CouchUser.from_django_user(request.user)
-        if not current_user.eula.signed:
+        if not current_user.is_eula_signed():
             messages.error(request, 'You must agree to our eula to publish a project to Exchange')
             return render_to_response(request, 'domain/create_snapshot.html',
                 {'domain': domain.name,

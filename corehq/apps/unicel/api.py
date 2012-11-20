@@ -14,7 +14,7 @@ class InboundParams(object):
     """
     A constant-defining class for incoming sms params
     """
-    SENDER = "sender"
+    SENDER = "send"
     MESSAGE = "msg"
     TIMESTAMP = "stime"
     UDHI = "udhi"
