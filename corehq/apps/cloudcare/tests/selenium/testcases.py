@@ -174,7 +174,7 @@ class CloudCareTestCase(MobileWorkerTestCase):
         cls.open_form(cls.update_case_form)
 
         tds = cls.driver.find_elements_by_xpath(
-            "//section[@id='case-details']//tbody//tr/td[position()=1]")
+            "//section[@id='case-list']//tbody//tr/td[position()=1]")
 
         return [td.text for td in tds]
    

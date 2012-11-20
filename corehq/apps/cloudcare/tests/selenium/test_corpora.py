@@ -30,8 +30,6 @@ class BasicTestTestCase(CloudCareTestCase):
 
     def test_new_case(self):
         name = self._create_case()
-        self.open_form('Update Case')
-        self.click_case(name)
         self.assertIn(name, self.get_open_case_names())
 
     def test_update_case(self):
