@@ -1,3 +1,4 @@
+from dimagi.utils.django.test import SeleniumWrapper
 from corehq.apps.selenium.testcases import MobileWorkerTestCase
 from selenium.common.exceptions import NoSuchElementException
 from corehq.apps import selenium
@@ -8,24 +9,33 @@ DEFAULT_SUBMIT_FORM_WAIT_TIME = 5
 
 class CloudCareQuestion(object):
     """
-    Selenium WebElement wrapper class with convenience methods for question
-    divs.
+    Selenium WebElement wrapper class with convenience methods for questions.
 
     """
     def __init__(self, element):
-        self.element = element
+        # element is a fully loaded question - we can assume any finds can
+        # return immediately
+        self.element = SeleniumWrapper(element=element)
 
     def __getattr__(self, name):
         return getattr(self.element, name)
 
-    @property
-    def input(self):
-        return self.find_element_by_xpath("div[@id='widget']/input")
-
     def set_value(self, value):
-        self.input.send_keys(value)
-        # todo: click outside to trigger validation, and handle non-text inputs
+        try:
+            # text input
+            self.find_element_by_xpath(
+                "div[@id='widget']/input", duration=0
+            ).send_keys(value)
+        except NoSuchElementException:
+            # radio buttons
+            self.find_element_by_xpath(
+                "div[@id='widget']//span[@id='label' and text()='%s']" % value,
+                duration=0
+            ).click()
 
+            # todo: other non-text inputs (?)
+
+        # todo: click outside to trigger validation
 
 class CloudCareTestCase(MobileWorkerTestCase):
     """
@@ -43,9 +53,8 @@ class CloudCareTestCase(MobileWorkerTestCase):
 
     app_name = None
     module_name = None
-
-    case_list_forms = []
-    teardown_close_case_form = None
+    update_case_form = None
+    close_case_form = None
 
     @classmethod
     def setUpClass(cls):
@@ -65,14 +74,14 @@ class CloudCareTestCase(MobileWorkerTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        if cls.teardown_close_case_form:
-            cls.close_all_cases(cls.teardown_close_case_form)
+        if cls.close_case_form:
+            cls.close_all_cases()
 
         super(CloudCareTestCase, cls).tearDownClass()
 
     @classmethod
     def open_form(cls, name):
-        if name in cls.case_list_forms:
+        if name in [cls.update_case_form, cls.close_case_form]:
             xpath = "//*[@id='dataTables-filter-box']"
         else:
             xpath = "//section//div[@id='form']"
@@ -91,18 +100,9 @@ class CloudCareTestCase(MobileWorkerTestCase):
             find_form()
 
     @classmethod
-    def find_question(cls, name=None):
-        if name:
-            xpath = "//span[@id='caption' and text()='%s']/.." % name
-        else:
-            # find any question
-            xpath = "//span[@id='caption']/.."
-        question = cls.driver.find_element_by_xpath(xpath)
-            
-        return CloudCareQuestion(question)
-
-    @classmethod
     def submit_form(cls, expect_success=True):
+        """Submit the currently open form."""
+
         success = "//*[@class='alert alert-success' and not(contains(@style, 'display: none'))]"
         
         # wait until any success alerts from previous form submissions go away
@@ -121,11 +121,67 @@ class CloudCareTestCase(MobileWorkerTestCase):
     def click_case(cls, name):
         cls.driver.find_element_by_xpath(
             "//section//td[text()='%s']" % name).click()
+
+    @classmethod
+    def enter_update_case(cls, name):
+        cls.click_case(name)
+        cls.driver.find_element_by_link_text('Enter Update Case').click()
+
+    @classmethod
+    def enter_close_case(cls, name):
+        cls.click_case(name)
+        cls.driver.find_element_by_link_text('Enter Close Case').click()
+
+    @classmethod
+    def find_question(cls, name=None):
+        """
+        Returns a CloudCareQuestion wrapper instance for the visible question
+        with the label 'name'.
+
+        """
+        if name:
+            xpath = "//span[@id='caption' and text()='%s']/.." % name
+        else:
+            # find any question
+            xpath = "//span[@id='caption']/.."
+        question = cls.driver.find_element_by_xpath(xpath)
+            
+        return CloudCareQuestion(question)
+
+    @classmethod
+    def get_case_details(cls, name):
+        """
+        Returns a dictionary of case attributes as displayed on the update case
+        form.
+        
+        """
+        cls.open_form(cls.update_case_form)
+        cls.click_case(name)
+
+        trs = cls.driver.find_elements_by_xpath(
+            "//section[@id='case-details']//tbody//tr")
+
+        details = {}
+        for tr in trs:
+            name = tr.find_element_by_tag_name('th').text
+            value = tr.find_element_by_tag_name('td').text
+            details[name] = value
+
+        return details
+
+    @classmethod
+    def get_open_case_names(cls):
+        cls.open_form(cls.update_case_form)
+
+        tds = cls.driver.find_elements_by_xpath(
+            "//section[@id='case-details']//tbody//tr/td[position()=1]")
+
+        return [td.text for td in tds]
    
     @classmethod
-    def close_all_cases(cls, close_case_form_name):
+    def close_all_cases(cls):
         while True:
-            cls.open_form(close_case_form_name)
+            cls.open_form(cls.close_case_form)
             try:
                 cls.driver.find_element_by_xpath(
                     "//section[@id='case-list']//td[not(contains(@class, 'dataTables_empty'))]",
